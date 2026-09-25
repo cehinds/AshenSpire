@@ -9,8 +9,13 @@ until the owner accepts it.
 the detailed evidence behind the feel, screen and structure items. Its IDs
 (A1, F, G…) are cited here instead of copied.
 
-Marks: `[ ]` open · `[~]` PR open · `[x]` merged to `dev`, with the PR
+Marks: `[ ]` open · `[~]` PR open, or partly done with the remainder stated · `[x]` merged to `dev`, with the PR
 linked. Update this file after every PR.
+
+**Status (2026-09-25, `dev` @ `630780b4`, build `0.7.1.498`):** synced against
+every merge to `dev` from #1270 to #1310. Each tick below was checked against
+the code, a test or a command run on that tree, not against a PR title. #1298,
+#1299 and #1300 are still open, so the lines they target are `[~]`; #1301 has since merged.
 
 ## Baseline (2026-09-24, `dev` @ `7fb05c9a`, build `0.7.1.449`)
 
@@ -26,19 +31,22 @@ linked. Update this file after every PR.
 
 ## 1. Spec coverage
 
-- [ ] **Guilt deals its in-hand turn-end HP loss** (SPEC §5.2, DEVELOPER "M1 known deviations", Guilt). Test: an engine test where Guilt in hand at turn end costs exactly the row's value (1 HP) and Guilt in draw or discard costs nothing. *Owner decision D2.*
+- [x] **Guilt deals its in-hand turn-end HP loss** (SPEC §5.2, DEVELOPER "M1 known deviations", Guilt). Test: an engine test where Guilt in hand at turn end costs exactly the row's value (1 HP) and Guilt in draw or discard costs nothing. *Owner decision D2.* — [#1286](https://github.com/cehinds/AshenSpire/pull/1286): `tests/guilt.test.mjs` covers 1 HP in hand, 0 in draw or discard, 2 for two Guilts, and a co-op seat.
 - [ ] **Warrior's Vow lets you choose a stance** (SPEC §5.2, DEVELOPER "M1 known deviations", Warrior's Vow). Test: an engine test where the card offers a pending choice of every class stance, and the chosen stance is the one entered. *D2.*
-- [~] **Remove the stale Frostbite deviation** ([#1283](https://github.com/cehinds/AshenSpire/pull/1283)): SPEC §4.4 marks Frostbite CUT, with Frost and `frostExposed` carrying it. Test: DEVELOPER.md "M1 known deviations" no longer numbers Frostbite among its rows (only a note that it is CUT, not deferred), and the SPEC falsifier `statuses.some(s=>s.id==='frostbite')` prints `false`.
-- [ ] **Card hotkeys 1–9 have a test**. They already ship in `src/ui/screens/combat.js` (`cardIdx`): 1–9 select a card, and with a card selected a number picks the enemy. Test: a test covers SPEC §7.3, where pressing N selects hand card N, a key past the hand size does nothing, and with a hostile card selected N targets living enemy N. The code needs no new input path.
-- [ ] **Abandoning mid-combat restarts that combat** (SPEC §9 M2), as a named test. Test: a headless test with seed S plays 2 cards, then reloads through the real load path; the combat is back at turn 1 with the same HP rolls, the same opening hand and the deck unchanged.
-- [ ] **Every card, relic and event is reachable** (SPEC §9 M3). Test: `node tools/contentreach.mjs` exits 0 with 0 orphans across 195 cards, 63 relics and 25 events, and its `--selftest` goes red on a planted orphan of each kind.
-- [ ] **SPEC text matches what shipped**: §5.1 gives 40 Rogue cards (§13.4f Prepare), §5.2 has the Goreblood row, and §12 is marked shipped. Test: `grep -n '39 authored' SPEC.md` gives 0 hits, and each §12 claim has a verdict in `docs/SPEC-RECONCILE.md`. Spec PR only.
+- [x] **Remove the stale Frostbite deviation**: SPEC §4.4 marks Frostbite CUT, with Frost and `frostExposed` carrying it. Test: DEVELOPER.md "M1 known deviations" no longer numbers Frostbite among its rows (only a note that it is CUT, not deferred), and the SPEC falsifier `statuses.some(s=>s.id==='frostbite')` prints `false`. — [#1283](https://github.com/cehinds/AshenSpire/pull/1283)
+- [ ] **DEVELOPER.md stops calling Guilt inert.** After #1286, "M1 known deviations" row 1 still says Guilt "ships as an inert unplayable curse". Test: `grep -n 'inert unplayable curse' DEVELOPER.md` gives 0 hits, and the list numbers only Warrior's Vow.
+- [x] **Card hotkeys 1–9 have a test**. They already ship in `src/ui/screens/combat.js` (`cardIdx`): 1–9 select a card, and with a card selected a number picks the enemy. Test: a test covers SPEC §7.3, where pressing N selects hand card N, a key past the hand size does nothing, and with a hostile card selected N targets living enemy N. The code needs no new input path. — [#1278](https://github.com/cehinds/AshenSpire/pull/1278): `tests/card-hotkeys.test.mjs` runs `cardHotkeyAction` through select, past-the-hand, armed-target and non-card keys.
+- [~] **Abandoning mid-combat restarts that combat** (SPEC §9 M2), as a named test. Test: a headless test with seed S plays 2 cards, then reloads through the real load path; the combat is back at turn 1 with the same HP rolls, the same opening hand and the deck unchanged. — [#1280](https://github.com/cehinds/AshenSpire/pull/1280): `tests/midcombat-reload.test.mjs` replays `main.js`'s load sequence (a copy held to the source by a text check), not the production `resumeRun`. Left: the same assertions through the real load door (`resumeRun` / the slot-load route).
+- [~] **Every card, relic and event is reachable** (SPEC §9 M3). Test: `node tools/contentreach.mjs` exits 0 with 0 orphans across 195 cards, 63 relics and 25 events, and its `--selftest` goes red on a planted orphan of each kind. — [#1281](https://github.com/cehinds/AshenSpire/pull/1281) ships the tool, its `--selftest` and `tests/contentreach.test.mjs`; relics 63/63 and events 25/25 are reached. Left: the tool exits 1 on 7 card orphans (next line).
+- [ ] **The 7 orphan cards get a route in, or an owner-ruled allowlist row.** `node tools/contentreach.mjs` on `dev` lists `rondelParry`, `sunderplate`, `astralInsight`, `blightwardLash`, `lastMercy`, `wound` and `slimed` as "NO ROUTE IN". Test: the tool reports `cards 195 of 195 reached`, and `KNOWN_ORPHANS` in `tests/contentreach.test.mjs` is empty.
+- [x] **SPEC text matches what shipped**: §5.1 gives 40 Rogue cards (§13.4f Prepare), §5.2 has the Goreblood row, and §12 is marked shipped. Test: `grep -n '39 authored' SPEC.md` gives 0 hits, and each §12 claim has a verdict in `docs/SPEC-RECONCILE.md`. Spec PR only. — [#1282](https://github.com/cehinds/AshenSpire/pull/1282): 0 hits; stage 3 of SPEC-RECONCILE gives every §12 item a verdict, with P6 and P8b to-build.
+- [ ] **SPEC P8b: Powers hold a resting stance until the next turn** (SPEC §12.5, SPEC-RECONCILE stage 3 P8b, to-build). `resolveCombatPose` keeps only guard, shieldGuard and parry, and `combatPoseStates.json` has no Power pose. Test: `node -e "import('./src/model/combatPose.js').then(m=>console.log(m.resolveCombatPose({hp:1},'cast',[])))"` prints a Power resting pose instead of `idle` (it prints `idle` on `dev`), and a test asserts the pose holds until that character's next turn starts.
 - [ ] **COMBAT-EQUIPMENT-RULES prototype gate, and each class pool from 36 to 50 cards** (SPEC lines 17–32, rules §7). Test: COMBAT-WORKSHOP.md records the gate closed, and a card census shows 50 pool cards per class. *D3: possibly post-1.0.*
 
 ## 2. Content
 
 - [x] Counts meet SPEC: 4 classes, 195 cards, 63 relics (≥40), 25 events (≥10), 7 flasks, 35 colorless, 20 regular enemies, 3 elites, 10 bosses (§12.4). `validateContent` 0 errors; `scripts.js` at 0.23% (<5%).
-- [ ] **Stale content validators are fixed and gated**: `tools/rogue-parity.mjs` (27/30) and `tools/enemy-level-content.mjs` (3/6) read counts from the bundle, group by seat rather than the retired `act`, and run in the suite. Test: both exit 0 and a `*.test.mjs` runs each.
+- [x] **Stale content validators are fixed and gated**: `tools/rogue-parity.mjs` (27/30) and `tools/enemy-level-content.mjs` (3/6) read counts from the bundle, group by seat rather than the retired `act`, and run in the suite. Test: both exit 0 and a `*.test.mjs` runs each. — [#1276](https://github.com/cehinds/AshenSpire/pull/1276): rogue-parity 31/31, enemy-level-content 6/6, both run by `tests/content-validators.test.mjs`.
 - [ ] **More than one elite per seat**. Test: each seat has 2 or more `pool==='elite'` encounters and `validateContent` passes. *D4.*
 
 ## 3. Full run
@@ -49,8 +57,8 @@ linked. Update this file after every PR.
 
 ## 4. Balance
 
-- [~] **A1: the simulators play by the live rules** — [#1270](https://github.com/cehinds/AshenSpire/pull/1270). Test: `node tools/balance.mjs --check` exits 0; the class HP rows in BALANCE.md equal the live maxHp.
-- [ ] **A2–A4: bring the classes into the target band** (plan §A). Test: `node tools/runsim.mjs 100` puts each class inside the accepted band (*D1*), with best minus worst ≤ 20 points.
+- [x] **A1: the simulators play by the live rules**. Test: `node tools/balance.mjs --check` exits 0; the class HP rows in BALANCE.md equal the live maxHp. — [#1270](https://github.com/cehinds/AshenSpire/pull/1270): `--check` exits 0 on `dev`; the rows are derived through the live door (Starseer 48, as #1284 states), and `tests/balance-doc.test.mjs` gates drift.
+- [~] **A2–A4: bring the classes into the target band** (plan §A). Test: `node tools/runsim.mjs 100` puts each class inside the accepted band (*D1*), with best minus worst ≤ 20 points. — A2 [#1284](https://github.com/cehinds/AshenSpire/pull/1284) and the lean A3 Dodge Roll rows [#1309](https://github.com/cehinds/AshenSpire/pull/1309) landed. #1309 measured `node tools/runsim.mjs 240 --seeded-seats`: Reaver 112, Starseer 104, Rogue 141, Herald 136 of 240 (46.7%, 43.3%, 58.8%, 56.7%; spread 15.4 points), inside D1's proposed 35–65% band. Left: A4 (hand rules) and the rest of A3 (Actions and draw breakpoints, starting pools) are not built, D1 is not yet accepted, and the line's own `runsim 100` has not been run on this tree.
 - [ ] **The Mana-aware A/B balance run** (SPEC §5.5.1, a release gate). Test: `node tools/runsim.mjs 50 --mana-ab` prints per-class win rate and Mana spent with Mana on and off, and the result lands in BALANCE.md.
 - [ ] **Seat-tier tolerance is stated** (SPEC §13 lines 1793–1795). Test: BALANCE.md states the tolerance, and the 300-seed per-tier runsim results fall within it.
 
@@ -77,14 +85,17 @@ linked. Update this file after every PR.
 
 - [ ] **Targets ≥ 44 pt on iOS and ≥ 48 dp on Android (48 CSS px on a coarse pointer), text ≥ 11 px** at 360×640, 390×844, 768×1024 and 844×390, with 0 horizontal overflow. Test: a browser probe over combat, map, shop and compendium.
 - [ ] **#724: no hand card drawn over Draw or End Turn**. Test: `node tools/hintstrip.mjs` finds 0 issues.
-- [ ] **#1142: the map camera fits the scrollport after it settles**. Test: at 390×844, `data-camera-viewport` equals the client size.
-- [ ] **#1164: the card door stacks between 601 and 703 px**. Test: a layout assertion at 601, 650 and 703 px.
+- [ ] **hintstrip H6: `--fan-lift` matches the fitted fan.** `hand.js` publishes `--fan-lift` (`FAN_LIFT_PROP`) for `.hand`'s `padding-top`, and H6 fails where the published lift does not match what the fitted fan draws. Test: `node tools/hintstrip.mjs` reports H6 OK in every reached cell, with no card above `.hand`'s own box.
+- [~] **#1142: the map camera fits the scrollport after it settles**. Test: at 390×844, `data-camera-viewport` equals the client size. — [#1289](https://github.com/cehinds/AshenSpire/pull/1289): measured in Chromium at 390×844 in the PR (433×770, then 433×300 after a shrink, both equal); `tests/mapboard-refit.test.mjs` covers the watch. No committed test guards the mount wiring. Left: a committed browser assertion at 390×844 that `data-camera-viewport` equals `clientWidth×clientHeight` after a post-settle scrollport change.
+- [ ] **#1289 follow-up: a re-fit keeps the tray's selected-destination framing** (Codex P2 on #1289, `src/ui/components/mapboard.js` `startRefitWatch`). On `dev` the watch's `onChange` still calls `centerOnCurrent()` unconditionally, so a scrollport change while the destination tray is open re-centres on `run.mapNodeId`. Test: with the tray open on node X, a scrollport resize leaves the camera centred on X with the tray inset, as `centerOnNode(selection.selectedId, …)` framed it.
+- [x] **#1164: the card door stacks between 601 and 703 px**. Test: a layout assertion at 601, 650 and 703 px. — [#1288](https://github.com/cehinds/AshenSpire/pull/1288): the door-stack probe in `tools/weapon-card-preview.mjs` asserts (hand-run, in no workflow) the bare and Armoury hosts in Chromium at 601, 650, 703 and 1280 px, and `tests/card-door-stack.test.mjs` holds the CSS to card.json.
 - [ ] **Offline and installable web edition** (manifest plus service worker). Test: after one visit, a reload with the network off starts a run. *D5.*
-- [ ] **Background and resume keep the run**. Test: a `visibilitychange` hidden→visible cycle mid-combat leaves the state unchanged.
+- [~] **Background and resume keep the run**. Test: a `visibilitychange` hidden→visible cycle mid-combat leaves the state unchanged. — [#1298](https://github.com/cehinds/AshenSpire/pull/1298) open.
 
 ## 9. Accessibility
 
-- [ ] **The palettes pass contrast** (SPEC §7.5): dark, high-contrast and cb-safe. Test: `node tools/contrast-audit.mjs --gate` runs in CI and exits 0. Its `GATED_PROFILES` includes `cb-safe` beside `default` and `hi-contrast-off` (today it gates only those two), and its `KNOWN_BELOW` ledger has no text rows. Then every text token in all three palettes is ≥ 4.5:1 (≥ 3:1 for large text). A report run without `--gate` exits 0 even when rows fail, so it proves nothing.
+- [~] **The palettes pass contrast** (SPEC §7.5): dark, high-contrast and cb-safe. Test: `node tools/contrast-audit.mjs --gate` runs in CI and exits 0. Its `GATED_PROFILES` includes `cb-safe` beside `default` and `hi-contrast-off`, and its `KNOWN_BELOW` ledger has no text rows. Then every text token in all three palettes is ≥ 4.5:1 (≥ 3:1 for large text). A report run without `--gate` exits 0 even when rows fail, so it proves nothing. — [#1291](https://github.com/cehinds/AshenSpire/pull/1291): `GATED_PROFILES` is `default`, `hi-contrast-off`, `cb-safe` and `hi-contrast-off+cb-safe`, and the palette text tokens are fixed. Left: no workflow runs `contrast-audit.mjs --gate` (only a `ci.yml` echo names it), and `KNOWN_BELOW` still holds 12 text rows: the reward Continue HOLD cue and the TAKEN chip and title in each gated profile. All 12 come from `opacity` rules in `styles/kit.css`, not from palette tokens.
+- [ ] **#1282 follow-up: the contrast audit measures the highlighted Continue** (Codex P2 on #1282, `tools/contrast-audit.mjs:117`). `?shot=title` boots with empty storage, so `title.js` never adds `is-highlighted` and the "Continue (highlighted, gold)" row measures the disabled entry. It is unchanged on `dev`. Test: the audit seeds an occupied slot for that row and asserts `.slot-continue.is-highlighted` exists before it measures.
 - [ ] **Reduced motion is proven in a browser**. Test: `document.getAnimations()` finds nothing over 0.01 s during one combat turn.
 - [x] Text scaling, reduced motion, reduce flashes, high contrast, cb-safe, and key/pad remapping exist (`src/ui/screens/settings.js`).
 - [ ] **Escape or pad B backs out of every screen**. Test: a dispatch per screen calls Back exactly once.
@@ -92,30 +103,35 @@ linked. Update this file after every PR.
 ## 10. Art and audio
 
 - [ ] **One style guide, with off-style assets listed** (plan §H and P2 identity). Test: the guide exists, and every `assets/*` directory is marked in style or listed as off-style.
-- [ ] **Every asset directory has a CREDITS row, and README §Legal agrees with the AI disclosure**. Test: `node tools/credits-check.mjs` in CI.
+- [~] **Every asset directory has a CREDITS row, and README §Legal agrees with the AI disclosure** ([#1299](https://github.com/cehinds/AshenSpire/pull/1299) open). Test: `node tools/credits-check.mjs` in CI.
 
 ## 11. Code health
 
 - [x] Every check `tests/run-node.mjs` runs is green (baseline above).
 - [ ] **#1167: card widths come from `sizing.levels`**. Test: `grep -- '--card-w:' styles/*.css` shows only values derived from that table.
-- [ ] **#1230: the two component catalogs agree**. Test: `tools/ui-components.mjs` fails when an id is in one catalog and not the other.
-- [ ] **DEVELOPER.md has no stale counts**. Test: `grep -n '22 assertions' DEVELOPER.md` gives 0 hits.
+- [x] **#1230: the two component catalogs agree**. Test: `tools/ui-components.mjs` fails when an id is in one catalog and not the other. — [#1297](https://github.com/cehinds/AshenSpire/pull/1297): check C22, run in the suite by `tests/ui-component-catalogs.test.mjs`.
+- [ ] **#1297 follow-up: C22 compares the semantic and Armoury catalogs separately** (Codex P2 on #1297). `catalogDisagreement` in `tools/ui-components.mjs` still merges each file's ids into one set, so an id moved from the Armoury table to the semantic table (or between the two HTML arrays) passes. Test: a `--selftest` plant that moves one id between families goes red on C22.
+- [ ] **`tools/ui-components.mjs` is green on `dev` and runs in the suite.** On `dev` it exits 1 on C5 ("reusable component modules crossed the simulation-state boundary") and C12 ("rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens"). `tests/run-node.mjs` does not run its verdict; the suite only imports C22's helpers. Test: `node tools/ui-components.mjs` exits 0, and `tests/run-node.mjs` runs it.
+- [x] **DEVELOPER.md has no stale counts**. Test: `grep -n '22 assertions' DEVELOPER.md` gives 0 hits. — [#1283](https://github.com/cehinds/AshenSpire/pull/1283): 0 hits, and `tests/stale-docs.test.mjs` keeps it that way.
 
 ## 12. CI
 
 - [x] **The receipts gate is green on `dev`**: backfill #1263, and see squash and `Merge PR #N:` subjects. Test: `node tools/receipts.mjs --check` exits 0, and `--selftest` catches both subject shapes. — [#1275](https://github.com/cehinds/AshenSpire/pull/1275)
+- [~] **`codex/` and squash merges land with a receipt.** #1305 (`codex/prologue-traveller-placement`), #1307 and #1310 (squashes) merged straight to `dev` without one. — The receipts were backfilled in [#1303](https://github.com/cehinds/AshenSpire/pull/1303), and `receipts.yml` went green again on `aaadf7b3`. Left: nothing stops the next one. The check does catch them: `receipts.yml` on `dev` failed on the #1307 push (run 36054317936: "FAIL #1305", "FAIL #1307") and on every push after it until #1303 (run 36079775053 also names #1310). The pure check over `origin/test..ef6d3efc2` (the commit before `aaadf7b`) finds the same three. The gap is where it runs: only on push to `dev`, after the merge, and it stayed red across eleven pushes (receipts runs 410 to 420). Test: the receipts check runs on `pull_request` into `dev`, or the owner's merge rule requires the `dev` receipts run to be green before the next merge.
 - [x] **The CHANGELOG ordering gate runs on PRs** (about-changelog has a mode that needs no browser). Test: a PR with a date out of order fails `tests.yml`. — [#1279](https://github.com/cehinds/AshenSpire/pull/1279)
 - [x] **Push runs of `tests.yml` on `dev` are not cancelled**. Test: `cancel-in-progress` applies only to `pull_request`, and every push run concludes success or failure. — [#1279](https://github.com/cehinds/AshenSpire/pull/1279)
-- [ ] **PR wall time is under 10 minutes**. Test: the measured green run after `bundle.test.mjs` moves to its own parallel job.
+- [~] **PR wall time is under 10 minutes**. Test: the measured green run after `bundle.test.mjs` moves to its own parallel job. — [#1279](https://github.com/cehinds/AshenSpire/pull/1279) moved the parse gate to its own `bundler parse gate` job. Measured on the #1282 push (run 36079775059): core suite 3m41s, tool self-tests 5m16s, bundler parse gate 12m59s, so wall time is about 13 min. Left: the parse gate, next line.
+- [ ] **The slowest `tests.yml` job fits the <10 min target.** Before #1279 the `tool self-tests` job carried the parse gate and ran 18–19 min (runs 36075414039, 36077405836), and longer on some earlier runs. After it, `tool self-tests` takes about 5 min and `bundler parse gate` about 13 min, 12m22s of which is the parse-gate step. Test: three consecutive green `tests.yml` push runs on `dev` each finish in under 10 minutes from start to last job.
 - [ ] **A browser-gate run of `ci.yml` exists on the release candidate**. Test: a dispatched `ci.yml` run on the RC SHA concludes success. *D7.*
 
 ## 13. Release readiness
 
-- [ ] **A written release gate** that takes the status from RED to GREEN. Test: `docs/RELEASE-CHECKLIST.md` lists at least 5 runnable gates, and the owner signs it off.
-- [ ] **A release-heading format in CHANGELOG** (`## 1.0.0 — <date>`). Test: `about-changelog --selftest` passes with a planted release heading.
-- [ ] **The save-migration test covers the 1.0 schema**. Test: fixtures v1–v10 load, and a newer version refuses and keeps the save.
-- [ ] **LICENSE and docs use the current name and version**. Test: `grep -ri eldenspire LICENSE README.md` gives 0 hits, and `docs/versioning.md` stops saying 0.5.4.
-- [ ] **Web and store metadata**: a meta description, og:*, an icon and theme-color in the bundle. Test: a grep test over the build. *D8 decides the storefronts.*
+- [~] **A written release gate** that takes the status from RED to GREEN ([#1300](https://github.com/cehinds/AshenSpire/pull/1300) open). Test: `docs/RELEASE-CHECKLIST.md` lists at least 5 runnable gates, and the owner signs it off.
+- [x] **A release-heading format in CHANGELOG** (`## 1.0.0 — <date>`). Test: `about-changelog --selftest` passes with a planted release heading. — [#1279](https://github.com/cehinds/AshenSpire/pull/1279): `node tools/about-changelog.mjs --check-order --selftest` exits 0 and prints "CAUGHT (inverted) a planted 1.0.0 release heading"; `tests.yml` runs it.
+- [x] **The save-migration test covers the 1.0 schema**. Test: fixtures v1–v10 load, and a newer version refuses and keeps the save. — [#1304](https://github.com/cehinds/AshenSpire/pull/1304): `tests/save-migration.test.mjs` loads one real save per schema v1 to v10 (`RUN_SCHEMA_VERSION` 10), and a newer save is refused with its stored bytes unchanged.
+- [ ] **#1304 follow-up: an in-run Load on a newer-build slot keeps the live run** (Codex P2 on #1304, `src/main.js` `confirmSlotLoad`). It was acknowledged but not fixed before #1304 merged, and it is unchanged on `dev`: `onConfirm` calls `closeOverlay()` then `resumeRun(slot)`, which drops the run before it refuses the slot. Test: loading a `newer` slot from the in-run Quick Menu opens `openNewerSaveNotice`, `run` is still set afterwards, and `showTitle` is never called.
+- [~] **LICENSE and docs use the current name and version**. Test: `grep -ri eldenspire LICENSE README.md` gives 0 hits, and `docs/versioning.md` stops saying 0.5.4. — [#1283](https://github.com/cehinds/AshenSpire/pull/1283): 0 hits; versioning.md's head names `src/content/index.js` as the current version's home, and `tests/stale-docs.test.mjs` guards both. The 0.5.4 mentions left are the scheme's worked examples, not a current-version claim, except `docs/versioning.md:109`, which still says in the present tense that `contentBundle.version` holds `0.5.4`. Left: that line.
+- [x] **Web and store metadata**: a meta description, og:*, an icon and theme-color in the bundle. Test: a grep test over the build. *D8 decides the storefronts.* — [#1301](https://github.com/cehinds/AshenSpire/pull/1301): `tests/web-meta.test.mjs` asserts the description, og:*, icon and theme-color in both built heads (4/4 pass on the built tree). The storefront listings themselves stay under D8.
 - [ ] **Release notes, store listing and post-launch roadmap drafted.** The owner cuts `release`, tags and publishes.
 
 ## Owner decisions
@@ -123,12 +139,12 @@ linked. Update this file after every PR.
 Proposals only. Nothing below is built until the owner rules.
 
 - **D1 — Balance gate.** SPEC §9 asks for about 35–50% for an experienced player; the plan's bot band is 35–65% with a spread of 20 points or less. *Proposal:* gate on the bot band at ≥ 40 seeded runs per class, and treat the experienced-player range as the design aim.
-- **D2 — Guilt and Warrior's Vow.** Build the engine hooks (an in-hand turn-end trigger and a choose-one choice), or amend SPEC §5.2 to match what shipped. *Proposal:* build both. (Frostbite is already CUT in SPEC §4.4.)
+- **D2 — Guilt and Warrior's Vow.** Build the engine hooks (an in-hand turn-end trigger and a choose-one choice), or amend SPEC §5.2 to match what shipped. *Proposal:* build both. (Frostbite is already CUT in SPEC §4.4.) **Guilt is built** ([#1286](https://github.com/cehinds/AshenSpire/pull/1286)); Warrior's Vow is still open.
 - **D3 — COMBAT-EQUIPMENT-RULES** (the prototype gate and 50-card pools). *Proposal:* mark it post-1.0 in SPEC.
 - **D4 — Elites per seat.** Is 1 the v1 scope, or 2 or more? *Proposal:* 2 per seat.
 - **D5 — Web edition.** Ship Pages as external art with a service worker (installable, under 5 MB of HTML/JS), and keep the 254 MB file as a download (plan §D). *Proposal:* yes.
 - **D6 — Mobile certification device and profile.** Which phone reported the crash? *Proposal:* Chromium with 4× CPU throttle at 390×844 in CI, plus one physical iPhone in Safari before release.
-- **D7 — ci.yml trigger.** Its browser gates and 3-OS matrix only run when dispatched by hand. *Proposal:* run it on push to `release`, plus a hand-dispatched green on the RC SHA.
+- **D7 — ci.yml trigger.** Its browser gates and 3-OS matrix only run when dispatched by hand. *Proposal:* run it on push to `release`, plus a hand-dispatched green on the RC SHA. (The push-to-`release` trigger shipped in [#1279](https://github.com/cehinds/AshenSpire/pull/1279); the RC run is §12's open line.)
 - **D8 — Storefronts.** Web only, or Steam/itch as well? This decides whether capsule art and store copy are needed.
 - **D9 — The tracker.** Close the ~35 stale agentops issues (#258–#273, #394–#465, #505, #564)? Keep #553 (the builds site deploys only when dispatched by hand) and decide whether it should deploy automatically.
 - **D10 — The receipt for #1263**, and whether squash merges count as PR merges for the receipts gate. *Proposal:* backfill it at the ordinal committed at its merge, and count squash merges.
