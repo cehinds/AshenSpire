@@ -5,8 +5,8 @@
 // file keeps the old wording from coming back.
 //
 // NOT checked: whether the remaining "M1 known deviations" rows are still true
-// (Guilt and Warrior's Vow were checked by hand against src/content; the
-// Goreblood row was resolved by #61 and is marked so),
+// (Warrior's Vow was checked by hand against src/content; the Goreblood row
+// was resolved by #61 and the Guilt row by #1286, and each is marked so),
 // any other doc in the repository, or stale numbers phrased differently from
 // the patterns below.
 import { test } from 'node:test';
@@ -22,6 +22,8 @@ const BANNED = [
   ['DEVELOPER.md', /\(\d+ assertions, SPEC §8\)/, 'a hand-kept test count; SPEC §8 says the index is `grep -n "test(\'" tests/engine.test.js`'],
   ['DEVELOPER.md', /\*\*Frostbite\*\* is specced/, 'Frostbite is CUT (SPEC §4.4), not a deferred deviation'],
   ['docs/versioning.md', /currently `\d+\.\d+\.\d+/, 'the release triple lives only in src/content/index.js (contentBundle.version)'],
+  ['docs/versioning.md', /contentBundle\.version` holds `\d/, 'a present-tense release triple; it lives only in src/content/index.js (contentBundle.version)'],
+  ['DEVELOPER.md', /\*\*Guilt\*\* ships as an inert/, 'Guilt costs its HP at turn end in hand since #1286 (onTurnEndInHand), so it is resolved, not a deviation'],
   ['DEVELOPER.md', /freezes Poise thresholds as well as Bleed/, 'Bleed thresholds are constant (#61), so Goreblood freezes only Poise'],
   ['LICENSE', /eldenspire/i, 'the project is AshenSpire (docs/FINISH.md: grep -ri eldenspire LICENSE README.md)'],
   ['README.md', /eldenspire/i, 'the project is AshenSpire (docs/FINISH.md: grep -ri eldenspire LICENSE README.md)'],

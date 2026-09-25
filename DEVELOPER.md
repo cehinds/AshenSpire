@@ -766,15 +766,16 @@ runs/class on 2026-09-24, under the live rules (plan A1, simulator parity): Reav
 Frostbite is not on this list: it is CUT (SPEC §4.4, which carries the
 falsifier), not deferred.
 
-1. **Guilt** ships as an inert unplayable curse — its "lose 1 HP at turn end
-   while in hand" needs an in-hand card hook (engine seam planned with M2's
-   event system, which is the first thing that can grant Guilt).
-2. **Warrior's Vow** enters Gorefire instead of "a stance of your choice" —
+1. **Warrior's Vow** enters Gorefire instead of "a stance of your choice" —
    a generic choose-one UI primitive is an M2/M3 feature.
 
 Resolved: **Goreblood** no longer freezes Bleed as well as Poise. Bleed
 thresholds are constant by design (#61), so `meterMaxGrowthDisabled` binds
 only Poise, and the card text and tooltip say Poise only.
+
+Resolved: **Guilt** is no longer inert. Since #1286 it loses its HP at the end
+of each of your turns while in hand, solo and in co-op, through the card's
+`onTurnEndInHand` hook (see *Add a card* above); the card text binds the amount.
 
 ## Dodge outcome presentation
 

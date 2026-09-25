@@ -18,12 +18,17 @@ name: receipts
 # putting a `fetch-depth: 0` on it would tax every pull request for a check that
 # only means something on `dev`.
 #
-# It runs on push to `dev` only. On a pull request the answer would be about
-# merges the author did not make, and a gate that goes red at somebody else for
-# work they cannot see is a gate people learn to ignore.
+# On push to `dev` it judges the whole promotion range. On a pull request into
+# `dev` it judges ONLY that pull request's own number (`--pr auto`, read from
+# the event payload): the range there would be about merges the author did not
+# make, and a gate that goes red at somebody else for work they cannot see is a
+# gate people learn to ignore — but a pull request whose own receipt is missing
+# is the author's to fix, and is caught before merge rather than after.
 
 on:
   push:
+    branches: [dev]
+  pull_request:
     branches: [dev]
   workflow_dispatch:
 
@@ -55,4 +60,9 @@ jobs:
         run: node tools/verdict.mjs -- node tools/receipts.mjs --selftest
 
       - name: Every pull request merged since the last promotion has a receipt
+        if: github.event_name != 'pull_request'
         run: node tools/verdict.mjs -- node tools/receipts.mjs --check
+
+      - name: This pull request has a receipt of its own
+        if: github.event_name == 'pull_request'
+        run: node tools/verdict.mjs -- node tools/receipts.mjs --check --pr auto
