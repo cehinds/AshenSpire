@@ -20,7 +20,8 @@ import { contentBundle } from './content/index.js';
 import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
-import { advancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, configuredContentBundle, presentationConfig } from './model/advancedConfig.js';
+import { STAT_ROWS_CHANGED_MEANING, STAT_ROWS_MARKER, STAT_ROWS_VERSION } from './model/statRows.js';
+import { advancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
@@ -50,7 +51,7 @@ import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
 import { seatAtTier, seatTierHpMult, bossTierScale } from './model/seats.js';
-import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY } from './engine/save.js';
+import { createSaveManager, createMemoryStorage, META_KEY, META_BACKUP_KEY, SLOTS, runKey } from './engine/save.js';
 import { createSaveTransfer } from './engine/saveTransfer.js';
 import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import {
@@ -85,7 +86,11 @@ import { mountGameOver } from './ui/screens/gameover.js';
 import { victoryBeat } from './ui/components/victoryBeat.js';
 import { mountHistory } from './ui/screens/history.js';
 import { mountCompendium } from './ui/screens/compendium.js';
-import { openSettings, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
+import { seedSettingsDefaults, seedAfterChange, SEED_KEY } from './model/settingsDefaults.js';
+import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
+import { pageDebug } from './ui/buildChannel.js';
+import { openSettings, settingsRows, promotionFor, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
@@ -109,7 +114,7 @@ import { mountCoop } from './ui/screens/coop.js';
 import { lanInfo } from './net/lan.js';
 import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
-import { initAudio, resolveMusicEnabled } from './ui/audio.js';
+import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
 import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
 import { regionForRun } from './model/environmentArt.js';
 import { resolvePerformanceMode, resolveCombatPacing } from './ui/performance.js';
@@ -318,6 +323,21 @@ function bringStoredProfileForward(meta) {
 }
 let activeMeta = saves.loadMeta();
 let activeSettings = bringStoredProfileForward(activeMeta);
+// THE OWNER'S PROMOTED DEFAULTS (src/content/settingsDefaults.js, written by
+// tools/settings-defaults.mjs). A key the player never set starts there, and a
+// key still at an earlier promotion's value follows a new one; a key the
+// player chose is theirs. Applied before anything reads the profile.
+// The same step runs again when a restored profile replaces this one.
+function seedPromotedDefaults(meta, settings) {
+  const seeded = seedSettingsDefaults(settings, promotionFor(SETTINGS_DEFAULTS, pageDebug()));
+  if (!Object.keys(seeded).length) return;
+  for (const [key, value] of Object.entries(seeded)) {
+    if (value === undefined) delete settings[key]; else settings[key] = value;
+  }
+  meta.settings = settings;
+  saves.saveMeta(meta);
+}
+seedPromotedDefaults(activeMeta, activeSettings);
 rebuildRegistries(activeSettings);
 const audio = initAudio(activeSettings);
 sfx.sink = (id) => audio.sfx(id);
@@ -842,7 +862,15 @@ function applyDisplaySettings(settings) {
   // at use time, so neither write depends on the other's order.
   applyTapSize(settings);
   setAnimSpeed(resolveCombatPacing(settings, quality));
-  audio.setVolumes({ ...settings, musicEnabled: resolveMusicEnabled(settings) });
+  // A cleared key (a Reset, a profile that leaves it out) means the default:
+  // setVolumes ignores a missing field, so say the default out loud.
+  audio.setVolumes({
+    ...settings,
+    musicEnabled: resolveMusicEnabled(settings),
+    musicVolume: settings.musicVolume ?? AUDIO_DEFAULTS.musicVolume,
+    sfxVolume: settings.sfxVolume ?? AUDIO_DEFAULTS.sfxVolume,
+    muteAudio: settings.muteAudio === true,
+  });
   scheduleCardFits(document.querySelectorAll('.card'));
   // Re-point external music only when the folder actually changed (avoids
   // re-fetching the manifest on every unrelated settings tweak). Blank means the
@@ -1198,6 +1226,10 @@ function resumeRun(slot = 1) {
   if (!run) return refusedRunLanding(slot);
   if (run.journey) syncWorldPosition();
   rng = createRng(run.seed, run.streamCounters);
+  // A snapshot still carrying the retired ×20 Cinder key: the bundle above
+  // already left it out, so this only says so — on the channel boot uses for
+  // a profile — and saves the cleaned run once, after `rng` (see below).
+  for (const line of bringRunSnapshotForward(run, () => persist())) console.warn('[advanced-config]', line);
   // THE LOAD DOOR IS WHERE AN OLD OPENING STATE IS REWRITTEN. A version-1
   // `scene` indexes the six-scene order; `onScene` below writes the NEW order
   // back into the same field, so a state left marked version 1 would be read
@@ -1235,6 +1267,11 @@ function saveSlotRecords() {
 }
 
 function confirmSlotLoad(slot, { returnFocusElement } = {}) {
+  // A SLOT A NEWER BUILD WROTE IS REFUSED HERE, BEFORE ANYTHING IS DROPPED.
+  // resumeRun's loadRun is null for it (SPEC §3.12: refused and kept), and by
+  // then closeOverlay has run and `run` is overwritten — the climb in hand was
+  // lost to a load that could never succeed. Say why and leave the run be.
+  if (saves.slotSummary(slot)?.newer) return openNewerSaveNotice({ slot, returnFocusElement });
   // WHICH CLIMB, NOT JUST WHICH SLOT. This is the in-run door's only stop
   // before the load, and it named a number and nothing else. The title's list
   // hands the seed to a review door on the way through; this path has no
@@ -1258,6 +1295,10 @@ function confirmSlotLoad(slot, { returnFocusElement } = {}) {
     tone: registries.framework.confirmationTone('action.loadSlot'),
     returnFocusElement,
     onConfirm: () => {
+      // AND AGAIN AT THE PRESS. Run saves share localStorage across tabs and
+      // this confirmation can stay open indefinitely, so a newer build in
+      // another tab can rewrite the slot after the check above passed.
+      if (saves.slotSummary(slot)?.newer) return openNewerSaveNotice({ slot, returnFocusElement });
       closeOverlay();
       resumeRun(slot);
     },
@@ -1406,7 +1447,14 @@ function showProfile() {
     saves,
     // Through boot's door first: a restored profile from before a key was
     // renamed must reach the rows, the bundle and storage already rewritten.
-    onRestored: () => applyRestoredSettings(bringStoredProfileForward(saves.loadMeta())),
+    onRestored: () => {
+      // Through boot's promotion step too: an archive from before the current
+      // promotion must start at its values, in play and in storage.
+      const meta = saves.loadMeta();
+      const settings = bringStoredProfileForward(meta);
+      seedPromotedDefaults(meta, settings);
+      applyRestoredSettings(settings);
+    },
   });
 }
 
@@ -1415,7 +1463,14 @@ function persistSettingsChange(changed) {
     activeMeta = saves.loadMeta();
     activeSettings = activeMeta.settings || (activeMeta.settings = {});
   }
+  // A value the player moves off a promoted one is theirs from now on.
+  const seed = seedAfterChange(activeSettings, changed);
   Object.assign(activeSettings, changed);
+  // A `draw` or `poise` stat row written by this build means what it means
+  // now (ruleset 7); the marker keeps a later boot from reading it as the
+  // pre-ruleset-7 co-op draw or ratings-off pool (model/statRows.js).
+  if (Object.keys(changed || {}).some((key) => STAT_ROWS_CHANGED_MEANING.test(key))) activeSettings[STAT_ROWS_MARKER] = STAT_ROWS_VERSION;
+  if (seed) activeSettings[SEED_KEY] = seed;
   activeMeta.settings = activeSettings;
   const res = saves.saveMeta(activeMeta);
   applyDisplaySettings(activeSettings);
@@ -1463,6 +1518,7 @@ function showSettings() {
     meta: activeMeta,
     previewAttributes: run?.attributes,
     previewLevel: run ? characterLevelOf(run) : null,
+    previewClassId: run?.class || null,
     onChange: persistSettingsChange,
     onOffline: showOfflinePlay,
   });
@@ -3020,6 +3076,23 @@ if (shotState === 'combat-test') {
   // reason it gives: that const IS the gate's reach.
   const shotClass = shotParams.get('shotClass');
   newRun({ classId: registries.classes.all().some(c => c.id === shotClass) ? shotClass : 'reaver', seedString: shotParams.get('shotSeed') || 'SHOWCASE', journeyProfile: shotState === 'atlas' ? (shotParams.get('shotProfile') || 'wanderer') : null, slot: 1 });
+  // `?shotNewerSlot=<n>` — STAND BESIDE A CLIMB FROM A NEWER BUILD. Slot n
+  // gets slot 1's own bytes (the real writer's, just persisted by newRun) with
+  // the schema one ahead, so the in-run Load door meets exactly what a newer
+  // build leaves behind (SPEC §3.12). Memory storage only: a shot boot's
+  // storage is the stub, so no durable byte is involved.
+  // tools/slot-load-door.mjs is the reader.
+  const shotNewerSlot = Number(shotParams.get('shotNewerSlot'));
+  if (Number.isInteger(shotNewerSlot) && shotNewerSlot > 1 && shotNewerSlot <= SLOTS) {
+    const bytes = JSON.parse(bootStorage.getItem(runKey(1)));
+    bootStorage.setItem(runKey(shotNewerSlot), JSON.stringify({ ...bytes, schemaVersion: bytes.schemaVersion + 1 }));
+    // The same rewrite on demand, for a newer build in another tab writing a
+    // slot while this tab's load confirmation is still open.
+    window.__shotAgeSlot = (slot) => {
+      const aged = JSON.parse(bootStorage.getItem(runKey(slot)));
+      bootStorage.setItem(runKey(slot), JSON.stringify({ ...aged, schemaVersion: aged.schemaVersion + 1 }));
+    };
+  }
   if (shotState === 'combat' && shotParams.get('shotKit') === '1') {
     configureArmamentKitPreview(registries, run, shotParams.get('shotMainHand'), shotParams.get('shotOffHand'));
   }
@@ -3525,6 +3598,21 @@ if (shotState === 'combat-test') {
   // was measured three times over. A seed is passed rather than randomised so
   // the seed field photographs the same on every run.
   showCustomize(1, shotState === 'components');
+} else if (pageDebug() && autoLoadEnabled()) {
+  // YOUR DEFAULTS FROM GITHUB (Settings → Advanced → Defaults & sync). Only on
+  // a debug build, only when this device opted in, and never for a photograph
+  // (a posed ?shot= state takes the branches above). The title — Continue and
+  // New Game — waits for it, at most PROFILE_WAIT_MS, so no run starts on the
+  // settings the profile is about to replace; a profile later than that is
+  // left for the next start rather than applied mid-session.
+  const PROFILE_WAIT_MS = 3000;
+  let waiting = true;
+  const loaded = autoLoadProfile({ settings: activeSettings, onChange: persistSettingsChange, rows: settingsRows(), stillWanted: () => waiting })
+    .then((result) => { if (result.applied) console.info(`settings profile: ${result.applied} setting(s) loaded from GitHub.`); })
+    .catch((error) => console.warn(`settings profile: not loaded — ${error.message}`));
+  Promise.race([loaded, new Promise((settle) => setTimeout(settle, PROFILE_WAIT_MS))])
+    .finally(() => { waiting = false; showTitle(); });
 } else {
   showTitle();
 }
+

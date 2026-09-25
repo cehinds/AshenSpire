@@ -12,6 +12,8 @@ import {
 } from './startingStatConfig.js';
 import { combatRatingRows, resolveCombatRatings, combatRatingProblems, applyItemRatingConfig, migrateCombatRatingSettings, hasLegacyItemRatingSettings } from './combatRatings.js';
 import { materializeCardValueBonuses } from './attackCardDamage.js';
+import { RATING_STAT_IDS, resolvedRuleRow } from './derivedStats.js';
+import { STAT_ROWS_MARKER, STAT_ROWS_VERSION, STAT_ROW_NO_MAX, hasLegacyStatSettings, hasRetiredOpeningHand, migrateLegacyStatSettings, withoutRetiredOpeningHand } from './statRows.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 import { gateOpen, ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
@@ -92,41 +94,62 @@ const LEGACY_BALANCE_KEYS = Object.freeze({
 });
 
 export function currentAdvancedKey(key) {
-  if (key === LEGACY_CINDER_KEY) return CINDER_KEY;
   return LEGACY_BALANCE_KEYS[key] ?? migratePrologueSettingKey(key);
 }
 
-// THE CINDER MULTIPLIER CHANGED WHAT IT MULTIPLIES (owner, 2026-09-24). His ×20
-// is baked into the authored table now (content/balance.js `rewards.cinders`),
-// so every reader of that table pays the same, and the row is a new key,
-// `progression.cinderMultiplier`, that scales the ×20 table (1 keeps it). The
-// old `progression.rewardMultiplier` scaled the ×1 table, so a stored or
-// exported value is carried across as value ÷ 20: his 20 becomes 1, a 2
-// becomes 0.1, and payouts are unchanged. When both keys are present the new
-// one wins and the old is dropped. A `settings.`-prefixed copy (the export's
-// per-row mirror) is carried the same way.
+// THE ×20 CINDERS ARE RETIRED (owner, 2026-09-24: "I hate the 20x cinder,
+// that needs to die"). His exported configuration carried
+// `progression.rewardMultiplier: 20`; it is not a default and it is not carried
+// across. The row is `progression.cinderMultiplier`, default 1 (the authored
+// table). A stored or imported old key — and its `settings.`-prefixed export
+// mirror — is DROPPED with a warning, never converted, so no profile or file
+// can bring the ×20 back by accident.
 const CINDER_KEY = `${ADVANCED_CONFIG_PREFIX}progression.cinderMultiplier`;
 const LEGACY_CINDER_KEY = `${ADVANCED_CONFIG_PREFIX}progression.rewardMultiplier`;
-const LEGACY_CINDER_SCALE = 20;
-const LEGACY_CINDER_KEYS = Object.freeze({
-  [LEGACY_CINDER_KEY]: CINDER_KEY,
-  [`settings.${LEGACY_CINDER_KEY}`]: `settings.${CINDER_KEY}`,
-});
-const legacyCinderValue = (raw) => (typeof raw === 'number' && Number.isFinite(raw) ? raw / LEGACY_CINDER_SCALE : raw);
+const LEGACY_CINDER_KEYS = Object.freeze([LEGACY_CINDER_KEY, `settings.${LEGACY_CINDER_KEY}`]);
 
-function withLegacyCinderMultiplier(entries) {
-  if (!entries.some(([key]) => key in LEGACY_CINDER_KEYS)) return entries;
-  const present = new Set(entries.map(([key]) => key));
-  return entries
-    .filter(([key]) => !(key in LEGACY_CINDER_KEYS) || !present.has(LEGACY_CINDER_KEYS[key]))
-    .map(([key, value]) => (key in LEGACY_CINDER_KEYS ? [LEGACY_CINDER_KEYS[key], legacyCinderValue(value)] : [key, value]));
+function withoutRetiredCinderKey(entries) {
+  return entries.filter(([key]) => !LEGACY_CINDER_KEYS.includes(key));
 }
 
-const LEGACY_CINDER_WARNING = 'The Cinder gain multiplier now scales a table that already pays twenty times the old Cinders, so the old multiplier was carried across divided by 20 (20 became 1) and payouts are unchanged.';
+const LEGACY_CINDER_WARNING = 'The old Cinder gain multiplier is retired and was left out: Cinders pay the authored table. Use Rewards → Cinder gain multiplier to scale them.';
+
+/**
+ * bringRunSnapshotForward(run, save, warnings) → `warnings`, with the retired
+ * Cinder warning pushed once when the run's `advancedConfigSnapshot` held the
+ * old key (either spelling) — and the opening-hand warning when it held a
+ * non-stock shared `handRules.starting.base` / `.stat` (model/statRows.js
+ * `withoutRetiredOpeningHand`) — and the run handed to `save(run)` once.
+ *
+ * A RUN SNAPSHOT IS DROPPED ALOUD TOO (Codex, on #1294). `configuredContentBundle`
+ * already leaves the key out of a snapshot, so the payouts were right — but a
+ * resumed run lost it in silence, where SPEC §5.1 promises a warning for "a
+ * profile, run snapshot or imported file". Saved, because the snapshot is read
+ * back from storage on every load: an un-saved run would warn every resume.
+ * A snapshot without the key is left untouched and not re-saved.
+ */
+export function bringRunSnapshotForward(run, save, warnings = []) {
+  const overrides = run?.advancedConfigSnapshot?.overrides;
+  if (!overrides || typeof overrides !== 'object') return warnings;
+  const entries = Object.entries(overrides);
+  const withoutCinder = withoutRetiredCinderKey(entries);
+  if (withoutCinder.length !== entries.length) warnings.push(LEGACY_CINDER_WARNING);
+  // The shared opening base and attribute go too (nothing reads them); the
+  // snapshot's opening-hand LIMITS stay — a run keeps the hand it began with.
+  const kept = withoutRetiredOpeningHand(withoutCinder, warnings, { limits: false });
+  if (kept.length === entries.length) return warnings;
+  // The snapshot is frozen when a run begins in this session; one read back
+  // from storage is a plain object. Either way the run gets a clean copy.
+  run.advancedConfigSnapshot = { ...run.advancedConfigSnapshot, overrides: Object.fromEntries(kept) };
+  save(run);
+  return warnings;
+}
 
 /** True when a stored profile holds a key `normalizeAdvancedSettings` rewrites. */
 export function hasLegacyAdvancedSettings(settings = {}) {
-  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY);
+  // An unmarked profile holding a `draw` or `poise` row is one of them
+  // (model/statRows.js hasLegacyStatSettings).
+  return hasLegacyItemRatingSettings(settings) || Object.hasOwn(settings || {}, LEGACY_CINDER_KEY) || hasRetiredOpeningHand(settings) || hasLegacyStatSettings(settings);
 }
 
 /**
@@ -151,14 +174,27 @@ export { hasLegacyItemRatingSettings };
 export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
   if (!settings || typeof settings !== 'object' || !bundle) return settings;
   if (Object.hasOwn(settings, LEGACY_CINDER_KEY)) {
-    if (!Object.hasOwn(settings, CINDER_KEY)) settings[CINDER_KEY] = legacyCinderValue(settings[LEGACY_CINDER_KEY]);
     delete settings[LEGACY_CINDER_KEY];
     if (Array.isArray(warnings)) warnings.push(LEGACY_CINDER_WARNING);
   }
-  const migrated = migrateCombatRatingSettings(settings, bundle, warnings);
-  if (migrated === settings) return settings;
-  for (const key of Object.keys(settings)) if (!Object.hasOwn(migrated, key)) delete settings[key];
-  Object.assign(settings, migrated);
+  // #1294's retired 3–15 opening-hand limits and the retired shared opening
+  // base and attribute go first (#1318), so they are never converted into the
+  // opening-hand row below.
+  if (hasRetiredOpeningHand(settings)) {
+    const kept = new Set(withoutRetiredOpeningHand(Object.entries(settings), warnings).map(([key]) => key));
+    for (const key of Object.keys(settings)) if (!kept.has(key)) delete settings[key];
+  }
+  // Ruleset 7: the rating formula, the hand rules' single-stat dials and the
+  // fallback hand size are stat rows now; their old keys become row keys.
+  // A profile whose stat rows were read here is marked as read by a ruleset-7
+  // build, so its `draw` and `poise` rows are never re-read as the old ones.
+  const readStatRows = hasLegacyStatSettings(settings);
+  const migrated = migrateLegacyStatSettings(migrateCombatRatingSettings(settings, bundle, warnings), warnings);
+  if (migrated !== settings) {
+    for (const key of Object.keys(settings)) if (!Object.hasOwn(migrated, key)) delete settings[key];
+    Object.assign(settings, migrated);
+  }
+  if (readStatRows) settings[STAT_ROWS_MARKER] = STAT_ROWS_VERSION;
   return settings;
 }
 
@@ -168,13 +204,16 @@ export function normalizeAdvancedSettings(settings, bundle, warnings = null) {
  * handed to `save(meta)`.
  *
  * ONE DOOR FOR A PROFILE ARRIVING FROM STORAGE (Codex, on #1273). Boot brought
- * the profile forward and a restore did not: a restored pre-#1273 profile kept
- * `progression.rewardMultiplier`, which `configuredContentBundle` still paid as
- * ÷ 20 while the Advanced Settings row opened on the new key's default of 1, so
- * the screen misstated what was in force until the next restart. Boot and
- * restore both come through here now. Saved, not only rewritten, because
- * `loadMeta` re-reads the stored bytes on every call: a profile left un-saved
- * would hand the next reader the retired key again.
+ * the profile forward and a restore did not, so a restored profile could keep
+ * a key this build has retired. Boot and restore both come through here now.
+ * The retired `progression.rewardMultiplier` (the ×20 Cinders, #1294) is
+ * DROPPED with a warning — never converted — and the profile saved, so the
+ * Advanced Settings row and `configuredContentBundle` both read the authored
+ * table (or the profile's own `cinderMultiplier`, kept as it was). The
+ * retired opening-hand keys go through `withoutRetiredOpeningHand` the same
+ * way (model/statRows.js). Saved, not
+ * only rewritten, because `loadMeta` re-reads the stored bytes on every call:
+ * a profile left un-saved would hand the next reader the retired key again.
  */
 export function bringProfileForward(meta, bundle, save, warnings = null) {
   const settings = meta.settings || (meta.settings = {});
@@ -221,13 +260,47 @@ function withoutRetired(entries, warnings) {
   return kept;
 }
 
+// A ROW THIS BUILD RETIRED BUT KEPT, so its key is still known (review of
+// #1294). `retired` rows keep their key in advancedConfigRows and leave the
+// screen — and the screen's ROWS, which is what the import door is handed as
+// `additionalRows`, so the `settings.`-prefixed mirror an export writes beside
+// each gameConfig key stopped resolving and the owner's own file refused
+// ("Unknown setting: settings.gameConfig.handRules.starting.base").
+//   · `retired` + `inert`: nothing reads the value any more, so both spellings
+//     are SKIPPED with one named warning — the file lands, the dead key does
+//     not come back into the profile.
+//   · `retired` alone (a creation mode the screen no longer offers): the value
+//     still applies, so the mirror reads as the row it mirrors, and is dropped
+//     as a duplicate when the plain key rides beside it.
+function withoutRetiredRows(entries, rows, warnings) {
+  const present = new Set(entries.map(([key]) => key));
+  const skipped = [];
+  const kept = [];
+  for (const [key, raw] of entries) {
+    let target = key;
+    if (!rows.has(key) && key.startsWith('settings.') && rows.get(key.slice('settings.'.length))?.retired) {
+      target = key.slice('settings.'.length);
+      if (present.has(target) && !rows.get(target).inert) continue;
+    }
+    const row = rows.get(target);
+    if (row?.retired && row.inert) {
+      const label = row.label || target;
+      if (!skipped.includes(label)) skipped.push(label);
+      continue;
+    }
+    kept.push([target, raw]);
+  }
+  if (skipped.length) warnings.push(`${skipped.join(', ')}: ${skipped.length === 1 ? 'this setting is' : 'these settings are'} no longer used and ${skipped.length === 1 ? 'was' : 'were'} skipped. Everything else in the file was imported.`);
+  return kept;
+}
+
 function withoutSupersededLegacy(entries) {
   const present = new Set(entries.map(([key]) => key));
   // The opening's per-scene keys used to be POSITIONAL, and the scenes moved.
   // They are translated by scene id before anything looks a row up, so an
   // exported file written before the reorder still imports, and lands on the
   // scene it was written for. See migratePrologueEntries.
-  return migratePrologueEntries(withLegacyCinderMultiplier(entries)
+  return migratePrologueEntries(withoutRetiredCinderKey(entries)
     .filter(([key]) => !(key in LEGACY_BALANCE_KEYS) || !present.has(LEGACY_BALANCE_KEYS[key]))
     .map(([key, value]) => [LEGACY_BALANCE_KEYS[key] ?? key, value]));
 }
@@ -247,7 +320,7 @@ function withoutSupersededLegacy(entries) {
 //   - how a run is built — rest, the atlas, seats, run modifiers, gauntlet,
 //     co-op, endless — is World.
 function balanceGroup(path) {
-  if (/^(poise|stagger|mana)\./.test(path) || path === 'handMax') return 'Stats';
+  if (/^(poise|stagger|mana)\./.test(path)) return 'Stats';
   if (/^(level|xp\.|skill\.|classTree\.)/.test(path)) return 'Progression';
   if (/^(equipment|powers)\./.test(path)) return 'Equipment';
   if (/^(rewards|shop|smith|graceRefill|flask|startingCinders)/.test(path)) return 'Rewards';
@@ -306,7 +379,7 @@ const RETIRED_BALANCE_PATHS = new Set([
 // new run." — the same five words under most of 325 rows. Every sentence it
 // held now sits beside its own number, with the facts it established kept:
 // the legacy poise and stagger rows are live only while combat ratings are
-// off; `handMax` is a fallback a solo fight never reads; each class's flasks
+// off; each class's flasks
 // must add up to `flaskCapacity`; and the swap-cost numbers belong to the
 // rule the "Weapon swap cost" picker chooses, not to the `gear` flags.
 
@@ -385,7 +458,6 @@ function labelSegment(part, sentence = false) {
 // they say what they do rather than spell their key; "Poise · On Fill · 0 —
 // Stacks" named an array index. Everything else keeps its key-derived label.
 const BALANCE_LABELS = Object.freeze({
-  handMax: 'Fallback hand capacity',
   'poise.growthMult': 'Poise meter growth after each fill',
   'poise.onFill.0.stacks': 'Staggered stacks when an enemy meter fills',
   'poise.playerImpactPerHit': 'Poise damage you take per enemy hit',
@@ -510,7 +582,7 @@ function explicitRows(bundle) {
         // class), and compacting it away took the only explanation of where the
         // floor comes from with it.
         floorNote: need ? `It cannot go below ${need.minimum}: the ${need.kit} kit this class starts in asks that much.` : '',
-        note: `Starting ${attribute.label.toLowerCase()} for ${classLabel}. The class's attributes must total the character's points, set under Assign points.`
+        note: `Starting ${attribute.label.toLowerCase()} for ${classLabel}. The class's attributes must total the character's points, set under Starting stats.`
           + (need ? ` It cannot go below ${need.minimum}: the ${need.kit} kit this class starts in asks that much.` : '')
           + ' Applies to a new run.',
         configPath: ['attributeRules', 'presets', presetModeId, classDef.id, attribute.id],
@@ -660,9 +732,8 @@ function progressionRows(bundle) {
     {
       // Cinders only — it never touched XP, whatever its old label said — so it
       // is filed with the Cinders it multiplies (Rewards → Combat rewards).
-      // A new key (was `progression.rewardMultiplier`, which scaled a table
-      // twenty times smaller; see LEGACY_CINDER_KEY). Steps of 0.01 so a
-      // carried-across 0.1 or 0.025 is a value the row can show and keep.
+      // A new key: the old `progression.rewardMultiplier` is retired (see
+      // LEGACY_CINDER_KEY).
       cat: 'Advanced', advancedGroup: 'Rewards', type: 'number', integer: false, step: 0.01,
       min: 0, max: 20, def: 1,
       key: CINDER_KEY,
@@ -729,8 +800,10 @@ const DROP_ROLL = /^gameConfig\.balance\.equipment\.drops\.(chance|rarityWeights
 function enableGates(key, swapRuleIds = []) {
   const balance = `${ADVANCED_CONFIG_PREFIX}balance.`;
   if (key.startsWith(`${ADVANCED_CONFIG_PREFIX}combatRatings.`) && key !== RATINGS_SWITCH) return [{ key: RATINGS_SWITCH }];
-  // The older poise meter, and the derived Poise rule, run only with ratings off.
-  if (/^gameConfig\.(balance\.(poise|stagger)\.|derivedStatRules\.rules\.poise\.)/.test(key)) return [{ key: RATINGS_SWITCH, when: false }];
+  // The older poise meter runs only with ratings off; the AR, DR, PR and Ward
+  // rows only with them on. The one Poise row is in force either way.
+  if (/^gameConfig\.balance\.(poise|stagger)\./.test(key)) return [{ key: RATINGS_SWITCH, when: false }];
+  if (/^gameConfig\.derivedStatRules\.rules\.(ar|dr|pr|ward)\./.test(key)) return [{ key: RATINGS_SWITCH }];
   // Formation movement's own rules do nothing while movement is off: a move is
   // refused before cost, selection or activation is read (formationMovement.js).
   // The shared selection colour stays live — it also marks cards and menus.
@@ -779,7 +852,7 @@ function withGates(rows, bundle) {
 
 export function advancedConfigRows(bundle) {
   const generated = leafRows(materializeCardValueBonuses(bundle).balance || {}, [], [], bundle).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
-  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(bundle.attributes), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...generated], bundle);
+  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...generated], bundle);
 }
 
 /**
@@ -879,15 +952,19 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
       : configured;
     setPath(root, row.configPath, value);
   }
+  // A Max left at the editor's "no ceiling" value is no bound at all (Codex, #1296).
+  for (const row of Object.values(configured.derivedStatRules?.rules || {})) {
+    if (row.max === STAT_ROW_NO_MAX) delete row.max;
+  }
   const xpMultiplier = Number(settings[`${ADVANCED_CONFIG_PREFIX}progression.xpMultiplier`]);
   if (Number.isFinite(xpMultiplier) && configured.balance.xp) {
     const xp = configured.balance.xp;
     for (const key of ['combatWin', 'quest']) if (Number.isFinite(xp[key])) xp[key] = Math.max(0, Math.round(xp[key] * xpMultiplier));
     for (const key of Object.keys(xp.kill || {})) xp.kill[key] = Math.max(0, Math.round(xp.kill[key] * xpMultiplier));
   }
-  // Read through the legacy map, so a run snapshot that still carries the old
-  // `rewardMultiplier` pays what it paid when it was written.
-  const cinderSetting = Object.fromEntries(withLegacyCinderMultiplier(Object.entries(settings)))[CINDER_KEY];
+  // Read through the legacy filter, so a run snapshot that still carries the
+  // retired `rewardMultiplier` pays the authored table, never ×20.
+  const cinderSetting = Object.fromEntries(withoutRetiredCinderKey(Object.entries(settings)))[CINDER_KEY];
   const rewardMultiplier = cinderSetting === undefined ? NaN : Number(cinderSetting);
   if (Number.isFinite(rewardMultiplier) && rewardMultiplier !== 1 && configured.balance.rewards?.cinders) {
     for (const range of Object.values(configured.balance.rewards.cinders)) {
@@ -931,6 +1008,12 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   }
   configured.balance.combatRatings = resolveCombatRatings(settings, bundle);
   if (legacyRatings) configured.balance.combatRatings.enabled = false;
+  // THE RATING ROWS ARE THE TABLE'S (ruleset 7). A reader with no run behind
+  // it — creation, a headless fixture — reads these; a run reads its own
+  // snapshot's through model/statRows.js ratingsConfigFor.
+  configured.balance.combatRatings.ratings = Object.fromEntries(RATING_STAT_IDS
+    .filter((id) => configured.derivedStatRules?.rules?.[id])
+    .map((id) => [id, resolvedRuleRow(configured.derivedStatRules, id)]));
   // THE ITEM'S RATINGS RIDE ON THE ITEM, and only while the ratings system is
   // switched on. Written HERE, after that decision, for two reasons: the
   // requirement pass above restates both equipment arrays, so columns written
@@ -957,6 +1040,9 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
 // rows, so both ends are addressed. Anything that is not a balance path — the
 // hand rules, the combat ratings — keeps the banner alone.
 function structuralKeys(message) {
+  // A stat row's bounds: the message names the row, and both ends are its keys.
+  const row = /^(derivedStatRules\.rules\.[A-Za-z]+)\.min /.exec(message)?.[1];
+  if (row) return [`${ADVANCED_CONFIG_PREFIX}${row}.min`, `${ADVANCED_CONFIG_PREFIX}${row}.max`];
   const path = /^(balance\.[A-Za-z0-9_.]+)/.exec(message)?.[1];
   if (!path) return [];
   const base = `${ADVANCED_CONFIG_PREFIX}${path}`;
@@ -1084,6 +1170,18 @@ export function advancedConfigStructuralProblems(bundle, settings = {}) {
     }
   };
   walk(configured.balance, ['balance']);
+  // A STAT ROW'S MIN MAY NOT EXCEED ITS MAX. The row door refuses it when the
+  // registries are built, so it is refused here first — at import and on the
+  // row — rather than as a boot that falls back to authored content.
+  const hand = configured.derivedStatRules?.rules?.handSize;
+  if (hand && !(Number.isInteger(hand.min) && hand.min >= 1 && (!Number.isFinite(hand.max) || hand.max >= 1))) {
+    problems.push(`derivedStatRules.rules.handSize.min (${hand.min}) and max (${hand.max ?? 'none'}) must each be at least 1: a hand holds at least one card.`);
+  }
+  for (const [id, row] of Object.entries(configured.derivedStatRules?.rules || {})) {
+    if (Number.isFinite(row.min) && Number.isFinite(row.max) && row.min > row.max) {
+      problems.push(`derivedStatRules.rules.${id}.min (${row.min}) must stay at or below derivedStatRules.rules.${id}.max (${row.max}).`);
+    }
+  }
   return problems;
 }
 
@@ -1112,6 +1210,9 @@ export function advancedConfigExport(settings = {}, build = {}, additionalKeys =
     schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
     game: 'Ashen Spire',
     build,
+    // Written by a ruleset-7 build: its `draw` and `poise` rows mean what they
+    // mean now (model/statRows.js).
+    statRows: STAT_ROWS_VERSION,
     overrides: advancedConfigSettings(settings, additionalKeys),
   }, null, 2) + '\n';
 }
@@ -1173,11 +1274,18 @@ export function parseAdvancedConfigFile(text, bundle, current = {}, additionalRo
   // carries `combatRatings.bonuses.<item>.<rating>`; `migrateCombatRatingSettings`
   // reads each as the value it used to make. Done HERE, at the door, because
   // the next line refuses an unknown key by aborting the whole file.
-  const overrides = migrateCombatRatingSettings(file.overrides, bundle, warnings);
-  // The old Cinder multiplier is carried across as ÷ 20 by withoutSupersededLegacy
-  // below, before an unknown key could refuse the file; said here, once.
-  if (Object.keys(overrides).some((key) => key in LEGACY_CINDER_KEYS && !Object.hasOwn(overrides, LEGACY_CINDER_KEYS[key]))) warnings.push(LEGACY_CINDER_WARNING);
-  for (const [key, raw] of tolerateRaisedFloors(withoutRetired(withoutSupersededLegacy(Object.entries(overrides)), warnings), rows, warnings)) {
+  // A file exported before ruleset 7 carries no `statRows` stamp. #1294's
+  // retired 3–15 opening-hand limits are set aside BEFORE the hand keys are
+  // converted into the opening-hand row.
+  const ratingsMigrated = migrateCombatRatingSettings(file.overrides, bundle, warnings);
+  const overrides = migrateLegacyStatSettings(Object.fromEntries(withoutRetiredOpeningHand(Object.entries(ratingsMigrated), warnings)), warnings, { legacyRows: file.statRows !== STAT_ROWS_VERSION });
+  // The retired Cinder multiplier is dropped by withoutSupersededLegacy below,
+  // before an unknown key could refuse the file; said here, once. The retired
+  // opening-hand limits and shared opening base/attribute (which have no row)
+  // are dropped by withoutRetiredOpeningHand, before the same check.
+  if (Object.keys(overrides).some((key) => LEGACY_CINDER_KEYS.includes(key))) warnings.push(LEGACY_CINDER_WARNING);
+  const entries = withoutRetiredOpeningHand(withoutRetired(withoutSupersededLegacy(Object.entries(overrides)), warnings), warnings);
+  for (const [key, raw] of tolerateRaisedFloors(withoutRetiredRows(entries, rows, warnings), rows, warnings)) {
     const row = rows.get(key);
     if (!row) throw new Error(`Unknown setting: ${key}. Nothing was imported.`);
     const value = row.type === 'choice' && Object.hasOwn(row.legacyChoices || {}, raw) ? row.legacyChoices[raw] : raw;

@@ -1,6 +1,6 @@
 import { retiredAttackSlots } from './cardRemoval.js';
 import { handRulesProblems } from './handRules.js';
-import { combatRatingProblems } from './combatRatings.js';
+import { combatRatingProblems, ratingIds } from './combatRatings.js';
 // src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
 //
 // The snapshot is persisted inside run.combatEntered.snapshot. This module
@@ -10,7 +10,7 @@ import { combatRatingProblems } from './combatRatings.js';
 import { itemRefIdentity, itemUpgradeTiers } from './itemUpgrades.js';
 import { skillsProblems } from './skills.js';
 import { coreTagsProblems } from './classTree.js';
-import { restoreDerivedStatRuleSnapshot } from './derivedStats.js';
+import { restoreDerivedStatRuleSnapshot, storedStatRowProblems } from './derivedStats.js';
 
 export const COMBAT_SNAPSHOT_VERSION = 1;
 
@@ -75,7 +75,14 @@ export function combatSnapshotProblems(snapshot) {
   }
   if (snapshot.emitDepth !== 0) problems.push('emitDepth must be 0 at a committed save boundary');
   if (snapshot.handRules !== undefined) problems.push(...handRulesProblems(snapshot.handRules));
-  if (snapshot.ratingsRules !== undefined) problems.push(...combatRatingProblems(snapshot.ratingsRules));
+  if (snapshot.ratingsRules !== undefined) {
+    problems.push(...combatRatingProblems(snapshot.ratingsRules));
+    // A saved fight's rating rows are what `refreshCombatRatings` prices on
+    // restore; a fight carrying rules but no rows would throw there (Codex, #1296).
+    const ratings = snapshot.ratingsRules && snapshot.ratingsRules.ratings;
+    if (!ratings || typeof ratings !== 'object') problems.push('Combat ratings: missing rating rows');
+    else for (const id of ratingIds) problems.push(...storedStatRowProblems(ratings[id], `Combat ratings: ${id}`));
+  }
   // The fight's copy of the run's derived-stat rules prices the Poise vessel on
   // restore and is preferred over the run's own, so it is held to the same
   // door the run's is: a truthy but malformed copy (`{}`, a missing row) is

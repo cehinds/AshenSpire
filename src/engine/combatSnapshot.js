@@ -59,6 +59,7 @@ export function serializeCombatSnapshot(combat) {
     result: combat.result,
     handMax: combat.handMax,
     drawPerTurn: combat.drawPerTurn,
+    ...(Number.isInteger(combat.characterLevel) ? { characterLevel: combat.characterLevel } : {}),
     player: combat.player,
     enemies: combat.enemies,
     loadout: combat.loadout,
@@ -135,6 +136,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     result: saved.result,
     handMax: saved.handMax,
     drawPerTurn: saved.drawPerTurn,
+    // Absent on a fight saved before ruleset 7, whose rows read no level.
+    ...(Number.isInteger(saved.characterLevel) ? { characterLevel: saved.characterLevel } : {}),
     player: saved.player,
     enemies: saved.enemies,
     loadout: saved.loadout,
@@ -185,6 +188,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
       loadout: combat.loadout, relics: combat.player.relicIds || [], class: combat.player.classId,
       itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,
       derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
+      ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
     }).value);
   }
   return combat;

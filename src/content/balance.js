@@ -235,7 +235,8 @@ export const balance = {
   },
   energy: 3,
   draw: 5,
-  handMax: 5,
+  // (`handMax` retired in ruleset 7: every fight's hand size is the
+  // derivedStatRules `handSize` row; validate.js refuses it by name.)
   // Crimson/Azure are charge pools sharing this fixed capacity. Utility
   // consumables remain inventory items and use flaskSlots independently.
   flaskCapacity: 3,
@@ -257,8 +258,7 @@ export const balance = {
   startingDeckSize: 11,
   [NOTE]: {
     energy: { text: 'The authored actions a turn starts with, and nothing reads it: a run derives Actions from Dexterity, and Stats → Actions is where they are set. It survives because the engine still spells actions "energy" — that rename is its own piece of work.', inert: true },
-    draw: { text: 'The authored cards drawn each turn, and nothing reads it: a run derives Draw from Intelligence, and Stats → Draw & hand is where it is set.', inert: true },
-    handMax: 'Fallback hand capacity, for a fight handed no hand rules. A solo fight always has them, so its capacity is Stats → Draw & hand → Hand capacity; a co-op fight reads this row whatever they say. A card drawn past the limit goes to the discard rather than being lost.',
+    draw: { text: 'The authored cards drawn each turn, and nothing reads it: a run derives Draw from its Draw / turn stat row, and Stats → Draw & hand is where it is set.', inert: true },
     flaskCapacity: 'Crimson and Azure charges a run carries between them, before any growth row adds to it. They share this one pool, and each class\'s HP and Mana flasks (Progression › the class) must add up to it; if they do not, the whole Advanced configuration is set aside and authored defaults are used.',
     flaskSlots: 'Inventory slots for utility consumables. Separate from flask charges, which have their own capacity above.',
     startingCinders: 'Cinders a new run opens with.',
@@ -405,13 +405,8 @@ export const balance = {
     // reading against the OLD faucet for a week; both are re-tuned against
     // this one now (2026-09-11) — the shop by this same ×3, the level ladder
     // by measurement, each explained where it lives.
-    // ×20 again (owner, 2026-09-24: his Cinder gain multiplier of 20 made the
-    // shipped default). Baked into the table, not applied by the settings
-    // layer, so every reader of this table — the encounter builder, the
-    // balance tools, a co-op session built from authored content — pays the
-    // same. The multiplier row (progression.cinderMultiplier) is 1 by default.
     cinders: {
-      normal: [900, 1500], elite: [2100, 3000], boss: [4500, 5400],
+      normal: [45, 75], elite: [105, 150], boss: [225, 270],
       [NOTE]: {
         '{kind}.{end}': 'The {band} of the cinders that {pool} pays.',
       },

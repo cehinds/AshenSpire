@@ -44,6 +44,11 @@
 // Usage
 //   node tools/receipts.mjs --check              origin/test..HEAD (the promotion)
 //   node tools/receipts.mjs --check --since dev  any other range
+//   node tools/receipts.mjs --check --pr <N>     a pull request head: its OWN
+//                                                number must carry a receipt
+//   node tools/receipts.mjs --check --pr auto    the same, N read from the
+//                                                Actions event (GITHUB_EVENT_PATH,
+//                                                then GITHUB_REF refs/pull/N/merge)
 //   node tools/receipts.mjs --selftest           the known-bad corpus
 //
 // Exit 0 green, 1 a gap, 2 the harness could not run.
@@ -85,6 +90,58 @@ export function unreceipted(mergeSubjects, changelogText) {
     if (n && !merged.includes(n)) merged.push(n);
   }
   return { receipted, merged, missing: merged.filter((n) => !receipted.has(n)) };
+}
+
+// A PULL REQUEST HEAD IS JUDGED BY ITS OWN NUMBER. On `pull_request` the
+// checkout is GitHub's synthetic merge commit ("Merge <sha> into <sha>"), which
+// names no pull request, so the range walk below cannot see the one being
+// judged; and the other merges in the range are dev's to answer for, on push.
+// The number comes from the event payload, or from `refs/pull/N/merge`.
+export function pullFromEnv(env = process.env) {
+  if (env.GITHUB_EVENT_PATH) {
+    try {
+      const ev = JSON.parse(readFileSync(env.GITHUB_EVENT_PATH, 'utf8'));
+      const n = ev?.pull_request?.number ?? ev?.number;
+      if (Number.isInteger(n) && n > 0) return String(n);
+    } catch { /* fall through to the ref */ }
+  }
+  const m = /^refs\/pull\/(\d+)\//.exec(env.GITHUB_REF || '');
+  return m ? m[1] : null;
+}
+
+// Whether `pull` is named by a receipt, through the same core the range uses.
+export function ownReceipt(pull, changelogText) {
+  return unreceipted([`Merge pull request #${pull} from head`], changelogText).missing.length === 0;
+}
+
+function checkPull(prArg) {
+  const pull = !prArg || prArg === 'auto' ? pullFromEnv() : prArg;
+  if (!pull || !/^\d+$/.test(pull)) {
+    console.error(`receipts: HARNESS COULD NOT RUN — no pull request number (--pr ${prArg || ''};`
+      + ' no pull_request in GITHUB_EVENT_PATH, no refs/pull/N/merge in GITHUB_REF)');
+    return 2;
+  }
+  const changelog = readFileSync(CHANGELOG, 'utf8');
+  if (unreceipted([], changelog).receipted.size === 0) {
+    console.error('receipts: HARNESS COULD NOT RUN — CHANGELOG.md yielded no pull-request references at all.');
+    return 2;
+  }
+  console.log('receipts — this pull request is named by a receipt in CHANGELOG.md');
+  console.log(`  pull request  #${pull}`);
+  console.log('');
+  if (!ownReceipt(pull, changelog)) {
+    console.log(`  FAIL  #${pull} carries no receipt in CHANGELOG.md`);
+    console.log('');
+    console.log('  Add one at the top of the newest date group, naming this pull request and');
+    console.log('  the build ordinal, then: node tools/about-changelog.mjs --write');
+    console.log('');
+    console.log(`receipts: FAIL — pull request #${pull} carries no receipt`);
+    return 1;
+  }
+  console.log(`  PASS  #${pull} has a receipt`);
+  console.log('');
+  console.log('receipts: OK — 1 checks passed');
+  return 0;
 }
 
 function git(args, cwd = ROOT) {
@@ -271,6 +328,10 @@ function selftest() {
     else { console.log(`  RED  "${name}" -> expected ${expected.join(', ')}, got ${got.join(', ') || 'nothing'}`); red += 1; }
   }
 
+  // A pull request head (--pr): its own number, unnamed, must go red; named, green.
+  if (!ownReceipt('14', CLEAN_MD) && ownReceipt('13', CLEAN_MD)) { console.log('  CAUGHT  "a pull request head with no receipt of its own" -> #14 missing, #13 present'); passed += 1; }
+  else { console.log('  RED  "a pull request head with no receipt of its own" -> ownReceipt did not separate #14 from #13'); red += 1; }
+
   // The plant that guards the guard: a changelog whose reference syntax moved
   // must NOT read as "every merge unreceipted" out in the world — check() turns
   // that into exit 2. Here we prove the core is what makes that detectable.
@@ -289,9 +350,11 @@ const invoked = process.argv[1] && fileURLToPath(import.meta.url) === pathResolv
 if (!invoked) { /* imported by a test: export only, run nothing */ }
 else if (argv.includes('--selftest')) process.exit(selftest());
 else if (argv.includes('--check') || argv.length === 0) {
+  const p = argv.indexOf('--pr');
+  if (p >= 0) process.exit(checkPull(argv[p + 1]));
   const i = argv.indexOf('--since');
   process.exit(check(i >= 0 ? argv[i + 1] : null));
 } else {
-  console.error('usage: node tools/receipts.mjs [--check] [--since <rev>] | --selftest');
+  console.error('usage: node tools/receipts.mjs [--check] [--since <rev> | --pr <N|auto>] | --selftest');
   process.exit(2);
 }

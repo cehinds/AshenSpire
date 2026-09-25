@@ -14,6 +14,8 @@ import { createRng } from '../src/engine/rng.js';
 import { cardPlayCosts } from '../src/engine/combat.js';
 import { createRunState } from '../src/model/state.js';
 import { resolveHandRules } from '../src/model/handRules.js';
+import { handStatRows } from '../src/model/statRows.js';
+import { resolvedRuleRow } from '../src/model/derivedStats.js';
 import { resolveSwapCostRule } from '../src/model/loadout.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { affordableCards } from '../tools/simbot.mjs';
@@ -28,8 +30,14 @@ function fight(classId = 'starseer', settings = {}) {
 }
 
 test('a run fight carries the rules a fresh profile gives the live game', () => {
-  const { combat } = fight();
-  assert.deepEqual(combat.handRules, resolveHandRules({}, registries.attributes.all()), 'default hand rules');
+  const { run, combat } = fight();
+  // The hand's counts are the run's own stat rows since ruleset 7; a fresh
+  // run's are the shipped table's.
+  assert.deepEqual(combat.handRules, resolveHandRules({}, handStatRows(registries, run)), 'default hand rules');
+  for (const id of ['openingHand', 'draw', 'handSize']) {
+    // The class's own opening hand (the row's per-class form, owner 2026-09-24).
+    assert.deepEqual(combat.handRules.rows[id], resolvedRuleRow(registries.derivedStatRules, id, 'starseer'), `the shipped ${id} row`);
+  }
   assert.equal(combat.swapCostRule, resolveSwapCostRule(registries, { settings: {} }), 'default swap price');
   if (registries.balance.combatRatings?.enabled) assert.ok(combat.ratingsRules, 'rating rules applied');
 });

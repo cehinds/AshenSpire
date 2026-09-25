@@ -3,14 +3,84 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1314",
+    "id": "pr-1296",
     "date": "2026-09-25",
     "group": "2026-09-25",
-    "summary": "The map keeps your chosen destination in view when the screen changes shape",
-    "detail": "With a node picked and its tray open, a change to the map's size, such as the window resizing or a toolbar appearing, used to jump the view back to where you stand. The picked node now stays centred in the part of the map the tray leaves visible.",
-    "build": "0.7.1.505",
-    "pullRequest": 1314,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1314"
+    "summary": "Every stat is set the same way, in one place, and read from one table",
+    "detail": "HP, Mana, Stamina, Actions, your opening hand, cards drawn per turn, hand size, AR, DR, PR, Ward and Poise are now all one kind of row: a starting value, what each point of Strength, Dexterity, Constitution, Wisdom and Intelligence adds, growth per level, and an optional floor and ceiling. Advanced → Stats edits every one of them with the same nine fields in the same order. Mana now comes mostly from Wisdom, with some from Constitution, Strength and Intelligence; Stamina from Constitution, Strength and Dexterity; and there is one Poise instead of two. Your opening hand stays your class's own 4 to 6 cards, now set per class in the same editor; your turn draw, hand size, HP, Actions, AR, DR, PR and Ward read as before at the starting attributes; Poise goes from 9 to 10 at every attribute 5. Co-op now deals each player their own opening hand, turn draw and hand size, and keeps unplayed cards. A climb already under way, and any saved fight, keeps the numbers it started with, and settings files exported before today still import, converted to the new rows.",
+    "build": "0.7.1.521",
+    "pullRequest": 1296,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1296"
+  },
+  {
+    "id": "pr-1315",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Loading a save from a newer version mid-climb no longer throws away the climb you're on",
+    "detail": "Choosing Load from the in-game menu on a slot saved by a newer version of Ashen Spire now says straight away that it cannot be opened here and leaves your current climb exactly where it was. The same check runs again when you confirm, in case a newer version open in another tab saved to that slot while the question was on screen. Before, it asked you to confirm discarding unsaved changes, then closed the menu, failed to load, and dropped you on the title screen with the climb in hand gone. A new browser check also lands a hit and ends a turn, walks away from the fight without saving, and loads the slot through the real menu, and confirms the fight starts again at turn 1 with the same health, the same opening hand, the enemies back at full health and the same deck.",
+    "build": "0.7.1.518",
+    "pullRequest": 1315,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1315"
+  },
+  {
+    "id": "pr-1318",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Opening-hand settings say what they do, everywhere",
+    "detail": "An older setting that gave every class the same opening hand is no longer accepted and then quietly ignored: it is set aside wherever it was saved, and when it held something other than the default a note points you to each class's own opening-hand settings under Stats → Draw & hand. The Shrine's level-up cards and the Armoury opened mid-fight now say what a point buys in your opening hand under your own settings, and the class chooser's preview shows both the Hand and the Draw chips.",
+    "build": "0.7.1.517",
+    "pullRequest": 1318,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1318"
+  },
+  {
+    "id": "pr-1298",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: leaving the game in the background is now tested",
+    "detail": "Nothing you play changes. A new test sends the game to the background mid-fight and brings it back, checking that the run survives and that a card being dragged or a held key is safely cancelled rather than played; the drag's end-of-play step moved into its own small unit so the test drives the real code.",
+    "build": "0.7.1.515",
+    "pullRequest": 1298,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1298"
+  },
+  {
+    "id": "pr-1277",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Settings open faster, search everything, and every value has − / + and a slider",
+    "detail": "Advanced now draws only the topic you open, so it appears in about a tenth of the time, and Find searches every section at once. Every number and volume is − · slider · field · +, the buttons repeat while held, and any setting you have changed shows a dot and its own Reset. On a phone each setting puts its label above a full-width control. Development and test builds add Defaults & sync, which saves your settings to GitHub and loads them on another device, previewing what changes first. The tuning, layout, import/export and sync sections no longer appear in release builds. The downloads are smaller too: an image used in two places is now stored once. A Changed button lists every setting you have changed, and any Reset can be undone. A one-time tip explains search and Reset, and a gamepad presses − and + directly. Development builds can keep named profiles (desk, phone and so on); screen-size settings stay with each device unless you choose to share them. The owner can also promote a profile to be every new player's defaults.",
+    "build": "0.7.1.512",
+    "pullRequest": 1277,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1277"
+  },
+  {
+    "id": "pr-1317",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: a missing changelog entry is caught before merge",
+    "detail": "Nothing you see changes. Every pull request into the development line is now checked for its own entry here before it can merge, not only after. The contrast check's title-screen Continue row now names the highlighted, enabled entry it already measured, so it fails loudly instead of measuring a greyed-out one if the screenshot ever stops seeding a save. Two developer notes are corrected: Guilt is no longer listed as inert, and the versioning note points at where the version number lives instead of quoting an old one.",
+    "build": "0.7.1.510",
+    "pullRequest": 1317,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1317"
+  },
+  {
+    "id": "pr-1300",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Behind the scenes: the release checklist is written down",
+    "detail": "Docs only. docs/RELEASE-CHECKLIST.md lists every gate a release candidate must pass on one commit, the command for each and what green looks like, and keeps the sign-off for the owner alone; a test keeps each gate's script and flags real.",
+    "build": "0.7.1.509",
+    "pullRequest": 1300,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1300"
+  },
+  {
+    "id": "pr-1294",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "Fights pay their normal Cinders again",
+    "detail": "The twentyfold Cinder rewards that came in with the new defaults are gone: a normal fight pays 45–75, an elite 105–150 and a boss 225–270, as before. The old Cinder multiplier is set aside wherever it was saved (an imported configuration file says so), and the Cinder gain multiplier in Settings starts at 1. You still begin a climb with 20 Cinders. Character creation now offers two ways to set your stats: Standard opens on your class's own spread — mostly 1s, with its three points already placed (the Starseer starts with Intelligence 3) — ready to go, and Assign points starts every stat at 1 with 3 points for you to place, a number you can change in Advanced settings; an Assign character dodges on the same scale as a Standard one, so Dexterity 1 to 3 no longer weakens its Dodge Roll as the old attribute scale did. Your opening hand now depends on your class and is always 4 to 6 cards: a base of 3 (Reaver), 4 (Rogue, Herald) or 5 (Starseer), plus one card once your class's main stat reaches 3, never fewer than 4, so a Standard character opens with 4, 5, 5 or 6 cards. Assign points can no longer be set so low that a class could not wear the equipment it starts in, and Cancel in the Assign points window puts back the Standard stats you had chosen. Saved settings or a configuration file still holding the old opening-hand limits of 3 to 15 cards move to the new 4 to 6 and say so, and a configuration file exported from an earlier build imports again instead of being refused. Character creation shows that number as its own Hand chip, beside Draw, the cards you draw on each later turn — never more than your hand can hold.",
+    "build": "0.7.1.508",
+    "pullRequest": 1294,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1294"
   },
   {
     "id": "pr-1299",
@@ -21,6 +91,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "build": "0.7.1.503",
     "pullRequest": 1299,
     "url": "https://github.com/cehinds/AshenSpire/pull/1299"
+  },
+  {
+    "id": "pr-1312",
+    "date": "2026-09-25",
+    "group": "2026-09-25",
+    "summary": "The opening scene list in Settings lays out cleanly",
+    "detail": "The list of opening scenes in Settings now uses the full width of its row, with each scene's name and position side by side and its buttons on their own row beneath, so long names wrap instead of crowding the controls. This entry was written after the change merged without one.",
+    "build": "0.7.1.502",
+    "pullRequest": 1312,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1312"
   },
   {
     "id": "pr-1311",

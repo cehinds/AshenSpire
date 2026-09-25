@@ -325,11 +325,13 @@ const RUN_AS_CLI = process.argv[1] && resolve(process.argv[1]) === resolve(fileU
 if (!RUN_AS_CLI) {
   /* imported for collect()/blankNonCode(); nothing runs */
 } else if (process.argv.includes('--selftest')) {
-  process.exit(selftest());
+  // exitCode, not exit(): process.exit() can drop stdout still queued for a
+  // pipe, and the suite harness reads the RESULT line through one.
+  process.exitCode = selftest();
 } else if (process.argv.includes('--json')) {
   const { sets } = collect(ROOT);
   console.log(JSON.stringify(sets, null, 2));
-  process.exit(sets.some((s) => !s.readers.length) ? 1 : 0);
+  process.exitCode = sets.some((s) => !s.readers.length) ? 1 : 0;
 } else {
-  process.exit(report(ROOT).code);
+  process.exitCode = report(ROOT).code;
 }

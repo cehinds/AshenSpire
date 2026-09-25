@@ -487,6 +487,16 @@ jobs:
         # proving the legitimate shapes the shipped file already uses still parse.
         run: node tools/verdict.mjs -- node tools/about-changelog.mjs --selftest
 
+      - name: The in-run Load door keeps the run on a newer slot and restarts an abandoned fight
+        # Quick Menu -> Load through main.js's own confirmSlotLoad/resumeRun:
+        # a newer-build slot is refused with the run still standing, and a
+        # fight abandoned mid-combat reloads at turn 1 with the same HP,
+        # opening hand and deck (SPEC 3.12, 9 M2).
+        run: node tools/verdict.mjs -- node tools/slot-load-door.mjs
+
+      - name: ...and that gate can fail (3 plants)
+        run: node tools/verdict.mjs -- node tools/slot-load-door.mjs --selftest
+
       - name: Cold boot owns and consumes the first input before Title exists
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs
 

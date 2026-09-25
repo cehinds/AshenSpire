@@ -26,20 +26,25 @@ test('Progression is the one driver: pool first, then each class, and the tier d
   // two read in a row, before the floors and the class tables they bound. What
   // the points turn into is a topic per trait under Stats (below).
   assert.deepEqual(groups.map(group => group.id).slice(0, 7),
-    ['Assign points', 'Level-up', 'Equipment requirements', ...CLASS_TOPICS]);
+    ['Starting stats', 'Level-up', 'Equipment requirements', ...CLASS_TOPICS]);
   assert.ok(!groups.some(group => group.id === 'Stats & resources'), 'the formulas are edited under Stats, one topic per trait');
 
-  const assign = groups.find(group => group.id === 'Assign points');
+  const assign = groups.find(group => group.id === 'Starting stats');
   // His sentence, in his order: the baseline he names first is the row he sees
   // first, then the points he places, then what they add up to, then the limits
-  // that bound both.
-  assert.deepEqual(assign.rows.map(row => row.label), [
+  // that bound both. Two modes are offered (owner, 2026-09-24), so each run of
+  // six names its mode: Standard's first, then Assign points'.
+  const dials = [
     'Starting value for every attribute',
     'Points available to assign',
     'Total points on a character',
     'Lowest a stat may be set to',
     'Highest a stat may be set to',
     'Points may be taken back off a stat',
+  ];
+  assert.deepEqual(assign.rows.map(row => row.label), [
+    ...dials.map(label => `Standard — ${label}`),
+    ...dials.map(label => `Assign points — ${label}`),
   ]);
   assert.ok(!categoryHandler('Advanced').rows.some(row => row.key === 'statTierSize'),
     'the tier dial retired with ruleset 6 — every stat states its own weights');
@@ -67,10 +72,16 @@ test('Progression is the one driver: pool first, then each class, and the tier d
 // effect is invalidating an old save; three of them read as three pools for
 // one idea. They keep their keys (see the `retired` filter in settings.js) and
 // leave the screen.
-test('only the creation mode a player can pick is offered a pool', () => {
+test('only the creation modes a player can pick — Standard and Assign points — are offered a pool', () => {
   const keys = categoryHandler('Advanced').rows.map(row => row.key);
   const pools = keys.filter(key => /^gameConfig\.startingStats\..+\.(total|bonusPool|baseline|minimum|maximum|belowBaseline)$/.test(key));
   assert.deepEqual(pools.sort(), [
+    'gameConfig.startingStats.assign.baseline',
+    'gameConfig.startingStats.assign.belowBaseline',
+    'gameConfig.startingStats.assign.bonusPool',
+    'gameConfig.startingStats.assign.maximum',
+    'gameConfig.startingStats.assign.minimum',
+    'gameConfig.startingStats.assign.total',
     'gameConfig.startingStats.lean.baseline',
     'gameConfig.startingStats.lean.belowBaseline',
     'gameConfig.startingStats.lean.bonusPool',
@@ -323,9 +334,9 @@ test('every Advanced row reads like every other Advanced row', async () => {
   }
   // The three that used to be shouted, spelled out.
   const spelled = new Map(generated.map(row => [row.searchPath, row.label]));
-  // Beside the hand rules under Stats, the fallback says what it is rather
-  // than spelling its key.
-  assert.equal(spelled.get('handMax'), 'Fallback hand capacity');
+  // The fallback hand capacity used to be the third; ruleset 7 retired it
+  // (every fight reads the Hand size stat row), so it is no row at all.
+  assert.equal(spelled.has('handMax'), false);
   assert.equal(spelled.get('startingCinders'), 'Starting cinders');
   assert.equal(spelled.get('levels.playerStartingLevel'), 'Levels — Player starting level');
   assert.equal(spelled.get('rest.hpSmallPct'), 'Rest — HP small %', 'an acronym survives inside a sentence-case leaf');
@@ -468,14 +479,19 @@ test('a setting that moves nothing is off the screen and still imports', async (
   }
   // Retired, not deleted: parseAdvancedConfigFile aborts a whole file on one
   // unknown key, so removing the row would refuse every configuration that
-  // still names it.
+  // still names it. The file lands; the dead keys are skipped by name (review
+  // of #1294), since nothing would ever read them back.
   const legacy = { 'gameConfig.balance.energy': 3, 'gameConfig.balance.draw': 5 };
-  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy), contentBundle), legacy);
-
-  // The row that IS read keeps its place and says what it actually governs.
-  const handMax = rows.find(candidate => candidate.key === 'gameConfig.balance.handMax');
-  assert.ok(!handMax.retired, 'handMax is read (engine/combat.js, engine/actions.js) and stays');
-  assert.match(handMax.note, /Stats → Draw & hand → Hand capacity/, 'and points at the row a fight actually uses');
+  // The fallback hand size WAS read — by co-op fights — and ruleset 7 made
+  // the Hand size stat row govern every fight instead. So it is no row at all,
+  // and a file naming it converts rather than refusing: the key is dropped,
+  // the warning points at the row a fight actually uses.
+  assert.ok(!rows.some(candidate => candidate.key === 'gameConfig.balance.handMax'), 'handMax is not a row since ruleset 7');
+  const warnings = [];
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport({ ...legacy, 'gameConfig.balance.handMax': 5 }), contentBundle, {}, [], warnings), {});
+  assert.equal(warnings.length, 2, warnings.join(' | '));
+  assert.ok(warnings.some((line) => /no longer used and were skipped\. Everything else in the file was imported\./.test(line)), warnings.join(' | '));
+  assert.ok(warnings.some((line) => /Stats → Draw & hand → Hand size/.test(line)), 'and points at the row a fight actually uses');
 });
 
 // ---- ONE HOME PER SETTING (owner, 2026-09-23) -------------------------------
@@ -499,18 +515,24 @@ test('every setting has one home, and rows sharing a quantity sit together', asy
     const sub = advancedSubgroups(rows, section).find(group => group.rows.includes(row));
     return `${section} → ${sub.id}`;
   };
-  // The legacy poise meter sits with the Poise rating that replaces it, under
-  // its own subsection heading.
-  for (const key of ['gameConfig.balance.poise.growthMult', 'gameConfig.balance.stagger.player.actionLoss',
-    'gameConfig.derivedStatRules.rules.poise.base']) {
+  // The legacy poise meter sits with the Poise row, under its own subsection
+  // heading. The Poise row itself is ONE row since ruleset 7 — in force with
+  // ratings on or off — so it reads as a formula, not as the legacy meter.
+  for (const key of ['gameConfig.balance.poise.growthMult', 'gameConfig.balance.stagger.player.actionLoss']) {
     assert.equal(where(key), 'Stats → Poise');
     assert.equal(statsSection(rows.find(row => row.key === key)), WITHOUT_RATINGS);
   }
-  // The fallback hand size and the legacy draw sit with the hand rules.
-  for (const key of ['gameConfig.balance.handMax', 'gameConfig.derivedStatRules.rules.draw.base']) {
+  assert.equal(where('gameConfig.derivedStatRules.rules.poise.base'), 'Stats → Poise');
+  assert.equal(statsSection(rows.find(row => row.key === 'gameConfig.derivedStatRules.rules.poise.base')), 'Formula');
+  // The three hand rows sit with the hand rules, each heading the subsection
+  // its behaviour options sit in. There is no fallback hand size and no legacy
+  // draw any more, so no fallback subsection either.
+  for (const [id, section] of [['openingHand', 'Starting hand'], ['draw', 'Turn draws'], ['handSize', 'Hand capacity']]) {
+    const key = `gameConfig.derivedStatRules.rules.${id}.base`;
     assert.equal(where(key), 'Stats → Draw & hand');
-    assert.equal(statsSection(rows.find(row => row.key === key)), DRAW_FALLBACK);
+    assert.equal(statsSection(rows.find(row => row.key === key)), section);
   }
+  assert.ok(!rows.some(row => statsSection(row) === DRAW_FALLBACK), 'the co-op & legacy fallback subsection is gone');
   assert.equal(where('swapCostRule'), 'Equipment → Equipment swapping', 'the swap rule sits with its numbers');
   assert.equal(where('gameConfig.balance.equipment.swapCost'), 'Equipment → Equipment swapping');
   assert.equal(where('gameConfig.progression.cinderMultiplier'), 'Rewards → Combat rewards', 'the Cinder multiplier sits with the Cinders');
@@ -548,8 +570,10 @@ test('a row that moved nothing is retired: off the screen, still importable', as
   }
   assert.ok(!shown.has('mapHeaderSeed'), 'the seed toggle the header never honoured is off the screen');
   const legacy = { 'gameConfig.balance.levelUp.pointsPerLevelMax': 20, 'gameConfig.classes.reaver.maxHp': 84 };
-  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy), contentBundle), legacy,
-    'an exported file naming a retired key still imports');
+  const warnings = [];
+  assert.deepEqual(parseAdvancedConfigFile(advancedConfigExport(legacy, {}, Object.keys(legacy)), contentBundle, {}, [], warnings), {},
+    'an exported file naming a retired key still imports, in either spelling, the dead keys skipped');
+  assert.match(warnings.join(' '), /Reaver — Base HP/);
 
   // AND IS NEVER APPLIED (review, #1256): a stale pair that disagrees used to
   // land in the bundle and refuse the whole configuration over a row no longer
@@ -577,23 +601,42 @@ test('Stats is the one menu for each trait: formulas, hand rules, ratings and th
   assert.deepEqual(stats.slice(0, 11).map(group => group.id), STATS_TOPICS.slice(0, 11));
   const topicOf = (key) => stats.find(group => group.rows.some(row => row.key === key))?.id;
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.energy.dexterity'), 'Actions');
-  assert.equal(topicOf('gameConfig.derivedStatRules.rules.draw.base'), 'Draw & hand', 'the Draw conversion sits beside the hand rules');
-  assert.equal(topicOf('gameConfig.handRules.starting.base'), 'Draw & hand');
-  assert.equal(topicOf('gameConfig.balance.handMax'), 'Draw & hand', 'the co-op hand capacity too');
+  assert.equal(topicOf('gameConfig.derivedStatRules.rules.draw.base'), 'Draw & hand', 'the Draw row sits beside the hand rules');
+  assert.equal(topicOf('gameConfig.derivedStatRules.rules.openingHand.intelligence'), 'Draw & hand');
+  assert.equal(topicOf('gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base'), 'Draw & hand', 'each class opening hand too (owner, 2026-09-24)');
+  assert.equal(topicOf('gameConfig.derivedStatRules.rules.openingHand.attributeBaseline'), 'Draw & hand');
+  assert.equal(topicOf('gameConfig.derivedStatRules.rules.handSize.max'), 'Draw & hand', 'the one hand size, co-op included');
+  assert.equal(topicOf('gameConfig.handRules.drawMode'), 'Draw & hand');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.hp.perLevel'), 'HP', 'level growth is part of the trait');
   assert.equal(topicOf('gameConfig.derivedStatRules.rules.mana.wisdom'), 'Mana');
   assert.equal(topicOf('gameConfig.balance.mana.minActionCost'), 'Mana');
-  for (const key of ['gameConfig.combatRatings.ratings.poise.constitution', 'gameConfig.derivedStatRules.rules.poise.base',
+  for (const key of ['gameConfig.derivedStatRules.rules.poise.constitution', 'gameConfig.derivedStatRules.rules.poise.base',
     'gameConfig.balance.poise.growthMult', 'gameConfig.balance.stagger.player.actionLoss', 'gameConfig.combatRatings.resistance.physicalK']) {
     assert.equal(topicOf(key), 'Poise', `${key} is a Poise rule`);
   }
-  assert.equal(topicOf('gameConfig.combatRatings.ratings.ward.wisdom'), 'Ward');
-  assert.equal(topicOf('gameConfig.combatRatings.ratings.ar.strength'), 'Attack rating (AR)');
-  // Every term of a trait is editable where the trait is.
-  for (const id of ['energy', 'draw', 'hp', 'stamina', 'mana', 'poise']) {
-    const own = rows.filter(row => row.derivedStatId === id).map(row => row.key.split('.').at(-1));
-    assert.deepEqual(own, ['base', 'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence', 'perLevel'], `${id}: base, a weight per attribute, growth per level`);
+  assert.equal(topicOf('gameConfig.derivedStatRules.rules.ward.wisdom'), 'Ward');
+  assert.equal(topicOf('gameConfig.derivedStatRules.rules.ar.strength'), 'Attack rating (AR)');
+  assert.equal(topicOf('gameConfig.derivedStatRules.rules.dr.dexterity'), 'Defence rating (DR)');
+  assert.equal(topicOf('gameConfig.derivedStatRules.rules.pr.intelligence'), 'Power rating (PR)');
+  // Every term of a trait is editable where the trait is — and since ruleset 7
+  // every stat has the SAME editor: the same nine fields in the same order.
+  for (const id of ['energy', 'openingHand', 'draw', 'handSize', 'hp', 'stamina', 'mana', 'ar', 'dr', 'pr', 'ward', 'poise']) {
+    const own = rows.filter(row => row.derivedStatId === id && !row.statClass && row.statField !== 'attributeBaseline').map(row => row.key.split('.').at(-1));
+    assert.deepEqual(own, ['base', 'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence', 'perLevel', 'min', 'max'],
+      `${id}: base, a weight per attribute, growth per level, bounds`);
   }
+  // The opening hand's per-class form (owner, 2026-09-24, #1294): each class
+  // edits its own base and weights, in the same order, and the row states the
+  // attribute points it counts from.
+  for (const classId of ['reaver', 'rogue', 'herald', 'starseer']) {
+    const own = rows.filter(row => row.derivedStatId === 'openingHand' && row.statClass === classId).map(row => row.key.split('.').at(-1));
+    assert.deepEqual(own, ['base', 'strength', 'dexterity', 'constitution', 'wisdom', 'intelligence'], `openingHand.byClass.${classId}`);
+  }
+  assert.ok(rows.some(row => row.key === 'gameConfig.derivedStatRules.rules.openingHand.attributeBaseline'));
+  // The retired homes are no rows: the rating formula and its multiplier, and
+  // the hand rules' single-stat groups (their keys convert on import).
+  assert.ok(!rows.some(row => /^gameConfig\.combatRatings\.(multiplier|ratings\.)/.test(row.key)), 'no rating-formula rows');
+  assert.ok(!rows.some(row => /^gameConfig\.handRules\.(starting|turn|capacity)\./.test(row.key)), 'no hand-rule group rows');
   // The tabs these came from are gone or no longer hold them.
   for (const gone of ['Ratings & Resistance', 'Hand & Draw']) assert.equal(advancedSubgroups(rows, gone).length, 0, `${gone} is merged into Stats`);
   assert.ok(!advancedSubgroups(rows, 'Progression').some(group => group.id === 'Stats & resources'));
@@ -603,7 +646,7 @@ test('Stats is the one menu for each trait: formulas, hand rules, ratings and th
 });
 
 test('each Stats subsection is one unbroken run, so its heading is drawn once', async () => {
-  const { WITHOUT_RATINGS, DRAW_FALLBACK } = await import('../src/ui/models/AdvancedSettingsGroups.js');
+  const { WITHOUT_RATINGS } = await import('../src/ui/models/AdvancedSettingsGroups.js');
   const topics = advancedSubgroups(categoryHandler('Advanced').rows, 'Stats');
   const runsOf = (group) => group.rows.map(statsSection).filter((section, index, all) => index === 0 || section !== all[index - 1]);
   for (const group of topics) {
@@ -611,11 +654,12 @@ test('each Stats subsection is one unbroken run, so its heading is drawn once', 
     assert.equal(new Set(runs).size, runs.length, `${group.id}: ${runs.join(' / ')}`);
   }
   const of = (id) => runsOf(topics.find(group => group.id === id));
-  assert.deepEqual(of('Draw & hand'), ['Starting hand', 'Turn draws', 'Hand capacity', 'Retention & discards', DRAW_FALLBACK]);
-  assert.deepEqual(of('HP'), ['Formula', 'Level growth']);
+  assert.deepEqual(of('Draw & hand'), ['Starting hand', 'Turn draws', 'Hand capacity', 'Retention & discards']);
+  // One editor per row: Per level sits in the row's own Formula run.
+  assert.deepEqual(of('HP'), ['Formula']);
   // The rows a switch turns off come after every row in force.
-  assert.deepEqual(of('Poise'), ['Rating formula', 'Resistance & breaks', WITHOUT_RATINGS]);
-  assert.deepEqual(of('Mana'), ['Formula', 'Level growth', 'Mana cards']);
+  assert.deepEqual(of('Poise'), ['Formula', 'Resistance & breaks', WITHOUT_RATINGS]);
+  assert.deepEqual(of('Mana'), ['Formula', 'Mana cards']);
 });
 
 test('a profile last on a merged tab opens on Stats', () => {
@@ -696,25 +740,33 @@ test('the worked example recomputes from the edited values and shows the whole s
   assert.match(inPlay.subject.label, /under these settings/);
   assert.match(inPlay.examples[0].hint, /run in progress keeps the rules it started with/);
 
-  // Hand rules: every term of the opening hand is on the line.
+  // Hand rules: every term of the opening hand is on the line. Since ruleset 7
+  // the hand counts are stat rows, written term by term exactly as a pool is.
   const hand = statsTopicPreview({
-    'gameConfig.handRules.starting.base': 4,
-    'gameConfig.handRules.starting.baseline': 5,
-    'gameConfig.handRules.starting.pointsPerCard': 2,
+    'gameConfig.derivedStatRules.rules.openingHand.base': 4,
+    'gameConfig.derivedStatRules.rules.openingHand.intelligence': 0.25,
     // Fill mode, set here: the stock draw is now a fixed count, and the line
     // under test is fill's ceiling.
     'gameConfig.handRules.drawMode': 'fill',
   }, 'Draw & hand', { intelligence: 9 });
   const opening = hand.examples[0].lines[0];
-  assert.equal(opening.total, 6);
-  assert.match(opening.expression, /4 base \+ 2 extra cards \(INT 9 − 5, ÷ 2, whole cards only\)/);
-  assert.match(hand.examples[1].legacy, /LAN/, 'the Draw conversion says who still uses it');
+  // The shared opening-hand row counts the points above 1 (its
+  // `attributeBaseline`, #1294), and says so: 4 + floor((9 − 1) × 0.25) = 6.
+  assert.equal(opening.total, 4 + Math.floor((9 - 1) * 0.25));
+  assert.match(opening.expression, /^4 base \+ INT \(9 − 1\) × 0\.25 → 2/);
+  // The legacy Draw conversion (co-op and older fights) is gone: the Draw /
+  // turn row IS the draw, so the topic shows the one hand example.
+  assert.deepEqual(hand.examples.map(entry => entry.kind), ['hand']);
   assert.equal(hand.examples[0].lines[1].label, 'Each turn, at most', 'filling to capacity is a ceiling, not a promise');
+  // Fill's ceiling is the Hand size row: 7 base + floor((INT 9 − 1) × 0.2) = 8.
+  assert.equal(hand.examples[0].lines[1].total, 7 + Math.floor((9 - 1) * 0.2));
+  assert.equal(hand.examples[0].lines[2].label, 'Hand size');
+  assert.match(hand.examples[0].lines[2].expression, /^7 base \+ INT \(9 − 1\) × 0\.2 → 1$/);
   assert.match(statsTopicPreview({ 'gameConfig.handRules.reshuffle': false }, 'Draw & hand').examples[0].lines[1].expression, /not reshuffled/);
   const fixed = statsTopicPreview({
     'gameConfig.handRules.drawMode': 'fixed',
-    'gameConfig.handRules.turn.base': 10,
-    'gameConfig.handRules.capacity.base': 5,
+    'gameConfig.derivedStatRules.rules.draw.base': 10,
+    'gameConfig.derivedStatRules.rules.handSize.base': 5,
   }, 'Draw & hand', { intelligence: 1 });
   assert.equal(fixed.examples[0].lines[1].total, 5, 'a fixed draw never shows more than capacity allows');
   assert.match(fixed.examples[0].lines[1].expression, /limited to capacity 5/);
@@ -722,7 +774,7 @@ test('the worked example recomputes from the edited values and shows the whole s
     'gameConfig.handRules.drawMode': 'fixed', 'gameConfig.handRules.promptDiscard': true, 'gameConfig.handRules.replaceDiscards': true,
   }, 'Draw & hand');
   assert.match(replacing.examples[0].lines[1].label, /before replacements/, 'a replaced discard can draw past the base amount');
-  const deepSettings = { 'gameConfig.handRules.starting.base': 20, 'gameConfig.handRules.starting.maximum': 30, 'gameConfig.handRules.capacity.base': 20 };
+  const deepSettings = { 'gameConfig.derivedStatRules.rules.openingHand.byClass.reaver.base': 20, 'gameConfig.derivedStatRules.rules.openingHand.max': 30, 'gameConfig.derivedStatRules.rules.handSize.base': 20 };
   const deep = statsTopicPreview(deepSettings, 'Draw & hand');
   assert.equal(deep.examples[0].lines[0].total, born('reaver', deepSettings).deck.length, 'an opening hand cannot exceed the starting deck');
   // `startingDeckSize` budgets only filler; bound cards ride on top, so the
@@ -733,20 +785,24 @@ test('the worked example recomputes from the edited values and shows the whole s
   assert.equal(statsTopicPreview(tinyBudget, 'Draw & hand').examples[0].lines[0].total, dealt, 'the cap is the dealt deck, not the filler budget');
 
   // Ratings: the same receipt combat uses, written term by term like a pool.
-  const poise = statsTopicPreview({ 'gameConfig.combatRatings.multiplier': 2 }, 'Poise', { strength: 3, constitution: 2 });
-  assert.equal(poise.examples[0].lines[0].total, 1 + Math.floor((Math.floor(3 * 0.5) + 2) * 2));
-  assert.match(poise.examples[0].lines[0].expression, /STR 3 × 0\.5 → 1 \+ CON 2 × 1 → 2/);
+  // There is no global multiplier since ruleset 7; a row's own weight is the
+  // edit, and with ratings on Poise is that ONE row (no second, legacy line).
+  const poise = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.poise.constitution': 2 }, 'Poise', { strength: 3, constitution: 2 });
+  assert.deepEqual(poise.examples.map(entry => entry.kind), ['rating']);
+  assert.equal(poise.examples[0].lines[0].total, 1 + Math.floor(3 * 0.5) + Math.floor(2 * 2));
+  assert.match(poise.examples[0].lines[0].expression, /^1 base \+ STR 3 × 0\.5 → 1 \+ CON 2 × 2 → 4/);
+  assert.doesNotMatch(poise.examples[0].lines[0].expression, /all ratings/);
   // A starting relic's rating bonus is in the rating a new character has
   // before equipment, as combat's receipt adds it (Codex, #1252).
   // AR is pinned to STR × 0.5 here so the attribute half of the sum is known;
   // the stock AR row now reads every attribute.
   const relicAr = statsTopicPreview({
     'gameConfig.combatRatings.bonuses.relic:forsakenMedallion.ar': 5,
-    'gameConfig.combatRatings.ratings.ar.strength': 0.5,
-    'gameConfig.combatRatings.ratings.ar.dexterity': 0,
-    'gameConfig.combatRatings.ratings.ar.constitution': 0,
-    'gameConfig.combatRatings.ratings.ar.wisdom': 0,
-    'gameConfig.combatRatings.ratings.ar.intelligence': 0,
+    'gameConfig.derivedStatRules.rules.ar.strength': 0.5,
+    'gameConfig.derivedStatRules.rules.ar.dexterity': 0,
+    'gameConfig.derivedStatRules.rules.ar.constitution': 0,
+    'gameConfig.derivedStatRules.rules.ar.wisdom': 0,
+    'gameConfig.derivedStatRules.rules.ar.intelligence': 0,
     settingsStatsExampleClass: 'reaver',
   }, 'Attack rating (AR)').examples[0].lines[0];
   assert.equal(relicAr.total, Math.floor(3 * 0.5) + 5);
@@ -767,15 +823,18 @@ test('a refused configuration is named, and the example shows the rules a run ke
   // A refusal on another tab no longer blanks every example.
   const flasks = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, settingsStatsExampleClass: 'reaver' }, 'HP');
   assert.match(flasks.refused, /flask/i);
-  // Hand rules are applied from settings regardless, and the notice says so
-  // rather than claiming every rule shown is authored (Codex, #1252).
-  assert.match(flasks.refused, /a valid group applies as set/);
-  // A refused hand group itself falls back to its defaults, and the notice
-  // says that too (Codex, #1252).
-  const badHand = statsTopicPreview({ 'gameConfig.handRules.starting.minimum': 9, 'gameConfig.handRules.starting.maximum': 2 }, 'Draw & hand');
-  assert.match(badHand.refused, /refused uses its defaults/);
-  const hand = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.handRules.starting.base': 8, 'gameConfig.handRules.capacity.base': 10 }, 'Draw & hand', { intelligence: 1 });
-  assert.equal(hand.examples[0].lines[0].total, 8, 'the edited hand rule is the one a fight uses');
+  // The hand's behaviour options are applied from settings regardless, and
+  // the notice says so rather than claiming every rule shown is authored
+  // (Codex, #1252).
+  assert.match(flasks.refused, /behaviour options \(retain, draw mode, discards\) are applied on their own/);
+  // Since ruleset 7 the hand COUNTS are stat rows, snapshotted at the run's
+  // birth like every other row: a row whose bounds cross refuses the
+  // configuration by name, and the example shows the authored row a run keeps.
+  const badHand = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.openingHand.min': 9, 'gameConfig.derivedStatRules.rules.openingHand.max': 2 }, 'Draw & hand');
+  assert.match(badHand.refused, /openingHand\.min \(9\) must stay at or below/);
+  const hand = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.derivedStatRules.rules.openingHand.base': 8, 'gameConfig.derivedStatRules.rules.handSize.base': 10 }, 'Draw & hand', { intelligence: 1 });
+  // Authored opening hand at INT 1, no class: 4 base + floor((1 − 1) × 0.5) = 4.
+  assert.equal(hand.examples[0].lines[0].total, 4, 'a refused configuration\'s hand rows never reach a run, so the example shows the authored row');
   assert.equal(flasks.examples[0].kind, 'derived');
   assert.equal(flasks.examples[0].lines[0].total, authored('reaver').maxHp);
   assert.match(statsTopicPreviewHtml({ 'gameConfig.balance.flaskCapacity': 9 }, 'HP'), /set-example-refused/);
@@ -797,10 +856,11 @@ test('a refused configuration is named, and the example shows the rules a run ke
   // Ratings too: a refused file's rating overrides never reach a fight, and
   // the authored content a refused configuration falls back to hands a fight
   // no rating rules at all (main.js ratingsRules), so the example says ratings
-  // are off rather than applying the rejected multiplier (Codex, #1252).
-  const ar = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.combatRatings.multiplier': 2 }, 'Attack rating (AR)', { strength: 6 });
+  // are off rather than applying the rejected AR weight (Codex, #1252).
+  const ar = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.derivedStatRules.rules.ar.strength': 2 }, 'Attack rating (AR)', { strength: 6 });
   assert.equal(ar.examples[0].off, true);
-  assert.doesNotMatch(ar.examples[0].lines[0].expression, /× 2 all ratings/);
+  assert.doesNotMatch(ar.examples[0].lines[0].expression, /STR 6 × 2 /);
+  assert.match(ar.examples[0].lines[0].expression, /STR 6 × 0\.75 → 4/, 'the authored AR row');
 });
 
 test('the example shows what a run is born with at the edges', async () => {
@@ -825,7 +885,13 @@ test('the example shows what a run is born with at the edges', async () => {
   assert.equal(poise.lines.at(-1).label, 'Poise in combat');
   assert.equal(poise.lines.at(-1).total, playerPoiseThresholdReceipt(registries, run).value);
   assert.match(poise.lines.at(-1).expression, /from armour/);
-  // A typed weight is shown as the number that was multiplied.
-  const eighth = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.draw.perLevel': 0.125 }, 'Draw & hand', { intelligence: 1 }, 9);
-  assert.match(eighth.examples[1].lines[0].expression, /8 levels × 0\.125 → 1/);
+  // A typed weight is shown as the number that was multiplied. (This read
+  // the legacy Draw example until ruleset 7 retired it; a pool shows the
+  // growth term the same way, and the hand's Draw / turn line adds it.)
+  const eighth = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.stamina.perLevel': 0.125 }, 'Stamina', { constitution: 1 }, 9);
+  assert.match(eighth.examples[0].lines[0].expression, /8 levels × 0\.125 → 1/);
+  const drawGrowth = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.draw.perLevel': 0.125 }, 'Draw & hand', { intelligence: 1 }, 9);
+  // Stock Draw / turn at INT 1, level 9: 2 base + nothing above 4 + floor(8 × 0.125) = 3.
+  assert.equal(drawGrowth.examples[0].lines[1].total, 3);
+  assert.match(drawGrowth.examples[0].lines[1].expression, /^2 base \+ INT 1 \(none above 4\) × 0\.2 → 0 \+ 1 from level/);
 });
