@@ -11,7 +11,7 @@ import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
 import { SEED_KEY } from '../../model/settingsDefaults.js';
 import { saveJsonFile } from '../services/saveJsonFile.js';
 import {
-  SYNC_STORAGE, syncConfig, syncConfigProblems, profileKeys, profileText, profileChanges, profileDiff, promotedValue,
+  SYNC_STORAGE, syncConfig, syncConfigProblems, profileKeys, profileText, profileChanges, profileDiff, promotedValue, promotionProblem,
   fetchProfile, pushProfile, profileWebUrl, listProfiles, profileName, profilePath, normalizeProfileName, DEVICE_KEYS,
 } from '../../model/settingsSync.js';
 import { esc } from './tooltip.js';
@@ -60,6 +60,10 @@ const PROMOTED = SETTINGS_DEFAULTS.values || {};
  */
 export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
   const diff = profileDiff(settings, parsed, promoted);
+  // Checked with the values it will really write — this build's promotion in
+  // place of the profile's older one — before anything moves.
+  const problem = promotionProblem(contentBundle, settings, Object.fromEntries(diff.map(({ key, to }) => [key, to])));
+  if (problem) throw new Error(`Nothing was loaded: with this build's promoted defaults in place, ${problem} Change that setting here or save the profile again, then load it.`);
   const changed = {};
   const had = {};
   const seedBefore = settings[SEED_KEY];
@@ -449,7 +453,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       // A mistyped field is refused by name, never swapped for the default
       // location (a Save there would overwrite the default profile).
       const problems = syncConfigProblems(raw);
-      if (problems.length) { status(`Not saved: check ${problems.join(', ')}. Profiles live under settings-profiles/ on a branch other than dev, test, release or main.`); return; }
+      if (problems.length) { status(`Not saved: check ${problems.join(', ')}. Profiles live under settings-profiles/ on a branch other than dev, test, release or main, named as git allows (no leading or trailing / or ., no .lock ending).`); return; }
       const next = syncConfig(raw);
       if (!write(SYNC_STORAGE.config, JSON.stringify(next))) { status(STORAGE_REFUSED); return; }
       cfg = next;

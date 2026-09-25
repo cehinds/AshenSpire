@@ -41,7 +41,7 @@ import { pageDebug } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
 import { SEED_KEY, seedAfterChange } from '../../model/settingsDefaults.js';
 import { renderSettingsSync } from '../components/settingsSync.js';
-import { importOwnership } from '../../model/settingsSync.js';
+import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
 import { gateOpen, ownOn } from '../../model/settingOverrides.js';
 import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 import { saveAdvancedConfigFile, saveJsonFile } from '../services/saveJsonFile.js';
@@ -3207,6 +3207,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         if (!container.isConnected) return;
         // A sync profile loaded by hand keeps the ownership it records.
         const saved = { ...changes, ...importOwnership(text, changes, settings, buildPromotion()) };
+        const problem = promotionProblem(contentBundle, settings, saved);
+        if (problem) throw new Error(`with this build's promoted defaults in place, ${problem} Nothing was imported.`);
         const result = onChange(saved);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
         Object.assign(settings, saved);
@@ -3710,6 +3712,8 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
       const changes = parseAdvancedConfigFile(text, contentBundle, settings, ROWS, warnings);
       // A sync profile loaded by hand keeps the ownership it records.
       const saved = { ...changes, ...importOwnership(text, changes, settings, buildPromotion()) };
+      const problem = promotionProblem(contentBundle, settings, saved);
+      if (problem) throw new Error(`with this build's promoted defaults in place, ${problem} Nothing was imported.`);
       if (onChange(saved)?.ok === false) throw new Error('Settings could not be saved.');
       Object.assign(settings, saved);
       dropUndoOffer(); // an imported configuration replaces what an Undo was taken from

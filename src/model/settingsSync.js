@@ -23,7 +23,7 @@
 // owns the buttons; tests own a fake fetch.
 
 import { SEED_KEY } from './settingsDefaults.js';
-import { advancedConfigExport, parseAdvancedConfigFile, ADVANCED_CONFIG_PREFIX } from './advancedConfig.js';
+import { advancedConfigExport, advancedConfigProblems, parseAdvancedConfigFile, ADVANCED_CONFIG_PREFIX } from './advancedConfig.js';
 
 export const SYNC_DEFAULTS = Object.freeze({
   owner: 'cehinds',
@@ -86,14 +86,29 @@ const SAFE_PATH = /^settings-profiles\/[A-Za-z0-9._/-]+\.json$/;
 // A profile never lands on a branch that builds or ships.
 const PROTECTED_BRANCHES = new Set(['dev', 'test', 'release', 'main']);
 
+/**
+ * validBranchName(name) → true when git would accept `name` as a branch
+ * (`git check-ref-format --branch`): no empty, `.`-led or `.lock`-ending
+ * component, no leading, trailing or doubled `/`, no trailing `.`, no `..` or
+ * `@{`, not `@`, not `-`-led, and no space, control character or any of
+ * ~ ^ : ? * [ \. SAFE_BRANCH alone let `foo/`, `/foo`, `.foo` and `foo.lock`
+ * through, and every request to GitHub then failed on them.
+ */
+export function validBranchName(name) {
+  if (typeof name !== 'string' || !name || name === '@' || name.startsWith('-')) return false;
+  if (/[\x00-\x20\x7f~^:?*[\\]/.test(name) || name.includes('..') || name.includes('@{')) return false;
+  if (name.startsWith('/') || name.endsWith('/') || name.endsWith('.')) return false;
+  return name.split('/').every((part) => part && !part.startsWith('.') && !part.endsWith('.lock'));
+}
+
 /** syncConfig(raw) → a complete, validated config; bad fields fall back. */
 export function syncConfig(raw = {}) {
-  const pick = (key, test) => (typeof raw?.[key] === 'string' && test.test(raw[key]) && !raw[key].includes('..') ? raw[key] : SYNC_DEFAULTS[key]);
+  const pick = (key, test, valid = () => true) => (typeof raw?.[key] === 'string' && test.test(raw[key]) && !raw[key].includes('..') && valid(raw[key]) ? raw[key] : SYNC_DEFAULTS[key]);
   return {
     owner: pick('owner', SAFE_SEGMENT),
     repo: pick('repo', SAFE_SEGMENT),
-    branch: PROTECTED_BRANCHES.has(raw?.branch) ? SYNC_DEFAULTS.branch : pick('branch', SAFE_BRANCH),
-    base: pick('base', SAFE_BRANCH),
+    branch: PROTECTED_BRANCHES.has(raw?.branch) ? SYNC_DEFAULTS.branch : pick('branch', SAFE_BRANCH, validBranchName),
+    base: pick('base', SAFE_BRANCH, validBranchName),
     path: pick('path', SAFE_PATH),
   };
 }
@@ -148,6 +163,27 @@ export function profileText(settings, keys, build = {}) {
   const exported = new Set([...keys, ...Object.keys(settings || {}).filter((key) => key.startsWith(ADVANCED_CONFIG_PREFIX))]);
   const promotionOwned = [...exported].filter((key) => settings?.[key] !== undefined && Object.hasOwn(record, key) && record[key] === settings[key]).sort();
   return JSON.stringify({ ...file, promotionOwned }, null, 2) + '\n';
+}
+
+/**
+ * promotionProblem(bundle, settings, changed) → the first rule the settings
+ * would break once `changed` is written (undefined = cleared), or null.
+ *
+ * A profile's values were checked as a set when it was read. Putting this
+ * build's promoted value in place of a promotion-owned one can split a pair
+ * the file kept whole — a promoted energy minimum of 10 against the player's
+ * own maximum of 6 — so the load is checked again with the values it will
+ * really write, and refused whole rather than saved broken. (Keeping the
+ * file's value for that key instead would quietly give the promotion's key an
+ * old value it then owns, and the next start's seeding would split the pair
+ * anyway.)
+ */
+export function promotionProblem(bundle, settings, changed) {
+  const effective = { ...(settings || {}) };
+  for (const [key, value] of Object.entries(changed || {})) {
+    if (value === undefined) delete effective[key]; else effective[key] = value;
+  }
+  return advancedConfigProblems(bundle, effective)[0] || null;
 }
 
 /**

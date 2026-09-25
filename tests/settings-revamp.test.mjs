@@ -851,3 +851,49 @@ test('a sync profile loaded by hand with Load settings keeps the ownership it re
   assert.equal((screen.match(/const saved = \{ \.\.\.changes, \.\.\.importOwnership\(text, changes, settings, buildPromotion\(\)\) \};/g) || []).length, 2, 'both Load settings doors apply it');
   assert.equal((screen.match(/Object\.assign\(settings, saved\);\s*dropUndoOffer\(\);/g) || []).length, 2, 'and still start a new Undo generation');
 });
+
+test('a branch or base git would refuse is refused by name, not saved', async () => {
+  const { syncConfigProblems, validBranchName } = await import('../src/model/settingsSync.js');
+  for (const bad of ['foo/', '/foo', '.foo', 'foo.lock', 'a/.b', 'a/b.lock', 'foo.', 'a//b', 'a..b', '@', '-foo', 'a@{b', 'a b', 'a~b', 'a^b', 'a:b', 'a?b', 'a*b', 'a[b', 'a\\b', 'a\u0001b']) {
+    assert.equal(validBranchName(bad), false, `${JSON.stringify(bad)} is not a git branch name`);
+    assert.deepEqual(syncConfigProblems({ branch: bad }), ['branch'], `branch ${JSON.stringify(bad)} refused`);
+    assert.deepEqual(syncConfigProblems({ base: bad }), ['base'], `base ${JSON.stringify(bad)} refused`);
+  }
+  for (const good of ['settings-sync', 'profiles/desk', 'v1.2', 'a.b/c-d_e']) {
+    assert.equal(validBranchName(good), true, good);
+    assert.deepEqual(syncConfigProblems({ branch: good, base: good === 'settings-sync' ? 'dev' : good }), [], good);
+  }
+});
+
+test('a load whose promoted values would split a pair the file kept whole is refused, changing nothing', async () => {
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const { importOwnership, promotionProblem } = await import('../src/model/settingsSync.js');
+  const { parseAdvancedConfigFile } = await import('../src/model/advancedConfig.js');
+  const min = 'gameConfig.derivedStatRules.rules.energy.min';
+  const max = 'gameConfig.derivedStatRules.rules.energy.max';
+  // Saved with min 5 (the promotion's then) and max 6 (the player's): a valid pair.
+  const parsed = { changes: { [min]: 5, [max]: 6 }, cleared: [], promotionOwned: [min] };
+  const device = { musicVolume: 40, [SEED_KEY]: { musicVolume: 40 } };
+  const snapshot = JSON.stringify(device);
+  const calls = [];
+  // This build promotes min 10: 10/6 would be broken.
+  assert.throws(() => applyProfile(device, (c) => { calls.push(c); return { ok: true }; }, parsed, { [min]: 10 }),
+    /Nothing was loaded: with this build's promoted defaults in place, .*energy\.min \(10\) must stay at or below .*energy\.max \(6\)/);
+  assert.equal(calls.length, 0, 'nothing saved');
+  assert.equal(JSON.stringify(device), snapshot, 'nothing moved');
+  // A promotion that keeps the pair whole still loads.
+  assert.equal(applyProfile(device, () => ({ ok: true }), parsed, { [min]: 4 }), 2);
+  assert.equal(device[min], 4);
+  // The same file loaded by hand: the doors check the values they will save.
+  const rows = settingsRows();
+  const text = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', statRows: 7, overrides: { [min]: 5, [max]: 6 }, promotionOwned: [min] });
+  const deviceB = {};
+  const changes = parseAdvancedConfigFile(text, contentBundle, deviceB, rows, []);
+  const saved = { ...changes, ...importOwnership(text, changes, deviceB, { [min]: 10 }) };
+  assert.match(promotionProblem(contentBundle, deviceB, saved), /energy\.min \(10\) must stay at or below/);
+  assert.equal(promotionProblem(contentBundle, deviceB, changes), null, 'the file as written is fine');
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.equal((screen.match(/const problem = promotionProblem\(contentBundle, settings, saved\);\s*if \(problem\) throw new Error\(/g) || []).length, 2, 'both Load settings doors refuse it before saving');
+});
