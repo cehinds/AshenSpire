@@ -279,7 +279,9 @@ and priced by ONE function (`statRowValue`, `model/derivedStats.js`):
 `value = clamp(base + Σ floor(weight × attribute) + floor(perLevel × (level − 1)), min, max)`
 
 Each attribute term is floored on its own, so a weight of 0.125 adds nothing until that
-attribute reaches 8. Equipment, relics and statuses are external addends on top (armour
+attribute reaches 8. Owner decision, 2026-09-24: this per-attribute rounding is kept
+deliberately; rounding the total was declined (so Mana is 4, not 6, at every attribute 5).
+Equipment, relics and statuses are external addends on top (armour
 `poiseThreshold`, item attack/defence ratings, relic adds, HP flat bonuses), as before. The
 owner's budget: a row's attribute weights sum to about 2; Mana's and Stamina's to 1.
 

@@ -8,7 +8,7 @@ import { equippedPieces, runMods } from './loadout.js';
 import { passiveSum } from './registries.js';
 import { resolveUpgradedRelic } from './itemUpgrades.js';
 import { ratingReceipt } from './combatRatings.js';
-import { ratingStatRows, ratingsConfigFor, statRow } from './statRows.js';
+import { ratingStatRows, ratingsConfigFor, readsLegacyStatHomes, statRow } from './statRows.js';
 import { mechanics } from '../framework/data/mechanics.js';
 
 // The labels and the order used to be a frozen map right here — a second home
@@ -264,5 +264,11 @@ export function statProjection(registries, run) {
   });
   // The rating rows this run reads (its own, or its retired formula restated),
   // so an attribute card names the weights its fights actually use.
-  return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived, ratingRows: ratingStatRows(registries, run) };
+  // A RUN BORN BEFORE RULESET 7 has no openingHand/handSize rows in its
+  // snapshot: its fights deal by its retired hand groups, restated as rows
+  // here so its attribute cards name the scaling combat uses (Codex, #1296).
+  const handRows = readsLegacyStatHomes(run)
+    ? { openingHand: statRow(registries, run, 'openingHand'), handSize: statRow(registries, run, 'handSize') }
+    : null;
+  return { classId: run.class, rulesetVersion: snapshot.rulesetVersion, attributes, derived, ratingRows: ratingStatRows(registries, run), handRows };
 }
