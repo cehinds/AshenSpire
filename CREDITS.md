@@ -127,9 +127,13 @@ row in the table below — no game-code changes.
 
 ## Remaining asset directories (2026-09-24)
 
-These directories had no row until `node tools/credits-check.mjs` required
-one for every child directory of `assets/` and `music/` and for the mobile twin
-tree. Each row gives only what the repository records.
+These directories had no attribution row until `node tools/credits-check.mjs`
+required one for every child directory of `assets/` and `music/` and for the
+mobile twin tree. The check counts only a table row whose first cell names the
+path and whose Source and Rights cells are filled; a path named in prose does
+not count. Several rows below restate, in table form, what a prose section of
+this file already records. Each row gives only what the repository records, and
+says so where a fact is not recorded.
 
 | Assets | Source | Rights |
 |---|---|---|
@@ -139,6 +143,20 @@ tree. Each row gives only what the repository records.
 | `assets/defeated-poses/`: 49 grounded defeated frames and `manifest.json` | AI-generated from the project's approved enemy idle and painted outfit art; the prompt is in `art/defeated-poses/generation.json`, the 49 source sheets are in `art/defeated-poses/sheets/`, and `art/defeated-poses/build.mjs` exports them (added 2026-09-08). The record does not name the image-generation tool | Project-owned AI-generated artwork; no third-party asset license claimed |
 | `assets/ui/flasks/flask-{crimson,azure}.webp` | Added by the owner on 2026-08-12 as PNGs and converted to WebP on 2026-09-10. The commits record no source or generator | **Provenance not recorded. The owner must confirm it before release** |
 | `assets-mobile/` | Downscaled twin of `assets/`, produced by `tools/mobile-art.mjs` for the mobile build | Each file has the same source and rights as its `assets/` original |
+| `assets/classes/` | Class-art working documents, JSON manifests and scripts written in this repository (the successor contract, look reference, crop receipts and their checkers). The directory holds no image, audio or font files | Project-owned; MIT with the code ([LICENSE](LICENSE)) |
+| `assets/relics/`: twelve 256px painted relic illustrations | AI-generated with built-in OpenAI imagegen; sources, exact prompts and export manifests in `art/relic-icons-pack-01/`, `-02/` and `-03/` (see *Painted relic illustrations* above) | Project-owned AI-generated artwork; no third-party artwork used and no third-party license claimed |
+| `assets/enemies-unity/`: twelve painted enemy frames and `provenance.json` | Unchanged AI-generated frames from the [AshenSpire-Unity](https://github.com/cehinds/AshenSpire-Unity/tree/130d7c5/Unity/Assets/AshenSpire/Resources/Art) fork, which generated them with its built-in image-generation tool; extraction manifest in `provenance.json` (see *Painted enemy sprites from the Unity fork* above) | Project-owned AI-generated artwork |
+| `assets/enemies-expansion/`: fourteen expansion portraits | Generated for AshenSpire with ChatGPT Codex in September 2026, in the Unity fork's painted style (see *Code* below) | Project-generated artwork, CC0 |
+| `assets/enemy-poses/`: seven replacement idle and 33 attack sprites, plus 26 unchanged idle frames | Generated with built-in image_gen from this project's enemy artwork; sheets, prompts and records in `art/enemy-poses/` (2026-09-07). The 26 unchanged idle frames are copies of their existing credited sources | **Rights not recorded** for the generated sprites: neither this file nor `art/enemy-poses/` states a licence. The owner must confirm them before release |
+| `assets/enemy-states/`: 231 enemy combat-state sprites | Generated with built-in image_gen from the project's approved enemy idle sprites; sheets and generation records in `art/enemy-states/` (2026-09-08) | **Rights not recorded**: neither this file nor `art/enemy-states/` states a licence. The owner must confirm them before release |
+| `assets/environments/*-combat.webp`: five combat-field atlases (twenty locations) | Generated with built-in OpenAI imagegen from the project's regional concept boards; sources and prompt brief in `art/environments/combat-fields/` (see *Combat field backgrounds* below); encoded by `tools/environment-art-build.mjs` | Project-owned AI-generated artwork, CC0-1.0 |
+| `assets/environments/*-map.webp`, `assets/environments/*-world.webp`, `assets/environments/fractured-realm-square.webp`: regional and world maps | Produced with the built-in image generator, per `art/environments/README.md` and `art/environments/world-maps.md`; masters in `art/environments/maps/` and `art/environments/worlds/`; encoded by `tools/environment-art-build.mjs` | Original generated art; no third-party map or screenshot shipped. No licence is recorded |
+| `assets/environments/legacy/`: three dungeon maps and 24 floor/background plates | Generated with OpenAI imagegen; sources, prompts and provenance in `art/webp-maps-2026-09-19/` (see *Playable legacy dungeon environments* below) | Original artwork generated for AshenSpire; no third-party asset license claimed |
+| `assets/environments/crownfall-landmark.webp`, `assets/environments/crownfall-local.webp` | Encoded by `tools/environment-art-build.mjs` from `art/environments/locations/`, added in commit bfc28f1f6 (2026-09-08). Neither the commit nor any file records a source or generator | **Provenance not recorded. The owner must confirm it before release** |
+| `assets/prologue/`: opening-sequence paintings, class adventurers and the starting-path plates | Opening sequence, class adventurers and class-memory revision: generated with OpenAI's built-in Image Generation tool; prompts and provenance in `art/prologue-2026-09-19/` and `art/prologue-herald-summit/` (see *Opening sequence art* and *Burning and class-memory opening revision* above). Starting-path plates: generated, or edited from existing journey art, and refined with the built-in image tool; prompts in `art/prologue-path-art/` | Original artwork for AshenSpire; no third-party artwork used and no third-party license claimed |
+| `assets/readiness-poses/`: twelve readiness and twelve transition pose illustrations | Generated with OpenAI imagegen from the project's painted outfit art; sources and prompts in `art/readiness-poses/` (see *Combat readiness poses* and *Readiness transition sprites* below) | Project-owned, CC0-1.0 |
+| `music/boss/ashen_boss_1.mp3` | Generated with ElevenLabs Music (`eleven_music_v2`); prompt in `music/PROMPTS.md` (see *Generated music score* below) | Original AI-generated recording for AshenSpire; no third-party recordings used and no third-party asset license claimed |
+| `music/victory/ashen_victory_1.mp3` | Generated with ElevenLabs Music (`eleven_music_v2`), the first 61 s of a 180 s render faded out with ffmpeg; prompt in `music/PROMPTS.md` (see *Generated music score* below) | Original AI-generated recording for AshenSpire; no third-party recordings used and no third-party asset license claimed |
 
 ## Code
 
