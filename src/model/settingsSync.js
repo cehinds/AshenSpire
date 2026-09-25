@@ -22,7 +22,8 @@
 // Everything here is plain functions over (config, token, fetch). The screen
 // owns the buttons; tests own a fake fetch.
 
-import { advancedConfigExport, parseAdvancedConfigFile, ADVANCED_CONFIG_PREFIX } from './advancedConfig.js';
+import { SEED_KEY, sameSetting } from './settingsDefaults.js';
+import { advancedConfigExport, advancedConfigProblems, parseAdvancedConfigFile, ADVANCED_CONFIG_PREFIX } from './advancedConfig.js';
 
 export const SYNC_DEFAULTS = Object.freeze({
   owner: 'cehinds',
@@ -85,16 +86,42 @@ const SAFE_PATH = /^settings-profiles\/[A-Za-z0-9._/-]+\.json$/;
 // A profile never lands on a branch that builds or ships.
 const PROTECTED_BRANCHES = new Set(['dev', 'test', 'release', 'main']);
 
+/**
+ * validBranchName(name) → true when git would accept `name` as a branch
+ * (`git check-ref-format --branch`): no empty, `.`-led or `.lock`-ending
+ * component, no leading, trailing or doubled `/`, no trailing `.`, no `..` or
+ * `@{`, not `@` or `HEAD`, not `-`-led, and no space, control character or any of
+ * ~ ^ : ? * [ \. SAFE_BRANCH alone let `foo/`, `/foo`, `.foo` and `foo.lock`
+ * through, and every request to GitHub then failed on them.
+ */
+export function validBranchName(name) {
+  if (typeof name !== 'string' || !name || name === '@' || name === 'HEAD' || name.startsWith('-')) return false;
+  if (/[\x00-\x20\x7f~^:?*[\\]/.test(name) || name.includes('..') || name.includes('@{')) return false;
+  if (name.startsWith('/') || name.endsWith('/') || name.endsWith('.')) return false;
+  return name.split('/').every((part) => part && !part.startsWith('.') && !part.endsWith('.lock'));
+}
+
 /** syncConfig(raw) → a complete, validated config; bad fields fall back. */
 export function syncConfig(raw = {}) {
-  const pick = (key, test) => (typeof raw?.[key] === 'string' && test.test(raw[key]) && !raw[key].includes('..') ? raw[key] : SYNC_DEFAULTS[key]);
+  const pick = (key, test, valid = () => true) => (typeof raw?.[key] === 'string' && test.test(raw[key]) && !raw[key].includes('..') && valid(raw[key]) ? raw[key] : SYNC_DEFAULTS[key]);
   return {
     owner: pick('owner', SAFE_SEGMENT),
     repo: pick('repo', SAFE_SEGMENT),
-    branch: PROTECTED_BRANCHES.has(raw?.branch) ? SYNC_DEFAULTS.branch : pick('branch', SAFE_BRANCH),
-    base: pick('base', SAFE_BRANCH),
+    branch: PROTECTED_BRANCHES.has(raw?.branch) ? SYNC_DEFAULTS.branch : pick('branch', SAFE_BRANCH, validBranchName),
+    base: pick('base', SAFE_BRANCH, validBranchName),
     path: pick('path', SAFE_PATH),
   };
+}
+
+/**
+ * syncConfigProblems(raw) → the fields syncConfig would replace with a default,
+ * by name ([] when every field stands). A typed location is refused rather
+ * than quietly swapped for the default profile, which a Save would overwrite.
+ * An empty field is not a problem: it asks for the default.
+ */
+export function syncConfigProblems(raw = {}) {
+  const cfg = syncConfig(raw);
+  return Object.keys(cfg).filter((key) => typeof raw?.[key] === 'string' && raw[key] !== '' && raw[key] !== cfg[key]);
 }
 
 const api = (cfg) => `https://api.github.com/repos/${cfg.owner}/${cfg.repo}`;
@@ -125,7 +152,72 @@ export function profileKeys(rows, options = {}) {
 
 /** profileText(settings, keys, build) → the JSON a profile file holds. */
 export function profileText(settings, keys, build = {}) {
-  return advancedConfigExport(settings, { ...build, profile: true }, keys);
+  const text = advancedConfigExport(settings, { ...build, profile: true }, keys);
+  // Which of these values are the owner's promoted defaults rather than the
+  // player's own choice: a device loading the profile takes that over too, so
+  // a later promotion moves exactly what it would have moved here.
+  const record = settings?.[SEED_KEY] && typeof settings[SEED_KEY] === 'object' ? settings[SEED_KEY] : {};
+  const file = JSON.parse(text);
+  // Every key the file carries: the profile's own rows and the gameConfig.*
+  // overrides advancedConfigExport always writes.
+  const exported = new Set([...keys, ...Object.keys(settings || {}).filter((key) => key.startsWith(ADVANCED_CONFIG_PREFIX))]);
+  const promotionOwned = [...exported].filter((key) => settings?.[key] !== undefined && Object.hasOwn(record, key) && sameSetting(record[key], settings[key])).sort();
+  return JSON.stringify({ ...file, promotionOwned }, null, 2) + '\n';
+}
+
+/**
+ * promotionProblem(bundle, settings, changed) → the first rule the settings
+ * would break once `changed` is written (undefined = cleared), or null.
+ *
+ * A profile's values were checked as a set when it was read. Putting this
+ * build's promoted value in place of a promotion-owned one can split a pair
+ * the file kept whole — a promoted energy minimum of 10 against the player's
+ * own maximum of 6 — so the load is checked again with the values it will
+ * really write, and refused whole rather than saved broken. (Keeping the
+ * file's value for that key instead would quietly give the promotion's key an
+ * old value it then owns, and the next start's seeding would split the pair
+ * anyway.)
+ */
+export function promotionProblem(bundle, settings, changed) {
+  const effective = { ...(settings || {}) };
+  for (const [key, value] of Object.entries(changed || {})) {
+    if (value === undefined) delete effective[key]; else effective[key] = value;
+  }
+  return advancedConfigProblems(bundle, effective)[0] || null;
+}
+
+/**
+ * importOwnership(text, changes, settings) → { [SEED_KEY]: record } to save
+ * with a file imported by hand, or {} when ownership is left to the save path.
+ *
+ * A profile downloaded from the sync panel can be loaded with Load settings
+ * too, and it says which of its values are promoted defaults
+ * (`promotionOwned`). The import takes that over for every key it sets, as a
+ * sync load does: a listed key is the promotion's at the file's value (so
+ * seeding moves it on, or back to its code default), any other key it sets is
+ * the player's. A file without the field (an ordinary export, or a profile
+ * from before it) changes nothing here: the save path's pruning applies.
+ * An import only merges, so keys the file leaves out keep their ownership.
+ */
+export function importOwnership(text, changes, settings, promoted = {}) {
+  let listed = null;
+  try { listed = JSON.parse(text)?.promotionOwned; } catch { return {}; }
+  if (!Array.isArray(listed)) return {};
+  const owned = new Set(listed.filter((key) => typeof key === 'string'));
+  const record = settings?.[SEED_KEY] && typeof settings[SEED_KEY] === 'object' ? settings[SEED_KEY] : {};
+  const next = { ...record };
+  const values = {};
+  for (const key of Object.keys(changes || {})) {
+    if (!owned.has(key)) { delete next[key]; continue; }
+    // The promotion's value is THIS build's: one saved under an older
+    // promotion lands at the current one, or at the code default if this build
+    // no longer promotes the key — what seeding would do at the next start.
+    const to = promotedValue(key, promoted);
+    if (changes[key] !== to) values[key] = to;
+    if (to === undefined) delete next[key]; else next[key] = to;
+  }
+  const same = JSON.stringify(Object.entries(next).sort()) === JSON.stringify(Object.entries(record).sort());
+  return same ? values : { ...values, [SEED_KEY]: next };
 }
 
 /**
@@ -144,18 +236,40 @@ export function profileChanges(text, bundle, settings, rows, keys) {
   for (const key of DEVICE_KEYS) if (!owned.has(key)) delete changes[key];
   const cleared = Object.keys(settings || {}).filter((key) => settings[key] !== undefined
     && !(key in changes) && (key.startsWith(ADVANCED_CONFIG_PREFIX) || owned.has(key)));
-  return { changes, cleared, warnings };
+  // Absent in a profile saved before this field existed: then ownership is
+  // left as it is (null), rather than guessed.
+  let promotionOwned = null;
+  try {
+    const listed = JSON.parse(text).promotionOwned;
+    if (Array.isArray(listed)) promotionOwned = listed.filter((key) => typeof key === 'string' && key in changes);
+  } catch { /* parseAdvancedConfigFile already accepted the text */ }
+  return { changes, cleared, warnings, promotionOwned };
 }
 
 /**
- * profileDiff(settings, { changes, cleared }, promoted) → [{ key, from, to }]
+ * promotedValue(key, promoted) → what a promotion-owned key holds in this
+ * build: its current promoted value, or undefined (the code default) when this
+ * build no longer promotes it. A profile saved under an older promotion is
+ * applied at the current one straight away, not only at the next start's
+ * seeding (seedSettingsDefaults), which has already run by then.
+ */
+export function promotedValue(key, promoted = {}) {
+  return Object.hasOwn(promoted, key) ? promoted[key] : undefined;
+}
+
+/**
+ * profileDiff(settings, { changes, cleared, promotionOwned }, promoted) → [{ key, from, to }]
  * that would actually move. A key the profile leaves out goes back to the
  * owner's promoted default when there is one (what Reset and boot use), and is
- * cleared otherwise.
+ * cleared otherwise. A key the profile lists in `promotionOwned` takes this
+ * build's promoted value, not the one it was saved with.
  */
-export function profileDiff(settings, { changes, cleared }, promoted = {}) {
+export function profileDiff(settings, { changes, cleared, promotionOwned }, promoted = {}) {
   const out = [];
-  for (const [key, to] of Object.entries(changes)) {
+  const listed = new Set(Array.isArray(promotionOwned) ? promotionOwned : []);
+  for (const [key, value] of Object.entries(changes)) {
+    // A promotion-owned value lands at this build's promotion (see promotedValue).
+    const to = listed.has(key) ? promotedValue(key, promoted) : value;
     if (settings?.[key] !== to) out.push({ key, from: settings?.[key], to });
   }
   for (const key of cleared) {

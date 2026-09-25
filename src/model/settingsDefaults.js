@@ -9,6 +9,17 @@
 export const SEED_KEY = 'settingsDefaultsSeed';
 
 /**
+ * sameSetting(a, b) → true when two stored values are the same setting value:
+ * numbers within 1e-9 (float noise such as 0.1 + 0.2), anything else by ===.
+ * The ONE comparison for promotion ownership — seeding, pruning, profiles and
+ * Undo all use it, so no path calls a value the player's that seeding still
+ * calls the promotion's.
+ */
+export function sameSetting(a, b) {
+  return typeof a === 'number' && typeof b === 'number' ? Math.abs(a - b) < 1e-9 : a === b;
+}
+
+/**
  * seedSettingsDefaults(settings, defaults) → changes ({} when nothing moves).
  * `defaults` is { digest, values }; `values` are setting keys → values.
  */
@@ -20,7 +31,7 @@ export function seedSettingsDefaults(settings = {}, defaults = { digest: 'none',
   // player left alone) is recorded: a player's own value that happens to match
   // is theirs, and a later promotion must not move it.
   const nextRecord = {};
-  const same = (a, b) => (typeof a === 'number' && typeof b === 'number' ? Math.abs(a - b) < 1e-9 : a === b);
+  const same = sameSetting;
   for (const [key, value] of Object.entries(values)) {
     const stored = settings[key];
     const untouched = stored === undefined || (Object.hasOwn(record, key) && same(stored, record[key]));
@@ -52,7 +63,7 @@ export function seedAfterChange(settings = {}, changed = {}) {
   const next = { ...record };
   let moved = false;
   for (const [key, value] of Object.entries(changed)) {
-    if (Object.hasOwn(next, key) && next[key] !== value) { delete next[key]; moved = true; }
+    if (Object.hasOwn(next, key) && !sameSetting(next[key], value)) { delete next[key]; moved = true; }
   }
   return moved ? next : undefined;
 }

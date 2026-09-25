@@ -552,7 +552,7 @@ test('moving off a promoted value makes it the player\'s; a Reset hands it back'
   assert.equal(seen[0][SEED_KEY].musicVolume, 40, 'Reset marks the key as the promotion\'s again');
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
-  assert.match(panel, /if \(!write\(SYNC_STORAGE\.lastSha, remote\.sha \|\| ''\)\) \{\s*status\('This device already matches/);
+  assert.match(panel, /if \(!write\(SYNC_STORAGE\.lastSha, remote\.sha \|\| ''\)\) \{[\s\S]*?status\('This device already matches/);
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(main, /const seed = seedAfterChange\(activeSettings, changed\);/);
 });
@@ -590,7 +590,7 @@ test('Save drops an older preview, and Undo gives promotion ownership back', asy
   resetKeys(settings, (c) => { seen.push(c); return { ok: true }; }, ['musicVolume'], 'reset', { promoted: { musicVolume: 40 } });
   assert.deepEqual(seen[0][SEED_KEY], { screenShake: false, musicVolume: 40 });
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
-  assert.match(screen, /if \(moved\.length && Object\.hasOwn\(changed, SEED_KEY\)\) undo\[SEED_KEY\] = seedBefore;/);
+  assert.match(screen, /offerUndo\(label, undo, seedMoved \? seedPatch\(seedBefore, changed\[SEED_KEY\]\) : null\);/);
 });
 
 test('a refused profile load hands the seed record back, and the panel bag mirrors the stored record', async () => {
@@ -662,7 +662,7 @@ test('a no-op load still records promotion ownership; the unrecorded warning sur
   assert.deepEqual(again, [], 'nothing new to own: nothing saved');
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
-  assert.match(panel, /if \(!noted\) carriedStatus = UNNOTED;\s*afterApply\(moved, before\);/);
+  assert.match(panel, /if \(!noted\) carriedStatus = UNNOTED;\s*afterApply\(moved, before, seedMoved\);/);
   assert.match(panel, /if \(carriedStatus\) \{ status\(carriedStatus\); carriedStatus = ''; \}/);
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.match(screen, /onChange\(now\);\s*undoOffer = offer;/);
@@ -672,5 +672,292 @@ test('a no-op load still records promotion ownership; the unrecorded warning sur
 test('a manual load that matches still saves promotion ownership before it is marked loaded', async () => {
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
-  assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?try \{ applyProfile\(settings, onChange, parsed\); \} catch \(error\) \{ status\(error\.message\); return; \}\s*if \(!write\(SYNC_STORAGE\.lastSha/);
+  assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?try \{ applyProfile\(settings, onChange, parsed\); \} catch \(error\) \{ status\(error\.message\); return; \}[\s\S]*?if \(!write\(SYNC_STORAGE\.lastSha/);
+});
+
+test('a profile carries which values are promoted defaults, and a loading device takes that ownership over', async () => {
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const rows = settingsRows();
+  const keys = profileKeys(rows);
+  // Device A: moved musicVolume off the promoted 40 and back — its own
+  // choice; sfxVolume 30 is still the promotion's.
+  const deviceA = { musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { sfxVolume: 30 } };
+  const text = profileText(deviceA, keys);
+  assert.deepEqual(JSON.parse(text).promotionOwned, ['sfxVolume']);
+  // Device B: seeded both, both owned by the promotion.
+  const deviceB = { musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { musicVolume: 40, sfxVolume: 30 } };
+  const parsed = profileChanges(text, contentBundle, deviceB, rows, keys);
+  assert.deepEqual(parsed.promotionOwned, ['sfxVolume']);
+  const seen = [];
+  const moved = applyProfile(deviceB, (c) => { seen.push(c); return { ok: true }; }, parsed, { musicVolume: 40, sfxVolume: 30 });
+  assert.equal(moved, 0, 'no visible value moved');
+  assert.deepEqual(deviceB[SEED_KEY], { sfxVolume: 30 }, 'musicVolume is now the player\'s, as it was on A');
+  // A profile saved before the field existed leaves ownership alone.
+  const legacy = JSON.stringify({ ...JSON.parse(text), promotionOwned: undefined });
+  const deviceC = { musicVolume: 40, [SEED_KEY]: { musicVolume: 40 } };
+  const legacyParsed = profileChanges(legacy, contentBundle, deviceC, rows, keys);
+  assert.equal(legacyParsed.promotionOwned, null);
+  applyProfile(deviceC, () => ({ ok: true }), legacyParsed, { musicVolume: 40 });
+  assert.deepEqual(deviceC[SEED_KEY], { musicVolume: 40 });
+});
+
+test('an Undo is painted only over the profile it was taken from; a seed-only reset can be undone', async () => {
+  const { resetKeys } = await import('../src/ui/screens/settings.js');
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /const offer = pendingUndo\(\);\s*if \(!offer\) return;/, 'the bar paints only a current offer');
+  assert.match(screen, /dropUndoOffer\(\);[\s\S]{0,400}?offerUndo\(moved \?/, 'a profile load starts a new generation before its own Undo');
+  // Every key already at its promoted value, but the player's: only ownership moves.
+  const settings = { musicVolume: 40 };
+  resetKeys(settings, () => ({ ok: true }), ['musicVolume'], 'reset', { promoted: { musicVolume: 40 } });
+  assert.deepEqual(settings[SEED_KEY], { musicVolume: 40 });
+  assert.match(screen, /offerUndo\(label, undo, seedMoved \? seedPatch\(seedBefore, changed\[SEED_KEY\]\) : null\);/);
+});
+
+test('a mistyped sync location is refused by name, never swapped for the default', async () => {
+  const { syncConfigProblems } = await import('../src/model/settingsSync.js');
+  assert.deepEqual(syncConfigProblems({ path: 'profiles/desk.json' }), ['path']);
+  assert.deepEqual(syncConfigProblems({ branch: 'main' }), ['branch']);
+  assert.deepEqual(syncConfigProblems({ path: 'settings-profiles/desk.json', owner: '' }), [], 'empty asks for the default');
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /const problems = syncConfigProblems\(raw\);\s*if \(problems\.length\) \{ status\(`Not saved: check/);
+});
+
+test('ownership survives a promotion that moved on, and an ownership-only load can be undone', async () => {
+  const { SEED_KEY, seedSettingsDefaults } = await import('../src/model/settingsDefaults.js');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  // Saved when the promotion was 40; this build promotes 50.
+  // It takes this build's promotion on load, not at the next start: boot's
+  // seeding has already run by the time a profile loads.
+  const { profileDiff } = await import('../src/model/settingsSync.js');
+  const parsed = { changes: { musicVolume: 40 }, cleared: [], promotionOwned: ['musicVolume'] };
+  const device = { musicVolume: 55, [SEED_KEY]: {} };
+  assert.deepEqual(profileDiff(device, parsed, { musicVolume: 50 }), [{ key: 'musicVolume', from: 55, to: 50 }], 'the preview shows the current promotion');
+  const moved = applyProfile(device, () => ({ ok: true }), parsed, { musicVolume: 50 });
+  assert.equal(moved, 1);
+  assert.equal(device.musicVolume, 50, 'the current promoted value is live straight away');
+  assert.deepEqual(device[SEED_KEY], { musicVolume: 50 }, 'and is the promotion\'s');
+  assert.deepEqual(seedSettingsDefaults(device, { digest: 'b', values: { musicVolume: 50 } }), {}, 'nothing left for the next start to fix');
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /afterApply\(moved, before, seedMoved\);/);
+  assert.match(panel, /if \(seedMoved\) \{\s*carriedStatus = '[^']*';\s*afterApply\(0, \{ \[SEED_KEY\]: seedBefore \}, true\);/);
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /if \(moved \|\| seedMoved\) \{[\s\S]{0,600}?offerUndo\(/);
+});
+
+test('a profile restore drops any pending Undo, since it refills the same settings object', async () => {
+  const { readFileSync } = await import('node:fs');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /function applyRestoredSettings\(restored\) \{[\s\S]*?dropUndoOffer\(\);[\s\S]*?for \(const key of Object\.keys\(activeSettings\)\) delete activeSettings\[key\];/);
+  const { dropUndoOffer } = await import('../src/ui/screens/settings.js');
+  assert.equal(typeof dropUndoOffer, 'function');
+});
+
+test('ownership covers gameConfig.* overrides and keys the current promotion dropped', async () => {
+  const { SEED_KEY, seedSettingsDefaults } = await import('../src/model/settingsDefaults.js');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const key = 'gameConfig.combatRatings.multiplier';
+  const rows = settingsRows();
+  const keys = profileKeys(rows);
+  const text = profileText({ [key]: 1.5, [SEED_KEY]: { [key]: 1.5 } }, keys);
+  assert.deepEqual(JSON.parse(text).promotionOwned, [key], 'an advanced override can be promotion-owned');
+  // Promoted 40 on the saving device; this build's promotion dropped the key.
+  // It lands at the code default now, owned by no one — what seeding would do.
+  const device = { musicVolume: 55, [SEED_KEY]: {} };
+  applyProfile(device, () => ({ ok: true }), { changes: { musicVolume: 40 }, cleared: [], promotionOwned: ['musicVolume'] }, {});
+  assert.equal(device.musicVolume, undefined, 'back to the code default on load');
+  assert.deepEqual(device[SEED_KEY], {});
+  assert.deepEqual(seedSettingsDefaults(device, { digest: 'c', values: {} }), {}, 'nothing left for the next start to fix');
+});
+
+test('a promoted advanced gameConfig value stays the promotion\'s on a loading device', async () => {
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const rows = settingsRows();
+  const keys = profileKeys(rows);
+  const adv = 'gameConfig.combatRatings.resistance.physicalK';
+  // Device A: both values are the promotion's; musicVolume is the player's.
+  const deviceA = { [adv]: 120, sfxVolume: 30, musicVolume: 40, [SEED_KEY]: { [adv]: 120, sfxVolume: 30 } };
+  const text = profileText(deviceA, keys);
+  assert.deepEqual(JSON.parse(text).promotionOwned, [adv, 'sfxVolume']);
+  const deviceB = { [adv]: 120, sfxVolume: 30, musicVolume: 40, [SEED_KEY]: { [adv]: 120, sfxVolume: 30, musicVolume: 40 } };
+  const parsed = profileChanges(text, contentBundle, deviceB, rows, keys);
+  assert.ok(parsed.promotionOwned.includes(adv));
+  applyProfile(deviceB, () => ({ ok: true }), parsed, { [adv]: 120, sfxVolume: 30, musicVolume: 40 });
+  assert.deepEqual(deviceB[SEED_KEY], { [adv]: 120, sfxVolume: 30 }, 'the advanced key keeps its promotion ownership');
+});
+
+test('an Undo survives a save and a reopen of the same profile, and never reaches a replaced one', async () => {
+  const { offerUndo, dropUndoOffer, pendingUndo } = await import('../src/ui/screens/settings.js');
+  const { readFileSync } = await import('node:fs');
+  // A reset offers Undo; the save reloads the profile into a new object and
+  // Settings is reopened over it within the window: still the same profile.
+  offerUndo('Reset (1 setting)', { musicVolume: 40 });
+  const offer = pendingUndo();
+  assert.ok(offer, 'offered');
+  assert.equal(pendingUndo(Date.now() + 1000), offer, 'still offered after a save and reopen inside the window');
+  assert.equal(pendingUndo(offer.until + 1), null, 'gone once the window closes');
+  // A profile load, restore or import replaces the profile: the offer is dropped.
+  offerUndo('Reset (1 setting)', { musicVolume: 40 });
+  dropUndoOffer();
+  assert.equal(pendingUndo(), null, 'a replaced profile never receives the old Undo');
+  // …and an offer made after the replacement belongs to the new profile.
+  offerUndo('Profile loaded (1 setting)', { sfxVolume: 30 });
+  assert.ok(pendingUndo(), 'the load\'s own Undo is offered');
+  dropUndoOffer();
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.equal((screen.match(/Object\.assign\(settings, saved\);\s*dropUndoOffer\(\);/g) || []).length, 2, 'both configuration imports drop a pending Undo');
+});
+
+test('a sync profile loaded by hand with Load settings keeps the ownership it records', async () => {
+  const { SEED_KEY, seedSettingsDefaults } = await import('../src/model/settingsDefaults.js');
+  const { importOwnership } = await import('../src/model/settingsSync.js');
+  const { parseAdvancedConfigFile, advancedConfigExport } = await import('../src/model/advancedConfig.js');
+  const rows = settingsRows();
+  const keys = profileKeys(rows);
+  // Device A: musicVolume 40 is the player's own; sfxVolume 30 is the promotion's.
+  const text = profileText({ musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { sfxVolume: 30 } }, keys);
+  // Device B: the same musicVolume, but still the promotion's there; sfxVolume the player's.
+  const deviceB = { musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { musicVolume: 40 } };
+  const changes = parseAdvancedConfigFile(text, contentBundle, deviceB, rows, []);
+  // This build promotes sfxVolume 30 (and musicVolume 40).
+  const saved = { ...changes, ...importOwnership(text, changes, deviceB, { musicVolume: 40, sfxVolume: 30 }) };
+  Object.assign(deviceB, saved); // what the import door saves
+  assert.deepEqual(deviceB[SEED_KEY], { sfxVolume: 30 }, 'ownership follows the file, as on A');
+  const next = seedSettingsDefaults(deviceB, { digest: 'd', values: { musicVolume: 50, sfxVolume: 35 } });
+  assert.equal(next.musicVolume, undefined, 'a later promotion leaves the player\'s value alone');
+  assert.equal(next.sfxVolume, 35, 'and moves the promotion\'s on');
+  // Saved under an older promotion: a hand load takes this build's value now,
+  // or the code default when this build no longer promotes the key.
+  const old = JSON.stringify({ ...JSON.parse(text), overrides: { ...JSON.parse(text).overrides, 'settings.sfxVolume': 20 } });
+  const deviceC = { sfxVolume: 30, [SEED_KEY]: { sfxVolume: 30 } };
+  const oldChanges = parseAdvancedConfigFile(old, contentBundle, deviceC, rows, []);
+  Object.assign(deviceC, { ...oldChanges, ...importOwnership(old, oldChanges, deviceC, { sfxVolume: 35 }) });
+  assert.equal(deviceC.sfxVolume, 35, 'the current promotion, not the file\'s older one');
+  assert.equal(deviceC[SEED_KEY].sfxVolume, 35);
+  const deviceD = { sfxVolume: 30, [SEED_KEY]: { sfxVolume: 30 } };
+  Object.assign(deviceD, { ...oldChanges, ...importOwnership(old, oldChanges, deviceD, {}) });
+  assert.equal(deviceD.sfxVolume, undefined, 'a dropped promotion lands at the code default');
+  assert.equal(Object.hasOwn(deviceD[SEED_KEY], 'sfxVolume'), false);
+  // An ordinary export carries no ownership: the import leaves it to the save path.
+  const plain = advancedConfigExport({ musicVolume: 40 }, {}, keys);
+  assert.deepEqual(importOwnership(plain, { musicVolume: 40 }, deviceB), {});
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.equal((screen.match(/const saved = \{ \.\.\.changes, \.\.\.importOwnership\(text, changes, settings, buildPromotion\(\)\) \};/g) || []).length, 2, 'both Load settings doors apply it');
+  assert.equal((screen.match(/Object\.assign\(settings, saved\);\s*dropUndoOffer\(\);/g) || []).length, 2, 'and still start a new Undo generation');
+});
+
+test('a branch or base git would refuse is refused by name, not saved', async () => {
+  const { syncConfigProblems, validBranchName } = await import('../src/model/settingsSync.js');
+  for (const bad of ['foo/', '/foo', '.foo', 'foo.lock', 'a/.b', 'a/b.lock', 'foo.', 'a//b', 'a..b', '@', '-foo', 'a@{b', 'a b', 'a~b', 'a^b', 'a:b', 'a?b', 'a*b', 'a[b', 'a\\b', 'a\u0001b']) {
+    assert.equal(validBranchName(bad), false, `${JSON.stringify(bad)} is not a git branch name`);
+    assert.deepEqual(syncConfigProblems({ branch: bad }), ['branch'], `branch ${JSON.stringify(bad)} refused`);
+    assert.deepEqual(syncConfigProblems({ base: bad }), ['base'], `base ${JSON.stringify(bad)} refused`);
+  }
+  for (const good of ['settings-sync', 'profiles/desk', 'v1.2', 'a.b/c-d_e']) {
+    assert.equal(validBranchName(good), true, good);
+    assert.deepEqual(syncConfigProblems({ branch: good, base: good === 'settings-sync' ? 'dev' : good }), [], good);
+  }
+});
+
+test('a load whose promoted values would split a pair the file kept whole is refused, changing nothing', async () => {
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const { importOwnership, promotionProblem } = await import('../src/model/settingsSync.js');
+  const { parseAdvancedConfigFile } = await import('../src/model/advancedConfig.js');
+  const min = 'gameConfig.derivedStatRules.rules.energy.min';
+  const max = 'gameConfig.derivedStatRules.rules.energy.max';
+  // Saved with min 5 (the promotion's then) and max 6 (the player's): a valid pair.
+  const parsed = { changes: { [min]: 5, [max]: 6 }, cleared: [], promotionOwned: [min] };
+  const device = { musicVolume: 40, [SEED_KEY]: { musicVolume: 40 } };
+  const snapshot = JSON.stringify(device);
+  const calls = [];
+  // This build promotes min 10: 10/6 would be broken.
+  assert.throws(() => applyProfile(device, (c) => { calls.push(c); return { ok: true }; }, parsed, { [min]: 10 }),
+    /Nothing was loaded: with this build's promoted defaults in place, .*energy\.min \(10\) must stay at or below .*energy\.max \(6\)/);
+  assert.equal(calls.length, 0, 'nothing saved');
+  assert.equal(JSON.stringify(device), snapshot, 'nothing moved');
+  // A promotion that keeps the pair whole still loads.
+  assert.equal(applyProfile(device, () => ({ ok: true }), parsed, { [min]: 4 }), 2);
+  assert.equal(device[min], 4);
+  // The same file loaded by hand: the doors check the values they will save.
+  const rows = settingsRows();
+  const text = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', statRows: 7, overrides: { [min]: 5, [max]: 6 }, promotionOwned: [min] });
+  const deviceB = {};
+  const changes = parseAdvancedConfigFile(text, contentBundle, deviceB, rows, []);
+  const saved = { ...changes, ...importOwnership(text, changes, deviceB, { [min]: 10 }) };
+  assert.match(promotionProblem(contentBundle, deviceB, saved), /energy\.min \(10\) must stay at or below/);
+  assert.equal(promotionProblem(contentBundle, deviceB, changes), null, 'the file as written is fine');
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.equal((screen.match(/const problem = promotionProblem\(contentBundle, settings, saved\);\s*if \(problem\) throw new Error\(/g) || []).length, 2, 'both Load settings doors refuse it before saving');
+});
+
+test('an Undo puts back ownership only for the keys its change moved', async () => {
+  const { resetKeys, pendingUndo, dropUndoOffer, applySeedPatch, seedPatch } = await import('../src/ui/screens/settings.js');
+  const { SEED_KEY, seedAfterChange } = await import('../src/model/settingsDefaults.js');
+  // A (musicVolume) is the player's at the promoted value; B (sfxVolume) is the promotion's.
+  const settings = { musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { sfxVolume: 30 } };
+  const save = (changed) => {
+    const seed = seedAfterChange(settings, changed);
+    for (const [key, value] of Object.entries(changed)) { if (value === undefined) delete settings[key]; else settings[key] = value; }
+    if (seed) settings[SEED_KEY] = seed;
+    return { ok: true };
+  };
+  dropUndoOffer();
+  // Reset A: only its ownership moves (to the promotion).
+  resetKeys(settings, save, ['musicVolume'], 'reset', { promoted: { musicVolume: 40, sfxVolume: 30 } });
+  assert.deepEqual(settings[SEED_KEY], { sfxVolume: 30, musicVolume: 40 });
+  const offer = pendingUndo();
+  assert.deepEqual(offer.seed, { musicVolume: null }, 'the offer carries A\'s ownership only');
+  // Inside the window the player moves B away and back: B is now theirs.
+  save({ sfxVolume: 20 });
+  save({ sfxVolume: 30 });
+  assert.deepEqual(settings[SEED_KEY], { musicVolume: 40 });
+  // Undo, as the bar applies it: A's ownership back, B's left as it is now.
+  const merged = applySeedPatch(settings[SEED_KEY], offer.seed);
+  save({ ...offer.snapshot, [SEED_KEY]: merged });
+  assert.deepEqual(settings[SEED_KEY], {}, 'A is the player\'s again; B stays the player\'s');
+  dropUndoOffer();
+  // seedPatch names only the keys that differ, with what they held before.
+  assert.deepEqual(seedPatch({ a: 1, b: 2 }, { a: 1, c: 3 }), { b: { value: 2 }, c: null });
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /if \(offer\.seed\) \{\s*restore\[SEED_KEY\] = applySeedPatch\(now\[SEED_KEY\], offer\.seed\);/, 'the bar merges, never replaces, the record');
+  assert.match(screen, /const \{ \[SEED_KEY\]: seedBefore, \.\.\.values \} = before \|\| \{\};\s*offerUndo\([^;]*values, seedPatch\(seedBefore, settings\[SEED_KEY\]\)\);/, 'a profile load\'s Undo is per key too');
+  assert.doesNotMatch(screen, /undo\[SEED_KEY\] = seedBefore/, 'no Undo carries the whole record');
+});
+
+test('HEAD is not a sync branch or base', async () => {
+  const { syncConfigProblems, validBranchName } = await import('../src/model/settingsSync.js');
+  assert.equal(validBranchName('HEAD'), false);
+  assert.deepEqual(syncConfigProblems({ branch: 'HEAD', base: 'HEAD' }), ['branch', 'base']);
+  assert.equal(validBranchName('HEADS'), true, 'only the exact name');
+  assert.equal(validBranchName('feature/HEAD'), true, 'git allows it as a component');
+});
+
+test('float noise never costs a value its promotion ownership', async () => {
+  const { SEED_KEY, sameSetting, seedSettingsDefaults, seedAfterChange } = await import('../src/model/settingsDefaults.js');
+  const { seedPatch } = await import('../src/ui/screens/settings.js');
+  const noisy = 0.1 + 0.2; // 0.30000000000000004
+  assert.notEqual(noisy, 0.3);
+  assert.equal(sameSetting(noisy, 0.3), true);
+  assert.equal(sameSetting(0.3, 0.31), false);
+  assert.equal(sameSetting('0.3', 0.3), false, 'only numbers are compared loosely');
+  const keys = profileKeys(settingsRows());
+  const device = { musicVolume: noisy, [SEED_KEY]: { musicVolume: 0.3 } };
+  // Seeding calls it the promotion's…
+  assert.deepEqual(seedSettingsDefaults(device, { digest: 'e', values: { musicVolume: 0.3 } }), {});
+  // …and so does every other path.
+  assert.deepEqual(JSON.parse(profileText(device, keys)).promotionOwned, ['musicVolume'], 'the profile lists it');
+  assert.equal(seedAfterChange(device, { musicVolume: 0.3 }), undefined, 'a save within the noise keeps ownership');
+  assert.deepEqual(seedPatch({ musicVolume: 0.3 }, { musicVolume: noisy }), {}, 'an Undo sees no ownership change');
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(Object\.hasOwn\(next, key\) && !sameSetting\(next\[key\], to\)\) delete next\[key\];/, 'a profile load prunes the same way');
 });

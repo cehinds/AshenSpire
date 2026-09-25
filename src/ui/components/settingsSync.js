@@ -8,10 +8,10 @@
 
 import { contentBundle } from '../../content/index.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
-import { SEED_KEY } from '../../model/settingsDefaults.js';
+import { SEED_KEY, sameSetting } from '../../model/settingsDefaults.js';
 import { saveJsonFile } from '../services/saveJsonFile.js';
 import {
-  SYNC_STORAGE, syncConfig, profileKeys, profileText, profileChanges, profileDiff,
+  SYNC_STORAGE, syncConfig, syncConfigProblems, profileKeys, profileText, profileChanges, profileDiff, promotedValue, promotionProblem,
   fetchProfile, pushProfile, profileWebUrl, listProfiles, profileName, profilePath, normalizeProfileName, DEVICE_KEYS,
 } from '../../model/settingsSync.js';
 import { esc } from './tooltip.js';
@@ -20,6 +20,9 @@ const DIFF_PREVIEW = 12;
 
 function store() { try { return globalThis.localStorage || null; } catch { return null; } }
 function read(key) { try { return store()?.getItem(key) ?? null; } catch { return null; } }
+// A seed record's content, comparable across objects and key order.
+const seedShape = (record) => JSON.stringify(Object.entries(record || {}).sort());
+
 // A status that must outlive a repaint (Apply repaints Settings mid-handler).
 let carriedStatus = '';
 
@@ -57,6 +60,10 @@ const PROMOTED = SETTINGS_DEFAULTS.values || {};
  */
 export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
   const diff = profileDiff(settings, parsed, promoted);
+  // Checked with the values it will really write — this build's promotion in
+  // place of the profile's older one — before anything moves.
+  const problem = promotionProblem(contentBundle, settings, Object.fromEntries(diff.map(({ key, to }) => [key, to])));
+  if (problem) throw new Error(`Nothing was loaded: with this build's promoted defaults in place, ${problem} Change that setting here or save the profile again, then load it.`);
   const changed = {};
   const had = {};
   const seedBefore = settings[SEED_KEY];
@@ -65,18 +72,35 @@ export function applyProfile(settings, onChange, parsed, promoted = PROMOTED) {
     had[key] = Object.hasOwn(settings, key) ? { value: settings[key] } : null;
     if (to === undefined) delete settings[key]; else settings[key] = to;
   }
-  // A key the profile leaves out goes back to the promotion, and is the
-  // promotion's again (as a Reset makes it): say so in the seed record, and
-  // prune it as the save path would, since sending the record overrides that.
+  // Who owns each value afterwards, in the seed record. A key the profile
+  // leaves out goes back to the promotion, and is the promotion's again (as a
+  // Reset makes it). A key the profile sets takes the ownership the saving
+  // device gave it (`promotionOwned`), when the profile says; a profile saved
+  // before that field leaves ownership alone. A key moved off its recorded
+  // value is pruned, as the save path would, since sending the record
+  // overrides that.
   const toPromotion = (parsed.cleared || []).filter((key) => Object.hasOwn(promoted, key));
-  if (toPromotion.length) {
+  const listed = Array.isArray(parsed.promotionOwned) ? new Set(parsed.promotionOwned) : null;
+  if (toPromotion.length || listed) {
     const record = seedBefore && typeof seedBefore === 'object' ? seedBefore : {};
     const next = { ...record };
-    for (const [key, to] of Object.entries(changed)) if (Object.hasOwn(next, key) && next[key] !== to) delete next[key];
+    for (const [key, to] of Object.entries(changed)) if (Object.hasOwn(next, key) && !sameSetting(next[key], to)) delete next[key];
     for (const key of toPromotion) next[key] = promoted[key];
+    if (listed) {
+      for (const key of Object.keys(parsed.changes || {})) {
+        // Owned by a promotion on the saving device, even an older one: it is
+        // this build's promotion's now, at this build's value (profileDiff
+        // applied it) — or the code default, owned by no one, when this build
+        // no longer promotes the key. What seeding would do, but now: seeding
+        // ran before this load and does not run again this session.
+        const to = listed.has(key) ? promotedValue(key, promoted) : undefined;
+        if (to === undefined) delete next[key]; else next[key] = to;
+      }
+    }
     // Only when it changes: a load that moves nothing and owns nothing new
     // writes nothing.
-    if (JSON.stringify(next) !== JSON.stringify(record) || seedBefore === undefined) {
+    const same = JSON.stringify(Object.entries(next).sort()) === JSON.stringify(Object.entries(record).sort());
+    if (!same || (seedBefore === undefined && Object.keys(next).length)) {
       settings[SEED_KEY] = next;
       changed[SEED_KEY] = next;
     }
@@ -137,6 +161,7 @@ export async function autoLoadProfile({ settings, onChange, rows, fetch = global
 }
 
 export function renderSettingsSync(mount, { settings, onChange, rows, afterApply = () => {} }) {
+  // afterApply(moved, before, seedMoved): Settings offers Undo and repaints.
   // Read at each use: the per-device toggle changes which keys a profile owns.
   const profileKeysNow = () => profileKeys(rows, { includeDevice: includeDeviceEnabled() });
   const labelOf = new Map(rows.map((row) => [row.key, String(row.label || row.key).replace(/<[^>]*>/g, '')]));
@@ -291,12 +316,22 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       if (!diff.length) {
         // Nothing visible moves, but a key the profile leaves out may still go
         // back to the promotion: save that ownership before calling it loaded.
+        const seedBefore = settings[SEED_KEY];
         try { applyProfile(settings, onChange, parsed); } catch (error) { status(error.message); return; }
+        const seedMoved = seedShape(seedBefore) !== seedShape(settings[SEED_KEY]);
         if (!write(SYNC_STORAGE.lastSha, remote.sha || '')) {
+          if (seedMoved) { carriedStatus = UNNOTED; afterApply(0, { [SEED_KEY]: seedBefore }, true); }
           status('This device already matches the profile, but it could not note that (storage is off or full here), so a later start may load it again over changes you make.');
           return;
         }
         write(SYNC_STORAGE.lastAt, new Date().toISOString());
+        // Only which values follow the promoted defaults changed: that is a
+        // saved change like any other, so it gets the profile load's Undo.
+        if (seedMoved) {
+          carriedStatus = 'This device already matches the profile; which settings follow the promoted defaults was updated to match it.';
+          afterApply(0, { [SEED_KEY]: seedBefore }, true);
+          return;
+        }
       }
       const box = mount.querySelector('[data-sync-preview]');
       box.hidden = false;
@@ -314,13 +349,14 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
           // …and which of them the promotion owned, so Undo hands those back too.
           before[SEED_KEY] = settings[SEED_KEY];
           const moved = applyProfile(settings, onChange, pending.parsed);
+          const seedMoved = seedShape(before[SEED_KEY]) !== seedShape(settings[SEED_KEY]);
           const noted = write(SYNC_STORAGE.lastSha, pending.sha || '');
           write(SYNC_STORAGE.lastAt, new Date().toISOString());
           pending = null;
           // afterApply repaints Settings and mounts a new panel: carry the
           // warning across so the panel the player sees shows it.
           if (!noted) carriedStatus = UNNOTED;
-          afterApply(moved, before);
+          afterApply(moved, before, seedMoved);
           if (!noted && mount.isConnected) { status(UNNOTED); carriedStatus = ''; }
         } catch (error) { status(error.message); }
       });
@@ -414,6 +450,10 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     on('where', () => {
       const raw = {};
       mount.querySelectorAll('[data-sync-field]').forEach((input) => { raw[input.dataset.syncField] = input.value.trim(); });
+      // A mistyped field is refused by name, never swapped for the default
+      // location (a Save there would overwrite the default profile).
+      const problems = syncConfigProblems(raw);
+      if (problems.length) { status(`Not saved: check ${problems.join(', ')}. Profiles live under settings-profiles/ on a branch other than dev, test, release or main, named as git allows (no leading or trailing / or ., no .lock ending).`); return; }
       const next = syncConfig(raw);
       if (!write(SYNC_STORAGE.config, JSON.stringify(next))) { status(STORAGE_REFUSED); return; }
       cfg = next;

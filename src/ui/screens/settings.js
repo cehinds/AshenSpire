@@ -39,8 +39,9 @@ import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExport
 import { contentBundle } from '../../content/index.js';
 import { pageDebug } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
-import { SEED_KEY, seedAfterChange } from '../../model/settingsDefaults.js';
+import { SEED_KEY, seedAfterChange, sameSetting } from '../../model/settingsDefaults.js';
 import { renderSettingsSync } from '../components/settingsSync.js';
+import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
 import { gateOpen, ownOn } from '../../model/settingOverrides.js';
 import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 import { saveAdvancedConfigFile, saveJsonFile } from '../services/saveJsonFile.js';
@@ -1243,10 +1244,64 @@ export function rowDefault(row, promoted = PROMOTED_DEFAULTS) {
 // value every touched key held before (undefined = was not stored).
 const UNDO_MS = 8000;
 let undoOffer = null;
-/** offerUndo(label, snapshot) — the next paint shows "label · Undo". */
-export function offerUndo(label, snapshot) {
-  if (!snapshot || !Object.keys(snapshot).length) return;
-  undoOffer = { label, snapshot, until: Date.now() + UNDO_MS };
+// Which profile an offer belongs to. Not the settings object: every save
+// reloads the profile into a new one (main.js persistSettingsChange), so an
+// identity check dropped a still-valid Undo when Settings was reopened within
+// the window. The generation moves only when the profile itself is replaced —
+// a restore, a profile load, a configuration import — via dropUndoOffer().
+let profileGeneration = 0;
+/**
+ * offerUndo(label, snapshot, seed) — the next paint shows "label · Undo". The
+ * offer belongs to the current profile generation, so a profile replaced in
+ * between never receives another profile's values. `seed` (from seedPatch) is
+ * the ownership the change moved, key by key: Undo puts back only those keys'
+ * ownership, merged into the record as it stands then, so a key the player
+ * took over inside the window stays theirs.
+ */
+export function offerUndo(label, snapshot, seed = null) {
+  const hasSeed = seed && Object.keys(seed).length > 0;
+  if ((!snapshot || !Object.keys(snapshot).length) && !hasSeed) return;
+  undoOffer = { label, snapshot: snapshot || {}, seed: hasSeed ? seed : null, generation: profileGeneration, until: Date.now() + UNDO_MS };
+}
+
+/**
+ * seedPatch(before, after) → { key: { value } | null } for each key whose
+ * promotion ownership differs between two seed records: what `before` held
+ * for it (null = not the promotion's). Only the keys a change moved.
+ */
+export function seedPatch(before, after) {
+  const a = before && typeof before === 'object' ? before : {};
+  const b = after && typeof after === 'object' ? after : {};
+  const patch = {};
+  for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    if (Object.hasOwn(a, key) !== Object.hasOwn(b, key) || !sameSetting(a[key], b[key])) patch[key] = Object.hasOwn(a, key) ? { value: a[key] } : null;
+  }
+  return patch;
+}
+
+/** applySeedPatch(record, patch) → `record` with each patched key's ownership put back. */
+export function applySeedPatch(record, patch) {
+  const next = { ...(record && typeof record === 'object' ? record : {}) };
+  for (const [key, entry] of Object.entries(patch || {})) {
+    if (entry) next[key] = entry.value; else delete next[key];
+  }
+  return next;
+}
+
+/**
+ * dropUndoOffer() — the profile was replaced (restored, loaded or imported):
+ * start a new generation and forget any pending Undo, which was taken from the
+ * profile that is gone.
+ */
+export function dropUndoOffer() { profileGeneration += 1; undoOffer = null; }
+
+/**
+ * pendingUndo(now) → the offer the next paint shows, or null. An offer past its
+ * window or taken from a profile since replaced is forgotten here.
+ */
+export function pendingUndo(now = Date.now()) {
+  if (undoOffer && (now > undoOffer.until || undoOffer.generation !== profileGeneration)) undoOffer = null;
+  return undoOffer;
 }
 
 /**
@@ -1292,9 +1347,12 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
     return snapshot;
   }
   const undo = Object.fromEntries(moved.map((key) => [key, snapshot[key]]));
-  // Undo puts back which values the promotion owned, as well as the values.
-  if (moved.length && Object.hasOwn(changed, SEED_KEY)) undo[SEED_KEY] = seedBefore;
-  offerUndo(label, undo);
+  // Undo puts back which values the promotion owned, as well as the values —
+  // also when only that moved (every key already sat at its promoted value
+  // but was the player's): that reset is saved, so it can be undone.
+  const seedMoved = Object.hasOwn(changed, SEED_KEY)
+    && JSON.stringify(Object.entries(changed[SEED_KEY] || {}).sort()) !== JSON.stringify(Object.entries(seedBefore || {}).sort());
+  offerUndo(label, undo, seedMoved ? seedPatch(seedBefore, changed[SEED_KEY]) : null);
   return snapshot;
 }
 
@@ -2539,8 +2597,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   let undoTimer = null;
   function paintUndo() {
     container.querySelector(':scope > .set-undo')?.remove();
-    if (!undoOffer || Date.now() > undoOffer.until) { undoOffer = null; return; }
-    const offer = undoOffer;
+    const offer = pendingUndo();
+    if (!offer) return;
     const bar = document.createElement('div');
     bar.className = 'set-undo';
     bar.setAttribute('role', 'status');
@@ -2554,6 +2612,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         now[key] = settings[key];
         if (value === undefined) delete settings[key]; else settings[key] = value;
         restore[key] = value;
+      }
+      // Ownership only for the keys the change moved, merged into the record
+      // as it is now: a key the player took over since stays theirs.
+      if (offer.seed) {
+        restore[SEED_KEY] = applySeedPatch(now[SEED_KEY], offer.seed);
+        settings[SEED_KEY] = restore[SEED_KEY];
       }
       undoOffer = null;
       if (onChange(restore)?.ok === false) {
@@ -2739,8 +2803,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   const changelogMount = container.querySelector('.set-changelog-mount');
   if (changelogMount) renderChangelogSection(changelogMount);
   const syncMount = container.querySelector('.set-sync-mount');
-  if (syncMount) renderSettingsSync(syncMount, { settings, onChange, rows: ROWS, afterApply: (moved, before) => {
-    if (moved) offerUndo(`Profile loaded (${moved} setting${moved === 1 ? '' : 's'})`, before);
+  if (syncMount) renderSettingsSync(syncMount, { settings, onChange, rows: ROWS, afterApply: (moved, before, seedMoved = false) => {
+    if (moved || seedMoved) {
+      // A new profile: nothing offered before it applies any more. Its own
+      // Undo belongs to the new generation.
+      dropUndoOffer();
+      // The values the load moved, and — key by key, not the whole record —
+      // the ownership it moved.
+      const { [SEED_KEY]: seedBefore, ...values } = before || {};
+      offerUndo(moved ? `Profile loaded (${moved} setting${moved === 1 ? '' : 's'})` : 'Profile loaded (which settings follow the defaults)', values, seedPatch(seedBefore, settings[SEED_KEY]));
+    }
     repaintPanel({ keepScroll: true });
   } });
 
@@ -3162,15 +3234,21 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         if (file.size > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
         // A raised floor is reported, not thrown: the rest of the file lands.
         const warnings = [];
-        const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
+        const text = await file.text();
+        const changes = parseAdvancedConfigFile(text, contentBundle, settings, ROWS, warnings);
         const outside = openingOnly ? Object.keys(changes).filter(key => !key.startsWith(PROLOGUE_PREFIX)) : [];
         if (outside.length) {
           throw new Error(`that file carries ${outside.length} setting${outside.length === 1 ? '' : 's'} from outside the opening. Load it under Advanced → Export, or export the opening on its own first. Nothing was imported.`);
         }
         if (!container.isConnected) return;
-        const result = onChange(changes);
+        // A sync profile loaded by hand keeps the ownership it records.
+        const saved = { ...changes, ...importOwnership(text, changes, settings, buildPromotion()) };
+        const problem = promotionProblem(contentBundle, settings, saved);
+        if (problem) throw new Error(`with this build's promoted defaults in place, ${problem} Nothing was imported.`);
+        const result = onChange(saved);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
-        Object.assign(settings, changes);
+        Object.assign(settings, saved);
+        dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
         renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
         showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.${warnings.length ? ` ${warnings.join(' ')}` : ''}`);
       } catch (error) {
@@ -3666,9 +3744,15 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     try {
       if (file.size > 1024 * 1024) throw new Error('Choose a file smaller than 1 MB.');
       const warnings = [];
-      const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
-      if (onChange(changes)?.ok === false) throw new Error('Settings could not be saved.');
-      Object.assign(settings, changes);
+      const text = await file.text();
+      const changes = parseAdvancedConfigFile(text, contentBundle, settings, ROWS, warnings);
+      // A sync profile loaded by hand keeps the ownership it records.
+      const saved = { ...changes, ...importOwnership(text, changes, settings, buildPromotion()) };
+      const problem = promotionProblem(contentBundle, settings, saved);
+      if (problem) throw new Error(`with this build's promoted defaults in place, ${problem} Nothing was imported.`);
+      if (onChange(saved)?.ok === false) throw new Error('Settings could not be saved.');
+      Object.assign(settings, saved);
+      dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
       rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
       showSettingsNotice(warnings.length ? `Settings loaded. ${warnings.join(' ')}` : 'Settings loaded.');
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }

@@ -90,7 +90,7 @@ import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.j
 import { seedSettingsDefaults, seedAfterChange, SEED_KEY } from './model/settingsDefaults.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
 import { pageDebug } from './ui/buildChannel.js';
-import { openSettings, settingsRows, promotionFor, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
+import { openSettings, dropUndoOffer, settingsRows, promotionFor, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
 import { mountEquipment, resetArmouryTraySession } from './ui/screens/equipment.js';
@@ -928,6 +928,8 @@ window.addEventListener('resize', () => applyCardSizeSettings(activeSettings));
  */
 function applyRestoredSettings(restored) {
   const settings = restored || {};
+  // An Undo taken from the profile this replaces must never land in it.
+  dropUndoOffer();
   for (const key of Object.keys(activeSettings)) delete activeSettings[key];
   Object.assign(activeSettings, settings);
   activeMeta.settings = activeSettings;
