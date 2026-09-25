@@ -1,0 +1,35 @@
+{
+  "checks": [
+    {
+      "coopRenderer": 1440,
+      "authoritativeSnapshots": true,
+      "poses": [
+        "prepared",
+        "starstoneCharge",
+        "bloodRite"
+      ],
+      "duplicateReceipt": true,
+      "transport": "snapshot replay, not sockets"
+    },
+    {
+      "coopRenderer": 390,
+      "authoritativeSnapshots": true,
+      "poses": [
+        "prepared",
+        "starstoneCharge",
+        "bloodRite"
+      ],
+      "duplicateReceipt": true,
+      "transport": "snapshot replay, not sockets"
+    },
+    {
+      "offlineGallery": true,
+      "queuedReactions": [
+        "hp",
+        "heal",
+        ""
+      ]
+    }
+  ],
+  "errors": []
+}

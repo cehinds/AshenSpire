@@ -1,0 +1,243 @@
+{
+  "schema": "ashenspire.class-assets/1",
+  "ticket": "AS-HD-040",
+  "generated_by": "assets/classes/measure-crop-state.mjs --emit",
+  "generated_from_pin": "62f6867a",
+  "adopted": false,
+  "authority_note": "Decision D1 authorises a proof-only successor. This manifest describes the frozen packet for a future reader; it adopts nothing, maps no runtime path, and grants no integration authority.",
+  "alpha_threshold": 128,
+  "shared_cover_safe_aspect": {
+    "min": 0.4922,
+    "max": 1.2864,
+    "bound_by_portrait": "rogue",
+    "bound_by_landscape": "starseer",
+    "rule": "A square slot (aspect 1.0) sits inside this band, so object-fit: cover clips no thresholded content at 1:1 for any of the four."
+  },
+  "classes": {
+    "reaver": {
+      "id": "class.portrait.reaver.future",
+      "status": "proof-only",
+      "source": {
+        "git_blob": "48041c50dbadb968fa92b56389111e3766524bc2",
+        "path": "review-approval-hub/evidence/look-switcher/assets/reaver-future.png",
+        "pin": "62f6867a"
+      },
+      "size": {
+        "canvas_px": [
+          512,
+          512
+        ],
+        "aspect": 1,
+        "content_box": {
+          "x0": 156,
+          "x1": 356,
+          "y0": 79,
+          "y1": 359
+        },
+        "content_fraction": 0.2155
+      },
+      "crop": {
+        "contain_margin_px": {
+          "top": 79,
+          "bottom": 152,
+          "left": 156,
+          "right": 155
+        },
+        "soft_alpha_margin_px": {
+          "top": 2,
+          "bottom": 0,
+          "left": 1,
+          "right": 0
+        },
+        "cover_safe_aspect": {
+          "min": 0.3906,
+          "max": 1.4463
+        }
+      },
+      "states": {
+        "declared": [
+          "default"
+        ],
+        "note": "The packet ships one look per class. hover/selected/disabled/locked have no distinct asset and are UNKNOWN until the catalog names them."
+      },
+      "provenance": {
+        "creator": "UNKNOWN",
+        "method": "UNKNOWN",
+        "licence": "UNKNOWN — CREDITS.md declares first-party CC0 at folder level for assets/equipment/**; that declaration does not reach this path.",
+        "modification_history": "UNKNOWN",
+        "restrictions": "UNKNOWN",
+        "blocking": true
+      }
+    },
+    "starseer": {
+      "id": "class.portrait.starseer.future",
+      "status": "proof-only",
+      "source": {
+        "git_blob": "eb929a467fe854c2e058e45a3d0dce4bb4589122",
+        "path": "review-approval-hub/evidence/look-switcher/assets/starseer-future.png",
+        "pin": "62f6867a"
+      },
+      "size": {
+        "canvas_px": [
+          512,
+          512
+        ],
+        "aspect": 1,
+        "content_box": {
+          "x0": 170,
+          "x1": 342,
+          "y0": 57,
+          "y1": 359
+        },
+        "content_fraction": 0.2
+      },
+      "crop": {
+        "contain_margin_px": {
+          "top": 57,
+          "bottom": 152,
+          "left": 170,
+          "right": 169
+        },
+        "soft_alpha_margin_px": {
+          "top": 1,
+          "bottom": 0,
+          "left": 1,
+          "right": 1
+        },
+        "cover_safe_aspect": {
+          "min": 0.3359,
+          "max": 1.2864
+        }
+      },
+      "states": {
+        "declared": [
+          "default"
+        ],
+        "note": "The packet ships one look per class. hover/selected/disabled/locked have no distinct asset and are UNKNOWN until the catalog names them."
+      },
+      "provenance": {
+        "creator": "UNKNOWN",
+        "method": "UNKNOWN",
+        "licence": "UNKNOWN — CREDITS.md declares first-party CC0 at folder level for assets/equipment/**; that declaration does not reach this path.",
+        "modification_history": "UNKNOWN",
+        "restrictions": "UNKNOWN",
+        "blocking": true
+      }
+    },
+    "rogue": {
+      "id": "class.portrait.rogue.future",
+      "status": "proof-only",
+      "source": {
+        "git_blob": "8359517b5ae1c816b2e717c2f3089a71ff71d6ba",
+        "path": "review-approval-hub/evidence/look-switcher/assets/rogue-future.png",
+        "pin": "62f6867a"
+      },
+      "size": {
+        "canvas_px": [
+          512,
+          512
+        ],
+        "aspect": 1,
+        "content_box": {
+          "x0": 130,
+          "x1": 381,
+          "y0": 85,
+          "y1": 359
+        },
+        "content_fraction": 0.2644
+      },
+      "crop": {
+        "contain_margin_px": {
+          "top": 85,
+          "bottom": 152,
+          "left": 130,
+          "right": 130
+        },
+        "soft_alpha_margin_px": {
+          "top": 0,
+          "bottom": 0,
+          "left": 1,
+          "right": 1
+        },
+        "cover_safe_aspect": {
+          "min": 0.4922,
+          "max": 1.4971
+        }
+      },
+      "states": {
+        "declared": [
+          "default"
+        ],
+        "note": "The packet ships one look per class. hover/selected/disabled/locked have no distinct asset and are UNKNOWN until the catalog names them."
+      },
+      "provenance": {
+        "creator": "UNKNOWN",
+        "method": "UNKNOWN",
+        "licence": "UNKNOWN — CREDITS.md declares first-party CC0 at folder level for assets/equipment/**; that declaration does not reach this path.",
+        "modification_history": "UNKNOWN",
+        "restrictions": "UNKNOWN",
+        "blocking": true
+      }
+    },
+    "herald": {
+      "id": "class.portrait.herald.future",
+      "status": "proof-only",
+      "source": {
+        "git_blob": "1a7cb6c86884bb07e188765ef39539627b457aae",
+        "path": "review-approval-hub/evidence/look-switcher/assets/herald-future.png",
+        "pin": "62f6867a"
+      },
+      "size": {
+        "canvas_px": [
+          512,
+          512
+        ],
+        "aspect": 1,
+        "content_box": {
+          "x0": 172,
+          "x1": 340,
+          "y0": 70,
+          "y1": 359
+        },
+        "content_fraction": 0.187
+      },
+      "crop": {
+        "contain_margin_px": {
+          "top": 70,
+          "bottom": 152,
+          "left": 172,
+          "right": 171
+        },
+        "soft_alpha_margin_px": {
+          "top": 0,
+          "bottom": 0,
+          "left": 1,
+          "right": 0
+        },
+        "cover_safe_aspect": {
+          "min": 0.3281,
+          "max": 1.3763
+        }
+      },
+      "states": {
+        "declared": [
+          "default"
+        ],
+        "note": "The packet ships one look per class. hover/selected/disabled/locked have no distinct asset and are UNKNOWN until the catalog names them."
+      },
+      "provenance": {
+        "creator": "UNKNOWN",
+        "method": "UNKNOWN",
+        "licence": "UNKNOWN — CREDITS.md declares first-party CC0 at folder level for assets/equipment/**; that declaration does not reach this path.",
+        "modification_history": "UNKNOWN",
+        "restrictions": "UNKNOWN",
+        "blocking": true
+      }
+    }
+  },
+  "open_items": [
+    "Per-file provenance is absent for all four sources; every provenance field above is UNKNOWN and blocking.",
+    "No repository code path reads assets/classes/**; the reader lives in src/ui/** which this lease does not hold.",
+    "Non-default states (hover/selected/disabled/locked) have no asset and no catalog entry."
+  ]
+}

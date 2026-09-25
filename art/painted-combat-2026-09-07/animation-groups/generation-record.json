@@ -1,0 +1,16 @@
+{
+  "tool": "built-in image_gen.imagegen",
+  "date": "2026-09-07",
+  "status": "feedback studies, not approved shipping artwork",
+  "references": ["../combat/reaver/idle.png", "../combat/starseer/idle.png"],
+  "generationBriefs": {
+    "reaver": "Six full-body painted combat frames, 3 columns by 2 rows. Reference the approved Reaver charcoal faceted plate with subtle gold edges, closed helmet and burgundy cape. Top row: raise steel kite shield, brace, settle. Bottom row: parry dagger ready, sweep forward-right, settle raised. Right-facing, main-hand sword low, same proportions and scale, feet aligned, no text, transparent background.",
+    "starseer": "Six full-body painted combat frames, 3 columns by 2 rows. Reference the approved Starseer charcoal/navy layered robes, bronze geometric trim, floppy pointed wizard hat and eight-point star staff. Top row: raise round shield, brace, hold. Bottom row: ready dagger, deflect forward-right, recover. Right-facing, staff retained, equal scale and baseline, no text, transparent background."
+  },
+  "finalEditPrompts": {
+    "reaver": "Precise background extraction. Remove ONLY the dark brown painted background and all glow and floor shadows from this six-character sprite sheet. Replace background with flat pure bright magenta RGB(255,0,255), perfectly uniform. Keep all six characters, exact original poses, colors, size, weapons and layout unchanged. Do not add any new elements. Preserve all six entire silhouettes and cape edges. Output same dimensions. Background must be solid #ff00ff everywhere outside characters for chroma key extraction.",
+    "starseer": "Edit this six-frame Starseer sprite sheet precisely. Preserve every character outfit, proportions, scale, position, pointed hat, cape, staff and right-facing orientation. 1) In TOP LEFT cell add the same bronze-rimmed round shield seen in top middle and top right, held low near left forearm at waist as the first raising frame. Staff remains in the right hand. 2) In BOTTOM RIGHT cell change only dagger arm to a clear recovery pose with elbow bent and dagger blade held vertically near chest, away from staff, to differ from bottom middle's fully extended parry. 3) Replace ALL checkerboard background with perfectly uniform bright solid magenta #ff00ff, no gradients or shadows, for chroma key extraction. Do not alter the other four poses. Six fully isolated figures in 3 columns by 2 rows, no text."
+  },
+  "finalSources": {"reaver": "sources/reaver.png", "starseer": "sources/starseer.png"},
+  "processing": "Magenta matte unmix, existing painted-poses cutter, uniform per-sheet scale, 640px canvas and floor 600. See build-frames.mjs and frames.json."
+}

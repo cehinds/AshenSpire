@@ -1,0 +1,174 @@
+{
+  "slash": {
+    "cell": 512,
+    "canvas": 256,
+    "sharedScale": 0.46875,
+    "frames": [
+      {
+        "file": "assets/combat-effects/slash1.webp",
+        "visiblePixels": 1440,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/slash2.webp",
+        "visiblePixels": 4534,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/slash3.webp",
+        "visiblePixels": 8331,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/slash4.webp",
+        "visiblePixels": 9924,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/slash5.webp",
+        "visiblePixels": 5220,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/slash6.webp",
+        "visiblePixels": 1786,
+        "borderPixels": 0,
+        "greenPixels": 0
+      }
+    ]
+  },
+  "shieldBash": {
+    "cell": 512,
+    "canvas": 256,
+    "sharedScale": 0.46875,
+    "frames": [
+      {
+        "file": "assets/combat-effects/shieldBash1.webp",
+        "visiblePixels": 922,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/shieldBash2.webp",
+        "visiblePixels": 3988,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/shieldBash3.webp",
+        "visiblePixels": 7753,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/shieldBash4.webp",
+        "visiblePixels": 9189,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/shieldBash5.webp",
+        "visiblePixels": 4953,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/shieldBash6.webp",
+        "visiblePixels": 491,
+        "borderPixels": 0,
+        "greenPixels": 0
+      }
+    ]
+  },
+  "starbolt": {
+    "cell": 512,
+    "canvas": 256,
+    "sharedScale": 0.46875,
+    "frames": [
+      {
+        "file": "assets/combat-effects/starbolt1.webp",
+        "visiblePixels": 1986,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/starbolt2.webp",
+        "visiblePixels": 4208,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/starbolt3.webp",
+        "visiblePixels": 5416,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/starbolt4.webp",
+        "visiblePixels": 6395,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/starbolt5.webp",
+        "visiblePixels": 6066,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/starbolt6.webp",
+        "visiblePixels": 1768,
+        "borderPixels": 0,
+        "greenPixels": 0
+      }
+    ]
+  },
+  "bloodSlash": {
+    "cell": 512,
+    "canvas": 256,
+    "sharedScale": 0.46875,
+    "frames": [
+      {
+        "file": "assets/combat-effects/bloodSlash1.webp",
+        "visiblePixels": 731,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/bloodSlash2.webp",
+        "visiblePixels": 2702,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/bloodSlash3.webp",
+        "visiblePixels": 6443,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/bloodSlash4.webp",
+        "visiblePixels": 11049,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/bloodSlash5.webp",
+        "visiblePixels": 4580,
+        "borderPixels": 0,
+        "greenPixels": 0
+      },
+      {
+        "file": "assets/combat-effects/bloodSlash6.webp",
+        "visiblePixels": 821,
+        "borderPixels": 0,
+        "greenPixels": 0
+      }
+    ]
+  }
+}

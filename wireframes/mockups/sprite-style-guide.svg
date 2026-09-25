@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 700" font-family="Verdana, Geneva, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16110c"/><stop offset="1" stop-color="#0d0b08"/>
+    </linearGradient>
+  </defs>
+  <rect width="1160" height="660" fill="url(#bg)"/>
+  <text x="580" y="686" fill="#7a6f5a" font-size="13" text-anchor="middle" font-style="italic">Sprite &amp; icon style guide — sizes, placeholder recipe, status/intent icon sets, meters. Icon glyphs shown are stand-ins for game-icons.net (CC BY 3.0) picks.</text>
+  <text x="580" y="38" fill="#c9a227" font-size="20" text-anchor="middle" font-family="Georgia, serif" letter-spacing="3">SPRITE &amp; ICON STYLE GUIDE</text>
+
+  <!-- ============ SIZE TIERS ============ -->
+  <text x="70" y="86" fill="#e8dcc0" font-size="14" font-family="Georgia, serif" letter-spacing="1">SIZE TIERS</text>
+  <g stroke="#3a3226" fill="none">
+    <rect x="70" y="104" width="70" height="100" rx="6"/>
+    <rect x="170" y="74" width="100" height="130" rx="6"/>
+    <rect x="300" y="44" width="150" height="160" rx="6"/>
+  </g>
+  <g fill="#2a241c">
+    <path d="M105 128 a12 12 0 0 1 12 12 v4 h-24 v-4 a12 12 0 0 1 12 -12 z M88 152 q17 -10 34 0 l4 44 q-21 8 -42 0 z"/>
+    <path d="M220 96 a15 15 0 0 1 15 15 v5 h-30 v-5 a15 15 0 0 1 15 -15 z M198 126 q22 -12 44 0 l5 66 q-27 10 -54 0 z"/>
+    <path d="M375 66 a20 20 0 0 1 20 20 v7 h-40 v-7 a20 20 0 0 1 20 -20 z M345 106 q30 -16 60 0 l7 86 q-37 14 -74 0 z"/>
+  </g>
+  <g fill="#7a6f5a" font-size="10" text-anchor="middle">
+    <text x="105" y="220">small · 70×100</text>
+    <text x="105" y="234">hounds, wisps</text>
+    <text x="220" y="220">medium · 100×130</text>
+    <text x="220" y="234">soldiers, brutes</text>
+    <text x="375" y="220">large/boss · 150×160+</text>
+    <text x="375" y="234">elites, bosses</text>
+  </g>
+  <text x="70" y="262" fill="#7a6f5a" font-size="10">Player portrait 96×96 · card art glyph 96×96 · all sprites sit on a baseline, shadow ellipse at 50% black</text>
+
+  <!-- ============ PLACEHOLDER RECIPE ============ -->
+  <text x="70" y="312" fill="#e8dcc0" font-size="14" font-family="Georgia, serif" letter-spacing="1">PLACEHOLDER RECIPE (assets.js fallback)</text>
+  <g transform="translate(70,330)">
+    <rect width="110" height="140" rx="10" fill="#241d15" stroke="#8a1a1a" stroke-width="2"/>
+    <text x="55" y="66" fill="#c9502e" font-size="34" text-anchor="middle">⚔</text>
+    <text x="55" y="110" fill="#e8dcc0" font-size="10" text-anchor="middle">Wandering</text>
+    <text x="55" y="124" fill="#e8dcc0" font-size="10" text-anchor="middle">Soldier</text>
+  </g>
+  <g fill="#7a6f5a" font-size="11">
+    <text x="200" y="356">1. rounded rect, faction-tinted border</text>
+    <text x="200" y="376">2. one large glyph (entity's icon id)</text>
+    <text x="200" y="396">3. name label, parchment text</text>
+    <text x="200" y="424" fill="#e8dcc0">Every entity is playable with zero downloaded art;</text>
+    <text x="200" y="442" fill="#e8dcc0">swapping in a real sprite = one line in assets.js.</text>
+  </g>
+
+  <!-- ============ METERS ============ -->
+  <text x="70" y="516" fill="#e8dcc0" font-size="14" font-family="Georgia, serif" letter-spacing="1">METERS</text>
+  <g transform="translate(70,534)">
+    <rect width="200" height="14" rx="4" fill="#241d15" stroke="#3a3226"/><rect width="130" height="14" rx="4" fill="#8a1a1a"/>
+    <text x="216" y="12" fill="#7a6f5a" font-size="10">HP — 14 px, always visible</text>
+    <rect y="22" width="200" height="7" rx="3" fill="#241d15"/><rect y="22" width="90" height="7" rx="3" fill="#c9a227"/>
+    <text x="216" y="30" fill="#7a6f5a" font-size="10">Poise — 7 px amber, always visible</text>
+    <rect y="36" width="200" height="7" rx="3" fill="#241d15"/><rect y="36" width="120" height="7" rx="3" fill="#c9502e"/>
+    <text x="216" y="44" fill="#7a6f5a" font-size="10">Bleed — 7 px red, only when &gt; 0</text>
+    <rect y="52" width="200" height="14" rx="4" fill="#241d15" stroke="#c9a227" stroke-width="1.5"/>
+    <rect y="52" width="200" height="14" rx="4" fill="#c9a227" opacity="0.25"/>
+    <text x="216" y="64" fill="#7a6f5a" font-size="10">full Poise = Staggered: bar flashes gold</text>
+  </g>
+
+  <!-- ============ STATUS ICONS ============ -->
+  <text x="620" y="86" fill="#e8dcc0" font-size="14" font-family="Georgia, serif" letter-spacing="1">STATUS ICONS — 20 px circle, color-coded</text>
+  <g transform="translate(620,104)">
+    <g transform="translate(0,16)"><circle r="15" fill="#241d15" stroke="#c9a227" stroke-width="2"/><text y="5" fill="#c9a227" font-size="13" text-anchor="middle">↑</text></g>
+    <text x="0" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">Strength</text>
+    <g transform="translate(60,16)"><circle r="15" fill="#241d15" stroke="#9fc3e8" stroke-width="2"/><text y="5" fill="#9fc3e8" font-size="12" text-anchor="middle">◇</text></g>
+    <text x="60" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">Dexterity</text>
+    <g transform="translate(120,16)"><circle r="15" fill="#241d15" stroke="#8a8072" stroke-width="2"/><text y="5" fill="#8a8072" font-size="12" text-anchor="middle">↓</text></g>
+    <text x="120" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">Weak</text>
+    <g transform="translate(180,16)"><circle r="15" fill="#241d15" stroke="#9fc3e8" stroke-width="2"/><text y="5" fill="#9fc3e8" font-size="12" text-anchor="middle">V</text></g>
+    <text x="180" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">Vulnerable</text>
+    <g transform="translate(240,16)"><circle r="15" fill="#241d15" stroke="#8a8072" stroke-width="2"/><text y="5" fill="#8a8072" font-size="12" text-anchor="middle">✂</text></g>
+    <text x="240" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">Frail</text>
+    <g transform="translate(300,16)"><circle r="15" fill="#241d15" stroke="#c9502e" stroke-width="2"/><path d="M300 -6 q-5 8 0 12 q5 -4 0 -12" transform="translate(-300,10)" fill="#c9502e"/><text y="7" fill="#c9502e" font-size="11" text-anchor="middle">💧</text></g>
+    <text x="300" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">Bleed</text>
+    <g transform="translate(360,16)"><circle r="15" fill="#241d15" stroke="#b5541c" stroke-width="2"/><text y="5" fill="#b5541c" font-size="12" text-anchor="middle">❀</text></g>
+    <text x="360" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">Rot</text>
+    <g transform="translate(420,16)"><circle r="15" fill="#241d15" stroke="#7fa8c9" stroke-width="2"/><text y="5" fill="#7fa8c9" font-size="12" text-anchor="middle">❄</text></g>
+    <text x="420" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">Frostbite</text>
+    <g transform="translate(480,16)"><circle r="15" fill="#241d15" stroke="#c9a227" stroke-width="2"/><text y="5" fill="#c9a227" font-size="12" text-anchor="middle">☀</text></g>
+    <text x="480" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">Madness</text>
+  </g>
+  <text x="620" y="186" fill="#7a6f5a" font-size="10">stack count renders bottom-right of icon; hover tooltip shows current math ("Weak: deals 25% less damage, 2 turns")</text>
+
+  <!-- ============ INTENT ICONS ============ -->
+  <text x="620" y="232" fill="#e8dcc0" font-size="14" font-family="Georgia, serif" letter-spacing="1">INTENT ICONS — above enemy head</text>
+  <g transform="translate(620,252)">
+    <g>
+      <rect width="72" height="34" rx="8" fill="#1c1610" stroke="#8a1a1a"/>
+      <path d="M12 24 l12 -12 m0 0 l-3 -3 m3 3 l3 -3" stroke="#c9502e" stroke-width="2.5" fill="none"/>
+      <text x="48" y="23" fill="#e8dcc0" font-size="14" font-weight="bold" text-anchor="middle">12</text>
+    </g>
+    <text x="36" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">Attack</text>
+    <g transform="translate(100,0)">
+      <rect width="72" height="34" rx="8" fill="#1c1610" stroke="#8a1a1a"/>
+      <path d="M12 24 l12 -12 m0 0 l-3 -3 m3 3 l3 -3" stroke="#c9502e" stroke-width="2.5" fill="none"/>
+      <text x="46" y="23" fill="#e8dcc0" font-size="13" font-weight="bold" text-anchor="middle">3×2</text>
+    </g>
+    <text x="136" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">Multi-attack</text>
+    <g transform="translate(200,0)">
+      <rect width="56" height="34" rx="8" fill="#1c1610" stroke="#7fa8c9"/>
+      <path d="M28 8 l9 4 v6 q0 8 -9 12 q-9 -4 -9 -12 v-6 z" fill="#7fa8c9"/>
+    </g>
+    <text x="228" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">Block</text>
+    <g transform="translate(284,0)">
+      <rect width="56" height="34" rx="8" fill="#1c1610" stroke="#c9a227"/>
+      <text x="28" y="24" fill="#c9a227" font-size="15" text-anchor="middle">↑</text>
+    </g>
+    <text x="312" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">Buff</text>
+    <g transform="translate(368,0)">
+      <rect width="56" height="34" rx="8" fill="#1c1610" stroke="#6a3a7a"/>
+      <text x="28" y="24" fill="#a06ab0" font-size="15" text-anchor="middle">☾</text>
+    </g>
+    <text x="396" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">Debuff</text>
+    <g transform="translate(452,0)">
+      <rect width="88" height="34" rx="8" fill="#1c1610" stroke="#8a1a1a" stroke-dasharray="6 3"/>
+      <path d="M12 24 l12 -12 m0 0 l-3 -3 m3 3 l3 -3" stroke="#c9502e" stroke-width="2.5" fill="none"/>
+      <text x="54" y="23" fill="#e8dcc0" font-size="12" font-weight="bold" text-anchor="middle">16 ⌛</text>
+    </g>
+    <text x="496" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">Delayed (boss)</text>
+  </g>
+
+  <!-- ============ FX ============ -->
+  <text x="620" y="356" fill="#e8dcc0" font-size="14" font-family="Georgia, serif" letter-spacing="1">FX RULES</text>
+  <g fill="#7a6f5a" font-size="11">
+    <text x="620" y="382"><tspan fill="#e8dcc0">-7</tspan> floating numbers: rise 40 px, fade, 280 ms</text>
+    <text x="620" y="402"><tspan fill="#c9502e" font-weight="bold">BURST!</tspan> Bleed burst: larger red number + droplet spray</text>
+    <text x="620" y="422"><tspan fill="#c9a227" font-weight="bold">STAGGERED</tspan> gold banner across enemy, 300 ms</text>
+    <text x="620" y="442">screen shake ≤ 4 px, only hits ≥ 15 · every animation ≤ 300 ms, click-skippable</text>
+  </g>
+
+  <!-- ============ PALETTE ============ -->
+  <text x="620" y="500" fill="#e8dcc0" font-size="14" font-family="Georgia, serif" letter-spacing="1">PALETTE (CSS variables)</text>
+  <g transform="translate(620,516)">
+    <rect width="52" height="34" fill="#0d0b08" stroke="#3a3226"/><text x="26" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">--bg</text>
+    <rect x="62" width="52" height="34" fill="#e8dcc0"/><text x="88" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">--parchment</text>
+    <rect x="124" width="52" height="34" fill="#c9a227"/><text x="150" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">--gold</text>
+    <rect x="186" width="52" height="34" fill="#8a1a1a"/><text x="212" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">--blood</text>
+    <rect x="248" width="52" height="34" fill="#b5541c"/><text x="274" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">--rot</text>
+    <rect x="310" width="52" height="34" fill="#7fa8c9"/><text x="336" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">--frost</text>
+    <rect x="372" width="52" height="34" fill="#9fc3e8"/><text x="398" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">--grace</text>
+    <rect x="434" width="52" height="34" fill="#c9502e"/><text x="460" y="52" fill="#7a6f5a" font-size="9" text-anchor="middle">--ember</text>
+  </g>
+  <text x="620" y="600" fill="#7a6f5a" font-size="10">Fonts: Cinzel (display, OFL) + Inter (body, OFL), self-hosted woff2 · icons recolored to palette via CSS filter or inline SVG fill</text>
+</svg>

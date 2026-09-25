@@ -1,0 +1,86 @@
+{
+  "SourceSha256": "005a1f33f90e1e00c3a619b1bf83348ff621e5372ae1c884a75f55411a029521",
+  "Canvas": [
+    384,
+    384
+  ],
+  "FootAnchor": [
+    192,
+    364
+  ],
+  "SharedScale": 0.8252427184466019,
+  "SourceBoxes": {
+    "wanderingSoldier": [
+      9,
+      24,
+      330,
+      333
+    ],
+    "blightHound": [
+      380,
+      92,
+      701,
+      337
+    ],
+    "livingArmor": [
+      736,
+      9,
+      1011,
+      337
+    ],
+    "fellWarden": [
+      1028,
+      7,
+      1436,
+      338
+    ],
+    "courtDuelist": [
+      11,
+      346,
+      369,
+      673
+    ],
+    "courtSurgeon": [
+      381,
+      355,
+      660,
+      671
+    ],
+    "gildedKnight": [
+      667,
+      343,
+      1053,
+      673
+    ],
+    "stitchedKing": [
+      1045,
+      331,
+      1442,
+      678
+    ],
+    "graveWisp": [
+      30,
+      674,
+      344,
+      1059
+    ],
+    "wyrmAspirant": [
+      365,
+      680,
+      711,
+      1057
+    ],
+    "valkyrieShade": [
+      726,
+      667,
+      1065,
+      1064
+    ],
+    "wyrmLord": [
+      1096,
+      665,
+      1440,
+      1077
+    ]
+  }
+}

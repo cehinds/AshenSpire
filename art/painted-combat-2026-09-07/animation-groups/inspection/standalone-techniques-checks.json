@@ -1,0 +1,23 @@
+{
+  "gameplay": {
+    "guard": "held",
+    "bashFrames": [
+      "shieldGuard3",
+      "shieldBash1",
+      "shieldBash2",
+      "shieldBash3"
+    ],
+    "payments": {
+      "hp": "observed on accepted card",
+      "mana": "observed on accepted card"
+    },
+    "power": "cast held after consumption",
+    "ownerTurn": "idle restored"
+  },
+  "report": {
+    "outfits": 16,
+    "decoded": 304,
+    "playback": "passed"
+  },
+  "errors": []
+}

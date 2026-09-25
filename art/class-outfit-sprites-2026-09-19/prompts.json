@@ -1,0 +1,165 @@
+{
+  "generator": "built-in image_gen",
+  "jobs": [
+    {
+      "id": "reaver-wayfarerPlate",
+      "classId": "reaver",
+      "outfitId": "wayfarerPlate",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/reaver/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-reaver-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Reaver: tall broad-shouldered armored knight with closed angular visor helmet, burgundy back cape, strong upright build; carry a practical straight sword. wearing Wayfarer Plate: heavy muted oxidized-green articulated breastplate, broad layered pauldrons and tassets, brown straps; exact armor design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    },
+    {
+      "id": "reaver-nightweave",
+      "classId": "reaver",
+      "outfitId": "nightweave",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/reaver/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-starseer-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Reaver: tall broad-shouldered armored knight with closed angular visor helmet, burgundy back cape, strong upright build; carry a practical straight sword. wearing Nightweave: deep muted indigo layered robe, frayed hems, antique-gold moon/star embroidery and brown belt; exact robe design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    },
+    {
+      "id": "reaver-riteVestments",
+      "classId": "reaver",
+      "outfitId": "riteVestments",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/reaver/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-herald-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Reaver: tall broad-shouldered armored knight with closed angular visor helmet, burgundy back cape, strong upright build; carry a practical straight sword. wearing Rite Vestments: austere dark burgundy long ritual robe, simple stole, brass clasp and rope belt; exact robe design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    },
+    {
+      "id": "reaver-gutterLeathers",
+      "classId": "reaver",
+      "outfitId": "gutterLeathers",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/reaver/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-rogue-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Reaver: tall broad-shouldered armored knight with closed angular visor helmet, burgundy back cape, strong upright build; carry a practical straight sword. wearing Gutter Leathers: charcoal olive fitted leather coat with layered short shoulder cape, stitched bracers, brown cross-straps and split skirt; exact coat design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    },
+    {
+      "id": "starseer-wayfarerPlate",
+      "classId": "starseer",
+      "outfitId": "wayfarerPlate",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/starseer/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-reaver-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Starseer: lean tall arcane scholar with unmistakable tall bent pointed broad-brim wizard hat and shadowed face; carry slender antique-gold eight-point star staff. wearing Wayfarer Plate: heavy muted oxidized-green articulated breastplate, broad layered pauldrons and tassets, brown straps; exact armor design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    },
+    {
+      "id": "starseer-nightweave",
+      "classId": "starseer",
+      "outfitId": "nightweave",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/starseer/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-starseer-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Starseer: lean tall arcane scholar with unmistakable tall bent pointed broad-brim wizard hat and shadowed face; carry slender antique-gold eight-point star staff. wearing Nightweave: deep muted indigo layered robe, frayed hems, antique-gold moon/star embroidery and brown belt; exact robe design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    },
+    {
+      "id": "starseer-riteVestments",
+      "classId": "starseer",
+      "outfitId": "riteVestments",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/starseer/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-herald-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Starseer: lean tall arcane scholar with unmistakable tall bent pointed broad-brim wizard hat and shadowed face; carry slender antique-gold eight-point star staff. wearing Rite Vestments: austere dark burgundy long ritual robe, simple stole, brass clasp and rope belt; exact robe design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    },
+    {
+      "id": "starseer-gutterLeathers",
+      "classId": "starseer",
+      "outfitId": "gutterLeathers",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/starseer/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-rogue-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Starseer: lean tall arcane scholar with unmistakable tall bent pointed broad-brim wizard hat and shadowed face; carry slender antique-gold eight-point star staff. wearing Gutter Leathers: charcoal olive fitted leather coat with layered short shoulder cape, stitched bracers, brown cross-straps and split skirt; exact coat design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    },
+    {
+      "id": "herald-wayfarerPlate",
+      "classId": "herald",
+      "outfitId": "wayfarerPlate",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/herald/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-reaver-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Herald: medium stocky hooded pilgrim-priest with shadowed face, circular antique-gold halo behind hood and prayer beads; empty hands in expressive ritual gestures. wearing Wayfarer Plate: heavy muted oxidized-green articulated breastplate, broad layered pauldrons and tassets, brown straps; exact armor design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    },
+    {
+      "id": "herald-nightweave",
+      "classId": "herald",
+      "outfitId": "nightweave",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/herald/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-starseer-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Herald: medium stocky hooded pilgrim-priest with shadowed face, circular antique-gold halo behind hood and prayer beads; empty hands in expressive ritual gestures. wearing Nightweave: deep muted indigo layered robe, frayed hems, antique-gold moon/star embroidery and brown belt; exact robe design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    },
+    {
+      "id": "herald-riteVestments",
+      "classId": "herald",
+      "outfitId": "riteVestments",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/herald/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-herald-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Herald: medium stocky hooded pilgrim-priest with shadowed face, circular antique-gold halo behind hood and prayer beads; empty hands in expressive ritual gestures. wearing Rite Vestments: austere dark burgundy long ritual robe, simple stole, brass clasp and rope belt; exact robe design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    },
+    {
+      "id": "herald-gutterLeathers",
+      "classId": "herald",
+      "outfitId": "gutterLeathers",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/herald/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-rogue-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Herald: medium stocky hooded pilgrim-priest with shadowed face, circular antique-gold halo behind hood and prayer beads; empty hands in expressive ritual gestures. wearing Gutter Leathers: charcoal olive fitted leather coat with layered short shoulder cape, stitched bracers, brown cross-straps and split skirt; exact coat design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    },
+    {
+      "id": "rogue-wayfarerPlate",
+      "classId": "rogue",
+      "outfitId": "wayfarerPlate",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/rogue/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-reaver-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Rogue: short slim agile fighter with low close-fitting hood, dark face mask, leather belt pouches; carry a short dagger in each hand. wearing Wayfarer Plate: heavy muted oxidized-green articulated breastplate, broad layered pauldrons and tassets, brown straps; exact armor design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    },
+    {
+      "id": "rogue-nightweave",
+      "classId": "rogue",
+      "outfitId": "nightweave",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/rogue/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-starseer-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Rogue: short slim agile fighter with low close-fitting hood, dark face mask, leather belt pouches; carry a short dagger in each hand. wearing Nightweave: deep muted indigo layered robe, frayed hems, antique-gold moon/star embroidery and brown belt; exact robe design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    },
+    {
+      "id": "rogue-riteVestments",
+      "classId": "rogue",
+      "outfitId": "riteVestments",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/rogue/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-herald-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Rogue: short slim agile fighter with low close-fitting hood, dark face mask, leather belt pouches; carry a short dagger in each hand. wearing Rite Vestments: austere dark burgundy long ritual robe, simple stole, brass clasp and rope belt; exact robe design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    },
+    {
+      "id": "rogue-gutterLeathers",
+      "classId": "rogue",
+      "outfitId": "gutterLeathers",
+      "refs": [
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/assets/painted-outfits/rogue/menu.webp",
+        "C:/Users/suprbludude/.codex/worktrees/0fbc/AshenSpire/art/inventory-webp-2026-09-19/sources/armor-rogue-default.png"
+      ],
+      "prompt": "Use case: stylized-concept. Production AshenSpire game sprite atlas. Image 1 is the approved CLASS identity reference; image 2 is the approved OUTFIT reference. Create Rogue: short slim agile fighter with low close-fitting hood, dark face mask, leather belt pouches; carry a short dagger in each hand. wearing Gutter Leathers: charcoal olive fitted leather coat with layered short shoulder cape, stitched bracers, brown cross-straps and split skirt; exact coat design from image 2. Preserve class headwear, face, body proportions and weapon identity from image 1 while replacing torso and legs clothing with image 2. Hand-painted dark fantasy, weathered materials, charcoal shadows, antique gold, restrained colors, crisp readable shapes. One transparent PNG atlas, 2048x2048 preferred, EXACTLY eight separate full-body poses in an evenly spaced 4-column by 2-row grid, one pose per equal cell. Read left to right top then bottom: 1 idle relaxed standing; 2 defensive guard; 3 attack wind-up; 4 attack impact; 5 attack recovery; 6 casting or empowering gesture; 7 flinching hurt; 8 defeated kneeling head bowed. Same character and costume in ALL EIGHT cells, consistent head/body size, front three-quarter view facing slightly screen right in every cell. All headwear weapons limbs feet and cloak fully inside each cell with generous 12% empty safety margins; no crossing cell boundaries, no overlap. True transparent alpha background, no scenery or ground, no shadow outside character, no text, no labels, no grid lines, no frame, no extra objects. This is wearable character sprite artwork, NOT separate floating armor inventory art."
+    }
+  ]
+}

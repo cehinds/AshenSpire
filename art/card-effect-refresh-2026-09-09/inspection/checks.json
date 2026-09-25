@@ -1,0 +1,39 @@
+{
+  "checks": [
+    "24 decoded frames, shared registry, synchronized scrubbing/playback and four directions",
+    "dark/light matte inspection and 390px responsive gallery",
+    "Pose Studio consumes the same 24 refreshed frames",
+    "four real card activations use refreshed artwork and clean up"
+  ],
+  "activations": [
+    {
+      "cardId": "strike",
+      "kind": "slash",
+      "framesObserved": 6,
+      "allFramesMatch": true,
+      "remaining": 0
+    },
+    {
+      "cardId": "shieldBash",
+      "kind": "shieldBash",
+      "framesObserved": 6,
+      "allFramesMatch": true,
+      "remaining": 0
+    },
+    {
+      "cardId": "starstonePebble",
+      "kind": "starbolt",
+      "framesObserved": 6,
+      "allFramesMatch": true,
+      "remaining": 0
+    },
+    {
+      "cardId": "gorefireSlash",
+      "kind": "bloodSlash",
+      "framesObserved": 6,
+      "allFramesMatch": true,
+      "remaining": 0
+    }
+  ],
+  "errors": []
+}

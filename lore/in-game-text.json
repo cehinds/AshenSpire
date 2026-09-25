@@ -1,0 +1,4235 @@
+{
+  "cards": [
+    {
+      "id": "strike",
+      "name": "Strike",
+      "flavor": "First cut of the hamlets.\n\nMade with whatever edge the hamlet owns. Marl's Hollow sends one climber each winter, chosen at the well, and the chosen spends the last evening at the whetting post learning this and nothing more.\n\nThe marked learned a thousand cuts. It did them no good."
+    },
+    {
+      "id": "defend",
+      "name": "Defend",
+      "flavor": "First guard of the road.\n\nTwo crossed lines upon a cairn stone: hold. Cut by climbers for climbers, before the Burning, when the ring was closed to the unmarked.\n\nThe mark does not say what to hold against, nor for how long."
+    },
+    {
+      "id": "technique",
+      "name": "Footwork",
+      "flavor": "Steps cut into the road.\n\nToo even to be natural, too worn to be recent. The Forsaken credit them to the climbers before. They run past the farthest point any Forsaken is known to have reached, and some lead onto the viaducts, older than the kingdom.\n\nClimbers before you cut steps. Use them."
+    },
+    {
+      "id": "evasiveGuard",
+      "name": "Evasive Guard",
+      "flavor": "Sidestep of the Pale Marches ice-fishers.\n\nThe lakes have not thawed since the Burning. The ice cracks all the year round, and gives only beneath a second pair of feet; the fishers learned to trust the sound.\n\nWidow Arne of Sallow Lake says the sound changed last winter. She fishes no longer."
+    },
+    {
+      "id": "dodgeRoll",
+      "name": "Dodge Roll",
+      "flavor": "Tumble of the ship-breakers.\n\nLearned upon hulls that shift with every tide at the Grave of Ships. The hulls were already rotting at anchor when the trade stopped, and on the night of the Burning, every hold went warm at once.\n\nGull-Bet's gang opened the holds the following spring. She has not said what was inside."
+    },
+    {
+      "id": "gorefireSlash",
+      "name": "Gorefire Slash",
+      "flavor": "Art of the sellswords of the Bastion.\n\nThe hired blades who held the Fell Courtyard wetted their steel with their own blood before each watch, for the Gorefire takes more readily to a blade already red.\n\nThe Wardens called it discipline. The sellswords knew it as a price, paid in advance."
+    },
+    {
+      "id": "crimsonCleave",
+      "name": "Crimson Cleave",
+      "flavor": "Wide cut of the Fell Courtyard watch.\n\nTaught for a gate choked with bodies. On the night the Bastion burned, the dead came up the Muster Stair in numbers the watch had no word for, and this was the only answer it had.\n\nThe gate log names the watch whole at the bell. Its hand changes halfway down the page."
+    },
+    {
+      "id": "shieldBash",
+      "name": "Shield Bash",
+      "flavor": "Rim-strike of the Wardens' shield line.\n\nDrilled in the years of the Spring Wars, when envoys of the Northern Holds came to the Bastion gate to haggle the price of a spring. The Wardens struck with the rim, for the face bore the gilded crest.\n\nTwice the Holds were struck. Twice they paid."
+    },
+    {
+      "id": "quickstep",
+      "name": "Quickstep",
+      "flavor": "Footwork of the Bastion's hired blades.\n\nAfter the Burning the weald's spring would not turn, and green came up between the courtyard flags. The sellswords learned short, flat steps upon the moss. The Wardens, who never stood where the footing was worst, did not.\n\nThe steps are counted to a dawn peal that brings no dawn."
+    },
+    {
+      "id": "guardCounter",
+      "name": "Guard Counter",
+      "flavor": "Riposte of the sworn Wardens.\n\nThe enemy commits; the Bastion answers, and its answer is always the greater. So the Wardens taught the drill, and so they told of the Spring Wars, in which they claimed never to have struck first.\n\nThe Northern Holds remember it otherwise."
+    },
+    {
+      "id": "ironResolve",
+      "name": "Iron Resolve",
+      "flavor": "Standing order of the Bastion.\n\nRead at the muster peal: a Warden holds until relieved, and relief comes by the bell. The bell-roll kept the names of all who held.\n\nAfter the Burning, the roll runs on for many pages, in a hand no scribe knew, bearing names no Warden ever enlisted."
+    },
+    {
+      "id": "serratedBlade",
+      "name": "Serrated Blade",
+      "flavor": "Saw-backed blade from the forges beneath the Bastion ridge.\n\nWeald smiths filed its teeth for clearing briar, and the Wardens took it up when the Blight came out of the woods. The smiths were never paid for the change of use.\n\nHow the briar learned to bleed, the smiths will not speak of."
+    },
+    {
+      "id": "enterGorefire",
+      "name": "Enter: Gorefire",
+      "flavor": "The breaking stance, first of the Wardens' two.\n\nThe drill is to hold the flame in the blade, not the hand. Sergeants warned that the stance takes the hand if held too long. Sellswords held it longest of all, which the Wardens took for greed.\n\nHold the flame in the blade; it still takes the hand."
+    },
+    {
+      "id": "enterBulwark",
+      "name": "Enter: Bulwark",
+      "flavor": "The holding stance, second of the Wardens' two.\n\nLow and square, shield set to the hinge side. The Wardens called the gate a wall a man could carry, and held that no gate kept in this stance had ever fallen.\n\nThat teaching was set down before the Burning, and was never amended."
+    },
+    {
+      "id": "riposte",
+      "name": "Riposte",
+      "flavor": "Return off the guard, as the Citadel fencing-masters taught it.\n\nThe Court held it too fine for field-born hands. Its manual shows a bout upon the bridges in the first year of the Mark Trade, a Knight against an unnamed Warden, and declares the Knight victorious.\n\nIn the illustration, the Knight lies upon his back."
+    },
+    {
+      "id": "rend",
+      "name": "Rend",
+      "flavor": "Tearing cut for the rot of the weald.\n\nWritten into the field-book after the Burning, by whoever keeps it now. It bids the reader cut the rot from hound and hamlet folk alike, for the rot came up the river road with the Court's traders.\n\nThe ink is fresh. The hand shakes."
+    },
+    {
+      "id": "cleavingBlow",
+      "name": "Cleaving Blow",
+      "flavor": "Heavy sweep of the weald hamlets.\n\nLearned by watching the Wardens from beyond the walls, for no Warden would teach the unmarked. It is swung in the winters when blight-hounds come down out of the lanternwood in packs.\n\nThe Wardens called the weald their charge. The hamlets paid for that charge in spring grain."
+    },
+    {
+      "id": "stomp",
+      "name": "Stomp",
+      "flavor": "Heel-strike of the Fell Courtyard.\n\nThe Wardens named it unworthy and used it all the same, for in the courtyard the fallen seldom stayed down. Sellswords held that the Wardens objected only to being seen at it.\n\nMany an old Bastion helm bears the dent of a heel."
+    },
+    {
+      "id": "rallyingStandard",
+      "name": "Rallying Standard",
+      "flavor": "Banner of the Bastion muster.\n\nRaised when the bell rang the line into place. The drill ends thus: raise the standard, sound the bell, log that the line held.\n\nThe final muster is logged as held, at dawn. The Bastion has seen no dawn since the Burning."
+    },
+    {
+      "id": "warSurgeon",
+      "name": "War Surgeon",
+      "flavor": "Field practice of the Bastion's surgeon-wardens.\n\nThey stitched wounds upon the wall, never below it, for a Warden stitched standing remained a Warden, and one carried to the stool was struck from the roll. The Wardens claimed their surgeons outdid the Chapel's physicians.\n\nThe Chapel's own figures burned with the Chapel."
+    },
+    {
+      "id": "hemorrhage",
+      "name": "Hemorrhage",
+      "flavor": "Second cut, laid into an open wound.\n\nThe Court's surgeons, who studied such matters, recorded that Wardens bled longer than other men beneath the knife, and blamed the thinness of field-born blood. The finding was signed by the surgeons as one body.\n\nNo cases were attached to it."
+    },
+    {
+      "id": "twinbladeFlurry",
+      "name": "Twinblade Flurry",
+      "flavor": "Two short blades, worked in turn, as the weald's sellswords used them.\n\nToo poor for a shield and too proud to carry a Warden's, they were hired for the Bastion's narrow gates. It is said part of their wage was paid in marks rather than coin: a right to the city's warmth.\n\nThose who refused the mark are the ones who tell of it."
+    },
+    {
+      "id": "shieldwall",
+      "name": "Shieldwall",
+      "flavor": "Formation of the Bastion's shield line.\n\nRim locked to rim across the Fell Courtyard. The Wardens credited it with holding the gate through three hungry winters of the Spring Wars, when Hold petitioners camped below the walls.\n\nThe field-book enters the price of spring in the same column as the petitioners turned away."
+    },
+    {
+      "id": "kickOff",
+      "name": "Kick Off",
+      "flavor": "Boot-strike of the Muster Stair.\n\nSellswords learned it upon steps steep enough that the fall does the killing. The Wardens forbade it as common, and had adopted it within a season.\n\nWhat is kicked from the stair now climbs it again."
+    },
+    {
+      "id": "wardingLunge",
+      "name": "Warding Lunge",
+      "flavor": "Guarded advance into the breaking stance.\n\nTaught as the moment to cease holding and begin taking ground. The Warden was to know that moment by the bell. When the Bellfoundry bell cracked, a new line was added beneath.\n\nKnow it by the smell of the courtyard."
+    },
+    {
+      "id": "impale",
+      "name": "Impale",
+      "flavor": "Pinning thrust of the weald hamlets.\n\nLearned in the first winter of the Blight, against what rose from the drowned hamlet and would not stay down. A pinned thing stops, the hamlets say. The Wardens would once have burned such things.\n\nBut the fire went into the Wardens that winter."
+    },
+    {
+      "id": "warcry",
+      "name": "Warcry",
+      "flavor": "The bell-roll, shouted.\n\nA custom of the gates farthest from the Bellfoundry, where the bell could not be heard. The Wardens held that the roll bore power of its own if read in order. Sellswords, who were not on it, shouted it all the same.\n\nIt is said the Bell Keeper answers, with a cracked bell."
+    },
+    {
+      "id": "executioner",
+      "name": "Executioner",
+      "flavor": "Finishing blow of the Fell Warden.\n\nTaught before his leg went the way of the weald and his blade was ground into a cane. The field-book holds that he never struck a man already kneeling.\n\nThe last page in his hand, dated the night of the Burning, is a list of kneeling men."
+    },
+    {
+      "id": "goreblood",
+      "name": "Goreblood",
+      "flavor": "The Wardens' name for blood-madness.\n\nThe state in which a fighter has spilled enough of their own blood that fear no longer holds. In sworn men the Wardens called it virtue; in sellswords, vice. The two are described in the same words.\n\nIts only instruction: keep standing."
+    },
+    {
+      "id": "unbreakable",
+      "name": "Unbreakable",
+      "flavor": "Order to hold the Fell Courtyard gate.\n\nDated, signed and never countermanded. The gate log continues past the Burning in a second hand, one entry each night, at the same hour. The gate still stands; the wall on either side does not.\n\nNo relief is recorded."
+    },
+    {
+      "id": "stitchedArms",
+      "name": "Stitched Arms",
+      "flavor": "Swordwork of the Court's stitched knights.\n\nAfter the Court Flame died, the surgeons sewed the knights to their swords, that no oath might be set down. The Citadel's record names it an honour: a knight's word made flesh.\n\nThe record was written by the surgeons."
+    },
+    {
+      "id": "lastStand",
+      "name": "Last Stand",
+      "flavor": "Final entry of the Fell Courtyard gate log.\n\nOne gate, one man, it reads. The man is not named, as though the writer thought none would need it.\n\nThe dead are counted twice upon the page, and the counts do not agree."
+    },
+    {
+      "id": "warriorsVow",
+      "name": "Warrior's Vow",
+      "flavor": "Contract of the sellswords of the Fell Courtyard.\n\nHold the gate until relieved; pay in advance. The weald's hired blades held a paid contract sacred, having few other sacred things, and the Wardens despised them for it.\n\nThe last was signed the week before the Burning. Its date of release is blank."
+    },
+    {
+      "id": "ruinousBlow",
+      "name": "Ruinous Blow",
+      "flavor": "Whole-body blow of the Wardens.\n\nReserved for a gate where all else has failed, and called a Warden's last argument. What becomes of the Warden who makes it, the drill does not say.\n\nThe pages that follow are stained through."
+    },
+    {
+      "id": "bloodhuntersStrike",
+      "name": "Bloodhunter's Strike",
+      "flavor": "Strike of the Bastion kennels.\n\nTaught by the kennelmaster before the hounds turned. The kennel book names them the finest in the three cities, trained upon the scent of blood alone, and never loosed on the weald's own people.\n\nAfter the Burning, the hamlets' dogs were found in those same kennels."
+    },
+    {
+      "id": "sanguinePactCard",
+      "name": "Sanguine Pact",
+      "flavor": "Soldier's bargain of the Bastion's lesser shrine.\n\nBlood spilled from an enemy is sworn to the one who spilled it. The Wardens thought it a harmless field-born custom, like the harvest tithe. The Chapel called it a mockery of the Writing, and fined the shrine.\n\nThe fine was paid. The shrine was in use the night of the Burning."
+    },
+    {
+      "id": "goreslash",
+      "name": "Goreslash",
+      "flavor": "Short cut of the Bastion's hired blades.\n\nThe sellswords had no patience for the Wardens' long forms. A long cut belongs in songs, they said, and the songs of the Bastion were paid for by the Wardens.\n\nThe sellswords kept a verse of their own. Only its tune survives."
+    },
+    {
+      "id": "bracingStance",
+      "name": "Bracing Stance",
+      "flavor": "First stance of the Bastion recruit.\n\nFeet planted, shield braced against the Bastion's own wall, before either true stance was taught. Drillmaster Hask taught it thirty winters.\n\nHer last entry is a roll of recruits, every name struck through but one, and that one scraped away."
+    },
+    {
+      "id": "flameToBlade",
+      "name": "Flame to Blade",
+      "flavor": "Lanternwood oil, set alight upon the edge.\n\nA late practice of the Wardens, adopted when plain steel no longer frightened what came out of the weald. The Chapel frowned upon Wardens bearing fire they had not been given.\n\nMind the sleeve; the oil takes it before the enemy."
+    },
+    {
+      "id": "ironVowCard",
+      "name": "Iron Vow",
+      "flavor": "Oath of the Wardens, sworn with the sword hand upon the gate.\n\nSworn Wardens bore the flame-mark from birth, and the oath was laid over it as a second promise. Sellswords swore it with no first promise beneath, and so the Wardens held them less bound.\n\nWhat that meant on the night of the Burning, no oath foretold."
+    },
+    {
+      "id": "bloodTithe",
+      "name": "Blood Tithe",
+      "flavor": "Harvest tithe of the weald, paid in blood.\n\nGiven at the Bastion's field-shrine in years the grain failed. The Wardens called it voluntary, and kept no names, as a courtesy to the givers.\n\nThe tithe-roll lengthens with each year of the Mark Trade, and the villages it lists grow fewer."
+    },
+    {
+      "id": "poiseBreaker",
+      "name": "Poise Breaker",
+      "flavor": "Knee-strike of Drillmaster Hask.\n\nHer answer to anything larger than a Warden: a knight and a kennel hound, she wrote, bend at the same place. She drew them both.\n\nBeside them, in later ink, a third figure grown of briar, under a name found nowhere else in the book."
+    },
+    {
+      "id": "rondelParry",
+      "name": "Rondel Parry",
+      "flavor": "Parry upon the guard of a rondel dagger.\n\nFavoured by the Bastion's older sellswords, who kept the short blade long after the Wardens ceased to issue it. The rondels came from the Northern Holds as tribute, and were worth more than a season's wage.\n\nThey bear a crest no herald of the ring recorded."
+    },
+    {
+      "id": "sunderplate",
+      "name": "Sunderplate",
+      "flavor": "Joint-splitting blow of the Wardens.\n\nDevised in the years of the Mark Trade with the Court's knights in mind, lest the Court forget which flame kept it fed. No occasion of its use is recorded.\n\nBeside the drill, a knight's gorget, its crest scratched out."
+    },
+    {
+      "id": "brace",
+      "name": "Brace",
+      "flavor": "The crouch before either stance.\n\nKnees bent, weight low, the body made ready to be struck. The field-book gives it the first page, and calls it the one lesson all Wardens learned alike, sworn or hired, marked or not.\n\nA later hand has corrected it."
+    },
+    {
+      "id": "starstonePebble",
+      "name": "Starstone Pebble",
+      "flavor": "Chip of catalogued starstone.\n\nSuch stones were weighed and numbered by the Observatory's apprentices in their first winter. The Astronomer held them inert once cooled, and wrote as much throughout his catalogue.\n\nYet frost formed upon their labels by night. Never upon the stones."
+    },
+    {
+      "id": "cometFragment",
+      "name": "Comet Fragment",
+      "flavor": "Sorcery of the Starwatch, the first permitted beyond the lens gallery.\n\nFragments came up the Basalt Stair in miners' sacks, sold by weight, and the Astronomer catalogued every one. Chart 41 records a fall. Chart 42 records a hearth.\n\nOf what lay between, the catalogue is silent."
+    },
+    {
+      "id": "starbladePhalanx",
+      "name": "Starblade Phalanx",
+      "flavor": "Blades ground from a single stone.\n\nThe apprentices found that blades from one stone answered one another in sequence, the second truer than the first. The Chapel's censor struck \"answered\" from the record and wrote \"rang\".\n\nThe apprentices kept the first word."
+    },
+    {
+      "id": "crystalBarrier",
+      "name": "Crystal Barrier",
+      "flavor": "Pane of starstone, cut as the great lens was cut.\n\nThe great lens cracked in the frost of the eclipse, yet held the light. The Astronomer credited his grinding.\n\nMaud Vell, who ground it, said the crack had closed a little by morning. She would not grind another."
+    },
+    {
+      "id": "starShower",
+      "name": "Star Shower",
+      "flavor": "Sorcery of the Starwatch, called in sequence.\n\nThe log of one autumn vigil counts forty small falls in a single night, none of which reached the ground warm. An apprentice asked in the margin whence forty falls could come.\n\nThe answer, in the Astronomer's hand, was cut from the page."
+    },
+    {
+      "id": "scholarsInsight",
+      "name": "Scholar's Insight",
+      "flavor": "Discipline of the double copy.\n\nApprentices copied each chart twice, for the second copy is the true one. The two copies of chart 9 differ in a single figure: the distance from the three hearths to a point upon the coast.\n\nBoth copies left the Observatory with the apprentice who took the charts."
+    },
+    {
+      "id": "frostVeil",
+      "name": "Frost Veil",
+      "flavor": "Rime drawn over the body.\n\nFirst seen upon the Observatory's upper terrace on the night of the eclipse, when the terrace froze in the space of a breath and every instrument stopped. The apprentice Hollis logged the hour, and wrote that he did not trust it.\n\nThe hour has since been corrected, in an unknown hand."
+    },
+    {
+      "id": "starSlicer",
+      "name": "Star Slicer",
+      "flavor": "Starstone, split along its grain.\n\nThe stone parts cleanly along lines the lens-grinders could see and the miners could not. The grinders held that it had been worked before it fell. The Astronomer called this sentimental.\n\nHe kept a split fragment upon his desk, its grain turned to the window."
+    },
+    {
+      "id": "starstoneWard",
+      "name": "Starstone Ward",
+      "flavor": "Slab of starstone, raised as a shield.\n\nAfter the fashion of the Observatory's doors, cut by builders whose name the Chapel did not keep. Starstone stays cold where all else warms.\n\nThe apprentices believed those doors were not made to open from within."
+    },
+    {
+      "id": "starlance",
+      "name": "Starlance",
+      "flavor": "Light forced through a starstone lens.\n\nDiscovered when the great lens scorched a line across the chart-room table. The Astronomer had the table kept as it was, and recorded that the line ran true to the south-west.\n\nThe line has lengthened since."
+    },
+    {
+      "id": "twinkling",
+      "name": "Twinkling",
+      "flavor": "Light drawn from a varying star.\n\nThe Astronomer recorded its variation nightly for many years, and drew no conclusion, as was his rule. In the last spring before the Burning, he spent three nights upon it alone.\n\nThe charts of those nights are not in the series."
+    },
+    {
+      "id": "frostNova",
+      "name": "Frost Nova",
+      "flavor": "Ring of cold, after the frozen ash of the caldera.\n\nMiners found such rings about fresh falls upon the caldera floor. Coll, a foreman, told the apprentices the ash froze before the stone landed. The Astronomer named miners unreliable witnesses.\n\nHe bought Coll's next fragment at double the price."
+    },
+    {
+      "id": "starstoneArc",
+      "name": "Starstone Arc",
+      "flavor": "Arc of force, used to measure the stone's reach.\n\nMeasured three times, the stone was found to have moved between readings. The Starwatch recorded an error of the apparatus, and replaced it.\n\nThe same error is recorded each month, until the eclipse."
+    },
+    {
+      "id": "lucidity",
+      "name": "Lucidity",
+      "flavor": "Clarity for the work.\n\nPractised on the one clear night in forty the reach allowed. The Astronomer worked such nights without sleep, and bade his apprentices do the same.\n\nThey believed he saw more than the charts show, and wrote it elsewhere."
+    },
+    {
+      "id": "stargazerCard",
+      "name": "Stargazer",
+      "flavor": "The long watch at the eyepiece.\n\nThe Astronomer kept it a hundred years by his own count, recording the coal's dimming and never its meaning. The Chapel admired his restraint.\n\nHis apprentices believed he watched something he had already resolved not to describe."
+    },
+    {
+      "id": "astralArmorCard",
+      "name": "Astral Armor",
+      "flavor": "Mantle of cold light, after Starwatch Terrace.\n\nThe terrace upon the Drowned Coast was paved in starstone, that the apprentices might measure the new tower's draw. The paving never warmed, and the salt spray never dried upon it.\n\nA Saint was sent to bless the stones. She asked to be posted elsewhere."
+    },
+    {
+      "id": "moonrendCut",
+      "name": "Moonrend Cut",
+      "flavor": "Crescent stroke of the Observatory's night-porters.\n\nThe porters walked the Basalt Stair with lanterns and curved blades, and claimed the moon's passage over the caldera showed them where to cut. The Starwatch called it folklore, and employed them regardless.\n\nTheir blades are found in the lower galleries, in hands no longer quite their own."
+    },
+    {
+      "id": "meteorite",
+      "name": "Meteorite",
+      "flavor": "Heavy fall, called upon one enemy.\n\nThe largest fragment the Starwatch recovered weighed more than its size allowed. The miners who carried it said it weighed more atop the stair than at its foot.\n\nThe Astronomer had it weighed at both ends, and recorded the results in cipher."
+    },
+    {
+      "id": "meteorSwarm",
+      "name": "Meteor Swarm",
+      "flavor": "Many falls, called as one.\n\nChart 43 records two falls in a single night. Miners were sent to both sites and found no crater at either. The Astronomer entered both regardless, for his lens could not err.\n\nA third mark on chart 43, in another ink, is nowhere explained."
+    },
+    {
+      "id": "gravityWell",
+      "name": "Gravity Well",
+      "flavor": "Pull of the Observatory's great pendulum.\n\nThe pendulum swung true for most of the Starwatch's history. In the years the Spire was built, it leaned toward the coast, and did not recover.\n\nThe Astronomer ordered the foundations inspected. The report is blank."
+    },
+    {
+      "id": "azureCoilCard",
+      "name": "Azure Coil",
+      "flavor": "Blue light that gathers about the working.\n\nFirst seen around apprentices reciting the star tables aloud in rhythm. The Chapel's censor ruled the tables were written in an old script, and forbade their recitation.\n\nThe coil returned the following night."
+    },
+    {
+      "id": "astralCleave",
+      "name": "Astral Cleave",
+      "flavor": "Cut of cold force.\n\nFirst seen when a falling fragment passed through the lens gallery and sheared the telescope in two before cooling upon the floor. The Astronomer recorded a fall. Maud Vell, at the eyepiece, called it a throw.\n\nShe was dismissed at the season's end."
+    },
+    {
+      "id": "radiantSpray",
+      "name": "Radiant Spray",
+      "flavor": "Flare cast wide.\n\nIn the years the Spire was built, a flare lit every terrace of the Observatory at once, and the apprentices on watch lost their sight for days. The log gives no source.\n\nWhen their sight returned, they were asked not to speak of it."
+    },
+    {
+      "id": "supernova",
+      "name": "Supernova",
+      "flavor": "Brightest working in the charts.\n\nThe final predictive chart forecasts a light great enough to burn the paper it is drawn upon. The Starwatch took it for the fate of a star.\n\nThe chart is unsigned and undated. The apprentices swore it was not among the sheets they left upon his desk."
+    },
+    {
+      "id": "timeDilation",
+      "name": "Time Dilation",
+      "flavor": "Slowing of the moment, after the eclipse.\n\nBy the Starwatch's reckoning the eclipse lasted a single night. By the Observatory clock, it has not ended. Anselm, keeper of the clock, refused to reset it.\n\nHe was found beside it, standing as he stood when the light went."
+    },
+    {
+      "id": "starstoneKris",
+      "name": "Starstone Kris",
+      "flavor": "Wavy dagger of starstone.\n\nCarried by apprentices for rough work in the lower galleries. Its first owner wrapped it in cloth and found the cloth frosted by morning. The kris keeps its cold whether carried or not.\n\nIt was coldest, the apprentice noted, in the Astronomer's presence."
+    },
+    {
+      "id": "constellationCard",
+      "name": "Constellation",
+      "flavor": "Sorcery of three stars, after the Goldbough crest.\n\nThree flames upon three twigs. The Chapel taught that the crest came first, and the stars were named for it.\n\nThe Starwatch's oldest plate, cut before the kingdom, shows the same three stars, and a faint fourth. The Chapel's copy omits it."
+    },
+    {
+      "id": "starfallBeam",
+      "name": "Starfall Beam",
+      "flavor": "Column of falling light.\n\nModelled upon a fall the Astronomer charted in advance. He foresaw where it would strike upon the caldera rim, and sent no warning to the mine camps there, for they were unmarked, and absent from the Court's maps.\n\nHis margin gives the fall's weight to the grain. Of the camps, nothing."
+    },
+    {
+      "id": "starcaller",
+      "name": "Starcaller",
+      "flavor": "Many falls, called in rhythm.\n\nThe apprentices chanted the star tables while practising it in the lens gallery, and on the night it was first attempted, eleven falls were recorded. The Astronomer entered chant and falls upon the same line.\n\nHe drew no connection between them. He drew none between anything."
+    },
+    {
+      "id": "umbralWard",
+      "name": "Umbral Ward",
+      "flavor": "Ward of shadow, after the eclipse.\n\nDuring the eclipse the Observatory cast no shadow, which the Starwatch recorded as a curiosity of the light. The apprentices upon the terrace cast shadows as ever.\n\nTheirs fell toward the Observatory, not away."
+    },
+    {
+      "id": "waxingMoonCard",
+      "name": "Waxing Moon",
+      "flavor": "Sorcery of the Starwatch, drawn from the moon-table.\n\nIn the last years before the Burning, the Astronomer observed that as the moon waxed, the coal in the Crown dimmed in equal measure. He named it coincidence, and kept the moon-table no longer.\n\nWhat he would not record, his apprentices remembered."
+    },
+    {
+      "id": "shootingShard",
+      "name": "Shooting Shard",
+      "flavor": "Small fall, too faint for the charts.\n\nThe Starwatch left such falls unrecorded, a star too faint to mark the lens being unworthy of ink. The reach miners kept their own tally, scratched upon the walls of the lower galleries.\n\nTheir count runs far higher."
+    },
+    {
+      "id": "wardingStar",
+      "name": "Warding Star",
+      "flavor": "Guarding light, after the Fixed Lamp.\n\nA star above the coast that did not move with the others. The Starwatch took it for a flaw of the lens and reground the lens twice. The star remained.\n\nAfter the Spire was finished, the log names it only \"the error\"."
+    },
+    {
+      "id": "starPath",
+      "name": "Star Path",
+      "flavor": "Step along a line of light.\n\nThe fourth viaduct spur appears upon the Starwatch's charts years before the Court commissioned it, drawn in the Astronomer's hand from the ring to the coast. The Court later claimed the Spire as its own design.\n\nWho showed the Astronomer where to draw, the charts do not tell."
+    },
+    {
+      "id": "moonlitShieldCard",
+      "name": "Moonlit Shield",
+      "flavor": "Frost raised by moonlight upon starstone.\n\nIt rises along the rails of Starwatch Terrace on clear nights, where the apprentices once judged the cold by it. From the Tidebound Chapel across the water, the salt-priests have watched it form the shape of a word.\n\nThey have not written it down."
+    },
+    {
+      "id": "celestialLance",
+      "name": "Celestial Lance",
+      "flavor": "Spear of light, horizon to zenith.\n\nChart 58 records such a line, lasting a single breath, sourced to a star upon no other chart. The Astronomer entered it as a fault of optics, then spent a week grinding a new lens he was never seen to use.\n\nChart 58 is the last he signed."
+    },
+    {
+      "id": "astromancerCard",
+      "name": "Astromancer",
+      "flavor": "The Starwatch's discipline, carried away.\n\nAn apprentice took the charts and left the Observatory before the eclipse. The Starwatch recorded it as theft. The apprentice's line in the roll has been scraped away.\n\nNot so thoroughly that the name cannot be guessed."
+    },
+    {
+      "id": "starSpark",
+      "name": "Star Spark",
+      "flavor": "Spark struck from a starstone flint.\n\nThe chart room kept such a flint for its lamps, for the Astronomer would not suffer the Chapel's flame in that room. Its sparks died before they landed.\n\nMaud Vell said the stone was being careful."
+    },
+    {
+      "id": "astralInsight",
+      "name": "Astral Insight",
+      "flavor": "Clear sight into the charts.\n\nThe apprentices believed the Starwatch's ledgers were meant to end where the charts of the fourth hearth began. There the Astronomer once underlined a line, and later struck through his own mark.\n\nThe charts of the fourth hearth were not among those carried away."
+    },
+    {
+      "id": "attune",
+      "name": "Attune",
+      "flavor": "First exercise of the apprentice.\n\nHold the stone until pulse and rhythm match. The Starwatch taught that starstone answers rhythm, not force, and credited the principle to the Astronomer.\n\nThe standing stones upon the marches road hum in the same rhythm. They are older than he."
+    },
+    {
+      "id": "urgentHeal",
+      "name": "Urgent Heal",
+      "flavor": "Rite of the Furnace Chapel, for wounds taken in its service.\n\nPerformed swiftly, its prayer cut to the first line. The rubric bids the wound be bound beneath the brand, never over it, that the mark be left clear.\n\nWe bind the wound beneath the unspent brand."
+    },
+    {
+      "id": "bloodPact",
+      "name": "Blood Pact",
+      "flavor": "Second office of the birth-rite.\n\nThe flame-mark was pressed into the newborn's wrist, and the parents answered in the child's stead. The Chapel called it a promise and a privilege.\n\nIn the birth-roll of the crown-born wards, beside the Herald's name, one word is struck through."
+    },
+    {
+      "id": "blightTouch",
+      "name": "Blight Touch",
+      "flavor": "Blessing of the Feral Ember.\n\nTaken from the Chapel's blessing of the sick and turned to what the Feral Ember holds its truer purpose: to give warmth and keep no account. The Saints name it heresy.\n\nThe converts say the touch is warm. None have said otherwise."
+    },
+    {
+      "id": "flagellation",
+      "name": "Flagellation",
+      "flavor": "Penance of the Chapel's novices.\n\nPerformed with a knotted cord upon the bare back. The Saints taught that pain offered freely spares the fire the trouble of taking it. Novice Wen kept the penance daily for three years.\n\nShe wrote that she could not say whom it had spared."
+    },
+    {
+      "id": "penance",
+      "name": "Penance",
+      "flavor": "Kneeling upon the cold stone of the nave.\n\nPrescribed for small failings of devotion, until the knees bled. The nave was repaved twice in the years of the Mark Trade, with stone from the caldera, and no reason given.\n\nWe kneel on the cold stone and are forgiven."
+    },
+    {
+      "id": "litany",
+      "name": "Litany",
+      "flavor": "Closing prayer of the funeral rite.\n\nSpoken over the ledger once a name was entered, and said to return a share of warmth to the mourners. Novices learned it before they could read. The last novice says it each night.\n\nThe ledger was lost in the Burning. There is no name to close."
+    },
+    {
+      "id": "graveOffering",
+      "name": "Grave Offering",
+      "flavor": "Offering at the graves of the crown-born.\n\nUpon the anniversary of their writing, mourners opened the grave and set a coal beside what remained. The Chapel ended the rite in the years of the Marking, saying the dead no longer needed company.\n\nBy then, the mourners had found the graves colder than they ought to be."
+    },
+    {
+      "id": "bloodletting",
+      "name": "Bloodletting",
+      "flavor": "Bleeding before the blessing of bread.\n\nThe Saints bled into the bowl first, that nothing be taken from the congregation the Saint had not first given. The Chapel taught it as humility.\n\nOn the days of the rite, the bread ran short, and the Saints ate first."
+    },
+    {
+      "id": "contagion",
+      "name": "Contagion",
+      "flavor": "Communion of the Feral Ember.\n\nThe Chapel passed one cup along the pews, that the congregation be one body before the fire. The Feral Ember revived the rite with another cup.\n\nWe pass one cup along the pews, and every mouth is red."
+    },
+    {
+      "id": "cullTheWeak",
+      "name": "Cull the Weak",
+      "flavor": "Rite of gathering the failing.\n\nPerformed in the sick-wards of the crown-born, that the dying need not linger. The Wandering Physician, who served in those wards, kept his own list of those gathered. The ward rolls name none of them.\n\nMany he had expected to recover."
+    },
+    {
+      "id": "transfusion",
+      "name": "Transfusion",
+      "flavor": "Communion of blood, between Saint and dying.\n\nBlood poured from cup to cup, for the dying of good family. The rubric speaks of the Saint giving, never receiving. Novice Wen wrote that the flow ran both ways.\n\nThe Saints rose from the rite looking younger."
+    },
+    {
+      "id": "blightward",
+      "name": "Blightward",
+      "flavor": "Cloth laid over an unfinished brand.\n\nBegun for the Herald, whose mark began to burn on the night of the Burning and stopped partway. The Chapel remnant now lays such cloths over the brands of its dead, and teaches that the fire will return to finish its work.\n\nThe fire started on me and stopped. I do not know why."
+    },
+    {
+      "id": "martyrBlood",
+      "name": "Martyr's Blood",
+      "flavor": "Offering of the Saint's own blood.\n\nMade at the altar when the censer ran low, for a Saint's blood was held to burn hotter than any incense. When the censers were cleaned in the years of the Spire, dried blood lay layered beneath the ash.\n\nWe spend ourselves at the altar, and the censer swings faster."
+    },
+    {
+      "id": "blightBloom",
+      "name": "Blight Bloom",
+      "flavor": "Red flowers upon the graves of the crown-born.\n\nThey first appeared in the Furnace Chapel's garden in the Long Winter. The remnant tends them as a sign that the dead are giving yet.\n\nThey spread fastest where the earth is freshly turned. The remnant has begun turning more."
+    },
+    {
+      "id": "sacredHarvest",
+      "name": "Sacred Harvest",
+      "flavor": "Harvest rite of the Chapel.\n\nA gilded sickle, blessed and carried through the fields of the crown-born. The Chapel found the harvest beautiful, and built a chapel to it. The rubric lists what the sickle is to cut, in the fields and after.\n\nThe second half of the list is written in the old script."
+    },
+    {
+      "id": "thornHaloCard",
+      "name": "Thorn Halo",
+      "flavor": "Crown of briar, worn at the feast of the Founding.\n\nIn memory of the first Saint, who by Chapel tradition wore thorns in the caldera; each thorn stood for a name carried. In the Long Winter, the Thorn Matriarch grew a crown of her own.\n\nThe remnant counts her a Saint. She was a Warden, and never swore to them."
+    },
+    {
+      "id": "communionCard",
+      "name": "Communion",
+      "flavor": "Sharing of warmth, as kept at the Tidebound Chapel.\n\nThe Saints raised that chapel upon the Drowned Coast to keep watch upon the Spire, which they called heresy. Its congregation shrank with each winter after the Spire was finished.\n\nWe watched from Tidebound Chapel and never saw the heresy lit."
+    },
+    {
+      "id": "gildedOath",
+      "name": "Gilded Oath",
+      "flavor": "Oath of the Goldbough crest.\n\nA gilded branch, three flames upon three twigs: the kingdom and its hearths. Novices swore it at their first vigil, before they were told what the hearths were fed.\n\nThe crest above the Furnace Chapel's nave bears a fourth twig, bare, blamed upon a careless gilder."
+    },
+    {
+      "id": "plagueBearer",
+      "name": "Plague Bearer",
+      "flavor": "Office of the censer-bearer.\n\nThe Saints taught that the censer's smoke opened doors to the fire's blessing. When the Chapel set the office down, the Feral Ember took it up, and bears the censers lit through the weald.\n\nThe doors open for them more readily than ever they did for the Saints."
+    },
+    {
+      "id": "exsanguinate",
+      "name": "Exsanguinate",
+      "flavor": "Giving of blood, until the giver is light enough to rise.\n\nPerformed by the Saints in the last extremity, when a hearth faltered and no other offering remained. The Chapel's record names those who performed it and rose.\n\nThe graves assigned to them were found empty."
+    },
+    {
+      "id": "stigmataCard",
+      "name": "Stigmata",
+      "flavor": "Marks of the Saints.\n\nWorn openly upon hands and brow, and held by the Chapel to be a favour of the fire. Novices learned they appeared more reliably upon Saints with a knife at hand.\n\nNovice Wen wrote so plainly, then begged forgiveness for it, twice."
+    },
+    {
+      "id": "scourge",
+      "name": "Scourge",
+      "flavor": "Penitent's walk down the nave.\n\nScourge in hand, while the congregation answered each blow. The number of blows was set by the number of names written that season. In the last seasons before the Burning, the rite lasted the night.\n\nWe walk the nave with the scourge, and the pews answer."
+    },
+    {
+      "id": "reclamation",
+      "name": "Reclamation",
+      "flavor": "Return of warmth lent to the dying.\n\nPerformed at the deathbed once the name was read, and called a courtesy returned. After the rite the dying were colder, and the Saint warmer.\n\nThe rubric closes: do not explain this to the family."
+    },
+    {
+      "id": "secondBloom",
+      "name": "Second Bloom",
+      "flavor": "Rite of recovery, named for the weald's second flowering.\n\nThe orchards bloomed a second time in years when the Field Flame burned strong, and the Chapel claimed both the blossom and the healing as its work. Neither has come since the Burning.\n\nThe last novice performs the rite regardless, and says it works."
+    },
+    {
+      "id": "butterflyPlague",
+      "name": "Plague of Butterflies",
+      "flavor": "Red moths of the Furnace Chapel's ossuary.\n\nThey dwelt among the bones for as long as the Chapel kept records, and were called the ossuary's keepers. After the Burning, they left the ossuary for the reach.\n\nWe loose the red moths from the ossuary; they know the way."
+    },
+    {
+      "id": "lifeTitheCard",
+      "name": "Life Tithe",
+      "flavor": "Tithe of life, owed by each crown-born family.\n\nOne day in seven, given to the Chapel's work, as the dead had given all their days. In the years of the Marking, the tithe was extended to newborns, who could not work.\n\nWe bring the cradle where the bier once stood."
+    },
+    {
+      "id": "crimsonRite",
+      "name": "Crimson Rite",
+      "flavor": "Chalice of the high altar.\n\nReserved to the Saints. It draws from the Saint as the Saint draws from it. The Furnace Saint performs the rite alone now, and keeps the chalice full.\n\nWe drink from the chalice, and it drinks from us."
+    },
+    {
+      "id": "blightNova",
+      "name": "Blight Nova",
+      "flavor": "Reading of every name, aloud and at once.\n\nComposed by the Furnace Saint after the Burning. The novices say it is what the fire did that night, and that the rite exists so it will be remembered. The remnant holds it holiest of the liturgies.\n\nIt has never been performed to its end."
+    },
+    {
+      "id": "lastRites",
+      "name": "Last Rites",
+      "flavor": "Rite for those not to be written.\n\nForeigners, criminals, and in the last years, the bought-marked of whom the Chapel had not been told. The rubric forbids a name upon the headstone, and calls this discretion.\n\nThe lower cemetery stands blank by the thousand."
+    },
+    {
+      "id": "zealotryCard",
+      "name": "Zealotry",
+      "flavor": "Creed of the Feral Ember.\n\nEach wound is a door the fire walks through. Its priests bless wounds rather than bind them, and hold that the Chapel knew as much, and hid it behind a ledger.\n\nIts converts do not live long. More come each week."
+    },
+    {
+      "id": "bloodHarvest",
+      "name": "Blood Harvest",
+      "flavor": "Reaping of the field of the marked.\n\nSo the liturgy names the gathering of names at the close of a plague year. The Saints went out with sickles and ledgers, and the rite is spoken throughout as thanksgiving.\n\nWe reap the field of the marked, and give thanks."
+    },
+    {
+      "id": "painOffering",
+      "name": "Pain Offering",
+      "flavor": "Small pain, offered in advance.\n\nTaught to crown-born children as good citizenship; the children called it paying early. The habit outlived the Chapel among the Forsaken hamlets, learned from refugees after the Burning.\n\nThey keep it without knowing whom they pay."
+    },
+    {
+      "id": "witheringTouch",
+      "name": "Withering Touch",
+      "flavor": "Touch that withers growth.\n\nPermitted by the rubric upon the weeds of the weald's field-shrines, and nothing else. In the years the Field Flame dimmed, a clause was added forbidding its use upon crops.\n\nThe clause is dated after three harvests had failed, and signed by a Saint absent from the roll of Saints."
+    },
+    {
+      "id": "desperateRite",
+      "name": "Desperate Rite",
+      "flavor": "Rite for when the bier is already made.\n\nThe rubric bids the officiant pray louder, and nothing more. The Saints held that the fire heeds the strength of a voice; the novices, that the rubric was written for the family.\n\nThe Herald has performed it upon themselves."
+    },
+    {
+      "id": "emberTideCard",
+      "name": "Ember Tide",
+      "flavor": "The Chapel's name for the night of the Burning.\n\nThe night the fire read the names of the crown-born all at once. The novices say the censers swung untouched through it, as the congregation burned around them. The censers of the Furnace Chapel have not stopped since.\n\nWe kept the censer swinging when the hearth went dark."
+    },
+    {
+      "id": "bloodOfferingRite",
+      "name": "Blood Offering",
+      "flavor": "Bowl filled with the officiant's own blood.\n\nFrom the Chapel's first years, when the Saints were few; revived by the Furnace Saint after the Burning, when they were fewer. He performs it daily, and grows thin.\n\nThe bowl is always full."
+    },
+    {
+      "id": "harbingerOfBlightCard",
+      "name": "Harbinger of Blight",
+      "flavor": "Title of the Feral Ember's preachers.\n\nThe Chapel gave the same name to the novice who walked before a bier with a bell. The Feral Ember holds that the word was never the Chapel's to give, but the fire's.\n\nWe go before the fire, and it follows us gladly."
+    },
+    {
+      "id": "blightwardLash",
+      "name": "Blightward Lash",
+      "flavor": "Scourge turned upon one's own rot.\n\nA discipline the Herald took up after the Burning: to cut the Blight from their own flesh and turn it outward. The Chapel remnant condemns it as heresy against the fire's gift.\n\nTwice the remnant has sent a novice to ask how it is done."
+    },
+    {
+      "id": "lastMercy",
+      "name": "Last Mercy",
+      "flavor": "Warming of a dying hand.\n\nThe Chapel's nursing sisters did it with a coal wrapped in cloth, that the fire might find the hand gentle. The Wandering Physician learned it from them, and does it without the coal.\n\nIt seems to work as well. He cannot say what working means."
+    },
+    {
+      "id": "warmLitany",
+      "name": "Warm Litany",
+      "flavor": "First prayer of the Furnace Chapel's novices.\n\nSaid over a small hurt, to keep it warm. The novices were taught its words were older than the Chapel, found by the first Saint cut into the caldera wall.\n\nWe give the name. We keep the warmth."
+    },
+    {
+      "id": "ambush",
+      "name": "Ambush",
+      "flavor": "Opening of the frozen docks.\n\nStrike from beneath a bridge, from behind, before the other has decided there is a fight at all. The docks learned it from the Court's surgeons, who walked the bridges by night with their bags, and always arrived first.\n\nTheir day-books record house calls, but no houses."
+    },
+    {
+      "id": "rogueShiv",
+      "name": "Shiv",
+      "flavor": "Sliver of iron from the rail of the Fourth Bridge.\n\nThe ironwork froze brittle the night the Court Flame died. Dock children say the railings were cast from the Court's melted oath-tokens, and so are worth more than any blade in the right hands.\n\nWhose hands are right, the children will not tell."
+    },
+    {
+      "id": "smokePellet",
+      "name": "Smoke Pellet",
+      "flavor": "Tallow and ash, rolled in a back room on the Chandlers' Stair.\n\nSold as lamp-starters. The chandler says the recipe was his grandmother's, taken from a Court surgeon, though in his telling the surgeon is sometimes a knight.\n\nThe docks buy more of them each winter."
+    },
+    {
+      "id": "quickCut",
+      "name": "Quick Cut",
+      "flavor": "Knife-work of the Tollmouth fence.\n\nHe pays only for quick cuts, holding that a slow cut is a confession and a quick one an accident. Before the Decree, a dock child caught with a knife was hanged, not branded.\n\nThe fence considers that the better age."
+    },
+    {
+      "id": "feint",
+      "name": "Feint",
+      "flavor": "Oldest trick of the frozen docks.\n\nEyes on the purse, hand on the knife. The docks say the Court's knights were easily taken, for they had sworn to look wherever a threat was declared.\n\nNo such clause appears in their oath-book. The knights wrote the oath-book."
+    },
+    {
+      "id": "backstep",
+      "name": "Backstep",
+      "flavor": "Retreat of the lower-river ice-cutters.\n\nThe cutters know which ice beneath the bridges holds and which only seems to, and sell the knowledge by the season. Their map is drawn inside a cutter's coat and passed down with it.\n\nIts present wearer says it has been wrong since the second winter."
+    },
+    {
+      "id": "twinPrick",
+      "name": "Twin Prick",
+      "flavor": "Two small wounds, set close together.\n\nThe Court's surgeons recorded them as bites when they found them upon bodies along the bridges. Their receipts give the hour, the bridge and the fee for the inquest. Not one case was closed.\n\nThe dock children call it the Surgeon's Signature."
+    },
+    {
+      "id": "pocketSand",
+      "name": "Pocket Sand",
+      "flavor": "Kiln ash, carried in a coat lining.\n\nFrom the south-bank lime kilns, where the dock poor laboured for the Court's builders. The Court paid in lime and taxed in coin; the ash was the one thing given freely.\n\nThe kilns went cold with the Court Flame. The ash has not run out."
+    },
+    {
+      "id": "hamstringRogue",
+      "name": "Hamstring",
+      "flavor": "Cut behind the knee.\n\nThe docks' answer to the stitched knights, who cannot kneel, and once fallen cannot rise. The surgeons called the knights unbending. On the docks, the word is taken as written.\n\nThe Fourth Bridge rail bears a tally of knights left upon the ice."
+    },
+    {
+      "id": "serratedShiv",
+      "name": "Serrated Shiv",
+      "flavor": "Shiv sawn from a Marionette's spine-rod.\n\nThe Court's surgeons set steel rods in the spines of their dancers, to keep them upright through the dance. Dock thieves call the taking of one a mercy.\n\nThe surgeons who fitted them took their reasons beneath the ice."
+    },
+    {
+      "id": "smokeVeil",
+      "name": "Smoke Veil",
+      "flavor": "River fog, thickened with ash.\n\nThe fog rose off the water the night the Court Flame died, and has not lifted. The Court's lamplighters, paid to burn it away, were the first to be lost in it.\n\nTheir guild-book ends with a list of lamps to be relit. None are marked done."
+    },
+    {
+      "id": "ricochet",
+      "name": "Ricochet",
+      "flavor": "Blade skipped across the ice.\n\nA children's game on the frozen river, played with pebbles by the young and knives by the old. The ice keeps no witnesses, they say.\n\nIt is said the Marrow Organist, beneath it, hears every throw."
+    },
+    {
+      "id": "lowBlow",
+      "name": "Low Blow",
+      "flavor": "Strike below the belt.\n\nForbidden by the Court's code of arms, which hangs upon the Citadel gate in frost-bitten gilt. The children of the docks read it aloud to one another in jest.\n\nIts final clause, on the treatment of the unmarked, has been chipped from the stone."
+    },
+    {
+      "id": "pilfer",
+      "name": "Pilfer",
+      "flavor": "Lift worked in the crowds upon the bridges.\n\nThe Court counted wrists and kept careful rolls, but never counted purses. Old Keel, the Tollmouth fence, taught that to rob a courtier sewn to his post was salvage, not theft.\n\nHe claimed to have been a courtier once. His wrist bears the brand."
+    },
+    {
+      "id": "vanish",
+      "name": "Vanish",
+      "flavor": "Art of the unmarked beneath the bridges.\n\nTaught to the docks by those who lived under the Citadel's bridges before the Decree, when to be seen was to be entered on a roll. Under the bridges there is nothing but ice.\n\nMost of those teachers vanished in the end. Where to, the docks cannot agree."
+    },
+    {
+      "id": "cheapShot",
+      "name": "Cheap Shot",
+      "flavor": "Blow at the already wounded.\n\nThe Tollmouth fence calls it the only honest bargain on the river, and charges for lessons in teeth. He says he learned the practice from a Court magistrate who levied fines the same way.\n\nThe jar upon his counter is nearly full."
+    },
+    {
+      "id": "bladeDanceRogue",
+      "name": "Blade Dance",
+      "flavor": "Cuts in the figure of the Marionettes' dance.\n\nThe surgeons stitched the Court's dancers to their dance when the Court Flame died, and they perform upon the frozen river for no one. The dance was meant to end at dawn.\n\nA small Marionette on the Fourth Bridge waits for the ending. Thieves leave her coins."
+    },
+    {
+      "id": "garrote",
+      "name": "Garrote",
+      "flavor": "Loop of the Court tailors' gilt thread.\n\nBought cheap on the docks once the tailors had no more use for it. The Court's surgeons bought the same thread, for purposes never shared with the tailors.\n\nThe surgeons and the stranglers were ever its best customers."
+    },
+    {
+      "id": "fanOfKnives",
+      "name": "Fan of Knives",
+      "flavor": "Surgeon's roll of scalpels, thrown as one.\n\nThe rolls reach the docks more often than their owners, sold by ice-cutters who find them frozen into the river, the coat still about them. The surgeons tried to flee the Citadel on the night of the Burning.\n\nThe ice closed over those who ran."
+    },
+    {
+      "id": "setupRogue",
+      "name": "Setup",
+      "flavor": "Preparation of a dock job.\n\nA window left open on the Lantern Bridge, a lamp turned low, a guard paid to cough. The method is credited to a thief called the Wick, who planned the first robbery of the Regent's hall in the years of the Mark Trade.\n\nIt is said the Court itself paid her to rob it."
+    },
+    {
+      "id": "acrobaticsRogue",
+      "name": "Acrobatics",
+      "flavor": "The rooftop road of the frozen docks.\n\nBridge rail, lamp post, gutter, never the street. The Court's watch walked only the paved ways, for the paving had been blessed at the Founding and the rooftops had not.\n\nWhether the watch was pious or idle is not agreed."
+    },
+    {
+      "id": "disorient",
+      "name": "Disorient",
+      "flavor": "Spin practised in the Hall of Mirrors.\n\nThe Glass Regent's mirrors are the frozen river beneath the bridges, and they show more than stands before them. Thieves who went in for the silver learned to turn a courtier until he lost the throne.\n\nIt is said the Regent herself now reigns from the wrong side of the glass."
+    },
+    {
+      "id": "coupDeGrace",
+      "name": "Coup de Grace",
+      "flavor": "Finishing thrust of the Court's surgeons.\n\nThey called it a courtesy and billed it as a procedure, listed between stitching and funeral in their fee schedule. The docks learned it watching the surgeons at work upon the bridges after the Burning.\n\nThe schedule has since been amended by hand. The price has risen."
+    },
+    {
+      "id": "sap",
+      "name": "Sap",
+      "flavor": "Sand-weighted cosh of the docks.\n\nMeant to fell without killing. It does not work upon the Marionettes, who dance on with slack strings. One thief used it upon a girl at the foot of the Stitched Throne, a dancer no older than a dock child.\n\nHe returned asking whether anyone knew the tune she hummed."
+    },
+    {
+      "id": "shadowstep",
+      "name": "Shadowstep",
+      "flavor": "Step through a pier's shadow.\n\nThe shadows beneath the bridges are let by the season, and rent is owed to whoever held the pier before. Tenancies pass down like a trade.\n\nThe oldest belongs to one not seen since the Decree. The rent is always paid."
+    },
+    {
+      "id": "afterimageCard",
+      "name": "Afterimage",
+      "flavor": "Reflection left in the Regent's glass.\n\nThe mirrors of the Hall held a thief's image a heartbeat longer than they should. The Regent's stewards recorded it as the Hall's loyalty.\n\nThe glass has grown slower with each winter since the Burning."
+    },
+    {
+      "id": "bloodletterRogue",
+      "name": "Bloodletter",
+      "flavor": "Bleeding, as the Citadel's surgeons practised it.\n\nTheir receipts name the patient, the measure drawn, and the patient's satisfaction, marked on every surviving copy. The surgeons held that bleeding balanced a courtier's humours before an oath.\n\nReceipts from the last month before the Burning bear no names."
+    },
+    {
+      "id": "venomcoat",
+      "name": "Venomcoat",
+      "flavor": "Sedative paste of the Court's surgeons.\n\nSold by the vial to courtiers who could not sleep in the weeks before the Decree. The docks found it served a blade as well as a cup of wine.\n\nThe label promises a dreamless night."
+    },
+    {
+      "id": "misdirect",
+      "name": "Misdirect",
+      "flavor": "Art of leading the watch astray.\n\nPerfected on the night of the Courtly Decree, when the brand-men came down to the river to mark the last of the unmarked by dawn, and the ice-cutters paid the bridge watch to lead them in circles.\n\nThe Decree said dawn. On that side of the river, dawn came late."
+    },
+    {
+      "id": "assassinate",
+      "name": "Assassinate",
+      "flavor": "Killing blow, struck after a single question.\n\nThe way of a dock thief who hunts one particular Court surgeon. The question has been told upon the docks; the surgeon's name has not. Some believe the question concerns a stitching. Others, that the surgeon is kin.\n\nThe docks have learned not to ask twice."
+    },
+    {
+      "id": "thousandCutsRogue",
+      "name": "Thousand Cuts",
+      "flavor": "Many small cuts, each undoing a stitch.\n\nThe surgeons called it the procedure run backward, and forbade it, for a courtier sewn to his post had sworn an oath. The winter after the Burning, a surgeon was found unstitching his own wife from the palace stair.\n\nThe surgeons' day-book records only a failed stitching."
+    },
+    {
+      "id": "deadlyTempoCard",
+      "name": "Deadly Tempo",
+      "flavor": "Rhythm of the frozen docks.\n\nThe dock clock froze at the Burning, its hands upon the King's Hour. Before, thieves timed their work by it, and the Court timed its watch by the same.\n\nSince then the docks keep time by their own pulses, and no two agree."
+    },
+    {
+      "id": "opportunistCard",
+      "name": "Opportunist",
+      "flavor": "First law of the frozen docks.\n\nWhen the knight stumbles, the purse swings. The stitched knights stumble often in their sewn armour, and the docks have prospered by it.\n\nMany of those knights are the fathers and brothers of the docks. This is not spoken of."
+    },
+    {
+      "id": "envenomCard",
+      "name": "Envenom",
+      "flavor": "Poison from a surgeon's second shelf.\n\nThe second shelf held what the first could not treat. Thieves who entered the surgeons' houses after the Burning found the second shelves full and the first bare.\n\nThe apprentices will not say which was emptied first."
+    },
+    {
+      "id": "toxicVolley",
+      "name": "Toxic Volley",
+      "flavor": "Sedative vials, broken into the river fog.\n\nLoosed upwind of the bridge watch, which slept through three robberies. The river smelled of it for weeks.\n\nThe watch ledger records those weeks as quiet, and commends the men for their vigilance."
+    },
+    {
+      "id": "smokeBomb",
+      "name": "Smoke Bomb",
+      "flavor": "Pig's bladder of kiln ash.\n\nSplit upon the stones, it raises a fog the bridge watch reports as a haunting. The ash is from the south-bank kilns, which in the Court's last years were fired with something other than lime.\n\nThe reports are not wholly wrong."
+    },
+    {
+      "id": "executionWindow",
+      "name": "Execution Window",
+      "flavor": "The moment the watch looks away.\n\nEvery guard has one. In the years of the Mark Trade, the watch's were written into the roster for a fee: the hours each bridge would stand unguarded, and beside each hour, a name.\n\nNone of those names appear in any Court record."
+    },
+    {
+      "id": "perfectHeist",
+      "name": "Perfect Heist",
+      "flavor": "Theft of the Glass Regent's mirrors.\n\nEvery mirror is entered in the Hall's inventory, and every one is gone. The older thieves credit the Wick.\n\nThe Hall of Mirrors is full of glass to this day. That is how the docks know it was perfect."
+    },
+    {
+      "id": "deathblow",
+      "name": "Deathblow",
+      "flavor": "Killing stroke of the frozen docks.\n\nStruck where the river keeps what the surgeons leave. The river does not thaw, the docks say, because it is full, and the Court built more bridges rather than ask why.\n\nBeneath the ice the Marrow Organist plays the funeral service. He has never reached its end."
+    },
+    {
+      "id": "prepare",
+      "name": "Prepare",
+      "flavor": "Hands warmed before the work.\n\nCold hands drop knives. Dock children learn to warm their hands before they learn to steal, and never at a fire another has lit. A borrowed fire is a debt, and the docks collect.\n\nThe fires on the Citadel side burn more than wood."
+    },
+    {
+      "id": "katanaDrawCut",
+      "name": "Draw Cut",
+      "flavor": "Single cut from the scabbard, as it is done beyond the marches.\n\nThe curved blades reached the ring in the years of the Mark Trade, borne by foreign lords who paid to be warm there. They burned with the rest of the marked, far from home, and left their swords where they fell.\n\nThe merchant knows whose each one was. He sells that separately."
+    },
+    {
+      "id": "greatswordSunderingHew",
+      "name": "Sundering Hew",
+      "flavor": "Hew of a Court knight's greatsword.\n\nToo heavy to carry far, and too dear to leave. The corrupted knights pause at the sight of one in a Forsaken's hands, unable to believe an unmarked hand holds their steel.\n\nThat pause is worth the weight."
+    },
+    {
+      "id": "honedEdge",
+      "name": "Honed Edge",
+      "flavor": "Whetstone from the cairn.\n\nAt the Grave of the Nameless, the custom is to take one and leave one. The stones are weald sandstone, marches slate, black glass of the reach. One is starstone.\n\nWithin the year, someone always carries it back."
+    },
+    {
+      "id": "ironSkin",
+      "name": "Iron Skin",
+      "flavor": "Plate of cold iron, worn where a flame-mark would lie.\n\nFirst worn by the ice-fishers of the Pale Marches in the year of the Decree, when the Court's brand-men came for the unmarked. Such plates are left upon the Grave of the Nameless for those who climb after.\n\nMost have been worn thin by more than one wearer."
+    },
+    {
+      "id": "fieldDressing",
+      "name": "Field Dressing",
+      "flavor": "Clean rag, tied to the cairn.\n\nBoiled by someone who expected to need it, and did not return for it. The custom reached the hamlets with Chapel refugees after the Burning; the hamlets kept the custom, and let the prayer go.\n\nSome rags arrive embroidered with names. The hamlets unpick them."
+    },
+    {
+      "id": "hex",
+      "name": "Hex",
+      "flavor": "Sign scratched upon a door.\n\nThe hamlets mark it on houses where someone marked burns slowly within, to keep it from coming out. They learned the sign from the Chapel, which set it upon the houses of the unmarked before the Decree.\n\nThe hamlets call it fair to use it the other way round."
+    },
+    {
+      "id": "transmute",
+      "name": "Transmute",
+      "flavor": "Cinder spent in the palm.\n\nFor a moment, the hand that holds it does not shake. The hamlets hold that each cinder was someone once, and forbid spending a cinder one took oneself.\n\nThose who return from the ring have mostly broken that rule."
+    },
+    {
+      "id": "twinFang",
+      "name": "Twin Fang",
+      "flavor": "Two knives, worn crosswise.\n\nOne for the hound, one for its handler. The weald's blight-hounds were the Wardens' before the Burning, and run yet with Bastion kennelmen who turned with the pack.\n\nA handler may be reasoned with, briefly. Never twice."
+    },
+    {
+      "id": "blindingSand",
+      "name": "Blinding Sand",
+      "flavor": "Ash thrown in the eyes.\n\nThe hamlets learned in the first winter that what came out of the weald flinched from ash as the living do. Some took this as proof the corrupted could be saved.\n\nMarl's Hollow took it as proof they could be blinded. Marl's Hollow endures."
+    },
+    {
+      "id": "hamstring",
+      "name": "Hamstring",
+      "flavor": "Cut at the back of the leg.\n\nTaught upon the road with a single instruction: all things of the ring walk, so go for the legs. The saying is scratched on cairns from the weald to the coast, weeks apart.\n\nIt is cut in the same hand on every one."
+    },
+    {
+      "id": "masterOfStrategy",
+      "name": "Master of Strategy",
+      "flavor": "Maps scratched upon cairn stones.\n\nLeft by climbers who came back down, or meant to. The hamlet councils copy the true ones and burn the rest, and each winter argue which were which.\n\nThe oldest shows a fourth road leading off the ring toward the coast. It has not been burned."
+    },
+    {
+      "id": "bashingBlow",
+      "name": "Bashing Blow",
+      "flavor": "Blow of whatever is heavy.\n\nA cudgel, a mallet, a shovel from a mine camp. The reach's miners swing it at things in the lower galleries that were miners once. Foreman Coll says not to look at their hands, which remember the work.\n\nHis camp has lost fewer than any other."
+    },
+    {
+      "id": "quickGuard",
+      "name": "Quick Guard",
+      "flavor": "Arm raised upon the viaduct.\n\nThe viaducts are older than the kingdom, and have no rails. Climbers say they were built to carry heat, not people. Those who cross learn to keep one arm raised against the wind.\n\nThe stone has never learned to expect feet."
+    },
+    {
+      "id": "sweepingBlow",
+      "name": "Sweeping Blow",
+      "flavor": "Wide swing for the viaduct.\n\nWhere the corrupted come three abreast and the stone is narrow. The Forsaken councils teach that the viaducts were always built to funnel something, long before there were corrupted to funnel.\n\nThe corrupted walk them because the stone expects a crowd."
+    },
+    {
+      "id": "enfeeble",
+      "name": "Enfeeble",
+      "flavor": "Sea salt, rubbed into a wound.\n\nThe ship-breakers swear by it. Salt, they say, is the one thing upon the ring the fire has never touched, for nothing written survives the sea.\n\nThey have not seen what the Tidebound Abbey keeps in its boathouse."
+    },
+    {
+      "id": "colossusSmash",
+      "name": "Colossus Smash",
+      "flavor": "Blow at the joints of something vast.\n\nLearned against the Goldbough Avatar, the heraldic idol kneeling in a clearing of the weald, a sapling grown through it. It does not know the kingdom is gone.\n\nIt is carved stone and gilt. It flinches all the same."
+    },
+    {
+      "id": "wound",
+      "name": "Wound",
+      "flavor": "A cut that closed wrong.\n\nIt knits into a hard ridge that aches before the weather turns. Climbers call it the road keeping its share.\n\nThe hamlets' older word for it means owed."
+    },
+    {
+      "id": "dazed",
+      "name": "Dazed",
+      "flavor": "Light behind the eyes, left by a Grave Wisp.\n\nThose who have seen a wisp up close say it looked at them as if reading.\n\nClose your eyes. Do not speak your name until the light is gone."
+    },
+    {
+      "id": "slimed",
+      "name": "Slimed",
+      "flavor": "Grey muck from the drowned hamlet.\n\nIt clings, and will not wash out in cold water. The hamlet flooded before the Burning, in a flood the Wardens called natural.\n\nIt is warmer than anything in the weald has a right to be."
+    },
+    {
+      "id": "guilt",
+      "name": "Guilt",
+      "flavor": "What follows looting at the Second Cairn.\n\nThe second time is easier. That is how climbers know the ring has begun on them."
+    },
+    {
+      "id": "rallyingBanner",
+      "name": "Rallying Banner",
+      "flavor": "Blank rag upon a pole.\n\nPlanted where climbers who meet upon the road may find one another. The Forsaken never had banners, for a banner bears a name. The corrupted come to them too.\n\nA rag on a pole. Find it. Stand by it."
+    },
+    {
+      "id": "sharedFlame",
+      "name": "Shared Flame",
+      "flavor": "Warmth passed between two climbers.\n\nHands over one coal, breath beneath one coat, with no hearth and no ledger. The Chapel would have named it theft. It is the only warmth upon the ring owed to no one.\n\nWarmth passed between two outlives the fire."
+    },
+    {
+      "id": "ashOath",
+      "name": "Oath of Ash",
+      "flavor": "Oath sworn in ash.\n\nA smear upon each other's wrist, where the mark would have been; no witness, no name. It binds twice, once for each. The Court held that an unwitnessed oath binds no one.\n\nThe Court is sewn to its oaths now."
+    },
+    {
+      "id": "shieldGuardian",
+      "name": "Guardian",
+      "flavor": "Kite shield of the Court's knights, its strap cut short.\n\nSuch shields lie easily found upon the marches road, where the knights who bore them were stitched to their posts and left standing. Climbers take the shields and leave the knights.\n\nThe knights have not objected."
+    },
+    {
+      "id": "guardianBulwark",
+      "name": "Enter: Bulwark",
+      "flavor": "The Wardens' holding stance, learned from the shield.\n\nA shield that stood in the Bastion's line keeps the habit, the elders say, and pulls the arm into place. They call it superstition.\n\nThey tell climbers to carry Bastion shields, and never Court ones."
+    },
+    {
+      "id": "shieldBastion",
+      "name": "Bastion",
+      "flavor": "Tower shield from the Bastion's walls.\n\nHeavy as a door, nearly as tall. The Wardens set such shields in the embrasures to fight from, never to carry. Climbers carry them regardless, for a moving wall is better than a still one.\n\nThe weight bows the bearer forward, as the Wardens once bowed before the Bastion."
+    },
+    {
+      "id": "spikedReprisal",
+      "name": "Spiked Reprisal",
+      "flavor": "Shield with nails driven through the boss.\n\nThe nails are from the Bastion's own gates. It is said a sellsword made it on the night of the Burning, from the gate he was hired to hold. His name is not known.\n\nNo bearer since has drawn the nails."
+    },
+    {
+      "id": "rimeThrust",
+      "flavor": "Frost spear of the Pale Marches.\n\nIts point was reforged from the broken blade of a Court knight, and marches steel keeps its frost long after leaving the cold. The ice-fishers who made it say the knight gave the blade freely, before the Decree, for a winter's fish.\n\nThe ice-fishers keep no records.",
+      "name": "Rime Thrust"
+    },
+    {
+      "id": "kilnCleave",
+      "flavor": "Axe of the Dead Foundry.\n\nThe Foundry's fires went out with the Crown Flame, and its forges have been warm ever since, though none has lit them. Corran, a foundryman, broke this axe from a cold mould at dawn and carried it up the Basalt Stair.\n\nHe says no one poured it.",
+      "name": "Kiln Cleave"
+    },
+    {
+      "id": "vesperWard",
+      "flavor": "Ward of the Chapel's evening bell-ringers.\n\nA chime rung at vespers to close the day. Its bell was taken long ago; only the frame and the ward remain. Climbers who carry it say it rings at dusk regardless.\n\nA Chapel ward, rung at vespers. The bell is gone.",
+      "name": "Vesper Ward"
+    }
+  ],
+  "relics": [
+    {
+      "id": "forsakenMedallion",
+      "name": "Forsaken Medallion",
+      "flavor": "Its face is worn smooth, but it still remembers being gold."
+    },
+    {
+      "id": "starstoneShard",
+      "name": "Starstone Shard",
+      "flavor": "A chip of someone else’s genius. It still hums."
+    },
+    {
+      "id": "cutpursesCoin",
+      "name": "Cutpurse's Coin",
+      "flavor": "One face buys silence. The other buys speed."
+    },
+    {
+      "id": "goldFigurine",
+      "name": "Gold Figurine",
+      "flavor": "It is very small and very heavy and it loves you."
+    },
+    {
+      "id": "goldenSprout",
+      "name": "Golden Sprout",
+      "flavor": "A sapling waits inside, patient as grief."
+    },
+    {
+      "id": "whetstoneFragment",
+      "name": "Whetstone Fragment"
+    },
+    {
+      "id": "kindlingCharm",
+      "name": "Kindling Charm"
+    },
+    {
+      "id": "cinderPouch",
+      "name": "Cinder Pouch"
+    },
+    {
+      "id": "feralEye",
+      "name": "Feral Eye"
+    },
+    {
+      "id": "goldleafCharm",
+      "name": "Goldleaf Charm",
+      "flavor": "A single leaf, pressed flat, still gold. It keeps the wind off you."
+    },
+    {
+      "id": "crackedLantern",
+      "name": "Cracked Lantern",
+      "flavor": "The glass is broken but the flame refuses to notice."
+    },
+    {
+      "id": "sacrificialKnife",
+      "name": "Sacrificial Knife",
+      "flavor": "It was made to open things that were meant to stay closed."
+    },
+    {
+      "id": "curedHide",
+      "name": "Cured Hide",
+      "flavor": "The beast learned its lesson too late to keep it."
+    },
+    {
+      "id": "ivoryComb",
+      "name": "Ivory Comb",
+      "flavor": "Someone kept themselves tidy right up until the end."
+    },
+    {
+      "id": "crackedTear",
+      "name": "Cracked Tear"
+    },
+    {
+      "id": "sealstoneKey",
+      "name": "Sealstone Key"
+    },
+    {
+      "id": "fellWardenBrand",
+      "name": "Fell Warden Brand"
+    },
+    {
+      "id": "bloodiedTalisman",
+      "name": "Bloodied Talisman"
+    },
+    {
+      "id": "emberFragment",
+      "name": "Ember Fragment"
+    },
+    {
+      "id": "twinnedArmor",
+      "name": "Twinned Armor"
+    },
+    {
+      "id": "blightTouchedIdol",
+      "name": "Blight-Touched Idol",
+      "flavor": "The carving was of a saint. The blight made it a saint of something else."
+    },
+    {
+      "id": "warhorn",
+      "name": "Warhorn",
+      "flavor": "One long note, and the old anger answers."
+    },
+    {
+      "id": "vowOfVengeance",
+      "name": "Vow of Vengeance",
+      "flavor": "Every name you take is a name you carry."
+    },
+    {
+      "id": "pearlOfSagacity",
+      "name": "Pearl of Sagacity",
+      "flavor": "It clouds when you are foolish. It has been cloudy for some time."
+    },
+    {
+      "id": "blessedDew",
+      "name": "Blessed Dew",
+      "flavor": "It gathers on the vial overnight, from nowhere, for no one."
+    },
+    {
+      "id": "azureSigil",
+      "name": "Azure Sigil",
+      "flavor": "Painted in a hand that trembled, by someone who steadied at the last stroke."
+    },
+    {
+      "id": "bloodstainedChalice",
+      "name": "Bloodstained Chalice",
+      "flavor": "It fills a little more each time. You have stopped asking with what."
+    },
+    {
+      "id": "goldboughSapling",
+      "name": "Goldbough Sapling"
+    },
+    {
+      "id": "wyrmHeart",
+      "name": "Wyrm Heart",
+      "flavor": "It still beats. It expects something of you."
+    },
+    {
+      "id": "ancestralHorn",
+      "name": "Ancestral Horn"
+    },
+    {
+      "id": "titansCinder",
+      "name": "Titan's Cinder",
+      "flavor": "A giant died to make this. It is still furious about it."
+    },
+    {
+      "id": "radiantAegis",
+      "name": "Radiant Aegis",
+      "flavor": "It rewards the guarded. It has nothing to say to the reckless."
+    },
+    {
+      "id": "flayersCenser",
+      "name": "Flayer's Censer",
+      "flavor": "The smoke seeks out lungs. It is not particular about whose."
+    },
+    {
+      "id": "vigilantHalo",
+      "name": "Vigilant Halo",
+      "flavor": "It hovers a hand above your head, waiting for you to earn it."
+    },
+    {
+      "id": "carrionTalon",
+      "name": "Carrion Talon",
+      "flavor": "The flock does not mourn. The flock moves to the next warm thing."
+    },
+    {
+      "id": "emberIdol",
+      "name": "Ember Idol",
+      "flavor": "It has been warm to the touch for a thousand years. It is patient about it."
+    },
+    {
+      "id": "crownOfStitches",
+      "name": "Crown of Stitches",
+      "flavor": "It fits. That is the worst part."
+    },
+    {
+      "id": "wardenHorn",
+      "name": "Warden Horn",
+      "flavor": "It sounds without being blown. Something is answering."
+    },
+    {
+      "id": "ashOfRemembrance",
+      "name": "Ash of Remembrance",
+      "flavor": "The dead lend strength. They are not gentle about it."
+    },
+    {
+      "id": "cinderOfTheFallen",
+      "name": "Cinder of the Fallen",
+      "flavor": "It pays out in the coin of endings. It expects you to make more of them."
+    },
+    {
+      "id": "crimsonCovenant",
+      "name": "Crimson Covenant",
+      "flavor": "The pact is simple: your blood answers for theirs. It is not a fair trade, but it is fast."
+    },
+    {
+      "id": "travelersWhetstone",
+      "name": "Traveler's Whetstone",
+      "flavor": "It was sharpened by hands that are no longer here to use it."
+    },
+    {
+      "id": "moonlitVial",
+      "name": "Moonlit Vial",
+      "flavor": "It never empties. It never fills, either."
+    },
+    {
+      "id": "wardensLantern",
+      "name": "Warden's Lantern",
+      "flavor": "The flame gutters when you are hurt, then burns a little brighter."
+    },
+    {
+      "id": "saltedRelic",
+      "name": "Salted Relic",
+      "flavor": "It was buried to keep something in, or something out. No one remembers which."
+    },
+    {
+      "id": "hollowedHorn",
+      "name": "Hollowed Horn",
+      "flavor": "It sounds only once. Everything still standing flinches."
+    },
+    {
+      "id": "gildedTear",
+      "name": "Gilded Tear",
+      "flavor": "A single drop, hardened gold, wept for someone who never asked for it."
+    },
+    {
+      "id": "watchmansBadge",
+      "name": "Watchman's Badge",
+      "flavor": "It is pinned to a coat that has seen more watches than the man wearing it."
+    },
+    {
+      "id": "howlingStandard",
+      "name": "Howling Standard",
+      "flavor": "It has not fallen in a hundred routs. It does not intend to start with yours."
+    },
+    {
+      "id": "emberwickCharm",
+      "name": "Emberwick Charm",
+      "flavor": "It burns brightest at the moment you can least afford to slow down."
+    },
+    {
+      "id": "carrionMorsel",
+      "name": "Carrion Morsel",
+      "flavor": "The spire feeds those who feed it. It is not fussy about the manners of the exchange."
+    },
+    {
+      "id": "gravetendersBell",
+      "name": "Gravetender's Bell",
+      "flavor": "One toll for each name laid down. The tending is in the counting."
+    },
+    {
+      "id": "sentinelsOath",
+      "name": "Sentinel's Oath",
+      "flavor": "The oath is long and the watch is longer. Endurance is its own kind of edge."
+    },
+    {
+      "id": "forsakenWarflag",
+      "name": "Forsaken Warflag",
+      "flavor": "The colors are all but rotted away. What it musters now answers to no banner but yours."
+    },
+    {
+      "id": "wrathCoil",
+      "name": "Wrath Coil",
+      "flavor": "It winds tighter with every wound and lets go all at once, at someone else."
+    },
+    {
+      "id": "ashenGrip",
+      "name": "Ashen Grip",
+      "flavor": "The leather remembers every hand that held it, and gives a little back."
+    },
+    {
+      "id": "lodestarShard",
+      "name": "Lodestar Shard",
+      "flavor": "It points nowhere on any map. It points at the next cast."
+    },
+    {
+      "id": "waxenSeal",
+      "name": "Waxen Seal",
+      "flavor": "Pressed once, it holds. Pressed twice, it is only wax."
+    },
+    {
+      "id": "whetstonePouch",
+      "name": "Whetstone Pouch",
+      "flavor": "A thumb along the edge before the first cut. Habit, and then not."
+    },
+    {
+      "id": "wayfarersKnot",
+      "name": "Wayfarer's Knot",
+      "flavor": "One knot for the road ahead. One for the breath to walk it."
+    },
+    {
+      "id": "prismaticThorn",
+      "name": "Prismatic Thorn",
+      "flavor": "It drinks the medicine and leaves the fever bright."
+    },
+    {
+      "id": "restlessClasp",
+      "name": "Restless Clasp",
+      "flavor": "It keeps the medicine close and sleep far away."
+    },
+    {
+      "id": "paupersDiadem",
+      "name": "Pauper's Diadem",
+      "flavor": "The crown accepts your future earnings. It never asks what you will eat."
+    }
+  ],
+  "enemies": [
+    {
+      "id": "wanderingSoldier",
+      "name": "Wandering Soldier"
+    },
+    {
+      "id": "blightHound",
+      "name": "Blight Hound"
+    },
+    {
+      "id": "huskBrute",
+      "name": "Husk Brute"
+    },
+    {
+      "id": "graveWisp",
+      "name": "Grave Wisp"
+    },
+    {
+      "id": "wyrmAspirant",
+      "name": "Wyrm Aspirant"
+    },
+    {
+      "id": "fellWarden",
+      "name": "The Fell Warden"
+    },
+    {
+      "id": "lanternMoth",
+      "name": "Lantern Moth"
+    },
+    {
+      "id": "briarHermit",
+      "name": "Briar Hermit"
+    },
+    {
+      "id": "chainScavenger",
+      "name": "Chain Scavenger"
+    },
+    {
+      "id": "bellKeeper",
+      "name": "The Bell Keeper"
+    },
+    {
+      "id": "thornMatriarch",
+      "name": "The Thorn Matriarch"
+    },
+    {
+      "id": "gildedKnight",
+      "name": "Gilded Knight"
+    },
+    {
+      "id": "courtSurgeon",
+      "name": "Court Surgeon"
+    },
+    {
+      "id": "stitchedHound",
+      "name": "Stitched Hound"
+    },
+    {
+      "id": "courtMarionette",
+      "name": "Court Marionette"
+    },
+    {
+      "id": "livingArmor",
+      "name": "Living Armor"
+    },
+    {
+      "id": "courtDuelist",
+      "name": "Duelist of the Court"
+    },
+    {
+      "id": "stitchedKing",
+      "name": "The Stitched King"
+    },
+    {
+      "id": "mirrorScribe",
+      "name": "Mirror Scribe"
+    },
+    {
+      "id": "stitchCrab",
+      "name": "Stitch Crab"
+    },
+    {
+      "id": "glassRegent",
+      "name": "The Glass Regent"
+    },
+    {
+      "id": "marrowOrganist",
+      "name": "The Marrow Organist"
+    },
+    {
+      "id": "ashRevenant",
+      "name": "Ash Revenant"
+    },
+    {
+      "id": "emberStarvedPilgrim",
+      "name": "Ember-Starved Pilgrim"
+    },
+    {
+      "id": "valkyrieShade",
+      "name": "Valkyrie Shade"
+    },
+    {
+      "id": "charredColossus",
+      "name": "Charred Colossus"
+    },
+    {
+      "id": "wyrmLord",
+      "name": "Wyrm Lord"
+    },
+    {
+      "id": "blightedValkyrie",
+      "name": "The Blighted Valkyrie"
+    },
+    {
+      "id": "cinderMantis",
+      "name": "Cinder Mantis"
+    },
+    {
+      "id": "eclipseCantor",
+      "name": "Eclipse Cantor"
+    },
+    {
+      "id": "furnaceSaint",
+      "name": "The Furnace Saint"
+    },
+    {
+      "id": "hollowAstronomer",
+      "name": "The Hollow Astronomer"
+    },
+    {
+      "id": "ashheartDragon",
+      "name": "The Ashheart Dragon"
+    }
+  ],
+  "seats": [
+    {
+      "id": "weald",
+      "name": "The Hollow Weald"
+    },
+    {
+      "id": "marches",
+      "name": "The Pale Marches"
+    },
+    {
+      "id": "reach",
+      "name": "The Cinder Reach"
+    }
+  ],
+  "events": [
+    {
+      "id": "turncoatMirror",
+      "name": "The Turncoat's Mirror",
+      "text": "A standing mirror in a ruined chapel, its silver gone to smoke. In it you are someone else: the same hands, the same scars, another calling. It waits to see whether you will step through.",
+      "choices": [
+        {
+          "label": "Step through (take up another class; your class levels start over)",
+          "resultText": "The glass gives like water. On the far side your weight sits differently, and the old name will not come."
+        },
+        {
+          "label": "Turn away",
+          "resultText": "The figure in the glass turns away too, a moment after you do."
+        }
+      ]
+    },
+    {
+      "id": "goldboughAvatar",
+      "name": "Goldbough Avatar",
+      "text": "A hulking avatar kneels in a clearing, grown into the roots of a golden sapling. It does not attack. It holds out one massive hand, palm up, waiting.",
+      "choices": [
+        {
+          "label": "Offer a card (lose a random card, take 6 damage)",
+          "resultText": "The card crumbles to gold leaf in its palm. Its other hand closes around yours — the blessing is not gentle."
+        },
+        {
+          "label": "Pray (heal 20% max HP, gain a Guilt curse)",
+          "resultText": "Warmth knits your wounds shut. Something else follows you out of the clearing."
+        },
+        {
+          "label": "Leave",
+          "resultText": "The hand stays open behind you for a long time."
+        }
+      ]
+    },
+    {
+      "id": "abandonedCart",
+      "name": "Abandoned Merchant Cart",
+      "text": "A trader’s cart lies tipped in the mud, one wheel still turning. Cinder-light glints from a split strongbox. The mud around it is churned with bootprints.",
+      "choices": [
+        {
+          "label": "Loot the strongbox (gain 75 cinders; the owners may object)",
+          "resultText": "You scoop the cinders from the mud. Behind you, someone clears their throat."
+        },
+        {
+          "label": "Leave",
+          "resultText": "Not every gift is free. You keep walking."
+        }
+      ]
+    },
+    {
+      "id": "weepingPilgrim",
+      "name": "Wayward Pilgrim",
+      "text": "A pilgrim sits at the roadside, robes soaked through, cradling something wrapped in cloth. \"Fifty cinders,\" she says, without looking up. \"It was my sister’s. I can’t carry it further.\"",
+      "choices": [
+        {
+          "label": "Give 50 cinders (gain a random relic)",
+          "resultText": "She presses the bundle into your hands and walks into the rain without counting."
+        },
+        {
+          "label": "Refuse",
+          "resultText": "She nods, as if she expected nothing else."
+        }
+      ]
+    },
+    {
+      "id": "bloodstainedAltar",
+      "name": "Bloodstained Altar",
+      "text": "An altar of dark stone, its channels worn smooth by use. The instructions are carved plainly: the stone sharpens what is given to it, and it keeps a portion.",
+      "choices": [
+        {
+          "label": "Offer your blood (upgrade 2 random cards, lose 8% max HP)",
+          "resultText": "The channels drink. Two of your cards come back keener than any smith could make them."
+        },
+        {
+          "label": "Leave",
+          "resultText": "The altar does not care. It has waited longer than you."
+        }
+      ]
+    },
+    {
+      "id": "wanderingPhysician",
+      "name": "Wandering Physician",
+      "text": "A physician in a rain-rotted coat unrolls his instruments without being asked. \"I can cut something out of you,\" he says. \"The procedure is not painless. Or I can simply patch you.\"",
+      "choices": [
+        {
+          "label": "The procedure (remove a random card, take 4 damage)",
+          "resultText": "He holds something up to the light, nods, and does not let you see it."
+        },
+        {
+          "label": "The patch (heal 15% max HP)",
+          "resultText": "Competent, quick, and strangely cold. He refuses payment."
+        },
+        {
+          "label": "Leave",
+          "resultText": "\"Suit yourself. The spire will finish what I would have started.\""
+        }
+      ]
+    },
+    {
+      "id": "goldenMoth",
+      "name": "Golden Moth",
+      "text": "A moth the size of a shield rests on a broken pillar, wings dusted with cinder-light. It is dying, slowly and without complaint. Cinders drip from its wings like pollen.",
+      "choices": [
+        {
+          "label": "Gather the falling cinders (gain 40 cinders)",
+          "resultText": "The cinders come away easily. The moth watches you with something like approval."
+        },
+        {
+          "label": "Sit with it a while (heal 10% max HP)",
+          "resultText": "You keep the vigil. When you rise, some of its lightness has passed to you."
+        },
+        {
+          "label": "Leave",
+          "resultText": "Some deaths are not yours to attend."
+        }
+      ]
+    },
+    {
+      "id": "feralShrine",
+      "name": "Shrine of the Feral Ember",
+      "text": "A shrine no church would recognize: antlers, wax, and old blood. Ember pools here anyway — wild, unattended, and guarded by something that has not left claw marks this fresh by accident.",
+      "choices": [
+        {
+          "label": "Take the offering (gain a random relic — its keeper objects)",
+          "resultText": "Your hand closes on the relic. Behind you, the undergrowth stands up."
+        },
+        {
+          "label": "Leave",
+          "resultText": "Wild ember keeps its own accounts. You leave the ledger closed."
+        }
+      ]
+    },
+    {
+      "id": "ancientRuneStone",
+      "name": "Ancient Cinder Stone",
+      "text": "A standing stone hums with old script. Reading it makes your teeth ache and your hands steadier. It would also break beautifully.",
+      "choices": [
+        {
+          "label": "Study it (upgrade a random card, lose 7% max HP)",
+          "resultText": "The script rearranges something behind your eyes. You are sharper, and less."
+        },
+        {
+          "label": "Smash it (gain 35 cinders)",
+          "resultText": "The stone comes apart into cinder-light. The hum does not entirely stop."
+        },
+        {
+          "label": "Leave",
+          "resultText": "Some doors are better left unread."
+        }
+      ]
+    },
+    {
+      "id": "graveOfTheNameless",
+      "name": "Grave of the Nameless",
+      "text": "A cairn of broken swords marks a grave no one tends. Cinder-light seeps between the blades like frost.\n\nThe mound is quiet — the particular quiet of something that could stop being quiet.",
+      "choices": [
+        {
+          "label": "Dig for cinders (gain 90 cinders; the grave may wake)",
+          "resultText": "The cinders come loose in cold handfuls. Somewhere under the swords, something shifts its weight."
+        },
+        {
+          "label": "Pay respects (heal 15% max HP)",
+          "resultText": "You right a fallen blade and stand a while. When you leave, you are lighter than you came."
+        },
+        {
+          "label": "Leave",
+          "resultText": "You leave the broken swords where they lie. No name is written here."
+        }
+      ]
+    },
+    {
+      "id": "sleepingSmith",
+      "name": "Sleeping Smith",
+      "text": "A smith slumps over his anvil, hammer still loose in one hand. His forge is cold, but the blade laid across it hums like it remembers heat. He does not stir when you approach.",
+      "choices": [
+        {
+          "label": "Take the blade (upgrade a random card)",
+          "resultText": "The hum quiets the moment it leaves the anvil, as if it was only ever waiting for a hand."
+        },
+        {
+          "label": "Wake him (pay 30 cinders, heal 12% max HP)",
+          "resultText": "He blinks awake just long enough to press a cold coin into your palm, and something in you settles."
+        },
+        {
+          "label": "Leave",
+          "resultText": "You let him sleep. The blade goes on humming behind you."
+        }
+      ]
+    },
+    {
+      "id": "wyrmTrial",
+      "name": "Wyrm Trial",
+      "text": "A cracked stone ring marks a trial-ground no map names. A single soldier stands within it, unmoving, waiting for someone foolish or hungry enough to step inside.",
+      "choices": [
+        {
+          "label": "Enter the ring (fight the soldier for 60 cinders)",
+          "resultText": "You step across the stone line. The soldier finally moves."
+        },
+        {
+          "label": "Circle it instead (lose 5% max HP crossing the rubble, gain 20 cinders)",
+          "resultText": "The rubble takes its toll, but the ring — and whatever waits in it — stays quiet."
+        },
+        {
+          "label": "Leave",
+          "resultText": "Some rings are drawn for a reason. You leave this one closed."
+        }
+      ]
+    },
+    {
+      "id": "discardedReliquary",
+      "name": "Discarded Reliquary",
+      "text": "A traveler's pack lies split open at the trail's edge, its owner nowhere to be found. Among the ruined provisions, a single card sits face-down, deliberately placed — as though left as a warning, not a gift.",
+      "choices": [
+        {
+          "label": "Take it with you (gain a Guilt curse; the pack has 45 cinders)",
+          "resultText": "You pick it up before you can think better of it. It settles into your deck like it was always there."
+        },
+        {
+          "label": "Burn the pack (gain 25 cinders; leave the card)",
+          "resultText": "The provisions catch fast. The face-down card curls to ash before you can read it."
+        },
+        {
+          "label": "Leave",
+          "resultText": "You step around the pack and do not look back."
+        }
+      ]
+    },
+    {
+      "id": "omensAltar",
+      "name": "Warden's Altar",
+      "text": "An altar carved with a face too many-eyed to be a saint. A voice — or something like one — offers to lend you its strength, if you will let it watch through your eyes for the rest of the road.",
+      "choices": [
+        {
+          "label": "Accept its gaze (gain a random relic; take a Guilt curse)",
+          "resultText": "The eyes close over yours like a second lid. You do not feel them leave."
+        },
+        {
+          "label": "Shatter the altar (fight what wakes, gain 70 cinders)",
+          "resultText": "The stone face cracks down the middle. What answers the noise is not stone at all."
+        },
+        {
+          "label": "Leave",
+          "resultText": "The many eyes stay open behind you, patient as ever."
+        }
+      ]
+    },
+    {
+      "id": "rotPriestOffer",
+      "name": "Blight-Priest's Offer",
+      "text": "A priest kneels in a ring of dead grass, robes fused to weeping skin. He is unbothered, almost radiant. \"The Blight gives,\" he says, holding out a reliquary in one ruined hand. \"It asks only a little flesh in return.\"",
+      "choices": [
+        {
+          "label": "Accept the blessing (gain a random relic; lose 10% max HP)",
+          "resultText": "His hand closes over yours. The reliquary is warm, and the warmth does not stop where your skin does."
+        },
+        {
+          "label": "Rob him (gain 50 cinders; take a Guilt curse)",
+          "resultText": "He does not resist. He only smiles wider, as if you have taken exactly what he meant you to."
+        },
+        {
+          "label": "Leave",
+          "resultText": "\"The Blight is patient,\" he calls after you. \"It will keep your seat.\""
+        }
+      ]
+    },
+    {
+      "id": "handspiderNest",
+      "name": "Handspider Nest",
+      "text": "A cluster of pale, many-jointed hands scuttles in the dark ahead, nested around a strongbox they have dragged from somewhere below. They have not noticed you. Yet.",
+      "choices": [
+        {
+          "label": "Snatch the strongbox (gain 80 cinders; they may wake)",
+          "resultText": "The box comes free with a wet scrape. All around you, fingers go still — then flex."
+        },
+        {
+          "label": "Back away slowly",
+          "resultText": "You retrace your steps one careful footfall at a time. The nest never stirs."
+        }
+      ]
+    },
+    {
+      "id": "fadedGrace",
+      "name": "Seat of Faded Emberlight",
+      "text": "A guiding ember once pooled here, now guttering to a thread of gold. It has just enough left to give — a mending, or a sharpening — but not both, and not for long.",
+      "choices": [
+        {
+          "label": "Warm yourself (heal 18% max HP)",
+          "resultText": "The last of the light soaks into you. When it fades, the ground is only ground."
+        },
+        {
+          "label": "Temper a blade (upgrade a random card, lose 6% max HP)",
+          "resultText": "You hold a card to the dying ember until it takes the edge. It costs you something to keep the flame that long."
+        },
+        {
+          "label": "Leave",
+          "resultText": "You let the ember fade unspent. Some kindnesses are not yours to take."
+        }
+      ]
+    },
+    {
+      "id": "merchantsGhost",
+      "name": "Merchant's Ghost",
+      "text": "A translucent figure keeps a stall that is no longer there, weighing wares no living hand can hold. \"Custom,\" it sighs, almost grateful. \"It has been so long. I have something you'll want.\"",
+      "choices": [
+        {
+          "label": "Pay in kind (give 60 cinders, gain a random relic)",
+          "resultText": "The cinders vanish from your hand into a ledger that isn't there. The relic is very solid, and very cold."
+        },
+        {
+          "label": "Take it and run (gain a random relic and a Guilt curse)",
+          "resultText": "It does not chase you. It only watches, and writes something down, and the writing follows you out."
+        },
+        {
+          "label": "Leave",
+          "resultText": "\"Come again,\" it says, to no one, already forgetting you."
+        }
+      ]
+    },
+    {
+      "id": "cinderbearDen",
+      "name": "Cinderbear Den",
+      "text": "The cave reeks of musk and old kills. Cinder-light glitters in the bone-litter at the back — a fortune, if you are quiet, and quick, and the mound of fur by the wall keeps breathing slow.",
+      "choices": [
+        {
+          "label": "Go for the hoard (gain 100 cinders; it will almost certainly wake)",
+          "resultText": "Your hands fill with cold light. Behind you, the breathing stops."
+        },
+        {
+          "label": "Skim the edges (squeeze past the rubble, lose 5% max HP, gain 25 cinders)",
+          "resultText": "You take only what is within reach and pay for it in scraped ribs. The den keeps its heart."
+        },
+        {
+          "label": "Leave",
+          "resultText": "Some fortunes are guarded by teeth. You leave this one to its keeper."
+        }
+      ]
+    },
+    {
+      "id": "stakeOfTheMartyr",
+      "name": "Stake of the Martyr",
+      "text": "A stake of gilded thorn juts from the path, humming with the promise of return. It asks for a piece of you to hold in trust — a card, and a measure of your vigor — and offers a relic drawn up from where the dead wait.",
+      "choices": [
+        {
+          "label": "Give what it asks (remove a random card, lose 8% max HP, gain a random relic)",
+          "resultText": "The stake drinks a card and a breath of your strength, and hands back something older than either."
+        },
+        {
+          "label": "Leave",
+          "resultText": "You step around the thorn. It hums after you, patient, certain you'll be back."
+        }
+      ]
+    },
+    {
+      "id": "twoFingersRiddle",
+      "name": "The Oracle's Riddle",
+      "text": "A pair of enormous fingers rises from a font of still water, tapping a slow rhythm only they understand. Read one way, the rhythm sharpens the mind. Read another, it mends the flesh — but the second reading leaves a mark.",
+      "choices": [
+        {
+          "label": "Sharpen (upgrade 2 random cards, take 5 damage)",
+          "resultText": "The rhythm settles behind your eyes. Two of your cards come back keener; your hands ache with the knowing."
+        },
+        {
+          "label": "Mend (heal 22% max HP, gain a Guilt curse)",
+          "resultText": "Warmth floods you, generous and total. Something reads back through the water, and does not look away."
+        },
+        {
+          "label": "Leave",
+          "resultText": "The fingers tap on. You leave the riddle unanswered, which is its own kind of answer."
+        }
+      ]
+    },
+    {
+      "id": "namelessKeeper",
+      "name": "The Keeper of the Nameless",
+      "text": "A figure in grave-clothes waits at a fork in the road, a lantern of cinder-light held low.\n\nIt knows the cairn of broken swords. It knows what you did there. It has been walking since.",
+      "choices": [
+        {
+          "label": "Return what you took (lose 90 cinders; the keeper stands down)",
+          "resultText": "The cinders go back into the lantern one by one. The keeper turns without a word and walks the way you came."
+        },
+        {
+          "label": "Stand your ground (fight; keep what you took)",
+          "resultText": "The keeper turns away, the lantern dimming along the road. The figures following it stop in front of you and draw their weapons."
+        },
+        {
+          "label": "Accept the keeper's thanks (gain the Gravetender's Bell)",
+          "resultText": "A small bell, iron and cold, pressed into your palm. \"One toll for each name,\" the keeper says. \"You will know when.\""
+        },
+        {
+          "label": "Leave",
+          "resultText": "The keeper does not follow. It only needed to be seen."
+        }
+      ]
+    },
+    {
+      "id": "namelessRest",
+      "name": "The Second Cairn",
+      "text": "Beside the road stands a second cairn. Its swords have fallen into the mud; no names are carved on its stones.\n\nThe keeper is not here. The road continues beyond it, and you cannot tell which way the keeper went.",
+      "choices": [
+        {
+          "label": "Raise every sword and keep the vigil (upgrade 2 random cards)",
+          "resultText": "You raise every fallen sword and stand among them until the cinder-light gutters. The bell in your pack rings once, though nothing moved it. The stones remain unwritten."
+        },
+        {
+          "label": "Raise every sword, then rest (heal 30% max HP)",
+          "resultText": "You set every sword upright before lying down among the stones. What you returned bought you this much: a night among the nameless, and no one waking you."
+        },
+        {
+          "label": "Loot the barrow (gain 120 cinders, gain a Guilt curse)",
+          "resultText": "You drag the fallen swords aside and prise the cinders from beneath them. Second time is easier. You leave the blades in the mud; that is the part that follows you."
+        },
+        {
+          "label": "Leave",
+          "resultText": "You leave the swords fallen and follow the road. The cairn keeps its silence."
+        }
+      ]
+    },
+    {
+      "id": "lastLantern",
+      "name": "The Last Lantern",
+      "text": "An unmarked routekeeper braces a broken signal lantern against the rain. The drivers call this traveler the Road Warden; there is no Fell Courtyard crest on the coat.\n\n\"That caravan carries medicine to Lantern Haven and the cold hamlets beyond. Oil costs forty cinders. Or help me haul the spare beacon up the scree.\"",
+      "choices": [
+        {
+          "label": "Buy signal oil (pay 40 cinders; aid the caravan)",
+          "resultText": "The wick catches. The Road Warden records forty cinders beside Lantern Haven in a weathered supply ledger."
+        },
+        {
+          "label": "Haul the beacon (take 8 damage; aid the caravan)",
+          "resultText": "The iron frame cuts your palms, but its light clears the ridge. The Road Warden waves Lantern Haven’s wagons through and promises to remember the work."
+        },
+        {
+          "label": "Leave",
+          "resultText": "You pass the unlit lantern. The caravan must find another way."
+        }
+      ]
+    },
+    {
+      "id": "lanternCaravan",
+      "name": "The Caravan Comes Through",
+      "text": "The Road Warden stands beside Lantern Haven’s mud-spattered wagons. The last one carries the lantern you helped raise.\n\n\"You bought these people a road. We can pay our debt. That strongbox is for medicine at the next trading post; it belongs to the cold hamlets.\"",
+      "choices": [
+        {
+          "label": "Accept the quartermaster’s lesson (upgrade a random card)",
+          "resultText": "The quartermaster shows you the economy of a practiced motion. Your investment returns as knowledge."
+        },
+        {
+          "label": "Accept wages for the climb (gain 60 cinders)",
+          "resultText": "The Road Warden counts out fair wages. The cuts on your hands have earned their keep."
+        },
+        {
+          "label": "Steal the emergency strongbox (gain 100 cinders and a Guilt curse)",
+          "resultText": "No one stops you. A driver crosses the medicine purchase off Lantern Haven’s manifest. The hamlets’ names remain beneath it, with nothing beside them."
+        },
+        {
+          "label": "Leave",
+          "resultText": "You wave the wagons onward, asking nothing in return."
+        }
+      ]
+    }
+  ],
+  "speakers": [
+    {
+      "id": "theNameless",
+      "name": "The Nameless"
+    },
+    {
+      "id": "keeperOfTheNameless",
+      "name": "The Keeper of the Nameless"
+    },
+    {
+      "id": "roadWarden",
+      "name": "The Road Warden"
+    }
+  ],
+  "atlasQuests": [
+    {
+      "questId": "survey:crownfall",
+      "description": "Survey the old road and return to the warden. The route must be open in this journey."
+    },
+    {
+      "questId": "survey:bellhaven",
+      "description": "Survey the old road and return to the warden. The route must be open in this journey."
+    },
+    {
+      "questId": "survey:lantern-haven",
+      "description": "Survey the old road and return to the warden. The route must be open in this journey."
+    },
+    {
+      "questId": "survey:frostgate",
+      "description": "Survey the old road and return to the warden. The route must be open in this journey."
+    },
+    {
+      "questId": "survey:emberhold",
+      "description": "Survey the old road and return to the warden. The route must be open in this journey."
+    },
+    {
+      "questId": "survey:saltwatch",
+      "description": "Survey the old road and return to the warden. The route must be open in this journey."
+    }
+  ],
+  "flasks": [
+    {
+      "id": "crimsonFlask",
+      "name": "Crimson Flask"
+    },
+    {
+      "id": "azureFlask",
+      "name": "Azure Flask"
+    },
+    {
+      "id": "flaskOfFerocity",
+      "name": "Flask of Ferocity"
+    },
+    {
+      "id": "flaskOfStone",
+      "name": "Flask of Stone"
+    },
+    {
+      "id": "blightCoating",
+      "name": "Blight Coating"
+    },
+    {
+      "id": "bloodUnction",
+      "name": "Blood Unction"
+    },
+    {
+      "id": "wondrousDraught",
+      "name": "Wondrous Draught"
+    }
+  ],
+  "classes": [
+    {
+      "id": "reaver",
+      "name": "Reaver",
+      "description": "Fights up close and switches footing mid-battle — one stance hits harder, the other holds the line. Wounds you land keep bleeding, and heavy blows stagger."
+    },
+    {
+      "id": "starseer",
+      "name": "Starseer",
+      "description": "Casts in sequence — the second spell each turn strikes harder than the first. Fragile early on, so the order you play cards matters more than their power."
+    },
+    {
+      "id": "rogue",
+      "name": "Rogue",
+      "description": "Sets up a clean opening, then turns speed, poison, and opportunism into decisive strikes before the enemy can recover."
+    },
+    {
+      "id": "herald",
+      "name": "Herald",
+      "description": "Spends its own health to act, then heals it back. Spreads a rot that damages enemies over time. One pool for everything, so mistakes stack up fast."
+    }
+  ],
+  "equipment": {
+    "armaments": [
+      {
+        "id": "straightSword",
+        "name": "Straight Sword",
+        "blurb": "Honest steel. It asks nothing clever of you."
+      },
+      {
+        "id": "greatsword",
+        "name": "Greatsword",
+        "blurb": "Slow, and it does not care."
+      },
+      {
+        "id": "dagger",
+        "name": "Dagger",
+        "blurb": "Two cuts where one would do."
+      },
+      {
+        "id": "shortbow",
+        "name": "Shortbow",
+        "blurb": "A compact ash-wood bow bound for a quick draw."
+      },
+      {
+        "id": "katana",
+        "name": "Katana",
+        "blurb": "A long curve, and a long grudge."
+      },
+      {
+        "id": "halberd",
+        "name": "Halberd",
+        "blurb": "Reach enough to keep the dead at arm's length."
+      },
+      {
+        "id": "warhammer",
+        "name": "Warhammer",
+        "blurb": "Poise is a fiction. This is the argument."
+      },
+      {
+        "id": "twinblade",
+        "name": "Twinblade",
+        "blurb": "Both ends are the business end."
+      },
+      {
+        "id": "battleaxe",
+        "name": "Battleaxe",
+        "blurb": "It was a woodcutter's once."
+      },
+      {
+        "id": "buckler",
+        "name": "Buckler",
+        "blurb": "Small enough to be quick with."
+      },
+      {
+        "id": "kiteShield",
+        "name": "Kite Shield",
+        "blurb": "A wall you can carry. Your arm knows it."
+      },
+      {
+        "id": "towerShield",
+        "name": "Tower Shield",
+        "blurb": "You will not be moved. You will not move."
+      },
+      {
+        "id": "roundShield",
+        "name": "Round Shield",
+        "blurb": "Plain, round, and enough."
+      },
+      {
+        "id": "spikedShield",
+        "name": "Spiked Shield",
+        "blurb": "Defence with an opinion."
+      },
+      {
+        "id": "lantern",
+        "name": "Lantern",
+        "blurb": "Light enough to see what is coming."
+      },
+      {
+        "id": "torch",
+        "name": "Torch",
+        "blurb": "Fire remembers what steel forgets."
+      },
+      {
+        "id": "parryDagger",
+        "name": "Parrying Dagger",
+        "blurb": "Held wrong on purpose."
+      },
+      {
+        "id": "ashStaff",
+        "name": "Ash Staff",
+        "blurb": "Grey wood, warm at the grip."
+      },
+      {
+        "id": "starstoneStaff",
+        "name": "Starstone Staff",
+        "blurb": "The stone hums before you do."
+      },
+      {
+        "id": "boneSceptre",
+        "name": "Bone Sceptre",
+        "blurb": "Someone knelt for this once."
+      },
+      {
+        "id": "emberlightSceptre",
+        "name": "Emberlight Sceptre",
+        "blurb": "It keeps a little of the guiding flame."
+      },
+      {
+        "id": "goldboughBranch",
+        "name": "Goldbough Branch",
+        "blurb": "Cut, and still growing."
+      },
+      {
+        "id": "blightRod",
+        "name": "Blight Rod",
+        "blurb": "Wet to the touch. It should not be."
+      },
+      {
+        "id": "gorefireBrand",
+        "name": "Gorefire Brand",
+        "blurb": "Blood takes to flame more readily than wood."
+      },
+      {
+        "id": "wyrmhornStaff",
+        "name": "Wyrmhorn Staff",
+        "blurb": "Taken from something that objected."
+      },
+      {
+        "id": "frostSpear",
+        "name": "Frost Spear",
+        "blurb": "A rimed point that slows the next advance."
+      },
+      {
+        "id": "cinderAxe",
+        "name": "Cinder Axe",
+        "blurb": "A furnace edge bought with a slower swing."
+      },
+      {
+        "id": "duskChime",
+        "name": "Dusk Chime",
+        "blurb": "Its last note settles into a sheltering hush."
+      }
+    ],
+    "armour": [
+      {
+        "id": "default",
+        "name": "Wayfarer Plate",
+        "blurb": "The armour you were buried in."
+      },
+      {
+        "id": "vigil",
+        "name": "Ashen Vigil",
+        "blurb": "Blackened at the court that broke."
+      },
+      {
+        "id": "oathsworn",
+        "name": "Gilded Oathsworn",
+        "blurb": "Kept bright by an oath unbroken."
+      },
+      {
+        "id": "warden",
+        "name": "Warden Mail",
+        "blurb": "Issued, not chosen."
+      },
+      {
+        "id": "default",
+        "name": "Nightweave",
+        "blurb": "Dyed with the dark between stars."
+      },
+      {
+        "id": "eclipse",
+        "name": "Eclipse Habit",
+        "blurb": "Worn only when the moon is eaten."
+      },
+      {
+        "id": "starlit",
+        "name": "Starlit Silks",
+        "blurb": "It catches light that is not there."
+      },
+      {
+        "id": "astral",
+        "name": "Astral Vestment",
+        "blurb": "Cut for someone taller than you."
+      },
+      {
+        "id": "default",
+        "name": "Rite Vestments",
+        "blurb": "Plain cloth, plainly kept."
+      },
+      {
+        "id": "ossuary",
+        "name": "Ossuary Weave",
+        "blurb": "Threaded through with quiet bone."
+      },
+      {
+        "id": "emberhabit",
+        "name": "Emberlight Habit",
+        "blurb": "Warm long after the fire is out."
+      },
+      {
+        "id": "pilgrim",
+        "name": "Pilgrim Wrap",
+        "blurb": "Road dust worked into the weave."
+      },
+      {
+        "id": "default",
+        "name": "Gutter Leathers",
+        "blurb": "Quiet leather for a loud profession."
+      },
+      {
+        "id": "nightveil",
+        "name": "Nightveil Coat",
+        "blurb": "Dark cloth that swallows the outline."
+      },
+      {
+        "id": "duelist",
+        "name": "Duelist Jerkin",
+        "blurb": "Cut close so nothing catches the blade."
+      },
+      {
+        "id": "shadow",
+        "name": "Shadow Mantle",
+        "blurb": "The hem remembers every alley."
+      },
+      {
+        "id": "bastion",
+        "name": "Bastion Harness",
+        "blurb": "Iron shelter that taxes every step."
+      },
+      {
+        "id": "rimeweave",
+        "name": "Rimeweave Robes",
+        "blurb": "Cold threads hold the enemy at a distance."
+      },
+      {
+        "id": "waywatcher",
+        "name": "Waywatcher Coat",
+        "blurb": "A light coat for the long retreat."
+      },
+      {
+        "id": "wayfarerPlate",
+        "name": "Wayfarer Plate",
+        "blurb": "The armour you were buried in."
+      },
+      {
+        "id": "wayfarerPlate",
+        "name": "Wayfarer Plate",
+        "blurb": "The armour you were buried in."
+      },
+      {
+        "id": "wayfarerPlate",
+        "name": "Wayfarer Plate",
+        "blurb": "The armour you were buried in."
+      },
+      {
+        "id": "wayfarerPlate",
+        "name": "Wayfarer Plate",
+        "blurb": "The armour you were buried in."
+      },
+      {
+        "id": "nightweave",
+        "name": "Nightweave",
+        "blurb": "Dyed with the dark between stars."
+      },
+      {
+        "id": "nightweave",
+        "name": "Nightweave",
+        "blurb": "Dyed with the dark between stars."
+      },
+      {
+        "id": "nightweave",
+        "name": "Nightweave",
+        "blurb": "Dyed with the dark between stars."
+      },
+      {
+        "id": "nightweave",
+        "name": "Nightweave",
+        "blurb": "Dyed with the dark between stars."
+      },
+      {
+        "id": "riteVestments",
+        "name": "Rite Vestments",
+        "blurb": "Plain cloth, plainly kept."
+      },
+      {
+        "id": "riteVestments",
+        "name": "Rite Vestments",
+        "blurb": "Plain cloth, plainly kept."
+      },
+      {
+        "id": "riteVestments",
+        "name": "Rite Vestments",
+        "blurb": "Plain cloth, plainly kept."
+      },
+      {
+        "id": "riteVestments",
+        "name": "Rite Vestments",
+        "blurb": "Plain cloth, plainly kept."
+      },
+      {
+        "id": "gutterLeathers",
+        "name": "Gutter Leathers",
+        "blurb": "Quiet leather for a loud profession."
+      },
+      {
+        "id": "gutterLeathers",
+        "name": "Gutter Leathers",
+        "blurb": "Quiet leather for a loud profession."
+      },
+      {
+        "id": "gutterLeathers",
+        "name": "Gutter Leathers",
+        "blurb": "Quiet leather for a loud profession."
+      },
+      {
+        "id": "gutterLeathers",
+        "name": "Gutter Leathers",
+        "blurb": "Quiet leather for a loud profession."
+      }
+    ],
+    "slots": [
+      {
+        "id": "rightHand",
+        "label": "Main Hand",
+        "blurb": "Your active main-hand armament. Rewrites Strike."
+      },
+      {
+        "id": "leftHand",
+        "label": "Off Hand",
+        "blurb": "Your active off-hand armament. Rewrites Defend."
+      },
+      {
+        "id": "armor",
+        "label": "Armour",
+        "blurb": "Your set. Repaints you and steadies the numbers."
+      },
+      {
+        "id": "head",
+        "label": "Head",
+        "blurb": "What you wear on your head. Empty until head pieces are authored."
+      },
+      {
+        "id": "hands",
+        "label": "Hands",
+        "blurb": "What you wear on your hands. Empty until hand pieces are authored."
+      },
+      {
+        "id": "feet",
+        "label": "Feet",
+        "blurb": "What you wear on your feet. Empty until foot pieces are authored."
+      },
+      {
+        "id": "talisman",
+        "label": "Talisman",
+        "blurb": "Small charms. Empty until talismans are authored."
+      }
+    ],
+    "modFields": {
+      "id": "modFields",
+      "damage": {
+        "label": "Damage",
+        "blurb": "How hard the card hits."
+      },
+      "block": {
+        "label": "Block",
+        "blurb": "How much the card guards."
+      },
+      "poise": {
+        "label": "Poise",
+        "blurb": "Build-up toward a Stagger."
+      },
+      "hits": {
+        "label": "Hits",
+        "blurb": "How many times the damage lands."
+      },
+      "cost": {
+        "label": "Cost",
+        "blurb": "Energy to play. Never drops below 0."
+      },
+      "potency": {
+        "label": "Potency",
+        "blurb": "Every number on the card, together."
+      },
+      "bleed": {
+        "label": "Bleed",
+        "blurb": "Bleed build-up the card applies."
+      },
+      "blight": {
+        "label": "Blight",
+        "blurb": "Crimson Blight the card applies."
+      },
+      "burn": {
+        "label": "Burn",
+        "blurb": "Burn the card applies."
+      },
+      "frost": {
+        "label": "Frost",
+        "blurb": "Frost build-up the card applies."
+      },
+      "insanity": {
+        "label": "Insanity",
+        "blurb": "Insanity build-up the card applies."
+      },
+      "strength": {
+        "label": "Strength",
+        "blurb": "Strength you begin every fight with."
+      },
+      "dexterity": {
+        "label": "Dexterity",
+        "blurb": "Dexterity you begin every fight with."
+      },
+      "regen": {
+        "label": "Regen",
+        "blurb": "HP recovered at the start of each turn."
+      },
+      "maxHp": {
+        "label": "Max HP",
+        "blurb": "Added to your maximum HP for the run."
+      },
+      "maxMana": {
+        "label": "Max Mana",
+        "blurb": "Added to your maximum Mana for the run."
+      },
+      "maxStamina": {
+        "label": "Max Stamina",
+        "blurb": "Added to your maximum Stamina for the run."
+      },
+      "swapCost": {
+        "label": "Swap cost",
+        "blurb": "Changed cost to switch armament sets mid-fight."
+      }
+    },
+    "basicCardProfiles": [
+      {
+        "id": "unarmedAttack",
+        "flavor": "Blow of the empty fist.\n\nThe last thing a Forsaken owns once the blade is broken and the cairn has kept it. No hamlet teaches it; it is learned the first winter a sword is traded for salt.\n\nA last resort, still yours."
+      },
+      {
+        "id": "shieldAttack",
+        "flavor": "Rim-blow of the Bastion's shield line.\n\nClimbers learn it from salvaged Warden shields, once gilded with the branch. Most scrape the gold away. The corrupted Wardens of the Fell Courtyard hesitate at the sight of it.\n\nSome leave the gold."
+      },
+      {
+        "id": "bladeAttack",
+        "flavor": "Plain cut of Bastion steel.\n\nDrilled into the field levies and the sellswords hired beside them. Weald smiths never signed their blades, a custom the Chapel's scribes thought insolent and never ended.\n\nUnsigned steel can be carried without anyone asking whose it was."
+      },
+      {
+        "id": "twinbladeAttack",
+        "flavor": "Turning flurry of the Citadel's midwinter masque.\n\nCourt dancers spun double-ended blades before the throne. Stitched to their posts when the Court Flame died, some turn yet upon the frozen river, slower each winter.\n\nClimbers learn the step by watching. The dancers do not mind."
+      },
+      {
+        "id": "daggerPierceAttack",
+        "flavor": "Two quick openings, as the Court's surgeons let a vein.\n\nTheir apprentices taught it on the docks once the Court stopped paying them. One teaches it yet, for cinders, beneath the ice below the Citadel.\n\nHe learned to open people. He taught himself to close them, and does not sell that part."
+      },
+      {
+        "id": "bowPierceAttack",
+        "flavor": "Shot loosed from low cover.\n\nThe way weald poachers took the deer the Bastion kept for its tables. The Bastion hanged poachers, so the hamlets loosed upon the dawn peal, which hid the sound of the string.\n\nThe Bell Keeper rings the peal yet, though no dawn follows."
+      },
+      {
+        "id": "staffMagicAttack",
+        "flavor": "Cold light struck from an apprentice's staff.\n\nCut green from weald lanternwood and tipped with starstone bought from the reach miners. The Starwatch taught that the light came from the stone.\n\nIt came more easily with the staff turned skyward. The apprentices were told not to notice."
+      },
+      {
+        "id": "sceptreArcaneAttack",
+        "flavor": "Working of a cantor's sceptre.\n\nChapel sceptres bore script copied from sealstone doors older than the Chapel. The cantors were taught its sounds, never its sense. The Chapel called the script sacred.\n\nAmong themselves, the cantors called it borrowed."
+      },
+      {
+        "id": "unarmedGuard",
+        "flavor": "Empty-handed guard of the ice-fishers.\n\nWeight low, feet wide, upon lakes that crack all winter and hold but one at a time. The fishers of Sallow Lake say the ice has a temper, and may be reasoned with.\n\nThose who said otherwise are beneath it."
+      },
+      {
+        "id": "weaponGuard",
+        "flavor": "Haft-turn of the Bastion's field levies.\n\nSergeant Ilse drilled it upon the Muster Stair. On quiet nights her voice carries from the Bastion walls, calling the count.\n\nThe levies she drilled are corrupted now. When they hear her, they take their places."
+      },
+      {
+        "id": "shieldGuard",
+        "flavor": "Shield set against the blow, as the Wardens taught.\n\nBastion shields bore strips of bell-bronze upon the rim, cast from metal left when the great bell was founded. The Wardens said the bronze rang the hour when struck.\n\nIt rings at other hours too."
+      },
+      {
+        "id": "staffGuard",
+        "flavor": "Ward drawn through a staff, taught upon Starwatch Terrace.\n\nWhere the apprentices measured the new tower's draw across the water. The Astronomer said the ward was against the salt wind.\n\nIt leaned toward the Spire whenever it was drawn."
+      },
+      {
+        "id": "sceptreGuard",
+        "flavor": "Ward of the bier-watch.\n\nCantors held a sceptre crosswise over the dead through the night, before a name was written. The Chapel taught that it kept the name from wandering.\n\nWhere a name might wander, the rubric does not say."
+      },
+      {
+        "id": "unarmedTechnique",
+        "flavor": "Art of the empty hand.\n\nMostly the art of not being where the blow lands, taught by the ship-breakers upon hulls that shift with the tide. Gull-Bet calls it the first thing the Forsaken ever had that the marked envied.\n\nThat has been true for a very short while."
+      },
+      {
+        "id": "weaponTechnique",
+        "flavor": "A weapon learned as it was last used.\n\nTake up what the corrupted drop, and let its habits show. A blade taken from a Warden cuts like a Warden. Orla of the hamlets below the Bastion bears a sword that dips toward the Fell Courtyard as she passes.\n\nShe no longer fights the pull."
+      },
+      {
+        "id": "bowTechnique",
+        "flavor": "The poacher's pause before loosing.\n\nBreath out, hand set, wait for the bell. Weald poachers learned patience from the Bastion's gamekeepers, who hanged the impatient. The gamekeepers walk the lanternwood yet, among the corrupted.\n\nThey count beneath their breath. The count never ends."
+      },
+      {
+        "id": "staffTechnique",
+        "flavor": "Breath set behind the focus.\n\nCounted to the rhythm of the star tables, recited until the rhythm lived in the breath. The Starwatch taught the tables were only numbers; the apprentices held the rhythm older.\n\nOn the night of the eclipse, the Astronomer read the last table aloud, and did not stop at its end."
+      }
+    ],
+    "startingKits": [
+      {
+        "id": "reaverBaseline",
+        "label": "Iron Vanguard"
+      },
+      {
+        "id": "reaverGreatsword",
+        "label": "Greatsword Vanguard"
+      },
+      {
+        "id": "starseerBaseline",
+        "label": "Ash Focus"
+      },
+      {
+        "id": "starseerStarstone",
+        "label": "Starstone Focus"
+      },
+      {
+        "id": "heraldBaseline",
+        "label": "Bone Rite"
+      },
+      {
+        "id": "heraldEmberlight",
+        "label": "Emberlight Rite"
+      },
+      {
+        "id": "rogueBaseline",
+        "label": "Knife and Buckler"
+      },
+      {
+        "id": "rogueBow",
+        "label": "Shortbow and Parrying Dagger"
+      }
+    ],
+    "armouryUi": {
+      "id": "armouryUi",
+      "layout": {
+        "combatPower": {
+          "cards": [
+            {
+              "id": "strike",
+              "label": "Strike"
+            },
+            {
+              "id": "potency",
+              "label": "Magic"
+            },
+            {
+              "id": "defense",
+              "label": "Defense"
+            }
+          ]
+        },
+        "viewModes": {
+          "grid": {
+            "label": "Character"
+          },
+          "rack": {
+            "label": "Equipment"
+          },
+          "hybrid": {
+            "label": "Inventory"
+          },
+          "cards": {
+            "label": "Cards"
+          }
+        }
+      }
+    }
+  },
+  "characterCreation": {
+    "keepsakes": [
+      {
+        "id": "none",
+        "name": "Nothing"
+      },
+      {
+        "id": "oldCinder",
+        "name": "Old Cinder"
+      },
+      {
+        "id": "travelersFlask",
+        "name": "Traveler's Flask"
+      },
+      {
+        "id": "whetstoneMemory",
+        "name": "Whetstone Memory"
+      }
+    ]
+  },
+  "surveyQuests": {
+    "survey:crownfall": {
+      "title": "The Empty Channel",
+      "description": "Crownfall has more buckets than water. Survey the Old Aqueduct and return to the Road Warden; the cracked channel may still shelter a path.",
+      "report": "The channel carries no water. Bootprints follow its bed. The Road Warden marks a path beside the empty buckets."
+    },
+    "survey:bellhaven": {
+      "title": "A Road for the Uncounted",
+      "description": "Bellhaven shelters families once turned away at dusk. Survey the Old Aqueduct for a road they can walk, then return to the Road Warden.",
+      "report": "A broken toll gate lies across the channel. Footprints pass around it. The Road Warden crosses a fee out of the route-book."
+    },
+    "survey:lantern-haven": {
+      "title": "A Spring That Will Not Turn",
+      "description": "Lantern Haven needs a road through the growth. Survey the Drowned Hamlet and return to the Road Warden. The branches have flowered again; there is still no fruit.",
+      "report": "Blossoms float through the drowned doorways. Beneath them lie last year's blossoms. The Road Warden leaves the harvest column blank."
+    },
+    "survey:frostgate": {
+      "title": "Ice Without a Thaw",
+      "description": "Frostgate's fishers need a path across the old winter road. Survey the Frozen Camp and return to the Road Warden. The thaw stakes have not moved in a generation.",
+      "report": "Ice has swallowed the lashings on the camp's thaw stakes. The Road Warden draws the winter road again and puts away the spring map."
+    },
+    "survey:emberhold": {
+      "title": "The Mountain Stirs",
+      "description": "Emberhold's carriers found fresh cracks under their boots. Survey the Caldera Rim and return to the Road Warden before another cart takes that road.",
+      "report": "A wheel-rut ends at a fresh split in the stone. Warm grit shakes from the rim. The Road Warden moves a route marker away from the edge."
+    },
+    "survey:saltwatch": {
+      "title": "The High-Water Marks",
+      "description": "Saltwatch's ship-breakers count safe roads by the tide. Survey the Drowned Orchard and return to the Road Warden. The old water marks are below your feet.",
+      "report": "Salt has crusted the upper branches. A mooring ring hangs above a drowned doorway. The Road Warden turns the low-road marker face down."
+    }
+  },
+  "worldAtlas": {
+    "nodes": [
+      {
+        "nodeId": "crownfall",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:01:0",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:01:1",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:01:2",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:02:0",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:02:1",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:02:2",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:03:0",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:03:1",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:03:2",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:04:0",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:04:1",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:04:2",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:05:0",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:05:1",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:05:2",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "bellhaven",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:06:1",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:06:2",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:07:0",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:07:1",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:07:2",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:08:0",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:08:1",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:08:2",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:09:0",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:09:1",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:09:2",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:10:0",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:10:1",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:10:2",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:11:0",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:11:1",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:11:2",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:12:0",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:12:1",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:12:2",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "black-spire",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:13:1",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "ashen-crown:13:2",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:01:0",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:01:1",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:01:2",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:02:0",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:02:1",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:02:2",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:03:0",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:03:1",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:03:2",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:04:0",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:04:1",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:04:2",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:05:0",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:05:1",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:05:2",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "lantern-haven",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:06:1",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:06:2",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:07:0",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:07:1",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:07:2",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:08:0",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:08:1",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:08:2",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:09:0",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:09:1",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:09:2",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:10:0",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:10:1",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:10:2",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:11:0",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:11:1",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:11:2",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:12:0",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:12:1",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:12:2",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "elder-root",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:13:1",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "hollow-weald:13:2",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:01:0",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:01:1",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:01:2",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:02:0",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:02:1",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:02:2",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:03:0",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:03:1",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:03:2",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:04:0",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:04:1",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:04:2",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:05:0",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:05:1",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:05:2",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "frostgate",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:06:1",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:06:2",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:07:0",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:07:1",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:07:2",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:08:0",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:08:1",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:08:2",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:09:0",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:09:1",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:09:2",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:10:0",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:10:1",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:10:2",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:11:0",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:11:1",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:11:2",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:12:0",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:12:1",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:12:2",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "silent-monastery",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:13:1",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "pale-marches:13:2",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:01:0",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:01:1",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:01:2",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:02:0",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:02:1",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:02:2",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:03:0",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:03:1",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:03:2",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:04:0",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:04:1",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:04:2",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:05:0",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:05:1",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:05:2",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "emberhold",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:06:1",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:06:2",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:07:0",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:07:1",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:07:2",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:08:0",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:08:1",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:08:2",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:09:0",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:09:1",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:09:2",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:10:0",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:10:1",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:10:2",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:11:0",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:11:1",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:11:2",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:12:0",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:12:1",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:12:2",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "dead-foundry",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:13:1",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "cinder-reach:13:2",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:01:0",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:01:1",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:01:2",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:02:0",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:02:1",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:02:2",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:03:0",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:03:1",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:03:2",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:04:0",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:04:1",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:04:2",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:05:0",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:05:1",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:05:2",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "saltwatch",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:06:1",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:06:2",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:07:0",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:07:1",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:07:2",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:08:0",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:08:1",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:08:2",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:09:0",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:09:1",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:09:2",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:10:0",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:10:1",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:10:2",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:11:0",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:11:1",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:11:2",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:12:0",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:12:1",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:12:2",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "tidebound-abbey",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:13:1",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "drowned-coast:13:2",
+        "description": "An enduring place in The Drowned Coast. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "junction:ashen-crown:hollow-weald",
+        "description": "An enduring place in The Ashen Crown. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "junction:hollow-weald:pale-marches",
+        "description": "An enduring place in The Hollow Weald. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "junction:pale-marches:cinder-reach",
+        "description": "An enduring place in The Pale Marches. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "junction:cinder-reach:drowned-coast",
+        "description": "An enduring place in The Cinder Reach. Follow its roads to discover what this journey holds."
+      },
+      {
+        "nodeId": "crownfall/forge",
+        "description": "Blacksmith is a fixed site within Crownfall."
+      },
+      {
+        "nodeId": "crownfall/market",
+        "description": "Old Market is a fixed site within Crownfall."
+      },
+      {
+        "nodeId": "crownfall/inn",
+        "description": "Wayfarer’s Inn is a fixed site within Crownfall."
+      },
+      {
+        "nodeId": "crownfall/chapel",
+        "description": "Chapel of Embers is a fixed site within Crownfall."
+      },
+      {
+        "nodeId": "crownfall/archive",
+        "description": "The Royal Archive holds the charter that opens the gates of the legacy dungeons. Read it here before setting out; the charter remains with you for this journey."
+      },
+      {
+        "nodeId": "crownfall/warden",
+        "description": "Road Warden is a fixed site within Crownfall."
+      },
+      {
+        "nodeId": "crownfall/gate:ashen-crown",
+        "description": "Inspect the road toward The Ashen Crown."
+      },
+      {
+        "nodeId": "crownfall/gate:hollow-weald",
+        "description": "Inspect the road toward The Hollow Weald."
+      },
+      {
+        "nodeId": "crownfall/gate:pale-marches",
+        "description": "Inspect the road toward The Pale Marches."
+      },
+      {
+        "nodeId": "crownfall/gate:cinder-reach",
+        "description": "Inspect the road toward The Cinder Reach."
+      },
+      {
+        "nodeId": "crownfall/gate:drowned-coast",
+        "description": "Inspect the road toward The Drowned Coast."
+      },
+      {
+        "nodeId": "bellhaven/forge",
+        "description": "Blacksmith is a fixed site within Bellhaven."
+      },
+      {
+        "nodeId": "bellhaven/market",
+        "description": "Old Market is a fixed site within Bellhaven."
+      },
+      {
+        "nodeId": "bellhaven/inn",
+        "description": "Wayfarer’s Inn is a fixed site within Bellhaven."
+      },
+      {
+        "nodeId": "bellhaven/chapel",
+        "description": "Chapel of Embers is a fixed site within Bellhaven."
+      },
+      {
+        "nodeId": "bellhaven/archive",
+        "description": "Royal Archive is a fixed site within Bellhaven."
+      },
+      {
+        "nodeId": "bellhaven/warden",
+        "description": "Road Warden is a fixed site within Bellhaven."
+      },
+      {
+        "nodeId": "bellhaven/gate:ashen-crown",
+        "description": "Inspect the road toward The Ashen Crown."
+      },
+      {
+        "nodeId": "bellhaven/gate:hollow-weald",
+        "description": "Inspect the road toward The Hollow Weald."
+      },
+      {
+        "nodeId": "bellhaven/gate:pale-marches",
+        "description": "Inspect the road toward The Pale Marches."
+      },
+      {
+        "nodeId": "bellhaven/gate:cinder-reach",
+        "description": "Inspect the road toward The Cinder Reach."
+      },
+      {
+        "nodeId": "bellhaven/gate:drowned-coast",
+        "description": "Inspect the road toward The Drowned Coast."
+      },
+      {
+        "nodeId": "black-spire/entrance",
+        "description": "Outer Gate is a fixed site within The Black Spire."
+      },
+      {
+        "nodeId": "black-spire/junction",
+        "description": "Broken Crossing is a fixed site within The Black Spire."
+      },
+      {
+        "nodeId": "black-spire/rescue",
+        "description": "Pilgrim Refuge is a fixed site within The Black Spire."
+      },
+      {
+        "nodeId": "black-spire/cache",
+        "description": "Sealed Reliquary is a fixed site within The Black Spire."
+      },
+      {
+        "nodeId": "black-spire/boss",
+        "description": "The lord of this legacy dungeon awaits beyond the final door."
+      },
+      {
+        "nodeId": "lantern-haven/forge",
+        "description": "Blacksmith is a fixed site within Lantern Haven."
+      },
+      {
+        "nodeId": "lantern-haven/market",
+        "description": "Old Market is a fixed site within Lantern Haven."
+      },
+      {
+        "nodeId": "lantern-haven/inn",
+        "description": "Wayfarer’s Inn is a fixed site within Lantern Haven."
+      },
+      {
+        "nodeId": "lantern-haven/chapel",
+        "description": "Chapel of Embers is a fixed site within Lantern Haven."
+      },
+      {
+        "nodeId": "lantern-haven/archive",
+        "description": "Royal Archive is a fixed site within Lantern Haven."
+      },
+      {
+        "nodeId": "lantern-haven/warden",
+        "description": "Road Warden is a fixed site within Lantern Haven."
+      },
+      {
+        "nodeId": "lantern-haven/gate:ashen-crown",
+        "description": "Inspect the road toward The Ashen Crown."
+      },
+      {
+        "nodeId": "lantern-haven/gate:hollow-weald",
+        "description": "Inspect the road toward The Hollow Weald."
+      },
+      {
+        "nodeId": "lantern-haven/gate:pale-marches",
+        "description": "Inspect the road toward The Pale Marches."
+      },
+      {
+        "nodeId": "lantern-haven/gate:cinder-reach",
+        "description": "Inspect the road toward The Cinder Reach."
+      },
+      {
+        "nodeId": "lantern-haven/gate:drowned-coast",
+        "description": "Inspect the road toward The Drowned Coast."
+      },
+      {
+        "nodeId": "elder-root/entrance",
+        "description": "Outer Gate is a fixed site within Roots of the Elder."
+      },
+      {
+        "nodeId": "elder-root/junction",
+        "description": "Broken Crossing is a fixed site within Roots of the Elder."
+      },
+      {
+        "nodeId": "elder-root/rescue",
+        "description": "Pilgrim Refuge is a fixed site within Roots of the Elder."
+      },
+      {
+        "nodeId": "elder-root/cache",
+        "description": "Sealed Reliquary is a fixed site within Roots of the Elder."
+      },
+      {
+        "nodeId": "elder-root/boss",
+        "description": "The lord of this legacy dungeon awaits beyond the final door."
+      },
+      {
+        "nodeId": "frostgate/forge",
+        "description": "Blacksmith is a fixed site within Frostgate."
+      },
+      {
+        "nodeId": "frostgate/market",
+        "description": "Old Market is a fixed site within Frostgate."
+      },
+      {
+        "nodeId": "frostgate/inn",
+        "description": "Wayfarer’s Inn is a fixed site within Frostgate."
+      },
+      {
+        "nodeId": "frostgate/chapel",
+        "description": "Chapel of Embers is a fixed site within Frostgate."
+      },
+      {
+        "nodeId": "frostgate/archive",
+        "description": "Royal Archive is a fixed site within Frostgate."
+      },
+      {
+        "nodeId": "frostgate/warden",
+        "description": "Road Warden is a fixed site within Frostgate."
+      },
+      {
+        "nodeId": "frostgate/gate:ashen-crown",
+        "description": "Inspect the road toward The Ashen Crown."
+      },
+      {
+        "nodeId": "frostgate/gate:hollow-weald",
+        "description": "Inspect the road toward The Hollow Weald."
+      },
+      {
+        "nodeId": "frostgate/gate:pale-marches",
+        "description": "Inspect the road toward The Pale Marches."
+      },
+      {
+        "nodeId": "frostgate/gate:cinder-reach",
+        "description": "Inspect the road toward The Cinder Reach."
+      },
+      {
+        "nodeId": "frostgate/gate:drowned-coast",
+        "description": "Inspect the road toward The Drowned Coast."
+      },
+      {
+        "nodeId": "silent-monastery/entrance",
+        "description": "Outer Gate is a fixed site within Monastery of Silence."
+      },
+      {
+        "nodeId": "silent-monastery/junction",
+        "description": "Broken Crossing is a fixed site within Monastery of Silence."
+      },
+      {
+        "nodeId": "silent-monastery/rescue",
+        "description": "Pilgrim Refuge is a fixed site within Monastery of Silence."
+      },
+      {
+        "nodeId": "silent-monastery/cache",
+        "description": "Sealed Reliquary is a fixed site within Monastery of Silence."
+      },
+      {
+        "nodeId": "silent-monastery/boss",
+        "description": "The lord of this legacy dungeon awaits beyond the final door."
+      },
+      {
+        "nodeId": "emberhold/forge",
+        "description": "Blacksmith is a fixed site within Emberhold."
+      },
+      {
+        "nodeId": "emberhold/market",
+        "description": "Old Market is a fixed site within Emberhold."
+      },
+      {
+        "nodeId": "emberhold/inn",
+        "description": "Wayfarer’s Inn is a fixed site within Emberhold."
+      },
+      {
+        "nodeId": "emberhold/chapel",
+        "description": "Chapel of Embers is a fixed site within Emberhold."
+      },
+      {
+        "nodeId": "emberhold/archive",
+        "description": "Royal Archive is a fixed site within Emberhold."
+      },
+      {
+        "nodeId": "emberhold/warden",
+        "description": "Road Warden is a fixed site within Emberhold."
+      },
+      {
+        "nodeId": "emberhold/gate:ashen-crown",
+        "description": "Inspect the road toward The Ashen Crown."
+      },
+      {
+        "nodeId": "emberhold/gate:hollow-weald",
+        "description": "Inspect the road toward The Hollow Weald."
+      },
+      {
+        "nodeId": "emberhold/gate:pale-marches",
+        "description": "Inspect the road toward The Pale Marches."
+      },
+      {
+        "nodeId": "emberhold/gate:cinder-reach",
+        "description": "Inspect the road toward The Cinder Reach."
+      },
+      {
+        "nodeId": "emberhold/gate:drowned-coast",
+        "description": "Inspect the road toward The Drowned Coast."
+      },
+      {
+        "nodeId": "dead-foundry/entrance",
+        "description": "Outer Gate is a fixed site within The Dead Foundry."
+      },
+      {
+        "nodeId": "dead-foundry/junction",
+        "description": "Broken Crossing is a fixed site within The Dead Foundry."
+      },
+      {
+        "nodeId": "dead-foundry/rescue",
+        "description": "Pilgrim Refuge is a fixed site within The Dead Foundry."
+      },
+      {
+        "nodeId": "dead-foundry/cache",
+        "description": "Sealed Reliquary is a fixed site within The Dead Foundry."
+      },
+      {
+        "nodeId": "dead-foundry/boss",
+        "description": "The lord of this legacy dungeon awaits beyond the final door."
+      },
+      {
+        "nodeId": "saltwatch/forge",
+        "description": "Blacksmith is a fixed site within Saltwatch."
+      },
+      {
+        "nodeId": "saltwatch/market",
+        "description": "Old Market is a fixed site within Saltwatch."
+      },
+      {
+        "nodeId": "saltwatch/inn",
+        "description": "Wayfarer’s Inn is a fixed site within Saltwatch."
+      },
+      {
+        "nodeId": "saltwatch/chapel",
+        "description": "Chapel of Embers is a fixed site within Saltwatch."
+      },
+      {
+        "nodeId": "saltwatch/archive",
+        "description": "Royal Archive is a fixed site within Saltwatch."
+      },
+      {
+        "nodeId": "saltwatch/warden",
+        "description": "Road Warden is a fixed site within Saltwatch."
+      },
+      {
+        "nodeId": "saltwatch/gate:ashen-crown",
+        "description": "Inspect the road toward The Ashen Crown."
+      },
+      {
+        "nodeId": "saltwatch/gate:hollow-weald",
+        "description": "Inspect the road toward The Hollow Weald."
+      },
+      {
+        "nodeId": "saltwatch/gate:pale-marches",
+        "description": "Inspect the road toward The Pale Marches."
+      },
+      {
+        "nodeId": "saltwatch/gate:cinder-reach",
+        "description": "Inspect the road toward The Cinder Reach."
+      },
+      {
+        "nodeId": "saltwatch/gate:drowned-coast",
+        "description": "Inspect the road toward The Drowned Coast."
+      },
+      {
+        "nodeId": "tidebound-abbey/entrance",
+        "description": "Outer Gate is a fixed site within Tidebound Abbey."
+      },
+      {
+        "nodeId": "tidebound-abbey/junction",
+        "description": "Broken Crossing is a fixed site within Tidebound Abbey."
+      },
+      {
+        "nodeId": "tidebound-abbey/rescue",
+        "description": "Pilgrim Refuge is a fixed site within Tidebound Abbey."
+      },
+      {
+        "nodeId": "tidebound-abbey/cache",
+        "description": "Sealed Reliquary is a fixed site within Tidebound Abbey."
+      },
+      {
+        "nodeId": "tidebound-abbey/boss",
+        "description": "The lord of this legacy dungeon awaits beyond the final door."
+      }
+    ],
+    "quests": [
+      {
+        "questId": "survey:crownfall",
+        "description": "Survey the old road and return to the warden. The route must be open in this journey."
+      },
+      {
+        "questId": "survey:bellhaven",
+        "description": "Survey the old road and return to the warden. The route must be open in this journey."
+      },
+      {
+        "questId": "survey:lantern-haven",
+        "description": "Survey the old road and return to the warden. The route must be open in this journey."
+      },
+      {
+        "questId": "survey:frostgate",
+        "description": "Survey the old road and return to the warden. The route must be open in this journey."
+      },
+      {
+        "questId": "survey:emberhold",
+        "description": "Survey the old road and return to the warden. The route must be open in this journey."
+      },
+      {
+        "questId": "survey:saltwatch",
+        "description": "Survey the old road and return to the warden. The route must be open in this journey."
+      }
+    ]
+  },
+  "legacyDungeons": {
+    "dungeons": [
+      {
+        "id": "BS",
+        "name": "Briar Sanctum",
+        "nodes": [
+          {
+            "id": "BS-01",
+            "name": "Gate of Unkept Names",
+            "lore": "Every name on this gate has been scratched out from within."
+          },
+          {
+            "id": "BS-02",
+            "name": "Rootbound Fork",
+            "lore": "The paving divides around a root older than the wall. Both tracks carry fresh mud."
+          },
+          {
+            "id": "BS-03",
+            "name": "Pilgrims' Hollow",
+            "lore": "Do not pull the thorns from your cloak. They are how she counts who leaves."
+          },
+          {
+            "id": "BS-04",
+            "name": "Broken Processional",
+            "lore": "The stones are worn at the knees, not the feet."
+          },
+          {
+            "id": "BS-05",
+            "name": "Moss Stair",
+            "lore": "Something beneath the moss breathes against the stair. A blight hound lifts its head."
+          },
+          {
+            "id": "BS-06",
+            "name": "Chapel of Small Mercies",
+            "lore": "A gold cup stands beneath a roof that fell generations ago. It is still full."
+          },
+          {
+            "id": "BS-07",
+            "name": "Widow's Recess",
+            "lore": "A child's wooden shoe rests beside an adult's stone effigy."
+          },
+          {
+            "id": "BS-08",
+            "name": "The Last Grave Tender",
+            "lore": "I leave one grave open. If I fill it, I have to admit whom it was for."
+          },
+          {
+            "id": "BS-09",
+            "name": "Seed Reliquary",
+            "lore": "The reliquary holds seeds wrapped in burial cloth, each labeled with a season."
+          },
+          {
+            "id": "BS-10",
+            "name": "Abandoned Watch Chapel",
+            "lore": "A narrow window faces away from the forest and toward the great tree."
+          },
+          {
+            "id": "BS-11",
+            "name": "Bridge of Bound Vows",
+            "lore": "State whom you have come to mourn. A blade is not an answer."
+          },
+          {
+            "id": "BS-12",
+            "name": "Waterward Fork",
+            "lore": "A second road leaves the gate beside a channel cut into the rock."
+          },
+          {
+            "id": "BS-13",
+            "name": "Thorn Scribe",
+            "lore": "I write the names she forgets. The bark heals faster each year."
+          },
+          {
+            "id": "BS-14",
+            "name": "Lower Stone Bridge",
+            "lore": "A blight hound waits where the bridge narrows, its muzzle tangled in prayer cords."
+          },
+          {
+            "id": "BS-15",
+            "name": "Candleless Landing",
+            "lore": "Wax fills every crack in the landing, but no wick remains."
+          },
+          {
+            "id": "BS-16",
+            "name": "East Chapel Steps",
+            "lore": "A kneeling statue holds a bowl toward the waterfall."
+          },
+          {
+            "id": "BS-17",
+            "name": "Keeper of the Empty Bowl",
+            "lore": "She took our hunger first. We thanked her. Then she took what we hungered for."
+          },
+          {
+            "id": "BS-18",
+            "name": "Waterfall Oratory",
+            "lore": "A leather satchel hangs above the spray, protected by a curtain of thorns."
+          },
+          {
+            "id": "BS-19",
+            "name": "The Listening Hedge",
+            "lore": "Speak softly. The leaves repeat whatever they hear to Mother."
+          },
+          {
+            "id": "BS-20",
+            "name": "Pilgrim's Turn",
+            "lore": "Footprints circle a single root before joining the upper path."
+          },
+          {
+            "id": "BS-21",
+            "name": "Rear Watch Ruin",
+            "lore": "A fallen bell lies stuffed with moss, its clapper deliberately removed."
+          },
+          {
+            "id": "BS-22",
+            "name": "The Unnamed Gardener",
+            "lore": "She is not guarding the dead from you. She is guarding them from the morning."
+          },
+          {
+            "id": "BS-23",
+            "name": "Sanctum Stair",
+            "lore": "Every root points inward. The stair rises into a silence that feels held shut."
+          },
+          {
+            "id": "BS-24",
+            "name": "Heart of Briar Sanctum",
+            "lore": "I kept them. Every one. Would you have me call that a sin?"
+          }
+        ]
+      },
+      {
+        "id": "HM",
+        "name": "Hall of Mirrors",
+        "nodes": [
+          {
+            "id": "HM-01",
+            "name": "Gate of Second Faces",
+            "lore": "Your reflection reaches the gate a moment before you do."
+          },
+          {
+            "id": "HM-02",
+            "name": "Winter Garden Fork",
+            "lore": "The snow is broken by footsteps that never seem to leave."
+          },
+          {
+            "id": "HM-03",
+            "name": "The Unreflected Porter",
+            "lore": "Leave your reflection with me. Guests must not bring strangers into court."
+          },
+          {
+            "id": "HM-04",
+            "name": "Fountain of Still Water",
+            "lore": "The fountain is frozen around a falling drop."
+          },
+          {
+            "id": "HM-05",
+            "name": "Gardener of Glass",
+            "lore": "The Regent wanted flowers that could not die. Glass was only the first attempt."
+          },
+          {
+            "id": "HM-06",
+            "name": "Shattered Conservatory",
+            "lore": "The collapsed glasshouse shelters a box of ordinary earth."
+          },
+          {
+            "id": "HM-07",
+            "name": "Glasshouse Crossing",
+            "lore": "Glass ribs make a cage around an empty planting bed."
+          },
+          {
+            "id": "HM-08",
+            "name": "Statue Walk",
+            "lore": "A porcelain sentry turns its face to match yours."
+          },
+          {
+            "id": "HM-09",
+            "name": "The White Landing",
+            "lore": "The same farewell is carved into every step in a different hand."
+          },
+          {
+            "id": "HM-10",
+            "name": "Bridge of Courtesy",
+            "lore": "Bow to the image, never the guest. Images do not change their loyalties."
+          },
+          {
+            "id": "HM-11",
+            "name": "The Thawing Witness",
+            "lore": "I saw the original die. Every morning since, another reflection has denied it."
+          },
+          {
+            "id": "HM-12",
+            "name": "Causeway Fork",
+            "lore": "The other road crosses dark water on broad stone arches."
+          },
+          {
+            "id": "HM-13",
+            "name": "The Tarn Span",
+            "lore": "A glass-armored sentinel drags its spear along the bridge rail."
+          },
+          {
+            "id": "HM-14",
+            "name": "Listening Balustrade",
+            "lore": "Voices rise through the arches, repeating a conversation you have not had."
+          },
+          {
+            "id": "HM-15",
+            "name": "The Ferry Without Oars",
+            "lore": "Before the ice, I carried people across. Now I ferry apologies. Neither ever returns."
+          },
+          {
+            "id": "HM-16",
+            "name": "Icebound Tollhouse",
+            "lore": "A brass box contains toll coins polished perfectly blank."
+          },
+          {
+            "id": "HM-17",
+            "name": "Rime Watch",
+            "lore": "Show me the face you wore when you entered. No substitutions."
+          },
+          {
+            "id": "HM-18",
+            "name": "Eastern Stair",
+            "lore": "Frost has formed on the underside of the steps, against the wind."
+          },
+          {
+            "id": "HM-19",
+            "name": "The Unsilvered Niche",
+            "lore": "One mirror has had its silver scraped away, leaving a view of bare stone."
+          },
+          {
+            "id": "HM-20",
+            "name": "The Seamstress of Faces",
+            "lore": "A face is easier to mend when its owner stops moving."
+          },
+          {
+            "id": "HM-21",
+            "name": "Court of Repeated Steps",
+            "lore": "Two sentries move as one. Only one leaves tracks."
+          },
+          {
+            "id": "HM-22",
+            "name": "Blackwater Basin",
+            "lore": "The basin reflects an intact palace under a summer sky."
+          },
+          {
+            "id": "HM-23",
+            "name": "Threshold of True Silver",
+            "lore": "Your reflection remains at the threshold after you step away."
+          },
+          {
+            "id": "HM-24",
+            "name": "Hall of Mirrors",
+            "lore": "I have perfected this court. It is the world outside that refuses correction."
+          }
+        ]
+      },
+      {
+        "id": "FC",
+        "name": "Furnace Chapel",
+        "nodes": [
+          {
+            "id": "FC-01",
+            "name": "Gate of Banked Coals",
+            "lore": "The gate is warm enough to hurt through a glove. No fire burns nearby."
+          },
+          {
+            "id": "FC-02",
+            "name": "The Ashen Divide",
+            "lore": "Two sets of footprints separate: bare feet uphill, iron boots toward the works."
+          },
+          {
+            "id": "FC-03",
+            "name": "The Coal Tally",
+            "lore": "Nothing enters empty-handed. What will you give the flame?"
+          },
+          {
+            "id": "FC-04",
+            "name": "Kiln Approach",
+            "lore": "Ash has settled into the shape of tools that were taken away long ago."
+          },
+          {
+            "id": "FC-05",
+            "name": "The Last Stoker",
+            "lore": "We thought the heat was a blessing. Then the saint stopped asking for fuel."
+          },
+          {
+            "id": "FC-06",
+            "name": "Cold Coal Shed",
+            "lore": "A sealed lunch tin sits between heaps of coal that never caught."
+          },
+          {
+            "id": "FC-07",
+            "name": "Quenching Yard",
+            "lore": "A cinder mantis unfolds from a slag heap, its legs ringing against the stone."
+          },
+          {
+            "id": "FC-08",
+            "name": "Worker's Niche",
+            "lore": "A small iron hand protects a candle from the furnace wind."
+          },
+          {
+            "id": "FC-09",
+            "name": "The Soot Confessor",
+            "lore": "They confessed exhaustion. I called it doubt. I would like that written down."
+          },
+          {
+            "id": "FC-10",
+            "name": "The Red Stair",
+            "lore": "The stair is swept clean while the surrounding terraces lie deep in ash."
+          },
+          {
+            "id": "FC-11",
+            "name": "Brazier of Petition",
+            "lore": "The great brazier is cold. Its rim has melted inward."
+          },
+          {
+            "id": "FC-12",
+            "name": "Pilgrims' Stair",
+            "lore": "The direct stair climbs above a fissure glowing beneath the paving."
+          },
+          {
+            "id": "FC-13",
+            "name": "Procession Landing",
+            "lore": "An ember-starved pilgrim blocks the stair, guarding a coal in cupped hands."
+          },
+          {
+            "id": "FC-14",
+            "name": "Bearer of the Last Coal",
+            "lore": "If it goes out, she said we all go out. Help me remember who she meant."
+          },
+          {
+            "id": "FC-15",
+            "name": "Reliquary Steps",
+            "lore": "Empty reliquary sockets line the stair like missing teeth."
+          },
+          {
+            "id": "FC-16",
+            "name": "Iron Viaduct",
+            "lore": "The upper works are closed. The order is old; my oath is older."
+          },
+          {
+            "id": "FC-17",
+            "name": "Eastern Abutment",
+            "lore": "The iron supports sing at a pitch too low to hear clearly."
+          },
+          {
+            "id": "FC-18",
+            "name": "The Weigh House",
+            "lore": "A balance hangs level with a prayer tablet on one pan and a tooth on the other."
+          },
+          {
+            "id": "FC-19",
+            "name": "Foreman Without a Shift",
+            "lore": "No one dismissed us. Until someone does, the shift is not over."
+          },
+          {
+            "id": "FC-20",
+            "name": "High Works Crossing",
+            "lore": "A cinder mantis has woven hot wire across the old service path."
+          },
+          {
+            "id": "FC-21",
+            "name": "The Joining Road",
+            "lore": "The works road and pilgrim stair meet before the chapel terrace."
+          },
+          {
+            "id": "FC-22",
+            "name": "Chapel Forecourt",
+            "lore": "Gold trim blackens above a row of names struck from the list of saints."
+          },
+          {
+            "id": "FC-23",
+            "name": "Furnace Threshold",
+            "lore": "Heat presses against you like a held breath. The chains are fastened from within."
+          },
+          {
+            "id": "FC-24",
+            "name": "Furnace Chapel",
+            "lore": "You call it suffering because you have not yet learned to burn clean."
+          }
+        ]
+      }
+    ],
+    "scenes": [
+      {
+        "id": "BS-ENV-01",
+        "name": "Gate of Unkept Names"
+      },
+      {
+        "id": "BS-ENV-02",
+        "name": "Chapel of Small Mercies"
+      },
+      {
+        "id": "BS-ENV-03",
+        "name": "Bridge of Bound Vows"
+      },
+      {
+        "id": "BS-ENV-04",
+        "name": "Heart of Briar Sanctum — Boss Arena"
+      },
+      {
+        "id": "HM-ENV-01",
+        "name": "Gate of Second Faces"
+      },
+      {
+        "id": "HM-ENV-02",
+        "name": "Shattered Conservatory"
+      },
+      {
+        "id": "HM-ENV-03",
+        "name": "Bridge of Courtesy"
+      },
+      {
+        "id": "HM-ENV-04",
+        "name": "Hall of Mirrors — Boss Arena"
+      },
+      {
+        "id": "FC-ENV-01",
+        "name": "Gate of Banked Coals"
+      },
+      {
+        "id": "FC-ENV-02",
+        "name": "Quenching Yard"
+      },
+      {
+        "id": "FC-ENV-03",
+        "name": "Iron Viaduct"
+      },
+      {
+        "id": "FC-ENV-04",
+        "name": "Furnace Chapel — Boss Arena"
+      }
+    ]
+  }
+}

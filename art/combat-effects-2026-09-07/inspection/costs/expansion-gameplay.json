@@ -1,0 +1,19 @@
+{
+  "expansion": [
+    "shieldBash",
+    "parry",
+    "steelGlint",
+    "weak",
+    "vulnerable",
+    "guardPulse",
+    "dodge",
+    "dustStep",
+    "arcaneWard",
+    "magicGuard",
+    "barrier",
+    "channelStance",
+    "staggerBreak",
+    "riposte"
+  ],
+  "errors": []
+}

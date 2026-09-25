@@ -1,0 +1,230 @@
+{
+  "generator": "OpenAI built-in image_gen",
+  "description": "Remove aura from Buff pose for user-configured sword/shield attack.",
+  "generations": [
+    {
+      "id": "reaver",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/reaver/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-75a13a18-59bb-4b8a-b62b-d7dad4281be6.png",
+      "source": "sources/buff-no-aura/reaver.png"
+    },
+    {
+      "id": "reaver-vigil",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/reaver-vigil/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-c58cc62f-a54a-4cef-9529-42e2e2f92694.png",
+      "source": "sources/buff-no-aura/reaver-vigil.png"
+    },
+    {
+      "id": "reaver-oathsworn",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/reaver-oathsworn/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-25eec74f-2eb7-4cc9-a421-8013d477f82d.png",
+      "source": "sources/buff-no-aura/reaver-oathsworn.png"
+    },
+    {
+      "id": "reaver-warden",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/reaver-warden/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-f9a852b4-732b-46e9-9a25-b13a6311bbb9.png",
+      "source": "sources/buff-no-aura/reaver-warden.png"
+    },
+    {
+      "id": "starseer",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/starseer/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-ee261d4c-28ea-4729-840f-491700786aeb.png",
+      "source": "sources/buff-no-aura/starseer.png"
+    },
+    {
+      "id": "starseer-eclipse",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/starseer-eclipse/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-d4f0f5a8-2841-40fb-879f-91064842e53a.png",
+      "source": "sources/buff-no-aura/starseer-eclipse.png"
+    },
+    {
+      "id": "starseer-starlit",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/starseer-starlit/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-f2112787-83e6-4969-baee-83130af94ee8.png",
+      "source": "sources/buff-no-aura/starseer-starlit.png"
+    },
+    {
+      "id": "starseer-astral",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/starseer-astral/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-d4da38ba-ec5c-4335-bb83-e678bfc4e488.png",
+      "source": "sources/buff-no-aura/starseer-astral.png"
+    },
+    {
+      "id": "herald",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/herald/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-fdc44258-df15-482b-9718-edfd35b3b6f8.png",
+      "source": "sources/buff-no-aura/herald.png"
+    },
+    {
+      "id": "herald-ossuary",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/herald-ossuary/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-ce5d195b-eb2d-446d-9ce0-180e7be1d9bd.png",
+      "source": "sources/buff-no-aura/herald-ossuary.png"
+    },
+    {
+      "id": "herald-emberhabit",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/herald-emberhabit/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-c4aee6c3-324b-4779-9d93-48bd15a28352.png",
+      "source": "sources/buff-no-aura/herald-emberhabit.png"
+    },
+    {
+      "id": "herald-pilgrim",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/herald-pilgrim/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-fdfb3274-7cb0-4848-a4ae-884520480fa4.png",
+      "source": "sources/buff-no-aura/herald-pilgrim.png"
+    },
+    {
+      "id": "rogue",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/rogue/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-eb24904d-25ee-4ba0-8442-f1b5788e6f40.png",
+      "source": "sources/buff-no-aura/rogue.png"
+    },
+    {
+      "id": "rogue-nightveil",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/rogue-nightveil/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-4a0b17af-a012-43cb-b0a3-16c75fb07d0f.png",
+      "source": "sources/buff-no-aura/rogue-nightveil.png"
+    },
+    {
+      "id": "rogue-duelist",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/rogue-duelist/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-fe7f40f5-a48e-4df7-9ab3-0dfda9e25825.png",
+      "source": "sources/buff-no-aura/rogue-duelist.png"
+    },
+    {
+      "id": "rogue-shadow",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/rogue-shadow/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-e47bf109-acee-4553-988f-9d220cd567db.png",
+      "source": "sources/buff-no-aura/rogue-shadow.png"
+    },
+    {
+      "id": "reaver-wayfarerPlate",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/reaver-wayfarerPlate/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-15ad6b91-da8b-46af-bd05-e899c9a374cd.png",
+      "source": "sources/buff-no-aura/reaver-wayfarerPlate.png"
+    },
+    {
+      "id": "reaver-nightweave",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/reaver-nightweave/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-72fc2b77-63e8-4fb3-96bd-c46a7bb8ff45.png",
+      "source": "sources/buff-no-aura/reaver-nightweave.png"
+    },
+    {
+      "id": "reaver-riteVestments",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/reaver-riteVestments/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-ab1d6f9c-663d-4f6f-bf10-8e192c79fac0.png",
+      "source": "sources/buff-no-aura/reaver-riteVestments.png"
+    },
+    {
+      "id": "reaver-gutterLeathers",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/reaver-gutterLeathers/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-ba6279be-877a-4ae1-8c8e-f7c099b8802d.png",
+      "source": "sources/buff-no-aura/reaver-gutterLeathers.png"
+    },
+    {
+      "id": "starseer-wayfarerPlate",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/starseer-wayfarerPlate/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-ad487e21-5ab6-4d73-9733-abd1962d9d75.png",
+      "source": "sources/buff-no-aura/starseer-wayfarerPlate.png"
+    },
+    {
+      "id": "starseer-nightweave",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/starseer-nightweave/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-846828bb-e031-4b6b-8413-fe6e2543edc9.png",
+      "source": "sources/buff-no-aura/starseer-nightweave.png"
+    },
+    {
+      "id": "starseer-riteVestments",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/starseer-riteVestments/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-e28821d6-5b84-4018-abcb-29fa60b8d60f.png",
+      "source": "sources/buff-no-aura/starseer-riteVestments.png"
+    },
+    {
+      "id": "starseer-gutterLeathers",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/starseer-gutterLeathers/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-16b6ab68-424c-4f71-bdff-2c0a3f20e555.png",
+      "source": "sources/buff-no-aura/starseer-gutterLeathers.png"
+    },
+    {
+      "id": "herald-wayfarerPlate",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/herald-wayfarerPlate/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-e90295e0-9994-468c-8e55-c8ff5db67454.png",
+      "source": "sources/buff-no-aura/herald-wayfarerPlate.png"
+    },
+    {
+      "id": "herald-nightweave",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/herald-nightweave/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-0c98b3b8-db49-4f46-b2e3-93e39142d334.png",
+      "source": "sources/buff-no-aura/herald-nightweave.png"
+    },
+    {
+      "id": "herald-riteVestments",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/herald-riteVestments/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-7b0f22c0-0465-48d8-ad88-99e93e0e3938.png",
+      "source": "sources/buff-no-aura/herald-riteVestments.png"
+    },
+    {
+      "id": "herald-gutterLeathers",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/herald-gutterLeathers/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-99bb1ced-52e6-4fd0-b196-260d7ec1829a.png",
+      "source": "sources/buff-no-aura/herald-gutterLeathers.png"
+    },
+    {
+      "id": "rogue-wayfarerPlate",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/rogue-wayfarerPlate/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-85580263-6587-43af-969c-b43f62733e3c.png",
+      "source": "sources/buff-no-aura/rogue-wayfarerPlate.png"
+    },
+    {
+      "id": "rogue-nightweave",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/rogue-nightweave/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-309c2c8b-0c02-4ee5-a36a-ebc3690cc67f.png",
+      "source": "sources/buff-no-aura/rogue-nightweave.png"
+    },
+    {
+      "id": "rogue-riteVestments",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/rogue-riteVestments/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-525e5b68-e519-440b-bd8e-a31cf7af00cc.png",
+      "source": "sources/buff-no-aura/rogue-riteVestments.png"
+    },
+    {
+      "id": "rogue-gutterLeathers",
+      "prompt": "Use case: precise-object-edit. Edit this exact single transparent game sprite. Remove ALL magical aura, gold glow clouds, luminous spiral ribbons, sparkles and ground glow completely, including the ribbons crossing clothing and shield. Reconstruct the underlying armor, cloth, sword and shield where effects were removed. Preserve EXACT character identity, armor colors, body and limb pose, sword and shield positions and angles, silhouette, size and placement within the square canvas. Preserve physical gold metal trim and herald's physical metal halo accessory when present; those are solid objects, not light effects. One fullbody character only, same raised sword BUFF pose, NO aura or magical effects. Transparent background with real alpha, no shadow, no text. Keep full boots and sword tip in canvas. This is an attack-pose variant of existing artwork, not a redesign. Output square.",
+      "reference": "art/sword-shield-outfits-2026-09-19/frames/rogue-gutterLeathers/BUFF.webp",
+      "original": "C:\\Users\\suprbludude\\.codex\\generated_images\\01a0ba9b-15ac-7813-be5a-890d3e7c1421\\exec-d847fefe-4db5-4f31-a96a-d9f64d1c27d3.png",
+      "source": "sources/buff-no-aura/rogue-gutterLeathers.png"
+    }
+  ]
+}

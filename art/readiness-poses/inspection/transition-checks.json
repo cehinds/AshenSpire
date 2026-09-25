@@ -1,0 +1,33 @@
+{
+  "checks": [
+    {
+      "classId": "rogue",
+      "enterAlpha": 0.110438,
+      "leaveAlpha": 0.889698,
+      "redrawEntry": true,
+      "redrawExit": true,
+      "reversal": true,
+      "reducedMotion": true
+    },
+    {
+      "classId": "starseer",
+      "enterAlpha": 0.110259,
+      "leaveAlpha": 0.930352,
+      "redrawEntry": true,
+      "redrawExit": true,
+      "reversal": true,
+      "reducedMotion": true
+    },
+    {
+      "classId": "herald",
+      "enterAlpha": 0.0696221,
+      "leaveAlpha": 0.961528,
+      "redrawEntry": true,
+      "redrawExit": true,
+      "reversal": true,
+      "reducedMotion": true
+    }
+  ],
+  "osReducedMotion": true,
+  "errors": []
+}
