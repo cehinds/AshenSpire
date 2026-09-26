@@ -1,6 +1,6 @@
 // tests/art-manifest.test.mjs — the art manifest is current, and its check can fail.
 //
-// content/art-manifest.json (tools/art-manifest.mjs) lists every asset id with
+// art-manifest.json (tools/art-manifest.mjs) lists every asset id with
 // the file each tier ships. The first test is the gate on the real tree; the
 // rest plant known-bads into a throwaway tree and require the named failure.
 import { test } from 'node:test';
@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { buildManifest, checkManifest, serialize, MANIFEST_PATH, dimensions } from '../tools/art-manifest.mjs';
 
-test('content/art-manifest.json matches assets/ and assets-mobile/', () => {
+test('art-manifest.json matches assets/ and assets-mobile/', () => {
   const problems = checkManifest();
   assert.deepEqual(problems, [], `run node tools/art-manifest.mjs --write:\n${problems.slice(0, 10).join('\n')}`);
 });
@@ -33,7 +33,6 @@ function tree(files) {
     mkdirSync(join(root, rel, '..'), { recursive: true });
     writeFileSync(join(root, rel), bytes);
   }
-  mkdirSync(join(root, 'content'), { recursive: true });
   return root;
 }
 

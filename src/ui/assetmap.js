@@ -18,7 +18,7 @@ export const ASSET_MAP = {};
 /* ASSET_MAP_END */
 
 // THE HIGH-RES TIER (LFS / art-tier plan, steps 3–4, 2026-09-26). An asset id
-// is the runtime path above; content/art-manifest.json lists, per id, the file
+// is the runtime path above; art-manifest.json lists, per id, the file
 // each tier ships. The built-in art is whatever this build carries — the light
 // tier on dev/test, the full art on release/main — and a player may lay a
 // high-res source over it (Settings → Display → Art quality). That source is a

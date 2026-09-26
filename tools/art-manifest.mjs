@@ -2,7 +2,7 @@
 // tools/art-manifest.mjs — the data-driven art manifest: one entry per asset id,
 // with the file each art tier ships for it.
 //
-//   node tools/art-manifest.mjs --write    regenerate content/art-manifest.json
+//   node tools/art-manifest.mjs --write    regenerate art-manifest.json
 //   node tools/art-manifest.mjs --check    exit 1 when the manifest and the trees disagree
 //
 // WHY (LFS / art-tier plan, step 3, 2026-09-26). The game has three art tiers:
@@ -34,7 +34,7 @@ import { MIME, runtimeAsset } from './assetmime.mjs';
 import { MOBILE_ASSET_DIR, webpDimensions } from './mobileart-policy.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-export const MANIFEST_PATH = 'content/art-manifest.json';
+export const MANIFEST_PATH = 'art-manifest.json';
 export const HIGH_DIR = 'assets';
 export const LIGHT_DIR = MOBILE_ASSET_DIR;
 export const SCHEMA = 1;
