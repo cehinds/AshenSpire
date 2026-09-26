@@ -70,6 +70,19 @@ owner reads the PR list and merges; nothing else is theirs to do there.
    asked you to land work, and never to `release` or `main` (see
    [Coordination and release boundary](#coordination-and-release-boundary)).
 
+### Builds are built by CI, not committed
+
+Owner's rule, 2026-09-26. The standalone HTML (`AshenSpire.html`,
+`AshenSpire-mobile.html` and their `build/` and `dist/` copies) is never
+committed: a pull request carries source, `buildordinal.json`, the
+regenerated `src/content/changelog.generated.js` and its CHANGELOG receipt,
+and nothing else generated. CI builds every pull request into `dev` and every
+push to `dev`, `test`, `release` and `main`, runs the gates that read a build,
+and uploads the result as the `<branch>-standalone-<commit>` workflow
+artifact; a push to `test` is the playtest build. Where the ordinal comes
+from, what each branch keeps and how Pages gets its builds are in
+[docs/versioning.md](docs/versioning.md#builds-are-not-committed-2026-09-26).
+
 ## Adding content (quick reference)
 
 Full walkthroughs live in `DEVELOPER.md` (lands with M1). Short version:

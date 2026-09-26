@@ -182,6 +182,20 @@ no line (`at :0`) because there is no throw site. Those are logged as `NOTICE`
 and raise nothing; `isBenignPageNotice()` is the anchored classifier, and
 `tests/debug-banner.test.mjs` holds both edges.
 
+## Where a build comes from (not committed since 2026-09-26)
+
+`node tools/launch.mjs --build-only` still writes `AshenSpire.html`,
+`AshenSpire-mobile.html` and their `build/` and `dist/` copies, but only to
+your working tree: git ignores them. Commit the box it moves
+(`buildordinal.json`) and the regenerated changelog module, never the HTML.
+To play a build you did not make, download the `<branch>-standalone-<commit>`
+artifact from that commit's workflow run: every pull request into `dev` and
+every push to `dev`, `test`, `release` and `main` uploads one. A tool or test
+that reads a build builds it first, or is handed that artifact; it never
+skips because a build is missing. The full contract, including the ordinal
+and Pages, is in
+[docs/versioning.md](docs/versioning.md#builds-are-not-committed-2026-09-26).
+
 ## The CI door: a tool's silence is not its success (#12)
 
 Every CI step that runs a checker is wrapped:
