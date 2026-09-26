@@ -46,6 +46,10 @@ const has = (name) => argv.includes(name);
 const REMOTE = flag('--remote', 'origin');
 const BRANCHES = flag('--branches', 'dev,test,release,main').split(',').map((s) => s.trim()).filter(Boolean);
 const KEEP = Math.max(1, Number(flag('--keep', '10')) || 10);
+// A directory holding AshenSpire.html and AshenSpire-mobile.html built by CI from
+// main's source. Needed once main no longer commits its build (the Git LFS budget
+// ran out, 2026-09-26): without it the stable Play links at the site root 404.
+const MAIN_BUILD = flag('--main-build', null);
 // A BRANCH'S ROLE IS READ FROM THE CONTRACT THAT GOVERNS IT, not typed here.
 // `.agentops/governance/git-ownership.json` already carries one note per ref and
 // is the thing that actually decides who may write to each; duplicating that
@@ -398,6 +402,15 @@ function assemble(outDir, keep) {
   for (const artifact of ['AshenSpire.html', 'build/AshenSpire.html', 'dist/AshenSpire.html',
     MOBILE_ARTIFACT, `build/${MOBILE_ARTIFACT}`, `dist/${MOBILE_ARTIFACT}`]) {
     if (existsSync(join(outDir, artifact))) writeFileSync(join(outDir, artifact), readGitArtifact(ROOT, mainRef, artifact));
+  }
+  // THE STABLE PLAY LINKS (README: /AshenSpire.html, /AshenSpire-mobile.html).
+  // A main tree that no longer tracks them gets main's CI build instead; with no
+  // build handed in, the run fails rather than publishing a site whose primary
+  // links are 404s.
+  for (const artifact of ['AshenSpire.html', MOBILE_ARTIFACT]) {
+    if (existsSync(join(outDir, artifact))) continue;
+    if (!MAIN_BUILD) throw new Error(`main's tree carries no ${artifact} — pass --main-build <dir> holding a build of main's source, or the stable Play link at /${artifact} 404s`);
+    cpSync(resolve(MAIN_BUILD, artifact), join(outDir, artifact));
   }
   if (existsSync(join(outDir, 'index.html'))) cpSync(join(outDir, 'index.html'), join(outDir, 'index-game.html'));
   // The build/ and dist/ aliases fetch the shipped score from beside themselves

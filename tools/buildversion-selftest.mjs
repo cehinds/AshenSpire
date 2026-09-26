@@ -584,6 +584,8 @@ function ordinalHistory() {
   CASES.push(
     [(j) => ({ ...j, ordinal: Math.max(0, j.ordinal - 5) }), 'red',
       'the ordinal is LOWERED by hand with the source digest unchanged — no rebuild moved it, and the box went backwards', null, false],
+    [bump, 'red',
+      'the ordinal is RAISED by hand with the source digest unchanged — it sorts higher, but no build writes a new number without a new digest', null, false],
     [null, 'green',
       'the control: the record is untouched and the digest unchanged — no build shipped, n/a', null, false],
   );

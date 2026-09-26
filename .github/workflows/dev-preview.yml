@@ -28,10 +28,11 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: dev-preview-${{ github.ref }}
-  # A PULL REQUEST'S superseded run may be cancelled; a branch push may not.
-  # The built HTML is not committed on dev, so this run's upload is the only copy
-  # of that commit's build — cancelling it would leave the commit with none.
+  # A PULL REQUEST'S superseded run may be cancelled; a branch push may not, and
+  # may not be REPLACED while queued either (a group holds one pending run). The
+  # built HTML is not committed, so a push run's upload is the only copy of that
+  # commit's build — so push runs are grouped by commit, never by branch.
+  group: dev-preview-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:

@@ -1141,7 +1141,18 @@ export function check(root = REPO_ROOT) {
       // edited record, so F agrees with it and only this row can see the move.
       const changed = before === null || now === null || before.digest !== now.digest
         || before.ordinal !== now.ordinal || before.release !== now.release;
-      if (!changed) {
+      const recordOnly = before !== null && now !== null && before.digest === now.digest
+        && (before.ordinal !== now.ordinal || before.release !== now.release);
+      if (recordOnly) {
+        // NOT A BUILD AT ALL. bumpOrdinal moves the ordinal only when the digest
+        // moves, and the release lives inside the digest's roots, so a record
+        // whose number changed under an unchanged digest was edited by hand (or
+        // merged badly) — up or down, it is red, never ranked (#1332 review).
+        add(false, 'H ORDINAL INCREASES',
+          `${ORDINAL_HOME} changed its number (${before.release}.${before.ordinal} → ${now.release}.${now.ordinal}) between`
+          + ` ${parent.slice(0, 7)} and HEAD with the source digest unchanged ('${now.digest}') — no build writes that;`
+          + ` restore the record and rebuild (node tools/launch.mjs --build-only).`);
+      } else if (!changed) {
         add(true, 'H ORDINAL INCREASES', `${ORDINAL_HOME} records the same build (digest, ordinal and release) at ${parent.slice(0, 7)} and HEAD — no build shipped, so no ordinal was owed (n/a, stated)`);
       } else if (before === null) {
         add(true, 'H ORDINAL INCREASES', `${parent.slice(0, 7)} has no ${ORDINAL_HOME} — the scheme did not exist at the parent (n/a, stated)`);
