@@ -3,14 +3,64 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1343",
+    "id": "pr-1340",
     "date": "2026-09-26",
     "group": "2026-09-26",
-    "summary": "Deck rules: set cards aside, draw in your own order",
-    "detail": "The groundwork for the deck editor, which arrives next. A new Settings tab, Advanced → Deck, holds its rules: editing on or off, where you may edit, the smallest and largest deck, and Play in deck order, which draws your cards in the order you arranged them instead of shuffling. A card you take out of your deck is kept, not lost, so you can put it back later; Strike and Defend stay unlimited and still wear your weapon's face.",
-    "build": "0.7.1.549",
-    "pullRequest": 1343,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1343"
+    "summary": "Behind the scenes: the full-resolution art can be fetched and checked",
+    "detail": "Nothing you see changes. A new tool fetches the full-resolution art from its own private repository and checks every file against the art list before anything uses it. This prepares for moving the art out of this repository.",
+    "build": "0.7.1.602",
+    "pullRequest": 1340,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1340"
+  },
+  {
+    "id": "pr-1339",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Art quality: play with full-resolution art from your own folder",
+    "detail": "Settings → Display → Art quality now offers Built-in, the art this build carries, or Local high-res, which uses full-resolution art from a folder on your device: one served beside the game, or one you choose (even when you opened the game straight from a file). Anything the folder lacks keeps the built-in art, pictures already on screen switch over in place, and the choice stays on this device and is never synced. Backdrops drawn by the stylesheet keep the built-in art for now.",
+    "build": "0.7.1.601",
+    "pullRequest": 1339,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1339"
+  },
+  {
+    "id": "pr-1338",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: every piece of art is listed with its light and full-resolution file",
+    "detail": "Nothing you see changes yet. A generated list now names each of the game's 5,201 art and font files with the lighter file development builds carry and the full-resolution original, with their sizes and fingerprints, and the game can take a full-resolution source over its built-in art for any file that source has — the groundwork for an Art quality setting.",
+    "build": "0.7.1.563",
+    "pullRequest": 1338,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1338"
+  },
+  {
+    "id": "pr-1337",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: a plan to move the art sources out of the repository",
+    "detail": "Docs only. docs/ART-REPO-PLAN.md sets out how the 1.6 GB of source art and the full-resolution game art would move to their own repository and be downloaded as a checked release instead of stored here, what reads them today, and the owner questions to answer first. Nothing has moved.",
+    "build": "0.7.1.559",
+    "pullRequest": 1337,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1337"
+  },
+  {
+    "id": "pr-1336",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: development builds carry lighter art",
+    "detail": "Development and test builds now carry the lighter art the mobile edition already uses, so each is one download of about 29 MB instead of 255 MB plus a separate mobile file; Settings → About says \"light art\" on them. Release builds keep the full art as painted.",
+    "build": "0.7.1.558",
+    "pullRequest": 1336,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1336"
+  },
+  {
+    "id": "pr-1332",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: development builds are no longer stored in the repository",
+    "detail": "Nothing you play changes. Every rebuild used to store a fresh 255 MB copy of the game plus its 29 MB mobile edition, and the repository ran out of room for them. Development builds are now made by the automated checks on every change and downloaded from there as the dev-standalone file; the build number and its changelog entry are still checked to agree before a change can merge.",
+    "build": "0.7.1.554",
+    "pullRequest": 1332,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1332"
   },
   {
     "id": "pr-1322",

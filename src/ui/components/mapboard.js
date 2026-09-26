@@ -2,6 +2,7 @@ import { authoredMapTerrainHtml } from './authoredMapArt.js';
 import { mapPoint } from '../../model/mapview.js';
 import { MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
 import { mountMapDetail } from './mapDetail.js';
+import { builtInFor } from '../highResArt.js';
 // src/ui/components/mapboard.js — THE ACT MAP. One renderer, mounted twice.
 //
 // WHY THIS FILE EXISTS, and it is a collapse and not a repair.
@@ -1428,6 +1429,9 @@ export function attachParchment(host, path, w, h) {
     host.appendChild(el);
   };
   probe.onerror = () => {
+    // A missing high-res plate retries once with the built-in art.
+    const fallback = builtInFor(path);
+    if (fallback) { path = fallback; probe.src = path; return; }
     const sc = port();
     if (sc) { sc.dataset.mapPlate = 'missing'; sc.dataset.mapPlatePath = path; }
     console.error(
