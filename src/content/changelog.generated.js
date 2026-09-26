@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1346",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "The Fullscreen switch stays on screen in Settings, and three release checks pass again",
+    "detail": "The Preview sample at the top of Settings › General › Display and Accessibility now starts folded; open, it pushed the Fullscreen switch below the bottom of a phone screen at the largest text size when Settings was opened mid-fight. Tap Preview to open it, and it stays open next time. Behind the scenes, two automated checks that failed on the release build are fixed: one reported a clean browser run as a failure because of how it worded its result, and the build ran out of memory on macOS.",
+    "build": "0.7.1.556",
+    "pullRequest": 1346,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1346"
+  },
+  {
     "id": "pr-1332",
     "date": "2026-09-26",
     "group": "2026-09-26",

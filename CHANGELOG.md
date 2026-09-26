@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-26
 
+- **The Fullscreen switch stays on screen in Settings, and three release checks pass again** ([#1346](https://github.com/cehinds/AshenSpire/pull/1346), `0.7.1.556`). The Preview sample at the top of Settings › General › Display and Accessibility now starts folded; open, it pushed the Fullscreen switch below the bottom of a phone screen at the largest text size when Settings was opened mid-fight. Tap Preview to open it, and it stays open next time. Behind the scenes, two automated checks that failed on the release build are fixed: one reported a clean browser run as a failure because of how it worded its result, and the build ran out of memory on macOS.
 - **Behind the scenes: development builds are no longer stored in the repository** ([#1332](https://github.com/cehinds/AshenSpire/pull/1332), `0.7.1.554`). Nothing you play changes. Every rebuild used to store a fresh 255 MB copy of the game plus its 29 MB mobile edition, and the repository ran out of room for them. Development builds are now made by the automated checks on every change and downloaded from there as the `dev-standalone` file; the build number and its changelog entry are still checked to agree before a change can merge.
 
 ## 2026-09-25
