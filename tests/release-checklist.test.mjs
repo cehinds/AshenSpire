@@ -133,7 +133,7 @@ function gateIds(md) {
 test('FINISH.md still has release criteria to map (the parser is not reading nothing)', () => {
   const cs = criteria(readFileSync(finishPath, 'utf8'));
   assert.ok(cs.length >= 20, `only ${cs.length} FINISH.md criteria parsed`);
-  assert.deepEqual([...new Set(cs.map((c) => c.sec))], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15]);
+  assert.deepEqual([...new Set(cs.map((c) => c.sec))], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
 });
 
 test('every checkbox line in FINISH.md §1–§15 is one the parser can read', () => {
