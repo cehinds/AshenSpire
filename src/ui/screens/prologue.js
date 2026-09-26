@@ -287,7 +287,12 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     }
     if (scene.character) {
       const actor = el('canvas',{class:'prologue-actor'});
-      const source = await characterSource();
+      // Art quality may change while the first decode is in flight (every
+      // change bumps `repaints`, even before an actor is mounted): load again
+      // until one finishes with no change behind it.
+      let source, request;
+      do { request = repaints; source = await characterSource(); }
+      while (request !== repaints && !stopped && token === serial);
       if (stopped || token !== serial) return;
       if (source.naturalWidth) {
         paintPrologueCharacter(actor,source,p.shadowStrength);
