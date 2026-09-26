@@ -58,7 +58,14 @@ export function readPin(root = ROOT) {
   return pin;
 }
 
-export const cacheDirFor = (pin, root = ROOT) => join(root, CACHE_DIR, pin.tag);
+export function cacheDirFor(pin, root = ROOT) {
+  // readPin already limits the tag to hd-assets-v<N>; this is the second lock,
+  // because unpack() deletes this directory before it writes.
+  const base = resolve(root, CACHE_DIR);
+  const dir = resolve(base, String(pin.tag));
+  if (!dir.startsWith(base + sep) || dir.slice(base.length + 1).includes(sep)) throw new Error(`${PIN_PATH}: tag ${JSON.stringify(pin.tag)} is not a single directory name`);
+  return dir;
+}
 
 /** What the verified marker records: the zip, and the manifest it was checked against. */
 export function markerFor(pin, manifest) {
@@ -122,9 +129,21 @@ function unpack(entries, dir, mark) {
   writeFileSync(join(dir, VERIFIED), `${mark}\n`);
 }
 
-/** recheck(dir, manifest) → problems: every listed file on disk still matches. */
+/** recheck(dir, manifest) → problems: the cached manifest and every listed file still match. */
 export function recheck(dir, manifest) {
   const problems = [];
+  const cached = join(dir, MANIFEST_PATH);
+  if (!existsSync(cached)) problems.push(`the cache has no ${MANIFEST_PATH}`);
+  else {
+    let theirs = null;
+    try { theirs = JSON.parse(readFileSync(cached, 'utf8')).assets || {}; } catch { problems.push(`the cached ${MANIFEST_PATH} is not JSON`); }
+    if (theirs) {
+      const want = manifest.assets || {};
+      const same = (a, b) => a && b && a.path === b.path && a.bytes === b.bytes && a.sha256 === b.sha256;
+      for (const id of Object.keys(want)) if (!same(theirs[id]?.high, want[id]?.high)) problems.push(`${id}: the cached ${MANIFEST_PATH} disagrees with this tree's`);
+      for (const id of Object.keys(theirs)) if (!want[id]) problems.push(`${id}: in the cached ${MANIFEST_PATH}, not in this tree's`);
+    }
+  }
   for (const [id, rec] of Object.entries(manifest.assets || {})) {
     const file = join(dir, rec.high.path);
     if (!existsSync(file)) { problems.push(`${id}: missing from the cache`); continue; }

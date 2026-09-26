@@ -137,3 +137,23 @@ test('known-bad: the zip reader refuses duplicate names, and the writer refuses 
     assert.throws(() => writeZip(join(dir, 'x.zip'), Array.from({ length: 0xffff }, (_, i) => ({ name: `f${i}`, data: Buffer.alloc(0) }))), /65535 or more/);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+test('known-bad: --recheck finds the cached art-manifest.json deleted or edited', async () => {
+  for (const damage of [(dir) => rmSync(join(dir, 'art-manifest.json')), (dir) => writeFileSync(join(dir, 'art-manifest.json'), '{"assets":{}}')]) {
+    const { root, zip } = fixture();
+    try {
+      const { dir } = await fetchArt({ root, from: zip });
+      damage(dir);
+      await assert.rejects(fetchArt({ root, recheck: true }), (e) => { assert.match(e.problems.join('\n'), /cached art-manifest\.json|no art-manifest\.json/); return true; });
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }
+});
+
+test('the cache directory can only ever be one name under .art-cache', async () => {
+  const { cacheDirFor } = await import('../tools/fetch-art.mjs');
+  const root = tmp();
+  try {
+    assert.match(cacheDirFor({ tag: 'hd-assets-v2' }, root), /\.art-cache[\\/]hd-assets-v2$/);
+    for (const tag of ['..', '../x', 'a/b', '']) assert.throws(() => cacheDirFor({ tag }, root), /not a single directory name/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
