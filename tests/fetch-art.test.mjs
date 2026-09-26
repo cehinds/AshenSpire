@@ -81,6 +81,8 @@ test('known-bad: a changed, missing or extra file is refused and leaves no cache
     [(e) => e.map((x) => (x.name === 'assets/bg/a.webp' ? { ...x, data: Buffer.from('other') } : x)), /assets\/bg\/a\.webp: the release's file differs/],
     [(e) => e.filter((x) => x.name !== 'assets/ui/b.webp'), /assets\/ui\/b\.webp: not in the release/],
     [(e) => [...e, { name: 'assets/extra.webp', data: Buffer.from('x') }], /assets\/extra\.webp: in the release, not in/],
+    [(e) => e.filter((x) => x.name !== 'art-manifest.json'), /the release has no art-manifest\.json/],
+    [(e) => e.map((x) => (x.name === 'art-manifest.json' ? { ...x, data: Buffer.from('{"assets":{}}') } : x)), /assets\/bg\/a\.webp: the release's art-manifest\.json disagrees/],
   ];
   for (const [tamper, want] of cases) {
     const { root, zip } = fixture({ tamper });

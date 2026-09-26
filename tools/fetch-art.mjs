@@ -14,7 +14,9 @@
 //   1. the zip's sha256 must equal the one art-release.json pins;
 //   2. every asset id art-manifest.json lists must be in the zip, with the
 //      bytes and sha256 its `high` record names;
-//   3. the zip may hold nothing else but its own art-manifest.json.
+//   3. the zip carries its own art-manifest.json (the one a served `hd/` folder
+//      is found by), naming the same ids with the same high records;
+//   4. the zip holds nothing else.
 //
 // Any mismatch exits 1 and leaves no cache behind. A cache that verified once is
 // marked with the zip's sha256 and reused; --recheck hashes it again.
@@ -62,6 +64,20 @@ export function verifyRelease(zipBuf, pin, manifest) {
   try { entries = new Map(readZip(zipBuf).map((e) => [e.name, e.data])); }
   catch (e) { return { problems: [e.message], entries: null }; }
   const want = manifest.assets || {};
+  // The release's own manifest is what a served `hd/` folder is found by
+  // (src/ui/highResArt.js reads `hd/art-manifest.json`), so it must be present
+  // and must name every id with the same high record as this tree's.
+  const embedded = entries.get(MANIFEST_PATH);
+  if (!embedded) problems.push(`the release has no ${MANIFEST_PATH}`);
+  else {
+    let theirs = null;
+    try { theirs = JSON.parse(embedded.toString('utf8')).assets || {}; } catch { problems.push(`the release's ${MANIFEST_PATH} is not JSON`); }
+    if (theirs) {
+      const same = (a, b) => a && b && a.path === b.path && a.bytes === b.bytes && a.sha256 === b.sha256;
+      for (const id of Object.keys(want)) if (!same(theirs[id]?.high, want[id]?.high)) problems.push(`${id}: the release's ${MANIFEST_PATH} disagrees with this tree's`);
+      for (const id of Object.keys(theirs)) if (!want[id]) problems.push(`${id}: in the release's ${MANIFEST_PATH}, not in this tree's`);
+    }
+  }
   const paths = new Set();
   for (const [id, rec] of Object.entries(want)) {
     const high = rec && rec.high;
