@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-26",
     "group": "2026-09-26",
     "summary": "Settings shows how fast you level",
-    "detail": "Settings → Advanced → Progression now has a Levelling preview that updates as you change the numbers. It shows how much XP a normal fight (3 kills), an elite (1 kill) and a boss (1 kill) gives, how many levels each is worth from level 1 and from level 10, the stat points those levels grant, and the XP to reach each level up to 20. The XP multiplier and Level-up value are counted. A new setting can also cap how many levels one fight can give: XP past the cap is lost. It is off by default, so nothing changes until you set it.",
-    "build": "0.7.1.610",
+    "detail": "Settings → Advanced → Progression now has a Levelling preview that updates as you change the numbers. It shows how much XP a normal fight (3 kills), an elite (1 kill) and a boss (1 kill) gives, how many levels each is worth from level 1 and from level 10, the stat points those levels grant, and the XP to reach each level up to 20. The XP multiplier and Level-up value are counted. A new setting can also cap how many levels one fight can give: XP past the cap is lost, and the spoils screen says how much. It is off by default, so nothing changes until you set it.",
+    "build": "0.7.1.611",
     "pullRequest": 1349,
     "url": "https://github.com/cehinds/AshenSpire/pull/1349"
+  },
+  {
+    "id": "pr-1331",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the rules for a deck editor and three kinds of shop are written down",
+    "detail": "Docs only, and nothing you play changes yet. The design spec now describes the deck editor that is planned: you add and remove cards between fights, with Strike and Defend unlimited and every other card limited to the copies you own. Deck size limits and an option to draw in the order you arranged will be settings. It also describes a market, a blacksmith and a wise master: each offers a configurable set of services, and a master can reset one skill back to level 1 for a partial refund of its experience. The 1.0 checklist gains one testable line per step.",
+    "build": "0.7.1.610",
+    "pullRequest": 1331,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1331"
   },
   {
     "id": "pr-1329",
