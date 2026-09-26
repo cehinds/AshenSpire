@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-26
+
+- **Behind the scenes: the attribute retune is measured and closed** ([#1327](https://github.com/cehinds/AshenSpire/pull/1327), `0.7.1.528`). Nothing you see in the game changes. The balance plan now records how each class opens (3 Actions, 2 cards drawn a turn) and where runs actually end (the act-2 boss, not act 1), and the rules text no longer claims a new Reaver draws 5.
+
 ## 2026-09-25
 
 - **Behind the scenes: the gameplay line catches up with the main line** ([#1324](https://github.com/cehinds/AshenSpire/pull/1324), `0.7.1.526`). The fight-feel, reward and combat-pacing work now runs on the same stat table, opening hands and resource rules as everything else, with weapon grades priced through that table. Two slips it turned up are fixed: a second curse from an event, or a card bought after your deck shrank, could share a card's identity with one already in your deck.

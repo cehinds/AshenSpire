@@ -114,7 +114,7 @@ amended before code moves.
     Warhorn duplicates Traveler's Whetstone (`balance.js` ~1599, ~1618).
   - [ ] Consider one or two relics that bend Stamina or Mana (none of the 55
     non-starter relics do).
-- [ ] **A3 Lean attribute retune (M).** Systems still tuned for the old stat
+- [x] **A3 Lean attribute retune (M).** Systems still tuned for the old stat
   scale:
   (Status 2026-09-24: the Dodge Roll and §13.4m rows landed on
   `claude/balance-a3-lean`. Load was met by `itemWeightScale` 0.2, and the
@@ -129,29 +129,50 @@ amended before code moves.
     ~55); it sits in two starter decks. (In combat the card face already
     shows the weight-priced cost through `previewCard`; only the balance is
     at issue.)
-  - [ ] Actions `3+floor(DEX/5)` and draw `3+floor(INT/5)` breakpoints are
+  - [x] Actions `3+floor(DEX/5)` and draw `3+floor(INT/5)` breakpoints are
     out of reach at creation; DEX 5 is the dominant level-up pick.
-  - [ ] Starting pools fell with the rebase: a stock Reaver opens on 48 HP
+    (Closed 2026-09-26, owner ruling: the Actions row keeps DEX 0.2 and the
+    draw row is unchanged. Re-measured on the stat rows (#1296): every class
+    opens on 3 Actions and 2 draw; +1 Action needs DEX 5 or level 11, +1 draw
+    needs INT 9. "DEX dominant" is stale — all-in single-attribute levelling
+    in `runsim` wins CON 14/21/15/15, INT 7/24/18/26, DEX 1/5/6/6 of 40
+    (Reaver/Starseer/Rogue/Herald). Every creation-reachable draw breakpoint
+    tried put its class at 80%+, so draw belongs to A4.)
+  - [x] Starting pools fell with the rebase: a stock Reaver opens on 48 HP
     where #1238 shipped 70 (`src/content/attributes.js` ~74, which calls
     moving them "a retune of `derivedStatRules` and the rating weights").
     Enemy HP is not the comparison (act-1 normals 10–34, elites 68–72, boss
     120); measure incoming damage per encounter with the A1 simulator and
     retune pools or enemy damage from that, not from the old figure.
+    (Closed 2026-09-26, measured: act-1 HP lost per fight is 1.9–5.3 normal,
+    6.3–14.5 elite, 7.4–14.4 boss against effective starting max HP of
+    38–49 (Rogue/Herald 38, Starseer 48, Reaver 49, with starting equipment
+    and relics), and no run dies in act 1; 56–88% of all deaths are the
+    act-2 boss. The wall is
+    `balance.bossTiers`, not starting pools. Post-sync `runsim 40`: Reaver
+    35%, Starseer 52.5%, Rogue 37.5%, Herald 37.5% — inside the band, spread
+    17.5. Winning runs reach ~26 levels, above the 10–20 band: an XP-curve
+    question for plan phase 6.)
   - [x] SPEC §13.4m still describes the conversion scale removed on 09-21.
-- [ ] **A4 Hand rules (M).** Defaults `retain: true`, `drawMode: 'fill'`,
+- [x] **A4 Hand rules (M).** Defaults `retain: true`, `drawMode: 'fill'`,
   capacity 10 (`src/content/handRules.js`) show ~10 of an 11-card deck, skip
   the derived draw stat (`src/engine/handRules.js` ~6–10) and make 21 draw
   cards and 6 draw relics near-dead.
-  - [ ] **(owner ruling)** Default solo combat to drawing the derived Draw
-    stat each turn with end-of-turn discard, and retune the Draw row so a new
-    character draws about 5 (`3 + floor(INT/5)` is 3 at creation). SPEC §4.1
-    makes retain-and-fill the solo default; the discard sequence it also
-    describes applies to older saves and LAN combat.
-  - [ ] Keep Retain as a keyword or class trait; keep the current mode
-    selectable.
-  - [ ] Within the current rules: rebalance draw cards and relics so they
-    matter under retain-and-fill (for example, by raising capacity only
-    through them).
+  (Closed 2026-09-26. Owner ruling: keep the hand (retain) and draw the Draw
+  stat each turn. That already shipped as the default in b9bdfcd77 (#1273:
+  `drawMode: 'fixed'`, `overflow: 'discard'`), with the counts as stat rows
+  since ruleset 7 (#1296); SPEC §4.1 describes it. Measured on the gameplay
+  line, `runsim` N=100: Reaver 43%, Starseer 58%, Rogue 52%, Herald 45%
+  (spread 15). The old fill default measured 90/85/97.5/42.5% (spread 55);
+  drawing 3–5 a turn put three classes at 70–97.5%, so the "draw about 5"
+  retune was not made. Draw cards and draw relics are live: 92% of their
+  requested cards reach the hand under fixed, against 67% under fill.
+  Owner rulings: a profile that saved `drawMode: 'fill'` keeps it as the
+  player's choice; co-op seats follow the host's hand settings (follow-up PR).)
+  - [x] **(owner ruling)** Keep the hand and draw the derived Draw stat each
+    turn (shipped; no Draw-row retune).
+  - [x] Keep the current mode selectable (Settings → hand behaviour).
+  - [x] Draw cards and relics matter under the default (measured above).
 
 ### E1. Test hygiene (one session, beside A)
 
