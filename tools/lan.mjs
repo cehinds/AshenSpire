@@ -357,6 +357,11 @@ export function attachLan(server, { port, root }) {
       if (!mids.length) continue;
       cl.id = mids[0];
       cl.ownedIds = mids;
+      // The returning player's current profile decides the draw, not the
+      // value the old host save carried.
+      if (typeof cl.playInDeckOrder === 'boolean') {
+        for (const mid of mids) { const m = game.session.members.get(mid); if (m) m.playInDeckOrder = cl.playInDeckOrder; }
+      }
       resumed.push(...mids);
       sock2.write(wsEncode(JSON.stringify({ t: 'resumed', yourId: mids[0], yourIds: mids, seedString: game.session.seedString })));
     }

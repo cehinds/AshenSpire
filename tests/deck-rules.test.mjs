@@ -297,6 +297,8 @@ test('owner ruling: a class spell or Power is limited to one copy in the deck; b
   assert.equal(deckCopyLimit(REG, colorless, {}), Infinity);
   assert.equal(deckCopyLimit(REG, 'strike', {}), Infinity, 'Strike stays unlimited');
   assert.equal(deckCopyLimit(REG, power, { classSpellPowerCopies: 2 }), 2, 'the limit is a setting');
+  assert.equal(deckCopyLimit(REG, power, {}, 'reaver'), 1, "the run's own class is limited");
+  assert.equal(deckCopyLimit(REG, power, {}, 'rogue'), Infinity, 'a card kept from a swapped-away class is not');
 
   const run = freshRun();
   run.deck.push(createCardInstance(power, false, () => 'pw1'));
