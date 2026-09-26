@@ -45,6 +45,7 @@ const SELFTEST = ARGV.includes('--selftest');
 const dirFlag = ARGV.indexOf('--dir');
 const OUT = resolve(ROOT, dirFlag >= 0 ? ARGV[dirFlag + 1] : 'build/web');
 const SRC_ASSETS = resolve(ROOT, 'assets');
+const SRC_TWINS = resolve(ROOT, 'assets-mobile');
 
 function walk(dir) {
   const out = [];
@@ -80,7 +81,14 @@ function verify(outDir) {
   const payloads = text.match(REAL_PAYLOAD) || [];
   if (payloads.length) findings.push(`${payloads.length} inlined asset payload(s) in a build that should carry none`);
 
-  // C — the copy is complete and faithful
+  // C — the copy is complete and faithful. FAITHFUL TO THE TIER IT CLAIMS: a
+  // light web edition (bundle.mjs --external-art --light, the dev/test default
+  // since 2026-09-26) copies the assets-mobile/ twins, so each copy is held to
+  // its twin; the full one to assets/. The LIST is always assets/'s — the
+  // twin tree must mirror it file for file, which bundle.mjs already refuses
+  // to build without.
+  const edition = (text.match(/const EDITION = '([^']*)'/) || [])[1] || 'full';
+  const refRoot = edition === 'light' ? SRC_TWINS : SRC_ASSETS;
   const want = walk(SRC_ASSETS).filter((a) => runtimeAsset(relative(SRC_ASSETS, a)) && Object.prototype.hasOwnProperty.call(MIME, extname(a).toLowerCase()));
   let missing = 0, differing = 0;
   for (const abs of want) {
@@ -89,12 +97,14 @@ function verify(outDir) {
     const copy = resolve(outDir, 'assets', rel);
     if (!existsSync(copy)) { missing++; if (missing <= 3) findings.push(`asset missing beside the build: assets/${rel.split(/[\\/]/g).join('/')}`); continue; }
     // bundle.mjs canonicalizes authored SVG line endings on every platform.
-    const sourceBytes = readFileSync(abs), copiedBytes = readFileSync(copy);
+    const ref = resolve(refRoot, rel);
+    if (!existsSync(ref)) { missing++; if (missing <= 3) findings.push(`no ${edition} source for assets/${rel.split(/[\\/]/g).join('/')} under ${relative(ROOT, refRoot)}/`); continue; }
+    const sourceBytes = readFileSync(ref), copiedBytes = readFileSync(copy);
     const matches = extname(abs).toLowerCase() === '.svg'
       ? sourceBytes.toString('utf8').replace(/\r\n?/g, '\n') === copiedBytes.toString('utf8').replace(/\r\n?/g, '\n')
       : sourceBytes.equals(copiedBytes);
     if (!matches) {
-      differing++; if (differing <= 3) findings.push(`asset differs from source: assets/${rel.split(/[\\/]/g).join('/')}`);
+      differing++; if (differing <= 3) findings.push(`asset differs from its ${edition} source (${relative(ROOT, refRoot)}/): assets/${rel.split(/[\\/]/g).join('/')}`);
     }
   }
   if (missing > 3) findings.push(`… and ${missing - 3} more missing`);

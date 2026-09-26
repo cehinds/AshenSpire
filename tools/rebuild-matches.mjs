@@ -56,6 +56,8 @@ const ABS = resolve(ROOT, BUNDLE);
 // What a build writes that IS committed: the box, and the changelog projection
 // the receipt flow regenerates. Both must survive a rebuild untouched.
 const COMMITTED_OUTPUTS = ['buildordinal.json', 'src/content/changelog.generated.js'];
+// The same tier tools/launch.mjs builds: light unless --full-art (release/main).
+const TIER_FLAG = process.argv.includes('--full-art') ? [] : ['--light'];
 
 // A Windows checkout may feed the bundler CRLF source. That is checkout format,
 // not foreign content. Canonicalize CRLF only; every other byte still binds.
@@ -97,7 +99,7 @@ if (spawnSync('git', ['-C', ROOT, 'diff', '--quiet', '--', ...COMMITTED_OUTPUTS]
 // exit 0, and the bundle actually (re)written.
 function build(n) {
   const mtimeBefore = existsSync(ABS) ? statSync(ABS).mtimeMs : null;
-  const built = spawnSync('node', ['tools/bundle.mjs'], { cwd: ROOT, encoding: 'utf8' });
+  const built = spawnSync('node', ['tools/bundle.mjs', ...TIER_FLAG], { cwd: ROOT, encoding: 'utf8' });
   if (built.status !== 0) {
     restore();
     unknown(`tools/bundle.mjs exited ${built.status === null ? 'on a signal' : built.status} (build ${n})`,

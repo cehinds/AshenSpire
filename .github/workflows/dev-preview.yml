@@ -45,6 +45,9 @@ env:
   # A dispatch from `feature/x` carries a slash; the preview job's first step
   # rewrites CHANNEL without it before anything names a file or an artifact.
   CHANNEL: ${{ github.base_ref || github.ref_name }}
+  # The web (external-art) edition's tier flag for bundle.mjs: light on
+  # dev/test (owner, 2026-09-26), full on release/main.
+  WEB_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && ' ' || '--light' }}
 
 jobs:
   preview:
@@ -66,7 +69,10 @@ jobs:
 
       - name: Build the standalone
         id: build
-        run: node tools/launch.mjs --build-only
+        # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
+        env:
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
+        run: node tools/launch.mjs --build-only $ART_TIER
 
       # The names carry the channel: src/ui/buildChannel.js reads `-dev-` from
       # a saved file's name to open the dev-only settings, and a plain
@@ -78,7 +84,9 @@ jobs:
           set -euo pipefail
           mkdir -p standalone
           cp AshenSpire.html "standalone/AshenSpire-${CHANNEL}-preview.html"
-          cp AshenSpire-mobile.html "standalone/AshenSpire-mobile-${CHANNEL}-preview.html"
+          # Only a --full-art build (release/main) writes a separate mobile file;
+          # a light build IS the phone-sized file.
+          if [ -f AshenSpire-mobile.html ]; then cp AshenSpire-mobile.html "standalone/AshenSpire-mobile-${CHANNEL}-preview.html"; fi
 
       - uses: actions/upload-artifact@v4
         with:
@@ -215,7 +223,8 @@ jobs:
           # AshenSpire.html plus assets/ and map-detail/ into preview/ in one
           # pass (and the shipped score, music/), so the copies that used to place
           # those by hand are gone with it.
-          node tools/bundle.mjs --external-art --out preview
+          # The same tier as the standalone: light on dev/test, full on release/main.
+          node tools/bundle.mjs --external-art $WEB_TIER --out preview
           cp preview/AshenSpire.html preview/index.html
           # The standalone is collected and uploaded by its own steps, right
           # after the build, so nothing here can cost a commit its download.
@@ -226,7 +235,10 @@ jobs:
           cp armament-kits-preview.html preview/
           cp tools/serve-preview.mjs preview/serve-preview.mjs
           cp -r styles preview/styles
-          cp -r assets/environments preview/assets/
+          # --update=none: the build above already placed this tier's art under
+          # preview/assets/ (the light twins on dev/test); these copies only add
+          # the files it does not ship, and never overwrite its art.
+          cp -r --update=none assets/environments preview/assets/
           mkdir -p preview/docs/preview
           cp -r docs/preview/world-atlas preview/docs/preview/
           cp -r docs/preview/combat-ground preview/docs/preview/
@@ -234,10 +246,10 @@ jobs:
           cp -r docs/preview/starting-equipment preview/docs/preview/
           cp -r docs/preview/armament-kits preview/docs/preview/
           cp -r pose-studio preview/pose-studio
-          cp -r assets/pose-effects preview/assets/
+          cp -r --update=none assets/pose-effects preview/assets/
           cp -r art/pose-studio preview/art/
           cp -r art/card-effect-refresh-2026-09-09 preview/art/
-          cp -r assets/combat-effects assets/painted-outfits preview/assets/
+          cp -r --update=none assets/combat-effects assets/painted-outfits preview/assets/
           cp art/combat-effects-2026-09-07/index.html art/combat-effects-2026-09-07/sprite-catalog.html art/combat-effects-2026-09-07/integrated-tag-mappings.html preview/art/combat-effects-2026-09-07/
           cp -r art/combat-effects-2026-09-07/inspection preview/art/combat-effects-2026-09-07/inspection
           {
@@ -264,9 +276,9 @@ jobs:
             echo "This folder is the DE-INLINED build: serve it and open AshenSpire.html"
             echo "(or run serve-preview.mjs). It needs a server. For the double-clickable"
             echo "single file that needs none, download the ${CHANNEL}-standalone artifact"
-            echo "from this same run: AshenSpire-${CHANNEL}-preview.html is the full game"
-            echo "(~250 MB) and AshenSpire-mobile-${CHANNEL}-preview.html the same build with"
-            echo "its art shrunk under 30 MB."
+            echo "from this same run: AshenSpire-${CHANNEL}-preview.html. On dev and test it"
+            echo "carries the light art tier (~29 MB); on release and main it is the full"
+            echo "art (~250 MB), with AshenSpire-mobile-${CHANNEL}-preview.html beside it."
             echo
             echo "This is an inspection artifact, not a deployment. The built HTML is not"
             echo "committed; this run's artifacts are this commit's build."
@@ -374,7 +386,7 @@ jobs:
       # the build is cheap without the 52.8 MB of base64 the single file carries.
       - name: The de-inlined build plays, and its art arrives over the wire
         run: |
-          node tools/bundle.mjs --external-art --out build/web
+          node tools/bundle.mjs --external-art $WEB_TIER --out build/web
           node tools/verdict.mjs -- node tools/external-play.mjs --dir build/web
 
       - name: Hand-side placement reaches the correct rendered side
