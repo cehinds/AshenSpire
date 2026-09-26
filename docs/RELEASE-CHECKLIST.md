@@ -11,7 +11,7 @@ sign, because editing it makes a new commit that never ran the gates.
 
 **Only the owner cuts a release.** Agents never cut `release`, tag, or publish.
 They may run these gates and report results in a pull request into `dev`. Cutting
-`release` from `dev`, merging `release` into `main`, creating the `vX.Y.Z` tag and
+`release` from `test` (the tested RC SHA), merging `release` into `main`, creating the `vX.Y.Z` tag and
 publishing any build or storefront listing are the owner's steps alone (see
 CONTRIBUTING.md, *Coordination and release boundary*).
 
