@@ -17,13 +17,42 @@
 export const ASSET_MAP = {};
 /* ASSET_MAP_END */
 
+// THE HIGH-RES TIER (LFS / art-tier plan, steps 3–4, 2026-09-26). An asset id
+// is the runtime path above; art-manifest.json lists, per id, the file
+// each tier ships. The built-in art is whatever this build carries — the light
+// tier on dev/test, the full art on release/main — and a high-res source may be
+// laid over it (the Art quality setting, step 4, sets one). That source is a
+// Map from id to a URL the browser can load: object URLs for a folder the
+// player picked, or `hd/…` paths for a folder served next to the game. It holds
+// only the files that exist, so an id it lacks falls back to the built-in art.
+let highRes = null;
+
 /**
- * assetUrl('assets/sprites/reaver_gold.webp') → that path, or the inlined
- * data URI when the build carries one. Unknown paths pass straight through,
- * so a missing asset still 404s visibly rather than silently resolving.
+ * setHighResSource(map) — lay a high-res source over the built-in art, or
+ * remove it with null / an empty map. Returns how many ids it now covers.
+ */
+export function setHighResSource(map) {
+  highRes = map && map.size ? map : null;
+  return highRes ? highRes.size : 0;
+}
+
+/**
+ * Which tier an id resolves to right now: 'high' when a high-res source covers
+ * it, else 'built-in' — whichever tier this build carries (light on dev/test,
+ * full on release/main), which the page's EDITION stamp names.
+ */
+export function assetTier(path) {
+  return highRes && highRes.has(path) ? 'high' : 'built-in';
+}
+
+/**
+ * assetUrl('assets/sprites/reaver_gold.webp') → the high-res file when a
+ * source covers it, else the inlined data URI when the build carries one, else
+ * the path. Unknown paths pass straight through, so a missing asset still 404s
+ * visibly rather than silently resolving.
  */
 export function assetUrl(path) {
-  return ASSET_MAP[path] || path;
+  return (highRes && highRes.get(path)) || ASSET_MAP[path] || path;
 }
 
 /** True when this build carries its own art (the single-file dist). */

@@ -57,7 +57,11 @@ owner reads the PR list and merges; nothing else is theirs to do there.
    rebuild writes. So: `node tools/launch.mjs --build-only`, re-point the
    receipt to the box's ordinal plus one, `node tools/about-changelog.mjs
    --write`, rebuild again — the box and the receipt now agree — and push.
-   The owner never resolves a conflict.
+   Commit `buildordinal.json` and the generated changelog module, **never
+   the built HTML**: it is ignored on `dev`, CI builds it and publishes it as
+   the `dev-standalone-<commit>` workflow artifact, and CI fails the PR if its
+   own rebuild would move `buildordinal.json`. The owner never resolves a
+   conflict.
 4. **Keep it green.** A failing test or gate is yours to root-cause and fix;
    "flake" is not a diagnosis. Never skip or quarantine a test to get green.
 5. **Keep checking after you open it.** Until it is merged or closed, re-check
