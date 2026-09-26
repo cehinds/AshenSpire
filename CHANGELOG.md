@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-26
+
+- **Behind the scenes: the 1.0 checklist records the owner's decisions** ([#1330](https://github.com/cehinds/AshenSpire/pull/1330), `0.7.1.549`). Docs only. `docs/FINISH.md` now holds the owner's rulings: no win-rate target for 1.0 (balance stays configurable), 1 to 5 elites per map with 3 on average, and a web proof of concept before any store. It adds three things to 1.0: a deck editor between runs, three kinds of shop (shop, blacksmith and wise master), and the design issues that were parked for later.
+
 ## 2026-09-25
 
 - **Synced settings keep which values you chose, and a mistyped sync location is refused** ([#1322](https://github.com/cehinds/AshenSpire/pull/1322), `0.7.1.548`). A settings profile now records which of its values are the owner's promoted defaults, so a value you picked on one device stays yours on the next and a later default update leaves it alone. An Undo only ever applies to the settings it came from, a reset that only hands values back to the defaults can be undone, and a sync location with a typo is refused by name instead of quietly saving over the default profile (settings sync is in development and test builds only).
