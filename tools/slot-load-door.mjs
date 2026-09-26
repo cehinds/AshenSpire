@@ -320,5 +320,5 @@ try {
 // verdict.mjs only accepts known success forms, and refuses a green line that
 // carries "failed" nearby — so a clean run and a red run print different lines.
 if (failures) console.log(`slot-load-door: RED — ${checks - failures}/${checks} checks passed; ${failures} failed`);
-else console.log(`slot-load-door: OK — ${checks} checks passed`);
+else if (process.exitCode !== 2) console.log(`slot-load-door: OK — ${checks} checks passed`);
 process.exit(process.exitCode === 2 ? 2 : failures ? 1 : 0);
