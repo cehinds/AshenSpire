@@ -1,19 +1,32 @@
-# .github/workflows/tests.yml — every test in the repository, on every PR into dev.
+# .github/workflows/tests.yml — every test in the repository, on every push to
+# `test` and `release`; the fast core suite also on every PR into dev and every
+# push to dev.
 #
-# WHY THIS FILE EXISTS. ci.yml holds the whole suite but has been dispatch-only
-# since 2026-08-01 (cost: a 3-OS matrix, macOS at 10x). dev-preview.yml runs on
+# WHY THIS FILE EXISTS. ci.yml holds the whole suite but was dispatch-only
+# from 2026-08-01 (cost: a 3-OS matrix, macOS at 10x). dev-preview.yml runs on
 # pull requests but carries a hand-picked handful of test files. So on a PR,
 # most of tests/ ran nowhere, and eighteen test files had never run in any job;
 # four of those had gone red unseen.
 #
-# WHAT IT COSTS, and why the triggers are these. Linux only, no LFS (no test
-# here reads an LFS-tracked artifact; they are the built HTML files), and 50
-# commits of history plus origin/dev, which zoomunits needs for its merge-base.
-# `pull_request` into dev plus `push` to dev: a feature branch is
-# covered by its PR, and the push covers the post-merge tree. The two events
-# never share a ref, so no commit runs twice — the defect ci.yml's header
-# measured for `push: ['**']` + `pull_request`. ci.yml's own triggers are left
-# exactly as the owner set them.
+# WHERE IT RUNS, by the owner's ruling of 2026-09-26: a pull request into `dev`
+# is gated by fast checks only (about five minutes or less), and the heavy
+# suites run when code is pushed to `test` and `release`.
+#   pull_request into dev    — `core` only (about 4 min). `selftests` (about
+#                              6 min) and `parse-gate` (about 13 min) are
+#                              skipped by their job-level `if:`, which reports
+#                              them as skipped rather than absent.
+#   push to dev              — `core` only, so the merged tree is read at once:
+#                              two PRs each green alone can break together.
+#   push to test / release   — all three jobs.
+#   workflow_dispatch        — all three jobs, on any ref.
+# Nothing was removed: every job and step below runs, unchanged, on every push
+# to `test` and `release`.
+#
+# WHAT IT COSTS. Linux only, no LFS (no test here reads an LFS-tracked
+# artifact; they are the built HTML files), and 50 commits of history plus
+# origin/dev, which zoomunits needs for its merge-base. `pull_request` and
+# `push` never share a ref here, so no commit runs twice — the defect ci.yml's
+# header measured for `push: ['**']` + `pull_request`.
 #
 # THREE PARALLEL JOBS, so a slow corpus cannot hold the fast answer hostage and
 # no job reads a tree another is mutating:
@@ -23,24 +36,24 @@
 #   selftests  — every tool's `--selftest` known-bad corpus (tests/run-node.mjs)
 #   parse-gate — the bundler's parse-gate fixtures (tools/bundle.test.mjs). It
 #                ran as a second step of `selftests` and, at about twelve
-#                minutes, set the PR's wall time on its own; alone it runs
+#                minutes, set the run's wall time on its own; alone it runs
 #                beside the other two instead of after one of them.
 #
 # CANCELLATION IS FOR PULL REQUESTS ONLY. A newer push to a PR branch makes the
-# older run's answer moot, so it is cancelled. A push to dev is a MERGE, and each
-# merge's post-merge tree is its own answer. Not cancelling is not enough on its
-# own: GitHub keeps at most one running and one pending run per group, and a
-# newer pending run replaces the older one, so in a burst of three merges the
-# middle one went without a run. So a push (and a dispatch) is grouped by its
-# SHA, one group per commit, and a pull request by its ref.
+# older run's answer moot, so it is cancelled. A push to `test` or `release` is
+# a promotion, and each promoted tree is its own answer. Not cancelling is not
+# enough on its own: GitHub keeps at most one running and one pending run per
+# group, and a newer pending run replaces the older one, so in a burst of three
+# pushes the middle one went without a run. So a push (and a dispatch) is
+# grouped by its SHA, one group per commit, and a pull request by its ref.
 
 name: tests
 
 on:
   pull_request:
-    branches: [dev]
+    branches: [dev] # `core` only; see the header
   push:
-    branches: [dev]
+    branches: [dev, test, release] # `core` only on dev; see the header
   workflow_dispatch:
 
 concurrency:
@@ -78,6 +91,9 @@ jobs:
 
   selftests:
     name: tool self-tests
+    # About 6 minutes: over the dev-PR budget, so it runs on push to test and
+    # release (and on dispatch), not on a pull request into dev.
+    if: github.event_name != 'pull_request' && !(github.event_name == 'push' && github.ref_name == 'dev')
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -95,6 +111,9 @@ jobs:
 
   parse-gate:
     name: bundler parse gate
+    # About 13 minutes: runs on push to test and release (and on dispatch),
+    # not on a pull request into dev.
+    if: github.event_name != 'pull_request' && !(github.event_name == 'push' && github.ref_name == 'dev')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

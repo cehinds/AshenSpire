@@ -303,6 +303,15 @@ const PLANTS = [
     plant: (root) => editJson(root, (j) => ({ ...j, built: '1999-12-31' })),
   },
   {
+    // THE MOBILE EDITION UNDER THE SINGLE-FILE NAME. build/AshenSpire.html is
+    // the full or (dev/test) light single file; a mobile stamp there means the
+    // wrong artifact was copied into place.
+    name: 'the single file calls itself the MOBILE edition — the phone file copied over AshenSpire.html',
+    row: 'E SHIPPED STAMP',
+    plant: (root) => edit(root, 'build/AshenSpire.html',
+      (t) => t.replace(/const EDITION = '(full|light)'/, "const EDITION = 'mobile'")),
+  },
+  {
     // THE CROSSED LABEL, and it is the failure this field exists to prevent
     // arriving through the field itself. A bundle that calls itself the source
     // tree sends every bug report from it to the wrong artifact — quietly,

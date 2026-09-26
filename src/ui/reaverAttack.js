@@ -2,6 +2,7 @@
 // byte-distinct images; the repeat table avoids inlining forty-four duplicate
 // WebPs into the standalone build.
 import { assetUrl } from './assetmap.js';
+import { builtInFor, whenArtSourceChanges } from './highResArt.js';
 import { DEFAULT_SPRITE_STYLE } from '../model/spriteStyle.js';
 import { liteRendering } from './performance.js';
 import { hintImage } from './imageHints.js';
@@ -34,6 +35,9 @@ export const REAVER_ATTACK = Object.freeze({
 const uniqueFrameIds = Object.freeze([...new Set(REAVER_ATTACK_SEQUENCE)]);
 const frameUrl = (frameId) => assetUrl(`${FRAME_ROOT}/${frameId}${ATTACK.frameExtension}`);
 let preloadState = 'idle';
+let preloadRound = 0; // a reset starts a new round; an older round's loads no longer count
+// The art source changed (Art quality): the frames warmed so far are the old tier's.
+whenArtSourceChanges(() => { preloadRound += 1; preloadState = 'idle'; });
 
 export function reaverAttackFrameUrls() {
   return uniqueFrameIds.map(frameUrl);
@@ -42,8 +46,10 @@ export function reaverAttackFrameUrls() {
 export function preloadReaverAttackFrames() {
   if (preloadState !== 'idle' || typeof Image === 'undefined') return;
   preloadState = 'loading';
+  const round = preloadRound;
   let remaining = uniqueFrameIds.length;
   const settled = (ok) => {
+    if (round !== preloadRound) return;
     if (!ok) preloadState = 'failed';
     remaining -= 1;
     if (remaining === 0 && preloadState !== 'failed') preloadState = 'ready';
@@ -51,7 +57,13 @@ export function preloadReaverAttackFrames() {
   for (const src of reaverAttackFrameUrls()) {
     const image = new Image();
     image.addEventListener('load', () => settled(true), { once: true });
-    image.addEventListener('error', () => settled(false), { once: true });
+    image.addEventListener('error', function retry() {
+      // A missing high-res frame retries once with the built-in art.
+      const fallback = builtInFor(src);
+      if (fallback && image.getAttribute('src') !== fallback) { image.src = fallback; return; }
+      image.removeEventListener('error', retry);
+      settled(false);
+    });
     image.src = src;
   }
 }

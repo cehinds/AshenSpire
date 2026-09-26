@@ -218,6 +218,18 @@ export function checkNoTrackedBuild(trackedPaths) {
 }
 
 /**
+ * E. Which edition is this single file, and is it one a single file may be?
+ * `full` (release/main, --full-art) or `light` (dev/test default since
+ * 2026-09-26). The answer also decides whether a mobile file is owed at all.
+ */
+export function checkEdition(name, bytes) {
+  const editions = [...bytes.toString('utf8').matchAll(/const EDITION = '([^']*)'/g)].map((m) => m[1]);
+  if (editions.length !== 1) return { ok: false, code: 'EDITION', edition: null, detail: `${name} carries ${editions.length} EDITION literals, expected exactly 1` };
+  if (!['full', 'light'].includes(editions[0])) return { ok: false, code: 'EDITION', edition: editions[0], detail: `${name} calls itself the '${editions[0]}' edition — the single file is 'full' or 'light'` };
+  return { ok: true, code: 'EDITION', edition: editions[0], detail: `${name} is the '${editions[0]}' edition` };
+}
+
+/**
  * D. Is the mobile file a mobile file — under its budget, and smaller than the
  * full one? Both halves are one verdict because both mean the same thing: the
  * player on a phone was handed the download this edition exists to avoid.
@@ -389,6 +401,12 @@ if (SELFTEST) {
 
   // 6-8. Positive controls — the checks must not fail everything indiscriminately.
   expect('control: good build carries art', checkCarriesArt('good.html', goodArt), true, 'NO_ART');
+  // The edition: a single file is full or light, exactly once, and nothing else.
+  const ed = (v) => Buffer.from(`<script>export const EDITION = '${v}';</script>`);
+  expect('edition: light single file', checkEdition('light.html', ed('light')), true, 'EDITION');
+  expect('edition: full single file', checkEdition('full.html', ed('full')), true, 'EDITION');
+  expect('edition: the mobile file under the single-file name', checkEdition('mobile.html', ed('mobile')), false, 'EDITION');
+  expect('edition: no EDITION literal', checkEdition('none.html', Buffer.from('<html></html>')), false, 'EDITION');
   expect('control: identical bytes are not drift',
     checkShippedIsBuilt('good.html', goodArt, goodArt), true, 'DRIFT');
   expect('control: clean dist/ listing', checkNoStampedTwin(['README.md']), true, 'STAMPED_TWIN');
@@ -452,6 +470,8 @@ if (!buildBytes) {
 // A on the build first: the chain dist===build only terminates in a true claim if
 // build itself is sound. This is the assertion bundle.mjs printed and never gated.
 record(checkCarriesArt(BUILD, buildBytes));
+const editionCheck = checkEdition(BUILD, buildBytes);
+record(editionCheck);
 
 const shippedPath = resolve(ROOT, SHIPPED);
 if (!existsSync(shippedPath)) {
@@ -475,7 +495,12 @@ if (!existsSync(rootCurrentPath)) {
 // FAIL and not a skip — README hands a player two links now, and a tool that
 // verified one of them and said OK would be verify-shipped's own founding bug.
 const mobileBuildPath = resolve(ROOT, MOBILE_BUILD);
-if (!existsSync(mobileBuildPath)) {
+if (editionCheck.edition === 'light') {
+  // A light build writes no mobile file: the light single file IS the
+  // phone-sized art. Any AshenSpire-mobile.html on disk is a leftover from a
+  // --full-art build and is not what this run ships.
+  console.log(`  note        ${BUILD} is the light edition — no mobile file is owed`);
+} else if (!existsSync(mobileBuildPath)) {
   record({ ok: false, code: 'MISSING', detail: `${MOBILE_BUILD} does not exist — run \`node tools/launch.mjs --build-only\`, which builds both editions.` });
 } else {
   const mobileBuildBytes = readFileSync(mobileBuildPath);
