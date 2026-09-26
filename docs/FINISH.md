@@ -146,9 +146,9 @@ the code, a test or a command run on that tree, not against a PR title.
 
 - [~] **SPEC §15 lands before any code.** Test: `grep -n '^## 15. Reward schedule' SPEC.md` gives 1 hit. — this PR.
 - [ ] **Card reward schedule** (§15.1). Test: `tests/card-reward-schedule.test.mjs`: afterCombat.normal false gives no card row on a normal win and one on an elite; chancePct 0 never offers; defaults leave the rewardRolls counter at 0 and 50 seeded offers byte-identical; onLevelUp adds exactly one levelCard row on a levelling fight.
-- [ ] **Levelling preview and cap** (§15.2). Test: `tests/level-pace.test.mjs`: the preview's normal-fight XP equals combatLevelXp × xpMultiplier; its levels-gained equals awardLevelXp from level 1; maxLevelsPerFight 1 caps a boss kill at one level.
-- [ ] **Crafting drops** (§15.3). Test: `tests/crafting-drops.test.mjs`: defaults leave drops unchanged; drops.chance.normal 100 drops an armament; rewardChancePct.elite 0 pays no stone; a refined stone pays and survives a reload.
-- [ ] **Legendary sigils** (§15.4). Test: `tests/legendary-sigils.test.mjs`: a bad sigil tag is refused by name; an attuned sigil's trigger fires and an unattuned one's does not; a second attune past attuneMax is refused; defaults drop none, boss chance 100 drops one unowned; a schema-11 save loads with empty sigils.
+- [ ] **Levelling preview and cap** (§15.2). Test: `tests/level-pace.test.mjs`: the preview's normal-fight XP equals combatLevelXp on the configured registries (xpMultiplier counted once); its levels-gained equals awardLevelXp from level 1; maxLevelsPerFight 1 caps a boss kill at one level and discards the excess, 0 means no cap.
+- [ ] **Crafting drops** (§15.3). Test: `tests/crafting-drops.test.mjs`: defaults leave drops unchanged and write no treasure claim; drops.chance.normal 100 drops an armament (rarityWeights.normal exists); rewardChancePct.elite 0 pays no stone; a refined stone pays and survives a reload.
+- [ ] **Legendary sigils** (§15.4). Test: `tests/legendary-sigils.test.mjs`: a bad sigil tag is refused by name; an attuned sigil's trigger fires and an unattuned one's does not; a second attune past attuneMax is refused; defaults drop none, boss chance 100 drops one unowned; a save at §14's last schema loads with empty attunedSigils (after §14 step 5).
 
 ## Owner decisions
 
