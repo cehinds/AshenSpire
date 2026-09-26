@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1326",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: sessions ask the owner in short bullets",
+    "detail": "Docs only. CLAUDE.md now tells every session to put a question for the owner as one line per bullet, ending in the answer needed, with one sub-bullet saying why it matters, and no paragraphs.",
+    "build": "0.7.1.549",
+    "pullRequest": 1326,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1326"
+  },
+  {
     "id": "pr-1322",
     "date": "2026-09-25",
     "group": "2026-09-25",
