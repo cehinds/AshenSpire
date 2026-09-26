@@ -5,7 +5,7 @@
 // rest plant known-bads into a throwaway tree and require the named failure.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { buildManifest, checkManifest, serialize, MANIFEST_PATH, dimensions } from '../tools/art-manifest.mjs';
@@ -91,6 +91,26 @@ test('known-bad: a deleted asset still listed is caught', () => {
     rmSync(join(root, 'assets/bg/a.webp'));
     assert.match(checkManifest(root).join('\n'), /in the manifest but not in assets\//);
   });
+});
+
+test('known-bad: a hand-edited pixel size is caught, not only a changed file', () => {
+  withManifest(base, (root) => {
+    const p = join(root, MANIFEST_PATH);
+    writeFileSync(p, readFileSync(p, 'utf8').replace('"width":1536', '"width":2048'));
+    assert.match(checkManifest(root).join('\n'), /differs from what --write produces/);
+  });
+});
+
+test('an SVG hashes the same from an LF and a CRLF checkout', () => {
+  const svgLf = '<svg width="4" height="4">\n<rect/>\n</svg>\n';
+  const lf = tree({ 'assets/ui/i.svg': svgLf, 'assets-mobile/ui/i.svg': svgLf });
+  const crlf = tree({ 'assets/ui/i.svg': svgLf.replace(/\n/g, '\r\n'), 'assets-mobile/ui/i.svg': svgLf.replace(/\n/g, '\r\n') });
+  try {
+    assert.deepEqual(buildManifest(crlf).assets, buildManifest(lf).assets);
+  } finally {
+    rmSync(lf, { recursive: true, force: true });
+    rmSync(crlf, { recursive: true, force: true });
+  }
 });
 
 test('authoring-only equipment components are not assets', () => {

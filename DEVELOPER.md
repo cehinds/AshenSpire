@@ -64,9 +64,12 @@ CI runs, and the policy lives in `tools/mobileart-policy.mjs`. Then run
 asset id (its runtime `assets/…` path) with the file each tier ships —
 `light` (`assets-mobile/`) and `high` (`assets/`), each with bytes, sha256 and
 pixel size; the placeholder tier has no file. `tests/art-manifest.test.mjs`
-fails the core suite while it is stale. `src/ui/assetmap.js` resolves an id
-through a high-res source when one is set (Settings → Display → Art quality),
-else the built-in art. Serve the whole web directory for
+fails the core suite while it is stale, or when any field differs from what
+`--write` produces. The manifest's ids are exactly the paths `assetUrl()` in
+`src/ui/assetmap.js` resolves; `assetUrl()` checks an optional high-res source
+first (built from a manifest by the Art quality setting), then the built-in
+art. Not yet covered: game code still builds many `assets/…` paths from
+templates, and 14 CSS `url(../assets/…)` backdrops bypass `assetUrl()`. Serve the whole web directory for
 mobile testing. Rendering-quality behavior and performance checks are described
 in [Mobile performance](docs/MOBILE-PERFORMANCE.md).
 

@@ -147,6 +147,13 @@ export function checkManifest(root = ROOT) {
   }
   for (const id of Object.keys(have)) if (!want[id]) problems.push(`${id}: in the manifest but not in ${HIGH_DIR}/`);
   if (committed.count !== Object.keys(have).length) problems.push(`${MANIFEST_PATH} says count ${committed.count} but lists ${Object.keys(have).length}`);
+  // AND BYTE FOR BYTE. The messages above name what moved; this catches every
+  // field they do not compare (pixel sizes, the header, an extra key), so a
+  // hand edit anywhere in the file is refused. Line endings are canonical first,
+  // because a Windows checkout may store the file with CRLF.
+  if (!problems.length && serialize(fresh) !== readFileSync(path, 'utf8').replace(/\r\n?/g, '\n')) {
+    problems.push(`${MANIFEST_PATH} differs from what --write produces (a field was edited by hand, e.g. a pixel size)`);
+  }
   return problems;
 }
 
