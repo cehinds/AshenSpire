@@ -79,6 +79,12 @@ export function profileName(cfg) {
 // unless this device opts in (SYNC_STORAGE.includeDevice).
 export const DEVICE_KEYS = Object.freeze(['uiScale', 'textSize', 'tapFloor', 'fullscreen', 'quickNav', 'armamentsPhonePlacement']);
 const DEVICE_KEY_SET = new Set(DEVICE_KEYS);
+// LOCAL-ONLY KEYS, stricter than DEVICE_KEYS: never saved in a profile and never
+// taken from one, even on a device that shares its screen settings. Art quality
+// names a folder of files on THIS device (owner, 2026-09-26: "per-device, not
+// synced"); on another device it would point at nothing.
+export const LOCAL_ONLY_KEYS = Object.freeze(['artQuality']);
+const LOCAL_ONLY_KEY_SET = new Set(LOCAL_ONLY_KEYS);
 
 const SAFE_SEGMENT = /^[A-Za-z0-9._-]+$/;
 const SAFE_BRANCH = /^[A-Za-z0-9._/-]+$/;
@@ -147,7 +153,7 @@ const CONTROL_TYPES = new Set(['button', 'action', 'sceneList']);
 export function profileKeys(rows, options = {}) {
   const { includeDevice = false, controlTypes = CONTROL_TYPES } = options instanceof Set ? { controlTypes: options } : (options || {});
   return rows.filter((row) => !row.retired && !controlTypes.has(row.type) && !String(row.key).startsWith(ADVANCED_CONFIG_PREFIX)
-    && (includeDevice || !DEVICE_KEY_SET.has(row.key))).map((row) => row.key);
+    && (includeDevice || !DEVICE_KEY_SET.has(row.key)) && !LOCAL_ONLY_KEY_SET.has(row.key)).map((row) => row.key);
 }
 
 /** profileText(settings, keys, build) → the JSON a profile file holds. */
@@ -234,6 +240,7 @@ export function profileChanges(text, bundle, settings, rows, keys) {
   const changes = parseAdvancedConfigFile(text, bundle, {}, rows, warnings);
   const owned = new Set(keys);
   for (const key of DEVICE_KEYS) if (!owned.has(key)) delete changes[key];
+  for (const key of LOCAL_ONLY_KEYS) delete changes[key];
   const cleared = Object.keys(settings || {}).filter((key) => settings[key] !== undefined
     && !(key in changes) && (key.startsWith(ADVANCED_CONFIG_PREFIX) || owned.has(key)));
   // Absent in a profile saved before this field existed: then ownership is

@@ -81,7 +81,36 @@ file (~255 MB) plus the mobile one (`AshenSpire-mobile.html`, the same twins, he
 under 30 MB). CI passes `--full-art` only for `release` and `main`. Changing anything under `assets/`
 means regenerating the twins with `node tools/mobile-art.mjs` (needs `cwebp`
 from libwebp on PATH); `node tools/mobile-art.mjs --check` is the Node-only gate
-CI runs, and the policy lives in `tools/mobileart-policy.mjs`. Serve the whole web directory for
+CI runs, and the policy lives in `tools/mobileart-policy.mjs`. Then run
+`node tools/art-manifest.mjs --write`: `art-manifest.json` lists every
+asset id (its runtime `assets/…` path) with the file each tier ships —
+`light` (`assets-mobile/`) and `high` (`assets/`), each with bytes, sha256 and
+pixel size; the placeholder tier has no file. `tests/art-manifest.test.mjs`
+fails the core suite while it is stale, or when any field differs from what
+`--write` produces. The manifest's ids are exactly the paths `assetUrl()` in
+`src/ui/assetmap.js` resolves; `assetUrl()` checks an optional high-res source
+first (built from a manifest by the Art quality setting), then the built-in
+art. Not yet covered: game code still builds many `assets/…` paths from
+templates, and 14 CSS `url(../assets/…)` backdrops bypass `assetUrl()`.
+
+**The high-res release** (docs/ART-REPO-PLAN.md). `art-release.json` pins one
+release of the private `cehinds/AshenSpire-art` (repo, tag, zip, sha256; it is
+unset until `hd-assets-v1` is published). `node tools/fetch-art.mjs` downloads
+it with `ART_REPO_TOKEN` (a token with read access to that repo's Contents),
+refuses unless the zip's sha256 is the pinned one and every file matches its
+`high` record in `art-manifest.json`, and unpacks it into `.art-cache/<tag>/`
+(gitignored). `--from <zip>` verifies a zip already on disk; `--recheck`
+re-hashes a cache. `tools/zip.mjs` is the same file the art repository packs
+with; `tests/fetch-art.test.mjs` pins their shared vector.
+
+**Settings → Display → Art quality** (`src/ui/highResArt.js`): *Built-in* uses
+the art the build carries; *Local high-res* lays full-resolution files over it
+from a folder served beside the game (`hd/art-manifest.json` plus `hd/assets/…`,
+found over http) or a folder the player picks (any build, `file://` included;
+the browser hands the files over for this page only, so a reload asks again).
+Anything the folder lacks stays built-in; images already on screen are swapped
+in place and pose preloads are dropped. The setting is `LOCAL_ONLY_KEYS` in
+`src/model/settingsSync.js`: never saved to or loaded from a sync profile. Serve the whole web directory for
 mobile testing. Rendering-quality behavior and performance checks are described
 in [Mobile performance](docs/MOBILE-PERFORMANCE.md).
 

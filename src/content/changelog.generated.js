@@ -8,9 +8,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Behind the scenes: the slow checks run when a build is promoted",
     "detail": "Nothing you play changes. A change proposed for the development build is now checked by the fast checks only, about five minutes' worth. The long suites — every platform, the rebuilt-file comparison and the browser checks — run when a build moves to test or release. No check was removed.",
-    "build": "0.7.1.560",
+    "build": "0.7.1.603",
     "pullRequest": 1345,
     "url": "https://github.com/cehinds/AshenSpire/pull/1345"
+  },
+  {
+    "id": "pr-1340",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the full-resolution art can be fetched and checked",
+    "detail": "Nothing you see changes. A new tool fetches the full-resolution art from its own private repository and checks every file against the art list before anything uses it. This prepares for moving the art out of this repository.",
+    "build": "0.7.1.602",
+    "pullRequest": 1340,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1340"
+  },
+  {
+    "id": "pr-1339",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Art quality: play with full-resolution art from your own folder",
+    "detail": "Settings → Display → Art quality now offers Built-in, the art this build carries, or Local high-res, which uses full-resolution art from a folder on your device: one served beside the game, or one you choose (even when you opened the game straight from a file). Anything the folder lacks keeps the built-in art, pictures already on screen switch over in place, and the choice stays on this device and is never synced. Backdrops drawn by the stylesheet keep the built-in art for now.",
+    "build": "0.7.1.601",
+    "pullRequest": 1339,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1339"
+  },
+  {
+    "id": "pr-1338",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: every piece of art is listed with its light and full-resolution file",
+    "detail": "Nothing you see changes yet. A generated list now names each of the game's 5,201 art and font files with the lighter file development builds carry and the full-resolution original, with their sizes and fingerprints, and the game can take a full-resolution source over its built-in art for any file that source has — the groundwork for an Art quality setting.",
+    "build": "0.7.1.563",
+    "pullRequest": 1338,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1338"
   },
   {
     "id": "pr-1337",
