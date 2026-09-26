@@ -200,13 +200,11 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     document.removeEventListener(ART_SOURCE_EVENT,repaintActor);
   }
   function finish(reason) { if (stopped) return; cleanup(); onFinish(reason); }
-  // The character painting, at whatever tier assetUrl() names now. A missing
-  // high-res painting retries once with the built-in art.
+  // The character painting, at whatever tier assetUrl() names now (ready()
+  // retries a missing high-res painting with the built-in art).
   async function characterSource() {
-    let source = new Image(); source.src = prologueArtwork(classId);
+    const source = new Image(); source.src = prologueArtwork(classId);
     await ready(source);
-    const fallback = !source.naturalWidth && builtInFor(source.getAttribute('src'));
-    if (fallback) { source = new Image(); source.src = fallback; await ready(source); }
     return source;
   }
   // Art quality changed while this scene is up (Settings opened from the
@@ -247,9 +245,21 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   }
   async function ready(image) {
     // Missing art must not strand a new run. Keep readable text and controls.
+    // The plate is still detached here, so the document's missing-high-res
+    // listener cannot see a failure: a high-res file that does not load
+    // retries once with the built-in art (builtInFor) before it is hidden.
     let timeout;
-    try { await Promise.race([image.decode(), new Promise(resolve=>{timeout=setTimeout(resolve,8000);})]); }
-    catch { image.hidden = true; }
+    const decoded = () => Promise.race([image.decode(), new Promise(resolve=>{timeout=setTimeout(resolve,8000);})]);
+    try { await decoded(); }
+    catch {
+      clearTimeout(timeout);
+      const fallback = builtInFor(image.getAttribute('src'));
+      if (fallback) {
+        image.setAttribute('src', fallback);
+        try { await decoded(); return; } catch { /* the built-in art is missing too */ }
+      }
+      image.hidden = true;
+    }
     finally { clearTimeout(timeout); }
   }
   async function showScene(at,{resumeAt = 0,notify = true} = {}) {
