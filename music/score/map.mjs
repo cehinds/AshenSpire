@@ -1,31 +1,41 @@
-// Fallback map — "slow, bleak wandering through ash" (music/PROMPTS.md). Plays
-// in any region that has no track of its own. E aeolian, as simple as it can
-// be: a low E/B drone, a hushed string chord changing every four bars, and one
-// solo cello line with long silences between its two phrases. A far bell and a
-// bowed-metal swell mark the empty distance. No drums, never bright.
-// Original material (music/score/_STYLE.md).
-import { Score, chord } from '../../tools/score/compose.mjs';
+// Fallback map — the ring road between the towers, and the cold after.
+//
+// Lore it carries (docs/LORE.md):
+//   §1  "The old viaducts still join the three in a ring ... There is no first
+//       seat ... the ring decides the rest."
+//   §4  "The Forsaken survived the Burning because the fire could not read them.
+//       They are not surviving the winter that came after."
+//   §4  the Forsaken Medallion, "a slug of cold iron, blank on both faces."
+//
+// How it sounds (music/score/_STYLE.md, lore table): E aeolian, 52 BPM, as bare as
+// it can be. A drone on E with a faint fifth — nothing else under it, no chords —
+// and wind-like bowed metal passing over. The one voice is the climber's own.
+//
+// Motifs (music/score/_motifs.mjs):
+//   FORSAKEN — solo cello, beat 4: E3–B3–D4–B3, broadened; then air; again at
+//              beat 36, E2–B2–D3–B2, lower and slower, the road going on.
+// Three layers: drone, cello (lead), metal (wind).
+// Original material.
+import { Score } from '../../tools/score/compose.mjs';
+import { motif } from './_motifs.mjs';
 
 export const context = 'map';
 
 // 52 BPM, 16 bars of 4 = 64 beats ≈ 74 s.
 const s = new Score({ bpm: 52, bars: 16, seed: 23, reverb: { room: 0.92, damp: 0.5 }, gain: 0.9 });
 
-// Bed: drone on E with a faint fifth, and a quiet string chord every four bars.
+// The bare drone: E with a faint fifth, unbroken.
 s.note('drone', 0, s.beats, 'E2', { vel: 0.5, rev: 0.2 });
-s.note('drone', 0, s.beats, 'B2', { vel: 0.2, rev: 0.2, cut: 300 });
-s.pad('strings', [
-  [chord('E2', 'm', 1), 4], [chord('C3', 'M'), 4], [chord('A2', 'm'), 4], [chord('B2', 'sus4'), 2], [chord('B2', 'm'), 2],
-], { note: { vel: 0.36, rev: 0.5, cut: 750, a: 3, r: 3 } });
+s.note('drone', 0, s.beats, 'B2', { vel: 0.22, rev: 0.2, cut: 300 });
 
-// Lead: solo cello. Two phrases, then air. The first falls to the second
-// degree and hangs; the second sinks to the fifth, never home.
-const cello = { note: { vel: 0.55, rev: 0.45, pan: -0.15 } };
-s.line('cello', 4, [['B3', 3], ['C4', 1], ['B3', 4], [null, 4], ['A3', 3], ['G3', 1], ['F#3', 8]], cello);
-s.line('cello', 36, [['G3', 3], ['A3', 1], ['B3', 4], ['E4', 6], ['D4', 2], ['C4', 4], ['B3', 8]], cello);
+// FORSAKEN on the cello, twice, with the road between.
+const cello = { note: { vel: 0.56, rev: 0.45, pan: -0.15 } };
+s.line('cello', 4, motif('E3', 'forsaken', { stretch: 1.5 }), cello);
+s.line('cello', 36, motif('E2', 'forsaken', { stretch: 1.75 }), { note: { ...cello.note, vel: 0.52 } });
 
-// Distance: one bell, one bowed-metal swell per loop.
-s.note('bell', 26, 1, 'E5', { vel: 0.12, rev: 0.85, pan: 0.55, ring: 8 });
-s.note('metal', 50, 8, 'B2', { vel: 0.14, rev: 0.75, pan: -0.5, a: 3 });
+// Wind over the viaducts: bowed metal swells, far apart, left and right.
+s.note('metal', 0, 10, 'B3', { vel: 0.1, rev: 0.8, pan: 0.5, a: 4 });
+s.note('metal', 22, 10, 'E4', { vel: 0.11, rev: 0.8, pan: -0.55, a: 4 });
+s.note('metal', 46, 12, 'F#3', { vel: 0.12, rev: 0.8, pan: 0.4, a: 4 });
 
 export default s;
