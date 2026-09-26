@@ -66,6 +66,8 @@ export function dimensions(buf, ext) {
     // DHT/JPG/DAC markers C4, C8, CC); its height and width follow the precision byte.
     let i = 2;
     while (i + 9 < buf.length && buf[i] === 0xff) {
+      // Any number of 0xFF fill bytes may precede a marker code.
+      while (i + 9 < buf.length && buf[i + 1] === 0xff) i += 1;
       const marker = buf[i + 1];
       if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
         return { width: buf.readUInt16BE(i + 7), height: buf.readUInt16BE(i + 5) };
