@@ -36,10 +36,10 @@ still be started by hand on any branch (Actions → *Run workflow*).
 |---|---|---|
 | `receipts.yml` → receipts | yes | — (runs on push to `dev`) |
 | `dev-preview.yml` → preview (build, standalone artifact, fast gates) | yes | yes (also `dev`, `main`) |
-| `tests.yml` → core suite | yes | yes |
-| `ci.yml` → Fullscreen first through both Settings doors | yes | yes |
-| `ci.yml` → what this green does NOT cover (boundary) | yes | yes |
+| `tests.yml` → core suite | yes | yes (also on push to `dev`) |
 | `tests.yml` → tool self-tests, bundler parse gate | no | yes |
+| `ci.yml` → Fullscreen first through both Settings doors | no | yes |
+| `ci.yml` → what this green does NOT cover (boundary) | no | yes |
 | `ci.yml` → tests (ubuntu, windows, macOS) | no | yes |
 | `ci.yml` → shipped artifact is this source (3 OSes), the three runners built the same bytes | no | yes |
 | `ci.yml` → the checks that need a real browser | no | yes |

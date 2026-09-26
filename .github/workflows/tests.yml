@@ -1,5 +1,6 @@
 # .github/workflows/tests.yml — every test in the repository, on every push to
-# `test` and `release`; the fast core suite also on every PR into dev.
+# `test` and `release`; the fast core suite also on every PR into dev and every
+# push to dev.
 #
 # WHY THIS FILE EXISTS. ci.yml holds the whole suite but was dispatch-only
 # from 2026-08-01 (cost: a 3-OS matrix, macOS at 10x). dev-preview.yml runs on
@@ -14,11 +15,12 @@
 #                              6 min) and `parse-gate` (about 13 min) are
 #                              skipped by their job-level `if:`, which reports
 #                              them as skipped rather than absent.
+#   push to dev              — `core` only, so the merged tree is read at once:
+#                              two PRs each green alone can break together.
 #   push to test / release   — all three jobs.
 #   workflow_dispatch        — all three jobs, on any ref.
-# A push to `dev` no longer runs this file: the post-merge tree is read again,
-# whole, when it is promoted to `test`. Nothing was removed: every job and step
-# below runs, unchanged, on every push to `test` and `release`.
+# Nothing was removed: every job and step below runs, unchanged, on every push
+# to `test` and `release`.
 #
 # WHAT IT COSTS. Linux only, no LFS (no test here reads an LFS-tracked
 # artifact; they are the built HTML files), and 50 commits of history plus
@@ -51,7 +53,7 @@ on:
   pull_request:
     branches: [dev] # `core` only; see the header
   push:
-    branches: [test, release]
+    branches: [dev, test, release] # `core` only on dev; see the header
   workflow_dispatch:
 
 concurrency:
@@ -91,7 +93,7 @@ jobs:
     name: tool self-tests
     # About 6 minutes: over the dev-PR budget, so it runs on push to test and
     # release (and on dispatch), not on a pull request into dev.
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && !(github.event_name == 'push' && github.ref_name == 'dev')
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -111,7 +113,7 @@ jobs:
     name: bundler parse gate
     # About 13 minutes: runs on push to test and release (and on dispatch),
     # not on a pull request into dev.
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && !(github.event_name == 'push' && github.ref_name == 'dev')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

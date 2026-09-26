@@ -14,9 +14,8 @@
 #     changed `on:` and said so; this header sits fifty lines above it and nobody
 #     edited it. That is how a second copy is born — one fact, two homes,
 #     nothing checking they agree. EldenSpire#35. Today every job runs on a push
-#     to `test` or `release`, `display-first` also runs on each pull request
-#     into `dev`, and the rest of a PR's heavy legs are read at promotion (the
-#     `on:` block below states it once). A push to `dev` or a feature branch
+#     to `test` or `release`, and a PR's legs are read at promotion (the `on:`
+#     block below states it once). A push to `dev` or a feature branch
 #     still fires nothing here: under SOP 2's silence guard that is `unknown`
 #     until the tree reaches `test`, and unknown blocks.
 #
@@ -152,35 +151,27 @@ on:
   # AUTOMATIC TRIGGERS. By the owner's ruling D7 (2026-09-24): a push to
   # `release`, the one ref whose tree ships, so the 3-OS claims above are read
   # there at least. By the owner's ruling of 2026-09-26 ("the long shipped
-  # artifact should be on test and release branches"): a push to `test` as well,
-  # and a pull request into `dev` is gated by fast checks only.
+  # artifact should be on test and release branches"): a push to `test` as well.
   #   push to test / release   — every job below.
-  #   pull_request into dev    — `display-first` (about 2 min) and `boundary`.
-  #                              `test` (10-24 min per OS), `reproducible`
-  #                              (10-60 min per OS), `reproducible-agree` and
-  #                              `browser-guard` (about 17 min) are skipped by
-  #                              their job-level `if:`, which reports them as
-  #                              skipped rather than absent.
   #   workflow_dispatch        — every job below, on any ref.
-  # This is option (a) above in shape: `push` names only `test` and `release`
-  # and `pull_request` only PRs into `dev`, so the two events never share a
-  # commit's ref and no commit runs twice. Nothing was removed: every job and
-  # step runs, unchanged, on every push to `test` and `release`.
+  # Pull requests into `dev` do not run this file: re-enabling that is the
+  # owner's call (above), and `display-first`'s self-test has not been measured
+  # against the five-minute dev-PR budget. `push` names only `test` and
+  # `release`, so no commit runs twice. Nothing was removed: every job and step
+  # runs, unchanged, on every push to `test` and `release`.
   push:
     branches: [test, release]
-  pull_request:
-    branches: [dev] # `display-first` and `boundary` only; see above
   workflow_dispatch:
 
-# A PULL REQUEST's superseded run is not evidence about its head, so it is
-# cancelled. A PUSH to `test` or `release` is a promotion, and each promoted
-# tree is its own answer: a second push must not cancel the first's 10-60 min
-# run, nor replace it while queued (a group holds one pending run). So a push
-# (and a dispatch) is grouped by its SHA, one group per commit, and a pull
-# request by its ref — the same rule as tests.yml and dev-preview.yml.
+# A PUSH to `test` or `release` is a promotion, and each promoted tree is its
+# own answer: a second push must not cancel the first's 10-60 min run, nor
+# replace it while queued (a group holds one pending run). So a push is grouped
+# by its SHA, one group per commit, and never cancelled. A DISPATCH is grouped
+# by its ref, so a newer dispatch on the same branch supersedes the older one
+# and a 3-OS matrix is not paid for twice.
 concurrency:
-  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ci-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
 
 permissions:
   contents: read
@@ -767,13 +758,6 @@ jobs:
         run: |
           echo "upstream results: test=${{ needs.test.result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }} browser-guard=${{ needs.browser-guard.result }} display-first=${{ needs['display-first'].result }}"
           echo ""
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "THIS IS A PULL-REQUEST RUN INTO dev. Only display-first ran; test, reproducible,"
-            echo "reproducible-agree and browser-guard were SKIPPED on purpose (owner, 2026-09-26)"
-            echo "and run on every push to test and release. Nothing listed below under"
-            echo "'A GREEN RUN OF THIS WORKFLOW MEANS' is claimed by this run except display-first."
-            echo ""
-          fi
           echo "A GREEN RUN OF THIS WORKFLOW MEANS:"
           # Was "34 engine tests". #10 adds test 35, so the number was wrong the moment
           # this branch existed. Not corrected to 35: this job has no checkout and no

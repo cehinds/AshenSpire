@@ -66,7 +66,8 @@ owner reads the PR list and merges; nothing else is theirs to do there.
    "flake" is not a diagnosis. Never skip or quarantine a test to get green.
    A PR into `dev` is gated by the fast checks only (about five minutes or
    less); the heavy suites — `tests.yml`'s self-tests and parse gate, `ci.yml`'s
-   3-OS and real-browser jobs, and `dev-preview.yml`'s reachability gates — run
+   jobs (3-OS, real-browser and Fullscreen-first), and `dev-preview.yml`'s
+   reachability gates — run
    on every push to `test` and `release` (owner, 2026-09-26). DEVELOPER.md
    (*Which checks gate a pull request*) lists each check. To read a heavy suite
    on your PR before promotion, dispatch that workflow on your branch by hand; a
