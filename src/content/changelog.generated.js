@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1338",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: every piece of art is listed with its light and full-resolution file",
+    "detail": "Nothing you see changes yet. A generated list now names each of the game's 5,201 art and font files with the lighter file development builds carry and the full-resolution original, with their sizes and fingerprints, and the game can take a full-resolution source over its built-in art for any file that source has — the groundwork for an Art quality setting.",
+    "build": "0.7.1.563",
+    "pullRequest": 1338,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1338"
+  },
+  {
     "id": "pr-1337",
     "date": "2026-09-26",
     "group": "2026-09-26",
