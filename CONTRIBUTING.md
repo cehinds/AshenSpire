@@ -64,6 +64,14 @@ owner reads the PR list and merges; nothing else is theirs to do there.
    conflict.
 4. **Keep it green.** A failing test or gate is yours to root-cause and fix;
    "flake" is not a diagnosis. Never skip or quarantine a test to get green.
+   A PR into `dev` is gated by the fast checks only (about five minutes or
+   less); the heavy suites — `tests.yml`'s self-tests and parse gate, `ci.yml`'s
+   jobs (3-OS, real-browser and Fullscreen-first), and `dev-preview.yml`'s
+   reachability gates — run
+   on every push to `test` and `release` (owner, 2026-09-26). DEVELOPER.md
+   (*Which checks gate a pull request*) lists each check. To read a heavy suite
+   on your PR before promotion, dispatch that workflow on your branch by hand; a
+   red at `test` or `release` is yours to fix like any other.
 5. **Keep checking after you open it.** Until it is merged or closed, re-check
    it after every merge to the base branch and on a check-in you schedule
    yourself (an hour apart is enough);
