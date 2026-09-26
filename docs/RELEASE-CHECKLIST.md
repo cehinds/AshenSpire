@@ -133,6 +133,8 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §8 | #1289 follow-up: a re-fit keeps the tray's selected-destination framing | G20 |
 | §8 | #1164: the card door stacks between 601 and 703 px | G20 |
 | §8 | Offline and installable web edition | G20 |
+| §8 | Pages serves the external-art edition, and the single-file download stays available | G20 |
+| §8 | One physical iPhone in Safari plays a run before release | G20 |
 | §8 | Background and resume keep the run | G20 |
 | §9 | The palettes pass contrast | G11 |
 | §9 | #1282 follow-up: the contrast audit measures the highlighted Continue | G20 |
