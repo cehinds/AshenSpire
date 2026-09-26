@@ -54,6 +54,14 @@ jobs:
 
       - uses: ./.github/actions/setup-node
 
+      # BUILT FIRST, AND UPLOADED WHENEVER THIS SUCCEEDS. The built HTML is not
+      # committed, so this run's artifacts are the only copy of this commit's
+      # build: a failing gate below still fails the job, but it must not cost the
+      # commit its download (collect + upload run on `steps.build.outcome`).
+      - name: Build the standalone
+        id: build
+        run: node tools/launch.mjs --build-only
+
       - name: Complete armament kits and temporary Guardian skill
         run: node tests/armament-combat-kits.test.mjs
 
@@ -110,14 +118,12 @@ jobs:
       - name: Release series gate rejects older and malformed versions
         run: node tools/release-series.mjs --selftest
 
-      # BUILT HERE, NOT CHECKED OUT: the built HTML is not committed on dev.
-      # A clean tree afterwards is what used to be "the committed bundle is this
-      # source": if the rebuild had to bump buildordinal.json, the commit's
-      # receipt and its box disagree.
-      - name: Build the standalone, and the rebuild changes nothing committed
+      # A clean tree after the build (first step of this job) is what used to be
+      # "the committed bundle is this source": if the rebuild had to bump
+      # buildordinal.json, the commit's receipt and its box disagree.
+      - name: The rebuild changed nothing committed
         run: |
           set -euo pipefail
-          node tools/launch.mjs --build-only
           git status --porcelain
           test -z "$(git status --porcelain)"
 
@@ -162,6 +168,8 @@ jobs:
         run: node --test pose-studio/tests/model.test.mjs
 
       - name: Collect the playable build
+        id: collect
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           set -euo pipefail
           mkdir -p preview
@@ -288,12 +296,14 @@ jobs:
       # AshenSpire.html that verify-shipped.mjs has already proven is this
       # source. Naming the sha in both makes that visible at the download.
       - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() && steps.collect.outcome == 'success' }}
         with:
           name: ${{ env.CHANNEL }}-preview-${{ github.sha }}
           path: preview/
           retention-days: 14
 
       - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() && steps.collect.outcome == 'success' }}
         with:
           name: ${{ env.CHANNEL }}-standalone-${{ github.sha }}
           path: standalone/

@@ -376,8 +376,9 @@ function branchIndex(branch, builds, head, generatedAt, headTracksBuild = true) 
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — ${esc(branch)} builds</title><style>${CSS}</style></head><body><main>
 <p><a href="../">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(BRANCH_ROLE[branch] || NO_ROLE)} · ${headLine}</p>
 ${uncommittedNote(branch, headTracksBuild)}
-${builds.length ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons('../', builds[0], ` latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
-<p class="meta">A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 30 MB. On a phone or tablet, download from here rather than from inside the game.</p>` : '<p class="meta">no build on this branch</p>'}
+${builds.length && headTracksBuild === false ? `<p><a class="play" href="${builds[0].ordinal}/">Play last committed (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play last committed mobile</a>` : ''}</p>` : ''}
+${builds.length && headTracksBuild !== false ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons('../', builds[0], ` latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
+<p class="meta">A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 30 MB. On a phone or tablet, download from here rather than from inside the game.</p>` : (builds.length ? '' : '<p class="meta">no build on this branch</p>')}
 ${rowsTable(builds, '../')}
 <footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code>.</footer></main></body></html>`;
 }
@@ -483,7 +484,10 @@ function assemble(outDir, keep) {
       if (Buffer.compare(readFileSync(join(dir, 'index.html')), html) !== 0) throw new Error(`${branch}/${b.ordinal}: written build differs from git blob`);
       checks++;
     }
-    if (builds[0]) {
+    // NO /latest/ FOR A BRANCH THAT STOPPED COMMITTING ITS BUILD: its newest
+    // listed build is only its last COMMITTED one, and an alias called latest
+    // would launch an ever-staler game. The page says where newer builds are.
+    if (builds[0] && headTracksBuild !== false) {
       const latest = join(outDir, branch, 'latest');
       mkdirSync(latest, { recursive: true });
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'index.html'), join(latest, 'index.html'));
