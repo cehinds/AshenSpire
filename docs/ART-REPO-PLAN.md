@@ -100,6 +100,9 @@ This repository keeps:
 | `tools/content-build.mjs --mutate` (M6/M7) | by hand and its self-test | sweeps the real `assets/` and copies it into fixtures; M6 renames `assets/sprites/enemy_wanderingSoldier.webp` | builds its fixture tree from the manifest's ids (placeholder bytes, as its other cases already write) |
 | `tests/content-expansion-equipment.test.mjs` | every test run | `existsSync` on `assets/equipment/icon_*`, `weapon_*`, `body_*` | checks ids against the manifest |
 | `tools/rogue-parity.mjs` (spawned by `tests/content-validators.test.mjs`) | every test run | `existsSync` on `assets/sprites/rogue_*.webp` and `assets/equipment/body_rogue_*.webp` | checks ids against the manifest |
+| `tests/environment-art.test.mjs`, `tests/relic-art.test.mjs` | every test run | `existsSync` on every environment, world-map and painted-relic path | check ids against the manifest |
+| `tools/buildversion-selftest.mjs` (run by `buildversion --selftest` in `ci.yml`'s reproducible job) | every CI run | copies `assets/` into its corpus; a planted case edits `assets/classes/successor-packet.manifest.json` | copies the kept non-art folder instead of `assets/`, and plants on that file's new path, in the same PR that moves it |
+| output-only writers: `tools/concept-cutout.mjs` and `tools/pose-cutout.mjs` (`assets/sprites`), `tools/parchment.mjs` (`assets/map`), `tools/reaver-attack-animation.mjs` (`assets/animations`) | when art changes | nothing; they **write** under `assets/` | move to AshenSpire-art with the ship tools, writing into its `hd/assets/`, so their output enters a release |
 | `src/framework/data/assets.js` | runtime data | names `assets/framework/silence.txt` | keeps working because that file stays tracked (see above) |
 | `tools/screenshot.mjs` | by hand | reads `assets/sprites/class-sprites.manifest.json` | reads it from its new home |
 | `styles/kit.css` | every build | `../assets/fonts/*` | unchanged: fonts have twins, and the build substitutes them |
@@ -118,6 +121,13 @@ This repository keeps:
 | dev-preview copies of `art/…/inspection`, `art/pose-studio`, `art/card-effect-refresh-…` | every push | published from AshenSpire-art's preview workflow |
 | `pose-studio/package.mjs`, `editor/server.mjs` | by hand | read a local AshenSpire-art checkout (a path setting), or move there |
 | tests: `dagger-animation`, `twin-sword-animation`, `unarmed-animation`, `unarmed-magic`, `prologue`, `combat-prototypes-ui` | every test run | the source-art parts move to AshenSpire-art's CI; the runtime parts read `assets-mobile/`, the manifest or small committed fixtures |
+
+**The tables are a starting inventory, not the whole of it.** Step 4's first
+PR records the complete one: every file under `tools/`, `tests/`, `src/`,
+`.github/` and `pose-studio/` that `git grep -n "assets/"` finds on `dev` (15 tools
+alone on 0.7.1), each classified as reads the high tier, reads a kept non-art
+file, writes art, or names an id only through `assetUrl()`. Each gets a row
+here, and no reader is left for step 6's grep to find.
 
 **No test is skipped, weakened or deleted to get green.** A check that loses its
 input moves along with it, or gets the same input from the manifest.
