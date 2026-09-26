@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1350",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: finished changes reach development builds without waiting",
+    "detail": "Nothing you play changes. A change now lands in development as soon as its quick checks pass, and the long checks run when development is promoted to the test build.",
+    "build": "0.7.1.610",
+    "pullRequest": 1350,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1350"
+  },
+  {
     "id": "pr-1329",
     "date": "2026-09-26",
     "group": "2026-09-26",
