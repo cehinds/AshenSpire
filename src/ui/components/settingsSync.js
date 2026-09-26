@@ -406,9 +406,11 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     on('device', (btn) => {
       const next = !includeDeviceEnabled();
       if (!write(SYNC_STORAGE.includeDevice, next ? '1' : null)) { status(STORAGE_REFUSED); return; }
-      // What a load would do has changed: an open preview is no longer true,
-      // and the loaded version must be read again under the new scope.
-      write(SYNC_STORAGE.lastSha, null);
+      // What a load would do has changed, so an open preview is no longer true.
+      // Widening the scope must read the loaded version again (its screen
+      // settings were skipped); narrowing it asks for nothing new, and
+      // re-reading would overwrite edits made here since.
+      if (next) write(SYNC_STORAGE.lastSha, null);
       generation += 1;
       pending = null;
       const box = mount.querySelector('[data-sync-preview]');
