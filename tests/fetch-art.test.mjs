@@ -6,7 +6,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { crc32, readZip, writeZip } from '../tools/zip.mjs';
@@ -155,5 +156,24 @@ test('the cache directory can only ever be one name under .art-cache', async () 
   try {
     assert.match(cacheDirFor({ tag: 'hd-assets-v2' }, root), /\.art-cache[\\/]hd-assets-v2$/);
     for (const tag of ['..', '../x', 'a/b', '']) assert.throws(() => cacheDirFor({ tag }, root), /not a single directory name/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('runs at the same time each publish a whole cache, and leave no staging behind', async () => {
+  const { root, zip } = fixture();
+  try {
+    const mod = new URL('../tools/fetch-art.mjs', import.meta.url).href;
+    const script = `const { fetchArt } = await import(${JSON.stringify(mod)}); await fetchArt({ root: ${JSON.stringify(root)}, from: ${JSON.stringify(zip)} });`;
+    const run = () => new Promise((done) => {
+      const child = spawn(process.execPath, ['--input-type=module', '-e', script], { stdio: ['ignore', 'ignore', 'pipe'] });
+      let err = '';
+      child.stderr.on('data', (d) => { err += d; });
+      child.on('close', (code) => done({ code, err }));
+    });
+    const results = await Promise.all(Array.from({ length: 6 }, run));
+    for (const r of results) assert.equal(r.code, 0, r.err);
+    assert.deepEqual(readdirSync(join(root, '.art-cache')), ['hd-assets-v1'], 'only the published cache is left');
+    const again = await fetchArt({ root, recheck: true });
+    assert.equal(again.reused, true, 'the published cache is whole and verified');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

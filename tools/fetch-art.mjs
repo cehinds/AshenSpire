@@ -21,7 +21,9 @@
 // Any mismatch exits 1 before anything is unpacked. A cache is marked verified
 // LAST, with the zip's sha256 and a digest of the manifest's high records, and
 // is reused only while both still match; --recheck hashes its files again. A
-// cache without that marker (an interrupted unpack) is never reused.
+// cache without that marker (an interrupted unpack) is never reused. A cache is
+// unpacked beside its final name and published in one rename, so runs at the
+// same time never see each other's half-written files.
 //
 // THE TOKEN. The art repository is private, so the download needs a token with
 // read access to its Contents: ART_REPO_TOKEN (CI secret of that name), else
@@ -29,7 +31,7 @@
 // ignores HTTPS_PROXY unless NODE_USE_ENV_PROXY=1 is set; behind a proxy, set it.
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readZip } from './zip.mjs';
@@ -117,16 +119,45 @@ export function verifyRelease(zipBuf, pin, manifest) {
   return { problems, entries };
 }
 
-/** unpack(entries, dir, zipSha) — write every entry under dir, then the verified marker last. */
+/** A name beside `dir` that no other process picks: the staging and discard directories. */
+const beside = (dir, what) => `${dir}.${what}-${process.pid}-${Math.random().toString(36).slice(2, 10)}`;
+
+/** discard(dir) — take a cache out of reach in one rename, then delete it where no reader looks. */
+function discard(dir) {
+  const gone = beside(dir, 'discard');
+  try { renameSync(dir, gone); } catch (e) { if (e.code === 'ENOENT') return; throw e; }
+  rmSync(gone, { recursive: true, force: true });
+}
+
+/**
+ * unpack(entries, dir, mark) — write every entry into a staging directory of
+ * this process's own, the verified marker last, then publish it under `dir` in
+ * one rename. A reader therefore sees either no cache or a whole one: two runs
+ * at once never share a half-written directory, and the one that loses the
+ * race keeps the winner's cache when it carries the same marker.
+ */
 function unpack(entries, dir, mark) {
-  rmSync(dir, { recursive: true, force: true });
-  for (const [name, data] of entries) {
-    const target = resolve(dir, name);
-    if (!target.startsWith(resolve(dir) + sep)) throw new Error(`${name} escapes the cache directory`);
-    mkdirSync(dirname(target), { recursive: true });
-    writeFileSync(target, data);
+  const stage = beside(dir, 'staging');
+  try {
+    mkdirSync(stage, { recursive: true });
+    for (const [name, data] of entries) {
+      const target = resolve(stage, name);
+      if (!target.startsWith(resolve(stage) + sep)) throw new Error(`${name} escapes the cache directory`);
+      mkdirSync(dirname(target), { recursive: true });
+      writeFileSync(target, data);
+    }
+    writeFileSync(join(stage, VERIFIED), `${mark}\n`);
+    for (let attempt = 0; ; attempt += 1) {
+      discard(dir);
+      try { renameSync(stage, dir); return; } catch (e) {
+        if (!['EEXIST', 'ENOTEMPTY', 'EPERM'].includes(e.code) || attempt >= 3) throw e;
+        const marker = join(dir, VERIFIED);
+        if (existsSync(marker) && readFileSync(marker, 'utf8').trim() === mark) return; // another run published the same release
+      }
+    }
+  } finally {
+    rmSync(stage, { recursive: true, force: true });
   }
-  writeFileSync(join(dir, VERIFIED), `${mark}\n`);
 }
 
 /** recheck(dir, manifest) → problems: the cached manifest and every listed file still match. */
@@ -181,7 +212,7 @@ export async function fetchArt({ root = ROOT, from = null, recheck: again = fals
     if (!again) return { dir, reused: true };
     const problems = recheck(dir, manifest);
     if (!problems.length) return { dir, reused: true };
-    rmSync(dir, { recursive: true, force: true });
+    discard(dir);
     throw Object.assign(new Error('the cache no longer matches the manifest; it was removed — run again to re-download'), { problems });
   }
   const zipBuf = from ? readFileSync(from) : await download(pin);
