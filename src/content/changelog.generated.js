@@ -8,9 +8,49 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Behind the scenes: a hand-rules test comment catches up",
     "detail": "Tests only. The fixed-draw test's comment now works its numbers from the one-row hand stats, counting Intelligence from each row's baseline, instead of the retired weights; the values it checks are unchanged.",
-    "build": "0.7.1.608",
+    "build": "0.7.1.615",
     "pullRequest": 1334,
     "url": "https://github.com/cehinds/AshenSpire/pull/1334"
+  },
+  {
+    "id": "pr-1348",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the rules for card rewards, levelling pace, crafting drops and legendary sigils are written down",
+    "detail": "Docs only; nothing you play changes yet. The design spec now describes settings for when card rewards come (after battle, on level-up) and how often they drop, a levelling preview that shows how fast your current XP settings level you, drop chances for armaments and smithing stones, and legendary sigils with unique effects you attune one at a time.",
+    "build": "0.7.1.614",
+    "pullRequest": 1348,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1348"
+  },
+  {
+    "id": "pr-1353",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the full-resolution art has its first release",
+    "detail": "Nothing you see changes. The full-resolution art now lives in its own private repository, and this build names the exact release of it to use, checked file by file before anything reads it.",
+    "build": "0.7.1.613",
+    "pullRequest": 1353,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1353"
+  },
+  {
+    "id": "pr-1331",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the rules for a deck editor and three kinds of shop are written down",
+    "detail": "Docs only, and nothing you play changes yet. The design spec now describes the deck editor that is planned: you add and remove cards between fights, with Strike and Defend unlimited and every other card limited to the copies you own. Deck size limits and an option to draw in the order you arranged will be settings. It also describes a market, a blacksmith and a wise master: each offers a configurable set of services, and a master can reset one skill back to level 1 for a partial refund of its experience. The 1.0 checklist gains one testable line per step.",
+    "build": "0.7.1.610",
+    "pullRequest": 1331,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1331"
+  },
+  {
+    "id": "pr-1329",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Turning off this device's screen settings no longer reloads your synced profile over local changes",
+    "detail": "Switching \"Include this device's screen settings\" off keeps the record of which profile version was loaded, so the next start leaves edits made here alone; switching it on still reloads, to bring in the screen settings it skipped (settings sync is in development and test builds only).",
+    "build": "0.7.1.609",
+    "pullRequest": 1329,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1329"
   },
   {
     "id": "pr-1330",
