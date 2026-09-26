@@ -189,10 +189,32 @@ jobs:
       # four — the step that produces the artifact a publication needs. The
       # gate belongs where current builds are made: dev-preview runs it on
       # every push to dev and every PR into dev, and ci.yml on dispatch.
+      # ONCE main STOPS COMMITTING ITS BUILD (the LFS budget ran out; dev stopped
+      # on 2026-09-26 and main follows on promotion), the stable Play links at the
+      # site root have no file in main's tree. Build main from source here and hand
+      # it to the generator; while main still tracks its build this does nothing.
+      - name: Build main from source when main no longer commits its build
+        run: |
+          set -euo pipefail
+          if git cat-file -e origin/main:AshenSpire.html 2>/dev/null; then
+            echo "main still tracks AshenSpire.html — the generator hydrates it from git"
+            exit 0
+          fi
+          git worktree add --detach "$RUNNER_TEMP/main" origin/main
+          (cd "$RUNNER_TEMP/main" && node tools/launch.mjs --build-only)
+          # The same gate every other build workflow applies: a rebuild that had
+          # to rewrite main's committed box is a build main's receipts do not
+          # name, and it must not become the stable Play link.
+          git -C "$RUNNER_TEMP/main" status --porcelain
+          test -z "$(git -C "$RUNNER_TEMP/main" status --porcelain)"
+          (cd "$RUNNER_TEMP/main" && node tools/buildversion.mjs --check)
+          mkdir -p "$RUNNER_TEMP/main-build"
+          cp "$RUNNER_TEMP/main/AshenSpire.html" "$RUNNER_TEMP/main/AshenSpire-mobile.html" "$RUNNER_TEMP/main-build/"
+          echo "MAIN_BUILD_ARGS=--main-build $RUNNER_TEMP/main-build" >> "$GITHUB_ENV"
       - name: Assemble the site from git history — every listed build proven byte-identical
-        run: node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "${{ inputs.keep || '10' }}"
+        run: node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "${{ inputs.keep || '10' }}" ${MAIN_BUILD_ARGS:-}
       - name: The generator's own drift plant is still caught
-        run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest
+        run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest ${MAIN_BUILD_ARGS:-}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
