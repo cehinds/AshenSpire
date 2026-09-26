@@ -79,6 +79,14 @@ export function combatSnapshotProblems(snapshot) {
   // (Codex, #1296).
   if (snapshot.characterLevel !== undefined && (!Number.isInteger(snapshot.characterLevel) || snapshot.characterLevel < 1)) problems.push('characterLevel must be a positive integer when present');
   if (snapshot.handRules !== undefined) problems.push(...handRulesProblems(snapshot.handRules));
+  // Play in deck order (SPEC §14.1): absent on an older fight, which shuffles;
+  // a present one is the deck's order and the empty-pile return reads it.
+  if (snapshot.orderedDraw !== undefined && snapshot.orderedDraw !== null) {
+    const order = record(snapshot.orderedDraw) ? snapshot.orderedDraw.order : undefined;
+    if (!Array.isArray(order) || order.some((id) => typeof id !== 'string' || !id) || new Set(order).size !== order.length) {
+      problems.push('orderedDraw.order must be an array of unique card instance ids');
+    }
+  }
   if (snapshot.ratingsRules !== undefined) {
     problems.push(...combatRatingProblems(snapshot.ratingsRules));
     // A saved fight's rating rows are what `refreshCombatRatings` prices on

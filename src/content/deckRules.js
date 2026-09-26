@@ -19,6 +19,8 @@ export const deckRules = Object.freeze({
     // The draw pile is the deck in the order the editor arranged it.
     playInDeckOrder: false,
   }),
+  // The range the Settings rows for the deck size accept.
+  sizeRange: Object.freeze({ min: 0, max: 200 }),
   // Where the editor may be opened from ('free' | 'restOnly').
   where: Object.freeze(['free', 'restOnly']),
   // Plain card ids a run with no equipment may add without limit. An equipped

@@ -18,6 +18,7 @@
 // span[style*="color"]`, `.tint-dot`, `.seed-line`) ride on the kit's parts.
 
 import { lanInfo, lanHost, lanUnhost, lanConnect } from '../../net/lan.js';
+import { playInDeckOrder } from '../../model/deckRules.js';
 import { classGlyph, DEFAULT_SPRITE_STYLE, PORTRAIT_TINTS, SPRITE_STYLES, tintCss } from '../assets.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { refusesWhen } from '../components/refusal.js';
@@ -149,7 +150,9 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       onMessage: (msg) => {
         if (msg.t === 'welcome') {
           myId = msg.id;
-          conn.send({ t: 'hello', name: state.name, classId: state.classId, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, tint: state.tint, spriteStyle: state.spriteStyle, hostKey });
+          conn.send({ t: 'hello', name: state.name, classId: state.classId, startingKitId: state.startingKitId, discoveredArmaments: state.discoveredArmaments, tint: state.tint, spriteStyle: state.spriteStyle, hostKey,
+            // The seat draws by its owner's Play in deck order (SPEC §14.1).
+            playInDeckOrder: playInDeckOrder(meta.settings || {}) });
         } else if (msg.t === 'roster') {
           state.players = msg.players;
           if (msg.seedString) state.seedString = msg.seedString;

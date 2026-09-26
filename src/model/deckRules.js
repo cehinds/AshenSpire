@@ -27,17 +27,42 @@ function wholeNumber(value, key, min) {
   return value;
 }
 
-/** deckEditBounds(settings) → { min, max }; max is Infinity when unlimited. */
-export function deckEditBounds(settings) {
+function readBounds(settings) {
   const min = setting(settings, 'deckMinUnlimited') ? 0 : wholeNumber(setting(settings, 'deckMinSize'), 'deckMinSize', 0);
   const max = setting(settings, 'deckMaxUnlimited') ? Infinity : wholeNumber(setting(settings, 'deckMaxSize'), 'deckMaxSize', 1);
-  if (max < min) throw new Error(`deckMaxSize (${max}) is below the effective minimum deck size (${min})`);
   return { min, max };
+}
+
+/**
+ * deckSettingsProblems(settings) → [{ keys, message }] for Settings to paint:
+ * a maximum below the effective minimum is refused by name (SPEC §14.1).
+ */
+export function deckSettingsProblems(settings) {
+  let bounds;
+  try { bounds = readBounds(settings); } catch (error) { return [{ keys: ['deckMinSize', 'deckMaxSize'], message: error.message }]; }
+  return bounds.max < bounds.min
+    ? [{ keys: ['deckMinSize', 'deckMaxSize'], message: `Maximum deck size (${bounds.max}) is below the minimum (${bounds.min}); the editor cannot confirm any deck until one of them moves.` }]
+    : [];
+}
+
+/**
+ * deckEditBounds(settings) → { min, max, problem }; max is Infinity when
+ * unlimited, and `problem` is the Settings refusal when max sits below min.
+ */
+export function deckEditBounds(settings) {
+  const problems = deckSettingsProblems(settings);
+  if (problems.length) {
+    let min = D.deckMinSize;
+    try { ({ min } = readBounds(settings)); } catch { /* fall back to the default */ }
+    return { min, max: min, problem: problems[0].message };
+  }
+  return { ...readBounds(settings), problem: '' };
 }
 
 /** deckEditRefusal(count, settings) → '' when the editor may confirm, else one sentence. */
 export function deckEditRefusal(count, settings) {
-  const { min, max } = deckEditBounds(settings);
+  const { min, max, problem } = deckEditBounds(settings);
+  if (problem) return problem;
   const cards = (n) => `${n} card${n === 1 ? '' : 's'}`;
   if (count < min) return `Your deck has ${cards(count)}; it needs at least ${min}.`;
   if (count > max) return `Your deck has ${cards(count)}; it can hold at most ${max}.`;
@@ -77,9 +102,15 @@ function mintId(run) {
 }
 
 function slotCount(run) {
-  return Number.isFinite(run.equipmentAttackSlotCount)
-    ? run.equipmentAttackSlotCount
-    : run.deck.filter((c) => c && c.equipmentRole === 'attack').length;
+  if (Number.isFinite(run.equipmentAttackSlotCount)) return run.equipmentAttackSlotCount;
+  // No quota written down (a run the load door has not seen): the highest slot
+  // index anywhere, retired ones included, + 1 — never a count that a retired
+  // slot would make collide.
+  const ids = [
+    ...[...(run.deck || []), ...(run.sideboard || [])].map((c) => c && c.equipmentAttackSlotId).filter(Boolean),
+    ...(run.removedAttackSlotIds || []),
+  ];
+  return ids.reduce((top, id) => Math.max(top, Number(String(id).slice(7)) + 1), 0);
 }
 
 function restamp(registries, run) {
@@ -104,7 +135,10 @@ export function moveToSideboard(registries, run, instanceId) {
     run.removedAttackSlotIds = [...retired];
   }
   run.deck.splice(index, 1);
-  if (!card.equipmentRole && deckRules.unlimitedCardIds.includes(card.cardId)) return true;
+  // A pristine plain basic has nothing to keep; an upgraded or modded one is
+  // kept like any owned card and comes back before a fresh one is minted.
+  const pristine = !card.upgraded && !(Array.isArray(card.mods) && card.mods.length);
+  if (!card.equipmentRole && deckRules.unlimitedCardIds.includes(card.cardId) && pristine) return true;
   sideboard(run).push(card);
   return true;
 }
@@ -133,11 +167,17 @@ export function moveFromSideboard(registries, run, instanceId) {
 export function addBasicCard(registries, run, role, { plain = false } = {}) {
   if (plain) {
     if (!deckRules.unlimitedCardIds.includes(role)) throw new Error(`'${role}' is not an unlimited card id (${deckRules.unlimitedCardIds.join(', ')})`);
+    const kept = sideboard(run).find((c) => c && !c.equipmentRole && !c.grantedBy && c.cardId === role);
+    if (kept) {
+      moveFromSideboard(registries, run, kept.instanceId);
+      return kept;
+    }
     const card = { instanceId: mintId(run), cardId: role, upgraded: false };
     run.deck.push(card);
     return card;
   }
   if (role !== 'attack' && role !== 'guard') throw new Error(`addBasicCard: role must be 'attack' or 'guard' (got '${role}')`);
+  if (!run.loadout || !run.attributes) throw new Error(`addBasicCard: an ${role} basic takes its face from the run's loadout; a run without one adds plain cards ({ plain: true })`);
   const back = sideboard(run).find((c) => c && c.equipmentRole === role && !c.grantedBy);
   if (back) {
     moveFromSideboard(registries, run, back.instanceId);
@@ -145,9 +185,15 @@ export function addBasicCard(registries, run, role, { plain = false } = {}) {
   }
   let card;
   if (role === 'attack') {
+    // A slot retired with no instance kept (the merchant's paid removal) is
+    // re-used before the allocation grows, so remove-and-add never inflates it.
     const count = slotCount(run);
-    card = { instanceId: mintId(run), cardId: 'strike', upgraded: false, equipmentRole: 'attack', equipmentAttackSlotId: `attack:${count}` };
-    run.equipmentAttackSlotCount = count + 1;
+    const retired = [...retiredAttackSlots(count, run.removedAttackSlotIds || [])]
+      .sort((a, b) => Number(a.slice(7)) - Number(b.slice(7)));
+    const slotId = retired.length ? retired[0] : `attack:${count}`;
+    card = { instanceId: mintId(run), cardId: 'strike', upgraded: false, equipmentRole: 'attack', equipmentAttackSlotId: slotId };
+    if (retired.length) run.removedAttackSlotIds = (run.removedAttackSlotIds || []).filter((id) => id !== slotId);
+    else run.equipmentAttackSlotCount = count + 1;
   } else {
     card = { instanceId: mintId(run), cardId: 'defend', upgraded: false, equipmentRole: 'guard' };
   }

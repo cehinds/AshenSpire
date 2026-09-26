@@ -40,6 +40,7 @@ import { contentBundle } from '../../content/index.js';
 import { pageDebug } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
 import { deckRules } from '../../content/deckRules.js';
+import { deckSettingsProblems } from '../../model/deckRules.js';
 import { SEED_KEY, seedAfterChange, sameSetting } from '../../model/settingsDefaults.js';
 import { renderSettingsSync } from '../components/settingsSync.js';
 import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
@@ -672,12 +673,12 @@ const ROWS = [
     note: 'Free opens the editor from the map and the Armoury at any moment out of combat. Rest sites only offers it at a Shrine, an inn or a chapel.' },
   { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMinUnlimited', def: deckRules.defaults.deckMinUnlimited, label: 'No minimum deck size',
     gates: [{ key: 'deckEditing' }], note: 'Let the editor confirm a deck of any size, however small.' },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMinSize', type: 'number', def: deckRules.defaults.deckMinSize, min: 0, max: 200,
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMinSize', type: 'number', def: deckRules.defaults.deckMinSize, min: deckRules.sizeRange.min, max: deckRules.sizeRange.max,
     gates: [{ key: 'deckEditing' }, { key: 'deckMinUnlimited', when: false }], label: 'Minimum deck size', applied: numberAppliedHtml,
     note: 'The fewest cards the editor lets you confirm. Rewards and purchases can still move the deck outside it; the editor then asks you to bring it back.' },
   { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMaxUnlimited', def: deckRules.defaults.deckMaxUnlimited, label: 'No maximum deck size',
     gates: [{ key: 'deckEditing' }], note: 'Let the editor confirm a deck of any size, however large.' },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMaxSize', type: 'number', def: deckRules.defaults.deckMaxSize, min: 1, max: 200,
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMaxSize', type: 'number', def: deckRules.defaults.deckMaxSize, min: Math.max(1, deckRules.sizeRange.min), max: deckRules.sizeRange.max,
     gates: [{ key: 'deckEditing' }, { key: 'deckMaxUnlimited', when: false }], label: 'Maximum deck size', applied: numberAppliedHtml,
     note: 'The most cards the editor lets you confirm. It may not sit below the minimum.' },
   { cat: 'Advanced', advancedGroup: 'Deck', key: 'playInDeckOrder', def: deckRules.defaults.playInDeckOrder, label: 'Play in deck order',
@@ -2066,7 +2067,7 @@ export function paintConfigProblems(container, settings, extra = []) {
   // `extra` carries the refusals the MODEL cannot see, because the value never
   // reached it: a typed number the field clamped on its way in (see
   // `typedNumberRefusal`). Same shape, same painting, same dedupe.
-  const entries = [...advancedConfigProblemRows(contentBundle, settings), ...extra];
+  const entries = [...advancedConfigProblemRows(contentBundle, settings), ...deckSettingsProblems(settings), ...extra];
   const byKey = new Map();
   for (const entry of entries) {
     for (const key of entry.keys || []) {

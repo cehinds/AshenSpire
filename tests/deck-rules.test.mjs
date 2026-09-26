@@ -32,9 +32,9 @@ test('the defaults are data, and the bounds read them', () => {
   assert.equal(DECK_RULES.defaults.deckEditing, true);
   assert.equal(DECK_RULES.defaults.deckEditingWhere, 'free');
   assert.equal(DECK_RULES.defaults.deckMinSize, 10);
-  assert.deepEqual(deckEditBounds({}), { min: DECK_RULES.defaults.deckMinSize, max: Infinity });
-  assert.deepEqual(deckEditBounds({ deckMinUnlimited: true }), { min: 0, max: Infinity });
-  assert.deepEqual(deckEditBounds({ deckMaxUnlimited: false, deckMaxSize: 12 }), { min: 10, max: 12 });
+  assert.deepEqual(deckEditBounds({}), { min: DECK_RULES.defaults.deckMinSize, max: Infinity, problem: '' });
+  assert.deepEqual(deckEditBounds({ deckMinUnlimited: true }), { min: 0, max: Infinity, problem: '' });
+  assert.deepEqual(deckEditBounds({ deckMaxUnlimited: false, deckMaxSize: 12 }), { min: 10, max: 12, problem: '' });
   assert.equal(playInDeckOrder({}), DECK_RULES.defaults.playInDeckOrder);
 });
 
@@ -47,8 +47,9 @@ test('an out-of-bounds draft is refused with a sentence naming its count and the
   const long = deckEditRefusal(13, { deckMaxUnlimited: false, deckMaxSize: 12 });
   assert.match(long, /\b13\b/);
   assert.match(long, /\b12\b/);
-  assert.throws(() => deckEditBounds({ deckMaxUnlimited: false, deckMaxSize: 5 }), /max.*min|below/i,
-    'a max below the effective min is refused by name');
+  const bad = { deckMaxUnlimited: false, deckMaxSize: 5 };
+  assert.match(deckEditBounds(bad).problem, /below the minimum/, 'a max below the effective min is refused by name');
+  assert.match(deckEditRefusal(10, bad), /below the minimum/, 'and the editor refuses with that sentence, never a throw');
 });
 
 test('a limited card moves to the sideboard with its fields and back, never minted or destroyed', () => {
@@ -116,7 +117,12 @@ test('a run with no equipment mints plain unlimited basics with counted ids', ()
   assert.equal(minted.instanceId, 'edit:1');
   assert.equal(run.editMintCounter, 1);
   assert.equal(moveToSideboard(REG, run, minted.instanceId), true);
-  assert.ok(!run.sideboard.some((c) => c.instanceId === minted.instanceId), 'a plain basic is deleted, not kept');
+  assert.ok(!run.sideboard.some((c) => c.instanceId === minted.instanceId), 'a pristine plain basic is deleted, not kept');
+  const plain = run.deck.find((c) => c.instanceId === 'plain1');
+  plain.upgraded = true;
+  assert.equal(moveToSideboard(REG, run, 'plain1'), true);
+  assert.ok(run.sideboard.some((c) => c.instanceId === 'plain1'), 'an upgraded plain basic is kept');
+  assert.equal(addBasicCard(REG, run, 'strike', { plain: true }).instanceId, 'plain1', 'and comes back before a fresh one');
 });
 
 test('ordered draw piles and returns follow the deck, Innate first, consuming no shuffle value', () => {
@@ -222,4 +228,61 @@ test('Settings → Advanced → Deck shows one row per rule, each defaulting fro
   assert.deepEqual(rows.map((row) => row.key).sort(), Object.keys(DECK_RULES.defaults).sort());
   for (const row of rows) assert.equal(row.def, DECK_RULES.defaults[row.key], `${row.key} defaults from content/deckRules.js`);
   assert.deepEqual(rows.find((row) => row.key === 'deckEditingWhere').choices, [...DECK_RULES.where]);
+});
+
+test('review fixes: a merchant-retired slot is reused, a malformed ordered snapshot is refused, a dangling sideboard id archives', async () => {
+  const { removeDeckCard } = await import('../src/model/cardRemoval.js');
+  const { combatSnapshotProblems } = await import('../src/model/combatSnapshot.js');
+  const run = freshRun();
+  const strike = run.deck.find((c) => c.equipmentRole === 'attack');
+  const born = run.equipmentAttackSlotCount;
+  assert.ok(removeDeckCard(run, strike.instanceId), 'the merchant removes it for good');
+  const added = addBasicCard(REG, run, 'attack');
+  assert.equal(added.equipmentAttackSlotId, strike.equipmentAttackSlotId, 'the retired slot is reused');
+  assert.equal(run.equipmentAttackSlotCount, born, 'the allocation did not grow');
+  assert.deepEqual(run.removedAttackSlotIds, []);
+  assert.doesNotThrow(() => stampDeck(REG, run));
+
+  const combat = createRunCombat({ registries: REG, rng: createRng(3), run: freshRun(), enemyIds: [ENEMY], settings: { playInDeckOrder: true } });
+  const snap = serializeCombatSnapshot(combat);
+  assert.deepEqual(combatSnapshotProblems(snap), []);
+  assert.ok(combatSnapshotProblems({ ...snap, orderedDraw: {} }).some((p) => /orderedDraw/.test(p)));
+
+  const saved = freshRun();
+  saved.sideboard.push({ instanceId: 'gone1', cardId: 'noSuchCard', upgraded: false });
+  saved.contentVersion = 'older';
+  const storage = createMemoryStorage();
+  const saves = createSaveManager(storage);
+  saves.saveRun(saved, createRng(1));
+  assert.equal(createSaveManager(storage).loadRun(REG), null, 'a dangling sideboard card archives the save');
+});
+
+test('a LAN seat carries its owner\'s Play in deck order into the fight', async () => {
+  const { createSession } = await import('../tools/session.mjs');
+  const game = createSession({ registries: REG, seedString: 'ORDER' });
+  const m = game.addMember({ id: 'p1', name: 'Wren', classId: 'reaver', playInDeckOrder: true });
+  assert.equal(m.playInDeckOrder, true);
+  const restored = JSON.parse(JSON.stringify(game.serialize()));
+  assert.equal(restored.members[0].playInDeckOrder, true, 'the seat keeps it across a host save');
+});
+
+test('Settings paints the min-above-max refusal on both rows', async () => {
+  const { deckSettingsProblems } = await import('../src/model/deckRules.js');
+  assert.deepEqual(deckSettingsProblems({}), []);
+  const [problem] = deckSettingsProblems({ deckMinSize: 30, deckMaxUnlimited: false, deckMaxSize: 20 });
+  assert.deepEqual(problem.keys, ['deckMinSize', 'deckMaxSize']);
+  assert.match(problem.message, /20.*30/);
+});
+
+test('a restored ordered fight returns its discard in deck order, Innate cards opening first', () => {
+  const run = freshRun();
+  run.deck.push(createCardInstance('warriorsVow', false, () => 'innate1'));
+  const combat = createRunCombat({ registries: REG, rng: createRng(5), run, enemyIds: [ENEMY], settings: { playInDeckOrder: true } });
+  assert.equal([...combat.piles.hand, ...combat.piles.draw][0].instanceId, 'innate1', 'the Innate card opens the pile');
+  const back = restoreCombatSnapshot({ registries: REG, rng: createRng(5), snapshot: serializeCombatSnapshot(combat) });
+  back.piles.discard.push(...back.piles.draw.splice(0).reverse(), ...back.piles.hand.splice(0).reverse());
+  drawCards(back, 1);
+  const order = back.orderedDraw.order;
+  const pile = [...back.piles.hand, ...back.piles.draw].map((c) => c.instanceId);
+  assert.deepEqual(pile, [...pile].sort((a, b) => order.indexOf(a) - order.indexOf(b)));
 });

@@ -200,9 +200,10 @@ export function attachLan(server, { port, root }) {
     const game = createSession({ registries: REG, seedString: session.seedString || 'GOLDBOUGH', endless: !!session.endless });
     const fallbackClass = REG.classes.all()[0].id;
     for (const cl of session.clients.values()) {
-      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, startingKitId: cl.startingKitId, discoveredArmaments: cl.discoveredArmaments, tint: cl.tint, spriteStyle: cl.spriteStyle });
+      game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, startingKitId: cl.startingKitId, discoveredArmaments: cl.discoveredArmaments, tint: cl.tint, spriteStyle: cl.spriteStyle, playInDeckOrder: cl.playInDeckOrder });
       (cl.locals || []).forEach((lp, i) => game.addMember({
         id: `${cl.id}L${i + 1}`, name: lp.name, classId: lp.classId || fallbackClass, startingKitId: lp.startingKitId, discoveredArmaments: lp.discoveredArmaments, tint: lp.tint, spriteStyle: lp.spriteStyle,
+        playInDeckOrder: cl.playInDeckOrder, // couch seats share the device's profile
       }));
     }
     game.start();
@@ -248,6 +249,7 @@ export function attachLan(server, { port, root }) {
         pl.name = String(msg.name || 'Forsaken').slice(0, 18);
         pl.classId = msg.classId || null;
         pl.startingKitId = msg.startingKitId || null;
+        pl.playInDeckOrder = msg.playInDeckOrder === true;
         pl.discoveredArmaments = Array.isArray(msg.discoveredArmaments) ? [...new Set(msg.discoveredArmaments.filter((id) => typeof id === 'string'))] : [];
         pl.tint = msg.tint || 'gold';
         pl.spriteStyle = msg.spriteStyle || DEFAULT_SPRITE_STYLE;
