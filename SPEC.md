@@ -2465,6 +2465,7 @@ This section is that contract. The rules from §14's preamble apply here too:
 - Every number is a `balance.*` leaf with a `[NOTE]`, so it gets its `gameConfig.*` Settings row generated and is frozen per run (`advancedConfigRows`, `run.advancedConfigSnapshot`).
 - Every shipped default reproduces today's behaviour, so an existing seed rolls exactly what it rolled before.
 - New run state is additive, with a schema bump and a captured corpus save per PR.
+- Every new **percentage chance** (`cardRewards.chancePct.*`, `equipment.drops.chance.normal`, `smithing.rewardChancePct.*`, `sigils.dropChancePct.*`) gets an explicit `BALANCE_DOMAINS` entry of 0–100 in `model/advancedConfig.js`, because `leafRows` otherwise derives the range from the shipped value (a 0 would cap at 20, a 100 would allow 1000). `maxLevelsPerFight` gets 0–20.
 
 "Runes" are named **sigils** here for the reason §14.3 gives: "runes" is the old currency word.
 
@@ -2483,7 +2484,7 @@ These keys go in `balance.rewards.cardRewards`.
 - **Chance rolls.** They use a new stream, **`rewardRolls`**, appended to the end of `STREAM_NAMES`, so no existing stream moves. A roll that fails leaves no card row, and the menu says so in one line: "No card this time."
 - **Level card row.** Its cards come from the class reward pool at the door's own rarity odds, through `rollCardRewardIds` on `cardRewards`. It is a new `REWARD_KIND_ORDER` kind, `levelCard`, sitting after `card`. Its row key is `levelCard:<ordinal>` (`rowKey` gains the `levelCard` case), and it is taken and skipped like the card offer. Each level-card row's pick persists in `pendingReward.chosenDraftCardIds[<rowKey>]`, the row-keyed map the class drafts already use (not the single `chosenCardId`, which stays the `card` row's), so two or more level-card rows save and restore unambiguously; `validateRunShape` treats an absent map as `{}`, so a Taken level-card row with no pick is refused by name. A save written before this section has no level-card rows and needs no migration.
 - **Drafts.** Skill and class drafts (§13.4e and §13.4g) are unchanged, and when a draft is waiting it still takes the card row's seat. A waiting draft does **not** displace the level card: the level card is the level's own reward, the draft is the track's.
-- **Consumers.** `main.js onCombatEnd`, `tools/session.mjs` (the co-op reward scene) and `tools/runsim.mjs` read the schedule through one model function, `cardRewardPlan(balance, { pool, levelsGained }, rng)` in `model/rewardplan.js`, so solo, co-op and the simulator agree.
+- **Consumers.** `main.js onCombatEnd`, `tools/session.mjs` (the co-op reward scene) and `tools/runsim.mjs` read the schedule through one model function, `cardRewardPlan(balance, { pool, levelsGained }, rng)` in `model/rewardplan.js`, so solo, co-op and the simulator share one rule. **Scope, stated:** co-op today reads the shipped balance for every `gameConfig.*` row (`tools/lan.mjs` builds its registries from `contentBundle`, with no host snapshot), so a LAN session plays the shipped schedule until the host's `advancedConfigSnapshot` is carried into the session. That carriage is its own follow-up for all `gameConfig` rows, not a §15 change.
 - A saved `pendingReward` written before this section reads as "card row as rolled".
 
 *Falsify:*
