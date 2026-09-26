@@ -10,10 +10,10 @@ import test from 'node:test';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { validateContent } from '../src/model/validate.js';
-import { createRunState, validateRunShape } from '../src/model/state.js';
+import { createRunState, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { createRng, STREAM_NAMES } from '../src/engine/rng.js';
-import { rollCardRewardIds, rollCombatCardOffer, cardRewardSchedule } from '../src/engine/encounters.js';
-import { rewardPlan, resolveContinue, rewardClaimStatus, rewardNotes, REWARD_KIND_ORDER, rowKey, cardRewardPlan } from '../src/model/rewardplan.js';
+import { rollCardRewardIds, rollCombatCardOffer } from '../src/engine/encounters.js';
+import { rewardPlan, resolveContinue, rewardClaimStatus, rewardNotes, REWARD_KIND_ORDER, rowKey, cardRewardPlan, cardRewardSchedule } from '../src/model/rewardplan.js';
 import { resolveCard } from '../src/model/registries.js';
 import { playCard, endTurn } from '../src/engine/coopCombat.js';
 import { createSession } from '../tools/session.mjs';
@@ -377,4 +377,78 @@ test('the reward screen draws the level card row, takes it through the chooser, 
   } finally {
     for (const [key, value] of Object.entries(saved)) globalThis[key] = value;
   }
+});
+
+test('two level cards are taken, and both picks persist in chosenDraftCardIds[<rowKey>] across a reload', () => {
+  const reg = withSchedule({ onLevelUp: true, onLevelUpMaxPerFight: 2 });
+  const offer = rollCombatCardOffer(reg, createRng(21), args('normal', { levelUps: 3 }));
+  assert.equal(offer.levelCards.length, 2);
+  const run = createRunState({ registries: REG, classId: 'reaver', seed: 21 });
+  run.pendingReward = {
+    schemaVersion: 1, source: 'normal', after: 'map', rewards: structuredClone(offer.rewards),
+    states: {}, chosenCardId: null, chosenDraftCardIds: {}, chosenDraftNodeIds: {},
+  };
+  const deckBefore = run.deck.length;
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const mount = (r) => {
+      const app = document.createElement('main'); document.body.append(app);
+      mountRewards(app, { registries: REG, run: r, checkpoint: r.pendingReward, rewards: r.pendingReward.rewards, onDone() {}, onPersist() {} });
+      return app;
+    };
+    const app = mount(run);
+    const picks = {};
+    for (const key of ['levelCard:0', 'levelCard:1']) {
+      app.querySelector(`[data-key="${key}"]`).click();
+      app.querySelectorAll('.reward-row .card')[2].click();
+      picks[key] = app.querySelectorAll('.reward-row .card')[2].dataset.cardId;
+      app.querySelector('#reward-card-confirm').click();
+    }
+    app.remove();
+    assert.deepEqual(run.pendingReward.chosenDraftCardIds, picks, 'each pick is kept under its own row key');
+    assert.deepEqual(run.deck.slice(deckBefore).map((c) => c.cardId), Object.values(picks));
+    // The reload: the bytes a save holds, read back through the load door.
+    const back = deserializeRun(serializeRun(run));
+    assert.deepEqual(validateRunShape(back).filter((m) => m.startsWith('pendingReward')), []);
+    assert.deepEqual(back.pendingReward.chosenDraftCardIds, picks);
+    assert.deepEqual(back.pendingReward.states, { 'levelCard:0': 'taken', 'levelCard:1': 'taken' });
+    const again = mount(back);
+    assert.deepEqual(again.querySelectorAll('[data-kind="levelCard"]').map((row) => row.dataset.state), ['taken', 'taken'], 'the resumed door shows both rows taken');
+    again.remove();
+  } finally {
+    for (const [key, value] of Object.entries(saved)) globalThis[key] = value;
+  }
+});
+
+test('a Taken levelCard row with no chosenDraftCardIds map at all is refused by name', () => {
+  const run = createRunState({ registries: REG, classId: 'reaver', seed: 3 });
+  const pendingReward = {
+    schemaVersion: 1, source: 'normal', after: 'map', chosenCardId: null, chosenDraftNodeIds: {},
+    rewards: { cardIds: [], levelCards: [{ ordinal: 0, cardIds: ['stomp', 'rend', 'gildedOath'] }] },
+    states: { 'levelCard:0': 'taken' },
+  };
+  assert.ok(validateRunShape({ ...run, pendingReward }).some((m) => /levelCard:0 Taken state requires its chosen card/.test(m)));
+});
+
+test('a co-op seat that was away claims its level card through the catch-up', () => {
+  const reg = withSchedule({ onLevelUp: true });
+  const host = createSession({ registries: reg, seedString: 'AWAY' });
+  for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
+  host.start();
+  for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
+  for (const enemy of host.live.combat.enemies) enemy.hp = 1;
+  host.setConnected('p2', false);
+  host.autoResolveCombat(botTurn);
+  const p2 = host.livingMembers().find((m) => m.id === 'p2');
+  const debt = p2.catchup.find((item) => item.type === 'reward');
+  assert.ok(debt, 'the away seat owes a reward');
+  assert.equal(debt.offer.levelCards?.length, 1, "the away seat levelled in the fight and is owed a level card");
+  const picked = debt.offer.levelCards[0].cardIds[0];
+  const before = p2.run.deck.length;
+  host.setConnected('p2', true);
+  assert.equal(host.resolveCatchup('p2', p2.catchup.indexOf(debt), { levelCardIds: { 0: picked } }).ok, true);
+  assert.equal(p2.run.deck.length, before + 1);
+  assert.equal(p2.run.deck.at(-1).cardId, picked);
 });

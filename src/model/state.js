@@ -933,8 +933,11 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
         problems.push('pendingReward.rewards.cardMissed must be a boolean');
       }
-      if (pending.chosenDraftCardIds !== undefined) {
-        const chosen = pending.chosenDraftCardIds;
+      {
+        // The map may be absent (a save written before it existed); the rule
+        // that a Taken draft or level card (SPEC §15.1) names its card holds
+        // all the same, as the class-draft rule below does.
+        const chosen = pending.chosenDraftCardIds === undefined ? {} : pending.chosenDraftCardIds;
         if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftCardIds must be an object keyed by draft row');
         else {
           const drafts = pendingDraftRows(pending).filter((d) => d.cardIds);

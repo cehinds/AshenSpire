@@ -1042,6 +1042,24 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (reason) attachTooltip(card, () => esc(reason));
     return card;
   }
+  // LEVEL CARDS (SPEC §15.1): one strip per row an offer carries. A tap only
+  // SELECTS — the pick is written into `picks` (ordinal → card id) and rides
+  // along with whichever choice closes the spoils. The live reward and the
+  // catch-up of a seat that was away both draw them here.
+  function levelCardStrips(offer, picks) {
+    return (Array.isArray(offer.levelCards) ? offer.levelCards : []).flatMap((row) => {
+      const strip = el('div', { class: 'reward-row coop-level-card', dataset: { ordinal: String(row.ordinal) } });
+      row.cardIds.forEach((cid) => {
+        const card = renderCard(registries, { cardId: cid, upgraded: false }, {});
+        card.addEventListener('click', () => {
+          picks[row.ordinal] = cid;
+          for (const other of strip.children) other.classList.toggle('is-chosen', other === card);
+        });
+        strip.appendChild(card);
+      });
+      return [subtitle(t('reward.levelCard.title')), strip];
+    });
+  }
   function renderReward() {
     const offer = snap.scene.offers[me];
     if (!offer) { sceneDoor({ title: 'Spoils', children: [waiting('Waiting for the others to choose…')] }); return; }
@@ -1049,20 +1067,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const grid = el('div', { class: 'reward-row' });
     let pick = { cardId: null, takeRelic: false, flask: false, levelCardIds: {} };
     const submit = () => send({ t: 'chooseReward', pick });
-    // LEVEL CARDS (SPEC §15.1): one strip per row. A tap here only SELECTS —
-    // the pick rides along with whichever choice below closes the spoils.
-    const levelStrips = (Array.isArray(offer.levelCards) ? offer.levelCards : []).flatMap((row) => {
-      const strip = el('div', { class: 'reward-row coop-level-card', dataset: { ordinal: String(row.ordinal) } });
-      row.cardIds.forEach((cid) => {
-        const card = renderCard(registries, { cardId: cid, upgraded: false }, {});
-        card.addEventListener('click', () => {
-          pick.levelCardIds[row.ordinal] = cid;
-          for (const other of strip.children) other.classList.toggle('is-chosen', other === card);
-        });
-        strip.appendChild(card);
-      });
-      return [subtitle(t('reward.levelCard.title')), strip];
-    });
+    const levelStrips = levelCardStrips(offer, pick.levelCardIds);
     offer.cardIds.forEach((cid) => {
       const card = renderCard(registries, { cardId: cid, upgraded: false }, {});
       card.addEventListener('click', () => { pick.cardId = cid; submit(); });
@@ -1242,20 +1247,25 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       }));
       return;
     }
-    const grid = item.type === 'reward' ? el('div', { class: 'reward-row' }) : null;
+    const grid = item.type === 'reward' && item.offer.cardIds.length ? el('div', { class: 'reward-row' }) : null;
     const relic = (item.type === 'reward' && item.offer.relicId) || (item.type === 'treasure' && item.relicId);
+    const levelCardIds = {};
+    const levelStrips = item.type === 'reward' ? levelCardStrips(item.offer, levelCardIds) : [];
     sceneDoor({
       title, eyebrow: debt,
       note: 'Claim what you would have earned while away.',
       children: [
+        ...levelStrips,
         grid,
+        item.type === 'reward' && item.offer.cardMissed ? el('p', { class: 'reward-note', dataset: { note: 'cardMissed' }, text: t('reward.note.cardMissed') }) : null,
         options([
           relic ? choice({ glyph: '◆', name: 'Take the relic', className: 'coop-take', attrs: { dataset: { cu: 'relic' } } }) : null,
           choice({ glyph: '›', name: 'Skip', attrs: { dataset: { cu: 'skip' } } }),
         ], { class: 'coop-choices' }),
       ],
     });
-    const resolve = (pick) => send({ t: 'catchupChoice', index: 0, pick });
+    // Every closing choice carries the level-card picks made above.
+    const resolve = (pick) => send({ t: 'catchupChoice', index: 0, pick: levelStrips.length ? { ...pick, levelCardIds } : pick });
     if (grid) {
       item.offer.cardIds.forEach((cid) => { const card = renderCard(registries, { cardId: cid, upgraded: false }, {}); card.addEventListener('click', () => resolve({ cardId: cid })); grid.appendChild(card); });
     }

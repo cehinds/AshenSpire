@@ -119,7 +119,6 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
 // model/rewardplan.js `cardRewardPlan`, the one door solo, co-op
 // (tools/session.mjs) and the simulator (tools/runsim.mjs) read it through.
 // This rolls the CARDS for the rows that plan grants.
-export { cardRewardSchedule, cardRewardPlan } from '../model/rewardplan.js';
 
 /**
  * rollCombatCardOffer(registries, rng, { classId, pool, relicIds, flatRarity,
