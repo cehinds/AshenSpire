@@ -197,6 +197,7 @@ export function builtInFor(url) {
     current.delete(id);
     setHighResSource(current);
     failed.add(url);
+    if (status) { describeSource(); showStatus(); }
   } else if (!failed.has(url)) return null;
   return assetUrl(id);
 }
@@ -232,9 +233,7 @@ function publish() {
     refreshMountedArt();
     announce(n);
   }
-  if (typeof document !== 'undefined') {
-    for (const el of document.querySelectorAll('[data-art-status]')) el.textContent = status;
-  }
+  showStatus();
   return n;
 }
 
@@ -267,13 +266,23 @@ export async function applyArtQuality(settings, opts = {}) {
     // loaded: that later call has already published, so this one must not.
     if (gen !== generation) return 0;
   }
+  const n = describeSource();
+  return publish() && n;
+}
+
+// The status line for the source in use, from what it covers now (a failed
+// file shrinks it). Returns that count.
+function describeSource() {
   const n = (picked && picked.size) || (served && served.size) || 0;
   const files = `${n} high-res file${n === 1 ? '' : 's'}`;
-  const from = picked ? `${files} from the folder you chose`
-    : served ? `${files} served beside the game` : '';
+  const from = !n ? '' : picked ? `${files} from the folder you chose` : `${files} served beside the game`;
   status = from ? `${from}; anything it lacks stays built-in.`
     : 'No high-res folder found. Choose one; anything it lacks stays built-in.';
-  return publish() && n;
+  return n;
+}
+function showStatus() {
+  if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return;
+  for (const el of document.querySelectorAll('[data-art-status]')) el.textContent = status;
 }
 
 /** The status line the settings row shows. */
