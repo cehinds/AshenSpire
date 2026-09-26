@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-26
+
+- **Turning off this device's screen settings no longer reloads your synced profile over local changes** ([#1329](https://github.com/cehinds/AshenSpire/pull/1329), `0.7.1.550`). Switching "Include this device's screen settings" off keeps the record of which profile version was loaded, so the next start leaves edits made here alone; switching it on still reloads, to bring in the screen settings it skipped (settings sync is in development and test builds only).
+
 ## 2026-09-25
 
 - **Synced settings keep which values you chose, and a mistyped sync location is refused** ([#1322](https://github.com/cehinds/AshenSpire/pull/1322), `0.7.1.548`). A settings profile now records which of its values are the owner's promoted defaults, so a value you picked on one device stays yours on the next and a later default update leaves it alone. An Undo only ever applies to the settings it came from, a reset that only hands values back to the defaults can be undone, and a sync location with a typo is refused by name instead of quietly saving over the default profile (settings sync is in development and test builds only).

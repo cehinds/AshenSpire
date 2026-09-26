@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1329",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Turning off this device's screen settings no longer reloads your synced profile over local changes",
+    "detail": "Switching \"Include this device's screen settings\" off keeps the record of which profile version was loaded, so the next start leaves edits made here alone; switching it on still reloads, to bring in the screen settings it skipped (settings sync is in development and test builds only).",
+    "build": "0.7.1.550",
+    "pullRequest": 1329,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1329"
+  },
+  {
     "id": "pr-1322",
     "date": "2026-09-25",
     "group": "2026-09-25",
