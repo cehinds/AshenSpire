@@ -64,6 +64,19 @@ behavior, and remove the adapter only after repository-wide consumer proof.
   `src/model/` and `src/engine/`.
 - Content changes prefer JSON/CSV and reusable interpreters over per-entity
   imperative branches.
+- **A component's size and shape are authored data, and a stylesheet reads them
+  rather than restating them.** The playing card is the worked example:
+  `content/config/ui/components/card.json` holds `sizing.ratio`, `sizing.bands`
+  and `sizing.levels`; `src/ui/models/CardSizeModel.js` validates them and
+  projects `--card-ratio`, `--card-height-per-width`, `--card-bands`,
+  `--card-band-head` and `--card-w-<level>` onto `:root` from the composition
+  root; and every `.card` rule in `styles/` reads those properties. Until this
+  was closed the ratio and the four face bands were written out a second time in
+  `styles/kit.css`, so the card shipped at two shapes at once and editing the
+  config moved neither. A page that draws card faces without booting `main.js`
+  (`armament-kits-preview.html`) projects them itself; there is deliberately no
+  fallback in the stylesheet, so a missing projection is a shapeless, loud card
+  rather than a quietly wrong one. `node tools/card-one-shape.mjs` is the gate.
 - The architecture refresh routine updates only the current-dev inventory; it
   cannot replace this contract or silently change the redesign goals.
 
@@ -200,6 +213,64 @@ reference validators accept the stored record, save migration composes one plan 
 snapshot's authoritative loadout and applies it to the combined `draw`/`hand`/`discard`/`exhaust`
 attack instances. The result replaces the stale top-level loadout projection before resume. No
 snapshot-specific package rules, renderer controller, or second composition service exists.
+
+## Card presentation levels
+
+How much a card face says is authored, not decided by whatever pixels are left
+over. Three levels — `glance`, `focus`, `inspect` — are declared in
+`content/config/ui/components/card.json` under `behavior.fields`, compiled by
+`tools/config-build.mjs` into `src/config/generated/ui.js`, and answered by the
+pure `src/model/cardFields.js`.
+
+```text
+content/config/ui/components/card.json  (behavior.fields)
+├─ levels    { glance | focus | inspect: [...regionKeys] }
+└─ surfaces  { <surfaceId>: { <level>: { add: [], drop: [] } } }   sparse patches
+        │
+        ▼
+src/model/cardFields.js   cardFields(level, { surface }) → { visible, omit }
+        │                 resolveCardLevel({ floor, lit, inspecting })
+        ├──────────────► src/model/equipmentCard.js  equipmentCardTokens(..., { omit })
+        ├──────────────► src/ui/components/equipmentCard.js  renderEquipmentCard
+        └──────────────► src/ui/components/card.js           renderCard
+```
+
+The rules this boundary holds:
+
+- **One vocabulary.** The region keys are exactly the keys of
+  `balance.ui.equipmentCard.regions`; there is no second list shaped like it.
+  Both card types map their own landmarks onto that one vocabulary, which is
+  what the shared models (`equipmentCardModel`, `playingCardModel`) were
+  extracted to make possible. `name` is not a region: it is positioned over the
+  art, holds no row, and shows at every level.
+- **The level is derived, never declared by a screen.**
+  `src/ui/components/cardSelection.js` already owns which card is lit. A caller
+  may set the *floor* — the least a surface is willing to say — and selection
+  promotes from it; the reading door is `inspect`. No screen keeps its own copy
+  of "which card is focused". A picker's grid/list toggle *selects* a level
+  (`levelForView`) rather than owning a field set, so the tables stay one.
+- **One `level` argument.** It drives both which fields appear and how large the
+  card is drawn. A second level-ish parameter would be two homes for one fact.
+- **Hide by not rendering.** A region a level does not say is absent from the
+  markup, never `display:none`. A hidden region would still spend a row in the
+  solver's height budget, so omitting it returns its floor *and its gaps* to the
+  regions that remain — the effect rows measure 136px at `glance` against 54px
+  at `inspect` — and a screen reader never announces a field the player cannot
+  see. `equipmentCardTokens` takes `omit` for this and keeps `collapse` for the
+  different case of a region the card has nothing to put in.
+- **Surfaces have one home.** A patch may only name a surface
+  `src/services/cardActions.js` already declares, so the place a card stands and
+  the verbs it offers there cannot drift into two vocabularies.
+- **Only the cards whose level changed repaint.** `cardInspection.js` fires
+  `cardinspectionselect` and `cardinspectiondouse` on the card each concerns, so
+  a selection repaints exactly two faces. Nothing sweeps the document; the
+  `document.querySelectorAll` reconciliation this would otherwise grow back is
+  what the selection store was extracted to delete.
+
+`tests/card-presentation-levels.test.mjs` is the gate: every manifest region
+exists in `balance.ui.equipmentCard.regions`, the solver honours its declared
+floors with regions omitted (at the sparsest level *and* at the fullest), and
+`glance ⊆ focus ⊆ inspect` holds at the base and on every patched surface.
 
 ## Migration order
 

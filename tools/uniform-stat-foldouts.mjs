@@ -244,6 +244,17 @@ async function checkCreation(shape) {
   await cdp.send('Target.closeTarget', { targetId: page.targetId });
 }
 
+// THE CARDS THE CHARACTER SURFACE DECLARES, in DOM order, and the ONE place
+// this file counts them. The count used to be the literal 4, typed at three
+// sites that had to be found and changed together; a fifth fold (Skill
+// progression) arrived and the wait at the top of checkArmoury timed out
+// before any assertion could say which of the three disagreed. The list also
+// pins the ORDER, which three separate `.length === 4` checks never did.
+const ARMOURY_INFO_CARDS = [
+  'armoury.combatPowerCard', 'armoury.attributesCard', 'armoury.relicsCard',
+  'armoury.skillsCard', 'armoury.equipmentReceiptsCard',
+];
+
 async function checkArmoury(shape) {
   const page = await openTarget(shape);
   await cdp.send('Page.navigate', { url: `http://localhost:${server.port}${APP_PATH}?shot=combat` }, page.sessionId);
@@ -251,14 +262,14 @@ async function checkArmoury(shape) {
   await page.evaluate("document.querySelector('#combat-armoury').click()");
   await page.until("!!document.querySelector('.armoury-overlay [data-surface=\"armouryView\"]')", 'Armoury');
   await page.evaluate("document.querySelector('.armoury-overlay [data-surface=\"armouryView\"] [data-member=\"grid\"]').click()");
-  await page.until("document.querySelector('.armoury')?.dataset.pane==='character' && document.querySelectorAll('.character-info-card').length===4", 'Armoury Character view');
+  await page.until(`document.querySelector('.armoury')?.dataset.pane==='character' && document.querySelectorAll('.character-info-card').length===${ARMOURY_INFO_CARDS.length}`, 'Armoury Character view');
 
   const arrival = await page.evaluate(`(() => ({
     cards:[...document.querySelectorAll('.character-info-card')].map((card) => card.dataset.component),
     open:[...document.querySelectorAll('.character-info-card[open]')].map((card) => card.dataset.component),
     aria:[...document.querySelectorAll('.character-info-card > summary')].map((head) => head.getAttribute('aria-expanded')),
   }))()`);
-  check(arrival.cards.length === 4 && arrival.open.join(',') === 'armoury.attributesCard'
+  check(arrival.cards.join(',') === ARMOURY_INFO_CARDS.join(',') && arrival.open.join(',') === 'armoury.attributesCard'
     && arrival.aria.filter((value) => value === 'true').length === 1,
   `${shape.name}: Armoury Character arrives with only Attributes expanded`, arrival);
 
@@ -287,10 +298,10 @@ async function checkArmoury(shape) {
         overflow:card.scrollWidth>card.clientWidth+1};
     });
   })()`);
-  check(folded.length === 4 && folded.every((card) => !card.open && !card.overflow
+  check(folded.length === ARMOURY_INFO_CARDS.length && folded.every((card) => !card.open && !card.overflow
     && card.head >= 43 && Math.abs(card.height-folded[0].height) <= 1
     && Math.abs(card.width-folded[0].width) <= 1),
-  `${shape.name}: all four folded information cards have uniform, tap-sized headers`, folded);
+  `${shape.name}: every folded information card has a uniform, tap-sized header`, folded);
   await screenshot(page, shape, '.armoury-character-stats', 'armoury-folded');
 
   await trustedClick(page, shape, '.combatPowerCard > summary');
@@ -299,6 +310,9 @@ async function checkArmoury(shape) {
   await trustedClick(page, shape, '.relicsCard > summary');
   open = await page.evaluate(`[...document.querySelectorAll('.character-info-card[open]')].map((card) => card.dataset.component)`);
   check(open.join(',') === 'armoury.relicsCard', `${shape.name}: opening Relics closes Combat Power`, open);
+  await trustedClick(page, shape, '.skillsCard > summary');
+  open = await page.evaluate(`[...document.querySelectorAll('.character-info-card[open]')].map((card) => card.dataset.component)`);
+  check(open.join(',') === 'armoury.skillsCard', `${shape.name}: opening Skill progression closes Relics`, open);
   await trustedClick(page, shape, '.attributesCard > summary');
   open = await page.evaluate(`[...document.querySelectorAll('.character-info-card[open]')].map((card) => card.dataset.component)`);
   check(open.join(',') === 'armoury.attributesCard', `${shape.name}: reopening Attributes closes Relics`, open);
@@ -306,7 +320,7 @@ async function checkArmoury(shape) {
   check(focus, `${shape.name}: the newly opened information header owns focus`);
   await screenshot(page, shape, '.attributesCard', 'armoury-attributes');
   // Three activations in one task expose races hidden by click-and-wait checks.
-  await page.evaluate(`['relicsCard','attributesCard','combatPowerCard'].forEach((name) =>
+  await page.evaluate(`['relicsCard','skillsCard','attributesCard','combatPowerCard'].forEach((name) =>
     document.querySelector('.'+name+' > summary').click())`);
   await wait(200);
   const rapid = await page.evaluate(`(() => {

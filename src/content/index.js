@@ -20,13 +20,24 @@ import { flasks } from './flasks.js';
 import { act1Enemies } from './enemies/act1.js';
 import { act2Enemies } from './enemies/act2.js';
 import { act3Enemies } from './enemies/act3.js';
-import { act1Encounters } from './encounters/act1.js';
-import { act2Encounters } from './encounters/act2.js';
-import { act3Encounters } from './encounters/act3.js';
-import { events, eventHistoryRequirements } from './events.js';
+import { wealdEncounters } from './encounters/weald.js';
+import { marchesEncounters } from './encounters/marches.js';
+import { reachEncounters } from './encounters/reach.js';
+import { SEATS } from './seats.js';
+import { events, eventHistoryRequirements, eventChoiceIds, questChains, eventSpeakers } from './events.js';
+import { speakers } from './generated/speakers.js';
+import { worldAtlas } from './generated/worldAtlas.js';
 import { classes, LOCKED_CLASSES } from './classes.js';
 import { mapConfigs } from './mapconfig.js';
 import { TAGS, TAG_DOMAINS, TAG_FAMILIES, TAG_FAMILY_DOMAINS, TAGGING } from './tags.js';
+import { PROPERTY_RULES } from './propertyRules.js';
+import { nodes } from './generated/nodes.js';
+import { nodeRelations } from './generated/nodeRelations.js';
+import { familyNodes } from './generated/familyNodes.js';
+import { nodeTerms } from './generated/nodeTerms.js';
+import { nodeVariables } from './generated/nodeVariables.js';
+import { variableBindings } from './generated/variableBindings.js';
+import { nodeEffects } from './generated/nodeEffects.js';
 import { scripts } from './scripts.js';
 import { SFX_RECIPES } from './sfx.js';
 import { SCALES, BEDS } from './music.js';
@@ -37,6 +48,7 @@ import {
 } from './equipment.js';
 import { equipTargets } from './generated/equipTargets.js';
 import { unlocks } from './generated/unlocks.js';
+import { classTree } from './generated/classTree.js';
 import { attributes, creationModes, attributeRules } from './attributes.js';
 import { retiredAttributeNames } from './retiredNames.js';
 import { derivedStatRules } from './derivedStats.js';
@@ -53,7 +65,10 @@ export const contentBundle = {
   // Release series and candidate live here; tools/buildversion.mjs derives the
   // fourth component and resets it to zero whenever this release changes.
   // The owner moved current builds to the 0.6.x.x series on 2026-09-08.
-  version: '0.6.0',
+  // 0.7.1: the first candidate of the 0.7 line — seats (SPEC §13), a new
+  // run-order system live for players with its save-schema migration, is a
+  // MINOR under docs/versioning.md rule 2; the owner's release cut names 0.7.0.
+  version: '0.7.1',
   balance,
   cards,
   relics,
@@ -63,9 +78,23 @@ export const contentBundle = {
   resources,
   keywords,
   enemies: [...act1Enemies, ...act2Enemies, ...act3Enemies],
-  encounters: [...act1Encounters, ...act2Encounters, ...act3Encounters],
+  // Bundle order is read order: the boss pool a map draws from is this list
+  // filtered, so a seat's bosses keep the columns they have always landed in
+  // (SPEC §13.6). The Valkyrie row sits first in reach.js for the same reason.
+  encounters: [...wealdEncounters, ...marchesEncounters, ...reachEncounters],
+  // The seats (SPEC §13.1): a registry, so an encounter's `seat` is a ref the
+  // validator resolves like any other id.
+  seats: SEATS,
   events,
   eventHistoryRequirements,
+  // Plan phase 10a: quest chains complete through one door, and every chain
+  // step is spoken by a speaker row (content/source/speakers.csv). Atlas quest
+  // rows ride along so validation can resolve their speakers too.
+  eventChoiceIds,
+  questChains,
+  eventSpeakers,
+  speakers,
+  atlasQuests: worldAtlas.quests,
   flasks,
   classes,
   mapConfigs,
@@ -96,6 +125,8 @@ export const contentBundle = {
     armouryUi: ARMOURY_UI,
   },
   unlocks,
+  // Plan phase 5b: the class tree — which property nodes a class may pick, by tier.
+  classTree,
   // The tag schema rides the bundle so every carrier — effect `tags`,
   // taggedVulnerability lists, creature kinds, equipment, relics — validates
   // against ONE vocabulary home (#61). Five normalised tables: the domain
@@ -106,6 +137,21 @@ export const contentBundle = {
   tagFamilies: TAG_FAMILIES,
   tagFamilyDomains: TAG_FAMILY_DOMAINS,
   tagging: TAGGING,
+  // What each `property` tag confers — one rule per tag (content/propertyRules.js).
+  propertyRules: PROPERTY_RULES,
+  // THE TREE the five tag tables and the property rules are views of
+  // (content/source/nodes.csv and its six companions; tools/content-build.mjs
+  // derives tags/tagDomains/tagFamilyDomains/propertyRules/propertyRuleEffects
+  // and the framework's properties/relations from these). They ride the bundle
+  // so validate.js can check the tree itself — parents, cycles, edges,
+  // variables against bindings, kinds against collections.
+  nodes,
+  nodeRelations,
+  familyNodes,
+  nodeTerms,
+  nodeVariables,
+  variableBindings,
+  nodeEffects,
   attributes,
   creationModes,
   // `retired` is composed HERE, from its own file, so that reverting

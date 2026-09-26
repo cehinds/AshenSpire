@@ -1,10 +1,11 @@
 # Versioning — when each segment increments
 
 The in-game stamp is `BUILD <MAJOR>.<MINOR>.<CANDIDATE>.<BUILD> · src <digest>`
-(currently `0.5.4.<build>`; see "The candidate is the third component" below). This document is the decision workflow for the
-three authored segments. It changes no machinery: the one home for the string
-is `src/buildversion.js`, the release triple lives only in
-`src/content/index.js` (`contentBundle.version`), and
+(the current triple is `contentBundle.version` in `src/content/index.js`;
+see "The candidate is the third component" below). This document is the
+decision workflow for the three authored segments. It changes no machinery:
+the one home for the string is `src/buildversion.js`, the release triple
+lives only in `src/content/index.js` (`contentBundle.version`), and
 `node tools/buildversion.mjs --check` keeps anyone from re-typing either.
 
 ## The four segments and their owners
@@ -105,9 +106,11 @@ the tail "should restart the ordinal to 0.5.4.0 and increment from there".
 So the stamp is `<MAJOR>.<MINOR>.<CANDIDATE>.<BUILD>`. The candidate number
 moves into the third component and the tail counts builds WITHIN that
 candidate, restarting at `0` when the candidate advances. `0.5.3.1` is the
-second build of the third 0.5 candidate. `contentBundle.version` holds `0.5.4`
-— the same fact in his notation — so the one home and the one composition are
-unchanged; only what the components MEAN moved.
+second build of the third 0.5 candidate. The triple's one home is still
+`contentBundle.version` in `src/content/index.js`. When this was written it
+read `0.5.4`, the same fact in his notation; that file holds today's value. So
+the one home and the one composition are unchanged; only what the components
+MEAN moved.
 
 What this changes, each with the check that carries it:
 

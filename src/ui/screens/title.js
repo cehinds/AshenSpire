@@ -7,8 +7,9 @@
 import { beatArmer } from '../../framework/optionDecision.js';
 import { buildStampHtml } from '../components/buildstamp.js';
 import { hudQuickSettingsHtml, wireHudQuickSettings } from '../components/hudQuickSettings.js';
-import { closeSaveSlotSelector, openSaveSlotSelector, slotOption, slotDoor, slotDecisionDoor } from '../components/saveSlotSelector.js';
-import { html, titleMenu } from '../kit/index.js';
+import { closeSaveSlotSelector, deleteSlotReview, openSaveSlotSelector, slotFacts, slotOption, slotDoor, slotDecisionDoor } from '../components/saveSlotSelector.js';
+import { el, html, titleMenu } from '../kit/index.js';
+import { t } from '../strings.js';
 import { hudQuickSettingsModel } from '../models/HudQuickSettingsModel.js';
 import { saveSlotSelectionModel } from '../models/SaveSlotSelectionModel.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
@@ -111,6 +112,22 @@ export function mountTitle(app, {
     list.className = 'title-menu';
     list.dataset.component = UI.titleMenu;
     list.setAttribute('aria-label', 'Ashen Spire main menu');
+    // W3b: an available Continue is highlighted and its exact save sits beside
+    // the menu (below it on narrow hosts); the wordmark above stays centred.
+    // With no save this is W3a: the lone centred menu, no empty placeholder.
+    const saved = occupied[0];
+    if (saved) {
+      list.querySelector('.slot-continue')?.classList.add('is-highlighted');
+      const home = document.createElement('div');
+      home.className = 'title-home';
+      list.replaceWith(home);
+      home.append(list, el('aside', { class: 'title-save-preview', 'aria-label': t('title.save.aria', { slot: saved.slot }) }, [
+        el('p', { class: 'as-eyebrow', text: t('title.save.eyebrow') }),
+        el('p', { class: 'title-save-name', text: saved.summary.className }),
+        el('p', { class: 'title-save-facts', text: slotFacts(saved.summary) }),
+        el('p', { class: 'title-save-identity', text: t('title.save.identity', { slot: saved.slot, seed: saved.summary.seedString || '—' }) }),
+      ]));
+    }
     const tagline = document.createElement('p');
     tagline.className = 'tm-foot title-tagline';
     tagline.dataset.component = UI.titleTagline;
@@ -126,13 +143,14 @@ export function mountTitle(app, {
       return `<div class="modal-veil title-modal-veil" data-title-modal-scrim>${html(slotDecisionDoor({ kind: 'new', slot: newReviewSlot, summary }))}</div>`;
     }
     const model = selectionModel();
+    // W1l: titled by what it is for, primary by what it does.
     const door = slotDoor({
-      eyebrow: 'New game',
-      title: 'Choose a slot',
+      eyebrow: '',
+      title: t('title.slots.door.new'),
       closeLabel: 'Close New Game',
       rows: modalSlotRows(model),
-      backLabel: 'Back',
-      continueLabel: 'Continue',
+      backLabel: t('common.back'),
+      continueLabel: t('title.slots.primary.new'),
       canContinue: !!model.properties.canContinue,
       actionSlot: model.properties.actionSlot,
     });
@@ -205,7 +223,11 @@ export function mountTitle(app, {
     if (!onDelete) return;
     const arm = beatArmer(meta, registries);
     root.querySelectorAll('.title-slot-delete').forEach((button) => {
-      arm(button, 'deleteSave', { onConfirm: () => onDelete(+button.dataset.slotDelete, 'new') });
+      const slot = +button.dataset.slotDelete;
+      arm(button, 'deleteSave', {
+        ...deleteSlotReview(slot, slots.find((record) => record.slot === slot)?.summary || null),
+        onConfirm: () => onDelete(slot, 'new'),
+      });
       button.title = button.dataset.holdMs ? 'Hold to delete this run' : 'Delete this run';
     });
   };

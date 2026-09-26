@@ -50,6 +50,45 @@ export const equipSlots = [
     "blurb": "Your set. Repaints you and steadies the numbers."
   },
   {
+    "id": "head",
+    "label": "Head",
+    "positionLabel": "Head Slot {n}",
+    "positionCode": "HEAD",
+    "kinds": "head",
+    "hand": "",
+    "sets": 1,
+    "swap": "outOfCombat",
+    "storage": false,
+    "order": 4,
+    "blurb": "What you wear on your head. Empty until head pieces are authored."
+  },
+  {
+    "id": "hands",
+    "label": "Hands",
+    "positionLabel": "Hands Slot {n}",
+    "positionCode": "HANDS",
+    "kinds": "hands",
+    "hand": "",
+    "sets": 1,
+    "swap": "outOfCombat",
+    "storage": false,
+    "order": 5,
+    "blurb": "What you wear on your hands. Empty until hand pieces are authored."
+  },
+  {
+    "id": "feet",
+    "label": "Feet",
+    "positionLabel": "Feet Slot {n}",
+    "positionCode": "FEET",
+    "kinds": "feet",
+    "hand": "",
+    "sets": 1,
+    "swap": "outOfCombat",
+    "storage": false,
+    "order": 6,
+    "blurb": "What you wear on your feet. Empty until foot pieces are authored."
+  },
+  {
     "id": "talisman",
     "label": "Talisman",
     "positionLabel": "Talisman Slot {n}",
@@ -59,7 +98,7 @@ export const equipSlots = [
     "sets": 3,
     "swap": "outOfCombat",
     "storage": false,
-    "order": 4,
+    "order": 7,
     "blurb": "Small charms. Empty until talismans are authored."
   }
 ];

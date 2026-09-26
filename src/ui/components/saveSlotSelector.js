@@ -14,6 +14,10 @@ import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 import { focusElement } from '../input.js';
 import { armHold, beatArmer } from '../../framework/optionDecision.js';
 import { hideTooltip } from './tooltip.js';
+import { openConfirmationModal } from './confirmationModal.js';
+import { deleteSaveReview, replaceSaveReview, reviewEyebrow } from '../models/ConfirmationReviewModel.js';
+import { saveStatusReview, savedAtLabel } from '../models/SaveStatusModel.js';
+import { t } from '../strings.js';
 import {
   el, html, modalHead, modalFooter, button, iconButton, optionCard, optionRow, options, decide, detailCard, ornament,
 } from '../kit/index.js';
@@ -29,15 +33,29 @@ let activeSelector = null;
  * describe why. The title's doors can offer a new climb instead.
  */
 export function slotFacts(summary, { canStart = true } = {}) {
+  // A climb saved by a newer build is kept, not offered: its facts are the
+  // reason it will not open here (SPEC §3.12, the run twin of profile 'newer').
+  if (summary?.newer) return t('title.slots.newer');
   if (summary) return `Act ${summary.actNumber} · Floor ${summary.floor} · ${summary.hp}/${summary.maxHp} HP`;
   return canStart ? 'Start a new climb here' : 'No climb saved here';
+}
+
+/**
+ * slotMeta(summary) → the identity line a slot's review card wears: the seed,
+ * and when the slot was last written (W1l/W1m "Last saved …"). A save from
+ * before the stamp existed prints its seed alone.
+ */
+export function slotMeta(summary) {
+  const seed = `Seed ${summary.seedString}`;
+  return summary.savedAt ? `${seed} · ${t('title.slots.saved', { when: savedAtLabel(summary.savedAt) })}` : seed;
 }
 
 /**
  * The same facts as words. The printed line leans on `·` and `34/50`, which a
  * screen reader either swallows or spells out; this is what it should hear.
  */
-function slotFactsSpoken(summary, options) {
+export function slotFactsSpoken(summary, options) {
+  if (summary?.newer) return t('title.slots.newer');
   return summary
     ? `Act ${summary.actNumber}, floor ${summary.floor}, ${summary.hp} of ${summary.maxHp} HP`
     : slotFacts(null, options);
@@ -71,6 +89,8 @@ export function slotOption({ slot, summary, selected = false, selectable = true,
     glyph: String(slot),
     name: summary ? summary.className : 'Empty slot',
     description: slotFacts(summary, { canStart }),
+    // W1l/W1m: the row says when the slot was last written, on its own line.
+    meta: summary?.savedAt ? t('title.slots.saved', { when: savedAtLabel(summary.savedAt) }) : '',
     selected,
     disabled: !selectable,
     arrow: false,
@@ -86,6 +106,7 @@ export function slotOption({ slot, summary, selected = false, selectable = true,
         `Slot ${slot}`,
         summary ? summary.className : 'Empty slot',
         slotFactsSpoken(summary, { canStart }),
+        summary?.savedAt ? t('title.slots.saved', { when: savedAtLabel(summary.savedAt) }) : null,
         hint?.action,
       ].filter(Boolean).join('. '),
     },
@@ -162,8 +183,39 @@ const SLOT_DECISIONS = {
   'load:occupied': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-review', title: (n) => `Load slot ${n}?`, prompt: 'Load this saved climb now?', back: 'Back to Saves', confirm: 'Load Save', action: 'review-load', card: true, danger: false },
   'load:empty': { eyebrow: 'Load game', closeLabel: 'Close Load Game', variant: 'load-empty', title: (n) => `Slot ${n} is empty`, prompt: 'Nothing is saved here yet. Start a new climb in this slot?', back: 'Back to Saves', confirm: 'New Game', action: 'review-new', card: false, danger: false },
   'new:empty': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-start', title: (n) => `Start in slot ${n}?`, prompt: 'This slot is empty. The new climb will be saved here.', back: 'Back to Slots', confirm: 'Start', action: 'review-new', card: false, danger: false },
-  'new:occupied': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-overwrite', title: (n) => `Overwrite slot ${n}?`, prompt: 'Starting here deletes this saved climb and begins a new one. There is no way back.', back: 'Back to Slots', confirm: 'Overwrite', action: 'review-new', card: true, danger: true },
+  // W1l (owner, FRONTEND-WIREFRAMES): selecting a slot never deletes or
+  // overwrites it. An occupied destination is carried through creation, and the
+  // W2c Replace review is asked at the write boundary — Begin the climb — where
+  // the replacement can be named. This door only says that.
+  'new:occupied': { eyebrow: 'New game', closeLabel: 'Close New Game', variant: 'new-occupied', title: (n) => t('title.slots.start.occupied', { slot: n }), prompt: t('title.slots.start.occupied.prompt'), back: 'Back to Slots', confirm: t('common.continue'), action: 'review-new', card: true, danger: false },
 };
+
+/**
+ * deleteSlotReview(slot, summary) → the copy the ✕'s review door reads.
+ *
+ * DELETE IS A DECISION DOOR LIKE THE OTHER FOUR (Constantine's review,
+ * 2026-09-11): the head asks "Delete slot n?", the body shows the DetailCard
+ * of the save that would go, the foot answers Delete (danger — the tone is
+ * the secondbeat row's: profile stakes, no undo) or Back. The machinery draws
+ * the door (framework/optionDecision.js → the shared confirmation modal); this
+ * only authors what it says, so the title's two ✕ sites read one home.
+ */
+export function deleteSlotReview(slot, summary = null) {
+  const card = summary
+    ? detailCard({ eyebrow: `Slot ${slot}`, name: summary.className, line: slotFacts(summary), meta: slotMeta(summary), muted: true, attrs: { class: 'title-load-review-slot' } })
+    : null;
+  // W2b: the question, the save it acts on, and what actually happens to it
+  // (ui/models/ConfirmationReviewModel.js reads the save manager's policy).
+  const review = deleteSaveReview({ slot, className: summary?.className ?? null, facts: summary ? slotFacts(summary) : null });
+  return {
+    question: review.question,
+    target: review.target,
+    message: review.message,
+    detailHtml: card ? card.outerHTML : '',
+    confirmLabel: review.confirmLabel,
+    policyAction: review.policyAction,
+  };
+}
 
 export function slotDecisionDoor({ kind, slot, summary = null }) {
   const spec = SLOT_DECISIONS[`${kind}:${summary ? 'occupied' : 'empty'}`];
@@ -176,7 +228,7 @@ export function slotDecisionDoor({ kind, slot, summary = null }) {
   head.querySelector('#title-modal-heading').dataset.component = UI.titleModalHeading;
   let card = null;
   if (spec.card && summary) {
-    card = detailCard({ eyebrow: `Slot ${slot}`, name: summary.className, line: slotFacts(summary), meta: `Seed ${summary.seedString}` });
+    card = detailCard({ eyebrow: `Slot ${slot}`, name: summary.className, line: slotFacts(summary), meta: slotMeta(summary) });
     card.classList.add('title-load-review-slot');
     if (spec.danger) card.classList.add('muted');
     card.dataset.component = UI.titleSaveSlot;
@@ -307,13 +359,15 @@ export function openSaveSlotSelector({
     }
 
     const selection = model();
+    // W1m: the door is titled by what it is for, and its primary by what it
+    // does — no "Choose a slot" sub-heading over the list.
     veil.appendChild(slotDoor({
-      eyebrow: 'Load game',
-      title: 'Choose a slot',
+      eyebrow: '',
+      title: t('title.slots.door.load'),
       closeLabel: 'Close Load Game',
       rows: slotRows(selection),
-      backLabel: 'Back',
-      continueLabel: 'Continue',
+      backLabel: t('common.back'),
+      continueLabel: t('title.slots.primary.load'),
       canContinue: !!selection.properties.canContinue,
       actionSlot: selection.properties.actionSlot,
     }));
@@ -371,7 +425,9 @@ export function openSaveSlotSelector({
     if (onDelete && meta && registries) {
       const arm = beatArmer(meta, registries);
       veil.querySelectorAll('.title-slot-delete[data-slot-delete]').forEach((deleteButton) => {
+        const slot = Number(deleteButton.dataset.slotDelete);
         arm(deleteButton, 'deleteSave', {
+          ...deleteSlotReview(slot, slots.find((record) => record.slot === slot)?.summary || null),
           onConfirm: () => {
             const slot = Number(deleteButton.dataset.slotDelete);
             close({ restoreFocus: false });
@@ -474,7 +530,71 @@ export function openSaveSlotSelector({
   return activeSelector;
 }
 
+/**
+ * openSaveStatusReview({ slot, className, facts, savedAt, error, onRetry, returnFocusElement })
+ * — W1r, the save status door. Opened by an explicit Save that FAILED: it names
+ * the run, its destination slot, when the slot last held it, and what went
+ * wrong; Retry saves again and never repeats a gameplay action. A save that
+ * worked says so in place (quicknav's saveAction) and opens nothing.
+ * The shared confirmation door draws it: one head, target, message, details,
+ * Back and the one primary — the W1 inspection body has no art slot.
+ */
+export function openSaveStatusReview({ slot, className, facts, savedAt = null, error = null, onRetry, returnFocusElement = null }) {
+  const review = saveStatusReview({ slot, className, facts, savedAt, error });
+  const card = detailCard({ eyebrow: review.destination, name: String(className), line: String(facts), meta: review.lastSaved, attrs: { class: 'title-load-review-slot save-status-slot' } });
+  openConfirmationModal({
+    title: review.question,
+    target: review.target,
+    message: review.message,
+    detailsHtml: card.outerHTML,
+    confirmLabel: review.confirmLabel,
+    cancelLabel: t('common.back'),
+    tone: 'normal',
+    returnFocusElement,
+    onConfirm: onRetry,
+  });
+}
+
+/**
+ * openReplaceSaveReview({ slot, existing, replacement, tone, onConfirm, returnFocusElement })
+ * — W2c, asked at the write boundary (Begin on the creation screen): the
+ * existing save is the target, the replacement is named, the consequence is
+ * exact, and the primary is Replace in the ConfirmationRegistry's tone for
+ * action.overwriteSave. Nothing is written until onConfirm.
+ */
+export function openReplaceSaveReview({ slot, existing, replacement, tone, onConfirm, returnFocusElement = null }) {
+  const review = replaceSaveReview({ slot, existing, replacement });
+  openConfirmationModal({
+    title: review.question,
+    target: review.target,
+    message: review.message,
+    confirmLabel: review.confirmLabel,
+    consequence: reviewEyebrow({ undo: 'none' }),
+    tone: typeof tone === 'function' ? tone(review.policyAction) : (tone || 'danger'),
+    returnFocusElement,
+    onConfirm,
+  });
+}
+
 // Kept for the title screen's string renderer: the same card, serialised.
 export function saveSlotCopyHtml({ slot, summary }) {
   return html(slotOption({ slot, summary }).querySelector('.title-slot-copy'));
+}
+
+/**
+ * openNewerSaveNotice({ slot }) → the notice a Continue on a slot saved by a
+ * NEWER build lands on (SPEC §3.12: refused and kept). The run-side twin of
+ * the profile's 'newer' notice (ui/screens/profileNotice.js): the bytes are
+ * fine, just from the future, so the one way on is to leave them be. There is
+ * no confirm, only the way out; Delete stays the slot's own confirmed act.
+ */
+export function openNewerSaveNotice({ slot, returnFocusElement = null }) {
+  openConfirmationModal({
+    title: t('save.newer.title'),
+    message: t('save.newer.message', { slot }),
+    cancelLabel: t('save.newer.close'),
+    confirmEnabled: false,
+    onConfirm: () => {},
+    returnFocusElement,
+  });
 }

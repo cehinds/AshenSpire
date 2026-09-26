@@ -1,0 +1,12 @@
+{
+  "iphoneSE": {
+    "label": "iPhone SE (3rd generation)",
+    "width": 375,
+    "height": 667
+  },
+  "galaxyS24": {
+    "label": "Galaxy S24",
+    "width": 360,
+    "height": 780
+  }
+}

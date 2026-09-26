@@ -2,6 +2,7 @@
 import { contentBundle } from '../index.js';
 import { combatRules } from '../combatRules.js';
 import { createRegistries } from '../../model/registries.js';
+import { CARD_TYPE_KIND } from '../../model/tree.js';
 import { createCombat } from '../../engine/combat.js';
 import { createRng } from '../../engine/rng.js';
 import { prototypeEquipment } from './combatEquipment.js';
@@ -21,8 +22,8 @@ export const prototypeCards = [
   card('prototypeSetup', 'Open Vein', 1, [hit(6)], { staminaCost: 1, attack: { source: 'weapon', buildup: [{ status: 'bleed', amount: 2 }] } }),
   card('prototypeFinish', 'Bloodletting Flurry', 1, [hit(5, 3)], { staminaCost: 2, attack: { source: 'weapon' } }),
   card('prototypeSpell', 'Astral Shard', 1, [hit(8)], { attack: { source: 'spell', damageType: 'arcane' } }),
-  card('prototypeComet', 'Falling Comet', 1, [hit(22)], { manaCost: 1, attack: { source: 'spell', damageType: 'arcane' } }),
-  card('prototypeNova', 'Nova', 2, [{ ...hit(30), target: 'allEnemies' }], { manaCost: 2, attack: { source: 'spell', damageType: 'arcane' } }),
+  card('prototypeComet', 'Falling Comet', 1, [hit(22)], { manaCost: 1, staminaCost: 1, exposureBuildupPerHit: 5, attack: { source: 'spell', damageType: 'arcane' } }),
+  card('prototypeNova', 'Nova', 2, [{ ...hit(30), target: 'allEnemies' }], { manaCost: 2, staminaCost: 1, exposureBuildupPerHit: 5, attack: { source: 'spell', damageType: 'arcane' } }),
   card('prototypePhysicalStance', 'Measured Guard', 1, [{ op: 'enterStance', stance: 'prototypeGuardStance' }], { type: 'skill', staminaCost: 2 }),
   card('prototypeCasterStance', 'Astral Focus', 1, [{ op: 'enterStance', stance: 'prototypeFocusStance' }], { type: 'skill', staminaCost: 2 }),
 ];
@@ -69,6 +70,12 @@ export function prototypeBundle(pressure = 1) {
     equipment: { ...contentBundle.equipment, cardExposure: [...contentBundle.equipment.cardExposure,
       ...prototypeCards.filter((c) => c.damageSchool).map((c) => ({ cardId: c.id, damageSchool: c.damageSchool, exposureBuildupPerHit: c.exposureBuildupPerHit }))] },
     enemies: [...contentBundle.enemies, ...Object.entries(prototypeScenarios).map(([id, s]) => enemy(id, s))],
+    // Every object states its kind (model/tree.js): a prototype card carries
+    // the node its type names and a prototype enemy carries the enemy kind,
+    // exactly as shipped content does — the prototype validates like content.
+    tagging: [...contentBundle.tagging,
+      ...prototypeCards.map((c) => ({ family: 'card', scope: '', objectId: c.id, tagId: CARD_TYPE_KIND[c.type] })),
+      ...Object.keys(prototypeScenarios).map((id) => ({ family: 'enemy', scope: '', objectId: `prototype_${id}`, tagId: 'classification.enemy' }))],
     statuses: [...contentBundle.statuses, { id: 'prototypeClotted', name: 'Bleed Resistance', stackMode: 'unique', decay: { duration: 99 }, resists: { status: 'bleed', percent: 50 } }],
     stances: [...contentBundle.stances,
       { id: 'prototypeGuardStance', name: 'Measured Guard', tooltip: 'Gain {onEnter.0.amount} Block when entering. Gain {hooks.0.do.0.amount} Block at the start of each of your turns.', onEnter: [{ op: 'block', target: 'self', amount: 3 }], hooks: [{ on: 'ownerTurnStart', do: [{ op: 'block', target: 'self', amount: 2 }] }] },

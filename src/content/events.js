@@ -1,5 +1,5 @@
 // src/content/events.js — Unknown-node events (SPEC §5.6; grown to 10 in M3,
-// 22 with the first quest chain)
+// 24 with the Nameless and Last Lantern quest chains)
 //
 // Every choice is a real trade-off, StS-style. `requires` is checked by the
 // event screen (e.g. { cinders: 50 }); `effects` are run-level opcodes executed
@@ -7,6 +7,25 @@
 // orchestrator after resultText is shown. SPEC §9 M3 target: 10 events.
 
 export const events = [
+  {
+    // Plan phase 5c: the one shipped door to the class swap — an event, never
+    // a menu. The glass shows another calling; the run keeps its deck, relics,
+    // hands and weapon skills, and starts its class over.
+    id: 'turncoatMirror',
+    name: "The Turncoat's Mirror",
+    art: '🪞',
+    text:
+      'A standing mirror in a ruined chapel, its silver gone to smoke. In it you are someone else: ' +
+      'the same hands, the same scars, another calling. It waits to see whether you will step through.',
+    choices: [
+      {
+        label: 'Step through (take up another class; your class levels start over)',
+        effects: [{ op: 'swapClass', random: true }],
+        resultText: 'The glass gives like water. On the far side your weight sits differently, and the old name will not come.',
+      },
+      { label: 'Turn away', effects: [], resultText: 'The figure in the glass turns away too, a moment after you do.' },
+    ],
+  },
   {
     id: 'goldboughAvatar',
     name: 'Goldbough Avatar',
@@ -187,10 +206,10 @@ export const events = [
     art: '⚰',
     text:
       'A cairn of broken swords marks a grave no one tends. Cinder-light seeps between the blades ' +
-      'like frost. The mound is quiet — the particular quiet of something that could stop being quiet.',
+      'like frost.\n\nThe mound is quiet — the particular quiet of something that could stop being quiet.',
     choices: [
       {
-        label: 'Dig for cinders (gain 90 cinders; the keeper may wake)',
+        label: 'Dig for cinders (gain 90 cinders; the grave may wake)',
         effects: [
           { op: 'addCinders', amount: 90 },
           { op: 'startCombat', encounterId: 'loneSoldier', if: { p: 'random', pct: 40 } },
@@ -202,7 +221,7 @@ export const events = [
         effects: [{ op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 15 } }],
         resultText: 'You right a fallen blade and stand a while. When you leave, you are lighter than you came.',
       },
-      { label: 'Leave', effects: [], resultText: 'You leave the nameless to their naming.' },
+      { label: 'Leave', effects: [], resultText: 'You leave the broken swords where they lie. No name is written here.' },
     ],
   },
   {
@@ -494,7 +513,7 @@ export const events = [
     name: 'The Keeper of the Nameless',
     art: '🕯',
     text:
-      'A figure in grave-clothes waits at a fork in the road, a lantern of cinder-light held low. ' +
+      'A figure in grave-clothes waits at a fork in the road, a lantern of cinder-light held low.\n\n' +
       'It knows the cairn of broken swords. It knows what you did there. It has been walking since.',
     choices: [
       {
@@ -504,9 +523,9 @@ export const events = [
         resultText: 'The cinders go back into the lantern one by one. The keeper turns without a word and walks the way you came.',
       },
       {
-        label: 'Face the keeper (fight; keep what you took)',
+        label: 'Stand your ground (fight; keep what you took)',
         effects: [{ op: 'startCombat', encounterId: 'patrol' }],
-        resultText: 'The lantern goes out. Things that were following the keeper are not so patient.',
+        resultText: 'The keeper turns away, the lantern dimming along the road. The figures following it stop in front of you and draw their weapons.',
       },
       {
         label: "Accept the keeper's thanks (gain the Gravetender's Bell)",
@@ -518,28 +537,71 @@ export const events = [
   },
   {
     id: 'namelessRest',
-    name: 'The Nameless at Rest',
+    name: 'The Second Cairn',
     art: '🪦',
     text:
-      'The road ends at a second cairn, newer than the first — every sword standing, every name struck ' +
-      'into the stone. The keeper is not here. Whatever it was walking toward, it arrived.',
+      'Beside the road stands a second cairn. Its swords have fallen into the mud; no names are carved ' +
+      'on its stones.\n\nThe keeper is not here. The road continues beyond it, and you cannot tell which way the keeper went.',
     choices: [
       {
-        label: 'Keep the vigil (upgrade 2 random cards)',
+        label: 'Raise every sword and keep the vigil (upgrade 2 random cards)',
         effects: [{ op: 'upgradeCard', random: true }, { op: 'upgradeCard', random: true }],
-        resultText: 'You stand until the cinder-light gutters. The bell in your pack rings once, though nothing moved it.',
+        resultText: 'You raise every fallen sword and stand among them until the cinder-light gutters. The bell in your pack rings once, though nothing moved it. The stones remain unwritten.',
       },
       {
-        label: 'Rest among the stones (heal 30% max HP)',
+        label: 'Raise every sword, then rest (heal 30% max HP)',
         effects: [{ op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 30 } }],
-        resultText: 'What you returned bought you this much: a night among the nameless, and no one waking you.',
+        resultText: 'You set every sword upright before lying down among the stones. What you returned bought you this much: a night among the nameless, and no one waking you.',
       },
       {
         label: 'Loot the barrow (gain 120 cinders, gain a Guilt curse)',
         effects: [{ op: 'addCinders', amount: 120 }, { op: 'addCardToDeck', card: 'guilt' }],
-        resultText: 'Second time is easier. The names on the stone do not object. That is the part that follows you.',
+        resultText: 'You drag the fallen swords aside and prise the cinders from beneath them. Second time is easier. You leave the blades in the mud; that is the part that follows you.',
       },
-      { label: 'Leave', effects: [], resultText: 'You leave the cairn as you found it, which is more than the first one got.' },
+      { label: 'Leave', effects: [], resultText: 'You leave the swords fallen and follow the road. The cairn keeps its silence.' },
+    ],
+  },
+  // A two-step investment in the road, answered at a later Unknown node.
+  {
+    id: 'lastLantern', name: 'The Last Lantern', art: '🏮',
+    text: 'An unmarked routekeeper braces a broken signal lantern against the rain. The drivers call this traveler the Road Warden; there is no Fell Courtyard crest on the coat.\n\n' +
+      '"That caravan carries medicine to Lantern Haven and the cold hamlets beyond. Oil costs forty cinders. Or help me haul the spare beacon up the scree."',
+    choices: [
+      {
+        label: 'Buy signal oil (pay 40 cinders; aid the caravan)',
+        requires: { cinders: 40 },
+        effects: [{ op: 'addCinders', amount: -40 }],
+        resultText: 'The wick catches. The Road Warden records forty cinders beside Lantern Haven in a weathered supply ledger.',
+      },
+      {
+        label: 'Haul the beacon (take 8 damage; aid the caravan)',
+        effects: [{ op: 'damage', target: 'self', amount: 8 }],
+        resultText: 'The iron frame cuts your palms, but its light clears the ridge. The Road Warden waves Lantern Haven’s wagons through and promises to remember the work.',
+      },
+      { label: 'Leave', effects: [], resultText: 'You pass the unlit lantern. The caravan must find another way.' },
+    ],
+  },
+  {
+    id: 'lanternCaravan', name: 'The Caravan Comes Through', art: '🏮',
+    text: 'The Road Warden stands beside Lantern Haven’s mud-spattered wagons. The last one carries the lantern you helped raise.\n\n' +
+      '"You bought these people a road. We can pay our debt. That strongbox is for medicine at the next trading post; it belongs to the cold hamlets."',
+    choices: [
+      {
+        label: 'Accept the quartermaster’s lesson (upgrade a random card)',
+        effects: [{ op: 'upgradeCard', random: true }],
+        resultText: 'The quartermaster shows you the economy of a practiced motion. Your investment returns as knowledge.',
+      },
+      {
+        label: 'Accept wages for the climb (gain 60 cinders)',
+        effects: [{ op: 'addCinders', amount: 60 }],
+        resultText: 'The Road Warden counts out fair wages. The cuts on your hands have earned their keep.',
+      },
+      {
+        label: 'Steal the emergency strongbox (gain 100 cinders and a Guilt curse)',
+        effects: [{ op: 'addCinders', amount: 100 }, { op: 'addCardToDeck', card: 'guilt' }],
+        resultText: 'No one stops you. A driver crosses the medicine purchase off Lantern Haven’s manifest. The hamlets’ names remain beneath it, with nothing beside them.',
+      },
+      { label: 'Leave', effects: [], resultText: 'You wave the wagons onward, asking nothing in return.' },
     ],
   },
 ];
@@ -547,6 +609,9 @@ export const events = [
 // Stable history ids live beside event content without widening the validated
 // event opcode schema. Labels may change; these ids are durable save facts.
 export const eventChoiceIds = Object.freeze({
+  turncoatMirror: ['stepThrough', 'turnAway'],
+  lastLantern: ['buyOil', 'haulBeacon', 'leave'],
+  lanternCaravan: ['acceptLesson', 'acceptWages', 'claimStrongbox', 'leave'],
   goldboughAvatar: ['offerCard', 'pray', 'leave'],
   abandonedCart: ['lootStrongbox', 'leave'],
   weepingPilgrim: ['giveCinders', 'refuse'],
@@ -575,6 +640,12 @@ export const eventChoiceIds = Object.freeze({
 // abandoned cart. Stealing remains available, and Leave is deliberately
 // requirement-free so this history branch can never trap the player.
 export const eventChoiceHistoryRequirements = Object.freeze({
+  lanternCaravan: [
+    { all: [{ eventId: 'lastLantern', choiceId: 'buyOil' }] },
+    { all: [{ eventId: 'lastLantern', choiceId: 'haulBeacon' }] },
+    undefined,
+    undefined,
+  ],
   merchantsGhost: [
     { none: [{ eventId: 'abandonedCart', choiceId: 'lootStrongbox' }] },
     undefined,
@@ -589,7 +660,7 @@ export const eventChoiceHistoryRequirements = Object.freeze({
     undefined,
   ],
   // The second cairn answers the keeper: the thanked keep the vigil, the
-  // penitent rest, the one who fought loots again.
+  // penitent rest, the one who fought the followers loots again.
   namelessRest: [
     { all: [{ eventId: 'namelessKeeper', choiceId: 'acceptThanks' }] },
     { all: [{ eventId: 'namelessKeeper', choiceId: 'returnCinders' }] },
@@ -604,6 +675,12 @@ export const eventChoiceHistoryRequirements = Object.freeze({
 // step cannot be met before the step it answers. Events not listed are
 // ungated, exactly as before.
 export const eventHistoryRequirements = Object.freeze({
+  lanternCaravan: {
+    any: [
+      { eventId: 'lastLantern', choiceId: 'buyOil' },
+      { eventId: 'lastLantern', choiceId: 'haulBeacon' },
+    ],
+  },
   namelessKeeper: {
     any: [
       { eventId: 'graveOfTheNameless', choiceId: 'digForCinders' },
@@ -617,6 +694,44 @@ export const eventHistoryRequirements = Object.freeze({
       { eventId: 'namelessKeeper', choiceId: 'acceptThanks' },
     ],
   },
+});
+
+// QUEST CHAINS (plan phase 10a; proposal §7.5). A chain names its steps and
+// the choices that complete it; committing a completing choice completes the
+// quest through the one door (engine/quests.js), at most once per run. Every
+// step is spoken in the dialogue screen. A Leave never completes a quest
+// (validate.js refuses it by name). Grave of the Nameless is the first chain:
+// any answer at the second cairn but Leave finishes the walk.
+export const questChains = Object.freeze({
+  lastLantern: Object.freeze({
+    steps: Object.freeze(['lastLantern', 'lanternCaravan']),
+    completes: Object.freeze([
+      Object.freeze({ eventId: 'lanternCaravan', choiceId: 'acceptLesson' }),
+      Object.freeze({ eventId: 'lanternCaravan', choiceId: 'acceptWages' }),
+      Object.freeze({ eventId: 'lanternCaravan', choiceId: 'claimStrongbox' }),
+    ]),
+  }),
+  nameless: Object.freeze({
+    steps: Object.freeze(['graveOfTheNameless', 'namelessKeeper', 'namelessRest']),
+    completes: Object.freeze([
+      Object.freeze({ eventId: 'namelessRest', choiceId: 'keepVigil' }),
+      Object.freeze({ eventId: 'namelessRest', choiceId: 'restAmongStones' }),
+      Object.freeze({ eventId: 'namelessRest', choiceId: 'lootBarrow' }),
+    ]),
+  }),
+});
+
+// Who speaks each chain step (content/source/speakers.csv rows). Every chain
+// event names one; validation refuses a step without a speaker and a speaker
+// no row defines. PROVISIONAL (owner decision, 2026-09-14): the grave and the
+// second cairn are spoken by the Nameless themselves, the fork in the road by
+// their Keeper (docs/LORE-CAST.md).
+export const eventSpeakers = Object.freeze({
+  lastLantern: 'roadWarden',
+  lanternCaravan: 'roadWarden',
+  graveOfTheNameless: 'theNameless',
+  namelessKeeper: 'keeperOfTheNameless',
+  namelessRest: 'theNameless',
 });
 
 /** Enrich validated event choices with their durable history contract. */

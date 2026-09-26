@@ -453,6 +453,9 @@ lib["hero_rim"].data.energy = 2.6
 # built at the same hand positions on the same camera — drop straight over them.
 lib["WITH_WEAPON"] = False
 for o in rows("outfits.csv"):
+    # Aliases reuse the canonical rig; do not render a second class-shaped copy.
+    if o.get("artClassId") or (o.get("artKey") and o["artKey"] != o["id"]):
+        continue
     build = CLASS_BUILD.get(o["classId"])
     if not build:
         continue

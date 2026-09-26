@@ -116,6 +116,7 @@ import { beatFor } from '../../model/secondbeat.js';
 import { sfx } from '../sfx.js';
 import { anchorLocalBox, viewportLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { openConfirmationModal } from './confirmationModal.js';
+import { reviewEyebrow, reviewTone } from '../models/ConfirmationReviewModel.js';
 
 /** How far a finger may wander before the hold is read as a drag. */
 export const HOLD_POINTER_SLOP = 12;
@@ -167,15 +168,18 @@ export function beatCue(phase, id, form) {
  * `onHoldStart` and `onHoldEnd` expose this one gesture's lifecycle to temporary
  * presentation such as a sustained-hold preview. The end hook runs on every
  * exit — early release, movement, cancellation, completion, Escape or disarm.
+ * `tapOnPointerRelease` lets a composite control deliver its safe early tap
+ * even when repainting the pressed child suppresses the browser's click.
+ * Requires `tapOnEarlyRelease`; movement and cancellation still abort.
  *
  * `ms <= 0` is the "off" position of the dial: one completed press commits.
  * It is not a hold with a zero timer, and it does not depend on a trailing
  * click that a mobile browser may suppress after a stationary long press.
  */
 export function armHold(btn, {
-  ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null,
+  ms, onConfirm, onTap = null, id = null, hintHost = null, hintBefore = null, showHint = true,
   feedbackHosts = null, pointerOnly = false, tapOnEarlyRelease = false,
-  onHoldStart = null, onHoldEnd = null, settleMs = 0,
+  onHoldStart = null, onHoldEnd = null, settleMs = 0, tapOnPointerRelease = false,
 }) {
   const msOf = typeof ms === 'function' ? ms : () => ms;
   // Like `ms`, the settle may be a function so a surface can turn it off while
@@ -255,7 +259,11 @@ export function armHold(btn, {
       if (!btn.dataset.hold) btn.dataset.hold = 'idle';
       btn.dataset.holdMs = String(now);
       if (btn.style.getPropertyValue('--hold') === '') btn.style.setProperty('--hold', '0');
-      if (!btn.querySelector('.hold-hint')) {
+      // A screen may carry the instruction in the control's tooltip and its
+      // accessible description instead of a word on the face (W4c responses,
+      // behavior.responseHints). The states above are written either way, so
+      // an instrument and a screenshot still read the same control.
+      if (showHint && !btn.querySelector('.hold-hint')) {
         // THE INSTRUCTION IS ON SCREEN, not announced and not discovered. A
         // gesture a tired player has to find is a gesture they will fight; the
         // word is three letters and it costs the control nothing.
@@ -443,6 +451,17 @@ export function armHold(btn, {
       // working software). Reaching here at all means `begin` took the press,
       // so there is no third case to answer.
       onEnd: (endEv, info) => {
+        // Combat may repaint the pressed card's children when the hold lights
+        // it. The browser can then omit its trailing click. Finish that safe
+        // selecting tap on release, and consume any click that does follow.
+        const releaseTap = () => {
+          if (!tapOnEarlyRelease || !onTap) return;
+          if (origin.source !== 'pointer') onTap(ev);
+          else if (tapOnPointerRelease && !info?.cancelled && !movedThisPress) {
+            committedThisPress = true;
+            onTap(endEv);
+          }
+        };
         // A cancelled end (pointercancel — a touch scroll) produces no click,
         // so the moved state must not outlive this press: the next activation
         // by key or pad would otherwise be swallowed as that press's click.
@@ -455,17 +474,18 @@ export function armHold(btn, {
         if (settleTimer) {
           clearTimeout(settleTimer);
           settleTimer = 0;
-          if (tapOnEarlyRelease && onTap && origin.source !== 'pointer') onTap(ev);
+          releaseTap();
           return true;
         }
         if (armed) {
           stop('idle');
-          // Pointer taps finish through the browser's trailing click so the
-          // click can be swallowed in one place. Keyboard and controller
+          // By default pointer taps finish through the trailing click; the
+          // release option above completes safe taps before that click.
+          // Keyboard and controller
           // releases have no click; option controls use this explicit seam to
           // give a short press its authored tap meaning while a completed hold
           // has already committed at full.
-          if (tapOnEarlyRelease && onTap && origin.source !== 'pointer') onTap(ev);
+          releaseTap();
         }
         return true;
       },
@@ -1021,7 +1041,7 @@ export function holdMs(settings, holdConfirm) {
 export function beatArmer(meta, registries) {
   const dialMs = holdMs((meta && meta.settings) || {}, registries.balance.ui.holdConfirm);
 
-  return function arm(el, actionId, { ctx = {}, onConfirm, question, detailHtml, confirmLabel, hintHost = null, hintBefore = null } = {}) {
+  return function arm(el, actionId, { ctx = {}, onConfirm, question, target, message, detailHtml, confirmLabel, policyAction = null, hintHost = null, hintBefore = null, showHint = true } = {}) {
     // `ctxOf` so a row whose stakes move with the game state (End Turn) is
     // evaluated at the moment the finger lands, not at the moment the screen
     // mounted. A screen passes a function; a static action passes an object.
@@ -1040,16 +1060,33 @@ export function beatArmer(meta, registries) {
     // skips the modal. The old beat classification remains published for
     // stakes/audit context; it no longer chooses between incompatible UI
     // forms. Every action routed through this door receives one interaction.
+    // W2 SLOTS (question, target, exact consequence): a caller that authors
+    // `target` and `message` fills the review's body with facts. A caller that
+    // authors neither keeps the older generic line below — W2a's service
+    // reviews all author both (ui/models/ConfirmationReviewModel.js).
+    const authored = (value) => (typeof value === 'function' ? value() : value);
     const review = () => {
       const current = beatFor(actionId, ctxOf());
-      const authoredQuestion = typeof question === 'function' ? question() : question;
-      const authoredDetail = typeof detailHtml === 'function' ? detailHtml() : detailHtml;
+      const authoredQuestion = authored(question);
+      const authoredDetail = authored(detailHtml);
+      const authoredMessage = authored(message);
+      const policy = authored(policyAction);
       openConfirmationModal({
         title: authoredQuestion || `Confirm ${current.of}`,
-        message: authoredQuestion
+        target: authored(target) || '',
+        message: authoredMessage || (authoredQuestion
           ? 'Review this change before confirming, or go back without applying it.'
-          : `This action means ${current.of}. Review any visible cost or consequence before confirming.`,
-        consequence: current.undo === 'none' ? 'CANNOT BE UNDONE' : 'STATE CHANGE',
+          : `This action means ${current.of}. Review any visible cost or consequence before confirming.`),
+        // The eyebrow is a concrete tag (CANNOT BE UNDONE) or nothing; W2
+        // forbids a category word like the old "STATE CHANGE".
+        consequence: reviewEyebrow(current),
+        // THE TONE IS THE ROW'S (secondbeat.js), never a call site's word: an
+        // action that writes the profile and gives nothing back is a danger
+        // door — red Delete, alertdialog — as the slot's Overwrite already is.
+        // A caller may also name the ConfirmationRegistry action its commit
+        // performs (`policyAction`); a DESTRUCTIVE policy there is a danger
+        // door too (W2: alert semantics where the policy requires them).
+        tone: reviewTone(current, policy ? registries.framework.confirmationTone(policy) : 'normal'),
         detailsHtml: authoredDetail || '',
         confirmLabel: confirmLabel || 'Confirm change',
         cancelLabel: 'Back',
@@ -1065,6 +1102,7 @@ export function beatArmer(meta, registries) {
       id: actionId,
       hintHost,
       hintBefore,
+      showHint,
     });
     // THE OTHER HALF OF "ALL INSTANCES" (S7 wide), and it is a REGISTRATION,
     // never a list. Some actions are reached without the focus cursor at all —

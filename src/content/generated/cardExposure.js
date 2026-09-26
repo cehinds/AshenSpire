@@ -235,27 +235,27 @@ export const cardExposure = [
   {
     "cardId": "starstoneArc",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "moonrendCut",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "meteorite",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "meteorSwarm",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "astralCleave",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "radiantSpray",
@@ -265,22 +265,22 @@ export const cardExposure = [
   {
     "cardId": "supernova",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "starstoneKris",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "starfallBeam",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "starcaller",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "shootingShard",
@@ -290,7 +290,7 @@ export const cardExposure = [
   {
     "cardId": "celestialLance",
     "damageSchool": "magic",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "starSpark",
@@ -310,7 +310,7 @@ export const cardExposure = [
   {
     "cardId": "graveOffering",
     "damageSchool": "arcane",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "cullTheWeak",
@@ -320,12 +320,12 @@ export const cardExposure = [
   {
     "cardId": "sacredHarvest",
     "damageSchool": "arcane",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "plagueBearer",
     "damageSchool": "arcane",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "exsanguinate",
@@ -340,17 +340,17 @@ export const cardExposure = [
   {
     "cardId": "crimsonRite",
     "damageSchool": "arcane",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "blightNova",
     "damageSchool": "arcane",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "bloodHarvest",
     "damageSchool": "arcane",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "painOffering",
@@ -360,7 +360,7 @@ export const cardExposure = [
   {
     "cardId": "witheringTouch",
     "damageSchool": "arcane",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "desperateRite",
@@ -370,7 +370,7 @@ export const cardExposure = [
   {
     "cardId": "bloodOfferingRite",
     "damageSchool": "arcane",
-    "exposureBuildupPerHit": 1
+    "exposureBuildupPerHit": 5
   },
   {
     "cardId": "blightwardLash",
@@ -409,6 +409,16 @@ export const cardExposure = [
   },
   {
     "cardId": "spikedReprisal",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "rimeThrust",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "kilnCleave",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
   }

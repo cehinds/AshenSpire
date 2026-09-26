@@ -48,13 +48,14 @@ try {
     await page.waitForTimeout(100);
     const after=await page.locator('.player .meters').first().boundingBox();
     assert.ok(Math.abs(after.y-before.y)<1,'status changes do not move vitality');
-    const overflow=page.locator('.player .status-overflow summary').first();
+    // WCF2: the final +N tile opens the combatant inspector with every effect.
+    const overflow=page.locator('.player .status-overflow-more').first();
     if(await overflow.count()) {
-      assert.equal(await page.locator('.player .status-overflow-list').isVisible(),false);
+      assert.match(await overflow.textContent(),/^\+\d+$/);
       await overflow.focus(); await page.keyboard.press('Enter');
-      assert.equal(await page.locator('.player .status-overflow-list').isVisible(),true);
+      assert.equal(await page.locator('.combatant-door').isVisible(),true);
       await page.screenshot({path:resolve(out,`statuses-${viewport.width}.png`)});
-      await page.keyboard.press('Enter');
+      await page.keyboard.press('Escape');
     } else await page.screenshot({path:resolve(out,`statuses-${viewport.width}.png`)});
     results.push({viewport,frames:samples.length,meterWidths:first,maxWidth:Math.max(...samples.flatMap(s=>s.widths)),statusOverflow:await overflow.count()});
     for(const profile of ['wanderer','expedition']) {
@@ -63,7 +64,7 @@ try {
       assert.equal(await page.locator('.atlas-node:not(.map-node)').count(),0);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
       await page.screenshot({path:resolve(out,`map-${profile}-${viewport.width}.png`)});
-      await page.locator('[data-atlas-inspect-current]').click();
+      await page.locator('[data-atlas-inspect]').click();
       await page.locator('.atlas-dialog').waitFor();
       await page.screenshot({path:resolve(out,`location-${profile}-${viewport.width}.png`)});
     }

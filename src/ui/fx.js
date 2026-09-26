@@ -272,7 +272,9 @@ export function placeAnchored(el, anchor, {
     const right = { left: a.left + a.width + gap, top: slideY };
     const left = { left: a.left - b.width - gap, top: slideY };
     const candidates = intent === 'under' ? [under]
-      : intent === 'above' ? [above, aboveLeft, aboveRight, right, left, under]
+      // 'above' flips BELOW before it goes sideways (CURRENT-SPECIFICATION,
+      // Tooltips: "anchor above trigger, flip below / shift within viewport").
+      : intent === 'above' ? [above, aboveLeft, aboveRight, under, right, left]
         : intent === 'left' ? [left, right, under, above]
           : intent === 'right' ? [right, left, under, above] : [
       right,
@@ -861,6 +863,11 @@ function baseVisualFor(e, beatKind) {
       };
     case 'meterFilled':
       return null; // poise fills speak through enemyStaggered below
+    case 'ratingImpact':
+      return e.breaks ? (ctx) => {
+        banner(ctx.layer, e.label.toUpperCase());
+        flash(ctx.anchorFor(e.targetId), 'wobble', 600);
+      } : null;
     case 'enemyStaggered':
       return (ctx) => {
         sfx.play('stagger');

@@ -50,8 +50,11 @@ const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 // tool measured a two-merge-stale bundle and printed OK once already. One home:
 // tools/artifact-provenance.mjs. Facts only; it never fails a run.
 import { printArtifactProvenance } from './artifact-provenance.mjs';
+import { MOBILE_BUNDLE_BUDGET_BYTES } from './mobileart-policy.mjs';
 printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire.html'), ROOT);
 printArtifactProvenance(resolve(ROOT, 'AshenSpire.html'), ROOT);
+printArtifactProvenance(resolve(ROOT, 'dist/AshenSpire-mobile.html'), ROOT);
+printArtifactProvenance(resolve(ROOT, 'AshenSpire-mobile.html'), ROOT);
 const args = process.argv.slice(2);
 const SELFTEST = args.includes('--selftest');
 
@@ -59,6 +62,15 @@ const BUILD = 'build/AshenSpire.html';
 const DIST_DIR = 'dist';
 const SHIPPED = 'dist/AshenSpire.html'; // canonical dist twin of the root alias
 const ROOT_CURRENT = 'AshenSpire.html'; // the discoverable root alias README gives a player
+
+// THE SECOND DOWNLOAD. The mobile single file (tools/bundle.mjs --mobile) has the
+// same three homes as the full one and is held to the same chain — carries art,
+// IS the build — plus one claim of its own: it fits the budget the owner set
+// (under 30 MB, tools/mobileart-policy.mjs), and it is smaller than the full file,
+// or it is not a mobile edition at all but the full one under a second name.
+const MOBILE_BUILD = 'build/AshenSpire-mobile.html';
+const MOBILE_SHIPPED = 'dist/AshenSpire-mobile.html';
+const MOBILE_ROOT_CURRENT = 'AshenSpire-mobile.html';
 
 // The stale artifact as committed at 40c5b21: 712667 bytes, no ASSET_MAP token,
 // three inlined images instead of 101. Kept as a corpus entry by blob id rather
@@ -102,7 +114,7 @@ const MIN_ASSET_MAP_ENTRIES = 64;
 // nothing (see the tool's removal condition above). Entries are ADDED only by a
 // human who means to track a new file in dist/ — an addition made to turn CI green
 // is the denylist's failure mode reintroduced by hand.
-const ALLOWED_TRACKED_IN_DIST = [SHIPPED.replace(`${DIST_DIR}/`, ''), 'README.md'];
+const ALLOWED_TRACKED_IN_DIST = [SHIPPED.replace(`${DIST_DIR}/`, ''), MOBILE_SHIPPED.replace(`${DIST_DIR}/`, ''), 'README.md'];
 
 // ---------------------------------------------------------------------------
 // The checks, as pure functions over bytes, so --selftest can feed them a corpus
@@ -144,13 +156,13 @@ export function checkCarriesArt(name, bytes, minEntries = MIN_ASSET_MAP_ENTRIES)
 }
 
 /** B. Is the shipped file the build, byte for byte? */
-export function checkShippedIsBuilt(distName, distBytes, buildBytes) {
+export function checkShippedIsBuilt(distName, distBytes, buildBytes, buildName = BUILD) {
   if (distBytes.equals(buildBytes)) {
-    return { ok: true, code: 'DRIFT', detail: `${distName} is byte-identical to ${BUILD} (${distBytes.length} bytes)` };
+    return { ok: true, code: 'DRIFT', detail: `${distName} is byte-identical to ${buildName} (${distBytes.length} bytes)` };
   }
   return {
     ok: false, code: 'DRIFT',
-    detail: `${distName} (${distBytes.length} bytes) differs from ${BUILD} (${buildBytes.length} bytes). ` +
+    detail: `${distName} (${distBytes.length} bytes) differs from ${buildName} (${buildBytes.length} bytes). ` +
       `Either dist/ is stale — run \`node tools/launch.mjs --build-only\` — or the build is not ` +
       `reproducible on this machine, which tools/dirorder.mjs exists to prevent.`,
   };
@@ -176,6 +188,28 @@ export function checkNoStampedTwin(trackedDistFiles, allowed = ALLOWED_TRACKED_I
   return {
     ok: true, code: 'STAMPED_TWIN',
     detail: `dist/ tracks only the allowlist [${allowed.join(', ')}] — no twin, stamped or otherwise`,
+  };
+}
+
+/**
+ * D. Is the mobile file a mobile file — under its budget, and smaller than the
+ * full one? Both halves are one verdict because both mean the same thing: the
+ * player on a phone was handed the download this edition exists to avoid.
+ */
+export function checkMobileFits(name, mobileBytes, fullBytes, budget = MOBILE_BUNDLE_BUDGET_BYTES) {
+  const problems = [];
+  if (mobileBytes.length > budget) problems.push(`${mobileBytes.length} bytes is over the ${budget}-byte budget`);
+  if (mobileBytes.length >= fullBytes.length) problems.push(`${mobileBytes.length} bytes is not smaller than the full file's ${fullBytes.length}`);
+  if (problems.length) {
+    return {
+      ok: false, code: 'MOBILE_BUDGET',
+      detail: `${name} is not a mobile edition: ${problems.join('; ')}. Tighten tools/mobileart-policy.mjs, ` +
+        `regenerate assets-mobile/ (node tools/mobile-art.mjs), rebuild.`,
+    };
+  }
+  return {
+    ok: true, code: 'MOBILE_BUDGET',
+    detail: `${name} is ${mobileBytes.length} bytes — under the ${budget}-byte budget, and ${fullBytes.length - mobileBytes.length} bytes smaller than the full file`,
   };
 }
 
@@ -327,6 +361,21 @@ if (SELFTEST) {
   expect('control: the real tracked dist/ listing passes the allowlist',
     checkNoStampedTwin(ALLOWED_TRACKED_IN_DIST), true, 'STAMPED_TWIN');
 
+  // 9. THE MOBILE BUDGET, both edges and both halves. The budget is a byte
+  //    count and nothing else, so the corpus is bytes: a file one byte over the
+  //    number fails, a file at the number passes, and a "mobile" file that is
+  //    the full file's size fails whatever the number says.
+  const full = Buffer.alloc(200);
+  expect('mobile: one byte over the budget fails',
+    checkMobileFits('synthetic-mobile.html', Buffer.alloc(101), full, 100), false, 'MOBILE_BUDGET');
+  expect('mobile: the full file under the mobile name fails',
+    checkMobileFits('synthetic-mobile.html', full, full, 1000), false, 'MOBILE_BUDGET');
+  expect('mobile: larger than the full file fails even under budget',
+    checkMobileFits('synthetic-mobile.html', Buffer.alloc(201), full, 1000), false, 'MOBILE_BUDGET');
+  expect('control: exactly at the budget, smaller than full, passes',
+    checkMobileFits('synthetic-mobile.html', Buffer.alloc(100), full, 100), true, 'MOBILE_BUDGET');
+  expect('control: the real budget is the owner\'s number', { ok: MOBILE_BUNDLE_BUDGET_BYTES === 30_000_000, code: 'MOBILE_BUDGET', detail: '' }, true, 'MOBILE_BUDGET');
+
   boundary([
     'nothing about the working tree — --selftest checks the CHECKS, not the repo',
     'the synthetic cases are my model of the defect; only the blob cases are the defect',
@@ -335,6 +384,7 @@ if (SELFTEST) {
     ' never "one asset short". An exact count would be two values kept equal by hand',
     'the allowlist is a claim about NAMES tracked in dist/, not about their contents:',
     ' a tracked README.md full of the wrong prose passes here and always will',
+    'the mobile budget is bytes: a file under 30 MB that looks terrible passes here',
   ]);
   if (bad.length) {
     console.error(`\nverify-shipped --selftest: ${bad.length} case(s) landed on the wrong verdict:`);
@@ -383,6 +433,28 @@ if (!existsSync(rootCurrentPath)) {
   record(checkShippedIsBuilt(ROOT_CURRENT, rootCurrentBytes, buildBytes));
 }
 
+// THE MOBILE FILE: the same chain, plus the budget. A missing mobile build is a
+// FAIL and not a skip — README hands a player two links now, and a tool that
+// verified one of them and said OK would be verify-shipped's own founding bug.
+const mobileBuildPath = resolve(ROOT, MOBILE_BUILD);
+if (!existsSync(mobileBuildPath)) {
+  record({ ok: false, code: 'MISSING', detail: `${MOBILE_BUILD} does not exist — run \`node tools/launch.mjs --build-only\`, which builds both editions.` });
+} else {
+  const mobileBuildBytes = readFileSync(mobileBuildPath);
+  record(checkCarriesArt(MOBILE_BUILD, mobileBuildBytes));
+  record(checkMobileFits(MOBILE_BUILD, mobileBuildBytes, buildBytes));
+  for (const [label, rel] of [['canonical dist twin', MOBILE_SHIPPED], ['root alias', MOBILE_ROOT_CURRENT]]) {
+    const p = resolve(ROOT, rel);
+    if (!existsSync(p)) {
+      record({ ok: false, code: 'MISSING', detail: `${rel} does not exist, but README.md links it as the mobile ${label}.` });
+      continue;
+    }
+    const bytes = readFileSync(p);
+    record(checkCarriesArt(rel, bytes));
+    record(checkShippedIsBuilt(rel, bytes, mobileBuildBytes, MOBILE_BUILD));
+  }
+}
+
 // C from git, not the filesystem: an ignored file sitting in dist/ after a
 // launcher run is correct and must not fail this. Only a TRACKED one is the bug.
 let trackedDist = [];
@@ -414,6 +486,8 @@ boundary([
   ' that is tools/tutorial-reach.mjs, and it needs a browser at a real --ui-zoom',
   'reproducibility across machines is not checked here — that is the git-diff step',
   ' in .github/workflows/ci.yml running on three runners',
+  'the mobile file is held to a byte budget, not to a look: whether its shrunken',
+  ' art reads well on a phone is a seeing seat\'s call, never this tool\'s',
 ]);
 
 const failed = results.filter((r) => !r.ok);
@@ -430,10 +504,13 @@ if (failed.length) {
 // at that door, and the tool that owns a claim should be able to state it.
 //
 // THE FLOOR IS BELOW THE POPULATION AND NEVER TRACKS IT: today this tool
-// records 6 checks. A floor that follows the count upward is a number retyped
-// to match whatever happened, which is the defect one file over (verify's own
-// ASSET_MAP note says the same thing about its own floor).
-const MIN_CHECKS = 4;
+// records 12 checks (6 on the full file, 6 on the mobile one). A floor that
+// follows the count upward is a number retyped to match whatever happened,
+// which is the defect one file over (verify's own ASSET_MAP note says the same
+// thing about its own floor). It was raised from 4 to 8 when the mobile file
+// doubled the population, because a run that silently lost one whole edition
+// would otherwise still clear it.
+const MIN_CHECKS = 8;
 if (results.length < MIN_CHECKS) {
   console.error(`\nverify-shipped: REFUSED — ran ${results.length} check(s), floor is ${MIN_CHECKS}.`);
   console.error('  A tool that checked nothing and a tool that found nothing are the same green (#12).');

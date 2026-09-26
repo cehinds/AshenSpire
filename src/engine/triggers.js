@@ -50,9 +50,19 @@ export function emitEvent(ctx, type, payload = {}) {
  * keep their own (already unique) entity ids.
  */
 function ownerKeyFor(ctx, entity) {
-  if (ctx.foundation && ctx.playerIdForEntity) return ctx.playerIdForEntity(entity) || entity?.id || 'none';
+  // A combat that can name seats (co-op, with or without a foundation
+  // ruleset) keys by the seat the ENTITY sits in, so an inactive seat's
+  // mounts and gates are its own when an event names it (a heal's
+  // targetPlayerId); the active seat's key is unchanged, since its entity
+  // resolves to the same id ctx.playerKey holds.
+  if (typeof ctx.playerIdForEntity === 'function') return ctx.playerIdForEntity(entity) || entity?.id || 'none';
   if (entity && entity.kind === 'player' && ctx.playerKey) return ctx.playerKey;
   return entity ? entity.id : 'none';
+}
+
+/** The owner key an entity's trigger gates and property mounts live under. */
+export function triggerOwnerKey(ctx, entity) {
+  return ownerKeyFor(ctx, entity);
 }
 
 function scanTriggers(ctx, event) {
@@ -65,20 +75,20 @@ function scanTriggers(ctx, event) {
     else { const fired = maybeFire(ctx, key, trigger, owner, event); if (fired) after?.(); }
   };
 
-  const owners = ctx.foundation && ctx.players && ['damageDealt', 'hpLost', 'enemyDied', 'statusApplied', 'impactDealt', 'attackEvaded'].includes(event.type)
+  // A heal names its seat (targetPlayerId), so every seat's mounts hear it
+  // with or without a foundation ruleset — an ally's heal is the ally's.
+  const everySeat = ctx.players && (
+    (ctx.foundation && ['damageDealt', 'hpLost', 'enemyDied', 'statusApplied', 'impactDealt', 'attackEvaded', 'healed'].includes(event.type))
+    || event.type === 'healed');
+  const owners = everySeat
     ? [...ctx.players.values()].filter((p) => p.entity.alive && p.connected).map((p) => p.entity) : [player];
   // Relics and stances react for their actual owner, including inactive co-op seats.
   for (const player of owners) {
   const pKey = ownerKeyFor(ctx, player);
-  for (const relicId of player.relicIds) {
-    const def = ctx.registries.relics.get(relicId);
-    (def.triggers || []).forEach((trig, i) => {
-      if (trig.on !== event.type) return;
-      schedule(`relic:${pKey}:${relicId}:${i}`, trig, player, () => {
-        if (event.type !== 'relicTriggered') emitEvent(ctx, 'relicTriggered', { relicId });
-      });
-    });
-  }
+  // Relics react through the mount path below, not here: plan phase 2 moved
+  // their triggers into propertyRules and their carriers are mounted beside the
+  // loadout's. What they kept is `relicTriggered`, emitted from the mount scan
+  // for a relic-kind source so the relic still flashes (ui/fx.js).
 
   // Stance hooks (player).
   if (player.stanceId) {
@@ -87,6 +97,32 @@ function scanTriggers(ctx, event) {
       if (trig.on !== event.type) return;
       schedule(`stance:${pKey}:${player.stanceId}:${i}`, trig, player);
     });
+  }
+
+  // Mounted properties (engine/properties.js) react for their carrier's owner,
+  // exactly as a relic does. Source keys are walked SORTED, so a restored
+  // snapshot — which re-derives its mounts rather than saving them — fires
+  // them in the same order the live fight did. The index runs across the
+  // mount's rules in order, so each trigger keeps one stable gate key.
+  const mounts = ctx.propertyMounts && ctx.propertyMounts[pKey];
+  if (mounts) {
+    for (const sourceKey of Object.keys(mounts).sort()) {
+      let index = 0;
+      // A relic-kind source still announces itself: `relicTriggered` is what
+      // ui/fx.js animates, and a relic that stopped flashing when its triggers
+      // moved would be a player-visible regression of a pure refactor.
+      const relicId = mounts[sourceKey].kind === 'relic' ? mounts[sourceKey].id : null;
+      const announce = relicId && event.type !== 'relicTriggered'
+        ? () => emitEvent(ctx, 'relicTriggered', { relicId })
+        : undefined;
+      for (const rule of mounts[sourceKey].rules) {
+        for (const trig of rule.triggers || []) {
+          const i = index++;
+          if (trig.on !== event.type) continue;
+          schedule(`property:${pKey}:${sourceKey}:${i}`, trig, player, announce);
+        }
+      }
+    }
   }
   }
 
@@ -169,8 +205,10 @@ function maybeFire(ctx, key, trigger, owner, event) {
   if (!foundationTriggerAllowed(ctx, key, trigger, event)) return false;
   st.fires += 1;
   st.turnFires += 1;
+  const ratingCard = ctx.ratingsRules && key.startsWith('status:')
+    ? Object.entries(owner.statuses || {}).find(([id]) => key.includes(`:${id}:`))?.[1]?.ratingCard : null;
   for (const eff of trigger.do || []) {
-    ctx.enqueue({ effect: eff, source: owner, owner, target, meta: { event, ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
+    ctx.enqueue({ effect: eff, source: owner, owner, target, ...(ratingCard ? { card: ratingCard } : {}), meta: { event, ...(ctx.foundation ? { foundationAncestry: [...(event.ancestry || []), key] } : {}) } });
   }
   return true;
 }
@@ -237,6 +275,20 @@ function firePhase(ctx, enemy, phase, index, event) {
  * pctx = { owner?, source?, target?, card?, meta?, event? } — the evaluation
  * context of the gated effect or trigger.
  */
+/**
+ * The skill ledger a gate reads for `owner`: in co-op the seat that owns the
+ * carrier (its own copy of run.skills), else the combat's — the active seat's
+ * in co-op, the one player's in solo.
+ */
+function ledgerFor(ctx, owner) {
+  if (owner && ctx.players instanceof Map && typeof ctx.playerIdForEntity === 'function') {
+    const id = ctx.playerIdForEntity(owner);
+    const seat = id ? ctx.players.get(id) : null;
+    if (seat && seat.skills) return seat.skills;
+  }
+  return ctx.skills;
+}
+
 export function evalPredicate(ctx, pred, pctx = {}) {
   switch (pred.p) {
     case 'inStance':
@@ -264,20 +316,43 @@ export function evalPredicate(ctx, pred, pctx = {}) {
       if (meta.attackOrdinal != null) return meta.attackOrdinal === 1;
       return ctx.player.counters.attacksPlayedThisCombat === 0;
     }
+    case 'cardTagIs': {
+      // The card's own tags ∪ the snapshot's derived tags (plan phase 3c).
+      // `pctx.card` is the action's card snapshot; the cardPlayed event carries
+      // the same two lists for the triggers that fire on it. A tag the grip
+      // derived (equipment.dualWield) answers here and appears on no card row.
+      // `authoredTags` where the snapshot carries them: a foundation carrier
+      // rewrites `tags` into the resolved attack tags (a Defend inherits the
+      // sword's `blade`), and the question here is what the CARD says.
+      const lists = pctx.card
+        ? [pctx.card.authoredTags ?? pctx.card.tags, pctx.card.derivedTags]
+        : pctx.event ? [pctx.event.cardTags, pctx.event.derivedTags] : [];
+      return lists.some((list) => Array.isArray(list) && list.includes(pred.tag));
+    }
     case 'cardTypeIs': {
+      // `card.type` and `event.cardType` are the card's KIND (model/tree.js
+      // cardKind), set where the card ref and the cardPlayed receipt are built
+      // — the predicate's authored word (attack, skill, …) is compared against
+      // the tag the card carries, never against def.type.
       if (pctx.card) return pctx.card.type === pred.type;
-      // Trigger context: the cardPlayed event carries the type.
       return !!pctx.event && pctx.event.cardType === pred.type;
     }
     case 'eventIsAttack':
       return !!pctx.event && pctx.event.isAttack === true;
     case 'hpDamagePositive':
       return pctx.event?.type === 'damageDealt' && pctx.event.amount > pctx.event.blocked;
+    case 'healPositive':
+      return pctx.event?.type === 'healed' && pctx.event.amount > 0;
+    case 'manaPositive':
+      return pctx.event?.type === 'manaRestored' && pctx.event.amount > 0;
+    // A seat id on the event names the seat, whenever the combat can name
+    // seats (co-op, with or without a foundation ruleset): every player
+    // entity is id 'player', so the bare id cannot tell an ally from the owner.
     case 'eventSourceIsOwner':
-      if (ctx.foundation && pctx.event?.sourcePlayerId) return pctx.event.sourcePlayerId === ctx.playerIdForEntity?.(pctx.owner);
+      if (pctx.event?.sourcePlayerId && typeof ctx.playerIdForEntity === 'function') return pctx.event.sourcePlayerId === ctx.playerIdForEntity(pctx.owner);
       return !!pctx.event && !!pctx.owner && pctx.event.sourceId === pctx.owner.id;
     case 'eventTargetIsOwner':
-      if (ctx.foundation && pctx.event?.targetPlayerId) return pctx.event.targetPlayerId === ctx.playerIdForEntity?.(pctx.owner);
+      if (pctx.event?.targetPlayerId && typeof ctx.playerIdForEntity === 'function') return pctx.event.targetPlayerId === ctx.playerIdForEntity(pctx.owner);
       return !!pctx.event && !!pctx.owner && pctx.event.targetId === pctx.owner.id;
     case 'eventStatusIs':
       return !!pctx.event && pctx.event.status === pred.status;
@@ -288,6 +363,23 @@ export function evalPredicate(ctx, pred, pctx = {}) {
     }
     case 'random':
       return ctx.rng.float('misc') * 100 < pred.pct;
+    // Progression gates (plan phase 1a). They read the skill and class ledger
+    // that phase 4 adds to run state. Until that ledger exists no level has
+    // been reached, so both answer false rather than guessing its shape — a
+    // property branch gated on them is inert, never half-live.
+    case 'skillLevelAtLeast': {
+      // The ledger the combat was handed (plan phase 4a): a copy of run.skills,
+      // the OWNER's own in co-op.
+      const skills = ledgerFor(ctx, pctx.owner);
+      const row = skills && skills[pred.skill];
+      return (row && Number.isInteger(row.level) ? row.level : 0) >= pred.level;
+    }
+    case 'classLevelAtLeast': {
+      const classId = pctx.owner && pctx.owner.classId ? pctx.owner.classId : (ctx.player && ctx.player.classId);
+      const skills = ledgerFor(ctx, pctx.owner);
+      const row = skills && classId ? skills[`class:${classId}`] : null;
+      return (row && Number.isInteger(row.level) ? row.level : 0) >= pred.level;
+    }
     case 'all':
       return pred.preds.every((sub) => evalPredicate(ctx, sub, pctx));
     case 'any':

@@ -11,9 +11,9 @@ import { resolve, join } from "node:path";
 import { act1Enemies } from "../src/content/enemies/act1.js";
 import { act2Enemies } from "../src/content/enemies/act2.js";
 import { act3Enemies } from "../src/content/enemies/act3.js";
-import { act1Encounters } from "../src/content/encounters/act1.js";
-import { act2Encounters } from "../src/content/encounters/act2.js";
-import { act3Encounters } from "../src/content/encounters/act3.js";
+import { wealdEncounters } from "../src/content/encounters/weald.js";
+import { marchesEncounters } from "../src/content/encounters/marches.js";
+import { reachEncounters } from "../src/content/encounters/reach.js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const schema = readFileSync(join(root, "tools/world-atlas-schema.sql"), "utf8");
@@ -22,7 +22,7 @@ const canonicalEnemies = new Set(
   [...act1Enemies, ...act2Enemies, ...act3Enemies].map((e) => e.id),
 );
 const canonicalEncounters = new Map(
-  [...act1Encounters, ...act2Encounters, ...act3Encounters].map((e) => [
+  [...wealdEncounters, ...marchesEncounters, ...reachEncounters].map((e) => [
     e.id,
     e,
   ]),

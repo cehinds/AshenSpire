@@ -18,23 +18,29 @@ import { eventChoiceRequirementMet, EVENT_CHOICE_HISTORY_KIND } from '../model/q
 import { graceRefillPlan, refillFlaskCharges, utilityFlaskIds } from '../model/gracerefill.js';
 import { eligibleWeaponArts } from '../model/armamentTrading.js';
 import { carriedIds } from '../model/loadout.js';
+import { skillSchools, rarityUnlockedAt } from '../model/skills.js';
+import { classDraftPool } from '../model/classTree.js';
 
 // ---------------------------------------------------------------------------
 // Encounters
 // ---------------------------------------------------------------------------
 
 /**
- * rollEncounter(registries, rng, { pool, act, exclude }) → encounter id.
- * Weighted pick from the act's pool; `exclude` is the no-repeat window
- * (pass the last 1–2 fought encounter ids). Encounters default to act 1.
+ * rollEncounter(registries, rng, { pool, seat, exclude }) → encounter id.
+ * Weighted pick from the SEAT's pool (SPEC §13.2); `exclude` is the no-repeat
+ * window (pass the last 1–2 fought encounter ids). `seat` is required and an
+ * `act` argument is refused: an act is a tier, and a tier has no pool of its
+ * own — guessing "act 1" would be the default this section exists to remove.
  */
-export function rollEncounter(registries, rng, { pool, act = 1, exclude = [] } = {}) {
-  const inActPool = (e) => e.pool === pool && (e.act || 1) === act;
-  let candidates = registries.encounters.all().filter((e) => inActPool(e) && !exclude.includes(e.id));
+export function rollEncounter(registries, rng, { pool, seat, act, exclude = [] } = {}) {
+  if (act !== undefined) throw new Error('rollEncounter: `act` is retired — pass the seat (SPEC §13.2)');
+  if (typeof seat !== 'string' || !seat) throw new Error('rollEncounter: a seat id is required (SPEC §13.2)');
+  const inSeatPool = (e) => e.pool === pool && e.seat === seat;
+  let candidates = registries.encounters.all().filter((e) => inSeatPool(e) && !exclude.includes(e.id));
   if (candidates.length === 0) {
-    candidates = registries.encounters.all().filter(inActPool);
+    candidates = registries.encounters.all().filter(inSeatPool);
   }
-  if (candidates.length === 0) throw new Error(`No encounters in pool '${pool}' for act ${act}`);
+  if (candidates.length === 0) throw new Error(`No encounters in pool '${pool}' for seat '${seat}'`);
   const total = candidates.reduce((a, e) => a + e.weight, 0);
   let r = rng.float('enemyAI') * total;
   for (const e of candidates) {
@@ -55,6 +61,14 @@ export function rollRuneReward(registries, rng, pool, relicIds) {
   return Math.floor(base * passiveMult(registries, relicIds, 'runeGainMult'));
 }
 
+/** Shared authored reward odds; Chaos always bypasses class and pool weights. */
+export function cardRewardRarityWeights(registries, { classId, pool = 'normal', flatRarity = false } = {}) {
+  if (flatRarity) return { common: 1, uncommon: 1, rare: 1 };
+  const rewards = registries.balance.rewards;
+  const poolId = Object.hasOwn(rewards.rarityWeights, pool) ? pool : 'normal';
+  return rewards.rarityWeightsByClass?.[classId]?.[poolId] || rewards.rarityWeights[poolId];
+}
+
 /**
  * rollCardRewardIds(registries, rng, { classId, pool, relicIds }) → distinct
  * card ids (rarity-weighted per pool; elites offer +1 with Feral Eye).
@@ -67,16 +81,15 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
   const cardPool = registries.classes.get(classId).cardPool;
   // flatRarity (Custom Climb "Chaos Rewards") ignores the pool weighting and
   // gives every rarity equal odds — far more rares than normal.
-  const weights = flatRarity
-    ? { common: 1, uncommon: 1, rare: 1 }
-    : bal.rarityWeights[pool] || bal.rarityWeights.normal;
+  const weights = cardRewardRarityWeights(registries, { classId, pool, flatRarity });
   const byRarity = {};
   for (const id of cardPool) {
     const def = registries.cards.get(id);
     (byRarity[def.rarity] = byRarity[def.rarity] || []).push(id);
   }
-  const rarities = Object.keys(weights).filter((r) => byRarity[r] && byRarity[r].length);
+  const rarities = Object.keys(weights).filter((r) => byRarity[r] && byRarity[r].length && weights[r] > 0);
   const total = rarities.reduce((a, r) => a + weights[r], 0);
+  if (!total) return [];
 
   const picks = [];
   let guard = 0;
@@ -93,6 +106,69 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
     const options = byRarity[rarity].filter((id) => !picks.includes(id));
     if (!options.length) continue;
     picks.push(rng.pick('cardRewards', options));
+  }
+  return picks;
+}
+
+/**
+ * rollSkillDraftIds(registries, rng, { classId, loadout, skillId, level,
+ * pool, flatRarity, size }) → distinct card ids for one skill draft (plan
+ * phase 4b): the class reward pool filtered to the track's schools
+ * (model/skills.js skillSchools), rarities unlocked by the level
+ * (balance.skill.rarityUnlock), weighted by the door's own reward odds
+ * (`rarityWeights[pool]`, normal when the pool has no row; equal odds under
+ * Chaos Rewards, as the card offer), `balance.skill.draftSize` picks on the
+ * same 'cardRewards' stream the card offer rolls on. An empty pool rolls
+ * nothing and draws nothing.
+ */
+export function rollSkillDraftIds(registries, rng, { classId, loadout, skillId, level, pool = 'normal', flatRarity = false, size }) {
+  const skill = registries.balance.skill || {};
+  const count = Number.isInteger(size) ? size : skill.draftSize;
+  const schools = new Set(skillSchools(registries, loadout, skillId));
+  const unlocked = rarityUnlockedAt(registries, level);
+  if (!schools.size || !unlocked.length || !(count > 0)) return [];
+  const weights = cardRewardRarityWeights(registries, { classId, pool, flatRarity });
+  const byRarity = {};
+  for (const id of registries.classes.get(classId).cardPool) {
+    const def = registries.cards.get(id);
+    if (!unlocked.includes(def.rarity) || !(def.tags || []).some((t) => schools.has(t))) continue;
+    (byRarity[def.rarity] = byRarity[def.rarity] || []).push(id);
+  }
+  const rarities = unlocked.filter((r) => byRarity[r] && byRarity[r].length && weights[r] > 0);
+  const total = rarities.reduce((a, r) => a + weights[r], 0);
+  if (!total) return [];
+  const picks = [];
+  let guard = 0;
+  while (picks.length < count && guard++ < 100) {
+    let roll = rng.float('cardRewards') * total;
+    let rarity = rarities[rarities.length - 1];
+    for (const r of rarities) {
+      roll -= weights[r];
+      if (roll < 0) { rarity = r; break; }
+    }
+    const options = byRarity[rarity].filter((id) => !picks.includes(id));
+    if (!options.length) {
+      if (rarities.every((r) => byRarity[r].every((id) => picks.includes(id)))) break;
+      continue;
+    }
+    picks.push(rng.pick('cardRewards', options));
+  }
+  return picks;
+}
+
+/**
+ * rollClassDraftIds(registries, rng, { classId, coreTags, level, size }) →
+ * distinct tree node ids for one class draft (plan phase 5b): the class's
+ * draftable nodes (model/classTree.js classDraftPool), `balance.skill.draftSize`
+ * picks on the 'cardRewards' stream. An empty pool draws nothing.
+ */
+export function rollClassDraftIds(registries, rng, { classId, coreTags = [], level = 0, size }) {
+  const count = Number.isInteger(size) ? size : (registries.balance.skill || {}).draftSize;
+  const pool = classDraftPool(registries, classId, coreTags, level);
+  if (!pool.length || !(count > 0)) return [];
+  const picks = [];
+  while (picks.length < Math.min(count, pool.length)) {
+    picks.push(rng.pick('cardRewards', pool.filter((id) => !picks.includes(id))));
   }
   return picks;
 }
@@ -263,19 +339,22 @@ function rollShopCards(registries, rng, classId, count) {
 // ---------------------------------------------------------------------------
 
 /**
- * resolveUnknownNode(registries, rng, { seenEvents, act, history }) →
+ * resolveUnknownNode(registries, rng, { seenEvents, tier, history }) →
  *   { kind: 'event', eventId } | { kind: 'fight'|'shrine'|'treasure' }
- * Odds from mapConfigs[act].unknownWeights — per act, beside the geometry they
- * describe (they used to be `balance.unknownNode`, a flat global that could not
- * differ per act while the map did). `act` is required: guessing act 1 would be
- * a default nobody authored, which is the fallback this rework exists to remove.
+ * Odds from mapConfigs[tier].unknownWeights — per TIER, beside the geometry
+ * they describe (they used to be `balance.unknownNode`, a flat global that
+ * could not differ per act while the map did). `tier` is required: guessing
+ * tier 1 would be a default nobody authored, which is the fallback this rework
+ * exists to remove. (It was `act`; SPEC §13 made the act number the tier and
+ * the seat the content — unknown odds are geometry, so they stay with the tier.)
  * Events avoid repeats within a run while unseen ones remain. Stream 'events'
  * (SPEC §5.6).
  */
-export function resolveUnknownNode(registries, rng, { seenEvents = [], act, history = [] } = {}) {
-  const cfg = registries.mapConfig(act);
+export function resolveUnknownNode(registries, rng, { seenEvents = [], tier, act, history = [] } = {}) {
+  if (act !== undefined) throw new Error('resolveUnknownNode: `act` is retired — pass the tier (SPEC §13.2)');
+  const cfg = registries.mapConfig(tier);
   const odds = cfg && cfg.unknownWeights;
-  if (!odds) throw new Error(`resolveUnknownNode: act ${JSON.stringify(act)} has no unknownWeights`);
+  if (!odds) throw new Error(`resolveUnknownNode: tier ${JSON.stringify(tier)} has no unknownWeights`);
   const total = Object.values(odds).reduce((a, b) => a + b, 0);
   let r = rng.float('events') * total;
   let kind = 'event';
@@ -335,9 +414,3 @@ export function applyGraceRefill(registries, run, opts = {}) {
   return plan;
 }
 
-/** Shrine rest heal (SPEC shrine.healPct × shrineHealMult passives, floored). */
-export function shrineHealAmount(registries, run) {
-  const pct = registries.balance.shrine.healPct;
-  const mult = passiveMult(registries, run.relics, 'shrineHealMult');
-  return Math.min(run.maxHp - run.hp, Math.floor((run.maxHp * pct * mult) / 100));
-}

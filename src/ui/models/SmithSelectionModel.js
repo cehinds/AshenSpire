@@ -1,3 +1,6 @@
+import { armamentIconAsset } from '../../model/equipmentArt.js';
+import { pieceWeight } from '../../model/statProjection.js';
+import { relicArtAsset } from '../../model/relicArt.js';
 import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 // A DOM-free read model for the Shrine armament Smith transaction.
 // Selection is reversible; only the modal's explicit Confirm command commits.
@@ -30,7 +33,7 @@ function groupedAffected(cards) {
       name: card.name.replace(/\+$/, ''),
       role: card.role,
       reference: card.reference,
-      scaling: card.scaling,
+      rating: card.rating,
       changes,
       values: rawChanges,
       used,
@@ -79,8 +82,8 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
     const artAsset = itemKind === 'armor'
       ? armourMenuAsset(candidate.classId, piece.id)
       : itemKind === 'armament'
-        ? `assets/equipment/icon_${piece.id}.webp`
-        : null;
+        ? armamentIconAsset(piece)
+        : relicArtAsset(piece);
     const itemTypes = (piece.itemTypes || []).map((type) => freeze({ ...type }));
     return freeze({
       itemRef,
@@ -100,7 +103,8 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       intrinsicStats: freeze({
         attackRating: piece.attackRating ?? null,
         defenseRating: piece.defenseRating ?? null,
-        weight: piece.weight ?? null,
+        // The load weight (itemWeightScale applied), as the Armoury shows it.
+        weight: piece.weight == null ? null : pieceWeight(piece),
         weaponArtManaCost: piece.weaponArtManaCost ?? null,
         uniqueSkillStaminaCost: piece.uniqueSkillStaminaCost ?? null,
       }),

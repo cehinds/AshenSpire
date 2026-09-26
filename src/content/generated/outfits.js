@@ -13,7 +13,12 @@ export const outfits = [
     "mods": "",
     "unlock": "",
     "blurb": "The armour you were buried in.",
-    "poiseThreshold": 8
+    "poiseThreshold": 8,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": 1
   },
   {
     "id": "vigil",
@@ -26,7 +31,12 @@ export const outfits = [
     "mods": "defend.block=+2",
     "unlock": "beatStitchedKing",
     "blurb": "Blackened at the court that broke.",
-    "poiseThreshold": 7
+    "poiseThreshold": 7,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "oathsworn",
@@ -42,7 +52,12 @@ export const outfits = [
     ],
     "unlock": "winAsReaver",
     "blurb": "Kept bright by an oath unbroken.",
-    "poiseThreshold": 9
+    "poiseThreshold": 9,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "warden",
@@ -58,7 +73,12 @@ export const outfits = [
     ],
     "unlock": "reachAshenCrown",
     "blurb": "Issued, not chosen.",
-    "poiseThreshold": 10
+    "poiseThreshold": 10,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "default",
@@ -71,7 +91,12 @@ export const outfits = [
     "mods": "",
     "unlock": "",
     "blurb": "Dyed with the dark between stars.",
-    "poiseThreshold": 3
+    "poiseThreshold": 3,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "eclipse",
@@ -84,7 +109,12 @@ export const outfits = [
     "mods": "power.potency=+1",
     "unlock": "winAsStarseer",
     "blurb": "Worn only when the moon is eaten.",
-    "poiseThreshold": 4
+    "poiseThreshold": 4,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "starlit",
@@ -100,7 +130,12 @@ export const outfits = [
     ],
     "unlock": "beatFellWarden",
     "blurb": "It catches light that is not there.",
-    "poiseThreshold": 3
+    "poiseThreshold": 3,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "astral",
@@ -116,7 +151,12 @@ export const outfits = [
     ],
     "unlock": "winTwice",
     "blurb": "Cut for someone taller than you.",
-    "poiseThreshold": 4
+    "poiseThreshold": 4,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "default",
@@ -129,7 +169,12 @@ export const outfits = [
     "mods": "",
     "unlock": "",
     "blurb": "Plain cloth, plainly kept.",
-    "poiseThreshold": 5
+    "poiseThreshold": 5,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "ossuary",
@@ -142,7 +187,12 @@ export const outfits = [
     "mods": "strike.blight=+1",
     "unlock": "beatBlightedValkyrie",
     "blurb": "Threaded through with quiet bone.",
-    "poiseThreshold": 6
+    "poiseThreshold": 6,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "emberhabit",
@@ -158,7 +208,12 @@ export const outfits = [
     ],
     "unlock": "beatKingAsHerald",
     "blurb": "Warm long after the fire is out.",
-    "poiseThreshold": 4
+    "poiseThreshold": 4,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "pilgrim",
@@ -174,7 +229,12 @@ export const outfits = [
     ],
     "unlock": "reachStitchedCourt",
     "blurb": "Road dust worked into the weave.",
-    "poiseThreshold": 5
+    "poiseThreshold": 5,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "default",
@@ -187,7 +247,12 @@ export const outfits = [
     "mods": "",
     "unlock": "",
     "blurb": "Quiet leather for a loud profession.",
-    "poiseThreshold": 3
+    "poiseThreshold": 3,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "nightveil",
@@ -200,7 +265,12 @@ export const outfits = [
     "mods": "defend.block=+2",
     "unlock": "rogueBeatWarden",
     "blurb": "Dark cloth that swallows the outline.",
-    "poiseThreshold": 3
+    "poiseThreshold": 3,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "duelist",
@@ -216,7 +286,12 @@ export const outfits = [
     ],
     "unlock": "winAsRogue",
     "blurb": "Cut close so nothing catches the blade.",
-    "poiseThreshold": 3
+    "poiseThreshold": 3,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "shadow",
@@ -229,6 +304,410 @@ export const outfits = [
     "mods": "self.strength=+1",
     "unlock": "rogueReachCrown",
     "blurb": "The hem remembers every alley.",
-    "poiseThreshold": 4
+    "poiseThreshold": 4,
+    "artKey": "",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
+  },
+  {
+    "id": "bastion",
+    "classId": "reaver",
+    "name": "Bastion Harness",
+    "plate": "3F4C5A",
+    "plateLt": "64798E",
+    "leather": "3A3226",
+    "under": "24272A",
+    "mods": [
+      "defend.block=+4",
+      "self.maxStamina=-1"
+    ],
+    "unlock": "reachStitchedCourt",
+    "blurb": "Iron shelter that taxes every step.",
+    "poiseThreshold": 11,
+    "artKey": "warden",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
+  },
+  {
+    "id": "rimeweave",
+    "classId": "starseer",
+    "name": "Rimeweave Robes",
+    "plate": "4A5E96",
+    "plateLt": "93AEE2",
+    "leather": "3A3226",
+    "under": "242A40",
+    "mods": [
+      "strike.frost=+2",
+      "defend.block=-1"
+    ],
+    "unlock": "beatFellWarden",
+    "blurb": "Cold threads hold the enemy at a distance.",
+    "poiseThreshold": 3,
+    "artKey": "starlit",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
+  },
+  {
+    "id": "waywatcher",
+    "classId": "rogue",
+    "name": "Waywatcher Coat",
+    "plate": "20272A",
+    "plateLt": "3B4B4A",
+    "leather": "211F25",
+    "under": 151719,
+    "mods": [
+      "self.maxStamina=+1",
+      "strike.damage=-1"
+    ],
+    "unlock": "rogueBeatWarden",
+    "blurb": "A light coat for the long retreat.",
+    "poiseThreshold": 3,
+    "artKey": "nightveil",
+    "sharedSet": "",
+    "artClassId": "",
+    "inventoryArtKey": "",
+    "defenseRating": ""
+  },
+  {
+    "id": "wayfarerPlate",
+    "classId": "reaver",
+    "name": "Wayfarer Plate",
+    "plate": "3E6157",
+    "plateLt": "64907F",
+    "leather": "4B3522",
+    "under": "332A1E",
+    "mods": [
+      "defend.block=+2",
+      "self.maxHp=+4"
+    ],
+    "unlock": "",
+    "blurb": "The armour you were buried in.",
+    "poiseThreshold": 8,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "reaver",
+    "inventoryArtKey": "wayfarerPlate",
+    "defenseRating": ""
+  },
+  {
+    "id": "wayfarerPlate",
+    "classId": "starseer",
+    "name": "Wayfarer Plate",
+    "plate": "3E6157",
+    "plateLt": "64907F",
+    "leather": "4B3522",
+    "under": "332A1E",
+    "mods": [
+      "defend.block=+2",
+      "self.maxHp=+4"
+    ],
+    "unlock": "",
+    "blurb": "The armour you were buried in.",
+    "poiseThreshold": 8,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "reaver",
+    "inventoryArtKey": "wayfarerPlate",
+    "defenseRating": ""
+  },
+  {
+    "id": "wayfarerPlate",
+    "classId": "herald",
+    "name": "Wayfarer Plate",
+    "plate": "3E6157",
+    "plateLt": "64907F",
+    "leather": "4B3522",
+    "under": "332A1E",
+    "mods": [
+      "defend.block=+2",
+      "self.maxHp=+4"
+    ],
+    "unlock": "",
+    "blurb": "The armour you were buried in.",
+    "poiseThreshold": 8,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "reaver",
+    "inventoryArtKey": "wayfarerPlate",
+    "defenseRating": ""
+  },
+  {
+    "id": "wayfarerPlate",
+    "classId": "rogue",
+    "name": "Wayfarer Plate",
+    "plate": "3E6157",
+    "plateLt": "64907F",
+    "leather": "4B3522",
+    "under": "332A1E",
+    "mods": [
+      "defend.block=+2",
+      "self.maxHp=+4"
+    ],
+    "unlock": "",
+    "blurb": "The armour you were buried in.",
+    "poiseThreshold": 8,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "reaver",
+    "inventoryArtKey": "wayfarerPlate",
+    "defenseRating": ""
+  },
+  {
+    "id": "nightweave",
+    "classId": "reaver",
+    "name": "Nightweave",
+    "plate": "17294F",
+    "plateLt": "26406E",
+    "leather": "4B3522",
+    "under": "332A1E",
+    "mods": [
+      "power.potency=+1",
+      "self.maxMana=+1"
+    ],
+    "unlock": "",
+    "blurb": "Dyed with the dark between stars.",
+    "poiseThreshold": 3,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "starseer",
+    "inventoryArtKey": "nightweave",
+    "defenseRating": ""
+  },
+  {
+    "id": "nightweave",
+    "classId": "starseer",
+    "name": "Nightweave",
+    "plate": "17294F",
+    "plateLt": "26406E",
+    "leather": "4B3522",
+    "under": "332A1E",
+    "mods": [
+      "power.potency=+1",
+      "self.maxMana=+1"
+    ],
+    "unlock": "",
+    "blurb": "Dyed with the dark between stars.",
+    "poiseThreshold": 3,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "starseer",
+    "inventoryArtKey": "nightweave",
+    "defenseRating": ""
+  },
+  {
+    "id": "nightweave",
+    "classId": "herald",
+    "name": "Nightweave",
+    "plate": "17294F",
+    "plateLt": "26406E",
+    "leather": "4B3522",
+    "under": "332A1E",
+    "mods": [
+      "power.potency=+1",
+      "self.maxMana=+1"
+    ],
+    "unlock": "",
+    "blurb": "Dyed with the dark between stars.",
+    "poiseThreshold": 3,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "starseer",
+    "inventoryArtKey": "nightweave",
+    "defenseRating": ""
+  },
+  {
+    "id": "nightweave",
+    "classId": "rogue",
+    "name": "Nightweave",
+    "plate": "17294F",
+    "plateLt": "26406E",
+    "leather": "4B3522",
+    "under": "332A1E",
+    "mods": [
+      "power.potency=+1",
+      "self.maxMana=+1"
+    ],
+    "unlock": "",
+    "blurb": "Dyed with the dark between stars.",
+    "poiseThreshold": 3,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "starseer",
+    "inventoryArtKey": "nightweave",
+    "defenseRating": ""
+  },
+  {
+    "id": "riteVestments",
+    "classId": "reaver",
+    "name": "Rite Vestments",
+    "plate": "2E1F1F",
+    "plateLt": "3A2A2A",
+    "leather": "4B3522",
+    "under": 241413,
+    "mods": [
+      "defend.block=+1",
+      "self.maxHp=+6"
+    ],
+    "unlock": "",
+    "blurb": "Plain cloth, plainly kept.",
+    "poiseThreshold": 5,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "herald",
+    "inventoryArtKey": "riteVestments",
+    "defenseRating": ""
+  },
+  {
+    "id": "riteVestments",
+    "classId": "starseer",
+    "name": "Rite Vestments",
+    "plate": "2E1F1F",
+    "plateLt": "3A2A2A",
+    "leather": "4B3522",
+    "under": 241413,
+    "mods": [
+      "defend.block=+1",
+      "self.maxHp=+6"
+    ],
+    "unlock": "",
+    "blurb": "Plain cloth, plainly kept.",
+    "poiseThreshold": 5,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "herald",
+    "inventoryArtKey": "riteVestments",
+    "defenseRating": ""
+  },
+  {
+    "id": "riteVestments",
+    "classId": "herald",
+    "name": "Rite Vestments",
+    "plate": "2E1F1F",
+    "plateLt": "3A2A2A",
+    "leather": "4B3522",
+    "under": 241413,
+    "mods": [
+      "defend.block=+1",
+      "self.maxHp=+6"
+    ],
+    "unlock": "",
+    "blurb": "Plain cloth, plainly kept.",
+    "poiseThreshold": 5,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "herald",
+    "inventoryArtKey": "riteVestments",
+    "defenseRating": ""
+  },
+  {
+    "id": "riteVestments",
+    "classId": "rogue",
+    "name": "Rite Vestments",
+    "plate": "2E1F1F",
+    "plateLt": "3A2A2A",
+    "leather": "4B3522",
+    "under": 241413,
+    "mods": [
+      "defend.block=+1",
+      "self.maxHp=+6"
+    ],
+    "unlock": "",
+    "blurb": "Plain cloth, plainly kept.",
+    "poiseThreshold": 5,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "herald",
+    "inventoryArtKey": "riteVestments",
+    "defenseRating": ""
+  },
+  {
+    "id": "gutterLeathers",
+    "classId": "reaver",
+    "name": "Gutter Leathers",
+    "plate": "303A35",
+    "plateLt": "52665D",
+    "leather": "3C2E25",
+    "under": "1D211F",
+    "mods": [
+      "strike.damage=+1",
+      "self.maxStamina=+1"
+    ],
+    "unlock": "",
+    "blurb": "Quiet leather for a loud profession.",
+    "poiseThreshold": 3,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "rogue",
+    "inventoryArtKey": "gutterLeathers",
+    "defenseRating": ""
+  },
+  {
+    "id": "gutterLeathers",
+    "classId": "starseer",
+    "name": "Gutter Leathers",
+    "plate": "303A35",
+    "plateLt": "52665D",
+    "leather": "3C2E25",
+    "under": "1D211F",
+    "mods": [
+      "strike.damage=+1",
+      "self.maxStamina=+1"
+    ],
+    "unlock": "",
+    "blurb": "Quiet leather for a loud profession.",
+    "poiseThreshold": 3,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "rogue",
+    "inventoryArtKey": "gutterLeathers",
+    "defenseRating": ""
+  },
+  {
+    "id": "gutterLeathers",
+    "classId": "herald",
+    "name": "Gutter Leathers",
+    "plate": "303A35",
+    "plateLt": "52665D",
+    "leather": "3C2E25",
+    "under": "1D211F",
+    "mods": [
+      "strike.damage=+1",
+      "self.maxStamina=+1"
+    ],
+    "unlock": "",
+    "blurb": "Quiet leather for a loud profession.",
+    "poiseThreshold": 3,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "rogue",
+    "inventoryArtKey": "gutterLeathers",
+    "defenseRating": ""
+  },
+  {
+    "id": "gutterLeathers",
+    "classId": "rogue",
+    "name": "Gutter Leathers",
+    "plate": "303A35",
+    "plateLt": "52665D",
+    "leather": "3C2E25",
+    "under": "1D211F",
+    "mods": [
+      "strike.damage=+1",
+      "self.maxStamina=+1"
+    ],
+    "unlock": "",
+    "blurb": "Quiet leather for a loud profession.",
+    "poiseThreshold": 3,
+    "artKey": "default",
+    "sharedSet": true,
+    "artClassId": "rogue",
+    "inventoryArtKey": "gutterLeathers",
+    "defenseRating": ""
   }
 ];

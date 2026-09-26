@@ -223,7 +223,7 @@ function runStates(registries) {
     build: () => {
       const run = createRunState({ seed: 0x3311, classId: 'starseer', registries });
       const rng = createRng(run.seed);
-      run.mapGraph = buildActMap(registries, rng, 1, null);
+      run.mapGraph = buildActMap(registries, rng, run.seatOrder[0], 1, null);
       run.floor = 4;
       run.mapNodeId = Object.keys(run.mapGraph.nodes)[3] || null;
       run.history = [{ nodeId: 'n0_0', kind: 'combat' }, { nodeId: 'n1_0', kind: 'event' }];
@@ -317,6 +317,10 @@ const EXPLAINED_CHANGES = {
   deck: 'stampDeck re-stamps carrier fields on a pre-carrier deck (ids checked separately)',
   equipmentAttackSlotCount: 'the birth attack quota is recovered ONCE at the load door by counting the pre-field deck, which is the record of what that run was born with; from then on it is read, never re-derived',
   loadout: 'a pre-equipment save is healed with the class starting loadout',
+  zones: 'syncZones projects the zone view of the loadout and deck onto a pre-zones save (plan phase 3a); a projection, re-derived on every write',
+  collection: 'syncZones projects the collection view of the deck onto a pre-zones save (plan phase 3a); a projection, re-derived on every write',
+  skills: 'a save from before the skill ledger (schema ≤ 7) gains the empty ledger at the migration door (plan phase 4a)',
+  coreTags: 'a save from before the class tree (schema ≤ 8) gains no picks at the migration door (plan phase 5b)',
   hp: 'pools are re-derived under the current rules; the ABSOLUTE deficit is checked separately',
   maxHp: 'pools are re-derived under the current rules; the ABSOLUTE deficit is checked separately',
   mana: 'pools are re-derived under the current rules',

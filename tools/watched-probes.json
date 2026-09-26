@@ -755,14 +755,14 @@
      "the strip": ".set-tabs"
     },
     "measure": {
-     "tabHeightDevicePx": "+(document.querySelector('.set-tab').getBoundingClientRect().height*devicePixelRatio).toFixed(1)",
-     "tabHeightCssPx": "+document.querySelector('.set-tab').getBoundingClientRect().height.toFixed(1)",
+     "tabHeightDevicePx": "+(([...document.querySelectorAll('.set-cat-select, .set-tab')].find(e=>e.getBoundingClientRect().height>0)||document.querySelector('.set-tab')).getBoundingClientRect().height*devicePixelRatio).toFixed(1)",
+     "tabHeightCssPx": "+([...document.querySelectorAll('.set-cat-select, .set-tab')].find(e=>e.getBoundingClientRect().height>0)||document.querySelector('.set-tab')).getBoundingClientRect().height.toFixed(1)",
      "stripRows": "new Set([...document.querySelectorAll('.set-tab')].map(e=>Math.round(e.getBoundingClientRect().top))).size",
      "stripOverflowX": "document.querySelector('.set-tabs').scrollWidth-document.querySelector('.set-tabs').clientWidth"
     },
     "wrong": [
      {
-      "js": "document.querySelector('.set-tab').getBoundingClientRect().height*devicePixelRatio + 0.5 < 44",
+      "js": "([...document.querySelectorAll('.set-cat-select, .set-tab')].find(e=>e.getBoundingClientRect().height>0)||document.querySelector('.set-tab')).getBoundingClientRect().height*devicePixelRatio + 0.5 < 44",
       "why": "a tab is now under the 44 device-px tap floor — smaller went past the floor"
      }
     ]
@@ -1923,10 +1923,10 @@
   {
    "id": "F1",
    "by": "Bjorn",
-   "read": "src/ui/screens/customize.js (#cz-derived pairs the HP value with the projection formula as accessible metadata) · src/content/derivedStats.js (pointsPerTier 5; hp gainPerTier 1, sourceStat vigour) · his words live in the FAMILY repo at commons/decisions/directions.md and are not resolvable from this tree",
+   "read": "src/ui/screens/customize.js (#cz-derived pairs the HP value with the projection formula as accessible metadata) · src/content/derivedStats.js (ruleset 6: hp `constitution: 4`, a decimal weight per point) · his words live in the FAMILY repo at commons/decisions/directions.md and are not resolvable from this tree",
    "anchors": [
     "cz-derived",
-    "pointsPerTier"
+    "constitution: 4"
    ],
    "screen": "customize › CHARACTER — the HP-from-Vigour derivation beside the primary stat stack",
    "why-drive": "His 'vigour shoudl be 1 hp point per' overrules the mock's flat +8 (D17). The projection prints base, tiers and total, so per-point vs per-tier is decidable from the screen's own arithmetic: per point, total − base = VIG.",

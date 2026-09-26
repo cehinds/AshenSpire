@@ -12,6 +12,80 @@
   --ui-tray-expanded-panel-max: 34%;
 }
 
+/* Formation editor: a shared live grid beside a compact inspector. */
+.modal:has([data-advanced-panel='Interface']:not([hidden]) [data-topic-panel='Formation layout']:not([hidden])) {
+  width: min(120rem, calc(94vw / var(--ui-zoom, 1))); max-width: calc(94vw / var(--ui-zoom, 1));
+}
+.formation-editor { container-type: inline-size; width: 100%; min-width: 0; font-size: max(1.3rem, calc(14px / var(--ui-zoom, 1))); }
+.formation-workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, .62fr); gap: 1.4rem; align-items: start; padding: .8rem .2rem; }
+.formation-preview-panel, .formation-inspector { min-width: 0; }
+.formation-preview-panel { border: 1px solid var(--line-soft); border-radius: var(--r-2); padding: 1rem; }
+.formation-inspector { border-left: 1px solid var(--line); padding-left: 1.3rem; }
+.formation-editor h3 { margin: 0 0 .8rem; font: 600 max(1.6rem, calc(18px / var(--ui-zoom, 1))) var(--font-ui, sans-serif); color: var(--parchment); }
+.formation-editor h4 { margin: 0 0 .5rem; font: 600 max(1.3rem, calc(14px / var(--ui-zoom, 1))) var(--font-ui, sans-serif); color: var(--parchment); }
+.formation-team-labels { display: grid; grid-template-columns: 1fr 1fr; text-align: center; gap: 1.5rem; margin: 1rem 0 .25rem; }
+.formation-team-labels small { display: block; font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); color: var(--parchment); opacity: .75; margin-top: .2rem; }
+.formation-editor .formation-preview { display: block; position: relative; inset: auto; width: 100%; height: calc(42dvh / var(--ui-zoom, 1)); min-height: 260px; max-height: 480px; z-index: 0; }
+.formation-preview .formation-grid-cell { transform: translate(-50%, -50%); pointer-events: none; }
+.formation-preview .formation-grid-cell::after { display: none; }
+.formation-preview .formation-grid-cell span { background: var(--bg-raise); color: var(--parchment); font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); font-weight: 400; padding: .1rem .2rem; }
+.formation-preview .formation-grid-outline > * { fill-opacity: .1; stroke-width: 1.3; }
+.formation-dimensions { text-align: center; font-weight: 600; margin: 1rem 0 .5rem; }
+.formation-preview-note, .formation-help { color: var(--parchment); opacity: .76; font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); line-height: 1.45; margin: .5rem 0 .8rem; }
+.formation-preview-note { text-align: center; }
+[data-settings-host] .formation-editor .set-row { padding: .3rem 0; border: 0; min-width: 0; }
+.formation-preset-field { display: grid; gap: .4rem; }
+.formation-preset-field select { width: 100%; }
+.formation-editor select, .formation-editor input { min-width: 0; max-width: 100%; font: inherit; color: var(--parchment); accent-color: var(--gold); }
+.formation-editor select, .formation-editor input[type='number'] { background: var(--bg); border: 1px solid var(--line-soft); border-radius: var(--r-2); min-height: var(--tap-floor, 44px); padding: .4rem .6rem; }
+.formation-presets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .4rem; margin: .5rem 0 .8rem; }
+.formation-presets button { display: flex; flex-direction: column; align-items: center; gap: .2rem; min-width: 0; min-height: 64px; padding: .35rem .15rem; font-size: max(1rem, calc(11px / var(--ui-zoom, 1))); background: var(--bg); border: 1px solid var(--line-soft); }
+.formation-presets button[aria-pressed='true'] { border-color: var(--gold); background: var(--panel); color: var(--parchment); }
+.formation-preset-diagram { width: 56px; max-width: 100%; height: 40px; fill: var(--gold); }
+.formation-dimension-controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
+.formation-dimension-controls .formation-control { display: flex; flex-direction: column; align-items: stretch; gap: .4rem; }
+.formation-control { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.4fr); align-items: center; gap: .7rem; }
+.formation-control label { font-size: inherit; }
+.formation-inputs { display: flex; gap: .4rem; align-items: center; min-width: 0; }
+.formation-inputs input[type='range'] { width: 100%; min-width: 30px; flex: 1; }
+.formation-inputs input[type='number'] { width: 5.8rem; flex-shrink: 0; text-align: center; }
+.formation-inputs > span { font-size: inherit; }
+.formation-dimension-controls .formation-inputs input { width: 100%; }
+.formation-control-section { border-top: 1px solid var(--line); padding-top: .9rem; margin-top: .8rem; }
+.formation-visibility { display: flex; align-items: center; gap: .6rem; min-height: 44px; margin: .6rem 0; }
+.formation-visibility input { width: 1.15rem; height: 1.15rem; }
+.formation-adjustments { border: 1px solid var(--line-soft); border-radius: var(--r-2); margin-top: .7rem; }
+.formation-adjustments summary { padding: .8rem; cursor: pointer; color: var(--parchment); }
+.formation-adjustments summary span { display: inline-block; vertical-align: middle; }
+.formation-adjustments summary small { display: block; font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); opacity: .76; margin-top: .3rem; }
+.formation-adjustment-fields { padding: 0 .8rem .7rem; }
+.formation-adjustment-fields .formation-control { grid-template-columns: minmax(0, 1fr) auto; padding-block: .5rem; }
+.formation-adjustment-fields .formation-control label { line-height: 1.35; }
+.formation-apply-status { font-size: max(1.1rem, calc(12px / var(--ui-zoom, 1))); color: var(--parchment); line-height: 1.4; margin: .8rem 0; }
+.formation-editor .formation-apply { width: 100%; background: var(--gold); color: var(--bg); min-height: 48px; font-weight: 700; }
+.formation-editor .formation-apply:is(:hover, :focus-visible, :active) { background: var(--gold); color: var(--bg); border-color: var(--parchment); }
+@container (max-width: 650px) {
+  .formation-workspace { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .formation-inspector { border-left: 0; padding-left: 0; }
+  .formation-editor .formation-preview { height: 300px; min-height: 290px; }
+}
+@container (min-width: 651px) {
+  .formation-preview-panel { position: sticky; top: 1rem; }
+}
+@container (max-width: 370px) {
+  .formation-preview-panel { padding: .6rem .3rem; }
+  .formation-team-labels small { display: none; }
+  .formation-control { grid-template-columns: minmax(0, 1fr); gap: .25rem; }
+  .formation-editor .formation-preview { min-height: 340px; }
+}
+/* UI zoom can make a narrow viewport report a wide logical container. */
+@media (max-width: 760px) {
+  .formation-workspace { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .formation-preview-panel { position: static; }
+  .formation-inspector { border-left: 0; padding-left: 0; }
+  .formation-editor .formation-preview { height: calc(300px / var(--ui-zoom, 1)); min-height: calc(300px / var(--ui-zoom, 1)); }
+}
+
 /* ---------- card colour motif (Settings → Display → Card motif) ------------ */
 /* Two independent axes, both player-chosen:
      class  → --card-tint, set per card from the class def's cardTint (data, so
@@ -62,12 +136,12 @@
 
 
 /* ---------- keyboard / gamepad focus cursor ---------- */
-.gp-focus {
-  outline: 3px solid var(--gold) !important; outline-offset: 2px;
-  box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.6) !important; border-radius: var(--r-2);
-}
+/* The pad's cursor wears THE ring (--focus-ring, kit.css) — the same one a
+   keyboard's :focus-visible wears — and nothing else: no second width, no
+   glow. `!important` because a screen's hover rule may still say
+   `outline: none` on the element the cursor is standing on. */
+.gp-focus { outline: var(--focus-ring) !important; outline-offset: var(--focus-ring-offset); border-radius: var(--r-2); }
 .map-node.gp-focus circle { stroke: var(--gold) !important; stroke-width: 4 !important; }
-.reduced-motion .gp-focus { box-shadow: none !important; }
 
 /* ---------- shared confirmation ---------- */
 .confirmation-veil {
@@ -168,19 +242,21 @@
 /* reward screen */
 .reward-row { display: flex; gap: 2.2rem; }
 
-/* The card chooser's NEW badge (E11/#290 — Codex 4989824448 finding 3: the
-   chooser set only `data-new`, which no stylesheet or renderer consumed, so
-   the unseen card looked identical to its neighbours). The chip dress is
-   restated here because `.chip` styling is scoped to `.class-pick` and this
-   badge lives inside `.card` — its named container (position: relative,
-   ui.css), per Law 2. Box geometry in px under Law 4 clause 3 (a badge is a
-   box); the label keeps its text unit. pointer-events: none — the badge marks
-   the card, the CARD takes the tap. */
+/* The card chooser's NEW badge belongs to the status stack above the card,
+   never to the title band. The reward row owns the stack's shared dimensions
+   in kit.css; fallbacks keep this component safe in an isolated render. The
+   height scales with text, while the gap remains a small piece of box
+   geometry. pointer-events: none — the badge marks the card, the CARD takes
+   the tap. */
 .card .card-badge-new {
-  position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
-  font-size: 0.9rem; font-weight: 700; letter-spacing: 0.08em;
+  position: absolute;
+  top: calc(-1 * (var(--reward-new-badge-height, calc(1.08rem + 6px)) + var(--reward-status-gap, 6px)));
+  left: 50%; transform: translateX(-50%);
+  box-sizing: border-box; height: var(--reward-new-badge-height, calc(1.08rem + 6px));
+  display: inline-flex; align-items: center;
+  font-size: 0.9rem; line-height: 1.2; font-weight: 700; letter-spacing: 0.08em;
   color: var(--gold); border: 1px solid var(--gold); border-radius: var(--r-3);
-  padding: 1px 8px; background: rgba(20, 16, 10, 0.85);
+  padding: 2px 8px; background: rgba(20, 16, 10, 0.85);
   pointer-events: none; z-index: 2;
 }
 
@@ -233,9 +309,15 @@
    wraps below. Keeping `overflow-x:auto` after the wrap made overflow-y compute
    to auto too and trapped the scaled cost tag 2px past that inner port's final
    endpoint at 360x640. The remaining `max-width` is the bound the wrap needs;
-   the generic `.screen` above owns any honest vertical travel and its cue. */
-  :root[data-layout='narrow'] #shop-cards.reward-row { max-width: 100%; }
-  :root[data-layout='narrow'] .reward-row:not(#shop-cards) { flex-wrap: wrap; justify-content: center; max-width: 100%; }
+   the generic `.screen` above owns any honest vertical travel and its cue.
+
+   THE SHOP'S OWN SHELVES ARE NO LONGER `.reward-row`: they are `.card-shelf`
+   (kit.css), which wraps, centres and bounds itself at every width by the same
+   rule that decides how many cards a row holds. The two `#shop-cards` rules
+   that used to state the wrap here are gone rather than kept as a second
+   answer; the rows below are the ones still dealt as `.reward-row` — the
+   reward door, the draft and the co-op picks. */
+  :root[data-layout='narrow'] .reward-row { flex-wrap: wrap; justify-content: center; max-width: 100%; }
 .reward-row .card:hover { transform: translateY(-8px) scale(1.06); box-shadow: 0 10px 30px rgba(201, 162, 39, 0.25); }
 
 /* THE MERCHANT'S SHELF WRAPS — Sten, 2026-08-14, on Marina's axisfit ruling
@@ -261,8 +343,13 @@
 
    Scoped to #shop-cards, NOT to .reward-row: the coop reward rows are red in
    the same sweep and they are Viki's, dealt by name (wave-three board,
-   2026-08-14) — a class-level wrap here would fix her rows behind her back. */
-:root[data-layout='narrow'] #shop-cards { flex-wrap: wrap; justify-content: center; }
+   2026-08-14) — a class-level wrap here would fix her rows behind her back.
+
+   SUPERSEDED, 2026-09-20, and deliberately left standing as the reason. The
+   wrap this rule asked for is now what `.card-shelf` does at every width, on
+   every shop shelf rather than on the card row alone, so the rule itself is
+   removed and its finding is not: a shelf that has to be told to wrap, once
+   per id, is the shape the shelf primitive exists to end. */
 .heal-note { color: var(--green); font-size: 1.3rem; }
 
 /* ---------- save slots (title) ---------- */
@@ -817,23 +904,16 @@ button.ev-choice {
 button.armoury-position-card { display: grid; grid-template-columns: var(--armoury-position-label-width) var(--armoury-position-sprite-width) minmax(0, 1fr); padding: 0; text-align: left; }
 
 /* ---- the smith's card services (mount-service-modal) -------------------
-   Same frame as the upgrade modal; only the preview differs: a list of the
-   item's mounts, then (seating) the deck cards that mount takes. */
-/* The instruction used to sit in a hand-built head; the shell's head has no slot
-   for a sentence, so it is the body grid's first, full-width row. The rows are
-   NAMED because the body grid stretches auto rows to fill the pane: left implicit,
-   the instruction row took half the height and the chooser sat at the bottom. */
-.mount-service-modal .smith-modal-body { grid-template-rows: auto minmax(0, 1fr); }
-.mount-service-modal .mount-modal-instruction { grid-column: 1 / -1; margin: 0; padding: 8px 20px 0; color: var(--muted); line-height: 1.35; }
-@media (max-width: 720px) {
-  .mount-service-modal .smith-modal-body { grid-template-rows: auto auto minmax(0, 1fr); }}
+   W1j / W1k: the same W1 frame as the upgrade (kit.css SMITH); only the pane
+   differs: the item's mount selector, then (seating) the deck cards that
+   mount takes. The instruction is the pane's idle text, not a body row. */
 .mount-row-list { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; }
 .mount-row {
-  display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px;
+  display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto; column-gap: 10px; min-height: var(--tap-floor);
   padding: 8px 10px; border: 1px solid var(--line, rgba(255,255,255,0.14)); border-radius: 8px;
   background: rgba(0,0,0,0.25); cursor: pointer;
 }
-.mount-row:focus-visible, .mount-row:hover { border-color: var(--gold); outline: none; }
+.mount-row:focus-visible, .mount-row:hover { border-color: var(--gold); }
 .mount-row.selected { border-color: var(--gold); background: rgba(201,162,39,0.12); }
 .mount-row > em { grid-row: 1 / span 2; align-self: center; font-style: normal; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .mount-row > b { font-size: 13px; }
@@ -841,7 +921,7 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .mount-row.is-extra > em { color: var(--gold); }
 .mount-card-list { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 6px 0 10px; }
 .mount-card-list .card { cursor: pointer; }
-.mount-card-list .card.selected { outline: 2px solid var(--gold); outline-offset: 2px; }
+/* The picked card wears the game's shared chosen ring (`.is-chosen`, kit.css); the stables no longer draw a gold one of their own. */
 
 /* ── CENTRED + TRACKED TEXT, AND THE HALF-TRACKING BUG ────────────────────
    `letter-spacing` adds its space after the LAST glyph as well as between the
@@ -891,47 +971,169 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .modal .modal-close:focus-visible,
 .modal .modal-iconbtn:focus-visible,
 .modal .set-tab:focus-visible {
-  outline: 2px solid var(--gold);
+  outline: var(--focus-ring);
   outline-offset: -3px;
-  box-shadow: inset 0 0 0 4px #17130e;
 }
 .modal .set-railed .set-panel { scrollbar-gutter: stable; }
-/* The rail folds on a short height as well as a narrow width (the media
-   query below): a landscape phone is 844 wide and 390 tall, and a two-column
-   rail inside a door that is 86% of that leaves the panel a few rows. The
-   height answer is the decider's own `data-short`, written by main.js. */
-:root[data-short='true'] .modal .set-railed { display: flex; flex-direction: column; min-height: 0; }
-:root[data-short='true'] .modal .set-railed > .set-tabs {
-  display: flex; flex-direction: row; flex: 0 0 auto;
-  gap: .5rem; padding: .7rem;
-  overflow-x: auto; overflow-y: hidden;
-  border-right: 0; border-bottom: 1px solid var(--line);
-  scrollbar-width: thin;
+/* Settings owns one vertical scrollport: the content pane. The old shell and
+   pane both scrolled, producing the paired scrollbars visible in the report.
+   The host is `[data-settings-host]` — the container renderSettings filled —
+   so BOTH doors get it: the Settings modal's `.set-body` and the in-run
+   overlay's `.overlay-body`. Scoping these to `.settings-modal` gave the
+   overlay a second scrollbar and none of the chrome below. */
+/* THE SETTINGS WINDOW'S OWN BOX, keyed to the rung it ASKED for rather than
+   the one in force: the Modals width choice may have moved it, and these rules
+   are this door's contract (its width setting, its height, the veil's room),
+   not the rung's. The width takes the smaller of the rung in force
+   (`--modal-rung-width`, published by the ladder in kit.css) and the player's
+   own Window width, so the two settings compose instead of cancelling. */
+.modal.settings-modal[data-authored-size='lg'] {
+  width: min(var(--modal-rung-width, 76rem), calc(var(--settings-window-width, 100vw) / var(--ui-zoom, 1)), 100%);
+  height: min(calc(var(--settings-window-height, 100dvh) / var(--ui-zoom, 1)), calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px)));
+  max-height: calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px));
 }
-:root[data-short='true'] .modal .set-railed > .set-tabs > .set-tab {
-  flex: 0 0 auto; width: auto; min-width: max-content;
-  min-height: var(--tap-floor); padding-inline: 1.2rem;
+:root[data-short='true'] .modal.settings-modal[data-authored-size='lg'] { height: min(calc(var(--settings-window-height, 100dvh) / var(--ui-zoom, 1)), calc(100dvh / var(--ui-zoom, 1) - var(--veil-pad-top, 8px) - var(--veil-pad-bottom, 8px))); }
+.modal > [data-settings-host] { display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 0; }
+.modal > [data-settings-host] > .set-notice { flex: 0 0 auto; margin: 0; padding: .65rem var(--modal-inset); border-bottom: 1px solid var(--line-soft); background: rgba(var(--accent-rgb), .06); }
+[data-settings-host] .set-railed { flex: 1 1 auto; min-height: 0; height: auto; }
+[data-settings-host] .set-panel { min-height: 0; overflow-x: hidden; overflow-y: auto; }
+[data-settings-host] .set-tabs { overflow-y: auto; }
+[data-settings-host] .set-tabs > * { flex-shrink: 0; }
+[data-settings-host] .set-tabs > .set-advanced-head { margin-left: .8rem; padding-left: .6rem; border-left: 1px solid var(--line); }
+[data-settings-host] .set-tabs .set-subtabs { display: flex; flex-direction: column; gap: .4rem; width: 100%; }
+[data-settings-host] .set-tabs .set-subtab { width: 100%; min-width: 0; text-align: left; white-space: normal; font-size: 1.1rem; }
+[data-settings-host] .set-subtab:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+[data-settings-host] .set-panel .set-subtabs { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: 1rem; }
+[data-settings-host] .set-subtabs { display: flex; flex-wrap: wrap; }
+[data-settings-host] .set-subtabs > button { flex: 1 0 auto; }
+.set-section-select, .set-topic-select { display: none; }
+/* Settings has a bounded three-row navigation band on every device. */
+:root [data-settings-host] .set-railed.set-railed[data-cat-nav='selector'] > .set-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: .25rem .7rem; gap: .4rem; }
+:root [data-settings-host] .set-railed[data-cat-nav='selector'] > .set-tabs > .set-tab { min-height: var(--tap-floor); padding: .3rem; }
+.settings-modal .modal-head { padding: .5rem .8rem; min-height: 0; gap: .5rem; }
+.settings-modal .modal-head-actions { flex: 1; justify-content: flex-end; gap: .35rem; min-width: 0; }
+.settings-modal .modal-head-id { flex: 0 0 auto; }
+.settings-modal .modal-head h2 { font-size: 1.7rem; }
+.set-header-tools { display: flex; align-items: center; justify-content: flex-end; gap: .3rem; min-width: 0; }
+.set-header-tools.search-open { flex: 1; }
+.set-header-tools input[type='search'] { width: 100%; min-width: 0; min-height: var(--tap-floor); background: #201c15; color: #eee5d4; border: 1px solid var(--line); border-radius: var(--r-2); padding: .4rem .7rem; }
+.set-header-tools input[hidden] { display: none; }
+/* One quiet toolbar: equal targets, centered icons, and a single close face. */
+.settings-modal .modal-head-actions { align-items: center; align-self: center; }
+:is(.settings-modal, [data-settings-host]) .set-search-toggle,
+:is(.settings-modal, [data-settings-host]) .set-options > summary,
+.settings-modal .modal-close {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--tap-floor); height: var(--tap-floor);
+  min-width: var(--tap-floor); min-height: var(--tap-floor);
+  flex: 0 0 auto; padding: 0; margin: 0;
+  border: 1px solid transparent; border-radius: var(--r-2);
+  background: transparent; color: var(--parchment); box-shadow: none;
 }
-:root[data-short='true'] .modal .set-railed > .set-panel { flex: 1 1 auto; min-height: 0; width: 100%; }
+:is(.settings-modal, [data-settings-host]) .set-header-tools svg { width: 1.8rem; height: 1.8rem; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+:is(.settings-modal, [data-settings-host]) .set-options > summary svg { fill: currentColor; stroke: none; }
+.settings-modal .modal-close > .modal-close-face { width: 100%; height: 100%; border: 0; background: transparent; }
+:is(.settings-modal, [data-settings-host]) .set-search-toggle:is(:hover, :focus-visible, [aria-expanded='true']),
+:is(.settings-modal, [data-settings-host]) .set-options > summary:is(:hover, :focus-visible),
+:is(.settings-modal, [data-settings-host]) .set-options[open] > summary,
+.settings-modal .modal-close:is(:hover, :focus-visible) { background: var(--panel); border-color: var(--line-soft); color: var(--gold); }
+:is(.settings-modal, [data-settings-host]) .set-options > summary::-webkit-details-marker { display: none; }
+/* The in-run overlay has no head of its own to hang the toolbar in, so the
+   same tools ride one bar at the top of the panel: Download & saves at the
+   left, search and options at the right. Before this they were two loose
+   blocks stacked above the rail, and the icons were unstyled black-on-black. */
+[data-settings-host] > .set-inline-bar {
+  flex: 0 0 auto; display: flex; align-items: center; flex-wrap: wrap; gap: .5rem;
+  padding: .5rem var(--modal-inset); border-bottom: 1px solid var(--line-soft);
+}
+[data-settings-host] > .set-inline-bar > .set-header-tools { margin-left: auto; }
+[data-settings-host] > .set-inline-bar > .set-header-tools.search-open { flex: 1 1 18rem; }
+.set-options { position: relative; }
+.set-options > summary { list-style: none; }
+.set-options-menu { position: absolute; top: 100%; right: 0; z-index: 20; width: 20rem; display: grid; gap: .4rem; padding: .6rem; border: 1px solid var(--line); border-radius: var(--r-2); background: #211d17; }
+.set-general-select { width: 100%; padding: .4rem .7rem; min-height: var(--tap-floor); margin-bottom: .5rem; background: #201c15; color: #eee5d4; border: 1px solid var(--line); border-radius: var(--r-2); }
+.settings-modal .modal-foot { padding: .5rem .8rem; }
+.set-export-choice { display: flex; gap: .7rem; align-items: center; }
+:root [data-settings-host] .set-row-dropdown { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 45%); align-items: center; gap: .8rem; }
+:root [data-settings-host] .set-row-dropdown > .r-trail { width: 100%; min-width: 0; max-width: none; }
+.set-choice-select { width: 100%; min-width: 0; min-height: var(--tap-floor); padding: .4rem .6rem; background: #201c15; color: var(--text, #eee5d4); border: 1px solid var(--line); border-radius: var(--r-2); font: inherit; }
+.set-export-body { padding: 1rem; }
+.set-general-pickers { display: flex; gap: .5rem; }
+.set-general-pickers select { flex: 1 1 0; min-width: 0; }
 @media (max-width: 600px) {
-  .modal .set-railed {
-    display: flex; flex-direction: column; min-height: 0;
-  }
-  .modal .set-railed > .set-tabs {
-    display: flex; flex-direction: row; flex: 0 0 auto;
-    gap: .5rem; padding: .7rem;
-    overflow-x: auto; overflow-y: hidden;
-    border-right: 0; border-bottom: 1px solid var(--line);
-    scrollbar-width: thin;
-  }
-  .modal .set-railed > .set-tabs > .set-tab {
-    flex: 0 0 auto; width: auto; min-width: max-content;
-    min-height: var(--tap-floor); padding-inline: 1.2rem;
-  }
-  .modal .set-railed > .set-panel {
-    flex: 1 1 auto; min-height: 0; width: 100%;
-  }
+  .settings-modal .modal-head:has(.set-header-tools.search-open) .modal-head-id { display: none; }
+  .settings-modal .modal-head:has(.set-header-tools.search-open) .set-header-tools { width: 100%; }
 }
+@media (min-width: 800px) {
+  [data-settings-host] .set-advanced-group[data-advanced-panel='Classes'] .set-topic-panel:not([hidden]) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1.5rem; }
+  [data-settings-host] .set-advanced-group[data-advanced-panel='Classes'] .set-topic-panel::before { grid-column: 1 / -1; }
+}
+.set-mobile-pickers { display: none; }
+.set-railed[data-cat-nav='selector'] .set-mobile-pickers { display: flex; gap: .5rem; }
+.set-railed[data-cat-nav='selector'] .set-mobile-pickers select { flex: 1 1 0; min-width: 0; }
+.set-railed[data-cat-nav='selector'] .set-topic-select[hidden] { display: none; }
+.set-topic-tabs { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 .8rem; }
+.set-topic-tabs > button[aria-selected='true'] { color: var(--accent); border-color: var(--accent); }
+.set-group-summary { display: flex; gap: .6rem; align-items: baseline; justify-content: space-between; margin: 0 0 .6rem; color: var(--muted); font-size: 1.05rem; }
+.set-group-summary .set-config-count { flex: none; white-space: nowrap; }
+.set-topic-panel[hidden], .set-topic-panel .set-row[hidden], .set-advanced-group[hidden], .set-subsection-heading[hidden] { display: none; }
+/* Advanced → Stats: the live worked example above each trait's controls, and
+   the subsection headings between its groups of rows. */
+.set-example { margin: 0 0 .8rem; padding: .7rem .85rem; border: 1px solid var(--line-soft); border-left: 3px solid var(--gold); border-radius: var(--r-2); background: var(--panel); }
+.set-example-head { display: flex; flex-wrap: wrap; gap: .4rem .8rem; align-items: baseline; justify-content: space-between; }
+.set-example-head > span, .set-example-who { color: var(--muted); }
+.set-example-who select { margin-left: .4rem; padding: .15rem .35rem; color: inherit; background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--r-2); font: inherit; }
+.set-example-attrs { margin: .3rem 0 .5rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.set-example-block + .set-example-block { margin-top: .6rem; padding-top: .6rem; border-top: 1px solid var(--line); }
+.set-example-block.is-off { opacity: .6; }
+.set-example-title { font-weight: 600; }
+.set-example-title small, .set-example-lines small { color: var(--muted); font-weight: 400; }
+.set-example-lines { margin: .3rem 0 0; }
+.set-example-lines > div { display: grid; grid-template-columns: minmax(7rem, max-content) 1fr; gap: .15rem .7rem; padding: .15rem 0; }
+.set-example-lines dt { color: var(--muted); }
+.set-example-lines dd { margin: 0; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.set-example-total { color: var(--gold); white-space: nowrap; }
+.set-example-hint { margin: .35rem 0 0; color: var(--muted); font-style: italic; }
+.set-example-refused { margin: 0 0 .35rem; padding: .3rem .5rem; border-left: 3px solid var(--danger); color: var(--parchment); }
+.set-example-problem { border-left-color: var(--blood); }
+@media (max-width: 520px) { .set-example-lines > div { grid-template-columns: 1fr; } }
+.set-subsection-heading { margin: .9rem .2rem .3rem; color: var(--gold); font-size: .95rem; letter-spacing: .05em; text-transform: uppercase; }
+.set-subsection-heading:first-child { margin-top: .2rem; }
+.set-topic-panel[data-searching='true']::before { content: attr(data-topic-panel); display: block; color: var(--accent); padding: .7rem; }
+[data-settings-host] .set-topic-panel .set-row { padding: .4rem .7rem; }
+@media (min-width: 800px) { .modal.settings-modal[data-authored-size='lg'] { height: min(80rem, calc(86dvh / var(--ui-zoom, 1))); } }
+.set-reset-menu { position: relative; }
+.set-reset-menu summary { list-style: none; cursor: pointer; }
+.set-reset-menu[open] > button { position: absolute; right: 0; top: 100%; z-index: 5; min-width: 16rem; background: var(--panel, #211d17); }
+[data-settings-host] input.set-config-search { min-height: var(--tap-floor); margin: 0; padding: .6rem .8rem; background: #201c15; color: var(--text, #eee5d4); border: 1px solid var(--line); border-radius: var(--r-2); }
+[data-settings-host] .set-advanced-tools { align-items: center; flex-wrap: nowrap; padding-bottom: .6rem; margin-bottom: .8rem; gap: .5rem; }
+[data-settings-host] .set-config-actions { flex-wrap: nowrap; gap: .4rem; }
+[data-settings-host] .set-config-search { flex: 1 1 12rem; min-width: 0; }
+[data-settings-host] .set-tabs .set-subtab { min-height: 2.8rem; padding-block: .45rem; }
+[data-settings-host] .set-tabs { gap: .35rem; }
+:root [data-settings-host] .set-railed[data-cat-nav='selector'] > .as-catnav-toggle { display: none; }
+:root [data-settings-host] .set-railed[data-cat-nav='selector'] > .set-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-row: 1; padding: .6rem; gap: .4rem; border-right: 0; border-bottom: 1px solid var(--line); overflow: visible; }
+:root [data-settings-host] .set-railed[data-cat-nav='selector'] > .set-tabs > .set-tab { width: 100%; min-width: 0; padding: .5rem .25rem; text-align: center; }
+:root [data-settings-host] .set-railed[data-cat-nav='selector'][data-cat-open='true'] > .set-panel { visibility: visible; }
+.set-railed[data-cat-nav='selector'] .set-advanced-head, .set-railed[data-cat-nav='selector'] .set-topic-tabs { display: none; }
+.set-railed[data-cat-nav='selector'] .set-section-select, .set-railed[data-cat-nav='selector'] .set-topic-select { display: block; width: 100%; min-height: var(--tap-floor); margin-bottom: .6rem; padding: .5rem; background: #201c15; color: var(--text, #eee5d4); border: 1px solid var(--line); border-radius: var(--r-2); }
+.set-railed[data-cat-nav='selector'] .set-panel { padding: .7rem; }
+.set-railed[data-cat-nav='selector'] .set-group-summary { flex-wrap: wrap; }
+.set-railed[data-cat-nav='selector'] .set-advanced-tools .as-btn { padding-inline: .6rem; }
+.set-advanced-tools { display: flex; align-items: end; gap: .8rem; flex-wrap: wrap; margin: 0 0 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line-soft); }
+.set-config-search { display: grid; gap: .35rem; flex: 1 1 18rem; color: var(--muted); font-size: 1.05rem; }
+.set-config-search input { width: 100%; min-height: var(--tap-floor); }
+.set-config-actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+.set-config-count { flex: 0 0 100%; min-height: 1em; color: var(--muted); font-size: 1.05rem; }
+@media (max-width: 600px) {
+  .modal.settings-modal[data-authored-size='lg'] { width: 100%; border-radius: var(--r-3); }
+  [data-settings-host] .set-subtabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; border: 0; gap: .4rem; }
+  [data-settings-host] .set-subtabs > button { border: 1px solid var(--line-soft); border-radius: var(--r-2); min-width: 0; }
+}
+/* W1a CATEGORY NAVIGATION is the kit's (kit/categoryNav.js, kit.css "W1
+   CATEGORY NAVIGATION"): a rail beside the pane, or one [Section ▾] selector
+   above it (`.set-cat-select`) that opens the same `.set-tabs` as a list.
+   data-settings-nav / data-nav-open mirror its state for the instruments. */
 @media (max-width: 600px) {
   .modal .set-panel .r-trail:has(> .choice-group) {
     flex-basis: 100%; width: 100%; max-width: 100%;
@@ -956,12 +1158,141 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
     flex: 1 0 auto; min-width: 7rem;
   }
 }
-/* The flick setting keeps its numeric value, slider and practice surface together. */
-.num-wrap:has(.set-num-slider) { display:grid; grid-template-columns:1fr auto; align-items:center; gap:8px; max-width:100%; width:100%; flex-basis:100%; order:1; }
-.set-num-slider { grid-column:1 / -1; grid-row:2; width:100%; max-width:100%; min-height:var(--tap-floor); }
-.set-num-reset { grid-column:2; grid-row:1; }
+/* W1a ROW CONTROLS AT THE TAP FLOOR (--tap-floor, 44 physical px). The drawn
+   chip keeps the kit's height (the floor less its segment's 2px of border);
+   the finger gets the floor. Its own ::after spans the floor's height, the
+   chip clips with a margin (so a long label still ellipsizes and the pseudo
+   is not cut to the chip), and the segment stops clipping its chips — its
+   end chips round their own corners instead. Chips sit edge to edge, so a
+   chip narrower than the floor (S, L, XL: 25–31 px on wide hosts) has no
+   free space beside it to borrow: it takes the floor as its width. Toggles
+   are the kit's (.as-toggle::after, kit.css). */
+.set-panel .as-seg { overflow: visible; }
+.set-panel .as-seg > button {
+  position: relative; min-width: var(--tap-floor);
+  overflow: clip; overflow-clip-margin: 0.5rem;
+}
+.set-panel .as-seg > button::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 50%;
+  height: max(100%, var(--tap-floor)); transform: translateY(-50%);
+}
+.set-panel .as-seg > button:first-child { border-top-left-radius: inherit; border-bottom-left-radius: inherit; }
+.set-panel .as-seg > button:last-child { border-top-right-radius: inherit; border-bottom-right-radius: inherit; }
+/* A strip of five or more chips wraps (Map zoom, Accent, UI size). Wrapped
+   rows used to touch, so each chip's floor overlapped the row below it and
+   the pair split the seam (measured 41 px). The rows now stand 2px apart —
+   the 2px each chip is short of the floor — so every chip's floor is its own. */
+.set-panel .choice-group:has(> button:nth-child(5)) { row-gap: 2px; }
+/* A row's own buttons (Command log's Open, the flick distance Reset) take at
+   least the floor's width: "Open" measured 43.6 px wide at 844x390. */
+.set-panel .r-trail button:not(.as-toggle):not(.choice) { min-width: var(--tap-floor); }
+/* ---- ONE GRAMMAR FOR EVERY VALUE (2026-09-24 revamp) ----------------------
+   Every number is  −  slider  field  +  on one line under its label, at every
+   width; the buttons meet the tap floor and repeat while held. A row that
+   differs from its default shows a dot before its name and a Reset after it. */
+[data-settings-host] .set-row-number > .as-labelstack { flex: 1 1 100%; }
+[data-settings-host] .set-row-number > .r-trail { flex: 1 1 100%; max-width: 100%; margin-left: 0; }
+.set-stepper { display: flex; align-items: center; gap: .45rem; width: 100%; min-width: 0; }
+.set-stepper > input[type='range'] { flex: 1 1 8rem; min-width: 4rem; min-height: var(--tap-floor); margin: 0; touch-action: pan-y; accent-color: var(--accent, #c9a45c); }
+:root [data-settings-host] .set-stepper > input[type='number'] { flex: 0 0 5.6rem; width: 5.6rem; min-height: var(--tap-floor); padding: .3rem .25rem; text-align: center; font-variant-numeric: tabular-nums; }
+.set-stepper > .set-step { flex: 0 0 auto; min-width: var(--tap-floor); min-height: var(--tap-floor); padding: 0; font-size: 1.35rem; line-height: 1; touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+.set-stepper > .set-step:disabled { opacity: .4; }
+/* A gated or rule-locked field locks its buttons and slider with it. */
+.set-stepper:has(> input[type='number']:disabled) > :is(.set-step, input[type='range']) { opacity: .4; pointer-events: none; }
+.set-unit { color: var(--muted); margin-left: -.25rem; }
+.set-mod-dot { display: none; width: .5rem; height: .5rem; margin-right: .45rem; border-radius: 50%; background: var(--accent, #c9a45c); vertical-align: middle; }
+.set-row[data-modified='true'] .set-mod-dot { display: inline-block; }
+/* The label and its Reset share one line, so showing or hiding the Reset
+   never changes the row's height. The label keeps its own ellipsis. */
+.set-label-line { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+.set-label-line > .ls-label { flex: 0 1 auto; min-width: 0; }
+.set-row-reset { flex: 0 0 auto; min-height: 1.9rem; padding: .1rem .6rem; font-size: .85rem; }
+/* Hidden, a Reset keeps its height (the tap floor) but no width: the row is
+   the same height changed or not, and the label keeps the whole line. */
+[data-settings-host] .set-label-line > .set-row-reset[hidden] { display: inline-flex !important; visibility: hidden; width: 0; min-width: 0; padding: 0; margin: 0; border: 0; overflow: hidden; }
+.set-row-reset[hidden] { display: none; }
+.set-search-where { margin-top: 1.1rem; }
+/* The Changed filter, the Undo bar and the first-open tip. */
+[data-settings-host] .set-changed-toggle { white-space: nowrap; }
+[data-settings-host] .set-changed-toggle.on, [data-settings-host] .set-changed-toggle[aria-pressed='true'] { color: var(--accent, #c9a45c); border-color: var(--accent, #c9a45c); }
+[data-settings-host] > :is(.set-undo, .set-tip) { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin: .4rem var(--modal-inset, .8rem); padding: .45rem .7rem; border: 1px solid var(--line-soft); border-left: 3px solid var(--accent, #c9a45c); border-radius: var(--r-2); background: var(--panel); }
+[data-settings-host] > :is(.set-undo, .set-tip) > span { flex: 1 1 14rem; min-width: 0; }
+[data-settings-host] > :is(.set-undo, .set-tip) > .as-btn { min-height: var(--tap-floor); }
+.set-search-empty { padding: 1rem .7rem; }
+/* Defaults & sync */
+.set-sync { display: grid; gap: .6rem; }
+.set-sync a { color: var(--accent, #c9a45c); overflow-wrap: anywhere; }
+.set-sync-acts { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.set-sync-acts .set-text { flex: 1 1 12rem; min-width: 0; min-height: var(--tap-floor); }
+.set-sync-select { flex: 1 1 10rem; min-width: 0; min-height: var(--tap-floor); max-width: 100%; padding: .4rem .6rem; background: #201c15; color: var(--text, #eee5d4); border: 1px solid var(--line); border-radius: var(--r-2); font: inherit; }
+.set-sync-active { color: var(--gold); overflow-wrap: anywhere; }
+.set-sync-preview { margin: .2rem 0 .6rem; padding: .7rem .85rem; border: 1px solid var(--line-soft); border-left: 3px solid var(--gold); border-radius: var(--r-2); background: var(--panel); }
+.set-sync-diff { margin: .4rem 0; padding-left: 1.1rem; display: grid; gap: .2rem; }
+.set-sync-diff s { color: var(--muted); }
+.set-sync-where { padding: .6rem .7rem; }
+.set-sync-fields { display: grid; gap: .5rem; margin-top: .6rem; }
+.set-sync-fields label { display: grid; gap: .2rem; color: var(--muted); }
+.set-sync-fields .set-text { width: 100%; min-height: var(--tap-floor); }
+@media (max-width: 600px) {
+  /* Phones: a row is label over control, the control full width. */
+  [data-settings-host] .set-panel .as-row.setting { flex-direction: column; align-items: stretch; }
+  [data-settings-host] .set-panel .as-row.setting > .as-labelstack { flex: 0 0 auto; }
+  [data-settings-host] .set-panel .as-row.setting > .r-trail { max-width: 100%; margin-left: 0; justify-content: flex-start; flex-wrap: wrap; }
+  [data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle) { flex-direction: row; align-items: center; }
+  [data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle) > .r-trail { margin-left: auto; }
+  /* A switch row keeps label and switch side by side: the label takes the
+     rest of the width and wraps, never its one-line length (was 1,395px). */
+  [data-settings-host] .set-panel .as-row.setting:has(> .r-trail > .as-toggle) > .as-labelstack { flex: 1 1 0; min-width: 0; }
+  [data-settings-host] .set-panel .choice-group { flex-wrap: wrap; }
+  :root [data-settings-host] .set-stepper > input[type='number'] { flex-basis: 4.6rem; width: 4.6rem; }
+  :root [data-settings-host] .set-row-dropdown { grid-template-columns: 1fr; }
+}
+/* LIVE PREVIEW STRIP (src/ui/components/settingsPreview.js) — above General ›
+   Display and Accessibility. It only arranges the sample; every face in it is
+   the game's own rule, restyled by the classes/vars applyDisplaySettings writes. */
+[data-settings-host] .set-preview { margin: .6rem 0; border: 1px solid var(--line); border-radius: var(--r-2, 8px); background: var(--bg); min-width: 0; max-width: 100%; box-sizing: border-box; }
+[data-settings-host] .set-preview > .set-preview-summary { display: flex; align-items: center; min-height: var(--tap-floor, 44px); padding: 0 .9rem; cursor: pointer; font: 600 1.1rem/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+[data-settings-host] .set-preview > .set-preview-body { display: flex; align-items: flex-start; gap: 1rem; padding: 0 .9rem .9rem; min-width: 0; }
+[data-settings-host] .set-preview-text { display: flex; flex-direction: column; gap: .5rem; flex: 1 1 auto; min-width: 0; }
+[data-settings-host] .set-preview-heading { white-space: normal; overflow-wrap: anywhere; }
+[data-settings-host] .set-preview-lore { margin: 0; color: var(--parchment); font-family: var(--lore-font); font-size: var(--lore-size); line-height: var(--lore-leading); letter-spacing: var(--lore-tracking); font-style: var(--lore-slant); }
+[data-settings-host] .set-preview-buttons { display: flex; flex-wrap: wrap; gap: .5rem; }
+[data-settings-host] .set-preview-card { flex: 0 0 auto; width: min(var(--card-w-glance, 152px), 40%); min-width: 0; }
+[data-settings-host] .set-preview-card > .card { width: 100%; max-width: 100%; margin: 0; }
+@media (max-width: 600px) {
+  [data-settings-host] .set-preview > .set-preview-body { padding: 0 .7rem .7rem; gap: .7rem; }
+}
+.set-color { width: 64px; min-height: var(--tap-floor, 44px); padding: 3px; cursor: pointer; }
+:root .choice.on, :root [role='tab'][aria-selected='true'], :root .mount-row.selected,
+:root .hand .card.selected { border-color: var(--selection-color, #59bd75); }
+:root .combatant.context-selected .sprite { --selection-glow: drop-shadow(0 0 6px var(--selection-color, #59bd75)); }
+:root .combatant.context-selected .nm { color: var(--selection-color, #59bd75); }
+:root .card.selected, :root .card[data-selected='true'], :root .as-card[data-selected='true'],
+:root .as-option[aria-checked='true'], :root .as-option[aria-pressed='true'], :root .as-option.is-selected,
+:root .class-pick.selected, :root .class-pick[aria-checked='true'], :root .as-railitem[aria-current='true'] {
+  border-color: var(--selection-color, #59bd75);
+  --selection-glow: drop-shadow(0 0 6px var(--selection-color, #59bd75));
+}
+:root .choice.on, :root [role='tab'][aria-selected='true'], :root .as-railitem[aria-current='true'] { color: var(--selection-color, #59bd75); }
+/* Existing selection treatments share a color without recoloring rarity or
+   unselected gold ornamentation elsewhere in the game. */
+:root :is(.selected, .is-selected, .reward-selected, .selected-target, .skill-selected,
+  .tooltip-selected, [data-selected='true'], [aria-selected='true'], .choice.on,
+  .modal-tab.on, .as-tab.on, .as-railitem.on, .as-railitem[aria-current='true'],
+  .as-option[aria-checked='true'], .as-option[aria-pressed='true'], .class-pick[aria-checked='true']) {
+  --gold: var(--selection-color, #59bd75);
+  --selection-glow: drop-shadow(0 0 6px var(--selection-color, #59bd75));
+}
 .set-row:has(.flick-practice) { display:flex; flex-wrap:wrap; }
 .set-row:has(.flick-practice) > .as-labelstack { flex-basis:100%; }
 .flick-practice { display:flex; flex-direction:column; justify-content:flex-end; gap:8px; flex-basis:100%; order:2; width:100%; box-sizing:border-box; min-height:210px; padding:16px; border:1px dashed var(--gold); border-radius:8px; touch-action:none; user-select:none; }
 .flick-practice[data-ready='true'] { border-style:solid; box-shadow:inset 0 0 12px #c9a84c55; }
 .flick-practice output { min-height:3em; font-size:14px; }
+/* Stats labels (hand rules, conversions) stay readable in the compact settings pane. */
+[data-advanced-panel="Stats"] .ls-label { white-space: normal; overflow: visible; text-overflow: clip; }
+[data-advanced-panel="Stats"] [aria-disabled="true"] { opacity: .5; }
+.modal.hand-discard-modal { background: var(--bg-raise); }
+.hand-discard-modal .modal-head h2 { white-space: normal; }
+.hand-discard-item { display: flex; flex-direction: column; gap: 8px; align-items: center; width: min(100%, calc(220px / var(--ui-zoom, 1))); }
+.hand-discard-item label { cursor: pointer; min-height: 44px; }
+.hand-discard-item input { width: 20px; height: 20px; accent-color: #c5a32b; }

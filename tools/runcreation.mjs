@@ -512,10 +512,13 @@ async function selftest() {
         // build now writes saves its own door must heal. Group C would stay
         // green under this — it damages saves itself and would still see its
         // heal. Only the wake fires.
+        // Preserve saveflow's failed-write timestamp rollback: only the saved
+        // payload loses its field, so the paired WAKE assertion still observes
+        // this build healing its own output rather than a different save error.
         name: "the shipped writer drops a field, so this build's own saves need healing (premise-death)",
         file: 'src/engine/save.js',
-        find: '      storage.setItem(runKey(slot), serializeRun(run));',
-        replace: '      const _p = JSON.parse(serializeRun(run)); delete _p.loadout;\n      storage.setItem(runKey(slot), JSON.stringify(_p));',
+        find: '      try { storage.setItem(runKey(slot), serializeRun(run)); } catch (error) { run.savedAt = previous; throw error; }',
+        replace: '      try { const _p = JSON.parse(serializeRun(run)); delete _p.loadout; storage.setItem(runKey(slot), JSON.stringify(_p)); } catch (error) { run.savedAt = previous; throw error; }',
         expectRed: /THE PREMISE HAS DIED/,
       },
     ],

@@ -8,11 +8,13 @@
 
 import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
 import { tagIndex } from './tags.js';
+import { nodeTree } from './tree.js';
 import { itemTypeLabel } from '../content/equipment.js';
 import { applyCardMods } from './loadout.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
 import { applyItemCardUpgradeRows, itemUpgradeRows, resolveUpgradedRelic } from './itemUpgrades.js';
+import { cardForSchool, projectAttackCardDamageBundle } from './attackCardDamage.js';
 import { sharedFrameworkBridge } from '../framework/bridge.js';
 import { createEntityTermOverlay } from '../framework/termOverlay.js';
 
@@ -45,16 +47,18 @@ export function deepFreeze(value) {
   return value;
 }
 
-function makeRegistry(typeName, defs) {
+// `key` is the field a def is indexed by — `id` everywhere except the property
+// rules table, whose rows are keyed by the tag they give behaviour to.
+function makeRegistry(typeName, defs, key = 'id') {
   const byId = new Map();
   for (const def of defs || []) {
-    if (!def || typeof def.id !== 'string') {
-      throw new Error(`Every ${typeName} def must have a string id (got ${JSON.stringify(def && def.id)})`);
+    if (!def || typeof def[key] !== 'string') {
+      throw new Error(`Every ${typeName} def must have a string ${key} (got ${JSON.stringify(def && def[key])})`);
     }
-    if (byId.has(def.id)) {
-      throw new Error(`Duplicate ${typeName} id '${def.id}'`);
+    if (byId.has(def[key])) {
+      throw new Error(`Duplicate ${typeName} ${key} '${def[key]}'`);
     }
-    byId.set(def.id, deepFreeze(def));
+    byId.set(def[key], deepFreeze(def));
   }
   return Object.freeze({
     type: typeName,
@@ -91,6 +95,7 @@ const TYPE_SINGULAR = {
   events: 'event',
   flasks: 'flask',
   classes: 'class',
+  seats: 'seat',
 };
 
 /**
@@ -138,7 +143,19 @@ const TYPE_SINGULAR = {
 const EQUIPMENT_ITEM_FAMILIES = new Set(['armament', 'armour']);
 
 function stampTags(bundle) {
-  const { families, index, keyOf } = tagIndex(bundle);
+  const { families, index, kinds: kindsOf, keyOf } = tagIndex(bundle);
+  // PROPERTY TAGS NEVER JOIN `tags`. They are the one domain that confers
+  // behaviour (the property root in content/source/nodes.csv), and their one reader is the
+  // mount path (engine/properties.js). Stamped onto `propertyTags` instead —
+  // and only when an object holds any — so every existing reader of `tags`
+  // (chips, the card/weapon fit check, the class leaning the starting deck
+  // reads) sees exactly what it saw before the domain existed.
+  const propertyIds = new Set((Array.isArray(bundle.tags) ? bundle.tags : [])
+    .filter((t) => t && t.domain === 'property').map((t) => t.id));
+  // WHAT THE OBJECT IS is stamped as `kindIds` (not `kinds`: a slot row already
+  // owns that word for the piece kinds it takes). tagIndex keeps the kind rows
+  // apart from the list — every list reader must never see a kind, and this is
+  // the one reader that must (model/tree.js cardKind reads the stamp).
   const stamped = new Map();
   for (const spec of families.values()) {
     // A non-string source is refused BY NAME in model/tags.js. Skipping it here
@@ -151,16 +168,21 @@ function stampTags(bundle) {
     stamped.set(spec.source, node.map((def) => {
       if (!def) return def;
       const scope = spec.scopeField ? (def[spec.scopeField] || '') : '';
-      const entityTags = [...(index.get(keyOf(spec.family, scope, def.id)) || [])];
+      const authored = index.get(keyOf(spec.family, scope, def.id)) || [];
+      const entityTags = authored.filter((tag) => !propertyIds.has(tag));
+      const propertyTags = authored.filter((tag) => propertyIds.has(tag));
+      const kinds = kindsOf.get(keyOf(spec.family, scope, def.id)) || [];
+      const conferred = { ...(propertyTags.length ? { propertyTags } : {}), ...(kinds.length ? { kindIds: kinds } : {}) };
       // Equipment splits its stamped tags four ways, exactly as content's
       // normPiece used to before the tags moved into tagging.csv: the complete
       // authored vocabulary, the item-type half the Armoury and the smith name
       // the piece by, and the gameplay/presentation half that stays `tags`. An
       // item card never infers its type from `kind` or a UI call site.
-      if (!EQUIPMENT_ITEM_FAMILIES.has(spec.family)) return { ...def, tags: entityTags };
+      if (!EQUIPMENT_ITEM_FAMILIES.has(spec.family)) return { ...def, tags: entityTags, ...conferred };
       const itemTypeTags = entityTags.filter((tag) => itemTypeLabel(tag));
       return {
         ...def,
+        ...conferred,
         entityTags,
         itemTypeTags,
         itemTypes: itemTypeTags.map((tag) => ({ tag, label: itemTypeLabel(tag) })),
@@ -172,7 +194,7 @@ function stampTags(bundle) {
 }
 
 export function createRegistries(contentBundle) {
-  const bundle = contentBundle || {};
+  const bundle = projectAttackCardDamageBundle(contentBundle || {});
   const registries = {};
 
   // The tag join, resolved once for every collection tagFamilies.csv names.
@@ -185,11 +207,32 @@ export function createRegistries(contentBundle) {
   for (const type of REGISTRY_TYPES) {
     registries[type] = makeRegistry(TYPE_SINGULAR[type], collection(type, bundle[type]));
   }
+  // What each `property` tag confers, keyed by the tag (content/propertyRules.js).
+  // Read only by the mount path; a getter throws on an unknown tag like every
+  // other registry, and validate.js has already refused a tag with no rule.
+  registries.propertyRules = makeRegistry('property rule', bundle.propertyRules || [], 'tag');
+
+  // The tree itself, and its companions, for the readers that ask it directly
+  // (model/tree.js nodeTree, resolveVariable). The tag tables and the property
+  // rules above are views of these; both are on the registries so a reader can
+  // take whichever shape its question is in.
+  // …and the class tree (plan phase 5b): classId, nodeId, tier — read by
+  // model/classTree.js as a plain table, like the tree's own companions.
+  for (const table of ['nodes', 'nodeRelations', 'familyNodes', 'nodeTerms', 'nodeVariables', 'variableBindings', 'classTree']) {
+    registries[table] = deepFreeze((bundle[table] || []).map((row) => ({ ...row })));
+  }
+  registries.nodeEffects = deepFreeze({ ...(bundle.nodeEffects || {}) });
+  registries.tree = nodeTree(registries);
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
   // Quest steps (E12): which events an Unknown node may roll only once the
   // run's history earns them. Keyed by event id; absent means ungated.
   registries.eventHistoryRequirements = deepFreeze({ ...(bundle.eventHistoryRequirements || {}) });
+  // Plan phase 10a: which choices complete which quest (the door reads it),
+  // who speaks each chain step, and the speaker rows themselves.
+  registries.questChains = deepFreeze({ ...(bundle.questChains || {}) });
+  registries.eventSpeakers = deepFreeze({ ...(bundle.eventSpeakers || {}) });
+  registries.speakers = makeRegistry('speaker', bundle.speakers || []);
   registries.attributeRules = deepFreeze({ ...(bundle.attributeRules || {}) });
   // Keepsakes are tagged like everything else; they just live one level down.
   const creation = { ...(bundle.characterCreation || {}) };
@@ -276,6 +319,10 @@ export function createRegistries(contentBundle) {
       if (match) hpEquipmentBonus = Math.max(hpEquipmentBonus, Number(match[1]));
     }
   }
+  // The label ceiling is the ATTRIBUTE term at the creation ceiling: the
+  // character level's own term (plan phase 6, derivedStats `perLevel`) is not
+  // added here — the trough's geometry reads the authored domainMax, and a
+  // long run's bumps at most widen a plate's number by a digit.
   const domainRows = registries.classes.all().map((classDef) => {
     const relic = resolveRelicModifiers(registries, [classDef.startingRelic], { attributes: ceilingAttributes });
     return {
@@ -358,19 +405,87 @@ function knownPassive(key) {
   console.error(`[passives] '${key}' is not a relic passive — it will always read as the default. Legal: ${PASSIVE_KEYS.join(', ')}`);
 }
 
-/** Product of a multiplicative passive across owned relics (default 1). */
-export function passiveMult(registries, relicIds, key) {
+/**
+ * carrierRules(registries, tagIds) → the rules a tag set confers, in tag order:
+ * each tag's one rule, kept only if every tag it `requires` is on the same
+ * carrier and none it `excludes` is. An unknown tag throws — validate.js has
+ * already refused it at boot.
+ *
+ * IT LIVES HERE RATHER THAN BESIDE THE MOUNT because two layers ask the same
+ * question and neither may ask the other: engine/properties.js resolves a
+ * carrier's rules to mount them, and the relic sentence in ui/components/card.js
+ * resolves the same rules to read their triggers' numbers (plan phase 2, where a
+ * relic's triggers moved into its rule). Rule resolution is a fact about content;
+ * mounting is what the engine does with it.
+ */
+export function carrierRules(registries, tagIds) {
+  const held = new Set(tagIds || []);
+  const rules = [];
+  for (const tag of tagIds || []) {
+    const rule = registries.propertyRules.get(tag);
+    if ((rule.requires || []).some((t) => !held.has(t))) continue;
+    if ((rule.excludes || []).some((t) => held.has(t))) continue;
+    rules.push(rule);
+  }
+  return rules;
+}
+
+/**
+ * objectKinds(registries, def) → the classification nodes the object carries,
+ * as stamped `kindIds` — what it IS, read off the tags rather than off the
+ * collection it sits in. Every shipped object carries exactly one family kind
+ * (validate.js refuses one that does not) and a card's is the node its type
+ * names, so `objectKinds(REG, strike)` is ['classification.attack'].
+ */
+export function objectKinds(registries, def) {
+  return def && Array.isArray(def.kindIds) ? [...def.kindIds] : [];
+}
+
+/** Whether an object carries a kind, by node id or by its leaf name. */
+export function objectIsKind(registries, def, kind) {
+  const want = String(kind).includes('.') ? String(kind) : `classification.${kind}`;
+  return objectKinds(registries, def).includes(want);
+}
+
+/** The property rules a relic definition confers — empty for a passives-only relic. */
+export function relicPropertyRules(registries, def) {
+  const tags = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
+  return tags.length ? carrierRules(registries, tags) : [];
+}
+
+// MOUNTED PROPERTY RULES CONFER PASSIVES EXACTLY AS AN OWNED RELIC DOES
+// (engine/properties.js). `mounts` is ONE owner's mount map —
+// { [sourceKey]: { rules } }, what propertyMountsOf(ctx, entity) returns — and
+// is plain data, so this model layer never reaches into the engine. Absent, it
+// reads as nothing mounted: every run-level caller (rewards, shrines, the map)
+// is unchanged, because properties are mounted only inside a fight. Sources are
+// walked sorted, the same order the trigger scan uses.
+function mountedPassiveValues(mounts, key) {
+  const values = [];
+  if (!mounts) return values;
+  for (const sourceKey of Object.keys(mounts).sort()) {
+    for (const rule of mounts[sourceKey].rules || []) {
+      const p = rule.passives;
+      if (p && p[key] !== undefined) values.push(p[key]);
+    }
+  }
+  return values;
+}
+
+/** Product of a multiplicative passive across owned relics and mounted properties (default 1). */
+export function passiveMult(registries, relicIds, key, mounts = null) {
   knownPassive(key);
   let m = 1;
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
     if (p && typeof p[key] === 'number') m *= p[key];
   }
+  for (const v of mountedPassiveValues(mounts, key)) if (typeof v === 'number') m *= v;
   return m;
 }
 
-/** Sum of an additive passive across owned relics (default 0). */
-export function passiveSum(registries, relicIds, key, itemUpgradeLevels = {}) {
+/** Sum of an additive passive across owned relics and mounted properties (default 0). */
+export function passiveSum(registries, relicIds, key, itemUpgradeLevels = {}, mounts = null) {
   knownPassive(key);
   let s = 0;
   for (const id of relicIds || []) {
@@ -378,17 +493,18 @@ export function passiveSum(registries, relicIds, key, itemUpgradeLevels = {}) {
     const p = resolveUpgradedRelic(registries, itemRef, itemUpgradeLevels[itemRef] || 0).passives;
     if (p && typeof p[key] === 'number') s += p[key];
   }
+  for (const v of mountedPassiveValues(mounts, key)) if (typeof v === 'number') s += v;
   return s;
 }
 
-/** True if any owned relic sets the boolean passive. */
-export function passiveFlag(registries, relicIds, key) {
+/** True if any owned relic or mounted property sets the boolean passive. */
+export function passiveFlag(registries, relicIds, key, mounts = null) {
   knownPassive(key);
   for (const id of relicIds || []) {
     const p = registries.relics.get(id).passives;
     if (p && p[key] === true) return true;
   }
-  return false;
+  return mountedPassiveValues(mounts, key).some((v) => v === true);
 }
 
 // ---------------------------------------------------------------------------
@@ -432,12 +548,18 @@ export function resolveCard(registries, instanceOrRef) {
   const hit = cache.get(key);
   if (hit) return hit;
 
-  let result = base;
-  if (instanceOrRef.upgraded) result = mergeUpgrade(base);
-  if (profileId) {
-    const profile = ((registries.equipment || {}).basicCardProfiles || []).find((p) => p.id === profileId);
-    result = applyBasicCardProfile(result, profile);
-  }
+  const profile = profileId
+    ? ((registries.equipment || {}).basicCardProfiles || []).find((p) => p.id === profileId)
+    : null;
+  // The school this card resolves in decides which formulas projected it: a
+  // staff's Strike is magical, so its damage is PR's and its impact Ward's
+  // (model/attackCardDamage.js cardForSchool). Chosen before the upgrade merge
+  // so both faces come from the same side.
+  const school = typeof instanceOrRef.damageSchool === 'string' ? instanceOrRef.damageSchool : profile?.damageSchool;
+  let result = cardForSchool(base, school);
+  if (result !== base) result = deepFreeze(result);
+  if (instanceOrRef.upgraded) result = mergeUpgrade(result);
+  if (profileId) result = applyBasicCardProfile(result, profile);
   if (mods && mods.length) {
     const eq = registries.equipment || {};
     result = deepFreeze(

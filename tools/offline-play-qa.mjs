@@ -23,7 +23,7 @@ Object.assign(fixtureRun, { customization: { name: 'Offline test', glyph: '⚔',
   custom: { ascension: 0, mods: {}, deckMode: 'standard' },
   stats: { fightsWon: 0, damageDealt: 0, damageTaken: 0 }, path: [], seenEvents: [], lastEncounters: [] });
 const fixtureRng = createRng(fixtureRun.seed);
-fixtureRun.mapGraph = buildActMap(registries, fixtureRng, fixtureRun.actNumber, null, { history: fixtureRun.history });
+fixtureRun.mapGraph = buildActMap(registries, fixtureRng, fixtureRun.seatOrder[fixtureRun.actNumber - 1], fixtureRun.actNumber, null, { history: fixtureRun.history });
 saves.saveRun(fixtureRun, fixtureRng, 2);
 const original = createSaveTransfer(storage, registries).createBackup();
 const server = createServer((req, res) => {
@@ -192,6 +192,7 @@ try {
   await capture('phone-offline-resumed');
   check(true, 'imported run continues offline');
   await click('.map-node.reachable');
+  await click('#map-enter');
   await until('!!document.querySelector(".combat")');
   if (await evaluate('!!document.querySelector(".tut-skip")')) await click('.tut-skip');
   await capture('phone-offline-combat');

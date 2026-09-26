@@ -244,6 +244,21 @@ export const BUILT = 'UNDATED';
 export const RUN_PATH = 'UNPLACED';
 /* BUILD_RUNPATH_END */
 
+// ---------------------------------------------------------------------------
+// THE EDITION — WHICH OF THE TWO SINGLE FILES THIS IS. `full` carries assets/
+// as authored; `mobile` carries the shrunken twins from assets-mobile/ and is
+// held under 30 MB (tools/mobileart-policy.mjs). Same digest, same ordinal,
+// different art — so this is the one fact that tells a bug report's screenshot
+// of a soft sprite from a bug about the sprite. The source tree served by
+// tools/serve.mjs IS the full art, so `full` is this file's honest resting
+// value rather than a placeholder; the bundler overwrites it for --mobile.
+// ---------------------------------------------------------------------------
+/* BUILD_EDITION_START */
+export const EDITION = 'full';
+/* BUILD_EDITION_END */
+/** True when this page carries the shrunken art of the mobile single file. */
+export const BUILD_IS_MOBILE = EDITION === 'mobile';
+
 /** True when the ordinal in this page belongs to the tree that drew it. */
 export const BUILD_IS_ORDERED = ORDINAL !== 'UNBUMPED';
 
@@ -292,4 +307,4 @@ export const BUILD_STAMP_TEXT = `BUILD ${BUILD_VERSION} · src ${SOURCE}`;
 // then reports it has no reader, because nothing imports it as a vocabulary. A
 // sentence built out of a list looks like a list. One template, no set.
 export const ABOUT_BUILD_LINE =
-  `Ashen Spire ${BUILD_VERSION}${BUILD_IS_DATED ? ` · built ${BUILT}` : ''} · src ${SOURCE}`;
+  `Ashen Spire ${BUILD_VERSION}${BUILD_IS_DATED ? ` · built ${BUILT}` : ''} · src ${SOURCE}${BUILD_IS_MOBILE ? ' · mobile edition' : ''}`;

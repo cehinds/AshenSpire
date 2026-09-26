@@ -69,6 +69,16 @@ function version() {
 
 const args = process.argv.slice(2);
 
+// 0a. Compile presentation config (content/config/**.json → src/config/generated/ui.js).
+// Runs before the content build, whose stray-source sweep refuses a config file
+// the generated module was not compiled from.
+console.log('launch: compiling presentation config…');
+const uiConfig = spawnSync(process.execPath, [resolve(ROOT, 'tools/config-build.mjs')], { stdio: 'inherit' });
+if (uiConfig.status !== 0) {
+  console.error('launch: config build failed — fix content/config and retry.');
+  process.exit(uiConfig.status || 1);
+}
+
 // 0. Compile authored content (content/source/*.csv|json → src/content/generated).
 // Runs first so a spreadsheet edit is picked up by the very next launch without
 // anyone remembering a separate command.
@@ -105,6 +115,12 @@ const aliases = [
 for (const dest of aliases) copyFileSync(src, dest);
 // Optional hosted detail is separate from the offline-safe HTML fallback.
 if (existsSync(resolve(ROOT, 'map-detail'))) cpSync(resolve(ROOT, 'map-detail'), resolve(distDir, 'map-detail'), {recursive:true});
+// The shipped score, the same way: a served alias with the music-folder setting
+// blank fetches music/ from beside itself (content/music.js SHIPPED_MUSIC_FOLDER),
+// so build/ and dist/ each carry a copy. Git-ignored, like dist/map-detail/.
+if (existsSync(resolve(ROOT, 'music'))) {
+  for (const dir of [distDir, resolve(ROOT, 'build')]) cpSync(resolve(ROOT, 'music'), resolve(dir, 'music'), {recursive:true});
+}
 const landed = aliases.filter((f) => existsSync(f)).length;
 console.log(`launch: current build refreshed → AshenSpire.html + dist/AshenSpire.html + dist/AshenSpire-${ver}.html`);
 if (landed !== aliases.length) {
@@ -112,14 +128,41 @@ if (landed !== aliases.length) {
   process.exit(1);
 }
 
-// Produce the mobile/web edition with the same source stamp and external art.
+// 2b. The MOBILE single file — the second download. Same source, same stamp
+// (the full build above already bumped the ordinal if the tree moved, so this
+// one reads the same number), art from assets-mobile/. It gets the same three
+// aliases the full file has, under its own name, and the same count-and-verify.
+console.log('launch: building the mobile single file…');
+const mobile = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs'), '--mobile'], { stdio: 'inherit' });
+if (mobile.status !== 0) {
+  console.error('launch: mobile build failed — aborting.');
+  process.exit(mobile.status || 1);
+}
+const mobileSrc = resolve(ROOT, 'build', 'AshenSpire-mobile.html');
+const mobileAliases = [
+  resolve(ROOT, 'AshenSpire-mobile.html'),
+  resolve(distDir, 'AshenSpire-mobile.html'),
+  resolve(distDir, `AshenSpire-mobile-${ver}.html`),
+];
+for (const dest of mobileAliases) copyFileSync(mobileSrc, dest);
+const landedMobile = mobileAliases.filter((f) => existsSync(f)).length;
+console.log(`launch: mobile build refreshed → AshenSpire-mobile.html + dist/AshenSpire-mobile.html + dist/AshenSpire-mobile-${ver}.html`);
+if (landedMobile !== mobileAliases.length) {
+  console.error(`launch: REFUSED — ${landedMobile} of ${mobileAliases.length} mobile aliases exist after the copy.`);
+  process.exit(1);
+}
+
+// Produce the hosted/web edition with the same source stamp and external art.
 console.log('launch: building the external-art web edition…');
 const web = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs'), '--external-art', '--out', 'build/web'], { stdio: 'inherit' });
 if (web.status !== 0) process.exit(web.status || 1);
 
 if (args.includes('--build-only')) {
   // The terminated verdict line #12's contract requires: one line, one count.
-  console.log(`launch: OK — ${landed}/${aliases.length} current-build aliases refreshed.`);
+  // Both editions counted in one ratio; the noun and the full stop are what
+  // tools/verdict.mjs admits, so the edition note goes on the line before.
+  console.log(`launch: full ${landed}/${aliases.length}, mobile ${landedMobile}/${mobileAliases.length}`);
+  console.log(`launch: OK — ${landed + landedMobile}/${aliases.length + mobileAliases.length} current-build aliases refreshed.`);
   process.exit(0);
 }
 

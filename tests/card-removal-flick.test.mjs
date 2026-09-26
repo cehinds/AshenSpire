@@ -32,7 +32,9 @@ export function runCardRemovalFlickTests() {
   check(nearestFlickTarget([], end) === null, 'no legal target returns none');
 
   const registries = createRegistries(contentBundle);
-  const run = createRunState({ seed: 671, classId: 'reaver', registries });
+  // A Starseer: its bound cards leave three basic attacks under the cap, so a
+  // middle one exists (a sword-and-shield Reaver's kits and Dodge Roll leave one).
+  const run = createRunState({ seed: 671, classId: 'starseer', registries });
   const attacks = run.deck.filter(card => card.equipmentAttackSlotId);
   const retired = attacks[1];
   check(removeDeckCard(run, retired.instanceId, { keepOne: true }), 'merchant can remove a middle basic attack');

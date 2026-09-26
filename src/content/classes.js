@@ -10,9 +10,11 @@ export const classes = [
     glyph: '⚔',
     name: 'Reaver',
     maxHp: 84,
-    startingFlaskAllocation: { hp: 3, mana: 1 },
+    startingFlaskAllocation: { hp: 2, mana: 1 },
     startingRelic: 'forsakenMedallion',
+    kitRelic: 'ashenGrip',
     startingSignatureCard: 'gorefireSlash',
+    abilityCard: 'brace',
     eligibleStartingKitIds: ['reaverBaseline', 'reaverGreatsword'],
     cardPool: [
       // Commons
@@ -36,9 +38,11 @@ export const classes = [
     glyph: '☄',
     name: 'Starseer',
     maxHp: 72,
-    startingFlaskAllocation: { hp: 2, mana: 2 },
+    startingFlaskAllocation: { hp: 1, mana: 2 },
     startingRelic: 'starstoneShard',
+    kitRelic: 'lodestarShard',
     startingSignatureCard: 'starstonePebble',
+    abilityCard: 'attune',
     eligibleStartingKitIds: ['starseerBaseline', 'starseerStarstone'],
     cardPool: [
       // Commons
@@ -60,9 +64,11 @@ export const classes = [
     glyph: '🗡',
     name: 'Rogue',
     maxHp: 74,
-    startingFlaskAllocation: { hp: 3, mana: 1 },
+    startingFlaskAllocation: { hp: 2, mana: 1 },
     startingRelic: 'cutpursesCoin',
+    kitRelic: 'whetstonePouch',
     startingSignatureCard: 'ambush',
+    abilityCard: 'prepare',
     eligibleStartingKitIds: ['rogueBaseline', 'rogueBow'],
     cardPool: [
       'quickCut', 'feint', 'backstep', 'twinPrick', 'pocketSand', 'hamstringRogue', 'serratedShiv',
@@ -80,9 +86,11 @@ export const classes = [
     glyph: '☀',
     name: 'Herald',
     maxHp: 78,
-    startingFlaskAllocation: { hp: 3, mana: 1 },
+    startingFlaskAllocation: { hp: 2, mana: 1 },
     startingRelic: 'goldFigurine',
+    kitRelic: 'waxenSeal',
     startingSignatureCard: 'urgentHeal',
+    abilityCard: 'warmLitany',
     eligibleStartingKitIds: ['heraldBaseline', 'heraldEmberlight'],
     cardPool: [
       // Commons

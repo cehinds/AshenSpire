@@ -32,7 +32,10 @@
           "y": 30
         },
         "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
-        "medallion_center_pct": null
+        "medallion_center_pct": {
+          "x": 50,
+          "y": 35
+        }
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
@@ -69,7 +72,10 @@
           "y": 30
         },
         "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
-        "medallion_center_pct": null
+        "medallion_center_pct": {
+          "x": 50,
+          "y": 35
+        }
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
@@ -106,7 +112,10 @@
           "y": 30
         },
         "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
-        "medallion_center_pct": null
+        "medallion_center_pct": {
+          "x": 50,
+          "y": 35
+        }
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
@@ -143,7 +152,10 @@
           "y": 30
         },
         "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
-        "medallion_center_pct": null
+        "medallion_center_pct": {
+          "x": 50,
+          "y": 35
+        }
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
@@ -180,7 +192,10 @@
           "y": 30
         },
         "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
-        "medallion_center_pct": null
+        "medallion_center_pct": {
+          "x": 50,
+          "y": 35
+        }
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.reaver — inline SVG silhouette in src/ui/assets.js",
@@ -217,7 +232,10 @@
           "y": 17
         },
         "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
-        "medallion_center_pct": null
+        "medallion_center_pct": {
+          "x": 48,
+          "y": 37
+        }
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
@@ -254,7 +272,10 @@
           "y": 17
         },
         "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
-        "medallion_center_pct": null
+        "medallion_center_pct": {
+          "x": 48,
+          "y": 37
+        }
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
@@ -291,7 +312,10 @@
           "y": 17
         },
         "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
-        "medallion_center_pct": null
+        "medallion_center_pct": {
+          "x": 48,
+          "y": 37
+        }
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
@@ -328,7 +352,10 @@
           "y": 17
         },
         "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
-        "medallion_center_pct": null
+        "medallion_center_pct": {
+          "x": 48,
+          "y": 37
+        }
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
@@ -365,7 +392,10 @@
           "y": 17
         },
         "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
-        "medallion_center_pct": null
+        "medallion_center_pct": {
+          "x": 48,
+          "y": 37
+        }
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.starseer — inline SVG silhouette in src/ui/assets.js",
@@ -402,7 +432,10 @@
           "y": 45
         },
         "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
-        "medallion_center_pct": null
+        "medallion_center_pct": {
+          "x": 49,
+          "y": 35
+        }
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
@@ -439,7 +472,10 @@
           "y": 45
         },
         "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
-        "medallion_center_pct": null
+        "medallion_center_pct": {
+          "x": 49,
+          "y": 35
+        }
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
@@ -476,7 +512,10 @@
           "y": 45
         },
         "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
-        "medallion_center_pct": null
+        "medallion_center_pct": {
+          "x": 49,
+          "y": 35
+        }
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
@@ -513,7 +552,10 @@
           "y": 45
         },
         "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
-        "medallion_center_pct": null
+        "medallion_center_pct": {
+          "x": 49,
+          "y": 35
+        }
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
@@ -550,7 +592,10 @@
           "y": 45
         },
         "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
-        "medallion_center_pct": null
+        "medallion_center_pct": {
+          "x": 49,
+          "y": 35
+        }
       },
       "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.rogue — inline SVG silhouette in src/ui/assets.js",
@@ -565,34 +610,33 @@
       "path": "assets/sprites/herald_gold.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 28370,
-      "sha256": "5ceef02b9afd3c9357e4e9aa829273547abf4df6b681bbdc11241df10226cd3f",
+      "bytes": 27546,
+      "sha256": "d132c79fe44d88d8c3679c8d6d75476dd9da5567720a062a266f05d9d2b70367",
       "source_recipe": {
-        "source_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/herald-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/herald/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#c9a227",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 297,
-          "h": 436
+          "w": 205,
+          "h": 526
         },
         "placed_at_px": {
-          "x": 77,
-          "y": 123
+          "x": 123,
+          "y": 33
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 61
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.herald — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -603,34 +647,33 @@
       "path": "assets/sprites/herald_ember.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 26828,
-      "sha256": "8286a9ae246eb8eb73ea8f0d865cd51f848a5113647e5c4aa0bee928b18027df",
+      "bytes": 26616,
+      "sha256": "554d5e369bce68d1f70aab888903d89c812654e7c59902c7ce4f25ae2257c110",
       "source_recipe": {
-        "source_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/herald-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/herald/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#c9502e",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 297,
-          "h": 436
+          "w": 205,
+          "h": 526
         },
         "placed_at_px": {
-          "x": 77,
-          "y": 123
+          "x": 123,
+          "y": 33
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 61
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.herald — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -641,34 +684,33 @@
       "path": "assets/sprites/herald_frost.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 27306,
-      "sha256": "aeb114bf46cc15f3c6dbef16fae8b04c2d38d0cafa95a1b77d27489a5d88eeb4",
+      "bytes": 27182,
+      "sha256": "d6f34e29488b380bb06dc71791957358d8fd272a6dea3ad58370e58bb9841367",
       "source_recipe": {
-        "source_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/herald-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/herald/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#7fa8c9",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 297,
-          "h": 436
+          "w": 205,
+          "h": 526
         },
         "placed_at_px": {
-          "x": 77,
-          "y": 123
+          "x": 123,
+          "y": 33
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 61
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.herald — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -679,34 +721,33 @@
       "path": "assets/sprites/herald_rot.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 27338,
-      "sha256": "9d9c1650e8d653a965dd890504002bb1fbe942123057264edbf59bf955b25bc1",
+      "bytes": 26886,
+      "sha256": "6fa1430d7e4fba1ac60834645ffcd8984c77c1cd46ce4951b36dfcfcf010a4d2",
       "source_recipe": {
-        "source_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/herald-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/herald/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#b5541c",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 297,
-          "h": 436
+          "w": 205,
+          "h": 526
         },
         "placed_at_px": {
-          "x": 77,
-          "y": 123
+          "x": 123,
+          "y": 33
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 61
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.herald — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"
@@ -717,34 +758,33 @@
       "path": "assets/sprites/herald_grace.webp",
       "format": "WebP, lossy q88, alpha_q 100, -exact (RGBA)",
       "dimensions": "450x570",
-      "bytes": 27650,
-      "sha256": "26ea379ba99e2b64537253b2e29d51a8115c71d4bf77e84cdf3ab90c29f36dae",
+      "bytes": 28164,
+      "sha256": "da40d139e01461b54932dc2148d60d49ea16ac09333d129ff6b471d060c39f89",
       "source_recipe": {
-        "source_blob": "613adb7468e073042b25bdcd27148ca0c181ecc1",
-        "source_path": "docs/art-evidence/2026-09-03/concepts/herald-concept-v1.png",
-        "command": "node tools/concept-cutout.mjs",
-        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye (HSV hue rotated toward tint by 0.88 along the short arc, saturation blended 0.42 toward the tint, both ramped in above source saturation 0.1; value passed through unchanged), accent rim",
+        "source_path": "docs/art-evidence/2026-09-04/poses/herald/idle-full.png",
+        "command": "node tools/pose-cutout.mjs --ship --in docs/art-evidence/2026-09-04/poses --out assets/sprites",
+        "steps": "edge flood-fill background removal, enclosed-pocket removal, detached-speck removal, 3x3 feather, un-premultiply against white, box-filter downscale, bottom-align on 450x570, garment dye, accent rim all round (the figure is complete, so no crop edge)",
         "tint_rgb": "#9fc3e8",
         "tool_versions": {
           "node": "v22.22.2",
-          "cwebp": "cwebp 1.3.2"
+          "cwebp": "1.3.2"
         }
       },
       "anchor": {
         "content_box_px": {
-          "w": 297,
-          "h": 436
+          "w": 205,
+          "h": 526
         },
         "placed_at_px": {
-          "x": 77,
-          "y": 123
+          "x": 123,
+          "y": 33
         },
-        "baseline": "bottom-aligned, 2% margin; shared scale across all four classes",
-        "medallion_center_pct": 61
+        "baseline": "bottom-aligned, 2% margin; shared scale across the shipped set",
+        "medallion_center_pct": null
       },
-      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason (see tools/sprites-blender.py header)",
+      "runtime_budget": "embedded base64 in the single-file build; WebP chosen over PNG for that reason",
       "fallback_id": "CLASS_SVG.herald — inline SVG silhouette in src/ui/assets.js",
-      "provenance": "AI-generated with ChatGPT Codex for this project (owner statement, 2026-09-03); CC0. See CREDITS.md.",
+      "provenance": "AI-generated for this project; CC0. See CREDITS.md and the source folder README.",
       "consumers": [
         "src/ui/assets.js renderedSpriteUrl()",
         "src/ui/assets.js classSprite()"

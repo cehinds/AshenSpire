@@ -59,6 +59,9 @@ export const COMBAT_OPCODES = Object.freeze([
   'enterStance',
   'poiseDamage',
   'stagger',
+  // Arcane Exposure buildup dealt directly, not by a hit (plan phase 8): a
+  // focus property spreads a break to the other foes (`resonance`).
+  'arcaneBuildup',
 ]);
 
 export const RUN_OPCODES = Object.freeze([
@@ -71,6 +74,12 @@ export const RUN_OPCODES = Object.freeze([
   'addFlaskCapacity',
   'loseMaxHpPct',
   'startCombat',
+  // Plan phase 5c: the class swap — an event or a boss's gift, never a menu.
+  'swapClass',
+  // Plan phase 7: the grace refill as a rule's effect — the `restFlasks`
+  // location tag fires it on `arrived`. Idempotent (a top-up), so a re-entry
+  // cannot double-pour.
+  'refillFlasks',
 ]);
 
 export const OPCODES = Object.freeze([...COMBAT_OPCODES, ...RUN_OPCODES]);
@@ -85,6 +94,9 @@ export const TARGETS = Object.freeze([
   'player',
   'owner',
   'ally', // co-op: a chosen living teammate; resolves to self in solo play
+  // Every living enemy EXCEPT the one the firing event names (and the action's
+  // own target): a break's ripple reaches the others, never the broken one.
+  'otherEnemies',
 ]);
 
 // Event bus events emitted by executed actions (SPEC §3.10).
@@ -115,6 +127,9 @@ export const EVENTS = Object.freeze([
   'enemySpawned',
   'enemyDied',
   'enemyStaggered',
+  // The player's poise meter filled (plan phase 8): { targetId, actionLoss,
+  // statuses } — what balance.stagger.player took from them.
+  'playerStaggered',
   // Threshold-proc vocabulary (#61 direction): the burst is ITS OWN event in
   // the damage record — never folded into the triggering hit (checkable
   // invariant). procResisted is the refusal receipt: applying points into an
@@ -131,9 +146,26 @@ export const EVENTS = Object.freeze([
   'arcaneExposureChanged',
   'arcaneExposureRefused',
   'arcaneBreak',
+  // Plan phase 10a: a quest completed, once per quest per run. Emitted only by
+  // the quest door (engine/quests.js completeQuest), for an event chain's
+  // completing choice and an atlas quest's claimed reward alike.
+  'questCompleted',
+  // Plan phase 7: a location is a property carrier, mounted from arrival to
+  // departure (engine/locations.js). `arrived` fires when the run reaches it,
+  // `rested` when the player takes its Rest; what the place restores is the
+  // sum of its tags' rules on these two events. Run-level only: no fight
+  // emits either.
+  'arrived',
+  'rested',
   'flaskUsed',
   'relicTriggered',
 ]);
+
+// The events only the run-level door emits (engine/locations.js): a status,
+// stance or enemy-phase hook naming one could never fire, so validate.js
+// refuses it by name. A property rule may name them — that is how a location
+// confers what it does.
+export const RUN_LEVEL_EVENTS = Object.freeze(['arrived', 'rested']);
 
 // Names a trigger's `on` may use (SPEC §3.6): every bus event, the owner-
 // relative turn hooks, and the enemy-phase threshold trigger.
@@ -155,17 +187,80 @@ export const PREDICATES = Object.freeze([
   'firstCardThisTurn',
   'firstAttackThisCombat',
   'cardTypeIs',
+  // Plan phase 3c: the card's tags UNION the action snapshot's derived tags
+  // (the grip's) — never the card row alone, never a tag written to a card.
+  'cardTagIs',
   'everyNthCardThisCombat',
   'random',
   'eventIsAttack',
   'hpDamagePositive',
+  // A `healed` event that healed something: applyHeal emits the event at
+  // full HP with amount 0, and a once-per-combat rule must not spend itself
+  // on it (plan phase 5a's Waxen Seal was the first to).
+  'healPositive',
+  // A `manaRestored` event that restored something: restoreMana emits the
+  // event at full Mana with amount 0 (plan phase 5b's Attuned Mind).
+  'manaPositive',
   'eventSourceIsOwner',
   'eventTargetIsOwner',
   'eventStatusIs',
+  // Progression gates (plan phase 1a). They read the skill and class ledger
+  // phase 4 adds to run state, and answer false until it exists.
+  'skillLevelAtLeast',
+  'classLevelAtLeast',
   'all',
   'any',
   'not',
 ]);
+
+// THE TREE (content/source/nodes.csv and its companions). Every tag is a node;
+// a node's parent is its parentId and nothing else; the five tag tables, the
+// property rules and the framework's property rows are views derived from it
+// by tools/content-build.mjs. These are the closed sets its rows draw from.
+//
+// The verbs an edge may carry (nodeRelations.csv). The framework's own list
+// (framework/schema.js RELATION_KINDS), stated here because the tree is
+// authored in the content layer and validated in the model layer, neither of
+// which may import the framework. tests/engine.test.js pins the two lists to
+// each other.
+export const NODE_RELATIONS = Object.freeze([
+  'REQUIRES', 'CONFLICTS_WITH', 'PERMITS', 'INHERITS', 'REPLACES', 'SUPPRESSES',
+]);
+
+// The framework's visibility and domain words a node may carry (nodes.csv),
+// stated here for the same reason NODE_RELATIONS is: the tree is validated in
+// the model layer, which may not import the framework. tests/engine.test.js
+// pins them to framework/schema.js PROPERTY_VISIBILITIES / PROPERTY_DOMAINS.
+export const NODE_VISIBILITIES = Object.freeze(['PRIMARY', 'SECONDARY', 'CONTEXTUAL', 'INTERNAL', 'DEBUG']);
+export const NODE_DOMAINS = Object.freeze([
+  'CLASSIFICATION', 'DAMAGE', 'ACTION_ROLE', 'COST', 'TARGETING',
+  'LIFECYCLE', 'SCALING', 'EQUIPMENT', 'STATUS', 'PRESENTATION', 'INTERNAL',
+]);
+
+// The columns each tree table may carry — a mis-spelt column (`parentid`)
+// would otherwise make its node a silent root. validate.js's "Unknown field"
+// discipline, for the seven tables.
+export const TREE_COLUMNS = Object.freeze({
+  nodes: ['id', 'parentId', 'label', 'color', 'glyph', 'visibility', 'priority', 'domain', 'aside', 'blurb'],
+  nodeRelations: ['sourceId', 'relation', 'targetId', 'precedence'],
+  familyNodes: ['family', 'nodeId'],
+  nodeTerms: ['nodeId', 'playerTermId', 'tooltipTermId', 'template'],
+  nodeVariables: ['nodeId', 'variable', 'role'],
+  variableBindings: ['scope', 'scopeId', 'nodeId', 'variable', 'balancePath'],
+});
+
+// The scopes a variable binding may name (variableBindings.csv), in resolution
+// order — highest wins. `default` is the shipped tuning and the only scope with
+// rows today; the others are the shape per-copy tuning (a smithed relic, a
+// class's own number) needs, declared and validated before anything writes one.
+export const VARIABLE_SCOPES = Object.freeze(['default', 'class', 'upgrade', 'instance']);
+
+// WHO MAY CARRY A PROPERTY TAG: every family. The four-carrier gate that lived
+// here (armament, armour, relic, class — "a card never") is gone: a property
+// tag is how the game is told what an object is and how it may be used, so
+// there is no family it could not apply to. What the mount path can HOLD is a
+// narrower, engine-side fact (engine/properties.js MOUNTABLE_KINDS) — a kind
+// gains a mount by gaining a hold window, not by joining a list here.
 
 // Relic passive keys — data the run systems (rewards, shops, shrines, map)
 // and cost/flask math consult. Closed set; each key is generic capability,
@@ -182,12 +277,17 @@ export const PREDICATES = Object.freeze([
 // list is derived from them, and the schema is built from the same object below:
 // adding a passive is one row and the two cannot disagree about what exists.
 export const PASSIVE_TYPES = Object.freeze({
+  arBonus: 'num', drBonus: 'num', prBonus: 'num', poiseBonus: 'num', wardBonus: 'num',
   runeGainMult: 'num', // cinder rewards ×
   eliteExtraCardReward: 'bool', // flag: elites offer one extra card choice
   flaskPowerMult: 'num', // flask effect amounts ×
   revealUnknown: 'bool', // flag: '?' map nodes show their resolved type
-  shrineHealMult: 'num', // shrine rest healing ×
-  shrineNoRest: 'bool', // flag: shrines offer Smith only
+  restHealMult: 'num', // rest healing × (every location's Rest; was shrineHealMult)
+  // Rest refused: `true` denies every location's Rest; a list of location
+  // tags (restHpPartial, …) denies only a place whose tag set holds one of
+  // them, so a relic can forbid the shrine's rest and still allow the town's
+  // (plan phase 7; was shrineNoRest, which had no filter).
+  restDenied: 'boolOrTags',
   powerCostReduction: 'num', // Power cards cost N less (min 0)
   // Inert character-sheet projection only. Player state and combat deliberately
   // have no poise meter; enemy poise remains a separate engine system.
@@ -197,9 +297,27 @@ export const PASSIVE_TYPES = Object.freeze({
   // a "reduction" of −1 to mean "one more" is a word arguing with its own value.
   // Deltas sum across relics; the total is added to the base and floored at 0.
   swapCostDelta: 'num', // a mid-fight armament swap costs N more (negative = less)
+  // Arcane Exposure buildup per hit × (multiplies across sources). Read for the
+  // hit's SOURCE by engine/actions.js applyArcaneExposure, relics and mounted
+  // properties alike. The wand's `overcharge` property confers it (plan 1b).
+  exposureBuildupMult: 'num',
+  // Skill XP × for the tracks a carrier's own tags name (plan phase 5a): the
+  // class card's `favored` property confers it, and engine/skillXp.js reads
+  // it scoped to the mounts whose tags include the track — never unscoped.
+  skillXpMult: 'num',
 });
 
 export const PASSIVE_KEYS = Object.freeze(Object.keys(PASSIVE_TYPES));
+
+// The passives node's fields, DERIVED FROM PASSIVE_TYPES once and shared by
+// every schema that carries passives (a relic, a property rule), so there is
+// one home for what a passive may be and no second hand-typed copy to drift.
+const passiveFields = Object.freeze(Object.fromEntries(
+  Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, {
+    ...(t === 'bool' ? { k: 'bool' } : t === 'boolOrTags' ? { k: 'union', anyOf: [{ k: 'bool' }, { k: 'arr', of: { k: 'str' } }] } : { k: 'num' }),
+    opt: true,
+  }])
+));
 
 // Status/stance modifier keys consulted by the generic damage/block math and
 // turn loop (SPEC §3.7, §4.2). Semantics:
@@ -259,7 +377,7 @@ export const STATUS_DURATION_TOKENS = Object.freeze(['turns']);
 export const VULN_STACKING = Object.freeze(['additive', 'multiplicative']);
 
 // Creature tags used to be a frozen array here, and then a field on the enemy
-// def. They are now rows in the one tag registry (content/source/tags.csv)
+// def. They are now nodes in the one tag tree (content/source/nodes.csv)
 // carrying domain 'creature', authored in content/source/tagging.csv like every
 // other tag and stamped onto the enemy at boot. Nothing about them is a schema
 // field any more, which is why neither the enemy nor the profile declares one.
@@ -342,6 +460,9 @@ export const REGISTRY_TYPES = Object.freeze([
   'events',
   'flasks',
   'classes',
+  // The seats (SPEC §13.1): a region with its content. A registry so that an
+  // encounter's `seat` is a ref the validator resolves like any other id.
+  'seats',
 ]);
 
 // Per-opcode field contracts used by validate.js. `refs` maps a field to the
@@ -365,12 +486,19 @@ export const EFFECT_SPECS = Object.freeze({
   addCard: { allowed: ['card', 'pile', 'position', 'count'], required: ['card'], refs: { card: 'cards' } },
   gainEnergy: { allowed: [], required: ['amount'], refs: {} },
   restoreStamina: { allowed: [], required: ['amount'], refs: {} },
-  restoreMana: { allowed: [], required: ['amount'], refs: {} },
+  // `amount` restores that much; `toFloorPct` (plan phase 7, the rest's
+  // floorOrFull mode) restores TO that percent of max, or to full when the
+  // pool already stands at or above the floor. Exactly one of the two —
+  // validate.js refuses neither and both.
+  restoreMana: { allowed: ['toFloorPct'], required: [], refs: {} },
   loseHp: { allowed: ['cause'], required: ['amount'], refs: {} },
   heal: { allowed: [], required: ['amount'], refs: {} },
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
   enterStance: { allowed: ['stance'], required: ['stance'], refs: { stance: 'stances' } },
   poiseDamage: { allowed: [], required: ['amount'], refs: {} },
+  // Exactly one of `amount` (points) or `pct` (of the target's own threshold);
+  // validate.js refuses neither or both. The school is the firing event's.
+  arcaneBuildup: { allowed: ['amount', 'pct'], required: [], refs: {} },
   // Direct stagger (insanity's proc): breaks the target's next move outright,
   // bypassing the poise bar. Enemy targets only — validated in validate.js.
   stagger: { allowed: [], required: [], refs: {} },
@@ -383,6 +511,9 @@ export const EFFECT_SPECS = Object.freeze({
   addFlaskCapacity: { allowed: ['kind', 'amount'], required: ['kind', 'amount'], refs: {} },
   loseMaxHpPct: { allowed: ['pct'], required: ['pct'], refs: {} },
   startCombat: { allowed: ['encounterId'], required: ['encounterId'], refs: { encounterId: 'encounters' } },
+  // `classId` names the class; `random: true` picks any class but the run's own.
+  swapClass: { allowed: ['classId', 'random'], required: [], refs: { classId: 'classes' } },
+  refillFlasks: { allowed: [], required: [], refs: {} },
 });
 
 // ---------------------------------------------------------------------------
@@ -403,6 +534,9 @@ const obj = (fields) => ({ k: 'obj', fields });
 const ref = (reg) => ({ k: 'ref', reg });
 const union = (...anyOf) => ({ k: 'union', anyOf });
 const opt = (node) => ({ ...node, opt: true });
+// The literal null — for the ONE field the spec admits it on (encounter.seat,
+// SPEC §13.5) and nowhere else. `opt` is absence; this is presence-as-null.
+const nul = { k: 'null' };
 
 // A FLOOR ANCHOR — the closed set in model/floorplan.js, as a schema node.
 // `index` and `of` are optional here because which one is required depends on
@@ -425,6 +559,7 @@ const modifiersSchema = obj(Object.fromEntries(
 ));
 
 const enemyMoveSchema = obj({
+  damageSchool: opt(en(...DAMAGE_SCHOOLS)),
   intent: en(...INTENT_KINDS),
   damage: opt(int),
   hits: opt(int),
@@ -531,10 +666,7 @@ export const SCHEMAS = Object.freeze({
     damageSchool: en(...DAMAGE_SCHOOLS),
     exposureBuildupPerHit: int,
     baseValue: num,
-    scalingStat: ref('attributes'),
-    pointsPerTier: num,
-    rounding: en('floor', 'ceil', 'round'),
-    gainPerTier: num,
+    ratingId: en('ar', 'dr', 'pr', 'poise', 'ward'),
     cap: union(num, str),
     flavor: str,
     mods: arr(str),
@@ -555,6 +687,7 @@ export const SCHEMAS = Object.freeze({
   }),
   creationMode: obj({
     id: str,
+    statConversionScale: opt(num),
     label: str,
     baseline: int,
     bonusPool: int,
@@ -566,12 +699,14 @@ export const SCHEMAS = Object.freeze({
     // semantics since the field existed; this set was closed to what shipped.
     belowBaseline: en('forbid', 'allow'),
     redistribution: en('fixedTotal'),
+    // Where the creation editor opens (owner, 2026-09-24): 'preset' seats the
+    // class preset with nothing left to spend (Standard); 'baseline' — and
+    // an absent field, which is every older mode — opens every attribute at
+    // the baseline with the whole pool unspent (Assign points).
+    opensOn: opt(en('preset', 'baseline')),
     equipmentProfiles: opt(mapOf(obj({
       baseValue: opt(num),
-      scalingStat: opt(ref('attributes')),
-      pointsPerTier: opt(num),
-      rounding: opt(en('floor', 'ceil', 'round')),
-      gainPerTier: opt(num),
+      ratingId: opt(en('ar', 'dr', 'pr', 'poise', 'ward')),
       cap: opt(num),
     }))),
   }),
@@ -596,6 +731,9 @@ export const SCHEMAS = Object.freeze({
     exposureBuildupPerHit: opt(int),
     keywords: arr(ref('keywords')),
     effects,
+    // Effects fired at the player's turn end for each copy still in hand
+    // (before the hand is discarded) — e.g. Guilt's HP loss (SPEC §5.2).
+    onTurnEndInHand: opt(effects),
     textTemplate: str,
     upgrade: opt(
       obj({
@@ -619,15 +757,21 @@ export const SCHEMAS = Object.freeze({
     rarity: en(...RELIC_RARITIES),
     pool: opt(en(...RELIC_POOLS)),
     textTemplate: str,
-    triggers: triggersNode,
+    // OPTIONAL SINCE PLAN PHASE 2, AND EMPTY ON EVERY SHIPPED RELIC: a relic's
+    // triggers are a property rule now (content/source/nodeEffects.json), and
+    // it carries them through the same mount path equipment does. The field
+    // stays declared for one release so a relic authored against the old shape
+    // is refused BY NAME here instead of loading with its triggers silently
+    // inert; validate.js says which rule to move them to. Its passives did NOT
+    // move and are not expected to — they are upgraded per copy at the smith
+    // (model/itemUpgrades.js), which a global rule row cannot express.
+    triggers: opt(triggersNode),
     // DERIVED FROM PASSIVE_TYPES, never re-typed. `obj` is strict about unknown
     // keys, so this node is what actually refuses a mis-spelled passive — which
     // is exactly why it must not be a second list.
     passives: opt(
       obj({
-        ...Object.fromEntries(
-          Object.entries(PASSIVE_TYPES).map(([key, t]) => [key, opt(t === 'bool' ? bool : num)])
-        ),
+        ...passiveFields,
         // Semantics and strict field validation live in validate.js beside the
         // closed RELIC_MODIFIER_TAGS vocabulary. `any` avoids duplicating three
         // discriminated object shapes in this generic schema walker.
@@ -637,6 +781,22 @@ export const SCHEMAS = Object.freeze({
     icon: opt(str),
     flavor: opt(str),
     script: opt(ref('scripts')),
+  }),
+
+  // One conferring node of content/source/nodes.csv joined with its nodeEffects.json entry
+  // (src/content/propertyRules.js). Built from the relic's nodes: the same
+  // passives fields (PASSIVE_TYPES, via passiveFields) and the same triggers
+  // node, so a property can confer nothing a relic could not. Relic `modifiers`
+  // are not carried — their semantics live beside RELIC_MODIFIER_TAGS and phase
+  // 2 moves them with the relics. Cross-row rules (one rule per property tag,
+  // requires/excludes resolve, no cycles, carriers only) live in validate.js.
+  propertyRule: obj({
+    tag: str,
+    requires: opt(arr(str)),
+    excludes: opt(arr(str)),
+    textTemplate: str,
+    passives: opt(obj(passiveFields)),
+    triggers: opt(triggersNode),
   }),
 
   status: obj({
@@ -780,9 +940,20 @@ export const SCHEMAS = Object.freeze({
     weight: num,
     minFloor: opt(int),
     pool: en(...ENCOUNTER_POOLS),
-    act: int,
+    // The seat this row belongs to (SPEC §13.2). `act` is RETIRED: an act is a
+    // tier, and a row bound to a tier would be fought at the wrong strength in
+    // every seat but one. The one admitted null is the Valkyrie (§13.5), and
+    // validate.js holds it to exactly one row.
+    seat: union(ref('seats'), nul),
     floorBand: levelBandSchema,
     targetBand: levelBandSchema,
+  }),
+
+  seat: obj({
+    id: str,
+    regionId: str,
+    name: str,
+    baseTier: int,
   }),
 
   event: obj({
@@ -833,6 +1004,13 @@ export const SCHEMAS = Object.freeze({
     cardTint: opt(str), // card motif hue (display; see styles/ui.css .card)
     startingRelic: ref('relics'),
     startingSignatureCard: ref('cards'),
+    // The class ability card (plan phase 5a, proposal §4): one card that
+    // teaches the class's resource loop, granted at creation beside the
+    // signature and, from phase 5b, what the class tree upgrades.
+    abilityCard: ref('cards'),
+    // The kit relic (plan phase 5a, proposal §4): held from creation beside
+    // the starting relic, and the one that reinforces the ability card's loop.
+    kitRelic: ref('relics'),
     eligibleStartingKitIds: arr(str),
     cardPool: arr(ref('cards')),
     description: opt(str),
