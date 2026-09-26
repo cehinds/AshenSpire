@@ -54,7 +54,7 @@
 //
 // Usage:  node tools/buildversion.mjs --selftest
 
-import { cpSync, mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
@@ -661,6 +661,15 @@ function traceability() {
 export async function selftest() {
   console.log('buildversion --selftest: every plant is a real edit to a real tree, entered at check(root).');
   console.log('');
+
+  // THE CORPUS COPIES A REAL BUILD, and the build is not committed on dev (since
+  // 2026-09-26), so a fresh checkout has none. Refused by name rather than by a
+  // cpSync stack trace from inside fresh(); never a pass.
+  if (!existsSync(resolve(REPO_ROOT, 'build/AshenSpire.html'))) {
+    console.error('buildversion --selftest: REFUSED — build/AshenSpire.html is missing. The corpus plants edits into a copy of a real build;');
+    console.error('  build it first: node tools/launch.mjs --build-only (built HTML is not committed; CI builds before this self-test).');
+    return 1;
+  }
 
   const rel = /version:\s*'([^']+)'/.exec(readFileSync(resolve(REPO_ROOT, 'src/content/index.js'), 'utf8'))[1];
   let failures = 0;

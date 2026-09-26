@@ -23,7 +23,10 @@ on:
 
 concurrency:
   group: dev-preview-${{ github.ref }}
-  cancel-in-progress: true
+  # A PULL REQUEST'S superseded run may be cancelled; a push to `dev` may not.
+  # The built HTML is not committed on dev, so this run's upload is the only copy
+  # of that commit's build — cancelling it would leave the commit with none.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
