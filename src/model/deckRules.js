@@ -183,6 +183,9 @@ export function moveFromSideboard(registries, run, instanceId, settings = {}) {
  */
 export function addBasicCard(registries, run, role, { plain = false } = {}) {
   if (plain) {
+    // An equipped run's basics are slot-true: a bare Strike would sit outside
+    // stampDeck's projection and the attack-slot allocation.
+    if (run.loadout) throw new Error(`addBasicCard: an equipped run adds basics by role ('attack' | 'guard'), not { plain: true }`);
     if (!deckRules.unlimitedCardIds.includes(role)) throw new Error(`'${role}' is not an unlimited card id (${deckRules.unlimitedCardIds.join(', ')})`);
     const kept = sideboard(run).find((c) => c && !c.equipmentRole && !c.grantedBy && c.cardId === role);
     if (kept) {

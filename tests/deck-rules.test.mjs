@@ -110,6 +110,8 @@ test('basics are matched by role and stay slot-true', () => {
 
 test('a run with no equipment mints plain unlimited basics with counted ids', () => {
   const run = freshRun();
+  assert.throws(() => addBasicCard(REG, run, 'strike', { plain: true }), /equipped run/, 'an equipped run never mints a bare basic');
+  delete run.loadout;
   run.deck = run.deck.filter((c) => !c.equipmentRole && !c.grantedBy);
   run.deck.push(createCardInstance('strike', false, () => 'plain1'));
   const minted = addBasicCard(REG, run, 'strike', { plain: true });
