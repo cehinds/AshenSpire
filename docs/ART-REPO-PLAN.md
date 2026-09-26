@@ -15,7 +15,7 @@ questions at the end.
   | tree | working-tree size | tracked files | what it is |
   |---|---|---|---|
   | `art/` | 1.6 GB | 6,536 | authoring sources: reference sheets, pose studies, outfit and weapon sets, map sources, inspection pages |
-  | `assets/` | 194 MB | 5,265 | full-resolution runtime art (5,201 files that ship), **plus 64 non-art files** (below) |
+  | `assets/` | 194 MB | 5,265 | full-resolution runtime art (5,201 files that ship), 41 authoring-only files in `equipment/components/` (39 WebP reference strips, a README and a manifest), and **23 non-art files** (below) |
   | `assets-mobile/` | 27 MB | 5,201 | the light tier, generated from `assets/` by `tools/mobile-art.mjs` |
   | `map-detail/`, `music/` | 12 MB, 5.6 MB | 116 + 5 | runtime data that both tiers ship |
   | `docs/preview/` | 161 MB | — | screenshots; stays, with new screenshots capped (owner) |
@@ -41,7 +41,10 @@ questions at the end.
 
 A new repository, **`cehinds/AshenSpire-art`**, holds:
 
-- **`art/`:** the authoring sources, as plain Git (they have never been in LFS).
+- **`art/`:** the authoring sources, as plain Git (they have never been in LFS),
+  plus `assets/equipment/components/`: its 39 WebP strips are modelling and
+  inventory-art references (CREDITS.md), never shipped (`tools/assetmime.mjs`
+  excludes them), so they are source art and move with its README and manifest.
 - **`hd/assets/`:** the full-resolution runtime art, as plain Git. It is the
   reviewable source of every release, so an art change is a normal PR there.
 - **A pack script and CI:** they build `hd-assets-v<N>.zip` and its
@@ -53,9 +56,12 @@ This repository keeps:
 
 - `assets-mobile/` (the light tier);
 - `map-detail/` and `music/`;
-- `art-manifest.json`, pinned to one release tag and its zip's sha256;
+- `art-manifest.json`, pinned to one release tag and its zip's sha256, and
+  **added to the build identity** (`BUILD_IDENTITY_FILES` in
+  `tools/buildversion.mjs`): once `assets/` is gone the digest no longer sees the
+  full art, so bumping the pin must move the build number;
 - `tools/fetch-art.mjs`;
-- **the 64 non-art files now under `assets/`**, moved to a tracked root folder such as `asset-data/` (`content/` accepts only compiled sources)
+- **the 23 non-art files now under `assets/`**, moved to a tracked root folder such as `asset-data/` (`content/` accepts only compiled sources)
   (or kept in a tracked `assets/` that holds only them; decided in step 4).
   They are:
   - 12 JSON manifests: `equipment/manifest.json`, `poses/pose-sprites.manifest.json`,
@@ -90,9 +96,11 @@ This repository keeps:
 | `tests/run-node.mjs` check 33 | every test run | reads `assets/equipment/manifest.json` (it warns and skips without it) | reads it from its new home in this repo; **it must not start skipping** |
 | `tests/run-node.mjs` check 49 (`assetExists`) | every test run | stats files under `assets/` | checks ids against the manifest |
 | `tests/content-expansion-equipment.test.mjs` | every test run | `existsSync` on `assets/equipment/icon_*`, `weapon_*`, `body_*` | checks ids against the manifest |
+| `tools/rogue-parity.mjs` (spawned by `tests/content-validators.test.mjs`) | every test run | `existsSync` on `assets/sprites/rogue_*.webp` and `assets/equipment/body_rogue_*.webp` | checks ids against the manifest |
 | `src/framework/data/assets.js` | runtime data | names `assets/framework/silence.txt` | keeps working because that file stays tracked (see above) |
 | `tools/screenshot.mjs` | by hand | reads `assets/sprites/class-sprites.manifest.json` | reads it from its new home |
 | `styles/kit.css` | every build | `../assets/fonts/*` | unchanged: fonts have twins, and the build substitutes them |
+| README (`npx serve .`, `python -m http.server`) and DEVELOPER ("any static server works") | local dev | a plain static server serves `/assets/…` from disk | the docs name `node tools/serve.mjs` as the way to run from source, because a plain server cannot remap `/assets/…`; the built `AshenSpire.html` still needs no server |
 | `tools/serve.mjs` | local dev | serves the repo root, so `/assets/…` is the full art | maps every `/assets/…` URL to `assets-mobile/` by default, and to the kept non-art files for those that have no twin; `--hd` serves the fetched cache |
 | `pose-studio/package.mjs`, `editor/server.mjs` | by hand | four `assets/*` trees; `editor` walks all of `assets/` | read the fetched cache (and `art/` below) |
 
@@ -125,7 +133,8 @@ Each step is one reviewed PR, or one owner action.
      zip's sha256 and then every file's sha256 against the manifest, unpacks
      into `.art-cache/` (gitignored), and refuses on any mismatch.
    - Pin the tag and hash in `art-manifest.json`.
-   - Move the 64 non-art files.
+   - Move the 23 non-art files.
+   - Add `art-manifest.json` to `BUILD_IDENTITY_FILES`.
    - Switch every `assets/` reader in the first table to the manifest, or to a
      fetch in the jobs that build full art.
 5. **PR here — readers stop needing `art/`:** move or repoint every reader in the
