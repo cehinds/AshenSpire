@@ -145,6 +145,29 @@ export function smithingStoneNote(receipt) {
   ].filter(Boolean).join(' · ');
 }
 
+/**
+ * smithingStoneRowCopy(row, t) → { title, body } for the spoils screen's
+ * Smithing Stone row. The ordinary and refined parts of each are built only
+ * for the purse that was paid, so a refined-only door never reads "0 total".
+ * `t` is the UI string lookup, handed in so this file stays headless.
+ */
+export function smithingStoneRowCopy(row, t) {
+  const ordinary = row.amount > 0 ? row.amount : 0;
+  const refined = row.refined > 0 ? row.refined : 0;
+  const plural = (n) => (n === 1 ? '' : 's');
+  const title = [];
+  const body = [];
+  if (ordinary) {
+    title.push(t('reward.stone.title', { amount: ordinary, plural: plural(ordinary) }));
+    body.push(t('reward.stone.body', { total: row.stoneBalanceAfter }));
+  }
+  if (refined) {
+    title.push(t('reward.stone.refinedTitle', { amount: refined, plural: plural(refined) }));
+    body.push(t('reward.stone.refinedBody', { total: row.refinedBalanceAfter }));
+  }
+  return { title: title.join(' · '), body: body.join(' · ') };
+}
+
 /** Whether a Smithing Stone receipt paid anything, ordinary or refined. */
 export function smithingStonesPaid(receipt) {
   const paid = (value) => Number.isInteger(value) && value > 0;

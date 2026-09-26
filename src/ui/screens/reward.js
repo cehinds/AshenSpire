@@ -61,7 +61,7 @@ import { isEngaged, focusFirst } from '../input.js';
 import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
-import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds, smithingStonesPaid } from '../../model/rewardplan.js';
+import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
 import { rewardProgress } from '../../model/rewardprogress.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
@@ -274,18 +274,10 @@ export function mountRewards(app, {
           title: t('reward.cinders.title', { amount: row.amount }),
           body: state === 'taken' ? t('reward.cinders.taken', { total: run.cinders }) : tFull('reward.cinders.title'),
         };
-      case 'smithingStone': {
-        // Ordinary stones, refined stones (SPEC §15.3), or both, on one row.
-        const refined = row.refined > 0 ? row.refined : 0;
-        const parts = [];
-        if (row.amount > 0) parts.push(t('reward.stone.title', { amount: row.amount, plural: row.amount === 1 ? '' : 's' }));
-        if (refined) parts.push(t('reward.stone.refinedTitle', { amount: refined, plural: refined === 1 ? '' : 's' }));
-        return {
-          title: parts.join(' · '),
-          body: t('reward.stone.body', { total: row.stoneBalanceAfter })
-            + (refined ? ` · ${t('reward.stone.refinedBody', { total: row.refinedBalanceAfter })}` : ''),
-        };
-      }
+      case 'smithingStone':
+        // Ordinary stones, refined stones (SPEC §15.3), or both, on one row:
+        // title and body each name only the purse that was paid.
+        return smithingStoneRowCopy(row, t);
       case 'card': {
         if (state === 'taken') {
           const def = registries.cards.get(chosenCardId);

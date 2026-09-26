@@ -440,6 +440,8 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   function travelTo(nodeId) {
+    // The last treasure's stone notice is read on the map it left; moving on clears it.
+    for (const m of members.values()) delete m.treasureStoneReceipt;
     const node = session.mapGraph.nodes[nodeId];
     session.cursorId = nodeId;
     session.floor = node.floor;
@@ -960,6 +962,9 @@ export function createSession({ registries, seedString, endless = false, restore
         : null;
       if (m.connected) {
         if (relicId && !m.run.relics.includes(relicId)) m.run.relics.push(relicId);
+        // A present seat has no treasure door to read it on, so the receipt
+        // rides this seat's snapshot until the party travels on.
+        if (smithingStoneReceipt) m.treasureStoneReceipt = { ...smithingStoneReceipt, act: session.actNumber, floor: session.floor };
       } else {
         m.catchup.push({ type: 'treasure', relicId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), act: session.actNumber, floor: session.floor });
       }
@@ -1350,6 +1355,7 @@ export function createSession({ registries, seedString, endless = false, restore
       ...(m.run.lastSmithingReceipt
         ? { lastSmithingReceipt: structuredClone(m.run.lastSmithingReceipt) }
         : {}),
+      ...(m.treasureStoneReceipt ? { treasureStoneReceipt: structuredClone(m.treasureStoneReceipt) } : {}),
       mana: m.run.mana, maxMana: m.run.maxMana,
       stamina: m.run.stamina, maxStamina: m.run.maxStamina,
       energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,

@@ -902,6 +902,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       : '';
 
     const smithReceipts = snap.party.filter((member) => member.lastSmithingReceipt);
+    // The stones this seat's last treasure paid (SPEC §15.3), shown to a
+    // present player here as the catch-up shows them to one who was away.
+    const treasureStone = smithingStoneNote(myMember()?.treasureStoneReceipt);
     app.innerHTML = `
       <div class="mapscreen">
         <header class="topbar map-header">
@@ -920,6 +923,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           const receipt = member.lastSmithingReceipt;
           return kitItem({ glyph: '⚒', name: `${member.name} smithed ${receipt.armamentName} · tier ${receipt.beforeLevel}→${receipt.afterLevel} · ${receipt.cost} Stone · ${receipt.affectedCards.length} cards` });
         }))) : ''}
+        ${treasureStone ? html(el('div', { class: 'as-kitline coop-treasure-stones', 'aria-live': 'polite' }, [kitItem({ glyph: '⚒', name: `Treasure: ${treasureStone}` })])) : ''}
       </div>`;
     wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 

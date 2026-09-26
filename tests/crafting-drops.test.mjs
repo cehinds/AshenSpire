@@ -284,7 +284,7 @@ test('co-op treasure pays the same stone door as solo, and the catch-up names it
     host.session.floor = node.floor;
     host.resolveNode({ ...node, type: 'treasure' });
     const [here, away] = host.livingMembers();
-    return { here, away };
+    return { here, away, host };
   };
   // Shipped tables: no claim, no receipt, nothing written.
   const plain = party(REG);
@@ -299,6 +299,31 @@ test('co-op treasure pays the same stone door as solo, and the catch-up names it
   assert.equal(item.type, 'treasure');
   assert.equal(item.smithingStoneReceipt.amount, 2);
   assert.equal(smithingStoneNote(item.smithingStoneReceipt), '⚒ 2 Smithing Stone secured · 2 total · 1 Refined Stone · 1 refined');
+  // The present seat sees its receipt too, on its own snapshot, until the party moves on.
+  const seat = (h, id) => h.snapshot().party.find((p) => p.id === id);
+  assert.equal(seat(plain.host, 'p1').treasureStoneReceipt, undefined, 'nothing paid, nothing shown');
+  const shown = seat(raised.host, 'p1').treasureStoneReceipt;
+  assert.equal(shown.amount, 2);
+  assert.equal(shown.refined, 1);
+  assert.equal(seat(raised.host, 'p2').treasureStoneReceipt, undefined, 'the away seat reads it on its catch-up instead');
+  raised.host.session.scene = { kind: 'map' };
+  raised.host.chooseNode('p1', raised.host.session.reachableIds[0]);
+  assert.equal(seat(raised.host, 'p1').treasureStoneReceipt, undefined, 'travelling on clears the notice');
   assert.equal(smithingStoneNote(null), '');
   assert.equal(smithingStoneNote({ amount: 0, stoneBalanceAfter: 0 }), '');
+});
+
+test('the spoils row names only the purse that was paid, in its title and its body', async () => {
+  const { t } = await import('../src/ui/strings.js');
+  const { smithingStoneRowCopy } = await import('../src/model/rewardplan.js');
+  const refinedOnly = smithingStoneRowCopy({ amount: 0, stoneBalanceAfter: 0, refined: 1, refinedBalanceAfter: 1 }, t);
+  assert.equal(refinedOnly.title, '1 Refined Stone');
+  assert.doesNotMatch(refinedOnly.body, /0 total/);
+  assert.match(refinedOnly.body, /1 refined/);
+  const ordinary = smithingStoneRowCopy({ amount: 1, stoneBalanceAfter: 3 }, t);
+  assert.equal(ordinary.title, t('reward.stone.title', { amount: 1, plural: '' }));
+  assert.equal(ordinary.body, t('reward.stone.body', { total: 3 }), 'an ordinary-only row reads as it always did');
+  const both = smithingStoneRowCopy({ amount: 2, stoneBalanceAfter: 2, refined: 2, refinedBalanceAfter: 2 }, t);
+  assert.equal(both.title, '2 Smithing Stones · 2 Refined Stones');
+  assert.match(both.body, /2 total.*2 refined/);
 });
