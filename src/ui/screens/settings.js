@@ -2293,6 +2293,9 @@ function statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLeve
 // force, the XP multiplier and Level-up value included, and redrawn after
 // every edit beside the Stats examples (`refreshStatsPreviews`).
 export const LEVEL_PACE_TOPICS = Object.freeze(['Experience', 'Level-up']);
+// The profile (non-gameConfig) keys the preview reads. A gameConfig edit
+// redraws it through reportAdvancedProblems; these must ask for it themselves.
+export const LEVEL_PACE_PROFILE_KEYS = Object.freeze(['levelUpValue']);
 let lastLevelPace = { key: null, html: '' };
 
 export function levelPacePreviewHtml(settings) {
@@ -3207,9 +3210,14 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       onChange({ [key]: val });
       if (refusal) typedRefusals.set(key, refusal); else typedRefusals.delete(key);
       if (key.startsWith('gameConfig.')) reportAdvancedProblems();
-      // A profile key can be what a gated row inherits, so the inherited
-      // values and their sentences are redrawn whatever the key (Codex, #1260).
-      else refreshGates(container, settings);
+      else {
+        // A profile key can be what a gated row inherits, so the inherited
+        // values and their sentences are redrawn whatever the key (Codex, #1260).
+        refreshGates(container, settings);
+        // Level-up value is a profile key the Levelling preview reads, and
+        // only a gameConfig key reaches reportAdvancedProblems (Codex, #1349).
+        if (LEVEL_PACE_PROFILE_KEYS.includes(key)) refreshStatsPreviews();
+      }
     };
     // change/blur, NEVER per keystroke: typing "12" passes through "1", and a
     // clamp on every keypress would rewrite the value under his fingers.

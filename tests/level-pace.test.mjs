@@ -173,3 +173,29 @@ test('§15.2: Settings → Progression → Experience draws the Levelling previe
   // Not on another Advanced tab.
   assert.doesNotMatch(categoryHtml('Advanced', { settingsAdvancedCategory: 'Rewards' }, null), /data-level-pace-preview/);
 });
+
+// Codex on #1349: editing Level-up value (a profile key, not gameConfig.*) ran
+// only refreshGates, so the preview kept its old stat points until another
+// edit. Every profile row the preview reads must be listed, and the number
+// commit must redraw the preview for the listed keys.
+test('§15.2: a profile setting the preview reads redraws it when edited', async () => {
+  const { levelPacePreviewHtml, settingsRows, LEVEL_PACE_PROFILE_KEYS } = await import('../src/ui/screens/settings.js');
+  const { readFileSync } = await import('node:fs');
+  assert.notEqual(levelPacePreviewHtml({ levelUpValue: 3 }), levelPacePreviewHtml({ levelUpValue: 1 }));
+  assert.match(levelPacePreviewHtml({ levelUpValue: 3 }), /3 stat points a level/);
+  // Which profile rows move the preview: every non-gameConfig number row, nudged.
+  const readers = settingsRows()
+    .filter((row) => row.type === 'number' && !String(row.key).startsWith('gameConfig.'))
+    .filter((row) => {
+      const def = Number(row.def);
+      const nudged = Number.isFinite(row.max) && def + 1 > row.max ? def - 1 : def + 1;
+      return levelPacePreviewHtml({ [row.key]: nudged }) !== levelPacePreviewHtml({ [row.key]: def });
+    })
+    .map((row) => row.key);
+  assert.deepEqual(readers, ['levelUpValue']);
+  assert.deepEqual([...LEVEL_PACE_PROFILE_KEYS].sort(), [...readers].sort());
+  // The number commit's profile branch asks for the redraw.
+  const source = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  const commit = source.slice(source.indexOf('const commit = (raw) => {'), source.indexOf('// change/blur, NEVER per keystroke'));
+  assert.match(commit, /if \(LEVEL_PACE_PROFILE_KEYS\.includes\(key\)\) refreshStatsPreviews\(\);/);
+});
