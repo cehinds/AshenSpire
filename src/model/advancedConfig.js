@@ -466,6 +466,7 @@ const BALANCE_LABELS = Object.freeze({
   'stagger.player.statuses.weak': 'Weak stacks when your meter fills',
   'mana.minActionCost': 'Least action cost of a mana card',
   'mana.minStaminaCost': 'Least stamina cost of a mana card',
+  'level.maxLevelsPerFight': 'Most levels one fight can give (0 = no cap)',
 });
 
 /**

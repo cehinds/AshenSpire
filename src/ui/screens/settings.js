@@ -11,6 +11,7 @@ import { openPrologueSceneEditor } from './prologueSceneEditor.js';
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
 import { advancedSubgroups, statsSection, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
 import { statsTopicPreview, statsExampleClasses, STATS_EXAMPLE_CLASS_KEY } from '../models/StatsPreviewModel.js';
+import { levelPacePreview } from '../models/LevelPacePreviewModel.js';
 import { WIREFRAME_CHOICE_GROUPS } from '../models/WireframeChoiceModel.js';
 import { handRulesRows, resolveHandRules, HAND_RULES_PREFIX } from '../../model/handRules.js';
 import { formationSettingsHtml, mountFormationSettings, applyPendingFormationSettings } from '../components/formationSettings.js';
@@ -2285,6 +2286,39 @@ function statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLeve
     + `<p class="set-example-attrs">${esc(preview.attributes)}</p>${examples}</div>`;
 }
 
+// ---- Advanced → Progression: the Levelling preview (SPEC §15.2) -------------
+//
+// "I change XP settings and I'm levelling up way too much" (owner,
+// 2026-09-26). Drawn by models/LevelPacePreviewModel.js from the settings in
+// force, the XP multiplier and Level-up value included, and redrawn after
+// every edit beside the Stats examples (`refreshStatsPreviews`).
+export const LEVEL_PACE_TOPICS = Object.freeze(['Experience', 'Level-up']);
+let lastLevelPace = { key: null, html: '' };
+
+export function levelPacePreviewHtml(settings) {
+  const pointsPerLevel = resolveLevelUpValue(settings);
+  const key = JSON.stringify([pointsPerLevel, settings]);
+  if (key === lastLevelPace.key) return lastLevelPace.html;
+  const html = levelPacePreviewMarkup(settings, pointsPerLevel);
+  lastLevelPace = { key, html };
+  return html;
+}
+
+function levelPacePreviewMarkup(settings, pointsPerLevel) {
+  const pace = levelPacePreview(settings, { pointsPerLevel });
+  if (pace.problem) return `<div class="set-example set-example-problem" role="status"><p>${esc(pace.problem)}</p></div>`;
+  const points = (count) => `${count} stat point${count === 1 ? '' : 's'}`;
+  const terms = [`XP ×${Number(pace.xpMultiplier.toFixed(4))}`, `${points(pace.pointsPerLevel)} a level`,
+    pace.maxLevelsPerFight ? `at most ${pace.maxLevelsPerFight} level${pace.maxLevelsPerFight === 1 ? '' : 's'} a fight` : 'no cap a fight'];
+  const fights = pace.fights.map((fight) => `<div class="set-example-block" data-level-pace-fight="${esc(fight.pool)}">`
+    + `<div class="set-example-title">${esc(fight.text)}</div>`
+    + `<p class="set-example-hint set-level-pace-points">${esc(fight.from.map((row) => `${points(row.points)} from level ${row.level}`).join(' · '))}</p></div>`).join('');
+  const curve = '<div class="set-example-block" data-level-pace-curve><div class="set-example-title">XP to reach each level</div>'
+    + `<ol class="set-level-pace-curve">${pace.curve.map((row) => `<li><span>Lv ${row.level}</span> <b>${row.step}</b> <small>${row.total} total</small></li>`).join('')}</ol></div>`;
+  return `<div class="set-example set-level-pace" data-level-pace aria-live="polite"><div class="set-example-head"><strong>Levelling preview</strong><span>A new run under these settings</span></div>`
+    + `<p class="set-example-attrs">${esc(terms.join(' · '))}</p>${fights}${curve}</div>`;
+}
+
 function visibleAdvancedSubgroups(rows, groupId) {
   const groups = advancedSubgroups(rows, groupId);
   // The scene editor owns per-scene values and shows their actual effect beside
@@ -2420,6 +2454,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
           ? `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}" data-lazy hidden></div>`
           : `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}">`
           + (group.id === 'Stats' ? `<div data-stats-preview="${esc(sub.id)}">${statsTopicPreviewHtml(settings, sub.id, previewAttributes, previewLevel, previewClassId)}</div>` : '')
+          + (group.id === 'Progression' && LEVEL_PACE_TOPICS.includes(sub.id) ? `<div data-level-pace-preview>${levelPacePreviewHtml(settings)}</div>` : '')
           + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows)
             : sub.rows.map((row, rowIndex) => {
               // A Stats topic reads as short subsections (Formula, Level
@@ -2762,6 +2797,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         // The picker was redrawn under the focus; hand it back.
         node.querySelector('[data-stats-example-class]')?.focus();
       });
+    });
+    container.querySelectorAll('[data-level-pace-preview]').forEach((node) => {
+      const shown = !searching && !node.closest('.set-advanced-group')?.hidden && !node.closest('.set-topic-panel')?.hidden;
+      const html = shown ? levelPacePreviewHtml(settings) : '';
+      if (drawnPreviews.get(node) === html) return;
+      node.innerHTML = html;
+      drawnPreviews.set(node, html);
     });
   };
   // A subsection whose every row is hidden (fixed-draw rows while drawing to
