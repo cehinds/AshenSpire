@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1336",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: development builds carry lighter art",
+    "detail": "Development and test builds now carry the lighter art the mobile edition already uses, so each is one download of about 29 MB instead of 255 MB plus a separate mobile file; Settings → About says \"light art\" on them. Release builds keep the full art as painted.",
+    "build": "0.7.1.558",
+    "pullRequest": 1336,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1336"
+  },
+  {
     "id": "pr-1332",
     "date": "2026-09-26",
     "group": "2026-09-26",

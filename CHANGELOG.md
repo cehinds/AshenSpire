@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-26
 
+- **Behind the scenes: development builds carry lighter art** ([#1336](https://github.com/cehinds/AshenSpire/pull/1336), `0.7.1.558`). Development and test builds now carry the lighter art the mobile edition already uses, so each is one download of about 29 MB instead of 255 MB plus a separate mobile file; Settings → About says "light art" on them. Release builds keep the full art as painted.
 - **Behind the scenes: development builds are no longer stored in the repository** ([#1332](https://github.com/cehinds/AshenSpire/pull/1332), `0.7.1.554`). Nothing you play changes. Every rebuild used to store a fresh 255 MB copy of the game plus its 29 MB mobile edition, and the repository ran out of room for them. Development builds are now made by the automated checks on every change and downloaded from there as the `dev-standalone` file; the build number and its changelog entry are still checked to agree before a change can merge.
 
 ## 2026-09-25

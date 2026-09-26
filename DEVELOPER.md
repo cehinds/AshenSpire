@@ -49,10 +49,14 @@ for the focused rules, persistence and settings checks. Advanced → Stats →
 Draw & hand keeps the Opening hand, Draw / turn and Hand size rows beside the
 discard controls, under a live worked example.
 
-`node tools/launch.mjs --build-only` produces the standalone aliases — the full
-single file and the mobile one (`AshenSpire-mobile.html`, the same build reading
-its art from the committed `assets-mobile/` twin tree, held under 30 MB) — and an
-external-art web edition in `build/web/`. Changing anything under `assets/`
+`node tools/launch.mjs --build-only` produces the standalone aliases and an
+external-art web edition in `build/web/`. **By default it builds the light art
+tier** (owner, 2026-09-26: dev/test builds are light only): one single file,
+`AshenSpire.html`, whose art payloads come from the committed `assets-mobile/`
+twin tree (~29 MB, edition `light`, no size cap), and a web edition carrying the
+same art. `--full-art` builds the release/main shape instead: the full-art single
+file (~255 MB) plus the mobile one (`AshenSpire-mobile.html`, the same twins, held
+under 30 MB). CI passes `--full-art` only for `release` and `main`. Changing anything under `assets/`
 means regenerating the twins with `node tools/mobile-art.mjs` (needs `cwebp`
 from libwebp on PATH); `node tools/mobile-art.mjs --check` is the Node-only gate
 CI runs, and the policy lives in `tools/mobileart-policy.mjs`. Serve the whole web directory for
