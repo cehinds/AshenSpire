@@ -138,7 +138,7 @@ amended before code moves.
     in `runsim` wins CON 14/21/15/15, INT 7/24/18/26, DEX 1/5/6/6 of 40
     (Reaver/Starseer/Rogue/Herald). Every creation-reachable draw breakpoint
     tried put its class at 80%+, so draw belongs to A4.)
-  - [ ] Starting pools fell with the rebase: a stock Reaver opens on 48 HP
+  - [x] Starting pools fell with the rebase: a stock Reaver opens on 48 HP
     where #1238 shipped 70 (`src/content/attributes.js` ~74, which calls
     moving them "a retune of `derivedStatRules` and the rating weights").
     Enemy HP is not the comparison (act-1 normals 10–34, elites 68–72, boss
