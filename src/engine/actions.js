@@ -1060,8 +1060,13 @@ export function createRunContext({ run, registries, rng }, { healMult = 1, refil
     enqueue(a) {
       ctx.queue.push(a);
     },
+    // Each run context starts its counter at 0, so an id is skipped while any
+    // owned card (deck ∪ sideboard, §14.1) still holds it.
     nextInstanceId() {
-      return `run${++ctx._idCounter}`;
+      const owned = new Set([...(run.deck || []), ...(run.sideboard || [])].map((c) => c && c.instanceId));
+      let id;
+      do id = `run${++ctx._idCounter}`; while (owned.has(id));
+      return id;
     },
   };
   return ctx;

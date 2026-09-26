@@ -346,3 +346,18 @@ test('a reward or purchase never reuses an id a set-aside card still holds', asy
   run.deck.splice(0, 1);
   assert.equal(unusedInstanceId(run, 'r', 'cleave'), 'r4_cleave');
 });
+
+test('an event-added card never reuses an id a set-aside card still holds', async () => {
+  const { executeRunEffects } = await import('../src/engine/actions.js');
+  const { createRng } = await import('../src/engine/rng.js');
+  const run = freshRun();
+  const rng = createRng('evt');
+  executeRunEffects({ run, registries: REG, rng }, [{ op: 'addCardToDeck', card: 'guilt' }]);
+  const first = run.deck.find((c) => c.cardId === 'guilt');
+  assert.equal(first.instanceId, 'run1');
+  run.deck.splice(run.deck.indexOf(first), 1);
+  run.sideboard.push(first);
+  executeRunEffects({ run, registries: REG, rng }, [{ op: 'addCardToDeck', card: 'guilt' }]);
+  const second = run.deck.find((c) => c.cardId === 'guilt');
+  assert.notEqual(second.instanceId, 'run1', 'the set-aside Guilt keeps run1; the new one takes the next free id');
+});
