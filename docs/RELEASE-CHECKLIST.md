@@ -143,7 +143,7 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §12 | The receipts gate is green on `dev` | G3 |
 | §12 | `codex/` and squash merges land with a receipt | G20 |
 | §12 | The CHANGELOG ordering gate runs on PRs | G20 |
-| §12 | Push runs of `tests.yml` on `dev` are not cancelled | G20 |
+| §12 | Push runs of `tests.yml` (on `test` and `release` since 2026-09-26) are not cancelled | G20 |
 | §12 | PR wall time is under 10 minutes | G20 |
 | §12 | The slowest `tests.yml` job fits the <10 min target | G20 |
 | §12 | A browser-gate run of `ci.yml` exists on the release candidate | G13 |

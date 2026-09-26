@@ -7,14 +7,18 @@
 #
 # SOP 3's four requirements, and where each is honestly met or not:
 #
-#  1. RUNS ON EVERY PUSH AND PR — → NOT MET since `b55e078`. The `on:` block
-#     below is `workflow_dispatch:` alone: exactly the "workflow_dispatch-only"
-#     shape the old text here ruled out while still reading "→ MET". The edit
-#     that turned automatic runs off changed `on:` and said so; this header sits
-#     fifty lines above it and nobody edited it. That is how a second copy is
-#     born — one fact, two homes, nothing checking they agree. EldenSpire#35.
-#     Under SOP 2's silence guard a workflow that never fires is `unknown`, and
-#     unknown blocks. Every gate in this repo is now a seat's hand-run.
+#  1. RUNS ON EVERY PUSH AND PR — → NOT MET since `b55e078`, and PARTLY MET
+#     since 2026-09-26. `b55e078` made the `on:` block `workflow_dispatch:`
+#     alone: exactly the "workflow_dispatch-only" shape the old text here ruled
+#     out while still reading "→ MET". The edit that turned automatic runs off
+#     changed `on:` and said so; this header sits fifty lines above it and nobody
+#     edited it. That is how a second copy is born — one fact, two homes,
+#     nothing checking they agree. EldenSpire#35. Today every job runs on a push
+#     to `test` or `release`, `display-first` also runs on each pull request
+#     into `dev`, and the rest of a PR's heavy legs are read at promotion (the
+#     `on:` block below states it once). A push to `dev` or a feature branch
+#     still fires nothing here: under SOP 2's silence guard that is `unknown`
+#     until the tree reaches `test`, and unknown blocks.
 #
 #     THE STANDING BOUNDARY, and it belongs here rather than on a card. Nothing
 #     in this repo is `verified-at` a CI ref while this holds. The permanent
@@ -145,12 +149,27 @@ on:
   # allowance; the allowance itself has never been read off this account's
   # billing page by anyone.
   #
-  # ONE AUTOMATIC TRIGGER, by the owner's ruling D7 (2026-09-24): a push to
-  # `release`. That branch moves only when the owner cuts a release, so it is a
-  # handful of runs, and it is the one ref whose tree ships — the 3-OS claims
-  # above are read there at least. Every other ref stays dispatch-only.
+  # AUTOMATIC TRIGGERS. By the owner's ruling D7 (2026-09-24): a push to
+  # `release`, the one ref whose tree ships, so the 3-OS claims above are read
+  # there at least. By the owner's ruling of 2026-09-26 ("the long shipped
+  # artifact should be on test and release branches"): a push to `test` as well,
+  # and a pull request into `dev` is gated by fast checks only.
+  #   push to test / release   — every job below.
+  #   pull_request into dev    — `display-first` (about 2 min) and `boundary`.
+  #                              `test` (10-24 min per OS), `reproducible`
+  #                              (10-60 min per OS), `reproducible-agree` and
+  #                              `browser-guard` (about 17 min) are skipped by
+  #                              their job-level `if:`, which reports them as
+  #                              skipped rather than absent.
+  #   workflow_dispatch        — every job below, on any ref.
+  # This is option (a) above in shape: `push` names only `test` and `release`
+  # and `pull_request` only PRs into `dev`, so the two events never share a
+  # commit's ref and no commit runs twice. Nothing was removed: every job and
+  # step runs, unchanged, on every push to `test` and `release`.
   push:
-    branches: [release]
+    branches: [test, release]
+  pull_request:
+    branches: [dev] # `display-first` and `boundary` only; see above
   workflow_dispatch:
 
 # One in-flight run per ref; a superseded run's result is not evidence about HEAD.
@@ -174,6 +193,7 @@ jobs:
   # ---------------------------------------------------------------------------
   test:
     name: tests (${{ matrix.os }})
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false # a Windows-only failure is a FINDING; do not hide it
@@ -327,6 +347,7 @@ jobs:
   # ---------------------------------------------------------------------------
   reproducible:
     name: shipped artifact is this source (${{ matrix.os }})
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -402,6 +423,7 @@ jobs:
   reproducible-agree:
     name: the three runners built the same bytes
     needs: reproducible
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -458,6 +480,7 @@ jobs:
     # in it. A job name is what a red run shows first; one naming a single check
     # sends the reader to the wrong tool. — Bjorn
     name: the checks that need a real browser
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -739,6 +762,13 @@ jobs:
         run: |
           echo "upstream results: test=${{ needs.test.result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }} browser-guard=${{ needs.browser-guard.result }} display-first=${{ needs['display-first'].result }}"
           echo ""
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "THIS IS A PULL-REQUEST RUN INTO dev. Only display-first ran; test, reproducible,"
+            echo "reproducible-agree and browser-guard were SKIPPED on purpose (owner, 2026-09-26)"
+            echo "and run on every push to test and release. Nothing listed below under"
+            echo "'A GREEN RUN OF THIS WORKFLOW MEANS' is claimed by this run except display-first."
+            echo ""
+          fi
           echo "A GREEN RUN OF THIS WORKFLOW MEANS:"
           # Was "34 engine tests". #10 adds test 35, so the number was wrong the moment
           # this branch existed. Not corrected to 35: this job has no checkout and no

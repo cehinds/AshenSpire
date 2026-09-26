@@ -26,6 +26,28 @@ names that ordinal. CI rebuilds and requires the rebuild to change nothing
 committed, then runs `node tools/buildversion.mjs --check` against the fresh
 build, so the box and the receipt are still checked to agree.
 
+**Which checks gate a pull request** (owner, 2026-09-26: a PR into `dev` is gated
+by fast checks only, about five minutes or less; the heavy suites run when code
+is pushed to `test` and `release`). Nothing was removed: every check below still
+runs, unchanged, on every push to `test` and `release`, and any workflow can
+still be started by hand on any branch (Actions → *Run workflow*).
+
+| Check (workflow → job) | PR into `dev` | Push to `test` / `release` |
+|---|---|---|
+| `receipts.yml` → receipts | yes | — (runs on push to `dev`) |
+| `dev-preview.yml` → preview (build, standalone artifact, fast gates) | yes | yes (also `dev`, `main`) |
+| `tests.yml` → core suite | yes | yes |
+| `ci.yml` → Fullscreen first through both Settings doors | yes | yes |
+| `ci.yml` → what this green does NOT cover (boundary) | yes | yes |
+| `tests.yml` → tool self-tests, bundler parse gate | no | yes |
+| `ci.yml` → tests (ubuntu, windows, macOS) | no | yes |
+| `ci.yml` → shipped artifact is this source (3 OSes), the three runners built the same bytes | no | yes |
+| `ci.yml` → the checks that need a real browser | no | yes |
+| `dev-preview.yml` → the reachability gates a phone would fail | no | yes (also `main`) |
+
+The workflows' own `on:` blocks and job `if:` conditions are the source of this
+table; a skipped job shows on the PR as *skipped*, not as missing.
+
 
 Settings: `src/ui/screens/settings.js` draws only the open Advanced topic and
 searches every section; `src/ui/buildChannel.js` decides whether the debug-only
@@ -180,9 +202,10 @@ Every `*.test.mjs` in the repository runs: `tests/run-node.mjs` finds them
 than `.github`) and hands them to one `node --test`. A new test file needs no
 registration. A file that must not be spawned there goes in its `NOT_SPAWNED`
 map with the reason. `.github/workflows/tests.yml` runs the two halves as two
-Linux jobs on every pull request into `dev` and every push to `dev`; the
-bundler's parse-gate fixtures (`node tools/bundle.test.mjs`, several minutes)
-run as their own step in the self-test job.
+Linux jobs, plus the bundler's parse-gate fixtures (`node tools/bundle.test.mjs`,
+several minutes) as a third; on a pull request into `dev` only the fast half
+(`core suite`) runs, and all three run on every push to `test` and `release`
+(see *Which checks gate a pull request* above).
 
 ```
 # what raises the red failure banner, and what must not
@@ -287,7 +310,7 @@ node tools/doorplant.mjs --selftest   # the harness's own door — seconds, no b
 node tools/plantsites.mjs --check     # every plant's find-string still resolves — under a second
 ```
 
-Both run on every pull request in `dev-preview.yml`, because a corpus that has
+Both run on every pull request in `dev-preview.yml`'s `preview` job, because a corpus that has
 stopped being able to arm is green for the wrong reason and nothing else notices.
 
 **Plants are authored with `\n`, and line endings belong to the CHECKOUT, not to
