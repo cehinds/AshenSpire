@@ -385,7 +385,8 @@ repository.
 ```
 node tools/receipts.mjs --check              # origin/test..HEAD — the promotion
 node tools/receipts.mjs --check --since dev  # any other range
-node tools/receipts.mjs --check --pr <N>     # a pull request head: #N itself has a receipt
+node tools/receipts.mjs --check --pr <N>     # a pull request head: #N itself has a receipt,
+                                             # stamped with this tree's buildordinal.json
 node tools/receipts.mjs --check --pr auto    # the same, N from GITHUB_EVENT_PATH / GITHUB_REF
 node tools/receipts.mjs --selftest           # the known-bad corpus
 ```
@@ -401,8 +402,11 @@ would be about merges the author did not make, but a pull request with no
 receipt of its own is the author's to fix, before merge.
 
 The tool checks **coverage**, not truth: whether an entry exists naming each
-merged pull request. Whether the prose is accurate is not machine-checkable, and
-whether the ordinal on it is the one committed at that merge belongs to
+merged pull request. Whether the prose is accurate is not machine-checkable.
+The one stamp it does check is the `--pr` pull request's own: its receipt must
+carry exactly the release and ordinal of `buildordinal.json` in the tree being
+checked, the box that pull request ships (#1315 merged with `0.7.1.518` on a
+box of 519, and nothing caught it). Older receipts' ordinals belong to
 `tools/about-changelog.mjs`, which owns the file's shape. If CHANGELOG.md ever
 yields no pull-request references at all, that is this tool's own syntax having
 moved out from under it, and it exits **2 (harness could not run)** rather than
