@@ -126,6 +126,8 @@ test('dimensions reads webp, png, gif, jpeg and svg sizes (svg by viewBox too) a
   assert.deepEqual(dimensions(Buffer.from('<svg width="24" height="12"></svg>'), '.svg'), { width: 24, height: 12 });
   assert.deepEqual(dimensions(Buffer.from('<svg xmlns="x" viewBox="0 0 32 16"></svg>'), '.svg'), { width: 32, height: 16 });
   assert.deepEqual(dimensions(Buffer.from('<svg width="100%" viewBox="0,0,8,4"></svg>'), '.svg'), { width: 8, height: 4 });
+  const prolog = `<?xml version="1.0"?>\n<!-- ${'x'.repeat(5000)} <svg width="1" height="1"> -->\n`;
+  assert.deepEqual(dimensions(Buffer.from(`${prolog}<svg viewBox="0 0 40 20"></svg>`), '.svg'), { width: 40, height: 20 }, 'root found past a 5 KB prolog, not inside a comment');
   const gif = Buffer.alloc(13); gif.write('GIF89a', 0, 'ascii'); gif.writeUInt16LE(7, 6); gif.writeUInt16LE(5, 8);
   assert.deepEqual(dimensions(gif, '.gif'), { width: 7, height: 5 });
   // SOI, an APP0 segment of length 4, then SOF0: length, precision, height 9, width 11.

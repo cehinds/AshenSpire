@@ -80,7 +80,8 @@ export function dimensions(buf, ext) {
     // The root element's width and height attributes when both are plain
     // numbers (px), else its viewBox size — what the browser uses as the
     // intrinsic size of an <img> that names neither.
-    const root = /<svg\b[^>]*>/i.exec(buf.toString('utf8', 0, Math.min(buf.length, 4096)));
+    // The whole payload: a long prolog (comments, a DOCTYPE) may precede the root.
+    const root = /<svg\b[^>]*>/i.exec(buf.toString('utf8').replace(/<!--[\s\S]*?-->/g, ''));
     if (!root) return null;
     const attr = (name) => new RegExp(`\\s${name}\\s*=\\s*["']([^"']*)["']`, 'i').exec(root[0])?.[1];
     const px = (v) => (v !== undefined && /^\d+(?:\.\d+)?(?:px)?$/.test(v.trim()) ? Number.parseFloat(v) : null);
