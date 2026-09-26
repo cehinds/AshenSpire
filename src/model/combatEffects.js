@@ -12,9 +12,13 @@ function activationVariant(card,receipt,rule,facts,tags){
  const treatment=ACTIVATION_TREATMENTS[activation];
  let kind=rule.kind;
  if(!resource){
+  // A spell's school is its look: an authored magic attack that spends no
+  // Mana or Stamina keeps its own effect at mundane strength (plan A2 freed
+  // five Starseer spells, which must not animate as a spear jab).
+  const spell=!card.equipmentProfileId&&card.damageSchool&&card.damageSchool!=='physical';
   if(facts.damaging){
-   if(!MUNDANE_ATTACK_EFFECTS.includes(kind))kind=tags.has('blade')?(high?'whirlwind':'slash'):tags.has('pierce')||facts.ranged?'thrust':'heavyImpact';
-   else if(high&&kind==='slash')kind=tags.has('heavy')?'heavyImpact':'whirlwind';
+   if(!spell&&!MUNDANE_ATTACK_EFFECTS.includes(kind))kind=tags.has('blade')?(high?'whirlwind':'slash'):tags.has('pierce')||facts.ranged?'thrust':'heavyImpact';
+   else if(!spell&&high&&kind==='slash')kind=tags.has('heavy')?'heavyImpact':'whirlwind';
   }else kind=!facts.hostile&&(tags.has('dodge')||tags.has('flourish')||tags.has('guile'))?'dustStep':'steelGlint';
  }
  return {kind,activation,...treatment,cast:resource&&kind!=='focusMotes'?(rule.cast||treatment.cast):null};

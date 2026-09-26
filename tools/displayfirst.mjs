@@ -1244,8 +1244,8 @@ function selftestPlants() {
       // rows a player meets.
       name: 'the renderer reverses what the table hands it (test 61 stays green)',
       file: 'src/ui/screens/settings.js',
-      find: "      + `</div><div class=\"set-card-list\">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;",
-      replace: "      + `</div><div class=\"set-card-list\">${[...topics.get(topic)].reverse().map(row => settingsRowHtml(settings, row)).join('')}</div>`;",
+      find: "      + `</div>${settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : ''}<div class=\"set-card-list\">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;",
+      replace: "      + `</div>${settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : ''}<div class=\"set-card-list\">${[...topics.get(topic)].reverse().map(row => settingsRowHtml(settings, row)).join('')}</div>`;",
       expectRed: /FINDING D1\/order .*want=fullscreen/,
     },
     {
@@ -1282,8 +1282,8 @@ function selftestPlants() {
       // blank screen.
       name: 'Display renders no rows at all (the empty edge)',
       file: 'src/ui/screens/settings.js',
-      find: '  const rows = ROWS.filter((r) => r.cat === cat);',
-      replace: '  const rows = ROWS.filter((r) => r.cat === cat && cat !== \'Display\');',
+      find: '  const rows = ROWS.filter((r) => r.cat === cat && !r.retired);',
+      replace: '  const rows = ROWS.filter((r) => r.cat === cat && !r.retired && cat !== \'Display\');',
       expectRed: /FINDING D0\/population/,
     },
     // -----------------------------------------------------------------------

@@ -115,6 +115,12 @@ const aliases = [
 for (const dest of aliases) copyFileSync(src, dest);
 // Optional hosted detail is separate from the offline-safe HTML fallback.
 if (existsSync(resolve(ROOT, 'map-detail'))) cpSync(resolve(ROOT, 'map-detail'), resolve(distDir, 'map-detail'), {recursive:true});
+// The shipped score, the same way: a served alias with the music-folder setting
+// blank fetches music/ from beside itself (content/music.js SHIPPED_MUSIC_FOLDER),
+// so build/ and dist/ each carry a copy. Git-ignored, like dist/map-detail/.
+if (existsSync(resolve(ROOT, 'music'))) {
+  for (const dir of [distDir, resolve(ROOT, 'build')]) cpSync(resolve(ROOT, 'music'), resolve(dir, 'music'), {recursive:true});
+}
 const landed = aliases.filter((f) => existsSync(f)).length;
 console.log(`launch: current build refreshed → AshenSpire.html + dist/AshenSpire.html + dist/AshenSpire-${ver}.html`);
 if (landed !== aliases.length) {

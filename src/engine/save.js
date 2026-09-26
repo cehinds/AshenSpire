@@ -71,7 +71,7 @@ const ARCHIVE_MAX_AGE_MS = 180 * 24 * 60 * 60 * 1000; // …and nothing older th
 
 // Slot 1 keeps the legacy key (backward compatible: existing saves are slot 1);
 // slots 2..N use suffixed keys. All slot-taking methods default to slot 1.
-function runKey(slot = 1) {
+export function runKey(slot = 1) {
   return slot === 1 ? RUN_KEY : `${RUN_KEY}_s${slot}`;
 }
 
@@ -213,6 +213,9 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     equipmentPoolDeficits: snapshot.equipmentPoolDeficits || {},
     equipmentAttackSlotCount: bornWith,
     removedAttackSlotIds: snapshot.removedAttackSlotIds ?? run.removedAttackSlotIds,
+    // The run's own stat rows price the ratings the stamp writes.
+    derivedStatRuleSnapshot: snapshot.derivedStatRuleSnapshot || run.derivedStatRuleSnapshot,
+    level: run.level,
     itemMounts,
     deck: cards,
   }, cards, {
@@ -226,6 +229,15 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   // observes the exact same loadout in run state and restored combat state.
   run.combatEntered.snapshot = snapshot;
   run.loadout = structuredClone(snapshot.loadout);
+}
+
+// newerRunSchemaVersion(json) → the save's schemaVersion when a NEWER build
+// wrote it, else null. Corrupt JSON is null here: it is refused and archived by
+// the ordinary door, which names why.
+function newerRunSchemaVersion(json) {
+  let v;
+  try { v = JSON.parse(json)?.schemaVersion; } catch { return null; }
+  return Number.isInteger(v) && v > RUN_SCHEMA_VERSION ? v : null;
 }
 
 /**
@@ -541,11 +553,21 @@ export function createSaveManager(storage) {
      * loadRun(registries, slot?) → run | null. Refuses and archives: corrupt
      * JSON, unknown schemaVersion, or (on contentVersion mismatch) any deck/
      * relic/flask id that no longer resolves against the current registries.
+     * A schemaVersion NEWER than this build is refused and left in the slot.
      */
     loadRun(registries, slot = 1) {
       const json = storage.getItem(runKey(slot));
       if (!json) {
         runStatusRecord = { state: 'none', reason: `slot ${slot} is empty`, ledger: null };
+        return null;
+      }
+      // A run written by a NEWER build: refuse AND PRESERVE, the run-side twin
+      // of the profile's 'newer' state. Archiving would clear the slot, and the
+      // player who goes back to the newer build would find their climb gone.
+      // Nothing is archived and nothing is moved; the bytes stay in the slot.
+      const newerVersion = newerRunSchemaVersion(json);
+      if (newerVersion !== null) {
+        runStatusRecord = { state: 'newer', reason: `run schemaVersion ${newerVersion} is newer than this build (${RUN_SCHEMA_VERSION})`, ledger: null, archiveId: null };
         return null;
       }
       let run;
@@ -854,6 +876,10 @@ export function createSaveManager(storage) {
           maxHp: r.maxHp,
           customization: r.customization,
           savedAt: typeof r.savedAt === 'string' ? r.savedAt : null,
+          // Written by a NEWER build: loadRun refuses it and keeps the bytes
+          // (state 'newer'), so the picker must say so rather than offer it
+          // as a climb that Continue can open.
+          newer: Number.isInteger(r.schemaVersion) && r.schemaVersion > RUN_SCHEMA_VERSION,
         };
       } catch (e) {
         return null;
@@ -947,6 +973,8 @@ export function createSaveManager(storage) {
      *        'healed'   — one or more ABSENT fields were filled in, and
      *                     `ledger.entries` says which, from where, with what
      *        'archived' — refused; the bytes were set aside, reason named
+     *        'newer'    — refused; a newer build wrote it, so the bytes stay
+     *                     in the slot untouched and nothing is archived
      *
      * `ledger.healedOnCurrentSchema` is the number this house is watching: a
      * heal on a save written by THIS schema version is not a migration, it is a

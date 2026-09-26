@@ -94,11 +94,22 @@ test('tint follows the selected motif and destination follows the run',()=>{
   config.presentation.tintSource='character';
   assert.equal(prologueTint(config,{accent:'violet'},{tint:'gold'}),'#a06cc8');
   assert.equal(prologueTint(config,{}, {tint:'ember'}),'#c9502e');
-  assert.equal(prologueDestination({journey:{anchors:{start:'crownfall'}}}).name,'Crownfall');
-  // The NAME is all the opening reads (prologue.js resolves {location} with it).
-  // The destination painting is gone with the scene that swapped artwork for it.
-  assert.equal(prologueDestination({seatOrder:['marches','weald','reach']}).name,'The Pale Marches');
-  assert.ok(!('art' in prologueDestination({seatOrder:['marches']})),'no dead painting branch');
+  assert.deepEqual(prologueDestination({journey:{anchors:{start:'crownfall'}}}),{name:'Crownfall',art:'crownfall'});
+  assert.deepEqual(prologueDestination({seatOrder:['marches','weald','reach']}),{name:'The Pale Marches',art:'marches'});
+  assert.equal(prologueDestination({seatOrder:['weald']}).art,'weald');
+  assert.equal(prologueDestination({seatOrder:['reach']}).art,'reach');
+  const finalScene = PROLOGUE_DEFAULTS.scenes.find(scene => scene.id === 'step');
+  assert.equal(finalScene.ownStaging, true, 'the destination scene keeps the distant Spire in frame');
+  assert.equal(prologueStaging(prologueConfig(), finalScene).imageFocusY, 0);
+  assert.deepEqual([finalScene.actor.desktop.x, finalScene.actor.desktop.y, finalScene.actor.mobile.x, finalScene.actor.mobile.y, finalScene.actor.mobile.height], [50, 96, 40, 96, 40], 'the default traveller stands in the foreground in both layouts');
+  assert.equal(prologueConfig({[`${PROLOGUE_PREFIX}scenes.step.actor.mobile.x`]: 62}).scenes.find(scene => scene.id === 'step').actor.mobile.x, 62);
+  for (const art of ['weald','marches','reach','crownfall']) {
+    for (const layout of ['desktop','mobile']) {
+      const path = prologueArtwork('step',layout,{destinationArt:art});
+      assert.ok(path.endsWith(`assets/prologue/step-${art}-${layout}.webp`));
+      assert.equal(readFileSync(new URL(`../assets/prologue/step-${art}-${layout}.webp`,import.meta.url)).subarray(8,12).toString(),'WEBP');
+    }
+  }
 });
 
 test('opening preference and interrupted-run recovery leave legacy saves alone',()=>{

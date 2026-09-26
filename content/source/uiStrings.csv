@@ -336,6 +336,30 @@ dialogue.cannotAfford,,Cannot afford,You cannot pay for this response yet.,Canno
 dialogue.respond.question,,Choose {label}?,,
 dialogue.respond.confirm,,Choose,Give this response.,Choose
 dialogue.respond.hold,,Hold to answer,A binding response is held down rather than tapped; the tooltip and the screen reader say so instead of a word on the button.,Hold to answer
+# ---- the quest board (plan phase 10b) ---------------------------------------
+questBoard.eyebrow,,Quest board,The quests offered in this town and the ones you carry.,Quest board
+questBoard.title,,Notices,The board's notices: quests offered anywhere in this town.,Notices
+questBoard.status,,{ready} to collect · {open} to accept,How many of the board's quests you can answer now.,
+questBoard.empty,,No quests are posted in this town.,,
+questBoard.offer.meta,,Reward: {reward} cinders · Objective: {objective},,
+questBoard.offer.noObjective,,the marked road,,
+questBoard.state.accepted,,Explore the marked road,You carry this quest; complete its objective and return.,
+questBoard.state.done,,Done,You have completed this quest and collected its reward.,
+questBoard.state.closed,,Not open,This quest's road is not open in this journey.,
+questBoard.journal.heading,,Journal,The quests this run has started and completed.,
+questBoard.journal.started,,Started,Quests you carry and have not finished.,
+questBoard.journal.completed,,Completed,Quests this run has completed.,
+questBoard.journal.noneStarted,,No quest under way.,,
+questBoard.journal.noneCompleted,,No quest completed yet.,,
+questBoard.leave,common.continue,,Leave the board.,
+questBoard.open,,Quest board,Read the town's quest board.,Quest board
+questBoard.open.summary,,{ready} to collect · {open} to accept,,
+questBoard.respond.accept,,Accept the quest,,
+questBoard.respond.collect,,Collect {reward} cinders,,
+questBoard.respond.leave,,Not now,,
+questBoard.result.accept,,You take the notice. The road is marked.,,
+questBoard.result.collect,,{speaker} counts out {reward} cinders.,,
+questBoard.result.leave,,You leave the notice on the board.,,
 # ---- the Armoury (W1e / W1n) ----------------------------------------------
 armoury.title,,Armoury,"Your character, equipment, inventory and deck.",Armoury
 armoury.close,,Close Armoury,,
@@ -382,6 +406,11 @@ title.slots.saved,,Saved {when},When this slot was last written.,
 title.slots.seed,,Seed {seed},,
 title.slots.start.occupied,,Start in slot {slot}?,,
 title.slots.start.occupied.prompt,,This slot holds a saved climb. Nothing changes until you begin the new one; you will be asked to replace it then.,,
+# A run saved by a NEWER build is refused and kept (SPEC §3.12): the slot says so, and Continue explains instead of silently returning to the title.
+title.slots.newer,,Saved by a newer build. Update to continue.,This slot holds a climb saved by a newer build of Ashen Spire. It is kept exactly as it is; update the game to continue it.,
+save.newer.title,,This climb is from a newer version,,
+save.newer.message,,Slot {slot} was saved by a newer build of Ashen Spire. It has been left exactly as it is; nothing was changed or deleted. Update Ashen Spire to continue it.,,
+save.newer.close,,Keep it and close,,
 # W2b / W2c / W2d: the save reviews name the save and say exactly what happens to it.
 save.review.delete,,Delete slot {slot}?,,
 save.review.delete.message,,The saved climb in slot {slot} is removed. It is not kept anywhere and cannot be recovered. Your profile stays as it is.,,

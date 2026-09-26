@@ -1,6 +1,6 @@
 import { retiredAttackSlots } from './cardRemoval.js';
 import { handRulesProblems } from './handRules.js';
-import { combatRatingProblems } from './combatRatings.js';
+import { combatRatingProblems, ratingIds } from './combatRatings.js';
 // src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
 //
 // The snapshot is persisted inside run.combatEntered.snapshot. This module
@@ -10,6 +10,7 @@ import { combatRatingProblems } from './combatRatings.js';
 import { itemRefIdentity, itemUpgradeTiers } from './itemUpgrades.js';
 import { skillsProblems } from './skills.js';
 import { coreTagsProblems } from './classTree.js';
+import { restoreDerivedStatRuleSnapshot, storedStatRowProblems } from './derivedStats.js';
 
 export const COMBAT_SNAPSHOT_VERSION = 1;
 
@@ -73,8 +74,32 @@ export function combatSnapshotProblems(snapshot) {
     if (!Number.isInteger(snapshot[key]) || snapshot[key] < 0) problems.push(`${key} must be a non-negative integer`);
   }
   if (snapshot.emitDepth !== 0) problems.push('emitDepth must be 0 at a committed save boundary');
+  // Absent on a fight saved before ruleset 7 (its rows read no level); a
+  // present one prices every row's level term, so it must be a real level
+  // (Codex, #1296).
+  if (snapshot.characterLevel !== undefined && (!Number.isInteger(snapshot.characterLevel) || snapshot.characterLevel < 1)) problems.push('characterLevel must be a positive integer when present');
   if (snapshot.handRules !== undefined) problems.push(...handRulesProblems(snapshot.handRules));
-  if (snapshot.ratingsRules !== undefined) problems.push(...combatRatingProblems(snapshot.ratingsRules));
+  if (snapshot.ratingsRules !== undefined) {
+    problems.push(...combatRatingProblems(snapshot.ratingsRules));
+    // A saved fight's rating rows are what `refreshCombatRatings` prices on
+    // restore; a fight carrying rules but no rows would throw there (Codex, #1296).
+    const ratings = snapshot.ratingsRules && snapshot.ratingsRules.ratings;
+    if (!ratings || typeof ratings !== 'object') problems.push('Combat ratings: missing rating rows');
+    else for (const id of ratingIds) problems.push(...storedStatRowProblems(ratings[id], `Combat ratings: ${id}`));
+  }
+  // The fight's copy of the run's derived-stat rules prices the Poise vessel on
+  // restore and is preferred over the run's own, so it is held to the same
+  // door the run's is: a truthy but malformed copy (`{}`, a missing row) is
+  // refused by name rather than repricing the meter from whatever it lacks.
+  // Null or absent stays legal: a fight saved before the field carries none
+  // (Codex, #1255).
+  if (snapshot.derivedStatRuleSnapshot !== undefined && snapshot.derivedStatRuleSnapshot !== null) {
+    // Every rule names a source stat, and the fight's own attributes are the
+    // ids a source stat may name — the snapshot carries its answer key.
+    const attributeIds = record(snapshot.attributes) ? Object.keys(snapshot.attributes) : [];
+    try { restoreDerivedStatRuleSnapshot(snapshot.derivedStatRuleSnapshot, { attributeIds }); }
+    catch (error) { problems.push(`derivedStatRuleSnapshot: ${error.message}`); }
+  }
   if (snapshot.ratingAttributeScale !== undefined && (!Number.isFinite(snapshot.ratingAttributeScale) || snapshot.ratingAttributeScale <= 0)) problems.push('ratingAttributeScale must be positive');
   if (snapshot.pendingDiscardDraw !== undefined && (!Number.isInteger(snapshot.pendingDiscardDraw) || snapshot.pendingDiscardDraw < 0 || snapshot.pendingDiscardDraw > 99)) problems.push('pendingDiscardDraw must be an integer from 0 to 99');
   if (typeof snapshot.equipmentChanged !== 'boolean') problems.push('equipmentChanged must be boolean');
@@ -120,6 +145,7 @@ export function combatSnapshotProblems(snapshot) {
   if (!record(snapshot.equipmentPoolDeficits)) problems.push('equipmentPoolDeficits must be an object');
   if (snapshot.loadout !== null && !record(snapshot.loadout)) problems.push('loadout must be an object or null');
   if (snapshot.attributes !== null && !record(snapshot.attributes)) problems.push('attributes must be an object or null');
+  if (snapshot.attributeMode != null && !nonEmptyString(snapshot.attributeMode)) problems.push('attributeMode must be a string or null');
   if (!record(snapshot.swapCostRule)) problems.push('swapCostRule must be an object');
   if (!Array.isArray(snapshot.eventLog)) problems.push('eventLog must be an array');
   if (!Array.isArray(snapshot.triggerState)

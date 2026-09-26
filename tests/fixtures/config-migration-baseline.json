@@ -5283,21 +5283,7 @@
               }
             }
           },
-          "herald": {
-            "__keys": [
-              "x",
-              "y"
-            ],
-            "frozen": true,
-            "values": {
-              "x": {
-                "__number": "50"
-              },
-              "y": {
-                "__number": "61"
-              }
-            }
-          }
+          "herald": null
         }
       },
       "medallionAnchor": {
@@ -5355,21 +5341,7 @@
           }
         }
       },
-      "medallionAnchor([\"herald\"])": {
-        "__keys": [
-          "x",
-          "y"
-        ],
-        "frozen": true,
-        "values": {
-          "x": {
-            "__number": "50"
-          },
-          "y": {
-            "__number": "61"
-          }
-        }
-      },
+      "medallionAnchor([\"herald\"])": null,
       "medallionAnchor([\"nobody\"])": null,
       "medallionDeclared([\"reaver\"])": {
         "__boolean": true

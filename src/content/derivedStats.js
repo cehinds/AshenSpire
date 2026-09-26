@@ -4,83 +4,101 @@
 // resolved rules so saves, sessions, and co-op keep the same derived values.
 
 export const derivedStatRules = {
-  // RULESET 5 — THE ATTRIBUTE REBASE (plan phase 9). Every formula is restated
-  // against the tuned2 scale (baseline 5, ceiling 12) rather than the old
-  // ten-point one, and the pools stop being tiers of five: Mana IS Wisdom and
-  // Stamina IS Constitution, so a point spent is a point felt. Actions and
-  // draw keep a tier, now five points wide instead of ten. Snapshots of 4 and
-  // earlier are restored exactly as they were saved; only new runs read this.
-  rulesetVersion: 5,
+  // RULESET 6 — ONE FORMAT FOR EVERY STAT AND RESOURCE (owner, 2026-09-21).
+  //
+  // "make mp hp and every resource now a similar calculation to AR, PR, DR,
+  // etc. I'll just use decimal values to set the growth per level, in fact I'd
+  // like all the resources and stats to be in the same format so that there was
+  // no confusion to include the base values and everything because they are way
+  // too separated."
+  //
+  // So a row here is now the SAME ROW a combat rating is (model/ratingFormula.js
+  // — AR, DR, PR, Poise, Ward), with the level term on it:
+  //
+  //   base         before a single point is spent
+  //   <attribute>  that attribute's decimal contribution per point, floored on
+  //                its own: 0.2 gives nothing until the attribute reaches 5
+  //   perLevel     DECIMAL growth per character level: 0.2 is a point every
+  //                five levels, 1 is one every level
+  //
+  // WHAT MOVED FROM RULESET 5: nothing in the attribute terms — every weight
+  // below is ruleset 5's `gainPerTier / pointsPerTier` restated, and lands on
+  // the same number at every attribute value. The LEVEL terms are decimals now
+  // and so are SMOOTH: HP climbs 1 per level instead of 5 every fifth level
+  // (the same rate, arriving each level rather than in lumps); Mana, Stamina
+  // and draw land on exactly the levels they always did. Ruleset 5 and earlier
+  // are restored exactly as they were saved; only new runs read this.
+  // RULESET 7 — EVERY STAT IN THIS TABLE (owner, 2026-09-24).
+  //
+  // "mana should be derived but mostly comes from about 4 points in wisdom
+  // with some from constitution strength and intelligence … I'd like all
+  // features, handsize, draw amount, actions, ar, dr, pr, ward, poise, stamina,
+  // mana, hp settings to have a similiar interface and be driven by only that
+  // interface. default should equal about 2 when adding all partials values as
+  // the budget per with mana and stamina budget is about 1."
+  //
+  // So the combat ratings (AR, DR, PR, Ward, Poise — formerly model/
+  // ratingFormula.js) and the hand (opening hand, per-turn draw, hand size —
+  // formerly content/handRules.js and the balance fallback hand size) are rows here, in the
+  // row every pool already used:
+  //
+  //   base         before a single point is spent (whole points)
+  //   <attribute>  that attribute's decimal contribution per point, floored
+  //                on its own: 0.125 gives nothing until the attribute is 8
+  //   perLevel     decimal growth per character level after the first
+  //   min / max    optional bounds the value never leaves
+  //
+  // THE BUDGET: a row's weights sum to about 2, Mana's and Stamina's to 1.
+  // HP, Actions and the three hand rows are PRESERVED rather than re-budgeted
+  // — a literal sum of 2 would hand out some ten extra Actions at creation —
+  // and read what ruleset 6 read at every attribute 5 and at 12 in the lead
+  // stat. Rulesets 1–6 are restored exactly as they were saved; only new runs
+  // read this.
+  rulesetVersion: 7,
   defaults: {
-    pointsPerTier: 5,
-    rounding: 'floor',
-    cap: null,
+    perLevel: 0,
   },
   rules: {
-    energy: {
-      base: 3,
-      sourceStat: 'dexterity',
-      pointsPerTier: 5,
-      gainPerTier: 1,
-      cap: null,
+    // Owner defaults, 2026-09-24 (ashen-spire-game-config_4.json): every
+    // pool reads a spread of attributes, not one.
+    energy: { base: 3, strength: 0.1, dexterity: 0.2, wisdom: 0.01, intelligence: 0.01, perLevel: 0.1 },
+    // The hand. Draw / turn and Hand size were single-attribute rules on INT,
+    // base + floor(max(0, INT − baseline) ÷ pointsPerCard); each is restated
+    // EXACTLY as a weight of 1 ÷ pointsPerCard counted from its baseline
+    // (`attributeBaseline`), so every INT reads what it read before.
+    //
+    // THE OPENING HAND IS FOUR TO SIX CARDS, BY CLASS (owner, 2026-09-24:
+    // "start with 4-6 cards depending on the base (3-5)", shipped in #1294):
+    // each class opens on its own base, plus one card for every two points of
+    // its primary attribute above 1 —
+    //   clamp(base + floor(max(0, primary − 1) / 2), 4, 6)
+    // — which is a weight of 0.5 counted from 1 (`attributeBaseline`). The
+    // Standard presets (primary 3) open 4 / 5 / 5 / 6; all 1s open 4 / 4 / 4 / 5.
+    // The shared base and Intelligence weight are the fallback for a fight
+    // with no class (a headless fixture); every shipped class has its own row.
+    openingHand: {
+      base: 4, intelligence: 0.5, attributeBaseline: 1, min: 4, max: 6,
+      byClass: {
+        reaver: { base: 3, strength: 0.5 },
+        rogue: { base: 4, dexterity: 0.5 },
+        herald: { base: 4, wisdom: 0.5 },
+        starseer: { base: 5, intelligence: 0.5 },
+      },
     },
-    draw: {
-      base: 3,
-      sourceStat: 'intelligence',
-      pointsPerTier: 5,
-      gainPerTier: 1,
-      cap: null,
-      // One more card in hand at level 11 and every ten after (plan phase 6).
-      perLevel: { every: 10, gain: 1 },
-    },
-    hp: {
-      // Tuned rule: 30 + 2 × CON + flat bonuses. A one-point tier makes the
-      // generic derived-stat engine express the per-point coefficient exactly.
-      // Relic resource.flat rows fold into base; equipment max-HP mods and the
-      // persisted adjustment remain the two external addends at the run door.
-      base: 30,
-      sourceStat: 'constitution',
-      pointsPerTier: 1,
-      gainPerTier: 4,
-      // THE CHARACTER LEVEL'S OWN TERM (plan phase 6): every five levels past
-      // the first the maximum gains this, beside whatever the points bought.
-      // Snapshotted with the row, so a run born before it never gains it and
-      // a run born under it keeps it whatever the table says later.
-      perLevel: { every: 5, gain: 5 },
-    },
-    stamina: {
-      // Ruleset 5: the pool IS Constitution, on the same one-point tier as
-      // Mana's — the body's own reserve rather than a tier of five.
-      base: 1,
-      sourceStat: 'constitution',
-      pointsPerTier: 1,
-      gainPerTier: 1,
-      perLevel: { every: 5, gain: 1 },
-    },
-    mana: {
-      // Small-unit pool: WIS is the only authored Mana authority. Classes do
-      // not carry a second base pool that can drift from this row. Under
-      // ruleset 5 the pool IS Wisdom, which is what lets a signature art ask
-      // for two points of it on the first floor (plan phase 9).
-      base: 1,
-      sourceStat: 'wisdom',
-      pointsPerTier: 1,
-      gainPerTier: 1,
-      cap: null,
-      perLevel: { every: 5, gain: 1 },
-    },
-    // THE POISE VESSEL, derived at last (plan phase 9). Phase 8 shipped the
-    // meter with its Constitution term in balance because this ruleset had
-    // not been written yet; the coefficient lives here now, and the receipt
-    // that stamps the meter reads this row. Armour and relics remain the two
-    // external addends, exactly as HP's are.
-    poise: {
-      base: 1,
-      sourceStat: 'constitution',
-      pointsPerTier: 1,
-      gainPerTier: 1,
-      cap: null,
-    },
+    draw: { base: 2, intelligence: 0.2, attributeBaseline: 4, min: 2, max: 10 },
+    handSize: { base: 7, intelligence: 0.2, attributeBaseline: 1, min: 1, max: 30 },
+    hp: { base: 30, strength: 0.35, constitution: 4, wisdom: 0.1, perLevel: 2 },
+    // Budget 1 each, the owner's own sums.
+    stamina: { base: 1, strength: 0.25, dexterity: 0.25, constitution: 0.5, perLevel: 0.2 },
+    mana: { base: 1, strength: 0.125, constitution: 0.25, wisdom: 0.5, intelligence: 0.125, perLevel: 0.2 },
+    // The combat ratings, budget 2. Equipment, relics and statuses add on top.
+    ar: { base: 0, strength: 0.75, dexterity: 0.5, constitution: 0.25, wisdom: 0.25, intelligence: 0.25 },
+    dr: { base: 0, strength: 0.5, dexterity: 0.75, constitution: 0.25, wisdom: 0.35, intelligence: 0.15 },
+    pr: { base: 0, dexterity: 0.25, constitution: 0.5, wisdom: 0.5, intelligence: 0.75 },
+    ward: { base: 1, dexterity: 0.2, constitution: 0.3, wisdom: 1, intelligence: 0.5 },
+    // ONE Poise: the rating and the pool were two rows for one number. Armour
+    // and relics remain its external addends, exactly as HP's equipment bonus.
+    poise: { base: 1, strength: 0.5, constitution: 1, wisdom: 0.3, intelligence: 0.2 },
   },
   // ---- D26: how each row READS, authored beside the row it describes -------
   //
@@ -124,7 +142,13 @@ export const derivedStatRules = {
     // when it drifted, and it reached him. A spread worth watching gets a
     // check that can go red, never a comment kept in sync by hand.
     energy: { label: 'Actions / turn', faceLabel: 'Actions', order: 4, disclosure: 'face', sense: 'How much you can do in one turn.' },
-    draw: { label: 'Draw / turn and opening hand', faceLabel: 'Draw', order: 5, disclosure: 'face', sense: 'How many cards you hold to choose from.' },
+    draw: { label: 'Draw / turn', faceLabel: 'Draw', order: 5, disclosure: 'face', sense: 'How many cards you draw at the start of each turn.' },
     poise: { label: 'Poise', order: 6, disclosure: 'reveal', sense: 'How much blows you can take before your footing breaks.' },
+    openingHand: { label: 'Opening hand', order: 7, disclosure: 'reveal', sense: 'How many cards you hold when a fight begins.' },
+    handSize: { label: 'Hand size', order: 8, disclosure: 'reveal', sense: 'The most cards you can hold at once.' },
+    ar: { label: 'AR', order: 9, disclosure: 'reveal', sense: 'How hard your physical attacks land.' },
+    dr: { label: 'DR', order: 10, disclosure: 'reveal', sense: 'How much your guard holds.' },
+    pr: { label: 'PR', order: 11, disclosure: 'reveal', sense: 'How hard your spells land.' },
+    ward: { label: 'Ward', order: 12, disclosure: 'reveal', sense: 'How well you shrug off magic and disruption.' },
   },
 };

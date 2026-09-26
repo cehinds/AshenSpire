@@ -95,9 +95,21 @@ export function primaryStatCard(input) {
   return renderPrimaryStatCard(input);
 }
 
-/** The derived resources: a StatStrip of Chips, each with its formula as its tooltip. */
+/**
+ * The derived resources: a StatStrip of Chips, each with its formula as its
+ * tooltip.
+ *
+ * ONE POISE CHIP, AND IT IS THE WHOLE THRESHOLD. Since ruleset 5 the
+ * projection carries a `poise` row of its own — the Constitution term alone —
+ * while the chip this strip appends is the RECEIPT: Constitution, body armour
+ * and relics. Drawing both stood two chips labelled Poise side by side with
+ * different numbers, both writing `data-stat="poise"`. The drop lives HERE
+ * rather than at each caller because the second chip is this component's own
+ * doing, and three callers filtering by hand is three chances to forget
+ * (review, #1217).
+ */
 export function resourceStrip(rows, poise) {
-  const chips = rows.map((entry) => {
+  const chips = rows.filter((entry) => entry.id !== 'poise').map((entry) => {
     const item = chip({ key: entry.faceLabel, value: entry.value, attrs: { dataset: { stat: entry.id, formula: entry.formula } } });
     attachTooltip(item, () => esc(entry.formula));
     return item;

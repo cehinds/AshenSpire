@@ -27,12 +27,15 @@ const magical = { cardId: 'strike', type: 'attack', damageSchool: 'magic' };
 
 test('AR, DR and PR add once to their eligible effects; Poise and Ward formulas agree', () => {
   const c = fight();
-  // Poise and Ward open at a base of 1 (combatRatingDefaults): 1 + CON 10 +
-  // floor(STR 10 / 2), and 1 + WIS 10 + floor(INT 10 / 2).
-  assert.deepEqual(c.player.ratings, { ar: 5, dr: 5, pr: 10, poise: 16, ward: 16 });
-  assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 15);
-  assert.equal(computeAttackDamage(c, c.player, null, 10, [], magical), 20);
-  assert.equal(computeBlockGain(c, c.player, 10, { ...physical, type: 'skill' }), 15);
+  // Every attribute at 10 under the owner's weights (2026-09-24), each term
+  // floored on its own: AR 7 + 5 + 2 + 2 + 2 = 18; DR 5 + 7 + 2 + 3 + 1 = 18;
+  // PR 2 + 5 + 5 + 7 = 19. Poise and Ward open at a base of 1 (their rows in
+  // content/derivedStats.js, ruleset 7): 1 + CON 10 + STR 5 + WIS 3 + INT 2 =
+  // 21, and 1 + DEX 2 + CON 3 + WIS 10 + INT 5 = 21.
+  assert.deepEqual(c.player.ratings, { ar: 18, dr: 18, pr: 19, poise: 21, ward: 21 });
+  assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 28);
+  assert.equal(computeAttackDamage(c, c.player, null, 10, [], magical), 29);
+  assert.equal(computeBlockGain(c, c.player, 10, { ...physical, type: 'skill' }), 28);
   assert.equal(computeBlockGain(c, c.player, 10), 10);
 });
 
@@ -59,11 +62,26 @@ test('magic impacts Ward, physical impacts Poise, breaks cost next-turn Actions'
 test('weapon impact categories and per-card overrides are configurable', () => {
   const c = fight();
   assert.equal(attackImpact(c, c.player, magical), 1);
+  // A Strike the weapon lends, as the engine carries it — cardId included. The
+  // card has a cost-derived Poise value (SPEC §3.4), and the weapon's weight
+  // still decides (SPEC §13.4): otherwise every weapon would hit alike.
+  const strikePoise = registries.cards.get('strike').cardRatingValues.poise;
   for (const item of registries.equipment.armaments) {
     const w = item.weight || 0;
     assert.equal(attackImpact(c, c.player, { ...physical, sourceArmamentId: item.id }), w <= 3 ? 1 : w <= 6 ? 2 : w <= 8 ? 3 : 4);
   }
-  for (const [id, expected] of [['dagger', 1], ['straightSword', 2], ['greatsword', 3], ['warhammer', 4]]) assert.equal(attackImpact(c, c.player, { ...physical, sourceArmamentId: id }), expected);
+  const byWeapon = [['dagger', 1], ['straightSword', 2], ['greatsword', 3], ['warhammer', 4]];
+  for (const [id, expected] of byWeapon) assert.equal(attackImpact(c, c.player, { ...physical, sourceArmamentId: id }), expected);
+  assert.ok(byWeapon.some(([, expected]) => expected !== strikePoise), 'the weights disagree with the card value, so the test can tell them apart');
+  // No weapon behind it: the card's own Poise value, not the flat unarmed
+  // default. Read off a card whose value differs from that default, or the
+  // assertion could not tell the two apart (Strike's is 1, the same as it).
+  const heavy = registries.cards.ids().map(id => registries.cards.get(id))
+    .find(def => def.type === 'attack' && def.cardRatingValues?.poise > c.ratingsRules.impact.unarmed);
+  assert.ok(heavy, 'some physical attack carries a Poise value above the unarmed default');
+  assert.equal(attackImpact(c, c.player, { cardId: heavy.id, type: 'attack', damageSchool: 'physical' }), heavy.cardRatingValues.poise);
+  // An enemy's blow carries no card value: its category default still holds.
+  assert.equal(attackImpact(c, c.enemies[0], { damageSchool: 'physical' }), c.ratingsRules.impact.enemyPhysical);
   c.ratingsRules.attackImpact.strike = 0;
   assert.equal(attackImpact(c, c.player, magical), 0);
 });
@@ -127,7 +145,8 @@ test('a magical power carries PR into its later block trigger', async () => {
   c.enqueue = action => queued.push(action);
   fireOwnerHooks(c, c.player, 'ownerTurnEnd');
   for (const action of queued) executeAction(c, action);
-  assert.equal(c.player.block, 14);
+  // 4 Block from Astral Armor + PR 19, carried from the power that set it up.
+  assert.equal(c.player.block, 23);
 });
 
 
@@ -141,26 +160,31 @@ test('explicit Poise damage respects configured break rules without legacy penal
 
 // ---- the shape of a rating (owner, 2026-09-21) ----------------------------
 //
-// "all calculations should be sum(floor(statmult*stat)) + equipment bonus",
-// with the multipliers present and shipping at 1. Each attribute term is
-// floored ON ITS OWN, so a weight is the rate that attribute converts at: a
-// 0.25 weight is four points to the rating, whatever the other four stats are
-// doing. The old formula pooled the weighted points and floored the total,
-// which let four stats each short of their own threshold add up to a rating
-// nobody's weights had promised — and divided that pool by the creation scale
-// besides.
-test('every rating is the sum of its floored attribute terms times one global multiplier', async () => {
+// "all calculations should be sum(floor(statmult*stat)) + equipment bonus".
+// Each attribute term is floored ON ITS OWN, so a weight is the rate that
+// attribute converts at: a 0.25 weight is four points to the rating, whatever
+// the other four stats are doing. The old formula pooled the weighted points
+// and floored the total, which let four stats each short of their own
+// threshold add up to a rating nobody's weights had promised — and divided
+// that pool by the creation scale besides.
+//
+// RULESET 7 (owner, 2026-09-24) retired the one global multiplier: a rating
+// is a row of the derived-stat table, tuned by its own
+// `derivedStatRules.rules.<id>.<field>` keys, and a new config carries no
+// multiplier at all. A fight SAVED under one still prices exactly as it did.
+test('every rating is the sum of its floored attribute terms; a saved multiplier still prices exactly', async () => {
   const { createRunState } = await import('../src/model/state.js');
+  const { LEGACY_RATING_FORMULA } = await import('../src/model/statRows.js');
   const run = createRunState({ seed: 42, classId: 'reaver', registries });
   run.loadout = null; run.relics = [];
   run.attributes = { strength: 1, dexterity: 1, constitution: 1, wisdom: 1, intelligence: 8 };
 
   const rules = resolveCombatRatings({
-    'gameConfig.combatRatings.ratings.ar.strength': 1,
-    'gameConfig.combatRatings.ratings.ar.dexterity': 0.5,
-    'gameConfig.combatRatings.ratings.ar.constitution': 0,
-    'gameConfig.combatRatings.ratings.ar.wisdom': 0.25,
-    'gameConfig.combatRatings.ratings.ar.intelligence': 0.25,
+    'gameConfig.derivedStatRules.rules.ar.strength': 1,
+    'gameConfig.derivedStatRules.rules.ar.dexterity': 0.5,
+    'gameConfig.derivedStatRules.rules.ar.constitution': 0,
+    'gameConfig.derivedStatRules.rules.ar.wisdom': 0.25,
+    'gameConfig.derivedStatRules.rules.ar.intelligence': 0.25,
   }, contentBundle);
   // floor(1×1) + floor(0.5×1) + 0 + floor(0.25×1) + floor(0.25×8) = 1 + 0 + 0 + 0 + 2
   assert.equal(ratingReceipt(registries, run, rules).totals.ar, 3);
@@ -168,29 +192,32 @@ test('every rating is the sum of its floored attribute terms times one global mu
   // A NON-EMPTY POOL IS NOT A TERM. Three attributes at 1 under a 0.5 weight
   // contribute nothing each and nothing together.
   const halves = resolveCombatRatings({
-    'gameConfig.combatRatings.ratings.ar.strength': 0.5,
-    'gameConfig.combatRatings.ratings.ar.dexterity': 0.5,
-    'gameConfig.combatRatings.ratings.ar.constitution': 0.5,
-    'gameConfig.combatRatings.ratings.ar.wisdom': 0,
-    'gameConfig.combatRatings.ratings.ar.intelligence': 0,
+    'gameConfig.derivedStatRules.rules.ar.strength': 0.5,
+    'gameConfig.derivedStatRules.rules.ar.dexterity': 0.5,
+    'gameConfig.derivedStatRules.rules.ar.constitution': 0.5,
+    'gameConfig.derivedStatRules.rules.ar.wisdom': 0,
+    'gameConfig.derivedStatRules.rules.ar.intelligence': 0,
   }, contentBundle);
   assert.equal(ratingReceipt(registries, run, halves).totals.ar, 0);
 
-  // The one global multiplier ships at 1 and changes every rating together.
-  assert.equal(resolveCombatRatings({}, contentBundle).multiplier, 1);
-  const scaled = resolveCombatRatings({
-    'gameConfig.combatRatings.multiplier': 2,
-    'gameConfig.combatRatings.ratings.ar.strength': 1,
-    'gameConfig.combatRatings.ratings.ar.dexterity': 0.5,
-    'gameConfig.combatRatings.ratings.ar.constitution': 0,
-    'gameConfig.combatRatings.ratings.ar.wisdom': 0.25,
-    'gameConfig.combatRatings.ratings.ar.intelligence': 0.25,
-  }, contentBundle);
-  assert.equal(ratingReceipt(registries, run, scaled).totals.ar, 6);
+  // A new config has no global multiplier: the row is the whole formula.
+  assert.equal(resolveCombatRatings({}, contentBundle).multiplier, undefined);
+  assert.equal(rules.multiplier, undefined);
+
+  // A SAVED legacy config states one multiplier over the frozen ruleset-6
+  // rows, and is priced as it always was: base + floor(Σ floored terms × 2).
+  // AR above: 2 × (1 + 0 + 0 + 0 + 2) = 6. The legacy AR row (STR .75, DEX .5,
+  // CON .25, WIS .25, INT .25) at the same attributes: 2 × (0+0+0+0+2) = 4.
+  const saved = { ...rules, multiplier: 2, ratings: { ...structuredClone(LEGACY_RATING_FORMULA.ratings), ar: { ...rules.ratings.ar } } };
+  assert.equal(ratingReceipt(registries, run, saved).totals.ar, 6);
+  const savedLegacyRows = { ...rules, multiplier: 2, ratings: structuredClone(LEGACY_RATING_FORMULA.ratings) };
+  assert.equal(ratingReceipt(registries, run, savedLegacyRows).totals.ar, 4);
+  // Poise under the same legacy save: base 1 + floor(2 × (CON 1 + STR 0 + WIS 0 + INT 0)) = 3.
+  assert.equal(ratingReceipt(registries, run, savedLegacyRows).totals.poise, 3);
 
   const zeroWeights = resolveCombatRatings(Object.fromEntries(
     ['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']
-      .map(id => [`gameConfig.combatRatings.ratings.ar.${id}`, 0]),
+      .map(id => [`gameConfig.derivedStatRules.rules.ar.${id}`, 0]),
   ), contentBundle);
   const zeroReceipt = ratingReceipt(registries, run, zeroWeights);
   const { renderPlayerPoise } = await import('../src/ui/components/equipmentReceipts.js');
@@ -200,8 +227,10 @@ test('every rating is the sum of its floored attribute terms times one global mu
     ratingAttributes: zeroReceipt.attributeReceipts,
     note: '',
   });
-  assert.match(zeroHtml, /data-rating-id="ar"[\s\S]*?No weighted attributes[\s\S]*?global × \(<b>0<\/b>\)/);
-  assert.doesNotMatch(zeroHtml, /global × \(\)/);
+  assert.match(zeroHtml, /data-rating-id="ar"[\s\S]*?No weighted attributes[\s\S]*?\(<b>0<\/b>\)/);
+  assert.doesNotMatch(zeroHtml, /\(\)/);
+  // The one row formula has no global multiplier to print (ruleset 7).
+  assert.doesNotMatch(zeroHtml, /global ×/);
 });
 
 test('weapon cards add their source equipment rating without a tier', async () => {
@@ -218,33 +247,35 @@ test('weapon cards add their source equipment rating without a tier', async () =
   const technique = surface.roles.find(row => row.role === 'technique');
   assert.deepEqual(
     [attack.receipt.base, attack.receipt.rating.equipmentBase, attack.receipt.rating.attributeValue, attack.receipt.rating.value, attack.receipt.rarityBonus, attack.receipt.value],
-    [5, 2, 1, 3, 0, 8],
-    'Slashing Strike is 5 base + (2 sword base AR + 1 attribute AR) + 0 rarity',
+    [5, 2, 2, 4, 0, 9],
+    'Slashing Strike is 5 base + (2 sword base AR + 2 attribute AR) + 0 rarity',
   );
   assert.deepEqual(
     [guard.receipt.base, guard.receipt.rating.equipmentBase, guard.receipt.rating.attributeValue, guard.receipt.rating.value, guard.receipt.rarityBonus, guard.receipt.value],
-    [3, 5, 0, 5, 0, 8],
-    'Shield Defend is 3 base + (5 shield base DR + 0 attribute DR) + 0 rarity',
+    [3, 5, 1, 6, 0, 9],
+    'Shield Defend is 3 base + (5 shield base DR + 1 attribute DR) + 0 rarity',
   );
   assert.deepEqual(
     [technique.receipt.base, technique.receipt.rating.id, technique.receipt.rating.value, technique.receipt.value],
-    [0, 'ar', 3, 3],
+    [0, 'ar', 4, 4],
     'Weapon Technique explicitly uses its source weapon AR',
   );
 
   const html = renderRoleCopies(surface);
   assert.doesNotMatch(html, /\btier\b/i);
   assert.doesNotMatch(html, /pointsPerTier/);
-  assert.match(html, /5 base \+ 3 AR \(weapon\) \+ 0 rarity =/);
-  assert.match(html, /3 base \+ 5 DR \(shield\) \+ 0 rarity =/);
+  assert.match(html, /5 base \+ 4 AR \(weapon\) \+ 0 rarity =/);
+  assert.match(html, /3 base \+ 6 DR \(shield\) \+ 0 rarity =/);
 
   const ratingHtml = renderPlayerPoise(surface.poise);
   assert.deepEqual(surface.poise.ratingAttributes.ar.values,
     { strength: 3, dexterity: 1, constitution: 2, wisdom: 1, intelligence: 1 });
   for (const id of ['ar', 'dr', 'pr', 'poise', 'ward']) assert.match(ratingHtml, new RegExp(`data-rating-id="${id}"`));
-  assert.match(ratingHtml, /data-rating-id="ar"[\s\S]*?Attributes[\s\S]*?Strength <b>3<\/b> × 0\.5 → floor = <b>1<\/b>[\s\S]*?Calculation[\s\S]*?<b>0<\/b> base[\s\S]*?<b>2<\/b> Straight Sword[\s\S]*?= <strong>3<\/strong>/);
-  assert.match(ratingHtml, /data-rating-id="dr"[\s\S]*?Dexterity <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?<b>2<\/b> Straight Sword[\s\S]*?<b>5<\/b> Round Shield[\s\S]*?= <strong>7<\/strong>/);
-  assert.match(ratingHtml, /data-rating-id="pr"[\s\S]*?Wisdom <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?Intelligence <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?= <strong>0<\/strong>/);
+  // The owner's weights (2026-09-24); the Reaver's default armour now carries
+  // a DR of 1, so Wayfarer Plate appears under DR as well as Poise.
+  assert.match(ratingHtml, /data-rating-id="ar"[\s\S]*?Attributes[\s\S]*?Strength <b>3<\/b> × 0\.75 → floor = <b>2<\/b>[\s\S]*?Calculation[\s\S]*?<b>0<\/b> base[\s\S]*?<b>2<\/b> Straight Sword[\s\S]*?= <strong>4<\/strong>/);
+  assert.match(ratingHtml, /data-rating-id="dr"[\s\S]*?Strength <b>3<\/b> × 0\.5 → floor = <b>1<\/b>[\s\S]*?Dexterity <b>1<\/b> × 0\.75 → floor = <b>0<\/b>[\s\S]*?<b>2<\/b> Straight Sword[\s\S]*?<b>5<\/b> Round Shield[\s\S]*?<b>1<\/b> Wayfarer Plate[\s\S]*?= <strong>9<\/strong>/);
+  assert.match(ratingHtml, /data-rating-id="pr"[\s\S]*?Constitution <b>2<\/b> × 0\.5 → floor = <b>1<\/b>[\s\S]*?Wisdom <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?Intelligence <b>1<\/b> × 0\.75 → floor = <b>0<\/b>[\s\S]*?= <strong>1<\/strong>/);
   assert.match(ratingHtml, /data-rating-id="poise"[\s\S]*?Strength <b>3<\/b> × 0\.5 → floor = <b>1<\/b>[\s\S]*?Constitution <b>2<\/b> × 1 → floor = <b>2<\/b>[\s\S]*?<b>8<\/b> Wayfarer Plate[\s\S]*?= <strong>12<\/strong>/);
   assert.match(ratingHtml, /data-rating-id="ward"[\s\S]*?Wisdom <b>1<\/b> × 1 → floor = <b>1<\/b>[\s\S]*?Intelligence <b>1<\/b> × 0\.5 → floor = <b>0<\/b>[\s\S]*?= <strong>2<\/strong>/);
 });
@@ -282,8 +313,9 @@ test('co-op initializes source equipment ratings for every seat', async () => {
     }],
     enemyIds: ['wanderingSoldier'],
   });
-  assert.equal(computeAttackDamage(c, c.player, null, 5, [], { ...physical, sourceArmamentId: 'straightSword' }), 8);
-  assert.equal(computeBlockGain(c, c.player, 3, { ...physical, type: 'skill', ratingId: 'dr', sourceArmamentId: 'roundShield' }), 8);
+  // 5 + 2 attribute AR + 2 sword AR; 3 + 1 attribute DR + 5 shield DR (the armour's DR stays out).
+  assert.equal(computeAttackDamage(c, c.player, null, 5, [], { ...physical, sourceArmamentId: 'straightSword' }), 9);
+  assert.equal(computeBlockGain(c, c.player, 3, { ...physical, type: 'skill', ratingId: 'dr', sourceArmamentId: 'roundShield' }), 9);
   assert.equal(c.enemies[0].ratings.poise, c.ratingsRules.enemyRatings.wanderingSoldier.poise);
 });
 
@@ -310,7 +342,8 @@ test('restoring a legacy combat rebuilds typed rating sources before source filt
     { name: 'Legacy off-hand weapon', ar: 99 },
   ];
   const resumed = restoreCombatSnapshot({ registries: currentRegistries, rng: createRng(998), snapshot });
-  assert.equal(computeAttackDamage(resumed, resumed.player, null, 5, [], { ...physical, sourceArmamentId: 'straightSword' }), 8);
+  // 5 + 2 attribute AR + 2 sword AR, rebuilt: neither the stale 1 nor the legacy 99 survives.
+  assert.equal(computeAttackDamage(resumed, resumed.player, null, 5, [], { ...physical, sourceArmamentId: 'straightSword' }), 9);
   assert.deepEqual(resumed.player.ratingSources.filter(row => row.kind === 'equipment').map(row => row.sourceId), ['straightSword', 'roundShield', 'default']);
   assert.equal(resumed.player.ratingSources.every(row => row.kind), true);
 });
@@ -454,16 +487,19 @@ test('foundation execution applies the same card rating as its preview', async (
   assert.equal(hp - c.enemies[0].hp, shown);
 });
 
-// A SAVED FIGHT PREDATES THE MULTIPLIERS. `combatSnapshotProblems` validates a
-// restored snapshot's own rating rules, so a field this build added must read
-// as 1 when it is absent rather than refuse the run.
+// A SAVED FIGHT PREDATES THE MULTIPLIERS — and, since ruleset 7, a new one
+// postdates them. `combatSnapshotProblems` validates a restored snapshot's own
+// rating rules, so a config with no `multiplier` (a save from before it
+// existed, and every config this build writes) must validate, while a save
+// that DOES carry one is still held to its domain.
 test('a combat save written before the multipliers still validates and resumes', async () => {
   const { combatRatingProblems } = await import('../src/model/combatRatings.js');
   const legacy = resolveCombatRatings({}, contentBundle);
-  delete legacy.multiplier;
+  assert.equal(legacy.multiplier, undefined, 'a new config carries no multiplier');
   assert.deepEqual(combatRatingProblems(legacy), []);
   const run = { attributes: { strength: 10, dexterity: 10, constitution: 10, wisdom: 10, intelligence: 10 } };
-  assert.deepEqual(ratingReceipt(registries, run, legacy).totals, { ar: 5, dr: 5, pr: 10, poise: 16, ward: 16 });
+  // The ruleset-7 rows at every attribute 10 (see the first test above).
+  assert.deepEqual(ratingReceipt(registries, run, legacy).totals, { ar: 18, dr: 18, pr: 19, poise: 21, ward: 21 });
   // A written multiplier is still held to its domain.
   assert.deepEqual(combatRatingProblems({ ...legacy, multiplier: -1 }), ['Invalid rating multiplier']);
 });
@@ -525,7 +561,7 @@ test('armour ratings, relic and status bonuses are additive and counted once', a
   assert.equal(after.ar - before.ar, 10);
   const c = fight({ 'gameConfig.combatRatings.bonuses.status:strength.ar': 2 });
   applyStatus(c, c.player, 'strength', 2, c.player);
-  assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 21);
+  assert.equal(computeAttackDamage(c, c.player, null, 10, [], physical), 34);
 });
 
 // THE ROW IS THE ITEM'S NUMBER, NOT A PLUS ON TOP OF IT (owner, 2026-09-21:
@@ -686,7 +722,8 @@ test('a set’s Poise is its own value, its weight follows it, and it has no AR 
   const set = configured.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default');
   assert.equal(set.poiseThreshold, 3, 'the armour key parses through its two colons');
   assert.equal(authoredItemRatings(configured.equipment, set).poise, 3);
-  assert.equal(pieceWeight(set), 3, 'a set’s Poise IS its weight — the row’s note says so');
+  const { mechanics } = await import('../src/framework/data/mechanics.js');
+  assert.equal(pieceWeight(set), Math.round(3 * mechanics.weight.itemWeightScale * 10) / 10, 'a set’s Poise IS its weight (rescaled by itemWeightScale) — the row’s note says so');
   assert.equal(contentBundle.equipment.armour.find(p => p.classId === 'reaver' && p.id === 'default').poiseThreshold, 8,
     'and the authored bundle is untouched');
 
@@ -751,11 +788,22 @@ test('a stored number reads the same in the panel and on the item', async () => 
 // assertion that has to be specific.
 test('a rating is spelled the same on its rows as on its tab', async () => {
   const { combatRatingRows } = await import('../src/model/combatRatings.js');
-  const rows = combatRatingRows(contentBundle);
+  const { advancedConfigRows } = await import('../src/model/advancedConfig.js');
+  const { advancedSubgroups } = await import('../src/ui/models/AdvancedSettingsGroups.js');
+  // Since ruleset 7 the formula is the rating's stat row (derivedStatRules.
+  // rules.<id>.*), edited with every other stat; the rest stays here.
+  const formulaRows = advancedConfigRows(contentBundle).filter(row => /^gameConfig\.derivedStatRules\.rules\.(ar|dr|pr|poise|ward)\./.test(row.key));
+  const rows = [...combatRatingRows(contentBundle), ...formulaRows];
+  const stats = advancedSubgroups(formulaRows, 'Stats');
 
   for (const [id, expected] of [['ar', 'AR'], ['dr', 'DR'], ['pr', 'PR'], ['poise', 'Poise'], ['ward', 'Ward']]) {
-    const formula = rows.filter(row => row.statTopic === `${expected} formula`);
-    assert.ok(formula.length >= 3, `${expected} has a formula group of its own`);
+    // Each formula is its own block under Advanced → Stats, filed under the
+    // trait it rates (models/AdvancedSettingsGroups.js).
+    const formula = formulaRows.filter(row => row.key.includes(`.rules.${id}.`));
+    assert.ok(formula.length >= 3, `${expected} has a formula block of its own`);
+    const tab = stats.find(group => formula.every(row => group.rows.includes(row)));
+    assert.ok(formula.every(row => row.advancedGroup === 'Stats') && tab, `${expected} sits under Stats, in one tab`);
+    assert.ok(new RegExp(`\\b${expected}\\b`).test(tab.label), `${expected}'s tab (${tab.label}) spells it the same way`);
     assert.ok(formula.some(row => row.label === `${expected} — Base`), `${expected} — Base is spelled like its tab`);
     // The per-item rows are the item's own ratings now (#1242), so they read
     // "Straight Sword — AR" rather than "— additional AR"; the spelling rule

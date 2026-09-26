@@ -53,7 +53,8 @@ import { splitByDisclosure } from './disclosure.js';
 import { statProjection } from './statProjection.js';
 import { equipmentRequirementReceipt, equippedPieces, modEffectLines } from './loadout.js';
 import { orderedAttributes } from './attributes.js';
-import { defaultRatingFormula } from './ratingFormula.js';
+import { HAND_STAT_IDS, isStatRowRuleset, resolvedRuleRow, ruleWeights } from './derivedStats.js';
+import { handRow } from './handRules.js';
 
 /** `mods` → player-readable effect lines, through the modFields vocabulary.
  *  The rendering itself is loadout.js's (modEffectLines) — this file was one of
@@ -137,19 +138,47 @@ function foldedSummary(sense) {
   return sentence || text;
 }
 
-function ratingWeightFacts(registries, attributeId) {
-  const config = registries.balance?.combatRatings || defaultRatingFormula;
+// The combat ratings are rows of the derived-stat table (ruleset 7) and read
+// the same way; they are listed as scaling rather than as a pool a point buys.
+const RATING_ROWS = ['ar', 'dr', 'pr', 'ward'];
+const FEED_EXCLUDED = new Set(RATING_ROWS);
+
+// THE RUN'S ROWS WHEN THERE IS A RUN (Codex, #1296): a run born before
+// ruleset 7 fights by its retired formula, and its card must say so.
+function ratingWeightFacts(registries, attributeId, runRows = null, ids = RATING_ROWS) {
+  const table = registries.derivedStatRules;
   const short = registries.attributes.get(attributeId).shortLabel;
-  if (!config?.ratings) return [];
-  return Object.entries(config.ratings)
-    .filter(([, rule]) => Number(rule[attributeId]) > 0)
+  if (!runRows && !table?.rules) return [];
+  return ids
+    .map((id) => [id, runRows ? runRows[id] : resolvedRuleRow(table, id)])
+    .filter(([, rule]) => rule && Number(rule[attributeId]) > 0)
     .map(([id, rule]) => {
       const label = id === 'poise' || id === 'ward' ? `${id[0].toUpperCase()}${id.slice(1)}` : id.toUpperCase();
+      // A rating row's Max is where its points stop paying, as for every
+      // other bounded fact (Codex, #1321).
+      const cap = Number.isFinite(rule.max) ? rule.max : null;
       return {
-        line: `${label}: floor(${rule[attributeId]} × ${short}), then × ${config.multiplier ?? 1} global`,
-        summary: `${label} weight ${rule[attributeId]}`,
+        line: `${label}: floor(${rule[attributeId]} × ${short})${Number.isFinite(rule.multiplier) && rule.multiplier !== 1 ? `, then × ${rule.multiplier} global` : ''}${cap !== null ? ` (at most ${cap})` : ''}`,
+        summary: `${label} weight ${rule[attributeId]}${cap !== null ? ` (max ${cap})` : ''}`,
+        cap,
       };
     });
+}
+
+/**
+ * attributeCycle(weight, perIncrease) → the fewest points n (up to 100) for
+ * which `n × weight` is whole AND divides evenly by `perIncrease`: after n
+ * points every floor in `floor(floor(n × weight) / perIncrease)` has landed
+ * exactly, so "+X every n points" is what the rule pays, not an average.
+ */
+function attributeCycle(weight, perIncrease) {
+  for (let n = 1; n <= 100; n += 1) {
+    const weighted = n * weight;
+    if (Math.abs(weighted - Math.round(weighted)) > 1e-9) continue;
+    const increases = Math.round(weighted) / perIncrease;
+    if (Math.abs(increases - Math.round(increases)) <= 1e-9 && Math.round(increases) > 0) return n;
+  }
+  return null;
 }
 
 /**
@@ -161,60 +190,94 @@ function ratingWeightFacts(registries, attributeId) {
  * time; every authored label, sentence, rule and equipment gate still comes
  * from its owning registry row.
  */
-export function attributeCardModels(registries, attributes, { projection = null, equipmentProfiles = null } = {}) {
+export function attributeCardModels(registries, attributes, { projection = null, equipmentProfiles = null, hand = null } = {}) {
   const rules = ((registries.derivedStatRules || {}).rules) || {};
+  const defaults = ((registries.derivedStatRules || {}).defaults) || {};
   const presentation = ((registries.derivedStatRules || {}).presentation) || {};
   const projected = new Map(((projection && projection.derived) || []).map((row) => [row.id, row]));
+  // A RUN'S HAND ROWS ITS SNAPSHOT NEVER HAD (born before ruleset 7) are its
+  // retired hand groups restated as rows; any other row a run's projection
+  // lacks is not the run's, so its card does not name it (Codex, #1296).
+  // THE HAND A FIGHT DEALS, when the caller has it (`hand`: a fight's own
+  // snapshot mid-combat, or `runHandRules` for the next fight — #1318): its
+  // three rows are the ones a card must state, over the projection's.
+  const handRows = hand
+    ? Object.fromEntries(HAND_STAT_IDS.map((id) => { try { return [id, handRow(hand, id)]; } catch { return [id, null]; } }))
+    : ((projection && projection.handRows) || {});
+  for (const [id, row] of Object.entries(handRows)) {
+    if (row) {
+      projected.set(id, { weights: Object.fromEntries(ruleWeights(row)), pointsPerIncrease: Number.isFinite(row.pointsPerIncrease) ? row.pointsPerIncrease : 1, gain: 1, max: row.max });
+    }
+  }
+  // A RUN BORN BEFORE RULESET 7 HAS TWO POISES: with ratings on it fights by
+  // its rating formula's Poise, not its pool row, so that is the one its cards
+  // name (Codex, #1296). Since ruleset 7 they are one row, listed as a feed.
+  const legacyPoise = !!projection?.ratingRows && !isStatRowRuleset(projection.rulesetVersion)
+    && !!registries.balance?.combatRatings?.enabled;
+  const ratingIds = legacyPoise ? [...RATING_ROWS, 'poise'] : RATING_ROWS;
   return orderedAttributes(registries).map((authored) => {
     const def = { ...authored, value: attributes?.[authored.id] };
     // WHAT THIS ATTRIBUTE FEEDS, as facts before prose. Derived once here so
     // the fold's line and the face's summary are the same numbers — the rules
     // are `registries.derivedStatRules`, the run's own derivation.
     const feedFacts = Object.entries(rules)
-      .filter(([, rule]) => rule.sourceStat === def.id)
+      .filter(([id]) => !FEED_EXCLUDED.has(id) && !(legacyPoise && id === 'poise'))
+      .filter(([id]) => !projection || projected.has(id))
+      // SINCE RULESET 6 A ROW NAMES ITS ATTRIBUTES AS WEIGHTS, so "what this
+      // attribute feeds" is every row that puts a non-zero weight on it — a row
+      // may now feed two attributes and appear on both cards, which the single
+      // `sourceStat` this filter used to read could never express.
+      // THE RUN'S WEIGHTS DECIDE WHICH CARD A STAT IS ON, not the live table:
+      // a player who moves HP from Constitution to Strength in Settings after
+      // starting a run still has a climb whose HP scales with Constitution
+      // (Codex, #1253). The authored row answers only when there is no run.
+      .filter(([id, rule]) => (projected.get(id)?.weights
+        ? Object.entries(projected.get(id).weights).filter(([, weight]) => weight > 0)
+        : ruleWeights({ ...defaults, ...rule })).some(([attrId]) => attrId === def.id))
       .sort((a, b) => (presentation[a[0]].order || 0) - (presentation[b[0]].order || 0))
       .map(([id, rule]) => {
-        const gain = Number.isFinite(rule.gainPerTier) ? rule.gainPerTier : null;
-        // THE RUN'S TIER, NOT THE TABLE'S. A run carries the derived-stat rows
+        // THE RUN'S RULE, NOT THE TABLE'S. A run carries the derived-stat rows
         // it was BORN under — a settings override tunes the live table while a
         // climb in progress keeps its own snapshot — so the authored row can
-        // say "every 1 point" while the character on screen was priced by a
-        // different one. The projection is the run's own derivation and
-        // already carries the resolved tier; reading the authored row here is
-        // the copy-that-nothing-syncs the card exists to avoid (Law 1 clause
-        // 2).
+        // say one thing while the character on screen was priced by another.
+        // The projection is the run's own derivation; reading the authored row
+        // here is the copy-that-nothing-syncs the card exists to avoid (Law 1
+        // clause 2). The authored row answers only when there is no run.
         const row = projected.get(id);
-        const authoredPoints = rule.pointsPerTier || ((registries.derivedStatRules || {}).defaults || {}).pointsPerTier;
-        const resolvedPoints = Number.isFinite(row?.pointsPerTier) ? row.pointsPerTier : authoredPoints;
-        // THE PROJECTION WINS ON THE GAIN TOO, for the same reason it wins on
-        // the tier: it is the run's own derivation. A class-field gain (hp) has
-        // no authored number at all and was always read here; an authored one
-        // that disagrees with the run's snapshot — a settings override, or a
-        // save born under an older table — is the copy that goes stale.
-        const perTier = Number.isFinite(row?.gainPerTier) ? row.gainPerTier : gain;
-        // A TIER SMALLER THAN A POINT IS RESTATED AS WHAT A POINT BUYS. "+4 HP
-        // every 0.2 points" is arithmetic homework; the player is asking what
-        // one point does.
-        //
-        // FLOOR, NOT ROUND, BECAUSE THE RULE FLOORS. A tier is counted
-        // `floor(points / pointsPerTier)`, so a point buys `floor(1 /
-        // pointsPerTier)` tiers at worst and never more on the first point.
-        // Rounding said "+8 HP per pt" at a tier of 0.6 where the measured gain
-        // is +4 — a card that promises more than the rule pays. The epsilon is
-        // for the same binary float the run door rounds away: 1 / 0.2 is
-        // 5.000000000000001 and must not floor to 4.
-        if (Number.isFinite(perTier) && resolvedPoints > 0 && resolvedPoints < 1) {
-          const tiersPerPoint = Math.max(1, Math.floor(1 / resolvedPoints + 1e-9));
-          return { label: presentation[id].label, perTier: perTier * tiersPerPoint, points: 1 };
-        }
-        return { label: presentation[id].label, perTier, points: resolvedPoints };
+        const weight = Number.isFinite(row?.weights?.[def.id]) ? row.weights[def.id]
+          : ruleWeights({ ...defaults, ...rule }).find(([attrId]) => attrId === def.id)?.[1];
+        const perIncrease = Number.isFinite(row?.pointsPerIncrease) ? row.pointsPerIncrease : 1;
+        const gain = Number.isFinite(row?.gain) ? row.gain : 1;
+        if (!Number.isFinite(weight) || weight <= 0) return { id, label: presentation[id].label, perTier: null, points: 1 };
+        // WHAT MY POINTS BUY, said as the CADENCE THE FLOORS ACTUALLY PAY. A
+        // weight of 4 is "+4 every 1 point"; a weight of 0.2 is "+1 every 5
+        // points", never "+0.2 per point" — the term is floored, so a fifth of
+        // a point is nothing until five arrive. An average rate would lie the
+        // same way whenever the steps are uneven: under a divisor of 3 a weight
+        // of 4 pays +1, +1, +2 across three points, so the card says "+4
+        // every 3 points" rather than "+1.33 every 1" (Codex, #1253). The
+        // cycle is the fewest points after which every floor lands exactly;
+        // a rule with no such cycle short enough to read says it scales.
+        const cycle = attributeCycle(weight, perIncrease);
+        // A ROW'S CAP IS PART OF ITS FACT (#1294: a Starseer at base 5 has one
+        // card of room before the cap of 6). Since ruleset 7 every row may
+        // carry a Max, so every bounded fact says where its points stop paying
+        // (Codex, #1296) — a weight with no exact cycle included (Codex,
+        // #1321): the run's own row, or the table's when there is none.
+        // A run saved under ruleset 1–6 states its bound as the retired
+        // `cap`, which prices exactly as a Max (Codex, #1321).
+        const source = row || rule;
+        const bound = Number.isFinite(source.max) ? source.max : source.cap;
+        const cap = Number.isFinite(bound) ? bound : null;
+        if (cycle === null) return { id, label: presentation[id].label, perTier: null, points: 1, cap };
+        return { id, label: presentation[id].label, perTier: Math.round((cycle * weight / perIncrease) * gain * 100) / 100, points: cycle, cap };
       });
     const unlocks = unlockLines(registries, def.id);
-    const ratingFacts = ratingWeightFacts(registries, def.id);
+    const ratingFacts = ratingWeightFacts(registries, def.id, projection?.ratingRows || null, ratingIds);
     const scaling = ratingFacts.map(({ line }) => line);
-    const feeds = feedFacts.map(({ label, perTier, points }) => (Number.isFinite(perTier)
-      ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}`
-      : `${label} scales with ${def.label}`));
+    const feeds = feedFacts.map(({ label, perTier, points, cap }) => (Number.isFinite(perTier)
+      ? `${label} +${perTier} every ${points} ${points === 1 ? 'point' : 'points'}${cap !== null && cap !== undefined ? ` (at most ${cap})` : ''}`
+      : `${label} scales with ${def.label}${cap !== null && cap !== undefined ? ` (at most ${cap})` : ''}`));
     // The FACE says what a point buys (Constantine, 2026-09-04: "stats show
     // flavor text instead of useful information"). The flavour is still the
     // fold's opening sentence — it is colour, and colour is not what a player
@@ -224,11 +287,19 @@ export function attributeCardModels(registries, attributes, { projection = null,
     // divisor sat at the end. `per N pts`, not `/N`, because a label may
     // already hold a slash ("Actions / turn") and two would read as one rate.
     const cadence = (points) => (points === 1 ? 'per pt' : `per ${points} pts`);
+    // The hand is three rows of the same table (ruleset 7), the class's own
+    // opening hand among them, so it is listed like every other feed.
     const faceFacts = feedFacts
       .filter(({ perTier }) => Number.isFinite(perTier))
-      .map(({ label, perTier, points }) => `+${perTier} ${label} ${cadence(points)}`);
-    const scalingFacts = faceFacts.length ? [] : ratingFacts.map(({ summary }) => summary);
-    const stated = [...faceFacts, ...scalingFacts];
+      .map(({ label, perTier, points, cap }) => `+${perTier} ${label} ${cadence(points)}${cap !== null && cap !== undefined ? ` (max ${cap})` : ''}`);
+    // A row that only "scales" (no exact cycle) still says its cap on the face.
+    const scalingCaps = feedFacts
+      .filter(({ perTier, cap }) => !Number.isFinite(perTier) && cap !== null && cap !== undefined)
+      .map(({ label, cap }) => `${label} scales (max ${cap})`);
+    // A capped rating always reaches the face: its points stop paying at the
+    // cap, which the other feeds never say (Codex, #1321).
+    const scalingFacts = (faceFacts.length ? ratingFacts.filter(({ cap }) => cap !== null) : ratingFacts).map(({ summary }) => summary);
+    const stated = [...faceFacts, ...scalingCaps, ...scalingFacts];
     const faceSummary = stated.length ? stated.join(' · ') : foldedSummary(def.sense);
     const lines = [...feeds, ...scaling, ...unlocks];
     return {

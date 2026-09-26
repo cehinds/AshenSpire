@@ -1,4 +1,5 @@
 import { previewPrologue } from './prologue.js';
+import { openPrologueSceneEditor } from './prologueSceneEditor.js';
 // src/ui/screens/settings.js — settings controls (SPEC §7)
 //
 // Rows are declarative and grouped into categories. `renderSettings` builds the
@@ -8,11 +9,13 @@ import { previewPrologue } from './prologue.js';
 // `onChange({key:value})` lets the orchestrator persist + apply immediately.
 
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
-import { advancedSubgroups, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
+import { advancedSubgroups, statsSection, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
+import { statsTopicPreview, statsExampleClasses, STATS_EXAMPLE_CLASS_KEY } from '../models/StatsPreviewModel.js';
 import { WIREFRAME_CHOICE_GROUPS } from '../models/WireframeChoiceModel.js';
-import { handRulesRows, resolveHandRules, handRuleSummary, HAND_RULES_PREFIX } from '../../model/handRules.js';
+import { handRulesRows, resolveHandRules, HAND_RULES_PREFIX } from '../../model/handRules.js';
 import { formationSettingsHtml, mountFormationSettings, applyPendingFormationSettings } from '../components/formationSettings.js';
 import { mountFlickPractice } from '../components/flickPractice.js';
+import { settingsPreviewHtml, settingsPreviewShown, mountSettingsPreview } from '../components/settingsPreview.js';
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
@@ -22,7 +25,6 @@ import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
 import { balance } from '../../content/balance.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
 import { TITLE_ENTRANCE_TIMING } from '../models/StartupGateModels.js';
-import { derivedStatRules } from '../../content/derivedStats.js';
 import { ZOOM_STEPS, MAP_ZOOM_DEFAULT, MAP_FREE_PAN_DEFAULT } from '../../model/mapview.js';
 import {
   MAP_MODES, MAP_MODE_DEFAULT, FOG_TRAIL_CLAUSE, SHRINE_GLOW_DEFAULT,
@@ -31,10 +33,18 @@ import { flasks } from '../../content/flasks.js';
 import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
 import { openModal, button } from '../kit/index.js';
 import { t } from '../strings.js';
+import { LORE_FACES, LORE_SIZES, LORE_LEADING, LORE_TRACKING, LORE_SLANTS, LORE_TYPE_DEFAULTS } from '../models/LoreTypeModel.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
-import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, saveAdvancedConfigFile, saveJsonFile, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { pageDebug } from '../buildChannel.js';
+import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
+import { SEED_KEY, seedAfterChange, sameSetting } from '../../model/settingsDefaults.js';
+import { renderSettingsSync } from '../components/settingsSync.js';
+import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
+import { gateOpen, ownOn } from '../../model/settingOverrides.js';
+import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
+import { saveAdvancedConfigFile, saveJsonFile } from '../services/saveJsonFile.js';
 import {
   prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
   prologueSettingKey, isPrologueSlot, prologueReorderChanges, prologueSceneCopy, prologueSceneClear,
@@ -87,10 +97,6 @@ let panelSettings = null;
 let deferredCardSizeNotice = null;
 const EQ_DEFAULTS = balance.equipment;
 const LEVEL_DEFAULTS = balance.levelUp || {};
-// THE TIER SIZE'S ONE HOME. Not `balance` — `derivedStatRules.defaults` is the
-// value the engine actually resolves rows against, so the row that turns it
-// reads it from there and a copy cannot drift.
-const DERIVED_DEFAULTS = derivedStatRules.defaults;
 // `retired: true` is a row that keeps its KEY so an exported configuration
 // still imports and still applies, and stays off the screen because nothing a
 // player can reach depends on it — today, the creation pools of the modes
@@ -98,7 +104,13 @@ const DERIVED_DEFAULTS = derivedStatRules.defaults;
 // near-identical "starting stat pool" rows for one reachable pool; this is the
 // line that stops that. parseAdvancedConfigFile reads advancedConfigRows()
 // directly, so import is unaffected.
-const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired);
+const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired)
+  // An override switch shows its EFFECTIVE state: stored, else on when the
+  // class ships its own value or a profile already pinned one.
+  .map((row) => (row.own ? { ...row, resolve: (settings) => ownOn(settings, row.own) } : row));
+const INERT_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => row.inert);
+// The Draw / turn stat row's editors, which only a fixed draw reads.
+const FIXED_DRAW_ROWS = ADVANCED_CONFIG_ROWS.filter((row) => row.fixedOnly);
 
 // A row that holds no value of its own: a button, the fullscreen action, the
 // opening's list editor. They are never exported and never reset, because
@@ -167,7 +179,7 @@ function graceRefillRows() {
   const cap = flaskSlotCap(balance);
   return graceRefillTable(balance).map((row) => ({
     cat: 'Advanced',
-    advancedGroup: 'Tuning',
+    advancedGroup: 'Rewards',
     key: GRACE_REFILL_KEY(row.kind),
     type: 'choice',
     def: String(row.count),
@@ -183,6 +195,62 @@ function graceRefillRows() {
     note: `Topped up automatically on arrival at a shrine. 0 is off; ${cap} slots in total.`,
   }));
 }
+
+/**
+ * hiddenTuningKeys(settings, debug) → stored keys this build has no row for:
+ * every row of a debug-only section (tuning or not — `shrineMultiUse`, say),
+ * and any `gameConfig.*` key no shown row carries. On a release build these
+ * still apply, but nothing on screen can see or reset them — so the options
+ * menu offers to clear them.
+ */
+export function hiddenTuningKeys(settings = {}, debug = pageDebug()) {
+  if (debug) return [];
+  const hidden = releaseHidden();
+  return Object.keys(settings).filter((key) => settings[key] !== undefined && hidden(key));
+}
+
+/** releaseHidden() → key => true when a release build shows no row for it. */
+function releaseHidden() {
+  const shown = new Set();
+  const debugOnly = new Set();
+  const advanced = categoryHandler('Advanced')?.rows || [];
+  const releaseGroups = new Set(visibleAdvancedGroups(false).map((group) => group.id));
+  for (const group of visibleAdvancedGroups(true)) {
+    if (MOUNTED_ADVANCED_GROUPS[group.id]) continue;
+    const into = releaseGroups.has(group.id) ? shown : debugOnly;
+    for (const sub of cachedSubgroups(advanced, group.id)) for (const row of sub.rows) into.add(row.key);
+  }
+  for (const row of ROWS) if (GENERAL_GROUPS.includes(row.cat) || row.cat === 'Accessibility') shown.add(row.key);
+  return (key) => !shown.has(key) && (debugOnly.has(key) || key.startsWith('gameConfig.'));
+}
+
+/**
+ * promotionFor(defaults, debug) → the promotion this build applies. A release
+ * build never applies a value it has no row for (the player could neither see
+ * nor reset it), so those keys are left out there — and a value an earlier
+ * promotion seeded for one is withdrawn by the seed's own "dropped key" rule.
+ */
+export function promotionFor(defaults, debug = pageDebug()) {
+  if (debug) return defaults;
+  const hidden = releaseHidden();
+  const values = Object.fromEntries(Object.entries(defaults?.values || {}).filter(([key]) => !hidden(key)));
+  return { ...defaults, values };
+}
+
+/**
+ * buildPromotion(debug) → the promoted values this build applies: what a
+ * Reset goes back to. On a release build that leaves out every row it does
+ * not show, as boot does, so no Reset reinstalls hidden tuning.
+ */
+function buildPromotion(debug = pageDebug()) {
+  return debug ? PROMOTED_DEFAULTS : promotionFor(SETTINGS_DEFAULTS, false).values;
+}
+
+/** The owner's promoted defaults, by setting key (tools/settings-defaults.mjs). */
+const PROMOTED_DEFAULTS = Object.freeze({ ...(SETTINGS_DEFAULTS.values || {}) });
+
+/** settingsRows() → every row this screen draws (the sync profile's key list). */
+export function settingsRows() { return ROWS; }
 
 const ROWS = [
   ...tooltipSettingsRows(),
@@ -292,9 +360,9 @@ const ROWS = [
   // E13 (#258), his words: "a toggle for multi-use rest stops". OFF is the
   // shipped Shrine — Rest or Smith, and taking either leaves. ON keeps the
   // Shrine open: Rest once, Smith while you have Stones, Level while you have
-  // cinders, and leave when you choose. Conservative default, as his own
-  // data-driven instruction for an unsettled 'maybe' asks.
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shrineMultiUse', def: false, label: 'Multi-use Shrines',
+  // cinders, and leave when you choose. On by default (owner's uploaded
+  // configuration, #1254).
+  { cat: 'Advanced', advancedGroup: 'World', key: 'shrineMultiUse', def: true, label: 'Multi-use Shrines',
     note: 'Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.' },
   // A SETTING, NOT A SWITCH IN THE FLOW. The creation screen's Starting
   // equipment head carried an "Auto-advance on valid choice" toggle beside
@@ -304,9 +372,9 @@ const ROWS = [
   // matches the shipped creation layout (content/source/characterCreation.json
   // `equipmentAutoAdvance`), which stays the screen's fallback when no
   // settings bag reaches it.
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'creationAutoAdvance', def: false, label: 'Auto-advance character creation',
+  { cat: 'Advanced', advancedGroup: 'Progression', key: 'creationAutoAdvance', def: false, label: 'Auto-advance character creation',
     note: 'After a valid starting-equipment choice, open the next equipment section. Off: each section waits for you to continue.' },
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'useRestorativeFlasksOutsideCombat', def: false, label: 'Use flasks outside combat',
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'useRestorativeFlasksOutsideCombat', def: true, label: 'Use flasks outside combat',
     note: 'Allow Crimson and Azure Flask charges to restore Health or Mana from the map. Their charges still refill only at a Shrine.' },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
     note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
@@ -332,6 +400,29 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotifStrength', type: 'choice', def: 'normal', selfEvident: true,
     choices: ['subtle', 'normal', 'strong'], label: 'Motif strength',
     note: 'How strongly the class colour tints a card.' },
+  // CARD LORE TYPE (owner, 2026-09-23): "make it configurable in the advanced
+  // settings for text related things, with sub options for flavor text". The
+  // lists and defaults live in models/LoreTypeModel.js, which also stamps the
+  // answer on <html>. Interface text size and readable headings stay in
+  // General → Accessibility, their one home; the tab's tip says so.
+  { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Flavor text', key: 'loreFace', type: 'choice', def: LORE_TYPE_DEFAULTS.loreFace,
+    choices: LORE_FACES.map((face) => face.label), label: 'Typeface',
+    note: 'The face card lore is set in: the one line in card inspection and the lore window it opens. Every face ships with the game; Cinzel has no italic and is always set upright.' },
+  { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Flavor text', key: 'loreSize', type: 'choice', def: LORE_TYPE_DEFAULTS.loreSize,
+    choices: LORE_SIZES, label: 'Size',
+    note: 'How large card lore is set. Stacks with Text size and UI size.' },
+  { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Lore window', key: 'loreLeading', type: 'choice', def: LORE_TYPE_DEFAULTS.loreLeading,
+    choices: LORE_LEADING, label: 'Line spacing', selfEvident: true,
+    note: 'Space between the lines of the lore window.' },
+  { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Flavor text', key: 'loreTracking', type: 'choice', def: LORE_TYPE_DEFAULTS.loreTracking,
+    choices: LORE_TRACKING, label: 'Letter spacing', selfEvident: true,
+    note: 'Space between the letters of card lore.' },
+  { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Lore window', key: 'loreSlant', type: 'choice', def: LORE_TYPE_DEFAULTS.loreSlant,
+    choices: LORE_SLANTS, label: 'Lore slant', selfEvident: true,
+    note: 'Italic or upright for the body of the lore window.' },
+  { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Flavor text', key: 'loreIdentitySlant', type: 'choice', def: LORE_TYPE_DEFAULTS.loreIdentitySlant,
+    choices: LORE_SLANTS, label: 'Identity line slant', selfEvident: true,
+    note: 'Italic or upright for the one-line identity shown in card inspection.' },
   { cat: 'Combat', key: 'screenShake', def: true, label: 'Screen shake', selfEvident: true,
     note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'ambient', type: 'choice', def: 'normal',
@@ -341,50 +432,20 @@ const ROWS = [
     note: 'Show the bar of keyboard shortcuts along the bottom of the map and combat.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapFreePan', def: MAP_FREE_PAN_DEFAULT, label: 'Two-axis map dragging',
     note: 'Drag the act map left and right as well as up and down. Off keeps the map centred horizontally and allows vertical dragging only.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'comfortable',
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'compact',
     choices: ['comfortable', 'compact'], label: 'Map header',
     note: 'Comfortable shows your name and full stats; Compact tightens the bar.' },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: 'Relics in map header', selfEvident: true,
     note: 'Show your relic icons in the map header bar.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: true, label: 'Seed in map header', selfEvident: true,
+  // RETIRED (owner, 2026-09-23). The solo map header never draws the seed —
+  // the header model receives it and prints nothing — and the co-op header's
+  // `.mh-seed` has no rule under the `hide-header-seed` class main.js sets, so
+  // this switch moved nothing anywhere. The key stays so a settings file that
+  // names it still imports.
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: true, label: 'Seed in map header', selfEvident: true, retired: true,
     note: 'Show the run seed in the map header bar.' },
-  // ---- HIS AMENDMENT TO THE UPRIGHT-GATE RULING (2026-08-17) ----------------
-  //
-  //   "rotating to horizontal should work again. I hate that it tells me to
-  //    rerotate to verticle. revert that back, or make that a configurable
-  //    setting."
-  //
-  // HE OFFERED BOTH AND MARINA RULED THE SETTING: a revert deletes whatever the
-  // gate was protecting, a row keeps it reachable. So this is one row in a table
-  // of about forty, and it is deliberately NOT the Settings layout act (E3).
-  //
-  // ⚠ THE DEFAULT IS `true` AND THAT IS MY CALL, NOT HIS, SO IT IS LABELLED AS
-  // MINE — with the measurement that decided it, because his sentence points the
-  // other way and a reader is owed the reason I did not simply follow it.
-  // `node tools/uprightgate.mjs`, 844x390, this tree:
-  //
-  //     .end-turn  top 415.41..439.78  0% on screen  NO scroll path to the rest
-  //     .hand-area 32.05% on screen · .energy-orb 0% on screen, unreachable
-  //
-  // **TURNING THIS OFF DOES NOT DELIVER "rotating to horizontal should work
-  // again."** It replaces a legible refusal with an illegible wall: the board
-  // draws, and the button that ends the turn is off screen inside a container
-  // that scrolls programmatically and never by hand. Defaulting it off would
-  // hand him a screen he cannot play and call it his ask. **Landscape SUPPORT is
-  // a third composition and it is still owed** (upright.js's header sets out why
-  // it is not one change) — this row is the switch he asked for and the honest
-  // half of the answer, not the whole of it.
-  //
-  // HIS ONE WORD FLIPS IT AND COSTS NOTHING: `def: true` -> `def: false`, one
-  // token, no other line in the tree. The default is the only part of this row I
-  // am holding for him.
-  //
-  // DISPLAY, NOT ADVANCED, and that is the departure from where Hold to confirm
-  // and the levelling dials went. Those are tuning knobs he asked to "try"; this
-  // one is found by a player who has just been refused, mid-annoyance, on a phone
-  // — and the gate's own copy now points at it by name. A switch you need because
-  // something is in your way does not live in the debugging surface.
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'uprightGate', def: true, label: 'Short-screen warning',
+  // Short-screen warning is optional on narrow landscape screens.
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'uprightGate', def: false, label: 'Short-screen warning',
     note: 'On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.' },
 
   { cat: 'Display', key: 'quickNav', type: 'choice', def: 'mirror',
@@ -411,9 +472,9 @@ const ROWS = [
     note: 'Ambient score for the title, map, and battles.' },
   { cat: 'Audio', key: 'sfxVolume', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: 'Sound effects', selfEvident: true,
     note: 'Hits, blocks, status bursts, cards, and pickups.' },
-  { cat: 'Advanced', advancedGroup: 'Debug', key: 'musicFolder', type: 'text', def: '', label: 'Custom music folder',
+  { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'musicFolder', type: 'text', def: '', label: 'Custom music folder',
     placeholder: 'e.g. music/ or https://…',
-    note: 'Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = built-in generated score.' },
+    note: 'Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = the score shipped in music/ beside the game, or the built-in generated score where that is unavailable.' },
 
   { cat: 'Accessibility', key: 'touchFlickPlay', def: UI_DEFAULTS.touchFlick.enabled, label: 'Card flick to play',
     note: 'Flick a card upward with touch, mouse, trackpad or pen to play it on the nearest valid target. Selection and the information button work as usual.' },
@@ -469,7 +530,7 @@ const ROWS = [
     note: 'Suppress bright impact and proc flashes (photosensitivity). Damage numbers stay.' },
   { cat: 'Accessibility', key: 'readableHeadings', def: false, label: 'Readable headings',
     note: 'Use the plain UI font for titles instead of the decorative serif.' },
-  { cat: 'Advanced', advancedGroup: 'Debug', key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
+  { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
     note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
   // E2 (#247): the recorded answer on the row — Sell is its own bar at the
   // merchant, conditional on THIS toggle, DEFAULT ON until he says otherwise,
@@ -477,7 +538,7 @@ const ROWS = [
   // settingOn so the default's polarity has one home, here. ONE ROW, appended
   // on purpose while another seat serializes this file for E3 — named in the
   // E2 claim (#247) so the touch is on the record, not smuggled.
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'shopSell', def: true, label: 'Merchant buys back',
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'shopSell', def: true, label: 'Merchant buys back',
     note: 'The shop offers a Sell bar for relics and flasks, at his prices. Off removes the bar entirely.' },
   // HOLD TO CONFIRM. Constantine: "yes press and hold" / "configurable in
   // debugging settings as enum drop down". Advanced is the debugging surface,
@@ -502,7 +563,7 @@ const ROWS = [
   //
   // `choices` and `def` are DERIVED from balance.ui.holdConfirm. Adding a fifth
   // speed is a row there and nothing here.
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'holdConfirm', type: 'choice', def: UI_DEFAULTS.holdConfirm.def,
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'holdConfirm', type: 'choice', def: UI_DEFAULTS.holdConfirm.def,
     choices: Object.keys(UI_DEFAULTS.holdConfirm.steps), label: 'Hold to confirm',
     // SHORT ON PURPOSE, and I measured why. My own ruling on the Map zoom row
     // tonight was that a long note plus a chip strip squeezes the text column
@@ -524,7 +585,7 @@ const ROWS = [
   // claim at authoring; Saga's #290 review ruled it owed the moment Marina
   // released that claim ("manual has a reader and no writer a player can
   // reach").
-  { cat: 'Advanced', advancedGroup: 'Gameplay', key: 'rewardCollect', type: 'choice', def: UI_DEFAULTS.rewardCollect.def,
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'rewardCollect', type: 'choice', def: UI_DEFAULTS.rewardCollect.def,
     choices: UI_DEFAULTS.rewardCollect.modes, label: 'Reward collection',
     note: 'Auto: Continue takes everything you didn’t skip, picking a card for you. Manual: Continue means done — only what you chose comes along.' },
   // WEAPON SWAP COST — his three prices, switchable (A8). Constantine,
@@ -541,7 +602,7 @@ const ROWS = [
   // `choices` and `def` are DERIVED, never typed. The zoom row two screens up
   // carried four of a six-step ladder for a night because someone typed the
   // list; a fourth rule row is a row in balance.js and nothing here.
-  { cat: 'Advanced', advancedGroup: 'Tuning', key: 'swapCostRule', type: 'choice', def: EQ_DEFAULTS.swapCostRule,
+  { cat: 'Advanced', advancedGroup: 'Equipment', key: 'swapCostRule', type: 'choice', def: EQ_DEFAULTS.swapCostRule,
     choices: (EQ_DEFAULTS.swapCostRules || []).map((r) => r.id), label: 'Weapon swap cost',
     // ONE SENTENCE PER RULE AND NO MORE, on the measurement in the row above:
     // a long note squeezes the text column beside a chip strip. Three chips,
@@ -568,9 +629,7 @@ const ROWS = [
   //
   // `choices` and `def` are DERIVED and NEITHER NUMBER IS TYPED HERE: the
   // ladders are `balance.levelUp`, the level value's default is that table's own
-  // `pointsPerLevel`, and THE TIER SIZE'S DEFAULT IS READ FROM
-  // `derivedStatRules.defaults` — its one home, one import away, so this row
-  // cannot drift from the rule it turns.
+  // `pointsPerLevel`.
   // CARD SIZE, TUNABLE IN PLACE. The three levels a card is drawn at live in
   // content/config/ui/components/card.json and ship as the default; these rows
   // lay an override over that table so a size can be tried against real cards
@@ -580,35 +639,25 @@ const ROWS = [
   // The ladder is the contract: a card you opened to read is never smaller
   // than one you were browsing past. A set of numbers that breaks it is
   // REFUSED and the authored table stands — see cardLevelsWithOverrides.
-  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_glance', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_glance', type: 'number',
     def: CARD_LEVELS.glance.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Resting card width',
     note: 'How wide a card is while you are browsing past it, in pixels. Must stay smaller than the selected width.' },
-  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_glance_mobile', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_glance_mobile', type: 'number',
     def: CARD_LEVELS.glance.variants.mobile, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Resting card width, phone',
     note: 'The resting width on a narrow screen. It ships equal to the resting width above, so nothing changes until you move it.' },
-  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_focus', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_focus', type: 'number',
     def: CARD_LEVELS.focus.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Selected card width',
     note: 'How wide the card you have picked out becomes. Must sit between the resting and reading widths.' },
-  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardWidth_inspect', type: 'number',
+  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_inspect', type: 'number',
     def: CARD_LEVELS.inspect.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Reading card width',
     note: 'How wide a card is in the window you open to read it. Must stay larger than the selected width.' },
-  { cat: 'Advanced', advancedGroup: 'Card size', key: 'cardSizeExport', type: 'button', btn: 'Copy',
+  { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardSizeExport', type: 'button', btn: 'Copy',
     label: 'Export card sizes',
     note: 'Copies the tuned sizes as a JSON fragment shaped like content/config/ui/components/card.json itself — merge it in at the FILE ROOT, where it replaces sizing.levels. It carries only the widths, so ratio, bands and behavior are left alone.' },
   { cat: 'Advanced', advancedGroup: 'Progression', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
     label: 'Level-up value', applied: numberAppliedHtml,
     note: 'How many stat points one level grants — type any whole number from 1 to 20. Takes effect on the next level you reach, in any run, including one already in progress; the points wait at the shrine until you assign them.' },
-  { cat: 'Advanced', advancedGroup: 'Progression', key: 'statTierSize', type: 'number', def: DERIVED_DEFAULTS.pointsPerTier,
-    min: LEVEL_DEFAULTS.tierSizeMin, max: LEVEL_DEFAULTS.tierSizeMax,
-    label: 'Stat points per tier', applied: numberAppliedHtml,
-    // THE SENTENCE THAT SAVES HIM AN HOUR. A climb is snapshotted at birth
-    // (`derivedStatRuleSnapshot`) so a content change can never re-stat a run in
-    // progress — which is correct, and which means turning this dial and loading
-    // an existing save shows NOTHING. It is written on the row because the
-    // alternative is him concluding the dial is broken. The middle sentence is
-    // the finding that caused the ask: at 5, one level moves no number at all.
-    note: 'How many points in a stat buy one step of HP, Mana, Actions or Draw — type any whole number from 1 to 20. At 5 a single level usually changes no number; at 1 every point shows. Applies to a NEW run — a climb already in progress keeps the rules it was born under, so start a run to feel this one.' },
   ...ADVANCED_CONFIG_ROWS,
   { cat: 'Advanced', advancedGroup: 'Export', key: 'promptSettingsExport', def: true, label: 'Offer export when done',
     note: 'Ask to export a configuration file after Done and Save.' },
@@ -658,41 +707,76 @@ const SECTIONS = {
 };
 
 const ADVANCED_GROUPS = Object.freeze([
+  // ---- ONE HOME PER SETTING (owner, 2026-09-23) ----------------------------
+  //
+  // "a lot of the advanced settings have settings duplicated in multiple
+  // sections making it hard to tell which does what." Sixteen tabs became
+  // thirteen, read top to bottom as: the run's content (opening, character,
+  // combat, hand, defence, rewards, equipment, world), then how it is drawn
+  // (interface, battlefield, layout), then files and diagnostics.
+  //
+  //   Rules      gone — its skills, talents and XP went to Progression, its
+  //              relic values to Equipment, rest / co-op / gauntlet / endless
+  //              to World, costs and deck limits to Combat.
+  //   Gameplay   gone — each preference joined the subject it changes.
+  //   Tuning     gone — the swap-cost rule sits with the swap-cost numbers.
+  //   Card size  folded into Layout with the wireframe and window sizes: every
+  //              "how big is it drawn" control in one tab.
+  //   Debug      folded into Import, export & debug.
+  //
+  // Where two rows still touch one quantity (the tier dial and each stat's
+  // own tier; the legacy poise meter and the ratings breaks; the fallback hand
+  // size and the hand rules) they now share a topic and the row note names
+  // the winner. Rows that moved nothing are retired: off the screen, still
+  // importable.
+  //
+  // A retired tab id resolves through `activeAdvancedGroup`, so a profile that
+  // last had "Rules" open lands on the first tab rather than a blank panel.
   { id: 'Opening', label: 'Opening sequence', tip: 'Opening artwork, dialogue, timing, motif and preview. Included in configuration exports.' },
-  { id: 'Ratings & Resistance', label: 'Stats & Defence', tip: 'Stat bonuses, Poise, Ward, impact and status resistance.' },
-  { id: 'Hand & Draw', label: 'Hand & Draw Rules', tip: 'Opening hand, turn draws, capacity and retention. Changes apply next combat.' },
-  // ONE TAB FOR ONE IDEA (owner, 2026-09-20). "Class defaults" was its own tab
-  // and held the class tables and the tier size while the creation pool sat
-  // here — one concept, two menus, and the two disagreed. Class defaults are
-  // now topics under Progression. The id is GONE rather than emptied because an
-  // emptied one draws a blank panel in silence: advanced group ids are not a
-  // declared surface (src/ui/surfaces.js declares overlayTab, settingsCategory,
-  // armouryView, armourySubject and menuAct — not these), so `assertSurfaces`
-  // would not catch it. A stored id that is gone is resolved by
-  // `activeAdvancedGroup`, which both the painter and the reset button read.
-  { id: 'Progression', label: 'Progression', tip: 'The points a new character starts with: the creation pool, each class’s defaults, level-up and stat conversions.' },
-  // THE TIP CARRIES A FORWARDING ADDRESS, and it is the other half of the
-  // report: this section is NAMED for combat and holds authored constants, so
-  // it is exactly where someone looking for an animation switch lands and finds
-  // nothing they recognise. One clause ends that walk.
-  { id: 'Combat', label: 'Combat & actors', tip: 'Combat, enemies, poise, damage, and status constants. Combat pacing, animation, sprites and Armaments are in General → Combat.' },
-  { id: 'Rewards', label: 'Rewards & economy', tip: 'Rewards, merchants, equipment, flasks, and smithing.' },
-  { id: 'World', label: 'World', tip: 'Map, floor, event, seat, and journey constants.' },
-  { id: 'Rules', label: 'Rules', tip: 'Remaining global numeric and boolean game rules.' },
-  { id: 'Gameplay', label: 'Gameplay', tip: 'Optional interaction rules.' },
-  { id: 'Interface', label: 'Interface', tip: 'Extra presentation and HUD controls.' },
+  { id: 'Progression', label: 'Character & progression', tip: 'Creation points, each class’s defaults, level-up, experience, skills and talents. What the points turn into is under Stats.' },
+  // THE TIP CARRIES A FORWARDING ADDRESS: this section is NAMED for combat and
+  // holds authored constants, so it is exactly where someone looking for an
+  // animation switch lands. One clause ends that walk.
+  { id: 'Combat', label: 'Combat rules', tip: 'Action and resource costs, card values, deck limits and arcane exposure. Combat pacing, animation, sprites and Armaments are in General → Combat.' },
+  // ONE TAB PER IDEA, AND STATS IS ONE IDEA (owner, 2026-09-21). Hand & Draw,
+  // Stats & Defence, Progression → Stats & resources and the Poise, Stagger
+  // and Mana constants were four doors onto the same traits. Each trait is one
+  // topic here (models/AdvancedSettingsGroups.js) with a live worked example
+  // (models/StatsPreviewModel.js).
+  { id: 'Stats', label: 'Stats', tip: 'Everything that turns attributes into Actions, Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.' },
+  { id: 'Rewards', label: 'Rewards & economy', tip: 'Cinders, reward rarity, merchants, flasks and smithing.' },
+  { id: 'Equipment', label: 'Equipment & relics', tip: 'Starting kits, drops, swapping, equipment balance and relic values.' },
+  { id: 'World', label: 'Run & world', tip: 'Rest and shrines, the atlas and seats, run modifiers, gauntlet, co-op and endless.' },
+  { id: 'Interface', label: 'Interface', tip: 'Map and HUD, card appearance, and confirmation controls.' },
+  { id: 'Text', label: 'Text & lore', tip: 'Typeface, size and spacing for card lore. Interface text size and readable headings are in General → Accessibility.' },
+  { id: 'Battlefield', label: 'Battlefield', tip: 'Formation layout, grid, character placement and formation movement.' },
   // The wireframe decisions the drawings leave open, one topic per family of
-  // surfaces. Separate from Interface because these are not "extra controls":
-  // they answer which wireframe a whole family of surfaces draws, and the
-  // answer reaches every door, menu and scene at once.
-  { id: 'Wireframes', label: 'Wireframes', tip: 'How windows, menus and scenes are laid out. Every choice starts where the game already draws it.' },
-  { id: 'Card size', label: 'Card size', tip: 'How big a card is drawn at each level.' },
-  { id: 'Tuning', label: 'Tuning', tip: 'Balance dials for testing a climb.' },
-  { id: 'Debug', label: 'Debug', tip: 'Diagnostics and custom development inputs.' },
-  { id: 'Export', label: 'Import / Export', tip: 'Load or save game configuration as a portable JSON file.' },
+  // surfaces, now beside the other size controls (cards, the settings window):
+  // every "how big and where" answer in one place.
+  { id: 'Wireframes', label: 'Layout', tip: 'How windows, menus, scenes and cards are sized and laid out. Every choice starts where the game already draws it.' },
+  { id: 'Export', label: 'Import, export & debug', tip: 'Load or save game configuration as a portable JSON file, and diagnostics.' },
+  { id: 'Sync', label: 'Defaults & sync', tip: 'Save your settings as your defaults on GitHub and load them on any device.' },
   { id: 'Changelog', label: 'Changelog', tip: 'Recent changes.' },
   { id: 'About', label: 'About', tip: 'Version and credits.' },
 ]);
+
+// ---- DEBUG-ONLY SECTIONS (owner, 2026-09-24) --------------------------------
+// "most of the advanced features probably should be locked behind a debug flag
+// that should only appear in dev and test builds. main should not have them."
+// A release build keeps the player-facing parts of Advanced — how the map, HUD,
+// cards and lore text look and confirm — plus Changelog and About. Every
+// tuning, rules, layout, import/export, diagnostics and sync section is shown
+// only where `pageDebug()` is true (src/ui/buildChannel.js says where that is).
+// Stored values are untouched either way: hiding a section changes what is
+// drawn, never what a profile holds.
+export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Interface', 'Text', 'Changelog', 'About']);
+/** Groups with their own mounted panel instead of rows. */
+const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
+
+/** visibleAdvancedGroups(debug) → the Advanced sections this build shows. */
+export function visibleAdvancedGroups(debug = pageDebug()) {
+  return debug ? ADVANCED_GROUPS : ADVANCED_GROUPS.filter((group) => RELEASE_ADVANCED_GROUP_IDS.includes(group.id));
+}
 
 /** The key the chosen category rides in. `meta.settings` is a free bag. */
 const CAT_KEY = 'settingsCategory';
@@ -710,9 +794,53 @@ const ADVANCED_CAT_KEY = 'settingsAdvancedCategory';
  */
 export const ADVANCED_GROUP_IDS = Object.freeze(ADVANCED_GROUPS.map((group) => group.id));
 
+/**
+ * formationLayoutRows() → the rows the formation editor edits, found by TOPIC
+ * in whichever tab files them. The mount named its tab ('Interface') and the
+ * topic moved to Battlefield under it, handing the editor no rows: every
+ * number threw on `row.max` and Apply saved nothing (Codex, on #1256). Asking
+ * every tab means the next move cannot do that again.
+ */
+export function formationLayoutRows() {
+  return ADVANCED_GROUP_IDS.flatMap((id) => advancedSubgroups(ROWS, id))
+    .find((group) => group.id === 'Formation layout')?.rows || [];
+}
+
+// Tabs merged into Stats, and topics that moved there out of tabs that still
+// exist. A profile last left on one of them opens on Stats rather than on the
+// first tab, or on an unrelated first topic of the tab it was in (Codex, on
+// #1252).
+const MERGED_ADVANCED_GROUPS = Object.freeze({ 'Ratings & Resistance': 'Stats', 'Hand & Draw': 'Stats' });
+const MOVED_ADVANCED_TOPICS = Object.freeze({
+  Progression: ['Stat conversions', 'Stats & resources'],
+  Combat: ['Poise', 'Stagger', 'Mana'],
+  Rules: ['Poise', 'Stagger', 'Mana'],
+});
+
 export function activeAdvancedGroup(settings) {
-  const stored = settings?.[ADVANCED_CAT_KEY];
-  return ADVANCED_GROUPS.some((group) => group.id === stored) ? stored : ADVANCED_GROUPS[0].id;
+  const raw = settings?.[ADVANCED_CAT_KEY];
+  const moved = MOVED_ADVANCED_TOPICS[raw]?.includes(settings?.[`settingsAdvancedSubgroup.${raw}`]);
+  const stored = moved ? 'Stats' : MERGED_ADVANCED_GROUPS[raw] || raw;
+  const shown = visibleAdvancedGroups();
+  return shown.some((group) => group.id === stored) ? stored : shown[0].id;
+}
+
+// The Stats topic a migrated profile lands on: where the rows it was last
+// looking at went, not Overview.
+const MIGRATED_STATS_TOPICS = Object.freeze({ 'Hand & Draw': 'Draw & hand', Poise: 'Poise', Stagger: 'Poise', Mana: 'Mana' });
+
+/** storedAdvancedTopic(settings, groupId) → the topic id a tab opens on, or undefined for its first. */
+export function storedAdvancedTopic(settings, groupId) {
+  const stored = settings?.[`settingsAdvancedSubgroup.${groupId}`];
+  if (stored !== undefined || groupId !== 'Stats') return stored;
+  const raw = settings?.[ADVANCED_CAT_KEY];
+  const old = settings?.[`settingsAdvancedSubgroup.${raw}`];
+  // A topic that kept its name under Stats (Resistance, Impact, Breaks, the
+  // per-item tables) reopens as itself (Codex, on #1252).
+  if (MERGED_ADVANCED_GROUPS[raw] && advancedSubgroups(ROWS, 'Stats').some((group) => group.id === old)) return old;
+  // Stats & Defence's own General and legacy-poise topics.
+  if (raw === 'Ratings & Resistance') return { General: 'Overview', 'Without ratings (legacy poise)': 'Poise' }[old];
+  return MIGRATED_STATS_TOPICS[raw] || MIGRATED_STATS_TOPICS[old];
 }
 
 export const CATEGORY_ORDER = ['General', 'Accessibility', 'Advanced'];
@@ -748,9 +876,9 @@ function categoryLabel(cat) {
  * failure; nothing here guesses.
  */
 export function categoryHandler(cat) {
-  if (cat === 'General') return { rows: ROWS.filter(row => GENERAL_GROUPS.includes(row.cat)) };
+  if (cat === 'General') return { rows: ROWS.filter(row => GENERAL_GROUPS.includes(row.cat) && !row.retired) };
   if (SECTIONS[cat]) return SECTIONS[cat];
-  const rows = ROWS.filter((r) => r.cat === cat);
+  const rows = ROWS.filter((r) => r.cat === cat && !r.retired);
   return rows.length ? { rows } : null;
 }
 
@@ -793,7 +921,7 @@ export function settingsCategories() {
  * Three labels, then an ellipsis: enough to recognise, short enough to finish.
  */
 export function categoryTip(cat) {
-  if (cat === 'Advanced') return 'Optional gameplay rules, tuning, diagnostics, and the changelog.';
+  if (cat === 'Advanced') return pageDebug() ? 'Optional gameplay rules, tuning, diagnostics, sync, and the changelog.' : 'Map, HUD and card appearance, lore text, the changelog and About.';
   const h = categoryHandler(cat);
   if (!h) return `Nothing is filed under "${cat}".`;
   if (h.mount) return h.tip || `The ${cat} section.`;
@@ -830,6 +958,82 @@ export function resolveArmamentsPhonePlacement(settings = {}) {
 
 function rowNote(settings, row) {
   return typeof row.note === 'function' ? row.note(settings) : row.note;
+}
+
+// ---- A ROW THAT DOES NOTHING RIGHT NOW IS DISABLED, AND SAYS WHY ----------
+//
+// (owner, 2026-09-23: "Disable fields if toggle isn't on.") `gates` on a row
+// (model/advancedConfig.js, model/startingStatConfig.js) name the switch that
+// decides whether it takes effect. While any gate is closed the row's controls
+// are disabled and a line under its label says which switch opens it; an
+// override row also shows the value it is inheriting in place of its own, so
+// the number on screen is always the number in force. Its own stored value is
+// kept, and comes back when the switch does.
+const GATED_ROWS = ROWS.filter((row) => row.gates?.length);
+const rowByKey = (key) => ROWS.find((row) => row.key === key);
+
+function inheritedValue(gate, settings) {
+  if (gate.inherited) return gate.inherited(settings);
+  if (!gate.inheritedKey) return undefined;
+  const row = rowByKey(gate.inheritedKey);
+  return Object.hasOwn(settings, gate.inheritedKey) ? settings[gate.inheritedKey] : row?.def;
+}
+
+export function gateSentence(gate, settings) {
+  const switchRow = rowByKey(gate.key);
+  const name = `“${switchRow?.label || gate.key}”`;
+  if (gate.own) {
+    const value = inheritedValue(gate, settings);
+    const from = gate.inheritedKey ? `“${rowByKey(gate.inheritedKey)?.label || gate.inheritedKey}”` : 'the authored value × the multiplier';
+    return `Following ${from}${value === undefined ? '' : ` (${value})`}. Turn on ${name} to set this one.`;
+  }
+  if (gate.when === false) return `Used only while ${name} is off.`;
+  if (gate.when === undefined || gate.when === true) return `Used only while ${name} is on.`;
+  const label = switchRow?.choiceLabels?.[gate.when] || gate.when;
+  return `Used only while ${name} is set to ${String(label).toUpperCase()}.`;
+}
+
+export function closedGate(settings, row) {
+  return (row.gates || []).find((gate) => !gateOpen(settings, gate, rowByKey)) || null;
+}
+
+export function refreshGates(container, settings) {
+  const controls = new Map();
+  for (const el of container.querySelectorAll('[data-key]')) {
+    if (!controls.has(el.dataset.key)) controls.set(el.dataset.key, []);
+    controls.get(el.dataset.key).push(el);
+  }
+  for (const row of GATED_ROWS) {
+    const els = controls.get(row.key);
+    if (!els) continue;
+    const closed = closedGate(settings, row);
+    const inherited = closed?.own ? inheritedValue(closed, settings) : undefined;
+    for (const el of els) {
+      el.disabled = !!closed;
+      el.setAttribute('aria-disabled', String(!!closed));
+      if (el.tagName !== 'INPUT' || el.type === 'checkbox' || el.type === 'color') continue;
+      if (closed && inherited !== undefined) {
+        el.value = String(inherited);
+        el.dataset.showingInherited = '1';
+      } else if (!closed && el.dataset.showingInherited) {
+        delete el.dataset.showingInherited;
+        el.value = String(settings[row.key] ?? row.def);
+      }
+    }
+    const wrapper = els[0].closest('.set-row');
+    if (!wrapper) continue;
+    wrapper.classList.toggle('set-row-gated', !!closed);
+    let hint = wrapper.querySelector('.set-gate-note');
+    if (closed) {
+      if (!hint) {
+        hint = (wrapper.ownerDocument || document).createElement('span');
+        hint.className = 'ls-hint set-note set-gate-note';
+        (wrapper.querySelector('.as-labelstack') || wrapper).append(hint);
+      }
+      hint.textContent = gateSentence(closed, settings);
+      hint.hidden = false;
+    } else if (hint) hint.hidden = true;
+  }
 }
 
 function refreshConditionNotes(container, settings) {
@@ -925,6 +1129,316 @@ export function compactRowLabel(label, topic) {
   return leaf.trim() || text;
 }
 
+// ---- ONE GRAMMAR FOR EVERY VALUE (2026-09-24 revamp) -------------------------
+//
+// Owner: "easier to edit values with sliders direct input and buttons to
+// increase and decrease. make it so that options are consistent for all
+// buttons and have the standard expected options."
+//
+// Every number is now − · slider · field · + , and every row that holds a
+// value carries the same two affordances: a dot when it differs from its
+// default, and a Reset that puts that one row back. Nothing else about a row
+// changed — the same keys, the same commit path, the same refusals.
+
+/**
+ * wireStepper(wrap, { read, commit, min, max, step, stepFor }) — the − and + buttons and
+ * the slider of one stepper. A press steps once; holding repeats and speeds up.
+ * The slider shows its value in the field while dragging and saves at most
+ * every 120 ms, then once more when released, so a drag is not a save per pixel.
+ */
+function wireStepper(wrap, { read, commit, min, max, step, stepFor = null }) {
+  const slider = wrap.querySelector('input[type="range"]');
+  const field = wrap.querySelector('input[type="number"]');
+  // Only floating-point noise is removed (0.1 + 0.2 → 0.3). A value off the
+  // step grid (0.01 on a 0.05 step) steps from where it is, not to the grid.
+  const round = (v) => Number(v.toFixed(10));
+  const buttons = [...wrap.querySelectorAll('.set-step')];
+  // A compact slider (sliderSpan) widens to hold any value committed outside
+  // it — typed, stepped or loaded — so thumb and field never disagree.
+  const fit = (v) => {
+    if (!slider || !Number.isFinite(v)) return;
+    if (v > Number(slider.max)) slider.max = String(Math.min(max, niceCeil(v * 1.5)));
+    if (v < Number(slider.min)) slider.min = String(Math.max(min, -niceCeil(Math.abs(v) * 1.5)));
+    slider.value = String(v);
+  };
+  const sync = () => {
+    const v = read();
+    fit(v);
+    for (const b of buttons) b.disabled = Number(b.dataset.step) < 0 ? v <= min : v >= max;
+  };
+  // A gate or a hand rule disables the FIELD (it carries the key); the
+  // buttons and slider follow it rather than keeping a second lock.
+  const locked = () => !!field?.disabled;
+  const stepOnce = (b, times = 1) => {
+    if (locked()) return;
+    // Step from what the field shows: a number typed but not yet committed
+    // (a press does not blur the field) is the one the player means.
+    const typed = field && field.value.trim() !== '' ? Number(field.value) : NaN;
+    const base = Number.isFinite(typed) ? typed : read();
+    // A row whose button step scales with its value (buttonStep) asks again
+    // for the value it steps from, not the one it was drawn with.
+    const by = (stepFor ? stepFor(base) : Number(b.dataset.stepBy)) || step;
+    const next = Math.min(max, Math.max(min, round(base + Number(b.dataset.step) * by * times)));
+    commit(next);
+    sync();
+  };
+  for (const b of buttons) {
+    let timer = null;
+    let count = 0;
+    const stop = () => { clearTimeout(timer); timer = null; count = 0; };
+    b.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0 || b.disabled) return;
+      event.preventDefault();
+      stepOnce(b);
+      const repeat = () => {
+        count += 1;
+        stepOnce(b, count > 15 ? 5 : 1);
+        if (!b.disabled) timer = setTimeout(repeat, count > 5 ? 50 : 90);
+      };
+      timer = setTimeout(repeat, 380);
+    });
+    for (const type of ['pointerup', 'pointerleave', 'pointercancel', 'blur']) b.addEventListener(type, stop);
+    // Keyboard and switch access arrive as a click with no pointer (detail 0).
+    b.addEventListener('click', (event) => { if (event.detail === 0) stepOnce(b); });
+  }
+  if (slider) {
+    let pending = null;
+    slider.addEventListener('input', () => {
+      if (locked()) { slider.value = field.value; return; }
+      if (field) field.value = slider.value;
+      if (pending) return;
+      pending = setTimeout(() => { pending = null; commit(slider.value); sync(); }, 120);
+    });
+    slider.addEventListener('change', () => { clearTimeout(pending); pending = null; if (!locked()) { commit(slider.value); sync(); } });
+  }
+  field?.addEventListener('change', sync);
+}
+
+/** markModified(container, settings, changes) — the dot and Reset follow each save. */
+function markModified(container, settings, changes) {
+  for (const [key, value] of Object.entries(changes || {})) {
+    const row = rowByKey(key);
+    if (!row) continue;
+    const probe = { ...settings, [key]: value === undefined ? undefined : value ?? settings[key] };
+    const on = rowModified(probe, row);
+    container.querySelectorAll(`[data-row-key="${CSS.escape(key)}"]`).forEach((el) => {
+      if (on) el.dataset.modified = 'true'; else delete el.dataset.modified;
+      const reset = el.querySelector('.set-row-reset');
+      if (reset) reset.hidden = !on;
+    });
+  }
+}
+
+/**
+ * rowDefault(row) → the value Reset restores: the owner's promoted default
+ * (src/content/settingsDefaults.js) when there is one, else the row's own.
+ */
+export function rowDefault(row, promoted = PROMOTED_DEFAULTS) {
+  if (row && Object.hasOwn(promoted, row.key)) return promoted[row.key];
+  return row?.def;
+}
+
+// ---- UNDO for anything that changes many values at once ---------------------
+// A row Reset, a group or results reset, Reset all, clearing hidden tuning and
+// a profile load each leave one "… · Undo" bar for UNDO_MS. The snapshot is the
+// value every touched key held before (undefined = was not stored).
+const UNDO_MS = 8000;
+let undoOffer = null;
+// Which profile an offer belongs to. Not the settings object: every save
+// reloads the profile into a new one (main.js persistSettingsChange), so an
+// identity check dropped a still-valid Undo when Settings was reopened within
+// the window. The generation moves only when the profile itself is replaced —
+// a restore, a profile load, a configuration import — via dropUndoOffer().
+let profileGeneration = 0;
+/**
+ * offerUndo(label, snapshot, seed) — the next paint shows "label · Undo". The
+ * offer belongs to the current profile generation, so a profile replaced in
+ * between never receives another profile's values. `seed` (from seedPatch) is
+ * the ownership the change moved, key by key: Undo puts back only those keys'
+ * ownership, merged into the record as it stands then, so a key the player
+ * took over inside the window stays theirs.
+ */
+export function offerUndo(label, snapshot, seed = null) {
+  const hasSeed = seed && Object.keys(seed).length > 0;
+  if ((!snapshot || !Object.keys(snapshot).length) && !hasSeed) return;
+  undoOffer = { label, snapshot: snapshot || {}, seed: hasSeed ? seed : null, generation: profileGeneration, until: Date.now() + UNDO_MS };
+}
+
+/**
+ * seedPatch(before, after) → { key: { value } | null } for each key whose
+ * promotion ownership differs between two seed records: what `before` held
+ * for it (null = not the promotion's). Only the keys a change moved.
+ */
+export function seedPatch(before, after) {
+  const a = before && typeof before === 'object' ? before : {};
+  const b = after && typeof after === 'object' ? after : {};
+  const patch = {};
+  for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
+    if (Object.hasOwn(a, key) !== Object.hasOwn(b, key) || !sameSetting(a[key], b[key])) patch[key] = Object.hasOwn(a, key) ? { value: a[key] } : null;
+  }
+  return patch;
+}
+
+/** applySeedPatch(record, patch) → `record` with each patched key's ownership put back. */
+export function applySeedPatch(record, patch) {
+  const next = { ...(record && typeof record === 'object' ? record : {}) };
+  for (const [key, entry] of Object.entries(patch || {})) {
+    if (entry) next[key] = entry.value; else delete next[key];
+  }
+  return next;
+}
+
+/**
+ * dropUndoOffer() — the profile was replaced (restored, loaded or imported):
+ * start a new generation and forget any pending Undo, which was taken from the
+ * profile that is gone.
+ */
+export function dropUndoOffer() { profileGeneration += 1; undoOffer = null; }
+
+/**
+ * pendingUndo(now) → the offer the next paint shows, or null. An offer past its
+ * window or taken from a profile since replaced is forgotten here.
+ */
+export function pendingUndo(now = Date.now()) {
+  if (undoOffer && (now > undoOffer.until || undoOffer.generation !== profileGeneration)) undoOffer = null;
+  return undoOffer;
+}
+
+/**
+ * resetKeys(settings, onChange, keys, label) → the snapshot taken. Each key goes
+ * back to its promoted default when there is one, else is cleared so the row's
+ * own default applies; an Undo is offered.
+ */
+export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted = buildPromotion() } = {}) {
+  const snapshot = {};
+  const changed = {};
+  const seedBefore = settings[SEED_KEY];
+  for (const key of keys) {
+    snapshot[key] = settings[key];
+    if (Object.hasOwn(promoted, key)) { settings[key] = promoted[key]; changed[key] = promoted[key]; }
+    else { delete settings[key]; changed[key] = undefined; }
+  }
+  const moved = Object.keys(snapshot).filter((key) => snapshot[key] !== changed[key]);
+  // A key reset to its promoted value is the promotion's again: say so in the
+  // seed record, so a later promotion may move it along.
+  const back = keys.filter((key) => Object.hasOwn(promoted, key));
+  if (back.length) {
+    const record = settings[SEED_KEY] && typeof settings[SEED_KEY] === 'object' ? settings[SEED_KEY] : {};
+    const next = { ...record };
+    for (const key of back) next[key] = promoted[key];
+    for (const key of keys) if (!Object.hasOwn(promoted, key)) delete next[key];
+    settings[SEED_KEY] = next;
+    changed[SEED_KEY] = next;
+  }
+  const result = onChange(changed);
+  if (result?.ok === false) {
+    // Not saved, so not reset: put every value (and the seed record) back —
+    // here and, through the same onChange, in the game and its live state.
+    const back = {};
+    for (const [key, value] of Object.entries(snapshot)) {
+      back[key] = value;
+      if (value === undefined) delete settings[key]; else settings[key] = value;
+    }
+    if (Object.hasOwn(changed, SEED_KEY)) {
+      back[SEED_KEY] = seedBefore;
+      if (seedBefore === undefined) delete settings[SEED_KEY]; else settings[SEED_KEY] = seedBefore;
+    }
+    onChange(back);
+    return snapshot;
+  }
+  const undo = Object.fromEntries(moved.map((key) => [key, snapshot[key]]));
+  // Undo puts back which values the promotion owned, as well as the values —
+  // also when only that moved (every key already sat at its promoted value
+  // but was the player's): that reset is saved, so it can be undone.
+  const seedMoved = Object.hasOwn(changed, SEED_KEY)
+    && JSON.stringify(Object.entries(changed[SEED_KEY] || {}).sort()) !== JSON.stringify(Object.entries(seedBefore || {}).sort());
+  offerUndo(label, undo, seedMoved ? seedPatch(seedBefore, changed[SEED_KEY]) : null);
+  return snapshot;
+}
+
+const VALUE_ROW_TYPES = new Set(['number', 'range', 'choice', 'color', 'colorSwatch', 'text', 'textarea', undefined, 'toggle']);
+
+/** rowModified(settings, row) → true when the stored value differs from the default. */
+export function rowModified(settings, row, promoted = PROMOTED_DEFAULTS) {
+  if (!row || !VALUE_ROW_TYPES.has(row.type)) return false;
+  const stored = settings?.[row.key];
+  if (stored === undefined) return false;
+  // A resolved row (Music, the "uses its own" switches) is changed when
+  // setting its key back to its default (the promoted one if there is one,
+  // else cleared) would change what it resolves to.
+  if (row.resolve) {
+    const base = Object.hasOwn(promoted, row.key) ? promoted[row.key] : undefined;
+    return row.resolve(settings) !== row.resolve({ ...settings, [row.key]: base });
+  }
+  const def = rowDefault(row, promoted);
+  if (row.type === 'number' && typeof stored === 'number' && typeof def === 'number') return Math.abs(stored - def) > 1e-9;
+  return stored !== def;
+}
+
+function resetButtonHtml(settings, r) {
+  if (!VALUE_ROW_TYPES.has(r.type) || r.type === 'action') return '';
+  const on = rowModified(settings, r);
+  return `<button type="button" class="as-btn set-row-reset${r.type === 'number' ? ' set-num-reset' : ''}" data-reset-key="${esc(r.key)}"`
+    + ` aria-label="Reset ${esc(stripTags(r.label))} to default" title="Reset to default"${on ? '' : ' hidden'}>Reset</button>`;
+}
+
+function stripTags(text) { return String(text ?? '').replace(/<[^>]*>/g, ''); }
+
+/**
+ * sliderSpan(row, value) → [min, max] for the slider. A row whose declared
+ * range is huge (most tuning rows allow 0–999) gets a slider around its value
+ * and default instead, so a drag moves in useful steps; the field and the
+ * buttons still reach the whole declared range.
+ */
+export function sliderSpan(row, value) {
+  const min = Number.isFinite(row.min) ? row.min : 0;
+  const max = Number.isFinite(row.max) ? row.max : 100;
+  const step = row.step ?? 1;
+  // An authored design range wins: `sliderRange: [lo, hi]` on the row.
+  if (Array.isArray(row.sliderRange) && row.sliderRange.length === 2) {
+    const lo = Math.max(min, Math.min(Number(row.sliderRange[0]), Number(value)));
+    const hi = Math.min(max, Math.max(Number(row.sliderRange[1]), Number(value)));
+    if (Number.isFinite(lo) && Number.isFinite(hi) && hi > lo) return [lo, hi];
+  }
+  if (row.slider || (max - min) / step <= 400) return [min, max];
+  const anchor = Math.max(Math.abs(Number(value) || 0), Math.abs(Number(row.def) || 0), step * 10);
+  const reach = niceCeil(anchor * 3);
+  // A signed domain (−999…999) is centred too: both ends come in around the
+  // value, each clamped to the declared range.
+  const low = Math.max(min, -reach);
+  return [low, Math.max(low + step, Math.min(max, reach))];
+}
+
+/** niceCeil(x) → the smallest 1, 2 or 5 × 10ⁿ at or above x. */
+export function niceCeil(x) {
+  if (!(x > 0)) return 1;
+  const power = 10 ** Math.floor(Math.log10(x));
+  const lead = x / power;
+  return (lead <= 1 ? 1 : lead <= 2 ? 2 : lead <= 5 ? 5 : 10) * power;
+}
+
+/** buttonStep(row, value) → how far − / + move one press. */
+export function buttonStep(row, value = row.def) {
+  const step = row.step ?? 1;
+  if (row.buttonStep) return row.buttonStep;
+  if (step >= 1 || row.integer) return Math.max(1, step);
+  const size = Math.abs(Number(value) || Number(row.def) || 0);
+  const coarse = size >= 20 ? 1 : size >= 2 ? 0.1 : 0.05;
+  return Math.max(step, coarse);
+}
+
+function stepperHtml({ key, label, value, min, max, step, span, fieldClass, sliderClass, unit = '', inputMode = 'numeric', keyOnSlider = false, bStep, sliderStep = step }) {
+  const name = esc(stripTags(label));
+  const sliderValue = Math.min(Math.max(Number(value), span[0]), span[1]);
+  return `<span class="set-stepper" data-stepper>`
+    + `<button type="button" class="as-btn set-step" data-step="-1" data-step-by="${bStep}" aria-label="Decrease ${name}"${value <= min ? ' disabled' : ''}>−</button>`
+    + `<input type="range" class="${sliderClass}"${keyOnSlider ? ` data-key="${esc(key)}"` : ''} min="${span[0]}" max="${span[1]}" step="${sliderStep}" value="${sliderValue}" aria-label="${name} slider">`
+    + `<input type="number" class="${fieldClass}" data-key="${esc(key)}" value="${value}" min="${min}" max="${max}" step="${step}" inputmode="${inputMode}" aria-label="${name}">`
+    + (unit ? `<span class="set-unit" aria-hidden="true">${esc(unit)}</span>` : '')
+    + `<button type="button" class="as-btn set-step" data-step="1" data-step-by="${bStep}" aria-label="Increase ${name}"${value >= max ? ' disabled' : ''}>+</button>`
+    + `</span>`;
+}
+
 export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // W1a: help only where the effect is not obvious. Condition and status lines
   // are feedback, and settingsRowShowsHelp always keeps them.
@@ -938,11 +1452,14 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
   // THE ROW IS THE KIT'S Row·setting: a LabelStack (what the setting does, and
   // one line on how — the note is that line, always visible, never behind a
   // disclosure) and the control in the trail. One grammar for every type.
+  // The row's Reset sits beside the label, not inside it: the label ellipsises
+  // (kit.css nowrap/overflow), and a long tuning label would clip the button.
   const stack = (extra = '') => `<span class="as-labelstack">
-        <span class="ls-label">${r.label}</span>${note ? `
+        <span class="set-label-line"><span class="ls-label"><span class="set-mod-dot" aria-hidden="true"></span>${r.label}</span>${resetButtonHtml(settings, r)}</span>${note ? `
         <span class="ls-hint set-note"${status}>${note}</span>` : ''}${extra}
       </span>`;
-  const rowOpen = (extraClass = '', attrs = '') => `<div class="as-row setting set-row${extraClass ? ` ${extraClass}` : ''}"${attrs}>`;
+  const modified = rowModified(settings, r);
+  const rowOpen = (extraClass = '', attrs = '') => `<div class="as-row setting set-row${extraClass ? ` ${extraClass}` : ''}" data-row-key="${esc(r.key)}"${modified ? ' data-modified="true"' : ''}${attrs}>`;
   if (r.type === 'color') {
     const value = /^#[0-9a-f]{6}$/i.test(settings[r.key] || '') ? settings[r.key] : r.def;
     return `${rowOpen()}${stack()}<span class="r-trail"><input type="color" class="set-color" data-key="${r.key}" value="${value}" aria-label="${r.label}"></span></div>`;
@@ -981,6 +1498,8 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
           <button type="button" class="as-btn" data-scene-move="up" data-scene-id="${esc(scene.id)}" aria-label="Move ${esc(scene.name)} earlier"${staged[0] === index ? ' disabled' : ''}>↑</button>
           <button type="button" class="as-btn" data-scene-move="down" data-scene-id="${esc(scene.id)}" aria-label="Move ${esc(scene.name)} later"${staged.at(-1) === index ? ' disabled' : ''}>↓</button>
           <button type="button" class="as-btn" data-scene-toggle="${esc(scene.id)}" aria-pressed="${on}">${on ? 'On' : 'Off'}</button>
+          <button type="button" class="as-btn set-scene-edit" data-scene-edit="${esc(scene.id)}" aria-label="Edit ${esc(scene.name)} with live preview">Edit & preview</button>
+          ${scene.character && scene.actor ? `<button type="button" class="as-btn set-scene-edit" data-scene-place="${esc(scene.id)}" aria-label="Place traveller in ${esc(scene.name)}">Place traveller</button>` : ''}
           <button type="button" class="as-btn" data-scene-copy="${esc(scene.id)}"${canCopy ? '' : ' disabled'}>Duplicate</button>
           ${isPrologueSlot(scene) ? `<button type="button" class="as-btn" data-scene-remove="${esc(scene.id)}">Remove</button>` : ''}
         </span>
@@ -994,6 +1513,7 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
         <ol class="set-scene-list" data-scene-list>${list}</ol>
         <div class="set-scene-tools">
           <button type="button" class="as-btn" data-scene-add${free ? '' : ' disabled'}>Add a scene</button>
+          <button type="button" class="as-btn set-scene-edit" data-scene-edit="${esc(config.scenes[staged[0]]?.id || 'warmth')}">Open live scene editor</button>
           <span class="as-status">${slotsLeft} empty slot${slotsLeft === 1 ? '' : 's'} left</span>
           ${anyLive ? '' : '<span class="as-status set-scene-warn">Nothing is switched on — the opening falls back to the five scenes it shipped with.</span>'}
         </div>
@@ -1053,24 +1573,23 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
     const val = resolveNumberRow(settings, r);
     const step = r.step ?? 1;
     const inputMode = r.integer === false ? 'decimal' : 'numeric';
-    return `${rowOpen(r.slider ? 'set-row-wide' : '')}
+    return `${rowOpen('set-row-wide set-row-number')}
         ${stack(appliedSlot(settings, r))}
         <span class="r-trail num-wrap">
-          <input type="number" class="set-num" data-key="${r.key}" value="${val}"
-                 min="${r.min}" max="${r.max}" step="${step}" inputmode="${inputMode}"
-                 aria-label="${r.label}">
-          ${r.slider ? `<input type="range" class="set-num-slider" min="${r.min}" max="${r.max}" step="${step}" value="${val}" aria-label="${r.label} slider"><button type="button" class="set-num-reset">Reset</button>` : ''}
+          ${stepperHtml({ key: r.key, label: r.label, value: val, min: r.min, max: r.max, step, span: sliderSpan(r, val), fieldClass: 'set-num', sliderClass: 'set-num-slider', inputMode, bStep: buttonStep(r, val), unit: r.unit || '',
+            // A fractional row's authored values need not sit on its step grid
+            // (0.01 on a 0.05 step); `any` lets the thumb stand where the value is.
+            sliderStep: r.integer === false || !Number.isInteger(step) ? 'any' : step })}
         </span>
         ${r.practice ? '<div class="flick-practice" data-flick-practice role="group" aria-label="Card flick practice"><span>Practice here — flick upward</span><output aria-live="polite">No cards or resources are spent.</output></div>' : ''}
       </div>`;
   }
   if (r.type === 'range') {
     const val = typeof settings[r.key] === 'number' ? settings[r.key] : r.def;
-    return `${rowOpen()}
+    return `${rowOpen('set-row-wide set-row-number')}
         ${stack()}
-        <span class="as-status range-val" data-for="${r.key}">${val}</span>
         <span class="r-trail range-wrap">
-          <input type="range" class="set-range" min="0" max="100" step="5" value="${val}" data-key="${r.key}">
+          ${stepperHtml({ key: r.key, label: r.label, value: val, min: 0, max: 100, step: 1, span: [0, 100], fieldClass: 'set-range-num', sliderClass: 'set-range', keyOnSlider: true, unit: '%', bStep: 5 })}
         </span>
       </div>`;
   }
@@ -1234,17 +1753,18 @@ function graceRefillAppliedHtml(settings, r) {
  */
 /**
  * resolveLevelUpValue(settings) → how many stat points one level grants.
- * resolveStatTierSize(settings) → how many points buy one tier.
  *
- * HIS TWO DIALS, resolved the way every other row in this file is: a stored
+ * HIS LEVEL DIAL, resolved the way every other row in this file is: a stored
  * value the row does not offer, or no value at all, is the SHIPPING DEFAULT —
  * the same rule `savedZoom`, `resolveMapMode` and `resolveTapSize` use, and for
  * the same reason. A hand-edited profile or an older build's value must behave
  * exactly like an absent one, because the alternative is a run created under a
  * number nothing in the game admits to.
  *
- * BOTH RETURN THE ROW'S OWN `def` WHEN UNSET, and both rows derive that `def`
- * from content, so neither of these functions contains a number.
+ * IT RETURNS THE ROW'S OWN `def` WHEN UNSET, and the row derives that `def`
+ * from content, so this function contains no number. (Its sibling, the "Stat
+ * points per tier" dial, was retired with ruleset 6: every stat now states its
+ * own decimal weight per attribute.)
  */
 /**
  * resolveNumberRow(settings, row) → the integer this 'number' row resolves to.
@@ -1350,6 +1870,15 @@ export function settingsRow(key) {
   return row;
 }
 
+/**
+ * settingsImportRows() → the rows the import door is handed as
+ * `additionalRows`, the same array both import buttons pass. Exported so a
+ * test imports a real exported file through exactly what the screen uses.
+ */
+export function settingsImportRows() {
+  return ROWS;
+}
+
 export function resolveLevelUpValue(settings) {
   return resolveNumberRow(settings, ROWS.find((r) => r.key === 'levelUpValue'));
 }
@@ -1371,31 +1900,7 @@ function numberAppliedHtml(settings, row) {
   return `<p class="set-note set-applied">Using <b>${used}</b> — ${row.min}–${row.max}, whole numbers.</p>`;
 }
 
-export function resolveStatTierSize(settings) {
-  return resolveNumberRow(settings, settingsRow('statTierSize'));
-}
 
-/**
- * derivedStatDialOptions(settings) → the `derivedStatOptions` a NEW run is born
- * with, or `{}` when the dial is at its shipping value.
- *
- * THIS IS THE WHOLE WIRING OF THE TIER DIAL AND IT INVENTS NOTHING. The engine
- * already takes layered overrides — `modeModifiers`, `runModifiers`,
- * `explicitOverride` — and a layer's `defaults` is assigned onto EVERY rule
- * (`resolveDerivedStatRules`), which is precisely "one tier size for all the
- * derived stats, and a row may still say otherwise". The shape he asked about
- * already existed; this hands it a number.
- *
- * `{}` AT THE DEFAULT IS DELIBERATE: a run at the shipping value is born with
- * no override layer at all, so its snapshot is byte-identical to one created
- * before this dial existed. Turning the dial and turning it back leaves no
- * residue in a save.
- */
-export function derivedStatDialOptions(settings) {
-  const size = resolveStatTierSize(settings);
-  if (size === Number(DERIVED_DEFAULTS.pointsPerTier)) return {};
-  return { explicitOverride: { defaults: { pointsPerTier: size } } };
-}
 
 export function resolveTapSize(settings) {
   const row = ROWS.find((r) => r.key === 'tapFloor');
@@ -1689,7 +2194,160 @@ export function generalGroups(category) {
   return groups;
 }
 
-function categoryHtml(cat, settings, saves) {
+/**
+ * compactAdvancedRow(row, groupId, subgroupId) → the row as the Advanced panel
+ * draws it, where the panel's own tab already carries part of the row's name.
+ *
+ * EXPORTED SO IT CAN BE ASSERTED. It was an anonymous block inside the render
+ * expression, which meant the one line that decides whether a generated
+ * balance row keeps its description was reachable only by rendering the whole
+ * panel — so a change putting the old 'Applies to a new run.' boilerplate back
+ * could pass every test in the repo (Copilot, #1243). It is a pure function of
+ * the row and its two tab ids now, and tests/advanced-config.test.mjs holds it.
+ */
+export function compactAdvancedRow(row, groupId, subgroupId) {
+  // SHORTEN WHAT THE TAB ALREADY SAYS — and only that. The label itself has
+  // ONE home (`leafRows` in model/advancedConfig.js); a branch here used to
+  // rebuild every generated balance row's label out of `row.key`, splitting
+  // camelCase without capitalising it, which is how "hand Max" and "levels ·
+  // player Starting Level" came to sit two rows under "HP — base amount" in
+  // one menu. That is gone. What is left is presentation: under a tab named
+  // "Enemy scaling", a row called "Levels · Enemy Scaling · HP — Per Level"
+  // says the tab's own name back to the reader, and the class tabs have always
+  // compacted that away. Now every tab does.
+  const compact = { ...row, label: compactRowLabel(row.label, subgroupId) };
+  if (groupId === 'Progression' && CLASS_TOPICS.includes(subgroupId)) {
+    // The class's own topic already says which class this is, so the note goes
+    // — EXCEPT the sentence naming the kit floor, which is the only place the
+    // row's minimum explains itself. Dropping it left the floor a number from
+    // nowhere.
+    compact.note = row.floorNote || '';
+  }
+  // EVERY OTHER ROW KEEPS ITS OWN NOTE. A generated balance row's used to be
+  // replaced here with 'Applies to a new run.' — the same five words under
+  // all 325 of them — and each now carries the sentence written beside its
+  // number in content/balance.js, closing clause included.
+  return compact;
+}
+
+// ---- Advanced → Stats: the live worked example ------------------------------
+//
+// Computed by models/StatsPreviewModel.js from the same configured bundle a new
+// run is born from, and redrawn after every edit (`refreshStatsPreviews`), so
+// the numbers under a dial are the ones the dial produces.
+// The last example drawn, keyed by everything it reads, so the render that
+// paints the panel and the refresh that follows it compute it once.
+let lastStatsPreview = { key: null, html: '' };
+
+export function statsTopicPreviewHtml(settings, topic, previewAttributes = null, previewLevel = null, previewClassId = null) {
+  const key = JSON.stringify([topic, previewAttributes, previewLevel, previewClassId, settings]);
+  if (key === lastStatsPreview.key) return lastStatsPreview.html;
+  const html = statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLevel, previewClassId);
+  lastStatsPreview = { key, html };
+  return html;
+}
+
+function statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLevel, previewClassId) {
+  const preview = statsTopicPreview(settings, topic, previewAttributes, previewLevel, previewClassId);
+  if (!preview) return '';
+  if (preview.problem) return `<div class="set-example set-example-problem" role="status"><p>${esc(preview.problem)}</p></div>`;
+  const classes = statsExampleClasses();
+  const who = preview.subject.current || classes.length < 2
+    ? `<span>${esc(preview.subject.label)}</span>`
+    : `<label class="set-example-who">Example character <select data-stats-example-class aria-label="Example character">${classes.map((entry) => `<option value="${esc(entry.id)}"${entry.id === preview.subject.classId ? ' selected' : ''}>New ${esc(entry.label)}</option>`).join('')}</select></label>`;
+  const examples = preview.examples.map((example) => `<div class="set-example-block${example.off ? ' is-off' : ''}" data-stat-example="${esc(example.id)}">`
+    + `<div class="set-example-title">${esc(example.title)}${example.legacy ? ` <small>${esc(example.legacy)}</small>` : ''}</div>`
+    + (example.lines.length ? `<dl class="set-example-lines">${example.lines.map((line) => `<div><dt>${esc(line.label)}</dt><dd><span class="set-example-math">${esc(line.expression)}</span> <b class="set-example-total">= ${esc(String(line.total))}</b>${line.capped != null ? ` <small>(capped at ${esc(String(line.capped))})</small>` : ''}</dd></div>`).join('')}</dl>` : '')
+    + (example.hint ? `<p class="set-example-hint">${esc(example.hint)}</p>` : '')
+    + '</div>').join('');
+  return `<div class="set-example" aria-live="polite"><div class="set-example-head"><strong>Worked example</strong>${who}</div>`
+    + (preview.refused ? `<p class="set-example-refused" role="status">${esc(preview.refused)}</p>` : '')
+    + `<p class="set-example-attrs">${esc(preview.attributes)}</p>${examples}</div>`;
+}
+
+function visibleAdvancedSubgroups(rows, groupId) {
+  const groups = advancedSubgroups(rows, groupId);
+  // The scene editor owns per-scene values and shows their actual effect beside
+  // the painting. Keeping another 70-plus controls under each scene tab meant
+  // the inactive private staging looked editable while changing nothing.
+  if (groupId !== 'Opening') return groups;
+  return groups.filter(group => !group.rows.some(row => row.prologuePath?.[0] === 'scenes'));
+}
+
+// ---- search: EVERY section at once (2026-09-24 revamp) ----------------------
+//
+// Find used to filter the rows of the Advanced section already open, so a
+// setting under another tab answered "0 of 212" — and to have anything to
+// filter, every one of Advanced's ~3,000 rows had to be in the page, hidden.
+// That page was the slowness: opening Advanced built and wired all of them.
+// Now a query draws its matches, from every section this build shows, and
+// nothing else; a section draws only the topic that is open.
+const SEARCH_LIMIT = 120;
+const subgroupCache = new Map();
+function cachedSubgroups(rows, groupId) {
+  if (!subgroupCache.has(groupId)) subgroupCache.set(groupId, visibleAdvancedSubgroups(rows, groupId));
+  return subgroupCache.get(groupId);
+}
+
+/**
+ * settingsSearchHits(query, debug, settings) → [{ row, where }] across every
+ * shown section. With `settings`, a row the hand rules currently hide (the
+ * fixed-draw rows while drawing to a hand size) is not a hit: it would be
+ * counted, and reset, without being on screen.
+ */
+export function settingsSearchHits(query, debug = pageDebug(), settings = null, { changedOnly = false } = {}) {
+  const q = String(query || '').trim().toLocaleLowerCase();
+  if (!q && !changedOnly) return [];
+  const words = q ? q.split(/\s+/) : [];
+  const hiddenByRules = new Set();
+  if (settings && resolveHandRules(settings).drawMode !== 'fixed') {
+    for (const row of [...handRulesRows(), ...FIXED_DRAW_ROWS]) if (row.fixedOnly) hiddenByRules.add(row.key);
+  }
+  const hit = (row) => {
+    if (hiddenByRules.has(row.key)) return false;
+    if (changedOnly && !rowModified(settings, row)) return false;
+    const hay = `${row.label || ''} ${typeof row.note === 'string' ? row.note : ''} ${row.key || ''}`.toLocaleLowerCase();
+    return words.every((word) => hay.includes(word));
+  };
+  const hits = [];
+  for (const row of ROWS) {
+    if (row.retired || !(GENERAL_GROUPS.includes(row.cat) || row.cat === 'Accessibility')) continue;
+    if (hit(row)) hits.push({ row, where: row.cat === 'Accessibility' ? 'Accessibility' : `General › ${row.cat}` });
+  }
+  const advanced = categoryHandler('Advanced')?.rows || [];
+  for (const group of visibleAdvancedGroups(debug)) {
+    if (MOUNTED_ADVANCED_GROUPS[group.id]) continue;
+    for (const sub of cachedSubgroups(advanced, group.id)) {
+      for (const row of sub.rows) if (hit(row)) hits.push({ row, where: `${group.label} › ${sub.label}` });
+    }
+  }
+  return hits;
+}
+
+function searchResultsHtml(settings, query, changedOnly = false) {
+  const hits = settingsSearchHits(query, pageDebug(), settings, { changedOnly });
+  if (!hits.length) {
+    return `<p class="set-note set-search-empty" data-search-results="0">${changedOnly
+      ? (query ? `No changed setting matches “${esc(query)}”.` : 'Nothing is changed: every setting is at its default.')
+      : `No setting matches “${esc(query)}”.`}</p>`;
+  }
+  let where = null;
+  const shown = hits.slice(0, SEARCH_LIMIT);
+  const body = shown.map(({ row, where: at }) => {
+    const heading = at !== where ? `<h4 class="set-subsection-heading set-search-where">${esc(at)}</h4>` : '';
+    where = at;
+    return heading + settingsRowHtml(settings, row);
+  }).join('');
+  const more = hits.length > shown.length ? `<p class="set-note">${hits.length - shown.length} more — add a word to narrow the search.</p>` : '';
+  const lead = changedOnly ? 'Every setting you have changed, from every section.' : 'Results from every section.';
+  const noun = changedOnly ? `${hits.length} changed` : `${hits.length} match${hits.length === 1 ? '' : 'es'}`;
+  return `<div class="set-group-summary"><span>${lead}</span><output data-config-count aria-live="polite">${noun}</output></div>`
+    + `<div class="set-card-list" data-search-results="${hits.length}">${body}</div>${more}`;
+}
+
+/** categoryHtml(cat, settings, …) → one pane's markup (exported for tests). */
+export function categoryHtml(cat, settings, saves, previewAttributes = null, previewLevel = null, previewClassId = null, query = '', changedOnly = false) {
+  if (query || changedOnly) return searchResultsHtml(settings, query, changedOnly);
   if (cat === 'General' || cat === 'Accessibility') {
     const groups = cat === 'Accessibility' ? ['Accessibility'] : GENERAL_GROUPS;
     const selected = groups.includes(settings.settingsGeneralCategory) ? settings.settingsGeneralCategory : groups[0];
@@ -1699,7 +2357,7 @@ function categoryHtml(cat, settings, saves) {
     return '<div class="set-general-pickers">'
       + (groups.length > 1 ? `<select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option${group === selected ? ' selected' : ''}>${group}</option>`).join('')}</select>` : '')
       + (topics.size > 1 ? `<select class="set-general-select" data-general-topic aria-label="${cat} option group">${[...topics.keys()].map(label => `<option${label === topic ? ' selected' : ''}>${label}</option>`).join('')}</select>` : '')
-      + `</div><div class="set-card-list">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;
+      + `</div>${settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : ''}<div class="set-card-list">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;
   }
   const h = categoryHandler(cat);
   if (!h) {
@@ -1716,49 +2374,46 @@ function categoryHtml(cat, settings, saves) {
   // The selected tab is the pane's identity: the panel is labelled by it
   // (aria-labelledby), and the tip is still the tab's tooltip.
   if (cat === 'Advanced') {
+    const shownGroups = visibleAdvancedGroups();
     const active = activeAdvancedGroup(settings);
-    const tabs = ADVANCED_GROUPS.map((group) => `<button class="set-subtab${group.id === active ? ' on' : ''}"`
+    const tabs = shownGroups.map((group) => `<button class="set-subtab${group.id === active ? ' on' : ''}"`
       + ` type="button" role="tab" aria-selected="${group.id === active}" aria-pressed="${group.id === active}"`
       + ` data-advanced-group="${esc(group.id)}">${esc(group.label)}</button>`).join('');
-    const groups = ADVANCED_GROUPS.map((group) => {
-      const hidden = group.id === active ? '' : ' hidden';
-      if (group.id === 'Changelog' || group.id === 'About') {
-        return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-          + `><div class="${group.id === 'About' ? 'set-about-mount' : 'set-changelog-mount'}"></div></section>`;
+    // ONLY THE OPEN SECTION, AND ONLY ITS OPEN TOPIC, IS DRAWN. The others are
+    // empty shells marked `data-lazy`; choosing one repaints the panel.
+    const groups = shownGroups.map((group) => {
+      if (group.id !== active) {
+        return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}" data-lazy hidden></section>`;
       }
-      const subgroups = advancedSubgroups(h.rows, group.id);
-      const selected = settings[`settingsAdvancedSubgroup.${group.id}`];
+      if (MOUNTED_ADVANCED_GROUPS[group.id]) {
+        return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"`
+          + `><div class="${MOUNTED_ADVANCED_GROUPS[group.id]}"></div></section>`;
+      }
+      const subgroups = cachedSubgroups(h.rows, group.id);
+      const selected = storedAdvancedTopic(settings, group.id);
       const activeSub = subgroups.find(sub => sub.id === selected) || subgroups[0];
       const subTabs = subgroups.length > 1 ? `<div class="set-topic-tabs" role="tablist" aria-label="${esc(group.label)} groups">`
         + subgroups.map((sub, index) => `<button type="button" class="as-btn${sub === activeSub ? ' on' : ''}" role="tab" aria-selected="${sub === activeSub}" aria-controls="set-topic-${group.id}-${index}" data-topic="${esc(sub.id)}">${esc(sub.label)}</button>`).join('') + '</div>' : '';
-      const picker = '';
-      return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"${hidden}`
-        + `>${subTabs}${picker}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
-        + subgroups.map((sub, index) => `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}"${sub === activeSub ? '' : ' hidden'}>`
-          + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows) : sub.rows.map(row => {
-            // SHORTEN WHAT THE TAB ALREADY SAYS — and only that. The label
-            // itself has ONE home (`leafRows` in model/advancedConfig.js); a
-            // branch here used to rebuild every generated balance row's label
-            // out of `row.key`, splitting camelCase without capitalising it,
-            // which is how "hand Max" and "levels · player Starting Level"
-            // came to sit two rows under "HP — base amount" in one menu. That
-            // is gone. What is left is presentation: under a tab named
-            // "Enemy scaling", a row called "Levels · Enemy Scaling · HP — Per
-            // Level" says the tab's own name back to the reader, and the class
-            // tabs have always compacted that away. Now every tab does.
-            const compact = { ...row, label: compactRowLabel(row.label, sub.id) };
-            if (group.id === 'Progression' && CLASS_TOPICS.includes(sub.id)) {
-              // The class's own topic already says which class this is, so the
-              // note goes — EXCEPT the sentence naming the kit floor, which is
-              // the only place the row's minimum explains itself. Dropping it
-              // left the floor a number from nowhere.
-              compact.note = row.floorNote || '';
-            }
-            return settingsRowHtml(settings, compact);
-          }).join('')) + '</div>').join('') + '</section>';
+      return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"`
+        + `>${subTabs}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
+        + subgroups.map((sub, index) => sub !== activeSub
+          ? `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}" data-lazy hidden></div>`
+          : `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}">`
+          + (group.id === 'Stats' ? `<div data-stats-preview="${esc(sub.id)}">${statsTopicPreviewHtml(settings, sub.id, previewAttributes, previewLevel, previewClassId)}</div>` : '')
+          + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows)
+            : sub.rows.map((row, rowIndex) => {
+              // A Stats topic reads as short subsections (Formula, Level
+              // growth, Starting hand, …): a heading wherever the section
+              // changes. `advancedSubgroups` keeps each one contiguous.
+              const section = group.id === 'Stats' ? statsSection(row) : null;
+              const heading = section && section !== (rowIndex ? statsSection(sub.rows[rowIndex - 1]) : null)
+                ? `<h4 class="set-subsection-heading" data-subsection="${esc(section)}">${esc(section)}</h4>` : '';
+              return heading + settingsRowHtml(settings, compactAdvancedRow(row, group.id, sub.id));
+            }).join(''))
+          + '</div>').join('') + '</section>';
     }).join('');
     return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
-      + `<div class="set-mobile-pickers"><select class="set-section-select" aria-label="Advanced section">${ADVANCED_GROUPS.map(group => `<option value="${esc(group.id)}"${group.id === active ? ' selected' : ''}>${esc(group.label)}</option>`).join('')}</select><select class="set-topic-select" aria-label="Option group"></select></div>`
+      + `<div class="set-mobile-pickers"><select class="set-section-select" aria-label="Advanced section">${shownGroups.map(group => `<option value="${esc(group.id)}"${group.id === active ? ' selected' : ''}>${esc(group.label)}</option>`).join('')}</select><select class="set-topic-select" aria-label="Option group"></select></div>`
       + groups;
   }
   if (h.mount) return `<div class="${h.mount}"></div>`;
@@ -1788,11 +2443,33 @@ function categoryHtml(cat, settings, saves) {
  * derives the set from what is filed; a tab, its tooltip, its bumper stop and
  * its place in the ring all follow from that one list.
  */
-export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null }) {
+const MARKS_MODIFIED = Symbol('marks modified rows');
+export function renderSettings(container, { settings, onChange, grouped = true, saves = null, onOffline = null, headerTools = null, previewAttributes = null, previewLevel = null, previewClassId = null }) {
   panelSettings = settings;
+  if (!onChange[MARKS_MODIFIED]) {
+    const report = onChange;
+    onChange = Object.assign((changes) => {
+      // The save path prunes the seed record in ITS bag (src/main.js); mirror
+      // that here, so a reset or an Undo snapshot built from this bag sees the
+      // record as it is stored, not as it was when the panel opened.
+      const seed = seedAfterChange(settings, changes);
+      if (seed) settings[SEED_KEY] = seed;
+      const out = report(changes);
+      markModified(container, settings, changes);
+      syncHeaderState();
+      return out;
+    }, { [MARKS_MODIFIED]: true });
+  }
   let html = '';
   let cats = [];
   let current = null;
+  if (!headerTools) {
+    headerTools = settingsHeaderTools();
+    headerTools.dataset.inlineSettings = 'true';
+  }
+  const searchQuery = () => (grouped ? headerTools.querySelector('[data-advanced-search]')?.value.trim() || '' : '');
+  const changedOnly = () => grouped && headerTools.dataset.changedOnly === '1';
+  const filtering = () => !!searchQuery() || changedOnly();
   if (grouped) {
     cats = shownCategories(saves);
     // A stored category that no longer exists must not blank the screen. Fail
@@ -1833,16 +2510,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         + `<div class="as-rail set-tabs" id="set-tabs" role="tablist" aria-label="${esc(t('settings.nav.sections'))}"`
         + ` aria-orientation="vertical" data-surface="settingsCategory">${tabs}</div>`
         + `<div class="as-pane set-panel" id="set-panel" role="tabpanel"`
-        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves)}</div></div>`;
+        + ` aria-labelledby="set-tab-${esc(current)}">${categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly())}</div></div>`;
     }
   } else {
-    html = ROWS.map((r) => settingsRowHtml(settings, r)).join('');
+    html = ROWS.filter((r) => !r.retired).map((r) => settingsRowHtml(settings, r)).join('');
   }
   container.innerHTML = html;
-  if (!headerTools) {
-    headerTools = settingsHeaderTools();
-    headerTools.dataset.inlineSettings = 'true';
-  }
   container.setAttribute('data-settings-host', '');
   // ONE BAR, NOT TWO LOOSE BLOCKS. The modal hangs these tools in its head; the
   // in-run overlay has no head to hang them in, so they used to be prepended
@@ -1897,9 +2570,106 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     if (vertical) container.querySelector('.set-tabs [data-member="Advanced"]')?.after(sections);
     else container.querySelector('.set-panel')?.prepend(sections);
   };
+  // ONE REPAINT for everything that changes what the pane shows — a category,
+  // an Advanced section or topic, a search, a row reset. Only the pane is
+  // rebuilt; the rail, the header tools and the page-level listeners stay.
+  let searchTimer = null;
+  function repaintPanel({ keepScroll = false } = {}) {
+    // The formation editor holds an unapplied draft in its DOM; apply it before
+    // the pane it lives in is rebuilt, or stay put when it cannot be applied.
+    if (!applyPendingFormationSettings(container)) return;
+    const panel = container.querySelector('.set-panel');
+    if (!panel) { renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId }); return; }
+    const scroll = keepScroll ? panel.scrollTop : 0;
+    const outer = keepScroll ? panel.parentElement?.scrollTop || 0 : 0;
+    container.querySelector('.set-tabs > .set-advanced-head')?.remove();
+    panel.innerHTML = categoryHtml(current, settings, saves, previewAttributes, previewLevel, previewClassId, searchQuery(), changedOnly());
+    panel.setAttribute('aria-labelledby', `set-tab-${current}`);
+    panel.dataset.searching = String(filtering());
+    const groupReset = headerTools.querySelector('[data-reset-config="group"]');
+    if (groupReset) groupReset.textContent = filtering() ? 'Reset these results' : 'Reset this group';
+    paintUndo();
+    wire();
+    panel.scrollTop = scroll;
+    if (panel.parentElement) panel.parentElement.scrollTop = outer;
+  }
+  // ---- the Undo bar, the first-open tip, the Changed toggle --------------
+  let undoTimer = null;
+  function paintUndo() {
+    container.querySelector(':scope > .set-undo')?.remove();
+    const offer = pendingUndo();
+    if (!offer) return;
+    const bar = document.createElement('div');
+    bar.className = 'set-undo';
+    bar.setAttribute('role', 'status');
+    bar.innerHTML = `<span>${esc(offer.label)}</span><button type="button" class="as-btn" data-undo>Undo</button>`;
+    bar.querySelector('[data-undo]').onclick = () => {
+      const restore = {};
+      // The seed record too, even when the Undo does not carry it: the save
+      // path may prune it for the keys this Undo moves.
+      const now = { [SEED_KEY]: settings[SEED_KEY] };
+      for (const [key, value] of Object.entries(offer.snapshot)) {
+        now[key] = settings[key];
+        if (value === undefined) delete settings[key]; else settings[key] = value;
+        restore[key] = value;
+      }
+      // Ownership only for the keys the change moved, merged into the record
+      // as it is now: a key the player took over since stays theirs.
+      if (offer.seed) {
+        restore[SEED_KEY] = applySeedPatch(now[SEED_KEY], offer.seed);
+        settings[SEED_KEY] = restore[SEED_KEY];
+      }
+      undoOffer = null;
+      if (onChange(restore)?.ok === false) {
+        // Not saved, so not undone: put the state the Undo replaced back, here
+        // and through onChange, so the live display and audio follow it — and
+        // keep the offer, so the player can try again.
+        for (const [key, value] of Object.entries(now)) {
+          if (value === undefined) delete settings[key]; else settings[key] = value;
+        }
+        onChange(now);
+        undoOffer = offer;
+      }
+      repaintPanel({ keepScroll: true });
+    };
+    container.insertBefore(bar, container.querySelector(':scope > .set-railed') || container.firstChild);
+    clearTimeout(undoTimer);
+    undoTimer = setTimeout(() => { if (undoOffer === offer) { undoOffer = null; bar.remove(); } }, Math.max(0, offer.until - Date.now()));
+  }
+  function paintTip() {
+    if (!grouped || settings.settingsTipSeen || container.querySelector(':scope > .set-tip')) return;
+    const tip = document.createElement('div');
+    tip.className = 'set-tip';
+    tip.setAttribute('role', 'note');
+    tip.innerHTML = '<span><b>Tip:</b> the magnifier finds any setting in every section. A dot marks a setting you changed, and its Reset puts it back. <b>Changed</b> lists all of them.</span>'
+      + '<button type="button" class="as-btn" data-tip-dismiss>Got it</button>';
+    tip.querySelector('[data-tip-dismiss]').onclick = () => {
+      settings.settingsTipSeen = true;
+      onChange({ settingsTipSeen: true });
+      tip.remove();
+    };
+    container.insertBefore(tip, container.querySelector(':scope > .set-railed') || container.firstChild);
+  }
+  function syncHeaderState() {
+    const toggle = headerTools.querySelector('[data-changed-toggle]');
+    if (toggle) {
+      // The rows Changed can show: on a release build, hidden tuning is
+      // counted by Clear hidden tuning instead.
+      const count = settingsSearchHits('', pageDebug(), settings, { changedOnly: true }).length;
+      toggle.textContent = count ? `Changed · ${count}` : 'Changed';
+      toggle.setAttribute('aria-pressed', String(changedOnly()));
+      toggle.classList.toggle('on', changedOnly());
+    }
+    const clear = headerTools.querySelector('[data-clear-tuning]');
+    if (clear) {
+      const hidden = hiddenTuningKeys(settings);
+      clear.hidden = !hidden.length;
+      clear.textContent = `Clear hidden tuning (${hidden.length})`;
+    }
+  }
   const wire = () => {
-  mountFormationSettings(container, settings, onChange,
-    advancedSubgroups(ROWS, 'Interface').find(group => group.id === 'Formation layout')?.rows || []);
+  mountFormationSettings(container, settings, onChange, formationLayoutRows());
+  mountSettingsPreview(container, settings, onChange);
   placeAdvancedNavigation();
   headerTools.querySelector('[data-search-toggle]').onclick = () => {
     const input = headerTools.querySelector('[data-advanced-search]');
@@ -1907,18 +2677,34 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     headerTools.classList.toggle('search-open', !input.hidden);
     headerTools.querySelector('[data-search-toggle]').setAttribute('aria-expanded', String(!input.hidden));
     if (!input.hidden) input.focus();
-    else { input.value = ''; input.dispatchEvent(new Event('input')); }
+    else if (input.value) { input.value = ''; repaintPanel(); }
   };
+  const changedToggle = headerTools.querySelector('[data-changed-toggle]');
+  if (changedToggle) changedToggle.onclick = () => {
+    if (changedOnly()) delete headerTools.dataset.changedOnly; else headerTools.dataset.changedOnly = '1';
+    repaintPanel();
+  };
+  const clearTuning = headerTools.querySelector('[data-clear-tuning]');
+  if (clearTuning) clearTuning.onclick = () => {
+    const keys = hiddenTuningKeys(settings);
+    if (!keys.length) return;
+    // Cleared, not reset: a promoted value for hidden tuning is not this
+    // build's default either (promotionFor leaves it out at boot).
+    resetKeys(settings, onChange, keys, `Hidden tuning cleared (${keys.length})`, { promoted: {} });
+    headerTools.querySelector('details').open = false;
+    repaintPanel({ keepScroll: true });
+  };
+  syncHeaderState();
   container.querySelector('[data-general-select]')?.addEventListener('change', event => {
     settings.settingsGeneralCategory = event.target.value;
     onChange({ settingsGeneralCategory: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
   });
   container.querySelector('[data-general-topic]')?.addEventListener('change', event => {
     const key = `settingsGeneralTopic.${current === 'Accessibility' ? 'Accessibility' : generalGroup(settings)}`;
     settings[key] = event.target.value;
     onChange({ [key]: event.target.value });
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
   });
   const syncTopicPicker = () => {
     const picker = container.querySelector('.set-topic-select');
@@ -1938,23 +2724,51 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   // reaches `settings`, so the model has nothing to report. Keyed by row, so a
   // legal re-entry clears exactly the message it replaced.
   const typedRefusals = new Map();
+  // Only the topic on screen draws its example. A search can open several
+  // topics at once; they show their rows without an example until it clears.
+  const drawnPreviews = new WeakMap();
+  const refreshStatsPreviews = () => {
+    const searching = !!headerTools?.querySelector('[data-advanced-search]')?.value.trim();
+    container.querySelectorAll('[data-stats-preview]').forEach((node) => {
+      const shown = !searching && !node.closest('.set-advanced-group')?.hidden && !node.closest('.set-topic-panel')?.hidden;
+      const html = shown ? statsTopicPreviewHtml(settings, node.dataset.statsPreview, previewAttributes, previewLevel, previewClassId) : '';
+      if (drawnPreviews.get(node) === html) return;
+      node.innerHTML = html;
+      drawnPreviews.set(node, html);
+      node.querySelector('[data-stats-example-class]')?.addEventListener('change', (event) => {
+        settings[STATS_EXAMPLE_CLASS_KEY] = event.target.value;
+        onChange({ [STATS_EXAMPLE_CLASS_KEY]: event.target.value });
+        refreshStatsPreviews();
+        // The picker was redrawn under the focus; hand it back.
+        node.querySelector('[data-stats-example-class]')?.focus();
+      });
+    });
+  };
+  // A subsection whose every row is hidden (fixed-draw rows while drawing to
+  // capacity, or a search) draws no heading over nothing.
+  const syncSubsectionHeadings = () => {
+    container.querySelectorAll('.set-subsection-heading').forEach((heading) => {
+      let node = heading.nextElementSibling;
+      let visible = false;
+      while (node && !node.classList.contains('set-subsection-heading')) {
+        if (node.classList.contains('set-row') && !node.hidden) { visible = true; break; }
+        node = node.nextElementSibling;
+      }
+      heading.hidden = !visible;
+    });
+  };
   const reportAdvancedProblems = () => {
+    refreshGates(container, settings);
     for (const input of container.querySelectorAll('[data-key^="gameConfig.attributeRules.presets."]')) {
       if (settings[input.dataset.key] === undefined) input.value = resolveNumberRow(settings, ROWS.find(row => row.key === input.dataset.key));
     }
-    const rules = resolveHandRules(settings, contentBundle.attributes);
-    const section = container.querySelector('[data-advanced-panel="Hand & Draw"]');
+    const rules = resolveHandRules(settings);
+    // The Stats → Draw & hand worked example states the hand these rules deal
+    // (`refreshStatsPreviews`); what is left here is which rows apply.
+    // The whole pane, not just Stats: a search result lists these rows too.
+    const section = container;
     if (section) {
-      let summary = section.querySelector('[data-hand-summary]');
-      if (!summary) {
-        summary = document.createElement('p');
-        summary.dataset.handSummary = '';
-        summary.className = 'set-group-summary';
-        summary.setAttribute('aria-live', 'polite');
-        section.querySelector('.set-group-summary').after(summary);
-      }
-      summary.textContent = (previewAttributes ? 'Next combat with your current stats: ' : 'Preview at baseline stats: ') + handRuleSummary(rules, previewAttributes || {}) + ' Stat bonuses use whole intervals above the baseline.';
-      for (const row of handRulesRows(contentBundle.attributes)) {
+      for (const row of [...handRulesRows(), ...FIXED_DRAW_ROWS]) {
         const controls = [...section.querySelectorAll('[data-key]')].filter(el => el.dataset.key === row.key);
         const read = path => path.split('.').reduce((v, k) => v[k], rules);
         const disabled = (row.requires && read(row.requires[0]) !== row.requires[1])
@@ -1968,6 +2782,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         });
       }
     }
+    refreshStatsPreviews();
+    syncSubsectionHeadings();
     // ---- THE REFUSAL IS PRINTED ON THE ROW THAT CAUSED IT ------------------
     //
     // This used to be one notice at the top of Settings carrying `problems[0]`
@@ -1986,6 +2802,19 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   if (aboutMount) renderAboutSection(aboutMount);
   const changelogMount = container.querySelector('.set-changelog-mount');
   if (changelogMount) renderChangelogSection(changelogMount);
+  const syncMount = container.querySelector('.set-sync-mount');
+  if (syncMount) renderSettingsSync(syncMount, { settings, onChange, rows: ROWS, afterApply: (moved, before, seedMoved = false) => {
+    if (moved || seedMoved) {
+      // A new profile: nothing offered before it applies any more. Its own
+      // Undo belongs to the new generation.
+      dropUndoOffer();
+      // The values the load moved, and — key by key, not the whole record —
+      // the ownership it moved.
+      const { [SEED_KEY]: seedBefore, ...values } = before || {};
+      offerUndo(moved ? `Profile loaded (${moved} setting${moved === 1 ? '' : 's'})` : 'Profile loaded (which settings follow the defaults)', values, seedPatch(seedBefore, settings[SEED_KEY]));
+    }
+    repaintPanel({ keepScroll: true });
+  } });
 
   container.querySelectorAll('.set-subtab').forEach((button) => {
     button.classList.add('as-railitem');
@@ -1999,8 +2828,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (!target) return;
       event.preventDefault();
       event.stopPropagation();
+      const id = target.dataset.advancedGroup;
       target.click();
-      target.focus();
+      container.querySelector(`.set-subtab[data-advanced-group="${CSS.escape(id)}"]`)?.focus();
     });
     button.addEventListener('click', () => {
       const group = button.dataset.advancedGroup;
@@ -2008,6 +2838,12 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const picker = container.querySelector('.set-section-select');
       if (picker) picker.value = group;
       onChange({ [ADVANCED_CAT_KEY]: group });
+      // A section not yet drawn is drawn now — the whole panel, once.
+      if (container.querySelector(`.set-advanced-group[data-advanced-panel="${CSS.escape(group)}"][data-lazy]`)) {
+        repaintPanel();
+        container.querySelector(`.set-subtab[data-advanced-group="${CSS.escape(group)}"]`)?.focus({ preventScroll: true });
+        return;
+      }
       container.querySelectorAll('.set-subtab').forEach((candidate) => {
         const selected = candidate.dataset.advancedGroup === group;
         candidate.classList.toggle('on', selected);
@@ -2021,41 +2857,34 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       const panel = container.querySelector('.set-panel');
       if (panel) panel.scrollTop = 0;
       filterAdvancedRows();
+      refreshStatsPreviews();
     });
   });
 
   const advancedSearch = headerTools.querySelector('[data-advanced-search]');
+  // Rows are no longer filtered in place: a query repaints the panel with its
+  // matches from every section (`searchResultsHtml`). What is left here is the
+  // open topic's own bookkeeping — rows the hand rules hide, the count.
   const filterAdvancedRows = () => {
-    if (!advancedSearch) return;
-    const query = advancedSearch.value.trim().toLocaleLowerCase();
-    let shown = 0;
-    let total = 0;
     const section = container.querySelector('.set-advanced-group:not([hidden])');
-    if (!section) {
-      container.querySelectorAll('.set-row').forEach(row => {
-        row.hidden = !!query && !row.textContent.toLocaleLowerCase().includes(query);
+    if (section) {
+      let total = 0;
+      section.querySelectorAll('.set-topic-panel:not([hidden]) .set-row').forEach((row) => {
+        total += 1;
+        row.hidden = row.dataset.handHidden === 'true';
       });
-      return;
+      const count = section.querySelector('[data-config-count]');
+      if (count) count.textContent = `${total} settings`;
     }
-    const selected = section.querySelector('[data-topic][aria-selected="true"]')?.dataset.topic;
-    section.querySelectorAll('[data-topic-panel]').forEach(panel => {
-      panel.hidden = !query && !!selected && panel.dataset.topicPanel !== selected;
-      panel.dataset.searching = String(!!query);
-    });
-    section.querySelectorAll('.set-topic-panel:not([hidden]) .set-row').forEach((row) => {
-      total += 1;
-      const match = !query || row.textContent.toLocaleLowerCase().includes(query)
-        || (row.querySelector('[data-key]')?.dataset.key || '').toLocaleLowerCase().includes(query);
-      row.hidden = !match || row.dataset.handHidden === 'true';
-      if (match) shown += 1;
-    });
-    if (query) section.querySelectorAll('[data-topic-panel]').forEach(panel => {
-      panel.hidden = !panel.querySelector('.set-row:not([hidden])');
-    });
-    const count = section.querySelector('[data-config-count]');
-    if (count) count.textContent = query ? `${shown} of ${total} settings` : `${total} settings`;
+    syncSubsectionHeadings();
+    refreshStatsPreviews();
   };
-  if (advancedSearch) advancedSearch.oninput = filterAdvancedRows;
+  if (advancedSearch) {
+    advancedSearch.oninput = () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => { if (lifecycleSentinel.isConnected) repaintPanel(); }, 160);
+    };
+  }
   container.querySelectorAll('.set-advanced-group').forEach(section => {
     const selectTopic = topic => {
       const key = `settingsAdvancedSubgroup.${section.dataset.advancedPanel}`;
@@ -2066,11 +2895,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         tab.setAttribute('aria-selected', String(active));
         tab.classList.toggle('on', active);
       });
-      const picker = section.querySelector('.set-topic-select');
-      if (picker) picker.value = topic;
-      syncTopicPicker();
       if (advancedSearch) advancedSearch.value = '';
-      filterAdvancedRows();
+      repaintPanel();
+      container.querySelector(`.set-advanced-group:not([hidden]) [data-topic="${CSS.escape(topic)}"]`)?.focus({ preventScroll: true });
     };
     section.querySelectorAll('[data-topic]').forEach(tab => {
       tab.addEventListener('click', () => selectTopic(tab.dataset.topic));
@@ -2083,7 +2910,6 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         event.preventDefault();
         event.stopPropagation();
         next.click();
-        next.focus();
       });
     });
     section.querySelector('.set-topic-select')?.addEventListener('change', event => selectTopic(event.target.value));
@@ -2093,9 +2919,16 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   headerTools.querySelectorAll('[data-reset-config]').forEach((button) => {
     button.onclick = () => {
       const currentGroup = activeAdvancedGroup(settings);
-      const groups = advancedSubgroups(ROWS, currentGroup);
-      const selected = settings[`settingsAdvancedSubgroup.${currentGroup}`];
-      const rows = button.dataset.resetConfig === 'all' ? ROWS
+      const groups = visibleAdvancedSubgroups(ROWS, currentGroup);
+      const selected = storedAdvancedTopic(settings, currentGroup);
+      // Reset all also clears inert retired keys: they are off the screen, so
+      // this is the only door that can take a stale one out of a profile.
+      // While a search is open the pane shows its matches, so "this group" IS
+      // the matches — every one the pane counts, not only the page it draws —
+      // and never the section that was open behind the search.
+      const query = searchQuery();
+      const rows = button.dataset.resetConfig === 'all' ? [...ROWS, ...INERT_CONFIG_ROWS]
+        : filtering() ? settingsSearchHits(query, pageDebug(), settings, { changedOnly: changedOnly() }).map((hit) => hit.row)
         : current === 'General' || current === 'Accessibility' ? (() => {
           const section = current === 'Accessibility' ? 'Accessibility' : generalGroup(settings);
           const topics = generalGroups(section);
@@ -2103,19 +2936,21 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         })()
         : (groups.find(group => group.id === selected) || groups[0])?.rows || [];
       const keys = rows.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key);
-      const changed = {};
-      for (const key of keys) {
-        delete settings[key];
-        changed[key] = undefined;
-      }
-      onChange(changed);
+      const label = button.dataset.resetConfig === 'all' ? 'All settings reset' : filtering() ? 'Results reset' : 'Group reset';
+      resetKeys(settings, onChange, keys, label);
       headerTools.querySelector('details').open = false;
-      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+      renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
     };
   });
 
   container.querySelectorAll('[data-btn="prologuePreview"]').forEach(btn => {
     btn.onclick = () => previewPrologue(settings);
+  });
+  container.querySelectorAll('[data-scene-edit]').forEach(btn => {
+    btn.addEventListener('click', () => openPrologueSceneEditor(settings, onChange, { sceneId: btn.dataset.sceneEdit }));
+  });
+  container.querySelectorAll('[data-scene-place]').forEach(btn => {
+    btn.addEventListener('click', () => openPrologueSceneEditor(settings, onChange, { sceneId: btn.dataset.scenePlace, tab: 'Traveller' }));
   });
   container.querySelectorAll('.set-prologue-text').forEach(input => {
     input.addEventListener('input', () => {
@@ -2123,7 +2958,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       onChange({[input.dataset.key]:input.value});
     });
   });
-  container.querySelectorAll('.set-text').forEach((input) => {
+  // `[data-key]`: only a control that names a setting saves one. The Defaults &
+  // sync panel's token field and switch carry no key and are its own to wire.
+  container.querySelectorAll('.set-text[data-key]').forEach((input) => {
     // Commit on change/blur (not each keystroke) so we don't re-fetch a manifest
     // mid-type.
     const commit = () => {
@@ -2166,7 +3003,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (value === undefined) delete settings[key]; else settings[key] = value;
     }
     if (onChange(changes)?.ok === false) { showSettingsNotice('Settings could not be saved.'); return; }
-    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+    renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
     // A re-render replaces the button that was pressed, so reordering three
     // places from the keyboard meant hunting for the arrow again after each
     // press. The same control on the same scene takes the focus back.
@@ -2223,7 +3060,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         dragging?.classList.remove('set-scene-dragging');
         const moved = !dropped && dragging;
         dragging = null;
-        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+        if (moved) renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
       });
       item.addEventListener('dragover', event => {
         if (!dragging || dragging === item) return;
@@ -2308,29 +3145,44 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       onChange({ [key]: val });
       if (refusal) typedRefusals.set(key, refusal); else typedRefusals.delete(key);
       if (key.startsWith('gameConfig.')) reportAdvancedProblems();
+      // A profile key can be what a gated row inherits, so the inherited
+      // values and their sentences are redrawn whatever the key (Codex, #1260).
+      else refreshGates(container, settings);
     };
     // change/blur, NEVER per keystroke: typing "12" passes through "1", and a
     // clamp on every keypress would rewrite the value under his fingers.
     field.addEventListener('change', () => commit(field.value));
     field.addEventListener('blur', () => commit(field.value));
-    wrap.querySelector('.set-num-slider')?.addEventListener('input', event => commit(event.target.value));
-    wrap.querySelector('.set-num-reset')?.addEventListener('click', () => commit(row.def));
-    // Part B's slider commits on `input`, because dragging IS the gesture:
-    //   slider.addEventListener('input', () => commit(slider.value));
+    wireStepper(wrap, { read: () => resolveNumberRow(settings, row), commit, min: row.min, max: row.max, step: row.step ?? 1, stepFor: (v) => buttonStep(row, v) });
   });
 
   mountFlickPractice(container, settings, UI_DEFAULTS.touchFlick);
 
-  container.querySelectorAll('.set-range').forEach((slider) => {
-    const updateVolume = () => {
-      const val = Number(slider.value);
-      const out = container.querySelector(`.range-val[data-for="${slider.dataset.key}"]`);
-      if (out) out.textContent = val;
-      settings[slider.dataset.key] = val;
-      onChange({ [slider.dataset.key]: val });
+  container.querySelectorAll('.range-wrap').forEach((wrap) => {
+    const slider = wrap.querySelector('.set-range');
+    const field = wrap.querySelector('.set-range-num');
+    const key = slider.dataset.key;
+    const commit = (raw) => {
+      const val = Math.min(100, Math.max(0, Math.round(Number(raw)) || 0));
+      slider.value = String(val);
+      field.value = String(val);
+      settings[key] = val;
+      onChange({ [key]: val });
+      refreshConditionNotes(container, settings);
     };
-    slider.addEventListener('input', updateVolume);
-    slider.addEventListener('change', updateVolume);
+    field.addEventListener('change', () => commit(field.value));
+    wireStepper(wrap, { read: () => Number(field.value), commit, min: 0, max: 100, step: 1 });
+  });
+
+  container.querySelectorAll('[data-reset-key]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.resetKey;
+      if (btn.closest('.set-row')?.querySelector('[data-key]:disabled')) return;
+      typedRefusals.delete(key);
+      resetKeys(settings, onChange, [key], `${stripTags(rowByKey(key)?.label || key)} reset`);
+      repaintPanel({ keepScroll: true });
+      container.querySelector(`[data-row-key="${CSS.escape(key)}"] [data-key], [data-row-key="${CSS.escape(key)}"] .toggle`)?.focus({ preventScroll: true });
+    });
   });
 
   container.querySelectorAll('[data-btn="commandLog"]').forEach((btn) => {
@@ -2382,16 +3234,22 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         if (file.size > 1024 * 1024) throw new Error('Choose a settings JSON file smaller than 1 MB.');
         // A raised floor is reported, not thrown: the rest of the file lands.
         const warnings = [];
-        const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
+        const text = await file.text();
+        const changes = parseAdvancedConfigFile(text, contentBundle, settings, ROWS, warnings);
         const outside = openingOnly ? Object.keys(changes).filter(key => !key.startsWith(PROLOGUE_PREFIX)) : [];
         if (outside.length) {
           throw new Error(`that file carries ${outside.length} setting${outside.length === 1 ? '' : 's'} from outside the opening. Load it under Advanced → Export, or export the opening on its own first. Nothing was imported.`);
         }
         if (!container.isConnected) return;
-        const result = onChange(changes);
+        // A sync profile loaded by hand keeps the ownership it records.
+        const saved = { ...changes, ...importOwnership(text, changes, settings, buildPromotion()) };
+        const problem = promotionProblem(contentBundle, settings, saved);
+        if (problem) throw new Error(`with this build's promoted defaults in place, ${problem} Nothing was imported.`);
+        const result = onChange(saved);
         if (result?.ok === false) throw new Error('Settings could not be saved.');
-        Object.assign(settings, changes);
-        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes });
+        Object.assign(settings, saved);
+        dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
+        renderSettings(container, { settings, onChange, grouped, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
         showSettingsNotice(`Loaded ${Object.keys(changes).length} settings. Existing saved runs are unchanged.${warnings.length ? ` ${warnings.join(' ')}` : ''}`);
       } catch (error) {
         showSettingsNotice(`Import failed: ${error.message}`);
@@ -2601,6 +3459,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       settings[select.dataset.key] = select.value;
       onChange({ [select.dataset.key]: select.value });
       if (select.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
+      else refreshGates(container, settings);
       refreshApplied(container, settings);
       refreshConditionNotes(container, settings);
       anchorPressed(container, select, wasAt);
@@ -2620,6 +3479,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       settings[btn.dataset.key] = btn.dataset.val;
       onChange({ [btn.dataset.key]: btn.dataset.val });
       if (btn.dataset.key.startsWith('gameConfig.')) reportAdvancedProblems();
+      else refreshGates(container, settings);
       // AFTER onChange, which is what applies the zoom. Reading before it would
       // report the previous value and the readout would always be one click
       // behind — a display that lies more quietly than the one it replaced.
@@ -2640,7 +3500,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     });
   });
 
-  container.querySelectorAll('.toggle').forEach((btn) => {
+  container.querySelectorAll('.toggle[data-key]').forEach((btn) => {
     btn.addEventListener('click', async () => {
       if (btn.dataset.action) {
         const result = await toggleFullscreen();
@@ -2664,6 +3524,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   }; // ---- end wire() ---------------------------------------------------
 
   wire();
+  paintTip();
+  paintUndo();
 
   // Declared before the observer that reads it: the early return below skips
   // the claim, and a `let` read before its declaration is a crash, not a false.
@@ -2731,7 +3593,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   });
 
   function selectCategory(cat) {
-    if (!cats.includes(cat) || cat === current) return;
+    const searching = !!searchQuery();
+    if (!cats.includes(cat) || (cat === current && !searching)) return;
+    if (searching) headerTools.querySelector('[data-advanced-search]').value = '';
     current = cat;
     settings[CAT_KEY] = cat;
     // Persisted through the same free bag every other setting rides in
@@ -2746,16 +3610,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       if (on) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
       b.setAttribute('aria-selected', String(on));
     });
-    const panel = container.querySelector('.set-panel');
-    if (!panel) return;
-    container.querySelector('.set-tabs > .set-advanced-head')?.remove();
-    panel.innerHTML = categoryHtml(cat, settings, saves);
-    panel.setAttribute('aria-labelledby', `set-tab-${cat}`);
-    // A tab switch is a new screenful. Start it at the top, or the player lands
-    // mid-way down a section they have never seen.
-    panel.scrollTop = 0;
-    if (panel.parentElement) panel.parentElement.scrollTop = 0;
-    wire();
+    // A tab switch is a new screenful: repaintPanel starts it at the top, or
+    // the player lands mid-way down a section they have never seen.
+    repaintPanel();
   }
 
   // Selection is the nav's `choose`; a pick from the opened selector list
@@ -2832,11 +3689,16 @@ function settingsHeaderTools() {
   const tools = document.createElement('div');
   tools.className = 'set-header-tools';
   tools.innerHTML = '<input hidden type="search" data-advanced-search aria-label="Find a setting" placeholder="Find a setting…">'
+    + '<button type="button" class="as-btn set-changed-toggle" data-changed-toggle aria-pressed="false" title="Show only the settings you have changed">Changed</button>'
     + '<button type="button" class="as-btn set-search-toggle" data-search-toggle aria-label="Search settings" aria-expanded="false" title="Search settings"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></button>'
     + '<details class="set-options"><summary class="as-btn" aria-label="Settings options" title="Settings options"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></summary><div class="set-options-menu">'
     + '<button type="button" class="as-btn" data-reset-config="group">Reset this group</button><button type="button" class="as-btn" data-reset-config="all">Reset all settings</button>'
-    + '<button type="button" class="as-btn" data-export-settings>Export configuration</button></div></details>';
-  tools.querySelector('[data-export-settings]').onclick = () => saveAdvancedConfigFile(panelSettings || {}, {
+    + (pageDebug() ? '<button type="button" class="as-btn" data-export-settings>Export configuration</button>'
+      : '<button type="button" class="as-btn" data-clear-tuning hidden>Clear hidden tuning</button>') + '</div></details>';
+  const exportItem = tools.querySelector('[data-export-settings]');
+  // Import and export are debug tools (owner, 2026-09-24): a release build has
+  // neither the menu item, the Load button, nor the export prompt on Done.
+  if (exportItem) exportItem.onclick = () => saveAdvancedConfigFile(panelSettings || {}, {
     build: { contentVersion: contentBundle.version },
     includeKeys: ROWS.filter(row => !CONTROL_ROW_TYPES.has(row.type)).map(row => row.key),
   });
@@ -2849,7 +3711,7 @@ function settingsHeaderTools() {
 // #1213 promises Download & saves "from Title or Settings", and only one of
 // those two was telling the truth. It is forwarded now, and lands in the same
 // one-row bar the in-run overlay uses.
-export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null }) {
+export function openSettings({ meta, onChange, saves = null, onOffline = null, previewAttributes = null, previewLevel = null, previewClassId = null }) {
   const settings = meta.settings || (meta.settings = {});
   // ONE DOOR-OPENER (kit §09): the shell owns veil, head, foot and dismissal;
   // this surface owns only the body, which is the NavRail + Pane it always was.
@@ -2866,8 +3728,8 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     title: t('settings.title'),
     closeLabel: t('settings.close'),
     bodyClassName: 'set-body',
-    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes }); },
-    secondary: [load],
+    body: (host) => { rendered = renderSettings(host, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId }); },
+    secondary: pageDebug() ? [load] : [],
     primary: done,
     footSize: 'short',
   });
@@ -2882,16 +3744,22 @@ export function openSettings({ meta, onChange, saves = null, onOffline = null, p
     try {
       if (file.size > 1024 * 1024) throw new Error('Choose a file smaller than 1 MB.');
       const warnings = [];
-      const changes = parseAdvancedConfigFile(await file.text(), contentBundle, settings, ROWS, warnings);
-      if (onChange(changes)?.ok === false) throw new Error('Settings could not be saved.');
-      Object.assign(settings, changes);
-      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes });
+      const text = await file.text();
+      const changes = parseAdvancedConfigFile(text, contentBundle, settings, ROWS, warnings);
+      // A sync profile loaded by hand keeps the ownership it records.
+      const saved = { ...changes, ...importOwnership(text, changes, settings, buildPromotion()) };
+      const problem = promotionProblem(contentBundle, settings, saved);
+      if (problem) throw new Error(`with this build's promoted defaults in place, ${problem} Nothing was imported.`);
+      if (onChange(saved)?.ok === false) throw new Error('Settings could not be saved.');
+      Object.assign(settings, saved);
+      dropUndoOffer(); // an imported configuration replaces what an Undo was taken from
+      rendered = renderSettings(door.body, { settings, onChange, saves, onOffline, headerTools, previewAttributes, previewLevel, previewClassId });
       showSettingsNotice(warnings.length ? `Settings loaded. ${warnings.join(' ')}` : 'Settings loaded.');
     } catch (error) { showSettingsNotice(`Import failed: ${error.message}`); }
   });
   done.addEventListener('click', () => {
     if (!applyPendingFormationSettings(door.body)) return;
-    if (settings.promptSettingsExport === false) { door.close(); return; }
+    if (!pageDebug() || settings.promptSettingsExport === false) { door.close(); return; }
     const exportButton = button({ label: 'Export configuration', weight: 'primary' });
     const skip = button({ label: 'Not now' });
     const body = document.createElement('div');

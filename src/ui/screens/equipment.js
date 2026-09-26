@@ -48,6 +48,7 @@ import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { closeFlaskActionMenu } from '../components/flask.js';
 import { mountDisclosure } from '../components/disclosure.js';
 import { primaryStatCards } from '../components/creationCards.js';
+import { runHandRules } from '../../model/handRules.js';
 import {
   equipmentPositionCardState, inventorySelectionAction, normalizeArmouryLayout,
   orderArmouryPositions, orderArmourySlots,
@@ -691,6 +692,7 @@ function inventoryReveal(registries, row, {
  */
 export function mountEquipment(host, {
   registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
+  handRules = null,
 }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
@@ -1442,7 +1444,12 @@ export function mountEquipment(host, {
         const act = () => applyEquipmentChange(target.slot.id, target.setIndex, target.pieceId, actionLabel);
         // With the candidate named, the seal carries the grip's sentence too
         // (model/loadout.js gripRefusal) — the player reads why before the act.
-        const seal = canEquip(registries, target.slot.id, { inCombat, loadout: run.loadout, classId: run.class, setIndex: target.setIndex, itemId: target.pieceId, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels });
+        // EVERY INPUT THE MUTATION READS, or the seal refuses in words an act
+        // the mutation would accept: `armamentLevels` carries the smithing
+        // tiers whose `requirement` deltas lower a minimum, and leaving it out
+        // made the card say "Straight Sword requires STR 5 (you have 4)" over
+        // a +1 sword the run could legitimately hold (review, #1217).
+        const seal = canEquip(registries, target.slot.id, { inCombat, loadout: run.loadout, classId: run.class, setIndex: target.setIndex, itemId: target.pieceId, attributes: run.attributes, itemUpgradeLevels: run.itemUpgradeLevels, armamentLevels: run.armamentLevels });
         const transition = equipTransitionReceipt(
           registries, run.loadout, target.slot.id, target.setIndex, target.pieceId
         );
@@ -1821,6 +1828,12 @@ export function mountEquipment(host, {
     const attributeRows = attributeCardModels(registries, run.attributes, {
       projection,
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+      // The hand a solo fight deals: mid-fight, that fight's own snapshot
+      // (`handRules`, from ui/screens/combat.js — its `meta` is synthetic and
+      // holds no hand settings, Codex #1294); otherwise the next fight's,
+      // read from the run's rows and the profile the way engine/runCombat.js
+      // reads them (`runHandRules`).
+      hand: handRules || runHandRules(registries, run, meta.settings || {}),
     });
     for (const entry of attributeRows) entry.face = { ...entry.face, compact: true };
     attributeHost.replaceChildren(...primaryStatCards(attributeRows));
@@ -2012,7 +2025,7 @@ export function mountEquipment(host, {
       ...(intrinsic ? [
         fact('Attack rating (AR)', String(intrinsic.attackRating)),
         fact('Defense rating (DEF)', String(intrinsic.defenseRating)),
-        fact('Weight', String(intrinsic.weight)),
+        fact('Weight', String(pieceWeight(item))),
         fact('Weapon Art Mana', String(intrinsic.weaponArtManaCost)),
         fact('Unique Skill Stamina', String(intrinsic.uniqueSkillStaminaCost)),
       ] : []),

@@ -134,11 +134,11 @@
     },
     "tools/card-drag-targeting.mjs": {
       "count": 10,
-      "digest": "2cae8cf11c778d97"
+      "digest": "18d86ea31ac4eaac"
     },
     "tools/class-loadouts.mjs": {
       "count": 6,
-      "digest": "173bb26df62015f7"
+      "digest": "c843c93053de6c10"
     },
     "tools/combat-action-row.mjs": {
       "count": 6,
@@ -166,7 +166,7 @@
     },
     "tools/displayfirst.mjs": {
       "count": 4,
-      "digest": "75d839e35e286902"
+      "digest": "a3043f4086aa8d3b"
     },
     "tools/equipment-surface-receipts.mjs": {
       "count": 3,
@@ -198,7 +198,7 @@
     },
     "tools/gesture-cancel.mjs": {
       "count": 2,
-      "digest": "6d9bdbd6b5dc8b74"
+      "digest": "92bb0583dd59c2c0"
     },
     "tools/hand-pager-threshold.mjs": {
       "count": 7,
@@ -296,6 +296,10 @@
       "count": 2,
       "digest": "0df767382db6375e"
     },
+    "tools/slot-load-door.mjs": {
+      "count": 4,
+      "digest": "72c9109639d0c591"
+    },
     "tools/startup-gate.mjs": {
       "count": 26,
       "digest": "6a9e39a11d46196c"
@@ -338,7 +342,7 @@
     },
     "tools/uprightgate.mjs": {
       "count": 14,
-      "digest": "2c7308ecd506ea35"
+      "digest": "283880e7bfda1aa5"
     },
     "tools/zoomplace.mjs": {
       "count": 1,

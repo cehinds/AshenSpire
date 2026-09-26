@@ -18,7 +18,7 @@
 // source content/config/ui/components/workspace.json 0cf6a3c4756f2b16
 // source content/config/ui/presentation/actionAnimations.json 8f84b8aca35129d0
 // source content/config/ui/presentation/armouryLayout.json 8a2d0c421a66ce7b
-// source content/config/ui/presentation/classArtAnchors.json 64475acbe0a4f473
+// source content/config/ui/presentation/classArtAnchors.json feef8a503a056875
 // source content/config/ui/presentation/combatAura.json 63555f490073dfb7
 // source content/config/ui/presentation/combatEffectAnchors.json 4b69dfa0be13ec42
 // source content/config/ui/presentation/combatEffectDirection.json a658eb3dfdfe9d03
@@ -34,7 +34,7 @@
 // source content/config/ui/presentation/poseAnimator.json d24e65c7e8f3721d
 // source content/config/ui/presentation/presentationSequence.json bc96d4294f49f6cb
 // source content/config/ui/presentation/reaverAttack.json 68d9c9659cf191a2
-// source content/config/ui/presentation/startupGate.json 0b5c43bc23a776e9
+// source content/config/ui/presentation/startupGate.json 235c1e44daaeeb6b
 // source content/config/ui/presentation/tooltipHelp.json f3968b1f1adea5e0
 // source content/config/ui/presentation/tooltipPlacement.json 2718119752f3c76b
 // source content/config/ui/presentation/uiContent.json 118475388559b5f2
@@ -44,7 +44,7 @@
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json 6fac3586aba302e3
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json c0e2adf1f013018e
+// source content/config/ui/screens/prologue.json 0e189386a8548f8f
 // source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -903,25 +903,27 @@ export const uiConfig = deepFreeze({
               "character": true,
               "actor": {
                 "desktop": {
-                  "x": 30,
-                  "y": 84,
+                  "x": 50,
+                  "y": 96,
                   "height": 40
                 },
                 "mobile": {
-                  "x": 31,
-                  "y": 81,
-                  "height": 28
+                  "x": 40,
+                  "y": 96,
+                  "height": 40
                 }
               },
               "art": "step",
               "enabled": true,
               "order": 5,
               "banner": false,
-              "ownStaging": false,
+              "ownStaging": true,
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {}
+              "stage": {
+                "imageFocusY": 0
+              }
             },
             {
               "id": "extraA",
@@ -1010,6 +1012,9 @@ export const uiConfig = deepFreeze({
             "previewClass": "reaver",
             "previewScene": "warmth",
             "shadowStrength": 0.7,
+            "editorGrid": false,
+            "editorSnap": true,
+            "editorGridStep": 5,
             "layout": "caption",
             "imageScale": 1,
             "imageFit": "cover",
@@ -1023,6 +1028,11 @@ export const uiConfig = deepFreeze({
             "textBoxVisible": true,
             "textBoxOpacity": 1,
             "textBoxColor": "#100e0c",
+            "captionFixedHeight": false,
+            "captionHeightVh": 18,
+            "bannerBox": true,
+            "bannerBoxColor": "#100e0c",
+            "bannerBoxOpacity": 1,
             "textOutline": false,
             "textOutlineColor": "#100e0c",
             "textOutlineWidth": 2,
@@ -1613,10 +1623,7 @@ export const uiConfig = deepFreeze({
             "x": 49,
             "y": 35
           },
-          "herald": {
-            "x": 50,
-            "y": 61
-          }
+          "herald": null
         }
       }
     },
@@ -34992,7 +34999,7 @@ export const uiConfig = deepFreeze({
         "entrance": {
           "lightUpMs": 560,
           "fadeMs": 880,
-          "holdDefault": "0.5s",
+          "holdDefault": "2s",
           "holdDurations": {
             "0s": 0,
             "0.3s": 300,

@@ -20,6 +20,7 @@ import {
   restoreDerivedStatRuleSnapshot,
   resolveDerivedStatRules,
   deriveStat,
+  ruleTierSize,
 } from './derivedStats.js';
 import { resolveStartingKit, startingKitSnapshot, resolveStartingArmour } from './startingKits.js';
 import { resolveCreationHands, resolveCreationRelic } from './characterCreation.js';
@@ -69,7 +70,7 @@ export function createDeck(cardIds, idGen = createIdGen('d')) {
 /**
  * createRunState({ seed, classId, registries }) → new run at floor 0, act 1.
  * Starting deck/relic/HP come from the class def; cinders from
- * balance.startingCinders (default 0).
+ * balance.startingCinders (default 20).
  */
 export function createRunState({
   seed,
@@ -272,7 +273,7 @@ function derivedOptions(registries, extra = {}) {
  * outputs so a later content edit cannot rewrite a climb in progress.
  */
 /** The character level a run's pools are derived at (plan phase 6): 1 for a run whose ledger is absent. */
-function characterLevelOf(run) {
+export function characterLevelOf(run) {
   const row = run && run.level;
   return row && Number.isInteger(row.level) && row.level >= 1 ? row.level : 1;
 }
@@ -456,7 +457,10 @@ export function initializeRunDerivedStats(run, registries, {
     derivedOptions(registries, effectiveDerivedStatOptions),
   );
   const tierSizes = Object.fromEntries(
-    Object.entries(hostRules.rules).map(([id, r]) => [id, r.pointsPerTier]),
+    // The granularity a relic term has to match is the row's points-per-
+    // increase divided by the weight it puts on its one attribute, which is the
+    // same number `pointsPerTier` used to be for a single-stat row.
+    Object.entries(hostRules.rules).map(([id, r]) => [id, ruleTierSize(r)]),
   );
   const relicModifierReceipt = resolveRelicModifiers(registries, run.relics, {
     attributes: run.attributes,
@@ -1286,7 +1290,7 @@ export function stampPlayerPoiseMax(entity, max) {
  * the poiseDamage opcode (SPEC §3.7, §4.4); everything else about Stagger is
  * content data.
  */
-export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool }) {
+export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, damageMult = 1 }) {
   const entity = {
     id: instanceId,
     kind: 'enemy',
@@ -1308,6 +1312,24 @@ export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arc
     ? { ...structuredClone(arcaneExposure), value: 0 }
     : { mode: 'immune' };
   if (damageResistanceBySchool) entity.damageResistanceBySchool = { ...damageResistanceBySchool };
+  // A fight-wide move-damage scale (SPEC §13.3 balance.bossTiers). Stamped
+  // only when it is not 1, so every unscaled enemy — and every snapshot
+  // written before the row existed — keeps its exact shape.
+  if (damageMult !== 1) entity.damageMult = damageMult;
   return entity;
+}
+
+/**
+ * enemyMoveDamage(enemy, move) → the per-hit base damage this enemy's move
+ * deals: the authored number, scaled by the entity's `damageMult` when it has
+ * one (rounded, never below 1). null for a move with no damage. The one place
+ * an enemy's move damage is read, so the intent, the hit and the move card
+ * cannot disagree.
+ */
+export function enemyMoveDamage(enemy, move) {
+  if (!move || move.damage == null) return null;
+  const mult = enemy && Number.isFinite(enemy.damageMult) ? enemy.damageMult : 1;
+  if (mult === 1 || !(move.damage > 0)) return move.damage;
+  return Math.max(1, Math.round(move.damage * mult));
 }
 import { legacyDungeonProblems } from './legacyDungeon.js';

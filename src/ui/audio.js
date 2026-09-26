@@ -11,7 +11,7 @@
 // suspended (autoplay policy) and resumes on the first user gesture.
 
 import { balance } from '../content/balance.js';
-import { MUSIC_MANIFEST, SCALES, BEDS } from '../content/music.js';
+import { MUSIC_MANIFEST, SCALES, BEDS, MUSIC_TRACK_FALLBACK } from '../content/music.js';
 import { SFX_MANIFEST, SFX_RECIPES, resolveRecipe } from '../content/sfx.js';
 import { MUSIC_SILENCE_WORD } from '../model/schemas.js';
 import { assetUrl } from './assetmap.js';
@@ -441,7 +441,9 @@ export function initAudio(settings = {}) {
     // Prefer an external track for this context if the folder provided any —
     // including over a shipped 'silence': the folder manifest is also a word a
     // human typed on purpose, and the more specific intent wins.
-    const ext = state.tracks[context];
+    // A context the folder left empty may borrow a broader one's tracks
+    // (a region's map music falls back to the plain map list).
+    const ext = state.tracks[context]?.length ? state.tracks[context] : state.tracks[own(MUSIC_TRACK_FALLBACK, context)];
     if (ext && ext.length) {
       playExternal(context, ext, bed);
       return 'external';
@@ -578,9 +580,15 @@ export function initAudio(settings = {}) {
    * manifest / unreachable files → the procedural score is used. Re-applied
    * live restarts the current context so a new folder takes effect at once.
    */
+  // Each call takes a ticket; a manifest that resolves after a newer call (the
+  // boot-time shipped folder landing after the player typed their own) is
+  // dropped rather than overwriting the newer choice.
+  let musicConfigTicket = 0;
   async function configureMusic({ folder } = {}) {
+    const ticket = ++musicConfigTicket;
     state.folder = folder || '';
     state.tracks = {};
+    let tracks = {};
     if (folder) {
       try {
         const base = String(folder).replace(/\/+$/, '');
@@ -590,14 +598,16 @@ export function initAudio(settings = {}) {
           for (const key of MUSIC_CONTEXTS) {
             const list = m[key];
             if (Array.isArray(list) && list.length) {
-              state.tracks[key] = list.map((f) => (/^(https?:)?\/\//.test(f) || f.startsWith('/') ? f : `${base}/${f}`));
+              tracks[key] = list.map((f) => (/^(https?:)?\/\//.test(f) || f.startsWith('/') ? f : `${base}/${f}`));
             }
           }
         }
       } catch (e) {
-        state.tracks = {}; // fall back entirely to procedural
+        tracks = {}; // fall back entirely to procedural
       }
     }
+    if (ticket !== musicConfigTicket) return; // superseded by a newer folder
+    state.tracks = tracks;
     // Re-trigger the current context so the new source is used immediately.
     if (state.context && state.musicEnabled && !state.muted) {
       const c = state.context;

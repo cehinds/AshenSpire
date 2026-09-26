@@ -1,36 +1,43 @@
+import { statRowValue } from './derivedStats.js';
+
 export const ratingIds = Object.freeze(['ar', 'dr', 'pr', 'poise', 'ward']);
 export const ratingAttributeIds = Object.freeze(['strength', 'dexterity', 'constitution', 'wisdom', 'intelligence']);
-const rule = (weights, base = 0) => ({ base, ...Object.fromEntries(ratingAttributeIds.map(id => [id, weights[id] || 0])) });
 
-export const defaultRatingFormula = Object.freeze({
-  multiplier: 1,
-  ratings: Object.freeze({
-    ar: Object.freeze(rule({ strength: 0.5 })),
-    dr: Object.freeze(rule({ dexterity: 0.5 })),
-    pr: Object.freeze(rule({ wisdom: 0.5, intelligence: 0.5 })),
-    poise: Object.freeze(rule({ constitution: 1, strength: 0.5 }, 1)),
-    ward: Object.freeze(rule({ wisdom: 1, intelligence: 0.5 }, 1)),
-  }),
-});
+// THE RATING FORMULA IS A STAT ROW (ruleset 7, owner 2026-09-24). AR, DR, PR,
+// Poise and Ward are rows of the derived-stat table, priced by the one row
+// formula (`statRowValue`), and `config.ratings` holds the rows THIS run reads
+// (model/statRows.js ratingsConfigFor). The frozen ruleset-6 formula and its
+// global multiplier live on only as the legacy adapter there, so a fight saved
+// under them — whose rules still say `multiplier` — is priced as it was.
 
-export function attributeRatingReceipt(config, attributes, id) {
+/**
+ * attributeRatingReceipt(config, attributes, id, level) → the attribute part of
+ * one rating: `{ base, weights, terms, weighted, attribute, value, … }`.
+ */
+export function attributeRatingReceipt(config, attributes, id, level = undefined) {
   const rule = config?.ratings?.[id];
   if (!rule) throw new Error(`Missing ${id} rating formula`);
-  const values = Object.fromEntries(ratingAttributeIds.map((attributeId) => [
-    attributeId,
-    attributes?.[attributeId] || 0,
-  ]));
-  const weights = Object.fromEntries(ratingAttributeIds.map((attributeId) => [
-    attributeId,
-    rule[attributeId],
-  ]));
-  const terms = Object.fromEntries(ratingAttributeIds.map((attributeId) => [
-    attributeId,
-    Math.floor(values[attributeId] * weights[attributeId] + 1e-9),
-  ]));
-  const weighted = Object.values(terms).reduce((sum, value) => sum + value, 0);
-  const attribute = Math.floor(weighted * (config.multiplier ?? 1) + 1e-9);
-  return { id, base: rule.base, multiplier: config.multiplier ?? 1, values, weights, terms, weighted, attribute, value: rule.base + attribute };
+  // A saved fight from before ruleset 7 states one multiplier for every row.
+  const legacyMultiplier = Number.isFinite(config.multiplier) && config.multiplier !== 1 && rule.multiplier === undefined;
+  const row = legacyMultiplier ? { ...rule, multiplier: config.multiplier } : rule;
+  const receipt = statRowValue(row, { attributes, level, statId: id, lenientAttributes: true });
+  const values = Object.fromEntries(ratingAttributeIds.map((attributeId) => [attributeId, Number(attributes?.[attributeId]) || 0]));
+  const weights = Object.fromEntries(ratingAttributeIds.map((attributeId) => [attributeId, row[attributeId] || 0]));
+  const terms = Object.fromEntries(ratingAttributeIds.map((attributeId) => [attributeId, receipt.terms[attributeId] || 0]));
+  return {
+    id,
+    base: receipt.base,
+    multiplier: Number.isFinite(row.multiplier) ? row.multiplier : 1,
+    values,
+    weights,
+    terms,
+    weighted: receipt.points,
+    levelBonus: receipt.levelBonus,
+    attribute: receipt.value - receipt.base,
+    min: receipt.min,
+    max: receipt.max,
+    value: receipt.value,
+  };
 }
 
 export function equipmentRatingBase(piece, id, profile = null) {
@@ -42,9 +49,9 @@ export function equipmentRatingBase(piece, id, profile = null) {
   return 0;
 }
 
-export function effectiveEquipmentRating(config, attributes, piece, profile, id = profile?.ratingId) {
+export function effectiveEquipmentRating(config, attributes, piece, profile, id = profile?.ratingId, level = undefined) {
   if (!ratingIds.includes(id)) throw new Error(`Unknown equipment rating '${id}'`);
-  const attribute = attributeRatingReceipt(config, attributes, id);
+  const attribute = attributeRatingReceipt(config, attributes, id, level);
   // THE ITEM'S RATING IS ITS OWN NUMBER, NOT A PLUS ON TOP OF IT (#1242). A
   // rating the item has a column for was written onto the piece by
   // `applyItemRatingConfig`, so `equipmentRatingBase` already reads it; one it

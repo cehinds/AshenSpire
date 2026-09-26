@@ -59,10 +59,12 @@ export function serializeCombatSnapshot(combat) {
     result: combat.result,
     handMax: combat.handMax,
     drawPerTurn: combat.drawPerTurn,
+    ...(Number.isInteger(combat.characterLevel) ? { characterLevel: combat.characterLevel } : {}),
     player: combat.player,
     enemies: combat.enemies,
     loadout: combat.loadout,
     attributes: combat.attributes,
+    attributeMode: combat.attributeMode || null,
     // THE RULE THE FIGHT WAS PRICED UNDER, AND IT HAS TO RIDE. The Poise
     // vessel is RE-DERIVED on restore (see below), and it is derived from this
     // snapshot — leaving it out meant a resumed fight re-priced the meter on
@@ -98,7 +100,7 @@ export function serializeCombatSnapshot(combat) {
  * non-idempotent for a current one, which tools/weapon-card-packages.mjs is
  * right to assert against: a load must not rewrite a snapshot it understands.
  */
-export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds }) {
+export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode }) {
   assertCombatSnapshot(snapshot);
   const saved = structuredClone(snapshot);
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
@@ -134,13 +136,19 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     result: saved.result,
     handMax: saved.handMax,
     drawPerTurn: saved.drawPerTurn,
+    // Absent on a fight saved before ruleset 7, whose rows read no level.
+    ...(Number.isInteger(saved.characterLevel) ? { characterLevel: saved.characterLevel } : {}),
     player: saved.player,
     enemies: saved.enemies,
     loadout: saved.loadout,
     attributes: saved.attributes,
-    // A snapshot written before this field existed carries null, which is
-    // exactly what the restore door read from an absent field before.
-    derivedStatRuleSnapshot: saved.derivedStatRuleSnapshot || null,
+    // A snapshot from before the field reads the run's creation mode.
+    attributeMode: saved.attributeMode || fallbackAttributeMode || null,
+    // A snapshot written before this field existed has none of its own, so it
+    // reads the RUN's — the same shape fallbackAttackSlotCount above uses, the
+    // run being the authority and the snapshot's copy the optimisation. Null
+    // only for a caller that has neither.
+    derivedStatRuleSnapshot: saved.derivedStatRuleSnapshot || fallbackDerivedStatRuleSnapshot || null,
     swapCostRule: saved.swapCostRule,
     swapsLeft: saved.swapsLeft,
     piles: saved.piles,
@@ -180,6 +188,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
       loadout: combat.loadout, relics: combat.player.relicIds || [], class: combat.player.classId,
       itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,
       derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
+      ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
     }).value);
   }
   return combat;

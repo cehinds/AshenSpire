@@ -786,7 +786,11 @@ try {
   // zero default.
   {
     const p1m = S.session.members.get('p1');
-    const owed = playerPoiseThresholdReceipt(REG, { loadout: p1m.run.loadout, relics: p1m.run.relics, class: p1m.classId, itemUpgradeLevels: p1m.run.itemUpgradeLevels || {}, attributes: p1m.run.attributes }).value;
+    // The run's OWN derived-stat rules, the way session.mjs stamps it: recomputing
+    // without them proves the receipt only while the live table happens to equal
+    // the run's snapshot, which is exactly what the snapshot exists to stop
+    // (review, #1217).
+    const owed = playerPoiseThresholdReceipt(REG, { loadout: p1m.run.loadout, relics: p1m.run.relics, class: p1m.classId, itemUpgradeLevels: p1m.run.itemUpgradeLevels || {}, attributes: p1m.run.attributes, derivedStatRuleSnapshot: p1m.run.derivedStatRuleSnapshot }).value;
     // The entity carries it as its poise METER's max (state.js stampPlayerPoiseMax);
     // an absent meter is the engine's "no vessel" — the zero this fix removes.
     const meter = S.live.combat.players.get('p1').entity.poiseMeter;

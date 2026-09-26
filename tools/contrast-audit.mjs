@@ -6,8 +6,11 @@
 //   node tools/contrast-audit.mjs --json          → machine-readable
 //   node tools/contrast-audit.mjs --gate          → exit 1 on a NEW or WORSENED
 //                                                   AA failure at a gated profile
-//                                                   (default, + the #45 map rows
-//                                                   in hi-contrast-off)
+//                                                   (default, hi-contrast-off,
+//                                                   cb-safe and hi-contrast-off+
+//                                                   cb-safe, every row — the three
+//                                                   SPEC §7.5 palettes, cb-safe on
+//                                                   both surface sets)
 //   node tools/contrast-audit.mjs --selftest      → plant a real palette token
 //                                                   below AA, require the gate to
 //                                                   name it, revert, re-prove clean
@@ -85,6 +88,10 @@ const PROFILES = {
   'cb-safe': { colorblindSafe: true },
   'hi-contrast+cb-safe': { highContrast: true, colorblindSafe: true },
   'hi-contrast-off': { highContrast: false }, // the pre-flip look, pinned explicitly
+  // cb-safe on the DARK :root set. `cb-safe` alone inherits highContrast's TRUE
+  // default, so it judges the remap on high-contrast surfaces only; a player can
+  // turn high contrast off and keep cb-safe on, and that pairing is its own palette.
+  'hi-contrast-off+cb-safe': { highContrast: false, colorblindSafe: true },
   'text-L': { textSize: 'L' },
   'hi-contrast+text-L': { highContrast: true, textSize: 'L' },
   // The SMALL edge, and it is not cosmetic. Auto zoom resolves to 1.29 at
@@ -98,20 +105,27 @@ const PROFILES = {
 // Each target names a screen (?shot=), a selector, and whether WCAG treats it as
 // large text (≥24px, or ≥18.66px bold → 3.0 floor instead of 4.5).
 const TARGETS = [
-  { screen: '', sel: '.title-stack .title-big', label: 'ASHEN SPIRE (title)' },
-  { screen: '', sel: '.title-stack .subtitle', label: 'title subtitle' },
-  { screen: '', sel: '.title-screen > p:last-of-type', label: 'title tagline' },
-  { screen: '', sel: '.slot-new', label: 'BEGIN A CLIMB (primary)' },
-  { screen: '', sel: '#settings', label: 'SETTINGS (secondary)' },
-  // Non-text: the button RING. Here because "does high contrast make the primary
-  // action harder to find?" is a question about salience, and text contrast
-  // cannot answer it — both buttons clear AA either way. What changes is the
-  // ordering: the gold ring is a fixed token, the secondary's --line-soft is one
-  // high contrast brightens. Same difference trick, on border-color.
-  { screen: '', sel: '.slot-new', label: '  ↳ its gold ring', prop: 'border-color', box: true },
-  { screen: '', sel: '#settings', label: '  ↳ its ring', prop: 'border-color', box: true },
-  { screen: 'map', sel: '.map-header .hud-act', label: 'Act' },
-  { screen: 'map', sel: '.map-header .mh-seed', label: 'SEED' },
+  // The title is reached through ?shot=title (src/main.js): the bare boot now
+  // opens the startup gate (PRESS ENTER), so no title-menu selector ever matched
+  // there and every title row read BLIND. The menu entries lost their button
+  // rings in the title-menu redesign (kit.css: `.as-titlemenu .tm-entry` has no
+  // border and no box-shadow), so the two old ring rows had no ink to measure
+  // and are gone; the highlighted entry's GOLD text is measured instead.
+  { screen: 'title', sel: '.title-screen .tm-name', label: 'ASHEN SPIRE (title)' },
+  { screen: 'title', sel: '.title-screen .tm-sub', label: 'title subtitle' },
+  { screen: 'title', sel: '.title-screen .title-tagline', label: 'title tagline' },
+  // The HIGHLIGHTED Continue, named as such (Codex P2 on #1282). title.js adds
+  // `is-highlighted` only when a slot is occupied and leaves Continue disabled
+  // when none is, so the bare `.slot-continue` could measure the disabled entry
+  // and call it gold. ?shot=title seeds slot 1 through newRun (src/main.js), and
+  // a fixture that ever stops doing so reads BLIND here, never a quiet wrong
+  // number. selectorContract's S8 holds this row to that selector.
+  { screen: 'title', sel: '.title-screen .slot-continue.is-highlighted:not([disabled])', label: 'Continue (highlighted, gold)' },
+  { screen: 'title', sel: '.title-screen #settings', label: 'Settings (menu entry)' },
+  // The run-position chip paints its ink in two children (.ck key, .cv value);
+  // measuring the parent chip toggled a colour no glyph uses and read no ink.
+  { screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' },
+  { screen: 'map', sel: '.map-header .hud-act .cv', label: 'Act value' },
   { screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' },
   { screen: 'map', sel: '.hint-bar .hint:first-child', label: 'keyboard hint' },
   // Map STRUCTURE (#45): the graph itself — the roads and rings a player reads
@@ -148,11 +162,22 @@ const TARGETS = [
   // The shared map/combat HUD replaced the old fight label with one centered
   // Cinders owner. Keep the pixel gate on the current visible status instead of
   // allowing a removed selector to turn the gate blind.
-  { screen: 'combat', sel: '.topbar .hud-cinders', label: 'Cinders (combat)' },
-  { screen: 'combat', sel: '.topbar .nm', label: 'hero name (combat)' },
-  { screen: 'combat', sel: '.resbar .label', label: 'resource bar label (combat)' },
-  { screen: 'combat', sel: 'CTAG:Blood', label: 'Blood card tag (label only)' },
-  { screen: 'death', sel: '.title-big', label: 'YOU PERISHED' },
+  { screen: 'combat', sel: '.topbar .hud-cinders .ck', label: 'Cinders (combat)' },
+  { screen: 'combat', sel: '.topbar .hud-class .cv', label: 'hero name (combat)' },
+  { screen: 'combat', sel: '.resbars .m-label', label: 'resource bar label (combat)' },
+  // Card text keywords and the hold cue (docs/plan-polish-review-2026-09.md §G:
+  // keyword red 4.1-4.3:1, "HOLD" 2.45:1). The showcase hand carries a Bleed
+  // card; `.hold-hint` is --gold at 0.75 opacity (kit.css).
+  { screen: 'combat', sel: '.hand .card .ctext .st-bleed', label: 'Bleed keyword (card text)' },
+  { screen: 'combat', sel: '.hand .card[data-card-id="strike"] > .hold-hint', label: 'card HOLD cue' },
+  { screen: 'death', sel: '.gameover .as-title-l', label: 'YOU PERISHED' },
+  // Reward panel: the gold row titles and the primary button's HOLD cue.
+  { screen: 'reward', sel: '.reward-kind[data-state="pending"] .cp-body h3', label: 'reward title (gold)' },
+  { screen: 'reward', sel: '#reward-continue .hold-hint', label: 'reward Continue HOLD cue' },
+  { screen: 'reward', sel: '.reward-claim-row[data-state="taken"] .reward-claim-state', label: 'reward claim Taken (gold)' },
+  { screen: 'reward', sel: '.reward-kind[data-state="taken"] .chip', label: 'reward TAKEN chip (gold)' },
+  { screen: 'reward', sel: '.reward-kind[data-state="taken"] .cp-body h3', label: 'reward taken title (gold)' },
+  { screen: 'reward', sel: '.reward-kind .chip.reward-new', label: 'reward NEW chip (gold)' },
 ];
 
 // Failures that are KNOWN, MEASURED, and deliberately not fixed by the default
@@ -166,58 +191,49 @@ const TARGETS = [
 // highContrast defaults TRUE, so the atmospheric palette's map values — the
 // exact thing the #45 remedy ships — could regress to any depth at exit 0).
 //
-// Every entry is a Tier-2 card waiting to be written, not a shrug. Two of them
-// are the same shape: high contrast swaps the muted / parchment / line tokens
-// and deliberately does not touch --blood or --gold, so the accent family sits
-// outside its reach entirely.
+// Every entry is a Tier-2 card waiting to be written, not a shrug.
+//
+// DRAINED 2026-09-24 (cb-safe gating): the two `map node body (fill vs bg)`
+// entries and `YOU PERISHED [default]` measured PASSING on the current tree
+// (5.66 and 4.91 judged), and `Blood card tag (label only)` lost its target —
+// the showcase hand no longer renders a `.ctag`. A stale entry is how a gate
+// goes quiet, so they are gone. What remains below is OPACITY, not palette:
+// the declared colour clears AA (spec 4.74 / 7.33) and an `opacity` rule in
+// styles/kit.css pulls the delivered pixel under it. No palette token reaches
+// an opacity, which is why no token edit here could retire these rows.
+const LEDGER_HOLD = {
+  render: 3.36, floor: 4.5,
+  why: '`.hold-hint` is --gold at `opacity: 0.75` (styles/kit.css), and on the primary '
+     + 'button it sits on a gold-tinted fill: declared 4.74, delivered 3.36 at 13.4px. The '
+     + 'hand-card HOLD cue (same rule, dark card body) clears at 4.66 — only the primary '
+     + 'button\'s cue is below. --gold itself is 8:1 on --bg; brightening it would move every '
+     + 'gold surface to lift one translucent word.',
+  fix: 'Drop the 0.75 opacity on `.as-btn.primary .hold-hint` (or render the cue in '
+     + '--parchment on primary fills) in styles/kit.css — a component rule, not a token.',
+};
+const LEDGER_TAKEN = {
+  render: 2.98, floor: 4.5,
+  why: 'A TAKEN reward row is an inactive control (`.class-pick.locked`, `opacity: 0.55`, '
+     + 'styles/kit.css): --gold declared 7.33 delivers 2.98. This is the plan-polish §G '
+     + '"gold on reward panels 3.03:1". WCAG 1.4.3 exempts inactive UI components, so this '
+     + 'is a legibility choice, not an AA failure — kept measured so the dimming cannot '
+     + 'deepen unseen.',
+  fix: 'Raise `.class-pick.locked` opacity for reward rows (or dim with a muted colour '
+     + 'instead of opacity) in styles/kit.css.',
+};
 const KNOWN_BELOW = [
-  {
-    label: 'map node body (fill vs bg)', profile: 'default', render: 1.17, floor: 3.0,
-    why: '--panel on --bg, 1.17 in BOTH palettes — high contrast never touches --panel, '
-       + 'so no toggle reaches this number. Sunna ruled the floor for non-text map glyphs '
-       + '(#45): 3:1 on each glyph\'s IDENTIFYING BOUNDARY against each adjacent rendered '
-       + 'colour. The node\'s identifying boundary is its RING, not its fill, and at '
-       + 'default the ring clears both adjacencies (4.18 vs field, 3.54 vs its fill — the '
-       + 'row above, judged on its worst). The fill owes no independent floor; the row '
-       + 'stays measured so a --panel/--bg drift is seen, and so the ring-vs-fill '
-       + 'adjacency keeps meaning what it says.',
-    fix: 'Nothing, while the ring exists. If the ring is ever removed or dropped to the '
-       + 'fill\'s colour, the fill BECOMES the boundary and this entry must be deleted so '
-       + 'the row goes red.',
-  },
-  {
-    label: 'map node body (fill vs bg)', profile: 'hi-contrast-off', render: 1.17, floor: 3.0,
-    why: 'The same fact in the atmospheric palette: --panel on --bg is untouched by the '
-       + 'highContrast toggle, so the fill measures 1.17 here too, and Sunna\'s #45 ruling '
-       + 'answers it the same way — the ring is the identifying boundary, and since the '
-       + '--map-structure remedy (#7a6b54) it clears both adjacencies in THIS palette as '
-       + 'well: 3.78 edge, 3.36 ring judged, rendered. A separate entry because the ledger '
-       + 'is keyed per profile — the default entry excusing this number here would be the '
-       + 'exact cross-palette silence the per-profile keys exist to forbid.',
-    fix: 'Same condition as the default entry: the day the ring stops being the boundary, '
-       + 'delete this so the row goes red.',
-  },
-  {
-    label: 'YOU PERISHED', profile: 'default', render: 1.97, floor: 3.0,
-    why: '--blood #8a1a1a on the death screen. High contrast does not touch --blood, so '
-       + 'the flip cannot reach it. `colorblindSafe` does (4.77) but that is a different '
-       + 'setting with a different meaning, and turning it on by default would repaint '
-       + 'danger/heal/frost/blight for every player.',
-    fix: 'A palette decision about --blood, which is a LOOK change to the game and '
-       + 'therefore Constantine\'s call, not a default flip.',
-  },
-  {
-    label: 'Blood card tag (label only)', profile: 'default', render: 1.71, floor: 4.5,
-    why: 'The worst contrast in the game, on the Reaver\'s staple card, and NO accessibility '
-       + 'toggle can reach it: the tag colour is not --blood. It is the literal string '
-       + '8A1A1A in the `color` column of content/source/nodes.csv, applied inline as '
-       + '--tag-color by src/ui/components/card.js. A second copy of the blood hex, living '
-       + 'in content, invisible to every CSS override in styles/base.css. `body.cb-safe` '
-       + 'remaps --blood and leaves this tag at 1.71 — the two look linked and are not.',
-    fix: 'Either the CSV colours become semantic token NAMES that the accessibility '
-       + 'layers can override, or that column is deleted and the tag inherits. Also the '
-       + 'size: .ctag is 0.8rem, which is 6.8px at UI size S.',
-  },
+  { label: 'reward Continue HOLD cue', profile: 'default', ...LEDGER_HOLD },
+  { label: 'reward Continue HOLD cue', profile: 'cb-safe', ...LEDGER_HOLD },
+  { label: 'reward Continue HOLD cue', profile: 'hi-contrast-off', ...LEDGER_HOLD },
+  { label: 'reward Continue HOLD cue', profile: 'hi-contrast-off+cb-safe', ...LEDGER_HOLD },
+  { label: 'reward TAKEN chip (gold)', profile: 'default', ...LEDGER_TAKEN },
+  { label: 'reward TAKEN chip (gold)', profile: 'cb-safe', ...LEDGER_TAKEN },
+  { label: 'reward TAKEN chip (gold)', profile: 'hi-contrast-off', ...LEDGER_TAKEN },
+  { label: 'reward TAKEN chip (gold)', profile: 'hi-contrast-off+cb-safe', ...LEDGER_TAKEN },
+  { label: 'reward taken title (gold)', profile: 'default', ...LEDGER_TAKEN },
+  { label: 'reward taken title (gold)', profile: 'cb-safe', ...LEDGER_TAKEN },
+  { label: 'reward taken title (gold)', profile: 'hi-contrast-off', ...LEDGER_TAKEN },
+  { label: 'reward taken title (gold)', profile: 'hi-contrast-off+cb-safe', ...LEDGER_TAKEN },
 ];
 
 // ---- WCAG --------------------------------------------------------------------
@@ -340,17 +356,22 @@ async function gotoScreen(cdp, url, settings) {
   // the rendered document before a pixel is allowed to count.
   const observed = await evalIn(cdp, `() => ({
     highContrast: document.body.classList.contains('hi-contrast'),
+    colorblindSafe: document.body.classList.contains('cb-safe'),
     mapMode: document.querySelector('.map-scroll')?.dataset.mapMode || null,
   })`, []);
   const expected = {
     // High contrast is the product default when the profile leaves the key
     // absent; explicit false is the atmospheric profile.
     highContrast: settings.highContrast !== false,
+    colorblindSafe: settings.colorblindSafe === true,
     mapMode: url.includes('?shot=map') ? settings.mapMode : null,
   };
   const mismatches = [];
   if (observed.highContrast !== expected.highContrast) {
     mismatches.push(`highContrast=${expected.highContrast} requested, observed ${observed.highContrast}`);
+  }
+  if (observed.colorblindSafe !== expected.colorblindSafe) {
+    mismatches.push(`colorblindSafe=${expected.colorblindSafe} requested, observed ${observed.colorblindSafe}`);
   }
   if (expected.mapMode && observed.mapMode !== expected.mapMode) {
     mismatches.push(`mapMode=${expected.mapMode} requested, observed ${observed.mapMode || 'absent'}`);
@@ -577,13 +598,16 @@ const selectorContract = (source) => {
   const bad = [];
   const targetBlock = /const TARGETS = \[[\s\S]*?\n\];/.exec(source)?.[0] || '';
   const wanted = [
-    ["{ screen: 'map', sel: '.map-header .hud-act', label: 'Act' }", 'S1 current Act metadata selector missing'],
-    ["{ screen: 'map', sel: '.map-header .mh-seed', label: 'SEED' }", 'S3 current Seed metadata selector missing'],
+    ["{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' }", 'S1 current Act metadata selector missing'],
     ["{ screen: 'map', sel: '.map-zoom #map-legend', label: 'map ? button' }", 'S4 current map legend selector missing'],
-    ["{ screen: 'combat', sel: '.topbar .hud-cinders', label: 'Cinders (combat)' }", 'S7 current combat Cinders selector missing'],
+    ["{ screen: 'combat', sel: '.topbar .hud-cinders .ck', label: 'Cinders (combat)' }", 'S7 current combat Cinders selector missing'],
+    ["{ screen: 'title', sel: '.title-screen .slot-continue.is-highlighted:not([disabled])', label: 'Continue (highlighted, gold)' }", 'S8 Continue row does not require the highlighted, enabled entry'],
   ];
   for (const [needle, finding] of wanted) if (!targetBlock.includes(needle)) bad.push(finding);
   if (targetBlock.includes("sel: '.map-header .hud-floor'")) bad.push('S2 removed Floor metadata selector returned');
+  // The run seed left the solo map header (it lives only in the co-op header,
+  // src/ui/screens/coop.js), so a `.mh-seed` map target can only read BLIND.
+  if (targetBlock.includes("sel: '.map-header .mh-seed'")) bad.push('S3 removed map-header Seed selector returned');
   if (targetBlock.includes("sel: '.map-header .mh-prog'")) bad.push('S5 removed combined progress selector returned');
   if (targetBlock.includes("sel: '.map-header #map-legend'")) bad.push('S6 removed map-header legend selector returned');
   return bad;
@@ -594,7 +618,7 @@ if (args.includes('--source-selftest')) {
   const plants = [
     {
       name: 'Act metadata points back at removed combined progress', expected: 'S1 ',
-      source: clean.replace("{ screen: 'map', sel: '.map-header .hud-act', label: 'Act' }", "{ screen: 'map', sel: '.map-header .mh-prog', label: 'Act' }"),
+      source: clean.replace("{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' }", "{ screen: 'map', sel: '.map-header .mh-prog', label: 'Act' }"),
     },
     {
       // The Floor chip was removed from the run header on 2026-09-05 (owner:
@@ -604,8 +628,15 @@ if (args.includes('--source-selftest')) {
       // comes BACK without a chip to point at.
       name: 'Floor metadata target returns with no chip behind it', expected: 'S2 ',
       source: clean.replace(
-        "{ screen: 'map', sel: '.map-header .hud-act', label: 'Act' },",
-        "{ screen: 'map', sel: '.map-header .hud-act', label: 'Act' },\n  { screen: 'map', sel: '.map-header .hud-floor', label: 'Floor' },",
+        "{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' },",
+        "{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' },\n  { screen: 'map', sel: '.map-header .hud-floor', label: 'Floor' },",
+      ),
+    },
+    {
+      name: 'SEED metadata target returns to the solo map header', expected: 'S3 ',
+      source: clean.replace(
+        "{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' },",
+        "{ screen: 'map', sel: '.map-header .hud-act .ck', label: 'Act' },\n  { screen: 'map', sel: '.map-header .mh-seed', label: 'SEED' },",
       ),
     },
     {
@@ -614,7 +645,11 @@ if (args.includes('--source-selftest')) {
     },
     {
       name: 'combat Cinders points back at removed fight label', expected: 'S7 ',
-      source: clean.replace("{ screen: 'combat', sel: '.topbar .hud-cinders', label: 'Cinders (combat)' }", "{ screen: 'combat', sel: '.topbar .fight-label', label: 'Cinders (combat)' }"),
+      source: clean.replace("{ screen: 'combat', sel: '.topbar .hud-cinders .ck', label: 'Cinders (combat)' }", "{ screen: 'combat', sel: '.topbar .fight-label', label: 'Cinders (combat)' }"),
+    },
+    {
+      name: 'Continue row measures an unhighlighted Continue', expected: 'S8 ',
+      source: clean.replace("sel: '.title-screen .slot-continue.is-highlighted:not([disabled])'", "sel: '.title-screen .slot-continue'"),
     },
   ];
   let failures = 0;
@@ -644,8 +679,8 @@ if (args.includes('--source-selftest')) {
 // `--muted` under `body.hi-contrast` is the token chosen because highContrast
 // DEFAULTS TRUE: it is what a first-boot player receives, so dimming it is a
 // change to the shipped default palette and lands in the `default` profile the
-// gate judges. Four targets ride it (Act, Floor, SEED, keyboard hint) and all
-// four sit comfortably above the floor on a healthy tree —
+// gate judges. Three targets ride it (Act, Cinders, resource bar label) and all
+// three sit comfortably above the floor on a healthy tree —
 // so a red here cannot be the tree's standing state leaking in.
 //
 // The child is spawned rather than re-entered in-process: this file measures on
@@ -662,11 +697,26 @@ if (args.includes('--selftest')) {
       why: 'the shipped high-contrast --muted dimmed to #5f5748 — the palette edit this gate exists to catch',
       // Named rather than counted: a gate that merely "exits 1" would be
       // satisfied by the standing BLIND rows below and prove nothing new.
+      // The Floor chip and the solo SEED left the header, and the keyboard hint
+      // is now a parchment button; the --muted riders today are the run-meta
+      // chip keys and the resource-bar labels.
       expectRows: [
         { label: 'Act', profile: 'default' },
-        { label: 'Floor', profile: 'default' },
-        { label: 'SEED', profile: 'default' },
-        { label: 'keyboard hint', profile: 'default' },
+        { label: 'Cinders (combat)', profile: 'default' },
+        { label: 'resource bar label (combat)', profile: 'default' },
+      ],
+    },
+    {
+      // THE cb-safe ARM (SPEC §7.5: all three palettes must pass). --bleed is
+      // overridden ONLY under body.cb-safe, so this plant can go red only if the
+      // gate actually judges the cb-safe profile — in `default` the keyword
+      // still derives from --ember and is untouched.
+      name: 'colourblind-safe keyword',
+      find: '  --bleed: #cc79a7;',
+      replace: '  --bleed: #6a3f57;',
+      why: 'the cb-safe --bleed keyword tint dimmed to #6a3f57 — a cb-safe-only palette edit',
+      expectRows: [
+        { label: 'Bleed keyword (card text)', profile: 'cb-safe' },
       ],
     },
     {
@@ -674,8 +724,13 @@ if (args.includes('--selftest')) {
       find: '  --map-structure: #7a6b54;',
       replace: '  --map-structure: #4a4034;',
       why: 'the atmospheric map-structure token restored to the old subfloor #4a4034',
+      // Only the RING rides --map-structure now. The path map draws over
+      // terrain art, and styles/map.css paints terrain roads with a literal
+      // (`.mapscreen svg:has(.map-terrain) .map-edge { stroke:#c9b987 }`) that
+      // no palette token reaches — so a token plant cannot move the edge row,
+      // and expecting it made this arm unpassable. The edge row is still
+      // measured and gated in every palette; it just has no token door.
       expectRows: [
-        { label: 'map edge (untraveled road)', profile: 'hi-contrast-off' },
         { label: 'map node ring (plain)', profile: 'hi-contrast-off' },
       ],
     },
@@ -685,7 +740,6 @@ if (args.includes('--selftest')) {
       replace: '  --map-structure: #4a4034; /* planted: subfloor high-contrast map structure */',
       why: 'the high-contrast map-structure token dimmed to the same subfloor #4a4034',
       expectRows: [
-        { label: 'map edge (untraveled road)', profile: 'default' },
         { label: 'map node ring (plain)', profile: 'default' },
       ],
     },
@@ -790,12 +844,14 @@ NOT PASSED: only the NEW-failure class is planted. REGRESSED (a KNOWN_BELOW row 
       0.15 slack) still has no plant here.
  MAP DOOR: the map arms enter through the shipped --map-structure tokens, then \`?shotSettings=\`
        selects the real full path-map mode. Both default/high-contrast and explicit atmospheric
-       profiles must name edge and ring failures independently; one palette cannot excuse the other.
+       profiles must name the ring failure independently; one palette cannot excuse the other.
+       NOT PLANTED: the untraveled road over terrain art is a literal stroke in styles/map.css,
+       so no token plant reaches it; its row is measured and gated but has no known-bad here.
  ARTIFACT DOOR: the stale-artifact plant edits the public shotSettings reader in a copied real root
        standalone, then enters through --artifact. Requested body palette and map mode are observed
        from the rendered product before any of its pixels may count.
- BOUNDARY: three palette plants plus one stale-artifact profile plant, two token families, two map
-       palettes, one viewport, one font stack. Proof this gate CAN go red on these named defects — not
+ BOUNDARY: four palette plants (one cb-safe-only) plus one stale-artifact profile plant, three token
+       families, two map palettes, one viewport, one font stack. Proof this gate CAN go red on these named defects — not
        proof it catches a differently shaped defect.`);
   console.log(bad ? `\nSELFTEST: ${bad} arm(s) did not fire` : `\nSELFTEST: ${ARMS.length}/${ARMS.length} arms observed RED by the palette door, plant reverted`);
   process.exit(bad || stillNamed.length ? 1 : 0);
@@ -871,10 +927,10 @@ const dbg = Number(/ws:\/\/[^:/]+:(\d+)\//.exec(wsUrl)[1]);
 // This is NOT the partial run the gate refuses below: that refusal exists because
 // a `--profile` invocation can omit a GATED profile and then exit 0 having judged
 // nothing there. This flag omits only profiles the gate never judged — the
-// verdict is bit-for-bit the one the full matrix produces, at a quarter of the
+// verdict is bit-for-bit the one the full matrix produces, at under half the
 // renders. The table it prints is narrower, and says so.
 const gatedOnly = args.includes('--gated-only');
-const GATED_PROFILES = ['default', 'hi-contrast-off'];
+const GATED_PROFILES = ['default', 'hi-contrast-off', 'cb-safe', 'hi-contrast-off+cb-safe'];
 const profiles = onlyProfile
   ? { [onlyProfile]: PROFILES[onlyProfile] }
   : (gatedOnly
@@ -893,7 +949,7 @@ const rows = [];
 try {
   const cdp = await connectCdp(dbg);
   for (const [pname, settings] of Object.entries(profiles)) {
-    for (const screen of ['', 'map', 'combat', 'death']) {
+    for (const screen of ['title', 'map', 'combat', 'death', 'reward']) {
       const targets = TARGETS.filter((t) => t.screen === screen);
       if (!targets.length) continue;
       // The fog-first map boot deliberately exposes only the entrance choice:
@@ -1021,15 +1077,25 @@ if (gate) {
   // `default` alone, which meant nine profiles rendered, one judged, and a
   // sub-floor plant in --map-structure (the exact value the #45 remedy ships)
   // exited 0. Observed red by Vira on the #45 branch before this map existed.
-  // So the #45 map-structure rows are additionally judged in `hi-contrast-off`.
-  const MAP45 = new Set([
-    'map edge (untraveled road)',
-    'map node ring (plain)',
-    'map node body (fill vs bg)',
-  ]);
+  // So the #45 map-structure rows were additionally judged in `hi-contrast-off`
+  // (edge, plain ring, plain body) — the first widening.
+  //
+  // SPEC §7.5 names THREE palettes — the dark `:root` set (what
+  // `hi-contrast-off` renders), high contrast (what `default` renders, since
+  // highContrast defaults TRUE), and `body.cb-safe` — and says this gate is
+  // what makes them pass. Until 2026-09-24 only those #45 map rows were judged
+  // in the dark set and cb-safe was judged nowhere, so the dark --muted sat at
+  // 3.74:1 under every run-meta key and a cb-safe token remap (vermillion
+  // --blood, pink --bleed) could drop any text row below AA at exit 0. Every
+  // palette a player can select is now judged on every target.
   const GATED = {
     default: () => true,
-    'hi-contrast-off': (label) => MAP45.has(label),
+    'hi-contrast-off': () => true,
+    'cb-safe': () => true,
+    // cb-safe over the dark :root set — `cb-safe` alone rides highContrast's TRUE
+    // default, so without this row a remap that holds on high-contrast surfaces
+    // but sinks on the dark ones would exit 0.
+    'hi-contrast-off+cb-safe': () => true,
   };
   // A partial run cannot gate: a `--profile` invocation that omits a gated
   // profile would judge nothing there and exit 0 — the same silence this block

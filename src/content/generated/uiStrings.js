@@ -2019,6 +2019,167 @@ export const uiStrings = [
     "tip": "Hold to answer"
   },
   {
+    "id": "questBoard.eyebrow",
+    "extends": "",
+    "short": "Quest board",
+    "full": "The quests offered in this town and the ones you carry.",
+    "tip": "Quest board"
+  },
+  {
+    "id": "questBoard.title",
+    "extends": "",
+    "short": "Notices",
+    "full": "The board's notices: quests offered anywhere in this town.",
+    "tip": "Notices"
+  },
+  {
+    "id": "questBoard.status",
+    "extends": "",
+    "short": "{ready} to collect · {open} to accept",
+    "full": "How many of the board's quests you can answer now.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.empty",
+    "extends": "",
+    "short": "No quests are posted in this town.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.offer.meta",
+    "extends": "",
+    "short": "Reward: {reward} cinders · Objective: {objective}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.offer.noObjective",
+    "extends": "",
+    "short": "the marked road",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.state.accepted",
+    "extends": "",
+    "short": "Explore the marked road",
+    "full": "You carry this quest; complete its objective and return.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.state.done",
+    "extends": "",
+    "short": "Done",
+    "full": "You have completed this quest and collected its reward.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.state.closed",
+    "extends": "",
+    "short": "Not open",
+    "full": "This quest's road is not open in this journey.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.journal.heading",
+    "extends": "",
+    "short": "Journal",
+    "full": "The quests this run has started and completed.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.journal.started",
+    "extends": "",
+    "short": "Started",
+    "full": "Quests you carry and have not finished.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.journal.completed",
+    "extends": "",
+    "short": "Completed",
+    "full": "Quests this run has completed.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.journal.noneStarted",
+    "extends": "",
+    "short": "No quest under way.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.journal.noneCompleted",
+    "extends": "",
+    "short": "No quest completed yet.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.leave",
+    "extends": "common.continue",
+    "short": "",
+    "full": "Leave the board.",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.open",
+    "extends": "",
+    "short": "Quest board",
+    "full": "Read the town's quest board.",
+    "tip": "Quest board"
+  },
+  {
+    "id": "questBoard.open.summary",
+    "extends": "",
+    "short": "{ready} to collect · {open} to accept",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.respond.accept",
+    "extends": "",
+    "short": "Accept the quest",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.respond.collect",
+    "extends": "",
+    "short": "Collect {reward} cinders",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.respond.leave",
+    "extends": "",
+    "short": "Not now",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.result.accept",
+    "extends": "",
+    "short": "You take the notice. The road is marked.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.result.collect",
+    "extends": "",
+    "short": "{speaker} counts out {reward} cinders.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "questBoard.result.leave",
+    "extends": "",
+    "short": "You leave the notice on the board.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "armoury.title",
     "extends": "",
     "short": "Armoury",
@@ -2302,6 +2463,34 @@ export const uiStrings = [
     "id": "title.slots.start.occupied.prompt",
     "extends": "",
     "short": "This slot holds a saved climb. Nothing changes until you begin the new one; you will be asked to replace it then.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.newer",
+    "extends": "",
+    "short": "Saved by a newer build. Update to continue.",
+    "full": "This slot holds a climb saved by a newer build of Ashen Spire. It is kept exactly as it is; update the game to continue it.",
+    "tip": ""
+  },
+  {
+    "id": "save.newer.title",
+    "extends": "",
+    "short": "This climb is from a newer version",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.newer.message",
+    "extends": "",
+    "short": "Slot {slot} was saved by a newer build of Ashen Spire. It has been left exactly as it is; nothing was changed or deleted. Update Ashen Spire to continue it.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.newer.close",
+    "extends": "",
+    "short": "Keep it and close",
     "full": "",
     "tip": ""
   },

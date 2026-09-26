@@ -18,6 +18,7 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
 import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
+import { runHandRules } from '../../model/handRules.js';
 import { runClassIdentity } from '../../model/classCard.js';
 import { characterLevel } from '../../model/levelup.js';
 import { cardKind } from '../../model/tree.js';
@@ -25,6 +26,7 @@ import { dodgeReceipt } from '../components/dodgeReceipt.js';
 import { openPileModal, openSpentPileModal } from '../components/piles.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
+import { enemyMoveDamage } from '../../model/state.js';
 import { tagService } from '../../model/tagService.js';
 import { reducedMotionRequested } from '../motion.js';
 import { stageFor } from '../services/PoseAnimator.js';
@@ -59,6 +61,7 @@ import { hintBarHtml, setHintMode } from '../components/hints.js';
 import { dlog } from '../debuglog.js';
 import { mountEquipment } from './equipment.js';
 import { trackGesture } from '../gesture.js';
+import { finishCardDrag } from '../cardDragEnd.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure, arcaneExposureReceipt } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -105,6 +108,22 @@ function pileButton(kind, label) {
 // The event types that move the displayed hand between beats — the same four
 // applyBeatToDisp() reads. Kept beside that switch's contract, not typed twice.
 const HAND_BEAT_EVENTS = new Set(['cardDrawn', 'cardPlayed', 'cardDiscarded', 'cardExhausted']);
+
+// THE POSITIONAL CARD KEYS (SPEC §7.3, §9 M4), as a pure mapping so it can be
+// tested without a DOM. `1`–`9` name hand slots 1–9 and `q`/`Q` names slot 10
+// (the hand caps at 10). While a card or flask is armed (`targeting`), a DIGIT
+// names the Nth LIVING enemy instead; Q never targets, so it falls through to
+// slot 10. Returns null for a key that is not a card key (the caller leaves the
+// event alone); otherwise one of
+//   { kind: 'select', index }  arm/play hand slot `index` (0-based)
+//   { kind: 'target', index }  commit the armed card/flask on living enemy `index`
+//   { kind: 'none' }           a card key with nothing under it: swallowed, no-op
+export function cardHotkeyAction(key, { targeting = false, handSize = 0, livingEnemies = 0 } = {}) {
+  const index = /^[1-9]$/.test(key) ? Number(key) - 1 : key === 'q' || key === 'Q' ? 9 : -1;
+  if (index < 0) return null;
+  if (targeting && index < 9) return index < livingEnemies ? { kind: 'target', index } : { kind: 'none' };
+  return index < handSize ? { kind: 'select', index } : { kind: 'none' };
+}
 
 export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {} }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
@@ -629,8 +648,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     });
   }
 
-  function moveDetail(move, preview = null) {
-    const source = preview || move || {};
+  // A move read off its roster row is scaled by the enemy's damageMult (a
+  // tier-scaled boss), the same helper the intent, the hit and the move
+  // cards read, so the skill list and Previous actions never print authored
+  // damage beside a scaled hit.
+  function moveDetail(move, preview = null, entity = null) {
+    const source = preview || { ...(move || {}), damage: enemyMoveDamage(entity, move) };
     const pieces = [];
     if (source.damage != null) pieces.push(`${source.damage}${source.hits > 1 ? ` × ${source.hits}` : ''} damage`);
     if (source.block != null) pieces.push(`${source.block} Block`);
@@ -675,7 +698,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const currentMoveId = intent.moveId;
     const skills = Object.entries(def.moves || {}).map(([moveId, move]) => ({
       name: words(moveId),
-      detail: moveDetail(move, moveId === currentMoveId ? intent : null),
+      detail: moveDetail(move, moveId === currentMoveId ? intent : null, entity),
       active: moveId === currentMoveId,
     }));
     const current = currentMoveId && def.moves?.[currentMoveId];
@@ -702,7 +725,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       skills,
       statuses: statusDetails(entity),
       entityId: entity.id,
-      history: past.map((moveId) => ({ name: words(moveId), detail: moveDetail(def.moves?.[moveId]) })),
+      history: past.map((moveId) => ({ name: words(moveId), detail: moveDetail(def.moves?.[moveId], null, entity) })),
       traits: (def.tags || []).map((tag) => ({ name: words(tag) })),
       // No authored lore exists for enemies yet; unknown, not none.
       lore: null,
@@ -1857,32 +1880,26 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       };
       trackGesture(ev, {
         onMove,
-        onEnd: (up, { cancelled }) => {
-          clearDragTargeting();
-          el.classList.remove('drag-source');
-          if (dragGhost) { dragGhost.remove(); dragGhost = null; }
-          const wasDragging = dragging;
-          dragging = false;
-          if (!wasDragging) return; // plain click handled by 'click'
-          // A CANCELLED DRAG DROPS NOTHING — AND COSTS NOTHING. The cancelled
-          // return sits ABOVE the suppressClick arm, and the order is Vira's
-          // gate finding on this very fix: suppressClick guards a COMPLETED
-          // drag against double-firing as a click, but no click follows a
-          // cancel — armed here, the flag sat live and ate the card's next
-          // real tap (one tap swallowed, self-recovering, both shapes;
-          // introduced by the first version of this fix, on exactly the
-          // gesture the fix exists to make safe). elementFromPoint on a
-          // cancel would aim the card at wherever the finger happened to die.
-          if (cancelled) return;
-          // armHold consumes the trailing click of a moved press.
-          const handBounds = $('.hand').getBoundingClientRect();
-          if (up.clientY >= handBounds.top && up.clientY <= handBounds.bottom && up.clientX >= handBounds.left && up.clientX <= handBounds.right) {
-            handStrip.reorderAt(inst.instanceId, up.clientX);
-            return;
-          }
-          const plan = dropPlan(up, true);
-          if (plan.legal) playCard(inst.instanceId, plan.targetId || null);
-        },
+        // The decision — cancelled drops nothing, over the hand reorders,
+        // a legal drop plays — is finishCardDrag (src/ui/cardDragEnd.js), the
+        // unit tests/visibility-resume.test.mjs drives.
+        onEnd: (up, info) => finishCardDrag(up, info, {
+          teardown: () => {
+            clearDragTargeting();
+            el.classList.remove('drag-source');
+            if (dragGhost) { dragGhost.remove(); dragGhost = null; }
+            const wasDragging = dragging;
+            dragging = false;
+            return wasDragging;
+          },
+          overHand: (at) => {
+            const handBounds = $('.hand').getBoundingClientRect();
+            return at.clientY >= handBounds.top && at.clientY <= handBounds.bottom && at.clientX >= handBounds.left && at.clientX <= handBounds.right;
+          },
+          reorder: (at) => handStrip.reorderAt(inst.instanceId, at.clientX),
+          dropPlan: (at) => dropPlan(at, true),
+          play: (targetId) => playCard(inst.instanceId, targetId),
+        }),
       });
     });
 
@@ -2052,20 +2069,31 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     }
 
     // Positional card keys: 1–9 then Q for the 10th (hand caps at 10). The key
-    // is tied to the SLOT, not the card — leftmost is always 1.
-    const cardIdx = /^[1-9]$/.test(ev.key) ? Number(ev.key) - 1 : ev.key === 'q' || ev.key === 'Q' ? 9 : -1;
-    if (cardIdx >= 0) {
+    // is tied to the SLOT, not the card — leftmost is always 1. The key→action
+    // mapping lives in cardHotkeyAction (pure, unit-tested in
+    // tests/card-hotkeys.test.mjs); this handler only carries it out.
+    // Not a card key (null whatever the context): leave the event alone before
+    // touching the DOM — this is the last check in the handler.
+    if (cardHotkeyAction(ev.key) === null) return;
+    const handCards = app.querySelectorAll('.hand .card');
+    const livingEnemies = combat.enemies.filter((e) => e.alive);
+    const hotkey = cardHotkeyAction(ev.key, {
+      targeting: Boolean(selected || selectedFlask != null),
+      handSize: handCards.length,
+      livingEnemies: livingEnemies.length,
+    });
+    if (hotkey) {
       ev.preventDefault();
+      if (hotkey.kind === 'none') return;
       // Targeting mode: a NUMBER picks the Nth living enemy (Q never targets).
-      if ((selected || selectedFlask != null) && cardIdx < 9) {
-        const enemy = combat.enemies.filter((e) => e.alive)[cardIdx];
-        if (!enemy) return;
+      if (hotkey.kind === 'target') {
+        const enemy = livingEnemies[hotkey.index];
         if (selected) playCard(selected, enemy.id);
         else useFlask(selectedFlask, enemy.id);
         return;
       }
       // Selection mode: play the Nth hand card (auto-target a lone enemy).
-      const visibleId = app.querySelectorAll('.hand .card')[cardIdx]?.dataset.instanceId;
+      const visibleId = handCards[hotkey.index]?.dataset.instanceId;
       const inst = combat.piles.hand.find(card => card.instanceId === visibleId);
       if (!inst) return;
       const pv = previewCard(combat, inst.instanceId);
@@ -2492,6 +2520,12 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       registries,
       run,
       meta: { settings: { customization: run.customization, ...(equipView ? { equipView } : {}) } },
+      // The attribute cards state THIS fight's hand: its snapshot, which the
+      // synthetic `meta` above cannot resolve (Codex, #1294). A fight from
+      // before hand rules has no `combat.handRules` and deals from the legacy
+      // Draw / handMax; this fallback shows the run's own rows under the
+      // current settings — an approximation for an old save, not a regression.
+      handRules: combat.handRules || runHandRules(registries, run, readSettings()),
       destination,
       inCombat: true,
       onSwap: (slotId, setIndex) => {

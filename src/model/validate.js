@@ -11,6 +11,7 @@
 //
 // Headless: no document/window/localStorage/timers.
 
+import { handRulesDefaults } from '../content/handRules.js';
 import { resolveFloorPlan } from './floorplan.js';
 import { validateAttack } from './combatRules.js';
 import { assertTableSane } from './secondbeat.js';
@@ -46,11 +47,13 @@ import { wornZoneOf, handZoneOf } from './zones.js';
 import { skillTracks } from './skills.js';
 import { tagContentProblems, tagIdsInDomain, tagIdsAllowedFor } from './tags.js';
 import { FORMULA_OPS, FORMULA_OF, isFormula } from './formulas.js';
-import { attributeContentProblems } from './attributes.js';
+import { attributeContentProblems, presetGearProblems } from './attributes.js';
 import { derivedStatPresentationProblems, derivedStatRuleProblems, relicAttributeTierFoldProblems } from './derivedStats.js';
+import { derivedStatFloorProblems } from './startingStatConfig.js';
 import { startingKitProblems } from './startingKits.js';
 import { armouryUiProblems } from './equipmentUi.js';
 import { eventChoiceRequirementProblems, validQuestId } from './quests.js';
+import { attackCardDamageConfigProblems } from './attackCardDamage.js';
 import { characterCreationProblems } from './characterCreation.js';
 import { enemyLevelProfileProblems, levelBandProblems, levelConfigProblems } from './levels.js';
 import {
@@ -266,6 +269,20 @@ export function computeTokenBindings(effects) {
   return out;
 }
 
+/**
+ * cardTokenEffects(card) → the effect list a card's text template binds to:
+ * its play `effects`, then its `onTurnEndInHand` hook (Guilt's HP loss). The
+ * hook is appended AFTER the play effects so a play effect's token never
+ * changes; a hook op sharing a base binds as `{base.2}`. Shared by the
+ * validator and the static token projection (model/playingCard.js), so the
+ * number a card shows is the number its hook fires.
+ */
+export function cardTokenEffects(card) {
+  const effects = card && Array.isArray(card.effects) ? card.effects : [];
+  const hook = card && Array.isArray(card.onTurnEndInHand) ? card.onTurnEndInHand : [];
+  return hook.length ? [...effects, ...hook] : effects;
+}
+
 export function extractTemplateTokens(template) {
   const tokens = [];
   const re = tokenRe();
@@ -333,6 +350,7 @@ function collectContentProblems(bundle, errors = []) {
       if (!Number.isFinite(multiplier) || multiplier < 0) err(`balance.arcaneExposure.schoolBuildupMultipliers.${school}`, 'must be finite and non-negative');
     }
   }
+  for (const problem of attackCardDamageConfigProblems(b)) err(problem.path, problem.msg);
 
   // Quest steps (E12): an event-level history gate must name a shipped event,
   // carry a well-formed requirement (model/quests.js is the one grammar), and
@@ -593,41 +611,39 @@ function collectContentProblems(bundle, errors = []) {
         }
       }
     }
-    // A PRESET MUST BE ABLE TO HOLD ITS OWN CLASS'S KIT (plan phase 9). The
-    // rebase moved every attribute and every equipment minimum at once, and
-    // nothing cross-read the two: the Starseer's preset lost the Intelligence
-    // its own staff asks for, so creation refused the character the table had
-    // just authored. Summing to the mode total is not enough — the kit the
-    // class starts in has to be wearable by the points the class starts with.
-    const presetTables = (b.attributeRules || {}).presets;
-    const kitRows = ((b.equipment || {}).startingKits) || [];
-    const reqRows = ((b.equipment || {}).equipmentRequirements) || [];
-    if (presetTables && typeof presetTables === 'object' && kitRows.length && reqRows.length) {
-      const minimaFor = (itemId) => reqRows.filter((row) => row && row.itemId === itemId);
-      const defaultMode = (b.attributeRules || {}).defaultMode;
-      const byClass = presetTables[defaultMode];
-      if (byClass && typeof byClass === 'object') {
-        for (const kit of kitRows) {
-          if (!kit || !kit.baseline) continue;
-          const allocation = byClass[kit.classId];
-          if (!allocation) continue;
-          for (const itemId of [kit.rightHand, kit.leftHand].filter(Boolean)) {
-            for (const row of minimaFor(itemId)) {
-              const have = allocation[row.attributeId];
-              if (Number.isInteger(row.minimum) && Number.isInteger(have) && have < row.minimum) {
-                err(`attributeRules.presets.${defaultMode}.${kit.classId}.${row.attributeId}`,
-                  `is ${have}, but the class's baseline kit item '${itemId}' asks ${row.minimum} — the preset cannot hold the kit it starts in`);
-              }
-            }
-          }
-        }
-      }
-    }
+    // A PRESET MUST BE ABLE TO HOLD ITS OWN CLASS'S STARTING GEAR (plan
+    // phase 9). The rule and its wording live in model/attributes.js so the
+    // Advanced settings door asks the same question of an edited preset
+    // (review, #1217); this door asks it of the authored content.
+    for (const problem of presetGearProblems({
+      presets: (b.attributeRules || {}).presets,
+      defaultMode: (b.attributeRules || {}).defaultMode,
+      startingKits: ((b.equipment || {}).startingKits) || [],
+      equipmentRequirements: ((b.equipment || {}).equipmentRequirements) || [],
+      creationClasses: ((b.characterCreation || {}).classes) || {},
+    })) err(problem.path, problem.msg);
     const poise = b.balance.poise;
     if (!poise || typeof poise !== 'object' || Array.isArray(poise)) err('balance.poise', 'must be an object { growthMult, onFill, playerImpactPerHit } — the poise meters read it (plan phase 8); the Constitution term is the derived-stat row (plan phase 9)');
     else {
       if (!(Number.isInteger(poise.playerImpactPerHit) && poise.playerImpactPerHit >= 0)) err('balance.poise.playerImpactPerHit', `must be a non-negative integer, got ${JSON.stringify(poise.playerImpactPerHit)}`);
       if (poise.playerPerConstitution !== undefined) err('balance.poise.playerPerConstitution', 'was retired in plan phase 9: the Poise coefficient is derivedStatRules.rules.poise, and a copy here is a second home for one number');
+    }
+    // RULESET 7 RETIRED THREE HOMES FOR ONE NUMBER EACH. A copy returning to
+    // any of them is refused by name, as `playerPerConstitution` is above:
+    // the hand size, the rating formula and its multiplier, and the hand
+    // rules' counts are rows of derivedStatRules now.
+    if (b.balance.handMax !== undefined) err('balance.handMax', 'was retired in derived-stat ruleset 7: the hand size is derivedStatRules.rules.handSize, and a copy here is a second home for one number');
+    if (b.balance.combatRatings !== undefined && b.balance.combatRatings !== null && typeof b.balance.combatRatings === 'object') {
+      if (b.balance.combatRatings.multiplier !== undefined) err('balance.combatRatings.multiplier', 'was retired in derived-stat ruleset 7: each rating is a derivedStatRules row whose weights are the whole formula');
+    }
+    // The hand's shipped behaviour options (content/handRules.js) are the
+    // other place a count could creep back; a bundle may carry its own too.
+    // #1294's per-class opening hand (`startingByClass`) is the openingHand
+    // row's per-class form (`byClass`) since ruleset 7.
+    const retiredHand = { starting: 'openingHand', startingByClass: 'openingHand.byClass', turn: 'draw', capacity: 'handSize' };
+    for (const [group, row] of Object.entries(retiredHand)) {
+      if (handRulesDefaults[group] !== undefined) err(`handRulesDefaults.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${row}`);
+      if (b.handRules && b.handRules[group] !== undefined) err(`handRules.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${row}, and a copy here is a second home for one number`);
     }
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
@@ -689,7 +705,7 @@ function collectContentProblems(bundle, errors = []) {
     const lu = b.balance.levelUp;
     if (!lu || typeof lu !== 'object' || Array.isArray(lu)) err('balance.levelUp', 'must be an object');
     else {
-      for (const key of Object.keys(lu)) if (!['pointsPerLevel', 'maxLevels', 'pointsPerLevelMin', 'pointsPerLevelMax', 'tierSizeMin', 'tierSizeMax'].includes(key)) err(`balance.levelUp.${key}`, 'Unknown field — cinders buy no level (plan phase 6); the curve is balance.level.xp');
+      for (const key of Object.keys(lu)) if (!['pointsPerLevel', 'maxLevels', 'pointsPerLevelMin', 'pointsPerLevelMax'].includes(key)) err(`balance.levelUp.${key}`, 'Unknown field — cinders buy no level (plan phase 6); the curve is balance.level.xp');
       if (!(Number.isInteger(lu.pointsPerLevel) && lu.pointsPerLevel > 0)) err('balance.levelUp.pointsPerLevel', `must be a positive integer, got ${JSON.stringify(lu.pointsPerLevel)}`);
       if (lu.maxLevels !== null && lu.maxLevels !== undefined && !(Number.isInteger(lu.maxLevels) && lu.maxLevels >= 1)) err('balance.levelUp.maxLevels', `must be null or an integer of at least 1, got ${JSON.stringify(lu.maxLevels)}`);
     }
@@ -1238,10 +1254,21 @@ function collectContentProblems(bundle, errors = []) {
     attributeIds: (b.attributes || []).map((row) => row.id),
     classFields: ['maxHp'],
   })) err(problem.path, problem.msg);
+  // A row's per-class form names shipped classes only: a misspelt class id
+  // would silently open that class on the shared row.
+  const classIds = new Set((b.classes || []).map((row) => row.id));
+  for (const [id, row] of Object.entries(b.derivedStatRules?.rules || {})) {
+    for (const classId of Object.keys((row && typeof row.byClass === 'object' && row.byClass) || {})) {
+      if (!classIds.has(classId)) err(`derivedStatRules.rules.${id}.byClass.${classId}`, `unknown class '${classId}'`);
+    }
+  }
   // D26's short form: every derived stat carries how it READS, beside the rule
   // it describes. Content-door only — a save's restored snapshot has rules and
   // no prose, and asking it for prose it never stored would refuse a legal save.
   for (const problem of derivedStatPresentationProblems(b.derivedStatRules)) err(problem.path, problem.msg);
+  // Mana must be at least 1 for the weakest character creation allows: a run
+  // born with 0 Mana fails its own shape check (model/startingStatConfig.js).
+  for (const problem of derivedStatFloorProblems(b)) err(problem.path, problem.message);
 
   // Relic modifier tags are a compact passive DSL. The tag is the behavior;
   // every other word is data. Validate the exact row here so a typo never
@@ -1392,6 +1419,24 @@ function collectContentProblems(bundle, errors = []) {
         for (const key of Object.keys(table)) {
           const tier = Number(key);
           if (!Number.isInteger(tier) || tier < 1 || tier > (Number(cycle) || 0)) err(`balance.seatTiers.${key}`, `tier keys must be 1..${cycle}`);
+        }
+      }
+      // balance.bossTiers (§13.3): one { hp, damage } per tier, both positive.
+      const bossTable = b.balance.bossTiers;
+      if (!isPlainObject(bossTable)) {
+        err('balance.bossTiers', 'must be an object keyed by tier (1..actsPerCycle), each { hp, damage } with positive multipliers');
+      } else {
+        for (let tier = 1; tier <= (Number(cycle) || 0); tier++) {
+          const row = bossTable[tier];
+          if (!isPlainObject(row)) { err(`balance.bossTiers.${tier}`, `tier ${tier} needs a { hp, damage } row`); continue; }
+          for (const field of ['hp', 'damage']) {
+            if (typeof row[field] !== 'number' || !(row[field] > 0)) err(`balance.bossTiers.${tier}.${field}`, `needs a positive multiplier (got ${JSON.stringify(row[field])})`);
+          }
+          for (const field of Object.keys(row)) if (field !== 'hp' && field !== 'damage') err(`balance.bossTiers.${tier}.${field}`, 'unknown field (a tier row is { hp, damage })');
+        }
+        for (const key of Object.keys(bossTable)) {
+          const tier = Number(key);
+          if (!Number.isInteger(tier) || tier < 1 || tier > (Number(cycle) || 0)) err(`balance.bossTiers.${key}`, `tier keys must be 1..${cycle}`);
         }
       }
     }
@@ -2490,12 +2535,13 @@ function checkTemplate(template, effects, path, err, extraBindings = []) {
 
 function validateCardTemplates(card, path, err) {
   if (typeof card.textTemplate !== 'string' || !Array.isArray(card.effects)) return; // schema pass reports
-  checkTemplate(card.textTemplate, card.effects, `${path}.textTemplate`, err);
+  checkTemplate(card.textTemplate, cardTokenEffects(card), `${path}.textTemplate`, err);
   if (card.upgrade) {
     const upTemplate = card.upgrade.textTemplate != null ? card.upgrade.textTemplate : card.textTemplate;
     const upEffects = card.upgrade.effects != null ? card.upgrade.effects : card.effects;
     if (typeof upTemplate === 'string' && Array.isArray(upEffects)) {
-      checkTemplate(upTemplate, upEffects, `${path}.upgrade.textTemplate`, err);
+      // The upgrade cannot override the in-hand hook, so it inherits the base's.
+      checkTemplate(upTemplate, cardTokenEffects({ effects: upEffects, onTurnEndInHand: card.onTurnEndInHand }), `${path}.upgrade.textTemplate`, err);
     }
   }
 }

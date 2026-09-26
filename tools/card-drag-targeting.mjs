@@ -371,8 +371,10 @@ if (process.argv.includes('--selftest')) {
       // every check that counts plays instead of naming which card left.
       name: 'a drag commits the SELECTED card instead of the dragged one',
       file: 'src/ui/screens/combat.js',
-      find: '          if (plan.legal) playCard(inst.instanceId, plan.targetId || null);',
-      replace: '          if (plan.legal) playCard(selected || inst.instanceId, plan.targetId || null);',
+      // (The drop decision is finishCardDrag, src/ui/cardDragEnd.js since
+      // #1298; which card it plays is still combat.js's `play` op.)
+      find: '          play: (targetId) => playCard(inst.instanceId, targetId),',
+      replace: '          play: (targetId) => playCard(selected || inst.instanceId, targetId),',
       expectRed: /FAIL cell 2 the card that PLAYS is the one under the finger/,
     }, {
       // CELL 3, AND IT IS AIMED AT THE DERIVATION, NOT THE GESTURE. The dial

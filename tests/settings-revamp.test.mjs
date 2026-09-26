@@ -1,0 +1,963 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { buildChannel, debugEnabled, DEBUG_STORAGE_KEY } from '../src/ui/buildChannel.js';
+import {
+  visibleAdvancedGroups, RELEASE_ADVANCED_GROUP_IDS, ADVANCED_GROUP_IDS, settingsSearchHits,
+  settingsRowHtml, settingsRow, sliderSpan, niceCeil, buttonStep, rowModified, settingsRows,
+} from '../src/ui/screens/settings.js';
+import {
+  syncConfig, SYNC_DEFAULTS, profileKeys, profileText, profileChanges, profileDiff,
+  fetchProfile, pushProfile, toBase64, fromBase64, contentsUrl,
+} from '../src/model/settingsSync.js';
+import { contentBundle } from '../src/content/index.js';
+
+const at = (href) => { const u = new URL(href); return { pathname: u.pathname, hostname: u.hostname, protocol: u.protocol }; };
+
+test('the channel is read from where the page was served or saved', () => {
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/dev/449/'), 'standalone file'), 'dev');
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/test/latest/mobile/'), 'standalone file'), 'test');
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/main/12/'), 'standalone file'), 'main');
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/release/3'), 'standalone file'), 'release');
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/AshenSpire.html'), 'standalone file'), 'main', 'the site root is main’s tree');
+  assert.equal(buildChannel(at('file:///sdcard/Download/AshenSpire-dev-0.7.1.449.html'), 'standalone file'), 'dev');
+  assert.equal(buildChannel(at('file:///sdcard/Download/AshenSpire-mobile-test-0.7.1.2.html'), 'standalone file'), 'test');
+  assert.equal(buildChannel(at('file:///C:/games/AshenSpire-main-0.7.1.9.html'), 'standalone file'), 'main');
+  assert.equal(buildChannel(at('file:///home/me/AshenSpire.html'), 'standalone file'), 'unknown');
+  assert.equal(buildChannel(at('http://localhost:8080/index.html'), 'UNPLACED'), 'dev');
+  assert.equal(buildChannel(at('https://example.com/whatever.html'), 'source tree'), 'dev', 'the dev server is dev wherever it is');
+  assert.equal(buildChannel(null), 'dev', 'no page (Node) is a developer’s seat');
+});
+
+test('debug opens on dev and test, never on main or release, and on unknown only when asked', () => {
+  const memory = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v), removeItem: (k) => m.delete(k) }; };
+  assert.equal(debugEnabled('dev', { search: '', storage: memory() }), true);
+  assert.equal(debugEnabled('test', { search: '', storage: memory() }), true);
+  assert.equal(debugEnabled('main', { search: '?debug=1', storage: memory() }), false, 'main ignores the flag');
+  assert.equal(debugEnabled('release', { search: '?debug=1', storage: memory() }), false);
+  const store = memory();
+  assert.equal(debugEnabled('unknown', { search: '', storage: store }), false);
+  assert.equal(debugEnabled('unknown', { search: '?debug=1', storage: store }), true);
+  assert.equal(store.getItem(DEBUG_STORAGE_KEY), '1', 'remembered on the device');
+  assert.equal(debugEnabled('unknown', { search: '', storage: store }), true);
+  assert.equal(debugEnabled('unknown', { search: '?debug=0', storage: store }), false, '?debug=0 forgets it');
+});
+
+test('a release build shows only the player-facing Advanced sections, and search follows', () => {
+  assert.deepEqual(visibleAdvancedGroups(true).map((g) => g.id), [...ADVANCED_GROUP_IDS]);
+  assert.deepEqual(visibleAdvancedGroups(false).map((g) => g.id), [...RELEASE_ADVANCED_GROUP_IDS]);
+  assert.ok(ADVANCED_GROUP_IDS.includes('Sync'), 'Defaults & sync is a debug section');
+  const debugHits = settingsSearchHits('poise', true);
+  const releaseHits = settingsSearchHits('poise', false);
+  assert.ok(debugHits.some(({ row }) => row.key.startsWith('gameConfig.')), 'debug search reaches tuning rows');
+  assert.ok(!releaseHits.some(({ row }) => row.key.startsWith('gameConfig.')), 'release search never offers a hidden row');
+  assert.ok(settingsSearchHits('music volume', false).some(({ row }) => row.key === 'musicVolume'), 'every word must match, in any field');
+  assert.deepEqual(settingsSearchHits('   '), []);
+});
+
+test('every number is − slider field + with a Reset that shows only when changed', () => {
+  const row = settingsRow('touchFlickDistance');
+  const plain = settingsRowHtml({}, row);
+  for (const part of ['data-step="-1"', 'class="set-num-slider"', 'class="set-num"', 'data-step="1"', 'data-reset-key="touchFlickDistance"']) {
+    assert.ok(plain.includes(part), `number row carries ${part}`);
+  }
+  assert.match(plain, /data-reset-key="touchFlickDistance"[^>]*hidden/, 'Reset is hidden at the default');
+  assert.ok(!plain.includes('data-modified'), 'no dot at the default');
+  const changed = settingsRowHtml({ touchFlickDistance: row.def + 8 }, row);
+  assert.ok(changed.includes('data-modified="true"'));
+  assert.doesNotMatch(changed, /data-reset-key="touchFlickDistance"[^>]*hidden/);
+  const volume = settingsRowHtml({ musicVolume: 30 }, settingsRow('musicVolume'));
+  for (const part of ['class="set-range"', 'class="set-range-num"', 'data-step="-1"', 'data-step="1"', 'data-reset-key="musicVolume"']) {
+    assert.ok(volume.includes(part), `volume row carries ${part}`);
+  }
+  const toggle = settingsRowHtml({ screenShake: false }, settingsRow('screenShake'));
+  assert.ok(toggle.includes('data-reset-key="screenShake"') && toggle.includes('data-modified="true"'), 'toggles share the same Reset');
+});
+
+test('rowModified compares with the declared default, not with presence', () => {
+  const row = settingsRow('screenShake');
+  assert.equal(rowModified({}, row), false);
+  assert.equal(rowModified({ screenShake: row.def }, row), false);
+  assert.equal(rowModified({ screenShake: !row.def }, row), true);
+});
+
+test('sliders use a useful span and the buttons a useful step', () => {
+  assert.deepEqual(sliderSpan({ min: 0, max: 100, step: 5, def: 50 }, 50), [0, 100]);
+  assert.deepEqual(sliderSpan({ min: 0, max: 999, step: 0.01, def: 1 }, 1), [0, 5], 'a 0–999 multiplier gets a slider near its value');
+  assert.deepEqual(sliderSpan({ min: 0, max: 999, step: 1, def: 3 }, 3), [0, 50]);
+  assert.deepEqual(sliderSpan({ min: 0, max: 999, step: 1, def: 3, slider: true }, 3), [0, 999], 'an authored slider keeps its range');
+  assert.equal(niceCeil(30), 50);
+  assert.equal(niceCeil(0.3), 0.5);
+  assert.equal(niceCeil(100), 100);
+  assert.equal(buttonStep({ step: 1 }), 1);
+  assert.equal(buttonStep({ step: 0.01, def: 1 }), 0.05);
+  assert.equal(buttonStep({ step: 0.01, def: 5 }), 0.1);
+  assert.equal(buttonStep({ step: 0.01, def: 40 }), 1);
+});
+
+test('a sync config falls back field by field and refuses path tricks', () => {
+  assert.deepEqual(syncConfig({}), { ...SYNC_DEFAULTS });
+  const cfg = syncConfig({ owner: 'me', repo: 'Game', branch: 'prefs/phone', path: 'x/../../evil.json' });
+  assert.equal(cfg.owner, 'me');
+  assert.equal(cfg.branch, 'prefs/phone');
+  assert.equal(cfg.path, SYNC_DEFAULTS.path);
+  assert.equal(syncConfig({ owner: 'a b' }).owner, SYNC_DEFAULTS.owner);
+  assert.equal(syncConfig({ path: 'p.txt' }).path, SYNC_DEFAULTS.path, 'a profile is a .json file');
+  for (const branch of ['dev', 'test', 'release', 'main']) assert.equal(syncConfig({ branch }).branch, SYNC_DEFAULTS.branch, `never ${branch}`);
+  assert.equal(syncConfig({ path: 'package.json' }).path, SYNC_DEFAULTS.path, 'a profile lives under settings-profiles/');
+  assert.equal(syncConfig({ path: 'settings-profiles/phone.json' }).path, 'settings-profiles/phone.json');
+});
+
+test('a profile round-trips through the import door, and loading clears what it does not name', () => {
+  const rows = settingsRows();
+  const keys = profileKeys(rows);
+  assert.ok(keys.includes('screenShake') && !keys.some((key) => key.startsWith('gameConfig.')));
+  const source = { screenShake: false, musicVolume: 30, 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 };
+  const text = profileText(source, keys, { contentVersion: contentBundle.version });
+  const device = { reducedMotion: true, musicVolume: 80, settingsCategory: 'Advanced' };
+  const parsed = profileChanges(text, contentBundle, device, rows, keys);
+  assert.deepEqual(parsed.changes, source);
+  assert.deepEqual(parsed.cleared, ['reducedMotion'], 'a key the profile omits goes back to default; navigation state is left alone');
+  const diff = profileDiff(device, parsed);
+  assert.deepEqual(diff.map((d) => d.key).sort(), ['gameConfig.derivedStatRules.rules.ar.strength', 'musicVolume', 'reducedMotion', 'screenShake']);
+  assert.throws(() => profileChanges('{"game":"Ashen Spire","schemaVersion":1,"overrides":{"settings.nope":1}}', contentBundle, {}, rows, keys), /Unknown setting/);
+});
+
+test('base64 of UTF-8 survives the trip', () => {
+  const text = 'Reaver — “Ash” ⚔ ✓';
+  assert.equal(fromBase64(toBase64(text)), text);
+});
+
+function fakeGitHub({ branch = false, file = null } = {}) {
+  const calls = [];
+  const state = { branch, file };
+  const reply = (status, body) => ({ status, ok: status >= 200 && status < 300, json: async () => body });
+  const fetch = async (url, init = {}) => {
+    const method = init.method || 'GET';
+    calls.push(`${method} ${url.replace('https://api.github.com/repos/cehinds/AshenSpire', '')}`);
+    if (url.includes('/git/ref/heads/settings-profiles')) return state.branch ? reply(200, { object: { sha: 'b1' } }) : reply(404, { message: 'Not Found' });
+    if (url.includes('/git/ref/heads/dev')) return reply(200, { object: { sha: 'dev-sha' } });
+    if (url.endsWith('/git/refs') && method === 'POST') { state.branch = true; return reply(201, {}); }
+    if (url.includes('/contents/') && method === 'GET') return state.file ? reply(200, { content: toBase64(state.file), sha: 'f1' }) : reply(404, { message: 'Not Found' });
+    if (url.includes('/contents/') && method === 'PUT') {
+      const body = JSON.parse(init.body);
+      state.file = fromBase64(body.content);
+      state.put = body;
+      return reply(state.put.sha ? 200 : 201, { content: { sha: 'f2' } });
+    }
+    return reply(500, {});
+  };
+  return { fetch, calls, state };
+}
+
+test('the first save makes the branch from dev, then the file; later saves replace it', async () => {
+  const cfg = syncConfig({});
+  const gh = fakeGitHub();
+  assert.equal(await fetchProfile(cfg, { fetch: gh.fetch }), null, 'nothing there yet');
+  const first = await pushProfile(cfg, '{"a":1}\n', { token: 't', fetch: gh.fetch });
+  assert.deepEqual([first.branchCreated, first.created], [true, true]);
+  assert.ok(gh.calls.includes('POST /git/refs'));
+  assert.equal(gh.state.put.branch, 'settings-profiles');
+  assert.equal(gh.state.put.sha, undefined, 'a new file carries no sha');
+  const again = await pushProfile(cfg, '{"a":2}\n', { token: 't', fetch: gh.fetch });
+  assert.deepEqual([again.branchCreated, again.created, again.unchanged], [false, false, false]);
+  assert.equal(gh.state.put.sha, 'f1', 'a replacement names the blob it replaces');
+  const same = await pushProfile(cfg, '{"a":2}\n', { token: 't', fetch: gh.fetch });
+  assert.equal(same.unchanged, true, 'an identical profile is not committed again');
+  assert.deepEqual(await fetchProfile(cfg, { fetch: gh.fetch }), { text: '{"a":2}\n', sha: 'f1' });
+  await assert.rejects(pushProfile(cfg, 'x', { token: '', fetch: gh.fetch }), /needs a token/);
+  assert.equal(contentsUrl(cfg), 'https://api.github.com/repos/cehinds/AshenSpire/contents/settings-profiles/default.json');
+});
+
+test('a refused token does not stop a public profile loading; a refused save says what to fix', async () => {
+  const seen = [];
+  const fetch = async (url, init = {}) => {
+    seen.push(init.headers?.Authorization || 'anonymous');
+    if (init.headers?.Authorization) return { status: 401, ok: false, json: async () => ({ message: 'Bad credentials' }) };
+    return { status: 200, ok: true, json: async () => ({ content: toBase64('{}'), sha: 's' }) };
+  };
+  assert.deepEqual(await fetchProfile(syncConfig({}), { token: 'bad', fetch }), { text: '{}', sha: 's' });
+  assert.deepEqual(seen, ['Bearer bad', 'anonymous']);
+  const refuse = async () => ({ status: 401, ok: false, json: async () => ({ message: 'Bad credentials' }) });
+  await assert.rejects(pushProfile(syncConfig({}), 'x', { token: 'bad', fetch: refuse }), /401: Bad credentials.*token was refused/);
+});
+
+test('the sync panel’s token field and switch are never wired as settings', async () => {
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.ok(screen.includes("querySelectorAll('.set-text[data-key]')"), 'generic text handler needs a key');
+  assert.ok(screen.includes("querySelectorAll('.toggle[data-key]')"), 'generic toggle handler needs a key');
+  assert.doesNotMatch(screen, /querySelectorAll\('\.(set-text|toggle)'\)/);
+  for (const hook of ['data-sync-token', 'data-sync="auto"']) {
+    const tag = panel.slice(panel.lastIndexOf('<', panel.indexOf(hook)), panel.indexOf('>', panel.indexOf(hook)));
+    assert.ok(!tag.includes('data-key'), `${hook} carries no setting key`);
+  }
+});
+
+test('a malformed page path does not break channel detection', () => {
+  assert.equal(buildChannel({ pathname: '/AshenSpire/dev/12/%E0%A4%A', hostname: 'cehinds.github.io', protocol: 'https:' }, 'standalone file'), 'dev');
+});
+
+test('auto-load applies only while the game is still waiting for it', async () => {
+  const { autoLoadProfile } = await import('../src/ui/components/settingsSync.js');
+  const { SYNC_STORAGE } = await import('../src/model/settingsSync.js');
+  const store = new Map([[SYNC_STORAGE.auto, '1']]);
+  const saved = globalThis.localStorage;
+  globalThis.localStorage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v), removeItem: (k) => store.delete(k) };
+  try {
+    const rows = settingsRows();
+    const text = profileText({ screenShake: false }, profileKeys(rows));
+    const fetch = async () => ({ status: 200, ok: true, json: async () => ({ content: toBase64(text), sha: 'p1' }) });
+    const settings = {};
+    const changes = [];
+    const late = await autoLoadProfile({ settings, onChange: (c) => changes.push(c), rows, fetch, stillWanted: () => false });
+    assert.equal(late.reason, 'late');
+    assert.deepEqual(changes, []);
+    assert.equal(store.get(SYNC_STORAGE.lastSha), undefined, 'a late profile is left for the next start');
+    const onTime = await autoLoadProfile({ settings, onChange: (c) => changes.push(c), rows, fetch });
+    assert.equal(onTime.applied, 1);
+    assert.equal(settings.screenShake, false);
+    assert.equal(store.get(SYNC_STORAGE.lastSha), 'p1');
+    assert.equal((await autoLoadProfile({ settings, onChange: () => {}, rows, fetch })).reason, 'unchanged');
+  } finally { globalThis.localStorage = saved; }
+});
+
+test('a resolved row shows its dot and Reset when clearing its key would change it', () => {
+  const row = settingsRow('musicEnabled');
+  assert.equal(typeof row.resolve, 'function');
+  assert.equal(rowModified({}, row), false);
+  assert.equal(rowModified({ musicEnabled: false }, row), true);
+  const html = settingsRowHtml({ musicEnabled: false }, row);
+  assert.ok(html.includes('data-reset-key="musicEnabled"') && html.includes('data-modified="true"'));
+  assert.doesNotMatch(html, /data-reset-key="musicEnabled"[^>]*hidden/);
+});
+
+test('while searching, the scoped reset resets every matching result and says so', async () => {
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /filtering\(\) \? settingsSearchHits\(query, pageDebug\(\), settings, \{ changedOnly: changedOnly\(\) \}\)\.map\(\(hit\) => hit\.row\)/);
+  assert.ok(screen.includes("'Reset these results'"));
+});
+
+test('a volume slider takes every whole percent, and a compact slider widens for values outside it', async () => {
+  const html = settingsRowHtml({ musicVolume: 33 }, settingsRow('musicVolume'));
+  assert.match(html, /class="set-range"[^>]*step="1"[^>]*value="33"/, 'a typed 33 is a slider position');
+  assert.match(html, /data-step="1" data-step-by="5"/, 'the buttons still move by 5');
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /if \(v > Number\(slider\.max\)\) slider\.max = /, 'a committed value past the span widens it');
+});
+
+test('a profile that already matches is recorded as loaded', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?if \(!write\(SYNC_STORAGE\.lastSha, remote\.sha/);
+});
+
+test('the dev-preview standalone files are named so they open as dev builds', async () => {
+  const { readFileSync } = await import('node:fs');
+  const workflow = readFileSync(new URL('../.github/workflows/dev-preview.yml', import.meta.url), 'utf8');
+  const names = [...workflow.matchAll(/standalone\/(AshenSpire[^\s]*\.html)/g)].map((m) => m[1]);
+  assert.ok(names.length >= 2, 'the workflow still writes the standalone files');
+  for (const name of names) {
+    assert.equal(buildChannel({ pathname: `/Downloads/dev-standalone/${name}`, hostname: '', protocol: 'file:' }, 'standalone file'), 'dev', name);
+  }
+});
+
+test('a fractional slider can stand on an off-step authored value', () => {
+  const html = settingsRowHtml({}, { key: 'x.frac', label: 'Frac', type: 'number', def: 0.01, min: 0, max: 5, step: 0.05, integer: false });
+  assert.match(html, /class="set-num-slider"[^>]*step="any"[^>]*value="0.01"/);
+  const whole = settingsRowHtml({}, { key: 'x.int', label: 'Int', type: 'number', def: 3, min: 0, max: 10, step: 1 });
+  assert.match(whole, /class="set-num-slider"[^>]*step="1"/);
+});
+
+test('−/+ step from an off-grid value instead of snapping to the grid', async () => {
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /const round = \(v\) => Number\(v\.toFixed\(10\)\);/);
+  assert.doesNotMatch(screen, /Math\.round\(v \/ step\) \* step/);
+});
+
+test('a compact slider over a signed range is centred on its value', () => {
+  assert.deepEqual(sliderSpan({ min: -999, max: 999, step: 1, def: 5 }, 5), [-50, 50]);
+  assert.deepEqual(sliderSpan({ min: -500, max: 500, step: 1, def: 0 }, 0), [-50, 50]);
+  assert.deepEqual(sliderSpan({ min: -3, max: 999, step: 1, def: 5 }, 5), [-3, 50], 'a shallow negative floor is kept');
+});
+
+test('search leaves out rows the hand rules hide, so the count and the reset match the screen', () => {
+  // Fill mode draws up to the hand size and never reads the Draw / turn stat
+  // row (the turn draw since derived-stat ruleset 7), so its editors are
+  // hidden there, as the retired fixed-draw rows were, and found in fixed mode.
+  const key = 'gameConfig.derivedStatRules.rules.draw.base';
+  const fill = { 'gameConfig.handRules.drawMode': 'fill' };
+  assert.ok(!settingsSearchHits('draw / turn base', true, fill).some((hit) => hit.row.key === key), 'a fixed-draw row is hidden while drawing to a hand size');
+  assert.ok(settingsSearchHits('draw / turn base', true, {}).some((hit) => hit.row.key === key), 'and found in fixed mode');
+});
+
+test('a new profile load retires the previous preview first', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  const start = panel.indexOf('const previewLoad = async');
+  assert.ok(panel.indexOf('pending = null;', start) < panel.indexOf('fetchProfile(', start));
+});
+
+test('a dev preview served to a phone over the LAN opens as dev', () => {
+  for (const host of ['192.168.1.20', '10.0.0.5', '172.20.3.4', 'workstation.local']) {
+    assert.equal(buildChannel({ pathname: '/index.html', hostname: host, protocol: 'http:' }, 'standalone file'), 'dev', host);
+  }
+  assert.equal(buildChannel({ pathname: '/index.html', hostname: '172.40.3.4', protocol: 'http:' }, 'standalone file'), 'main', 'a public 172.x is not private');
+});
+
+test('?debug=1 still opens an unknown file when storage is unavailable', () => {
+  assert.equal(debugEnabled('unknown', { search: '?debug=1', storage: null }), true);
+  assert.equal(debugEnabled('unknown', { search: '', storage: null }), false);
+  assert.equal(debugEnabled('main', { search: '?debug=1', storage: null }), false);
+});
+
+test('a profile load that finishes after the location changed is dropped', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(mine !== generation \|\| !btn\.isConnected\) return;/);
+  assert.match(panel, /cfg = next;\s*generation \+= 1;/);
+});
+
+test('Changed lists every modified row from every section, and nothing else', async () => {
+  const { rowDefault } = await import('../src/ui/screens/settings.js');
+  const hits = settingsSearchHits('', true, { screenShake: false, 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 }, { changedOnly: true });
+  assert.deepEqual(hits.map((hit) => hit.row.key).sort(), ['gameConfig.derivedStatRules.rules.ar.strength', 'screenShake']);
+  assert.deepEqual(settingsSearchHits('', true, {}, { changedOnly: true }), [], 'a fresh profile has nothing changed');
+  assert.deepEqual(settingsSearchHits('shake', true, { screenShake: false, reducedMotion: true }, { changedOnly: true }).map((h) => h.row.key), ['screenShake'], 'words narrow it');
+  assert.equal(rowDefault(settingsRow('screenShake')), settingsRow('screenShake').def, 'no promoted default: the row default');
+});
+
+test('a reset offers Undo with exactly what it moved', async () => {
+  const { resetKeys } = await import('../src/ui/screens/settings.js');
+  const settings = { screenShake: false, reducedMotion: true };
+  const seen = [];
+  const snapshot = resetKeys(settings, (c) => seen.push(c), ['screenShake', 'musicVolume'], 'Group reset');
+  assert.deepEqual(snapshot, { screenShake: false, musicVolume: undefined });
+  assert.equal(settings.screenShake, undefined);
+  assert.equal(settings.reducedMotion, true, 'keys outside the reset stay');
+  assert.deepEqual(seen, [{ screenShake: undefined, musicVolume: undefined }]);
+});
+
+test('a release build can see and clear tuning it hides', async () => {
+  const { hiddenTuningKeys } = await import('../src/ui/screens/settings.js');
+  const settings = { 'gameConfig.derivedStatRules.rules.ar.strength': 2, screenShake: false };
+  assert.deepEqual(hiddenTuningKeys(settings, false), ['gameConfig.derivedStatRules.rules.ar.strength']);
+  assert.deepEqual(hiddenTuningKeys(settings, true), [], 'a debug build shows every row, so nothing is hidden');
+});
+
+test('an authored slider range wins over the heuristic, and still holds the value', () => {
+  assert.deepEqual(sliderSpan({ min: 0, max: 999, step: 0.01, def: 1, sliderRange: [0.5, 2] }, 1), [0.5, 2]);
+  assert.deepEqual(sliderSpan({ min: 0, max: 999, step: 0.01, def: 1, sliderRange: [0.5, 2] }, 3), [0.5, 3]);
+});
+
+test('promoted defaults seed a profile once, follow a new promotion, and never override a choice', async () => {
+  const { seedSettingsDefaults, SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const first = { digest: 'a', values: { screenShake: false, musicVolume: 40 } };
+  const fresh = {};
+  Object.assign(fresh, seedSettingsDefaults(fresh, first));
+  assert.equal(fresh.screenShake, false);
+  assert.equal(fresh.musicVolume, 40);
+  assert.deepEqual(fresh[SEED_KEY], first.values);
+  const chose = { ...fresh, musicVolume: 70 };
+  const second = { digest: 'b', values: { screenShake: true, musicVolume: 55 } };
+  const moved = seedSettingsDefaults(chose, second);
+  assert.equal(moved.screenShake, true, 'an untouched default follows the new promotion');
+  assert.ok(!('musicVolume' in moved), 'the player’s own value stays');
+  const dropped = seedSettingsDefaults({ ...fresh }, { digest: 'c', values: {} });
+  assert.ok('screenShake' in dropped && dropped.screenShake === undefined, 'a dropped promotion hands the key back to the code default');
+  assert.deepEqual(seedSettingsDefaults({}, { digest: 'none', values: {} }), {}, 'no promotion, no change');
+});
+
+test('a profile save that finishes after the location changed is not recorded', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /const target = cfg;\s*const mine = generation;\s*const result = await pushProfile\(target,/);
+  assert.match(panel, /if \(mine !== generation \|\| target !== cfg\) return;\s*const noted = write\(SYNC_STORAGE\.lastSha/);
+});
+
+test('a resolved row set to its promoted default is not changed', async () => {
+  const { rowModified } = await import('../src/ui/screens/settings.js');
+  const row = settingsRow('musicEnabled');
+  const promoted = { musicEnabled: false };
+  assert.equal(rowModified({ musicEnabled: false }, row, promoted), false, 'the promoted value is the default');
+  assert.equal(rowModified({ musicEnabled: true }, row, promoted), true, 'moving off the promoted value is a change');
+  assert.equal(rowModified({ musicEnabled: false }, row, {}), true, 'with no promoted default, off is a change');
+});
+
+test('a key a profile leaves out goes back to its promoted default, not the code default', async () => {
+  const { profileDiff } = await import('../src/model/settingsSync.js');
+  const parsed = { changes: {}, cleared: ['screenShake', 'reducedMotion'] };
+  const here = { screenShake: false, reducedMotion: true };
+  assert.deepEqual(profileDiff(here, parsed, { screenShake: false }), [{ key: 'reducedMotion', from: true, to: undefined }],
+    'already at the promoted value: nothing moves');
+  assert.deepEqual(profileDiff({ screenShake: true }, { changes: {}, cleared: ['screenShake'] }, { screenShake: false }),
+    [{ key: 'screenShake', from: true, to: false }]);
+  assert.deepEqual(profileDiff(here, parsed).map((d) => d.to), [undefined, undefined], 'no promoted default: cleared');
+});
+
+test('changing the device-key scope forgets the loaded version, and Changed counts only what it can show', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /write\(SYNC_STORAGE\.includeDevice[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*write\(SYNC_STORAGE\.lastSha, null\);/);
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /const count = settingsSearchHits\('', pageDebug\(\), settings, \{ changedOnly: true \}\)\.length;/);
+  const hidden = settingsSearchHits('', false, { 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 }, { changedOnly: true });
+  assert.deepEqual(hidden, [], 'release: hidden tuning is not in Changed');
+});
+
+test('a player value that happens to equal a promotion is not recorded as seeded', async () => {
+  const { seedSettingsDefaults, SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const chose = { musicVolume: 40 };
+  Object.assign(chose, seedSettingsDefaults(chose, { digest: 'a', values: { musicVolume: 40, screenShake: false } }));
+  assert.deepEqual(chose[SEED_KEY], { screenShake: false }, 'only the absent key was seeded');
+  const moved = seedSettingsDefaults(chose, { digest: 'b', values: { musicVolume: 50, screenShake: false } });
+  assert.equal(Object.hasOwn(moved, 'musicVolume'), false, 'the player\'s 40 survives the next promotion');
+});
+
+test('a release build neither applies nor keeps promoted hidden tuning', async () => {
+  const { promotionFor, resetKeys, hiddenTuningKeys } = await import('../src/ui/screens/settings.js');
+  const defaults = { digest: 'x', values: { screenShake: false, 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 } };
+  assert.deepEqual(promotionFor(defaults, true), defaults, 'debug builds apply all of it');
+  assert.deepEqual(promotionFor(defaults, false).values, { screenShake: false }, 'release leaves hidden tuning out');
+  const settings = { 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 };
+  const keys = hiddenTuningKeys(settings, false);
+  resetKeys(settings, () => ({ ok: true }), keys, 'clear', { promoted: {} });
+  assert.equal(Object.hasOwn(settings, 'gameConfig.derivedStatRules.rules.ar.strength'), false, 'cleared, not reset to the promotion');
+  const { seedSettingsDefaults, SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const seeded = { 'gameConfig.derivedStatRules.rules.ar.strength': 1.5, [SEED_KEY]: { 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 } };
+  const moved = seedSettingsDefaults(seeded, promotionFor(defaults, false));
+  assert.equal(moved['gameConfig.derivedStatRules.rules.ar.strength'], undefined, 'an earlier seed of it is withdrawn on release');
+  assert.equal(Object.hasOwn(moved, 'gameConfig.derivedStatRules.rules.ar.strength'), true);
+});
+
+test('pad directions, profile switches and cleared volumes reach the live state', async () => {
+  const { readFileSync } = await import('node:fs');
+  const input = readFileSync(new URL('../src/ui/input.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(input, /else if \(i === 1[2-5]\) moveFocus\(/, 'the D-pad goes through navigate()');
+  assert.match(input, /if \(Math\.abs\(ax\) > Math\.abs\(ay\)\) navigate\(/, 'so does the stick');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.equal((panel.match(/write\(SYNC_STORAGE\.lastSha, null\);\s*write\(SYNC_STORAGE\.lastAt, null\);/g) || []).length, 2);
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /musicVolume: settings\.musicVolume \?\? AUDIO_DEFAULTS\.musicVolume/);
+  assert.match(main, /sfxVolume: settings\.sfxVolume \?\? AUDIO_DEFAULTS\.sfxVolume/);
+});
+
+test('a profile that cannot be saved is not left applied', async () => {
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const settings = { screenShake: false, reducedMotion: true };
+  const parsed = { changes: { screenShake: true, musicVolume: 20 }, cleared: ['reducedMotion'] };
+  const calls = [];
+  assert.throws(() => applyProfile(settings, (c) => { calls.push(c); return { ok: false }; }, parsed, {}), /could not be saved/);
+  assert.deepEqual(settings, { screenShake: false, reducedMotion: true });
+  assert.deepEqual(calls[1], { screenShake: false, musicVolume: undefined, reducedMotion: true },
+    'the old values go back through onChange too, so the live state follows');
+});
+
+test('navigate() reads its own cursor, and a refused token write is reported', async () => {
+  const { readFileSync } = await import('node:fs');
+  const input = readFileSync(new URL('../src/ui/input.js', import.meta.url), 'utf8');
+  const body = input.slice(input.indexOf('function navigate('), input.indexOf('function nudgeRange('));
+  assert.match(body, /function navigate\(dir, on = null\)/, 'navigate is module-level, so each caller hands it the control');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(!write\(SYNC_STORAGE\.token, value\)\) \{/);
+});
+
+test('release promotions and Clear hidden tuning cover every debug-only row, not only gameConfig.*', async () => {
+  const { promotionFor, hiddenTuningKeys } = await import('../src/ui/screens/settings.js');
+  const values = { shrineMultiUse: true, screenShake: false, 'gameConfig.derivedStatRules.rules.ar.strength': 2 };
+  assert.deepEqual(promotionFor({ digest: 'x', values }, false).values, { screenShake: false });
+  assert.deepEqual(hiddenTuningKeys(values, false).sort(), ['gameConfig.derivedStatRules.rules.ar.strength', 'shrineMultiUse']);
+  assert.deepEqual(hiddenTuningKeys(values, true), [], 'debug builds show them all');
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(!write\(SYNC_STORAGE\.auto, [^)]*\)\) \{ status\(STORAGE_REFUSED\); return; \}/);
+  assert.match(panel, /if \(!write\(SYNC_STORAGE\.includeDevice, [^)]*\)\) \{ status\(STORAGE_REFUSED\); return; \}/);
+});
+
+test('a profile location is adopted only once storage kept it', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  const guarded = panel.match(/if \(!write\(SYNC_STORAGE\.config, JSON\.stringify\(next\)\)\) \{ status\(STORAGE_REFUSED\); return; \}\s*cfg = next;/g) || [];
+  assert.equal(guarded.length, 2, 'both the named-profile picker and Use these');
+});
+
+test('auto-load leaves a profile alone when this device cannot record its version', async () => {
+  const { autoLoadProfile } = await import('../src/ui/components/settingsSync.js');
+  const { SYNC_STORAGE } = await import('../src/model/settingsSync.js');
+  const store = new Map([[SYNC_STORAGE.auto, '1']]);
+  const saved = globalThis.localStorage;
+  // Reads work; every write is refused (a full or locked store).
+  globalThis.localStorage = { getItem: (k) => store.get(k) ?? null, setItem: () => { throw new Error('QuotaExceeded'); }, removeItem: () => {} };
+  try {
+    const rows = settingsRows();
+    const text = profileText({ screenShake: false }, profileKeys(rows));
+    const fetch = async () => ({ status: 200, ok: true, json: async () => ({ content: toBase64(text), sha: 'p1' }) });
+    const settings = {};
+    const changes = [];
+    const result = await autoLoadProfile({ settings, onChange: (c) => changes.push(c), rows, fetch });
+    assert.equal(result.reason, 'unrecorded');
+    assert.deepEqual(changes, [], 'nothing applied that would be re-applied on every start');
+  } finally { globalThis.localStorage = saved; }
+});
+
+test('each input steers the control it is on', async () => {
+  const { readFileSync } = await import('node:fs');
+  const input = readFileSync(new URL('../src/ui/input.js', import.meta.url), 'utf8');
+  assert.match(input, /navigate\(\{ ArrowUp[^}]*\}\[ev\.key\], ev\.target\);/, 'keys act on the keyboard target');
+  for (const d of ['up', 'down', 'left', 'right']) assert.match(input, new RegExp(`navigate\\('${d}', current\\(\\)\\);`), `D-pad ${d} acts on the game cursor`);
+  const body = input.slice(input.indexOf('function navigate('), input.indexOf('function nudgeRange('));
+  assert.doesNotMatch(body, /document\.activeElement|current\(\)/, 'navigate uses only the control it is given');
+});
+
+test('−/+ ask for the button step of the value they step from', async () => {
+  const { buttonStep } = await import('../src/ui/screens/settings.js');
+  const row = settingsRow('gameConfig.derivedStatRules.rules.ar.strength');
+  assert.equal(buttonStep(row, 1), 0.05);
+  assert.equal(buttonStep(row, 40), 1, 'a typed 40 steps by 1, not the 0.05 it was drawn with');
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /const by = \(stepFor \? stepFor\(base\) : Number\(b\.dataset\.stepBy\)\) \|\| step;/);
+  assert.match(screen, /stepFor: \(v\) => buttonStep\(row, v\)/);
+});
+
+test('a Reset goes back to the promotion this build applies, never hidden tuning on release', async () => {
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /export function resetKeys\(settings, onChange, keys, label = 'Reset', \{ promoted = buildPromotion\(\) \} = \{\}\)/);
+  assert.match(screen, /return debug \? PROMOTED_DEFAULTS : promotionFor\(SETTINGS_DEFAULTS, false\)\.values;/);
+  const { resetKeys } = await import('../src/ui/screens/settings.js');
+  const settings = { shrineMultiUse: true, screenShake: true };
+  resetKeys(settings, () => ({ ok: true }), ['shrineMultiUse', 'screenShake'], 'all', { promoted: { screenShake: false } });
+  const { settingsDefaultsSeed: _seed, ...values } = settings;
+  assert.deepEqual(values, { screenShake: false }, 'a key the promotion leaves out is cleared');
+});
+
+test('moving off a promoted value makes it the player\'s; a Reset hands it back', async () => {
+  const { seedAfterChange, seedSettingsDefaults, SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const settings = { musicVolume: 40, [SEED_KEY]: { musicVolume: 40, screenShake: false } };
+  const away = seedAfterChange(settings, { musicVolume: 55 });
+  assert.deepEqual(away, { screenShake: false }, 'moved off: no longer the promotion\'s');
+  Object.assign(settings, { musicVolume: 55, [SEED_KEY]: away });
+  assert.equal(seedAfterChange(settings, { musicVolume: 40 }), undefined, 'coming back changes nothing in the record');
+  settings.musicVolume = 40;
+  assert.equal(Object.hasOwn(seedSettingsDefaults(settings, { digest: 'b', values: { musicVolume: 50, screenShake: false } }), 'musicVolume'), false,
+    'a later promotion leaves the player\'s 40 alone');
+  assert.equal(seedAfterChange(settings, { musicVolume: 50, [SEED_KEY]: {} }), undefined, 'a change that carries the record is not pruned');
+  const { resetKeys } = await import('../src/ui/screens/settings.js');
+  const seen = [];
+  resetKeys(settings, (c) => seen.push(c), ['musicVolume'], 'reset', { promoted: { musicVolume: 40 } });
+  assert.equal(seen[0][SEED_KEY].musicVolume, 40, 'Reset marks the key as the promotion\'s again');
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(!write\(SYNC_STORAGE\.lastSha, remote\.sha \|\| ''\)\) \{[\s\S]*?status\('This device already matches/);
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /const seed = seedAfterChange\(activeSettings, changed\);/);
+});
+
+test('every version marker and the token removal report a refused write', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /const noted = write\(SYNC_STORAGE\.lastSha, pending\.sha \|\| ''\);[\s\S]*?if \(!noted\) carriedStatus = UNNOTED;/, 'Apply');
+  assert.match(panel, /const noted = write\(SYNC_STORAGE\.lastSha, result\.sha \|\| ''\);[\s\S]*?\(noted \? '' : ` \$\{UNNOTED\}`\)/, 'Save');
+  assert.match(panel, /if \(!write\(SYNC_STORAGE\.token, null\)\) \{ status\('The token could not be removed/, 'Forget');
+  assert.doesNotMatch(panel, /^\s*write\(SYNC_STORAGE\.(lastSha|token), (remote|pending|result)\.sha/m, 'no unchecked version write is left');
+});
+
+test('a Reset that cannot be saved is not left applied, and results reset covers every match', async () => {
+  const { resetKeys } = await import('../src/ui/screens/settings.js');
+  const settings = { screenShake: false, reducedMotion: true };
+  const calls = [];
+  resetKeys(settings, (c) => { calls.push(c); return { ok: false }; }, ['screenShake', 'reducedMotion'], 'reset', { promoted: {} });
+  assert.deepEqual(settings, { screenShake: false, reducedMotion: true }, 'values back as they were');
+  assert.deepEqual(calls[1], { screenShake: false, reducedMotion: true }, 'and back through onChange, so live state follows');
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /filtering\(\) \? settingsSearchHits\(query, pageDebug\(\), settings, \{ changedOnly: changedOnly\(\) \}\)\.map\(\(hit\) => hit\.row\)/);
+});
+
+test('Save drops an older preview, and Undo gives promotion ownership back', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /on\('save', async \(btn\) => \{[\s\S]*?generation \+= 1;\s*pending = null;[\s\S]*?const mine = generation;/, 'the save bumps the generation before it snapshots it');
+  assert.match(panel, /before\[SEED_KEY\] = settings\[SEED_KEY\];/, 'a profile load\'s Undo carries the seed record');
+  const { resetKeys } = await import('../src/ui/screens/settings.js');
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const settings = { musicVolume: 55, [SEED_KEY]: { screenShake: false } };
+  const seen = [];
+  resetKeys(settings, (c) => { seen.push(c); return { ok: true }; }, ['musicVolume'], 'reset', { promoted: { musicVolume: 40 } });
+  assert.deepEqual(seen[0][SEED_KEY], { screenShake: false, musicVolume: 40 });
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /offerUndo\(label, undo, seedMoved \? seedPatch\(seedBefore, changed\[SEED_KEY\]\) : null\);/);
+});
+
+test('a refused profile load hands the seed record back, and the panel bag mirrors the stored record', async () => {
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /const seed = seedAfterChange\(settings, changes\);\s*if \(seed\) settings\[SEED_KEY\] = seed;/, 'the panel bag mirrors the stored record');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const record = { musicVolume: 40 };
+  const settings = { musicVolume: 40, [SEED_KEY]: record };
+  const calls = [];
+  assert.throws(() => applyProfile(settings, (c) => { calls.push(c); return calls.length === 1 ? { ok: false } : { ok: true }; },
+    { changes: { musicVolume: 70 }, cleared: [] }, {}), /could not be saved/);
+  assert.deepEqual(calls[1], { musicVolume: 40, [SEED_KEY]: record }, 'a refused load hands the record back too');
+  assert.deepEqual(settings, { musicVolume: 40, [SEED_KEY]: record });
+});
+
+test('a row\'s Reset sits beside its label, never inside the ellipsised label', () => {
+  const row = settingsRow('screenShake');
+  const html = settingsRowHtml({ screenShake: !row.def }, row);
+  const label = html.match(/<span class="ls-label"><span class="set-mod-dot" aria-hidden="true"><\/span>([^<]*)<\/span>/);
+  assert.ok(label, 'the label is plain text after the dot');
+  assert.ok(html.indexOf('set-row-reset') > label.index + label[0].length, 'the Reset follows the closed label, inside the label stack');
+  assert.match(html, /<button type="button" class="as-btn set-row-reset[^>]*>Reset<\/button>/, 'a changed row shows its Reset');
+});
+
+test('a profile load hands omitted promoted keys back to the promotion', async () => {
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const settings = { musicVolume: 55, screenShake: false, [SEED_KEY]: { screenShake: false } };
+  const seen = [];
+  const moved = applyProfile(settings, (c) => { seen.push(c); return { ok: true }; },
+    { changes: { screenShake: true }, cleared: ['musicVolume'] }, { musicVolume: 40, screenShake: false });
+  assert.equal(moved, 2);
+  assert.deepEqual(seen[0][SEED_KEY], { musicVolume: 40 }, 'the cleared key is the promotion\'s again; the one moved off it is not');
+  assert.deepEqual(settings, { musicVolume: 40, screenShake: true, [SEED_KEY]: { musicVolume: 40 } });
+  const refused = { musicVolume: 55 };
+  const calls = [];
+  assert.throws(() => applyProfile(refused, (c) => { calls.push(c); return calls.length === 1 ? { ok: false } : { ok: true }; },
+    { changes: {}, cleared: ['musicVolume'] }, { musicVolume: 40 }), /could not be saved/);
+  assert.deepEqual(refused, { musicVolume: 55 }, 'a refused load leaves no seed record behind');
+  assert.ok(Object.hasOwn(calls[1], SEED_KEY) && calls[1][SEED_KEY] === undefined, 'and clears the one it sent');
+});
+
+test('a refused Undo is rolled back; a restored profile is seeded like boot; a dotted name is refused', async () => {
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /const now = \{ \[SEED_KEY\]: settings\[SEED_KEY\] \};[\s\S]*?if \(onChange\(restore\)\?\.ok === false\) \{[\s\S]*?onChange\(now\);/, 'Undo puts the state it replaced back when the save is refused');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /onRestored: \(\) => \{[\s\S]*?seedPromotedDefaults\(meta, settings\);\s*applyRestoredSettings\(settings\);/, 'a restore runs the promotion step');
+  assert.match(main, /^seedPromotedDefaults\(activeMeta, activeSettings\);/m, 'boot runs the same step');
+  const { validProfileName, normalizeProfileName } = await import('../src/model/settingsSync.js');
+  for (const name of ['desk.', '.', '.hidden', 'a.']) assert.equal(validProfileName(name), false, name);
+  assert.equal(normalizeProfileName('desk.'), null);
+  assert.equal(normalizeProfileName('desk..json'), null);
+  assert.equal(validProfileName('v1.2_test'), true);
+});
+
+test('a no-op load still records promotion ownership; the unrecorded warning survives the repaint; a refused Undo keeps its offer', async () => {
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const settings = { musicVolume: 40 };
+  const seen = [];
+  const moved = applyProfile(settings, (c) => { seen.push(c); return { ok: true }; }, { changes: {}, cleared: ['musicVolume'] }, { musicVolume: 40 });
+  assert.equal(moved, 0, 'no visible setting moved');
+  assert.deepEqual(seen, [{ [SEED_KEY]: { musicVolume: 40 } }], 'but ownership was saved');
+  const again = [];
+  applyProfile(settings, (c) => { again.push(c); return { ok: true }; }, { changes: {}, cleared: ['musicVolume'] }, { musicVolume: 40 });
+  assert.deepEqual(again, [], 'nothing new to own: nothing saved');
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(!noted\) carriedStatus = UNNOTED;\s*afterApply\(moved, before, seedMoved\);/);
+  assert.match(panel, /if \(carriedStatus\) \{ status\(carriedStatus\); carriedStatus = ''; \}/);
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /onChange\(now\);\s*undoOffer = offer;/);
+  assert.match(screen, /<span class="set-label-line"><span class="ls-label">/, 'label and Reset share one line');
+});
+
+test('a manual load that matches still saves promotion ownership before it is marked loaded', async () => {
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?try \{ applyProfile\(settings, onChange, parsed\); \} catch \(error\) \{ status\(error\.message\); return; \}[\s\S]*?if \(!write\(SYNC_STORAGE\.lastSha/);
+});
+
+test('a profile carries which values are promoted defaults, and a loading device takes that ownership over', async () => {
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const rows = settingsRows();
+  const keys = profileKeys(rows);
+  // Device A: moved musicVolume off the promoted 40 and back — its own
+  // choice; sfxVolume 30 is still the promotion's.
+  const deviceA = { musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { sfxVolume: 30 } };
+  const text = profileText(deviceA, keys);
+  assert.deepEqual(JSON.parse(text).promotionOwned, ['sfxVolume']);
+  // Device B: seeded both, both owned by the promotion.
+  const deviceB = { musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { musicVolume: 40, sfxVolume: 30 } };
+  const parsed = profileChanges(text, contentBundle, deviceB, rows, keys);
+  assert.deepEqual(parsed.promotionOwned, ['sfxVolume']);
+  const seen = [];
+  const moved = applyProfile(deviceB, (c) => { seen.push(c); return { ok: true }; }, parsed, { musicVolume: 40, sfxVolume: 30 });
+  assert.equal(moved, 0, 'no visible value moved');
+  assert.deepEqual(deviceB[SEED_KEY], { sfxVolume: 30 }, 'musicVolume is now the player\'s, as it was on A');
+  // A profile saved before the field existed leaves ownership alone.
+  const legacy = JSON.stringify({ ...JSON.parse(text), promotionOwned: undefined });
+  const deviceC = { musicVolume: 40, [SEED_KEY]: { musicVolume: 40 } };
+  const legacyParsed = profileChanges(legacy, contentBundle, deviceC, rows, keys);
+  assert.equal(legacyParsed.promotionOwned, null);
+  applyProfile(deviceC, () => ({ ok: true }), legacyParsed, { musicVolume: 40 });
+  assert.deepEqual(deviceC[SEED_KEY], { musicVolume: 40 });
+});
+
+test('an Undo is painted only over the profile it was taken from; a seed-only reset can be undone', async () => {
+  const { resetKeys } = await import('../src/ui/screens/settings.js');
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /const offer = pendingUndo\(\);\s*if \(!offer\) return;/, 'the bar paints only a current offer');
+  assert.match(screen, /dropUndoOffer\(\);[\s\S]{0,400}?offerUndo\(moved \?/, 'a profile load starts a new generation before its own Undo');
+  // Every key already at its promoted value, but the player's: only ownership moves.
+  const settings = { musicVolume: 40 };
+  resetKeys(settings, () => ({ ok: true }), ['musicVolume'], 'reset', { promoted: { musicVolume: 40 } });
+  assert.deepEqual(settings[SEED_KEY], { musicVolume: 40 });
+  assert.match(screen, /offerUndo\(label, undo, seedMoved \? seedPatch\(seedBefore, changed\[SEED_KEY\]\) : null\);/);
+});
+
+test('a mistyped sync location is refused by name, never swapped for the default', async () => {
+  const { syncConfigProblems } = await import('../src/model/settingsSync.js');
+  assert.deepEqual(syncConfigProblems({ path: 'profiles/desk.json' }), ['path']);
+  assert.deepEqual(syncConfigProblems({ branch: 'main' }), ['branch']);
+  assert.deepEqual(syncConfigProblems({ path: 'settings-profiles/desk.json', owner: '' }), [], 'empty asks for the default');
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /const problems = syncConfigProblems\(raw\);\s*if \(problems\.length\) \{ status\(`Not saved: check/);
+});
+
+test('ownership survives a promotion that moved on, and an ownership-only load can be undone', async () => {
+  const { SEED_KEY, seedSettingsDefaults } = await import('../src/model/settingsDefaults.js');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  // Saved when the promotion was 40; this build promotes 50.
+  // It takes this build's promotion on load, not at the next start: boot's
+  // seeding has already run by the time a profile loads.
+  const { profileDiff } = await import('../src/model/settingsSync.js');
+  const parsed = { changes: { musicVolume: 40 }, cleared: [], promotionOwned: ['musicVolume'] };
+  const device = { musicVolume: 55, [SEED_KEY]: {} };
+  assert.deepEqual(profileDiff(device, parsed, { musicVolume: 50 }), [{ key: 'musicVolume', from: 55, to: 50 }], 'the preview shows the current promotion');
+  const moved = applyProfile(device, () => ({ ok: true }), parsed, { musicVolume: 50 });
+  assert.equal(moved, 1);
+  assert.equal(device.musicVolume, 50, 'the current promoted value is live straight away');
+  assert.deepEqual(device[SEED_KEY], { musicVolume: 50 }, 'and is the promotion\'s');
+  assert.deepEqual(seedSettingsDefaults(device, { digest: 'b', values: { musicVolume: 50 } }), {}, 'nothing left for the next start to fix');
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /afterApply\(moved, before, seedMoved\);/);
+  assert.match(panel, /if \(seedMoved\) \{\s*carriedStatus = '[^']*';\s*afterApply\(0, \{ \[SEED_KEY\]: seedBefore \}, true\);/);
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /if \(moved \|\| seedMoved\) \{[\s\S]{0,600}?offerUndo\(/);
+});
+
+test('a profile restore drops any pending Undo, since it refills the same settings object', async () => {
+  const { readFileSync } = await import('node:fs');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /function applyRestoredSettings\(restored\) \{[\s\S]*?dropUndoOffer\(\);[\s\S]*?for \(const key of Object\.keys\(activeSettings\)\) delete activeSettings\[key\];/);
+  const { dropUndoOffer } = await import('../src/ui/screens/settings.js');
+  assert.equal(typeof dropUndoOffer, 'function');
+});
+
+test('ownership covers gameConfig.* overrides and keys the current promotion dropped', async () => {
+  const { SEED_KEY, seedSettingsDefaults } = await import('../src/model/settingsDefaults.js');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const key = 'gameConfig.combatRatings.multiplier';
+  const rows = settingsRows();
+  const keys = profileKeys(rows);
+  const text = profileText({ [key]: 1.5, [SEED_KEY]: { [key]: 1.5 } }, keys);
+  assert.deepEqual(JSON.parse(text).promotionOwned, [key], 'an advanced override can be promotion-owned');
+  // Promoted 40 on the saving device; this build's promotion dropped the key.
+  // It lands at the code default now, owned by no one — what seeding would do.
+  const device = { musicVolume: 55, [SEED_KEY]: {} };
+  applyProfile(device, () => ({ ok: true }), { changes: { musicVolume: 40 }, cleared: [], promotionOwned: ['musicVolume'] }, {});
+  assert.equal(device.musicVolume, undefined, 'back to the code default on load');
+  assert.deepEqual(device[SEED_KEY], {});
+  assert.deepEqual(seedSettingsDefaults(device, { digest: 'c', values: {} }), {}, 'nothing left for the next start to fix');
+});
+
+test('a promoted advanced gameConfig value stays the promotion\'s on a loading device', async () => {
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const rows = settingsRows();
+  const keys = profileKeys(rows);
+  const adv = 'gameConfig.combatRatings.resistance.physicalK';
+  // Device A: both values are the promotion's; musicVolume is the player's.
+  const deviceA = { [adv]: 120, sfxVolume: 30, musicVolume: 40, [SEED_KEY]: { [adv]: 120, sfxVolume: 30 } };
+  const text = profileText(deviceA, keys);
+  assert.deepEqual(JSON.parse(text).promotionOwned, [adv, 'sfxVolume']);
+  const deviceB = { [adv]: 120, sfxVolume: 30, musicVolume: 40, [SEED_KEY]: { [adv]: 120, sfxVolume: 30, musicVolume: 40 } };
+  const parsed = profileChanges(text, contentBundle, deviceB, rows, keys);
+  assert.ok(parsed.promotionOwned.includes(adv));
+  applyProfile(deviceB, () => ({ ok: true }), parsed, { [adv]: 120, sfxVolume: 30, musicVolume: 40 });
+  assert.deepEqual(deviceB[SEED_KEY], { [adv]: 120, sfxVolume: 30 }, 'the advanced key keeps its promotion ownership');
+});
+
+test('an Undo survives a save and a reopen of the same profile, and never reaches a replaced one', async () => {
+  const { offerUndo, dropUndoOffer, pendingUndo } = await import('../src/ui/screens/settings.js');
+  const { readFileSync } = await import('node:fs');
+  // A reset offers Undo; the save reloads the profile into a new object and
+  // Settings is reopened over it within the window: still the same profile.
+  offerUndo('Reset (1 setting)', { musicVolume: 40 });
+  const offer = pendingUndo();
+  assert.ok(offer, 'offered');
+  assert.equal(pendingUndo(Date.now() + 1000), offer, 'still offered after a save and reopen inside the window');
+  assert.equal(pendingUndo(offer.until + 1), null, 'gone once the window closes');
+  // A profile load, restore or import replaces the profile: the offer is dropped.
+  offerUndo('Reset (1 setting)', { musicVolume: 40 });
+  dropUndoOffer();
+  assert.equal(pendingUndo(), null, 'a replaced profile never receives the old Undo');
+  // …and an offer made after the replacement belongs to the new profile.
+  offerUndo('Profile loaded (1 setting)', { sfxVolume: 30 });
+  assert.ok(pendingUndo(), 'the load\'s own Undo is offered');
+  dropUndoOffer();
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.equal((screen.match(/Object\.assign\(settings, saved\);\s*dropUndoOffer\(\);/g) || []).length, 2, 'both configuration imports drop a pending Undo');
+});
+
+test('a sync profile loaded by hand with Load settings keeps the ownership it records', async () => {
+  const { SEED_KEY, seedSettingsDefaults } = await import('../src/model/settingsDefaults.js');
+  const { importOwnership } = await import('../src/model/settingsSync.js');
+  const { parseAdvancedConfigFile, advancedConfigExport } = await import('../src/model/advancedConfig.js');
+  const rows = settingsRows();
+  const keys = profileKeys(rows);
+  // Device A: musicVolume 40 is the player's own; sfxVolume 30 is the promotion's.
+  const text = profileText({ musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { sfxVolume: 30 } }, keys);
+  // Device B: the same musicVolume, but still the promotion's there; sfxVolume the player's.
+  const deviceB = { musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { musicVolume: 40 } };
+  const changes = parseAdvancedConfigFile(text, contentBundle, deviceB, rows, []);
+  // This build promotes sfxVolume 30 (and musicVolume 40).
+  const saved = { ...changes, ...importOwnership(text, changes, deviceB, { musicVolume: 40, sfxVolume: 30 }) };
+  Object.assign(deviceB, saved); // what the import door saves
+  assert.deepEqual(deviceB[SEED_KEY], { sfxVolume: 30 }, 'ownership follows the file, as on A');
+  const next = seedSettingsDefaults(deviceB, { digest: 'd', values: { musicVolume: 50, sfxVolume: 35 } });
+  assert.equal(next.musicVolume, undefined, 'a later promotion leaves the player\'s value alone');
+  assert.equal(next.sfxVolume, 35, 'and moves the promotion\'s on');
+  // Saved under an older promotion: a hand load takes this build's value now,
+  // or the code default when this build no longer promotes the key.
+  const old = JSON.stringify({ ...JSON.parse(text), overrides: { ...JSON.parse(text).overrides, 'settings.sfxVolume': 20 } });
+  const deviceC = { sfxVolume: 30, [SEED_KEY]: { sfxVolume: 30 } };
+  const oldChanges = parseAdvancedConfigFile(old, contentBundle, deviceC, rows, []);
+  Object.assign(deviceC, { ...oldChanges, ...importOwnership(old, oldChanges, deviceC, { sfxVolume: 35 }) });
+  assert.equal(deviceC.sfxVolume, 35, 'the current promotion, not the file\'s older one');
+  assert.equal(deviceC[SEED_KEY].sfxVolume, 35);
+  const deviceD = { sfxVolume: 30, [SEED_KEY]: { sfxVolume: 30 } };
+  Object.assign(deviceD, { ...oldChanges, ...importOwnership(old, oldChanges, deviceD, {}) });
+  assert.equal(deviceD.sfxVolume, undefined, 'a dropped promotion lands at the code default');
+  assert.equal(Object.hasOwn(deviceD[SEED_KEY], 'sfxVolume'), false);
+  // An ordinary export carries no ownership: the import leaves it to the save path.
+  const plain = advancedConfigExport({ musicVolume: 40 }, {}, keys);
+  assert.deepEqual(importOwnership(plain, { musicVolume: 40 }, deviceB), {});
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.equal((screen.match(/const saved = \{ \.\.\.changes, \.\.\.importOwnership\(text, changes, settings, buildPromotion\(\)\) \};/g) || []).length, 2, 'both Load settings doors apply it');
+  assert.equal((screen.match(/Object\.assign\(settings, saved\);\s*dropUndoOffer\(\);/g) || []).length, 2, 'and still start a new Undo generation');
+});
+
+test('a branch or base git would refuse is refused by name, not saved', async () => {
+  const { syncConfigProblems, validBranchName } = await import('../src/model/settingsSync.js');
+  for (const bad of ['foo/', '/foo', '.foo', 'foo.lock', 'a/.b', 'a/b.lock', 'foo.', 'a//b', 'a..b', '@', '-foo', 'a@{b', 'a b', 'a~b', 'a^b', 'a:b', 'a?b', 'a*b', 'a[b', 'a\\b', 'a\u0001b']) {
+    assert.equal(validBranchName(bad), false, `${JSON.stringify(bad)} is not a git branch name`);
+    assert.deepEqual(syncConfigProblems({ branch: bad }), ['branch'], `branch ${JSON.stringify(bad)} refused`);
+    assert.deepEqual(syncConfigProblems({ base: bad }), ['base'], `base ${JSON.stringify(bad)} refused`);
+  }
+  for (const good of ['settings-sync', 'profiles/desk', 'v1.2', 'a.b/c-d_e']) {
+    assert.equal(validBranchName(good), true, good);
+    assert.deepEqual(syncConfigProblems({ branch: good, base: good === 'settings-sync' ? 'dev' : good }), [], good);
+  }
+});
+
+test('a load whose promoted values would split a pair the file kept whole is refused, changing nothing', async () => {
+  const { SEED_KEY } = await import('../src/model/settingsDefaults.js');
+  const { applyProfile } = await import('../src/ui/components/settingsSync.js');
+  const { importOwnership, promotionProblem } = await import('../src/model/settingsSync.js');
+  const { parseAdvancedConfigFile } = await import('../src/model/advancedConfig.js');
+  const min = 'gameConfig.derivedStatRules.rules.energy.min';
+  const max = 'gameConfig.derivedStatRules.rules.energy.max';
+  // Saved with min 5 (the promotion's then) and max 6 (the player's): a valid pair.
+  const parsed = { changes: { [min]: 5, [max]: 6 }, cleared: [], promotionOwned: [min] };
+  const device = { musicVolume: 40, [SEED_KEY]: { musicVolume: 40 } };
+  const snapshot = JSON.stringify(device);
+  const calls = [];
+  // This build promotes min 10: 10/6 would be broken.
+  assert.throws(() => applyProfile(device, (c) => { calls.push(c); return { ok: true }; }, parsed, { [min]: 10 }),
+    /Nothing was loaded: with this build's promoted defaults in place, .*energy\.min \(10\) must stay at or below .*energy\.max \(6\)/);
+  assert.equal(calls.length, 0, 'nothing saved');
+  assert.equal(JSON.stringify(device), snapshot, 'nothing moved');
+  // A promotion that keeps the pair whole still loads.
+  assert.equal(applyProfile(device, () => ({ ok: true }), parsed, { [min]: 4 }), 2);
+  assert.equal(device[min], 4);
+  // The same file loaded by hand: the doors check the values they will save.
+  const rows = settingsRows();
+  const text = JSON.stringify({ schemaVersion: 1, game: 'Ashen Spire', statRows: 7, overrides: { [min]: 5, [max]: 6 }, promotionOwned: [min] });
+  const deviceB = {};
+  const changes = parseAdvancedConfigFile(text, contentBundle, deviceB, rows, []);
+  const saved = { ...changes, ...importOwnership(text, changes, deviceB, { [min]: 10 }) };
+  assert.match(promotionProblem(contentBundle, deviceB, saved), /energy\.min \(10\) must stay at or below/);
+  assert.equal(promotionProblem(contentBundle, deviceB, changes), null, 'the file as written is fine');
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.equal((screen.match(/const problem = promotionProblem\(contentBundle, settings, saved\);\s*if \(problem\) throw new Error\(/g) || []).length, 2, 'both Load settings doors refuse it before saving');
+});
+
+test('an Undo puts back ownership only for the keys its change moved', async () => {
+  const { resetKeys, pendingUndo, dropUndoOffer, applySeedPatch, seedPatch } = await import('../src/ui/screens/settings.js');
+  const { SEED_KEY, seedAfterChange } = await import('../src/model/settingsDefaults.js');
+  // A (musicVolume) is the player's at the promoted value; B (sfxVolume) is the promotion's.
+  const settings = { musicVolume: 40, sfxVolume: 30, [SEED_KEY]: { sfxVolume: 30 } };
+  const save = (changed) => {
+    const seed = seedAfterChange(settings, changed);
+    for (const [key, value] of Object.entries(changed)) { if (value === undefined) delete settings[key]; else settings[key] = value; }
+    if (seed) settings[SEED_KEY] = seed;
+    return { ok: true };
+  };
+  dropUndoOffer();
+  // Reset A: only its ownership moves (to the promotion).
+  resetKeys(settings, save, ['musicVolume'], 'reset', { promoted: { musicVolume: 40, sfxVolume: 30 } });
+  assert.deepEqual(settings[SEED_KEY], { sfxVolume: 30, musicVolume: 40 });
+  const offer = pendingUndo();
+  assert.deepEqual(offer.seed, { musicVolume: null }, 'the offer carries A\'s ownership only');
+  // Inside the window the player moves B away and back: B is now theirs.
+  save({ sfxVolume: 20 });
+  save({ sfxVolume: 30 });
+  assert.deepEqual(settings[SEED_KEY], { musicVolume: 40 });
+  // Undo, as the bar applies it: A's ownership back, B's left as it is now.
+  const merged = applySeedPatch(settings[SEED_KEY], offer.seed);
+  save({ ...offer.snapshot, [SEED_KEY]: merged });
+  assert.deepEqual(settings[SEED_KEY], {}, 'A is the player\'s again; B stays the player\'s');
+  dropUndoOffer();
+  // seedPatch names only the keys that differ, with what they held before.
+  assert.deepEqual(seedPatch({ a: 1, b: 2 }, { a: 1, c: 3 }), { b: { value: 2 }, c: null });
+  const { readFileSync } = await import('node:fs');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(screen, /if \(offer\.seed\) \{\s*restore\[SEED_KEY\] = applySeedPatch\(now\[SEED_KEY\], offer\.seed\);/, 'the bar merges, never replaces, the record');
+  assert.match(screen, /const \{ \[SEED_KEY\]: seedBefore, \.\.\.values \} = before \|\| \{\};\s*offerUndo\([^;]*values, seedPatch\(seedBefore, settings\[SEED_KEY\]\)\);/, 'a profile load\'s Undo is per key too');
+  assert.doesNotMatch(screen, /undo\[SEED_KEY\] = seedBefore/, 'no Undo carries the whole record');
+});
+
+test('HEAD is not a sync branch or base', async () => {
+  const { syncConfigProblems, validBranchName } = await import('../src/model/settingsSync.js');
+  assert.equal(validBranchName('HEAD'), false);
+  assert.deepEqual(syncConfigProblems({ branch: 'HEAD', base: 'HEAD' }), ['branch', 'base']);
+  assert.equal(validBranchName('HEADS'), true, 'only the exact name');
+  assert.equal(validBranchName('feature/HEAD'), true, 'git allows it as a component');
+});
+
+test('float noise never costs a value its promotion ownership', async () => {
+  const { SEED_KEY, sameSetting, seedSettingsDefaults, seedAfterChange } = await import('../src/model/settingsDefaults.js');
+  const { seedPatch } = await import('../src/ui/screens/settings.js');
+  const noisy = 0.1 + 0.2; // 0.30000000000000004
+  assert.notEqual(noisy, 0.3);
+  assert.equal(sameSetting(noisy, 0.3), true);
+  assert.equal(sameSetting(0.3, 0.31), false);
+  assert.equal(sameSetting('0.3', 0.3), false, 'only numbers are compared loosely');
+  const keys = profileKeys(settingsRows());
+  const device = { musicVolume: noisy, [SEED_KEY]: { musicVolume: 0.3 } };
+  // Seeding calls it the promotion's…
+  assert.deepEqual(seedSettingsDefaults(device, { digest: 'e', values: { musicVolume: 0.3 } }), {});
+  // …and so does every other path.
+  assert.deepEqual(JSON.parse(profileText(device, keys)).promotionOwned, ['musicVolume'], 'the profile lists it');
+  assert.equal(seedAfterChange(device, { musicVolume: 0.3 }), undefined, 'a save within the noise keeps ownership');
+  assert.deepEqual(seedPatch({ musicVolume: 0.3 }, { musicVolume: noisy }), {}, 'an Undo sees no ownership change');
+  const { readFileSync } = await import('node:fs');
+  const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  assert.match(panel, /if \(Object\.hasOwn\(next, key\) && !sameSetting\(next\[key\], to\)\) delete next\[key\];/, 'a profile load prunes the same way');
+});

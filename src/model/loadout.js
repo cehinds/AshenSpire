@@ -4,7 +4,8 @@ import {
   applyMountOverrides, extraMountInstances, mountKey, ownerItemRef,
 } from './cardMounts.js';
 import { deriveStat } from './derivedStats.js';
-import { defaultRatingFormula, effectiveEquipmentRating, ratingIds } from './ratingFormula.js';
+import { effectiveEquipmentRating, ratingIds } from './ratingFormula.js';
+import { ratingsConfigFor, LEGACY_RATING_FORMULA } from './statRows.js';
 import { startingKitProblems, armourIsStartingEligible } from './startingKits.js';
 import { resolveCreationHands, classCreationConfig } from './characterCreation.js';
 import { tagService } from './tagService.js';
@@ -237,13 +238,23 @@ export function equipmentRequirementReceipt(registries, piece, attributes = {}, 
   const authored = (piece.requirements && piece.requirements.attributes) || {};
   const requirements = [];
   const failures = [];
-  const namespaced = itemUpgradeLevels?.[`armament/${piece.id}`];
+  // EACH HALF OF THE WARDROBE UNDER ITS OWN REF. Upgrade levels are keyed
+  // `armament/<id>` for weapons and `armor/<classId>/<id>` for outfits
+  // (itemUpgradeChanges.csv, loadout's own equippedPieces), and this read
+  // used the weapon form for both, so an outfit sharing an id with a weapon
+  // read THAT weapon's smithing level. No armour tier can lower a minimum
+  // today — itemUpgradeTagMatchesKind admits only equipmentPoise deltas for
+  // armour — so the armour ref finds no requirement rows; it is the right
+  // key for the day that vocabulary is widened, not a live reduction
+  // (review, #1217 and #1255).
+  const itemRef = piece.kind === 'armor' ? `armor/${piece.classId}/${piece.id}` : `armament/${piece.id}`;
+  const namespaced = itemUpgradeLevels?.[itemRef];
   const level = Number.isInteger(namespaced) ? namespaced
-    : Number.isInteger(armamentLevels?.[piece.id]) ? armamentLevels[piece.id] : 0;
+    : piece.kind !== 'armor' && Number.isInteger(armamentLevels?.[piece.id]) ? armamentLevels[piece.id] : 0;
   for (const [attributeId, required] of Object.entries(authored)) {
     if (!registries.attributes.has(attributeId)) throw new Error(`${piece.id}: unknown requirement attribute '${attributeId}'`);
     if (!Number.isInteger(required) || required < 0) throw new Error(`${piece.id}.${attributeId}: requirement minimum must be a non-negative integer`);
-    const delta = cumulativeRequirementDelta(registries, `armament/${piece.id}`, attributeId, level);
+    const delta = cumulativeRequirementDelta(registries, itemRef, attributeId, level);
     const effectiveRequired = Math.max(0, required + delta);
     const actual = attributes && attributes[attributeId];
     const row = { attributeId, baseRequired: required, reduction: -delta, required: effectiveRequired, actual: Number.isFinite(actual) ? actual : null };
@@ -1093,14 +1104,17 @@ export function equipmentKitPlan(registries, loadout, classId) {
   return EQUIPMENT_ROLES.map((role) => equipmentRoleSource(registries, loadout, classId, role));
 }
 
-function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnapshot) {
+function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnapshot, run = null) {
   const profile = row.profile;
   const rule = equipmentProfileRuleSnapshot && equipmentProfileRuleSnapshot.profiles && equipmentProfileRuleSnapshot.profiles[profile.id];
   if (!rule) throw new Error(`equipment profile snapshot missing '${profile.id}'`);
   const rarity = row.piece && row.piece.rarity;
   const rarityBonus = (((equipmentProfileRuleSnapshot.rarityBonuses || {})[rarity] || {})[row.role]) || 0;
-  const ratingConfig = registries.balance?.combatRatings || defaultRatingFormula;
-  const rating = effectiveEquipmentRating(ratingConfig, attributes, row.piece, rule, rule.ratingId);
+  // THE RUN'S OWN RATING ROWS (ruleset 7, model/statRows.js): a card's rating
+  // is priced by the rows the run was born with, or the live table for a
+  // preview with no run behind it.
+  const ratingConfig = ratingsConfigFor(registries, run) || LEGACY_RATING_FORMULA;
+  const rating = effectiveEquipmentRating(ratingConfig, attributes, row.piece, rule, rule.ratingId, run?.level?.level);
   rating.sourceLabel = row.piece ? (row.piece.kind === 'shield' ? 'shield' : 'weapon') : 'attribute';
   const uncappedEffectBase = rule.baseValue + rarityBonus;
   const effectBase = Number.isFinite(rule.cap) ? Math.min(rule.cap, uncappedEffectBase) : uncappedEffectBase;
@@ -1123,9 +1137,9 @@ function roleAmountReceipt(registries, row, attributes, equipmentProfileRuleSnap
 }
 
 /** Calculation receipts for card base + source-equipment rating + rarity. */
-export function equipmentKitReceipt(registries, loadout, classId, attributes, equipmentProfileRuleSnapshot) {
+export function equipmentKitReceipt(registries, loadout, classId, attributes, equipmentProfileRuleSnapshot, run = null) {
   const snapshot = restoreEquipmentProfileRuleSnapshot(equipmentProfileRuleSnapshot, registries);
-  return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes, snapshot) }));
+  return equipmentKitPlan(registries, loadout, classId).map((row) => ({ ...row, receipt: roleAmountReceipt(registries, row, attributes, snapshot, run) }));
 }
 
 // ---------------------------------------------------------------------------
@@ -1762,7 +1776,11 @@ function grantRefsFor(registries, loadout, classId, cfg, techniqueRow) {
   // (priorityAttackRefs) are not counted here: they are dealt inside the attack
   // quota by quotaRefs, so counting them again would charge them twice.
   const hasCombatKit = ['right', 'left'].some((hand) => handSource(registries, loadout, classId, hand).package?.combatKit);
-  if (techniqueRow && techniqueRow.profile && !hasCombatKit) {
+  // The unarmed technique IS the Dodge Roll, and every deck already carries
+  // one item-owned Dodge Roll (desiredGrantInstances), so it is not granted a
+  // second time as a technique slot.
+  const unarmedDodge = profileById(registries, ((registries.balance || {}).equipment || {}).unarmedProfiles?.technique)?.baseCardId;
+  if (techniqueRow && techniqueRow.profile && !hasCombatKit && techniqueRow.profile.baseCardId !== unarmedDodge) {
     grants.push({
       source: grantSourceFor(cfg, 'weapon'),
       cardId: techniqueRow.profile.baseCardId,
@@ -2028,6 +2046,33 @@ function pieceFamily(piece) {
  * stamped non-equipment card as immutable, so patching `cardId` alone would
  * leave a Dodge Roll wearing Crimson Cleave's stamp.
  */
+// The Dodge Roll's id named its owner hand until 2026-09-24
+// (`weaponArt:unarmed:left:dodgeRoll`); a saved run or combat pile still
+// holding that spelling is the same card under the owner-free id.
+function currentInstanceId(inst) {
+  const m = /^weaponArt:unarmed:(?:left|right|body):(.+)$/.exec(inst.instanceId || '');
+  if (m) inst.instanceId = `weaponArt:unarmed:${m[1]}`;
+  return inst.instanceId;
+}
+
+// The Dodge Roll changes owner — hand, body, or a smith-emptied art mount
+// that falls back to it — without leaving the pile it is in. Before the sweep,
+// an unwanted Dodge Roll takes the id of a wanted one no pile holds yet, so
+// the sweep adopts it where it sits rather than dropping it and minting a
+// copy into the discard.
+function carryDodgeRoll(registries, piles, wanted) {
+  const dodgeId = profileById(registries, ((registries.balance || {}).equipment || {}).unarmedProfiles?.technique)?.baseCardId;
+  if (!dodgeId) return;
+  const all = piles.flat();
+  const held = new Set(all.map((inst) => inst && currentInstanceId(inst)));
+  const open = [...wanted.values()].filter((d) => d.equipmentRole === 'weaponArt' && d.cardId === dodgeId && !held.has(d.instanceId));
+  for (const inst of all) {
+    if (!open.length) return;
+    if (!isItemOwned(inst) || inst.equipmentRole !== 'weaponArt' || inst.cardId !== dodgeId || wanted.has(inst.instanceId)) continue;
+    inst.instanceId = open.shift().instanceId;
+  }
+}
+
 function adoptWanted(inst, wanted) {
   if (inst.cardId !== wanted.cardId || (inst.upgraded === true) !== (wanted.upgraded === true)) return wanted;
   // Older combat snapshots omitted ownership metadata. Adopt it without moving
@@ -2046,10 +2091,11 @@ export function reconcileGrantedCards(registries, run) {
   // In place, not a reassignment: stampDeck captures its stamping list before
   // reconciling, so an appended instance must land in the SAME array to flow
   // through the carrier/mod stamping that follows.
+  carryDodgeRoll(registries, [run.deck], wanted);
   const kept = [];
   for (const inst of run.deck) {
     if (!isItemOwned(inst)) { kept.push(inst); continue; }
-    const want = wanted.get(inst.instanceId);
+    const want = wanted.get(currentInstanceId(inst));
     if (!want) continue;
     present.add(inst.instanceId);
     kept.push(adoptWanted(inst, want));
@@ -2125,27 +2171,48 @@ function desiredGrantInstances(registries, run) {
     }
   }
 
-  // THE EMPTY HAND'S ART: the Dodge Roll rides as long as one hand is empty
-  // (the owner's rule, 2026-09-02) — not only when both are. With one hand
-  // armed, the technique slot is that armament's (its installed art, A-6)
-  // and the EMPTY hand contributes the unarmed technique as a weapon-art
-  // instance of its own, minted and dropped here as the hands change, so
-  // filling the hand takes the dodge away and emptying it brings it back.
-  // Both hands empty is the unarmed package (every technique slot is the
-  // Dodge Roll already); a two-handed armament fills both hands.
-  const armed = ['right', 'left'].filter((hand) => handSource(registries, run.loadout, run.class, hand).piece);
+  // EVERYONE HAS THE DODGE (the owner's rule, 2026-09-24, widening the
+  // 2026-09-02 empty-hand rule): holding equipment never costs the Dodge Roll.
+  // Exactly one rides in every composed deck. An empty hand still owns it
+  // (`unarmed:<hand>`, right first), so filling that hand moves it rather than
+  // removing it; with no empty hand — both armed, or a two-handed armament —
+  // the body owns it (`unarmed:body`). An art mount already holding the Dodge
+  // Roll (a smith's emptied mount falls back to it) counts: one, not two.
+  const empty = ['right', 'left'].filter((hand) => !handSource(registries, run.loadout, run.class, hand).piece);
   const twoHanded = sources.right?.package?.handsRequired === 2 || sources.left?.package?.handsRequired === 2;
-  if (armed.length === 1 && !twoHanded) {
-    const empty = armed[0] === 'right' ? 'left' : 'right';
-    const profile = profileById(registries, ((registries.balance || {}).equipment || {}).unarmedProfiles?.technique);
-    const alreadyInstalled = profile && desired.some((d) => d.equipmentRole === 'weaponArt' && d.cardId === profile.baseCardId);
-    if (profile && profile.baseCardId && !alreadyInstalled) {
-      desired.push({
-        instanceId: `weaponArt:unarmed:${empty}:${profile.baseCardId}`,
-        cardId: profile.baseCardId, upgraded: false, equipmentRole: 'weaponArt', grantedBy: `unarmed:${empty}`,
-        grantSource: weaponSource,
-      });
-    }
+  const owner = twoHanded || !empty.length ? 'body' : empty[0];
+  const profile = profileById(registries, ((registries.balance || {}).equipment || {}).unarmedProfiles?.technique);
+  // A run saved while the unarmed technique slot still dealt the Dodge Roll
+  // keeps that run-owned copy; it counts as the one only while both hands are
+  // empty — the restamp that follows rebinds a technique slot to an armed
+  // hand's technique, and then that copy is no longer a Dodge Roll.
+  const legacyTechniqueDodge = empty.length === 2 && !twoHanded
+    && (run.deck || []).some((c) => c && c.equipmentRole === 'technique' && c.cardId === profile?.baseCardId);
+  const alreadyInstalled = profile && (
+    desired.some((d) => d.equipmentRole === 'weaponArt' && d.cardId === profile.baseCardId)
+    || legacyTechniqueDodge);
+  if (profile && profile.baseCardId && !alreadyInstalled) {
+    // One id whoever owns it, so a swap that moves it between a hand and the
+    // body re-attributes the card in whatever pile it sits in instead of
+    // dropping it and minting a fresh copy into the discard.
+    desired.push({
+      instanceId: `weaponArt:unarmed:${profile.baseCardId}`,
+      cardId: profile.baseCardId, upgraded: false, equipmentRole: 'weaponArt', grantedBy: `unarmed:${owner}`,
+      grantSource: weaponSource,
+    });
+  }
+
+  // Exactly one: two emptied art mounts (both hands' Weapon Arts extracted)
+  // each fall back to the Dodge Roll. The first — right hand before left, the
+  // order the arts were composed in — owns it; the others lend nothing.
+  if (profile && profile.baseCardId) {
+    let seen = false;
+    desired = desired.filter((d) => {
+      if (d.equipmentRole !== 'weaponArt' || d.cardId !== profile.baseCardId) return true;
+      if (seen) return false;
+      seen = true;
+      return true;
+    });
   }
 
   // EXTRA MOUNTS a smith has filled on worn pieces (the rune seam).
@@ -2240,14 +2307,18 @@ export function itemMountInstances(registries, run, piece, { authored = false } 
  * Deterministic instance ids keep the sweep idempotent and combat-save-stable.
  */
 export function reconcileGrantedCardsInCombat(registries, run, piles) {
-  const desired = desiredGrantInstances(registries, run);
+  // Combat's swap hands in a synthetic run with an empty deck; the piles are
+  // the deck here, and the Dodge Roll rule reads the deck for a legacy copy.
+  const deck = run.deck && run.deck.length ? run.deck : [...piles.hand, ...piles.draw, ...piles.discard, ...piles.exhaust];
+  const desired = desiredGrantInstances(registries, { ...run, deck });
   const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();
+  carryDodgeRoll(registries, [piles.hand, piles.draw, piles.discard, piles.exhaust], wanted);
   for (const pile of [piles.hand, piles.draw, piles.discard, piles.exhaust]) {
     const kept = [];
     for (const inst of pile) {
       if (!isItemOwned(inst)) { kept.push(inst); continue; }
-      const want = wanted.get(inst.instanceId);
+      const want = wanted.get(currentInstanceId(inst));
       if (!want) continue;
       present.add(inst.instanceId);
       kept.push(adoptWanted(inst, want));
@@ -2889,7 +2960,7 @@ export function stampDeck(registries, run, cards, {
   // BEFORE the stamping loop (in place — list IS run.deck here) means a
   // newly composed instance is stamped like any other card below.
   if (cards == null) reconcileGrantedCards(registries, run);
-  const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot).map((row) => [row.role, row]));
+  const rolePlan = new Map(equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot, run).map((row) => [row.role, row]));
   let n = 0;
   for (const inst of list) {
     let row = inst.equipmentRole ? rolePlan.get(inst.equipmentRole) : null;
@@ -2900,7 +2971,7 @@ export function stampDeck(registries, run, cards, {
         ? (registries.equipment.armaments || []).find((candidate) => candidate.id === owner) || null
         : null;
       row = { role: inst.kitRole || 'attack', profile, piece };
-      row.receipt = roleAmountReceipt(registries, row, run.attributes, run.equipmentProfileRuleSnapshot);
+      row.receipt = roleAmountReceipt(registries, row, run.attributes, run.equipmentProfileRuleSnapshot, run);
     }
     if (row && row.profile) {
       const prior = inst.profileId && run.equipmentProfileRuleSnapshot.profiles[inst.profileId];
@@ -3198,8 +3269,13 @@ export function canEquip(registries, slotId, ctx) {
     // armaments, and a gate that searched only the weapons would have left
     // every armour minimum unenforced while reading as though it enforced
     // them — worse than no gate, because the table says otherwise.
+    // ARMOUR IDS REPEAT PER CLASS (outfits.csv carries four `wayfarerPlate`
+    // rows), so the armour half is resolved against the run's own class when
+    // the caller names one; without a class the first row still answers, as
+    // equipPiece's own read does.
     const eq = registries.equipment || {};
     const piece = (eq.armaments || []).find((row) => row.id === ctx.itemId)
+      || (eq.armour || []).find((row) => row.id === ctx.itemId && (!ctx.classId || row.classId === ctx.classId))
       || (eq.armour || []).find((row) => row.id === ctx.itemId);
     if (piece) {
       // THE SAME INPUTS THE MUTATION'S OWN CHECK USES. equipPiece has read
@@ -3530,9 +3606,14 @@ export function equipPiece(registries, loadout, slotId, setIndex, itemId, owned,
     return changed;
   }
   // Armour ids repeat across classes; the class gate is armourById's, and this
-  // one only asks whether the piece may live in this slot at all.
+  // one only asks whether the piece may live in this slot at all. The row it
+  // reads is still the WEARER's when the caller names a class, as canEquip's
+  // is: the requirement receipt keys an outfit's smithing level by
+  // `armor/<classId>/<id>`, and reading another class's row would price the
+  // act differently from the seal (review, #1255).
   const piece = slot.kinds.includes('armor')
-    ? (eq.armour || []).find((o) => o.id === itemId)
+    ? ((eq.armour || []).find((o) => o.id === itemId && ctx.classId && o.classId === ctx.classId)
+      || (eq.armour || []).find((o) => o.id === itemId))
     : (eq.armaments || []).find((a) => a.id === itemId);
   if (!piece || !fitsSlot(slot, piece)) return false;
   if (!owned || typeof owned.has !== 'function') {

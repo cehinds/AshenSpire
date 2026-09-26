@@ -17,7 +17,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": 1
   },
   {
     "id": "vigil",
@@ -34,7 +35,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "oathsworn",
@@ -54,7 +56,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "warden",
@@ -74,7 +77,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "default",
@@ -91,7 +95,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "eclipse",
@@ -108,7 +113,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "starlit",
@@ -128,7 +134,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "astral",
@@ -148,7 +155,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "default",
@@ -165,7 +173,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "ossuary",
@@ -182,7 +191,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "emberhabit",
@@ -202,7 +212,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "pilgrim",
@@ -222,7 +233,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "default",
@@ -239,7 +251,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "nightveil",
@@ -256,7 +269,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "duelist",
@@ -276,7 +290,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "shadow",
@@ -293,7 +308,8 @@ export const outfits = [
     "artKey": "",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "bastion",
@@ -313,7 +329,8 @@ export const outfits = [
     "artKey": "warden",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "rimeweave",
@@ -333,7 +350,8 @@ export const outfits = [
     "artKey": "starlit",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "waywatcher",
@@ -353,7 +371,8 @@ export const outfits = [
     "artKey": "nightveil",
     "sharedSet": "",
     "artClassId": "",
-    "inventoryArtKey": ""
+    "inventoryArtKey": "",
+    "defenseRating": ""
   },
   {
     "id": "wayfarerPlate",
@@ -373,7 +392,8 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "reaver",
-    "inventoryArtKey": "wayfarerPlate"
+    "inventoryArtKey": "wayfarerPlate",
+    "defenseRating": ""
   },
   {
     "id": "wayfarerPlate",
@@ -393,7 +413,8 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "reaver",
-    "inventoryArtKey": "wayfarerPlate"
+    "inventoryArtKey": "wayfarerPlate",
+    "defenseRating": ""
   },
   {
     "id": "wayfarerPlate",
@@ -413,7 +434,8 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "reaver",
-    "inventoryArtKey": "wayfarerPlate"
+    "inventoryArtKey": "wayfarerPlate",
+    "defenseRating": ""
   },
   {
     "id": "wayfarerPlate",
@@ -433,7 +455,8 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "reaver",
-    "inventoryArtKey": "wayfarerPlate"
+    "inventoryArtKey": "wayfarerPlate",
+    "defenseRating": ""
   },
   {
     "id": "nightweave",
@@ -453,7 +476,8 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "starseer",
-    "inventoryArtKey": "nightweave"
+    "inventoryArtKey": "nightweave",
+    "defenseRating": ""
   },
   {
     "id": "nightweave",
@@ -473,7 +497,8 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "starseer",
-    "inventoryArtKey": "nightweave"
+    "inventoryArtKey": "nightweave",
+    "defenseRating": ""
   },
   {
     "id": "nightweave",
@@ -493,7 +518,8 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "starseer",
-    "inventoryArtKey": "nightweave"
+    "inventoryArtKey": "nightweave",
+    "defenseRating": ""
   },
   {
     "id": "nightweave",
@@ -513,7 +539,8 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "starseer",
-    "inventoryArtKey": "nightweave"
+    "inventoryArtKey": "nightweave",
+    "defenseRating": ""
   },
   {
     "id": "riteVestments",
@@ -533,7 +560,8 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "herald",
-    "inventoryArtKey": "riteVestments"
+    "inventoryArtKey": "riteVestments",
+    "defenseRating": ""
   },
   {
     "id": "riteVestments",
@@ -553,7 +581,8 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "herald",
-    "inventoryArtKey": "riteVestments"
+    "inventoryArtKey": "riteVestments",
+    "defenseRating": ""
   },
   {
     "id": "riteVestments",
@@ -573,7 +602,8 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "herald",
-    "inventoryArtKey": "riteVestments"
+    "inventoryArtKey": "riteVestments",
+    "defenseRating": ""
   },
   {
     "id": "riteVestments",
@@ -593,7 +623,8 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "herald",
-    "inventoryArtKey": "riteVestments"
+    "inventoryArtKey": "riteVestments",
+    "defenseRating": ""
   },
   {
     "id": "gutterLeathers",
@@ -613,7 +644,8 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "rogue",
-    "inventoryArtKey": "gutterLeathers"
+    "inventoryArtKey": "gutterLeathers",
+    "defenseRating": ""
   },
   {
     "id": "gutterLeathers",
@@ -633,7 +665,8 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "rogue",
-    "inventoryArtKey": "gutterLeathers"
+    "inventoryArtKey": "gutterLeathers",
+    "defenseRating": ""
   },
   {
     "id": "gutterLeathers",
@@ -653,7 +686,8 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "rogue",
-    "inventoryArtKey": "gutterLeathers"
+    "inventoryArtKey": "gutterLeathers",
+    "defenseRating": ""
   },
   {
     "id": "gutterLeathers",
@@ -673,6 +707,7 @@ export const outfits = [
     "artKey": "default",
     "sharedSet": true,
     "artClassId": "rogue",
-    "inventoryArtKey": "gutterLeathers"
+    "inventoryArtKey": "gutterLeathers",
+    "defenseRating": ""
   }
 ];

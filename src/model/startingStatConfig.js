@@ -1,3 +1,8 @@
+import { presetGearProblems } from './attributes.js';
+import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
+import { ownKey } from './settingOverrides.js';
+import { STAT_ROW_NO_MAX } from './statRows.js';
+
 const PREFIX = 'gameConfig.startingStats.';
 const REQUIREMENT_PREFIX = 'gameConfig.equipmentRequirements.';
 const TOTAL_MAX = 495;
@@ -124,13 +129,30 @@ export function equipmentRequirementRows(bundle) {
   });
   for (const row of bundle?.equipment?.equipmentRequirements || []) {
     if (!row?.itemId || !row.attributeId || !Number.isInteger(row.minimum)) continue;
+    const key = `${REQUIREMENT_PREFIX}${row.itemId}.${row.attributeId}`;
+    const piece = names[row.itemId] || row.itemId;
+    // An item's own requirement wins over the multiplier only while its switch
+    // is on; off, the row shows (and the game uses) authored × multiplier.
+    // Off by default, and on for any item a profile already pinned.
+    const own = { member: key, defaultOn: false };
+    rows.push({
+      cat: 'Advanced', advancedGroup: 'Progression', statTopic: 'Equipment requirements',
+      key: ownKey(key), def: false, own,
+      label: `${piece} — own ${labels[row.attributeId] || row.attributeId} requirement`,
+      searchPath: `equipment requirement ${row.itemId} ${row.attributeId} override`,
+      note: `On: the number below is ${piece}'s requirement, whatever the multiplier says. Off: it is the authored ${row.minimum} × the multiplier. Applies to a new run.`,
+    });
     rows.push({
       cat: 'Advanced', advancedGroup: 'Progression', statTopic: 'Equipment requirements',
       type: 'number', integer: true, step: 1, min: 0, max: TOTAL_MAX, def: row.minimum,
-      key: `${REQUIREMENT_PREFIX}${row.itemId}.${row.attributeId}`,
+      key,
+      // The value shown while the switch is off is the one a new run uses: the
+      // scaled table when it is admitted, the authored one when the multiplier
+      // asks for more than a character can carry and is refused (Codex, #1260).
+      gate: { key: ownKey(key), own, inherited: (settings) => admittedRequirement(bundle, row, settings) },
       label: `${names[row.itemId] || row.itemId} — ${labels[row.attributeId] || row.attributeId} required`,
       searchPath: `equipment requirement ${row.itemId} ${row.attributeId}`,
-      note: `The least ${labels[row.attributeId] || row.attributeId} a character needs to hold ${names[row.itemId] || row.itemId}. 0 means anyone may hold it. Overrides the multiplier above for this item. A class that starts holding this item cannot be given fewer points than this asks for. Applies to a new run.`,
+      note: `The least ${labels[row.attributeId] || row.attributeId} a character needs to hold ${names[row.itemId] || row.itemId}. 0 means anyone may hold it. Used only while the switch above is on. A class that starts holding this item cannot be given fewer points than this asks for. Applies to a new run.`,
     });
   }
   return rows;
@@ -144,17 +166,37 @@ export function equipmentRequirementRows(bundle) {
  * leave `bundle.equipment` shared by reference in the ordinary case — the
  * table is large and every run pays for a clone of it.
  */
+function requirementScale(settings = {}) {
+  const rawScale = settings[`${REQUIREMENT_PREFIX}scale`];
+  return Number.isFinite(Number(rawScale)) && Number(rawScale) >= 0 && Number(rawScale) <= 10
+    ? Number(rawScale) : 1;
+}
+
+function scaledRequirement(minimum, settings) {
+  return Math.max(0, Math.min(TOTAL_MAX, Math.round(minimum * requirementScale(settings))));
+}
+
+function admittedRequirement(bundle, row, settings) {
+  const table = bundleWithConfiguredEquipment(bundle, settings).equipment?.equipmentRequirements || [];
+  return table.find((entry) => entry.itemId === row.itemId && entry.attributeId === row.attributeId)?.minimum ?? row.minimum;
+}
+
 export function resolveEquipmentRequirements(bundle, settings = {}) {
   const authored = bundle?.equipment?.equipmentRequirements || [];
-  const rawScale = settings[`${REQUIREMENT_PREFIX}scale`];
-  const scale = Number.isFinite(Number(rawScale)) && Number(rawScale) >= 0 && Number(rawScale) <= 10
-    ? Number(rawScale) : 1;
   let changed = false;
   const next = authored.map((row) => {
     if (!row?.itemId || !row.attributeId || !Number.isInteger(row.minimum)) return row;
-    const raw = settings[`${REQUIREMENT_PREFIX}${row.itemId}.${row.attributeId}`];
-    const explicit = Number.isInteger(raw) && raw >= 0 && raw <= TOTAL_MAX ? raw : null;
-    const minimum = explicit ?? Math.max(0, Math.min(TOTAL_MAX, Math.round(row.minimum * scale)));
+    const key = `${REQUIREMENT_PREFIX}${row.itemId}.${row.attributeId}`;
+    const raw = settings[key];
+    // A pinned value whose switch was turned off is kept in the profile but
+    // not used: the multiplier decides again.
+    // Switched ON with nothing typed yet: the item's own requirement is its
+    // authored one, which is what the enabled row shows (review and Codex, on
+    // #1260 — the multiplier used to keep applying until the field was edited).
+    const pinned = Number.isInteger(raw) && raw >= 0 && raw <= TOTAL_MAX ? raw : null;
+    const explicit = settings[ownKey(key)] === false ? null
+      : pinned ?? (settings[ownKey(key)] === true ? row.minimum : null);
+    const minimum = explicit ?? scaledRequirement(row.minimum, settings);
     if (minimum === row.minimum) return row;
     changed = true;
     return { ...row, minimum };
@@ -164,7 +206,8 @@ export function resolveEquipmentRequirements(bundle, settings = {}) {
 
 /**
  * defaultModeHoldsItsKits(bundle, settings) → can the mode creation offers
- * still dress every class, with THIS requirement table in force?
+ * still dress every class — its kit and the outfits creation offers it —
+ * with THIS requirement table in force?
  *
  * THE DIAL THAT COULD THROW AWAY EVERY OTHER DIAL. `validateContent` refuses a
  * preset that cannot hold the kit its class starts in, and `rebuildRegistries`
@@ -192,6 +235,31 @@ function defaultModeHoldsItsKits(bundle, settings) {
     for (const id of ids) {
       const value = values[id];
       if (!Number.isInteger(value) || value < kitMinimum(needs, classId, id) || value > ceiling) return false;
+    }
+    // The OUTFITS creation offers the class are held to the same door: a raise
+    // the preset cannot wear fails validateContent just as a kit raise does
+    // (Codex, #1255). The class survives it either way it can be born: in the
+    // preset it falls back to, or in the per-cell edit made alongside the
+    // raise, when that edit is itself a whole allocation that holds its kit —
+    // raising Vigil and giving the Reaver the Strength to wear it is one
+    // change, not two (Codex, #1255).
+    const wearsOutfits = (preset) => !presetGearProblems({
+      presets: { [modeId]: { [classId]: preset } },
+      defaultMode: modeId,
+      startingKits: [],
+      equipmentRequirements: bundle.equipment?.equipmentRequirements || [],
+      creationClasses: bundle.characterCreation?.classes || {},
+    }).length;
+    if (!wearsOutfits(values)) {
+      const edited = Object.fromEntries(ids.map((id) => [id,
+        Number(settings[`gameConfig.attributeRules.presets.${modeId}.${classId}.${id}`] ?? values[id])]));
+      const inForce = resolved.mode || mode;
+      const expected = inForce.baseline * ids.length + inForce.bonusPool;
+      const floor = inForce.belowBaseline === 'forbid' ? Math.max(inForce.minimum, inForce.baseline) : inForce.minimum;
+      const whole = ids.every((id) => Number.isInteger(edited[id]) && edited[id] >= Math.max(floor, kitMinimum(needs, classId, id))
+        && edited[id] <= ceiling)
+        && ids.reduce((sum, id) => sum + edited[id], 0) === expected;
+      if (!whole || !wearsOutfits(edited)) return false;
     }
   }
   return true;
@@ -290,14 +358,17 @@ export function applyEquipmentRequirementConfig(configured, authored, settings =
  * startingStatBounds(bundle, modeId) → { min, max }
  *
  * The lowest total a character can carry and still put on the kit its class
- * starts in. validate.js applies the kit rule to the DEFAULT mode only, so the
- * retired modes keep the bare "one point per attribute" floor they always had.
+ * starts in. EVERY OFFERED MODE is held to it (review of #1294): Assign points
+ * opens on all 1s, so a pool below what the Starseer's staff asks (INT 3 → a
+ * pool of 2) would seat a character who cannot wear the kit it starts in. The
+ * retired modes — nobody can choose them — keep the bare "one point per
+ * attribute" floor they always had, so no save made under them changes verdict.
  */
 export function startingStatBounds(bundle, modeId) {
   const ids = (bundle.attributes || []).map((attribute) => attribute.id);
   let min = ids.length;
   let because = null;
-  if (modeId === bundle.attributeRules?.defaultMode) {
+  if (offersKitFloor(bundle, modeId)) {
     for (const [classId, need] of Object.entries(kitAttributeMinimums(bundle))) {
       const floor = ids.reduce((sum, id) => sum + Math.max(1, need[id]?.minimum || 0), 0);
       if (floor <= min) continue;
@@ -306,6 +377,11 @@ export function startingStatBounds(bundle, modeId) {
     }
   }
   return { min, max: TOTAL_MAX, because };
+}
+
+/** True for a mode a player can pick: the kit floor binds it. */
+function offersKitFloor(bundle, modeId) {
+  return modeId === bundle.attributeRules?.defaultMode || visibleCreationModes(bundle).some((mode) => mode.id === modeId);
 }
 
 /** One sentence naming the class and kit that set the floor, or ''. */
@@ -349,6 +425,107 @@ function dialLabel(key) {
   return DIAL_LABELS[key.slice(key.lastIndexOf('.') + 1)] || key;
 }
 
+/**
+ * derivedStatFloorProblems(bundle) → [{ path, keys, message }]
+ *
+ * THE ONE POOL A RUN CANNOT HOLD AT ZERO. `validateRunShape` refuses a run with
+ * `maxMana <= 0`, and since ruleset 6 every input to Mana is a dial: a base and
+ * a weight per attribute. Set them all to zero and a new run is born invalid —
+ * it cannot be saved or restored (Codex, #1253). So Mana is priced here for the
+ * weakest character creation allows, at level 1, and refused by name if that
+ * is below one. HP is clamped to 1 at the run door and Stamina, Actions and
+ * draw may be 0, so Mana is the only row.
+ *
+ * THE WEAKEST LEGAL CHARACTER, NOT EVERY ATTRIBUTE AT ITS FLOOR. A fixedTotal
+ * mode spends its whole pool, so "every attribute at the floor" is a character
+ * no one can make: under lean, weights of 0.5 price that {1,1,1,1,1} at 0 Mana
+ * while every legal eight-point character has at least 2 (Codex, #1253). Each
+ * attribute's term is floored on its own, so Mana is a sum of one
+ * non-decreasing term per attribute, and the minimum over allocations that
+ * spend exactly the mode's total is a small knapsack over the points.
+ */
+export function derivedStatFloorProblems(bundle) {
+  // EVERY MODE A PLAYER CAN PICK, not only the default (owner, 2026-09-24):
+  // Assign points has a pool dial of its own, and a pool of 0 there is a
+  // character creation allows. The first mode that cannot hold one Mana is
+  // named; the default is asked first, so its sentence is unchanged.
+  const modes = visibleCreationModes(bundle || {})
+    .sort((a, b) => Number(b.id === bundle?.attributeRules?.defaultMode) - Number(a.id === bundle?.attributeRules?.defaultMode));
+  for (const mode of modes) {
+    const problems = manaFloorProblems(bundle, mode);
+    if (problems.length) return problems;
+  }
+  return [];
+}
+
+function manaFloorProblems(bundle, mode) {
+  const table = bundle?.derivedStatRules;
+  const rule = table?.rules?.mana;
+  if (!rule || !mode || !Array.isArray(bundle.attributes)) return [];
+  const ids = bundle.attributes.map((row) => row.id);
+  const floor = mode.belowBaseline === 'forbid' ? Math.max(mode.minimum, mode.baseline) : mode.minimum;
+  const ceiling = mode.maximum;
+  if (![floor, ceiling].every(Number.isInteger) || ceiling < floor) return [];
+  const fixedTotal = mode.redistribution === 'fixedTotal';
+  const total = mode.baseline * ids.length + mode.bonusPool;
+  let value;
+  let weakest;
+  try {
+    const resolved = resolveDerivedStatRules(table, { attributeIds: ids, classFields: ['maxHp'] });
+    const zero = Object.fromEntries(ids.map((id) => [id, 0]));
+    const at = (attributes) => deriveStat(resolved, 'mana', { attributes, classDef: {}, level: 1 }).value;
+    const constant = at(zero);
+    // term(id, points): what `points` of one attribute adds on its own.
+    const term = (id, points) => at({ ...zero, [id]: points }) - constant;
+    // best[s] = the least Mana the attributes placed so far can make while
+    // spending exactly s points, with the allocation that makes it.
+    let best = new Map([[0, { mana: 0, allocation: {} }]]);
+    for (const id of ids) {
+      const next = new Map();
+      for (let points = floor; points <= ceiling; points += 1) {
+        const add = term(id, points);
+        for (const [spent, entry] of best) {
+          const key = spent + points;
+          const mana = entry.mana + add;
+          if (!next.has(key) || mana < next.get(key).mana) {
+            next.set(key, { mana, allocation: { ...entry.allocation, [id]: points } });
+          }
+        }
+      }
+      best = next;
+    }
+    const candidates = fixedTotal ? [best.get(total)].filter(Boolean) : [...best.values()];
+    if (!candidates.length) return []; // no legal character: the mode's own check names that
+    const least = candidates.reduce((a, b) => (b.mana < a.mana ? b : a));
+    value = constant + least.mana;
+    weakest = least.allocation;
+  } catch {
+    return []; // a malformed table is the schema's to name, not this check's
+  }
+  if (value >= 1) return [];
+  const keys = ['base', ...ids].map((field) => `gameConfig.derivedStatRules.rules.mana.${field}`);
+  const shown = ids.map((id) => `${id} ${weakest[id]}`).join(', ');
+  const under = mode.id === bundle?.attributeRules?.defaultMode ? '' : ` under ${mode.label || mode.id}`;
+  return [{
+    path: 'derivedStatRules.rules.mana',
+    keys,
+    message: `Mana would be ${value} for the weakest character creation allows${under} (${shown}), and a run cannot hold 0 Mana. Raise the Mana base or a Mana attribute weight; the authored rules stay active until then.`,
+  }];
+}
+
+// ONE ANSWER PER NUMBER (#1256, owner 2026-09-23: "multiple settings changing
+// the same setting"). Since ruleset 7 no row shares its quantity with another
+// — the legacy draw, the second Poise and the fallback hand size are gone —
+// so the note only says where a row's number is used.
+function derivedRowNote(id) {
+  if (['ar', 'dr', 'pr', 'ward'].includes(id)) return ' Only while combat ratings are on. Equipment, relics and statuses add on top.';
+  if (id === 'poise') return ' Armour and relic Poise add on top.';
+  if (id === 'draw') return ' Cards drawn at the start of each turn after the first (a fixed draw), never past the hand size.';
+  if (id === 'openingHand') return ' Cards drawn when a fight begins, never past the hand size. Each class opens on its own base and attribute (the per-class rows); the shared Base and weights apply only to a fight with no class.';
+  if (id === 'handSize') return ' The most cards a hand holds, in solo and co-op alike.';
+  return '';
+}
+
 export function startingStatRows(bundle) {
   const rows = [];
   const add = (key, def, label, topic, extra = {}) => rows.push({
@@ -373,17 +550,17 @@ export function startingStatRows(bundle) {
     // total decides it, which is what every configuration exported before this
     // row existed relies on.
     add(PREFIX + mode.id + '.baseline', mode.baseline,
-      `${prefix}${DIAL_LABELS.baseline}`, 'Assign points', {
+      `${prefix}${DIAL_LABELS.baseline}`, 'Starting stats', {
         integer: true, step: 1, min: 1, max: TOTAL_MAX, ...retired,
         note: `What every attribute opens at before a single point is assigned. Setting this decides the total: baseline × ${ids.length} attributes, plus the points available to assign. Leave it alone and it is derived from the total instead. Applies to a new run.`,
       });
     add(PREFIX + mode.id + '.bonusPool', mode.bonusPool,
-      `${prefix}${DIAL_LABELS.bonusPool}`, 'Assign points', {
+      `${prefix}${DIAL_LABELS.bonusPool}`, 'Starting stats', {
         integer: true, step: 1, min: 0, max: TOTAL_MAX - ids.length, ...retired,
         note: `How many of the character's points are yours to place at creation, on top of the starting value above. Applies to a new run.`,
       });
     add(PREFIX + mode.id + '.total', total,
-      `${prefix}${DIAL_LABELS.total}`, 'Assign points', {
+      `${prefix}${DIAL_LABELS.total}`, 'Starting stats', {
         integer: true, step: 1, min: bounds.min, max: bounds.max, ...retired,
         // The floor moved from the attribute count to the kit floor after
         // schema version 1 shipped. An older export carrying a smaller total
@@ -397,36 +574,122 @@ export function startingStatRows(bundle) {
         note: `Every attribute point a character carries when the climb begins, baseline plus the points assigned. Ignored while a starting value is set above, which decides it instead. Class defaults below rescale to fit.${floorSentence(bundle, bounds)} Applies to a new run.`,
       });
     add(PREFIX + mode.id + '.minimum', mode.minimum,
-      `${prefix}${DIAL_LABELS.minimum}`, 'Assign points', {
+      `${prefix}${DIAL_LABELS.minimum}`, 'Starting stats', {
         integer: true, step: 1, min: 1, max: TOTAL_MAX, ...retired,
         note: 'The floor a stat can be dragged down to at creation, and the limit on how many points can be reclaimed from it. It can never exceed the starting value above. Applies to a new run.',
       });
     add(PREFIX + mode.id + '.maximum', mode.maximum,
-      `${prefix}${DIAL_LABELS.maximum}`, 'Assign points', {
+      `${prefix}${DIAL_LABELS.maximum}`, 'Starting stats', {
         integer: true, step: 1, min: 1, max: TOTAL_MAX, ...retired,
         note: 'The most a single stat may be raised to AT CREATION. It caps the character screen, not the character: levelling raises it by the points levelled. It can never fall below the starting value, nor below what a starting kit asks for. Applies to a new run.',
       });
     add(PREFIX + mode.id + '.belowBaseline', mode.belowBaseline !== 'forbid',
-      `${prefix}${DIAL_LABELS.belowBaseline}`, 'Assign points', {
+      `${prefix}${DIAL_LABELS.belowBaseline}`, 'Starting stats', {
         ...retired,
         note: 'On: a stat may be dropped below its starting value, down to the floor above, handing those points back to the pool. Off: the starting value is also the floor and only the assignable points move. Applies to a new run.',
       });
   }
-  for (const [id, rule] of Object.entries(bundle.derivedStatRules.rules)) {
-    const label = bundle.derivedStatRules.presentation[id].faceLabel || bundle.derivedStatRules.presentation[id].label;
-    for (const [field, title] of [['base', 'base amount'], ['pointsPerTier', 'stat points per increase'], ['gainPerTier', 'gain per increase']]) {
-      const value = rule[field] ?? bundle.derivedStatRules.defaults[field];
+  // ---- ONE FORMAT, ONE PLACE (owner, 2026-09-21) --------------------------
+  //
+  // "I'd like all the resources and stats to be in the same format so that
+  // there was no confusion to include the base values and everything because
+  // they are way too separated."
+  //
+  // So every resource and stat — HP, Mana, Stamina, Actions, draw, Poise, and
+  // the AR/DR/PR/Poise/Ward ratings — is written with the same three kinds of
+  // dial, in the order a rating row has them:
+  //
+  //   base               what it opens at
+  //   <each attribute>   that attribute's decimal contribution per point
+  //   growth per level   his decimal
+  //
+  // and each trait is ONE topic of Advanced → Stats ("stat conversion should
+  // be its own section under stats, and have sub sections for actions, draw,
+  // hp, stamina mana, etc", owner 2026-09-21), beside its rating formula from
+  // combatRatings.js and everything else that decides it.
+  // ---- RULESET 7: ONE EDITOR PER ROW, THE SAME FIELDS IN THE SAME ORDER ----
+  //
+  // "I'd like all features, handsize, draw amount, actions, ar, dr, pr, ward,
+  // poise, stamina, mana, hp settings to have a similiar interface and be
+  // driven by only that interface" (owner, 2026-09-24). Every row of the
+  // derived-stat table — the pools, the hand and the combat ratings — is
+  // edited here with the same nine fields, in this order:
+  //
+  //   Base · STR · DEX · CON · WIS · INT · Per level · Min · Max
+  const derivedDefaults = bundle.derivedStatRules.defaults || {};
+  const attributeRows = (bundle.attributes || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  for (const [id, authored] of Object.entries(bundle.derivedStatRules.rules)) {
+    const presentation = bundle.derivedStatRules.presentation[id];
+    const label = presentation.label;
+    const rule = { ...derivedDefaults, ...authored };
+    // Labels name the row and the field, so a search that finds every "per
+    // level" row still tells them apart.
+    const fields = [
+      ['base', `${label} — Base`, 0, 1,
+        'What this is worth before a single attribute point is spent, and before equipment, relics and level.'],
+      ...attributeRows.map((attribute) => [attribute.id, `${label} — ${attribute.shortLabel || attribute.label} (per ${attribute.label} point)`, 0, 0.01,
+        `Gained from each point of ${attribute.label}, rounded down on its own: 0.25 gives nothing until ${attribute.label} reaches 4, then one more every four. 0 ignores ${attribute.label}.`]),
+      ['perLevel', `${label} — Per level`, 0, 0.05,
+        'Gained per character level after the first, as a decimal and rounded down: 0.2 is one every five levels, 1 is one every level, 0 never moves with the level.'],
+      ['min', `${label} — Min`, 0, 1, 'Never less than this, whatever the attributes. 0 sets no floor.'],
+      ['max', `${label} — Max`, 0, 1, 'Never more than this, whatever the attributes. 999 sets no ceiling.'],
+    ];
+    for (const [field, title, min, step, note] of fields) {
+      // A CLASS-FIELD BASE HAS NO NUMBER TO TYPE. `base` may be `{ strategy:
+      // 'classField' }`, which resolves per class at the run door; a number row
+      // for it would overwrite the reference with one value for every class.
+      const value = field === 'base' ? rule.base : field === 'min' ? (rule.min ?? 0) : field === 'max' ? (rule.max ?? STAT_ROW_NO_MAX) : (rule[field] ?? 0);
       if (!Number.isFinite(value)) continue;
-      add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, `${label} — ${title}`, 'Stat conversions', {
-        min: field === 'pointsPerTier' ? 0.01 : 0, step: 0.01,
+      add(`gameConfig.derivedStatRules.rules.${id}.${field}`, value, title, 'Stats & resources', {
+        // A hand holds at least one card (model/derivedStats.js).
+        // ...and a run holds at least one Mana (`validateRunShape`), so its
+        // ceiling cannot be set under 1 (Codex, #1296).
+        min: (id === 'handSize' && (field === 'min' || field === 'max')) || (id === 'mana' && field === 'max') ? 1 : min, step,
+        // Filed under this row's own topic of Advanced → Stats
+        // (models/AdvancedSettingsGroups.js), one unbroken editor per row.
+        advancedGroup: 'Stats', derivedStatId: id, statField: field,
+        settingSection: 'Formula',
+        // Fill mode draws to the hand size and never reads Draw / turn, so its
+        // editor is shown only while turns draw a fixed number (as the retired
+        // `turn` group's rows were).
+        ...(id === 'draw' ? { fixedOnly: true } : {}),
+        // Whole points only: every other term is floored, so a fractional base
+        // or bound would be the one way a stat stopped being a whole number.
+        ...(['base', 'min', 'max'].includes(field) ? { integer: true } : {}),
         configPath: ['derivedStatRules', 'rules', id, field],
-        // THE NOTE A REMOVED DIAL LEFT BEHIND. It promised that automatic
-        // scaling adjusted the points required — the behaviour this row's own
-        // panel no longer has. A note describing a retired mechanism is worse
-        // than none: it tells a player the number they typed is not the number
-        // in force, which is exactly backwards now.
-        note: `Uses ${rule.sourceStat}. The value you set is the value a new run is born with; nothing rescales it.`,
+        note: `${note}${derivedRowNote(id)} The value you set is the value a new run is born with; nothing rescales it.`,
       });
+    }
+    // A ROW THAT COUNTS FROM A BASELINE says so (the opening hand counts the
+    // points of its attribute above 1: owner, 2026-09-24, #1294).
+    if (Number.isFinite(rule.attributeBaseline)) {
+      add(`gameConfig.derivedStatRules.rules.${id}.attributeBaseline`, rule.attributeBaseline, `${label} — Attribute points before bonuses`, 'Stats & resources', {
+        min: 0, step: 1, integer: true, advancedGroup: 'Stats', derivedStatId: id, statField: 'attributeBaseline', settingSection: 'Formula',
+        configPath: ['derivedStatRules', 'rules', id, 'attributeBaseline'],
+        note: `Only attribute points above this count toward ${label}: a weight of 0.5 counted from 1 adds one at 3, 5, 7…, a weight of 0.2 counted from 4 one at 9, 14, 19…${derivedRowNote(id)} Applies to a new run.`,
+      });
+    }
+    // ONE EDITOR PER CLASS for a row with a per-class form (the opening hand:
+    // "give the openingHand stat row a per-class form", owner, 2026-09-24):
+    // that class's base and attribute weights, in the row's own order. Min,
+    // Max and the baseline above are shared.
+    const classNames = Object.fromEntries((bundle.classes || []).map((row) => [row.id, row.name || row.id]));
+    for (const [classId, classRow] of Object.entries(rule.byClass || {})) {
+      const name = classNames[classId] || classId[0].toUpperCase() + classId.slice(1);
+      const classFields = [
+        ['base', `${label} — ${name} — Base`, 0, 1, `The ${name}'s ${label.toLowerCase()} before a single attribute point is spent.`],
+        ...attributeRows.map((attribute) => [attribute.id, `${label} — ${name} — ${attribute.shortLabel || attribute.label} (per ${attribute.label} point)`, 0, 0.01,
+          `Gained from each point of ${attribute.label} for the ${name}, rounded down on its own. 0 ignores ${attribute.label}.`]),
+      ];
+      for (const [field, title, min, step, note] of classFields) {
+        add(`gameConfig.derivedStatRules.rules.${id}.byClass.${classId}.${field}`, classRow[field] ?? 0, title, 'Stats & resources', {
+          min, step, advancedGroup: 'Stats', derivedStatId: id, statField: field, statClass: classId,
+          settingSection: 'Formula',
+          ...(field === 'base' ? { integer: true } : {}),
+          configPath: ['derivedStatRules', 'rules', id, 'byClass', classId, field],
+          note: `${note} Min, Max and the attribute points before bonuses are the row's.${derivedRowNote(id)} Applies to a new run.`,
+        });
+      }
     }
   }
   return [...rows, ...equipmentRequirementRows(bundle)];
@@ -533,6 +796,20 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
         pool = Math.min(mode.bonusPool, Math.max(0, total - ids.length));
       }
     }
+  } else if (rawTotal === undefined && rawPool !== undefined) {
+    // THE POOL ALONE DECIDES THE TOTAL (owner, 2026-09-24: Assign points is
+    // "x points to assign but configurable in advanced settings"). Typed with
+    // neither a starting value nor a total beside it, the points to assign sit
+    // on the authored starting value — baseline × attributes + pool — which is
+    // what the row says it is. Before this the row was bounded by the total
+    // it could not move, so raising it was refused and lowering it did nothing.
+    const poolCeiling = TOTAL_MAX - mode.baseline * ids.length;
+    const poolFloor = Math.max(0, bounds.min - mode.baseline * ids.length);
+    if (Number.isInteger(rawPool) && rawPool >= poolFloor && rawPool <= poolCeiling) {
+      pool = rawPool;
+      baseline = mode.baseline;
+      total = baseline * ids.length + pool;
+    } else refuse('bonusPool', rawPool, { min: poolFloor, max: poolCeiling }, pool, { kitBounds: bounds });
   } else {
     if (rawTotal !== undefined) {
       if (Number.isInteger(rawTotal) && rawTotal >= bounds.min && rawTotal <= bounds.max) total = rawTotal;
@@ -546,7 +823,7 @@ export function resolveStartingStatMode(authored, mode, settings = {}) {
     }
   }
 
-  const needs = mode.id === authored.attributeRules?.defaultMode ? kitAttributeMinimums(authored) : {};
+  const needs = offersKitFloor(authored, mode.id) ? kitAttributeMinimums(authored) : {};
   const kitCeiling = Math.max(0, ...Object.values(needs).flatMap((need) => Object.values(need).map((entry) => entry.minimum)));
   const ratio = total / oldTotal;
   const resolvedBaseline = baseline ?? Math.max(1, Math.floor((total - pool) / ids.length));
@@ -682,7 +959,7 @@ export function startingStatPoolProblems(bundle, settings = {}) {
   for (const mode of visibleCreationModes(source)) {
     for (const refusal of resolveStartingStatMode(source, mode, settings).refusals) {
       const label = dialLabel(refusal.key);
-      const sizes = /\.(total|baseline)$/.test(refusal.key);
+      const sizes = /\.(total|baseline|bonusPool)$/.test(refusal.key);
       // Two shapes, because they are two different refusals and one wording
       // for both would be a lie in one of them: a number OUTSIDE the row's
       // range, and a number inside it that no set of class tables can fit.
