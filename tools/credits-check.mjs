@@ -240,7 +240,7 @@ async function selftest() {
     { name: 'credits-names-undisclosed-vendor', rule: 'credits-vendor', input: { ...clean, credits: `${credits}Music by Suno.\n` } },
     // The same plants against the real tree's text: the rules bite on what ships.
     { name: 'real-credits-loses-a-row', rule: 'row', input: { ...real, dirs: [...real.dirs, 'assets/zz-planted'] } },
-    { name: 'real-legal-drops-a-vendor', rule: 'legal-vendor-missing', input: onRealLegal((l) => l.replace(/ElevenLabs( Music)?/g, 'a music model')) },
+    { name: 'real-legal-drops-a-vendor', rule: 'legal-vendor-missing', input: onRealLegal((l) => l.replace(/OpenAI|ChatGPT|Codex/g, 'an image model')) },
     { name: 'real-legal-edits-summary-sentence', rule: 'legal-summary', input: onRealLegal((l) => l.replace(AI_SUMMARY, 'Ashen Spire was built with AI under human direction.')) },
     { name: 'real-legal-loses-disclosure-link', rule: 'legal-disclosure-link', input: onRealLegal((l) => l.replace(new RegExp(`\\]\\(${escapeRe(DISCLOSURE_PATH)}\\)`, 'g'), '](docs/)')) },
   ];

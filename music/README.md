@@ -1,12 +1,30 @@
 # Music folder
 
-This folder ships the game's recorded score (generated from
-[PROMPTS.md](PROMPTS.md)). Hosted and preview builds copy it beside the game, and
-with **Custom music folder** blank a page served over http(s) plays it; any
-context left empty keeps the procedural music. You can also drop your own tracks
-here, or point the setting at another folder.
+This folder ships the game's score. Every track is **written as code**: the
+notes live in [`score/<id>.mjs`](score/) and `node tools/score/render.mjs`
+renders them on the synthesizer in `tools/score/synth.mjs` into
+`<context>/<id>.mp3` and rewrites [`manifest.json`](manifest.json). No samples,
+soundfonts or licensed music are involved; the MP3s are build output, committed
+so the game can stream them. The brief each score answers is in
+[PROMPTS.md](PROMPTS.md).
 
-Generation prompts for every context: [PROMPTS.md](PROMPTS.md).
+Hosted and preview builds copy this folder beside the game, and with **Custom
+music folder** blank a page served over http(s) plays it; a context without a
+track keeps the procedural music. You can also drop your own tracks here, or
+point the setting at another folder.
+
+## Changing the score
+
+1. Edit or add `score/<id>.mjs` (`export const context = '<manifest key>'`,
+   `export default` a `Score` from `tools/score/compose.mjs`).
+2. `FFMPEG=/path/to/ffmpeg node tools/score/render.mjs [<id> …]` (ffmpeg on
+   PATH works too). Rendering is deterministic: the same score gives the same
+   audio.
+3. Commit the score, the MP3 and `manifest.json` together.
+
+`render.mjs --alt --out <dir>` renders the alt cut (`tools/score/alt.mjs`):
+cello becomes a double bass, the game's heartbeat is brought forward, and the
+reverb is tighter. It writes under `<dir>` and leaves the manifest alone.
 
 ## Setup
 
