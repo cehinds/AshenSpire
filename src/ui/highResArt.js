@@ -138,7 +138,6 @@ function remember(map) {
 }
 function idOfUrl(url) {
   if (!url) return null;
-  if (url.startsWith('assets/')) return url;
   if (!inlineIndexed) {
     inlineIndexed = true;
     for (const [id, data] of Object.entries(ASSET_MAP)) {
@@ -146,9 +145,12 @@ function idOfUrl(url) {
       if (list) list.push(id); else inlineIds.set(data, [id]);
     }
   }
-  const aliases = inlineIds.get(url);
-  if (aliases) return aliases.find((id) => current && current.has(id)) || aliases[0];
-  return urlToId.get(url) || null;
+  // A URL from an earlier source names one alias; its group is recovered from
+  // that id's inlined URI, so a folder that covers only another alias still wins.
+  const id = url.startsWith('assets/') ? url : urlToId.get(url) || null;
+  const aliases = inlineIds.get(url) || (id && inlineIds.get(ASSET_MAP[id]));
+  if (!aliases || aliases.length < 2) return id || (aliases ? aliases[0] : null);
+  return aliases.find((a) => current && current.has(a)) || id || aliases[0];
 }
 
 // An <img> carries its URL in src; an SVG <image> (the environment, map and

@@ -208,6 +208,36 @@ test('an inlined URL shared by byte-identical assets resolves to the alias the s
   }
 });
 
+test('switching to a folder that covers only another alias moves a mounted image onto that alias', async () => {
+  const { ASSET_MAP } = await import('../src/ui/assetmap.js');
+  const { pickHighResFolder } = await import('../src/ui/highResArt.js');
+  const LOCAL = { [ART_QUALITY_KEY]: ART_LOCAL_HIGH };
+  const data = 'data:image/webp;base64,SAME';
+  ASSET_MAP['assets/ui/a.webp'] = data;
+  ASSET_MAP['assets/ui/b.webp'] = data;
+  const attrs = { src: data };
+  const img = { tagName: 'IMG', getAttribute: (k) => attrs[k], setAttribute: (k, v) => { attrs[k] = v; } };
+  const input = {
+    files: [file('hd/assets/ui/b.webp')],
+    setAttribute() {}, addEventListener(type, fn) { this.fn = fn; }, click() { this.fn(); },
+  };
+  globalThis.document = { querySelectorAll: () => [img], createElement: () => input };
+  const realCreate = URL.createObjectURL;
+  URL.createObjectURL = () => 'blob:only-b';
+  try {
+    const onlyA = { assets: { 'assets/ui/a.webp': { high: { path: 'assets/ui/a.webp' } } } };
+    await applyArtQuality(LOCAL, { fetchImpl: json(onlyA), protocol: 'https:' });
+    assert.equal(attrs.src, 'hd/assets/ui/a.webp');
+    await pickHighResFolder(LOCAL, globalThis.document);
+    assert.equal(attrs.src, 'blob:only-b', 'the alias the new folder covers, not the built-in art');
+  } finally {
+    URL.createObjectURL = realCreate;
+    delete globalThis.document;
+    delete ASSET_MAP['assets/ui/a.webp'];
+    delete ASSET_MAP['assets/ui/b.webp'];
+  }
+});
+
 test('a detached loader gets the built-in URL for a failed high-res file, and nothing for other URLs', async () => {
   const { builtInFor } = await import('../src/ui/highResArt.js');
   await applyArtQuality({ [ART_QUALITY_KEY]: ART_LOCAL_HIGH }, { fetchImpl: json(manifest), protocol: 'https:' });
