@@ -105,14 +105,14 @@ More captures — Armoury: [Equipment](docs/preview/armoury-simple-equipment-144
 
 ### Branches
 
-`feature/* → dev → release → main`
+`feature/* → dev → test → release → main`
 
 | Branch | Purpose |
 |---|---|
 | `main` | Stable, playable. Only receives merges from `release`. |
-| `release` | Release staging — final checks before `main`. |
-| `test` | QA / balance experiments that may never ship. Branched from `dev`. |
-| `dev` | Integration. Feature branches merge here. |
+| `release` | Release staging, promoted from `test` by the owner — final checks before `main`. |
+| `test` | Heavy CI: each session promotes `dev` here after merging, and the long suites run on that push. Only `dev` promotions land here; balance experiments go on `experiment/*` branches. |
+| `dev` | Integration. Each session merges its own feature PR here once the fast checks pass. |
 | `feature/*` | One branch per unit of work, branched from `dev`, merged back via PR. |
 
 ### Repository layout
