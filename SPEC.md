@@ -926,8 +926,16 @@ Later turns draw a **fixed** number by default — the Draw / turn row, never pa
 fill mode instead draws up to the hand size. Overflow defaults to **discard**: retained cards past
 the hand size are selected for discard at turn end. Opening counts are evaluated at combat start;
 later draws and the hand size at turn start. **Co-op reads the same rows**: each seat's opening
-hand, turn draw and hand size come from its own run's rows, it keeps unplayed cards under the
-shipped behaviour options and discards what is over its hand size at turn end. A seat or saved
+hand, turn draw and hand size come from its own run's rows. **How every seat's hand behaves is
+the host's** (owner ruling): the host's retain, draw mode, overflow, reshuffle, discard-prompt,
+discard-limit and replacement options (`model/handRules.js handBehaviour`) are captured once, when
+the host starts the session (the lobby's Start carries them), stored on the session and written
+into its save (`handBehaviour`), and handed to every co-op fight — a run keeps the rules it started
+with, so a restored session plays them again whatever the host's settings now say. A save that
+carries malformed options is refused by name at the restore door; a save from before the field
+plays the shipped options. Co-op has no turn-end discard prompt, so the prompt, its limit and its
+replacements are carried but idle; over the hand size at turn end, a seat under `overflow:
+'discard'` discards the excess. A seat or saved
 fight born before ruleset 7 keeps what it had: solo, its hand rules as saved (the retired
 single-stat groups, read exactly); co-op, a fresh hand of its derived draw capped at the retired
 fallback of 5.

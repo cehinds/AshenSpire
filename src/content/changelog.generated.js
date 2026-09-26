@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1335",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Co-op: everyone plays by the host's hand rules",
+    "detail": "When the host starts a co-op run, every seat keeps, draws and discards cards the way the host's settings say, for the whole session, and a saved session remembers it. Older saves use the standard rules: keep your hand and draw your Draw stat each turn.",
+    "build": "0.7.1.530",
+    "pullRequest": 1335,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1335"
+  },
+  {
     "id": "pr-1327",
     "date": "2026-09-26",
     "group": "2026-09-26",

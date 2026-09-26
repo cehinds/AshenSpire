@@ -126,6 +126,36 @@ export function resolveHandRules(settings = {}, rows = null) {
 }
 
 /**
+ * THE HOST'S HAND BEHAVIOUR (owner ruling, co-op): the seven options above that
+ * say how a hand BEHAVES — never how many cards it counts — resolved from a
+ * settings object. A co-op session captures the host's at its start and hands
+ * them to every seat's fight (engine/coopCombat.js), so the party plays the
+ * host's hand rules and a restored session keeps the ones it started with.
+ */
+export const HAND_BEHAVIOUR_KEYS = Object.freeze(Object.keys(handRulesDefaults));
+
+export function handBehaviour(settings = {}) {
+  const rules = resolveHandRules(settings || {});
+  return Object.fromEntries(HAND_BEHAVIOUR_KEYS.map((key) => [key, rules[key]]));
+}
+
+/** handBehaviourProblems(value) → why a stored hand behaviour is refused, each named ([] when sound). */
+export function handBehaviourProblems(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return ['hand behaviour must be an object'];
+  const problems = [];
+  for (const key of Object.keys(value)) if (!HAND_BEHAVIOUR_KEYS.includes(key)) problems.push(`hand behaviour: unknown option '${key}'`);
+  for (const row of handRulesRows()) {
+    const key = row.key.slice(HAND_RULES_PREFIX.length);
+    const raw = value[key];
+    const ok = row.type === 'choice' ? row.choices.includes(raw)
+      : typeof row.def === 'boolean' ? typeof raw === 'boolean'
+        : Number.isInteger(raw) && raw >= row.min && raw <= row.max;
+    if (!ok) problems.push(`hand behaviour: invalid ${key}`);
+  }
+  return problems;
+}
+
+/**
  * runHandRules(registries, run, settings) → the hand rules this run's next
  * fight is handed: the behaviour options from `settings` and the run's own
  * three rows (its class's opening hand among them). The ONE door —

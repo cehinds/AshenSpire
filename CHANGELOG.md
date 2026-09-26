@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-26
 
+- **Co-op: everyone plays by the host's hand rules** ([#1335](https://github.com/cehinds/AshenSpire/pull/1335), `0.7.1.530`). When the host starts a co-op run, every seat keeps, draws and discards cards the way the host's settings say, for the whole session, and a saved session remembers it. Older saves use the standard rules: keep your hand and draw your Draw stat each turn.
+
 - **Behind the scenes: the attribute retune is measured and closed** ([#1327](https://github.com/cehinds/AshenSpire/pull/1327), `0.7.1.528`). Nothing you see in the game changes. The balance plan now records how each class opens (3 Actions, 2 cards drawn a turn) and where runs actually end (the act-2 boss, not act 1), and the rules text no longer claims a new Reaver draws 5.
 
 ## 2026-09-25

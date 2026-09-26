@@ -40,6 +40,7 @@ import { commitEventChoice, completeQuest } from '../src/engine/quests.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
 import { DEFAULT_SPRITE_STYLE } from '../src/model/spriteStyle.js';
+import { handBehaviour as resolveHandBehaviour, handBehaviourProblems } from '../src/model/handRules.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
   rollRelicReward,
@@ -238,7 +239,12 @@ export function restoreSession(registries, data) {
   return s;
 }
 
-export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {}, firstSeat = null }) {
+// `handBehaviour` is the HOST's hand behaviour (model/handRules.js
+// handBehaviour(settings)): captured when the session is created, stored on
+// it, written into its save, and handed to every co-op fight — so the party
+// plays the host's hand rules and a restored run keeps the rules it started
+// with. Absent (and in a save from before it was stored): the shipped options.
+export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {}, firstSeat = null, handBehaviour = null }) {
   const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
   // Each member's open shrine visit (engine/locations.js), by member id.
   const shrineVisits = new Map();
@@ -254,11 +260,18 @@ export function createSession({ registries, seedString, endless = false, restore
     // the one it was already climbing — and a save that names an order must
     // name every seat once.
     const seatOrder = Array.isArray(restore.seatOrder) ? restore.seatOrder : defaultSeatOrder(registries);
-    const seatProblems = [...seatOrderProblems(seatOrder, registries), ...rewardSceneProblems(restore.scene)];
+    const seatProblems = [
+      ...seatOrderProblems(seatOrder, registries), ...rewardSceneProblems(restore.scene),
+      ...(restore.handBehaviour === undefined ? [] : handBehaviourProblems(restore.handBehaviour)),
+    ];
     if (seatProblems.length) throw new Error(`Malformed session save: ${seatProblems.join('; ')}`);
     const mapAct = endless ? ((restore.actNumber - 1) % LAST_ACT) + 1 : restore.actNumber;
     assertSavedBossReferences(registries, restore.mapGraph, { seat: seatAtTier(seatOrder, mapAct), tier: mapAct });
     restore = { ...restore, seatOrder, mapGraph: refreshBossDestinationLabels(registries, restore.mapGraph, mapAct) };
+  }
+  if (!restore && handBehaviour != null) {
+    const problems = handBehaviourProblems(handBehaviour);
+    if (problems.length) throw new Error(`Malformed host hand behaviour: ${problems.join('; ')}`);
   }
   const seed = restore ? (restore.seed >>> 0) : seedOf(seedString);
   const rng = createRng(seed, restore ? restore.rng : {}); // shared: map gen, encounter rolls
@@ -286,6 +299,8 @@ export function createSession({ registries, seedString, endless = false, restore
     // map answers to the run the party actually walked even when the
     // earliest-joined seat was absent or dead at the event (Codex, #536).
     history: restore ? (Array.isArray(restore.history) ? restore.history.slice() : []) : [],
+    // THE HOST'S HAND BEHAVIOUR, fixed for the run (see createSession's header).
+    handBehaviour: { ...((restore ? restore.handBehaviour : handBehaviour) || resolveHandBehaviour({})) },
     members,
   };
 
@@ -673,6 +688,7 @@ export function createSession({ registries, seedString, endless = false, restore
       extraHpMult,
       enemyDamageMult: boss ? boss.damage : 1,
       enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: registries.balance.endless.strPerLoop * loop }] : [],
+      handBehaviour: session.handBehaviour,
     });
     // Co-op player entities intentionally share the engine id `player`; the
     // active seat key is the authoritative discriminator. Stamp it at emission
@@ -1681,6 +1697,7 @@ export function createSession({ registries, seedString, endless = false, restore
       scene: session.scene,
       started: session.started,
       history: session.history.slice(),
+      handBehaviour: { ...session.handBehaviour },
       mapGraph: session.mapGraph,
       rng: rng.getCounters(),
       order,

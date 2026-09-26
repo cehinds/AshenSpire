@@ -24,6 +24,7 @@ import { refusesWhen } from '../components/refusal.js';
 import { attachSeedField } from '../components/seedfield.js';
 import { startingKitViews } from '../../model/startingKits.js';
 import { createRunState } from '../../model/state.js';
+import { handBehaviour } from '../../model/handRules.js';
 import {
   el, pane, row, labelStack, button, buttonRow, optionCard, options, pill, flavour, blocker, eyebrow,
   segmented, swatch, swatches, iconButton, hairline,
@@ -393,7 +394,9 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
       startBtn.addEventListener('click', () => {
         if (seed.problem()) return; // the refusal already said why, at the button
         conn.send({ t: 'seed', seedString: state.seedString });
-        conn.send({ t: 'start' });
+        // The party plays the HOST's hand behaviour (owner ruling): this
+        // host's settings, resolved here and fixed on the session at start.
+        conn.send({ t: 'start', handBehaviour: handBehaviour(meta.settings || {}) });
       });
     } else {
       readyBtn.addEventListener('click', () => {
