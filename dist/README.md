@@ -68,7 +68,7 @@ operation and `tools/verify-shipped.mjs` verifies both against `build/`.
 From the project root:
 
 ```
-node tools/launch.mjs --build-only     # rebuild build/ (full + mobile) and refresh root + dist/
+node tools/launch.mjs --build-only     # rebuild build/ (light art; --full-art for full + mobile) and refresh root + dist/
 node tools/bundle.mjs                  # ONLY the bundler → build/AshenSpire.html; root + dist/ untouched
 node tools/bundle.mjs --mobile         # ONLY the mobile bundler → build/AshenSpire-mobile.html
 node tools/verify-shipped.mjs          # check root + dist/ ARE those builds, carry art, and the mobile one fits

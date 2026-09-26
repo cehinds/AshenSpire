@@ -258,6 +258,11 @@ export const EDITION = 'full';
 /* BUILD_EDITION_END */
 /** True when this page carries the shrunken art of the mobile single file. */
 export const BUILD_IS_MOBILE = EDITION === 'mobile';
+/**
+ * True for the light art tier: the dev/test single file since 2026-09-26, the
+ * same art payloads as the mobile file under the ordinary name.
+ */
+export const BUILD_IS_LIGHT = EDITION === 'light';
 
 /** True when the ordinal in this page belongs to the tree that drew it. */
 export const BUILD_IS_ORDERED = ORDINAL !== 'UNBUMPED';
@@ -307,4 +312,4 @@ export const BUILD_STAMP_TEXT = `BUILD ${BUILD_VERSION} · src ${SOURCE}`;
 // then reports it has no reader, because nothing imports it as a vocabulary. A
 // sentence built out of a list looks like a list. One template, no set.
 export const ABOUT_BUILD_LINE =
-  `Ashen Spire ${BUILD_VERSION}${BUILD_IS_DATED ? ` · built ${BUILT}` : ''} · src ${SOURCE}${BUILD_IS_MOBILE ? ' · mobile edition' : ''}`;
+  `Ashen Spire ${BUILD_VERSION}${BUILD_IS_DATED ? ` · built ${BUILT}` : ''} · src ${SOURCE}${BUILD_IS_MOBILE ? ' · mobile edition' : ''}${BUILD_IS_LIGHT ? ' · light art' : ''}`;

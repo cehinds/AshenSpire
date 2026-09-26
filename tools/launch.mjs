@@ -68,6 +68,12 @@ function version() {
 }
 
 const args = process.argv.slice(2);
+// THE ART TIER. Light by default (owner, 2026-09-26: "light only on dev/test"):
+// one single file, AshenSpire.html, carrying the assets-mobile/ payloads, and a
+// web edition with the same art. `--full-art` is the release/main shape it
+// replaced: the full-art AshenSpire.html (~255 MB) plus the mobile file.
+const FULL_ART = args.includes('--full-art');
+const TIER_FLAG = FULL_ART ? [] : ['--light'];
 
 // 0a. Compile presentation config (content/config/**.json → src/config/generated/ui.js).
 // Runs before the content build, whose stray-source sweep refuses a config file
@@ -90,8 +96,8 @@ if (content.status !== 0) {
 }
 
 // 1. Build the standalone bundle.
-console.log('launch: building the standalone bundle…');
-const build = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs')], { stdio: 'inherit' });
+console.log(`launch: building the standalone bundle (${FULL_ART ? 'full art' : 'light art'})…`);
+const build = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs'), ...TIER_FLAG], { stdio: 'inherit' });
 if (build.status !== 0) {
   console.error('launch: build failed — aborting.');
   process.exit(build.status || 1);
@@ -132,6 +138,9 @@ if (landed !== aliases.length) {
 // (the full build above already bumped the ordinal if the tree moved, so this
 // one reads the same number), art from assets-mobile/. It gets the same three
 // aliases the full file has, under its own name, and the same count-and-verify.
+let mobileLanded = 0;
+let mobileWanted = 0;
+if (FULL_ART) {
 console.log('launch: building the mobile single file…');
 const mobile = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs'), '--mobile'], { stdio: 'inherit' });
 if (mobile.status !== 0) {
@@ -151,18 +160,23 @@ if (landedMobile !== mobileAliases.length) {
   console.error(`launch: REFUSED — ${landedMobile} of ${mobileAliases.length} mobile aliases exist after the copy.`);
   process.exit(1);
 }
+mobileLanded = landedMobile;
+mobileWanted = mobileAliases.length;
+} else {
+  console.log('launch: light art — no separate mobile file (AshenSpire.html already carries the phone-sized art)');
+}
 
 // Produce the hosted/web edition with the same source stamp and external art.
 console.log('launch: building the external-art web edition…');
-const web = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs'), '--external-art', '--out', 'build/web'], { stdio: 'inherit' });
+const web = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs'), '--external-art', ...TIER_FLAG, '--out', 'build/web'], { stdio: 'inherit' });
 if (web.status !== 0) process.exit(web.status || 1);
 
 if (args.includes('--build-only')) {
   // The terminated verdict line #12's contract requires: one line, one count.
   // Both editions counted in one ratio; the noun and the full stop are what
   // tools/verdict.mjs admits, so the edition note goes on the line before.
-  console.log(`launch: full ${landed}/${aliases.length}, mobile ${landedMobile}/${mobileAliases.length}`);
-  console.log(`launch: OK — ${landed + landedMobile}/${aliases.length + mobileAliases.length} current-build aliases refreshed.`);
+  console.log(`launch: ${FULL_ART ? 'full' : 'light'} ${landed}/${aliases.length}${FULL_ART ? `, mobile ${mobileLanded}/${mobileWanted}` : ''}`);
+  console.log(`launch: OK — ${landed + mobileLanded}/${aliases.length + mobileWanted} current-build aliases refreshed.`);
   process.exit(0);
 }
 

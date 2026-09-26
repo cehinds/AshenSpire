@@ -344,7 +344,11 @@ jobs:
       - uses: ./.github/actions/setup-node
 
       - name: Build the standalone and refresh root + dist/
-        run: node tools/verdict.mjs -- node tools/launch.mjs --build-only
+        # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
+        env:
+          ART_TIER: ${{ (github.ref_name == 'release' || github.ref_name == 'main') && '--full-art' || '' }}
+        shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
+        run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
 
       - name: Root + dist carry their art, and ARE the build
         run: node tools/verdict.mjs -- node tools/verify-shipped.mjs
@@ -387,7 +391,7 @@ jobs:
         # diff caught. Each runner hashes what it built; `reproducible-agree`
         # requires all three to be identical.
         shell: bash
-        run: node -e "const c=require('crypto'),f=require('fs');for(const p of ['build/AshenSpire.html','build/AshenSpire-mobile.html'])console.log(c.createHash('sha256').update(f.readFileSync(p)).digest('hex')+'  '+p)" > build-digest-${{ matrix.os }}.txt
+        run: node -e "const c=require('crypto'),f=require('fs');for(const p of ['build/AshenSpire.html','build/AshenSpire-mobile.html'].filter((p)=>f.existsSync(p)))console.log(c.createHash('sha256').update(f.readFileSync(p)).digest('hex')+'  '+p)" > build-digest-${{ matrix.os }}.txt
 
       - uses: actions/upload-artifact@v4
         with:
@@ -410,7 +414,9 @@ jobs:
           ls build-digest-*.txt
           cat build-digest-*.txt
           test "$(ls build-digest-*.txt | wc -l)" -eq 3
-          test "$(cat build-digest-*.txt | sort -u | wc -l)" -eq 2
+          # Every runner built the same files (one line each), and they agree:
+          # the union of lines is exactly one runner's lines.
+          test "$(cat build-digest-*.txt | sort -u | wc -l)" -eq "$(wc -l < "$(ls build-digest-*.txt | head -1)")"
 
   # ---------------------------------------------------------------------------
   # The save-overwrite guard needs a real browser: the defect was a URL reaching
@@ -459,7 +465,11 @@ jobs:
       - uses: ./.github/actions/setup-node
 
       - name: Build the standalone (about-changelog opens build/AshenSpire.html)
-        run: node tools/verdict.mjs -- node tools/launch.mjs --build-only
+        # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
+        env:
+          ART_TIER: ${{ (github.ref_name == 'release' || github.ref_name == 'main') && '--full-art' || '' }}
+        shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
+        run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
 
       - uses: ./.github/actions/which-browser
 

@@ -16,7 +16,7 @@ import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
 import { MOBILE_ASSET_DIR, MOBILE_BUNDLE_BUDGET_BYTES, distinctAssetId } from './mobileart-policy.mjs';
 import { headMetaTags } from './head-meta.mjs';
-import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_FULL, EDITION_MOBILE } from './buildversion.mjs';
+import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_FULL, EDITION_MOBILE, EDITION_LIGHT } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -126,13 +126,29 @@ function idOf(absPath) {
 // refused, not written. Owner's ask, 2026-09-20: the full file had grown to
 // 253 MB, which on a phone is the whole cost of starting; two downloads now,
 // the full one and this one, and the site offers both.
+//
+// `--light`: the LIGHT ART TIER, and the default for dev/test builds since
+// 2026-09-26 (owner: "light only on dev/test"). The same art payloads as
+// --mobile — read from assets-mobile/ — but written as the ordinary
+// AshenSpire.html and stamped edition `light`. It is NOT held to the mobile
+// budget (owner: the single file is exempt from the 50 MB build cap), and it
+// combines with --external-art so the served web edition carries the same tier.
+// tools/launch.mjs builds it unless told --full-art.
 const ARGV = process.argv.slice(2);
 const EXTERNAL_ART = ARGV.includes('--external-art');
 const MOBILE = ARGV.includes('--mobile');
+const LIGHT = ARGV.includes('--light');
 if (EXTERNAL_ART && MOBILE) {
   console.error('bundle.mjs: --external-art and --mobile are two different shapes; pick one');
   process.exit(2);
 }
+if (LIGHT && MOBILE) {
+  console.error('bundle.mjs: --light and --mobile both name an edition; pick one');
+  process.exit(2);
+}
+// Both read their art payloads from the twin tree; only the name, the stamp and
+// the budget tell them apart.
+const TWIN_ART = MOBILE || LIGHT;
 const OUT_FLAG = ARGV.indexOf('--out');
 if (OUT_FLAG >= 0 && !ARGV[OUT_FLAG + 1]) {
   console.error('bundle.mjs: --out needs a directory');
@@ -314,7 +330,7 @@ visit(entryAbs);
 const ASSET_DIR = resolve(ROOT, 'assets');
 // The tree the payloads are READ from. The keys stay `assets/…` whatever it is,
 // because the runtime builds those paths and never learns which edition it is.
-const ART_DIR = MOBILE ? resolve(ROOT, MOBILE_ASSET_DIR) : ASSET_DIR;
+const ART_DIR = TWIN_ART ? resolve(ROOT, MOBILE_ASSET_DIR) : ASSET_DIR;
 const ASSET_MAP_ID = 'src/ui/assetmap.js';
 
 function walkAssets(dir) {
@@ -336,7 +352,7 @@ let copiedDetail = 0;
 let copiedMusic = 0;
 const skipped = []; // files under assets/ with no MIME mapping — reported, not silent
 let authoringBytes = 0;
-if (MOBILE) {
+if (TWIN_ART) {
   // THE TWIN TREE IS SWEPT, THE SOURCE TREE IS THE ORACLE. A mobile build that
   // swept assets-mobile/ alone would ship whatever happened to be there — the
   // art-less-build bug with a new address. So the two trees are compared file
@@ -398,7 +414,9 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
       // runtime (`assets/equipment/weapon_${id}.webp`), so no reader of this
       // source can know which files are reachable. A "copy only what is
       // referenced" pass would ship a build that 404s on the third weapon.
-      const dest = resolve(EXTERNAL_ASSET_DIR, relative(ASSET_DIR, abs));
+      // Relative to the tree it was READ from, so a light web edition lands its
+      // twins at the same `assets/…` paths the full one would.
+      const dest = resolve(EXTERNAL_ASSET_DIR, relative(ART_DIR, abs));
       mkdirSync(dirname(dest), { recursive: true });
       writeFileSync(dest, buf);
       copiedAssets += 1;
@@ -493,7 +511,7 @@ try {
     runPath: RUN_PATH_BUNDLE,
     // The edition is the one fact that tells the two single files apart from
     // inside: same digest, same ordinal, different art. Settings → About says it.
-    edition: MOBILE ? EDITION_MOBILE : EDITION_FULL,
+    edition: MOBILE ? EDITION_MOBILE : LIGHT ? EDITION_LIGHT : EDITION_FULL,
   }));
 } catch (err) {
   fail(`could not derive the build version: ${err.message}`);
@@ -658,7 +676,7 @@ function inlineCssUrls(css, cssAbs) {
     const ext = extname(assetAbs).toLowerCase();
     const mime = MIME[ext];
     if (!mime) fail(`unsupported CSS asset type '${ext}' for ${ref}`);
-    if (MOBILE) {
+    if (TWIN_ART && !EXTERNAL_ART) {
       // Same rule as the sweep: the stylesheet names the source, the payload
       // comes from the twin. A url() that points outside assets/ has no twin
       // and is refused, exactly as --external-art refuses it.
@@ -1086,7 +1104,8 @@ console.log('  stylesheets      : ' + cssHrefs.length + ' (' + cssHrefs.join(', 
 console.log('  authoring omitted: ' + Math.round(authoringBytes / 1024) + ' KiB (equipment component experiments)');
 console.log('  shape            : ' + (EXTERNAL_ART ? 'external art (needs a server; assets/ beside the HTML)'
   : MOBILE ? `consolidated single file, MOBILE edition (art from ${MOBILE_ASSET_DIR}/; runs from file://; budget ${MOBILE_BUNDLE_BUDGET_BYTES} bytes)`
-    : 'consolidated single file (runs from file://)'));
+    : LIGHT ? `consolidated single file, LIGHT art tier (art from ${MOBILE_ASSET_DIR}/; runs from file://; no budget)`
+      : 'consolidated single file (runs from file://)'));
 if (EXTERNAL_ART) {
   console.log('  art copied       : ' + copiedAssets + ' files (' + Math.round(mapBytes / 1024) + ' KiB) → ' + idOf(EXTERNAL_ASSET_DIR));
   console.log('  css assets linked: ' + externalCssUrls + ' (rebased onto the output HTML)');

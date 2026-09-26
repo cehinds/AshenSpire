@@ -106,6 +106,14 @@ export const EDITION_MARKER_START = '/* BUILD_EDITION_START */';
 export const EDITION_MARKER_END = '/* BUILD_EDITION_END */';
 export const EDITION_FULL = 'full';
 export const EDITION_MOBILE = 'mobile';
+/**
+ * The light art tier (tools/bundle.mjs --light): the default single file on
+ * dev/test since 2026-09-26, carrying the assets-mobile/ payloads under the
+ * ordinary AshenSpire.html name. A light build is the only single file its run
+ * writes, so row E accepts it at BUNDLE and row E2 has no mobile file to hold.
+ */
+export const EDITION_LIGHT = 'light';
+const BUNDLE_EDITIONS = Object.freeze([EDITION_FULL, EDITION_LIGHT]);
 /** The mobile single file, beside the full one. Both are checked by rows E and E2. */
 export const MOBILE_BUNDLE = 'build/AshenSpire-mobile.html';
 
@@ -421,7 +429,7 @@ export function stampSource(text, digest, { ordinal = null, built = null, runPat
     out = between(out, RUN_MARKER_START, RUN_MARKER_END, 'BUILD_RUNPATH', `export const RUN_PATH = '${runPath}';`);
   }
   if (edition !== null) {
-    if (edition !== EDITION_FULL && edition !== EDITION_MOBILE) throw new Error(`unknown edition '${edition}' — a bundle is '${EDITION_FULL}' or '${EDITION_MOBILE}'`);
+    if (edition !== EDITION_FULL && edition !== EDITION_MOBILE && edition !== EDITION_LIGHT) throw new Error(`unknown edition '${edition}' — a bundle is '${EDITION_FULL}', '${EDITION_MOBILE}' or '${EDITION_LIGHT}'`);
     out = between(out, EDITION_MARKER_START, EDITION_MARKER_END, 'BUILD_EDITION', `export const EDITION = '${edition}';`);
   }
   return out;
@@ -944,6 +952,7 @@ export function check(root = REPO_ROOT) {
     }
   }
   let bundleText = null;
+  let bundleEdition = null; // set by row E, read by row E2
   try { bundleText = src(BUNDLE); } catch { /* reported */ }
   if (bundleText == null) {
     outside.push(`${BUNDLE} is missing — the module list cannot be bound to the sweep; ${BUILD_FIRST}`);
@@ -984,10 +993,11 @@ export function check(root = REPO_ROOT) {
     else if (places[0] !== RUN_PATH_BUNDLE) problems.push(`${BUNDLE} says it was drawn by '${places[0]}' — a bundle is a '${RUN_PATH_BUNDLE}', and a page that misnames its own run path sends every bug report to the wrong artifact`);
     const editions = [...bundleText.matchAll(/const EDITION = '([^']*)'/g)].map((m) => m[1]);
     if (editions.length !== 1) problems.push(`${BUNDLE} carries ${editions.length} EDITION literals, expected exactly 1`);
-    else if (editions[0] !== EDITION_FULL) problems.push(`${BUNDLE} calls itself the '${editions[0]}' edition — the full single file is '${EDITION_FULL}'`);
+    else if (!BUNDLE_EDITIONS.includes(editions[0])) problems.push(`${BUNDLE} calls itself the '${editions[0]}' edition — the single file is '${EDITION_FULL}' or, on dev/test, '${EDITION_LIGHT}'`);
+    else bundleEdition = editions[0];
     add(problems.length === 0, 'E SHIPPED STAMP',
       problems.length === 0
-        ? `${BUNDLE} carries SOURCE '${want}', which is this tree's digest, names its run path '${RUN_PATH_BUNDLE}' and its edition '${EDITION_FULL}'`
+        ? `${BUNDLE} carries SOURCE '${want}', which is this tree's digest, names its run path '${RUN_PATH_BUNDLE}' and its edition '${editions[0]}'`
         : problems.join('\n      '));
   }
 
@@ -999,7 +1009,12 @@ export function check(root = REPO_ROOT) {
   //      run path, and the edition literal that tells the two apart.
   let mobileText = null;
   try { mobileText = src(MOBILE_BUNDLE); } catch { /* reported */ }
-  if (mobileText == null) {
+  if (bundleEdition === EDITION_LIGHT) {
+    // A LIGHT RUN WRITES NO MOBILE FILE: the light single file already carries
+    // the phone-sized art, so there is no second edition to hold to this tree.
+    // Any AshenSpire-mobile.html on disk is left over from a --full-art build.
+    add(true, 'E2 MOBILE STAMP', `${BUNDLE} is the '${EDITION_LIGHT}' edition — a light build ships no separate mobile file (n/a, stated)`);
+  } else if (mobileText == null) {
     add(false, 'E2 MOBILE STAMP', `${MOBILE_BUNDLE} is missing — the mobile single file has not been built (node tools/launch.mjs --build-only)`);
   } else {
     const want = sourceDigest(root).digest;

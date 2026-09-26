@@ -66,7 +66,10 @@ jobs:
 
       - name: Build the standalone
         id: build
-        run: node tools/launch.mjs --build-only
+        # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
+        env:
+          ART_TIER: ${{ (github.ref_name == 'release' || github.ref_name == 'main') && '--full-art' || '' }}
+        run: node tools/launch.mjs --build-only $ART_TIER
 
       # The names carry the channel: src/ui/buildChannel.js reads `-dev-` from
       # a saved file's name to open the dev-only settings, and a plain
@@ -78,7 +81,9 @@ jobs:
           set -euo pipefail
           mkdir -p standalone
           cp AshenSpire.html "standalone/AshenSpire-${CHANNEL}-preview.html"
-          cp AshenSpire-mobile.html "standalone/AshenSpire-mobile-${CHANNEL}-preview.html"
+          # Only a --full-art build (release/main) writes a separate mobile file;
+          # a light build IS the phone-sized file.
+          if [ -f AshenSpire-mobile.html ]; then cp AshenSpire-mobile.html "standalone/AshenSpire-mobile-${CHANNEL}-preview.html"; fi
 
       - uses: actions/upload-artifact@v4
         with:
@@ -264,9 +269,9 @@ jobs:
             echo "This folder is the DE-INLINED build: serve it and open AshenSpire.html"
             echo "(or run serve-preview.mjs). It needs a server. For the double-clickable"
             echo "single file that needs none, download the ${CHANNEL}-standalone artifact"
-            echo "from this same run: AshenSpire-${CHANNEL}-preview.html is the full game"
-            echo "(~250 MB) and AshenSpire-mobile-${CHANNEL}-preview.html the same build with"
-            echo "its art shrunk under 30 MB."
+            echo "from this same run: AshenSpire-${CHANNEL}-preview.html. On dev and test it"
+            echo "carries the light art tier (~29 MB); on release and main it is the full"
+            echo "art (~250 MB), with AshenSpire-mobile-${CHANNEL}-preview.html beside it."
             echo
             echo "This is an inspection artifact, not a deployment. The built HTML is not"
             echo "committed; this run's artifacts are this commit's build."
