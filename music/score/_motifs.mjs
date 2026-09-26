@@ -87,3 +87,51 @@ export function snuffed(score, beat, root, { stretch = 1, vel = 0.42, cutAt = 0.
   if (ember) score.note('drone', b, emberBeats, n(root) - 24, { vel: 0.22, rev: 0.3, a: 1.5, r: 3, cut: 240 });
   return b;
 }
+
+// ---- the in-game beat --------------------------------------------------------
+//
+// Owner, 2026-09-26: "cello and bass should be pretty strong with the rhythmic
+// beat of the current in-game music". The in-game (procedural) score is
+// src/content/music.js BEDS + src/ui/audio.js playProcedural: one note every
+// `cadence` ms, degree = scale[(step*lift + (step%2 ? 2 : 0)) % len], up an
+// octave every fourth step, over a drone an octave below the root; battle beds
+// (`pulse: true`) add a low thump twice per note. These helpers read that same
+// table, so the recorded score keeps the game's own tempo, key and walk.
+
+import { BEDS, SCALES } from '../../src/content/music.js';
+
+const hzToMidi = (hz) => Math.round(69 + 12 * Math.log2(hz / 440));
+
+/** The in-game bed variant for a context (map-* use the map bed). */
+export function ingame(context, variant = 0) {
+  const bed = BEDS[context] ?? BEDS.map;
+  const v = bed.variants[variant % bed.variants.length];
+  return {
+    bpm: 60000 / v.cadence, // one beat = one in-game note
+    root: hzToMidi(v.root),
+    scale: SCALES[v.scale],
+    lift: v.lift || 3,
+    pulse: !!bed.pulse,
+  };
+}
+
+/**
+ * inGameBeat(score, context, opts) — the in-game walk, one note per beat, on
+ * a strong low cello (or `inst`), dropped `down` octaves from the game's pitch,
+ * with the game's octave jump every fourth step. Adds the drone an octave under
+ * the root for the whole span and, for battle beds, a taiko thump on every half
+ * beat. Returns nothing; writes into `score`.
+ */
+export function inGameBeat(score, context, { variant = 0, from = 0, to = score.beats, inst = 'cello', vel = 0.62, down = 1, drone = true, thump = true, legato = 0.9 } = {}) {
+  const g = ingame(context, variant);
+  const base = g.root - 12 * down;
+  for (let step = 0, b = from; b < to; step++, b++) {
+    const deg = g.scale[(step * g.lift + (step % 2 ? 2 : 0)) % g.scale.length];
+    const oct = step % 4 === 0 ? 12 : 0;
+    score.note(inst, b, legato, base + deg + oct, { vel: step % 4 === 0 ? vel * 1.1 : vel, pan: -0.1, rev: 0.3, a: 0.06, r: 0.8 });
+  }
+  if (drone) score.note('drone', from, to - from, base - 12, { vel: 0.5, rev: 0.15, a: 2, r: 3, cut: 320 });
+  if (g.pulse && thump) {
+    for (let b = from; b < to; b += 0.5) score.note('taiko', b, 0.5, base - 12, { vel: 0.5, rev: 0.2, ring: 0.6 });
+  }
+}

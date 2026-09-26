@@ -2,28 +2,31 @@
 
 ## Direction now (owner, 2026-09-26, latest — this wins over anything below it)
 
-"I'd prefer more like a quiet cello that's an echo of great prosperity suddenly
-snuffed out like flame."
+Two messages, read together:
+1. "a quiet cello that's an echo of great prosperity suddenly snuffed out like flame"
+2. "cello and bass should be pretty strong with the rhythmic beat of the current in-game music"
 
-- **The quiet cello leads.** Title, the six maps, rest and shop are carried by a
-  solo cello, quietly (vel ≈ 0.35–0.45), with almost nothing else: a faint pad or
-  drone, an occasional bell far away. 2 layers is the norm, 3 at most. No choir
-  in these tracks unless the lore row needs one NAMES phrase, and then barely audible.
-- **Echo of prosperity.** Each of those tracks states GOLDBOUGH (`snuffed()` in
-  `_motifs.mjs`): a warm, noble phrase that rises in the MAJOR — the kingdom at its
-  height — in the track's key or its relative major.
-- **Snuffed like a flame.** The phrase is cut off dead, mid-rise, before its peak
-  (a pinch, not a fade). Then: nothing but the reverb dying and a faint ember
-  drone. Hold that near-silence for a few beats; it is the point. The rest of the
-  track is the aftermath in the minor: the cello alone, slower, lower, FORSAKEN or
-  a broken fragment of GOLDBOUGH that never rises as far again.
-- **Quieter overall:** score `gain` 0.7–0.8; per-second RMS roughly -34..-20 dB.
-  The near-silence after the snuff may dip to about -40 dB for up to ~3 s; no
-  longer.
-- **Battles and victory** keep their current lore scores. Victory may add GOLDBOUGH
-  once, and there alone the phrase is allowed to reach its octave (relit, briefly).
-- The cello is both the memory (GOLDBOUGH) and the climber (FORSAKEN): the one
-  voice left that remembers.
+- **Built on the in-game beat.** Every track takes its tempo, key and walk from the
+  game's own procedural bed for its context: `ingame(context)` gives the bpm (one
+  beat = one in-game note), the root and scale; `inGameBeat(score, context)` writes
+  the walk on a STRONG low cello with the drone under it, and the heartbeat thump
+  on half-beats for combat/elite/boss, exactly as the game does. Construct the Score
+  with `bpm: ingame(ctx).bpm`. Use the same variant index for tempo and walk.
+- **Cello and bass strong.** The cello (the walk, and above it the lead) and the bass
+  (drone, low strings) are the front of the mix: vel 0.55–0.75. Everything else is
+  thin and supporting: at most one more layer (a pad, bells or the choir for the lore).
+- **Echo of prosperity, snuffed out.** Title, the six maps, rest and shop each state
+  GOLDBOUGH with `snuffed()` once per loop, on the cello above the walk: a warm major
+  rise cut off dead before its peak. After the snuff, the walk continues (the beat
+  does not stop), but the lead is gone for a while: the kingdom went out; the pulse
+  of the world goes on.
+- **Lore stays.** The motif rules and the per-track lore table below still apply
+  (NAMES in the choir, unfinished except in victory; EMBER never sung; the cello is
+  both GOLDBOUGH and FORSAKEN).
+- **Levels:** per-second RMS roughly -30..-17 dB, loops 60–100 s (victory 30–45 s),
+  first and last seconds similar.
+- **Battles and victory:** built on `inGameBeat` too (the thump included); victory
+  may let GOLDBOUGH reach its octave, once.
 
 ---
  (owner feedback 2026-09-26: "way too upbeat — more like Elden Ring, but simple")
