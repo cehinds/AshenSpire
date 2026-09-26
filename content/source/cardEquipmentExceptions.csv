@@ -1,5 +1,0 @@
-# Exact-weapon card compatibility is exceptional and must be explicit here.
-# A card with a row uses ONLY its listed item(s); generic class/tag fallback is
-# deliberately bypassed so exact requirements cannot silently become hints.
-cardId,weaponId
-starstoneKris,dagger

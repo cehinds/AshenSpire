@@ -1,5 +1,0 @@
-electron/node_modules/
-electron/build/
-electron/userdata/
-electron/dist-embed/
-electron/package-lock.json
