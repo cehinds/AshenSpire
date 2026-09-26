@@ -132,6 +132,19 @@ const KINDS = {
  * — an unstated fact reads as no room, so a caller that forgets to state one
  * gets a blocked row it can see, never a silent over-grant.
  */
+/**
+ * smithingStoneNote(receipt) → the one-line spoils note a co-op door shows for
+ * a Smithing Stone receipt: ordinary and refined stones (SPEC §15.3), each
+ * named when paid; '' when nothing was.
+ */
+export function smithingStoneNote(receipt) {
+  if (!receipt) return '';
+  return [
+    receipt.amount > 0 ? `⚒ ${receipt.amount} Smithing Stone secured · ${receipt.stoneBalanceAfter} total` : '',
+    receipt.refined > 0 ? `${receipt.refined} Refined Stone${receipt.refined === 1 ? '' : 's'} · ${receipt.refinedBalanceAfter} refined` : '',
+  ].filter(Boolean).join(' · ');
+}
+
 /** Whether a Smithing Stone receipt paid anything, ordinary or refined. */
 export function smithingStonesPaid(receipt) {
   const paid = (value) => Number.isInteger(value) && value > 0;

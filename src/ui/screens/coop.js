@@ -95,6 +95,7 @@ import {
 
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { clearSelection } from '../components/cardSelection.js';
+import { smithingStoneNote } from '../../model/rewardplan.js';
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
@@ -1062,10 +1063,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     sceneDoor({
       title: `${String(snap.scene.pool || 'The').replace(/^./, (c) => c.toUpperCase())} spoils`,
       // Ordinary and refined stones (SPEC §15.3) on the one line, each when paid.
-      note: [
-        stone?.amount > 0 ? `⚒ ${stone.amount} Smithing Stone secured · ${stone.stoneBalanceAfter} total` : '',
-        stone?.refined > 0 ? `${stone.refined} Refined Stone${stone.refined === 1 ? '' : 's'} · ${stone.refinedBalanceAfter} refined` : '',
-      ].filter(Boolean).join(' · '),
+      note: smithingStoneNote(stone),
       children: [subtitle('Choose a card'), grid, options(takes, { class: 'coop-choices' })],
     });
     app.querySelectorAll('[data-take]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.take === 'relic') pick.takeRelic = true; else if (b.dataset.take === 'flask') pick.flask = true; submit(); }));
@@ -1229,9 +1227,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     const grid = item.type === 'reward' ? el('div', { class: 'reward-row' }) : null;
     const relic = (item.type === 'reward' && item.offer.relicId) || (item.type === 'treasure' && item.relicId);
+    // The stones were granted when the party earned them; the catch-up says so.
+    const stoneNote = smithingStoneNote(item.type === 'reward' ? item.offer.smithingStoneReceipt : item.smithingStoneReceipt);
     sceneDoor({
       title, eyebrow: debt,
-      note: 'Claim what you would have earned while away.',
+      note: ['Claim what you would have earned while away.', stoneNote].filter(Boolean).join(' '),
       children: [
         grid,
         options([

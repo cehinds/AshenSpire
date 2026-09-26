@@ -26,7 +26,7 @@ import { awardLevelXp, combatLevelXp } from '../src/model/levelup.js';
 import { playerWeightClass } from '../src/engine/combat.js';
 import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import {
-  commitSmithing, grantSmithingReward, initializeRunSmithing, smithingPlan,
+  commitSmithing, grantSmithingReward, initializeRunSmithing, smithingPlan, smithingRewardPays,
 } from '../src/model/smithing.js';
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
@@ -952,10 +952,16 @@ export function createSession({ registries, seedString, endless = false, restore
   function enterTreasure() {
     for (const m of livingMembers()) {
       const relicId = rollRelicReward(registries, m.rng, m.run.relics);
+      // The solo treasure door's Smithing Stones (SPEC §15.3), granted to the
+      // seat like a fight's are, present or not, and only when a treasure
+      // table pays: both ship at 0, so no claim is written by default.
+      const smithingStoneReceipt = smithingRewardPays(registries, 'treasure')
+        ? grantSmithingReward(registries, m.run, 'treasure', `coop-treasure:${session.actNumber}:${session.floor}:${m.id}`, m.rng)
+        : null;
       if (m.connected) {
         if (relicId && !m.run.relics.includes(relicId)) m.run.relics.push(relicId);
       } else {
-        m.catchup.push({ type: 'treasure', relicId, act: session.actNumber, floor: session.floor });
+        m.catchup.push({ type: 'treasure', relicId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), act: session.actNumber, floor: session.floor });
       }
     }
     advanceFromNode();

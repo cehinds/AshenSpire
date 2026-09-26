@@ -268,3 +268,37 @@ test('the spoils row copy names a refined stone', async () => {
   assert.equal(t('reward.stone.refinedTitle', { amount: 2, plural: 's' }), '2 Refined Stones');
   assert.match(t('reward.stone.refinedBody', { total: 3 }), /3 refined/);
 });
+
+test('co-op treasure pays the same stone door as solo, and the catch-up names it', async () => {
+  const { createSession } = await import('../tools/session.mjs');
+  const { smithingStoneNote } = await import('../src/model/rewardplan.js');
+  const party = (registries) => {
+    const host = createSession({ registries, seedString: 'GOLDBOUGH' });
+    host.addMember({ id: 'p1', name: 'Here', classId: 'reaver' });
+    host.addMember({ id: 'p2', name: 'Away', classId: 'reaver' });
+    host.start();
+    host.setConnected('p2', false);
+    // Stand the party on a real node, dressed as treasure, as travelTo would.
+    const node = host.session.mapGraph.nodes[host.session.reachableIds[0]];
+    host.session.cursorId = node.id;
+    host.session.floor = node.floor;
+    host.resolveNode({ ...node, type: 'treasure' });
+    const [here, away] = host.livingMembers();
+    return { here, away };
+  };
+  // Shipped tables: no claim, no receipt, nothing written.
+  const plain = party(REG);
+  assert.deepEqual((plain.here.run.smithingRewardClaims || []).filter((id) => id.startsWith('coop-treasure')), []);
+  assert.equal(plain.away.catchup.at(-1).smithingStoneReceipt, undefined);
+  // Raised: both seats are paid, present or away, and the away seat's catch-up carries the receipt.
+  const raised = party(registriesWith({ 'smithing.rewardByPool.treasure': 2, 'smithing.refinedRewardByPool.treasure': 1 }));
+  assert.equal(raised.here.run.smithingStones, 2);
+  assert.equal(raised.here.run.smithingStonesRefined, 1);
+  assert.equal(raised.away.run.smithingStones, 2);
+  const item = raised.away.catchup.at(-1);
+  assert.equal(item.type, 'treasure');
+  assert.equal(item.smithingStoneReceipt.amount, 2);
+  assert.equal(smithingStoneNote(item.smithingStoneReceipt), '⚒ 2 Smithing Stone secured · 2 total · 1 Refined Stone · 1 refined');
+  assert.equal(smithingStoneNote(null), '');
+  assert.equal(smithingStoneNote({ amount: 0, stoneBalanceAfter: 0 }), '');
+});
