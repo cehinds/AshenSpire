@@ -6,6 +6,13 @@ Two messages, read together:
 1. "a quiet cello that's an echo of great prosperity suddenly snuffed out like flame"
 2. "cello and bass should be pretty strong with the rhythmic beat of the current in-game music"
 
+- **The floor is the current build's music itself** (owner: "use the current build
+  of the game as the reference and just build on top of it"). `inGameBeat` renders
+  the game's own procedural bed faithfully (its waveforms, envelopes, drone, fifth,
+  and battle thump) at the game's own balance. Every track starts from that and
+  ADDS: the strong cello bass (built into inGameBeat), the cello lead
+  (GOLDBOUGH/FORSAKEN), and the lore layer. Nothing replaces or reharmonises the
+  floor; new parts must sit in its key and scale.
 - **Built on the in-game beat.** Every track takes its tempo, key and walk from the
   game's own procedural bed for its context: `ingame(context)` gives the bpm (one
   beat = one in-game note), the root and scale; `inGameBeat(score, context)` writes

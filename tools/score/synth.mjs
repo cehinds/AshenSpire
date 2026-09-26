@@ -50,6 +50,21 @@ function table(key, amps) {
   tableCache.set(key, t);
   return t;
 }
+// A band-limited single cycle of a basic waveform at frequency f (harmonics
+// kept below 20 kHz), cached by wave and harmonic count.
+function bandlimited(wave, f) {
+  const nh = Math.max(1, Math.min(400, Math.floor(20000 / f)));
+  const key = `bl:${wave}:${nh}`;
+  if (tableCache.has(key)) return tableCache.get(key);
+  const amps = [];
+  for (let h = 1; h <= nh; h++) {
+    if (wave === 'sine') amps.push(h === 1 ? 1 : 0);
+    else if (wave === 'sawtooth') amps.push(1 / h);
+    else if (wave === 'square') amps.push(h % 2 ? 1 / h : 0);
+    else amps.push(h % 2 ? ((h - 1) / 2 % 2 ? -1 : 1) / (h * h) : 0); // triangle
+  }
+  return table(key, amps);
+}
 function readTable(t, phase) {
   const x = phase * TABLE;
   const i = x | 0;
@@ -229,6 +244,105 @@ const INSTRUMENTS = {
       ph += (2 * Math.PI * f) / SR;
       nz += kn * ((rand() * 2 - 1) - nz);
       out[i] = (Math.sin(ph) * Math.exp(-t * (o.decay ?? 5)) + nz * 1.5 * Math.exp(-t * 30)) * Math.min(1, i / 24);
+    }
+    return out;
+  },
+  // Piano: the voice of the in-game score. The current build's procedural
+  // music plays one soft struck note per cadence (src/ui/audio.js
+  // playProcedural); this is that note as a piano — a hammered, slightly
+  // inharmonic string pair with a fast attack and a partial-by-partial decay.
+  piano(n, rand, o) {
+    const f = mtof(n.midi);
+    const held = Math.round(n.dur * SR);
+    const ring = Math.round((o.ring ?? 3.2) * SR);
+    const len = Math.max(held, 1) + ring;
+    const out = new Float32Array(len);
+    const B = 0.00035; // string stiffness → stretched partials
+    const nh = Math.min(14, Math.floor(10000 / f));
+    const bright = o.bright ?? 1;
+    for (let k = 1; k <= nh; k++) {
+      const fk = f * k * Math.sqrt(1 + B * k * k);
+      const amp = (1 / Math.pow(k, 1.25)) * (k <= 3 ? 1 : bright * 0.8);
+      const dec = 0.9 + 0.45 * k; // higher partials die faster
+      for (const det of [-0.6, 0.6]) {
+        const w = (2 * Math.PI * (fk + det)) / SR;
+        const ph = rand() * 6.28;
+        for (let i = 0; i < len; i++) {
+          const t = i / SR;
+          // damper: after the key is released the note fades in ~0.35 s
+          const damp = i < held ? 1 : Math.exp(-(i - held) / (0.35 * SR));
+          out[i] += amp * 0.5 * Math.sin(w * i + ph) * Math.exp(-t * dec) * damp;
+        }
+      }
+    }
+    for (let i = 0; i < Math.min(len, 144); i++) out[i] *= i / 144; // ~3 ms hammer
+    let s1 = 0; const k = lp1(o.cut ?? 5200);
+    for (let i = 0; i < len; i++) { s1 += k * (out[i] - s1); out[i] = s1 * 0.6; }
+    return out;
+  },
+  // ---- the current build's own voices (src/ui/audio.js playProcedural) ----
+  // Rendered faithfully so the recorded score can stand ON the game's music:
+  // same waveforms (band-limited, as WebAudio's are), same envelopes, same
+  // drone and thump. `midi` may be fractional; these take exact Hz from it.
+  //
+  // gamenote: one melody note — 0.08 s exponential rise, exponential fall to
+  // silence at 1.8 s, stopped at 1.9 s. `wave`: sine|triangle|square|sawtooth.
+  gamenote(n, rand, o) {
+    const f = mtof(n.midi);
+    const len = Math.round(1.9 * SR);
+    const out = new Float32Array(len);
+    const t = bandlimited(o.wave ?? 'triangle', f);
+    let ph = rand();
+    const rise = Math.round(0.08 * SR), fall = Math.round(1.8 * SR);
+    for (let i = 0; i < len; i++) {
+      ph += f / SR; ph -= Math.floor(ph);
+      let e;
+      if (i < rise) e = 0.0001 * Math.pow(1 / 0.0001, i / rise);
+      else if (i < fall) e = Math.pow(0.0001, (i - rise) / (fall - rise));
+      else e = 0.0001;
+      out[i] = readTable(t, ph) * e;
+    }
+    return out;
+  },
+  // gamedrone: two sawtooths a hair apart through a 700 Hz lowpass swept
+  // ±260 Hz by a 0.07 Hz LFO, faded in over 1.5 s; held for the note length.
+  gamedrone(n, rand) {
+    const f = mtof(n.midi);
+    const held = Math.round(n.dur * SR);
+    const len = held + Math.round(1.5 * SR);
+    const out = new Float32Array(len);
+    const t1 = bandlimited('sawtooth', f), t2 = bandlimited('sawtooth', f * 1.005);
+    let p1 = rand(), p2 = rand(), y1 = 0, y2 = 0;
+    for (let i = 0; i < len; i++) {
+      p1 += f / SR; p1 -= Math.floor(p1);
+      p2 += (f * 1.005) / SR; p2 -= Math.floor(p2);
+      const x = 0.5 * (readTable(t1, p1) + readTable(t2, p2));
+      const cut = 700 + 260 * Math.sin(2 * Math.PI * 0.07 * (i / SR));
+      const k = lp1(Math.max(60, cut));
+      y1 += k * (x - y1); y2 += k * (y1 - y2);
+      const up = Math.min(1, i / (1.5 * SR));
+      const down = i < held ? 1 : Math.max(0, 1 - (i - held) / (1.5 * SR));
+      out[i] = y2 * up * down;
+    }
+    return out;
+  },
+  // gamethump: the battle heartbeat — a sine falling from f to 2f/3 in 0.18 s,
+  // 0.02 s exponential rise, gone by 0.32 s.
+  gamethump(n) {
+    const f0 = mtof(n.midi);
+    const len = Math.round(0.36 * SR);
+    const out = new Float32Array(len);
+    let ph = 0;
+    const rise = Math.round(0.02 * SR), fall = Math.round(0.32 * SR);
+    for (let i = 0; i < len; i++) {
+      const t = i / SR;
+      const f = t < 0.18 ? f0 * Math.pow(2 / 3, t / 0.18) : (f0 * 2) / 3;
+      ph += (2 * Math.PI * f) / SR;
+      let e;
+      if (i < rise) e = 0.0001 * Math.pow(1 / 0.0001, i / rise);
+      else if (i < fall) e = Math.pow(0.0001, (i - rise) / (fall - rise));
+      else e = 0;
+      out[i] = Math.sin(ph) * e;
     }
     return out;
   },

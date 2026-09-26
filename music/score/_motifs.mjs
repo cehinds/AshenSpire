@@ -115,23 +115,43 @@ export function ingame(context, variant = 0) {
   };
 }
 
+const hzMidi = (hz) => 69 + 12 * Math.log2(hz / 440); // exact, fractional
+
 /**
- * inGameBeat(score, context, opts) — the in-game walk, one note per beat, on
- * a strong low cello (or `inst`), dropped `down` octaves from the game's pitch,
- * with the game's octave jump every fourth step. Adds the drone an octave under
- * the root for the whole span and, for battle beds, a taiko thump on every half
- * beat. Returns nothing; writes into `score`.
+ * inGameBeat(score, context, opts) — THE CURRENT BUILD'S MUSIC, as the floor
+ * every track stands on (owner: "use the current build of the game as the
+ * reference and just build on top of it"). Reproduces src/ui/audio.js
+ * playProcedural for one bed variant, note for note: a `gamenote` in the
+ * variant's wave every cadence (one beat), degree = scale[(step*lift +
+ * (step%2 ? 2 : 0)) % len], an octave up every fourth step, a soft sine a fifth
+ * above every third step; the detuned-saw `gamedrone` at root/2 for the whole
+ * span; and, for battle beds, a `gamethump` every max(420 ms, cadence/2).
+ * Levels keep the engine's own ratios (note 0.16, fifth 0.07, drone 0.12,
+ * thump 0.22), scaled by `level`.
+ *
+ * On top of that floor, `bass: true` (default) adds a strong bowed cello bass
+ * note two octaves under the root on every fourth step, the downbeat of the
+ * game's four-note cycle. Everything else a track adds is its own.
+ * (Older options — inst, vel, down, fifth — are accepted and ignored: the floor
+ * is the game's, not the track's.)
  */
-export function inGameBeat(score, context, { variant = 0, from = 0, to = score.beats, inst = 'cello', vel = 0.62, down = 1, drone = true, thump = true, legato = 0.9 } = {}) {
-  const g = ingame(context, variant);
-  const base = g.root - 12 * down;
+export function inGameBeat(score, context, { variant = 0, from = 0, to = score.beats, level = 1, bass = true, bassVel = 0.62, drone = true, thump = true } = {}) {
+  const bed = BEDS[context] ?? BEDS.map;
+  const v = bed.variants[variant % bed.variants.length];
+  const scale = SCALES[v.scale];
+  const lift = v.lift || 3;
+  const K = 4 * level; // engine gain → note velocity
   for (let step = 0, b = from; b < to; step++, b++) {
-    const deg = g.scale[(step * g.lift + (step % 2 ? 2 : 0)) % g.scale.length];
-    const oct = step % 4 === 0 ? 12 : 0;
-    score.note(inst, b, legato, base + deg + oct, { vel: step % 4 === 0 ? vel * 1.1 : vel, pan: -0.1, rev: 0.3, a: 0.06, r: 0.8 });
+    const deg = scale[(step * lift + (step % 2 ? 2 : 0)) % scale.length];
+    const oct = step % 4 === 0 ? 2 : 1;
+    const hz = v.root * oct * Math.pow(2, deg / 12);
+    score.note('gamenote', b, 1, hzMidi(hz), { wave: v.wave || 'triangle', vel: 0.16 * K, pan: 0.1, rev: 0.35 });
+    if (step % 3 === 1) score.note('gamenote', b, 1, hzMidi(hz * 1.4983), { wave: 'sine', vel: 0.07 * K, pan: 0.2, rev: 0.4 });
+    if (bass && step % 4 === 0) score.note('cello', b, 3.6, Math.round(hzMidi(v.root)) - 24, { vel: bassVel, pan: -0.15, rev: 0.25, a: 0.12, r: 1.2 });
   }
-  if (drone) score.note('drone', from, to - from, base - 12, { vel: 0.5, rev: 0.15, a: 2, r: 3, cut: 320 });
-  if (g.pulse && thump) {
-    for (let b = from; b < to; b += 0.5) score.note('taiko', b, 0.5, base - 12, { vel: 0.5, rev: 0.2, ring: 0.6 });
+  if (drone && bed.drone !== false) score.note('gamedrone', from, to - from, hzMidi(v.root / 2), { vel: 0.12 * K, pan: 0, rev: 0.15 });
+  if (bed.pulse && thump) {
+    const every = Math.max(420, v.cadence / 2) / v.cadence; // in beats
+    for (let b = from; b < to - 1e-9; b += every) score.note('gamethump', b, every, hzMidi(v.root / 2), { vel: 0.22 * K, pan: 0, rev: 0.1 });
   }
 }
