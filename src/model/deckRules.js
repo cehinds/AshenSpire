@@ -234,3 +234,22 @@ export function orderedReturn(discard, order) {
   const known = discard.filter((c) => at.has(c.instanceId)).sort((a, b) => at.get(a.instanceId) - at.get(b.instanceId));
   return [...known, ...discard.filter((c) => !at.has(c.instanceId))];
 }
+
+// Everything an editor session can change: the two piles, the attack-slot
+// allocation it retires and grows, and the mint counter. Cancel puts ALL of it
+// back (SPEC §14.1), so a cancelled edit leaves no allocation that disagrees
+// with the restored instances and spends no mint number.
+const EDIT_STATE_KEYS = ['deck', 'sideboard', 'equipmentAttackSlotCount', 'removedAttackSlotIds', 'editMintCounter'];
+
+/** beginDeckEdit(run) → an opaque snapshot to hand to cancelDeckEdit. */
+export function beginDeckEdit(run) {
+  return Object.freeze(Object.fromEntries(EDIT_STATE_KEYS.map((key) => [key, structuredClone(run[key])])));
+}
+
+/** cancelDeckEdit(run, snapshot) — restore every editor-owned field exactly. */
+export function cancelDeckEdit(run, snapshot) {
+  for (const key of EDIT_STATE_KEYS) {
+    if (snapshot[key] === undefined) delete run[key];
+    else run[key] = structuredClone(snapshot[key]);
+  }
+}

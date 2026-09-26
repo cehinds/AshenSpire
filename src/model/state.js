@@ -989,20 +989,31 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
   // worth checking, since a bad entry breaks combat rather than the load.
-  if (Array.isArray(run.deck)) {
-    const bad = run.deck.findIndex((c) => !c || typeof c.cardId !== 'string' || typeof c.instanceId !== 'string');
-    if (bad !== -1) problems.push(`deck[${bad}] is not { instanceId, cardId }`);
-    for (let i = 0; i < run.deck.length; i++) {
-      const card = run.deck[i];
+  // The sideboard holds the same instances (SPEC §14.1), so it is held to the
+  // same invariants: a malformed set-aside card is refused here, at the load
+  // door, not when the editor returns it to the deck.
+  for (const pile of ['deck', 'sideboard']) {
+    const cards = run[pile];
+    if (!Array.isArray(cards)) continue;
+    const bad = cards.findIndex((c) => !c || typeof c.cardId !== 'string' || typeof c.instanceId !== 'string');
+    if (bad !== -1) problems.push(`${pile}[${bad}] is not { instanceId, cardId }`);
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
       if (!card) continue;
       const schoolAbsent = card.damageSchool === undefined;
       const buildupAbsent = card.exposureBuildupPerHit === undefined;
-      if (schoolAbsent !== buildupAbsent) problems.push(`deck[${i}] damageSchool and exposureBuildupPerHit must both be present or both be absent`);
-      if (!schoolAbsent && !DAMAGE_SCHOOLS.includes(card.damageSchool)) problems.push(`deck[${i}].damageSchool '${card.damageSchool}' is unknown`);
-      if (!buildupAbsent && (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0)) problems.push(`deck[${i}].exposureBuildupPerHit must be a non-negative integer`);
-      if (card.ratingId !== undefined && !['ar', 'pr', 'dr', 'poise', 'ward'].includes(card.ratingId)) problems.push(`deck[${i}].ratingId '${card.ratingId}' is unknown`);
-      if (card.ratingValue !== undefined && (!Number.isFinite(card.ratingValue) || card.ratingValue < 0)) problems.push(`deck[${i}].ratingValue must be a finite non-negative number`);
-      if (card.ratingCap !== undefined && (!Number.isFinite(card.ratingCap) || card.ratingCap < 0)) problems.push(`deck[${i}].ratingCap must be a finite non-negative number`);
+      if (schoolAbsent !== buildupAbsent) problems.push(`${pile}[${i}] damageSchool and exposureBuildupPerHit must both be present or both be absent`);
+      if (!schoolAbsent && !DAMAGE_SCHOOLS.includes(card.damageSchool)) problems.push(`${pile}[${i}].damageSchool '${card.damageSchool}' is unknown`);
+      if (!buildupAbsent && (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0)) problems.push(`${pile}[${i}].exposureBuildupPerHit must be a non-negative integer`);
+      if (card.ratingId !== undefined && !['ar', 'pr', 'dr', 'poise', 'ward'].includes(card.ratingId)) problems.push(`${pile}[${i}].ratingId '${card.ratingId}' is unknown`);
+      if (card.ratingValue !== undefined && (!Number.isFinite(card.ratingValue) || card.ratingValue < 0)) problems.push(`${pile}[${i}].ratingValue must be a finite non-negative number`);
+      if (card.ratingCap !== undefined && (!Number.isFinite(card.ratingCap) || card.ratingCap < 0)) problems.push(`${pile}[${i}].ratingCap must be a finite non-negative number`);
+      // A set-aside attack basic's slot is retired; any other would make the
+      // next restamp disagree with the allocation.
+      if (pile === 'sideboard' && card.equipmentAttackSlotId !== undefined
+        && !(Array.isArray(run.removedAttackSlotIds) && run.removedAttackSlotIds.includes(card.equipmentAttackSlotId))) {
+        problems.push(`sideboard[${i}].equipmentAttackSlotId '${card.equipmentAttackSlotId}' must be a retired slot`);
+      }
     }
   }
   if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {

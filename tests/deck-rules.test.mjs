@@ -304,3 +304,30 @@ test('owner ruling: a class spell or Power is limited to one copy in the deck; b
   assert.equal(moveFromSideboard(REG, run, 'pw2'), false, 'a second copy of a class Power is refused');
   assert.equal(moveFromSideboard(REG, run, 'pw2', { classSpellPowerCopies: 2 }), true, 'and allowed when the setting raises the limit');
 });
+
+test('a malformed sideboard card is refused at the load door, like a deck card', async () => {
+  const { validateRunShape } = await import('../src/model/state.js');
+  const run = freshRun();
+  run.sideboard.push({ instanceId: 'bad1', cardId: 'strike', upgraded: false, damageSchool: 'fire' });
+  assert.ok(validateRunShape(run).some((p) => /sideboard\[0\] damageSchool/.test(p)));
+  run.sideboard = [{ instanceId: 'bad2', cardId: 'strike', upgraded: false, equipmentRole: 'attack', equipmentAttackSlotId: 'attack:0' }];
+  assert.ok(validateRunShape(run).some((p) => /must be a retired slot/.test(p)), 'an unretired slot in the sideboard is refused');
+  const ok = freshRun();
+  const strike = ok.deck.find((c) => c.equipmentRole === 'attack');
+  moveToSideboard(REG, ok, strike.instanceId);
+  assert.deepEqual(validateRunShape(ok).filter((p) => /sideboard/.test(p)), [], 'a real set-aside basic passes');
+});
+
+test('Cancel restores the piles, the slot allocation and the mint counter exactly', async () => {
+  const { beginDeckEdit, cancelDeckEdit } = await import('../src/model/deckRules.js');
+  const run = freshRun();
+  const before = structuredClone({ deck: run.deck, sideboard: run.sideboard, count: run.equipmentAttackSlotCount, retired: run.removedAttackSlotIds, mint: run.editMintCounter });
+  const snap = beginDeckEdit(run);
+  moveToSideboard(REG, run, run.deck.find((c) => c.equipmentRole === 'attack').instanceId);
+  addBasicCard(REG, run, 'attack');
+  addBasicCard(REG, run, 'attack');
+  moveToSideboard(REG, run, ordinary(run).instanceId);
+  cancelDeckEdit(run, snap);
+  assert.deepEqual({ deck: run.deck, sideboard: run.sideboard, count: run.equipmentAttackSlotCount, retired: run.removedAttackSlotIds, mint: run.editMintCounter }, before);
+  assert.doesNotThrow(() => stampDeck(REG, run));
+});
