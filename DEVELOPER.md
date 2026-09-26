@@ -69,7 +69,16 @@ fails the core suite while it is stale, or when any field differs from what
 `src/ui/assetmap.js` resolves; `assetUrl()` checks an optional high-res source
 first (built from a manifest by the Art quality setting), then the built-in
 art. Not yet covered: game code still builds many `assets/…` paths from
-templates, and 14 CSS `url(../assets/…)` backdrops bypass `assetUrl()`. Serve the whole web directory for
+templates, and 14 CSS `url(../assets/…)` backdrops bypass `assetUrl()`.
+
+**Settings → Display → Art quality** (`src/ui/highResArt.js`): *Built-in* uses
+the art the build carries; *Local high-res* lays full-resolution files over it
+from a folder served beside the game (`hd/art-manifest.json` plus `hd/assets/…`,
+found over http) or a folder the player picks (any build, `file://` included;
+the browser hands the files over for this page only, so a reload asks again).
+Anything the folder lacks stays built-in; images already on screen are swapped
+in place and pose preloads are dropped. The setting is `LOCAL_ONLY_KEYS` in
+`src/model/settingsSync.js`: never saved to or loaded from a sync profile. Serve the whole web directory for
 mobile testing. Rendering-quality behavior and performance checks are described
 in [Mobile performance](docs/MOBILE-PERFORMANCE.md).
 

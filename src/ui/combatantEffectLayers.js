@@ -3,6 +3,8 @@ import {combatEffectFrames} from './assets.js';
 import {combatEffectOpacity} from '../content/combatEffectPresentation.js';
 import {reducedMotionRequested} from './motion.js';
 import { hintImage } from './imageHints.js';
+// Each frame re-resolves its tier as it is shown (Art quality may change mid-effect).
+import { currentArtUrl } from './highResArt.js';
 import {uiConfig} from '../config/generated/ui.js';
 
 // Canvas size, default duration and frame count live in
@@ -22,7 +24,7 @@ export function mountCombatantEffectLayers(host,kind,{actor,pose='idle',anchor='
  });
  let stopped=false;
  const update=options=>{if(stopped)return;Object.assign(state,options);const point=combatPoseAttachment(state.actor,state.pose,state.anchor);for(const {el,part} of nodes){el.hidden=!point||!state[part.plane];if(!point)continue;el.dataset.anchor=state.anchor;el.dataset.pose=state.pose;Object.assign(el.style,{left:point.x/CANVAS*PCT+'%',top:point.y/CANVAS*PCT+'%',width:(ATTACHMENT_SIZE[state.anchor]||PLAY.sizing.defaultAttachment)*state.scale/CANVAS*PCT+'%',height:'auto',opacity:String(Math.max(0,Math.min(1,state.opacity))*part.opacity),transform:`translate(-50%,-50%) rotate(${point.rotation}deg)`});}};
- const show=frame=>{if(stopped)return;const i=Math.max(0,Math.min(frames.length-1,Math.floor(frame)));for(const {el}of nodes){el.src=frames[i];el.dataset.frame=String(i+1);}};
+ const show=frame=>{if(stopped)return;const i=Math.max(0,Math.min(frames.length-1,Math.floor(frame)));const src=currentArtUrl(frames[i]);for(const {el}of nodes){el.src=src;el.dataset.frame=String(i+1);}};
  update({});show(0);
  return {show,update,stop(){stopped=true;for(const {el}of nodes)el.remove();}};
 }

@@ -20,13 +20,15 @@ import { resolve, dirname } from 'node:path';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const TARGET = resolve(ROOT, 'src/content/settingsDefaults.js');
 const DEVICE_KEYS_FALLBACK = ['uiScale', 'textSize', 'tapFloor', 'fullscreen', 'quickNav', 'armamentsPhonePlacement'];
+// Never promoted either: Art quality names a folder on one device (settingsSync.js).
+const LOCAL_ONLY_KEYS_FALLBACK = ['artQuality'];
 
 async function modules() {
   const { contentBundle } = await import('../src/content/index.js');
   const { parseAdvancedConfigFile } = await import('../src/model/advancedConfig.js');
   const { settingsRows } = await import('../src/ui/screens/settings.js');
   const sync = await import('../src/model/settingsSync.js');
-  return { contentBundle, parseAdvancedConfigFile, rows: settingsRows(), deviceKeys: sync.DEVICE_KEYS || DEVICE_KEYS_FALLBACK };
+  return { contentBundle, parseAdvancedConfigFile, rows: settingsRows(), deviceKeys: [...(sync.DEVICE_KEYS || DEVICE_KEYS_FALLBACK), ...(sync.LOCAL_ONLY_KEYS || LOCAL_ONLY_KEYS_FALLBACK)] };
 }
 
 export function moduleText(values) {

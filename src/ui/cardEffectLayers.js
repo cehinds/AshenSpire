@@ -3,6 +3,8 @@ import {combatEffectFrames} from './assets.js';
 import {combatEffectOrientation} from './combatEffectDirection.js';
 import {reducedMotionRequested} from './motion.js';
 import { hintImage } from './imageHints.js';
+// Each frame re-resolves its tier as it is shown (Art quality may change mid-effect).
+import { currentArtUrl } from './highResArt.js';
 
 // The caller owns a stacking context with its card face at z=1. These are real
 // sibling planes: the rear image is occluded by the face, not painted over it.
@@ -16,7 +18,7 @@ export function mountCardEffectLayers(host,kind,{opacity=combatEffectOpacity(kin
  let stopped=false;
  const settings={opacity,direction,behind:true,front:true};
  const update=options=>{Object.assign(settings,options);for(const {el,part}of nodes){el.style.opacity=String(Math.max(0,Math.min(1,settings.opacity))*part.opacity);el.style.transform=`translate(-50%,-50%) ${combatEffectOrientation(settings.direction)}`;el.hidden=!settings[part.plane];}};
- const show=frame=>{if(stopped)return;const i=Math.max(0,Math.min(frames.length-1,Math.floor(frame)));for(const {el}of nodes){el.src=frames[i];el.dataset.frame=String(i+1);}};
+ const show=frame=>{if(stopped)return;const i=Math.max(0,Math.min(frames.length-1,Math.floor(frame)));const src=currentArtUrl(frames[i]);for(const {el}of nodes){el.src=src;el.dataset.frame=String(i+1);}};
  update({});show(0);
  return {show,update,stop:()=>{stopped=true;for(const {el}of nodes)el.remove();}};
 }
