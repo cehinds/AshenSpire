@@ -8,9 +8,59 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "A full recorded score, written as code",
     "detail": "Hosted builds now play thirteen recorded tracks. There is one for the title, shop, rest, combat, elite, boss and victory screens, and the map has its own track in each of the five regions. Each track is built on the music the game already plays, with a strong low cello bass under it and a quiet cello phrase from before the Burning that is snuffed out like a flame. Victory is short. Tracks loop without a gap. The two tracks made with an AI music service are gone. The score was composed as code by AI: every note is written in the repository and rendered by an AI-written synthesizer, with no samples, no licensed music and no AI music model.",
-    "build": "0.7.1.558",
+    "build": "0.7.1.604",
     "pullRequest": 1328,
     "url": "https://github.com/cehinds/AshenSpire/pull/1328"
+  },
+  {
+    "id": "pr-1340",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the full-resolution art can be fetched and checked",
+    "detail": "Nothing you see changes. A new tool fetches the full-resolution art from its own private repository and checks every file against the art list before anything uses it. This prepares for moving the art out of this repository.",
+    "build": "0.7.1.602",
+    "pullRequest": 1340,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1340"
+  },
+  {
+    "id": "pr-1339",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Art quality: play with full-resolution art from your own folder",
+    "detail": "Settings → Display → Art quality now offers Built-in, the art this build carries, or Local high-res, which uses full-resolution art from a folder on your device: one served beside the game, or one you choose (even when you opened the game straight from a file). Anything the folder lacks keeps the built-in art, pictures already on screen switch over in place, and the choice stays on this device and is never synced. Backdrops drawn by the stylesheet keep the built-in art for now.",
+    "build": "0.7.1.601",
+    "pullRequest": 1339,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1339"
+  },
+  {
+    "id": "pr-1338",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: every piece of art is listed with its light and full-resolution file",
+    "detail": "Nothing you see changes yet. A generated list now names each of the game's 5,201 art and font files with the lighter file development builds carry and the full-resolution original, with their sizes and fingerprints, and the game can take a full-resolution source over its built-in art for any file that source has — the groundwork for an Art quality setting.",
+    "build": "0.7.1.563",
+    "pullRequest": 1338,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1338"
+  },
+  {
+    "id": "pr-1337",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: a plan to move the art sources out of the repository",
+    "detail": "Docs only. docs/ART-REPO-PLAN.md sets out how the 1.6 GB of source art and the full-resolution game art would move to their own repository and be downloaded as a checked release instead of stored here, what reads them today, and the owner questions to answer first. Nothing has moved.",
+    "build": "0.7.1.559",
+    "pullRequest": 1337,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1337"
+  },
+  {
+    "id": "pr-1336",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: development builds carry lighter art",
+    "detail": "Development and test builds now carry the lighter art the mobile edition already uses, so each is one download of about 29 MB instead of 255 MB plus a separate mobile file; Settings → About says \"light art\" on them. Release builds keep the full art as painted.",
+    "build": "0.7.1.558",
+    "pullRequest": 1336,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1336"
   },
   {
     "id": "pr-1332",
