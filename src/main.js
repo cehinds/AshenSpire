@@ -908,6 +908,8 @@ function applyDisplaySettings(settings) {
 }
 // A new high-res source (Art quality) must not be undercut by pose preloads,
 // which are keyed by pose, not URL, and would keep serving the old art.
+// The pose preloads start over; reaverAttack.js and combatEffectSprites.js
+// reset their own warmers through whenArtSourceChanges.
 onArtSourceChange(() => clearPosePreloads());
 applyDisplaySettings(activeSettings);
 // The resting width depends on the viewport, so it is re-resolved when the

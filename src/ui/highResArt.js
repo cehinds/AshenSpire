@@ -50,8 +50,13 @@ export function onArtSourceChange(fn) { onChange = typeof fn === 'function' ? fn
  * It listens while mounted and repaints from assetUrl().
  */
 export const ART_SOURCE_EVENT = 'ashen:art-source';
+// Caches of frames warmed from one tier (the Reaver attack, combat effects)
+// register here at module load, so a tier change starts them over.
+const resetters = new Set();
+export function whenArtSourceChanges(fn) { if (typeof fn === 'function') resetters.add(fn); }
 function announce(n) {
   if (onChange) try { onChange(n); } catch { /* a listener must not break the setting */ }
+  for (const fn of resetters) try { fn(n); } catch { /* as above */ }
   try { globalThis.document?.dispatchEvent?.(new CustomEvent(ART_SOURCE_EVENT, { detail: { covered: n } })); } catch { /* as above */ }
 }
 
@@ -273,9 +278,12 @@ export async function applyArtQuality(settings, opts = {}) {
 // The status line for the source in use, from what it covers now (a failed
 // file shrinks it). Returns that count.
 function describeSource() {
-  const n = (picked && picked.size) || (served && served.size) || 0;
+  // The source in use is the picked folder whenever there is one, even once
+  // its last file has failed; the served folder does not stand in for it.
+  const source = picked || served || null;
+  const n = source ? source.size : 0;
   const files = `${n} high-res file${n === 1 ? '' : 's'}`;
-  const from = !n ? '' : picked ? `${files} from the folder you chose` : `${files} served beside the game`;
+  const from = !n ? '' : source === picked ? `${files} from the folder you chose` : `${files} served beside the game`;
   status = from ? `${from}; anything it lacks stays built-in.`
     : 'No high-res folder found. Choose one; anything it lacks stays built-in.';
   return n;

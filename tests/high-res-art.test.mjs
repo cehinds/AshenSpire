@@ -229,3 +229,34 @@ test('a source change is also announced as a DOM event for canvas-painted art', 
     delete globalThis.document;
   }
 });
+
+test('a picked folder whose last file failed is still the source: the served folder does not stand in', async () => {
+  const { pickHighResFolder, builtInFor } = await import('../src/ui/highResArt.js');
+  const LOCAL = { [ART_QUALITY_KEY]: ART_LOCAL_HIGH };
+  await applyArtQuality(LOCAL, { fetchImpl: json(manifest), protocol: 'https:' });
+  assert.match(artQualityStatus(), /^2 high-res files served/);
+  const realCreate = URL.createObjectURL;
+  URL.createObjectURL = () => 'blob:picked-1';
+  try {
+    const input = {
+      files: [file('hd/assets/bg/bg_act1.webp')],
+      setAttribute() {}, addEventListener(type, fn) { this.fn = fn; }, click() { this.fn(); },
+    };
+    await pickHighResFolder(LOCAL, { createElement: () => input });
+    assert.match(artQualityStatus(), /^1 high-res file from the folder you chose/);
+    assert.equal(builtInFor('blob:picked-1'), 'assets/bg/bg_act1.webp');
+    assert.match(artQualityStatus(), /^No high-res folder found/);
+    assert.equal(assetTier('assets/ui/frame.webp'), 'built-in', 'the served folder is not silently used instead');
+  } finally {
+    URL.createObjectURL = realCreate;
+  }
+});
+
+test('frame warmers registered with whenArtSourceChanges start over on every source change', async () => {
+  const { whenArtSourceChanges } = await import('../src/ui/highResArt.js');
+  const seen = [];
+  whenArtSourceChanges((n) => seen.push(n));
+  await applyArtQuality({ [ART_QUALITY_KEY]: ART_LOCAL_HIGH }, { fetchImpl: json(manifest), protocol: 'https:' });
+  await applyArtQuality({ [ART_QUALITY_KEY]: ART_BUILT_IN });
+  assert.deepEqual(seen, [2, 0]);
+});

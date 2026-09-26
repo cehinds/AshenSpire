@@ -6,6 +6,7 @@ import {playPresentationSequence} from './presentationSequence.js';
 import {combatEffectAttachment} from '../content/combatEffectAnchors.js';
 import {playCombatantEffectLayers,combatantEmissionBox} from './combatantEffectLayers.js';
 import { hintImage } from './imageHints.js';
+import { whenArtSourceChanges } from './highResArt.js';
 import {uiConfig} from '../config/generated/ui.js';
 
 // Every duration, delay fraction and size below is authored in
@@ -14,6 +15,8 @@ const PLAY=uiConfig.presentation.combatEffectPlayback, M=PLAY.motion, SZ=PLAY.si
 const active=new WeakMap();
 // Each effect kind's frames are warmed once per page, not once per play.
 const warmedKinds=new Set();
+// The art source changed (Art quality): warm each kind again from the new tier.
+whenArtSourceChanges(()=>warmedKinds.clear());
 function warmEffectFrames(kind,frames){
  if(warmedKinds.has(kind))return;
  warmedKinds.add(kind);
