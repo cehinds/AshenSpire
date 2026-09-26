@@ -93,6 +93,21 @@ function formantAmps(f0, vowel) {
 // One-pole lowpass state helper.
 function lp1(cut) { return 1 - Math.exp((-2 * Math.PI * cut) / SR); }
 
+// In-place RBJ biquad: 'lp' | 'hp' | 'peak' (db gain) at fc Hz, quality q.
+function biquad(x, type, fc, q, db = 0) {
+  const w = (2 * Math.PI * fc) / SR, cs = Math.cos(w), al = Math.sin(w) / (2 * q), A = 10 ** (db / 40);
+  let b0, b1, b2, a0, a1, a2;
+  if (type === 'lp') { b0 = (1 - cs) / 2; b1 = 1 - cs; b2 = b0; a0 = 1 + al; a1 = -2 * cs; a2 = 1 - al; }
+  else if (type === 'hp') { b0 = (1 + cs) / 2; b1 = -(1 + cs); b2 = b0; a0 = 1 + al; a1 = -2 * cs; a2 = 1 - al; }
+  else { b0 = 1 + al * A; b1 = -2 * cs; b2 = 1 - al * A; a0 = 1 + al / A; a1 = -2 * cs; a2 = 1 - al / A; }
+  b0 /= a0; b1 /= a0; b2 /= a0; a1 /= a0; a2 /= a0;
+  let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+  for (let i = 0; i < x.length; i++) {
+    const y = b0 * x[i] + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
+    x2 = x1; x1 = x[i]; y2 = y1; y1 = y; x[i] = y;
+  }
+}
+
 // ---- instruments -------------------------------------------------------------
 //
 // Each writes one note into (L, R) starting at sample `at`. `n` is the note:
@@ -344,6 +359,64 @@ const INSTRUMENTS = {
       else e = 0;
       out[i] = Math.sin(ph) * e;
     }
+    return out;
+  },
+  // Double bass, arco: a band-limited bowed-string wave (stick-slip noise
+  // riding each period, a small pitch scoop into the note, late slow vibrato)
+  // through a wooden body — air and top-plate resonances, a nasal dip, and a
+  // gentle lowpass so it reads as a played instrument, not an oscillator.
+  bass(n, rand, o) {
+    const f = mtof(n.midi);
+    const held = Math.round(n.dur * SR);
+    const r = o.r ?? 0.8;
+    const len = held + Math.round(Math.max(0.03, r) * SR);
+    const out = new Float32Array(len);
+    const t = bandlimited('sawtooth', f);
+    const A = Math.round(Math.min(o.a ?? 0.1, 0.15) * SR);
+    const Rn = Math.max(1, Math.round(r * SR));
+    let ph = rand(), nz = 0, drift = 0;
+    const kn = lp1(1800), vr = 4.4 + rand() * 0.5;
+    for (let i = 0; i < len; i++) {
+      const tt = i / SR;
+      drift += (rand() - 0.5) * 2e-6; drift *= 0.9995;
+      const scoop = 1 - 0.006 * Math.exp(-tt / 0.05);
+      const vib = 1 + 0.0022 * Math.sin(2 * Math.PI * vr * tt) * Math.min(1, Math.max(0, (tt - 0.35) / 0.5));
+      ph += (f * scoop * vib * (1 + drift)) / SR; ph -= Math.floor(ph);
+      nz += kn * (rand() * 2 - 1 - nz);
+      const x = readTable(t, ph) + nz * (0.12 * (1 - ph) + 0.9 * Math.exp(-tt / 0.03));
+      let e;
+      if (i < A) e = Math.sin((Math.PI / 2) * (i / A));
+      else if (i < held) e = 0.84 + 0.16 * Math.exp(-(i - A) / (0.25 * SR));
+      else { const k = (i - held) / Rn; e = k >= 1 ? 0 : 0.84 * (1 - k) * (1 - k); }
+      out[i] = x * e;
+    }
+    for (const [type, fc, q, db] of [['hp', 32, 0.7, 0], ['peak', 98, 2, 6], ['peak', 215, 3, 4], ['peak', 430, 2.5, 2], ['peak', 820, 1, -4], ['lp', 1700, 0.7, 0], ['lp', 3200, 0.7, 0]]) {
+      biquad(out, type, fc, q, db);
+    }
+    for (let i = 0; i < len; i++) out[i] *= 0.55;
+    return out;
+  },
+  // Heartbeat: the game's battle thump made a two-beat heart — "lub" (a sine
+  // falling f → 0.6f with a soft felt click for definition, plus a quiet
+  // octave so small speakers hear it) and a lighter, higher "dub" `gap` s later.
+  heart(n, rand, o) {
+    const f0 = mtof(n.midi);
+    const gap = o.gap ?? 0.24;
+    const len = Math.round((gap + 0.4) * SR);
+    const out = new Float32Array(len);
+    const beat = (at, fr, amp) => {
+      let ph = 0, nz = 0; const kc = lp1(900);
+      for (let i = 0; i < Math.round(0.34 * SR) && at + i < len; i++) {
+        const tt = i / SR;
+        const f = fr * (0.6 + 0.4 * Math.exp(-tt / 0.045));
+        ph += (2 * Math.PI * f) / SR;
+        const e = Math.min(1, i / (0.004 * SR)) * Math.exp(-tt / 0.075);
+        nz += kc * (rand() * 2 - 1 - nz);
+        out[at + i] += amp * e * (Math.sin(ph) + 0.35 * Math.sin(2 * ph)) + amp * 1.6 * nz * Math.exp(-tt / 0.008);
+      }
+    };
+    beat(0, f0, 1);
+    beat(Math.round(gap * SR), f0 * 1.12, 0.62);
     return out;
   },
   // Frame drum: higher, drier hand drum.

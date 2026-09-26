@@ -3,6 +3,7 @@
 //
 //   node tools/score/render.mjs                 # every score in music/score/
 //   node tools/score/render.mjs map-pale-marches boss
+//   node tools/score/render.mjs --alt --out /tmp/alt   # the alt cut (alt.mjs)
 //
 // Each music/score/<id>.mjs exports `context` (the manifest key it plays under)
 // and `default` (a Score). The render lands at music/<folder>/<id>.mp3, where
@@ -20,12 +21,17 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { render, wav } from './synth.mjs';
+import { altScore } from './alt.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const SCORES = join(ROOT, 'music/score');
 const FFMPEG = process.env.FFMPEG || 'ffmpeg';
 
-const wanted = process.argv.slice(2);
+const argv = process.argv.slice(2);
+const ALT = argv.includes('--alt');
+const outAt = argv.indexOf('--out');
+const OUT = outAt >= 0 ? resolve(argv[outAt + 1]) : join(ROOT, 'music');
+const wanted = argv.filter((a, i) => !a.startsWith('--') && (outAt < 0 || i !== outAt + 1));
 const files = readdirSync(SCORES).filter((f) => f.endsWith('.mjs') && !f.startsWith('_'));
 const ids = files.map((f) => f.replace(/\.mjs$/, ''));
 for (const w of wanted) if (!ids.includes(w)) { console.error(`render: no score music/score/${w}.mjs`); process.exit(1); }
@@ -39,19 +45,21 @@ for (const id of ids) {
   rendered.push({ id, context, rel });
   if (wanted.length && !wanted.includes(id)) continue;
   const t0 = Date.now();
-  const score = mod.default.toJSON();
+  const score = ALT ? altScore(mod.default.toJSON()) : mod.default.toJSON();
   const { left, right, seconds } = render(score);
   const tmp = join(tmpdir(), `score-${id}-${process.pid}.wav`);
   writeFileSync(tmp, wav(left, right));
-  const out = join(ROOT, 'music', rel);
+  const out = join(OUT, rel);
   mkdirSync(dirname(out), { recursive: true });
   execFileSync(FFMPEG, ['-hide_banner', '-loglevel', 'error', '-y', '-i', tmp, '-c:a', 'libmp3lame', '-b:a', '160k', out]);
   rmSync(tmp, { force: true });
-  console.log(`render: ${id.padEnd(20)} ${context.padEnd(20)} ${seconds.toFixed(1).padStart(5)} s  ${score.events.length} notes  ${((Date.now() - t0) / 1000).toFixed(1)} s → music/${rel}`);
+  console.log(`render: ${id.padEnd(20)} ${context.padEnd(20)} ${seconds.toFixed(1).padStart(5)} s  ${score.events.length} notes  ${((Date.now() - t0) / 1000).toFixed(1)} s → ${join(OUT, rel)}`);
 }
 
 // The manifest names exactly what the scores produce (every score, rendered
-// this run or before), keyed by context.
+// this run or before), keyed by context. An alt or out-of-tree render leaves
+// it alone.
+if (ALT || outAt >= 0) process.exit(0);
 const manifestPath = join(ROOT, 'music/manifest.json');
 const old = JSON.parse(readFileSync(manifestPath, 'utf8'));
 const next = { _comment: old._comment };

@@ -60,3 +60,18 @@ test('the synthesizer is deterministic and loops without a gap', () => {
   for (let i = 0; i < 4800; i++) head += Math.abs(a.left[i]);
   assert.ok(head > 0, 'the loop start carries the tail of the end');
 });
+
+test('the alt cut swaps cello for bass and brings the heartbeat forward', async () => {
+  const { altScore } = await import('../tools/score/alt.mjs');
+  const { inGameBeat } = await import('../music/score/_motifs.mjs');
+  for (const context of ['map', 'combat']) {
+    const s = new Score({ bpm: 60, bars: 2, seed: 1 });
+    inGameBeat(s, context);
+    s.note('cello', 0, 2, 'D4');
+    const alt = altScore(s.toJSON());
+    assert.ok(!alt.events.some((e) => e.inst === 'cello' || e.inst === 'gamethump'), `${context}: no cello or bare thump left`);
+    assert.ok(alt.events.some((e) => e.inst === 'bass' && e.midi === 62 - 12), `${context}: the cello lead drops an octave onto the bass`);
+    assert.ok(alt.events.filter((e) => e.inst === 'heart').length >= 8, `${context}: a heartbeat on every in-game note`);
+    assert.ok(render(alt).left.length > 0);
+  }
+});

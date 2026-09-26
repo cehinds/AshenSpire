@@ -22,6 +22,10 @@ point the setting at another folder.
    audio.
 3. Commit the score, the MP3 and `manifest.json` together.
 
+`render.mjs --alt --out <dir>` renders the alt cut (`tools/score/alt.mjs`):
+cello becomes a double bass, the game's heartbeat is brought forward, and the
+reverb is tighter. It writes under `<dir>` and leaves the manifest alone.
+
 ## Setup
 
 1. Put audio files (`.mp3` or `.ogg`) into the per-context subfolders below.
