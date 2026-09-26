@@ -215,7 +215,7 @@ jobs:
           cp art/combat-effects-2026-09-07/index.html art/combat-effects-2026-09-07/sprite-catalog.html art/combat-effects-2026-09-07/integrated-tag-mappings.html preview/art/combat-effects-2026-09-07/
           cp -r art/combat-effects-2026-09-07/inspection preview/art/combat-effects-2026-09-07/inspection
           {
-            echo "AshenSpire dev preview"
+            echo "AshenSpire ${CHANNEL} preview"
             echo "commit:   ${GITHUB_SHA}"
             echo "ref:      ${GITHUB_REF}"
             echo "built:    $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -237,12 +237,13 @@ jobs:
             echo
             echo "This folder is the DE-INLINED build: serve it and open AshenSpire.html"
             echo "(or run serve-preview.mjs). It needs a server. For the double-clickable"
-            echo "single file that needs none, download the dev-standalone artifact from"
-            echo "this same run: AshenSpire.html is the full game (~250 MB) and"
-            echo "AshenSpire-mobile.html the same build with its art shrunk under 30 MB."
+            echo "single file that needs none, download the ${CHANNEL}-standalone artifact"
+            echo "from this same run: AshenSpire-${CHANNEL}-preview.html is the full game"
+            echo "(~250 MB) and AshenSpire-mobile-${CHANNEL}-preview.html the same build with"
+            echo "its art shrunk under 30 MB."
             echo
-            echo "This is an inspection artifact, not a deployment. Pages serves main;"
-            echo "dev has no hosted URL."
+            echo "This is an inspection artifact, not a deployment. The built HTML is not"
+            echo "committed; this run's artifacts are this commit's build."
           } > preview/README.txt
           echo "collected $(find preview -type f | wc -l) files"
 
