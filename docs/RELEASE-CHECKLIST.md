@@ -66,7 +66,7 @@ or not a command for it exists yet.
 |------|---------|-----------------|------------------|
 | G14 | `node tools/runsim.mjs 5` | **RED: not yet in the suite.** Exit 0, ending "No crashes across all simulated runs": fixed seeds, 5 whole headless runs for every class (FINISH.md §3, *A headless full run in CI*). The criterion asks for `tests/run-node.mjs` to run it, and it does not yet, so a hand run on the RC is not enough. Run it bare: its closing line is not a form the verdict door accepts, so wrapped it exits 3 on a green tree. It exits 1 on any crash. | not yet: `tests/run-node.mjs` does not run it |
 | G15 | none yet | **RED: not yet runnable.** A browser run on a fixed seed goes Title → Class Select → map → at least 1 combat → boss → Victory or Death → Title → a new run starts, with 0 console errors (FINISH.md §3, *A browser full run*). No tool in `tools/` plays a full run in a browser. | none |
-| G16 | `node tools/runsim.mjs 100` | **RED: no verdict yet.** Every class's full-run win rate is inside the accepted band, and best minus worst is 20 points or less (FINISH.md §4, *A2–A4: bring the classes into the target band*). The band is owner decision D1 (FINISH.md, *Owner decisions*), whose proposal is a bot band of 35–65% at 40 or more seeded runs per class. The command prints each class's wins but exits 0 whatever they are, so read the rates. G16 stays red until that FINISH.md line is ticked `[x]`. | none |
+| G16 | `node tools/runsim.mjs 100` | **RED: no verdict yet.** Every class's full run completes with no crash and its report lands in BALANCE.md (FINISH.md §4, *A2–A4: bring the classes into the target band*). Owner ruling D1 (2026-09-26): there is no win-rate band for 1.0, and every balance number stays configurable. G16 stays red until that FINISH.md line is ticked `[x]`. | none |
 | G17 | none yet | **RED: not yet runnable.** The Mana-aware A/B run, `node tools/runsim.mjs 50 --mana-ab`, prints each class's win rate and Mana spent with Mana on and off, and the result lands in docs/BALANCE.md (FINISH.md §4, *The Mana-aware A/B balance run*; SPEC §5.5.1 calls it a release gate). `tools/runsim.mjs` has no `--mana-ab` flag yet. | none |
 | G18 | none yet | **RED: not yet runnable.** Save and resume hold in a browser, as three separate cases (FINISH.md §3, *Save/resume holds in the browser*; SPEC §9 M2, §3.12): (a) a reload on the map gives a run deep-equal to the one before, minus timestamps; (b) **Save Game** or **Save and Quit** mid-combat, then a reload, gives back exactly the hand, the piles, the enemies with their intents and the resources, through the `CombatSnapshotService` record; (c) a plain reload or abandon mid-combat, with no explicit save, restarts that encounter from its entry checkpoint. No tool in `tools/` drives these in a browser. | none |
 | G19 | none yet | **RED: not yet runnable.** docs/BALANCE.md states the seat-tier tolerance, and the 300-seed per-tier runsim results fall within it (FINISH.md §4, *Seat-tier tolerance is stated*; SPEC §13). BALANCE.md states no tolerance yet, and no tool reports win rates per seat tier. G16 checks only each class's overall rate, so one badly tuned tier can hide inside it. | none |
@@ -97,10 +97,18 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §1 | The 7 orphan cards get a route in, or an owner-ruled allowlist row | G20 |
 | §1 | SPEC text matches what shipped | G20 |
 | §1 | SPEC P8b: Powers hold a resting stance until the next turn | G20 |
-| §1 | COMBAT-EQUIPMENT-RULES prototype gate, and each class pool from 36 to 50 cards | G20 |
+| §1 | COMBAT-EQUIPMENT-RULES prototype gate, and each class pool from 36 to 50 cards | waived: post-1.0 by owner ruling D3 (2026-09-26). |
 | §2 | Counts meet SPEC | G20 |
 | §2 | Stale content validators are fixed and gated | G20 |
-| §2 | More than one elite per seat | G20 |
+| §2 | 1–5 elites per seat, averaging 3 | G20 |
+| §2 | Deck editor between runs | G20 |
+| §2 | Three shop types: shop, blacksmith, wise master | G20 |
+| §2 | D11 design issues are in 1.0 scope | G20 |
+| §2 | [#845] | G20 |
+| §2 | [#785] | G20 |
+| §2 | [#239] | G20 |
+| §2 | [#1026] | G20 |
+| §2 | [#601] | G20 |
 | §3 | A headless full run in CI | G14 |
 | §3 | A browser full run | G15 |
 | §3 | Save/resume holds in the browser | G18 |
