@@ -209,11 +209,13 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   }
   // Art quality changed while this scene is up (Settings opened from the
   // pause): the canvas holds pixels, not a URL, so repaint it.
-  let mountedActor = null;
+  let mountedActor = null, repaints = 0;
   async function repaintActor() {
-    const mounted = mountedActor;
+    const mounted = mountedActor, request = ++repaints;
     if (!mounted || stopped || mounted.token !== serial) return;
     const source = await characterSource();
+    // A later change (Local, then back to Built-in) owns the canvas now.
+    if (request !== repaints) return;
     if (stopped || mountedActor !== mounted || mounted.token !== serial || !source.naturalWidth) return;
     paintPrologueCharacter(mounted.actor,source,p.shadowStrength);
   }
