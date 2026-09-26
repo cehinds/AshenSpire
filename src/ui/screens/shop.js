@@ -13,6 +13,7 @@ import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
+import { unusedInstanceId } from '../../model/deckRules.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 import { canRemoveDeckCard, removeDeckCard } from '../../model/cardRemoval.js';
 import { carriedIds } from '../../model/loadout.js';
@@ -222,7 +223,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
         ...purchaseReview({ kind: 'card', name: def.name, cost: item.cost, cinders: run.cinders }),
         onConfirm: () => {
           run.cinders -= item.cost;
-          run.deck.push({ instanceId: `s${run.deck.length}_${item.id}`, cardId: item.id, upgraded: false });
+          run.deck.push({ instanceId: unusedInstanceId(run, 's', item.id), cardId: item.id, upgraded: false });
           stock.cards.splice(i, 1);
           sfx.play('buy');
           onChanged();

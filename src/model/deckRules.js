@@ -91,6 +91,20 @@ export function ownedCopies(run, cardId) {
   return [...(run.deck || []), ...(run.sideboard || [])].filter((c) => c && c.cardId === cardId).length;
 }
 
+/**
+ * unusedInstanceId(run, prefix, cardId) → `${prefix}${n}_${cardId}` for the
+ * smallest n ≥ the deck's length that no owned card (deck ∪ sideboard) holds.
+ * The deck-length stamp alone repeats once a card leaves the deck and a later
+ * reward or purchase lands at the same length; the ids an unchanged run mints
+ * are the ones it always minted.
+ */
+export function unusedInstanceId(run, prefix, cardId) {
+  const taken = new Set([...(run.deck || []), ...(run.sideboard || [])].map((c) => c && c.instanceId));
+  let n = (run.deck || []).length;
+  while (taken.has(`${prefix}${n}_${cardId}`)) n++;
+  return `${prefix}${n}_${cardId}`;
+}
+
 function sideboard(run) {
   if (!Array.isArray(run.sideboard)) run.sideboard = [];
   return run.sideboard;

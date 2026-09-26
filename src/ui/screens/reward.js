@@ -72,6 +72,7 @@ import { el, modalHead, modalFooter, button, meter } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t, tFull, tTip } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
+import { unusedInstanceId } from '../../model/deckRules.js';
 
 const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
 
@@ -165,7 +166,7 @@ export function mountRewards(app, {
     // and begins in Taken state; reaching this function would be a contract bug.
     smithingStone() { return false; },
     card(row) {
-      run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
+      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: false });
       chosenCardId = row.cardId;
       return true;
     },
@@ -183,7 +184,7 @@ export function mountRewards(app, {
     },
     skillDraft(row) {
       if (!spendSkillDraft(run, row.skillId)) return false;
-      run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: skillUpgradesCards(registries, skillLevel(run, row.skillId)) });
+      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: skillUpgradesCards(registries, skillLevel(run, row.skillId)) });
       chosenDraftCardIds[row.key] = row.cardId;
       return true;
     },

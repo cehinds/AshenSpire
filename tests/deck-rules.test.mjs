@@ -335,3 +335,14 @@ test('Cancel restores the piles, the slot allocation and the mint counter exactl
   assert.deepEqual({ deck: run.deck, sideboard: run.sideboard, count: run.equipmentAttackSlotCount, retired: run.removedAttackSlotIds, mint: run.editMintCounter }, before);
   assert.doesNotThrow(() => stampDeck(REG, run));
 });
+
+test('a reward or purchase never reuses an id a set-aside card still holds', async () => {
+  const { unusedInstanceId } = await import('../src/model/deckRules.js');
+  const run = { deck: [{ instanceId: 'a', cardId: 'x' }, { instanceId: 'b', cardId: 'x' }], sideboard: [] };
+  assert.equal(unusedInstanceId(run, 'r', 'cleave'), 'r2_cleave', 'an unchanged run mints the id it always minted');
+  run.sideboard.push({ instanceId: 'r2_cleave', cardId: 'cleave' });
+  assert.equal(unusedInstanceId(run, 'r', 'cleave'), 'r3_cleave', 'the set-aside copy keeps its id; the new one does not collide');
+  run.deck.push({ instanceId: 'r3_cleave', cardId: 'cleave' });
+  run.deck.splice(0, 1);
+  assert.equal(unusedInstanceId(run, 'r', 'cleave'), 'r4_cleave');
+});
