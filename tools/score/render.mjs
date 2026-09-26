@@ -30,6 +30,9 @@ const FFMPEG = process.env.FFMPEG || 'ffmpeg';
 const argv = process.argv.slice(2);
 const ALT = argv.includes('--alt');
 const outAt = argv.indexOf('--out');
+if (outAt >= 0 && !argv[outAt + 1]) { console.error('render: --out needs a directory'); process.exit(1); }
+// The alt cut never overwrites the shipped renders: it must be sent elsewhere.
+if (ALT && outAt < 0) { console.error('render: --alt needs --out <dir> (it must not replace the shipped renders in music/)'); process.exit(1); }
 const OUT = outAt >= 0 ? resolve(argv[outAt + 1]) : join(ROOT, 'music');
 const wanted = argv.filter((a, i) => !a.startsWith('--') && (outAt < 0 || i !== outAt + 1));
 const files = readdirSync(SCORES).filter((f) => f.endsWith('.mjs') && !f.startsWith('_'));
