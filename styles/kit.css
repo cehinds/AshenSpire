@@ -28,6 +28,13 @@
   --ink-dim: #b9ac91;
   --rule: #2a2419;
   --r-pill: 999px;
+  /* One inset contract for every component card. A hosted face inherits the
+     values from its bare OptionCard, so the outer shell and inner surface can
+     never both discard the text gutter. */
+  --card-inset-block: 1.28rem;
+  --card-inset-inline: 1.5rem;
+  --card-inset-block-compact: 0.75rem;
+  --card-inset-inline-compact: 1.2rem;
 }
 
 /* ═══ TEXT ATOMS ════════════════════════════════════════════════════════════ */
@@ -260,7 +267,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .as-artwell img { width: 100%; height: 100%; object-fit: contain; }
 
 /* DetailCard — an inset, gold-edged card that shows exactly what is at stake. */
-.as-detailcard { display: flex; flex-direction: column; gap: 0.2rem; padding: 1.28rem 1.5rem; background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-3); text-align: left; }
+.as-detailcard { display: flex; flex-direction: column; gap: 0.2rem; padding: var(--card-inset-block) var(--card-inset-inline); background: var(--panel); border: 1px solid var(--gold); border-radius: var(--r-3); text-align: left; }
 .as-detailcard .dc-eyebrow { font-size: 1.02rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 .as-detailcard .dc-name { margin: 0.1rem 0 0.2rem; font: 600 1.72rem/1.1 var(--font-display); color: var(--gold); }
 .as-detailcard .dc-line { font-size: 1.32rem; font-weight: 600; color: var(--parchment); }
@@ -304,10 +311,12 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 /* OptionCard — choosing between things, not settings. */
 .as-options { display: flex; flex-direction: column; gap: 1.05rem; width: 100%; }
 .as-option {
+  --option-inset-block: var(--card-inset-block);
+  --option-inset-inline: var(--card-inset-inline);
   position: relative;
   display: flex; gap: 1.5rem; align-items: center;
   width: 100%;
-  padding: 1.28rem 3.3rem 1.28rem 1.5rem;
+  padding: var(--option-inset-block) 3.3rem var(--option-inset-block) var(--option-inset-inline);
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--r-3);
@@ -332,7 +341,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background: rgba(212
 .as-option.noarrow > .r-trail { margin-right: 0; }
 .as-option[aria-disabled="true"], .as-option:disabled { opacity: 0.55; cursor: default; }
 .as-option[aria-disabled="true"] .on, .as-option:disabled .on { color: var(--muted); }
-.as-option.noarrow { padding-right: 1.5rem; }
+.as-option.noarrow { padding-right: var(--option-inset-inline); }
 .as-option.noarrow::after { content: none; }
 /* A row of an option and a trailing IconButton (delete) share one height. */
 .as-optionrow { display: flex; align-items: stretch; gap: 0.75rem; }
@@ -1163,7 +1172,12 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* An open reveal drops UNDER the whole row: the face and the trail keep their line. */
 .as-row.setting > .as-row-fold .disc-reveal { order: 2; }
 .as-row.setting:has(> .as-row-fold) { align-items: flex-start; }
-.disc-face > .as-row { padding: 0; min-height: 0; width: 100%; gap: 0.75rem; }
+.disc-face > .as-row {
+  box-sizing: border-box;
+  width: 100%; min-height: var(--tap-floor);
+  padding: var(--option-inset-block) var(--option-inset-inline);
+  gap: 0.75rem;
+}
 .disc-face > .as-row > .as-labelstack { flex: 1 1 auto; }
 .disc-face > .as-row .ls-label { color: var(--gold); font: 600 1.5rem/1.2 var(--font-display); letter-spacing: 0.03em; }
 .disc-face > .as-row .ls-hint { font-family: var(--font-body); letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1197,7 +1211,12 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .as-options.tight { gap: 0.45rem; }
 /* An option may carry an ArtWell where its glyph would be, or a compact inset. */
 .as-option > .as-artwell { flex: 0 0 auto; }
-.as-option.compact { padding: 0.75rem 1.2rem; gap: 1rem; }
+.as-option.compact {
+  --option-inset-block: var(--card-inset-block-compact);
+  --option-inset-inline: var(--card-inset-inline-compact);
+  padding: var(--option-inset-block) var(--option-inset-inline);
+  gap: 1rem;
+}
 .as-option.compact > .as-artwell.sm { width: 4rem; height: 4rem; font-size: 1.8rem; }
 .as-option.compact .on { font-size: 1.45rem; }
 .as-option.more { border-style: dashed; }
@@ -1216,8 +1235,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* The host stays bare so the face owns the padding and can paint the whole
    card (a hold fill, a drag ghost); the face is the OptionCard's grammar. */
 .as-option.hosts-face { padding: 0; }
-.as-face { display: flex; align-items: center; gap: 1.5rem; width: 100%; min-width: 0; min-height: var(--tap-floor); padding: 1.28rem 1.5rem; border-radius: inherit; text-align: left; }
-.as-option.compact.hosts-face > .as-face { padding: 0.75rem 1.2rem; gap: 1rem; }
+.as-face { display: flex; align-items: center; gap: 1.5rem; width: 100%; min-width: 0; min-height: var(--tap-floor); padding: var(--option-inset-block, var(--card-inset-block)) var(--option-inset-inline, var(--card-inset-inline)); border-radius: inherit; text-align: left; }
+.as-option.compact.hosts-face > .as-face { gap: 1rem; }
 .as-face > .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
 .as-face > .ob { flex: 1 1 8rem; }
 .as-face > .r-trail { flex: 0 1 auto; margin-left: auto; display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 0.5rem; max-width: 50%; }
@@ -1321,6 +1340,9 @@ details[open] > summary .as-glyph.caret { transform: rotate(90deg); }
 .disc-faces > .disc-reveal { flex: 1 1 100%; width: 100%; grid-column: 1 / -1; }
 .disc-faces > .disc-face .disc-value { white-space: nowrap; }
 .disc-faces > .disc-face .disc-summary { white-space: normal; }
+/* A compact Row face is a fixed one-line card. Its summary clips at the same
+   right inset instead of making one long attribute taller than its peers. */
+.disc-faces > .disc-face > .as-row.face-lite .disc-summary { white-space: nowrap; }
 .disc-faces > .disc-face[data-reveal="open"] { border-color: var(--gold); }
 .disc-face.disc-pick, .disc-face.disc-armament, .disc-face.disc-relic, .disc-face.disc-item, .disc-face.disc-power, .disc-face.disc-stat, .disc-face.disc-attribute, .disc-face.disc-section { flex: 1 1 100%; }
 .disc-reveal > .dc-name { font-size: 1.5rem; }

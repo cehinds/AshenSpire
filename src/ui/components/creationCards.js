@@ -60,7 +60,7 @@ function renderPrimaryStatCard(input, peers = null) {
     status: input.face.value === '' || input.face.value == null ? '' : String(input.face.value),
   });
   face.querySelector('.ls-hint')?.classList.add('disc-summary');
-  const model = { ...input, face: { ...input.face, node: face } };
+  const model = { ...input, face: { ...input.face, node: face, compact: true } };
   const fold = mountDisclosure(host, [model]);
   const control = host.querySelector('.disc-face');
   control?.classList.add('cc-primary-stat');

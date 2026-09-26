@@ -6,10 +6,11 @@
 // trusted CDP mouse/touch input; DOM clicks are used only to establish the
 // Character Creation and Armoury routes.
 //
-// Boundary: this proves equal rendered face boxes and single-open behavior for
-// the five primary stats in Character Creation, Assign Points, and the Armoury
-// Character pane. It does not compare pixels to a golden image or judge every
-// other <details> family in the game.
+// Boundary: this proves equal rendered face boxes, symmetric content insets,
+// uniform inter-card gaps, and single-open behavior for the five primary stats
+// in Character Creation, Assign Points, and the Armoury Character pane. It
+// does not compare pixels to a golden image or judge every other <details>
+// family in the game.
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -168,14 +169,38 @@ const primaryGeometry = `((rootSelector) => {
   const root=document.querySelector(rootSelector);
   const cards=[...(root?.querySelectorAll('[data-face^="attribute:"]') || [])];
   const rects=cards.map((card) => card.getBoundingClientRect());
+  const round=(value) => Math.round(value*100)/100;
+  const metrics=cards.map((card) => {
+    const surface=card.classList.contains('hosts-face') ? card.firstElementChild : card;
+    const style=getComputedStyle(surface);
+    const padding=[style.paddingTop,style.paddingRight,style.paddingBottom,style.paddingLeft]
+      .map((value) => Number.parseFloat(value));
+    const ink=[...surface.querySelectorAll(':scope > .as-labelstack, :scope > .ob, :scope > .as-status, :scope > .r-trail')]
+      .map((node) => node.getBoundingClientRect());
+    const cardRect=card.getBoundingClientRect();
+    const left=ink.length ? Math.min(...ink.map((rect) => rect.left))-cardRect.left : 0;
+    const right=ink.length ? cardRect.right-Math.max(...ink.map((rect) => rect.right)) : 0;
+    const top=ink.length ? Math.min(...ink.map((rect) => rect.top))-cardRect.top : 0;
+    const bottom=ink.length ? cardRect.bottom-Math.max(...ink.map((rect) => rect.bottom)) : 0;
+    return { padding:padding.map(round), contentInsets:[top,right,bottom,left].map(round) };
+  });
+  const gaps=rects.slice(1).map((rect,index) => round(rect.top-rects[index].bottom));
+  const same=(values,tolerance=0.75) => values.length>0 && values.every((value) => Math.abs(value-values[0])<=tolerance);
   return {
     count:cards.length,
     labels:cards.map((card) => (card.querySelector('.ls-label,.disc-name')?.textContent || '').trim()),
     summaries:cards.map((card) => (card.querySelector('.disc-summary')?.textContent || '').trim()),
     equalWidth:rects.length>0 && rects.every((rect) => Math.abs(rect.width-rects[0].width)<=1),
     equalHeight:rects.length>0 && rects.every((rect) => Math.abs(rect.height-rects[0].height)<=1),
-    widths:rects.map((rect) => Math.round(rect.width*100)/100),
-    heights:rects.map((rect) => Math.round(rect.height*100)/100),
+    uniformGaps:same(gaps),
+    symmetricPadding:metrics.length>0 && metrics.every(({padding}) => Math.abs(padding[0]-padding[2])<=0.01 && Math.abs(padding[1]-padding[3])<=0.01),
+    uniformPadding:metrics.length>0 && metrics.every(({padding}) => padding.every((value,index) => Math.abs(value-metrics[0].padding[index])<=0.01)),
+    padded:metrics.length>0 && metrics.every(({padding}) => Math.min(...padding)>=6),
+    balancedContent:metrics.length>0 && metrics.every(({contentInsets}) => Math.abs(contentInsets[0]-contentInsets[2])<=1 && Math.abs(contentInsets[1]-contentInsets[3])<=1),
+    widths:rects.map((rect) => round(rect.width)),
+    heights:rects.map((rect) => round(rect.height)),
+    gaps,
+    metrics,
   };
 })`;
 
@@ -183,6 +208,15 @@ async function checkCreation(shape) {
   const page = await openTarget(shape);
   await cdp.send('Page.navigate', { url: `http://localhost:${server.port}${APP_PATH}?shot=customize` }, page.sessionId);
   await page.until("document.querySelectorAll('.cz-flow > .disc-faces > .disc-face').length===4", 'Character Creation');
+  const summaryGeometry = await page.evaluate(`(() => {
+    const faces=[...document.querySelectorAll('.cz-flow > .disc-faces > .disc-face')];
+    const widths=faces.map((face)=>Math.round(face.getBoundingClientRect().width*100)/100);
+    const details=faces.map((face)=>{const value=face.querySelector('.disc-value');const style=getComputedStyle(value);return {overflow:style.overflow,textOverflow:style.textOverflow};});
+    return {widths,equalWidth:widths.every((width)=>Math.abs(width-widths[0])<=1),details};
+  })()`);
+  check(summaryGeometry.equalWidth, `${shape.name}: creation summary sections have equal widths`, summaryGeometry);
+  check(summaryGeometry.details.every((detail) => detail.overflow === 'hidden' && detail.textOverflow === 'ellipsis'),
+    `${shape.name}: creation summary details ellipsize when constrained`, summaryGeometry);
   await page.evaluate("document.querySelector('.cz-flow > .disc-faces > [data-face=\"character\"]').click()");
   await page.until("!!document.querySelector('#cz-primary-stats [data-face=\"attribute:strength\"]')", 'primary stats');
 
@@ -190,6 +224,9 @@ async function checkCreation(shape) {
   check(geometry.count === 5 && geometry.labels.join(',') === 'STR,DEX,CON,WIS,INT'
     && geometry.summaries.every(Boolean) && geometry.equalWidth && geometry.equalHeight,
   `${shape.name}: Character Creation uses five compact, uniform primary-stat faces`, geometry);
+  check(geometry.uniformGaps && geometry.symmetricPadding && geometry.uniformPadding
+    && geometry.padded && geometry.balancedContent,
+  `${shape.name}: Character Creation card text keeps equal padding on every edge`, geometry);
 
   await trustedClick(page, shape, '#cz-primary-stats [data-face="attribute:strength"]');
   await trustedClick(page, shape, '#cz-primary-stats [data-face="attribute:dexterity"]');
@@ -207,6 +244,9 @@ async function checkCreation(shape) {
   check(allocationGeometry.count === 5 && allocationGeometry.labels.join(',') === 'STR,DEX,CON,WIS,INT'
     && allocationGeometry.equalHeight,
   `${shape.name}: Assign Points reuses the same compact primary-stat family`, allocationGeometry);
+  check(allocationGeometry.uniformGaps && allocationGeometry.symmetricPadding && allocationGeometry.uniformPadding
+    && allocationGeometry.padded && allocationGeometry.balancedContent,
+  `${shape.name}: Assign Points card text keeps equal padding on every edge`, allocationGeometry);
   await trustedClick(page, shape, '.cc-stat-overlay [data-face="attribute:strength"]');
   await trustedClick(page, shape, '.cc-stat-overlay [data-face="attribute:dexterity"]');
   const allocationOpen = await page.evaluate(`(() => ({
@@ -241,6 +281,9 @@ async function checkArmoury(shape) {
   check(geometry.count === 5 && geometry.labels.join(',') === 'STR,DEX,CON,WIS,INT'
     && geometry.summaries.every(Boolean) && geometry.equalWidth && geometry.equalHeight,
   `${shape.name}: Armoury Attributes matches the five compact, uniform rows`, geometry);
+  check(geometry.uniformGaps && geometry.symmetricPadding && geometry.uniformPadding
+    && geometry.padded && geometry.balancedContent,
+  `${shape.name}: Armoury card text keeps equal padding on every edge`, geometry);
 
   await trustedClick(page, shape, '.combatPowerCard > summary');
   let open = await page.evaluate(`[...document.querySelectorAll('.character-info-card[open]')].map((card) => card.dataset.component)`);
@@ -265,7 +308,7 @@ try {
   console.error(`FAIL browser harness: ${error.stack || error.message}`);
 } finally {
   console.log('');
-  console.log(`BOUNDARY: rendered ${DOOR}; 1440x900 and 390x844; primary-stat foldouts in Character Creation, Assign Points, and Armoury Character only.`);
+  console.log(`BOUNDARY: rendered ${DOOR}; 1440x900 and 390x844; primary-stat foldout size, spacing, and interaction in Character Creation, Assign Points, and Armoury Character only.`);
   console.log('BOUNDARY: geometry and trusted interaction are checked; screenshots are evidence, not pixel-golden assertions.');
   cdp.close();
   await browser.close();
