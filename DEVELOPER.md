@@ -26,6 +26,28 @@ names that ordinal. CI rebuilds and requires the rebuild to change nothing
 committed, then runs `node tools/buildversion.mjs --check` against the fresh
 build, so the box and the receipt are still checked to agree.
 
+**Which checks gate a pull request** (owner, 2026-09-26: a PR into `dev` is gated
+by fast checks only, about five minutes or less; the heavy suites run when code
+is pushed to `test` and `release`). Nothing was removed: every check below still
+runs, unchanged, on every push to `test` and `release`, and any workflow can
+still be started by hand on any branch (Actions → *Run workflow*).
+
+| Check (workflow → job) | PR into `dev` | Push to `test` / `release` |
+|---|---|---|
+| `receipts.yml` → receipts | yes | — (runs on push to `dev`) |
+| `dev-preview.yml` → preview (build, standalone artifact, fast gates) | yes | yes (also `dev`, `main`) |
+| `tests.yml` → core suite | yes | yes (also on push to `dev`) |
+| `tests.yml` → tool self-tests, bundler parse gate | no | yes |
+| `ci.yml` → Fullscreen first through both Settings doors | no | yes |
+| `ci.yml` → what this green does NOT cover (boundary) | no | yes |
+| `ci.yml` → tests (ubuntu, windows, macOS) | no | yes |
+| `ci.yml` → shipped artifact is this source (3 OSes), the three runners built the same bytes | no | yes |
+| `ci.yml` → the checks that need a real browser | no | yes |
+| `dev-preview.yml` → the reachability gates a phone would fail | no | yes (also `main`) |
+
+The workflows' own `on:` blocks and job `if:` conditions are the source of this
+table; a skipped job shows on the PR as *skipped*, not as missing.
+
 
 Settings: `src/ui/screens/settings.js` draws only the open Advanced topic and
 searches every section; `src/ui/buildChannel.js` decides whether the debug-only
@@ -49,13 +71,46 @@ for the focused rules, persistence and settings checks. Advanced → Stats →
 Draw & hand keeps the Opening hand, Draw / turn and Hand size rows beside the
 discard controls, under a live worked example.
 
-`node tools/launch.mjs --build-only` produces the standalone aliases — the full
-single file and the mobile one (`AshenSpire-mobile.html`, the same build reading
-its art from the committed `assets-mobile/` twin tree, held under 30 MB) — and an
-external-art web edition in `build/web/`. Changing anything under `assets/`
+`node tools/launch.mjs --build-only` produces the standalone aliases and an
+external-art web edition in `build/web/`. **By default it builds the light art
+tier** (owner, 2026-09-26: dev/test builds are light only): one single file,
+`AshenSpire.html`, whose art payloads come from the committed `assets-mobile/`
+twin tree (~29 MB, edition `light`, no size cap), and a web edition carrying the
+same art. `--full-art` builds the release/main shape instead: the full-art single
+file (~255 MB) plus the mobile one (`AshenSpire-mobile.html`, the same twins, held
+under 30 MB). CI passes `--full-art` only for `release` and `main`. Changing anything under `assets/`
 means regenerating the twins with `node tools/mobile-art.mjs` (needs `cwebp`
 from libwebp on PATH); `node tools/mobile-art.mjs --check` is the Node-only gate
-CI runs, and the policy lives in `tools/mobileart-policy.mjs`. Serve the whole web directory for
+CI runs, and the policy lives in `tools/mobileart-policy.mjs`. Then run
+`node tools/art-manifest.mjs --write`: `art-manifest.json` lists every
+asset id (its runtime `assets/…` path) with the file each tier ships —
+`light` (`assets-mobile/`) and `high` (`assets/`), each with bytes, sha256 and
+pixel size; the placeholder tier has no file. `tests/art-manifest.test.mjs`
+fails the core suite while it is stale, or when any field differs from what
+`--write` produces. The manifest's ids are exactly the paths `assetUrl()` in
+`src/ui/assetmap.js` resolves; `assetUrl()` checks an optional high-res source
+first (built from a manifest by the Art quality setting), then the built-in
+art. Not yet covered: game code still builds many `assets/…` paths from
+templates, and 14 CSS `url(../assets/…)` backdrops bypass `assetUrl()`.
+
+**The high-res release** (docs/ART-REPO-PLAN.md). `art-release.json` pins one
+release of the private `cehinds/AshenSpire-art` (repo, tag, zip, sha256; it is
+unset until `hd-assets-v1` is published). `node tools/fetch-art.mjs` downloads
+it with `ART_REPO_TOKEN` (a token with read access to that repo's Contents),
+refuses unless the zip's sha256 is the pinned one and every file matches its
+`high` record in `art-manifest.json`, and unpacks it into `.art-cache/<tag>/`
+(gitignored). `--from <zip>` verifies a zip already on disk; `--recheck`
+re-hashes a cache. `tools/zip.mjs` is the same file the art repository packs
+with; `tests/fetch-art.test.mjs` pins their shared vector.
+
+**Settings → Display → Art quality** (`src/ui/highResArt.js`): *Built-in* uses
+the art the build carries; *Local high-res* lays full-resolution files over it
+from a folder served beside the game (`hd/art-manifest.json` plus `hd/assets/…`,
+found over http) or a folder the player picks (any build, `file://` included;
+the browser hands the files over for this page only, so a reload asks again).
+Anything the folder lacks stays built-in; images already on screen are swapped
+in place and pose preloads are dropped. The setting is `LOCAL_ONLY_KEYS` in
+`src/model/settingsSync.js`: never saved to or loaded from a sync profile. Serve the whole web directory for
 mobile testing. Rendering-quality behavior and performance checks are described
 in [Mobile performance](docs/MOBILE-PERFORMANCE.md).
 
@@ -176,9 +231,10 @@ Every `*.test.mjs` in the repository runs: `tests/run-node.mjs` finds them
 than `.github`) and hands them to one `node --test`. A new test file needs no
 registration. A file that must not be spawned there goes in its `NOT_SPAWNED`
 map with the reason. `.github/workflows/tests.yml` runs the two halves as two
-Linux jobs on every pull request into `dev` and every push to `dev`; the
-bundler's parse-gate fixtures (`node tools/bundle.test.mjs`, several minutes)
-run as their own step in the self-test job.
+Linux jobs, plus the bundler's parse-gate fixtures (`node tools/bundle.test.mjs`,
+several minutes) as a third; on a pull request into `dev` only the fast half
+(`core suite`) runs, and all three run on every push to `test` and `release`
+(see *Which checks gate a pull request* above).
 
 ```
 # what raises the red failure banner, and what must not
@@ -283,7 +339,7 @@ node tools/doorplant.mjs --selftest   # the harness's own door — seconds, no b
 node tools/plantsites.mjs --check     # every plant's find-string still resolves — under a second
 ```
 
-Both run on every pull request in `dev-preview.yml`, because a corpus that has
+Both run on every pull request in `dev-preview.yml`'s `preview` job, because a corpus that has
 stopped being able to arm is green for the wrong reason and nothing else notices.
 
 **Plants are authored with `\n`, and line endings belong to the CHECKOUT, not to

@@ -7,11 +7,12 @@ import { liteRendering } from './performance.js';
 export function createEnemyPoseStage(host, facing, idle, id, entity) {
   host.classList.add('enemy-pose-stage');
   const frames = new Map();
-  const urls = new Map();
+  const ids = new Map(); // pose → asset id; resolved when loaded, so a Lite frame
+                         // loaded later follows the Art quality chosen since
   let presentation = enemyPresentation(entity), current = presentation.rest, timer;
   function draw() {
     const selected = frames.get(current);
-    if (selected && !selected.getAttribute('src') && urls.get(current)) selected.src = urls.get(current);
+    if (selected && !selected.getAttribute('src') && ids.get(current)) selected.src = assetUrl(ids.get(current));
     const ready = selected?.dataset.ready === 'true' && idle.dataset.artSource === 'enemy-poses';
     facing.dataset.stateActive = ready ? 'true' : 'false';
     host.dataset.pose = ready ? current : 'idle';
@@ -27,9 +28,9 @@ export function createEnemyPoseStage(host, facing, idle, id, entity) {
     frame.addEventListener('error', () => { delete frame.dataset.ready; draw(); });
     frames.set(pose, frame); facing.appendChild(frame);
     frame.removeAttribute('src');
-    const src = assetUrl(pose === 'defeated' ? DEFEATED_ART[id]?.file || '' : `assets/enemy-states/${id}_${pose}.webp`);
-    urls.set(pose, src);
-    if (!liteRendering() && src) frame.src = src;
+    const artId = pose === 'defeated' ? DEFEATED_ART[id]?.file || '' : `assets/enemy-states/${id}_${pose}.webp`;
+    ids.set(pose, artId);
+    if (!liteRendering() && artId) frame.src = assetUrl(artId);
   }
   idle.addEventListener('error', draw);
   function setState(next) {
