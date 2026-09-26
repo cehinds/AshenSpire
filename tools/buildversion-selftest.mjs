@@ -54,7 +54,7 @@
 //
 // Usage:  node tools/buildversion.mjs --selftest
 
-import { cpSync, mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
@@ -388,8 +388,9 @@ function freshRepo() {
 // not a property of a tree. It is a property of a tree AND ITS PARENT, so no
 // file plant can reach it and neither can the history corpus above, which owns
 // a toy repo with no real bundle in it. This one copies the real tree, makes it
-// a git repository, and commits twice — the second commit shipping a changed
-// build/AshenSpire.html with the ordinal left where it was. That is the defect
+// a git repository, and commits twice — the second commit recording a new
+// source digest in buildordinal.json (a rebuild, which is what row H reads now
+// that the bundle is not committed) with the ordinal left where it was. That is the defect
 // in its natural habitat: somebody rebuilds, the ordinal does not move, and two
 // different artifacts read the same number. Exactly what we replaced.
 //
@@ -410,7 +411,7 @@ function ordinalHistory() {
    * rewrites the ordinal record for that second commit, so one function reaches
    * the continuation case AND the candidate-boundary cases review named on #574.
    */
-  const build = (second, first = null) => {
+  const build = (second, first = null, moveDigest = true) => {
     const dir = fresh();
     git(dir, 'init', '-q', '-b', 'main');
     git(dir, 'config', 'user.email', 'selftest@family.local');
@@ -432,13 +433,16 @@ function ordinalHistory() {
       writeFileSync(p, `${JSON.stringify(first(JSON.parse(readFileSync(p, 'utf8'))), null, 2)}\n`, 'utf8');
     }
     git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'the build that shipped');
-    // A REAL change to the shipped artifact — the same door a rebuild enters by.
-    appendFileSync(resolve(dir, 'build/AshenSpire.html'), '<!-- a later build -->\n');
-    if (second) {
+    // A NEW BUILD, as row H reads one: the recorded source digest moves — the
+    // same door a rebuild enters by (bumpOrdinal writes the digest and the
+    // ordinal in one act). The ordinal is left to `second`.
+    {
       const p = resolve(dir, ORDINAL_HOME);
-      writeFileSync(p, `${JSON.stringify(second(JSON.parse(readFileSync(p, 'utf8'))), null, 2)}\n`, 'utf8');
+      const rec = JSON.parse(readFileSync(p, 'utf8'));
+      const moved = moveDigest ? { ...rec, digest: 'f0f0f0f0f0' } : rec;
+      writeFileSync(p, `${JSON.stringify(second ? second(moved) : moved, null, 2)}\n`, 'utf8');
     }
-    git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'a second build');
+    git(dir, 'add', '-A'); git(dir, 'commit', '-q', '--allow-empty', '-m', 'a second build');
     return dir;
   };
 
@@ -573,9 +577,22 @@ function ordinalHistory() {
   // THREE VERDICTS, NOT TWO. `unknown` is its own expectation because it is its
   // own outcome: check() treats null as blocking exactly as false does, and a
   // case watched merely "not green" could not tell the two apart.
+  // THE DIGEST-UNCHANGED BRANCH. Every case above moves the digest; these two
+  // leave it where it was. A record edit with the same digest used to be row F's
+  // catch against the committed bundle, and since CI rebuilds from the record,
+  // only row H can see it (#1332 review).
+  CASES.push(
+    [(j) => ({ ...j, ordinal: Math.max(0, j.ordinal - 5) }), 'red',
+      'the ordinal is LOWERED by hand with the source digest unchanged — no rebuild moved it, and the box went backwards', null, false],
+    [bump, 'red',
+      'the ordinal is RAISED by hand with the source digest unchanged — it sorts higher, but no build writes a new number without a new digest', null, false],
+    [null, 'green',
+      'the control: the record is untouched and the digest unchanged — no build shipped, n/a', null, false],
+  );
+
   const WANT = { red: false, green: true, unknown: null };
-  for (const [second, want, label, first = null] of CASES) {
-    const dir = build(second, first);
+  for (const [second, want, label, first = null, moveDigest = true] of CASES) {
+    const dir = build(second, first, moveDigest);
     try {
       const row = check(dir).rows.find((r) => r.name === 'H ORDINAL INCREASES');
       const detail = row ? row.detail.split('\n')[0].trim() : 'NO SUCH ROW';
@@ -636,6 +653,15 @@ function traceability() {
       'a digest REPLACED by that merge reports the commit that SHIPPED it, not the one that stopped',
       `whichCommits → ${removed.length === 1 ? removed[0] : JSON.stringify(removed)} (the merge ${merge} must not appear)`);
 
+    // T4 — the shape since the bundle left git: only buildordinal.json records it.
+    writeFileSync(resolve(dir, 'buildordinal.json'), `${JSON.stringify({ ordinal: 1, digest: 'dddddddddd' })}\n`);
+    git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'recorded dddddddddd in buildordinal.json, no bundle committed');
+    const recorded = git(dir, 'log', '-1', '--format=%h', 'main').trim();
+    const viaOrdinal = whichCommits('dddddddddd', dir);
+    say(viaOrdinal.length === 1 && viaOrdinal[0].startsWith(recorded),
+      'a digest recorded only in buildordinal.json (no committed bundle) reports the commit that recorded it',
+      `whichCommits → ${viaOrdinal.length === 1 ? viaOrdinal[0] : JSON.stringify(viaOrdinal)}`);
+
     // T3 — the empty edge. A tool that answers everything answers nothing.
     const none = whichCommits('cccccccccc', dir);
     say(none.length === 0, 'a digest no commit ever shipped returns EMPTY, not a plausible commit',
@@ -649,6 +675,15 @@ function traceability() {
 export async function selftest() {
   console.log('buildversion --selftest: every plant is a real edit to a real tree, entered at check(root).');
   console.log('');
+
+  // THE CORPUS COPIES A REAL BUILD, and the build is not committed on dev (since
+  // 2026-09-26), so a fresh checkout has none. Refused by name rather than by a
+  // cpSync stack trace from inside fresh(); never a pass.
+  if (!existsSync(resolve(REPO_ROOT, 'build/AshenSpire.html'))) {
+    console.error('buildversion --selftest: REFUSED — build/AshenSpire.html is missing. The corpus plants edits into a copy of a real build;');
+    console.error('  build it first: node tools/launch.mjs --build-only (built HTML is not committed; CI builds before this self-test).');
+    return 1;
+  }
 
   const rel = /version:\s*'([^']+)'/.exec(readFileSync(resolve(REPO_ROOT, 'src/content/index.js'), 'utf8'))[1];
   let failures = 0;
