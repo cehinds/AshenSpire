@@ -344,6 +344,10 @@ jobs:
       - uses: ./.github/actions/setup-node
 
       - name: Build the standalone and refresh root + dist/
+        # The build passes Node's ~2 GB default heap on macos-latest (OOM on
+        # release, 2026-09-26); ubuntu and windows stayed under it.
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only
 
       - name: Root + dist carry their art, and ARE the build

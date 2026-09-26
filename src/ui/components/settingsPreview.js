@@ -12,9 +12,12 @@
  * listen. `applyDisplaySettings` also re-fits every `.card` on the page, which
  * includes the sample card.
  *
- * The strip is a `<details>` so a phone can fold it away; its open state is the
- * sparse settings key `settingsPreviewOpen` (absent = open), saved through the
- * same onChange every row uses.
+ * The strip is a `<details>` that starts FOLDED; its open state is the sparse
+ * settings key `settingsPreviewOpen` (absent = folded), saved through the same
+ * onChange every row uses. Folded by default because, open, it pushed the
+ * Fullscreen row off a phone screen at Text XL in the in-run Settings door —
+ * and Fullscreen must be the first Display control a player can see
+ * (tools/displayfirst.mjs).
  */
 import { renderCard } from './card.js';
 import { contentBundle } from '../../content/index.js';
@@ -31,7 +34,7 @@ export function settingsPreviewShown(cat, group) {
 
 /** settingsPreviewHtml(settings) → the strip's markup; the card slot is filled by mountSettingsPreview. */
 export function settingsPreviewHtml(settings = {}) {
-  const open = settings[SETTINGS_PREVIEW_OPEN_KEY] !== false;
+  const open = settings[SETTINGS_PREVIEW_OPEN_KEY] === true;
   return `<details class="set-preview" data-settings-preview${open ? ' open' : ''}>`
     + '<summary class="set-preview-summary">Preview</summary>'
     + '<div class="set-preview-body" inert>'
@@ -72,7 +75,7 @@ export function mountSettingsPreview(host, settings, onChange) {
     }
   }
   strip.addEventListener('toggle', () => {
-    if ((settings[SETTINGS_PREVIEW_OPEN_KEY] !== false) === strip.open) return;
+    if ((settings[SETTINGS_PREVIEW_OPEN_KEY] === true) === strip.open) return;
     settings[SETTINGS_PREVIEW_OPEN_KEY] = strip.open;
     onChange?.({ [SETTINGS_PREVIEW_OPEN_KEY]: strip.open });
   });
