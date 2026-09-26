@@ -1,3 +1,4 @@
+import { contentBundle } from '../src/content/index.js';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -20,7 +21,8 @@ try {
     await page.screenshot({ path: join(out, `${name}-sword-and-shield.png`) });
     if (name === 'desktop') {
       const ids = await page.locator('#left option').evaluateAll(es => es.map(e => e.value).filter(Boolean));
-      check(ids.length === 25, 'all 25 armaments offered');
+      check(ids.length === contentBundle.equipment.armaments.length, `all ${contentBundle.equipment.armaments.length} armaments offered`);
+      assert.deepEqual([...ids].sort(), contentBundle.equipment.armaments.map(piece => piece.id).sort(), 'preview offers the exact shipped armament roster');
       for (const id of ids) {
         await page.selectOption('#right', ''); await page.selectOption('#left', id);
         await page.locator('#controls button').click();
@@ -48,6 +50,10 @@ try {
   check(await page.locator('.hand .card[data-card-id=guardianBulwark]').count() === 1, 'Guardian generates Bulwark through real input');
   await page.screenshot({ path: join(out, 'guardian-generates-bulwark.png') });
   await hold('guardianBulwark');
+  // WCM0: the stance strip shows on the selected combatant only; select the
+  // player the way a pointer does before reading it.
+  await page.waitForFunction(() => !!window.__combat?.player?.stanceId, null, { timeout: 30000 });
+  await page.locator('.combatant.player .sprite').click();
   await page.locator('.stance-chip.bulwark').waitFor({ timeout: 30000 }).catch(async error => {
     await page.screenshot({ path: join(out, 'stance-check-failure.png') });
     console.error(await page.locator('body').innerText()); throw error;

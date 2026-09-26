@@ -13,8 +13,10 @@ const OUTPUT = resolve(ROOT, 'docs/ARCHITECTURE-CURRENT-DEV.md');
 const CHECK = process.argv.includes('--check');
 const VERIFY = process.argv.includes('--verify');
 
+// `git ls-files` passed Node's 1 MiB default maxBuffer as the tree grew, and
+// every architecture-sync run on dev died of ENOBUFS before refreshing.
 function git(...args) {
-  return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8' }).trim();
+  return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).trim();
 }
 
 function trackedFiles() {

@@ -9,8 +9,9 @@
 // the VIEWER and never the act.
 //
 // WHAT IS STILL THIS FILE'S: the chrome a solo run needs and a co-op client does
-// not — the hero header, the relic and flask strip, the legend, the quick-nav,
-// the hint bar, and this screen's own keyboard handler.
+// not — the hero header, the relic strip, the legend, the quick-nav, the map
+// tray (hint bar, Potions, the selected node and Back / Enter), and this
+// screen's own keyboard handler.
 //
 // TWO MODES, and the toggle is Settings → Display · Map reveal:
 //
@@ -25,16 +26,22 @@
 // it is the operator that lifts a node from `placed` to `known`.
 
 import { passiveFlag } from '../../model/registries.js';
+import { wireframeUi } from '../../content/wireframeUi.js';
 import { attachTooltip, esc } from '../components/tooltip.js';
 import { veilIsOpen } from '../components/veil.js';
-import { matchAction, actionDestinationForEvent, isEngaged, focusFirst } from '../input.js';
+import { matchAction, actionDestinationForEvent, isEngaged, focusFirst, focusElement } from '../input.js';
 import { hintBarHtml } from '../components/hints.js';
 import { nodeBlurb, actTitle, legendEntries, MENU } from '../uiContent.js';
 import { mountMapBoard } from '../components/mapboard.js';
 import { resolveMapMode } from '../../model/mapknowledge.js';
 import { actRouteStripHtml } from '../components/actRouteStrip.js';
+import { seatNameOf } from '../components/runHud.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
-import { popover, row } from '../kit/index.js';
+import { mountRunPotions } from '../components/runPotions.js';
+import { button, el, popover, row } from '../kit/index.js';
+import { t } from '../strings.js';
+import { pickMapNode, projectMapContext } from '../models/MapSelectionModel.js';
+import { reducedMotionRequested } from '../motion.js';
 
 /**
  * THE MAP'S KEY HANDLER, AND ONLY ONE OF IT — #22's lifecycle, applied to the
@@ -57,29 +64,31 @@ let liveMapKeys = null;
 let liveMapBoard = null;
 let liveMapViewportRelease = null;
 
-export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {} }) {
-  // Before anything is drawn: the previous mount's keyboard handler, if this is
-  // a re-mount. See `liveMapKeys` above.
-  if (liveMapKeys) {
-    removeEventListener('keydown', liveMapKeys);
-    liveMapKeys = null;
-  }
-  if (liveMapBoard) {
-    liveMapBoard.teardown();
-    liveMapBoard = null;
-  }
+export function releaseMapScreen() {
+  if (liveMapKeys) removeEventListener('keydown', liveMapKeys);
+  liveMapKeys = null;
+  liveMapBoard?.teardown();
+  liveMapBoard = null;
   liveMapViewportRelease?.();
   liveMapViewportRelease = null;
-  const map = run.mapGraph;
+}
+
+export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls = {}, mapAdapter = null }) {
+  // Before anything is drawn: the previous mount's keyboard handler, if this is
+  // a re-mount. See `liveMapKeys` above.
+  releaseMapScreen();
+  const remount = () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls, mapAdapter });
+  const map = mapAdapter?.graph || run.mapGraph;
+  const current = mapAdapter ? mapAdapter.current : run.mapNodeId;
   // WHAT THIS RUN KNOWS AND MAY DO — the viewer's half, and the only half this
   // screen still computes. Geometry, drawing and the camera are the board's
   // (ui/components/mapboard.js).
-  const reachable = new Set(run.mapNodeId ? map.nodes[run.mapNodeId].next : map.startIds);
+  const reachable = new Set(mapAdapter?.reachable || (current ? map.nodes[current].next : map.startIds));
   const reveal = passiveFlag(registries, run.relics, 'revealUnknown');
-  const mode = resolveMapMode(meta);
+  const mode = mapAdapter?.mode || resolveMapMode(meta);
   const fog = mode === 'fog';
 
-  const atEntrance = !run.mapNodeId;
+  const atEntrance = !current;
   // THE LEGEND IS THE KIT'S POPOVER: one Row per node kind, its icon the Row's
   // Glyph in the kind's own tint. It hangs off the ? in the zoom bar and is
   // read, never chosen — so the Rows are static.
@@ -97,20 +106,20 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   });
 
   app.innerHTML = `
-    <div class="mapscreen${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
+    <div data-theme="${mapAdapter?.theme || ''}" class="mapscreen${mapAdapter ? ' legacy-dungeon' : ''}${fog ? ' map-fog' : ''}${atEntrance ? ' map-entrance' : ''}">
       <!-- ONE HUD SHELL: the same band combat, the merchant, the Shrine and an event mount (components/runHud.js). -->
-      ${runHudHtml({ registries, run, meta, place: 'map', headerClass: 'map-header' })}
-      ${actRouteStripHtml({ title: actTitle(run.actNumber) })}
+      ${runHudHtml({
+        registries, run, meta, place: 'map', headerClass: 'map-header',
+      })}
+      ${actRouteStripHtml({ title: mapAdapter?.title || actTitle(run.actNumber, run.journey ? null : seatNameOf(registries, run)) })}
     </div>`;
   // ---- THE HUD, AND IT IS THE COMBAT HUD ---------------------------------
-  // Bars, relics, flasks, Armoury and Menu: components/runHud.js fills the
-  // band for every room, so the map cannot drift from the merchant or the
-  // Shrine any more than it could from combat (E9 / #254).
+  // Bars, relics, Armoury and Menu: components/runHud.js fills the band for
+  // every room, so the map cannot drift from the merchant or the Shrine any
+  // more than it could from combat (E9 / #254).
   wireRunHud(app, {
-    registries, run, meta, onArmoury, onMenu, onLoad, onSave, onQuit, onQuitWithoutSave, quickControls, onSettingsChange,
-    remount: () => mountMap(app, { registries, run, meta, onPick, onSave, onQuit, onLoad, onQuitWithoutSave, onSettings, onSettingsChange, onMenu, onArmoury, quickControls }),
+    registries, run, meta, onArmoury, onMenu, onLoad, onSave, onQuit, onQuitWithoutSave, quickControls, onSettingsChange, remount,
   });
-
   // ---- THE BOARD -------------------------------------------------------
   //
   // ONE RENDERER, and this is the whole of the map on this screen. Everything
@@ -118,32 +127,165 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // zoom bar and the delivered-tap-size note — is the same code the co-op
   // client mounts. Read ui/components/mapboard.js's header for why.
   //
-  // The hint bar goes in as `chromeHtml` so it lands BETWEEN the scrollport and
-  // the zoom bar, and the order is a fix rather than a preference: `.hint-bar`
-  // is fixed to the bottom of the VIEWPORT, so once the zoom buttons stopped
-  // floating and took the bottom of the map, the two claimed the same band and
-  // the hint pill sat on top of the − and the ⊙ (map.css, `.mapscreen
-  // .hint-bar`). It was never unpressable, so the reach sweep was right to stay
-  // green — this was only ever visible to an eye.
-  // The legend belongs to the corner it opens from — the ? in the zoom bar — so
-  // it is mounted with the board's chrome, not on the HUD.
-  const board = mountMapBoard(app.querySelector('.mapscreen'), {
-    act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds },
+  // ---- THE MAP TRAY (owner, 2026-09-14) -------------------------------------
+  //
+  // One row at the foot of the map holds only the centred action buttons. The
+  // unboxed Potions control belongs to the map frame's far-right corner. The row is the only
+  // part of the tray that takes layout height, so the scene's height, and the
+  // camera framed against it, never change while the tray works.
+  //
+  // Picking a lit node OPENS the tray: after a beat it slides up over the foot
+  // of the map, never higher than today's bottom band reached, and shows the
+  // node's context with Back and Enter centred clear of Potions. The camera
+  // recentres the picked node in the map still visible above it. Back, or a
+  // tap anywhere on the map but a lit node, closes it and the camera recentres
+  // on the whole map. The footer's Recenter went with the old footer: it did
+  // exactly what the zoom bar's ⊙ does.
+  //
+  // AND IT IS NOT THE FOLDING TRAY (components/trayComponents.js), which is a
+  // docked LIST region: a header Row of caret + name + count the player taps to
+  // fold, with sorting, a resize handle and a remembered size. This tray has no
+  // name, no count and no fold control — it is opened by a pick and closed by
+  // Back or a tap away, and its closed state is a row of controls rather than a
+  // header. Reusing that component would mean inventing a name and a count and
+  // then disabling the three affordances that make it what it is.
+  //
+  // AND IT IS NOT THE FOLDING TRAY (components/trayComponents.js), which is a
+  // docked LIST region: a header Row of caret + name + count the player taps to
+  // fold, with sorting, a resize handle and a remembered size. This tray has no
+  // name, no count and no fold control — it is opened by a pick and closed by
+  // Back or a tap away, and its closed state is a row of controls rather than a
+  // header. Reusing that component would mean inventing a name and a count and
+  // then disabling the three affordances that make it what it is.
+  //
+  // The tray and the hint bar are built BEFORE the board mounts: the board
+  // checks a saved fit camera against the scene's height, so everything that
+  // takes height must already have it, or every remount would discard the
+  // player's pan. The zoom bar and Potions stay inside opposite corners of the
+  // map frame as separate, unboxed controls and therefore add no footer height.
+  const screen = app.querySelector('.mapscreen');
+  let selection = { selectedId: null };
+  const readings = new Map();
+  const context = el('section', { class: 'map-context', 'aria-label': t('map.context.aria') });
+  const backButton = button({ label: t('map.back'), id: 'map-back', className: 'map-back' });
+  const enterButton = button({ label: t('map.enter'), weight: 'primary', id: 'map-enter', className: 'map-enter', disabled: true });
+  const trayReveal = el('div', { class: 'map-tray-reveal' }, [context, el('div', { class: 'map-tray-pair' }, [backButton, enterButton])]);
+  trayReveal.inert = true;
+  const potionsHost = el('div', { class: 'map-potions' });
+  const trayRow = el('div', { class: 'map-tray-row' });
+  trayRow.insertAdjacentHTML('beforeend', hintBarHtml('map'));
+  const tray = el('div', { class: 'map-tray', dataset: { open: 'false', shown: 'false' } }, [trayReveal, trayRow]);
+  mountRunPotions(potionsHost, { registries, run, meta, onChange: () => { onSave?.(); remount(); } });
+  screen.append(tray);
+  renderSelection();
+  const board = mountMapBoard(screen, {
+    act: { seedString: run.seedString, nodes: map.nodes, columns: map.columns, actNumber: run.actNumber, seatName: seatNameOf(registries, run), startIds: map.startIds, bossId: map.bossId, bossIds: map.bossIds, authoredMap: mapAdapter?.art },
     showLegendControl: true,
     viewer: {
       meta, reachable, mode, reveal,
-      current: run.mapNodeId || null,
-      path: run.path || [],
-      viewState: run.mapView,
+      current: current || null,
+      path: mapAdapter?.path || run.path || [],
+      viewState: mapAdapter ? mapAdapter.viewState : run.mapView,
       onViewStateChange: (viewState, { commit } = {}) => {
-        run.mapView = viewState;
+        if (mapAdapter) mapAdapter.onViewStateChange(viewState); else run.mapView = viewState;
         if (commit && onSave) onSave();
       },
-      onPick,
-      tooltip: (n, { shownType, revealed }) => nodeTooltip(shownType, n, revealed),
+      // W4b: a pick selects; Enter, or picking the selected node again, travels.
+      onPick: (id, reading) => selectNode(id, reading),
+      tooltip: (n, { shownType, revealed }) => mapAdapter ? `<div class="tt-title">${esc(n.name)}</div>${esc(n.lore)}` : nodeTooltip(shownType, n, revealed),
     },
-    chromeHtml: hintBarHtml('map'),
   });
+  const mapFrame = screen.querySelector('.map-frame');
+  const zoomBar = app.querySelector('.map-zoom');
+  if (zoomBar) mapFrame?.appendChild(zoomBar);
+  mapFrame?.appendChild(potionsHost);
+  // Below the board and its notes; moving it changes no height.
+  screen.append(tray);
+  // Live only after the resting text is in place: a mount announces nothing.
+  context.setAttribute('aria-live', 'polite');
+
+  // ---- W4b: SELECT, THEN ENTER — in the tray ------------------------------
+  const trayTiming = wireframeUi.map.tray;
+  let trayTimer = 0;
+  const reduced = () => reducedMotionRequested();
+  const wait = (ms, fn) => { clearTimeout(trayTimer); trayTimer = setTimeout(fn, reduced() ? 0 : ms); };
+  const glideMs = () => (reduced() ? 0 : trayTiming.cameraMs);
+  function openTray() {
+    if (tray.dataset.open === 'true') {
+      // Already open (or closing): stay open, and recentre on the new pick.
+      clearTimeout(trayTimer);
+      tray.dataset.shown = 'true';
+      trayReveal.inert = false;
+      board.centerOnNode(selection.selectedId, { inset: trayReveal.scrollHeight, glideMs: glideMs() });
+      return;
+    }
+    wait(trayTiming.openDelayMs, () => {
+      const height = trayReveal.scrollHeight;
+      tray.dataset.open = 'true';
+      trayReveal.inert = false;
+      trayReveal.style.height = `${height}px`;
+      board.centerOnNode(selection.selectedId, { inset: height, glideMs: glideMs() });
+      wait(trayTiming.slideMs, () => {
+        tray.dataset.shown = 'true';
+        if (isEngaged() && !enterButton.disabled) focusElement(enterButton);
+      });
+    });
+  }
+  function closeTray() {
+    clearTimeout(trayTimer);
+    if (tray.dataset.open !== 'true') return;
+    tray.dataset.shown = 'false';
+    trayReveal.inert = true;
+    wait(trayTiming.fadeMs, () => {
+      tray.dataset.open = 'false';
+      trayReveal.style.height = '0px';
+      board.resetFraming({ glideMs: glideMs() });
+    });
+  }
+  backButton.addEventListener('click', () => clearSelection());
+  enterButton.addEventListener('click', () => {
+    if (selection.selectedId && reachable.has(selection.selectedId)) onPick(selection.selectedId);
+  });
+  // A tap on the map away from the lit nodes closes the tray; a mouse drag
+  // that pans the board is not a tap.
+  let pressAt = null;
+  board.scroll.addEventListener('pointerdown', (ev) => { pressAt = { x: ev.clientX, y: ev.clientY }; });
+  board.scroll.addEventListener('click', (ev) => {
+    const moved = pressAt ? Math.hypot(ev.clientX - pressAt.x, ev.clientY - pressAt.y) : 0;
+    pressAt = null;
+    if (moved > 6 || ev.target.closest('.map-node.reachable')) return;
+    clearSelection();
+  });
+  function selectNode(id, reading) {
+    if (reading) readings.set(id, reading);
+    const next = pickMapNode(selection, id, reachable, { now: performance.now(), repeatDelayMs: wireframeUi.map.repeatPickDelayMs });
+    if (next.enter) { onPick(id); return; }
+    selection = next;
+    renderSelection();
+    if (selection.selectedId) openTray();
+  }
+  function clearSelection() {
+    if (!selection.selectedId) return;
+    selection = { selectedId: null };
+    renderSelection();
+    closeTray();
+  }
+  function renderSelection() {
+    for (const node of app.querySelectorAll('.map-node.selected')) node.classList.remove('selected');
+    const id = selection.selectedId;
+    if (id) app.querySelector(`.map-node[data-node="${id}"]`)?.classList.add('selected');
+    const view = projectMapContext({ node: id ? map.nodes[id] : null, reading: readings.get(id), reachable: !!id && reachable.has(id) });
+    context.replaceChildren(...(view.empty
+      ? [el('p', { class: 'map-context-line', text: t('map.context.empty') })]
+      : [
+        el('p', { class: 'as-eyebrow', text: t('map.context.floor', { floor: view.floor }) }),
+        el('h2', { class: 'map-context-title', text: mapAdapter ? map.nodes[id].name : view.kindName }),
+        ...[mapAdapter ? map.nodes[id].lore : view.blurb, view.destination, view.revealed ? t('map.context.revealed') : '']
+          .filter(Boolean).map((text) => el('p', { class: 'map-context-line', text })),
+      ]));
+    enterButton.disabled = !view.canEnter;
+    enterButton.textContent = view.canEnter ? (mapAdapter?.enterLabel?.(id) || t('map.enterNamed', { name: mapAdapter ? map.nodes[id].name : view.kindName })) : t('map.enter');
+  }
 
   // The legend hangs off the ? IN THE ZOOM BAR, so it is mounted inside that
   // Band — the Band is its containing block, which is how `bottom: 100%` means
@@ -236,6 +378,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   viewport?.addEventListener('resize', recenterAfterSettle);
   liveMapViewportRelease = () => {
     cancelAnimationFrame(frameA); cancelAnimationFrame(frameB);
+    clearTimeout(trayTimer);
     window.removeEventListener('resize', recenterAfterSettle);
     for (const type of ['fullscreenchange', 'webkitfullscreenchange']) document.removeEventListener(type, recenterAfterSettle);
     viewport?.removeEventListener('resize', recenterAfterSettle);

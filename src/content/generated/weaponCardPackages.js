@@ -111,12 +111,12 @@ export const weaponCardPackages = [
     "weaponId": "twinblade",
     "package": {
       "compatibility": "attack-v1",
-      "fillerAttackProfileId": "bladeAttack",
+      "fillerAttackProfileId": "twinbladeAttack",
       "weaponArtDefaults": [
         "twinbladeFlurry"
       ],
       "combatKit": {
-        "attackProfileId": "bladeAttack",
+        "attackProfileId": "twinbladeAttack",
         "guardProfileId": "weaponGuard",
         "artCardId": "twinbladeFlurry"
       }
@@ -374,6 +374,51 @@ export const weaponCardPackages = [
         "attackProfileId": "sceptreArcaneAttack",
         "guardProfileId": "staffGuard",
         "artCardId": "moonrendCut"
+      }
+    }
+  },
+  {
+    "weaponId": "frostSpear",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "rimeThrust"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "rimeThrust"
+      }
+    }
+  },
+  {
+    "weaponId": "cinderAxe",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "bladeAttack",
+      "weaponArtDefaults": [
+        "kilnCleave"
+      ],
+      "combatKit": {
+        "attackProfileId": "bladeAttack",
+        "guardProfileId": "weaponGuard",
+        "artCardId": "kilnCleave"
+      }
+    }
+  },
+  {
+    "weaponId": "duskChime",
+    "package": {
+      "compatibility": "attack-v1",
+      "fillerAttackProfileId": "sceptreArcaneAttack",
+      "weaponArtDefaults": [
+        "vesperWard"
+      ],
+      "combatKit": {
+        "attackProfileId": "sceptreArcaneAttack",
+        "guardProfileId": "sceptreGuard",
+        "artCardId": "vesperWard"
       }
     }
   }

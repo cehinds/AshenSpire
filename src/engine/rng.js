@@ -27,6 +27,11 @@ export const STREAM_NAMES = Object.freeze([
   // its own stream). A save written before the stream existed starts it at 0.
   'smith',
   'combatProcs',
+  // The seat order (SPEC §13.4): drawn exactly once, at run creation, on a
+  // stream of its own — so seeding the order moves no draw on any stream
+  // above, and every existing seed's maps and rolls stay byte-identical
+  // (§13.6). A save written before the stream existed starts it at 0.
+  'seats',
 ]);
 
 const MULBERRY_INC = 0x6d2b79f5;

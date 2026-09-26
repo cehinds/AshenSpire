@@ -23,7 +23,7 @@ CREATE TABLE service_handlers(handlerId TEXT PRIMARY KEY NOT NULL);
 CREATE TABLE service_types(serviceTypeId TEXT PRIMARY KEY NOT NULL, displayName TEXT NOT NULL, handlerId TEXT NOT NULL REFERENCES service_handlers);
 CREATE TABLE services(serviceId TEXT PRIMARY KEY NOT NULL, displayName TEXT NOT NULL, serviceTypeId TEXT NOT NULL REFERENCES service_types);
 CREATE TABLE node_services(nodeId TEXT NOT NULL REFERENCES nodes, serviceId TEXT NOT NULL REFERENCES services, PRIMARY KEY(nodeId,serviceId));
-CREATE TABLE quests(questId TEXT PRIMARY KEY NOT NULL, displayName TEXT NOT NULL, description TEXT NOT NULL, objectiveNodeId TEXT NOT NULL REFERENCES world_nodes, rewardCinders INTEGER NOT NULL CHECK(rewardCinders>=0));
+CREATE TABLE quests(questId TEXT PRIMARY KEY NOT NULL, displayName TEXT NOT NULL, description TEXT NOT NULL, objectiveNodeId TEXT NOT NULL REFERENCES world_nodes, rewardCinders INTEGER NOT NULL CHECK(rewardCinders>=0), speakerId TEXT NOT NULL);
 CREATE TABLE node_quests(nodeId TEXT NOT NULL REFERENCES nodes, questId TEXT NOT NULL REFERENCES quests, PRIMARY KEY(nodeId,questId));
 CREATE TABLE local_gates(nodeId TEXT NOT NULL REFERENCES local_map_nodes, destinationNodeId TEXT NOT NULL REFERENCES world_nodes, PRIMARY KEY(nodeId,destinationNodeId));
 CREATE TABLE anchor_roles(roleId TEXT PRIMARY KEY NOT NULL, displayName TEXT NOT NULL);

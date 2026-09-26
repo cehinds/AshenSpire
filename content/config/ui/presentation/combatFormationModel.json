@@ -1,0 +1,39 @@
+{
+  "sizing": {
+    "layout": {
+      "hud": 10,
+      "field": 55,
+      "hand": 30,
+      "controls": 5
+    },
+    "figureReference": 150,
+    "ceiling": {
+      "heightFraction": 0.52,
+      "widthFraction": 0.16
+    },
+    "insetCapDivisor": 10,
+    "stepCapDivisor": 6,
+    "gapRamp": {
+      "narrowPx": 375,
+      "widePx": 1200
+    },
+    "grid": {
+      "slantFraction": 0.19,
+      "cellFraction": 0.78,
+      "previewDepthFraction": 0.82,
+      "fieldDepthFraction": 0.49,
+      "bottomClearanceFraction": 0.12,
+      "tileWidthFraction": 0.62,
+      "tileRowFraction": 0.5,
+      "legacyTileRowFraction": 0.7
+    }
+  },
+  "positioning": {
+    "detailReserveFraction": 0.22,
+    "firstFootFraction": 0.45,
+    "footSteps": [
+      0.25,
+      1.125
+    ]
+  }
+}

@@ -21,11 +21,12 @@ export const weapons = [
     "dropWeight": 10,
     "artKey": "",
     "poiseThreshold": 5,
-    "attackRating": 5,
+    "attackRating": 2,
     "defenseRating": 2,
     "weight": 5,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": "straightSwordInventory2026"
   },
   {
     "id": "greatsword",
@@ -41,7 +42,6 @@ export const weapons = [
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
     "mods": [
-      "strike.damage=+4",
       "strike.cost=+1",
       "strike.poise=+3"
     ],
@@ -50,11 +50,12 @@ export const weapons = [
     "dropWeight": 7,
     "artKey": "",
     "poiseThreshold": 8,
-    "attackRating": 9,
+    "attackRating": 4,
     "defenseRating": 2,
     "weight": 8,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "dagger",
@@ -75,11 +76,12 @@ export const weapons = [
     "dropWeight": 10,
     "artKey": "",
     "poiseThreshold": 3,
-    "attackRating": 3,
+    "attackRating": 1,
     "defenseRating": 2,
     "weight": 3,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "shortbow",
@@ -100,11 +102,12 @@ export const weapons = [
     "dropWeight": 10,
     "artKey": "dagger",
     "poiseThreshold": 2,
-    "attackRating": 4,
+    "attackRating": 1,
     "defenseRating": 2,
     "weight": 2,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "katana",
@@ -119,20 +122,18 @@ export const weapons = [
     "attackProfile": "bladeAttack",
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
-    "mods": [
-      "strike.damage=-1",
-      "strike.bleed=+2"
-    ],
+    "mods": "strike.bleed=+2",
     "unlock": "",
     "blurb": "A long curve, and a long grudge.",
     "dropWeight": 7,
     "artKey": "",
     "poiseThreshold": 5,
-    "attackRating": 4,
+    "attackRating": 2,
     "defenseRating": 2,
     "weight": 5,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "halberd",
@@ -148,7 +149,6 @@ export const weapons = [
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
     "mods": [
-      "strike.damage=+3",
       "strike.cost=+1",
       "strike.poise=+4"
     ],
@@ -157,11 +157,12 @@ export const weapons = [
     "dropWeight": 7,
     "artKey": "",
     "poiseThreshold": 7,
-    "attackRating": 8,
+    "attackRating": 4,
     "defenseRating": 2,
     "weight": 7,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "warhammer",
@@ -176,20 +177,18 @@ export const weapons = [
     "attackProfile": "bladeAttack",
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
-    "mods": [
-      "strike.damage=+2",
-      "strike.poise=+6"
-    ],
+    "mods": "strike.poise=+6",
     "unlock": "",
     "blurb": "Poise is a fiction. This is the argument.",
     "dropWeight": 7,
     "artKey": "",
     "poiseThreshold": 9,
-    "attackRating": 7,
+    "attackRating": 3,
     "defenseRating": 2,
     "weight": 9,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "twinblade",
@@ -201,11 +200,10 @@ export const weapons = [
     "scale": 1,
     "metal": "C0B8A6",
     "accent": "7FA8C9",
-    "attackProfile": "bladeAttack",
+    "attackProfile": "twinbladeAttack",
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
     "mods": [
-      "strike.damage=2",
       "strike.hits=3",
       "self.maxStamina=+1"
     ],
@@ -218,7 +216,8 @@ export const weapons = [
     "defenseRating": 2,
     "weight": 5,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "battleaxe",
@@ -233,20 +232,18 @@ export const weapons = [
     "attackProfile": "bladeAttack",
     "guardProfile": "weaponGuard",
     "techniqueProfile": "weaponTechnique",
-    "mods": [
-      "strike.damage=+3",
-      "strike.cost=+1"
-    ],
+    "mods": "strike.cost=+1",
     "unlock": "",
     "blurb": "It was a woodcutter's once.",
     "dropWeight": 10,
     "artKey": "",
     "poiseThreshold": 7,
-    "attackRating": 8,
+    "attackRating": 2,
     "defenseRating": 2,
     "weight": 7,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "buckler",
@@ -261,17 +258,18 @@ export const weapons = [
     "attackProfile": "shieldAttack",
     "guardProfile": "shieldGuard",
     "techniqueProfile": "weaponTechnique",
-    "mods": "defend.block=+2",
+    "mods": "",
     "unlock": "",
     "blurb": "Small enough to be quick with.",
     "dropWeight": 10,
     "artKey": "",
     "poiseThreshold": 4,
-    "attackRating": 0,
+    "attackRating": 1,
     "defenseRating": 5,
     "weight": 4,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "kiteShield",
@@ -286,20 +284,18 @@ export const weapons = [
     "attackProfile": "shieldAttack",
     "guardProfile": "shieldGuard",
     "techniqueProfile": "weaponTechnique",
-    "mods": [
-      "defend.block=+3",
-      "strike.damage=-1"
-    ],
+    "mods": "",
     "unlock": "",
     "blurb": "A wall you can carry. Your arm knows it.",
     "dropWeight": 10,
     "artKey": "",
     "poiseThreshold": 8,
     "attackRating": 0,
-    "defenseRating": 6,
+    "defenseRating": 4,
     "weight": 8,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": "kiteShieldInventory2026"
   },
   {
     "id": "towerShield",
@@ -314,11 +310,7 @@ export const weapons = [
     "attackProfile": "shieldAttack",
     "guardProfile": "shieldGuard",
     "techniqueProfile": "weaponTechnique",
-    "mods": [
-      "defend.block=+6",
-      "strike.damage=-2",
-      "self.maxHp=+10"
-    ],
+    "mods": "self.maxHp=+10",
     "unlock": "",
     "blurb": "You will not be moved. You will not move.",
     "dropWeight": 4,
@@ -328,7 +320,8 @@ export const weapons = [
     "defenseRating": 9,
     "weight": 12,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "roundShield",
@@ -343,7 +336,7 @@ export const weapons = [
     "attackProfile": "shieldAttack",
     "guardProfile": "shieldGuard",
     "techniqueProfile": "weaponTechnique",
-    "mods": "defend.block=+2",
+    "mods": "",
     "unlock": "",
     "blurb": "Plain, round, and enough.",
     "dropWeight": 10,
@@ -353,7 +346,8 @@ export const weapons = [
     "defenseRating": 5,
     "weight": 7,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "spikedShield",
@@ -368,20 +362,18 @@ export const weapons = [
     "attackProfile": "shieldAttack",
     "guardProfile": "shieldGuard",
     "techniqueProfile": "weaponTechnique",
-    "mods": [
-      "defend.block=+2",
-      "strike.damage=+1"
-    ],
+    "mods": "",
     "unlock": "",
     "blurb": "Defence with an opinion.",
     "dropWeight": 7,
     "artKey": "",
     "poiseThreshold": 8,
-    "attackRating": 0,
+    "attackRating": 2,
     "defenseRating": 5,
     "weight": 8,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "lantern",
@@ -396,10 +388,7 @@ export const weapons = [
     "attackProfile": "shieldAttack",
     "guardProfile": "shieldGuard",
     "techniqueProfile": "weaponTechnique",
-    "mods": [
-      "defend.block=+1",
-      "self.regen=+1"
-    ],
+    "mods": "self.regen=+1",
     "unlock": "",
     "blurb": "Light enough to see what is coming.",
     "dropWeight": 10,
@@ -409,7 +398,8 @@ export const weapons = [
     "defenseRating": 4,
     "weight": 2,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "torch",
@@ -434,7 +424,8 @@ export const weapons = [
     "defenseRating": 3,
     "weight": 2,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "parryDagger",
@@ -449,10 +440,7 @@ export const weapons = [
     "attackProfile": "shieldAttack",
     "guardProfile": "shieldGuard",
     "techniqueProfile": "weaponTechnique",
-    "mods": [
-      "defend.block=+1",
-      "strike.poise=+2"
-    ],
+    "mods": "strike.poise=+2",
     "unlock": "",
     "blurb": "Held wrong on purpose.",
     "dropWeight": 7,
@@ -462,7 +450,8 @@ export const weapons = [
     "defenseRating": 4,
     "weight": 3,
     "weaponArtManaCost": 0,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "ashStaff",
@@ -483,11 +472,12 @@ export const weapons = [
     "dropWeight": 10,
     "artKey": "",
     "poiseThreshold": 3,
-    "attackRating": 2,
+    "attackRating": 1,
     "defenseRating": 1,
     "weight": 3,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "starstoneStaff",
@@ -504,7 +494,6 @@ export const weapons = [
     "techniqueProfile": "staffTechnique",
     "mods": [
       "power.potency=+2",
-      "strike.damage=-1",
       "strike.frost=+2"
     ],
     "unlock": "",
@@ -516,7 +505,8 @@ export const weapons = [
     "defenseRating": 1,
     "weight": 3,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "boneSceptre",
@@ -540,11 +530,12 @@ export const weapons = [
     "dropWeight": 7,
     "artKey": "",
     "poiseThreshold": 4,
-    "attackRating": 3,
+    "attackRating": 2,
     "defenseRating": 1,
     "weight": 4,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "emberlightSceptre",
@@ -569,7 +560,8 @@ export const weapons = [
     "defenseRating": 0,
     "weight": 4,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "goldboughBranch",
@@ -597,7 +589,8 @@ export const weapons = [
     "defenseRating": 0,
     "weight": 4,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "blightRod",
@@ -625,7 +618,8 @@ export const weapons = [
     "defenseRating": 0,
     "weight": 3,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "gorefireBrand",
@@ -653,7 +647,8 @@ export const weapons = [
     "defenseRating": 0,
     "weight": 3,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
   },
   {
     "id": "wyrmhornStaff",
@@ -682,6 +677,91 @@ export const weapons = [
     "defenseRating": 0,
     "weight": 5,
     "weaponArtManaCost": 1,
-    "uniqueSkillStaminaCost": 0
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": ""
+  },
+  {
+    "id": "frostSpear",
+    "name": "Frost Spear",
+    "kind": "weapon",
+    "hand": "either",
+    "rarity": "uncommon",
+    "geom": "polearm",
+    "scale": 1,
+    "metal": "A8A090",
+    "accent": "C9A227",
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
+    "mods": "strike.frost=+2",
+    "unlock": "",
+    "blurb": "A rimed point that slows the next advance.",
+    "dropWeight": 7,
+    "artKey": "halberd",
+    "poiseThreshold": 6,
+    "attackRating": 3,
+    "defenseRating": 2,
+    "weight": 6,
+    "weaponArtManaCost": 0,
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": "halberd"
+  },
+  {
+    "id": "cinderAxe",
+    "name": "Cinder Axe",
+    "kind": "weapon",
+    "hand": "either",
+    "rarity": "uncommon",
+    "geom": "axe",
+    "scale": 1,
+    "metal": "A8A090",
+    "accent": "C9502E",
+    "attackProfile": "bladeAttack",
+    "guardProfile": "weaponGuard",
+    "techniqueProfile": "weaponTechnique",
+    "mods": [
+      "strike.cost=+1",
+      "strike.burn=+3"
+    ],
+    "unlock": "",
+    "blurb": "A furnace edge bought with a slower swing.",
+    "dropWeight": 7,
+    "artKey": "battleaxe",
+    "poiseThreshold": 7,
+    "attackRating": 3,
+    "defenseRating": 2,
+    "weight": 7,
+    "weaponArtManaCost": 0,
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": "battleaxe"
+  },
+  {
+    "id": "duskChime",
+    "name": "Dusk Chime",
+    "kind": "staff",
+    "hand": "either",
+    "rarity": "rare",
+    "geom": "staffSkull",
+    "scale": 1,
+    "metal": "B8AE98",
+    "accent": "B5541C",
+    "attackProfile": "sceptreArcaneAttack",
+    "guardProfile": "sceptreGuard",
+    "techniqueProfile": "staffTechnique",
+    "mods": [
+      "strike.blight=+1",
+      "self.maxMana=+1"
+    ],
+    "unlock": "",
+    "blurb": "Its last note settles into a sheltering hush.",
+    "dropWeight": 4,
+    "artKey": "boneSceptre",
+    "poiseThreshold": 3,
+    "attackRating": 1,
+    "defenseRating": 1,
+    "weight": 3,
+    "weaponArtManaCost": 1,
+    "uniqueSkillStaminaCost": 0,
+    "inventoryArtKey": "boneSceptre"
   }
 ];

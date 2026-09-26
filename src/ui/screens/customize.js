@@ -1,3 +1,4 @@
+import { compactEquipmentDetails } from '../components/compactEquipmentDetails.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { renderEquipmentCard, equipmentDetails } from '../components/equipmentCard.js';
 import { EMPTY_HAND_PRESENTATION } from '../components/emptyHandCard.js';
@@ -28,17 +29,18 @@ import { attachSeedField } from '../components/seedfield.js';
 import { createRunState } from '../../model/state.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
 import { settingOn } from './settings.js';
-import { statProjection, playerPoiseThresholdReceipt } from '../../model/statProjection.js';
+import { statProjection, playerPoiseThresholdReceipt, handResourceRows, withHandResources, startingResourceRows } from '../../model/statProjection.js';
 import { startingKitViews, startingArmourViews } from '../../model/startingKits.js';
-import { creationMode, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation } from '../../model/attributes.js';
-import { previewCompatibleHands, startingHandsRequirementFailure } from '../../model/loadout.js';
+import { creationMode, creationModeHasPoints, orderedAttributes, classAttributePreset, attributeAllocationProblems, allocationTotal, baselineAttributeAllocation, defaultCreationModeId } from '../../model/attributes.js';
+import { previewCompatibleHands, startingHandsRequirementFailure, equipmentKitReceipt } from '../../model/loadout.js';
 import {
   creationModeViews, creationEquipmentSectionViews, creationRelicChoices,
   selectStartingHand,
 } from '../../model/characterCreation.js';
-import { pieceChip } from './equipment.js';
+import { pieceChip, setPieceChipChosen } from './equipment.js';
 import { ATLAS } from '../../model/worldAtlas.js';
-import { relicText, renderCard } from '../components/card.js';
+import { relicText, renderCard, scheduleCardFits } from '../components/card.js';
+import { bindCardInspection, openCardInspection } from '../components/cardInspection.js';
 import { renderStatAllocationCard } from '../components/statAllocationCard.js';
 import { renderEquipmentRequirements, renderPlayerPoise, renderRoleCopies } from '../components/equipmentReceipts.js';
 import { UI_COMPONENTS as UI, markUiComponent } from '../components/uiComponents.js';
@@ -46,28 +48,45 @@ import { equipmentSurfaceReceipt } from '../../model/equipmentPresentation.js';
 import {
   primaryStatCard, primaryStatCards, resourceStrip, modeChoiceButton, spriteChoiceButton,
   tintChoiceButton, sigilChoiceButton, keepsakeChoiceButton, viewModeToggle,
-  booleanSettingToggle, classChoiceCard, classPreviewPane, classResourceGrid, relicChoiceButton,
+  booleanSettingToggle, classChoiceCard, classPreviewPane, classUnfold, classResourceGrid, relicChoiceButton,
   selectionSectionFace,
 } from '../components/creationCards.js';
 import {
-  el, eyebrow, titleS, subtitle, flavour, hairline, artWell, options, row, labelStack,
-  button, buttonRow, modalHead, modalFooter, pane, statPair,
+  el, eyebrow, subtitle, flavour, hairline, artWell, options, row, labelStack,
+  button, buttonRow, modalHead, modalFooter, pane, statPair, railItem, categoryNav,
 } from '../kit/index.js';
+import {
+  creationCategories, creationStep, creationFooterPlan, creationRailItems, creationAttributeColumns, creationCssProperties, creationFitsChoices, creationClassPreview,
+} from '../models/CreationWorkspaceModel.js';
+// The fold's own sentence is a row in content/source/uiStrings.csv, which is
+// where #991 put the words this game says. This screen still carries plenty of
+// copy in code — the baseline counts it — but a NEW sentence does not join it.
+import { t } from '../strings.js';
+import { clearSelection } from '../components/cardSelection.js';
+import { mountCreationInfoLayer } from '../components/creationInfoLayer.js';
+import { placeAnchored, placeGap, viewportLocalBox, anchorLocalBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { classAvailable, classUnlockRow } from '../../model/unlocks.js';
 
-/** A section's head: Eyebrow + Title·S on the left, its controls on the right. */
-function sectionHead(kicker, title, trail = []) {
-  return el('div', { class: 'as-pane-head' }, [
-    el('div', { class: 'set-section-head' }, [eyebrow(kicker), titleS(title, { tag: 'h3' })]),
-    trail.length ? el('span', { class: 'r-trail' }, trail) : null,
-  ]);
-}
+const CREATION_DERIVED_LABELS = Object.freeze({
+  hp: 'HP',
+  mana: 'MP',
+  stamina: 'SP',
+  energy: 'AP',
+});
+const CREATION_INSPECTION_LABELS = Object.freeze({
+  hp: 'Health Points (HP)',
+  mana: 'Mana Points (MP)',
+  stamina: 'Stamina Points (SP)',
+  energy: 'Action Points (AP)',
+  ar: 'Attack Rating (AR)',
+  dr: 'Defense Rating (DR)',
+  pr: 'Power Rating (PR)',
+  openingHand: 'Opening hand',
+  draw: 'Cards drawn each turn',
+});
 
-/** The way on from a section: one long button, at the end of the row.
- *  A gated step's button is primary — green once the step is complete, muted
- *  with its reason until then (refusal.js). The seed's is a plain button:
- *  Begin, in the foot, is the one that turns green at the end. */
-function nextRow(label, next, weight = 'primary') {
-  return buttonRow({ size: 'long', className: 'end', buttons: [button({ label, weight, className: 'cz-next', attrs: { dataset: { next } } })] });
+function creationDerivedLabel(entry) {
+  return CREATION_DERIVED_LABELS[entry.id] || entry.faceLabel;
 }
 
 /** Show or stash a live node. Inline display, not `hidden` alone — the kit's
@@ -79,8 +98,22 @@ function showNode(node, on) {
 }
 
 export function mountCustomize(app, {
-  registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false, shotPose = null,
+  registries, meta = {}, defaultSeedString, onBack, onStart, catalog = false, shotPose = null, slot = null,
 }) {
+  // THE HAND A NEW CHARACTER IS PROMISED IS THE HAND ITS FIRST FIGHT DEALS
+  // (Codex, #1294): the legacy derived `draw` row gives way to the Hand and
+  // Draw chips read from the run's own hand rows (its class's opening hand),
+  // the rows engine/runCombat.js snapshots (`handResourceRows`).
+  const creationResources = (run, projection) => withHandResources(projection.derived, handResourceRows(registries, run, meta.settings || {}));
+  // The class preview's starting resources (model/statProjection.js
+  // `startingResourceRows`): HP through the Hand and Draw chips, not Poise.
+  const classPreviewResources = (run, projection) => startingResourceRows(creationResources(run, projection));
+  // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
+  // page-wide store, and nothing in production ever emptied it — so a card
+  // whose `i` had been read kept its first beat for the life of the page, and
+  // meeting the same logical id on a later surface handed that surface a card
+  // already one beat in: its first touch acted instead of selecting.
+  clearSelection();
   const firstClass = registries.classes.all()[0];
   const creationLayout = registries.characterCreation.layout || {};
   const visibleModes = creationModeViews(registries);
@@ -180,7 +213,6 @@ export function mountCustomize(app, {
     ]),
   ]);
   const previewSide = el('div', { class: 'as-pane flush cc-preview-side' }, [
-    portrait,
     el('div', { id: 'cz-preview-fold', class: 'cc-preview-fold cz-disc' }, spriteGroup),
   ]);
   const seedInput = el('input', { id: 'seed-input', type: 'text', value: defaultSeedString });
@@ -198,10 +230,7 @@ export function mountCustomize(app, {
       'aria-orientation': 'vertical', 'aria-valuemin': '22', 'aria-valuemax': '45', 'aria-valuenow': String(state.classPreviewPercent),
     }),
     el('div', { class: 'as-split-pane cc-class-selection' }, el('div', { class: 'as-pane' }, [
-      sectionHead('Choose', 'Class', [el('div', { id: 'cz-class-view-toggle' })]),
-      hairline(),
       options([], { id: 'cz-classes', class: 'cc-choice-collection', dataset: { view: state.classChoiceView } }),
-      nextRow('Continue to character', 'character'),
     ])),
   ]);
   split.style.setProperty('--split-share', `${state.classPreviewPercent}%`);
@@ -211,32 +240,133 @@ export function mountCustomize(app, {
     character: el('section', { id: 'cz-character-panel', class: 'as-pane flush cz-stage' }, [
       el('div', { class: 'as-splitbody cc-character-grid', dataset: { spriteSide: spriteSide } },
         spriteSide === 'left' ? [previewSide, statsSide] : [statsSide, previewSide]),
-      nextRow('Continue to equipment', 'equipment'),
     ]),
     equipment: el('section', { id: 'cz-equipment-panel', class: 'as-pane flush cz-stage' }, [
-      sectionHead('Choose', 'Starting equipment', [el('div', { id: 'cz-equipment-view-toggle' })]),
-      hairline(),
+      el('div', { class: 'cc-equipment-header' }, [el('b', {}, 'Equipment'), el('select', { id: 'cz-equipment-section', 'aria-label': 'Equipment section' }), el('span', { id: 'cz-equipment-count' })]),
       el('div', { id: 'cz-equipment-fold', class: 'cc-equipment-fold cz-disc' }),
       el('div', { id: 'cz-equipment-receipts', class: 'cc-equip-group', 'aria-live': 'polite' }),
       flavour('An armament is one carried object. Choosing it for the other hand moves it.', { class: 'cc-move-note' }),
-      nextRow('Continue to seed', 'seed', 'secondary'),
     ]),
-    seed: el('section', { id: 'cz-seed-panel', class: 'as-pane flush cz-stage' }, [journeyRow, seedRow]),
+    // W1c Review: the seed and journey, the destination slot, and a concise
+    // summary of identity, loadout and derived values (filled on arrival).
+    review: el('section', { id: 'cz-seed-panel', class: 'as-pane flush cz-stage', dataset: { stage: 'review' } }, [
+      journeyRow, seedRow,
+      slot == null ? null : row({ tag: 'div', setting: true, className: 'cc-destination-row', labelNode: labelStack({ label: t('creation.review.destination'), hint: t('creation.review.destination.hint') }), trail: el('span', { class: 'as-status cc-destination', text: t('creation.review.slot', { slot }) }) }),
+      el('div', { id: 'cz-review-summary', class: 'as-stack cc-review' }),
+    ]),
   };
-  const flow = el('div', { class: 'cz-flow cz-disc' }, Object.values(stages));
-
-  const head = modalHead({
-    eyebrow: catalog ? 'Component catalogue' : 'Divided oath',
-    title: catalog ? 'Character creation components' : 'Prepare your Forsaken',
-    closeLabel: 'Back',
+  // The catalogue still lays every stage out in one column; the screen shows
+  // one at a time inside the W1 pane below.
+  const flow = el('div', { class: 'cz-flow cz-disc' }, catalog ? Object.values(stages) : []);
+  const categories = creationCategories();
+  for (const id of categories) {
+    if (!stages[id]) throw new Error(`creation behavior.categories names '${id}', which is not a stage this screen draws (${Object.keys(stages).join(', ')})`);
+  }
+  const railItems = creationRailItems({
+    categories, current: categories[0],
+    labels: Object.fromEntries(categories.map((id) => [id, t(`creation.category.${id}`)])),
+  }).map((entry) => {
+    const item = railItem({ label: entry.label, member: entry.id, id: `cz-tab-${entry.id}`, className: 'cz-tab', attrs: { 'aria-controls': 'cz-pane' } });
+    item.append(el('span', { class: 'cz-tab-value as-status' }));
+    return item;
   });
-  head.querySelector('.modal-close').hidden = true; // the way back is Back, in the foot
-  const back = button({ label: 'Back', id: 'cz-back' });
+  const rail = el('div', { class: 'as-rail cz-rail', role: 'tablist', 'aria-label': t('creation.categories'), 'aria-orientation': 'vertical', dataset: { surface: 'creationCategory' } }, railItems);
+  const paneHost = el('div', { id: 'cz-pane', class: 'as-pane flush cz-pane', role: 'tabpanel' });
+  const railed = el('div', { class: 'as-railed cz-railed', dataset: { classPreview: creationClassPreview() } }, [rail, paneHost]);
+
+  // W1c head: one title, the small portrait, the exit. No eyebrow.
+  const head = modalHead({
+    eyebrow: catalog ? 'Component catalogue' : '',
+    title: catalog ? 'Character creation components' : t('creation.title'),
+    closeLabel: t('common.back'),
+  });
+  const close = head.querySelector('.modal-close');
+  // The view switches live in the head, where the width is free, and only the
+  // active category's shows (owner, 2026-09-19: no row spent on a toggle).
+  const classTools = el('div', { id: 'cz-class-view-toggle', class: 'cz-head-tool' });
+  const equipmentTools = el('div', { id: 'cz-equipment-view-toggle', class: 'cz-head-tool' });
+  const headTools = el('div', { class: 'cz-head-tools' }, [classTools, equipmentTools]);
+  if (catalog) { close.hidden = true; flow.prepend(headTools); }
+  else {
+    headTools.classList.add('cz-header-menu');
+    headTools.setAttribute('popover', 'auto');
+    const menu = el('button', { type: 'button', class: 'as-btn cz-menu-button', text: '\u2630', 'aria-label': 'Character menu', 'aria-haspopup': 'true', 'aria-expanded': 'false' });
+    const navigation = el('div', { class: 'cz-menu-navigation' });
+    for (const id of categories) {
+      const item = el('button', { type: 'button', class: 'as-btn', text: t(`creation.category.${id}`) });
+      item.addEventListener('click', () => { activate(id); headTools.hidePopover(); });
+      navigation.append(item);
+    }
+    headTools.prepend(navigation);
+    // THE BUTTON IS THE POPOVER'S INVOKER, NOT A HAND-ROLLED TOGGLE. It used
+    // to call `togglePopover()` from a click listener, and with `popover=auto`
+    // that cannot close: light dismiss runs on pointerup and shuts the menu,
+    // then the click handler re-opens it. Measured on ?shot=customize at
+    // 1200x730 with real CDP input, mouse and touch alike — open, open, open,
+    // open; the menu could be summoned and never put away. `popovertarget`
+    // hands the toggle to the browser, which knows an invoker from a stray
+    // click. (quicknav's ☰ toggles correctly at the same door — true, false,
+    // true — so this was this call site's bug, not the platform's.)
+    headTools.id = 'cz-menu-popover';
+    menu.setAttribute('popovertarget', headTools.id);
+    // THE SCREEN MARGIN IS PASSED, NOT ASSUMED — flask.js's rule, and its
+    // words: placeAnchored uses `pad` for the fit test AND for the bound, so
+    // the cap below needs the same number rather than a literal matched
+    // against the default by hand. quicknav writes the doubled `8` beside a
+    // call that passes no `pad`; this follows flask, which is the one of the
+    // two that homed it. That the recipe itself — "a dropdown under its
+    // button, capped to the room below" — now has three call sites is real,
+    // and flask.js already names the deferral ("Named, not touched"); lifting
+    // it into fx.js is a change to quicknav and flask too, not this fix.
+    const PAD = 4;
+    // PLACED ON `toggle`, WHICH IS WHERE THE OPEN ACTUALLY HAPPENS. With the
+    // browser owning the toggle there is no click handler to hang this on, and
+    // an open by any other route — the keyboard, a future invoker — is placed
+    // too rather than left wherever it was last.
+    headTools.addEventListener('toggle', (event) => {
+      menu.setAttribute('aria-expanded', String(headTools.matches(':popover-open')));
+      if (event.newState !== 'open') return;
+      // A DROPDOWN HANGING OFF ITS BUTTON, THROUGH THE ONE HOME FOR THAT.
+      // This used to be its own arithmetic, and it read the zoom off the WRONG
+      // ELEMENT: `getComputedStyle(document.documentElement).zoom`. The app is
+      // zoomed by `body { zoom: var(--ui-zoom) }` (styles/base.css), and <html>
+      // "is the one element the zoom does not touch" — so that read answered 1
+      // at every UI size and the visual px of `getBoundingClientRect()` went
+      // straight into `style.left`, a LOCAL px property. Measured through
+      // tools/placement.mjs at 1920x1080 (--ui-zoom 1.48): the menu's box was
+      // (1580.8,72.7)-(1800.8,304.7) in a 1297.3x729.7 room, its LEFT edge
+      // alone 283 px past the right one, so none of it was on the glass. It
+      // was open, sized and hit-testable the whole time — simply drawn where
+      // nobody could see it, which reads as a button that does nothing.
+      // `position: fixed` does not escape the zoom (EldenSpire#15); fx.js is
+      // the one home for the conversion.
+      const view = viewportLocalBox();
+      const anchor = anchorLocalBox(VIEWPORT_ORIGIN, menu);
+      // THE CAP IS COMPUTED BEFORE THE PLACEMENT, AND THAT ORDER IS THE POINT.
+      // Capping afterwards — what flask.js and quicknav.js both do — means
+      // placeAnchored measures the menu at its FULL height, finds it does not
+      // fit under a short window's button, and slides it up OVER the button
+      // before the cap ever applies. Measured at 1200x260 with the cap last:
+      // menu top 4.0 against a button bottom of 58.0 — `intent: 'under'` asked
+      // for, and the menu sitting on the control that summoned it. Capped
+      // first, the box placeAnchored measures is the box that will be drawn,
+      // it fits under the button by construction, and the categories scroll
+      // inside it instead. Recomputed from the room on every open, so no cap
+      // this wrote before can be measured as this open's box.
+      headTools.style.maxHeight = `${Math.max(0, view.height - (anchor.top + anchor.height + placeGap(headTools)) - PAD * 2)}px`;
+      placeAnchored(headTools, menu, { intent: 'under', align: 'end', view, pad: PAD });
+    });
+    close.querySelector('.modal-close-face').textContent = '\u00d7';
+    close.before(portrait, menu, headTools);
+  }
+  const back = button({ label: t('common.back'), role: 'exit', id: 'cz-back' });
+  const next = button({ label: t('creation.next'), id: 'cz-next', weight: 'primary', className: 'cz-next-stage' });
   const start = button({ label: 'Begin', id: 'cz-start', weight: 'primary' });
-  const foot = modalFooter({ note: 'Choose your path. The spire remembers.', secondary: [back], primary: start, size: 'medium', className: 'cz-actions' });
+  const foot = modalFooter({ note: catalog ? 'Choose your path. The spire remembers.' : '', secondary: [back], primary: start, size: 'medium', className: 'cz-actions' });
+  if (!catalog) foot.querySelector('.modal-foot-actions').insertBefore(next, start);
   const body = el('div', { class: 'modal-body cz-scroll' }, [
     catalog ? subtitle('Interactive production specimens for every creation section, nested disclosure, and reusable selector card.', { class: 'cc-catalog-intro' }) : null,
-    flow,
+    catalog ? flow : railed,
   ]);
   // ONE page door, the kit's, on its `full` rung (kit.css PAGE DOOR).
   const door = el('section', {
@@ -245,12 +375,42 @@ export function mountCustomize(app, {
   }, [head, body, foot]);
   app.replaceChildren(el('div', { class: `screen customize as-page${catalog ? ' component-catalog' : ''}` }, door));
 
-  const $ = (selector) => app.querySelector(selector);
+  // W1c: only the active stage is in the document; the others wait, built,
+  // off it. A lookup reaches them all so the renderers need not know which.
+  const $ = (selector) => app.querySelector(selector)
+    || Object.values(stages).map((stage) => (stage.matches(selector) ? stage : stage.querySelector(selector))).find(Boolean)
+    || null;
   const customizeScreen = $('.screen.customize');
+  mountCreationInfoLayer(customizeScreen);
+  // Every --creation-* the W1c CSS reads, from the model (uiConfig.screens.creation); kit.css names no number for this screen.
+  for (const [property, value] of Object.entries(creationCssProperties())) customizeScreen.style.setProperty(property, value);
   const classBox = $('#cz-classes');
   const statBox = $('#cz-statedit');
-  const STANDARD = 'standard';
-  const POINTBUY = 'pointbuy';
+  // THE EDITABLE MODE IS DATA, NOT A LITERAL (plan phase 9). This screen used
+  // to name 'pointbuy' as the one mode with points to place and 'standard' as
+  // the preset it previewed from. The rebase made `tuned2` both, and two
+  // hard-coded ids would have left the advertised ten placeable points
+  // uneditable while the preview showed a retired mode's character (Codex,
+  // #1217). Both now resolve from attributeRules.defaultMode, which is the
+  // mode creation offers.
+  const EDITABLE = defaultCreationModeId(registries);
+  /**
+   * Which mode a PLAYER has points to place in. The two aliases this replaced
+   * (`STANDARD` and `POINTBUY`, both equal to the default mode) made every
+   * `mode.id === POINTBUY` branch tautological and its `else` unreachable, so
+   * the day a second mode returns to `visibleModeIds` the preview would price
+   * it with the default mode's preset and a preset-only mode would be routed
+   * into the point editor — silently, because nothing reads wrong today
+   * (review, #1217). The real question is whether the mode has a pool.
+   */
+  const hasPoints = (modeId) => !!modeId && creationModeHasPoints(creationMode(registries, modeId));
+  /** Does choosing this mode seat the class preset (Standard) rather than
+   *  open the editor on the baseline (Assign points)? Data: `opensOn`. */
+  const opensOnPreset = (modeId) => !!modeId && creationMode(registries, modeId).opensOn === 'preset';
+  // Which sections have their starting-card fold open, for the life of this
+  // screen. renderEquipment rebuilds the detail pane on every choice, so a
+  // fold with no memory is one a player has to re-open after every tap.
+  const packageOpen = new Map();
   let equipmentSectionViews = [];
   let equipmentNodes = new Map();
   let equipmentFold = null;
@@ -285,13 +445,36 @@ export function mountCustomize(app, {
   });
 
   function renderViewToggles() {
-    $('#cz-class-view-toggle').replaceChildren(viewModeToggle(state.classChoiceView, (mode) => {
+    const toggle = viewModeToggle;
+    $('#cz-class-view-toggle').replaceChildren(toggle(state.classChoiceView, (mode) => {
       state.classChoiceView = mode;
+      if (!catalog) headTools.hidePopover();
       renderClasses();
+      fitStage();
     }, 'Class choice view'));
-    $('#cz-equipment-view-toggle').replaceChildren(viewModeToggle(state.equipmentChoiceView, (mode) => {
+    $('#cz-equipment-view-toggle').replaceChildren(toggle(state.equipmentChoiceView, (mode) => {
       state.equipmentChoiceView = mode;
-      for (const node of equipmentNodes.values()) node.querySelector('.cc-card-selectors').dataset.view = mode;
+      if (!catalog) headTools.hidePopover();
+      // THE TOGGLE REDRAWS THE CHIPS, as the class toggle above already does.
+      // Setting `data-view` on the containers was enough while the view was
+      // only a CSS arrangement of the same faces; a view now SELECTS a
+      // presentation level (src/model/cardFields.js), and the level is read
+      // when a face is built. Leaving the old chips in place would show grid's
+      // arrangement with list's fields, which is the drift the one-vocabulary
+      // design exists to make impossible. `renderEquipment` rebuilds each
+      // container with the current view on it, so the old sweep is not a
+      // second place that has to agree.
+      //
+      // AND IT HANDS BACK THE SECTION THE PLAYER HAD OPEN. `renderEquipment`
+      // re-opens the fold only when it is TOLD which section to open
+      // (`preferredOpenId`, below); called bare it rebuilds every section
+      // closed. So switching the view shut the picker: all four containers
+      // collapsed to zero width with their chips still inside them, and the
+      // step rendered empty at every size. Measured on dev before this fix —
+      // grid read `312:2` for the open section, list read `0:2` for all four.
+      // Changing how the choices are ARRANGED must not change which of them
+      // you are looking at.
+      renderEquipment(equipmentFold?.openKey || null);
       renderViewToggles();
     }, 'Starting equipment choice view'));
   }
@@ -311,7 +494,7 @@ export function mountCustomize(app, {
     // class suggestion. Every stat goes back to the mode's baseline and the
     // complete bonus pool becomes available again (SPEC 7.2). The helper is
     // #692's; this branch computed the same thing inline before it existed.
-    state.attributes = baselineAttributeAllocation(registries, POINTBUY);
+    state.attributes = baselineAttributeAllocation(registries, state.attributeMode || EDITABLE);
   }
 
   function resetClassChoices() {
@@ -324,14 +507,26 @@ export function mountCustomize(app, {
     // so the common case is one click per step, not four mandatory picks.
     state.startingArmourId = gated ? null : armourChoices()[0].id;
     state.startingRelicId = registries.classes.get(state.classId).startingRelic;
-    if (state.attributeMode === POINTBUY) resetAttributes();
+    // A NEW CLASS IS A NEW ALLOCATION: the preset a class is biased toward is
+    // not the one the next class wants, so the points go back and the mode
+    // returns to unchosen, which puts the placeholder back and makes choosing
+    // it again a fresh allocation.
+    // ONLY IN THE GATED FLOW. This function runs at mount too, and the
+    // component catalogue deliberately mounts PRESELECTED — its specimens
+    // need a chosen state to draw (the note at the head of this screen). With
+    // the mode aliased to the one editable mode, clearing it here blanked the
+    // catalogue's own seed on the first call: the stat rows, the resources
+    // and the continue row stopped drawing, and catalogue Begin — which reads
+    // statsProblem() without modeProblem() — went green on an empty mode that
+    // createRunState refuses by name (review, #1217).
+    if (gated && hasPoints(state.attributeMode)) { state.attributeMode = ''; state.attributes = null; }
   }
 
   // ---- what each step still needs ------------------------------------------
   // One reason per step, read by that step's Continue AND by Begin, so the
   // foot and the section can never disagree about what is missing.
   function classProblem() { return state.classChosen ? null : 'Choose a class.'; }
-  function modeProblem() { return state.attributeMode ? null : 'Choose Standard or Assign points.'; }
+  function modeProblem() { return state.attributeMode ? null : 'Choose how to assign your stats.'; }
   function keepsakeProblem() { return state.keepsakeId ? null : 'Choose a keepsake.'; }
   function armourProblem() { return state.startingArmourId ? null : 'Choose starting armour.'; }
   /** The stats step: the mode, then a complete and legal allocation. */
@@ -340,26 +535,26 @@ export function mountCustomize(app, {
   function equipmentProblem() { return armourProblem() || handsProblem(); }
   function flowProblem() { return classProblem() || characterProblem() || equipmentProblem(); }
 
-  function pointbuyMode() { return creationMode(registries, POINTBUY); }
+  function pointbuyMode() { return creationMode(registries, state.attributeMode || EDITABLE); }
   function remainingPoints() {
     if (!state.attributes) return pointbuyMode().bonusPool;
-    return allocationTotal(registries, POINTBUY) - Object.values(state.attributes).reduce((sum, value) => sum + value, 0);
+    return allocationTotal(registries, state.attributeMode || EDITABLE) - Object.values(state.attributes).reduce((sum, value) => sum + value, 0);
   }
   /** The point-buy alone: the pool spent exactly, every stat in bounds. */
   function allocationProblem() {
-    if (state.attributeMode !== POINTBUY || !state.attributes) return null;
+    if (!hasPoints(state.attributeMode) || !state.attributes) return null;
     const remaining = remainingPoints();
     if (remaining !== 0) return remaining > 0
       ? `${remaining} stat point${remaining === 1 ? '' : 's'} still to assign.`
       : `${-remaining} stat point${remaining === -1 ? '' : 's'} over the pool.`;
-    const problems = attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes);
+    const problems = attributeAllocationProblems(registries, state.classId, state.attributeMode, state.attributes);
     return problems.length ? problems[0].msg : null;
   }
   /** The attributes the run would begin with: a complete point-buy, else the
    *  class preset for the chosen mode (Standard until one is chosen). */
   function effectiveAttributes() {
-    if (state.attributeMode === POINTBUY && state.attributes && !allocationProblem()) return state.attributes;
-    return classAttributePreset(registries, state.classId, state.attributeMode || STANDARD);
+    if (hasPoints(state.attributeMode) && state.attributes && !allocationProblem()) return state.attributes;
+    return classAttributePreset(registries, state.classId, state.attributeMode || EDITABLE);
   }
   /** A held weapon the effective attributes cannot wield. Checked at the
    *  hand step and at Begin — NOT in Assign points, which used to refuse
@@ -375,10 +570,12 @@ export function mountCustomize(app, {
 
   function previewRun() {
     // Validate the live allocation independently of weapon requirements.
-    // An incomplete point-buy draft uses a valid standard preset for hints.
-    const hasCompletePointBuy = state.attributeMode === POINTBUY && state.attributes
-      && attributeAllocationProblems(registries, state.classId, POINTBUY, state.attributes).length === 0;
-    const previewMode = hasCompletePointBuy ? POINTBUY : STANDARD;
+    // An incomplete draft previews from its OWN mode's class preset — not
+    // from some other mode's, which is what the retired `STANDARD` alias
+    // would have meant the day a second mode returned.
+    const previewMode = state.attributeMode || EDITABLE;
+    const hasCompletePointBuy = hasPoints(state.attributeMode) && state.attributes
+      && attributeAllocationProblems(registries, state.classId, state.attributeMode, state.attributes).length === 0;
     const attributes = hasCompletePointBuy
       ? state.attributes
       : classAttributePreset(registries, state.classId, previewMode);
@@ -403,7 +600,7 @@ export function mountCustomize(app, {
         // Framed, not bare: the chosen sigil rides the figure here as it does
         // everywhere else a figure is drawn. `classic` draws its own sigil
         // inside the silhouette, so it keeps going through classSprite().
-        : paintedFigure(state.classId, tintCss(state.tint), state.glyph, state.startingArmourId, 'detail'))
+        : paintedFigure(state.classId, tintCss(state.tint), state.glyph, state.startingArmourId, 'portrait'))
       : null;
     portrait.replaceChildren(sprite || state.glyph);
 
@@ -414,7 +611,17 @@ export function mountCustomize(app, {
       equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
     })));
     const poise = playerPoiseThresholdReceipt(registries, run);
-    $('#cz-derived').replaceChildren(resourceStrip(projection.derived, poise));
+    const ratings = equipmentKitReceipt(registries, run.loadout, run.class, run.attributes, run.equipmentProfileRuleSnapshot, run);
+    const ratingRows = [['attack', 'AR', 'Attack'], ['guard', 'DR', 'Defense']].map(([role, faceLabel, label]) => {
+      const rating = ratings.find(row => row.role === role);
+      return { id: `${role}Rating`, faceLabel, value: rating?.receipt.value ?? 0,
+        formula: `${label} rating · ${rating?.profile.displayName || 'Unarmed'} · before card-specific modifiers.` };
+    });
+    // resourceStrip drops the derived `poise` row itself and appends the whole
+    // threshold as one chip; this call only renames three faces.
+    const resources = creationResources(run, projection)
+      .map(entry => ({ ...entry, faceLabel: creationDerivedLabel(entry) }));
+    $('#cz-derived').replaceChildren(resourceStrip([...resources, ...ratingRows], poise));
     renderClassPreview();
   }
 
@@ -426,9 +633,25 @@ export function mountCustomize(app, {
       ? paintedPresentation(state.classId, state.startingArmourId, 'portrait')
       : null;
     const relic = registries.relics.get(state.startingRelicId || cls.startingRelic);
+    const resources = classResourceGrid(classPreviewResources(run, projection));
+    if (!catalog && creationClassPreview() === 'unfold') {
+      // THE CHOSEN CARD UNFOLDS (owner, 2026-09-19): no preview column; the
+      // picked card opens to the portrait and the summary. Before a pick the
+      // pointer-follow has nothing to draw.
+      for (const open of classBox.querySelectorAll('.cz-class.unfolded')) { open.classList.remove('unfolded'); open.querySelector('.cc-class-unfold')?.remove(); open.removeAttribute('aria-describedby'); }
+      const card = state.classChosen ? classBox.querySelector(`.cz-class[data-class="${state.classId}"]`) : null;
+      if (card) {
+        const unfold = classUnfold({ cls, sprite, resources, relic });
+        card.classList.add('unfolded');
+        card.append(unfold);
+        card.setAttribute('aria-describedby', unfold.id); // the button's description: the resources and the relic
+      }
+      $('#cz-class-preview-host').replaceChildren();
+      return;
+    }
     const previewPane = classPreviewPane({
       cls, sprite,
-      resources: classResourceGrid(projection.derived.slice(0, 5)),
+      resources,
       relic,
       relicDescription: relicText(relic, registries),
     });
@@ -436,26 +659,58 @@ export function mountCustomize(app, {
   }
 
   function renderModes() {
-    const modes = el('span', { class: 'as-seg se-modes', role: 'group', 'aria-label': 'Attribute mode' });
+    const modes = el('select', { class: 'se-modes cc-mode-select', 'aria-label': 'Attribute mode' });
+    modes.append(el('option', { value: '', disabled: true, selected: !state.attributeMode }, 'Choose stat allocation'));
     for (const mode of visibleModes) {
-      modes.appendChild(modeChoiceButton(mode, state.attributeMode === mode.id, () => {
+      modes.append(el('option', { value: mode.id, selected: state.attributeMode === mode.id }, mode.label));
+    }
+    modes.value = state.attributeMode || '';
+    modes.addEventListener('change', () => {
+        const mode = visibleModes.find(mode => mode.id === modes.value);
+        if (!mode) return;
+        // What was chosen BEFORE this change, so Cancel on a fresh Assign
+        // points puts it back (review of #1294): Standard → Assign points →
+        // Cancel used to land on unchosen, the Standard preset thrown away.
+        const previous = { mode: state.attributeMode, attributes: state.attributes ? { ...state.attributes } : null };
         state.attributeMode = mode.id;
-        if (mode.id === POINTBUY) {
-          // Entering Assign Points is an explicit fresh allocation. Return the
-          // entire authored pool instead of reopening the class-biased preset
-          // (or a previous edit) with points already spent.
-          resetAttributes();
-          openPointBuy();
+        if (opensOnPreset(mode.id)) {
+          // STANDARD SEATS THE CLASS PRESET (owner, 2026-09-24: "standard (pre
+          // assigned class presets)"). Nothing is left to spend, so no editor
+          // opens and the step's Continue is green at once; "Edit points"
+          // still reshapes the same fixed total as a revision.
+          closePointBuy();
+          state.attributes = { ...classAttributePreset(registries, state.classId, mode.id) };
+        } else if (hasPoints(mode.id)) {
+          // Entering Assign Points from the SELECT is an explicit fresh
+          // allocation: the whole authored pool comes back rather than the
+          // class-biased preset (or a previous edit) with points already
+          // spent. Reopening it from "Edit points" is a revision instead.
+          openPointBuy({ fresh: true, previous });
         } else {
           closePointBuy();
         }
         renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
-      }));
-    }
-    statBox.replaceChildren(modes);
+    });
+    // THE WAY BACK INTO THE POINTS. The select is the only door-opener, and
+    // with one visible mode it can never fire `change` twice: once an
+    // allocation was committed the editor was unreachable, so a player who
+    // reached the Equipment step and was told "Ash Staff needs intelligence 8
+    // — you have 3" had no path back to the stats short of changing class
+    // (which discards keepsake, armour, hands and relic) or leaving creation
+    // (review, #1217). This button is that path, and it is a revision: the
+    // committed numbers are on the steppers and Cancel puts them back.
+    const editPoints = el('button', {
+      type: 'button', class: 'as-btn cc-mode-edit', text: 'Edit points',
+      'aria-label': 'Edit your stat allocation',
+    });
+    editPoints.addEventListener('click', () => openPointBuy({ fresh: false }));
+    statBox.replaceChildren(modes, editPoints);
     // Until a mode is chosen the section is the question alone: the stat rows,
     // the resources and the way on appear with the answer.
     const chosen = Boolean(state.attributeMode);
+    // The editor only reopens what a chosen mode owns, and only the editable
+    // mode has points to edit at all.
+    showNode(editPoints, chosen && hasPoints(state.attributeMode));
     showNode($('#cz-primary-stats'), chosen);
     showNode($('#cz-derived'), chosen);
     showNode($('.cc-primary-continue-row'), chosen);
@@ -480,8 +735,8 @@ export function mountCustomize(app, {
 
   // THE POINT-BUY IS A DOOR. Opened by the one door-opener (through the shared
   // allocation card), so its veil, head, foot, Escape and veil-click are the
-  // shell's. What this screen adds is policy: what Escape MEANS here (back to
-  // Standard), the Tab ring, and scoping the page behind it.
+  // shell's. What this screen adds is policy: what Escape MEANS here (the
+  // same as Cancel), the Tab ring, and scoping the page behind it.
   function closePointBuy({ restoreFocus = true } = {}) {
     if (!pointBuy) return;
     const door = pointBuy;
@@ -497,16 +752,38 @@ export function mountCustomize(app, {
     pointBuy = null;
   }
 
-  function openPointBuy() {
+  /**
+   * `fresh` separates the TWO WAYS IN, which want opposite things of Cancel.
+   * Choosing the mode is a fresh allocation: the pool comes back whole and
+   * cancelling returns to unchosen. Pressing "Edit points" on a committed
+   * allocation is a revision: the current numbers stay on the steppers and
+   * cancelling puts back exactly what was there, because a player who opens
+   * their own stats to look at them must not lose them by pressing Cancel.
+   */
+  function openPointBuy({ fresh = true, previous = null } = {}) {
     closePointBuy({ restoreFocus: false });
-    resetAttributes();
+    // Taken BEFORE the reset below, which fills a null allocation in: read
+    // after it, a revision opened on no allocation (the catalogue's
+    // preselected mode) looked like a fresh one and Cancel then left the
+    // baseline with points unplaced (review, #1255).
+    const priorMode = state.attributeMode;
+    const priorAttributes = state.attributes ? { ...state.attributes } : null;
+    if (fresh || !state.attributes) resetAttributes();
     pointBuyReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     customizeScreen.inert = true;
     const mode = pointbuyMode();
     const rowsNow = () => {
       const remaining = remainingPoints();
-      const rules = previewRun().equipmentProfileRuleSnapshot?.profiles;
-      const cards = new Map(attributeCardModels(registries, state.attributes, { equipmentProfiles: rules }).map((card) => [card.id, card]));
+      // THE PREVIEW RUN'S OWN PROJECTION, for the reason the shrine's card
+      // needs one (rest.js): the point-buy modal is where the points are
+      // placed, and without a projection the card reads the authored tier
+      // rather than the one the creation mode actually converts at.
+      const preview = previewRun();
+      const rules = preview.equipmentProfileRuleSnapshot?.profiles;
+      const cards = new Map(attributeCardModels(registries, state.attributes, {
+        projection: statProjection(registries, preview),
+        equipmentProfiles: rules,
+      }).map((card) => [card.id, card]));
       return orderedAttributes(registries).map((def) => ({
         id: def.id,
         label: def.label,
@@ -570,14 +847,14 @@ export function mountCustomize(app, {
       title: 'Assign points',
       remaining: remainingPoints(),
       modal: true,
-      cancelLabel: 'Standard',
+      cancelLabel: 'Cancel',
       doneLabel: 'Continue',
       rows: rowsNow(),
       onDecrease: (id) => step(id, -1),
       onIncrease: (id) => step(id, 1),
       onCancel: () => { door.outcome = 'cancel'; allocation.close(); },
       onClose: () => {
-        const outcome = door.outcome; // null: the shell dismissed it (Escape, the veil) — that is Standard
+        const outcome = door.outcome; // null: the shell dismissed it (Escape, the veil) — that is Cancel
         const restore = door.restoreFocus;
         teardownPointBuy();
         if (outcome === 'reopen') return;
@@ -586,11 +863,33 @@ export function mountCustomize(app, {
           advanceToKeepsake({ focus: restore });
           return;
         }
-        state.attributeMode = STANDARD;
+        // CANCEL UNDOES THE WAY IN. Creation offers one mode since the
+        // rebase (plan phase 9), so "cancel" can no longer mean "take the
+        // other one": re-selecting the value already in the select fires no
+        // change event, so the editor could never reopen, while the reset
+        // allocation left points unplaced and Continue refused for good
+        // (Codex, #1217). A FRESH allocation therefore returns to unchosen —
+        // the placeholder comes back and choosing the mode again starts
+        // over. A REVISION puts back the allocation it opened, so looking at
+        // your own stats and changing your mind costs nothing (review,
+        // #1217).
+        // A fresh allocation entered FROM ANOTHER CHOSEN MODE (Standard →
+        // Assign points) puts that choice back, preset and all: Cancel undoes
+        // the switch, it does not also undo the answer given before it.
+        if (!fresh) {
+          state.attributeMode = priorMode;
+          state.attributes = priorAttributes;
+        } else if (previous?.mode && previous.attributes) {
+          state.attributeMode = previous.mode;
+          state.attributes = previous.attributes;
+        } else {
+          state.attributeMode = '';
+          state.attributes = null;
+        }
         renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
         if (restore) {
-          const standard = statBox.querySelector('.se-mode.chosen');
-          standard?.focus(); focusElement(standard);
+          const chooser = statBox.querySelector('.cc-mode-select');
+          chooser?.focus(); focusElement(chooser);
         }
       },
     });
@@ -626,13 +925,18 @@ export function mountCustomize(app, {
 
   function renderClasses() {
     classBox.dataset.view = state.classChoiceView;
+    // Plan phase 5c: a class card the profile has not earned is listed locked,
+    // with its unlock's hint; every shipped class is free until a row gates it.
     const cards = registries.classes.all().map((cls) => classChoiceCard(cls, {
       selected: state.classChosen && cls.id === state.classId,
       visual: classGlyph(cls.id),
+      locked: !classAvailable(registries.unlocks, cls.id, meta),
+      hint: classAvailable(registries.unlocks, cls.id, meta) ? null : (classUnlockRow(registries.unlocks, cls.id) || {}).hint || null,
       onChoose: () => {
         if (state.classChosen && state.classId === cls.id) return;
         state.classId = cls.id; state.classChosen = true; resetClassChoices();
         renderClasses(); renderEquipment(); renderModes(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
+        fitStage();
       },
     }));
     // Before a pick the preview pane follows the pointer, so it is never a
@@ -644,12 +948,14 @@ export function mountCustomize(app, {
         if (state.classChosen || state.classId === id) return;
         // The kit, relic and armour follow the class; nothing is chosen yet,
         // so the reset costs the player nothing.
-        state.classId = id; resetClassChoices(); renderClassPreview();
+        state.classId = id; resetClassChoices(); renderClassPreview(); fitStage();
       });
     }
     for (const cls of LOCKED_CLASSES) cards.push(classChoiceCard(cls, { locked: true, visual: classGlyph(cls.id) }));
     classBox.replaceChildren(...cards);
     renderViewToggles();
+    // The cards are new nodes; in unfold mode the chosen one opens again.
+    if (!catalog && state.classChosen && creationClassPreview() === 'unfold') renderClassPreview();
   }
 
   function renderAppearance() {
@@ -678,6 +984,7 @@ export function mountCustomize(app, {
           : section.kind === 'hand' ? `cz-${section.slot === 'leftHand' ? 'left' : 'right'}-hand`
             : `cz-${section.id}`;
       const box = options([], { id: boxId, class: 'cc-card-selectors cc-choice-collection', dataset: { view: state.equipmentChoiceView } });
+      box.dataset.many = String(section.choices.length > 2);
       const node = el('section', { class: 'cc-equip-group', dataset: { equipmentSection: section.id } }, box);
       equipmentNodes.set(section.id, node);
       const detailPane = el('div', { class: 'cc-equipment-details card-inspection-details', 'aria-live': 'polite' });
@@ -687,28 +994,117 @@ export function mountCustomize(app, {
           ? state.startingHands[section.slot] === piece.id : state.startingSlotChoices[section.id] === piece.id;
       const showDetails = piece => {
         detailPane.dataset.previewItem = piece.id || 'empty-hand';
-        detailPane.replaceChildren(equipmentDetails((section.kind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { interactive: false, inspection: false }) : renderEquipmentCard(registries, piece, { interactive: false, inspection: false, presentation: piece.emptyHand ? EMPTY_HAND_PRESENTATION : null })).explanations));
-        const heading = document.createElement('h3');
-        heading.textContent = piece.name;
-        const context = el('p', { class: 'cc-choice-context' }, isSelected(piece) ? `Selected · ${section.label}` : 'Preview · Choose below the card to select');
-        detailPane.prepend(heading, context);
+        detailPane.replaceChildren(compactEquipmentDetails(piece.name, (section.kind === 'relic' ? renderCollectibleCard(registries, piece, 'Relic', { interactive: false, inspection: false }) : renderEquipmentCard(registries, piece, { interactive: false, inspection: false, presentation: piece.emptyHand ? EMPTY_HAND_PRESENTATION : null })).explanations));
         if (section.kind === 'hand') {
           const hands = selectStartingHand(state.startingHands, section.slot, piece.id);
           const preview = startingEquipmentPreview(registries, previewRun(), hands, section.slot);
           const grid = el('div', { class: 'cc-starting-card-grid', 'aria-label': `${piece.name} starting combat cards` });
           for (const { ref, count } of preview.cards) {
+            // Small, because inside the fold these are a reference rather than
+            // a thing to choose between: the choice is the armament above.
+            // NOT `small: true`: that flag's only effect is a 0.92 transform, which
+            // `.cc-starting-card > .card` cancels — and a transformed card keeps its
+            // untransformed box, so it would save no scroll even if it applied. The
+            // fold sizes these faces in CSS, where a smaller box is a smaller box.
             const face = renderCard(registries, ref);
             const entry = el('div', { class: 'cc-starting-card', dataset: { cardId: ref.cardId, quantity: String(count) } }, [
               el('span', { class: 'cc-card-quantity' }, `${count} ${count === 1 ? 'copy' : 'copies'}`), face,
             ]);
             grid.append(entry);
           }
-          const packageNode = el('section', { class: 'cc-starting-package' }, [
-            el('h4', {}, 'Starting combat cards'),
-            el('p', { class: 'cc-package-context' }, `${preview.total} ${preview.total === 1 ? 'card' : 'cards'} with this loadout. Quantities depend on both hands.`),
+          // THE DECK IS SUMMARISED, NOT DUMPED (Constantine, 2026-09-12:
+          // *"some of the card details probably can be folded ... and the
+          // continue button always in view and not requiring too much
+          // scrolling"*).
+          //
+          // MEASURED, because the first attempt at this was measured in the
+          // wrong state and looked inert. Opening the right-hand section at
+          // 390x844 took the creation scroll from 838px to 3010px — +2172px,
+          // nearly four screens, for six card faces drawn at full size between
+          // the armament you are choosing and the way on. At 1280x800 it is
+          // +525px. The count and the kinds are what a player compares two
+          // weapons on; the faces are what they want once they have chosen to
+          // look.
+          //
+          // So the summary is the face and the grid is the reveal, closed until
+          // asked. `packageOpen` remembers the answer per section for the life
+          // of the screen: renderEquipment repaints this pane on every choice,
+          // and a fold that forgets is one you re-open after every tap.
+          // DISTINCT CARDS, NOT BROAD TYPES. This counted `type` — attack, skill,
+          // power — and the summary exists so a player can compare two armaments
+          // WITHOUT opening the fold, which that number cannot do: measured on a
+          // Reaver, the straight sword and the greatsword both resolve to exactly
+          // {attack, skill}, so both read "2 kinds" and the line said the same
+          // thing about two different weapons. Counting distinct cardIds says 3
+          // for each, and what actually differs — Guard Counter against Sundering
+          // Hew — is the named card behind the fold.
+          const kinds = new Set(preview.cards.map(({ ref }) => ref.cardId).filter(Boolean));
+          const summary = preview.cards.length
+            ? `Adds ${preview.total} ${preview.total === 1 ? 'card' : 'cards'}`
+              + (kinds.size ? ` · ${kinds.size} ${kinds.size === 1 ? 'kind' : 'kinds'}` : '')
+            : 'Adds no combat cards with the other hand as it stands';
+          const fold = el('details', { class: 'cc-starting-fold' });
+          if (packageOpen.get(section.id)) fold.open = true;
+          // A CARD MEASURED WHILE HIDDEN WAS NEVER MEASURED. renderCard schedules
+          // its one fit for the next frame, and inside a closed `<details>` that
+          // frame reads zeros — so `data-name`, `data-tag-rows` and above all
+          // `data-truncated` are written from nothing, and only an unrelated
+          // resize or a font load ever corrects them.
+          //
+          // MEASURED at 390x844 on opening the fold: all four faces read
+          // tag-rows 1 / truncated false. Forcing a re-fit at their real 90px
+          // width turns three of them to tag-rows 2 and flips ONE to truncated
+          // — a card whose text is clipped, wearing no chevron. That chevron is
+          // the whole affordance #987 and #998 exist for.
+          //
+          // So the fold asks for the fit when it opens. This is the same
+          // zero-rect trap that made an earlier probe of mine report a hidden
+          // button as on-screen, and that the equipment QA was walking into.
+          const refitCards = () => { if (preview.cards.length) scheduleCardFits(grid.querySelectorAll('.card')); };
+          fold.addEventListener('toggle', () => {
+            packageOpen.set(section.id, fold.open);
+            if (fold.open) refitCards();
+          });
+          // THE FOLD IS NOT THE ONLY THING THAT CAN BE HIDING THESE CARDS.
+          // A fold restored open — the player had it open, went back to Class,
+          // changed class, and returned — is built ALREADY OPEN while the
+          // equipment stage itself is still shut, so its toggle never fires
+          // while the cards are measurable, and revealing the outer section
+          // does not toggle the inner fold. Same zeros, a different ancestor.
+          //
+          // Rather than chase each ancestor that could be shut, ask the one
+          // question that actually matters: when do these cards HAVE A BOX?
+          // A ResizeObserver answers exactly that — a hidden element reports
+          // 0x0 and reports a real size the moment it is rendered — whichever
+          // thing was hiding it. It disconnects on the first answer, so it is
+          // one shot per restored-open fold, not a standing subscription on a
+          // pane renderEquipment repaints after every choice.
+          //
+          // AN INTERSECTION OBSERVER WAS TRIED FIRST AND DOES NOT WORK, which
+          // is worth the line: it asks whether the element is ON SCREEN, and
+          // a restored fold is rendered far below the fold of a long section,
+          // so it never intersects and never fires. Measured: the cards stayed
+          // at the hidden-measure values until an unrelated resize. Rendered
+          // and visible are not the same question.
+          if (fold.open && preview.cards.length && typeof ResizeObserver === 'function') {
+            const measurable = new ResizeObserver((entries, self) => {
+              if (!entries.some((entry) => entry.contentRect.height > 0)) return;
+              self.disconnect();
+              refitCards();
+            });
+            measurable.observe(grid);
+          }
+          fold.append(
+            el('summary', { class: 'cc-starting-summary' }, [
+              el('b', { text: summary }),
+              el('small', { class: 'cc-package-context', text: t('creation.startingCards.context') }),
+            ]),
             preview.cards.length ? grid : el('p', {}, 'This choice adds no combat cards with the other hand currently selected.'),
-          ]);
-          detailPane.append(packageNode);
+          );
+          detailPane.append(el('section', { class: 'cc-starting-package' }, [
+            el('h4', {}, 'Starting combat cards'),
+            fold,
+          ]));
         }
       };
       const choiceRows = [];
@@ -721,13 +1117,26 @@ export function mountCustomize(app, {
         showDetails(piece);
       };
       for (const piece of section.choices) {
-        const chipButton = pieceChip(registries, piece, { selected: isSelected(piece), kind: section.kind === 'relic' ? 'Relic' : null, presentation: piece.emptyHand ? EMPTY_HAND_PRESENTATION : null });
+        // THE VIEW SELECTS A LEVEL; it does not own a field set. Grid is a
+        // wall of candidates to tell apart, so it asks for `glance`; list is
+        // one card at a time with room to read, so it asks for `focus`. The
+        // mapping is one line in src/model/cardFields.js rather than a second
+        // authored table per view — views x levels x surfaces is the shape
+        // this design exists to avoid.
+        const chipButton = pieceChip(registries, piece, { selected: isSelected(piece), kind: section.kind === 'relic' ? 'Relic' : null, presentation: piece.emptyHand ? EMPTY_HAND_PRESENTATION : null, level: 'glance' });
         const face = chipButton.querySelector('.equipment-poker-card');
         choiceRows.push({ piece, node: chipButton, face });
-        face.addEventListener('cardinspectionselect', () => focusChoice(piece));
+        face.addEventListener('cardinspectionselect', () => {
+          if (section.kind === 'relic') state.startingRelicId = piece.id;
+          else if (section.kind === 'armour') state.startingArmourId = piece.id;
+          else if (section.kind === 'hand') state.startingHands = selectStartingHand(state.startingHands, section.slot, piece.id);
+          else state.startingSlotChoices[section.id] = piece.id;
+          for (const refresh of refreshers) refresh();
+          focusChoice(piece); renderEquipmentSummary(); renderCharacterPreview(); refreshFaces(); updateStartRefusal();
+        });
         face.addEventListener('keydown', event => {
           if (event.target.classList.contains('equipment-poker-card') && ['Enter', ' '].includes(event.key)) {
-            event.preventDefault(); focusChoice(piece);
+            event.preventDefault(); face.dispatchEvent(new CustomEvent('cardinspectionselect'));
           }
         });
         markUiComponent(chipButton, UI.equipmentChoiceCard, section.id);
@@ -747,11 +1156,11 @@ export function mountCustomize(app, {
       const refresh = () => {
         for (const row of choiceRows) {
           const selected = isSelected(row.piece);
-          row.node.classList.toggle('on', selected);
+          // `selected` on the face is the inspection hook (it reveals the info
+          // button); the chosen ring, the quiet button and the spoken note are
+          // one call, so they cannot drift apart.
           row.face.classList.toggle('selected', selected);
-          const choose = row.node.querySelector('.equipment-choose');
-          choose.textContent = selected ? 'Selected' : `Choose ${row.piece.name}`;
-          choose.setAttribute('aria-pressed', String(selected));
+          setPieceChipChosen(row.node, selected);
         }
         const chosen = section.choices.find(isSelected);
         if (chosen) focusChoice(chosen);
@@ -761,14 +1170,14 @@ export function mountCustomize(app, {
       const nextLabel = next ? next.label.toLowerCase().replace(/\b\w/g, letter => letter.toUpperCase()) : 'Seed';
       // Armour waits for a pick; a hand waits for a weapon the stats can
       // wield; the last section's button is plain — Begin is what goes green.
-      const sectionProblem = () => (section.kind === 'armour' ? armourProblem()
+      const sectionProblem = () => !next ? equipmentProblem() : (section.kind === 'armour' ? armourProblem()
         : section.kind === 'hand' ? handProblem(section.slot) : null);
       const continueButton = button({ label: `Continue to ${nextLabel}`, weight: next ? 'primary' : 'secondary', className: 'cc-equipment-continue' });
-      if (next) equipmentGateRefreshers.push(refusesWhen(continueButton, sectionProblem, `On to ${nextLabel.toLowerCase()}.`));
+      equipmentGateRefreshers.push(refusesWhen(continueButton, sectionProblem, `On to ${nextLabel.toLowerCase()}.`));
       continueButton.addEventListener('click', () => {
         if (sectionProblem()) return;
         if (next) openEquipmentSection(next.id);
-        else app.querySelector('.cz-next[data-next="seed"]')?.click();
+        else advanceFrom('equipment');
       });
       node.append(continueButton);
     }
@@ -784,6 +1193,9 @@ export function mountCustomize(app, {
     refreshEquipmentFaces = () => {
       for (const section of equipmentSectionViews) equipmentFaces.get(section.id).setValue(equipmentValue(section));
     };
+    const selector = $('#cz-equipment-section');
+    selector.replaceChildren(...equipmentSectionViews.map(section => el('option', { value: section.id }, section.label.toLowerCase().replace(/^./, c => c.toUpperCase()))));
+    selector.onchange = () => openEquipmentSection(selector.value);
     const openId = equipmentSectionViews.some((section) => section.id === preferredOpenId)
       ? preferredOpenId
       : equipmentSectionViews[0]?.id;
@@ -801,44 +1213,142 @@ export function mountCustomize(app, {
   // (tools/equipment-surface-receipts.mjs reads that this screen uses them).
   const summaryBody = el('div', { class: 'as-stack cc-summary' });
   let summaryFold = null;
-  function characterSummaryCard(run, projection) {
-    const cls = registries.classes.get(state.classId);
-    const stats = el('div', { class: 'cc-summary-stats', role: 'list', 'aria-label': 'Primary stats' },
-      orderedAttributes(registries).map((def) => statPair({
-        key: def.shortLabel, value: String(run.attributes[def.id]),
-        attrs: { role: 'listitem', dataset: { stat: def.id } },
-      })));
-    return el('article', { class: 'cc-summary-character', 'aria-label': `${state.name} character card` }, [
-      el('span', { class: 'cc-summary-eyebrow', text: cls.name }),
-      el('p', { class: 'cc-summary-name', text: state.name || 'Forsaken' }),
-      hairline(),
-      stats,
-      hairline(),
-      resourceStrip(projection.derived, playerPoiseThresholdReceipt(registries, run)),
-    ]);
+  function characterSummaryResources(derived, poise) {
+    const resources = derived
+      .filter(entry => entry.id !== 'poise')
+      .map(entry => ({
+        id: entry.id,
+        label: creationDerivedLabel(entry),
+        inspectionLabel: CREATION_INSPECTION_LABELS[entry.id] || entry.faceLabel,
+        value: entry.value,
+        explanation: entry.formula,
+      }));
+    resources.push({
+      id: 'poise',
+      label: 'Poise',
+      inspectionLabel: 'Poise',
+      value: poise.value,
+      explanation: poise.note,
+    });
+    if (poise.ratings) {
+      for (const id of ['ward', 'ar', 'dr', 'pr']) {
+        resources.push({
+          id,
+          label: id === 'ward' ? 'Ward' : id.toUpperCase(),
+          inspectionLabel: CREATION_INSPECTION_LABELS[id] || 'Ward',
+          value: poise.ratings[id],
+          explanation: null,
+        });
+      }
+    }
+    return resources;
   }
-  function fillSummary() {
+  function characterSummaryGrid(rows, ariaLabel, { limit = Infinity, expanded = false } = {}) {
+    const visible = rows.slice(0, limit);
+    const pairs = visible.map((entry) => {
+      const pair = statPair({
+        key: expanded ? entry.inspectionLabel || entry.label : entry.label,
+        value: String(entry.value),
+        attrs: { role: 'listitem', dataset: { stat: entry.id } },
+      });
+      if (entry.explanation) attachTooltip(pair, () => esc(entry.explanation));
+      return pair;
+    });
+    if (visible.length < rows.length) {
+      pairs.push(el('span', {
+        class: 'cc-summary-more',
+        role: 'listitem',
+        'aria-label': `${rows.length - visible.length} more stats available in Information`,
+        text: '…',
+      }));
+    }
+    return el('div', { class: 'cc-summary-stats', role: 'list', 'aria-label': ariaLabel }, pairs);
+  }
+  function characterSummaryCard(run, projection, inspection = false) {
+    const cls = registries.classes.get(state.classId);
+    const name = state.name || 'Forsaken';
+    const attributes = orderedAttributes(registries).map((def) => ({
+      id: def.id,
+      label: def.shortLabel,
+      inspectionLabel: `${def.label} (${def.shortLabel})`,
+      value: run.attributes[def.id],
+    }));
+    const resources = characterSummaryResources(
+      creationResources(run, projection),
+      playerPoiseThresholdReceipt(registries, run),
+    );
+    const card = el('article', {
+      class: 'cc-summary-character',
+      'aria-label': `${name} character card`,
+      dataset: { summaryLevel: inspection ? 'inspect' : 'glance' },
+    }, [
+      el('span', { class: 'cc-summary-eyebrow', text: cls.name }),
+      el('p', { class: 'cc-summary-name', text: name }),
+      hairline(),
+      characterSummaryGrid(attributes, 'Primary stats', inspection ? { expanded: true } : undefined),
+      hairline(),
+      characterSummaryGrid(resources, 'Derived resources', inspection
+        ? { expanded: true }
+        : { limit: 6 }),
+    ]);
+    if (!inspection) {
+      bindCardInspection(card, {
+        title: `${name} — ${cls.name}`,
+        identity: 'creation-character-summary',
+        open: opener => {
+          const explained = resources.filter((entry) => entry.explanation);
+          const details = el('div', { class: 'cc-summary-inspection-details' }, [
+            el('h3', { text: 'Derived stat calculations' }),
+            el('dl', {}, explained.map((entry) => [
+              el('dt', { text: `${entry.inspectionLabel || entry.label} ${entry.value}` }),
+              el('dd', { text: entry.explanation }),
+            ])),
+          ]);
+          return openCardInspection({
+            title: `${name} — ${cls.name}`,
+            card: characterSummaryCard(run, projection, true),
+            details,
+            opener,
+          });
+        },
+      });
+    }
+    return card;
+  }
+  function fillSummary(host = summaryBody) {
     const run = previewRun();
     const projection = statProjection(registries, run);
     const surface = equipmentSurfaceReceipt(registries, run);
-    const inert = { interactive: false, inspection: false };
+    // The summary is a row of slots you SCAN to check your loadout, not one you
+    // read — same level, and therefore same size, as the picker you chose from.
+    // Same SURFACE too: these slots stand on the character-creation screen, so
+    // they take that screen's glance patch (`card.json` surfaces.creation adds
+    // `footer`) and show the same regions the chip you picked did. Omitting it
+    // would have made the summary a quieter card than its own picker for no
+    // reason anyone authored.
+    const summaryCard = { interactive: false, level: 'glance', surface: 'creation' };
     const armament = (id) => registries.equipment.armaments.find((row) => row.id === id) || null;
     const slots = [
       { key: 'character', label: 'Character', node: characterSummaryCard(run, projection) },
     ];
     const armour = registries.equipment.armour.find((row) => row.classId === state.classId && row.id === state.startingArmourId);
-    slots.push({ key: 'armour', label: 'Armour', node: armour ? renderEquipmentCard(registries, armour, inert).card : null, empty: 'Not chosen yet' });
+    slots.push({ key: 'armour', label: 'Armour', node: armour
+      ? renderEquipmentCard(registries, armour, { ...summaryCard, identity: 'creation-summary:armour' }).card
+      : null, empty: 'Not chosen yet' });
     const handSlot = (slot, label) => {
       const piece = armament(state.startingHands[slot]);
+      const options = { ...summaryCard, identity: `creation-summary:${slot}` };
       const node = piece
-        ? renderEquipmentCard(registries, piece, inert).card
-        : renderEquipmentCard(registries, { id: 'empty-hand', name: 'Empty Hand', emptyHand: true }, { ...inert, presentation: EMPTY_HAND_PRESENTATION }).card;
+        ? renderEquipmentCard(registries, piece, options).card
+        : renderEquipmentCard(registries, { id: 'empty-hand', name: 'Empty Hand', emptyHand: true }, { ...options, presentation: EMPTY_HAND_PRESENTATION }).card;
       return { key: slot, label, node, unmet: piece ? handProblem(slot) : null };
     };
     slots.push(handSlot('rightHand', 'Main hand'));
     if (state.startingHands.leftHand) slots.push(handSlot('leftHand', 'Off hand'));
     const relic = registries.relics.get(state.startingRelicId);
-    slots.push({ key: 'relic', label: 'Relic', node: relic ? renderCollectibleCard(registries, relic, 'Relic', inert).card : null, empty: 'None' });
+    slots.push({ key: 'relic', label: 'Relic', node: relic
+      ? renderCollectibleCard(registries, relic, 'Relic', { ...summaryCard, identity: 'creation-summary:relic' }).card
+      : null, empty: 'None' });
     const cards = el('div', { class: 'cc-summary-cards', role: 'list' }, slots.map((slot) => el('div', {
       class: `cc-summary-slot${slot.unmet ? ' unmet' : ''}`, role: 'listitem', dataset: { summarySlot: slot.key },
     }, [
@@ -857,7 +1367,7 @@ export function mountCustomize(app, {
       face: { label: 'Show calculations', value: 'Card packages, requirements and poise' },
       reveal: { node: receiptBody },
     }], { structure: 'details' });
-    summaryBody.replaceChildren(cards, calculations);
+    host.replaceChildren(cards, calculations);
   }
   function renderEquipmentSummary() {
     fillSummary();
@@ -877,7 +1387,11 @@ export function mountCustomize(app, {
   function openEquipmentSection(id) {
     if (!id || !equipmentFold) return;
     equipmentFold.open(id);
-    seatFace(id);
+    $('#cz-equipment-section').value = id;
+    const section = equipmentSectionViews.find(row => row.id === id);
+    $('#cz-equipment-count').textContent = `${section?.choices.length || 0} options`;
+    updateStartRefusal();
+    const pane = $('#cz-pane'); if (pane) pane.scrollTop = 0;
   }
 
   function advanceEquipment(sectionId) {
@@ -956,7 +1470,7 @@ export function mountCustomize(app, {
       const arms = registries.equipment.armaments;
       return `${selectedName(state.startingHands.leftHand, arms, 'Empty Hand')} / ${selectedName(state.startingHands.rightHand, arms, 'Empty Hand')}`;
     } },
-    { key: 'seed', label: 'SEED', node: panels.seed, value: () => seedInput.value.trim() || '—' },
+    { key: 'review', label: 'REVIEW', node: panels.review, value: () => seedInput.value.trim() || '—' },
   ];
   let fold = null;
   if (catalog) {
@@ -1000,7 +1514,7 @@ export function mountCustomize(app, {
     )));
     drawDisclosureKeepsakes();
     const disclosureSpecimen = mountDisclosure(disclosureHost, [
-      { key: 'sample-primary', kind: 'pick', disclosure: 'face', face: { label: 'PRIMARY STATS', value: 'Standard' }, reveal: { node: disclosureStat, sense: 'Edit primary stats.' } },
+      { key: 'sample-primary', kind: 'pick', disclosure: 'face', face: { label: 'PRIMARY STATS', value: 'Assign points' }, reveal: { node: disclosureStat, sense: 'Edit primary stats.' } },
       { key: 'sample-keepsake', kind: 'pick', disclosure: 'face', face: { label: 'KEEPSAKE', value: registries.characterCreation.keepsakes[0].name }, reveal: { node: disclosureKeepsake, sense: 'Edit keepsake.' } },
     ]);
     markUiComponent(disclosureHost, UI.characterDisclosure);
@@ -1018,12 +1532,12 @@ export function mountCustomize(app, {
     const classPreviewHost = classPreviewPane({
       cls: registries.classes.get(state.classId),
       sprite: paintedPresentation(state.classId, state.startingArmourId, 'portrait'),
-      resources: classResourceGrid(specimenProjection.derived.slice(0, 5)),
+      resources: classResourceGrid(classPreviewResources(specimenRun, specimenProjection)),
       relic: previewRelic,
       relicDescription: relicText(previewRelic, registries),
     });
     classPreviewHost.classList.add('cc-catalog-specimen');
-    const classResourceSpecimen = classResourceGrid(specimenProjection.derived.slice(0, 5));
+    const classResourceSpecimen = classResourceGrid(classPreviewResources(specimenRun, specimenProjection));
     classResourceSpecimen.classList.add('cc-catalog-specimen');
     let viewToggleHost = null;
     const setCatalogView = (mode) => {
@@ -1041,16 +1555,51 @@ export function mountCustomize(app, {
       autoAdvanceSpecimen = next;
     };
     setCatalogAutoAdvance(true);
-    const armourSpecimen = options([], { class: 'cc-card-selectors cc-catalog-specimen', dataset: { view: 'list' } });
+    // Both branches of the view toggle are catalogued: they are two authored
+    // layouts of one component, and until this change only one of them existed.
+    const armourSpecimen = options([], { class: 'cc-card-selectors cc-catalog-specimen', dataset: { view: 'grid' } });
+    const armourListSpecimen = options([], { class: 'cc-card-selectors cc-catalog-specimen', dataset: { view: 'list' } });
     const specimenArmours = armourChoices().slice(0, 2);
     let specimenArmourId = specimenArmours[0].id;
-    const drawArmourChoices = () => armourSpecimen.replaceChildren(...specimenArmours.map((piece) => {
-      const chipButton = pieceChip(registries, piece, { selected: piece.id === specimenArmourId });
-      markUiComponent(chipButton, UI.equipmentChoiceCard, 'armour');
-      chipButton.addEventListener('click', () => { specimenArmourId = piece.id; drawArmourChoices(); });
-      return chipButton;
-    }));
+    const drawArmourChoices = () => {
+      for (const host of [armourSpecimen, armourListSpecimen]) {
+        host.replaceChildren(...specimenArmours.map((piece) => {
+          const chipButton = pieceChip(registries, piece, { selected: piece.id === specimenArmourId });
+          markUiComponent(chipButton, UI.equipmentChoiceCard, 'armour');
+          chipButton.addEventListener('click', () => { specimenArmourId = piece.id; drawArmourChoices(); });
+          return chipButton;
+        }));
+      }
+    };
     drawArmourChoices();
+    // THE THREE PRESENTATION LEVELS, side by side, on one item. The catalogue's
+    // job is to show what a component's model can be asked for, and "how much
+    // this card says" is now part of that model (src/model/cardFields.js), so
+    // a reviewer can see glance / focus / inspect differ — and by how much the
+    // effect rows grow as the regions above them are withheld — without
+    // driving a real screen into three different states to get there.
+    //
+    // These are REAL faces from the real renderer, at the real levels; nothing
+    // here is a mock-up of one. `inspection: false` is how the last specimen
+    // reaches `inspect`, which is the same door the modal's own face uses.
+    // It wears the picker's own container classes so the faces are sized by the
+    // rules that already size faces in a picker — the catalogue must not grow a
+    // second opinion about how big a card is.
+    const levelSpecimen = el('div', { class: 'cc-catalog-specimen cc-card-selectors cc-card-levels', dataset: { view: 'list' } });
+    for (const at of ['glance', 'focus', 'inspect']) {
+      // EACH SPECIMEN IS ITS OWN CARD AS FAR AS SELECTION IS CONCERNED.
+      // All three draw the same item on purpose — that is the comparison — but
+      // selection is page-wide and keyed by identity, so sharing one meant
+      // lighting any face promoted all three to `focus` and the three-level
+      // comparison collapsed into three identical cards. On a real screen that
+      // sharing is the correct behaviour; here it defeats the specimen.
+      const face = renderEquipmentCard(registries, specimenArmours[0], at === 'inspect'
+        ? { interactive: false, inspection: false }
+        : { interactive: false, level: at, identity: `catalog-level-${at}` }).card;
+      levelSpecimen.append(el('figure', { class: 'cc-card-level', dataset: { level: at } }, [
+        face, el('figcaption', {}, at),
+      ]));
+    }
     const specimenRelics = creationRelicChoices(registries, state.classId).slice(0, 2);
     const relicSpecimen = options([], { class: 'cc-card-selectors cc-catalog-specimen' });
     let specimenRelicId = specimenRelics[0].id;
@@ -1071,9 +1620,9 @@ export function mountCustomize(app, {
       { key: 'selection-section-face', label: 'Selection subcard face', node: selectionFaceSpecimen },
       { key: 'primary-stat-card', label: 'Primary stat card', node: statHost },
       { key: 'resource-strip', label: 'Resource strip', node: resourceStrip(
-        specimenProjection.derived, playerPoiseThresholdReceipt(registries, specimenRun),
+        creationResources(specimenRun, specimenProjection), playerPoiseThresholdReceipt(registries, specimenRun),
       ) },
-      { key: 'mode-choice', label: 'Standard / assign points', node: choiceSpecimen(
+      { key: 'mode-choice', label: 'Stat allocation mode', node: choiceSpecimen(
         'as-seg se-modes', visibleModes, (row) => row.id, modeChoiceButton, state.attributeMode,
       ) },
       { key: 'sprite-choice', label: 'Sprite choice', node: choiceSpecimen(
@@ -1088,31 +1637,48 @@ export function mountCustomize(app, {
       { key: 'keepsake-choice', label: 'Keepsake card', node: choiceSpecimen(
         'as-options cz-keepsakes', registries.characterCreation.keepsakes, (row) => row.id, keepsakeChoiceButton, state.keepsakeId,
       ) },
-      { key: 'equipment-choice-card', label: 'Equipment choice card', node: armourSpecimen },
+      { key: 'equipment-choice-card', label: 'Equipment choice card (grid view)', node: armourSpecimen },
+      { key: 'equipment-choice-card-list', label: 'Equipment choice card (list view)', node: armourListSpecimen },
+      { key: 'card-presentation-levels', label: 'Card presentation levels', node: levelSpecimen },
       { key: 'relic-choice-card', label: 'Relic choice card', node: relicSpecimen },
+      // W1c moved the live portrait into the head; the catalogue still shows it.
+      { key: 'creation-portrait', label: t('creation.catalog.portrait'), node: portrait },
     ];
     for (const row of specimens) appendCatalogItem(row, 'Reusable component');
     flow.replaceChildren(fragment);
   } else {
-    fold = mountDisclosure(flow, sectionRows.map((row) => ({
-      key: row.key, kind: 'pick', disclosure: 'face',
-      face: { label: row.label, value: row.value() },
-      reveal: { node: row.node, sense: `Edit ${row.label.toLowerCase()}.` },
-    })), { structure: 'details' });
-    refreshSectionFaces = () => { for (const row of sectionRows) fold.setValue(row.key, row.value()); };
-    fold.open('class');
+    // W1c: the rail names each category and what it holds; the pane shows one.
+    refreshSectionFaces = () => {
+      for (const item of railItems) {
+        const rowFor = sectionRows.find((row) => row.key === item.dataset.member);
+        if (rowFor) item.querySelector('.cz-tab-value').textContent = rowFor.value();
+      }
+    };
+    const nav = categoryNav({
+      items: railItems, rail, ariaLabel: t('creation.categories'),
+      choose: (id) => activate(id),
+      face: (item) => item.querySelector('.rail-label')?.textContent || item.firstChild?.textContent || item.dataset.member,
+      toggleClass: 'cz-cat-select', toggleId: 'cz-cat-select',
+      onChange: ({ mode, open }) => { railed.dataset.creationNav = mode; railed.toggleAttribute('data-nav-open', open); },
+    });
+    nav.attach(railed);
+    // The model owns the authored column count at each pane width.
+    const applyColumns = () => {
+      const rootStyle = getComputedStyle(document.documentElement);
+      const zoom = parseFloat(rootStyle.getPropertyValue('--ui-zoom')) || 1;
+      const columns = creationAttributeColumns({ hostWidthPx: paneHost.getBoundingClientRect().width / zoom, rootFontPx: parseFloat(rootStyle.fontSize) });
+      customizeScreen.style.setProperty('--creation-attribute-columns', String(columns));
+    };
+    if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => { if (paneHost.isConnected) { applyColumns(); fitStage(); } }).observe(paneHost);
+    applyColumns();
   }
 
   // THE WAY ON, per step: what it waits for, and what it opens inside the next
   // section so the player lands on the next question rather than a shut fold.
-  const nextGates = {
-    character: { problem: classProblem, tip: 'On to the character.' },
-    equipment: { problem: characterProblem, tip: 'On to starting equipment.' },
-  };
   const openInside = {
     character: () => {
       characterFold.open('primary');
-      seatFace('primary', statBox.querySelector('.se-mode.chosen') || statBox.querySelector('.se-mode'));
+      seatFace('primary', statBox.querySelector('.cc-mode-select'));
       return null; // seatFace seats the cursor itself
     },
     equipment: () => {
@@ -1120,23 +1686,77 @@ export function mountCustomize(app, {
       return null; // openEquipmentSection seats the cursor itself
     },
   };
-  app.querySelectorAll('.cz-next').forEach((control) => {
-    const gate = nextGates[control.dataset.next];
-    if (gate && !catalog) gateRefreshers.push(refusesWhen(control, gate.problem, gate.tip));
-    control.addEventListener('click', () => {
-      if (catalog) {
-        const target = app.querySelector(`[data-catalog-component="${control.dataset.next}"]`);
-        target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-        focusElement(target?.querySelector('button, input'));
-        return;
-      }
-      if (gate && gate.problem()) return;
-      fold.open(control.dataset.next);
-      const opener = openInside[control.dataset.next];
-      const target = opener ? opener() : app.querySelector(`[data-face="${control.dataset.next}"]`);
-      if (target) queueMicrotask(() => focusElement(target));
+  // W1c: one persistent footer. Back leaves on the first category and steps
+  // back otherwise; Next refuses with the current category's unmet step and
+  // lands the cursor on the next question; Begin takes over on Review.
+  const activeEquipmentProblem = () => { const section = equipmentSectionViews.find(row => row.id === equipmentFold?.openKey); return !section?.nextId ? equipmentProblem() : section?.kind === 'armour' ? armourProblem() : section?.kind === 'hand' ? handProblem(section.slot) : null; };
+  const stageProblems = { class: classProblem, character: characterProblem, equipment: activeEquipmentProblem, review: () => null };
+  let current = categories[0];
+  const categoryLabel = (id) => t(`creation.category.${id}`);
+  function activate(id) {
+    if (catalog || !categories.includes(id)) return;
+    current = id;
+    paneHost.replaceChildren(stages[id]);
+    paneHost.scrollTop = 0;
+    paneHost.setAttribute('aria-labelledby', `cz-tab-${id}`);
+    for (const item of railItems) {
+      const on = item.dataset.member === id;
+      item.classList.toggle('on', on);
+      item.setAttribute('aria-selected', String(on));
+      if (on) item.setAttribute('aria-current', 'true'); else item.removeAttribute('aria-current');
+    }
+    const plan = creationFooterPlan({ categories, current: id });
+    next.hidden = plan.primary !== 'next';
+    start.hidden = plan.primary !== 'begin';
+    railed.dataset.creationStage = id;
+    classTools.hidden = id !== 'class';
+    equipmentTools.hidden = id !== 'equipment';
+    if (id === 'review') fillSummary($('#cz-review-summary'));
+    refreshGates();
+    fitStage();
+  }
+  // EVERY CHOICE IN VIEW WITHOUT SCROLLING (owner, 2026-09-19). The class pane
+  // is measured after it draws; when its choices run past the pane the cards
+  // fold their descriptions to one line, and when that is still too tall the
+  // preview column steps aside so the choices take the width. Measurement
+  // only — the rule and its lines are behavior.fitChoicesToPane and
+  // sizing.choiceDescriptionLines in the config.
+  function fitStage() {
+    if (catalog || !creationFitsChoices()) return;
+    delete railed.dataset.choiceFit;
+    delete railed.dataset.previewOff;
+    if (current !== 'class') return;
+    // The collection is its own scrollport inside the split (kit.css), so it is
+    // the box that overflows, not the pane.
+    const overflows = () => classBox.scrollHeight > classBox.clientHeight + 1 || paneHost.scrollHeight > paneHost.clientHeight + 1;
+    if (!overflows()) return;
+    railed.dataset.choiceFit = 'compact';
+    if (!overflows()) return;
+    railed.dataset.previewOff = 'true';
+    if (!overflows()) return;
+    railed.dataset.choiceFit = 'bare';
+  }
+  function advanceFrom(id) {
+    if (catalog) return;
+    if (stageProblems[id]?.()) return;
+    const to = creationStep(categories, id, 1);
+    if (!to) return;
+    activate(to);
+    const opener = openInside[to];
+    const target = opener ? opener() : paneHost.querySelector('button:not([disabled]), input, select');
+    if (target) queueMicrotask(() => focusElement(target));
+  }
+  if (!catalog) {
+    gateRefreshers.push(refusesWhen(next, () => stageProblems[current](), () => {
+      const to = creationStep(categories, current, 1);
+      return t('creation.next.tip', { category: to ? categoryLabel(to) : '' });
+    }));
+    next.addEventListener('click', () => {
+      if (current === 'equipment') { equipmentNodes.get(equipmentFold?.openKey)?.querySelector('.cc-equipment-continue')?.click(); return; }
+      advanceFrom(current);
     });
-  });
+    activate(categories[0]);
+  }
   const primaryContinue = $('.cc-primary-continue');
   gateRefreshers.push(refusesWhen(primaryContinue, statsStepProblem, 'On to the keepsake.'));
   primaryContinue.addEventListener('click', () => {
@@ -1159,8 +1779,20 @@ export function mountCustomize(app, {
     return `Begin as <b>${esc(cls.name)}</b>${keepsake ? ` with <b>${esc(keepsake.name)}</b>` : ''}.`;
   });
   updateStartRefusal = () => { refreshStart(); refreshGates(); };
-  attachTooltip(back, () => 'Back to the title screen. Nothing here is saved.');
-  back.addEventListener('click', onBack);
+  attachTooltip(back, () => {
+    const plan = catalog ? { back: 'leave' } : creationFooterPlan({ categories, current });
+    return plan.back === 'leave' ? t('creation.leave.tip') : t('creation.previous.tip', { category: categoryLabel(plan.previous) });
+  });
+  back.addEventListener('click', () => {
+    const plan = catalog ? { back: 'leave' } : creationFooterPlan({ categories, current });
+    if (plan.back === 'leave') return onBack();
+    activate(plan.previous);
+    queueMicrotask(() => focusElement(paneHost.querySelector('button:not([disabled]), input, select')));
+  });
+  if (!catalog) {
+    attachTooltip(close, () => t('creation.leave.tip'));
+    close.addEventListener('click', onBack);
+  }
   start.addEventListener('click', () => {
     if (beginProblem()) return;
     onStart({
@@ -1174,7 +1806,7 @@ export function mountCustomize(app, {
       startingArmourId: state.startingArmourId,
       startingRelicId: state.startingRelicId,
       attributeMode: state.attributeMode,
-      ...(state.attributeMode === POINTBUY && state.attributes ? { attributes: { ...state.attributes } } : {}),
+      ...(hasPoints(state.attributeMode) && state.attributes ? { attributes: { ...state.attributes } } : {}),
     });
   });
   updateStartRefusal();

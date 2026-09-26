@@ -1,5 +1,40 @@
 # AshenSpire component catalog
 
+`prologue-screen` composes text-free WebP paintings, a class item layer, motif
+wash, live narration, and a control band that is the frame's own last row — the
+buttons and the scene counter stay at the bottom whichever wireframe is standing
+(caption below the art, text over it, letterbox, or a side panel), unless
+`controlsPosition` puts them back under the text. `src/model/prologue.js`
+projects Advanced → Opening settings; `src/ui/screens/prologue.js` is shared by
+new games and the settings preview. The opening is nine authored scenes — five
+shipped and four empty slots a scene can be added into — played in a configured
+order over a configured subset, each with its own artwork, banner, hold, music
+and stinger. Staging (`PROLOGUE_STAGE_FIELDS`) is answered by the opening or by
+a single scene that sets `ownStaging`: wireframe, artwork scale/fit/focus and
+picture treatment, camera, wash, every part of the text and its container, the
+reveal, and the transition. All of it rides in configuration exports, in a scene
+file of its own, and in three named preset slots. Interrupted saves resume at a
+scene boundary — on the next scene still in the opening when the one they
+stopped on has been switched off; Set forth reveals the first playable map.
+`node tools/screenshot.mjs --only prologue` photographs it (`?shot=prologue`,
+staged with `?shotSettings={…}`).
+
+`equipment-animation-reference` derives the active presentation from class,
+armour, ordered right/left weapon groups and optional grip. Its model is
+`src/model/equipmentAnimation.js`; authored references live in
+`content/config/ui/presentation/equipmentAnimations.json`. The painted stage,
+Armoury, conversation and portrait views share those references. The visual
+catalog includes greatsword, sword/shield and unarmed ready stances. Each family serves 35 armor entries with 32 outfit appearances; catalog art aliases reuse their corresponding frames. Unarmed physical attacks and casting have separate references within one shared profile.
+Twin swords add 32 appearances across those 35 entries, sharing one motion profile. Optional per-hand item constraints select only the authored right Straight Sword / left Katana order; reversed hands retain existing art. The [twin-sword workshop](../art/twin-sword-reference-2026-09-19/index.html) compares outfits and edits playback order.
+See [equipment animation references](EQUIPMENT-ANIMATION-REFERENCES.md).
+
+Empty-hand magic adds 16 addressable poses for each of the 32 appearances,
+covering all 35 armor entries. The shared unarmed profile uses the nine-step
+magic channel/release clip for casting and a self-directed magic buff pose;
+physical references remain the defaults for ordinary attacks and other roles.
+The [magic gallery](../art/unarmed-magic-2026-09-19/index.html) includes class and
+armor filters, labeled sheets and synchronized playback.
+
 `offlinePlay.js` supplies the shared **Download & saves** modal, opened from
 Title and Settings (including in-run Settings). Release metadata supplies its
 version, size, and numbered download; `src/content/offlinePlay.js` owns the feed,
@@ -19,6 +54,22 @@ nearest-target ties; `flickPractice.js` shares that recognition with the combat
 hand for touch, mouse, trackpad dragging and pen. Existing saved settings retain
 their values. The selected card and separate Information button remain unchanged.
 See [card removal and touch flick validation](qa/card-removal-touch-flick.md).
+
+`card-shelf` is the one row of resting cards. Up to four stand across it; every
+track is the same width, floored at a legible minimum and capped at the card's
+resting width, and when the room for four is not there it drops a column rather
+than shaving the cards. The three numbers are authored at
+`content/config/ui/components/card.json -> sizing.shelf`;
+`src/ui/models/CardSizeModel.js` owns the arithmetic
+(`cardShelf`, `cardShelfColumnsAt`, `cardShelfTrackPx`),
+`styles/kit.css` draws it, and `src/ui/components/cardShelf.js` measures each
+shelf so a last row of two is not drawn wider than the four above it. Reuse
+surfaces: the merchant's six shelves, the card-removal grid, and the mount
+service deck list. A tile that holds no card — the SELL shelf's relics and
+flasks — keeps the OptionCard measure instead (`.shop-text-offer`). The
+merchant's offers column is sized from the same model
+(`ShopWorkspaceModel.shopOffersWidthPx`), so the column and the cards standing
+in it cannot disagree about how wide a shelf is.
 
 This is the quick-reference library for the reusable UI vocabulary. The visual
 catalog is available at [`component-catalog.html`](./component-catalog.html).
@@ -70,7 +121,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 
 | Component ID | Model / factory | View or renderer | Reuse | Purpose |
 |---|---|---|---|---|
-| `startup-gate` | `startupGateModel` | `startupGate.mountStartupGate` | Cold boot | Input-gated wordmark and family prompt over River Citadel; activation lights the city, holds for Settings > Game > Lit city pause, then fades into the layered hall. Title mounts after the fade. |
+| `startup-gate` | `startupGateModel` | `startupGate.mountStartupGate` | Cold boot | Input-gated wordmark and family prompt over River Citadel; activation lights the city, holds for Settings > General > Display > Title screen > Lit city pause, then fades into the layered hall. Title mounts after the fade. |
 | `startup-ash-field` | `startupGateModel.properties.particles` | `startupGate.mountStartupGate` | Startup Gate | Decorative particle host; visual-only and removed with the boot gate. |
 | `startup-ash-particle` | deterministic particle record | `startupGate.mountStartupGate` | Startup Ash Field | One data-driven ash mote with position, delay, duration, and size. |
 | `startup-mark` | startup copy + responsive presentation | `startupGate.mountStartupGate` | Startup Gate | Centered folded-title content group; its phone backing is fully transparent. |
@@ -128,11 +179,12 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `tray-header` | `trayHeaderModel` child | `trayComponents.renderTray` | Folding Tray | Arrow, name, quantity, and optional sort action. |
 | `tray-resize-handle` | `trayResizeHandleModel` child | `trayComponents.renderTray` | Resizable expanded Folding Tray | Optional 44px pointer/touch/keyboard resize surface; emitted only when that tray enables resizing. |
 | `tray-content` | `trayContentModel` child | `trayComponents.renderTray` | Folding Tray | Pluggable item-model content host. |
-| `relic-tray` | `itemTrayModel` | Belt view | Map + Combat | Relics under SP. |
-| `relic-slot` | `componentModel` semantic ID | Item view | Map + Combat | Individual relic tile. |
-| `potion-tray` | `itemTrayModel` | Belt view | Map + Combat | Utility potion tray, right anchored. |
+| `relic-tray` | `itemTrayModel` | Icon tray (`iconTray.js`) | Every run HUD, map included | Relics under SP: the shared icon tray, one non-wrapping row with a `+N` tile. |
+| `relic-slot` | `componentModel` semantic ID | Tray icon (`relicRail.js`) | Every run HUD | One relic: the round Pip the status icons wear; tap explains, a second tap opens its card. |
+| `potion-tray` | `itemTrayModel` | Icon tray (`iconTray.js`) | Rooms, only with `hud.potions.roomRail` (off) | No top HUD draws potions; the combat footer's Potions minis are the same tray. |
 | `potion-control` | `componentModel` semantic ID | Item view | Inventory | Individual utility potion control. |
-| `battlefield-stage` | `battlefieldStageModel` | `battlefieldStage.js` + `combat.js` | Combat | Fixed 10/45/30/15 tracks; shared formation slots for solo and party combat, with grounded art, uniform nameplates and shallow overflow rows. |
+| `battlefield-stage` | `battlefieldStageModel` + `combatFormation` | `battlefieldStage.js` + `combat.js` | Combat | Shared formation presets and uniform labeled grids, up to 3 columns × 6 rows per side. Actor feet and movement use the same anchors. Ground tilt/skew transform tiles while characters stay upright. Small grids expand for encounter capacity. |
+| `formation-layout-editor` | `formationLayoutConfig` + `combatFormation` | `formationSettings.js` | Settings → Advanced → Interface → Formation layout | Live battlefield preview, illustrated named presets, shared dimensions, footprint width/depth/gap, tile outline and ground tilt/skew. Apply saves a draft through the normal settings owner; row A–F scale/layer and front/back offsets live under Character adjustments. Stacks on narrow screens. |
 | `combatant-frame` | `combatantFrame` | `combatantFrame.js` + `battlefieldStage.js` | Combat | Shared intent-and-card stack with responsive card-only scaling. Updates retain the frame, sprite host and input listeners; Lite targeting uses a colored ground ring without cloning art. |
 | `player-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Player combatant card. |
 | `enemy-combatant-frame` | `combatantFrame` variant | `combatantFrame.js` | Combat | Enemy combatant card. |
@@ -144,12 +196,12 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `poise-status-bar` | `resourceMeter` variant | `resbars.js` | Combat cards | Individual combatant Poise bar. |
 | `proc-status-bar` | semantic component | `combat.js` | Enemy cards | Individual Bleed/Frost/Insanity buildup bar. |
 | `arcane-exposure-bar` | semantic component | `arcaneExposure.js` | Enemy cards | Individual Arcane Exposure meter. |
-| `status-effect-tray` | semantic component | `combat.js` | Combat cards | Active status icons and stacks. |
+| `status-effect-tray` | semantic component | Icon tray (`iconTray.js`) via `combat.js`, `coop.js` | Combat cards | Active status icons and stacks. THE REFERENCE the shared icon tray was lifted from: relics and the Potions minis inherit its Pip, non-wrapping row, `+N` tile and tooltip. |
 | `tooltip` | semantic component | `tooltip.js` + `tooltipGlossary.js` | All interactive surfaces | Every hover, handover and nested term waits the explanation delay (1 s default); a tap or click selects a detail and a second one explains it; keyboard focus explains after 500 ms; dismiss 500 ms after leaving owner and panel. Cards explain only through their Information button. Active-bundle keywords and touch/keyboard definitions share the renderer. |
 | `damage-feedback` | semantic component | `fx.js` | Combat feedback | One hit receipt containing Guard and HP channels. |
 | `guarded-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Amount absorbed by Guard. |
 | `health-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Residual damage applied to HP. |
-| `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Fixed 5:7 faces fan by overlap and remain visible, inert and dim during enemy turns. |
+| `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Faces fan by overlap and remain visible, inert and dim during enemy turns. The 5:7 face is the card's one authored shape (`content/config/ui/components/card.json` `sizing.ratio`, projected as `--card-ratio` by `CardSizeModel`): this row said 5:7 while the hand actually drew 5:8, and `node tools/card-one-shape.mjs` now holds every surface to the one number. |
 | `combat-action-rail` | `componentModel` | `combat.js` | Combat | Single centered row: Actions, flexible Draw, End Turn, flexible Discard/Exhaust, and Potions. All five controls share a vertical center at narrow widths. |
 | `kit.pageDoor` | `pageDoor(spec)` | `kit/index.js` pageDoor | Every screen that asks something | The one door-opener: head with eyebrow, title and a single close control, a body the surface owns, and a foot on the button ladder. Four named widths (sm, md, lg, xl) or full; Escape, veil click and focus return are bound here once. |
 | `kit.optionCard` | `optionCard(spec)` | `kit/index.js` optionCard | Every list of ways on | One choosable way on — glyph or art, name, description, optional badge, meta and trail — carrying its own selected and disabled states. |
@@ -167,6 +219,18 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `kit.railItem` | `railItem(spec)` | `kit/index.js` railItem | Compendium, settings rails, owner pages | One entry in a navigation rail, which marks itself as current rather than being marked from outside. |
 | `kit.popover` | `popover(spec)` | `kit/index.js` popover | Quick menu, flask menu, armament radial | A caption above grouped rows, hung off the control that opened it. |
 | `kit.decide` | `decide(spec)` | `kit/index.js` decide | Every door that asks a question | The body of a decision — the question, what it costs, and the ways to answer — the shape a page door wraps when the surface is a question rather than a place. |
+| `equipment-animation-reference` | `equipmentAnimationForLoadout + equipmentAnimations.json` | `paintedOutfits.createPaintedStage + assets.playerSprite` | Solo + co-op + Armoury + conversation + portrait | Derives a presentation set from class, armour, ordered hand weapon groups and optional grip. Named clips provide action and view references; missing bindings retain existing class art. Independent greatsword, sword/shield and unarmed profiles cover all four classes and 35 armor entries, preserving 32 appearances per family. Sword/shield records its authored right-sword/left-shield hands; reversed selectors share that canonical artwork without mirroring. Twin swords add 32 appearances across all 35 entries with a shared profile and optional per-hand item constraints. Only right Straight Sword / left Katana selects these paintings; reversed hands retain existing art. Empty-hand casting and buffs use magic references across all 35 armor entries; ordinary actions retain physical references. The magic gallery preserves all 16 configurable poses. |
+| `touch-flick-practice` | `TouchFlickModel` | `settingsRowHtml + mountFlickPractice` | Accessibility settings + combat hand | Configurable 32–160 CSS-pixel upward flick distance, synchronized field and slider, Reset and harmless practice. Touch, mouse, trackpad and pen share nearest legal target selection on release; selection and Information stay separate. |
+| `card-shelf` | `CardSizeModel.cardShelf + cardShelfColumnsAt (content/config/ui/components/card.json -> sizing.shelf)` | `cardShelf.wireCardShelf + styles/kit.css .card-shelf` | Merchant shelves (cards, armaments, weapon arts, relics, flasks, sell), card-removal grid, mount service deck list | Row of resting cards: up to four across, every track the same width, floored at a legible minimum and capped at the card resting width. Too narrow for four, it drops a column rather than shaving the cards. |
+| `modal-height-policy` | `measured body overflow` | `modalShell.bindModalDismiss` | All shared dialogs | Standard widths remain independent of height. Overflow promotes the dialog to the long viewport-bounded height; body scrolls while header and footer remain pinned. Promotion remains stable until close. |
+| `card-effect-layers` | `combatEffectPresentation.CARD_EFFECT_LAYERS` | `cardEffectLayers.mountCardEffectLayers / playCardEffectLayers` | Optional accepted card flight | Default OFF: Settings > General > Combat > Animation & effects > Show played card animation. Card flights are independent of caster effects. Payment receipts choose art; cancellation and accessibility preferences suppress playback. |
+| `combatant-effect-layers` | `combatEffectAnchors.COMBAT_EFFECT_ANCHORS / COMBATANT_EFFECT_PLANES` | `combatantEffectLayers.mountCombatantEffectLayers / playCombatantEffectLayers` | Solo + co-op caster effects + art gallery | Pose-specific weapon, shield and hand/staff origins across 16 outfits. Rear and front planes inherit pose scale, facing and movement. Target hit impacts and resource auras remain separate. |
+| `rating-calculation-receipt` | `ratingReceipt attributeReceipts + sources` | `equipmentReceipts.renderPlayerPoise` | Character Creation Review + Armoury Stats | One section per AR, DR, PR, Poise, and Ward rating: raw attribute values, weights, individually floored contributions, global multiplier, named equipment/relic additions, and final total. A rating with no active weights states that explicitly and calculates from zero. |
+| `card-presentation-levels` | `cardFields(level, surface) over balance.ui.equipmentCard.regions` | `model/cardFields.js driving equipmentCard.renderEquipmentCard and card.renderCard` | Every card surface + catalog | How much a card says is authored, not decided by the pixels left over. Three levels — glance, focus, inspect — are declared in content/config/ui/components/card.json over the region keys balance.ui.equipmentCard.regions already owns, with sparse per-surface patches (the creation picker shows rarity while you choose; the Armoury glance shows the type band; the combat hand drops rarity even at focus). The level is DERIVED, never passed by a screen: cardSelection.js owns which card is lit, an unlit card draws at its surface&rsquo;s floor, a lit card is promoted to focus, and the reading door is inspect. A picker&rsquo;s grid/list toggle selects a level rather than owning a field set of its own. A region the level does not say is NOT RENDERED — not hidden — so the row solver returns its pixels and its gaps to the regions that remain (effect rows measure 136px at glance against 54px at inspect) and a screen reader never announces a field the player cannot see. Both card types share the one vocabulary. Only the two cards whose level changed repaint, from their own select and douse events; nothing sweeps the document. |
+| `local-map-camera` | `LocalMapCameraModel + LocalServiceModel + SurveyQuestModel` | `localMapCamera.js + worldAtlas.js` | City and dungeon location dialogs | Tall shared layout for all 11 local maps: protected map height, scrollable service benefits, pinned Return and service actions, and a spatial Up/Left/Right/Down pad followed by minus/Fit/plus controls. Inspection and combat share normalized node profiles and weighted WebP scene pools, with stable selection and explicit day/night fallback; available travel is green and anchored bottom-right. Uses WebP artwork and adaptive WebP detail tiles; pointer, touch and keyboard navigation retain saved framing. SurveyQuestModel projects regional quest offers and claimed reports without changing saved atlas rows. |
+| `map-detail` | `MapDetailModel + mapPresentation` | `mapDetail.js + mapFog.js` | All run maps | Viewport-selected native detail tiles over a bundled fallback; bounded loading and cache, engraved fog, outlined routes and one extra manual zoom step. |
+| `map-node-face` | `mapview + AtlasCameraModel` | `mapNodeInk.js + mapboard.js + worldAtlas.js` | All run maps | Shared vector disc, glyph and reachable halo. Traditional/co-op and journey maps use the same close-up node scale; journey framing follows the current junction and preserves authored positions. |
+| `prologue-screen` | `prologueConfig` | `screens/prologue.js` | Opening / Advanced preview | Nine authored scenes (five shipped, four addable slots) played in a configured order and subset, each with its own artwork, hold, music and stinger; staging — wireframe, picture treatment, camera, wash, text and container, reveal, transition — answered by the opening or per scene; controls in a band that is the frame's last row; desktop and mobile. |
 
 ## Composition at a glance
 
@@ -246,6 +310,7 @@ custom art does not require a second card implementation.
 | `primary-stat-card` | `creationBrief.attributeCardModels` entry | `creationCards.primaryStatCard` + `disclosure.mountDisclosure` | Character Creation + Shrine allocation + Armoury + catalog |
 | `stat-allocation-row` | one attribute allocation row | `statAllocationCard.renderStatAllocationCard` | Character Creation + Shrine allocation + catalog |
 | `resource-strip` | derived rows + Poise receipt | `creationCards.resourceStrip` | Character stats + catalog |
+| `settings-stat-example` | `StatsPreviewModel.statsTopicPreview` | `settings.statsTopicPreviewHtml` | Settings / Advanced / Stats |
 | `mode-choice` | creation mode + selected state | `creationCards.modeChoiceButton` | Standard/Assign Points + catalog |
 | `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog; Animated is the default when no explicit style is stored. |
 | `tint-choice` | tint row + selected state | `creationCards.tintChoiceButton` | Appearance + catalog |
@@ -343,6 +408,8 @@ sync without duplicating persistence.
 | `confirmation-modal` | `ConfirmationService` state + semantic callbacks | `confirmationModal.openConfirmationModal` | Shared themed Load / Quit Without Saving review surface. Danger variants expose `alertdialog`, focus neutral Back first, trap focus, cancel without mutation, restore the launcher, preserve the covered menu on Escape, and retain a bounded top-layer input shield across committed navigation. Parchment eyebrow text preserves blood/ember on borders while clearing 4.5:1; real hit-tested behavior and computed contrast are covered from Map and Combat at 1200×730, 390×844, and 320×640. |
 | `confirmation-cancel-control` | confirmation cancel command | `confirmationModal.openConfirmationModal` | Stable neutral Back action; initial focus target for danger decisions, with launcher restoration and no state mutation. |
 | `confirmation-action` | confirmation commit command | `confirmationModal.openConfirmationModal` | Explicit danger action; parchment text clears 4.5:1 while the danger border retains blood/ember, and the destructive callback runs exactly once and never before activation. |
+| `lore-line` | card or equipment `flavor` text | `loreLine.loreLine` | The one-line identity shown in card and equipment inspection, set in the player's lore type (Advanced → Text & lore, `LoreTypeModel`). When the lore has more than its identity line it is a button with a Read cue; otherwise plain text. |
+| `lore-modal` | the same `flavor` text, split by `loreParts` | `loreLine.openLoreModal` | Small shared-shell modal over the inspection: eyebrow, card name, identity line, history, and the closing line set apart under a rule. Escape, ✕ and a scrim press close only this modal and return focus to the line. |
 | `controls-rebind-capture` | `rebind-capture-service` state | `controls.renderControls` | Controls keyboard/pad binding surface. An armed keyboard capture owns its keydown before the surrounding overlay. |
 | `controls-key-rebind-control` | action id + capture state | `controls.renderControls` | Stable keyboard rebind action. Press… is cancelled by Escape without mutation, then focus returns to this control; re-arming accepts a free key. |
 
@@ -460,11 +527,11 @@ is [`assets/components/armoury.json`](../assets/components/armoury.json).
 | Rendered family | Searchable asset IDs |
 |---|---|
 | Shell and player views | `armoury.shell`, `armoury.viewSwitcher`, `armoury.characterView`, `armoury.inventoryView`, `armoury.hybridView`, `armoury.characterViewButton`, `armoury.inventoryViewButton`, `armoury.hybridViewButton` |
-| Character composition | `armoury.characterPane`, `armoury.spritePane`, `armoury.characterSummary`, `armoury.combatPowerCard`, `armoury.combatPowerGroup`, `armoury.combatPowerMetric`, `armoury.attributesCard`, `armoury.attributeCard`, `armoury.relicsCard` |
+| Character composition | `armoury.characterPane`, `armoury.spritePane`, `armoury.characterSummary`, `armoury.levelProgress`, `armoury.combatPowerCard`, `armoury.combatPowerGroup`, `armoury.combatPowerMetric`, `armoury.attributesCard`, `armoury.attributeCard`, `armoury.relicsCard`, `armoury.skillsCard`, `armoury.skillProgressGroup`, `armoury.skillTrack` |
 | Armaments tray and pane | `armoury.equipmentPane`, `armoury.armamentsCard`, `armoury.armamentsHeader`, `armoury.armamentsFoldButton`, `armoury.armamentsExpanded`, `armoury.armamentsFolded`, `armoury.armamentViewToggle`, `armoury.hybridPaneSplitter` |
 | Procedural equipment-position cards | `armoury.equipmentPositionCard`, `armoury.occupiedPositionCard`, `armoury.emptyPositionCard`, `armoury.lockedPositionCard`, `armoury.positionLabelPane`, `armoury.positionSpritePane`, `armoury.summaryDivider`, `armoury.positionSummaryPane`, `armoury.positionAction`, `armoury.armamentItemCard`, `armoury.armamentDetailPane`, `armoury.armamentGridGroup`, `armoury.positionGridCard`, `armoury.occupiedPositionGridCard`, `armoury.emptyPositionGridCard`, `armoury.lockedPositionGridCard`, `armoury.armamentGridDetails` |
 | Inventory and comparison | `armoury.inventoryCard`, `armoury.paneSplitter`, `armoury.itemCard`, `armoury.inventoryItemClass`, `armoury.itemReveal`, `armoury.comparisonTooltipAnchor`, `armoury.equipmentComparison`, `armoury.inventoryTrayResizeHandle` |
-| Cards, Stats, and disclosure | `armoury.cardsCard`, `armoury.cardList`, `armoury.cardRow`, `armoury.cardDetail`, `armoury.cardViewToggle`, `armoury.cardsTrayResizeHandle`, `armoury.statsTray`, `armoury.statsSummary`, `armoury.statsTrayResizeHandle`, `armoury.disclosure` |
+| Cards, Stats, and disclosure | `armoury.cardsCard`, `armoury.cardList`, `armoury.cardRow`, `armoury.cardDetail`, `armoury.cardViewToggle`, `armoury.cardsTrayResizeHandle`, `armoury.statsTray`, `armoury.statsSummary`, `armoury.playerLoadReceipt`, `armoury.statsTrayResizeHandle`, `armoury.disclosure` |
 
 Within each procedural equipment group, empty positions are ordered after the
 occupied and locked positions. Their Grid presentation spans every column,
@@ -548,7 +615,7 @@ copy counts from the run's deck planner, grant reconciliation and card stamping.
 nodes persist through selection so the 180 ms lift/scale transition can settle smoothly.
 Phones use a smaller lift, and OS/in-game reduced motion disables movement. Continue
 opens the named next section; automatic advancement defaults off. Flavor stays on one
-line with an ellipsis, and full wording is available in the Flavor inspection disclosure.
+line with an ellipsis, and full wording is available in the inspection's lore line.
 Review: `equipment-selection-preview.html`; checks: `tools/starting-equipment-qa.mjs`.
 
 Equipment cards (#784): Inventory, starting equipment choices and equipped-item
@@ -573,8 +640,11 @@ Combat card actions: selection reveals a circular Information button centered ab
 Selected combat cards preview legal targets without committing: pure friendly cards highlight the player blue; hostile cards highlight every living enemy red. Unavailable cards and dead enemies do not glow. Selection changes and Escape clear stale highlights. Raster silhouettes retain transparent backgrounds so glow follows artwork rather than its rectangular canvas.
 
 World Journey (`src/ui/screens/worldAtlas.js`) composes fixed map terrain, discovery
-masks, inspectable landmark overlays, the route journal, and one native location
-dialog. Local points select a detail pane instead of opening nested dialogs. The
+masks, inspectable landmark overlays, and one native location dialog. It is laid
+out in W4b bands: a header, the map scene, and a context band for the selected
+place and its open roads. A Recenter / Enter footer closes the screen
+(`AtlasSelectionModel.js`: a tap selects, Enter travels or opens the current
+place). Local points select a detail pane instead of opening nested dialogs. The
 same renderer serves `world-atlas-preview.html`; its authoring controls and ID
 selector are isolated from the game. Actual service dispatch reuses the existing
 merchant, smith upgrade, and grace screens. See `docs/WORLD-ATLAS.md` for the
@@ -600,3 +670,36 @@ Combatant overhead controls: `combatantOverhead.js` shares Information and enlar
 Ready primary actions lift by 2px and scale to 1.015 without shifting surrounding layout. End Turn is ready only during the player phase when no affordable playable hand card remains; zero-Action cards still use their Mana/Stamina costs. Ready modal footers hide helper copy, retain secondary actions in their own row, and expand the primary button across the container. Reduced motion removes the transition.
 
 Ready colors use a 240ms background-color transition, including hovered hold buttons. Hold-progress background images remain independent and uneased. Newly mounted ready controls use a starting style so modal redraws also fade into green; hover does not switch between green shades.
+
+
+Single-dagger coverage adds 32 skins across all 35 catalog armor entries to the
+equipment animation reference component. It selects only right dagger + left empty
+with one-hand grip. The visual miniature includes Rogue single dagger; the
+[full synchronized gallery](../art/dagger-outfits-2026-09-19/index.html) provides
+class/outfit filters, pose order, timing, portrait and conversation references.
+
+### Stats, conversions, and hand rules
+
+Advanced → Stats is the one editing area for everything an attribute turns
+into. Each trait is a topic — Actions, Draw & hand, HP, Stamina, Mana, Poise,
+Ward, AR, DR, PR — holding its stat row (ruleset 7: one editor per row, the
+same fields in the same order — Base, STR, DEX, CON, WIS, INT, Per level, Min,
+Max) and related constants under subsection headings
+(`models/AdvancedSettingsGroups.js` `statsSection`). Draw & hand keeps the
+Opening hand, Draw / turn and Hand size rows beside Retention & discards; Poise
+ends with the legacy meter rows used only while ratings are off.
+`src/ui/models/StatsPreviewModel.js` computes the worked example above each
+topic from the same configured bundle, derived-stat engine, hand rules and
+rating receipt the game uses (a new character through `createRunState`, so
+starting relics are included); `settings.js` renders it and redraws it after
+every edit. In-run previews use the character's current attributes and level;
+outside a run the example is a chosen class's starting attributes.
+
+`src/ui/components/handDiscard.js` composes the shared modal shell, card grid,
+read-only card faces and footer buttons into the turn-end discard selector.
+Checkboxes select card instance IDs. Keep all/Confirm commit once; Close/Escape
+cancel without changing combat state. `src/engine/handRules.js` validates the
+selection independently before the turn can advance.
+
+### Ratings, Poise and Ward
+Advanced → Stats holds a topic for each rating's stat row, plus curves, impacts, break penalties and source/status overrides. Shared character resource strips and equipment receipts show Ward and AR/DR/PR contributions. The shared resource-bar renderer receives the new Ward source on character models, with the same selected-character visibility as Poise. Combat inspection lists both meters and the three bonus ratings. Stagger and Disruption use the shared combat banner.

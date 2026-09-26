@@ -1,0 +1,4 @@
+{
+  "sizing": { "glowRem": "$selectionGlowRem" },
+  "motion": { "revealDelayMs": "$revealDelayMs" }
+}

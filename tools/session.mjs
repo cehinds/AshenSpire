@@ -16,32 +16,39 @@
 // series when they return (see resolveCatchup).
 
 import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
-import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema } from '../src/model/state.js';
+import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema, syncZones } from '../src/model/state.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
-import { stampDeck } from '../src/model/loadout.js';
+import { stampDeck, healMissingSlotCells } from '../src/model/loadout.js';
+import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
+import { awardClassXp } from '../src/model/classTree.js';
+import { awardLevelXp, combatLevelXp } from '../src/model/levelup.js';
 import { playerWeightClass } from '../src/engine/combat.js';
 import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import {
   commitSmithing, grantSmithingReward, initializeRunSmithing, smithingPlan,
 } from '../src/model/smithing.js';
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
-import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
+import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
+import { defaultSeatOrder, seatOrderProblems, seatAtTier, seatTierHpMult, bossTierScale } from '../src/model/seats.js';
 import { assertSavedBossReferences } from '../src/model/mapReferences.js';
 import { refreshBossDestinationLabels } from '../src/model/bossDestinationLabels.js';
-import { availableEventChoices, recordEventChoice } from '../src/model/quests.js';
+import { availableEventChoices, recordEventChoice, questsCompletedBy } from '../src/model/quests.js';
+import { commitEventChoice, completeQuest } from '../src/engine/quests.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
 import { DEFAULT_SPRITE_STYLE } from '../src/model/spriteStyle.js';
 import {
   rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
-  rollRelicReward, shrineHealAmount, applyGraceRefill,
+  rollRelicReward,
 } from '../src/engine/encounters.js';
+import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import {
   createCoopCombat, coopOutcome, playCard, endTurn, useFlask, joinCombat, leaveCombat,
 } from '../src/engine/coopCombat.js';
 import { applyStatus } from '../src/engine/statuses.js';
 import { COOP_CARD_IDS } from '../src/content/cards/coop.js';
+import { staminaAtCombatStart } from '../src/framework/resources.js';
 
 // Focused browser gates may establish only the starting HP/Block named by the
 // story before driving the real LAN intent/event/render path. Keep that setup
@@ -107,12 +114,27 @@ export function restoreSession(registries, data) {
   return s;
 }
 
-export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {} }) {
+export function createSession({ registries, seedString, endless = false, restore = null, derivedStatOptions = {}, firstSeat = null }) {
   const LAST_ACT = registries.balance.endless.actsPerCycle; // act count (data)
+  // Each member's open shrine visit (engine/locations.js), by member id.
+  const shrineVisits = new Map();
+  function restView(visit) {
+    if (!visit) return null;
+    if (visit.restDenied) return { denied: registries.relics.get(visit.restDenied).name, heal: 0, mana: 0 };
+    const preview = previewRest(visit);
+    return { denied: null, heal: preview.heal, mana: preview.mana };
+  }
+
   if (restore) {
+    // SPEC §13.4: a party save from before seats climbs the default order —
+    // the one it was already climbing — and a save that names an order must
+    // name every seat once.
+    const seatOrder = Array.isArray(restore.seatOrder) ? restore.seatOrder : defaultSeatOrder(registries);
+    const seatProblems = seatOrderProblems(seatOrder, registries);
+    if (seatProblems.length) throw new Error(`Malformed session save: ${seatProblems.join('; ')}`);
     const mapAct = endless ? ((restore.actNumber - 1) % LAST_ACT) + 1 : restore.actNumber;
-    assertSavedBossReferences(registries, restore.mapGraph, mapAct);
-    restore = { ...restore, mapGraph: refreshBossDestinationLabels(registries, restore.mapGraph, mapAct) };
+    assertSavedBossReferences(registries, restore.mapGraph, { seat: seatAtTier(seatOrder, mapAct), tier: mapAct });
+    restore = { ...restore, seatOrder, mapGraph: refreshBossDestinationLabels(registries, restore.mapGraph, mapAct) };
   }
   const seed = restore ? (restore.seed >>> 0) : seedOf(seedString);
   const rng = createRng(seed, restore ? restore.rng : {}); // shared: map gen, encounter rolls
@@ -125,6 +147,9 @@ export function createSession({ registries, seedString, endless = false, restore
     seed,
     endless,
     actNumber: restore ? restore.actNumber : 1,
+    // The party's seat order (SPEC §13.4): drawn once at start() on the shared
+    // rng's `seats` stream; until then the default, so a lobby has a shape.
+    seatOrder: restore ? restore.seatOrder : defaultSeatOrder(registries),
     floor: restore ? restore.floor : 0,
     mapGraph: restore ? restore.mapGraph : null,
     cursorId: restore ? restore.cursorId : null,
@@ -173,14 +198,21 @@ export function createSession({ registries, seedString, endless = false, restore
         }
         const legacyKit = md.run.schemaVersion === 1;
         migrateRunSchema(md.run);
+        // The PARTY's seat order is the member's (SPEC §13.4): a pre-seat
+        // member run has none, and a member that joined mid-climb carries
+        // whatever it was born with; the session is the one authority.
+        md.run.seatOrder = session.seatOrder.slice();
         normalizeRunAttributes(md.run, registries);
         const discoveredArmaments = [...new Set(md.discoveredArmaments || [])];
         validateRunStartingKit(md.run, registries, { discoveredArmaments }, { legacy: legacyKit });
         initializeRunDerivedStats(md.run, registries, { preserveDeficits: true });
         initializeRunSmithing(registries, md.run);
+        healMissingSlotCells(registries, md.run.loadout); // a slot row newer than the record gets its empty cells (phase 3b)
         stampDeck(registries, md.run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
         initializeRunFlaskCharges(md.run, registries);
+        syncZones(md.run); // the restore re-stamped the deck; the projection follows it (plan phase 3a)
         delete md.run.migratedFromRunSchemaVersion;
+        delete md.run.reprojectedZones; // no ledger is open on a member record; the re-projection stands
         members.set(md.id, {
           id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || DEFAULT_SPRITE_STYLE,
           connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
@@ -208,12 +240,25 @@ export function createSession({ registries, seedString, endless = false, restore
     // trusted serialized client-facing bytes. Rebuild them on restore so an
     // older saved Shrine cannot disable Smithing after the run itself heals.
     if (session.scene?.kind === 'shrine') {
+      // The visits are rebuilt with the plans (engine/locations.js) as
+      // ALREADY ARRIVED: the save was written after the members arrived, so
+      // the arrival's rules (the refill, or any content a later row authors)
+      // do not run again on a host restart. The rest view is read off the
+      // rebuilt visit, so a restored save at a shrine shows a denied Rest
+      // disabled, not open.
+      shrineVisits.clear();
+      for (const member of [...members.values()].filter((m) => m.alive)) {
+        shrineVisits.set(member.id, createLocationVisit({ run: member.run, registries, rng: member.rng }, 'shrine', { arrived: true }));
+      }
       session.scene = {
         ...session.scene,
         done: { ...(session.scene.done || {}) },
         smithing: Object.fromEntries([...members.values()]
           .filter((member) => member.alive)
           .map((member) => [member.id, smithingPlan(registries, member.run)])),
+        rest: Object.fromEntries([...members.values()]
+          .filter((member) => member.alive)
+          .map((member) => [member.id, restView(shrineVisits.get(member.id))])),
         receipts: {
           ...(session.scene.receipts || {}),
           ...Object.fromEntries([...members.values()]
@@ -228,6 +273,9 @@ export function createSession({ registries, seedString, endless = false, restore
   function contentAct() {
     return endless ? ((session.actNumber - 1) % LAST_ACT) + 1 : session.actNumber;
   }
+  function currentSeat() {
+    return seatAtTier(session.seatOrder, contentAct());
+  }
   function loopCount() {
     return endless ? Math.floor((session.actNumber - 1) / LAST_ACT) : 0;
   }
@@ -236,6 +284,9 @@ export function createSession({ registries, seedString, endless = false, restore
     const index = order++;
     const entitlement = [...new Set(discoveredArmaments || [])];
     const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: { discoveredArmaments: entitlement } });
+    // The party's order, not the default: a member's run rides the session's
+    // seats exactly as it rides the session's act and floor (SPEC §13.4).
+    run.seatOrder = session.seatOrder.slice();
     const m = {
       id,
       name: String(name || 'Forsaken').slice(0, 18),
@@ -314,7 +365,7 @@ export function createSession({ registries, seedString, endless = false, restore
   function buildMap() {
     // The ONE boot path (#54) — same module main.js and runsim.mjs use;
     // unknowns come back pre-rolled, seed-determined at map birth.
-    session.mapGraph = buildActMap(registries, rng, contentAct(), null, { history: partyHistory() });
+    session.mapGraph = buildActMap(registries, rng, currentSeat(), contentAct(), null, { history: partyHistory() });
     session.floor = 0;
     session.cursorId = null;
     session.reachableIds = session.mapGraph.startIds.slice();
@@ -325,6 +376,10 @@ export function createSession({ registries, seedString, endless = false, restore
     if (session.started) return;
     session.started = true;
     session.actNumber = 1;
+    // The party's order, drawn once on the shared rng's `seats` stream; the
+    // host may pin the opening seat exactly as Custom Run does (SPEC §13.4).
+    session.seatOrder = drawSeatOrder(registries, rng, { firstSeat });
+    for (const m of members.values()) m.run.seatOrder = session.seatOrder.slice();
     buildMap();
   }
 
@@ -426,12 +481,16 @@ export function createSession({ registries, seedString, endless = false, restore
       id: m.id, name: m.name, classId: m.classId,
       maxHp: m.run.maxHp, hp: m.run.hp, deck: m.run.deck,
       maxMana: m.run.maxMana, mana: m.run.mana,
-      maxStamina: m.run.maxStamina, stamina: m.run.stamina,
+      maxStamina: m.run.maxStamina, stamina: staminaAtCombatStart({ currentStamina: m.run.stamina, maxStamina: m.run.maxStamina }),
       energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,
+      // The level every stat row's `perLevel` reads (ruleset 7).
+      level: m.run.level?.level,
       startingKitId: m.run.startingKitId,
       derivedStatRuleSnapshot: structuredClone(m.run.derivedStatRuleSnapshot),
       damageBySchoolAdd: { ...m.run.damageBySchoolAdd },
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
+      skills: m.run.skills, // the seat's ledger, for the progression predicates (plan phase 4a)
+      coreTags: m.run.coreTags, // the seat's class tree picks (plan phase 5b)
       // The seat's loadout rides into the co-op engine so the framework Weight
       // Class (dodge check and pricing) is this player's, not a Light default.
       loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
@@ -443,7 +502,7 @@ export function createSession({ registries, seedString, endless = false, restore
       // co-op engine takes poiseMax as given and defaults it to ZERO, so an
       // upgraded armour's threshold bought at the Shrine did nothing here
       // while its weight still priced the seat's dodge (Codex, #528).
-      poiseMax: playerPoiseThresholdReceipt(registries, { loadout: m.run.loadout, relics: m.run.relics, class: m.classId, itemUpgradeLevels: m.run.itemUpgradeLevels || {} }).value,
+      poiseMax: playerPoiseThresholdReceipt(registries, { loadout: m.run.loadout, relics: m.run.relics, class: m.classId, itemUpgradeLevels: m.run.itemUpgradeLevels || {}, attributes: m.run.attributes, derivedStatRuleSnapshot: m.run.derivedStatRuleSnapshot, level: m.run.level }).value,
     };
   }
 
@@ -454,17 +513,22 @@ export function createSession({ registries, seedString, endless = false, restore
   // `enc.pool` for the solo player; the caller's pool is only for the roll.
   function enterCombat(pool, forcedEncounterId = null) {
     const encounterId = forcedEncounterId || (pool === 'boss'
-      ? bossEncounterForNode(registries, session.mapGraph, session.cursorId, contentAct())
-      : rollEncounter(registries, rng, { pool, act: contentAct() }));
+      ? bossEncounterForNode(registries, session.mapGraph, session.cursorId, { seat: currentSeat(), tier: contentAct() })
+      : rollEncounter(registries, rng, { pool, seat: currentSeat() }));
     const enc = registries.encounters.get(encounterId);
     if (forcedEncounterId) pool = enc.pool;
     const loop = loopCount();
-    const extraHpMult = 1 + registries.balance.endless.hpPerLoop * loop; // endless cycle scaling (headcount handled by the runner)
+    // Endless cycle scaling × the seat's tier ratio (SPEC §13.3; 1 at the
+    // seat's own baseline). Headcount is handled by the runner.
+    // A boss scales by the tier it is met at instead (balance.bossTiers).
+    const boss = bossTierScale(registries, { encounter: enc, tier: contentAct() });
+    const extraHpMult = (1 + registries.balance.endless.hpPerLoop * loop) * (boss ? boss.hp : seatTierHpMult(registries, currentSeat(), contentAct()));
     const combat = createCoopCombat({
       registries, rng,
       players: connectedMembers().map(memberAsPlayer),
       enemyIds: enc.enemies,
       extraHpMult,
+      enemyDamageMult: boss ? boss.damage : 1,
       enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: registries.balance.endless.strPerLoop * loop }] : [],
     });
     // Co-op player entities intentionally share the engine id `player`; the
@@ -569,6 +633,18 @@ export function createSession({ registries, seedString, endless = false, restore
       enemies: c.enemies.map((e) => ({
         id: e.id, enemyId: e.enemyId, hp: e.hp, maxHp: e.maxHp, block: e.block,
         alive: e.alive, intent: e.intent, statuses: e.statuses, poiseMeter: e.poiseMeter,
+        // WHAT IT HAS ALREADY DONE. The engine records every move that
+        // RESOLVED on `performedMoves` (coopCombat.js, beside combat.js's own
+        // line), and solo's inspector reads it straight off the entity. This
+        // projection never carried it, so a co-op client's "Previous actions"
+        // was `unknown` — not "has not acted yet", but "we cannot see" — for
+        // the whole of every fight. An empty array is a real answer and a
+        // missing field is not; that distinction is the section's whole point.
+        performedMoves: Array.isArray(e.performedMoves) ? e.performedMoves.slice() : [],
+        // A boss's tier scale (balance.bossTiers) rides on the entity; the
+        // client's move cards read it through enemyMoveDamage, as solo's do,
+        // so an inactive move shows the damage it will really deal.
+        ...(Number.isFinite(e.damageMult) ? { damageMult: e.damageMult } : {}),
         arcaneExposure: e.arcaneExposure ? structuredClone(e.arcaneExposure) : undefined,
         damageResistanceBySchool: e.damageResistanceBySchool ? { ...e.damageResistanceBySchool } : undefined,
       })),
@@ -581,6 +657,10 @@ export function createSession({ registries, seedString, endless = false, restore
         drawPerTurn: P.entity.drawPerTurn,
         connected: P.connected, alive: P.entity.alive, ended: P.ended,
         statuses: P.entity.statuses, stanceId: P.entity.stanceId,
+        // THE SEAT'S POISE VESSEL. The client renders Poise from this alone,
+        // so a live meter the host fills was invisible to every co-op player
+        // without it (Codex, #1203). Absent stays absent: no vessel, no bar.
+        poiseMeter: P.entity.poiseMeter ? { ...P.entity.poiseMeter } : undefined,
         hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded })),
         drawCount: P.piles.draw.length, discardCount: P.piles.discard.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
@@ -644,6 +724,16 @@ export function createSession({ registries, seedString, endless = false, restore
         m.run.stamina = P.entity.stamina;
         m.run.flasks = P.entity.flasks.map((f) => ({ ...f }));
         m.run.flaskCharges = P.entity.flaskCharges ? { ...P.entity.flaskCharges } : null;
+        // The seat's skill receipt, keyed by its own id (plan phase 4a).
+        applySkillXp(registries, m.run, skillXpReceipt(c, m.id));
+        // The class track (plan phase 5b), paid per seat by the session, which knows the pool.
+        awardClassXp(registries, m.run, { victory: c.result === 'victory', pool: live && live.pool });
+        // The character level (plan phase 6), per seat: the party's kills are
+        // every seat's. No settings dial here — the server is authoritative
+        // and reads the authored points per level.
+        awardLevelXp(registries, m.run, combatLevelXp(registries, {
+          victory: c.result === 'victory', pool: live && live.pool, kills: c.eventLog.filter((e) => e.type === 'enemyDied').length,
+        }));
       }
     }
     live = null;
@@ -779,11 +869,28 @@ export function createSession({ registries, seedString, endless = false, restore
     // No settings override here on purpose. The server is authoritative and has
     // no browser to read `meta.settings` from; the counts are the authored
     // table. A per-session override is a lobby setting and a separate subject.
-    for (const m of livingMembers()) applyGraceRefill(registries, m.run);
+    //
+    // THE SHRINE IS A LOCATION VISIT (plan phase 7): every living member's
+    // visit mounts the shrine's rules and `arrived` runs the refill rule; the
+    // Rest choice below fires `rested` on that member's visit. The visits live
+    // beside the scene, not in it — the scene is what clients are shown.
+    shrineVisits.clear();
+    for (const m of livingMembers()) {
+      // Each visit rolls on ITS MEMBER'S streams (the seat's rng, as their
+      // rewards do), so a rolling rule's preview and its Rest read the same
+      // roll whatever order the party chooses in.
+      const visit = createLocationVisit({ run: m.run, registries, rng: m.rng }, 'shrine');
+      arriveAt(visit);
+      shrineVisits.set(m.id, visit);
+    }
     session.scene = {
       kind: 'shrine',
       done: {},
       smithing: Object.fromEntries(livingMembers().map((m) => [m.id, smithingPlan(registries, m.run)])),
+      // What each member's Rest would do here, and the relic that forbids it
+      // when one does — so the client can disable and explain the option
+      // rather than send a choice the host refuses (the review of #1195).
+      rest: Object.fromEntries(livingMembers().map((m) => [m.id, restView(shrineVisits.get(m.id))])),
       receipts: {},
     };
     return { ok: true };
@@ -796,8 +903,19 @@ export function createSession({ registries, seedString, endless = false, restore
       reallocateFlaskCharges(m.run.flaskCharges, targetId || {});
       return { ok: true, allocation: { ...m.run.flaskCharges } };
     } else if (choice === 'rest') {
-      m.run.hp = Math.min(m.run.maxHp, m.run.hp + shrineHealAmount(registries, m.run));
-      m.run.mana = m.run.maxMana;
+      // A member whose visit is missing (a save from before the visits, or a
+      // member revived at the stop) arrived when the scene opened: the visit
+      // is rebuilt already arrived and kept for the leave below.
+      let visit = shrineVisits.get(memberId);
+      if (!visit) {
+        visit = createLocationVisit({ run: m.run, registries, rng: m.rng }, 'shrine', { arrived: true });
+        shrineVisits.set(memberId, visit);
+      }
+      if (visit.restDenied) return { ok: false, error: `rest denied by relic '${visit.restDenied}'` };
+      restAt(visit);
+    } else if (choice === 'leave') {
+      // Taking nothing is a choice: a member whose Rest a relic denies, with
+      // no smith candidate and no ally to Mend, still marks the stop done.
     } else if (choice === 'mend') {
       // Co-op Mend: heal an ally for 30% of their max HP instead of resting.
       const ally = members.get(targetId);
@@ -818,8 +936,15 @@ export function createSession({ registries, seedString, endless = false, restore
       return { ok: false, error: `unknown shrine choice '${choice}'` };
     }
     session.scene.done[memberId] = true;
+    // A Mend moved an ally's pools: every member's rest view is re-read so
+    // the next snapshot shows what a Rest would do now.
+    session.scene.rest = Object.fromEntries(livingMembers().map((mm) => [mm.id, restView(shrineVisits.get(mm.id))]));
     const waiting = connectedMembers().filter((mm) => !session.scene.done[mm.id]);
-    if (!waiting.length) advanceFromNode();
+    if (!waiting.length) {
+      for (const visit of shrineVisits.values()) leaveLocation(visit);
+      shrineVisits.clear();
+      advanceFromNode();
+    }
     return { ok: true };
   }
 
@@ -885,23 +1010,23 @@ export function createSession({ registries, seedString, endless = false, restore
       if (choice.requires && typeof choice.requires.cinders === 'number' && (m.run.cinders || 0) < choice.requires.cinders) {
         return { ok: false, error: `that choice needs ${choice.requires.cinders} cinders` };
       }
-      // THE TRANSACTION HAPPENS BEFORE THE FACT IS RECORDED — the same DSL
-      // and the same order as the solo event screen and runsim.mjs
-      // (executeRunEffects, then recordEventChoice). Recording "gave the
-      // cinders" with the purse untouched and no relic granted put a fact in
-      // the party's history that never occurred (Codex, #536). The member's
-      // own rng stream prices it, as their rewards are rolled.
-      executeRunEffects({ run: m.run, registries, rng: m.rng }, choice.effects || []);
+      // The history record reads the run's own act/floor/node; a member's run
+      // rides the session's cursor, so it is stamped from it first.
+      m.run.actNumber = session.actNumber;
+      m.run.floor = session.floor;
+      m.run.mapNodeId = session.cursorId ?? null;
+      // THE TRANSACTION HAPPENS BEFORE THE FACT IS RECORDED. The quest door
+      // (src/engine/quests.js commitEventChoice) the solo Event and dialogue
+      // screens use runs the effects, then records the choice, then completes
+      // any quest chain the choice finishes — so a quest finished in co-op is
+      // finished. Recording "gave the cinders" with the purse untouched put a
+      // fact in the party's history that never occurred (Codex, #536). The
+      // member's own rng stream prices it, as their rewards are rolled.
+      commitEventChoice({ run: m.run, registries, rng: m.rng }, { eventId: def.id, choiceId: choice.id });
       // A CHOICE CAN KILL. An offering at 1 HP leaves the run at 0; the seat
       // falls the way it falls in combat (m.alive), so it is broadcast fallen
       // and enters no later node at 0 HP (Codex, #536).
       if (m.run.hp <= 0) { m.run.hp = 0; m.alive = false; }
-      // recordEventChoice reads the run's own act/floor/node for the record;
-      // a member's run rides the session's cursor, so it is stamped from it.
-      m.run.actNumber = session.actNumber;
-      m.run.floor = session.floor;
-      m.run.mapNodeId = session.cursorId ?? null;
-      recordEventChoice(m.run, { eventId: def.id, choiceId: choice.id });
       session.scene.picks[memberId] = choice.id;
       // The choice's authored result, for this seat to read before the room
       // moves on (shown by coop.js when a fight follows).
@@ -1140,6 +1265,10 @@ export function createSession({ registries, seedString, endless = false, restore
         // live stream is not moved (Codex on #548).
         const eventRng = item.rng ? createRng(m.rng.seed, item.rng) : m.rng;
         executeRunEffects({ run: m.run, registries, rng: eventRng }, choice.effects || []);
+        // A CHOICE CAN SWAP THE CLASS (plan phase 5c, swapClass): the member's
+        // own copy of the class follows the run's, or the restore door refuses
+        // the seat and the reward and poise readers keep the old card.
+        if (m.run.class !== m.classId) m.classId = m.run.class;
         // THE FIGHT THE CHOICE STARTED was the party's — a choice whose fight
         // the party did not meet is not in the entry (settleEvent) — and was
         // fought while this seat was away; a returning seat fights no room
@@ -1172,6 +1301,14 @@ export function createSession({ registries, seedString, endless = false, restore
         m.run.floor = item.floor;
         m.run.mapNodeId = item.mapNodeId ?? null;
         recordEventChoice(m.run, { eventId: def.id, choiceId: choice.id });
+        // A caught-up choice that finishes a quest chain completes it through
+        // the same completion door as the live room (src/engine/quests.js), at
+        // most once. The commit itself stays here rather than going through
+        // commitEventChoice: it is judged against the entry's frozen `open`
+        // list and priced at the event's own rng position, not today's.
+        for (const questId of questsCompletedBy(registries.questChains, { eventId: def.id, choiceId: choice.id })) {
+          completeQuest({ run: m.run }, { questId, source: 'event' });
+        }
         // Then the seat snaps back to the party's position.
         m.run.actNumber = session.actNumber;
         m.run.floor = session.floor;
@@ -1194,6 +1331,10 @@ export function createSession({ registries, seedString, endless = false, restore
     return {
       loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
       id: m.id, name: m.name, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, connected: m.connected, alive: m.alive,
+      // The seat's character ledger (plan phase 6), so a client can show the
+      // level and the points waiting; assigning them in co-op waits with the
+      // co-op class draft (the session pays, the shrine does not yet offer).
+      level: m.run.level ? structuredClone(m.run.level) : null,
       startingKitId: m.run.startingKitId,
       hp: m.run.hp, maxHp: m.run.maxHp, cinders: m.run.cinders,
       smithingStones: m.run.smithingStones,
@@ -1228,12 +1369,17 @@ export function createSession({ registries, seedString, endless = false, restore
   // live fight (combat is not persisted; resume lands at the pre-combat node).
   function serialize() {
     if (live || session.scene.kind === 'combat') return null;
+    // Member runs are emitted as they are, not through serializeRun, so the
+    // projection is drawn here from the fields that own it (plan phase 3a):
+    // what is written is what class, loadout, relics and deck say now.
+    for (const m of members.values()) syncZones(m.run);
     return {
       v: 1,
       seed: session.seed,
       seedString: session.seedString,
       endless: session.endless,
       actNumber: session.actNumber,
+      seatOrder: session.seatOrder.slice(),
       floor: session.floor,
       cursorId: session.cursorId,
       reachableIds: session.reachableIds.slice(),
@@ -1279,10 +1425,22 @@ export function createSession({ registries, seedString, endless = false, restore
             ...(n.type === 'boss' ? { encounterId: n.encounterId, destinationLabel: n.destinationLabel } : {}) })),
         }
       : null;
+    // THE SEAT THE PARTY IS CLIMBING (SPEC §13.2). `start()` DRAWS the order,
+    // so it differs run to run; solo reads it off `run.seatOrder` and prints
+    // "ACT II — THE PALE MARCHES". The producer never sent either field, so
+    // `snap.seatName` at coop.js and `act.seatName` at mapboard.js both read
+    // `undefined` and every co-op fight header and map title said a bare "ACT
+    // II" — the one line that tells a party WHERE they are, missing, for the
+    // whole of co-op. `seatOrder` rides too: it is what a client needs to say
+    // anything about a tier that is not the current one.
+    const seatId = session.seatOrder && session.seatOrder.length ? currentSeat() : null;
     return {
       id: session.id,
       seedString: session.seedString,
       actNumber: session.actNumber,
+      seatOrder: session.seatOrder ? session.seatOrder.slice() : [],
+      seatId,
+      seatName: seatId && registries.seats.has(seatId) ? registries.seats.get(seatId).name : null,
       floor: session.floor,
       endless: session.endless,
       scene: session.scene,

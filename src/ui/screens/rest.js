@@ -1,5 +1,6 @@
-// src/ui/screens/rest.js — Shrine of Emberlight: Rest (heal) or Smith (upgrade)
-// (SPEC §7.1; heal math from engine/encounters.js shrineHealAmount)
+// src/ui/screens/rest.js — a location's Rest screen: Rest, and the services
+// the place carries (SPEC §7.1, §13.4j; what a Rest restores is the location's
+// tag set, engine/locations.js — this screen states no number of its own)
 //
 // TWO ACTIONS ON THIS SCREEN TAKE A SECOND BEAT, and they take DIFFERENT ONES,
 // which is the clearest illustration in the tree of why the form is derived
@@ -17,10 +18,12 @@
 // Neither of those decisions is in this file. `model/secondbeat.js` holds the
 // characteristics; this screen names its actions.
 
-import { shrineHealAmount } from '../../engine/encounters.js';
+import { createLocationVisit, previewRest, restAt } from '../../engine/locations.js';
+import { locationServiceTypeId } from '../../model/locations.js';
 import { levelUpPlan, applyLevelUp, levelUpBudget } from '../../model/levelup.js';
 import { attributeCardModels } from '../../model/creationBrief.js';
-import { passiveFlag } from '../../model/registries.js';
+import { statProjection } from '../../model/statProjection.js';
+import { runHandRules } from '../../model/handRules.js';
 import { commitSmithing, smithingPlan } from '../../model/smithing.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { beatArmer } from '../../framework/optionDecision.js';
@@ -39,7 +42,14 @@ import { runHudHtml, wireRunHud } from '../components/runHud.js';
 // tap-floor buttons trailing — the total is StatusText, the cinder preview
 // a KitLine with a StatPair and a delta. The `.flask-*` / `.level-cinder-*`
 // names stay on the kit elements because tools/flaskbox.mjs reads them.
-import { el, html, row, stepper, statusText, subtitle, statPair } from '../kit/index.js';
+import { el, html, row, stepper, statusText, subtitle, statPair, button, modalFooter } from '../kit/index.js';
+// W1s: the Shrine is a choice body — the options beside their availability,
+// the head's {Status} from the same facts, Continue in the foot when the
+// Shrine has one (Multi-use). ChoiceBodyModel projects; this screen decides.
+import { mountChoiceBody } from '../components/choiceBody.js';
+import { restChoiceStatus } from '../models/ChoiceBodyModel.js';
+import { t, has } from '../strings.js';
+import { restReview } from '../models/ConfirmationReviewModel.js';
 
 const boundedNumber = (value, fallback, minimum, maximum) => {
   const parsed = Number(value);
@@ -88,32 +98,59 @@ function partnerName(registries, kind) {
   return (def && def.name) || kind;
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, levelValue = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null }) {
+/**
+ * The place's own title row when one is authored, else its rest service type's
+ * (an atlas point resolved by its own tagging row is still an inn), else the
+ * Shrine's.
+ */
+function locationTitle(locationId) {
+  for (const id of [locationId, locationServiceTypeId(locationId)]) {
+    if (has(`location.${id}.title`)) return t(`location.${id}.title`);
+  }
+  return t('rest.title');
+}
+
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null, questBoard = null }) {
   // E13's multi-use Shrine: an action re-opens the same screen (with what was
   // already taken recorded) instead of leaving; LEAVE is the one way out.
   const remount = (extra = {}) => mountRest(app, {
-    registries, run, meta, onDone, onReallocate, onLevelUp, levelValue, healMult, refill, openPanel: null, multiUse, rested, services, hud, ...extra,
+    registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill, openPanel: null, multiUse, rested, services, hud, visit, questBoard, ...extra,
   });
-  const heal = Math.floor(shrineHealAmount(registries, run) * healMult);
-  const relicNoRest = passiveFlag(registries, run.relics, 'shrineNoRest');
+  // THE PLACE IS A CARRIER (plan phase 7). The door (main.js) opens the visit
+  // — the location's rules mounted, `arrived` already emitted — and hands it
+  // in; a screen mounted without one (a fixture, an older caller) stands at
+  // the classic Shrine. What Rest restores is read off the same rules the
+  // button fires, on a clone, so the line and the result cannot disagree.
+  const stay = visit || createLocationVisit({ run, registries, rng: null }, 'shrine', { healMult });
+  const relicNoRest = !!stay.restDenied;
+  const preview = relicNoRest ? null : previewRest(stay);
+  const heal = preview ? preview.heal : 0;
+  const manaAfter = preview ? preview.manaAfter : run.mana;
+  const manaGain = Math.max(0, manaAfter - run.mana);
   const noRest = relicNoRest || (multiUse && rested);
-  // The locked copy names the real reason: a relic that forbids rest, or a
-  // rest already taken at this Shrine under Multi-use — never a relic the
+  // The locked copy names the real reason: the relic that forbids rest here,
+  // or a rest already taken at this place under Multi-use — never a relic the
   // player does not carry.
-  const noRestCopy = relicNoRest ? 'The Wyrm Heart will not let you rest.' : 'You have already rested at this Shrine.';
+  const noRestCopy = relicNoRest ? `The ${registries.relics.get(stay.restDenied).name} will not let you rest here.` : 'You have already rested here.';
   // Rest at full health and full Mana led the list as if it were the thing to
   // do — "Heal 0 HP (62 → 62/62)" in the first, brightest card (review,
   // 2026-09-11). It stays a choice (it is still the way to end a visit without
   // spending anything), reads muted, and says what it would not restore.
-  const nothingToRestore = !noRest && heal <= 0 && run.mana >= run.maxMana;
+  const nothingToRestore = !noRest && heal <= 0 && manaGain <= 0;
   const smith = smithingPlan(registries, run);
-  // WHICH SERVICES THIS SMITH OFFERS is the table in balance.smithing.services,
-  // resolved at the door (main.js) and handed in; a screen mounted without it
-  // — a fixture, an older caller — keeps the Shrine it always had.
-  const offered = services && Array.isArray(services.services) ? services.services : ['upgrade'];
+  // WHICH SERVICES THIS PLACE OFFERS is its tag set (smith, levelUp,
+  // restFlasks — model/locations.js); WHICH SMITH SERVICES is the table in
+  // balance.smithing.services, resolved at the door and handed in. A screen
+  // mounted without the table keeps the upgrade it always had.
+  const offered = stay.services.smith ? (services && Array.isArray(services.services) ? services.services : ['upgrade']) : [];
   const canInspectSmithing = offered.includes('upgrade') && smith.candidates.length > 0;
   const extract = offered.includes('extract') ? mountServiceOffer(registries, run, 'extract') : null;
   const install = offered.includes('install') ? mountServiceOffer(registries, run, 'install') : null;
+  // THE QUEST BOARD (plan phase 10b) is a service the place's tags offer
+  // (`questBoard`); the door hands in its counts and the way to it, since the
+  // board is the atlas town's and this screen knows no atlas. Reading it takes
+  // nothing and ends nothing: the board returns here.
+  const board = stay.services.questBoard && questBoard ? questBoard : null;
   const arm = beatArmer(meta, registries);
   // `hpCharge` / `manaCharge` are GONE, and their absence is the point: this
   // screen no longer names a charge kind at all. It used to reach for exactly
@@ -124,15 +161,15 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // offer; every row, every disabled state and every reason below is read off
   // this plan, and none of them is decided here (model/gracerefill.js).
   const charge = flaskChargePlan(registries, run.flaskCharges);
-  // "also at graces, players should have the option to level up their character
-  // (per run) by trading cinders to level up." The screen asks the model what
-  // it may offer and prices nothing itself.
-  // The shrine assignment card grants exactly one point. The model still owns
-  // pricing, caps, persistence, and pool reconciliation; the screen only fixes
-  // the size of this one interaction.
-  const level = levelUpPlan(registries, run, { pointsPerLevel: 1 });
-  // How many levels IN A ROW the purse covers — the card offers them all at
-  // once and commits them one ladder step at a time (model/levelup.js).
+  // THE LEVEL IS EARNED, NOT BOUGHT (plan phase 6): fights pay XP, each level
+  // grants attribute points, and this card is where the points waiting on
+  // the run's ledger are assigned. The screen asks the model what it may
+  // offer and prices nothing — there is no price. The model owns the ledger,
+  // the cap, persistence and pool reconciliation; the screen only fixes the
+  // size of this one interaction.
+  const level = levelUpPlan(registries, run);
+  // How many points wait — the card offers them all at once and commits them
+  // one applyLevelUp at a time (model/levelup.js).
   const budget = levelUpBudget(registries, run);
   const shrinePresentation = registries.balance?.ui?.shrinePresentation || {};
   const authoredShrineLayout = shrinePresentation.optionLayout;
@@ -140,7 +177,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   const foldedCardWidthViewportPct = boundedNumber(shrinePresentation.foldedCardWidthViewportPct, 88, 60, 100);
   const foldedCardMaxWidthRem = boundedNumber(shrinePresentation.foldedCardMaxWidthRem, 44, 24, 72);
   const foldedCardHeightViewportPct = boundedNumber(shrinePresentation.foldedCardHeightViewportPct, 10, 6, 18);
-  const foldedCardMaxHeightRem = boundedNumber(shrinePresentation.foldedCardMaxHeightRem, 7, 4, 12);
+  const foldedCardMaxHeightRem = boundedNumber(shrinePresentation.foldedCardMaxHeightRem, 6.5, 4, 12);
 
   // THE FLASK ROWS. One kit Row per charge kind: identity left, the stepper
   // trailing. THE STEPPER IS ONE UNIT AND WRAPS AS ONE — on a narrow shape the
@@ -161,31 +198,31 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       }),
     });
   }));
-  // THE CINDER LINE: what you hold, what a level costs, and — once a point is
-  // pending — what remains, as the kit's delta.
-  const cinderLineHtml = level.capped ? '' : html(el('p', { class: 'as-kitline level-cinder-preview', dataset: { levelCinderPreview: '' } }, [
-    statPair({ key: 'You hold', value: String(level.cinders) }),
-    el('strong', { class: 'level-cinder-cost', text: `− ${level.cost} cinders` }),
-    el('span', { class: 'as-delta level-cinder-result', dataset: { levelCinderResult: '', dir: 'down' }, hidden: true }, [
-      el('span', { class: 'd-arrow', text: '→' }), el('span', { class: 'd-to', text: `${level.cinders - level.cost} remaining` }),
+  // THE LEVEL LINE: where the climb stands — the level, the XP toward the
+  // next — and, once a point is pending, how many remain, as the kit's delta.
+  // No cinder is named here: a level costs nothing but the fights it took.
+  const levelLineHtml = html(el('p', { class: 'as-kitline level-xp-preview', dataset: { levelXpPreview: '' } }, [
+    statPair({ key: `Level ${level.level}`, value: `${level.xp} / ${level.xpToNext} XP` }),
+    el('strong', { class: 'level-points-waiting', text: `${level.points} point${level.points === 1 ? '' : 's'} to assign` }),
+    el('span', { class: 'as-delta level-points-result', dataset: { levelPointsResult: '', dir: 'down' }, hidden: true }, [
+      el('span', { class: 'd-arrow', text: '→' }), el('span', { class: 'd-to', text: `${level.points} remaining` }),
     ]),
   ]));
 
-  app.innerHTML = `
-    ${hud ? runHudHtml({ registries, run, meta, place: 'rest', headerClass: 'map-header room-header' }) : ''}
-    <div class="screen room-screen" style="--shrine-folded-card-width:${foldedCardWidthViewportPct}vw;--shrine-folded-card-max-width:${foldedCardMaxWidthRem}rem;--shrine-folded-card-height:${foldedCardHeightViewportPct}vh;--shrine-folded-card-max-height:${foldedCardMaxHeightRem}rem">
-      <h2>Shrine of Ember</h2>
-      <p class="subtitle">The gold light holds, for now</p>
-      ${refillLineHtml(registries, refill)}
+  // W1s: the option cards are the choice body's first slot, their markup
+  // unchanged. The Shrine's name moves to the head's title, and the flavour
+  // subtitle under it goes (FRONTEND-WIREFRAMES §4: no redundant shrine
+  // introduction). The refill sentence moves to the second slot, below.
+  const choicesHtml = `
       <div class="class-row shrine-option-${shrineLayout}" data-option-layout="${shrineLayout}">
         <div class="class-pick${noRest ? ' locked' : nothingToRestore ? ' quiet' : ''}" id="rest-opt">
           <div class="glyph">♨</div>
           <div class="cp-body">
             <h3>Rest</h3>
-            <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore — you stand at ${run.hp}/${run.maxHp} HP with full Mana. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp}) and restore Mana (${run.mana} → ${run.maxMana}).`}</p>
+            <p>${noRest ? noRestCopy : nothingToRestore ? `Nothing to restore — you stand at ${run.hp}/${run.maxHp} HP${run.mana >= run.maxMana ? ' with full Mana' : ''}. Resting still ${multiUse ? 'takes the rest' : 'ends the visit'}.` : `Heal ${heal} HP (${run.hp} → ${Math.min(run.maxHp, run.hp + heal)}/${run.maxHp})${manaGain > 0 ? ` and restore Mana (${run.mana} → ${manaAfter})` : ''}.`}</p>
           </div>
         </div>
-        <div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
+        ${stay.services.smith ? `<div class="class-pick${canInspectSmithing ? '' : ' locked'}" id="smith-opt"
              role="button" tabindex="${canInspectSmithing ? '0' : '-1'}"
              aria-disabled="${canInspectSmithing ? 'false' : 'true'}">
           <div class="glyph">⚒</div>
@@ -195,7 +232,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
               ? `${smith.stones} Smithing Stone${smith.stones === 1 ? '' : 's'} · choose one owned armament.`
               : 'No owned armament has an effective tier remaining.'}</p>
           </div>
-        </div>
+        </div>` : ''}
         ${extract ? `<div class="class-pick${extract.available ? '' : ' locked'}" id="extract-opt"
              role="button" tabindex="${extract.available ? '0' : '-1'}"
              aria-disabled="${extract.available ? 'false' : 'true'}">
@@ -214,7 +251,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
             <p>${esc(install.summary)}</p>
           </div>
         </div>` : ''}
-        <details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
+        ${stay.services.flasks ? `<details class="class-pick shrine-fold" id="flask-reallocate"${openPanel === 'flask' ? ' open' : ''}>
           <summary>
             <span class="glyph shrine-fold-glyph">⚗</span>
             <span class="ob shrine-fold-summary"><b class="on">Reallocate Flask Charges</b><small class="om">${charge.assigned}/${charge.capacity} assigned</small></span>
@@ -240,17 +277,18 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           </div>
           </div>
           </div>
-        </details>
-        <!-- THE AFFORDABILITY PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
+        </details>` : ''}
+        <!-- THE OFFER PREDICATE, PUBLISHED RATHER THAN RE-DERIVED.
              Constantine: "make the flask and the level up collapsible (with
              level up being grayed out or not visible when there isn't enough
-             cinders)". The fold and the grey-out are the player-experience
-             seat's; the PREDICATE is model/levelup.js's, and these attributes
-             are the seam between them. A styling seat reads data-affordable,
-             data-blocked-by and data-short and never subtracts a cost from a
-             purse - the day it did there would be two answers to "can he afford
-             this" and the screen would eventually disagree with the commit path
-             below.
+             cinders)". Cinders buy no level now (plan phase 6): the card is
+             greyed when no earned point waits. The fold and the grey-out are
+             the player-experience seat's; the PREDICATE is model/levelup.js's,
+             and these attributes are the seam between them. A styling seat
+             reads data-points and data-blocked-by and never re-derives the
+             ledger - the day it did there would be two answers to "may he
+             assign a point" and the screen would eventually disagree with the
+             commit path below.
              THE SAME OBJECT DRIVES BOTH: the locked class and these attributes
              come off ONE level plan, computed once per mount, so a disabled card
              and a refused purchase cannot diverge. An instrument reads them too,
@@ -261,21 +299,72 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
              node --check exits 0 on the result because it parses the file as a
              SCRIPT, so my own "parses" check was silent on all three. The gate
              that caught this one is tools/linkcheck.mjs. -->
-        <div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt"
+        ${stay.services.levelUp ? `<div class="class-pick${level.offerable ? '' : ' locked'}" id="level-opt"
              role="button" tabindex="0" aria-haspopup="dialog"
              aria-disabled="${level.offerable ? 'false' : 'true'}"
-             data-affordable="${level.affordable ? '1' : '0'}"
+             data-points="${level.points}"
              data-blocked-by="${level.blockedBy || ''}"
-             data-cost="${level.cost}" data-short="${level.short}">
+             data-level="${level.level}" data-xp="${level.xp}" data-xp-to-next="${level.xpToNext}">
           <div class="glyph">✦</div>
           <div class="cp-body">
             <h3>Level up</h3>
-            <p>${level.capped ? 'Level cap reached' : level.offerable ? `${budget.levels} level${budget.levels === 1 ? '' : 's'} affordable · from ${level.cost} cinders` : `${level.cost} cinders · +1 point`}</p>
+            <p>${level.offerable ? `${budget.points} point${budget.points === 1 ? '' : 's'} to assign · Level ${level.level}` : level.capped ? `Level ${level.level} · the level cap` : `Level ${level.level} · ${level.xp} / ${level.xpToNext} XP to the next`}</p>
           </div>
-        </div>
+        </div>` : ''}
+        ${board ? `<div class="class-pick" id="board-opt" role="button" tabindex="0">
+          <div class="glyph">✉</div>
+          <div class="cp-body">
+            <h3>${esc(t('questBoard.open'))}</h3>
+            <p>${esc(t('questBoard.open.summary', { ready: board.ready, open: board.open }))}</p>
+          </div>
+        </div>` : ''}
       </div>
-      ${multiUse ? '<button id="shrine-leave" class="shrine-leave">LEAVE THE SHRINE</button>' : ''}
-    </div>`;
+    `;
+
+  app.innerHTML = `
+    ${hud ? runHudHtml({ registries, run, meta, place: 'rest', headerClass: 'map-header room-header' }) : ''}
+    <div class="screen room-screen rest-screen" style="--shrine-folded-card-width:${foldedCardWidthViewportPct}vw;--shrine-folded-card-max-width:${foldedCardMaxWidthRem}rem;--shrine-folded-card-height:${foldedCardHeightViewportPct}vh;--shrine-folded-card-max-height:${foldedCardMaxHeightRem}rem"></div>`;
+  // W1s {Status} and availability: one fact per offered choice, read off the
+  // same plans that build and wire the cards above — never re-derived.
+  const offeredChoices = [
+    { id: 'rest', selector: '#rest-opt', available: !noRest, used: !relicNoRest && multiUse && rested },
+    stay.services.smith && { id: 'smith', selector: '#smith-opt', available: canInspectSmithing },
+    extract && { id: 'extract', selector: '#extract-opt', available: extract.available },
+    install && { id: 'install', selector: '#install-opt', available: install.available },
+    stay.services.flasks && { id: 'flask', selector: '#flask-reallocate', available: charge.rows.some((r) => r.canAdd || r.canSub) },
+    stay.services.levelUp && { id: 'level', selector: '#level-opt', available: level.offerable },
+  ].filter(Boolean);
+  const availability = restChoiceStatus(offeredChoices);
+  // The foot is Multi-use's continuation (it was LEAVE THE SHRINE under the
+  // cards). A single-use place has none — taking a choice is the way on — so
+  // its reserved foot collapses rather than inventing a way to leave. EXCEPT
+  // where a relic denies the Rest: then Rest is not a way on, and a place
+  // with no smith (a chapel) would hold the run for good (the review of
+  // #1195), so the foot is the way out.
+  const leave = multiUse || relicNoRest ? button({ label: t('rest.continue'), weight: 'primary', id: 'shrine-leave', className: 'shrine-leave' }) : null;
+  const consequences = el('aside', { class: 'choice-body-consequences choice-status rest-consequences', 'aria-label': t('rest.consequences.heading') });
+  mountChoiceBody(app.querySelector('.rest-screen'), {
+    className: 'rest-door',
+    eyebrow: t('rest.eyebrow'),
+    title: locationTitle(stay.locationId),
+    status: t('rest.status.available', { available: availability.available, total: availability.total }),
+    choices: el('div', { class: 'choice-body-choices rest-choices', html: choicesHtml }),
+    consequences,
+    foot: leave ? modalFooter({ primary: leave, size: 'fill', className: 'choice-foot' }) : null,
+  });
+  // The second slot: what arriving already restored, then each choice's state.
+  // The names are read off the mounted cards, so a choice keeps one title.
+  consequences.insertAdjacentHTML('beforeend', refillLineHtml(registries, refill));
+  consequences.append(
+    el('h3', { class: 'as-eyebrow', text: t('rest.consequences.heading') }),
+    el('ul', { class: 'choice-status-list' }, availability.rows.map((entry) => {
+      const card = app.querySelector(offeredChoices.find((choice) => choice.id === entry.id).selector);
+      return el('li', { class: 'choice-status-row', dataset: { option: entry.id, state: entry.state } }, [
+        el('span', { class: 'choice-status-name', text: (card?.querySelector('h3, .on')?.textContent || entry.id).trim() }),
+        el('span', { class: 'choice-status-state', text: t(`rest.state.${entry.state}`) }),
+      ]);
+    })),
+  );
 
   if (hud) wireRunHud(app, { ...hud, registries, run, meta, remount: () => remount() });
 
@@ -287,18 +376,25 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     const element = app.querySelector(selector);
     if (element) markUiComponent(element, UI.shrineOptionCard, variant);
   }
-  const leave = app.querySelector('#shrine-leave');
+  const boardOption = board ? app.querySelector('#board-opt') : null;
+  if (boardOption) {
+    boardOption.addEventListener('click', () => board.onOpen());
+    boardOption.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      board.onOpen();
+    });
+  }
   if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));
 
   if (!noRest) {
     arm(app.querySelector('#rest-opt'), 'shrineRest', {
-      question: multiUse
-        ? `Rest here? Heal ${heal} HP and restore Mana. You stay at this Shrine and leave when you choose.`
-        : `Rest here? Heal ${heal} HP and restore Mana, then leave this Shrine.`,
-      confirmLabel: 'REST',
+      // W2a: question, the Shrine and the pools it acts on, the exact recovery.
+      ...restReview({ shrine: locationTitle(stay.locationId), heal, manaGain, hp: run.hp, maxHp: run.maxHp, mana: run.mana, maxMana: run.maxMana, multiUse }),
       onConfirm: () => {
-        run.hp = Math.min(run.maxHp, run.hp + heal);
-        run.mana = run.maxMana;
+        // The rules fire (`rested`), the pools move through the engine's
+        // opcodes; this screen writes nothing to the run itself.
+        restAt(stay);
         sfx.play('shrine');
         if (multiUse) { if (onLevelUp) onLevelUp(); remount({ rested: true }); return; }
         onDone(`Rested: +${heal} HP.`);
@@ -348,9 +444,10 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // The same allocation component used by character creation, with shrine
   // policy: existing values are immutable, affordable points may be assigned,
   // and the run is not mutated until Done commits it through applyLevelUp.
-  if (level.offerable) {
-    // Pending points per attribute. Up to `budget.levels` in total; each one
-    // is a level, so Done walks the ladder once per point, in order.
+  if (level.offerable && stay.services.levelUp) {
+    // Pending points per attribute. Up to `budget.points` in total — the
+    // points the run has earned and not yet assigned; Done commits them one
+    // applyLevelUp at a time, in order.
     const pending = Object.fromEntries(level.attributes.map((attr) => [attr.id, 0]));
     const pendingTotal = () => Object.values(pending).reduce((sum, n) => sum + n, 0);
     const option = app.querySelector('#level-opt');
@@ -358,23 +455,35 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
     let allocation = null;
     const drawLevelCard = () => {
       const count = pendingTotal();
-      const spend = budget.costs.slice(0, count).reduce((sum, cost) => sum + cost, 0);
       const values = Object.fromEntries(level.attributes.map((attr) => [
         attr.id,
         run.attributes[attr.id] + pending[attr.id],
       ]));
+      // THE RUN'S OWN PROJECTION, NOT THE AUTHORED TABLE. This is the screen
+      // where a point is actually spent, so the card that says what a point
+      // buys has to say what THIS run's point buys: a climb keeps the
+      // derived-stat rows it was BORN under, and without the projection
+      // `attributeCardModels` falls back to the live authored row — which a
+      // Settings edit mid-climb, or a save from an older table, makes a
+      // different number, on the one screen where the number decides the
+      // choice.
       const cards = new Map(attributeCardModels(registries, values, {
+        projection: statProjection(registries, run),
         equipmentProfiles: run.equipmentProfileRuleSnapshot?.profiles,
+        // The next fight's hand, resolved the way engine/runCombat.js resolves
+        // it (`runHandRules`: the run's own rows), so a point here states what
+        // it buys in the solo hand (Codex, #1294; #1318).
+        hand: runHandRules(registries, run, meta?.settings || {}),
       }).map((card) => [card.id, card]));
       const spec = {
         title: 'Level up',
         modal: true,
-        remaining: budget.levels - count,
-        note: budget.levels === 1
+        remaining: budget.points - count,
+        note: budget.points === 1
           ? 'Choose one attribute. Existing points cannot be reduced.'
-          : 'Each point is a level and pays the next price on the ladder. Existing points cannot be reduced.',
+          : 'Each point was earned by a level; assign as many as you like now and keep the rest. Existing points cannot be reduced.',
         cancelLabel: 'Cancel',
-        doneLabel: count > 1 ? `Level up ×${count}` : 'Level up',
+        doneLabel: count > 1 ? `Assign ×${count}` : 'Assign',
         doneDisabled: !count,
         rows: level.attributes.map((attr) => ({
           id: attr.id,
@@ -383,7 +492,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           value: values[attr.id],
           card: cards.get(attr.id),
           canDecrease: pending[attr.id] > 0,
-          canIncrease: count < budget.levels,
+          canIncrease: count < budget.points,
         })),
         onIncrease: (id) => { pending[id] += 1; drawLevelCard(); },
         onDecrease: (id) => { if (pending[id] > 0) pending[id] -= 1; drawLevelCard(); },
@@ -397,7 +506,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         onDone: () => {
           if (!pendingTotal()) return;
           for (const attr of level.attributes) {
-            for (let i = 0; i < pending[attr.id]; i++) applyLevelUp(registries, run, attr.id, { pointsPerLevel: 1 });
+            for (let i = 0; i < pending[attr.id]; i++) applyLevelUp(registries, run, attr.id);
           }
           allocation.close();
           sfx.play('shrine');
@@ -424,7 +533,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
         shrineScreen.inert = true;
         allocation = renderStatAllocationCard(app, spec);
         allocation.card.classList.add('level-up-modal');
-        allocation.card.querySelector('.se-pool').after(el('div', { html: cinderLineHtml }));
+        allocation.card.querySelector('.se-pool').after(el('div', { html: levelLineHtml }));
         allocation.card.addEventListener('keydown', (event) => {
           if (event.key !== 'Tab') return;
           const controls = [...allocation.card.querySelectorAll('button:not([disabled]), summary, [tabindex]:not([tabindex="-1"])')]
@@ -438,10 +547,9 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
           }
         });
       }
-      allocation.card.querySelector('.level-cinder-cost').textContent = `− ${spend} cinders`;
-      const result = allocation.card.querySelector('[data-level-cinder-result]');
+      const result = allocation.card.querySelector('[data-level-points-result]');
       result.hidden = false;
-      result.querySelector('.d-to').textContent = `${level.cinders - spend} remaining`;
+      result.querySelector('.d-to').textContent = `${level.points - count} remaining`;
     };
     const openLevel = () => { if (!allocation) { option.focus(); drawLevelCard(); } };
     option.addEventListener('click', openLevel);

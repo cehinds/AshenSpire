@@ -93,8 +93,8 @@
 //       went blind. Both need a person. An excuse nobody can be forced to
 //       revisit is how a suite goes green over a bug.
 //
-// ONE EXEMPTION SHIPS, from ONE home (src/ui/handAxis.js — no renderer types
-// the string), on the hand strip, mode-scoped:
+// TWO EXEMPTIONS SHIP. The hand exemption comes from one home
+// (src/ui/handAxis.js — no renderer types the string), mode-scoped:
 //   · the hand under PAGING — rendered conditionally from
 //     <html data-hand-layout>, his D19 word as its reason; the mode axis
 //     below keeps it honest (A5). It appears on every surface that mounts the
@@ -117,13 +117,10 @@
 // and named `.hand` as receiving none — that refusal stood on D17 msg 3's word
 // and was right; D19's later word is what opened it (the history is spelled
 // out under THE MODE AXIS below). The act
-// map's old declaration ("the act map is a horizontal route", 1c227ec) stays
-// DELETED, not moved: D17 message 4 falsified its reason in Constantine's own
-// words ("not require any scrollign left or right"), and the camera owns the
-// horizontal axis through the viewBox (mapboard.js), so the map's travel is 0
-// by construction and A4 would correctly fail that declaration if it ever
-// came back without travel under it. Every other scroller remains undecided
-// by design.
+// The second is the act map only while the player-enabled Two-axis map dragging
+// setting is on. mapboard.js authors both its extent and its declaration; when
+// the setting is off it authors neither, so A1 and A4 guard both sides of the
+// toggle. Every other scroller remains undecided by design.
 //
 // ---------------------------------------------------------------------------
 // THE MODE AXIS — Vega, 2026-08-14, on Marina's ruling, and the words are his.
@@ -844,13 +841,11 @@ async function main() {
       ?shot=combat run a real seeded climb, so these are the app's own numbers,
       not a fixture's — but they are the numbers at the ENTRANCE with a starting
       deck. A late-run hand, a full relic shelf or a deeper act is more content
-      in the same box and this sweeps none of them. The map is exempt from that
-      worry BY CONSTRUCTION now, and it was measured, not assumed: its
-      horizontal extent is the viewport itself (mapboard.js viewBox camera), so
-      no seed, walk depth or column count can widen it — 0px on 72 cells
-      (12 seeds x entrance/walk3/walk6 x 390x844 + 320x640) at the change that
-      landed it. (Rune, 2026-08-14, replacing Vira's 2026-08-08 boundary note,
-      which described the ink-grow camera this change removed.)
+      in the same box and this sweeps none of them. The map deliberately exposes
+      horizontal travel while Two-axis map dragging is on; its declaration and
+      reason are audited above. The dedicated map-two-axis-pan gate proves that
+      mouse, touch and pen can actually move the resulting extent, while
+      map-pan-ownership proves the vertical-only setting removes that ownership.
   (g) THE MODE AXIS IS TWO SURFACES. balance.ui.handLayoutModes (${handModes.join('/')}) is
       swept both ways on ${MODE_SURFACES.map((s) => `'?shot=${s}'`).join(' and ')} — combat because it reads
       the word, coop because its hand renderer does NOT (its unscoped declaration

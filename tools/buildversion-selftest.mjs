@@ -62,7 +62,7 @@ import { pathToFileURL } from 'node:url';
 import { check, REPO_ROOT, release, versionPrefix, sourceDigest, whichCommits, ORDINAL_HOME, BUILD_IDENTITY_FILES } from './buildversion.mjs';
 
 /** The files a real tree needs for every row to have something to rule on. */
-const COPY = ['index.html', 'styles', 'src', 'assets', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
+const COPY = ['index.html', 'styles', 'src', 'assets', 'assets-mobile', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
 
 // macOS can report ENOTEMPTY for a just-closed Git worktree while directory
 // entries settle. Node retries that class of recursive-removal failure only
@@ -262,6 +262,15 @@ const PLANTS = [
     row: 'D CONTAINMENT',
     plant: (root) => edit(root, 'index.html',
       (t) => t.replace('</head>', '  <link rel="stylesheet" href="vendor/theme.css" />\n</head>')),
+  },
+  {
+    // A protocol-relative stylesheet href is a PATH to the bundler, not a URL:
+    // resolve(ROOT, '//etc/x.css') reads /etc/x.css. Skipping it as "remote"
+    // would let a read outside the roots through the containment row.
+    name: 'a protocol-relative stylesheet href that the bundler reads as an absolute path',
+    row: 'D CONTAINMENT',
+    plant: (root) => edit(root, 'index.html',
+      (t) => t.replace('</head>', '  <link rel="stylesheet" href="//etc/theme.css" />\n</head>')),
   },
   {
     name: 'a source edit that never reached the bundle — the shipped stamp goes stale',

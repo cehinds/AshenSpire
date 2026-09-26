@@ -115,8 +115,8 @@
   "unreadable": {
     "tools/armoury-picked-up.mjs": 11,
     "tools/card-drag-targeting.mjs": 6,
-    "tools/displayfirst.mjs": 6,
-    "tools/doorplant.mjs": 1,
+    "tools/displayfirst.mjs": 7,
+    "tools/doorplant.mjs": 3,
     "tools/flask-menu-cancel.mjs": 1,
     "tools/gatelist.mjs": 4,
     "tools/hybrid-input-parity.mjs": 10,
@@ -126,7 +126,7 @@
   "sites": {
     "tools/about-changelog.mjs": {
       "count": 52,
-      "digest": "2b16dd47741b60e8"
+      "digest": "f94acefec937c4a5"
     },
     "tools/armoury-picked-up.mjs": {
       "count": 14,
@@ -134,19 +134,19 @@
     },
     "tools/card-drag-targeting.mjs": {
       "count": 10,
-      "digest": "2cae8cf11c778d97"
+      "digest": "18d86ea31ac4eaac"
     },
     "tools/class-loadouts.mjs": {
-      "count": 4,
-      "digest": "bb50920dc80f5ed8"
+      "count": 6,
+      "digest": "c843c93053de6c10"
     },
     "tools/combat-action-row.mjs": {
       "count": 6,
-      "digest": "6bc20cf585308b00"
+      "digest": "4c54bc7ac015d844"
     },
     "tools/combat-save.mjs": {
       "count": 3,
-      "digest": "454d327f2e222f7b"
+      "digest": "7f42d1401647d9b4"
     },
     "tools/confirmation-modal.mjs": {
       "count": 10,
@@ -166,7 +166,7 @@
     },
     "tools/displayfirst.mjs": {
       "count": 4,
-      "digest": "6bbfdd0e052593bc"
+      "digest": "a3043f4086aa8d3b"
     },
     "tools/equipment-surface-receipts.mjs": {
       "count": 3,
@@ -186,7 +186,7 @@
     },
     "tools/flaskbox.mjs": {
       "count": 6,
-      "digest": "601fc9365791d717"
+      "digest": "5672362e35f11aef"
     },
     "tools/fullscreen-control.mjs": {
       "count": 5,
@@ -198,7 +198,7 @@
     },
     "tools/gesture-cancel.mjs": {
       "count": 2,
-      "digest": "6d9bdbd6b5dc8b74"
+      "digest": "92bb0583dd59c2c0"
     },
     "tools/hand-pager-threshold.mjs": {
       "count": 7,
@@ -218,7 +218,7 @@
     },
     "tools/hudparity.mjs": {
       "count": 18,
-      "digest": "39c6558a1814857d"
+      "digest": "8e95fe8e9f0ee98e"
     },
     "tools/hybrid-input-parity.mjs": {
       "count": 13,
@@ -241,12 +241,12 @@
       "digest": "c36293eabaf8a2d6"
     },
     "tools/placement.mjs": {
-      "count": 8,
-      "digest": "b57e6a9496fd3591"
+      "count": 10,
+      "digest": "24200c44130a678b"
     },
     "tools/player-poise-threshold.mjs": {
       "count": 4,
-      "digest": "ee565a3b0c8f6206"
+      "digest": "ae1e17d1dbb3e533"
     },
     "tools/profile-durability-probe.mjs": {
       "count": 2,
@@ -274,7 +274,7 @@
     },
     "tools/runcreation.mjs": {
       "count": 5,
-      "digest": "2685af698d0ee3b9"
+      "digest": "07bfaaffe1f4f502"
     },
     "tools/saveroundtrip.mjs": {
       "count": 6,
@@ -286,23 +286,27 @@
     },
     "tools/scroll-cue-bleed.mjs": {
       "count": 2,
-      "digest": "e8cd56b68de1aec8"
+      "digest": "024e3beb3c87065c"
     },
     "tools/shopbars.mjs": {
       "count": 4,
-      "digest": "a33d30837221dd88"
+      "digest": "68ce8fbfc038e5aa"
     },
     "tools/short-landscape-support.mjs": {
       "count": 2,
       "digest": "0df767382db6375e"
     },
+    "tools/slot-load-door.mjs": {
+      "count": 4,
+      "digest": "72c9109639d0c591"
+    },
     "tools/startup-gate.mjs": {
       "count": 26,
-      "digest": "a3803ac419d0b8b8"
+      "digest": "6a9e39a11d46196c"
     },
     "tools/status-presentation-authority.mjs": {
       "count": 4,
-      "digest": "8e06bb1549328347"
+      "digest": "a7bf54d937e5a54d"
     },
     "tools/swap-cost-relic-surface.mjs": {
       "count": 2,
@@ -334,11 +338,11 @@
     },
     "tools/ui-sweep.mjs": {
       "count": 3,
-      "digest": "d53972e2e2f71feb"
+      "digest": "89bbf8775e316cce"
     },
     "tools/uprightgate.mjs": {
       "count": 14,
-      "digest": "2c7308ecd506ea35"
+      "digest": "283880e7bfda1aa5"
     },
     "tools/zoomplace.mjs": {
       "count": 1,

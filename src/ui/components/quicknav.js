@@ -131,6 +131,9 @@ export function quickNavIsOpen() {
 export function saveAction(onSave) {
   return (_tab, btn) => {
     const slot = onSave();
+    // A save that failed says nothing here: the W1r status door is open and
+    // owns the news, with Retry. Claiming "Saved" over it would be a lie.
+    if (slot === false) return 'keep';
     const lab = btn.querySelector('.qn-label');
     const was = lab.textContent;
     lab.textContent = slot ? `Saved · Slot ${slot}` : 'Saved';

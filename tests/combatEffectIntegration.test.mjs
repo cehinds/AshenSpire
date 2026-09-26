@@ -20,7 +20,9 @@ test('action-only magic motifs use mundane variants; paid activations retain fan
  assert.equal(heavy.kind,'whirlwind');assert.ok(heavy.sizeScale>free.sizeScale);
  const stamina=combatEffectPlan({...card,manaCost:0,staminaCost:2});
  assert.equal(stamina.kind,'bloodSlash');assert.equal(stamina.activation,'resourceHigh');assert.ok(stamina.sizeScale>paid.sizeScale);
- assert.equal(plan('crimsonCleave').kind,'whirlwind');
+ // Crimson Cleave now pays Stamina, retaining its authored blood motif.
+ assert.equal(plan('crimsonCleave').kind,'bloodSlash');
+ assert.equal(plan('crimsonCleave').activation,'resourceHigh');
  assert.equal(plan('disorient').kind,'steelGlint');
 });
 test('cost variants retain auras, defensive identities and actual X spending',()=>{
@@ -89,7 +91,7 @@ test('every authored playable card and equipment profile resolves to existing ar
  for(const rule of COMBAT_EFFECT_RULES)assert.ok(COMBAT_EFFECT_ART[rule.kind],rule.id);
 });
 test('specific combinations beat generic schools and defensive tags',()=>{
- for(const [id,kind]of [['shieldBash','shieldBash'],['gorefireSlash','bloodSlash'],['riposte','riposte'],['guardCounter','riposte'],['crystalBarrier','barrier'],['enterBulwark','ward'],['starstonePebble','starbolt']])assert.equal(plan(id).kind,kind,id);
+ for(const [id,kind]of [['shieldBash','shieldBash'],['gorefireSlash','bloodSlash'],['riposte','riposte'],['guardCounter','riposte'],['crystalBarrier','barrier'],['enterBulwark','ward'],['starstoneArc','starbolt']])assert.equal(plan(id).kind,kind,id);
  assert.equal(plan('strike','shieldAttack').kind,'shieldBash');
  assert.equal(plan('defend','staffGuard').kind,'magicGuard');
  assert.equal(plan('defend','sceptreGuard').kind,'arcaneWard');

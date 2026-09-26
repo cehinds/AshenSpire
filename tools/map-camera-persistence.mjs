@@ -20,6 +20,9 @@ const HERE = resolve(fileURLToPath(new URL('.', import.meta.url)));
 const ROOT = resolve(HERE, '..');
 const WRITE_SHOTS = !process.argv.includes('--no-screenshots');
 const SELFTEST = process.argv.includes('--selftest');
+// --check runs ONLY the #1142 post-settle re-fit case and exits 0/1 on it: a
+// short gate for the one property, without the full persistence drive.
+const CHECK = process.argv.includes('--check');
 const argValue = (name, fallback = '') => {
   const index = process.argv.indexOf(name);
   return index >= 0 && process.argv[index + 1] ? process.argv[index + 1] : fallback;
@@ -39,6 +42,34 @@ const VIEWPORTS = [
   { name: '412x915', width: 412, height: 915, deviceScaleFactor: 3 },
 ];
 const wait = (ms) => new Promise((done) => setTimeout(done, ms));
+// THE MOUNT BUDGET BELONGS TO THE ENTRY, NOT TO ONE NUMBER FOR BOTH DOORS.
+//
+// Every other wait below is an in-page transition — an overlay opening, a menu
+// row answering, a screen remounting inside a document that is already up — and
+// waitFor's 7 s default is generous for those. A wait that FOLLOWS A NAVIGATE
+// is a different thing: it is the whole document coming up. Through the SOURCE
+// entry (no --entry, which is what --selftest uses, because its plants go into
+// src/) that means the unbundled ES-module graph plus one request for
+// src/buildversion.js — and tools/serve.mjs stamps that module by re-deriving
+// sourceDigest() over the entire tree ON EVERY REQUEST. That is deliberate and
+// stays (see its comment: a stamp frozen at boot would name a source that is no
+// longer there), but it is not free here.
+//
+// Measured on this Windows machine, 2026-09-17, against the real source mount:
+// that one request costs 4.7-8.8 s on its own (2,386 files, 49 MB, of which
+// assets/ is the bulk), it is synchronous, so every other module queues behind
+// it, and the first map mount of a freshly checked-out tree took 23.3 s end to
+// end. The 7 s default could not be met, so the tool timed out in its first
+// wait and judged nothing — a red that was never about the camera.
+//
+// So a source-entry mount is given a budget measured against that mount: 45 s,
+// about twice the slowest observed, which still fails in well under a minute
+// when a mount is genuinely broken. The bundle entry (--entry) is served as one
+// already-stamped file and keeps the 7 s default, so a real hang on that door
+// still fails fast. Caching the digest per file would cut the warm cost but not
+// this one — the first request of a run is always cold — so the budget is the
+// fix and the cache is not.
+const MOUNT_TIMEOUT_MS = ENTRY ? 7000 : 45000;
 
 function connectCdp(wsUrl) {
   const ws = new WebSocket(wsUrl);
@@ -74,7 +105,7 @@ function connectCdp(wsUrl) {
   };
 }
 
-async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
+async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } = {}) {
   const browser = BROWSERS.find((candidate) => existsSync(candidate));
   if (!browser) throw new Error('no Chrome or Edge found; set CHROME to a local Chromium executable');
 
@@ -115,6 +146,25 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       }
       throw new Error(`timed out waiting for ${label}; last=${JSON.stringify(last)}`);
     };
+    // A mount wait — the first thing asked of a document that a Page.navigate
+    // has just started. These carry the entry's budget; everything else stays
+    // on waitFor's default.
+    const waitForMount = (label, expression) => waitFor(label, expression, MOUNT_TIMEOUT_MS);
+    // A trusted pointer press at the control's center — the player's tap, not
+    // a scripted .click() — as startup-gate and title-new-slot drive the doors.
+    const press = async (selector) => {
+      const point = await evaluate(`(() => {
+        const e = document.querySelector(${JSON.stringify(selector)});
+        if (!e) return null;
+        e.scrollIntoView({ block: 'center', inline: 'center' });
+        const r = e.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      })()`);
+      if (!point) throw new Error(`missing ${selector}`);
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mousePressed', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
+      await cdp.send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: point.x, y: point.y, button: 'left', clickCount: 1 }, sessionId);
+      await wait(120);
+    };
     const readState = () => evaluate(`(() => {
       const port = document.querySelector('.map-scroll');
       const svg = port && port.querySelector('.map-canvas');
@@ -131,8 +181,84 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
         framing: port.dataset.framing,
         framingMiss: Number(port.dataset.framingMiss),
         cameraRestore: port.dataset.cameraRestore,
+        cameraViewport: port.dataset.cameraViewport || null,
       };
     })()`);
+
+    // #1142 — THE CAMERA FOLLOWS THE SCROLLPORT AFTER THE FIRST SETTLE. The box
+    // changes with NO window resize (a banner-shaped spacer takes height above
+    // the map frame, as the app's own late layout does), so only the board's
+    // standing watch can see it. The verdict is exact: the solved viewport the
+    // board reports equals clientWidth x clientHeight of the scrollport it is
+    // looking through. Then the same change under an OPEN destination tray: the
+    // selected node must stay CENTRED in the band the tray leaves visible (the
+    // look `centerOnNode` took), not be dropped for the current node's framing.
+    // Within 4 px, unless the scroll is pinned at an edge and centring is not
+    // reachable; merely "inside the band" passed with the fix removed, because
+    // the current node's frame happened to contain the pick.
+    {
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: 390, height: 844, deviceScaleFactor: 3, mobile: true,
+      }, sessionId);
+      await cdp.send('Page.navigate', { url: `${served.url}${ENTRY}?shot=map&shotSeed=SHOWCASE` }, sessionId);
+      await waitForMount('the settled 390x844 map', `(() => {
+        const port = document.querySelector('.map-scroll');
+        return !!(port && port.dataset.cameraViewport && port.clientHeight > 0);
+      })()`);
+      await wait(400); // outlast the 120 ms backstop and any settling layout
+      const shape = (state) => `${state.viewportWidth}x${state.viewportHeight}`;
+      const settledState = await readState();
+      await evaluate(`(() => {
+        const spacer = document.createElement('div');
+        spacer.id = 'refit-check-spacer';
+        spacer.style.cssText = 'flex: 0 0 150px; height: 150px;';
+        const frame = document.querySelector('.mapscreen .map-frame');
+        frame.parentNode.insertBefore(spacer, frame);
+      })()`);
+      await wait(400); // the watch debounces 100 ms
+      const changedState = await readState();
+      // The open tray: select a reachable node through the map's own pick.
+      const picked = await evaluate(`(() => {
+        const node = document.querySelector('.map-node.reachable');
+        if (!node) return null;
+        node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        return node.dataset.node;
+      })()`);
+      await waitFor('the open destination tray', `document.querySelector('.map-tray')?.dataset.shown === 'true'`);
+      await wait(400);
+      await evaluate(`document.querySelector('#refit-check-spacer').style.cssText = 'flex: 0 0 40px; height: 40px;'`);
+      await wait(400);
+      const trayState = await readState();
+      const band = await evaluate(`(() => {
+        const port = document.querySelector('.map-scroll');
+        const node = document.querySelector('.map-node[data-node="' + ${JSON.stringify(picked)} + '"]');
+        const reveal = document.querySelector('.map-tray-reveal');
+        if (!port || !node || !reveal) return null;
+        const p = port.getBoundingClientRect();
+        const n = node.getBoundingClientRect();
+        const r = reveal.getBoundingClientRect();
+        const bottom = Math.min(p.top + port.clientHeight, r.top);
+        const y = n.top + n.height / 2;
+        return { y: Math.round(y), top: Math.round(p.top), bottom: Math.round(bottom), selected: node.classList.contains('selected') };
+      })()`);
+      if (screenshots) {
+        const out = resolve(root, 'docs', 'preview', 'map-refit-tray-390x844.png');
+        mkdirSync(resolve(out, '..'), { recursive: true });
+        const png = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true }, sessionId);
+        writeFileSync(out, Buffer.from(png.data, 'base64'));
+      }
+      const exact = (state) => state.cameraViewport === shape(state);
+      results.postSettleRefit = {
+        pass: !!(settledState && changedState && trayState && band)
+          && changedState.viewportHeight !== settledState.viewportHeight
+          && exact(settledState) && exact(changedState) && exact(trayState)
+          && band.selected && band.y > band.top && band.y < band.bottom
+          && (Math.abs(band.y - (band.top + band.bottom) / 2) <= 4
+            || trayState.scrollTop <= 0.5 || trayState.scrollTop >= trayState.maxScrollTop - 0.5),
+        settled: settledState, changed: changedState, tray: trayState, picked, band,
+      };
+    }
+    if (refitOnly) return results;
 
     for (const viewport of VIEWPORTS) {
       await cdp.send('Emulation.setDeviceMetricsOverride', {
@@ -144,7 +270,7 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       await cdp.send('Page.navigate', {
         url: `${served.url}${ENTRY}?shot=map&shotSeed=SHOWCASE`,
       }, sessionId);
-      await waitFor('the real map and its camera report', `(() => {
+      await waitForMount('the real map and its camera report', `(() => {
         const port = document.querySelector('.map-scroll');
         return !!(port && document.querySelector('#zoom-in')
           && document.querySelector('#open-armoury')
@@ -207,40 +333,94 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       }
     }
 
-    // Fit is computed from viewport geometry. Prove that a desktop Fit is not
-    // treated as a portable camera when the same run remounts on a phone.
+    // Fit is a VIEWPORT PROMISE, not a portable camera. The run this case owns
+    // is the one the promise is for: a climb framed on a desktop, put down,
+    // and picked up again on a phone. The saved fit must not be applied there.
+    //
+    // THE VIEWPORT CHANGES WHILE NO BOARD IS MOUNTED, and that is the whole
+    // shape of this drive rather than a convenience. The earlier version
+    // switched the emulation under a LIVE map and remounted through Armaments,
+    // and it could not hold a verdict: map.js re-fits a live board on `resize`
+    // two animation frames later, so the run may legitimately hold a
+    // phone-solved fit by the time Armaments closes — `restored` is then the
+    // RIGHT answer — and which of `restored` and `recomputed` landed depended
+    // on whether those frames beat the tap, and on which stage of the emulated
+    // resize's two-stage layout they caught. Measured on an unchanged tree it
+    // flipped run to run, and with the guard itself removed the case still went
+    // green, because the live re-fit had already replaced the desktop camera
+    // this case exists to catch travelling. A plant that a race can rescue is
+    // not a plant. Through the title there is no live board to re-fit anything:
+    // what the phone mounts is exactly what the desktop wrote down.
+    //
+    // The exit is the player's own — Menu, then "Save & Quit to Title", the
+    // same door the #243 case drives — because the saved camera is the subject
+    // and only a real save writes one.
     await cdp.send('Emulation.setDeviceMetricsOverride', {
       width: 1200, height: 730, deviceScaleFactor: 1, mobile: false,
     }, sessionId);
     await cdp.send('Page.navigate', {
       url: `${served.url}${ENTRY}?shot=map&shotSeed=SHOWCASE`,
     }, sessionId);
-    await waitFor('desktop fit camera', `(() => {
+    await waitForMount('desktop fit camera', `(() => {
       const port = document.querySelector('.map-scroll');
-      return !!(port && port.dataset.framing && port.dataset.cameraRestore);
+      return !!(port && port.dataset.framing && port.dataset.cameraRestore
+        && port.dataset.cameraViewport);
     })()`);
-    await wait(220);
+    await wait(220); // outlast the board's 120 ms camera backstop
     const desktopFit = await readState();
+    await evaluate(`document.querySelector('#open-menu').click()`);
+    await waitFor('the save-and-quit row in the quick menu',
+      `!!document.querySelector('.qn-row[data-act="saveQuit"]')`);
+    await evaluate(`document.querySelector('.qn-row[data-act="saveQuit"]').click()`);
+    await waitFor('the title after Save & Quit', `(() => !document.querySelector('.map-scroll')
+      && !!(document.querySelector('.startup-gate') || document.querySelector('.title-menu')))()`);
+    // No map is mounted from here until Continue, so nothing can re-fit the
+    // saved camera before the phone reads it back.
     await cdp.send('Emulation.setDeviceMetricsOverride', {
       width: 390, height: 844, deviceScaleFactor: 3, mobile: true,
     }, sessionId);
-    await evaluate(`document.querySelector('#open-armoury').click()`);
-    await waitFor('cross-viewport Armaments overlay', `!!document.querySelector('.armoury-overlay')`);
-    await cdp.send('Input.dispatchKeyEvent', {
-      type: 'rawKeyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27,
-    }, sessionId);
-    await cdp.send('Input.dispatchKeyEvent', {
-      type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27, nativeVirtualKeyCode: 27,
-    }, sessionId);
-    await waitFor('phone map after cross-viewport remount', `(() => {
+    await wait(220);
+    await evaluate(`document.querySelector('.startup-gate')?.click()`);
+    await waitFor('the folded title and its Continue door',
+      `!!document.querySelector('.title-menu .slot-continue:not([disabled])')`);
+    await evaluate(`document.querySelector('.title-menu .slot-continue').click()`);
+    await waitFor('the phone map the desktop run resumed into', `(() => {
       const port = document.querySelector('.map-scroll');
-      return !document.querySelector('.armoury-overlay') && !!(port && port.dataset.cameraRestore);
+      return !!(port && port.dataset.framing && port.dataset.cameraRestore
+        && port.dataset.cameraViewport);
     })()`);
     await wait(220);
     const phoneFit = await readState();
+    const solvedShape = (state) => {
+      const [width, height] = String(state.cameraViewport || '').split('x').map(Number);
+      return Number.isFinite(width) && Number.isFinite(height) ? { width, height } : null;
+    };
+    const desktopSolve = solvedShape(desktopFit);
+    const phoneSolve = solvedShape(phoneFit);
     results.fitViewport = {
+      // The shapes really did differ — without that there is nothing to own —
+      // the desktop board was solved for the desktop it was on, the phone did
+      // NOT take the saved camera as given, and what it is looking through was
+      // measured against a viewport the phone can actually show.
+      //
+      // FITS IN, rather than matches exactly, and the asymmetry is the subject:
+      // the harm in a travelling fit is a frame sized for a wider screen and so
+      // cut off on a narrower one. An exact match would also fail the board for
+      // solving against an early stage of this shape's OWN layout — the app
+      // scales its root before the map settles, so a mount can land on 390x405
+      // of an eventual 433x643 and never re-fit, `recenter`'s observer being
+      // one-shot with no window `resize` to follow the app's own scaling. That
+      // is a real wart — #1142 — and it is one shape mis-measuring itself rather
+      // than a desktop camera on a phone, which is the property this case owns.
+      // It belongs to that gate; folded in here it would only put this verdict
+      // back on which layout stage the remount happened to catch.
       pass: desktopFit.viewportWidth > phoneFit.viewportWidth
+        && !!desktopSolve && !!phoneSolve
+        && Math.abs(desktopSolve.width - desktopFit.viewportWidth) <= 1
+        && Math.abs(desktopSolve.height - desktopFit.viewportHeight) <= 1
         && phoneFit.cameraRestore === 'recomputed'
+        && phoneSolve.width <= phoneFit.viewportWidth + 1
+        && phoneSolve.height <= phoneFit.viewportHeight + 1
         && phoneFit.framing === 'fit',
       before: desktopFit,
       after: phoneFit,
@@ -258,6 +438,7 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       port.dispatchEvent(new Event('scroll'));
       const to = target.dataset.node;
       target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      document.querySelector('#map-enter')?.click(); // W4b: select, then Enter
       return { from, to };
     })()`);
     await wait(180);
@@ -304,7 +485,7 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
         deviceScaleFactor: exitShape.deviceScaleFactor, mobile: exitShape.mobile,
       }, sessionId);
       await cdp.send('Page.navigate', { url: `${served.url}${ENTRY}?shot=title` }, sessionId);
-      await waitFor('the folded title and its Continue door', `(() => {
+      await waitForMount('the folded title and its Continue door', `(() => {
         const button = document.querySelector('.title-menu .slot-continue:not([disabled])');
         return !!button && /continue/i.test(button.textContent);
       })()`);
@@ -385,14 +566,45 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
       }, sessionId);
       await evaluate(`localStorage.clear()`);
       await cdp.send('Page.navigate', { url: `${served.url}${ENTRY}` }, sessionId);
-      await waitFor('the startup gate (flush case)', `!!document.querySelector('.startup-gate')`);
+      await waitForMount('the startup gate (flush case)', `!!document.querySelector('.startup-gate')`);
       await evaluate(`document.querySelector('.startup-gate').click()`);
       await waitFor('the real folded title (flush case)', `!!document.querySelector('.title-menu .slot-new')`);
       await evaluate(`document.querySelector('.title-menu .slot-new').click()`);
       await waitFor('the new-slot modal (flush case)', `!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`);
-      await evaluate(`document.querySelector('[data-title-action="modal-continue"]').click()`);
+      await press('[data-title-action="modal-continue"]');
+      // Continue only opens the slot's decision door ("Start in slot n?"); its
+      // primary, Start (review-new), is the press that commits the new climb.
+      await waitFor('the new-slot decision door (flush case)', `!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`);
+      await press('[data-title-action="review-new"]');
       await waitFor('character creation (flush case)', `!!document.querySelector('#cz-start:not([disabled])')`);
-      await evaluate(`document.querySelector('#cz-start').click()`);
+      // Creation is gated step by step (781da54a): Begin refuses until a class,
+      // a stat mode, a keepsake and starting armour are chosen. Walk the steps
+      // a player walks — the first class, Standard stats, the first keepsake,
+      // the first armour — opening each fold before tapping inside it.
+      const openFace = async (key) => {
+        const expanded = await evaluate(`document.querySelector('[data-face="${key}"]')?.getAttribute('aria-expanded') === 'true'`);
+        if (!expanded) await press(`[data-face="${key}"]`);
+      };
+      await openFace('class');
+      await press('.cz-class');
+      await openFace('character');
+      await openFace('primary');
+      await evaluate(`(() => { const select = document.querySelector('#cz-statedit .cc-mode-select'); select.value = 'standard'; select.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+      await openFace('keepsake');
+      await press('#cz-keepsakes [data-keepsake-id]');
+      await openFace('equipment');
+      await openFace('armour');
+      await press('#cz-armours .equip-chip .equipment-poker-card');
+      await press('#cz-armours .equip-chip .equipment-choose');
+      await openFace('seed');
+      await waitFor('Begin to accept the finished character (flush case)', `(() => {
+        const begin = document.querySelector('#cz-start');
+        return !!begin && begin.getAttribute('aria-disabled') !== 'true';
+      })()`, 3000).catch(async (error) => {
+        const refusal = await evaluate(`document.querySelector('#cz-start')?.dataset.refusal || null`);
+        throw new Error(`${error.message}; Begin refuses: ${JSON.stringify(refusal)}`);
+      });
+      await press('#cz-start');
       await waitFor('the new run map (flush case)', `!!(document.querySelector('.map-scroll') && document.querySelector('#zoom-in'))`);
       await wait(300);
       exceptionsSeen.length = 0;
@@ -528,7 +740,7 @@ async function runProbe(root, { screenshots = WRITE_SHOTS } = {}) {
     await cdp.send('Page.navigate', {
       url: `${served.url}${ENTRY}?shot=map&shotSeed=SHOWCASE&zeroHeightSettle=1`,
     }, sessionId);
-    await waitFor('zero-height map scrollport mount', `!!document.querySelector('.map-scroll')`);
+    await waitForMount('zero-height map scrollport mount', `!!document.querySelector('.map-scroll')`);
     await wait(170); // outlast the 120 ms backstop while clientHeight is held at zero
     const zeroBefore = await readState();
     await evaluate(`window.__releaseMapHeight = true`);
@@ -587,7 +799,7 @@ async function selftest() {
     const fitSeam = '    && fitViewportMatches\n';
     const raceSeam = '      const snapshot = pendingViewCommit;\n';
     const settleSeam = '      if (settled || scroll.clientHeight <= 0) return false;\n';
-    const nodeSeam = "    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id));";
+    const nodeSeam = "    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id, { shownType, revealed }));";
     // The #243 guard: removing it re-opens the detached-timer crash, and the
     // plant enters as source bytes in the copied tree — the same door a real
     // regression would take (a build of this copy, driven by the real controls).
@@ -600,7 +812,7 @@ async function selftest() {
       .replace(fitSeam, '')
       .replace(raceSeam, '      const snapshot = viewSnapshot();\n')
       .replace(settleSeam, '      if (settled) return false;\n')
-      .replace(nodeSeam, "    if (isReachable && viewer.onPick) el.addEventListener('click', () => { run.mapNodeId = n.id; viewer.onPick(n.id); });")
+      .replace(nodeSeam, "    if (isReachable && viewer.onPick) el.addEventListener('click', () => { run.mapNodeId = n.id; viewer.onPick(n.id, { shownType, revealed }); });")
       .replace(exitSeam, ''));
     const ownership = await runProbe(tempRoot, { screenshots: false });
     const fitCaught = ownership.fitViewport && !ownership.fitViewport.pass;
@@ -636,8 +848,21 @@ async function selftest() {
   }
 }
 
+const printRefit = (row) => {
+  const line = (state) => (state ? `solved ${state.cameraViewport} vs scrollport ${state.viewportWidth}x${state.viewportHeight}` : '?');
+  console.log(`${row && row.pass ? 'PASS' : 'FAIL'} post-settle re-fit (#1142) 390x844: `
+    + `settled ${line(row?.settled)}; after box change ${line(row?.changed)}; `
+    + `tray open on ${row?.picked} after box change ${line(row?.tray)}, `
+    + `node y=${row?.band?.y} vs visible band [${row?.band?.top}, ${row?.band?.bottom}] `
+    + `(middle ${row?.band ? (row.band.top + row.band.bottom) / 2 : '?'}), scrollTop ${row?.tray?.scrollTop}/${row?.tray?.maxScrollTop}`);
+  return !!(row && row.pass);
+};
+
 if (SELFTEST) {
   await selftest();
+} else if (CHECK) {
+  const results = await runProbe(ROOT, { refitOnly: true });
+  process.exitCode = printRefit(results.postSettleRefit) ? 0 : 1;
 } else {
   const results = await runProbe(ROOT);
   let failures = 0;
@@ -654,9 +879,13 @@ if (SELFTEST) {
       + `[${row.after.scrollLeft.toFixed(1)},${row.after.scrollTop.toFixed(1)}]`);
     judge(row.pass);
   }
+  judge(printRefit(results.postSettleRefit));
   const fit = results.fitViewport;
   console.log(`${fit && fit.pass ? 'PASS' : 'FAIL'} fit viewport ownership: `
-    + `${fit ? fit.before.viewportWidth : '?'} -> ${fit ? fit.after.viewportWidth : '?'}; `
+    + `${fit ? fit.before.viewportWidth : '?'}x${fit ? fit.before.viewportHeight : '?'} `
+    + `(solved ${fit ? fit.before.cameraViewport : '?'}) -> `
+    + `${fit ? fit.after.viewportWidth : '?'}x${fit ? fit.after.viewportHeight : '?'} `
+    + `(solved ${fit ? fit.after.cameraViewport : '?'}); `
     + `restore=${fit ? fit.after.cameraRestore : '?'}`);
   judge(fit && fit.pass);
   const race = results.debounceRace;

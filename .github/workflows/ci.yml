@@ -144,6 +144,13 @@ on:
   # before anyone commits to a number. Every RATIO here is independent of the
   # allowance; the allowance itself has never been read off this account's
   # billing page by anyone.
+  #
+  # ONE AUTOMATIC TRIGGER, by the owner's ruling D7 (2026-09-24): a push to
+  # `release`. That branch moves only when the owner cuts a release, so it is a
+  # handful of runs, and it is the one ref whose tree ships — the 3-OS claims
+  # above are read there at least. Every other ref stays dispatch-only.
+  push:
+    branches: [release]
   workflow_dispatch:
 
 # One in-flight run per ref; a superseded run's result is not evidence about HEAD.
@@ -154,14 +161,10 @@ concurrency:
 permissions:
   contents: read
 
-# KNOWN WARNING, deliberately not chased: the runner reports that
-# actions/checkout@v4 and actions/setup-node@v4 execute on Node 20, which is
-# deprecated and is being forced onto Node 24. Nothing is broken today. I am not
-# bumping the tags in the same commit that fixes a CI failure, because I cannot
-# test the bump from here and a wrong tag turns a now-green workflow red for a
-# reason unrelated to this repo. Act on it when a run FAILS or prints a
-# hard-deprecation date, not when it warns — and bump both actions in one commit
-# that does nothing else, so the diff is legible if it breaks.
+# NODE 24 ACTIONS. Runs used to warn that actions/checkout@v4 and
+# actions/setup-node@v4 execute on Node 20, which is deprecated and was being
+# forced onto Node 24. Both were bumped to @v5 (Node 24) in one commit that did
+# nothing else, so if a run breaks on the bump the diff says why.
 
 jobs:
   # ---------------------------------------------------------------------------
@@ -187,13 +190,12 @@ jobs:
       - name: Keep checked-out bytes identical to stored bytes
         run: git config --global core.autocrlf false
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
+          lfs: true
           fetch-depth: 0 # verify-shipped --selftest reads a known-bad blob from history
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - uses: ./.github/actions/setup-node
 
       # #12 — THE CI DOOR PROVES ITSELF BEFORE IT JUDGES ANYTHING ELSE.
       # Every checker step below is wrapped in tools/verdict.mjs, which refuses a
@@ -220,6 +222,9 @@ jobs:
       - name: Engine suite
         run: node tools/verdict.mjs -- node tests/run-node.mjs
 
+      - name: Historical standalone artifacts resolve verified LFS bytes
+        run: node tools/git-artifact.test.mjs
+
       - name: World Journey normalized data and seeded routes
         run: node tests/world-atlas.test.mjs
 
@@ -243,10 +248,45 @@ jobs:
       - name: Music-only parity can fail (11 plants)
         run: node tools/verdict.mjs -- node tools/music-toggle-parity.mjs --selftest
 
+      - name: The mobile art twin tree mirrors assets/ at the policy's sizes and fits its budget
+        run: node tools/verdict.mjs -- node tools/mobile-art.mjs --check
+
+      - name: That twin-tree gate catches its own known-bads (9 plants)
+        run: node tools/verdict.mjs -- node tools/mobile-art.mjs --selftest
+
+      - name: Every asset directory has a CREDITS row and README Legal agrees with the AI disclosure
+        run: node tools/verdict.mjs -- node tools/credits-check.mjs
+
+      - name: The credits check catches its own known-bads (12 plants)
+        run: node tools/verdict.mjs -- node tools/credits-check.mjs --selftest
+
       - name: Shipped-artifact guard — self-test against the known-bad corpus
         # Proves the guard can fail. A guard that has never failed proves nothing,
         # which is exactly what bundle.mjs:435's WARNING was.
         run: node tools/verdict.mjs -- node tools/verify-shipped.mjs --selftest
+
+      - name: Parse gate — the bundler's own known-bad corpus
+        # NOTHING RAN THIS FILE, and that is the defect it was written to prevent
+        # happening to something else. `tools/bundle.test.mjs` was in no workflow
+        # at all, so when the ordinal rule changed under case 1a and the bundle
+        # outgrew case 6v's fixed 600 KB cut, three assertions went red and stayed
+        # red — a corpus nobody watches rots exactly the way §8's required-coverage
+        # list rotted, which is the sentence at the top of case 7.
+        #
+        # UBUNTU ONLY, and it is a budget, not an oversight: this suite runs the
+        # REAL bundler against ~20 disposable checkouts and each one writes a
+        # 57 MB artifact, so it is about five minutes on one runner and a quarter
+        # of an hour across the matrix. Its claims are about the gate's REFUSALS,
+        # which are platform-independent; the platform claim is dirorder's and
+        # `reproducible`'s, and both already run on all three.
+        #
+        # UNWRAPPED, like the world-atlas step above: the file prints per-case
+        # PASS/FAIL lines and exits 1 on any FAIL, but no counted verdict, so the
+        # door would read it as SILENCE. Giving it one is a change to this tool's
+        # output contract and belongs with whoever wants the wrapper, not with
+        # the fix that made the corpus green again.
+        if: matrix.os == 'ubuntu-latest'
+        run: node tools/bundle.test.mjs
 
       - name: Directory order — the corpus history already wrote
         # HERE, in the matrix job, and not in `reproducible`: the claim under test is
@@ -263,7 +303,7 @@ jobs:
         # other leg of this gate green.
         run: node tools/verdict.mjs -- node tools/dirorder.mjs --mutate
 
-      - name: Current builds use the 0.6.x.x release series
+      - name: Current builds use the 0.7.x.x release series
         run: node tools/release-series.mjs
       - name: Release series gate rejects older and malformed versions
         run: node tools/release-series.mjs --selftest
@@ -311,13 +351,12 @@ jobs:
       - name: Keep checked-out bytes identical to stored bytes
         run: git config --global core.autocrlf false
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
+          lfs: true
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
+      - uses: ./.github/actions/setup-node
 
       - name: Rebuild the standalone and refresh root + dist/
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only
@@ -332,8 +371,8 @@ jobs:
         # identical and always would have been. This is the only place the
         # platform claim is actually tested.
         run: |
-          git --no-pager diff --stat -- AshenSpire.html build dist
-          git diff --exit-code -- AshenSpire.html build dist
+          git --no-pager diff --stat -- AshenSpire.html AshenSpire-mobile.html build dist
+          git diff --exit-code -- AshenSpire.html AshenSpire-mobile.html build dist
 
   # ---------------------------------------------------------------------------
   # The save-overwrite guard needs a real browser: the defect was a URL reaching
@@ -357,10 +396,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
         with:
-          node-version: '22'
+          lfs: true
+      - uses: ./.github/actions/setup-node
 
       - name: Fullscreen is first and visible through both Settings doors
         run: node tools/verdict.mjs -- node tools/displayfirst.mjs
@@ -376,17 +415,12 @@ jobs:
     name: the checks that need a real browser
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+      - uses: actions/checkout@v5
         with:
-          node-version: '22'
+          lfs: true
+      - uses: ./.github/actions/setup-node
 
-      - name: Which browser will be used
-        run: |
-          for p in /usr/bin/google-chrome /usr/bin/chromium /usr/bin/chromium-browser; do
-            [ -x "$p" ] && echo "found: $p" && "$p" --version
-          done
-          echo "(probe exits 2 if none of these exist — unknown, which blocks)"
+      - uses: ./.github/actions/which-browser
 
       - name: Hand-side placement reaches the correct rendered side
         # #16's remaining live half after #306: exercise every legal left/right
@@ -453,6 +487,16 @@ jobs:
         # proving the legitimate shapes the shipped file already uses still parse.
         run: node tools/verdict.mjs -- node tools/about-changelog.mjs --selftest
 
+      - name: The in-run Load door keeps the run on a newer slot and restarts an abandoned fight
+        # Quick Menu -> Load through main.js's own confirmSlotLoad/resumeRun:
+        # a newer-build slot is refused with the run still standing, and a
+        # fight abandoned mid-combat reloads at turn 1 with the same HP,
+        # opening hand and deck (SPEC 3.12, 9 M2).
+        run: node tools/verdict.mjs -- node tools/slot-load-door.mjs
+
+      - name: ...and that gate can fail (3 plants)
+        run: node tools/verdict.mjs -- node tools/slot-load-door.mjs --selftest
+
       - name: Cold boot owns and consumes the first input before Title exists
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs
 
@@ -464,6 +508,14 @@ jobs:
 
       - name: The mobile visual reach gate can fail (8 plants)
         run: node tools/verdict.mjs -- node tools/screenreach.mjs --selftest
+
+      # No menu paints two scrollbars on one axis. Kept to the shape
+      # the pairs actually live at — a door that fits has no bars to nest.
+      - name: One scrollbar per axis in every menu
+        run: node tools/verdict.mjs -- node tools/doublescroll.mjs --only 900x600
+
+      - name: The double-scrollbar gate can fail (the defect, replanted)
+        run: node tools/verdict.mjs -- node tools/doublescroll.mjs --mutate
 
       # -----------------------------------------------------------------------
       # #295 / D58 — THE INSTRUMENT EXISTED AND WAS IN NOBODY'S LIST.

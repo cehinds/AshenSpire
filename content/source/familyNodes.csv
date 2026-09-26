@@ -1,0 +1,110 @@
+# content/source/familyNodes.csv — which SUBTREE a family may draw from
+#
+# Replaces tagFamilyDomains.csv. A row (family, nodeId) says objects of that
+# family may carry any node under nodeId. Pointing at a root is the old
+# family×domain pair; pointing at a branch is new and narrower. Every
+# collection-backed family points at classification, because every object
+# states its kind (validate.js refuses one that does not).
+#
+# columns: family, nodeId
+family,nodeId
+card,card
+class,card
+class,itemType
+relic,item
+flask,item
+keepsake,item
+event,run
+encounter,run
+enemy,creature
+armament,card
+armament,item
+armament,itemType
+armour,card
+armour,item
+armour,itemType
+basicCardProfile,card
+slot,item
+startingKit,item
+unlock,run
+effect,card
+grant,grantSource
+card,presentation
+basicCardProfile,presentation
+card,attackSource
+card,delivery
+card,damageType
+card,technique
+card,theme
+effect,attackSource
+effect,delivery
+effect,damageType
+effect,technique
+effect,theme
+armament,attackSource
+armament,delivery
+armament,damageType
+armament,technique
+armament,theme
+armour,attackSource
+armour,delivery
+armour,damageType
+armour,technique
+armour,theme
+relic,attackSource
+relic,delivery
+relic,damageType
+relic,technique
+relic,theme
+basicCardProfile,attackSource
+basicCardProfile,delivery
+basicCardProfile,damageType
+basicCardProfile,technique
+basicCardProfile,theme
+armament,property
+armour,property
+relic,property
+class,property
+card,classification
+class,classification
+relic,classification
+flask,classification
+keepsake,classification
+event,classification
+encounter,classification
+enemy,classification
+armament,classification
+armour,classification
+basicCardProfile,classification
+slot,classification
+startingKit,classification
+unlock,classification
+# The framework's roots are carried by cards: framework/importer.js builds a
+# card entity from its type, keywords, cost and targets into exactly these
+# subtrees, so the pairing states what the importer already does.
+card,damage
+card,scaling
+card,cost
+card,lifecycle
+card,equipment
+card,utility
+card,targeting
+card,internal
+# EVERY family may carry the property subtree. The four-carrier gate that used
+# to live in src/model/schemas.js is gone: a property tag is how the game is
+# told what an object is and how it may be used, so there is no family it could
+# not apply to. What the mount path can HOLD is the engine's narrower business
+# (engine/properties.js MOUNTABLE_KINDS).
+card,property
+flask,property
+keepsake,property
+event,property
+encounter,property
+enemy,property
+basicCardProfile,property
+slot,property
+startingKit,property
+unlock,property
+# A location (plan phase 7) carries only what it confers: the rest and service
+# tags under property. It has no collection and states no kind.
+location,property

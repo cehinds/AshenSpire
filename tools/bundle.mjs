@@ -14,7 +14,9 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, cpSync, readdirSync
 import vm from 'node:vm';
 import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
-import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE } from './buildversion.mjs';
+import { MOBILE_ASSET_DIR, MOBILE_BUNDLE_BUDGET_BYTES, distinctAssetId } from './mobileart-policy.mjs';
+import { headMetaTags } from './head-meta.mjs';
+import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_FULL, EDITION_MOBILE } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -115,8 +117,22 @@ function idOf(absPath) {
 // says so: with ASSET_MAP empty, assetUrl() returns the plain path and the
 // browser fetches normally. `--external-art` is that mode, chosen deliberately
 // rather than by being served from a directory.
+//
+// `--mobile`: a THIRD shape, and the second single file. The same bundle, the
+// same `assets/…` keys, but every art payload is read from assets-mobile/ — the
+// committed twin tree tools/mobile-art.mjs shrinks from assets/ under the
+// policy in tools/mobileart-policy.mjs. It runs from file:// like the default
+// and is held under MOBILE_BUNDLE_BUDGET_BYTES (30 MB): a build over that is
+// refused, not written. Owner's ask, 2026-09-20: the full file had grown to
+// 253 MB, which on a phone is the whole cost of starting; two downloads now,
+// the full one and this one, and the site offers both.
 const ARGV = process.argv.slice(2);
 const EXTERNAL_ART = ARGV.includes('--external-art');
+const MOBILE = ARGV.includes('--mobile');
+if (EXTERNAL_ART && MOBILE) {
+  console.error('bundle.mjs: --external-art and --mobile are two different shapes; pick one');
+  process.exit(2);
+}
 const OUT_FLAG = ARGV.indexOf('--out');
 if (OUT_FLAG >= 0 && !ARGV[OUT_FLAG + 1]) {
   console.error('bundle.mjs: --out needs a directory');
@@ -126,7 +142,8 @@ if (OUT_FLAG >= 0 && !ARGV[OUT_FLAG + 1]) {
 // the refusal write must resolve to the same file. Both read OUT_PATH, so a
 // flag that moves the output moves both or neither.
 const OUT_DIR = resolve(ROOT, OUT_FLAG >= 0 ? ARGV[OUT_FLAG + 1] : 'build');
-const OUT_PATH = resolve(OUT_DIR, 'AshenSpire.html');
+const OUT_NAME = MOBILE ? 'AshenSpire-mobile.html' : 'AshenSpire.html';
+const OUT_PATH = resolve(OUT_DIR, OUT_NAME);
 // Where an `assets/…` URL resolves from, for the copy pass and the CSS rewrite.
 const EXTERNAL_ASSET_DIR = resolve(OUT_DIR, 'assets');
 
@@ -295,6 +312,9 @@ visit(entryAbs);
 // a build that misses one is a bug nobody sees.
 // ---------------------------------------------------------------------------
 const ASSET_DIR = resolve(ROOT, 'assets');
+// The tree the payloads are READ from. The keys stay `assets/…` whatever it is,
+// because the runtime builds those paths and never learns which edition it is.
+const ART_DIR = MOBILE ? resolve(ROOT, MOBILE_ASSET_DIR) : ASSET_DIR;
 const ASSET_MAP_ID = 'src/ui/assetmap.js';
 
 function walkAssets(dir) {
@@ -313,12 +333,40 @@ let mapEntries = 0;
 let mapBytes = 0;
 let copiedAssets = 0;
 let copiedDetail = 0;
+let copiedMusic = 0;
 const skipped = []; // files under assets/ with no MIME mapping — reported, not silent
 let authoringBytes = 0;
-if (existsSync(ASSET_DIR) && sources.has(ASSET_MAP_ID)) {
+if (MOBILE) {
+  // THE TWIN TREE IS SWEPT, THE SOURCE TREE IS THE ORACLE. A mobile build that
+  // swept assets-mobile/ alone would ship whatever happened to be there — the
+  // art-less-build bug with a new address. So the two trees are compared file
+  // for file before a byte is inlined: every runtime asset the full build
+  // carries must have a twin, and nothing without a source may ride along.
+  // tools/mobile-art.mjs --check says the same thing with sizes; this is the
+  // bundler refusing to trust that it ran.
+  if (!existsSync(ART_DIR)) fail(`${MOBILE_ASSET_DIR}/ is missing — run node tools/mobile-art.mjs (needs cwebp) to shrink assets/ into it`);
+  const rel = (dir) => walkAssets(dir).map((abs) => relative(dir, abs).split(/[\\/]/g).join('/'))
+    .filter((p) => runtimeAsset(p) && MIME[extname(p).toLowerCase()]);
+  const want = new Set(rel(ASSET_DIR));
+  const have = new Set(rel(ART_DIR));
+  const missing = [...want].filter((p) => !have.has(p));
+  const stray = [...have].filter((p) => !want.has(p));
+  if (missing.length || stray.length) {
+    fail(`${MOBILE_ASSET_DIR}/ is not a twin of assets/ — ${missing.length} missing, ${stray.length} stray; run node tools/mobile-art.mjs --check`,
+      [...missing.slice(0, 5).map((p) => ({ message: `missing twin: ${MOBILE_ASSET_DIR}/${p}` })),
+        ...stray.slice(0, 5).map((p) => ({ message: `stray twin with no source: ${MOBILE_ASSET_DIR}/${p}` }))]);
+  }
+}
+if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
   const pairs = [];
-  for (const abs of walkAssets(ASSET_DIR)) {
-    const assetPath = relative(ASSET_DIR, abs);
+  // ONE DATA URI PER DISTINCT IMAGE. ~50 images are byte-identical to another
+  // path (an outfit's menu and detail plate, a portrait shared by two sets);
+  // inlining each copy cost the mobile file ~410 KB. A repeat becomes an alias
+  // line after the map, pointing at the first key with the same bytes.
+  const firstKeyOf = new Map();
+  const aliases = [];
+  for (const abs of walkAssets(ART_DIR)) {
+    const assetPath = relative(ART_DIR, abs);
     if (!runtimeAsset(assetPath)) {
       authoringBytes += statSync(abs).size;
       // A rebuild also retires this file from a previous external-art output.
@@ -336,7 +384,7 @@ if (existsSync(ASSET_DIR) && sources.has(ASSET_MAP_ID)) {
       continue;
     }
     const buf = readAssetBytes(abs);
-    const key = posix.join('assets', relative(ASSET_DIR, abs).split(/[\\/]/g).join('/'));
+    const key = posix.join('assets', relative(ART_DIR, abs).split(/[\\/]/g).join('/'));
     if (EXTERNAL_ART) {
       // THE SAME SWEEP, A DIFFERENT DESTINATION. Copying exactly what the map
       // would have carried is what makes the two shapes carry the same art:
@@ -354,7 +402,22 @@ if (existsSync(ASSET_DIR) && sources.has(ASSET_MAP_ID)) {
       mkdirSync(dirname(dest), { recursive: true });
       writeFileSync(dest, buf);
       copiedAssets += 1;
+    } else if (key.startsWith('assets/fonts/')) {
+      // FONTS REACH THE PAGE THROUGH CSS ONLY. styles/kit.css names each face
+      // in an @font-face url(), which inlineCssUrls already turns into a data:
+      // URI; nothing asks the asset map for a font. Mapping them too shipped
+      // every face twice (~535 KB), most of the mobile build's headroom. The
+      // external-art branch above still copies them, because the rewritten
+      // CSS url points at that copy.
+      continue;
     } else {
+      const id = distinctAssetId(buf, extname(abs));
+      if (firstKeyOf.has(id)) {
+        aliases.push([key, firstKeyOf.get(id)]);
+        mapEntries += 1;
+        continue;
+      }
+      firstKeyOf.set(id, key);
       pairs.push(`  ${JSON.stringify(key)}: "data:${mime};base64,${buf.toString('base64')}"`);
     }
     mapEntries += 1;
@@ -370,9 +433,13 @@ if (existsSync(ASSET_DIR) && sources.has(ASSET_MAP_ID)) {
   // run is a worse day than finding it here.
   if (!EXTERNAL_ART) sources.set(
     ASSET_MAP_ID,
+    // A replacer FUNCTION: a string replacement would read `$&`, `$1`… in an
+    // asset path as a pattern.
     src.replace(
       /\/\* ASSET_MAP_START \*\/[\s\S]*?\/\* ASSET_MAP_END \*\//,
-      `/* ASSET_MAP_START */\nexport const ASSET_MAP = {\n${pairs.join(',\n')}\n};\n/* ASSET_MAP_END */`
+      () => `/* ASSET_MAP_START */\nexport const ASSET_MAP = {\n${pairs.join(',\n')}\n};\n`
+        + (aliases.length ? `for (const [alias, key] of ${JSON.stringify(aliases)}) ASSET_MAP[alias] = ASSET_MAP[key];\n` : '')
+        + '/* ASSET_MAP_END */'
     )
   );
 }
@@ -424,6 +491,9 @@ try {
     ordinal: padOrdinal(ord.ordinal),
     built: ord.built,
     runPath: RUN_PATH_BUNDLE,
+    // The edition is the one fact that tells the two single files apart from
+    // inside: same digest, same ordinal, different art. Settings → About says it.
+    edition: MOBILE ? EDITION_MOBILE : EDITION_FULL,
   }));
 } catch (err) {
   fail(`could not derive the build version: ${err.message}`);
@@ -588,6 +658,19 @@ function inlineCssUrls(css, cssAbs) {
     const ext = extname(assetAbs).toLowerCase();
     const mime = MIME[ext];
     if (!mime) fail(`unsupported CSS asset type '${ext}' for ${ref}`);
+    if (MOBILE) {
+      // Same rule as the sweep: the stylesheet names the source, the payload
+      // comes from the twin. A url() that points outside assets/ has no twin
+      // and is refused, exactly as --external-art refuses it.
+      const fromAssets = relative(ASSET_DIR, assetAbs);
+      if (fromAssets.startsWith('..')) fail(`CSS url outside assets/ has no mobile twin: ${ref}`);
+      const twin = resolve(ART_DIR, fromAssets);
+      if (!existsSync(twin)) fail(`CSS asset has no twin under ${MOBILE_ASSET_DIR}/: ${ref} — run node tools/mobile-art.mjs`);
+      const buf = readAssetBytes(twin);
+      inlinedAssets += 1;
+      inlinedAssetBytes += buf.length;
+      return `url("data:${mime};base64,${buf.toString('base64')}")`;
+    }
     if (EXTERNAL_ART) {
       // REWRITTEN, NOT LEFT ALONE, AND THAT DISTINCTION IS THE WHOLE BUG.
       //
@@ -781,6 +864,9 @@ ${entries}
 const runtime = assembleRuntime(moduleEntries, entryId);
 
 const title = (/<title>([\s\S]*?)<\/title>/i.exec(indexHtml) || [, 'AshenSpire'])[1].trim();
+// Web/share metadata (description, og:*, icon, theme-color) — copied from index.html.
+let headMeta;
+try { headMeta = headMetaTags(indexHtml); } catch (e) { fail(e.message); }
 
 const html = `<!DOCTYPE html>
 <html lang="en">
@@ -790,6 +876,7 @@ const html = `<!DOCTYPE html>
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>${title}</title>
+${headMeta.map((tag) => '  ' + tag).join('\n')}
 ${styleBlocks.join('\n')}
 </head>
 <body>
@@ -939,6 +1026,14 @@ const probeEntries = `${JSON.stringify(SIGNATURE_PROBE_ID)}: ${MODULE_FN}
   }
 }
 
+// THE MOBILE BUDGET IS A REFUSAL, NOT A WARNING. A mobile file over the number
+// is not a mobile file; writing it and printing a line would hand a phone the
+// exact download this edition exists to avoid. Refused here, before the write,
+// so the exit handler stands a build-failed page where the game would be.
+if (MOBILE && Buffer.byteLength(html, 'utf8') > MOBILE_BUNDLE_BUDGET_BYTES) {
+  fail(`the mobile build is ${Buffer.byteLength(html, 'utf8')} bytes, over its ${MOBILE_BUNDLE_BUDGET_BYTES}-byte budget — tighten tools/mobileart-policy.mjs, regenerate ${MOBILE_ASSET_DIR}/, or cut art`);
+}
+
 // The success write and the refusal write must aim at the same file or the
 // whole property is a second copy of a path. OUT_DIR / OUT_PATH, one home.
 mkdirSync(OUT_DIR, { recursive: true });
@@ -967,6 +1062,15 @@ if (EXTERNAL_ART) {
     cpSync(detailSrc, resolve(OUT_DIR, 'map-detail'), { recursive: true });
     copiedDetail = walkCount(resolve(OUT_DIR, 'map-detail'));
   }
+  // The shipped score, same contract: a served page with the music-folder
+  // setting blank fetches music/manifest.json from beside itself
+  // (content/music.js SHIPPED_MUSIC_FOLDER), so a hosted build without it
+  // 404s on boot and falls back to the synth.
+  const musicSrc = resolve(ROOT, 'music');
+  if (existsSync(musicSrc)) {
+    cpSync(musicSrc, resolve(OUT_DIR, 'music'), { recursive: true });
+    copiedMusic = walkCount(resolve(OUT_DIR, 'music'));
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -981,12 +1085,14 @@ console.log('  modules bundled  : ' + order.length);
 console.log('  stylesheets      : ' + cssHrefs.length + ' (' + cssHrefs.join(', ') + ')');
 console.log('  authoring omitted: ' + Math.round(authoringBytes / 1024) + ' KiB (equipment component experiments)');
 console.log('  shape            : ' + (EXTERNAL_ART ? 'external art (needs a server; assets/ beside the HTML)'
-  : 'consolidated single file (runs from file://)'));
+  : MOBILE ? `consolidated single file, MOBILE edition (art from ${MOBILE_ASSET_DIR}/; runs from file://; budget ${MOBILE_BUNDLE_BUDGET_BYTES} bytes)`
+    : 'consolidated single file (runs from file://)'));
 if (EXTERNAL_ART) {
   console.log('  art copied       : ' + copiedAssets + ' files (' + Math.round(mapBytes / 1024) + ' KiB) → ' + idOf(EXTERNAL_ASSET_DIR));
   console.log('  css assets linked: ' + externalCssUrls + ' (rebased onto the output HTML)');
   console.log('  map detail       : ' + copiedDetail + ' tiles → ' + idOf(resolve(OUT_DIR, 'map-detail'))
     + (copiedDetail ? '' : ' (none found — the map falls back to low detail)'));
+  console.log('  shipped score    : ' + copiedMusic + ' files → ' + idOf(resolve(OUT_DIR, 'music')));
 } else {
   console.log('  css assets inlined: ' + inlinedAssets + ' (' + Math.round(inlinedAssetBytes / 1024) + ' KiB raw)');
   console.log('  art inlined      : ' + mapEntries + ' files (' + Math.round(mapBytes / 1024) + ' KiB raw)');

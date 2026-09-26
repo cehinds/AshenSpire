@@ -1,3 +1,5 @@
+import { authoredMapTerrainHtml } from './authoredMapArt.js';
+import { mapPoint } from '../../model/mapview.js';
 import { MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
 import { mountMapDetail } from './mapDetail.js';
 // src/ui/components/mapboard.js — THE ACT MAP. One renderer, mounted twice.
@@ -70,8 +72,8 @@ import {
 } from '../../model/mapknowledge.js';
 import {
   ZOOM_STEPS, ZOOM_MIN, MAP_ZOOM_DEFAULT,
-  clampZoom, framingBox, fitZoom, nodeRadius, nodeX, nodeY, svgWidth, svgHeight,
-  NODE_R, TAP_TARGET_DEFAULT, deliveredNodePx,
+  clampZoom, framingBox, fitZoom, nodeRadius, svgWidth, svgHeight,
+  NODE_R, TAP_TARGET_DEFAULT, deliveredNodePx, resolveMapFreePan,
 } from '../../model/mapview.js';
 
 const HALO_PAD = 6;
@@ -142,6 +144,76 @@ function indexNodes(nodes) {
 }
 
 /**
+ * watchViewport(el, { read, onChange, delayMs, RO, setTimer, clearTimer })
+ * — the camera's STANDING re-fit (#1142). The first-settle observer in
+ * `recenter` is one-shot by design: it waits for the first non-zero size and
+ * disconnects. Everything after that — root scaling settling a frame late, a
+ * tray or banner changing the scrollport's box, a font swap — reached the
+ * camera only if it happened to arrive with a window `resize` (map.js). A box
+ * change with no window event left `data-camera-viewport` naming a shape the
+ * screen no longer had: measured 390x405 against a 433x643 scrollport.
+ *
+ * THE BASELINE IS THE SIZE WHEN THE WATCH STARTS, not the size the camera was
+ * solved for. A manual or saved camera is restored exactly whatever viewport
+ * it was saved under (the restore door, above), and comparing against its
+ * saved shape would re-centre a player's deliberate view on the very first
+ * observation. So only a later CHANGE re-fits. Within 1 px is not a change —
+ * the restore door's own tolerance.
+ *
+ * Debounced (a settling layout fires several times in a row; the camera moves
+ * once, on the last). The re-fit is a jump, never a glide, so reduced motion
+ * needs no branch here. Returns `stop()`; no ResizeObserver means no watch,
+ * and says so by returning a no-op rather than throwing.
+ */
+export function watchViewport(el, {
+  read, onChange, delayMs = 100,
+  RO = typeof ResizeObserver !== 'undefined' ? ResizeObserver : null,
+  setTimer = setTimeout, clearTimer = clearTimeout,
+} = {}) {
+  if (!RO || !el) return () => {};
+  const usable = (v) => !!v && v.width > 0 && v.height > 0;
+  const same = (a, b) => Math.abs(a.width - b.width) <= 1 && Math.abs(a.height - b.height) <= 1;
+  let last = read();
+  let timer = null;
+  let stopped = false;
+  const fire = () => {
+    timer = null;
+    if (stopped) return;
+    const now = read();
+    if (!usable(now)) return; // hidden or detached: not a viewport, keep the baseline
+    if (usable(last) && same(now, last)) return;
+    last = now;
+    onChange(now);
+  };
+  const ro = new RO(() => {
+    if (stopped) return;
+    if (timer !== null) clearTimer(timer);
+    timer = setTimer(fire, delayMs);
+  });
+  ro.observe(el);
+  return () => {
+    stopped = true;
+    if (timer !== null) { clearTimer(timer); timer = null; }
+    ro.disconnect();
+  };
+}
+
+/**
+ * refitCamera({ look, centerOnCurrent, centerOnNode }) — what a re-fit DOES,
+ * kept apart from when one happens. The frame is always solved first (zoom and
+ * `data-camera-viewport` are functions of the viewport); then, while a host's
+ * tray has the camera looking at one node (`look`, left by `centerOnNode` and
+ * cleared by `resetFraming`), that same look is taken again at the same inset.
+ * Without the second step a scrollport change under an open destination tray
+ * re-centred on the current node and the selected one slid out of the band the
+ * tray leaves visible.
+ */
+export function refitCamera({ look, centerOnCurrent, centerOnNode }) {
+  centerOnCurrent();
+  if (look) centerOnNode(look.id, { inset: look.inset });
+}
+
+/**
  * mountMapBoard(host, { act, viewer, chromeHtml, showLegendControl }) → board
  *
  * `act` — WHAT THE MAP IS. `{ nodes, columns, actNumber, startIds, bossId }`.
@@ -162,7 +234,8 @@ function indexNodes(nodes) {
  *   `mark`      (node) → extra SVG inside the node's <g>. Vote pips live here.
  *   `classes`   (node) → extra classes. `my-vote` lives here.
  *   `tooltip`   (node, reading) → html.
- *   `onPick`    (id) → void, fired only for reachable nodes.
+ *   `onPick`    (id, { shownType, revealed }) → void, fired only for reachable
+ *               nodes; the reading is what this board drew for the node.
  *
  * `chromeHtml` is emitted BETWEEN the scrollport and the tap note, and the
  * position is a fix rather than a preference: `.hint-bar` is fixed to the bottom
@@ -200,10 +273,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     console.warn(`[mapboard] no \`columns\` on this graph; drawing ${columns} derived from the nodes in use.`);
   }
 
-  const width = svgWidth(columns);
-  const height = svgHeight(maxFloor);
-  const x = (col) => nodeX(col);
-  const y = (floor) => nodeY(floor, height);
+  const width = act.authoredMap?.width || svgWidth(columns);
+  const height = act.authoredMap?.height || svgHeight(maxFloor);
+  const px = n => mapPoint(n, height).x;
+  const py = n => mapPoint(n, height).y;
 
   const reachable = viewer.reachable instanceof Set ? viewer.reachable : new Set(viewer.reachable || []);
   const traveled = viewer.traveled instanceof Set ? viewer.traveled : new Set(viewer.path || []);
@@ -212,6 +285,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   const run = { mapNodeId: current, path: viewer.path || [] };
   const app = host;
   const reveal = !!viewer.reveal;
+  const freePan = resolveMapFreePan(viewer.meta);
 
   // WHAT THE VIEWER KNOWS, derived once and read by everything below — the node
   // loop, the edges, and the camera's look-ahead. Deriving it twice is how a
@@ -267,19 +341,25 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       const to = byId[toId];
       if (!to) continue;
       const ia = path.indexOf(n.id);
-      const isTraveled = ia >= 0 && path[ia + 1] === toId;
-      const isLane = laneEdge.has(`${n.id}>${toId}`);
-      edgeSvg += `<line class="map-route-outline" vector-effect="non-scaling-stroke" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>` ;
-      edgeSvg += `<line vector-effect="non-scaling-stroke" class="map-edge${isTraveled ? ' traveled' : ''}${isLane ? ' shrine-lane' : ''}" x1="${x(n.col)}" y1="${y(n.floor)}" x2="${x(to.col)}" y2="${y(to.floor)}"/>`;
+      const reverseIndex = act.authoredMap ? path.indexOf(toId) : -1;
+      const isTraveled = (ia >= 0 && path[ia + 1] === toId) || (reverseIndex >= 0 && path[reverseIndex + 1] === n.id);
+      const isLane = laneEdge.has(`${n.id}>${toId}`) || (act.authoredMap && laneEdge.has(`${toId}>${n.id}`));
+      const route = act.authoredMap?.routes.find(r => r.a === n.id && r.b === toId || r.b === n.id && r.a === toId);
+      if (route && route.a !== n.id) continue; // undirected authored roads draw once
+      const tag = route ? 'polyline' : 'line';
+      const coords = route ? `points="${route.points.map(p=>p.join(',')).join(' ')}"` : `x1="${px(n)}" y1="${py(n)}" x2="${px(to)}" y2="${py(to)}"`;
+      edgeSvg += `<${tag} class="map-route-outline" vector-effect="non-scaling-stroke" ${coords}/>`;
+      edgeSvg += `<${tag} vector-effect="non-scaling-stroke" class="map-edge${isTraveled ? ' traveled' : ''}${isLane ? ' shrine-lane' : ''}" ${coords}/>`;
+
     }
   }
 
   // Terrain uses the same discovered nodes as the navigation layer. The saved
   // path makes the reveal persistent, including previously visible branches.
-  const world = worldMapForRun(act);
-  const groundSvg = mapTerrainHtml({
+  const world = act.authoredMap || worldMapForRun(act);
+  const groundSvg = act.authoredMap ? authoredMapTerrainHtml({ art: act.authoredMap, fog, visited: nodes.filter(n => traveled.has(n.id) || n.id === current).map(n => mapPoint(n, height)) }) : mapTerrainHtml({
     world, width, height, fog,
-    points: nodes.filter(n => isDrawn(n.id)).map(n => ({ id: n.id, x: x(n.col), y: y(n.floor) })),
+    points: nodes.filter(n => isDrawn(n.id)).map(n => ({ id: n.id, x: px(n), y: py(n) })),
   });
 
   // The per-act parchment tone rides the SCROLLPORT, not the <g> inside the SVG:
@@ -287,19 +367,13 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // scrollport's own background need to read it.
   host.insertAdjacentHTML('beforeend', `
     <div class="map-frame">
-    <!-- NO data-scroll-axis HERE, AND THE ABSENCE IS THE FACT. This container
-         carried the exemption 'the act map is a horizontal route' (1c227ec) —
-         a sentence D17 message 4 contradicts in Constantine's own words: "not
-         require any scrollign left or right." The route is a CLIMB and it runs
-         UP. The exemption died with the travel: the camera now owns the
-         horizontal axis through the viewBox (see sizeSvg), horizontal travel is
-         zero by construction, and axisfit's A4 ratchet would fail a declaration
-         with no travel under it — correctly. -->
-    <div class="map-scroll${fog ? ` ${parchmentClass(act.actNumber)}` : ''}" data-map-mode="${mode}">
+    <!-- data-pan-axis reports the Advanced preference applied by the board.
+         It is written after mount beside the other camera evidence fields. -->
+    <div class="map-scroll${fog ? ` ${parchmentClass(act.actNumber)}` : ''}" data-map-mode="${mode}"${freePan ? ' data-scroll-axis="x" data-scroll-axis-why="Two-axis map dragging is enabled by the player in Advanced settings."' : ''}>
       <div class="map-canvas">
         <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
           ${groundSvg}
-          <text class="map-act-title" x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${actTitle(act.actNumber)}</text>
+          <text class="map-act-title" x="${width / 2}" y="24" text-anchor="middle" fill="var(--gold)" font-size="17" letter-spacing="4" font-family="Georgia,serif">${actTitle(act.actNumber, act.seatName)}</text>
           ${edgeSvg}
           <!-- BOTH AN ID AND A CLASS, and the id is not decoration: two
                instruments key on the ids map-nodes, zoom-in, zoom-out and
@@ -407,9 +481,9 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // The per-viewer mark rides LAST so it draws over the node, and it is given
     // the geometry rather than left to re-derive it — a second copy of `y()` is
     // how this whole file came to be needed.
-    const mark = viewer.mark ? viewer.mark(n, { x: x(n.col), y: y(n.floor), r }) : '';
-    el.insertAdjacentHTML('beforeend', `${mapNodeInk({ type: shownType, x: x(n.col), y: y(n.floor), radius: r, reachable: isReachable })}${mark || ''}`);
-    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id));
+    const mark = viewer.mark ? viewer.mark(n, { x: px(n), y: py(n), r }) : '';
+    el.insertAdjacentHTML('beforeend', `${mapNodeInk({ type: shownType, x: px(n), y: py(n), radius: r, reachable: isReachable })}${mark || ''}`);
+    if (isReachable && viewer.onPick) el.addEventListener('click', () => viewer.onPick(n.id, { shownType, revealed }));
     if (viewer.tooltip) attachTooltip(el, () => viewer.tooltip(n, { shownType, revealed, reachable: isReachable }));
     g.appendChild(el);
   }
@@ -434,6 +508,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // compare two sets rather than trust one count. The full walk is deliberately
   // NOT published: it names nodes the player has not earned.
   scroll.dataset.shrineLane = [...laneNodes].join(',');
+  scroll.dataset.panAxis = freePan ? 'both' : 'vertical';
 
   // Settings owns the DEFAULT. The run owns what the player subsequently did
   // with the on-map ladder and camera. A changed Settings value invalidates the
@@ -452,6 +527,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   const restored = candidate && candidate.actNumber === act.actNumber
     && candidate.nodeId === (run.mapNodeId || null)
     && candidate.setting === setting
+    && candidate.panAxis === (freePan ? 'both' : 'vertical')
     && Number.isFinite(candidate.zoom) && candidate.zoom > 0
     && ['fit', 'saved', 'manual'].includes(candidate.framing)
     && Number.isFinite(candidate.scrollLeft) && candidate.scrollLeft >= 0
@@ -462,6 +538,11 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   const saved = restored ? clampZoom(restored.zoom) : savedZoom(viewer.meta);
   let framing = restored ? restored.framing : (saved == null ? 'fit' : 'saved');
   let zoom = saved == null ? ZOOM_MIN : saved;
+  // What a host's tray covers at the foot of the scene while it is open, in
+  // local px (screens/map.js). The content box grows by it at the bottom so a
+  // node near the foot can still be centred in the part left visible.
+  let insetBottom = 0;
+  let glideFrame = 0;
 
   // ---- zoom + centering (SPEC §7.1 map UX) ----
   // `scroll` and `svgEl` were scoped to this board above.
@@ -490,68 +571,20 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // player was given a canvas whose empty half was pannable and whose full half
   // was not.
   //
-  // THE RULE, one sentence per axis, because the two axes answer two different
-  // masters. VERTICAL — the thumb's axis, D17's "the edges need to be longer
-  // and more in the verticle axis": the scrollable content is the painted ink,
-  // grown by half a viewport above and below so that ANY painted point can be
-  // brought to the centre (`overflow = ink`). HORIZONTAL — the camera's axis,
-  // Law 5 clause 1 and D17's "not require any scrollign left or right": the
-  // content box is EXACTLY the viewport, centred on the camera's aim, so the
-  // scrollport never has a horizontal overflow to give a finger. Travel across
-  // is ZERO BY CONSTRUCTION — not clamped, not small: there is no extent.
-  // Centring still works on both axes; what moved is WHO does the horizontal
-  // half — the viewBox origin (aimX, below), never scrollLeft.
-  //
-  // ~~so the map scrolls the axis the act is long on and stops scrolling the one
-  // it is not.~~ STRUCK 2026-08-08 by Sunna, and struck rather than reworded,
-  // because it is the sentence a reader would cite as Law 5 coverage. IT IS NOT
-  // TRUE. Measured on this branch, `.map-scroll` horizontal travel, 390x844,
-  // shipped zoom, headless Chromium on one Linux box:
-  //
-  //   fog, entrance      65  (SHOWCASE)  ..  385  (VIRA4, BJORN1, SAGA11)
-  //   fog, mid-climb    166  ..  385     (4 seeds x floors 1/4/7/10, 16 cells)
-  //   path, entrance    704  (SHOWCASE)
-  //
-  // For scale, Law 5's own known-bad is this same container at 401 px on `dev`
-  // cd3da94 — so the entrance improved on ONE seed and the shipped `path` mode
-  // got worse. The two fog-entrance numbers are the same code on two seeds:
-  // travel across is `inkWidth * zoom` AND NOTHING ELSE, because the ink is
-  // grown by a full viewport whether or not it already fits inside one. A door
-  // and a boss in the same column give 65; three columns apart give 385.
-  //
-  // A number that swings 320 px on the seed is not an axis the layout has
-  // stopped scrolling — it is one nobody is measuring. Law 5 clause 1 wants
-  // ZERO and clause 2 says a threshold is not an exemption. So the honest state
-  // of this expression WAS: the VERTICAL axis was the defect it was written to
-  // fix and it fixed it (19 -> 692 px of travel, which is what makes centring
-  // possible at all), and the HORIZONTAL axis was unpaid.
-  //
-  // THE HORIZONTAL AXIS IS NOW PAID, and the payment is structural, not a
-  // clamp. Measured at dev = acb8ffe before this change, the shipped bundle,
-  // default settings (fog, Fit), 12 seeds x entrance/walk3/walk6 x 390x844 +
-  // 320x640: travel across ran 114..835 px and was zero on 0 of 72 cells,
-  // while `data-framing` said `fit/0` on ALL 72 — the promise never needed the
-  // axis it was hoarding. The fix follows from that measurement: the camera
-  // keeps the decision framed, so the horizontal freedom belongs to the camera
-  // (the viewBox aim), and the scroller's horizontal extent is the viewport
-  // itself. `tools/axisfit.mjs` still owns the number; this comment claims
-  // only the mechanism.
-  //
-  // IT IS THE viewBox, NOT PADDING, AND THAT IS DELIBERATE. #24 padded
-  // `.map-canvas` to clear the zoom buttons and the fix only held at the scroll
-  // offset it was measured at (see styles/map.css). Padding moves the content
-  // inside the scrollport; this moves the SCROLLPORT'S IDEA OF THE CONTENT, so
-  // there is no offset at which it disagrees with itself. Node coordinates are
-  // untouched — the viewBox carries the origin — so every rect, edge and label
-  // in the markup is where it always was.
+  // Both axes derive their extent from painted ink rather than the column grid.
+  // Vertical always grows by half a viewport so every painted point can be
+  // centred. With Two-axis map dragging on, horizontal does the same; with it
+  // off, the horizontal content box is exactly the viewport and the viewBox is
+  // centred on aimX, preserving the former vertical-only camera. This is viewBox
+  // geometry rather than CSS padding, so the scrollport and SVG agree at every
+  // offset and node coordinates remain untouched.
   const titleEl = svgEl.querySelector('.map-act-title');
   const inkBox = framingBox(nodes.filter((n) => isDrawn(n.id)), height) || { x0: 0, y0: 0, x1: width, y1: height };
   // The content box last APPLIED to the element, in SVG units. Read by the
   // camera and by `report`, so the three cannot disagree about where zero is.
   let content = { x0: 0, y0: 0, w: width, h: height };
-  // WHERE THE CAMERA POINTS ON THE HORIZONTAL AXIS, in SVG units — the ONLY
-  // horizontal position this board has, because scrollLeft has no extent to
-  // hold one. Written by `centerOnCurrent` (the current node's column, or the
+  // WHERE THE CAMERA POINTS ON THE HORIZONTAL AXIS, in SVG units. Written by
+  // `centerOnCurrent` (the current node's column, or the
   // entrance aim's centre, nudged so a fitting decision box is never cut);
   // read by `apply`, which centres the viewBox on it. Before the first
   // centring it is the ink's own centre, the honest place to stand when
@@ -560,6 +593,35 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   let restorePending = !!restored;
   let viewCommitTimer = null;
   let pendingViewCommit = null;
+  // THE VIEWPORT THE CAMERA WAS LAST SOLVED AGAINST — the promise a `fit`
+  // makes, and the only thing `fitViewportMatches` above has to check it with.
+  // It is written where the camera is COMPUTED from viewport geometry
+  // (centerOnCurrent), inherited from a restored view, and never re-read at
+  // emit time. Reading it live was the bug: a viewport change fires a `scroll`
+  // event — the browser clamps scrollTop to the new extent — and the debounce
+  // below snapshots the camera, so the snapshot stamped the NEW measurements
+  // onto a fit solved for the OLD ones. The map screen does re-fit a live board
+  // on `resize` (map.js), but that is two animation frames away and lands on
+  // whatever layout stage it catches; the clamp's scroll event does not wait
+  // for it. So a desktop fit could reach the next mount wearing the phone's
+  // measurements, match, and be restored as though it had been solved there.
+  // Measured at 1200x730 -> 390x844 before this: the phone resumed that camera
+  // at scrollTop 1756.7, where the phone's own fit stands at 1953.3.
+  //
+  // AND THE BOARD SAYS WHICH SHAPE IT SOLVED FOR, the same discipline as the
+  // fog census and the shrine lane one field over: a promise that cannot report
+  // itself cannot be caught being broken. `data-camera-restore` says which
+  // DOOR the camera came through, which on a live resize is a race — that
+  // two-frame re-fit can leave the run holding a phone-solved fit, and
+  // `restored` is then the right answer. `data-camera-viewport` says the one
+  // thing the door cannot: the shape the camera in force was measured against.
+  let solvedViewport = null;
+  function solveViewport(width, height) {
+    if (!(Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0)) return;
+    solvedViewport = { width, height };
+    scroll.dataset.cameraViewport = `${Math.round(width)}x${Math.round(height)}`;
+  }
+  if (restored) solveViewport(restored.viewportWidth, restored.viewportHeight);
 
   scroll.dataset.cameraRestore = restored ? 'restored' : (candidate ? 'recomputed' : 'new');
 
@@ -568,13 +630,14 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
       actNumber: act.actNumber,
       nodeId: run.mapNodeId || null,
       setting,
+      panAxis: freePan ? 'both' : 'vertical',
       zoom,
       framing,
       scrollLeft: scroll.scrollLeft,
       scrollTop: scroll.scrollTop,
       aimX,
-      viewportWidth: scroll.clientWidth,
-      viewportHeight: scroll.clientHeight,
+      viewportWidth: solvedViewport ? solvedViewport.width : scroll.clientWidth,
+      viewportHeight: solvedViewport ? solvedViewport.height : scroll.clientHeight,
     };
   }
 
@@ -596,17 +659,18 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // grow by; the plain canvas is the honest fallback and the ResizeObserver
     // below re-runs this the moment a real size exists.
     const padY = scroll.clientHeight > 0 ? scroll.clientHeight / (2 * zoom) : 0;
-    // HORIZONTAL: the content box IS the viewport, centred on the camera's aim.
-    // `w * zoom` lands exactly on `clientWidth`, so scrollWidth == clientWidth
-    // and horizontal travel is zero with nothing left to clamp. Ink outside
-    // [x0, x0+w] is clipped by the viewBox — deliberately: it is history and
-    // context the centring promise does not cover, and D17 asks for the current
-    // and next nodes focused, not a pannable panorama. The pre-layout fallback
-    // is the bare ink, same honesty as the vertical branch.
-    const w = scroll.clientWidth > 0 ? scroll.clientWidth / zoom : (inkBox.x1 - inkBox.x0);
-    const x0 = aimX - w / 2;
+    const viewportW = scroll.clientWidth > 0 ? scroll.clientWidth / zoom : (inkBox.x1 - inkBox.x0);
+    // In two-axis mode the ink grows by half a viewport on each side, matching
+    // the vertical camera: every painted point can be brought to the centre.
+    // Turning the setting off retains the former viewport-wide, aim-centred box.
+    const padX = freePan && scroll.clientWidth > 0 ? viewportW / 2 : 0;
+    const w = freePan ? (inkBox.x1 - inkBox.x0) + 2 * padX : viewportW;
+    const x0 = freePan ? inkBox.x0 - padX : aimX - w / 2;
     const y0 = inkBox.y0 - padY;
-    const h = (inkBox.y1 - inkBox.y0) + 2 * padY;
+    // PLUS WHAT A TRAY COVERS at the foot (insetBottom): the box grows at the
+    // bottom only, so y0 and everything above it are untouched and nothing
+    // shifts when a host opens or closes one.
+    const h = (inkBox.y1 - inkBox.y0) + 2 * padY + insetBottom / zoom;
     content = { x0, y0, w, h };
     svgEl.setAttribute('viewBox', `${x0} ${y0} ${w} ${h}`);
     svgEl.style.width = `${w * zoom}px`;
@@ -835,8 +899,17 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // not because the arithmetic here got smarter. The two halves are one change
   // and neither works alone.
   function centerOnCurrent() {
+    // A hand on ⊙, on the zoom ladder, or a resize: this frame is the newer
+    // instruction, so an in-flight glide stops rather than landing on top of it.
+    // `resetFraming`'s gliding path calls this to SOLVE its target and starts
+    // its own glide immediately afterwards, so nothing is lost there.
+    stopGlide();
     const fs = framingNodes();
     if (!fs.length) { report(null, null); return; }
+    // THIS is where the camera becomes a function of the viewport — both axes,
+    // in every framing mode — so this is where a fit's promise is dated. A zero
+    // measurement is not a viewport and must not be recorded as one.
+    solveViewport(scroll.clientWidth, scroll.clientHeight);
     if (framing === 'fit' && scroll.clientWidth > 0 && scroll.clientHeight > 0) {
       // The decision must fit; the look-ahead is fitted too when it costs
       // nothing, and `min` is what makes that safe — the context box contains
@@ -858,11 +931,6 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     const entrance = cur ? null : entranceFrame(fs, box);
     const aim = cur ? framingBox([cur], height) : entrance.aim;
 
-    // THE HORIZONTAL HALF HAPPENS IN SVG UNITS, BEFORE THE VIEWBOX IS SIZED,
-    // because the viewBox is where it lands: `apply()` centres the content box
-    // on `aimX`, so writing the aim and then sizing IS the horizontal centring.
-    // There is no scrollLeft arithmetic to do afterwards — no extent exists.
-    //
     // CENTRED UNLESS CENTRING WOULD HIDE THE CHOICE — the clause survives the
     // axis moving house, verbatim in its logic: the centre is a TARGET and the
     // decision is a FLOOR. Nudge the aim by the smallest amount that keeps the
@@ -898,10 +966,9 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     if (bb - bt <= scroll.clientHeight) top = Math.min(bt, Math.max(bb - scroll.clientHeight, top));
 
     const maxTop = Math.max(0, scroll.scrollHeight - scroll.clientHeight);
-    // scrollLeft is written once, to zero, as a statement rather than a repair:
-    // if this line ever moves a pixel, the horizontal extent has come back and
-    // axisfit will say so before any player does.
-    scroll.scrollLeft = 0;
+    const maxLeft = Math.max(0, scroll.scrollWidth - scroll.clientWidth);
+    const left = ((aimX - content.x0) * zoom) - scroll.clientWidth / 2;
+    scroll.scrollLeft = freePan ? Math.min(maxLeft, Math.max(0, left)) : 0;
     scroll.scrollTop = Math.min(maxTop, Math.max(0, top));
     report(box, fs.length);
     reportEntrance(entrance);
@@ -1038,12 +1105,123 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     applyZoom(keepCenter);
     emitViewState(true);
   }
+  // THE CAMERA GLIDES RATHER THAN JUMPS when a host asks for a new frame — the
+  // map tray opening and closing (screens/map.js). ONE tween drives both halves:
+  // the aim is an SVG coordinate the viewBox carries (sizeSvg) and the top is the
+  // scroller's, and moving them apart would read as two cameras. A glide of 0 ms
+  // lands immediately, which is what reduced motion asks for.
+  //
+  // AND THE HORIZONTAL HALF IS TWO DIFFERENT THINGS depending on who owns the
+  // axis, which is the whole of #1168's tail. Vertical-only: the viewBox carries
+  // the aim (`apply` solves `x0` from `aimX`) and the scroller has no horizontal
+  // extent at all, so `scrollLeft` is 0 and saying so is honest. Two-axis — the
+  // DEFAULT since MAP_FREE_PAN_DEFAULT — the viewBox is the whole ink plus half a
+  // viewport of pad on each side and `scrollLeft` IS the horizontal camera. A
+  // hardcoded 0 there is not "no pan", it is a pan to the far left of the padded
+  // canvas: selecting a node threw the map into the right half of the screen
+  // instead of centring on it. So the target carries `left` and it is tweened
+  // like the other two; omit it and the old meaning (0) stands.
+  //
+  // AND A GLIDE IN FLIGHT OUTRANKED EVERY OTHER HAND ON THE CAMERA. Only
+  // `glideTo` itself and `teardown` ever cancelled the frame, so anything that
+  // wrote the camera DIRECTLY during the 300 ms after a pick was overwritten by
+  // the next tween frame and the glide still landed on the picked node: ⊙ (or
+  // `0`) read as doing nothing at all, `+` / `−` / ctrl-wheel re-centred and
+  // were dragged back to a target solved at the OLD zoom, and a drag fought the
+  // tween for every pixel. That is older than this change — and this change
+  // sharpens it, because the tween now owns the horizontal axis for the whole
+  // glide instead of only slamming it to 0 at the end. So the cancel gets a
+  // name and the two doors that write the camera by hand use it: the computed
+  // frame (`centerOnCurrent`, which is ⊙, the ladder, and a resize) and the
+  // start of a drag. The player's hand is the newer instruction; it wins.
+  function stopGlide() { cancelAnimationFrame(glideFrame); glideFrame = 0; }
+  function glideTo(target, ms = 0, onDone = null) {
+    stopGlide();
+    const toLeft = Number.isFinite(target.left) ? target.left : 0;
+    const land = () => {
+      aimX = target.aimX;
+      sizeSvg();
+      if (titleEl) titleEl.setAttribute('x', String(aimX));
+      scroll.scrollLeft = toLeft;
+      scroll.scrollTop = target.top;
+      if (onDone) onDone();
+    };
+    if (!(ms > 0) || typeof requestAnimationFrame === 'undefined') { land(); return; }
+    const from = { aimX, top: scroll.scrollTop, left: scroll.scrollLeft };
+    const started = performance.now();
+    const step = (now) => {
+      const k = Math.min(1, (now - started) / ms);
+      if (k >= 1) { land(); return; }
+      const eased = 1 - Math.pow(1 - k, 3);
+      aimX = from.aimX + (target.aimX - from.aimX) * eased;
+      sizeSvg();
+      if (titleEl) titleEl.setAttribute('x', String(aimX));
+      scroll.scrollTop = from.top + (target.top - from.top) * eased;
+      scroll.scrollLeft = from.left + (toLeft - from.left) * eased;
+      glideFrame = requestAnimationFrame(step);
+    };
+    glideFrame = requestAnimationFrame(step);
+  }
+
+  // CENTRE ONE NODE IN WHAT IS LEFT VISIBLE — the map tray's open half. `inset`
+  // is what the host's tray covers at the foot of the scene, so the content box
+  // grows by it (apply) and a node on the bottom row still reaches the middle of
+  // the part the player can see. THE FRAMING IS NOT TOUCHED: this is a look, not
+  // a hand on the ladder, so ⊙, the zoom ladder and the saved camera still mean
+  // exactly what they meant before the tray opened.
+  // The tray's look, remembered so a re-fit can take it again (refitCamera).
+  let look = null;
+  const refit = () => refitCamera({ look, centerOnCurrent, centerOnNode });
+  function centerOnNode(id, { inset = 0, glideMs = 0 } = {}) {
+    const n = byId[id];
+    if (!n) return;
+    insetBottom = Math.max(0, inset);
+    look = { id, inset: insetBottom };
+    sizeSvg();
+    // WHAT THE TRAY COVERS OF THE MAP, not of the frame. The reveal panel is
+    // absolutely positioned against the foot of the map frame (styles/map.css:
+    // `bottom: 100%` off `.map-tray`), so it eats the horizontal scrollbar's
+    // gutter FIRST and the map only after it. Subtracting the whole inset from
+    // `clientHeight` — which already excludes that gutter — counted it twice,
+    // and the pick landed half a gutter high: measured at 1440x900, 5.2 px above
+    // the middle of the band the player can see, and 0 on a phone, where the
+    // scrollbar is an overlay and takes no layout at all.
+    const gutter = Math.max(0, scroll.offsetHeight - scroll.clientHeight);
+    const visible = Math.max(0, scroll.clientHeight - Math.max(0, insetBottom - gutter));
+    const maxTop = Math.max(0, scroll.scrollHeight - scroll.clientHeight);
+    const top = Math.min(maxTop, Math.max(0, (py(n) - content.y0) * zoom - visible / 2));
+    // BOTH AXES, and it is the SAME arithmetic as `centerOnCurrent`'s last four
+    // lines — whoever owns the horizontal axis is answered in their own units.
+    // In vertical-only mode `aimX` is the whole of it and `left` stays 0; in
+    // two-axis mode `content.x0` does not move with `aimX`, so the scroll
+    // offset solved here is still the right one when the glide lands.
+    const maxLeft = Math.max(0, scroll.scrollWidth - scroll.clientWidth);
+    const left = freePan
+      ? Math.min(maxLeft, Math.max(0, (px(n) - content.x0) * zoom - scroll.clientWidth / 2))
+      : 0;
+    glideTo({ aimX: px(n), top, left }, glideMs, () => emitViewState(false));
+  }
+
   // ⊙ — "Reset / center", and now it means it: back to the computed frame from
-  // wherever the ladder, the wheel or the saved setting left us.
-  function resetFraming() {
+  // wherever the ladder, the wheel, the saved setting or an open tray left us.
+  function resetFraming({ glideMs = 0 } = {}) {
+    insetBottom = 0;
+    look = null;
     framing = 'fit';
+    if (!(glideMs > 0)) { centerOnCurrent(); emitViewState(true); return; }
+    // SOLVE THE FRAME FIRST, then glide to it from where we stand: the target is
+    // whatever centerOnCurrent lands on, so the glide cannot drift from the frame
+    // the instruments read.
+    const from = { aimX, top: scroll.scrollTop, left: scroll.scrollLeft, zoom };
     centerOnCurrent();
-    emitViewState(true);
+    const target = { aimX, top: scroll.scrollTop, left: scroll.scrollLeft };
+    // A zoom change is not a pan, and there is nothing honest to tween: land it.
+    if (Math.abs(zoom - from.zoom) > 0.0005) { emitViewState(true); return; }
+    aimX = from.aimX;
+    sizeSvg();
+    scroll.scrollTop = from.top;
+    scroll.scrollLeft = from.left;
+    glideTo(target, glideMs, () => emitViewState(true));
   }
   const stepZoom = (dir) => {
     const i = ZOOM_STEPS.findIndex((z) => Math.abs(z - zoom) < 0.001);
@@ -1071,20 +1249,24 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   let sy = 0;
   let sl = 0;
   let st = 0;
-  let activeMousePointerId = null;
+  let activePointerId = null;
   scroll.addEventListener('pointerdown', (ev) => {
-    // Touch and pen belong to the browser's native vertical scroll path. If
-    // this handler captures either one, native pan and our scrollTop writes
-    // race each other. A second mouse pointer also cannot replace the origin
-    // of the gesture already in flight.
-    if (ev.pointerType !== 'mouse' || ev.button !== 0 || activeMousePointerId !== null) return;
+    // In vertical-only mode touch and pen stay on the browser's native path.
+    // Two-axis mode owns them here because CSS touch-action:none prevents a
+    // second native scroll from racing these writes. No second pointer may
+    // replace the origin of the gesture already in flight.
+    const supported = ev.pointerType === 'mouse' || (freePan && (ev.pointerType === 'touch' || ev.pointerType === 'pen'));
+    if (!supported || (ev.pointerType === 'mouse' && ev.button !== 0) || activePointerId !== null) return;
     // The `.map-zoom` half of this guard went with the overlay (EldenSpire#28).
     // This listener is on .map-scroll and the buttons are no longer inside it,
     // so a press on one cannot reach here to be excluded. Left in, it would be
     // a line that reads like protection and can never run — and the next reader
     // would take it as evidence the buttons are still in the scrollport.
     if (ev.target.closest('.map-node.reachable')) return;
-    activeMousePointerId = ev.pointerId;
+    activePointerId = ev.pointerId;
+    // The hand beats the tween: without this the glide writes both axes back
+    // under the drag, every frame, until it lands.
+    stopGlide();
     panning = true;
     sx = ev.clientX;
     sy = ev.clientY;
@@ -1099,18 +1281,13 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
     // the pan exactly as release does — a pan has nothing to abandon.
     trackGesture(ev, {
       onMove: (mv) => {
-        if (!panning || mv.pointerId !== activeMousePointerId) return;
-        // The horizontal write is INERT BY CONSTRUCTION, kept for the day a
-        // wide layout earns a horizontal extent back: scrollWidth equals
-        // clientWidth on every shape now (see apply), so the browser clamps
-        // this to 0 and a sideways drag moves nothing. That is the design, not
-        // a regression — the camera owns X, the thumb owns Y (Law 5, D17).
+        if (!panning || mv.pointerId !== activePointerId) return;
         scroll.scrollLeft = sl - (mv.clientX - sx);
         scroll.scrollTop = st - (mv.clientY - sy);
       },
       onEnd: (end) => {
-        if (end.pointerId !== activeMousePointerId) return;
-        activeMousePointerId = null;
+        if (end.pointerId !== activePointerId) return;
+        activePointerId = null;
         panning = false;
         scroll.classList.remove('grabbing');
         emitViewState(true);
@@ -1148,6 +1325,21 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   // the first non-zero size via a ResizeObserver, with a timeout backstop.
   let ro = null;
   let backstop = null;
+  // THE STANDING WATCH, started by the first settle and kept until teardown
+  // (#1142). One per mount: map.js calls `recenter` again on every window
+  // resize, and each of those must not stack another observer.
+  let stopRefitWatch = null;
+  function startRefitWatch() {
+    if (stopRefitWatch) return;
+    stopRefitWatch = watchViewport(scroll, {
+      read: () => ({ width: scroll.clientWidth, height: scroll.clientHeight }),
+      onChange: () => {
+        if (!scroll.isConnected) return;
+        refit();
+        emitViewState(false);
+      },
+    });
+  }
   function recenter(onSettled) {
     let settled = false;
     const settle = () => {
@@ -1169,9 +1361,10 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
         reportEntrance(currentNode || !box ? null : entranceFrame(fs, box));
         reportTapSize();
       } else {
-        centerOnCurrent();
+        refit();
       }
       emitViewState(false);
+      startRefitWatch();
       if (onSettled) onSettled();
       return true;
     };
@@ -1188,7 +1381,9 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
   }
 
   function teardown() {
+    stopGlide();
     if (ro) { ro.disconnect(); ro = null; }
+    if (stopRefitWatch) { stopRefitWatch(); stopRefitWatch = null; }
     if (backstop) { clearTimeout(backstop); backstop = null; }
     if (viewCommitTimer) { clearTimeout(viewCommitTimer); viewCommitTimer = null; }
     pendingViewCommit = null;
@@ -1196,7 +1391,7 @@ export function mountMapBoard(host, { act, viewer = {}, chromeHtml = '', showLeg
 
   return {
     scroll, svg: svgEl, counts: know.counts, know, columns, width, height,
-    recenter, resetFraming, stepZoom, teardown,
+    recenter, resetFraming, centerOnNode, stepZoom, teardown,
     get zoom() { return zoom; },
   };
 }

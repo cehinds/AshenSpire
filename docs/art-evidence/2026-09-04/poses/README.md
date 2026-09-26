@@ -35,12 +35,40 @@ same code.
 |---|---|---|---|
 | `reaver/idle-full.png` | Reaver | Idle — both hands on the pommel, blade grounded | 397×768 |
 | `starseer/idle-full.png` | Starseer | Idle — staff upright beside him | 399×768 |
-| `rogue/idle-full.png` | Rogue | Idle — a dagger point-down in each hand | 395×760 |
+| `rogue/idle-full.png` | Rogue | Idle — a dagger point-down in each hand | 373×717 |
+| `herald/idle-full.png` | Herald | Idle — standing square, hands clasped before the waist | 286×735 |
 
-**Three of four. The Herald is missing** and its absence is not a choice: the
-account hit `free_tier_image_limit_reached` on the fourth call of the day.
+**All four.** The Herald landed 2026-09-23, after nineteen days in which every
+retry was refused — first `free_tier_image_limit_reached`, then `quota_exceeded`
+against a zero credit balance. All four now ship in ONE `--ship` run, which is
+what the shared scale requires.
 
-## Why the fourth one blocks shipping
+## The shed count measures the SOURCE, not the result
+
+`dropGroundShadow` reports how many pale pixels it removed from the bottom band
+of each source plate, and that number has been read as the quality bar — a clean
+source sheds under ~100 px. The four cut together on 2026-09-23 say it does not
+predict what actually ships:
+
+| class | shed from source | pale rim left in the 450×570 sprite |
+|---|---|---|
+| Herald | **3955** | **133** |
+| Reaver | 88 | 219 |
+| Rogue | 3574 | **605** |
+| Starseer | 78 | 230 |
+
+The Herald's plate shed the most of any of the four and cut the *cleanest* — its
+shadow was broad and diffuse, so the drop took all of it. The Rogue's sheds less
+and leaves 605 px, nearly three times the clean pair, because its shadow has a
+hard enough outer edge for the rim to trace under the boots. That traced rim is
+the defect the owner reported, and it is visible in the shipped sprite rather
+than in the shed count.
+
+So a plate is judged on the **pale rim of the cut result**, against the ~220 px
+the two accepted figures carry. A high shed is not by itself a reason to reject
+a source, and a low one is not a pass.
+
+## Why the fourth one blocked shipping
 
 `tools/concept-cutout.mjs` frames every class at ONE SHARED SCALE — derived
 from the tallest and widest figure across the whole set, so no class arrives
@@ -49,14 +77,17 @@ a different set later would break exactly the property that scale exists to
 hold. The frame itself (450×570) does not need to change: a 768 px full-body
 figure fits it at the shared scale with side margin to spare.
 
-Two things do need re-measuring once the fourth source lands:
+Two things needed re-measuring once the fourth source landed:
 
 - **Medallion anchors** (`src/content/classArtAnchors.js`). `medallionPct` is a
   measured per-class chest height, and it was measured on busts. The chest of a
   full-body figure sits far higher in its own frame; shipping without
   re-measuring would put each class's sigil somewhere it was never checked.
   A missing anchor means no overlay, which is the designed failure — so a
-  wrong one is worse than none.
+  wrong one is worse than none. **The Herald's is now an explicit null**: its 61
+  was the bust's number, and 61 % of a full-body Herald is lower robe. It draws
+  no medallion until someone holds candidate discs against the new painting.
+  The other three keep the values re-measured on 2026-09-07.
 - **The facing rule.** `styles/ui.css` mirrors every player figure via
   `.class-sprite { transform: scaleX(-1) }`. That rule is a weapon-socket
   correction for Blender-rendered layered art, and it argues its own safety

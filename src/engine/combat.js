@@ -1,3 +1,4 @@
+import { formationMovePlan } from '../model/formationMovement.js';
 // src/engine/combat.js — action queue + turn loop (generic interpreter)
 // (SPEC §3.9, §4.1–§4.3, §4.6)
 //
@@ -14,20 +15,27 @@
 // Headless: no document/window/localStorage/timers.
 
 import * as A from './actions.js';
+import { turnDrawCount, endTurnCardFate, validateDiscardChoice, applyDiscardChoice } from './handRules.js';
+import { handRow, scaledCards } from '../model/handRules.js';
+import { LEGACY_HAND_MAX } from '../model/statRows.js';
+import { refreshCombatRatings, recoverRatingMeters, cardRatingBonus } from './combatRatings.js';
 import * as F from './combatRules.js';
 import { emitEvent, fireOwnerHooks, findEntity } from './triggers.js';
+import { attachSkillXp } from './skillXp.js';
 import * as S from '../framework/statusSemantics.js';
 import { resolveCard, passiveSum, passiveMult } from '../model/registries.js';
+import { cardKind } from '../model/tree.js';
 import { evaluate } from '../model/formulas.js';
 import { computeTokenBindings } from '../model/validate.js';
-import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax } from '../model/state.js';
+import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax, enemyMoveDamage } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 export { playerWeightClass };
-import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool } from '../model/loadout.js';
+import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool, gripOf, gripTags } from '../model/loadout.js';
 // Deck restamping goes through the framework's adopted composition door.
 import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
+import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, propertyMountsOf } from './properties.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -50,15 +58,18 @@ const QUEUE_GUARD = 10000;
  */
 export function createCombat({
   registries, rng, player, enemyIds, hpMult = 1, enemyStatuses = [], playerStatuses = [],
+  // Every enemy's move damage × this (SPEC §13.3 balance.bossTiers: a boss
+  // met at a later tier hits harder). Stamped on each enemy entity, so a
+  // snapshot carries it; 1 stamps nothing.
+  enemyDamageMult = 1,
   // WHICH SWAP-COST RULE THIS FIGHT IS UNDER (A8). Resolved once here rather
   // than per swap, for the reason `hpMult` is: a fight's rules must not change
   // under the player halfway through it. Omitted resolves to the shipping
   // default, so every existing caller — and every test — keeps the price it
   // already had, and `resolveSwapCostRule(registries, meta)` is the one place
   // his Settings choice is read.
-  swapCostRule = null, ruleset = null, combatProfiles = {},
+  swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, ratingsRules = null,
 }) {
-  const bal = registries.balance || {};
   // Run creation owns derived Mana. Older headless fixtures without a Mana
   // pool get a harmless zero pool; class data is never a fallback authority.
   const maxMana = Number.isFinite(player.maxMana) ? player.maxMana : 0;
@@ -78,9 +89,21 @@ export function createCombat({
   const poiseMax = Number.isInteger(player.poiseMax)
     ? player.poiseMax
     : (player.loadout
-      ? playerPoiseThresholdReceipt(registries, { loadout: player.loadout, relics: player.relicIds || [], class: player.classId, itemUpgradeLevels: player.itemUpgradeLevels || {} }).value
+      ? playerPoiseThresholdReceipt(registries, {
+        loadout: player.loadout, relics: player.relicIds || [], class: player.classId,
+        itemUpgradeLevels: player.itemUpgradeLevels || {}, attributes: player.attributes || null,
+        // THE RUN'S OWN RULE TRAVELS WITH IT. Without this the meter is
+        // priced from live content while the character sheet shows the
+        // snapshot's number, and an Advanced tier override moves one and
+        // not the other (Codex, #1217).
+        derivedStatRuleSnapshot: player.derivedStatRuleSnapshot || null,
+        // …and its level, or a row's `perLevel` never reaches the meter.
+        ...(Number.isInteger(player.level) ? { level: { level: player.level } } : {}),
+      }).value
       : 0);
   const combat = {
+    ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
+    ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
     registries,
     equipmentProfileRuleSnapshot,
@@ -108,7 +131,11 @@ export function createCombat({
     turn: 0,
     phase: 'setup', // 'player' | 'enemy' | 'ended'
     result: null, // null | 'victory' | 'defeat'
-    handMax: bal.handMax != null ? bal.handMax : 10,
+    // THE HAND SIZE IS A STAT ROW (ruleset 7). A fight handed no hand rules —
+    // an old headless fixture — keeps the retired fallback it always had.
+    handMax: handRules ? scaledCards(handRow(handRules, 'handSize'), player.attributes, player.level) : LEGACY_HAND_MAX,
+    // The character level a row's `perLevel` reads, for the hand and ratings.
+    ...(Number.isInteger(player.level) ? { characterLevel: player.level } : {}),
     drawPerTurn: player.drawPerTurn,
     player: createPlayerCombatEntity({
       classId: player.classId,
@@ -132,6 +159,17 @@ export function createCombat({
     // still changed when the fight ends.
     loadout: player.loadout || null,
     attributes: player.attributes ? { ...player.attributes } : null,
+    // The scale those attributes were made on: the dodge's Dexterity centre.
+    attributeMode: player.attributeMode || null,
+    // Carried for the same reason the attributes are: every mid-fight
+    // restamp of the Poise vessel must read the rule this run was born with.
+    derivedStatRuleSnapshot: player.derivedStatRuleSnapshot || null,
+    // The run's skill ledger, read by the progression predicates
+    // (triggers.js skillLevelAtLeast / classLevelAtLeast). A copy: combat
+    // never writes it.
+    skills: player.skills ? structuredClone(player.skills) : {},
+    // The core card's picked tree nodes (plan phase 5b), mounted with the class.
+    coreTags: Array.isArray(player.coreTags) ? [...player.coreTags] : [],
     swapCostRule: swapCostRule || resolveSwapCostRule(registries, null),
     swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
@@ -144,8 +182,22 @@ export function createCombat({
   };
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
   combat._emitEvent = emitEvent;
+  // The skill tracks listen to the same bus (plan phase 4a); the receipt they
+  // write lives on the combat and reaches the run only through applySkillXp.
+  attachSkillXp(combat);
   combat.enqueue = (action) => combat.queue.push(action);
   combat.nextInstanceId = () => `gen${++combat._idCounter}`;
+
+  // Property carriers (engine/properties.js): the loadout's equipped pieces
+  // mount their property rules before anything is emitted, so a property hears
+  // enemySpawned and combatStart exactly as a relic does.
+  syncLoadoutProperties(combat);
+  // …and the relics the player carries, whose triggers are property rules too
+  // since plan phase 2. Mounted before the first emit for the same reason.
+  syncRelicProperties(combat);
+  // …and the class card, the core zone's one card (plan phase 5a): its
+  // `favored` leaning is a property like any other.
+  syncClassProperties(combat);
 
   // Enemies — HP rolled on stream 'enemyHP' (SPEC §3.11, §4.6). An optional
   // hpMult (Custom Climb difficulty rules) scales the rolled HP after the roll,
@@ -159,11 +211,20 @@ export function createCombat({
         instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax,
         arcaneExposure: def.arcaneExposure,
         damageResistanceBySchool: def.damageResistanceBySchool,
+        damageMult: enemyDamageMult,
       })
     );
     combat.emit('enemySpawned', { targetId: `e${i + 1}`, enemyId });
   });
 
+  if (combat.ratingsRules) {
+    refreshCombatRatings(combat);
+    for (const enemy of combat.enemies) {
+      const values = combat.ratingsRules.enemyRatings?.[enemy.enemyId] || { poise: enemy.poiseMeter?.max || 1, ward: enemy.poiseMeter?.max || 1 };
+      enemy.ratings = { ar: 0, dr: 0, pr: 0, ...values };
+      for (const id of ['poise', 'ward']) enemy[id + 'Meter'] = { value: 0, max: Math.max(1, values[id]), growths: 0 };
+    }
+  }
   // Deck → draw pile: shuffle (stream 'shuffle'), Innate cards to top (§4.1(1)).
   const deck = player.deck.map((c) => ({
     instanceId: c.instanceId,
@@ -176,6 +237,9 @@ export function createCombat({
     ...(typeof c.damageSchool === 'string' ? { damageSchool: c.damageSchool } : {}),
     ...(Number.isInteger(c.exposureBuildupPerHit) ? { exposureBuildupPerHit: c.exposureBuildupPerHit } : {}),
     ...(c.equipmentRole ? { equipmentRole: c.equipmentRole, profileId: c.profileId, profileReceipt: c.profileReceipt } : {}),
+    ...(c.ratingId ? { ratingId: c.ratingId } : {}),
+    ...(Number.isFinite(c.ratingValue) ? { ratingValue: c.ratingValue } : {}),
+    ...(Number.isFinite(c.ratingCap) ? { ratingCap: c.ratingCap } : {}),
     ...(c.kitRole ? { kitRole: c.kitRole } : {}),
     ...(c.grantedBy ? { grantedBy: c.grantedBy, grantSource: c.grantSource } : {}),
     ...(c.equipmentAttackSlotId ? { equipmentAttackSlotId: c.equipmentAttackSlotId } : {}),
@@ -273,11 +337,14 @@ function startPlayerTurn(combat) {
     if (cap != null) p.block = Math.min(p.block, cap);
   }
 
-  // Set energy to base (relics that add energy hook playerTurnStart).
-  p.energy = p.energyMax;
+  // Set energy to base (relics that add energy hook playerTurnStart) — less
+  // what a Stagger took (plan phase 8): the loss is owed to the next turn only.
+  p.energy = Math.max(0, p.energyMax - (p.pendingActionLoss || 0));
+  p.pendingActionLoss = 0;
+  recoverRatingMeters(combat, p);
 
   // Draw.
-  A.drawCards(combat, combat.drawPerTurn);
+  A.drawCards(combat, turnDrawCount(combat));
 
   // playerTurnStart triggers + owner-relative status/stance hooks.
   combat.emit('playerTurnStart', { turn: combat.turn });
@@ -285,7 +352,7 @@ function startPlayerTurn(combat) {
   drainQueue(combat);
 }
 
-function endPlayerTurn(combat) {
+function endPlayerTurn(combat, discardIds = []) {
   const p = combat.player;
 
   // (4) playerTurnEnd triggers first…
@@ -293,6 +360,23 @@ function endPlayerTurn(combat) {
   fireOwnerHooks(combat, p, 'ownerTurnEnd');
   drainQueue(combat);
   if (combat.result) return;
+
+  // …then each card still in hand fires its authored `onTurnEndInHand` effect
+  // list (e.g. Guilt: lose 1 HP, SPEC §5.2). Content owns the numbers; the
+  // engine only walks the hand, before the hand is discarded.
+  let inHandFired = false;
+  for (const card of [...combat.piles.hand]) {
+    const hook = resolveCard(combat.registries, card).onTurnEndInHand;
+    if (!Array.isArray(hook) || !hook.length) continue;
+    for (const eff of hook) {
+      combat.enqueue({ effect: eff, source: p, owner: p, target: p, meta: { cardInstanceId: card.instanceId, cardId: card.cardId, trigger: 'turnEndInHand' } });
+    }
+    inHandFired = true;
+  }
+  if (inHandFired) {
+    drainQueue(combat);
+    if (combat.result) return;
+  }
 
   // …then player status decay (perTurnEnd statuses −1 stack at owner's turn end)…
   S.decayAtTurnEnd(combat, p);
@@ -315,11 +399,11 @@ function endPlayerTurn(combat) {
   // fate of each card is the framework's call (src/framework/lifecycle.js);
   // this engine only moves the card and emits the receipt.
   const keep = [];
+  applyDiscardChoice(combat, discardIds);
   const toDiscard = [];
   const toExhaust = [];
   for (const card of combat.piles.hand) {
-    const def = resolveCard(combat.registries, card);
-    const fate = combat.foundation && def.effects.some((e) => e.op === 'dodgeRoll') ? 'keep' : combat.registries.framework.endTurnFate(def);
+    const fate = endTurnCardFate(combat, card);
     if (fate === 'keep') keep.push(card);
     else if (fate === 'exhaust') toExhaust.push(card);
     else toDiscard.push(card);
@@ -425,10 +509,13 @@ function enemyPhase(combat) {
 // 'enemyMoveStarted' marks the acting enemy so the UI can pace playback
 // one actor at a time (SPEC §7.4); content triggers may also key off it.
 function executeMovePayload(combat, enemy, move, moveId) {
+  // movesHistory records ROLLS (maxConsecutive reads it); a roll a stagger
+  // cancels never happens. This is what did — the inspector's history.
+  (enemy.performedMoves ||= []).push(moveId);
   combat.emit('enemyMoveStarted', { sourceId: enemy.id, enemyId: enemy.enemyId, moveId, kind: move.intent });
   if (move.damage != null) {
     combat.enqueue({
-      effect: { op: 'damage', target: 'player', amount: move.damage, hits: move.hits != null ? move.hits : 1 },
+      effect: { op: 'damage', target: 'player', amount: enemyMoveDamage(enemy, move), hits: move.hits != null ? move.hits : 1, ...(move.damageSchool ? { damageSchool: move.damageSchool } : {}) },
       source: enemy,
       owner: enemy,
       target: combat.player,
@@ -477,7 +564,7 @@ function rollIntents(combat, isFirstTurn = false) {
       continue;
     }
     enemy.movesHistory.push(moveId);
-    enemy.intent = buildIntent(def.moves[moveId], moveId);
+    enemy.intent = buildIntent(def.moves[moveId], moveId, enemy);
   }
 }
 
@@ -509,11 +596,11 @@ function weightedMovePick(combat, enemy, def) {
   return pool[pool.length - 1][0];
 }
 
-function buildIntent(move, moveId) {
+function buildIntent(move, moveId, enemy = null) {
   return {
     kind: move.intent,
     moveId,
-    damage: move.damage != null ? move.damage : null,
+    damage: enemyMoveDamage(enemy, move),
     hits: move.damage != null ? (move.hits != null ? move.hits : 1) : null,
     block: move.block != null ? move.block : null,
     delayed: !!move.delay,
@@ -541,11 +628,21 @@ export function dispatch(combat, intent) {
   combat._buffer = [];
   try {
     switch (intent.type) {
+      case 'moveCharacter': {
+        const move = formationMovePlan(combat, intent.cell, intent.settings);
+        if (!move.ok) throw new Error(move.reason);
+        combat.player.energy -= move.cost;
+        combat.player.formationCell = move.cell;
+        if (move.cost) combat.emit('energySpent', { amount: move.cost });
+        combat.emit('characterMoved', { sourceId: combat.player.id, from: move.current, to: move.cell });
+        drainQueue(combat);
+        break;
+      }
       case 'playCard':
         doPlayCard(combat, intent);
         break;
       case 'endTurn':
-        doEndTurn(combat);
+        doEndTurn(combat, intent.discardIds);
         break;
       case 'useFlask':
         doUseFlask(combat, intent);
@@ -597,7 +694,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     classId: p.classId,
     slotId,
     setIndex,
-    relicDelta: passiveSum(combat.registries, p.relicIds, 'swapCostDelta'),
+    relicDelta: passiveSum(combat.registries, p.relicIds, 'swapCostDelta', {}, propertyMountsOf(combat, p)),
   });
   if (cfg.swapCostKind === 'allowance') {
     if ((combat.swapsLeft || 0) < 1) throw new Error('No swaps left this turn');
@@ -634,6 +731,9 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     throw new Error(`No set ${setIndex} on '${slotId}'`);
   }
   const poolAfter = runMods(combat.registries, combat.loadout, p.classId);
+  // The hand now holds a different set: its old piece's properties leave with
+  // it and the new piece's arrive (source ownership, engine/properties.js).
+  syncLoadoutProperties(combat);
   if (activeBefore !== combat.loadout.active[slotId]) {
     combat.equipmentChanged = true;
     const currentFor = { maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' };
@@ -668,6 +768,10 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     removedAttackSlotIds: combat.removedAttackSlotIds,
     itemMounts: combat.itemMounts,
+    // The rows a restamped card's rating reads are the run's own (ruleset 7,
+    // model/statRows.js), at the level the fight opened at.
+    derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot,
+    ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
   };
   // Pile stamps are subset calls, so granted/weaponArt instances reconcile
   // here explicitly, BEFORE the stamps: the swapped-out armament's leave every
@@ -683,10 +787,16 @@ function doSwapArmament(combat, { slotId, setIndex }) {
   // value (0 today; nothing writes it), so the future writer's build-up will
   // survive a swap unchanged. This deliberately re-derives over any explicit
   // poiseMax override: after a real swap, the receipt is the truth again.
-  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, { loadout: combat.loadout, relics: p.relicIds || [], class: p.classId, itemUpgradeLevels: combat.itemUpgradeLevels || {} }).value);
+  if (!combat.ratingsRules) stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, {
+    loadout: combat.loadout, relics: p.relicIds || [], class: p.classId,
+    itemUpgradeLevels: combat.itemUpgradeLevels || {}, attributes: combat.attributes || null,
+    derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
+    ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
+  }).value);
 
   // The event carries what it COST and under which rule — a price nobody can
   // read back is a price nobody can check, and "try each" is a comparison.
+  refreshCombatRatings(combat);
   combat.emit('armamentSwapped', { slotId, setIndex, cost: price.cost, rule: price.ruleId });
   if (cfg.swapEndsTurn) doEndTurn(combat);
 }
@@ -731,7 +841,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     classId: p.classId,
     slotId,
     setIndex,
-    relicDelta: passiveSum(combat.registries, p.relicIds, 'swapCostDelta'),
+    relicDelta: passiveSum(combat.registries, p.relicIds, 'swapCostDelta', {}, propertyMountsOf(combat, p)),
   });
   if (cfg.swapCostKind === 'allowance') {
     if ((combat.swapsLeft || 0) < 1) throw new Error('No equipment changes left this turn');
@@ -747,6 +857,9 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
   })) {
     throw new Error('That equipment change is no longer available');
   }
+  // Unmount the outgoing piece's properties and mount the incoming piece's,
+  // now that equipPiece has committed (engine/properties.js).
+  syncLoadoutProperties(combat);
   const poolAfter = runMods(combat.registries, combat.loadout, p.classId);
   combat.equipmentChanged = true;
   const currentFor = { maxHp: 'hp', maxMana: 'mana', maxStamina: 'stamina' };
@@ -772,18 +885,26 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     removedAttackSlotIds: combat.removedAttackSlotIds,
     itemMounts: combat.itemMounts,
+    // The rows a restamped card's rating reads are the run's own (ruleset 7,
+    // model/statRows.js), at the level the fight opened at.
+    derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot,
+    ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
   };
   reconcileGrantedCardsInCombat(combat.registries, run, combat.piles);
   for (const pile of [combat.piles.hand, combat.piles.draw, combat.piles.discard, combat.piles.exhaust]) {
     stampDeck(combat.registries, run, pile);
   }
-  stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, {
+  if (!combat.ratingsRules) stampPlayerPoiseMax(p, playerPoiseThresholdReceipt(combat.registries, {
     loadout: combat.loadout,
     relics: p.relicIds || [],
     class: p.classId,
     itemUpgradeLevels: combat.itemUpgradeLevels || {},
+    attributes: combat.attributes || null,
+    derivedStatRuleSnapshot: combat.derivedStatRuleSnapshot || null,
+    ...(Number.isInteger(combat.characterLevel) ? { level: { level: combat.characterLevel } } : {}),
   }).value);
 
+  refreshCombatRatings(combat);
   if (changeEvent) combat.emit('equipmentChanged', changeEvent);
   combat.emit('equipmentRearmed', {
     slotId, setIndex, pieceId, cost: price.cost, rule: price.ruleId,
@@ -803,9 +924,25 @@ function effectiveCost(combat, def) {
   // relic reduction and the framework applies it only where the card's
   // classification permits (Powers).
   return F.foundationCosts(combat, def, playerWeightClass(combat).weightClass, combat.registries.framework.costProfile(def, {
-    powerCostReduction: passiveSum(combat.registries, combat.player.relicIds, 'powerCostReduction', combat.itemUpgradeLevels || {}),
+    powerCostReduction: passiveSum(combat.registries, combat.player.relicIds, 'powerCostReduction', combat.itemUpgradeLevels || {}, propertyMountsOf(combat, combat.player)),
     weightClass: playerWeightClass(combat).weightClass,
   })).action;
+}
+
+// What playing this card costs right now, in every pool: Actions (X spends
+// them all), Mana and Stamina, weight class and relic reductions applied. The
+// one pricing doPlayCard pays, exported so a bot can ask before it plays.
+function playCosts(combat, def) {
+  const weightClass = playerWeightClass(combat).weightClass;
+  const pools = F.foundationCosts(combat, def, weightClass, combat.registries.framework.costProfile(def, { weightClass }));
+  return { energy: def.cost === 'X' ? combat.player.energy : effectiveCost(combat, def), mana: pools.mana, stamina: pools.stamina };
+}
+
+/** cardPlayCosts(combat, cardInstanceId) → { energy, mana, stamina } for a card in hand. */
+export function cardPlayCosts(combat, cardInstanceId) {
+  const inst = combat.piles.hand.find((c) => c.instanceId === cardInstanceId);
+  if (!inst) throw new Error(`Card '${cardInstanceId}' is not in hand`);
+  return playCosts(combat, resolveCard(combat.registries, inst));
 }
 
 function doPlayCard(combat, { cardInstanceId, targetId }) {
@@ -821,10 +958,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   if (combat.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
 
   const isX = def.cost === 'X';
-  const cost = isX ? p.energy : effectiveCost(combat, def);
-  const pools = F.foundationCosts(combat, def, playerWeightClass(combat).weightClass, combat.registries.framework.costProfile(def, { weightClass: playerWeightClass(combat).weightClass }));
-  const manaCost = pools.mana;
-  const staminaCost = pools.stamina;
+  const { energy: cost, mana: manaCost, stamina: staminaCost } = playCosts(combat, def);
   if (p.energy < cost) throw new Error(`Not enough energy (need ${cost}, have ${p.energy})`);
   if (p.mana < manaCost) throw new Error(`Not enough mana (need ${manaCost}, have ${p.mana})`);
   if (p.stamina < staminaCost) throw new Error(`Not enough stamina (need ${staminaCost}, have ${p.stamina})`);
@@ -838,11 +972,37 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     if (!target) throw new Error('No living enemy to target');
   }
 
+  // WHAT THE CARD IS comes from its kind tag (model/tree.js cardKind), never
+  // from `def.type` — every reader downstream (the attack counter, the
+  // cardTypeIs predicate, the cardPlayed receipt) sees the kind.
+  const kind = cardKind(def);
+  // DYNAMIC TAGS ARE READ HERE, ONCE, AND WRITTEN TO NO CARD (plan phase 3c).
+  // The grip the hands are in when the card is played (model/loadout.js
+  // gripOf) derives `equipment.dualWield` / `equipment.twoHanded`; they ride
+  // this snapshot as `derivedTags`, beside the card's own `tags`, and a
+  // predicate that asks about the card's tags reads both (triggers.js
+  // cardTagIs). The card definition and the deck instance never carry them.
+  const derivedTags = gripTags(gripOf(combat.registries, combat.loadout, p.classId));
   const cardRef = {
+    sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
+    ratingId: inst.ratingId,
+    ratingValue: inst.ratingValue,
+    ratingCap: inst.ratingCap,
+    equipmentRole: inst.equipmentRole,
     instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
-    type: def.type, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+    type: kind, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+    derivedTags,
+    // The card's AUTHORED tags, kept apart from `tags`: the foundation carrier
+    // rewrites `tags` into the resolved attack tags (the weapon's inherited
+    // ones included), and cardTagIs must read what the card row says.
+    authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
+    // Which piece lent this card, for the skill hooks (engine/skillXp.js).
+    ...(inst.grantedBy ? { grantedBy: inst.grantedBy } : {}),
     damageSchool: inst.damageSchool ?? def.damageSchool,
     exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+    // The resolved face's Poise/Ward values: a staff's Strike resolves
+    // magical and carries Ward, which the registry def cannot (attackImpact).
+    ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
   };
   const sourceSnapshots = F.cardSourceSnapshots(combat, def, p, cardRef);
 
@@ -869,7 +1029,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     ordinalThisCombat: p.counters.cardsPlayedThisCombat,
     attackOrdinal: null,
   };
-  if (def.type === 'attack') {
+  if (kind === 'attack') {
     p.counters.attacksPlayedThisCombat += 1;
     meta.attackOrdinal = p.counters.attacksPlayedThisCombat;
   }
@@ -879,7 +1039,9 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   combat.emit('cardPlayed', {
     cardInstanceId: inst.instanceId,
     cardId: inst.cardId,
-    cardType: def.type,
+    cardType: kind,
+    cardTags: cardRef.tags || [],
+    derivedTags,
     targetId: target ? target.id : null,
     ordinalThisTurn: meta.ordinalThisTurn,
     ordinalThisCombat: meta.ordinalThisCombat,
@@ -906,9 +1068,10 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   }
 }
 
-function doEndTurn(combat) {
+function doEndTurn(combat, discardIds = []) {
   if (combat.phase !== 'player') throw new Error('Not the player turn');
-  endPlayerTurn(combat);
+  validateDiscardChoice(combat, discardIds);
+  endPlayerTurn(combat, discardIds);
   if (combat.result) return;
   enemyPhase(combat);
   if (combat.result) return;
@@ -936,7 +1099,7 @@ function doUseFlask(combat, { slot, chargeKind, targetId }) {
   else p.flasks.splice(slot, 1);
   combat.emit('flaskUsed', { flaskId: flask.flaskId, slot, targetId: target ? target.id : null });
   // Cracked Tear-style passives scale flask amounts (rounded up, SPEC §5.4).
-  const amountMult = passiveMult(combat.registries, p.relicIds, 'flaskPowerMult');
+  const amountMult = passiveMult(combat.registries, p.relicIds, 'flaskPowerMult', propertyMountsOf(combat, p));
   for (const eff of def.effects || []) {
     combat.enqueue({ effect: eff, source: p, owner: p, target, meta: amountMult !== 1 ? { amountMult } : {} });
   }
@@ -986,10 +1149,20 @@ export function previewCard(combat, cardInstanceId, targetId) {
     owner: p,
     target: target || (needsEnemyTarget(def) ? living[0] || null : null),
     card: {
+      sourceArmamentId: inst.sourceArmamentId || inst.weaponId,
+      ratingId: inst.ratingId,
+      ratingValue: inst.ratingValue,
+      ratingCap: inst.ratingCap,
+      equipmentRole: inst.equipmentRole,
       instanceId: inst.instanceId, cardId: inst.cardId, upgraded: inst.upgraded,
-      type: def.type, tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+      // The kind tag and the grip's derived tags, as the live play reads them
+      // (above) — a preview that disagreed with the play would lie.
+      type: cardKind(def), tags: def.cardTags ?? (def.tags?.length ? def.tags : undefined), attack: def.attack, sourceHand: inst.sourceHand,
+      derivedTags: gripTags(gripOf(combat.registries, combat.loadout, combat.player.classId)),
+      authoredTags: def.cardTags ?? (def.tags?.length ? def.tags : []),
       damageSchool: inst.damageSchool ?? def.damageSchool,
       exposureBuildupPerHit: inst.exposureBuildupPerHit ?? def.exposureBuildupPerHit,
+      ...(def.cardRatingValues ? { cardRatingValues: def.cardRatingValues } : {}),
     },
     meta: { energySpent: isX ? p.energy : typeof shownCost === 'number' ? shownCost : 0 },
   };
@@ -1041,7 +1214,7 @@ export function previewCard(combat, cardInstanceId, targetId) {
         break;
       }
       case 'block': {
-        entry.value = A.computeBlockGain(combat, p, evalPreview(combat, action, eff.amount, primary));
+        entry.value = A.computeBlockGain(combat, p, evalPreview(combat, action, eff.amount, primary), action.card);
         break;
       }
       case 'applyStatus': {
@@ -1050,6 +1223,11 @@ export function previewCard(combat, cardInstanceId, targetId) {
         break;
       }
       case 'heal':
+        {
+          const amount = evalPreview(combat, action, eff.amount, primary);
+          entry.value = amount + cardRatingBonus(combat, p, action.card, 'heal', amount);
+        }
+        break;
       case 'loseHp':
       case 'draw':
       case 'gainEnergy':
@@ -1127,7 +1305,11 @@ export function previewIntent(combat, enemyInstanceId) {
   const intent = enemy.intent || { kind: 'unknown', moveId: null };
   const out = { ...intent };
   if (intent.damage != null) {
-    out.damage = A.computeAttackDamage(combat, enemy, combat.player, intent.damage);
+    const damageSchool = combat.ratingsRules?.enemyAttackType?.[`${enemy.enemyId}:${intent.moveId}`];
+    const move = combat.registries.enemies.get(enemy.enemyId).moves[intent.moveId];
+    const effect = move?.effects?.find(e => e.op === 'damage');
+    const carrier = damageSchool && damageSchool !== 'auto' ? { damageSchool } : { damageSchool: effect?.damageSchool || move?.damageSchool, tags: effect?.tags || move?.tags || [] };
+    out.damage = A.computeAttackDamage(combat, enemy, combat.player, intent.damage, [], carrier);
     out.hits = intent.hits != null ? intent.hits : 1;
     out.totalDamage = out.damage * out.hits;
   }

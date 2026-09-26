@@ -1,17 +1,17 @@
 /* styles/map.css — act map screen (mockup: docs/mockups/map-screen.svg) */
 
-.mapscreen { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-/* `position` is deliberately NOT set here. It was `relative`, and the one thing
-   that used it was the floating zoom stack — now a sibling in the flow rather
-   than an overlay (EldenSpire#28; see .map-zoom). Restoring it re-arms nothing
-   by itself, but it is the anchor the next overlay would reach for, so the
-   absence is the note. */
-/* The box the scrollport and its overlay share. It exists so the vignette has
-   something to be bounded BY (Law 2 — every positioned element names its
-   container): `inset: 0` against this, never against the viewport, so there is
-   no shape at which it covers a control that is not the map. `min-height: 0` is
-   the flex-item clamp the scrollport needs to be allowed to shrink — without it
-   a tall canvas pushes the zoom bar off the bottom. */
+.mapscreen {
+  flex: none; display: flex; flex-direction: column; overflow: hidden;
+  /* Body is zoomed. A percentage-height screen is therefore only a zoomed
+     fraction of the glass, leaving the apparent "footer" as empty page below
+     it. This is the same viewport compensation used by the combat frame. */
+  width: calc(100vw / var(--ui-zoom, 1));
+  height: calc(var(--visible-height, 100dvh) / var(--ui-zoom, 1));
+}
+/* The box the scrollport and its map-only overlays share. The vignette and the
+   compact zoom cluster are bounded by this frame, never by the viewport.
+   `min-height: 0` is the flex-item clamp the scrollport needs in order to yield
+   to the narrow footer and to the expanding location panel. */
 .mapscreen .map-frame { position: relative; flex: 1; display: flex; min-height: 0; min-width: 0; }
 
 .mapscreen .map-scroll {
@@ -20,6 +20,10 @@
      Mouse drag remains an explicit camera gesture in mapboard.js. */
   touch-action: pan-y pinch-zoom;
   cursor: grab; scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+}
+.mapscreen .map-scroll[data-pan-axis='both'] {
+  touch-action: none;
+  overscroll-behavior: contain;
 }
 /* THE UNLIT GROUND IS A LANTERN, NOT A FIELD. Fog-only, decorative, and inert:
    it takes no pointer events, so it cannot repeat #28's untappable nodes, and
@@ -62,17 +66,9 @@
   background: radial-gradient(ellipse at center, transparent 65%, rgba(45, 30, 13, 0.2));
 }
 
-/* THE MAP'S HINT BAR JOINS THE FLOW, and only the map's.
-   .hint-bar (styles/ui.css) is `position: fixed` to the bottom of the VIEWPORT
-   and centred. That was invisible while the map's bottom edge belonged to a
-   floating overlay; the moment the zoom buttons became real layout, the fixed
-   pill sat on top of the − and the ⊙ at 390x844 and 412x915. Unreadable, and
-   not unreachable — the pill is pointer-events: none, so every reach sweep was
-   correctly green and only an eye could see it (Sunna's, on the shot).
-   In the flow it stacks above the zoom bar instead of over it, and the map's
-   bottom chrome ends up one column with NO reserved height on either side.
-   Scoped to .mapscreen: combat pins its own copy to the top (.hint-combat) and
-   every other screen keeps the fixed pill. `body.hide-hints` still wins. */
+/* The map's action buttons belong to its footer flow; the map controls remain
+   a separate cluster inside the map frame. Scoped here so other hint bars keep
+   their screen-specific positioning. */
 .mapscreen .hint-bar {
   position: static; transform: none; align-self: center;
   margin: 0 auto 0.6rem; max-width: 96%;
@@ -128,6 +124,131 @@
    PAINTS and this one paints 35% wider than its own radius eight times a
    second. One home, two readers (the keyframe below, and mountMap). */
 .mapscreen { --halo-peak: 1.35; }
+/* THE MAP TRAY (owner, 2026-09-14; screens/map.js). One compact row takes layout
+   height for the centred action buttons. Potions is independent in the map's
+   far-right corner, so it never creates a footer container of its own.
+   Picking a lit node slides the reveal up OVER the foot of the map: the node's
+   context (a FIXED height, so a long blurb scrolls instead of growing) and Back
+   / Enter, centred and held clear of the Potions column. Row + reveal stay
+   within the bottom band this replaced. The height is written by map.js from
+   the reveal's own content, so there is no second copy of it here. */
+.mapscreen > .map-tray { position: relative; z-index: 30; flex: 0 0 auto; container: map-tray / inline-size; background: transparent; border: 0; }
+.map-tray-row {
+  /* A DEFINITE middle track, not auto: the hint bar is a kit ButtonRow whose
+     width is min(100%, its steps), and a percentage against a content-sized
+     column has nothing to resolve against — every chip collapsed to 12 px. */
+  display: flex; align-items: center; justify-content: center; gap: 1rem;
+  min-height: calc(var(--iconbtn-size) + 1rem);
+  padding: .5rem 1.4rem calc(.5rem + env(safe-area-inset-bottom, 0px) / var(--ui-zoom, 1));
+}
+.map-frame > .map-zoom {
+  position: absolute; z-index: 3; left: 1.4rem; bottom: 1.4rem;
+  gap: .6rem; width: max-content; padding: 0; border: 0; background: none;
+}
+.mapscreen .map-tray-row > .hint-bar {
+  margin: 0; width: min(100%, 54rem); max-width: 54rem;
+}
+/* POTIONS IS THE BIG CONTROL IN THIS CORNER (owner, 2026-09-17): 1.6x the
+   touch row, and the minis stand ABOVE it rather than beside it. The host is
+   the button's own box, so the minis hang off its top edge and the row's
+   height is what holds it. */
+.mapscreen { --map-potions-size: calc(var(--iconbtn-size) + 3.2rem); }
+.map-frame > .map-potions {
+  position: absolute; z-index: 4; right: 1.4rem; bottom: 1.4rem;
+  width: var(--map-potions-size); height: var(--map-potions-size);
+}
+/* The row stays compact at every width; location details expand above it. */
+@container map-tray (max-width: 104rem) {
+  .map-tray-row { gap: .5rem; }
+}
+:root[data-layout='narrow'] .mapscreen .map-tray-row { display: none; }
+/* Potions, as in combat's footer: a round control, its minis (the shared icon
+   tray) beside it, --icon-tray-slots of them wide before the +N tile. */
+.map-potions .run-potions-btn {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  min-width: 0; padding: 0; border-radius: 50%; font-size: 1.3rem; line-height: 1.1; letter-spacing: 0;
+}
+/* THE MINIS COME OUT OF THE BUTTON, and only for a pointer that stays (owner,
+   2026-09-17). They keep their space while hidden, so the Potions button never
+   moves out from under the cursor; they fade and slide from the button's edge
+   after the player's OWN tooltip delay (--potion-reveal-delay, handed over by
+   components/runPotions.js from the setting tooltips read) and go back with no
+   wait at all. `visibility` keeps them out of the tab order until the corner
+   has focus, and the button sits first in the DOM so a keyboard reaches them
+   through it. Reduced motion keeps the reveal and drops the movement. */
+.map-potions .run-potion-minis {
+  visibility: hidden;
+  position: absolute; left: 50%; bottom: calc(100% + 0.5rem); transform: translateX(-50%);
+  transition: visibility 0s linear var(--potion-reveal-fade, 160ms);
+  width: max-content; max-width: 40vw; justify-content: center; flex-wrap: nowrap;
+}
+/* NOTHING BEHIND THEM (owner, 2026-09-17): the flask's own art over the map
+   rather than on a chip, with the count a small number ABOVE it rather than a
+   pill on its corner. The pill's ground goes with the chip's; an ink shadow is
+   what keeps a bare number readable on parchment. */
+.map-potions .potion-mini { background: none; border-color: transparent; overflow: visible; }
+.map-potions .potion-mini > .as-pill.round {
+  left: 50%; right: auto; top: -1.15rem; bottom: auto; transform: translateX(-50%);
+  min-width: 0; padding: 0; background: none; border: 0; border-radius: 0;
+  font-size: 0.95rem; line-height: 1; color: var(--parchment);
+  text-shadow: 0 1px 2px #000, 0 0 3px #000;
+}
+.map-potions:has(:focus-visible) .run-potion-minis {
+  visibility: visible; transition-delay: var(--potion-focus-delay, 500ms);
+}
+.map-potions .run-potion-minis > * {
+  opacity: 0; transform: translateY(0.7rem);
+  transition: opacity var(--potion-reveal-fade, 160ms) ease, transform var(--potion-reveal-fade, 160ms) ease;
+}
+.map-potions:has(:focus-visible) .run-potion-minis > * { opacity: 1; transform: none; }
+/* One after another, nearest the button first — the tray holds four at most. */
+.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(1) { transition-delay: var(--potion-focus-delay, 500ms); }
+.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(2) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 40ms); }
+.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(3) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 80ms); }
+.map-potions:has(:focus-visible) .run-potion-minis > *:nth-last-child(4) { transition-delay: calc(var(--potion-focus-delay, 500ms) + 120ms); }
+/* Touch browsers may keep :hover latched after a tap. Only a device with an
+   actual fine hover pointer gets the hover reveal; touch keeps the large
+   Potions button as its direct, one-tap route to the full list. */
+@media (hover: hover) and (pointer: fine) {
+  .map-potions:hover .run-potion-minis { visibility: visible; transition-delay: var(--potion-reveal-delay, 500ms); }
+  .map-potions:hover .run-potion-minis > * { opacity: 1; transform: none; }
+  .map-potions:hover .run-potion-minis > *:nth-last-child(1) { transition-delay: var(--potion-reveal-delay, 500ms); }
+  .map-potions:hover .run-potion-minis > *:nth-last-child(2) { transition-delay: calc(var(--potion-reveal-delay, 500ms) + 40ms); }
+  .map-potions:hover .run-potion-minis > *:nth-last-child(3) { transition-delay: calc(var(--potion-reveal-delay, 500ms) + 80ms); }
+  .map-potions:hover .run-potion-minis > *:nth-last-child(4) { transition-delay: calc(var(--potion-reveal-delay, 500ms) + 120ms); }
+}
+.reduced-motion .map-potions .run-potion-minis > * { transform: none; }
+
+.map-tray-reveal {
+  position: absolute; left: 0; right: 0; bottom: 100%; height: 0; overflow: hidden;
+  display: flex; flex-direction: column; background: var(--panel); border-top: 0 solid var(--line);
+  transition: height 240ms cubic-bezier(.2, .8, .2, 1);
+}
+.map-tray[data-open="true"] > .map-tray-reveal { border-top-width: 1px; }
+.map-tray-reveal > * { opacity: 0; transition: opacity 180ms ease; }
+.map-tray[data-shown="true"] > .map-tray-reveal > * { opacity: 1; }
+.map-tray-reveal > .map-context { flex: 0 0 auto; box-sizing: border-box; height: min(calc(20dvh / var(--ui-zoom, 1)), 8rem); overflow-y: auto; display: grid; align-content: start; gap: .2rem; padding: .6rem 2.5vw 0; }
+.map-tray-reveal > .map-context > * { margin: 0; }
+.mapscreen .map-context-title { font: 600 1.5rem/1.2 var(--font-display); color: var(--parchment); }
+.mapscreen .map-context-line { color: var(--muted); }
+/* Back and Enter are centred on the SCREEN, not on the space left beside
+   Potions: they take the row ABOVE it, so the clearance between them is
+   vertical and a phone keeps two full-width buttons instead of two slivers. */
+.map-tray-pair { flex: 0 0 auto; display: flex; justify-content: center; gap: .8rem; padding: .5rem 1.4rem; }
+.map-tray-pair > .as-btn { flex: 0 1 18rem; min-width: 0; }
+.map-node.selected > circle:not(.node-halo) { stroke: var(--parchment); stroke-width: 4; }
+/* The pad cursor and hover both repaint the stroke; the glow keeps the
+   selection visible under either. */
+.map-node.selected { filter: drop-shadow(0 0 5px var(--parchment)); }
+/* The selection glow is a node's only selection mark (owner, 2026-09-13).
+   A press on a node also runs the tooltip's tap-to-select, which marks it
+   `.tooltip-selected`; kit.css outlines that in gold, and the box sat beside
+   the glow. An open tooltip's own quieter ring ([data-tip-open]) goes too.
+   Keyboard and pad users keep the cursor: `.gp-focus` (ui.css) still rings
+   the node and strokes its circle gold, and the reachable halo still pulses.
+   `g.` is load-bearing: kit.css's `.tooltip-selected:not(.overhead-control)`
+   is (0,2,0) and loads after this file, so an equal selector loses. */
+g.map-node.tooltip-selected, g.map-node[data-tip-open="true"] { outline: none; }
 .map-node .node-halo {
   fill: none; stroke: var(--gold); stroke-width: 2.5;
   transform-box: fill-box; transform-origin: center;
@@ -240,25 +361,28 @@
 .mapscreen.map-fog .map-edge { stroke-opacity: 0.9; }
 
 
-/* World Journey: fixed geography with discovered roads and local inspection. */
-.world-atlas-screen { overflow:auto; background:#171612; color:#d5c5a4; min-height:100%; }
-.atlas-header { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:20px 28px; border-bottom:1px solid #5b4a30; background:#171512; }
-.atlas-header h1 { font:32px Georgia,serif; letter-spacing:.035em; margin:5px 0 0; color:#eee0be; }
+/* World Journey: fixed geography with discovered roads and local inspection.
+   W4b bands (10 / 60 / 20 / 10): a header, the map scene, the selected place's
+   context, and a Recenter / Enter footer. The screen never scrolls; the scene's
+   scrollport is the camera, and the context band scrolls inside itself when
+   its content outgrows its share. */
+.world-atlas-screen { display:grid; grid-template-rows:auto minmax(0,1fr) auto auto; overflow:hidden; min-height:0; background:#171612; color:#d5c5a4; }
+.atlas-header { display:grid; grid-template-columns:minmax(0,1fr) auto auto; grid-template-areas:"title vitals actions"; align-items:center; gap:4px 16px; padding:8px 2.5vw; border-bottom:1px solid #5b4a30; background:#171512; }
+.atlas-title { grid-area:title; min-width:0; }
+.atlas-header h1 { font:26px Georgia,serif; letter-spacing:.035em; margin:2px 0 0; color:#eee0be; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .atlas-eyebrow { font:11px system-ui,sans-serif; letter-spacing:.18em; color:#b49a68; }
-.atlas-header-actions { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:8px; }
-.atlas-vitals { font-size:13px; margin-right:8px; }
-.atlas-layout { display:grid; grid-template-columns:minmax(0,1fr) 270px; gap:24px; padding:22px; width:min(1440px,100%); box-sizing:border-box; margin:0 auto; }
-.atlas-map-column { min-width:0; }
-.atlas-map-tools { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; font-size:13px; }
-.atlas-map-tools>div { display:flex; gap:5px; }
+.atlas-header-actions { grid-area:actions; display:flex; align-items:center; justify-content:flex-end; gap:6px; }
+.atlas-vitals { grid-area:vitals; font-size:13px; white-space:nowrap; }
+.atlas-scene { position:relative; display:flex; min-height:0; padding:0 2.5vw; }
+.atlas-map-tools { position:absolute; top:8px; right:calc(2.5vw + 8px); z-index:3; display:flex; gap:5px; }
 .atlas-map-tools .as-btn { min-width:var(--tap-floor); min-height:var(--tap-floor); }
-.atlas-scrollport { width:100%; max-height:calc(100vh - 205px); min-height:320px; overflow:auto; border:1px solid #8a744d; background:#9d8051; box-shadow:0 10px 45px #0006; }
+.atlas-scrollport { flex:1; min-width:0; min-height:0; overflow:auto; border:1px solid #8a744d; background:#9d8051; box-shadow:0 10px 45px #0006; }
 .atlas-world { position:relative; width:calc(100% * var(--atlas-zoom)); min-width:600px; aspect-ratio:1; isolation:isolate; }
 .atlas-terrain { display:block; position:absolute; inset:0; width:100%; height:100%; }
 .atlas-roads path { stroke:#322a1c; stroke-width:3.5; fill:none; stroke-dasharray:4 4; }
 .atlas-roads .traveled { stroke:#e9c477; stroke-width:4; stroke-dasharray:none; }
 .atlas-node { position:absolute; z-index:2; transform:translate(-50%,-50%); width:44px; height:44px; padding:0; background:none; border:0; cursor:pointer; display:grid; place-items:center; }
-.atlas-node:focus-visible { outline:3px solid #fff2b5; outline-offset:3px; border-radius:50%; }
+.atlas-node:focus-visible { outline:var(--focus-ring); outline-offset:3px; border-radius:50%; }
 .atlas-landmark { position:absolute; width:110px; height:110px; bottom:19px; left:50%; transform:translateX(-50%); transform-origin:50% 95%; transition:transform 180ms ease; pointer-events:none; filter:drop-shadow(0 5px 5px #18100a99); }
 .atlas-landmark img,.atlas-landmark svg { width:100%; height:100%; object-fit:contain; }
 .atlas-landmark svg { mask-image:radial-gradient(ellipse,#000 30%,transparent 70%); }
@@ -268,17 +392,28 @@
 .atlas-compass { position:absolute; top:5%; left:7%; font:32px Georgia,serif; line-height:1.2; text-align:center; color:#5c4b2e; pointer-events:none; }
 .atlas-map-caption { position:absolute; bottom:4%; width:100%; text-align:center; color:#554226; letter-spacing:.25em; font:18px Georgia,serif; pointer-events:none; }
 .atlas-map-caption small { font:11px Georgia,serif; letter-spacing:.04em; }
-.atlas-legend { display:flex; flex-wrap:wrap; gap:16px; font-size:11px; color:#b8a581; padding:13px 0; }
-.atlas-journal { padding:24px 18px; background:linear-gradient(#282218aa,#171612); border:1px solid #55452e; align-self:start; }
-.atlas-journal h2 { font:26px Georgia,serif; margin:12px 0 5px; }
-.atlas-journal h3 { font:18px Georgia,serif; margin:18px 0; color:#d6bc84; }
-.atlas-journal p { line-height:1.6; font-size:13px; }
-.atlas-journal .as-btn { white-space:normal; text-align:left; width:100%; min-height:var(--tap-floor); padding:9px 12px; line-height:1.4; }
-.atlas-journal-rule { height:1px; background:linear-gradient(90deg,#695437,transparent); margin:25px 0; }
-.atlas-objective { display:flex; flex-direction:column; gap:5px; padding:12px 0; font-size:13px; }
+.atlas-node[aria-pressed="true"]::before { content:""; position:absolute; inset:-5px; border:3px solid #f6e7bd; border-radius:50%; box-shadow:0 0 0 2px #1b150ecc; pointer-events:none; }
+.atlas-context { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr); grid-template-rows:auto 1fr; grid-template-areas:"place roads journey" "description roads journey"; gap:4px 28px; align-items:start; max-height:calc(20dvh / var(--ui-zoom,1)); overflow-y:auto; overscroll-behavior:contain; padding:10px 2.5vw; border-top:1px solid #5b4a30; background:linear-gradient(#282218aa,#171612); }
+.atlas-context h2 { font:22px Georgia,serif; margin:4px 0 2px; color:#eee0be; }
+.atlas-context h3 { font:15px Georgia,serif; margin:0 0 6px; color:#d6bc84; }
+.atlas-context p { margin:2px 0; line-height:1.45; font-size:13px; }
+.atlas-context-place { grid-area:place; min-width:0; }
+.atlas-context-roads { grid-area:roads; min-width:0; }
+.atlas-context-journey { grid-area:journey; min-width:0; }
+.atlas-context-status { color:#e9d6a6; }
+.atlas-context .atlas-context-description { grid-area:description; margin:0; color:#bfae8b; }
+.atlas-context-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; min-width:0; }
+.atlas-context-heading h2 { min-width:0; overflow-wrap:anywhere; }
+.atlas-context .atlas-inspect { flex:none; min-height:var(--tap-floor); }
+.atlas-legend { display:flex; flex-wrap:wrap; gap:4px 14px; font-size:11px; color:#b8a581; margin:6px 0; }
+.atlas-objective { display:flex; justify-content:space-between; gap:8px; padding:2px 0; font-size:12px; }
 .atlas-objective>span { font-size:10px; text-transform:uppercase; letter-spacing:.13em; color:#9b8664; }
-.atlas-road-list { display:grid; gap:8px; }
+.atlas-road-list { display:flex; flex-wrap:wrap; gap:6px; }
+.atlas-road-list .as-btn { white-space:normal; text-align:left; min-height:var(--tap-floor); padding:6px 12px; line-height:1.3; }
+.atlas-road-list .as-btn[aria-pressed="true"] { border-color:#f6e7bd; color:#f6e7bd; }
 .atlas-progress,.atlas-seed { color:#aa9774; }
+.atlas-footer { padding:8px 2.5vw calc(8px + env(safe-area-inset-bottom,0px) / var(--ui-zoom,1)); border-top:1px solid #5b4a30; background:#171512; }
+.atlas-footer > .modal-btnrow { width:100%; }
 .atlas-dialog { position:fixed; inset:0; margin:auto; padding:0; width:min(1080px,calc(100vw - 32px)); max-width:none; max-height:calc(100dvh - 32px); border:1px solid #947548; color:#dbc9a4; background:#1b1813; box-shadow:0 30px 90px #000b; z-index:500; overflow:auto; }
 .atlas-dialog::backdrop { background:#080808bc; backdrop-filter:blur(4px); }
 .atlas-dialog-head,.atlas-dialog-foot { display:flex; justify-content:space-between; align-items:center; gap:20px; padding:18px 24px; background:#211b14; }
@@ -303,14 +438,13 @@
 .atlas-location-illustration { aspect-ratio:1; }
 .atlas-location-illustration svg { width:100%; height:100%; }
 @media(max-width:800px) {
- .atlas-header { padding:15px; align-items:flex-start; flex-direction:column; gap:12px; }
- .atlas-header h1 { font-size:26px; }
- .atlas-header-actions { justify-content:flex-start; gap:6px; }
- .atlas-vitals { width:100%; }
- .atlas-layout { grid-template-columns:1fr; padding:12px; gap:16px; }
- .atlas-scrollport { max-height:65vh; }
- .atlas-journal { padding:20px; }
- .atlas-journal .atlas-objective { display:inline-flex; min-width:30%; padding-right:10px; }
+ .atlas-header { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"title actions" "vitals actions"; gap:0 10px; padding:6px 2.5vw; }
+ .atlas-header .atlas-eyebrow { display:none; }
+ .atlas-header h1 { font-size:19px; margin:0; }
+ .atlas-vitals { font-size:12px; }
+ .atlas-header-actions .as-btn { padding-inline:10px; }
+ .atlas-context { grid-template-columns:1fr; grid-template-rows:none; grid-template-areas:"place" "roads" "description" "journey"; gap:8px; padding-block:8px; }
+ .atlas-context h2 { font-size:19px; }
  .atlas-dialog { width:calc(100vw - 16px); max-height:calc(100dvh - 16px); }
  .atlas-dialog-head,.atlas-dialog-foot { padding:14px; gap:10px; }
  .atlas-dialog h2 { font-size:24px; }
@@ -319,6 +453,14 @@
  .atlas-location-detail { padding:20px; }
  .atlas-local-point small { font-size:10px; }
  .atlas-dialog-foot { position:sticky; bottom:0; }
+}
+/* A phone keeps the whole title: title and vitals share the first row and the
+   three actions take equal shares of the second, within W4b's 10% header. */
+@media(max-width:480px) {
+ .atlas-header { grid-template-columns:minmax(0,1fr) auto; grid-template-areas:"title vitals" "actions actions"; gap:4px 10px; }
+ .atlas-header h1 { white-space:normal; overflow-wrap:anywhere; }
+ .atlas-header-actions { justify-content:stretch; }
+ .atlas-header-actions .as-btn { flex:1; min-width:0; }
 }
 @media(prefers-reduced-motion:reduce) { .atlas-landmark { transition:none; } }
 /* Native dialogs own layout and focus; the shared veil class only marks input ownership. */
@@ -337,7 +479,7 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex
 .atlas-local-zoom-tools output { min-width:45px; text-align:center; font-size:13px; }
 .atlas-local-help { margin:0; font-size:12px; line-height:1.4; color:#c2b38e; }
 .atlas-local-port { position:relative; flex:1; min-height:170px; overflow:clip; background:#8b7d61; touch-action:none; overscroll-behavior:contain; cursor:grab; isolation:isolate; }
-.atlas-local-port:focus-visible { outline:2px solid #f6d37c; outline-offset:2px; }
+.atlas-local-port:focus-visible { outline:var(--focus-ring); outline-offset:var(--focus-ring-offset); }
 .atlas-local-port[data-dragging] { cursor:grabbing; user-select:none; }
 .atlas-local-map { position:absolute; aspect-ratio:auto; }
 .atlas-local-map>svg { position:absolute; width:100%; height:100%; pointer-events:none; }
@@ -378,10 +520,10 @@ dialog.atlas-dialog.modal-veil[open]:has(.atlas-local-port) { display:flex; flex
 }
 .world-atlas-screen .atlas-roads path { stroke:#775125; stroke-width:3; stroke-dasharray:none; filter:none; }
 .world-atlas-screen .atlas-roads .traveled { stroke:#b27c1f; stroke-width:4; }
-@media(min-width:1000px) { .atlas-layout { grid-template-columns:minmax(0,min(100%,calc(100vh - 240px))) 270px; justify-content:center; } }
 
-/* Keep map navigation clear of the combat inventory strip, including its hit targets. */
-.mapscreen .shared-hud .hud-bottom { display:none; }
+/* The relic rail shows on the map as on every screen (owner, 2026-09-14). It is
+   an icon tray, so only its icons take a press: the board under the empty rest
+   of the row stays live, which is what hiding the rail used to buy. */
 
 /* Atlas profiles use the same compact circular node vocabulary as traditional runs. */
 .atlas-node-label { top:40px; max-width:130px; white-space:normal; text-align:center; pointer-events:none; }

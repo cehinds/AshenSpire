@@ -1,0 +1,31 @@
+{
+  "sizing": {
+    "ratio": { "numerator": 5, "denominator": 7 },
+    "bands": [1, 4, 4, 1],
+    "levels": {
+      "glance": {
+        "widthPx": 152,
+        "variants": { "compact": 108, "mobile": 152 }
+      },
+      "focus": { "widthPx": 280 },
+      "inspect": { "widthPx": 320 }
+    },
+    "shelf": { "maxColumns": 4, "gapPx": 12, "minTrackPx": 120 },
+    "doorReadableMinPx": 384,
+    "tuning": { "minPx": 64, "maxPx": 640, "slidered": ["mobile"] }
+  },
+  "behavior": {
+    "fields": {
+      "levels": {
+        "glance": ["art", "facts", "effects"],
+        "focus": ["art", "type", "facts", "effects", "footer"],
+        "inspect": ["art", "type", "facts", "tags", "effects", "flavor", "footer"]
+      },
+      "surfaces": {
+        "creation": { "glance": { "add": ["footer"] } },
+        "armoury": { "glance": { "add": ["type"] } },
+        "combat": { "focus": { "drop": ["footer"] } }
+      }
+    }
+  }
+}

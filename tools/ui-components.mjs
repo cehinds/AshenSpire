@@ -4,7 +4,7 @@
 // imported into component modules.
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (rel) => readFileSync(resolve(ROOT, rel), 'utf8').replace(/\r\n/g, '\n');
@@ -54,6 +54,296 @@ const REQUIRED_IDS = Object.freeze([
   'equipment-choice-card', 'relic-choice-card',
 ]);
 
+// THE TWO CATALOGS NAME THE SAME COMPONENTS (#1230). The Markdown catalog's
+// entries are the rows of its "| Component ID |" and "| Stable ID |" tables
+// plus every `armoury.*` id in its "| Rendered family |" table; the
+// interactive catalog's are the SEMANTIC_COMPONENTS and
+// RENDERED_ARMOURY_COMPONENTS records. An id in one and not the other is a
+// component one reader can find and the other cannot.
+//
+// The two FAMILIES are compared separately: the Component/Stable-ID tables
+// against SEMANTIC_COMPONENTS, the Rendered-family table against
+// RENDERED_ARMOURY_COMPONENTS. An id moved from one family to the other on one
+// side only is still listed once per catalog, so one merged set would call
+// the catalogs in agreement while each family disagrees.
+export function markdownCatalogFamilies(md) {
+  const semantic = [];
+  const armoury = [];
+  let table = null;
+  for (const line of md.split('\n')) {
+    if (/^\| (?:Component|Stable) ID \|/.test(line)) { table = 'semantic'; continue; }
+    if (/^\| Rendered family \|/.test(line)) { table = 'family'; continue; }
+    if (!table) continue;
+    if (!line.startsWith('|')) { table = null; continue; }
+    if (table === 'semantic') {
+      const id = line.match(/^\| `([^`]+)` \|/)?.[1];
+      if (id) semantic.push(id);
+    } else {
+      armoury.push(...[...line.matchAll(/`(armoury\.[^`]+)`/g)].map((m) => m[1]));
+    }
+  }
+  return { semantic, armoury };
+}
+
+// Record ids are the first string of each array literal, in either quote
+// style, between the list's opening line and its closing "\n]".
+function htmlListIds(html, name) {
+  const start = html.indexOf(`const ${name} = [`);
+  if (start < 0) return null;
+  const end = html.indexOf('\n]', start);
+  const body = html.slice(start, end < 0 ? undefined : end);
+  return [...body.matchAll(/^\s*\[(['"])([^'"]+)\1,/gm)].map((m) => m[2]);
+}
+
+export function htmlCatalogFamilies(html) {
+  return {
+    semantic: htmlListIds(html, 'SEMANTIC_COMPONENTS') || [],
+    armoury: htmlListIds(html, 'RENDERED_ARMOURY_COMPONENTS') || [],
+  };
+}
+
+// A one-sided id names its family, so an id moved between families reads as
+// "only here in one family, only there in the other" rather than as two
+// unrelated strays.
+export function catalogDisagreement(md, html) {
+  const mdFamilies = markdownCatalogFamilies(md);
+  const htmlFamilies = htmlCatalogFamilies(html);
+  const markdownOnly = [];
+  const htmlOnly = [];
+  // Each side that listed no ids for a family, named, so an emptied table
+  // reads as "listed no armoury ids" and not only as every id one-sided.
+  const emptyFamilies = [];
+  for (const family of ['semantic', 'armoury']) {
+    const mdIds = new Set(mdFamilies[family]);
+    const htmlIds = new Set(htmlFamilies[family]);
+    if (!mdIds.size) emptyFamilies.push(`COMPONENT-CATALOG.md listed no ${family} ids`);
+    if (!htmlIds.size) emptyFamilies.push(`component-catalog.html listed no ${family} ids`);
+    markdownOnly.push(...[...mdIds].filter((id) => !htmlIds.has(id)).map((id) => `${id} [${family}]`));
+    htmlOnly.push(...[...htmlIds].filter((id) => !mdIds.has(id)).map((id) => `${id} [${family}]`));
+  }
+  return { markdownOnly, htmlOnly, empty: emptyFamilies.length > 0, emptyFamilies };
+}
+
+// A small CSS reader for C12, so the checks judge what the browser applies and
+// not what a line pattern happens to match (Codex, #1316). It strips comments,
+// honours quotes and parentheses, descends into @media/@supports/@container
+// blocks, and yields each style rule as { selector, decls } where decls lists
+// { prop, value } in source order (a last declaration without `;` counts).
+// Nested rules (CSS nesting) are judged as `:is(parent) child`.
+// BOUNDARY: it does not model the cascade (specificity, !important, @layer
+// order, @scope limits) or custom-property substitution; a var() value is
+// judged as unreadable. A further CSS form is fixed here only if the shipped
+// CSS uses it; otherwise this note is the answer.
+function splitTop(text, sep) {
+  const out = []; let depth = 0; let quote = null; let cur = ''; let escaped = false;
+  for (const ch of text) {
+    // A backslash escapes the next character, in or out of a string.
+    if (escaped) { cur += ch; escaped = false; continue; }
+    if (ch === '\\') { cur += ch; escaped = true; continue; }
+    if (quote) { cur += ch; if (ch === quote) quote = null; continue; }
+    if (ch === '"' || ch === "'") { quote = ch; cur += ch; continue; }
+    if (ch === '(' || ch === '[') depth++;
+    if (ch === ')' || ch === ']') depth--;
+    if (depth === 0 && sep.test(ch)) { out.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  out.push(cur);
+  return out;
+}
+
+// At-rules whose blocks hold no style rules; every other block at-rule
+// (@media, @supports, @container, @layer, @scope, @starting-style, and any
+// new one) is descended into, so an unknown grouping rule is judged, not lost.
+const NON_STYLE_AT = /^@(?:-webkit-)?(?:keyframes|font-face|property|page|counter-style|font-feature-values|font-palette-values|view-transition)\b/i;
+
+function parseBlock(src, parent, rules, conditional = false, scopeBlock = false) {
+  let depth = 0; let quote = null; let text = ''; let openAt = -1; let prelude = '';
+  const decls = [];
+  const flushDecls = (chunk) => splitTop(chunk, /;/).map((d) => d.trim()).filter(Boolean).forEach((d) => {
+    const at = d.indexOf(':');
+    if (at > 0) decls.push({ prop: d.slice(0, at).trim().toLowerCase(), value: d.slice(at + 1).replace(/!\s*important\s*$/i, '').trim() });
+  });
+  for (let j = 0; j < src.length; j++) {
+    const ch = src[j];
+    if (ch === '\\') { if (depth === 0) text += src.slice(j, j + 2); j++; continue; }
+    if (quote) { if (depth === 0) text += ch; if (ch === quote) quote = null; continue; }
+    if (ch === '"' || ch === "'") { quote = ch; if (depth === 0) text += ch; continue; }
+    if (ch === '{') {
+      if (depth++ === 0) {
+        // The nested prelude is what follows the last top-level `;`; what
+        // precedes it is this block's own declarations (or bare statements).
+        const parts = splitTop(text, /;/);
+        prelude = parts.pop().trim();
+        if (parent !== null) flushDecls(parts.join(';'));
+        text = ''; openAt = j + 1;
+      }
+      continue;
+    }
+    if (ch === '}' && depth > 0) {
+      if (--depth === 0) {
+        const body = src.slice(openAt, j);
+        if (/^@scope\b/i.test(prelude)) {
+          // @scope (root): the root is every inner rule's ancestor, `:scope`
+          // inside is the root itself, and declarations written straight in
+          // the block apply to the root. A prelude-less nested @scope's root
+          // is its parent rule. The limit (`to (…)`) is not modelled.
+          const root = scopeRoot(prelude);
+          const scope = !root ? parent : parent === null ? root : `:is(${parent}) :is(${root})`;
+          parseBlock(body, scope, rules, conditional, scope === null);
+        } else if (prelude.startsWith('@')) {
+          // A grouping rule applies only under its condition, so its rules
+          // (and a nested copy of `parent`) are marked conditional. @layer
+          // is an ordering, not a condition.
+          if (!NON_STYLE_AT.test(prelude)) parseBlock(body, parent, rules, conditional || !/^@layer\b/i.test(prelude));
+        } else if (prelude) {
+          const selector = parent === null ? prelude
+            : splitTop(prelude, /,/).map((part) => (/&|:scope(?![\w-])/.test(part) ? part.replace(/&|:scope(?![\w-])/g, `:is(${parent})`) : `:is(${parent}) ${part.trim()}`)).join(', ');
+          parseBlock(body, selector, rules, conditional);
+        }
+      }
+      continue;
+    }
+    if (depth === 0) text += ch;
+  }
+  if (parent !== null && !scopeBlock) {
+    flushDecls(text);
+    rules.push({ selector: parent, decls, conditional });
+  }
+  return rules;
+}
+
+// The root selector of an `@scope (root) [to (limit)]` prelude, read up to its
+// balanced closing paren; null when the prelude names none.
+function scopeRoot(prelude) {
+  const open = prelude.indexOf('(');
+  if (open < 0 || prelude.slice(6, open).trim()) return null;
+  let depth = 0;
+  for (let i = open; i < prelude.length; i++) {
+    if (prelude[i] === '(') depth++;
+    if (prelude[i] === ')' && --depth === 0) return prelude.slice(open + 1, i).trim() || null;
+  }
+  return null;
+}
+
+// Comments are dropped only outside strings (and escapes), so `content: "/*"`
+// is a string, not the start of a comment that swallows the rules after it.
+function stripComments(css) {
+  return css.replace(/\\[\s\S]|"(?:\\[\s\S]|[^"\\])*"|'(?:\\[\s\S]|[^'\\])*'|\/\*[\s\S]*?(?:\*\/|$)/g,
+    (m) => (m.startsWith('/*') ? '' : m));
+}
+
+export function cssRules(css) {
+  return parseBlock(stripComments(css), null, []);
+}
+
+// The subject of one selector (no commas): its last top-level compound, so
+// `.hud-bottom:has(> .x)` has subject `.hud-bottom` and `.hud-bottom .relic`
+// has subject `.relic`; `:is(.hud-bottom)` has subject `.hud-bottom`.
+function subjectOf(part) {
+  return subjectAlternatives(part).join(' ');
+}
+
+// The same subject, kept as its alternatives: each is one compound that a
+// single element matches whole, with every :is()/:where()/:matches() argument
+// spliced in as its own alternative, so `.a:is(.b, .c)` is `.a.b` and `.a.c`,
+// never `.a.b.c`. Used where two simple selectors must sit on one element.
+function subjectAlternatives(part) {
+  const compounds = splitTop(part.trim(), /[\s>+~]/).filter(Boolean);
+  const compound = compounds.at(-1) || '';
+  // A pseudo-element (`::before`, or the legacy one-colon four) is its own
+  // box, so the compound names no element this check is about.
+  if (/::|:(?:before|after|first-line|first-letter)(?![\w-])/i.test(compound.replace(/\([^()]*\)/g, ''))) return [];
+  // :is() / :where() / :matches() match the element itself, so each of their
+  // arguments contributes ITS OWN subject (recursively): `:is(.a > .b)` has
+  // subject `.b`, not `.a .b`. Any other functional pseudo's arguments
+  // (:has, :not, :nth-child) are not the subject and are dropped.
+  let alts = ['']; let i = 0;
+  const append = (text) => { alts = alts.map((alt) => alt + text); };
+  while (i < compound.length) {
+    const open = compound.indexOf('(', i);
+    if (open < 0) { append(compound.slice(i)); break; }
+    let depth = 0; let close = open;
+    for (; close < compound.length; close++) {
+      if (compound[close] === '(') depth++;
+      if (compound[close] === ')' && --depth === 0) break;
+    }
+    const head = compound.slice(i, open);
+    const matchesSelf = /:(?:is|where|matches|-webkit-any)$/i.test(head);
+    append(head.replace(/:(?:is|where|matches|-webkit-any)$/i, ''));
+    if (matchesSelf) {
+      const inner = splitTop(compound.slice(open + 1, close), /,/).flatMap(subjectAlternatives);
+      alts = alts.flatMap((alt) => inner.map((sub) => alt + sub));
+    }
+    i = close + 1;
+  }
+  return alts;
+}
+const hasClass = (compound, name) => new RegExp(`\\.${name}(?![\\w-])`).test(compound);
+// `all` sets every property at once, so it counts as a write to each.
+const lastValue = (decls, props) => decls.filter((d) => props.includes(d.prop) || d.prop === 'all').at(-1)?.value;
+
+// Every shared-HUD grid (the base band, the compact and wide map headers, the
+// narrow phone band) that sets its areas lays out a `meters` row and puts a
+// `rail` row directly beneath it, in the same column, and the base band has
+// such a grid. The effective value is the last of grid-template-areas and the
+// grid-template / grid shorthands (which reset areas); a value with no quoted
+// rows (none, var(), a shorthand without areas) is a failing grid, not a skip.
+export function railUnderMeters(css) {
+  const tops = cssRules(css)
+    .filter((rule) => splitTop(rule.selector, /,/).some((part) => part.includes('.shared-hud') && hasClass(subjectOf(part), 'hud-top')));
+  const grids = tops
+    .map((rule) => ({ selector: rule.selector, decl: lastValue(rule.decls, ['grid-template-areas', 'grid-template', 'grid']) }))
+    .filter((g) => g.decl !== undefined)
+    .map((g) => ({ ...g, rows: g.decl.match(/"[^"]*"|'[^']*'/g)?.map((row) => row.slice(1, -1).trim().split(/\s+/)) ?? [] }));
+  return grids.some((g) => g.selector === '.shared-hud > .hud-top')
+    // A top rule that switches display off grid takes the areas with it.
+    && tops.every((rule) => /^(?:inline-grid|(?:(?:block|inline)\s+)?grid|grid\s+(?:block|inline))$/i.test(lastValue(rule.decls, ['display']) ?? 'grid'))
+    && grids.every(({ rows }) => validAreas(rows) && rows.some((row) => row.includes('meters'))
+      && rows.every((row, i) => !row.includes('meters') || rows[i + 1]?.[row.indexOf('meters')] === 'rail'));
+}
+
+// CSS drops a grid-template-areas whose rows differ in width or whose named
+// areas are not filled rectangles; such a template places nothing.
+function validAreas(rows) {
+  if (!rows.length || rows.some((row) => row.length !== rows[0].length)) return false;
+  const boxes = new Map();
+  rows.forEach((row, y) => row.forEach((name, x) => {
+    if (/^\.+$/.test(name)) return;
+    const b = boxes.get(name) || { x0: x, x1: x, y0: y, y1: y, n: 0 };
+    boxes.set(name, { x0: Math.min(b.x0, x), x1: Math.max(b.x1, x), y0: Math.min(b.y0, y), y1: Math.max(b.y1, y), n: b.n + 1 });
+  }));
+  return [...boxes].every(([name, b]) => b.n === (b.x1 - b.x0 + 1) * (b.y1 - b.y0 + 1)
+    && rows.slice(b.y0, b.y1 + 1).every((row) => row.slice(b.x0, b.x1 + 1).every((cell) => cell === name)));
+}
+
+// The relic rail is in flow: the base `.shared-hud .hud-bottom` rule's
+// effective position is static and its effective grid-area is `rail`, and no
+// rule whose subject compound carries `.hud-bottom` (the rail itself, in any
+// state, layout or media override; not its children) hangs it again with an
+// effective absolute or fixed position or moves it out of the `rail` area.
+export function railInFlow(css) {
+  const rules = cssRules(css)
+    .filter((rule) => splitTop(rule.selector, /,/).some((part) => hasClass(subjectOf(part), 'hud-bottom')));
+  // The base is every unconditional `.shared-hud .hud-bottom` rule, in order;
+  // a copy a nested @media emits is conditional and is judged only below.
+  const base = rules.filter((rule) => rule.selector === '.shared-hud .hud-bottom' && !rule.conditional).flatMap((rule) => rule.decls);
+  return base.length > 0
+    && /^static$/i.test(lastValue(base, ['position']) ?? '')
+    && lastValue(base, ['grid-area']) === 'rail'
+    && !rules.some((rule) => /^(?:absolute|fixed)\b/i.test(lastValue(rule.decls, ['position']) || '')
+      // Placement too: a rail rule that sets grid-area keeps it `rail`, and
+      // none re-places it by line (grid-row / grid-column and their longhands).
+      || (lastValue(rule.decls, ['grid-area']) ?? 'rail') !== 'rail'
+      || rule.decls.some((d) => /^grid-(?:row|column)(?:-start|-end)?$/.test(d.prop))
+      // Display too: none or contents takes the rail out of the grid. Only a
+      // rule whose subject is `:empty` may hide it (a rail with no relics).
+      || (/^(?:none|contents)$/i.test(lastValue(rule.decls, ['display']) ?? '')
+        // `:empty` must sit on the rail's own compound alternative: in
+        // `:is(.hud-bottom, .x:empty)` it is on `.x`, not on the rail.
+        && !splitTop(rule.selector, /,/).every((part) => subjectAlternatives(part)
+          .filter((alt) => hasClass(alt, 'hud-bottom')).every((alt) => /:empty(?![\w-])/i.test(alt)))));
+}
+
 export function receipt() {
   return {
     registry: read('src/ui/models/UiComponentId.js'),
@@ -86,8 +376,10 @@ export function receipt() {
     catalogMarkdown: read('docs/COMPONENT-CATALOG.md'),
     catalogHtml: read('docs/component-catalog.html'),
     frame: read('src/ui/components/combatantFrame.js'),
+    overhead: read('src/ui/components/combatantOverhead.js'),
     battlefieldStage: read('src/ui/components/battlefieldStage.js'),
     battlefieldStageModel: read('src/ui/models/BattlefieldStageModel.js'),
+    spriteScale: read('src/ui/models/CombatSpriteScaleModel.js'),
     tooltip: read('src/ui/components/tooltip.js'),
     exposure: read('src/ui/components/arcaneExposure.js'),
     fx: read('src/ui/fx.js'),
@@ -150,12 +442,24 @@ export function findings(r) {
     bad.push('C3 Map and Combat no longer consume the same shared HUD composition');
   }
   if (!/export function combatantFrame/.test(r.frame)
-      || (r.combat.match(/combatantFrame\(\{/g) || []).length !== 2
+      // Player and enemy each build a `slots` bag and hand it to the ONE frame
+      // component (or its updater on a reused box) — two consumers, no third.
+      || (r.combat.match(/: combatantFrame\(slots\);/g) || []).length !== 2
       || /document\.createElement\('div'\);\s*\n\s*box\.className = `combatant/.test(r.combat)) {
     bad.push('C4 player and enemy no longer consume one Combatant Frame component');
   }
-  // The catalogue-only armour image resolver reads no run or combat state.
-  if (/from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.hud + r.quickSettings + r.frame + r.registry + r.componentModel + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels.replace("import { armourMenuAsset } from '../../model/paintedOutfitArt.js';", '') + r.menuComponents + r.armouryComponents)
+  // The Armoury's two catalogue-only art resolvers read no run or combat
+  // state: armourMenuAsset (a piece's painted outfit) and, since 7688282ef,
+  // armamentIconAsset (a piece's authored inventory-art alias, the ONE home
+  // of that alias — inlining it here would be the bypass that commit
+  // removed). Each is excused by its exact import line, so any other name
+  // imported from either file, or any other model/engine module, is still red.
+  const armouryArtImports = [
+    "import { armamentIconAsset } from '../../model/equipmentArt.js';",
+    "import { armourMenuAsset } from '../../model/paintedOutfitArt.js';",
+  ];
+  const armouryModelsSansArt = armouryArtImports.reduce((text, line) => text.replace(line, ''), r.armouryModels);
+  if (/from ['"](?:\.\.\/)+(?:engine|model)\//.test(r.hud + r.quickSettings + r.frame + r.registry + r.componentModel + r.hudModels + r.hudViewModel + r.menuModels + armouryModelsSansArt + r.menuComponents + r.armouryComponents)
       || /\b(run|combat)\s*=/.test(r.hud + r.quickSettings + r.frame + r.hudModels + r.hudViewModel + r.menuModels + r.armouryModels)) {
     bad.push('C5 reusable component modules crossed the simulation-state boundary');
   }
@@ -183,15 +487,16 @@ export function findings(r) {
   }
   if (!/UI\.battlefieldStage/.test(r.combat)
       || !/centerHeightRatio/.test(r.battlefieldStageModel)
-      || !/availableHeight \* centerHeightRatio/.test(r.battlefieldStage)
-      || !/measureFrame\(frame, model\.tokens\.intentGapPx, model\.tokens\.centerHeightRatio\)/.test(r.battlefieldStage)
-      // ONE SCALE FOR THE STAGE (2026-09-04). The stage used to divide each
-      // card by its OWN sprite's natural height, so every combatant rendered a
-      // different width. It now measures every frame and applies the smallest
-      // scale any of them needs — this asserts the reduce and the apply, so a
-      // return to per-frame scaling is red.
-      || !/measures\.reduce\(\(least, m\) => Math\.min\(least, m\.fits\), Infinity\)/.test(r.battlefieldStage)
-      || !/for \(const measure of measures\) applyFrame\(measure, scale\)/.test(r.battlefieldStage)
+      // ONE SCALE FOR THE STAGE (2026-09-04; re-homed 2026-09-09 in
+      // models/CombatSpriteScaleModel.js `fitCombatSprites`). The stage used
+      // to divide each card by its OWN sprite's natural height, so every
+      // combatant rendered a different width. The fitter now reduces ONE
+      // `base` across every actor and derives each sprite's height from it —
+      // this asserts the reduce and the apply, so a return to per-frame
+      // scaling is red.
+      || !/fitCombatSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors \}\)/.test(r.battlefieldStage)
+      || !/base = Math\.min\(base, maxHeight \/ ratio,/.test(r.spriteScale)
+      || !/const visibleHeight = base \* a\.ratio \* a\.slot\.depth;/.test(r.spriteScale)
       || !/function renderCombatantStage\(\)[\s\S]*?renderPlayer\(\);\s*renderEnemies\(\);[\s\S]*?battlefieldStage\.refresh\(\);[\s\S]*?function render\(\)/.test(r.combat)
       || (r.combat.match(/renderCombatantStage\(\);/g) || []).length < 2
       || !/UI\.playerHandTray/.test(r.combat)
@@ -203,7 +508,7 @@ export function findings(r) {
       || !/UI\.poiseStatusBar/.test(r.combat)
       || !/UI\.procStatusBar/.test(r.combat)
       || !/UI\.statusEffectTray/.test(r.combat)
-      || !/UI\.intentIndicator/.test(r.combat)
+      || !/UI\.intentIndicator/.test(r.overhead)
       || !/UI\.blockBadge/.test(r.combat)
       || !/UI\.arcaneExposureBar/.test(r.exposure)
       || !/UI\.tooltip/.test(r.tooltip)
@@ -288,16 +593,34 @@ export function findings(r) {
       || !/--hud-quick-tile-size:(?!\s*var\(--iconbtn-size\))[^;]+;/.test(r.kit)
       || !/--hud-quick-tile-gap:(?!\s*var\(--iconbtn-size\))[^;]+;/.test(r.kit)
       || !/\.shared-hud \.hud-control-grid :is\(\.as-iconbtn, \.as-slot\) \{[\s\S]*?width: var\(--hud-quick-tile-size\); height: var\(--hud-quick-tile-size\);/.test(r.kit)
-      || !/\.shared-hud \.hud-bottom \{[\s\S]*?position: absolute;[\s\S]*?top: calc\(100% \+ 0\.4rem\);[\s\S]*?left: 1\.6rem; right: 1\.6rem;/.test(r.kit)
-      || !/\.shared-hud \.hud-bottom \.as-slot \{[\s\S]*?width: var\(--iconbtn-size\); height: var\(--iconbtn-size\);/.test(r.kit)
-      || !/\.shared-hud \.hud-bottom \.as-slot::before \{[\s\S]*?width: var\(--hud-belt-tile-face-size\); height: var\(--hud-belt-tile-face-size\);/.test(r.kit)
+      // THE RELIC RAIL IS INSIDE THE HUD, beneath Vitals (SPEC "Primary and
+      // inventory geometry": `inventory-belt` places Relics beneath Vitals).
+      // It hung absolutely beneath the band's edge until f8d7d3257 ("Contain
+      // the HUD") put it in the band's own grid, so the band grows with it;
+      // this clause pinned the hang and left C12 red on dev. What it means
+      // now: the rail is in flow in the `rail` area, and the shared grid
+      // stacks a rail row directly under the meters row.
+      || !railInFlow(r.kit)
+      || !railUnderMeters(r.kit)
+      // The relic rail is the shared icon tray (components/iconTray.js), the
+      // combatant card's status row its reference: the rail wears the tray's
+      // classes and the tray sizes every icon from its own plan.
+      || !/class="relics hud-relics as-pips icon-tray grow"/.test(r.hud)
+      || !/\.icon-tray \.as-pip \{[\s\S]*?width: var\(--icon-tray-size[\s\S]*?height: var\(--icon-tray-size/.test(r.kit)
       || !/iconButton\(\{/.test(r.hud)
       || !/class="as-iconbtn modal-iconbtn hud-quick-setting/.test(r.quickSettings)
       || !/\.as-iconbtn, \.modal-iconbtn, \.modal-close \{[\s\S]*?width: var\(--iconbtn-size\); height: var\(--iconbtn-size\);/.test(r.kit)
       || !/\.as-slot \{[^}]*width: var\(--iconbtn-size\); height: var\(--iconbtn-size\);/.test(r.kit)
       || !/\.as-meter \{/.test(r.kit)
       || /^\s*\.(?:topbar|hud-top|hud-info-row|hud-resource-row|hud-bottom|hud-control-grid|hud-quick-setting)\b[^{]*\{/m.test(r.css)
-      || !/actRouteStripHtml\(\{\s*title:\s*actTitle\(run\.actNumber\)\s*\}\)/.test(r.map)
+      // The map titles its route strip with the act's own name. Since the
+      // W4b header (#1052) actTitle also takes the seat's name on a seated
+      // climb, so the check pins the call and its first argument and lets the
+      // rest of the argument list vary. An authored legacy dungeon mounts the
+      // same map with its own title (ed4d7e6c9, `mapAdapter.title`); every
+      // generated act still falls through to actTitle. Both halves are
+      // required: dropping the authored title is a defect too (Codex, #1316).
+      || !/actRouteStripHtml\(\{\s*title:\s*mapAdapter\?\.title\s*\|\|\s*actTitle\(run\.actNumber\b[^\n]*?\)\s*\}\)/.test(r.map)
       || /routeTitle|actRouteStripHtml|act-route-strip/.test(r.combat)) {
     bad.push('C12 rendered HUD no longer consumes the horizontal, transparent, uniformly spaced component tokens');
   }
@@ -312,7 +635,12 @@ export function findings(r) {
       // The ORDER of what remains is still pinned, which is what this line is
       // for, and the second clause pins the removal itself so the child cannot
       // reappear without a finding.
-      || !/runHeaderModel\([\s\S]*vitalsPanelModel\(\)[\s\S]*quickAccessPanelModel\(controls\)[\s\S]*inventoryBeltModel\(place\)/.test(r.hudViewModel)
+      // Since #1084 (WGH0 layers) each child is present only when its layer is
+      // on and takes `layers`, and vitals + quick access are composed into the
+      // `primary` row first. The rendered order is unchanged — header, the
+      // primary row (vitals, then quick access), then the belt — and that order
+      // is what is pinned here.
+      || !/const primary = \[[\s\S]*vitalsPanelModel\(\)[\s\S]*quickAccessPanelModel\(controls\b[\s\S]*?\];[\s\S]*children: \[[\s\S]*runHeaderModel\([\s\S]*UI\.primaryHudRow, \{ children: primary \}[\s\S]*inventoryBeltModel\(place\b/.test(r.hudViewModel)
       || /hudQuickSettingsModel\(\{ place/.test(r.hudViewModel)
       || !/UI\.componentBackground/.test(r.hudModels)
       || !/\.NET-inspired application and Component Model contract/.test(r.spec)) {
@@ -494,6 +822,10 @@ export function findings(r) {
         && r.catalogHtml.includes(`['${id}'`))) {
     bad.push('C21 Controls rebind capture lost its stable ids or armed-Escape ownership contract');
   }
+  const split = catalogDisagreement(r.catalogMarkdown, r.catalogHtml);
+  if (split.empty || split.markdownOnly.length || split.htmlOnly.length) {
+    bad.push(`C22 the two component catalogs disagree — ${split.emptyFamilies.map((line) => `${line}; `).join('')}only in COMPONENT-CATALOG.md: ${split.markdownOnly.join(', ') || 'none'}; only in component-catalog.html: ${split.htmlOnly.join(', ') || 'none'}`);
+  }
   return bad;
 }
 
@@ -505,13 +837,36 @@ function selftest() {
     ['give Map a second HUD', 'C3 ', (r) => ({ ...r, map: r.map.replace('${runHudHtml({', '${(() => "")({') })],
     ['give the merchant its own band', 'C3 ', (r) => ({ ...r, shop: r.shop.replace('wireRunHud(app, {', 'wireMerchantBand(app, {') })],
     ['detach the run HUD from the shared shell', 'C3 ', (r) => ({ ...r, runHud: r.runHud.replace('hudShellHtml(runHudViewModel({', 'ownShell({') })],
-    ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace(/const box = combatantFrame\(\{\r?\n\s*role: 'enemy'/, "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void ({\n        role: 'enemy'") })],
+    ['duplicate enemy frame', 'C4 ', (r) => ({ ...r, combat: r.combat.replace("const box = record ? updateCombatantFrame(record.box, slots) : combatantFrame(slots);", "const box = document.createElement('div');\n      box.className = `combatant enemy`;\n      void slots;") })],
     ['import model into component', 'C5 ', (r) => ({ ...r, hud: `${r.hud}\nimport { resourceBarPlan } from '../../model/resources.js';\n` })],
+    ['import run state into the Armoury models beside their art resolvers', 'C5 ', (r) => ({ ...r, armouryModels: `import { resourceBarPlan } from '../../model/resources.js';\n${r.armouryModels}` })],
     ['remove Floor from the header trail', 'C6 ', (r) => ({ ...r, hud: r.hud.replace("childModel(model, UI.metadataField, 'floor')", "childModel(model, UI.metadataField, 'seed')") })],
     // Substitutes the declaration whatever its authored value, so this plant
     // site cannot drift out from under the corpus the way the check above did.
     ['restore oversized Quick Access tiles', 'C12 ', (r) => ({ ...r, kit: r.kit.replace(/--hud-quick-tile-size:[^;]+;/, '--hud-quick-tile-size: var(--iconbtn-size);') })],
-    ['put Relics and potions back inside the HUD flow', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: absolute;\n  z-index: 85;', 'position: static;\n  z-index: auto;') })],
+    ['hang the relic rail beneath the HUD again', 'C12 ', (r) => ({ ...r, kit: r.kit.replace(/(\.shared-hud \.hud-bottom \{[^}]*)position: static;/, '$1position: absolute;') })],
+    ['drop the rail row from under the meters', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"meters actions" "rail actions" "route route"', '"meters actions" "route route"') })],
+    ['put the phone band\'s rail beside the meters', 'C12 ', (r) => ({ ...r, kit: r.kit.replace(/(\[data-layout='narrow'\] \.shared-hud > \.hud-top \{[^}]*)"meters actions" "rail actions"/, '$1"meters rail" "actions actions"') })],
+    // Review of #1316: the in-flow rule reads the LAST position declaration
+    // and every rule on the rail, so a later override is still red.
+    ['re-hang the relic rail later in its own rule', 'C12 ', (r) => ({ ...r, kit: r.kit.replace(/(\.shared-hud \.hud-bottom \{[^}]*)\}/, '$1  position: absolute;\n}') })],
+    ['re-hang the relic rail from a later layout rule', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n:root[data-layout='narrow'] .shared-hud .hud-bottom { position: absolute; top: 100%; }\n` })],
+    // Codex, #1316: an override grid that drops `meters` is judged, not skipped.
+    ['drop the meters row from a map-header override', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "rail actions";') })],
+    ['single-quote a map-header grid that drops meters', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', "'info actions' 'rail actions';") })],
+    ['drop the authored dungeon title from the map route strip', 'C12 ', (r) => ({ ...r, map: r.map.replace('title: mapAdapter?.title || actTitle(', 'title: actTitle(') })],
+    ['end a map-header grid on an unparseable grid-template-areas', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "meters actions" "rail actions";\n  grid-template-areas: none;') })],
+    ['hang the rail again from a class-qualified .hud-bottom state', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { position: absolute; }\n` })],
+    ['hang the rail from a :has() state on .hud-bottom', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom:has(> .icon-tray.expanded) { position: absolute; }\n` })],
+    ['drop meters in a semicolon-less final declaration', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud[data-x] > .hud-top { grid-template-areas: "info actions" "rail actions" }\n` })],
+    ['drop meters through the grid-template shorthand', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud[data-x] > .hud-top { grid-template: "info actions" auto "rail actions" auto / 1fr auto; }\n` })],
+    ['drop meters inside an @media override', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@media (max-width: 1px) { .shared-hud[data-x] > .hud-top { grid-template-areas: "info actions" "rail actions"; } }\n` })],
+    ['hang the rail inside @scope', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@scope (.shared-hud) { .shared-hud .hud-bottom { position: absolute; } }\n` })],
+    ['hang the rail inside @starting-style', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@starting-style { .shared-hud .hud-bottom { position: absolute; } }\n` })],
+    ['hang the rail through :is()', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud :is(.hud-bottom) { position: absolute; }\n` })],
+    ['hang the rail from a nested & rule', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom { &.expanded { position: absolute; } }\n` })],
+    ['repeat grid-template-areas without meters after the good one', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info actions" "meters actions" "rail actions";\n  grid-template-areas: "info actions" "rail actions";') })],
+    ['title the map route strip with anything but the act', 'C12 ', (r) => ({ ...r, map: r.map.replace('actRouteStripHtml({ title: mapAdapter?.title || actTitle(', 'actRouteStripHtml({ title: mapAdapter?.title || String(') })],
     ['remove Source priority', 'C7 ', (r) => ({ ...r, kit: r.kit.replace('.as-statstrip.trail > .build-stamp > :nth-child(n+2) { display: none; }', '.as-statstrip.trail > .build-stamp > :nth-child(n+1) { display: none; }') })],
     // The other half of the same rung: a phone that drops the chip's VALUE
     // instead of its total is the defect the photograph caught.
@@ -520,6 +875,17 @@ function selftest() {
     ['bottom-align enemies', 'C9 ', (r) => ({ ...r, css: r.css.replace('align-items: center; justify-content: space-evenly;', 'align-items: flex-end; justify-content: space-evenly;') })],
     ['remove public id from spec', 'C10 ', (r) => ({ ...r, spec: r.spec.replace('`potion-tray`', 'Potion tray') })],
     ['change transparent default', 'C11 ', (r) => ({ ...r, balance: r.balance.replace('componentBackgroundOpacityPct: 0', 'componentBackgroundOpacityPct: 25') })],
+    ['drop meters from a scoped HUD grid', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@scope (.shared-hud) { .hud-top { grid-template-areas: "info actions" "rail actions"; } }\n` })],
+    ['hang the rail from a @media nested in its base rule', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: static; grid-area: rail; min-width: 0; width: 100%;', 'position: static; grid-area: rail; min-width: 0; width: 100%;\n  @media (width < 1px) { position: absolute; }') })],
+    ['hang the rail from declarations straight in a nested @scope', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('position: static; grid-area: rail; min-width: 0; width: 100%;', 'position: static; grid-area: rail; min-width: 0; width: 100%;\n  @scope { position: absolute; }') })],
+    ['move the rail off its grid area in a media override', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n@media (width < 1px) { .shared-hud .hud-bottom { grid-area: auto; } }\n` })],
+    ['give a HUD top grid unequal rows', 'C12 ', (r) => ({ ...r, kit: r.kit.replace('"info actions" "meters actions" "rail actions";', '"info info" "meters actions" "rail actions" "route";') })],
+    ['switch a HUD top layout off grid', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud[data-x] > .hud-top { display: flex; }\n` })],
+    ['hide the rail behind an :empty on another :is() argument', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud :is(.hud-bottom, .x:empty) { display: none; }\n` })],
+    ['hide an expanded rail with display: none', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { display: none; }\n` })],
+    ['hide a rail rule behind a string holding an escaped quote', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.a::before { content: "\\""; }\n.shared-hud .hud-bottom.x { position: absolute; }\n` })],
+    ['hide a rail rule between comment markers inside strings', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.a::before { content: "/*"; }\n.shared-hud .hud-bottom.x { position: absolute; }\n.b::before { content: "*/"; }\n` })],
+    ['reset an expanded rail with all: unset', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { all: unset; }\n` })],
     ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],
     ['flatten Menu model into Quick Nav', 'C14 ', (r) => ({ ...r, menuModels: r.menuModels.replace('export function quickMenuPanelModel', 'function quickMenuPanelModel') })],
@@ -530,11 +896,18 @@ function selftest() {
     ['remove Smith Back control', 'C19 ', (r) => ({ ...r, smithUpgradeModal: r.smithUpgradeModal.replace('smith-back', 'smith-return') })],
     ['detach title from save-slot selection model', 'C20 ', (r) => ({ ...r, title: r.title.replace('import { saveSlotSelectionModel }', 'import { detachedSaveSlotSelectionModel }') })],
     ['let armed Escape reach the overlay', 'C21 ', (r) => ({ ...r, input: r.input.replace('ev.stopImmediatePropagation();\n    const capture = keyCapture;', 'ev.stopPropagation();\n    const capture = keyCapture;') })],
+    ['list a component in the Markdown catalog only', 'C22 ', (r) => ({ ...r, catalogMarkdown: r.catalogMarkdown.replace('| `startup-gate` |', '| `markdown-only-component` | x | x | x | x |\n| `startup-gate` |') })],
+    ['list a component in the interactive catalog only', 'C22 ', (r) => ({ ...r, catalogHtml: r.catalogHtml.replace("const SEMANTIC_COMPONENTS = [", "const SEMANTIC_COMPONENTS = [\n ['html-only-component','x','x','primitive','x','x','panel'],") })],
+    ['list an armoury asset id in the interactive catalog only', 'C22 ', (r) => ({ ...r, catalogHtml: r.catalogHtml.replace('const RENDERED_ARMOURY_COMPONENTS = [', 'const RENDERED_ARMOURY_COMPONENTS = [\n ["armoury.htmlOnlyAsset",".x","x","x","x"],') })],
+    // Moves, not additions: each id is still listed once in each catalog, so
+    // only a per-family comparison sees them.
+    ['move an armoury asset id into a Markdown Component-ID table', 'C22 ', (r) => ({ ...r, catalogMarkdown: r.catalogMarkdown.replace(', `armoury.disclosure` |', ' |').replace('| `startup-gate` |', '| `armoury.disclosure` | x | x | x | x |\n| `startup-gate` |') })],
+    ['move an armoury record into SEMANTIC_COMPONENTS', 'C22 ', (r) => { const rec = ` ["armoury.shell",".armoury[data-composition='character-equipment']","Armoury shell and view routing","responsive shared shell","armouryPanel"],\n`; return { ...r, catalogHtml: r.catalogHtml.replace(rec, '').replace('const SEMANTIC_COMPONENTS = [\n', `const SEMANTIC_COMPONENTS = [\n${rec}`) }; }],
   ];
   let failures = 0;
   const cleanBad = findings(clean);
   if (cleanBad.length) { failures++; console.error(`FAIL clean source: ${cleanBad.join('; ')}`); }
-  else console.log('PASS clean source: 21/21 reusable component contracts hold');
+  else console.log('PASS clean source: 22/22 reusable component contracts hold');
   for (const [name, code, mutate] of plants) {
     const got = findings(mutate(clean));
     const hit = got.find((line) => line.startsWith(code));
@@ -543,12 +916,18 @@ function selftest() {
   }
   if (failures) process.exitCode = 1;
   else console.log(`ui-components --selftest: OK — ${plants.length}/${plants.length} plants observed red`);
+  // The one line tests/run-node.mjs quotes (rung 94).
+  console.log(`RESULT: ${failures ? `${failures} of ${plants.length + 1} selftest check(s) failed.` : `${plants.length}/${plants.length} known-bad plants observed red and the clean source holds.`}`);
 }
 
-if (process.argv.includes('--selftest')) selftest();
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
+if (!isMain) { /* imported by a test: run nothing */ }
+else if (process.argv.includes('--selftest')) selftest();
 else {
   const bad = findings(receipt());
   bad.forEach((line) => console.error(`FAIL ${line}`));
   if (bad.length) process.exitCode = 1;
-  else console.log('ui-components: OK — 21/21 reusable component contracts hold');
+  else console.log('ui-components: OK — 22/22 reusable component contracts hold');
+  // The one line tests/run-node.mjs quotes (rung 95).
+  console.log(`RESULT: ${bad.length ? `${bad.length} reusable component contract(s) broken.` : '22/22 reusable component contracts hold.'}`);
 }

@@ -103,16 +103,19 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // stylesheet re-declares a width or height for `.mh-flask`. The old F4 asserted
 // a shared `.topbar .relic.flask-slot, .topbar .mh-flask` rule in ui.css; that
 // rule is gone because the sharing is no longer a selector list, it is the atom.
+// `map` IS THE RUN HUD (components/runHud.js since 2026-09-11, #977): the
+// map's band became the one band every room mounts, and the utility flask
+// row moved out of map.js with it. The key keeps its name; the file moved.
 const sourceContract = ({ map, input, css, combatCss, kit, tool }) => {
   const bad = [];
   const surfaceBlock = /const SURFACES = \[[\s\S]*?\n\];/.exec(tool)?.[0] || '';
-  if (!map.includes("className: 'mh-flask flask-slot'")) {
+  if (!map.includes("class: 'mh-flask flask-slot'")) {
     bad.push('F1 map utility flask is not a unified-cursor flask-slot');
   }
   if (!input.includes("el.matches('.flask-slot')")) {
     bad.push('F2 input focus no longer exempts flask-slot controls from topbar chrome');
   }
-  if (!map.includes('canDrop: true') || !map.includes('mountFlaskActionMenu(el, {')) {
+  if (!map.includes('canDrop: true') || !map.includes('mountFlaskActionMenu(node, {')) {
     bad.push('F3 map utility flask lost its inspect/drop action menu');
   }
   const kitSlotBox = /\.as-slot \{[^}]*width: var\(--iconbtn-size\)[^}]*min-height: var\(--iconbtn-size\)/.test(kit);
@@ -120,15 +123,15 @@ const sourceContract = ({ map, input, css, combatCss, kit, tool }) => {
   if (!kitSlotBox || boxedByAScreen) {
     bad.push('F4 map utility flask no longer shares the topbar control box');
   }
-  if (!surfaceBlock.includes("{ group: 'utility', name: 'map utility', sel: '.topbar .hud-potions .mh-flask', door: 'map-after-shop' }")) {
-    bad.push('F5 flaskbox no longer measures the current map topbar surface');
+  if (!surfaceBlock.includes("{ group: 'utility', name: 'room utility', sel: '.shared-hud .hud-potions .mh-flask', door: 'shop-after-buy' }")) {
+    bad.push('F5 flaskbox no longer measures the current run-HUD potion surface');
   }
   return bad;
 };
 
 if (process.argv.includes('--source-selftest')) {
   const clean = {
-    map: readFileSync(join(ROOT, 'src/ui/screens/map.js'), 'utf8'),
+    map: readFileSync(join(ROOT, 'src/ui/components/runHud.js'), 'utf8'),
     input: readFileSync(join(ROOT, 'src/ui/input.js'), 'utf8'),
     css: readFileSync(join(ROOT, 'styles/ui.css'), 'utf8'),
     combatCss: readFileSync(join(ROOT, 'styles/combat.css'), 'utf8'),
@@ -139,7 +142,7 @@ if (process.argv.includes('--source-selftest')) {
     {
       name: 'map utility flask loses its topbar focus exception',
       expected: 'F1 ',
-      mutate: (s) => ({ ...s, map: s.map.replace("className: 'mh-flask flask-slot'", "className: 'mh-flask'") }),
+      mutate: (s) => ({ ...s, map: s.map.replace("class: 'mh-flask flask-slot'", "class: 'mh-flask'") }),
     },
     {
       name: 'map utility flask loses inspect/drop',
@@ -150,8 +153,8 @@ if (process.argv.includes('--source-selftest')) {
       name: 'flaskbox points back at the removed map sub-strip',
       expected: 'F5 ',
       mutate: (s) => ({ ...s, tool: s.tool.replace(
-        "  { group: 'utility', name: 'combat utility', sel: '.combat .hud-potions .flask-slot', door: 'combat' },\n  { group: 'utility', name: 'map utility', sel: '.topbar .hud-potions .mh-flask', door: 'map-after-shop' },",
-        "  { group: 'utility', name: 'combat utility', sel: '.combat .hud-potions .flask-slot', door: 'combat' },\n  { group: 'utility', name: 'map sub-strip', sel: '.map-substrip .mh-flask', door: 'map-after-shop' },"
+        "  { group: 'belt', name: 'combat utility', sel: '.combat-potion-menu .potion-fold[data-potion-slot] .potion-use', door: 'combat' },\n  { group: 'utility', name: 'room utility', sel: '.shared-hud .hud-potions .mh-flask', door: 'shop-after-buy' },",
+        "  { group: 'belt', name: 'combat utility', sel: '.combat-potion-menu .potion-fold[data-potion-slot] .potion-use', door: 'combat' },\n  { group: 'utility', name: 'map sub-strip', sel: '.map-substrip .mh-flask', door: 'map-after-shop' },"
       ) }),
     },
   ];
@@ -267,8 +270,8 @@ if (process.argv.includes('--selftest')) {
         name: 'a declared surface stops being reachable and B3 must NOT green on the survivors',
         edits: [{
           file: 'src/ui/components/runHud.js',
-          find: "className: 'mh-flask flask-slot'",
-          replace: "className: 'mh-flask-planted-away flask-slot'",
+          find: "class: 'mh-flask flask-slot'",
+          replace: "class: 'mh-flask-planted-away flask-slot'",
         }],
         expectRed: /BAD\s+B3 .*declared utility surfaces were reached/,
       },
@@ -282,13 +285,24 @@ const SHAPES = [
 ];
 
 // Every surface that draws a flask AS A CONTROL, and the door it is reached by.
-// `.flask-charge` is a subset of `.flask-slot` in combat and its own class in
-// co-op, so co-op is listed by the selector its own screen writes.
+// COMBAT MOVED ITS FLASKS BEHIND THE POTIONS MENU (combat.js openPotions,
+// 2026-09): the band draws no flask chip in a fight; Crimson, Azure and every
+// carried potion are rows of one modal, each row a `.potion-fold` whose
+// `<summary>` is the control a thumb lands on. That row is a deliberately
+// different box from the map's Slot — a list row, not a chip — and the row's
+// height follows its description, so the CONTROL that spends the potion is
+// the row's Use button: its own group ('belt'), one box for every Use, never
+// compared with the map's chips.
+// THE MAP HIDES ITS STRIP (Constantine, 07069c68 2026-09-09: "hide inventory
+// strip on maps" — map.css `.mapscreen .shared-hud .hud-bottom {display:none}`),
+// so the band's relic and flask chips are measured where the owner shows
+// them: the same run HUD at the merchant, right after the purchase that put
+// a flask in it. Co-op is listed by the selector its own screen writes.
 const SURFACES = [
-  { group: 'charge', name: 'combat charge', sel: '.combat .hud-charge-flasks .flask-slot', door: 'combat' },
-  { group: 'charge', name: 'map charge', sel: '.topbar .hud-charge-flasks .flask-slot', door: 'map-after-shop' },
-  { group: 'utility', name: 'combat utility', sel: '.combat .hud-potions .flask-slot', door: 'combat' },
-  { group: 'utility', name: 'map utility', sel: '.topbar .hud-potions .mh-flask', door: 'map-after-shop' },
+  { group: 'belt', name: 'combat charge', sel: '.combat-potion-menu .potion-fold[data-charge-kind] .potion-use', door: 'combat' },
+  { group: 'charge', name: 'room charge', sel: '.shared-hud .hud-potions .flask-charge', door: 'shop-after-buy' },
+  { group: 'belt', name: 'combat utility', sel: '.combat-potion-menu .potion-fold[data-potion-slot] .potion-use', door: 'combat' },
+  { group: 'utility', name: 'room utility', sel: '.shared-hud .hud-potions .mh-flask', door: 'shop-after-buy' },
   { group: 'utility', name: 'co-op board', sel: '.combat.coop .coop-flask', door: 'coop' },
 ];
 
@@ -363,7 +377,12 @@ async function main() {
     for (const surface of SURFACES) {
       if (surface.door === 'combat') {
         await cdp.send('Page.navigate', { url: `${base}?shot=combat` }, S);
-        await until(`!!document.querySelector('.combat .flask-slot')`, 'combat');
+        await until(`!!document.querySelector('.combat .combat-potions')`, 'combat');
+        await wait(300);
+        // The player's road to a flask in a fight: the Potions control, then
+        // the menu it opens. Pressed, not conjured.
+        await ev(`document.querySelector('.combat .combat-potions').click(); true`);
+        await until(`!!document.querySelector('.combat-potion-menu .potion-fold')`, 'combat potions menu');
       } else if (surface.door === 'coop') {
         await cdp.send('Page.navigate', { url: `${base}?shot=coop` }, S);
         await until(`!!document.querySelector('.combat.coop')`, 'coop');
@@ -375,22 +394,37 @@ async function main() {
         // the tap a player's road gained: open the bar, then buy. The old
         // selector would find nothing and B0 would call the stock missing,
         // which is this tool's own smaller-confident-number failure.
+        // RE-AIMED AGAIN 2026-09-13 (W1d / W1v): the bars became a category
+        // rail and a purchase is select-then-act — the FLASKS rail item, a
+        // flask tile to select it, then the footer's Buy, whose beat is the
+        // same shopBuy review modal.
         await cdp.send('Page.navigate', { url: `${base}?shot=shop` }, S);
-        await until(`!!document.querySelector('[data-face="bar:flasks"]')`, 'shop');
+        await until(`!!document.querySelector('#shop-cat-flasks')`, 'shop');
         await wait(500);
-        const bought = await ev(`(() => { let n = 0;
+        // A PURCHASE IS A DECISION (shop.js arm(primary, 'shopBuy')): the
+        // footer's Buy opens the review modal and the second beat is its
+        // BUY IT — pressed, as a player presses it, never bypassed.
+        const bought = await ev(`(async () => { let n = 0;
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
           for (let pass = 0; pass < 6; pass++) {
-            const face = document.querySelector('[data-face="bar:flasks"]');
-            if (face && face.getAttribute('aria-expanded') !== 'true') face.click();
+            const cat = document.querySelector('#shop-cat-flasks');
+            if (cat && cat.getAttribute('aria-selected') !== 'true') cat.click();
+            // The shelf's rows are the flasks (a rendered collectible card each
+            // since 2026-09, no .flask-identity inside); an affordable one
+            // selects, and the footer arms its shopBuy decision. NO BACKTICKS
+            // HERE: this is a template.
             const row = [...document.querySelectorAll('#shop-flasks .class-pick')]
-              .find((el) => el.querySelector('.flask-identity') && !el.classList.contains('locked'));
-            if (!row) break; row.click(); n++; }
+              .find((el) => !el.classList.contains('locked'));
+            if (!row) break; row.click(); await sleep(150);
+            const primary = document.querySelector('#shop-primary');
+            if (!primary || primary.disabled || primary.dataset.beatAction !== 'shopBuy') break;
+            primary.click(); await sleep(250);
+            const buy = document.querySelector('.confirmation-modal .confirmation-confirm');
+            if (!buy) break; buy.click(); await sleep(400); n++; }
           return n; })()`);
-        if (!bought) { bad('B0', shape, 'the merchant stocked no affordable flask — the map surface was NOT reached, and nothing below is a measurement of it'); continue; }
+        if (!bought) { bad('B0', shape, 'the merchant stocked no affordable flask — the band never held one, and nothing below is a measurement of it'); continue; }
         await wait(300);
-        await ev(`document.querySelector('#leave-shop').click(); true`);
-        await until(`!!document.querySelector('.mapscreen')`, 'map after shop');
-        console.log(`       map reached by the shop door: ${bought} flask(s) bought, then LEAVE`);
+        console.log(`       the band's chips reached at the merchant: ${bought} flask(s) bought`);
       }
       await wait(600);
 
@@ -437,7 +471,7 @@ async function main() {
     // already names in its own header, reproduced by me in a new tool the same
     // night I read it. The count SURFACES declares is the count that must be
     // reached; anything less is red, whatever the survivors agreed about.
-    for (const group of ['charge', 'utility']) {
+    for (const group of ['charge', 'utility', 'belt']) {
       const declared = SURFACES.filter((surface) => surface.group === group);
       const seen = [...heights.entries()].filter(([, row]) => row.group === group);
       const all = [...new Set(seen.flatMap(([, row]) => row.values))];
@@ -459,14 +493,21 @@ async function main() {
     await cdp.send('Page.navigate', { url: `${base}?shot=rest` }, S);
     await until(`!!document.querySelector('#flask-reallocate .flask-step')`, 'shrine');
     await wait(600);
+    // LEVEL UP IS A DIALOG NOW (rest.js drawLevelCard → renderStatAllocationCard
+    // modal, `.level-up-modal`), not a fold under the card: #level-opt is a
+    // button that opens it. "Folded" for it means the dialog is not standing.
     const folds = await ev(`(() => ({
       flask: document.querySelector('#flask-reallocate')?.open,
-      level: document.querySelector('#level-opt')?.open,
-      details: document.querySelectorAll('#level-opt [data-stat-action="decrease"]').length,
-      plus: document.querySelectorAll('#level-opt [data-stat-action="increase"]').length
+      level: !!document.querySelector('.level-up-modal'),
     }))()`);
     if (folds.flask || folds.level) bad('B4', shape, 'the flask or level-up card opens expanded — both shrine options must start folded');
     else ok('B4', shape, 'flask allocation and level-up both start folded');
+    await ev(`document.querySelector('#level-opt').click(); true`);
+    await until(`!!document.querySelector('.level-up-modal [data-stat-action]')`, 'level-up dialog');
+    Object.assign(folds, await ev(`(() => ({
+      details: document.querySelectorAll('.level-up-modal [data-stat-action="decrease"]').length,
+      plus: document.querySelectorAll('.level-up-modal [data-stat-action="increase"]').length
+    }))()`));
     const shrineList = await ev(`(() => {
       const list = document.querySelector('.shrine-option-list');
       const cards = [...document.querySelectorAll('.shrine-option-list > .class-pick')].map((x) => x.getBoundingClientRect());
@@ -482,43 +523,50 @@ async function main() {
         heightToken: getComputedStyle(document.querySelector('.screen')).getPropertyValue('--shrine-folded-card-height').trim()
       };
     })()`);
-    if (shrineList.authoredLayout !== 'list' || shrineList.count !== 4 || !shrineList.vertical || !shrineList.aligned
+    // Four options when this row was written; the Smith's three joined the
+    // list on 2026-09-10. The law here is the list's SHAPE, not its length.
+    if (shrineList.authoredLayout !== 'list' || shrineList.count < 4 || !shrineList.vertical || !shrineList.aligned
       || !shrineList.uniformFoldedHeight || shrineList.components.some((id) => id !== 'shrine-option-card')
       || !/vw$/.test(shrineList.widthToken) || !/vh$/.test(shrineList.heightToken)) {
       bad('B4', shape, `the authored shrine default is not one uniform viewport-sized vertical list (${JSON.stringify(shrineList)})`);
-    } else ok('B4', shape, 'all four shrine options share one viewport-sized folded card in one aligned vertical list');
+    } else ok('B4', shape, `all ${shrineList.count} shrine options share one viewport-sized folded card in one aligned vertical list`);
     if (folds.details !== 5 || folds.plus !== 5) bad('B4', shape, `the shared level allocator drew ${folds.details} minus and ${folds.plus} plus controls instead of five of each`);
     else ok('B4', shape, 'the shrine level card uses the five-row shared stat allocator');
     const assignment = await ev(`(() => {
-      const level = document.querySelector('#level-opt'); level.open = true;
-      const cinderResultBefore = level.querySelector('[data-level-cinder-result]');
-      const cinderPreviewHiddenBefore = cinderResultBefore?.hidden === true;
+      const level = document.querySelector('.level-up-modal');
+      // The dialog previews the ledger from its first draw ("N points to
+      // assign · N remaining"; plan phase 6 — no cinder is named); what a press
+      // owes is that the preview MOVES.
+      const pointsResultBefore = level.querySelector('[data-level-points-result]');
+      const pointsTextBefore = pointsResultBefore?.textContent || '';
       const before = [...level.querySelectorAll('.se-value')].map((x) => Number(x.textContent));
       level.querySelector('[data-stat-action="increase"]').click();
       const after = [...level.querySelectorAll('.se-value')].map((x) => Number(x.textContent));
-      const cinderResultAfter = level.querySelector('[data-level-cinder-result]');
-      const cinderCost = level.querySelector('.level-cinder-cost');
+      const pointsResultAfter = level.querySelector('[data-level-points-result]');
+      const pointsWaiting = level.querySelector('.level-points-waiting');
       return {
         changed: after.filter((n, i) => n !== before[i]).length,
         delta: after.reduce((n, value, i) => n + value - before[i], 0),
         // Multi-point (Constantine, 2026-09-04): the pending row's minus is the
-        // one undo, every plus stays live while the purse still covers a level.
+        // one undo, every plus stays live while a point still waits.
         minusOpen: [...level.querySelectorAll('[data-stat-action="decrease"]')].filter((x) => x.getAttribute('aria-disabled') === 'false').length,
         plusOpen: [...level.querySelectorAll('[data-stat-action="increase"]')].filter((x) => x.getAttribute('aria-disabled') === 'false').length,
         poolLeft: Number((level.querySelector('.se-pool')?.textContent || '').match(/\\d+/)?.[0] || 0),
         doneReady: level.querySelector('[data-stat-done]').getAttribute('aria-disabled') === 'false',
-        cinderPreviewHiddenBefore,
-        cinderPreviewVisibleAfter: cinderResultAfter?.hidden === false,
-        cinderPreviewText: cinderResultAfter?.textContent || '',
-        cinderCostStyled: cinderCost ? getComputedStyle(cinderCost).color !== getComputedStyle(level).color : false
+        pointsPreviewMoved: (pointsResultAfter?.textContent || '') !== pointsTextBefore,
+        pointsPreviewVisibleAfter: pointsResultAfter?.hidden === false,
+        pointsPreviewText: pointsResultAfter?.textContent || '',
+        pointsWaitingStyled: pointsWaiting ? getComputedStyle(pointsWaiting).color !== getComputedStyle(level).color : false
       };
     })()`);
     const plusRight = assignment.poolLeft > 0 ? assignment.plusOpen === 5 : assignment.plusOpen === 0;
     if (assignment.changed !== 1 || assignment.delta !== 1 || assignment.minusOpen !== 1 || !plusRight || !assignment.doneReady
-      || !assignment.cinderPreviewHiddenBefore || !assignment.cinderPreviewVisibleAfter || !/remaining/.test(assignment.cinderPreviewText) || !assignment.cinderCostStyled) {
-      bad('B4', shape, `level assignment did not add one point, offer its one undo, keep the rest of the purse's points open and preview the cinder spend (changed ${assignment.changed}, delta ${assignment.delta}, minusOpen ${assignment.minusOpen}, plusOpen ${assignment.plusOpen}, poolLeft ${assignment.poolLeft}, doneReady ${assignment.doneReady}, cinders ${assignment.cinderPreviewText})`);
-    } else ok('B4', shape, 'level assignment adds one point, offers only its undo, keeps further affordable points open, and previews the remaining cinders');
-    await ev(`(() => { document.querySelector('#level-opt').open = false; document.querySelector('#flask-reallocate').open = true; return true; })()`);
+      || !assignment.pointsPreviewMoved || !assignment.pointsPreviewVisibleAfter || !/remaining/.test(assignment.pointsPreviewText) || !assignment.pointsWaitingStyled) {
+      bad('B4', shape, `level assignment did not add one point, offer its one undo, keep the rest of the waiting points open and preview the points remaining (changed ${assignment.changed}, delta ${assignment.delta}, minusOpen ${assignment.minusOpen}, plusOpen ${assignment.plusOpen}, poolLeft ${assignment.poolLeft}, doneReady ${assignment.doneReady}, points ${assignment.pointsPreviewText})`);
+    } else ok('B4', shape, 'level assignment adds one point, offers only its undo, keeps the other waiting points open, and previews the points remaining');
+    await ev(`document.querySelector('.level-up-modal [data-stat-cancel]').click(); true`);
+    await until(`!document.querySelector('.level-up-modal')`, 'level-up dialog closed');
+    await ev(`(() => { document.querySelector('#flask-reallocate').open = true; return true; })()`);
     await wait(40);
     const READ_INC = `(() => {
       const z = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;

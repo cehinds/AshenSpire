@@ -1,3 +1,4 @@
+import { cardKind } from './tree.js';
 // Owner-approved player presentation groups. Enemy motion remains governed by
 // actionAnimations.js. These plans never change card effects or combat state.
 export const COMBAT_SEQUENCES = Object.freeze({
@@ -8,18 +9,26 @@ export const COMBAT_SEQUENCES = Object.freeze({
   shieldBash: ['shieldBash1', 'shieldBash2', 'shieldBash3'],
 });
 
-export function resolveCombatAnimation(card = {}, equipment = []) {
+export function resolveCombatAnimation(card = {}, equipment = [], { animation, action } = {}) {
+  // The card's kind tag decides the family of motion, not its `type` field.
+  const kind = cardKind(card);
   const tags = new Set((card.cardTags || card.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id));
   // Lanterns and torches share the equipment kind but are not physical shields.
   const shield = equipment.find(item => item.kind === 'shield' && ['round', 'kite', 'tower', 'spiked'].includes(item.geom));
   const parry = equipment.some(item => item.id === 'parryDagger');
   const shieldIntent = tags.has('shield') || card.equipmentProfileId === 'shieldGuard';
-  if (card.type === 'attack') {
+  if (kind === 'attack') {
+    // Equipment still selects one empty+empty skin. The resolved action selects
+    // its physical attack or magical cast clip, including attack-kind spells.
+    if (animation?.motionProfile === 'unarmed' && animation.rightGroup === 'empty'
+        && animation.leftGroup === 'empty' && action?.casting) {
+      return { group: 'cast', technique: 'cast', rest: null, family: action.family, motion: action.motion };
+    }
     const bash = shield && card.sourceArmamentId !== 'parryDagger' && (card.id === 'shieldBash' || card.equipmentProfileId === 'shieldAttack' || tags.has('shield'));
     return { group: 'attack', technique: bash ? 'shieldBash' : 'attack', rest: null, family: 'strike', motion: 'impact' };
   }
-  if (card.type === 'power') return { group: 'cast', technique: 'power', rest: 'cast', family: 'spell', motion: 'cast' };
-  if (card.type === 'skill' && (tags.has('guard') || tags.has('block'))) {
+  if (kind === 'power') return { group: 'cast', technique: 'power', rest: 'cast', family: 'spell', motion: 'cast' };
+  if (kind === 'skill' && (tags.has('guard') || tags.has('block'))) {
     const technique = shieldIntent ? parry ? 'parry' : shield ? 'shieldGuard' : 'guard' : 'guard';
     return { group: 'defend', technique, rest: technique, family: 'guard', motion: 'brace' };
   }

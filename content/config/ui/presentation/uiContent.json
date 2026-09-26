@@ -1,0 +1,337 @@
+{
+  "components": {
+    "nodeTypes": {
+      "monster": {
+        "icon": "⚔",
+        "name": "Monster",
+        "blurb": "A fight — cinders and a card reward."
+      },
+      "fight": {
+        "icon": "⚔",
+        "name": "Monster",
+        "blurb": "A fight — cinders and a card reward."
+      },
+      "elite": {
+        "icon": "☠",
+        "name": "Elite",
+        "blurb": "A hard fight. Drops a relic."
+      },
+      "boss": {
+        "icon": "👁",
+        "name": "Boss",
+        "blurb": "The act boss."
+      },
+      "shrine": {
+        "icon": "♨",
+        "name": "Shrine of Emberlight",
+        "blurb": "Rest (heal), smith an owned armament, or mend an ally."
+      },
+      "merchant": {
+        "icon": "⚖",
+        "name": "Merchant",
+        "blurb": "Cards, relics, flasks, card removal."
+      },
+      "treasure": {
+        "icon": "▣",
+        "name": "Treasure",
+        "blurb": "A relic, free."
+      },
+      "event": {
+        "icon": "?",
+        "name": "Unknown",
+        "blurb": "An event, a fight, a shrine… who can say."
+      },
+      "unknown": {
+        "icon": "?",
+        "name": "Unknown",
+        "blurb": "An event, a fight, a shrine… who can say."
+      }
+    },
+    "nodeTint": {
+      "elite": "var(--ember)",
+      "boss": "var(--ember)",
+      "shrine": "var(--gold)",
+      "merchant": "var(--grace)",
+      "treasure": "var(--gold)"
+    },
+    "actNames": {
+      "1": "ACT I — THE FALLOW MARCHES",
+      "2": "ACT II — THE STITCHED COURT",
+      "3": "ACT III — THE ASHEN CROWN"
+    },
+    "tierNumerals": [
+      "I",
+      "II",
+      "III",
+      "IV",
+      "V",
+      "VI",
+      "VII",
+      "VIII",
+      "IX"
+    ],
+    "padButtons": {
+      "0": {
+        "glyph": "A",
+        "name": "A"
+      },
+      "1": {
+        "glyph": "B",
+        "name": "B"
+      },
+      "2": {
+        "glyph": "X",
+        "name": "X"
+      },
+      "3": {
+        "glyph": "Y",
+        "name": "Y"
+      },
+      "4": {
+        "glyph": "LB",
+        "name": "LB"
+      },
+      "5": {
+        "glyph": "RB",
+        "name": "RB"
+      },
+      "6": {
+        "glyph": "LT",
+        "name": "LT"
+      },
+      "7": {
+        "glyph": "RT",
+        "name": "RT"
+      },
+      "8": {
+        "glyph": "Back",
+        "name": "Back"
+      },
+      "9": {
+        "glyph": "Start",
+        "name": "Start"
+      },
+      "10": {
+        "glyph": "L3",
+        "name": "L3"
+      },
+      "11": {
+        "glyph": "R3",
+        "name": "R3"
+      },
+      "12": {
+        "glyph": "▲",
+        "name": "D-Up"
+      },
+      "13": {
+        "glyph": "▼",
+        "name": "D-Down"
+      },
+      "14": {
+        "glyph": "◀",
+        "name": "D-Left"
+      },
+      "15": {
+        "glyph": "▶",
+        "name": "D-Right"
+      },
+      "16": {
+        "glyph": "⊙",
+        "name": "Guide"
+      }
+    },
+    "menuTabs": [
+      {
+        "id": "settings",
+        "label": "Settings",
+        "icon": "⚙",
+        "tip": "Display, audio, and accessibility."
+      },
+      {
+        "id": "controls",
+        "label": "Controls",
+        "icon": "⌨",
+        "tip": "Every key and pad button, and how to rebind them."
+      }
+    ],
+    "quickMenuRows": [
+      {
+        "act": "tab",
+        "tab": "settings",
+        "band": "navigation"
+      },
+      {
+        "act": "tab",
+        "tab": "controls",
+        "band": "navigation"
+      },
+      {
+        "act": "fullscreen",
+        "icon": "⛶",
+        "label": "Fullscreen",
+        "band": "comfort",
+        "control": "switch",
+        "tip": "Use the browser fullscreen owner; its live state is shared with Settings."
+      },
+      {
+        "act": "music",
+        "icon": "♫",
+        "label": "Music",
+        "band": "comfort",
+        "control": "switch",
+        "tip": "Turn music on or off without changing its volume, sound effects, or global mute."
+      },
+      {
+        "act": "inventory",
+        "icon": "▦",
+        "label": "Inventory",
+        "band": "armoury",
+        "tip": "Open carried weapons, armour, and items."
+      },
+      {
+        "act": "character",
+        "icon": "♟",
+        "label": "Character",
+        "band": "armoury",
+        "tip": "Open the compact character and vitality view."
+      },
+      {
+        "act": "load",
+        "icon": "↥",
+        "label": "Load",
+        "band": "run",
+        "tone": "danger",
+        "tip": "Replace unsaved progress with the active slot after confirmation."
+      },
+      {
+        "act": "save",
+        "icon": "💾",
+        "label": "Save",
+        "band": "run",
+        "tip": "Write the exact committed combat turn to this slot and stay here."
+      },
+      {
+        "act": "saveQuit",
+        "icon": "↯",
+        "label": "Save and Quit",
+        "band": "run",
+        "tip": "Write the exact committed combat turn, then return to the title."
+      },
+      {
+        "act": "quit",
+        "icon": "⏻",
+        "label": "Quit Without Saving",
+        "band": "run",
+        "tone": "danger",
+        "tip": "Discard changes since the last save and return to the title after confirmation."
+      }
+    ],
+    "intentIcons": {
+      "attack": "⚔",
+      "block": "🛡",
+      "buff": "↑",
+      "debuff": "☾",
+      "staggered": "✦",
+      "unknown": "?"
+    },
+    "intentBadges": {
+      "unknown": {
+        "cls": "unknown",
+        "tone": "",
+        "glyph": "",
+        "label": "?"
+      },
+      "staggered": {
+        "cls": "staggered",
+        "tone": "gold",
+        "glyph": "✦",
+        "label": "Staggered"
+      },
+      "attack": {
+        "cls": "attack",
+        "delayedCls": " delayed",
+        "tone": "danger",
+        "delayedSuffix": " ⌛"
+      },
+      "block": {
+        "cls": "block",
+        "tone": "frost"
+      },
+      "buff": {
+        "cls": "buff",
+        "tone": "gold",
+        "label": ""
+      },
+      "debuff": {
+        "cls": "debuff",
+        "tone": "violet",
+        "label": ""
+      }
+    },
+    "copy": {
+      "intentTooltips": {
+        "unknown": "<div class=\"tt-title\">Intent: Unknown</div>",
+        "staggered": "<div class=\"tt-title\">Staggered</div>Poise broken — this enemy's turn is skipped and it takes +50% damage.",
+        "attack": "<div class=\"tt-title\">Intent: Attack</div>Attacking {victim} for <b>{damage}{extra}</b> damage (modifiers included).",
+        "attackMultiplier": " × {hits}{total}",
+        "attackTotal": " ({totalDamage} total)",
+        "committed": "<br><b>Committed:</b> this delayed attack lands this coming turn — Stagger cancels it.",
+        "delayed": "<br><b>Delayed:</b> it holds this turn and strikes the next. Stagger cancels it.",
+        "block": "<div class=\"tt-title\">Intent: Defend</div>Gaining Block.",
+        "buff": "<div class=\"tt-title\">Intent: Buff</div>Strengthening itself.",
+        "debuff": "<div class=\"tt-title\">Intent: Debuff</div>Hindering {victim}.",
+        "defaultVictim": "you"
+      },
+      "status": {
+        "turnSingular": "turn",
+        "turnPlural": "turns",
+        "durationJoiner": " · ",
+        "turnsLeft": " Turns left: {duration}.",
+        "percentLabel": "{name} {value}{duration}",
+        "stackLabel": "{name} ×{value}",
+        "defaultValueToken": "stacks",
+        "percentValueToken": "percent"
+      },
+      "actTitle": {
+        "tiered": "ACT {tier} — {seat}",
+        "numbered": "ACT {act}",
+        "cycleSuffix": " · CYCLE {cycle}"
+      },
+      "armamentKindFallbackSuffix": "S",
+      "padGlyphFallback": "B{button}",
+      "padNameFallback": "Btn {button}",
+      "padNameUnbound": "—",
+      "nodeIconFallback": "?"
+    }
+  },
+  "behavior": {
+    "bands": [
+      "navigation",
+      "comfort",
+      "armoury",
+      "run"
+    ],
+    "menuActs": [
+      "tab",
+      "fullscreen",
+      "music",
+      "inventory",
+      "character",
+      "load",
+      "save",
+      "saveQuit",
+      "quit"
+    ],
+    "armamentKindLabels": {
+      "weapon": "WEAPONS",
+      "shield": "SHIELDS",
+      "staff": "STAVES"
+    },
+    "parchmentExt": ".svg",
+    "lockCopy": {
+      "unearned": "Not yet earned.",
+      "unfound": "Not yet found. Armaments turn up in treasure, and on the bodies of things that owned them."
+    },
+    "percentScale": 100
+  }
+}

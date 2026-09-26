@@ -1,6 +1,8 @@
+import { surveyQuestPresentation } from '../models/SurveyQuestModel.js';
 import { locationScene } from '../../content/locationScenes.js';
 import { mountLocalMapCamera } from '../components/localMapCamera.js';
 import { localServiceModel } from '../models/LocalServiceModel.js';
+import { questBoardPointAt } from '../../model/locations.js';
 import { mountMapDetail } from '../components/mapDetail.js';
 import { mapFogDefs } from '../components/mapFog.js';
 import { MAP_PRESENTATION, MAP_CLOSE_NODE_SCALE } from '../../content/mapPresentation.js';
@@ -19,6 +21,9 @@ import { mapNodeInk } from '../components/mapNodeInk.js';
 import { nodeRadius } from '../../model/mapview.js';
 import { MAP_TERRAIN_REVEAL_RADIUS } from '../../content/environments.js';
 import { atlasFocusCamera } from '../models/AtlasCameraModel.js';
+import { atlasEnterKind, pickAtlasNode, projectAtlasContext } from '../models/AtlasSelectionModel.js';
+import { button as kitButton, buttonRow, el } from '../kit/index.js';
+import { t } from '../strings.js';
 // World-specific places project onto the established run-node vocabulary.
 const traditionalType = type => ({start:'shrine',city:'merchant',dungeon:'boss',landmark:'event',service:'merchant',quest:'event',gate:'event'}[type] || type);
 const uri = (id) => assetUrl(ATLAS.assets[id]?.uri);
@@ -56,8 +61,10 @@ export function mountWorldAtlas(
   const known = new Set(j.discoveredNodeIds),
     done = new Set(j.completedNodeIds),
     reachable = new Set(reachableJourneyNodes(j));
-  const current = a.nodes[j.currentNodeId],
-    art = uri(map.artAssetId);
+  const art = uri(map.artAssetId);
+  // The one sentence each place's road state is described with, in the band
+  // and in the location dialog alike.
+  const statusLine = (id) => t(`atlas.status.${projectAtlasContext({ place: { id }, currentId: j.currentNodeId, reachable }).status}`);
   const coreArt = (id) => {
     const n = a.nodes[id],
       v = pos[id];
@@ -65,9 +72,11 @@ export function mountWorldAtlas(
       ? `<img${imageHintAttrs()} src="${esc(uri(n.landmarkAssetId))}" alt=""/>`
       : `<svg viewBox="${v.x * 1000 - 65} ${v.y * 1000 - 75} 130 130" aria-hidden="true"><image href="${esc(art)}" width="1000" height="1000"/></svg>`;
   };
-  app.innerHTML = `<section class="mapscreen world-atlas-screen"><header class="atlas-header"><div><span class="atlas-eyebrow">WORLD JOURNEY · ${esc(p.displayName)}</span><h1>${esc(map.displayName)}</h1></div><div class="atlas-header-actions"><span class="atlas-vitals">${run.hp} / ${run.maxHp} HP · ${run.cinders} cinders</span>${button("Armoury", "data-atlas-armoury")}${button("Menu", "data-atlas-menu")}${button("Save & quit", "data-atlas-quit")}</div></header>
- <div class="atlas-layout"><div class="atlas-map-column"><div class="atlas-map-tools"><span>At <strong>${esc(current.displayName)}</strong></span><div>${button("−", 'data-atlas-zoom="-1" aria-label="Zoom out"')}${button("Fit", 'data-atlas-zoom="0"')}${button("You", 'data-atlas-center')}${button("+", 'data-atlas-zoom="1" aria-label="Zoom in"')}</div></div>
- <div class="atlas-scrollport" tabindex="0" aria-label="World map; scroll to explore"><div class="atlas-world" style="--atlas-zoom:${j.view?.zoom || 1}"><svg class="atlas-terrain" viewBox="0 0 1000 1000" aria-hidden="true"><defs>${mapFogDefs('atlas')}<radialGradient id="atlas-reveal"><stop offset="60%" stop-color="white"/><stop offset="100%" stop-color="white" stop-opacity="0"/></radialGradient><mask id="atlas-fog" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" style="mask-type:alpha">${[...known].map((id) => `<circle cx="${pos[id].x * 1000}" cy="${pos[id].y * 1000}" r="${p.revealRadius * 1000}" fill="url(#atlas-reveal)"/>`).join("")}</mask></defs>
+  // W4b bands: header, map scene, context (the selected place and the open
+  // roads), then a Recenter / Enter footer. Only the scene's scrollport and the
+  // context band scroll; the screen itself never does.
+  app.innerHTML = `<section class="mapscreen world-atlas-screen"><header class="atlas-header"><div class="atlas-title"><span class="atlas-eyebrow">WORLD JOURNEY · ${esc(p.displayName)}</span><h1>${esc(map.displayName)}</h1></div><span class="atlas-vitals">${run.hp} / ${run.maxHp} HP · ${run.cinders} cinders</span><div class="atlas-header-actions">${button("Armoury", "data-atlas-armoury")}${button("Menu", "data-atlas-menu")}${button("Save & quit", "data-atlas-quit")}</div></header>
+ <div class="atlas-scene"><div class="atlas-scrollport" tabindex="0" aria-label="World map; scroll to explore"><div class="atlas-world" style="--atlas-zoom:${j.view?.zoom || 1}"><svg class="atlas-terrain" viewBox="0 0 1000 1000" aria-hidden="true"><defs>${mapFogDefs('atlas')}<radialGradient id="atlas-reveal"><stop offset="60%" stop-color="white"/><stop offset="100%" stop-color="white" stop-opacity="0"/></radialGradient><mask id="atlas-fog" maskUnits="userSpaceOnUse" x="0" y="0" width="1000" height="1000" style="mask-type:alpha">${[...known].map((id) => `<circle cx="${pos[id].x * 1000}" cy="${pos[id].y * 1000}" r="${p.revealRadius * 1000}" fill="url(#atlas-reveal)"/>`).join("")}</mask></defs>
  <rect width="1000" height="1000" fill="url(#atlas-paper)"/><g class="map-detail-surface" ${authoring ? "" : 'mask="url(#atlas-fog)"'}><image href="${esc(art)}" width="1000" height="1000" preserveAspectRatio="none"/></g>
  <g class="atlas-roads">${journeyEdges(j)
    .filter((e) => known.has(e.fromNodeId) && known.has(e.toNodeId))
@@ -86,8 +95,8 @@ export function mountWorldAtlas(
      return `<button type="button" class="atlas-node map-node ${type} ${type === "event" ? "revealed" : ""} ${core ? "atlas-core" : ""} ${reachable.has(id) ? "reachable" : ""} ${done.has(id) ? "completed visited" : ""} ${id === j.currentNodeId ? "current" : ""}" style="left:${pct(pos[id].x)};top:${pct(pos[id].y)};--atlas-node-size:${radius * 2 * MAP_CLOSE_NODE_SCALE}px" data-atlas-node="${esc(id)}" aria-label="${esc(n.displayName)}${id === j.currentNodeId ? ", current location" : reachable.has(id) ? ", road available" : ""}"><svg class="atlas-node-face" viewBox="${-radius} ${-radius} ${radius * 2} ${radius * 2}" aria-hidden="true">${mapNodeInk({type, radius, reachable:reachable.has(id)})}</svg>${core ? `<span class="atlas-node-label">${esc(n.displayName)}</span>` : ""}</button>`;
    })
    .join("")}
- <span class="atlas-map-caption">THE FRACTURED REALM<br><small>Beyond the roads, the land remains uncharted</small></span></div></div><div class="atlas-legend"><span>◉ You are here</span><span>◌ Road available</span><span>Gold ring: visited</span><span>Inspect before traveling</span></div></div>
- <aside class="atlas-journal"><span class="atlas-eyebrow">YOUR JOURNEY</span><h2>${esc(current.displayName)}</h2><p>${esc(a.regions[a.regionOf(j.currentNodeId)].displayName)}</p>${button("Inspect current location", "data-atlas-inspect-current")}<div class="atlas-journal-rule"></div><h3>Three guiding lights</h3>${[
+ <span class="atlas-map-caption">THE FRACTURED REALM<br><small>Beyond the roads, the land remains uncharted</small></span></div></div><div class="atlas-map-tools">${button("−", 'data-atlas-zoom="-1" aria-label="Zoom out"')}${button("Fit", 'data-atlas-zoom="0"')}${button("+", 'data-atlas-zoom="1" aria-label="Zoom in"')}</div></div>
+ <section class="atlas-context" aria-label="${esc(t("atlas.context.aria"))}"><div class="atlas-context-place" aria-live="polite"></div><p class="atlas-context-description"></p><div class="atlas-context-roads"><h3>${esc(t("atlas.roads.title"))}</h3><div class="atlas-road-list">${[...reachable].map((id) => button(a.nodes[id].displayName, `data-atlas-node="${esc(id)}"`)).join("") || "<p>Complete this location to open the road ahead.</p>"}</div></div><div class="atlas-context-journey"><h3>Three guiding lights</h3>${[
    ["start", "Starting city"],
    ["hub", "Major city"],
    ["final", "Legacy dungeon"],
@@ -98,7 +107,15 @@ export function mountWorldAtlas(
    )
    .join(
      "",
-   )}<div class="atlas-journal-rule"></div><h3>Open roads</h3><div class="atlas-road-list">${[...reachable].map((id) => button(a.nodes[id].displayName, `data-atlas-node="${esc(id)}"`)).join("") || "<p>Complete this location to open the road ahead.</p>"}</div><p class="atlas-progress">${j.visitedNodeIds.length} visited · ${j.activeNodeIds.length} places in this journey</p><small class="atlas-seed">Seed ${esc(j.seed)}</small></aside></div></section>`;
+   )}<p class="atlas-progress">${j.visitedNodeIds.length} visited · ${j.activeNodeIds.length} places in this journey</p><div class="atlas-legend"><span>◉ You are here</span><span>◌ Road available</span><span>Gold ring: visited</span></div><small class="atlas-seed">Seed ${esc(j.seed)}</small></div></section><footer class="atlas-footer"></footer></section>`;
+  // WGM6 / WGM7: Recenter keeps the former "You" camera behaviour (wired with
+  // the camera below); Enter commits the selection.
+  // No `title`: the shared tooltip layer would make it the accessible name,
+  // and a button's name must contain the words it wears.
+  const recenterButton = kitButton({ label: t("atlas.recenter"), id: "atlas-recenter", className: "atlas-recenter", attrs: { "data-atlas-center": "" } });
+  const enterButton = kitButton({ label: t("atlas.enter"), weight: "primary", id: "atlas-enter", className: "atlas-enter", disabled: true });
+  const inspectButton = kitButton({ label: t("atlas.inspect"), className: "atlas-inspect", attrs: { "data-atlas-inspect": "" } });
+  app.querySelector(".atlas-footer").append(buttonRow({ size: "fill", buttons: [recenterButton, enterButton] }));
   app.querySelector("[data-atlas-menu]").onclick = onMenu;
   app.querySelector("[data-atlas-armoury]").onclick = onArmoury;
   app.querySelector("[data-atlas-quit]").onclick = onQuit;
@@ -108,11 +125,51 @@ export function mountWorldAtlas(
     note.textContent = `Sealed road: ${a.nodes[road.nodeId].displayName}. Explore ${a.nodes[road.requiredNodeId].displayName} to open it.`;
     app.querySelector(".atlas-road-list").append(note);
   }
+  // ---- W4b: SELECT, THEN ENTER -------------------------------------------
+  // A tap on a place (on the map or in the open-roads list) selects it and
+  // fills the context band. Enter travels an open road through `onTravel`,
+  // the same command the location dialog's Travel button calls, or opens the
+  // place where you stand. Details opens the location dialog for any place.
+  const sets = { known, reachable, currentId: j.currentNodeId };
+  let selection = { selectedId: known.has(inspectNodeId) ? inspectNodeId : j.currentNodeId };
+  const place = app.querySelector(".atlas-context-place"),
+    description = app.querySelector(".atlas-context-description");
   app
     .querySelectorAll("[data-atlas-node]")
-    .forEach((b) => (b.onclick = () => inspect(b.dataset.atlasNode, b)));
-  app.querySelector("[data-atlas-inspect-current]").onclick = (e) =>
-    inspect(j.currentNodeId, e.currentTarget);
+    .forEach((b) => (b.onclick = () => pick(b.dataset.atlasNode, b)));
+  inspectButton.onclick = () => inspect(selection.selectedId, inspectButton);
+  enterButton.onclick = () => enter(enterButton);
+  function pick(id, from) {
+    selection = pickAtlasNode(selection, id, sets);
+    if (selection.action === "enter") return enter(from);
+    if (selection.action === "inspect") return inspect(id, from);
+    renderSelection();
+  }
+  function enter(from) {
+    const id = selection.selectedId, kind = atlasEnterKind(id, sets);
+    if (kind === "travel") onTravel(id);
+    else if (kind === "open") inspect(id, from);
+  }
+  function renderSelection() {
+    const id = selection.selectedId, n = a.nodes[id];
+    for (const node of app.querySelectorAll(".atlas-node[data-atlas-node]"))
+      node.setAttribute("aria-pressed", String(node.dataset.atlasNode === id));
+    for (const road of app.querySelectorAll(".atlas-road-list [data-atlas-node]"))
+      road.setAttribute("aria-pressed", String(road.dataset.atlasNode === id));
+    const view = projectAtlasContext({
+      place: n && { id, name: n.displayName, regionName: a.regions[a.regionOf(id)].displayName, description: n.description },
+      currentId: j.currentNodeId, reachable,
+    });
+    place.replaceChildren(...(view.empty ? [] : [
+      el("span", { class: "atlas-eyebrow", text: view.regionName }),
+      el("div", { class: "atlas-context-heading" }, [el("h2", { text: view.name }), inspectButton]),
+      el("p", { class: "atlas-context-status", text: t(`atlas.status.${view.status}`) }),
+    ]));
+    description.textContent = view.empty ? "" : view.description;
+    enterButton.disabled = !view.canEnter;
+    enterButton.textContent = view.canEnter ? t("atlas.enterNamed", { name: view.name }) : t("atlas.enter");
+  }
+  renderSelection();
   const port = app.querySelector('.atlas-scrollport'), world = app.querySelector('.atlas-world');
   mountMapDetail(port, world.querySelector('.map-detail-surface'), map && a.assets[map.artAssetId].uri);
   const focusPoints = [j.currentNodeId, ...reachable].filter((id, i, ids) => known.has(id) && ids.indexOf(id) === i).map(id => pos[id]);
@@ -171,7 +228,7 @@ export function mountWorldAtlas(
       ? `<svg viewBox="${scene.box.join(' ')}" role="img" aria-label="${esc(n.displayName)} — ${esc(scene.name)}" data-location-scene="${esc(scene.id)}"><image href="${esc(assetUrl(scene.atlas))}" width="1536" height="1024"/></svg>`
       : coreArt(id);
     dialog.setAttribute("aria-labelledby", "atlas-location-title");
-    dialog.innerHTML = `<div class="atlas-dialog-head"><div><span class="atlas-eyebrow">${esc(a.regions[a.regionOf(id)].displayName)}</span><h2 id="atlas-location-title">${esc(n.displayName)}</h2></div>${button("Close", 'data-atlas-close aria-label="Close location"')}</div><div class="atlas-location-body"><div class="atlas-local-wrap">${local ? localMapHtml(local) : `<div class="atlas-location-illustration">${illustration}</div>`}</div><section class="atlas-location-detail" aria-live="polite"></section></div><footer class="atlas-dialog-foot"><span>${here ? "You are here" : reachable.has(id) ? "A connected road leads here" : "Explore connecting roads to reach this place"}</span>${button(here ? "Return to world" : `Travel to ${n.displayName}`, `data-atlas-travel data-forward="${!here}" ${!here && !reachable.has(id) ? "disabled" : ""}`)}<div class="atlas-detail-actions"></div></footer>`;
+    dialog.innerHTML = `<div class="atlas-dialog-head"><div><span class="atlas-eyebrow">${esc(a.regions[a.regionOf(id)].displayName)}</span><h2 id="atlas-location-title">${esc(n.displayName)}</h2></div>${button("Close", 'data-atlas-close aria-label="Close location"')}</div><div class="atlas-location-body"><div class="atlas-local-wrap">${local ? localMapHtml(local) : `<div class="atlas-location-illustration">${illustration}</div>`}</div><section class="atlas-location-detail" aria-live="polite"></section></div><footer class="atlas-dialog-foot"><span>${esc(statusLine(id))}</span>${button(here ? "Return to world" : `Travel to ${n.displayName}`, `data-atlas-travel data-forward="${!here}" ${!here && !reachable.has(id) ? "disabled" : ""}`)}<div class="atlas-detail-actions"></div></footer>`;
     document.body.append(dialog);
     if (local) {
       const tools = dialog.querySelector('.atlas-local-tools');
@@ -232,18 +289,23 @@ export function mountWorldAtlas(
         const def = a.services[s.serviceId],
           used = j.serviceStates[pointId]?.used;
         const preview = localServiceModel({ handlerId: a.serviceTypes[def.serviceTypeId].handlerId,
-          registries, run, state: j.serviceStates[pointId], ...serviceContext });
+          registries, run, state: j.serviceStates[pointId], nodeId: pointId, serviceTypeId: def.serviceTypeId, ...serviceContext });
         html += `<div class="atlas-service-benefits">${def.displayName === point.displayName ? "" : `<h4>${esc(def.displayName)}</h4>`}<p class="atlas-service-benefit">${esc(preview.benefit)}</p><ul>${preview.facts.map(f=>`<li>${esc(f)}</li>`).join('')}</ul></div>`;
         html += button(
           used ? "Visit used" : preview.action,
           `data-local-service="${esc(s.serviceId)}" ${!here || used ? "disabled" : ""}`,
         );
       }
+      // Where the town keeps a quest board (plan phase 10b) the quests are
+      // answered there, spoken; this list reads them and opens the board.
+      const board = quests.length ? questBoardPointAt(registries, id) : null;
       for (const q of quests) {
         const def = a.quests[q.questId],
           action = questAction(j, q.questId);
-        html += `<h4>${esc(def.displayName)}</h4><p>${esc(def.description)}</p><p class="atlas-service-benefit">Reward: ${def.rewardCinders} cinders. Objective: ${esc(a.nodes[def.objectiveNodeId]?.displayName || "Explore the marked road")}.</p>${button(action.label, `data-local-quest="${esc(q.questId)}" ${!here || !action.allowed ? "disabled" : ""}`)}`;
+        const writing = surveyQuestPresentation(def, j);
+        html += `<h4>${esc(writing.title)}</h4><p>${esc(writing.text)}</p><p class="atlas-service-benefit">Reward: ${def.rewardCinders} cinders. Objective: ${esc(a.nodes[def.objectiveNodeId]?.displayName || "Explore the marked road")}.</p>${board ? `<p class="atlas-action-note">${esc(action.label)}</p>` : button(action.label, `data-local-quest="${esc(q.questId)}" ${!here || !action.allowed ? "disabled" : ""}`)}`;
       }
+      if (board) html += button(t('questBoard.open'), `data-local-board ${!here ? "disabled" : ""}`);
       if (gate) {
         const available = reachable.has(gate.destinationNodeId);
         html += `<p>${available ? `Road to ${esc(a.nodes[gate.destinationNodeId].displayName)}` : "This gate does not connect to an open road in this journey."}</p>${button("Take this road", `data-local-gate ${!here || !available ? "disabled" : ""}`)}`;
@@ -267,7 +329,7 @@ export function mountWorldAtlas(
       pane.innerHTML = `<div class="atlas-detail-scroll">${html}</div>`;
       const actions = dialog.querySelector('.atlas-detail-actions');
       actions.replaceChildren();
-      pane.querySelectorAll('[data-local-service], [data-local-quest], [data-local-gate], [data-local-boss], [data-local-explore]').forEach(b => actions.append(b));
+      pane.querySelectorAll('[data-local-service], [data-local-quest], [data-local-board], [data-local-gate], [data-local-boss], [data-local-explore]').forEach(b => actions.append(b));
       actions.querySelectorAll("[data-local-service]").forEach(
         (b) =>
           (b.onclick = () => {
@@ -293,6 +355,12 @@ export function mountWorldAtlas(
             detail(pointId);
           }),
       );
+      const boardButton = actions.querySelector("[data-local-board]");
+      if (boardButton)
+        boardButton.onclick = () => {
+          close();
+          onAction({ kind: "board", ownerId: id, pointId });
+        };
       const g = actions.querySelector("[data-local-gate]");
       if (g)
         g.onclick = () => {
@@ -314,7 +382,7 @@ export function mountWorldAtlas(
     }
   }
   if (inspectNodeId)
-    inspect(inspectNodeId, app.querySelector("[data-atlas-inspect-current]"));
+    inspect(inspectNodeId, inspectButton);
 }
 function localMapHtml(local) {
   const map = ATLAS.maps[local.mapId],

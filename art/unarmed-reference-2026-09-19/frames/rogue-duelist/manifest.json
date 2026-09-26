@@ -1,0 +1,631 @@
+{
+  "exportVersion": 2,
+  "status": "generated-and-exported",
+  "generator": "built-in image_gen",
+  "motionProfile": "unarmed",
+  "authoredEquipment": {
+    "rightGroup": "empty",
+    "leftGroup": "empty"
+  },
+  "id": "rogue-duelist",
+  "classId": "rogue",
+  "armourId": "duelist",
+  "effectsBaked": false,
+  "source": "sources/rogue-duelist.png",
+  "sourceSha256": "0886594e138a6acd383b1dd43bd651aa10736095e6c0471a7a8bd01bb0fafb0b",
+  "sourceSize": [
+    1254,
+    1254
+  ],
+  "frameSize": [
+    512,
+    512
+  ],
+  "bodyScale": 1.3548387096774193,
+  "anchor": [
+    256,
+    480
+  ],
+  "poses": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "DEFEND",
+    "HURT",
+    "CAST",
+    "BUFF",
+    "STANCE-AGGRESSIVE",
+    "STANCE-DEFENSIVE",
+    "PORTRAIT",
+    "CONVERSATION"
+  ],
+  "sequence": [
+    "STANCE-READY",
+    "ATK-01",
+    "ATK-02",
+    "ATK-03",
+    "ATK-04",
+    "ATK-05",
+    "ATK-06",
+    "ATK-07",
+    "STANCE-READY"
+  ],
+  "frameMs": 140,
+  "impactIndices": [
+    3,
+    5
+  ],
+  "frames": {
+    "STANCE-READY": {
+      "content": [
+        23,
+        20,
+        289,
+        313
+      ],
+      "core": [
+        35,
+        32,
+        277,
+        301
+      ],
+      "scale": 1.3548387096774193,
+      "sourceFootAnchor": [
+        141.0,
+        281
+      ],
+      "offset": [
+        65,
+        99
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        73,
+        111,
+        413,
+        486
+      ],
+      "file": "frames/rogue-duelist/STANCE-READY.webp",
+      "sha256": "96c2dc107cc49ffde6e5eab5137c33d27add723d7f53fcfb878cff718f461140"
+    },
+    "ATK-01": {
+      "content": [
+        335,
+        24,
+        597,
+        313
+      ],
+      "core": [
+        347,
+        36,
+        585,
+        301
+      ],
+      "scale": 1.3548387096774193,
+      "sourceFootAnchor": [
+        135.0,
+        277
+      ],
+      "offset": [
+        73,
+        105
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        81,
+        118,
+        419,
+        490
+      ],
+      "file": "frames/rogue-duelist/ATK-01.webp",
+      "sha256": "73f6b5c42cf2e8328da6eb68fbf5b6595cf1c0f10d472a8a5b4a60920e9c3da2"
+    },
+    "ATK-02": {
+      "content": [
+        649,
+        29,
+        915,
+        313
+      ],
+      "core": [
+        661,
+        41,
+        903,
+        301
+      ],
+      "scale": 1.3548387096774193,
+      "sourceFootAnchor": [
+        135.0,
+        272
+      ],
+      "offset": [
+        73,
+        111
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        81,
+        122,
+        421,
+        496
+      ],
+      "file": "frames/rogue-duelist/ATK-02.webp",
+      "sha256": "32087bd3cd2fffbe5e017f01b4d563776cef5d55426707e933dc2249a2cdb11d"
+    },
+    "ATK-03": {
+      "content": [
+        959,
+        26,
+        1249,
+        313
+      ],
+      "core": [
+        971,
+        38,
+        1237,
+        301
+      ],
+      "scale": 1.3548387096774193,
+      "sourceFootAnchor": [
+        137.0,
+        275
+      ],
+      "offset": [
+        70,
+        107
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        82,
+        119,
+        451,
+        496
+      ],
+      "file": "frames/rogue-duelist/ATK-03.webp",
+      "sha256": "cd493c1790d1dbbc05fc71a8df2649506a769b1e5ab286742db45eb9e47af8cd"
+    },
+    "ATK-04": {
+      "content": [
+        22,
+        333,
+        290,
+        628
+      ],
+      "core": [
+        34,
+        345,
+        278,
+        616
+      ],
+      "scale": 1.3548387096774193,
+      "sourceFootAnchor": [
+        142.0,
+        283
+      ],
+      "offset": [
+        64,
+        97
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        76,
+        98,
+        426,
+        497
+      ],
+      "file": "frames/rogue-duelist/ATK-04.webp",
+      "sha256": "5ed0a51939488b92c33907f024e5c20b59818739b2258b49bd07572b25ca8fab"
+    },
+    "ATK-05": {
+      "content": [
+        324,
+        334,
+        622,
+        628
+      ],
+      "core": [
+        336,
+        346,
+        610,
+        616
+      ],
+      "scale": 1.3548387096774193,
+      "sourceFootAnchor": [
+        143.0,
+        282
+      ],
+      "offset": [
+        62,
+        98
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        74,
+        107,
+        465,
+        491
+      ],
+      "file": "frames/rogue-duelist/ATK-05.webp",
+      "sha256": "c58cce206a60bd64052d5e7bff5e96ee5a78bdda9a98e8d4f945d4f95d03672b"
+    },
+    "ATK-06": {
+      "content": [
+        649,
+        337,
+        916,
+        628
+      ],
+      "core": [
+        661,
+        349,
+        904,
+        616
+      ],
+      "scale": 1.3548387096774193,
+      "sourceFootAnchor": [
+        139.0,
+        279
+      ],
+      "offset": [
+        68,
+        102
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        80,
+        110,
+        418,
+        487
+      ],
+      "file": "frames/rogue-duelist/ATK-06.webp",
+      "sha256": "d485e7a0ed4ad6e7f1ccef241ccca92517be5cad37a8f68cb95d51a9f12be2ee"
+    },
+    "ATK-07": {
+      "content": [
+        966,
+        337,
+        1231,
+        628
+      ],
+      "core": [
+        978,
+        349,
+        1219,
+        616
+      ],
+      "scale": 1.3548387096774193,
+      "sourceFootAnchor": [
+        140.5,
+        279
+      ],
+      "offset": [
+        66,
+        102
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        78,
+        114,
+        413,
+        492
+      ],
+      "file": "frames/rogue-duelist/ATK-07.webp",
+      "sha256": "4538abcff2ea624f2b2fa586b4a84979a535a0566a269775356d542a7347ef24"
+    },
+    "DEFEND": {
+      "content": [
+        30,
+        652,
+        294,
+        938
+      ],
+      "core": [
+        42,
+        664,
+        282,
+        926
+      ],
+      "scale": 1.3548387096774193,
+      "sourceFootAnchor": [
+        138.5,
+        274
+      ],
+      "offset": [
+        68,
+        109
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        75,
+        121,
+        419,
+        489
+      ],
+      "file": "frames/rogue-duelist/DEFEND.webp",
+      "sha256": "63adae6c9226a4550a148df80e46f546acfe35aa8ee5c38a11d4fb46f63b3c58"
+    },
+    "HURT": {
+      "content": [
+        327,
+        643,
+        607,
+        939
+      ],
+      "core": [
+        339,
+        655,
+        595,
+        927
+      ],
+      "scale": 1.3548387096774193,
+      "sourceFootAnchor": [
+        156.0,
+        284
+      ],
+      "offset": [
+        45,
+        95
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        57,
+        108,
+        411,
+        488
+      ],
+      "file": "frames/rogue-duelist/HURT.webp",
+      "sha256": "fe9c7986d8a3e892441a5b477268da97e3f9b6bedaaddc78935b56f8e96c7d3a"
+    },
+    "CAST": {
+      "content": [
+        643,
+        642,
+        944,
+        939
+      ],
+      "core": [
+        655,
+        654,
+        932,
+        927
+      ],
+      "scale": 1.3548387096774193,
+      "sourceFootAnchor": [
+        146.0,
+        285
+      ],
+      "offset": [
+        58,
+        94
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        59,
+        99,
+        453,
+        488
+      ],
+      "file": "frames/rogue-duelist/CAST.webp",
+      "sha256": "93ebf159fb55af40c6b59a79606161083ae16c327eb04a16030b578a7ec444ff"
+    },
+    "BUFF": {
+      "content": [
+        978,
+        631,
+        1207,
+        939
+      ],
+      "core": [
+        990,
+        643,
+        1195,
+        927
+      ],
+      "scale": 1.3548387096774193,
+      "sourceFootAnchor": [
+        130.5,
+        296
+      ],
+      "offset": [
+        79,
+        79
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        87,
+        80,
+        377,
+        491
+      ],
+      "file": "frames/rogue-duelist/BUFF.webp",
+      "sha256": "f73cde75407aeff9ce930111907f1b8023cf07999689481b2c42532ff57bf6c8"
+    },
+    "STANCE-AGGRESSIVE": {
+      "content": [
+        35,
+        971,
+        310,
+        1231
+      ],
+      "core": [
+        47,
+        983,
+        298,
+        1219
+      ],
+      "scale": 1.3548387096774193,
+      "sourceFootAnchor": [
+        138.0,
+        248
+      ],
+      "offset": [
+        69,
+        144
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        82,
+        156,
+        431,
+        485
+      ],
+      "file": "frames/rogue-duelist/STANCE-AGGRESSIVE.webp",
+      "sha256": "d72bf4b04649d52fbb15d29cd934f4c1d14ccb19f8214d8b4679fdd00b104e80"
+    },
+    "STANCE-DEFENSIVE": {
+      "content": [
+        345,
+        960,
+        610,
+        1234
+      ],
+      "core": [
+        357,
+        972,
+        598,
+        1222
+      ],
+      "scale": 1.3548387096774193,
+      "sourceFootAnchor": [
+        137.5,
+        262
+      ],
+      "offset": [
+        70,
+        125
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        78,
+        133,
+        425,
+        483
+      ],
+      "file": "frames/rogue-duelist/STANCE-DEFENSIVE.webp",
+      "sha256": "4e8a86e067e8859faed8095a93efc5e8d9db95f4d2f34a323b34ba9500830ee7"
+    },
+    "PORTRAIT": {
+      "content": [
+        632,
+        938,
+        945,
+        1235
+      ],
+      "core": [
+        644,
+        950,
+        933,
+        1223
+      ],
+      "scale": 1.4824281150159744,
+      "sourceFootAnchor": [
+        156.5,
+        285
+      ],
+      "offset": [
+        24,
+        58
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        34,
+        72,
+        488,
+        488
+      ],
+      "file": "frames/rogue-duelist/PORTRAIT.webp",
+      "sha256": "67b43da1b80fac7d6c4e8fdcbecaf00556b2e7d4c67af47617cb572b7b5deb2f"
+    },
+    "CONVERSATION": {
+      "content": [
+        989,
+        929,
+        1202,
+        1239
+      ],
+      "core": [
+        1001,
+        941,
+        1190,
+        1227
+      ],
+      "scale": 1.3548387096774193,
+      "sourceFootAnchor": [
+        123.0,
+        298
+      ],
+      "offset": [
+        89,
+        76
+      ],
+      "anchor": [
+        256,
+        480
+      ],
+      "bounds": [
+        101,
+        83,
+        365,
+        489
+      ],
+      "file": "frames/rogue-duelist/CONVERSATION.webp",
+      "sha256": "8e158e8f575e0b15a1b1c140701c649b54c3d0b4445bf8e1ccedd6b4710ef7a1"
+    }
+  },
+  "references": {
+    "menu": "STANCE-READY",
+    "conversation": "CONVERSATION",
+    "portrait": "PORTRAIT",
+    "detail": "PORTRAIT"
+  }
+}

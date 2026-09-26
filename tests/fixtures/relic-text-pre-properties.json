@@ -1,0 +1,254 @@
+{
+  "forsakenMedallion": {
+    "name": "Forsaken Medallion",
+    "text": "Max HP +10. Your first attack each combat also deals 4 Poise damage."
+  },
+  "starstoneShard": {
+    "name": "Starstone Shard",
+    "text": "Max HP +14. Mana +1. Magic damage +2. Begin each combat with Starstone Charge and restore 1 Mana."
+  },
+  "cutpursesCoin": {
+    "name": "Cutpurse's Coin",
+    "text": "Begin each combat Prepared. Your first attack each combat applies 2 Venom."
+  },
+  "goldFigurine": {
+    "name": "Gold Figurine",
+    "text": "Whenever you heal, gain 2 Block (even at full HP)."
+  },
+  "goldenSprout": {
+    "name": "Golden Sprout",
+    "text": "At the start of each combat, heal 3 HP."
+  },
+  "whetstoneFragment": {
+    "name": "Whetstone Fragment",
+    "text": "Your first attack each combat deals 4 extra damage."
+  },
+  "kindlingCharm": {
+    "name": "Kindling Charm",
+    "text": "At the start of each combat, draw 1 extra card."
+  },
+  "cinderPouch": {
+    "name": "Cinder Pouch",
+    "text": "Gain 25% more Cinders from combats."
+  },
+  "feralEye": {
+    "name": "Feral Eye",
+    "text": "Elites offer an extra card reward choice."
+  },
+  "goldleafCharm": {
+    "name": "Goldleaf Charm",
+    "text": "At the start of your first turn, gain 4 Block."
+  },
+  "crackedLantern": {
+    "name": "Cracked Lantern",
+    "text": "On your first turn each combat, gain 1 Energy."
+  },
+  "sacrificialKnife": {
+    "name": "Sacrificial Knife",
+    "text": "Your first attack each combat applies 2 Bleed."
+  },
+  "curedHide": {
+    "name": "Cured Hide",
+    "text": "The first time you lose HP each combat, gain 5 Block. Poise threshold +2 (no current consumer)."
+  },
+  "ivoryComb": {
+    "name": "Ivory Comb",
+    "text": "Every 8th card you play each combat: draw 1 card."
+  },
+  "crackedTear": {
+    "name": "Cracked Tear",
+    "text": "Flasks are 50% stronger (rounded up)."
+  },
+  "sealstoneKey": {
+    "name": "Sealstone Key",
+    "text": "Unknown (?) locations on the map are revealed."
+  },
+  "fellWardenBrand": {
+    "name": "Fell Warden Brand",
+    "text": "Whenever an enemy Staggers, draw 2 cards."
+  },
+  "bloodiedTalisman": {
+    "name": "Bloodied Talisman",
+    "text": "Whenever Bleed bursts, the victim loses 5 additional HP."
+  },
+  "emberFragment": {
+    "name": "Ember Fragment",
+    "text": "Resting heals 15% more."
+  },
+  "twinnedArmor": {
+    "name": "Twinned Armor",
+    "text": "Every 10th card you play each combat: gain 6 Block."
+  },
+  "blightTouchedIdol": {
+    "name": "Blight-Touched Idol",
+    "text": "Your first attack each combat applies 3 Crimson Blight."
+  },
+  "warhorn": {
+    "name": "Warhorn",
+    "text": "At the start of each combat, gain 1 Strength."
+  },
+  "vowOfVengeance": {
+    "name": "Vow of Vengeance",
+    "text": "Whenever an enemy dies, gain 2 Strength."
+  },
+  "pearlOfSagacity": {
+    "name": "Pearl of Sagacity",
+    "text": "Every 6th card you play each combat: gain 1 Energy."
+  },
+  "blessedDew": {
+    "name": "Blessed Dew",
+    "text": "At the start of each turn, heal 2 HP."
+  },
+  "azureSigil": {
+    "name": "Azure Sigil",
+    "text": "The first Skill you play each combat: gain 1 Energy."
+  },
+  "bloodstainedChalice": {
+    "name": "Bloodstained Chalice",
+    "text": "Whenever Bleed bursts on an enemy, gain 2 Block."
+  },
+  "goldboughSapling": {
+    "name": "Goldbough Sapling",
+    "text": "At the start of your turn, if you have no Block: gain 4 Block."
+  },
+  "wyrmHeart": {
+    "name": "Wyrm Heart",
+    "text": "Gain 1 extra Energy each turn. Shrines and chapels no longer offer Rest."
+  },
+  "ancestralHorn": {
+    "name": "Ancestral Horn",
+    "text": "Power cards cost 1 less."
+  },
+  "titansCinder": {
+    "name": "Titan's Cinder",
+    "text": "At the start of each turn, gain 1 Strength."
+  },
+  "radiantAegis": {
+    "name": "Radiant Aegis",
+    "text": "At the start of each turn, if you have Block: gain 4 Block."
+  },
+  "flayersCenser": {
+    "name": "Flayer's Censer",
+    "text": "At the start of each turn, apply 1 Crimson Blight to ALL enemies."
+  },
+  "vigilantHalo": {
+    "name": "Vigilant Halo",
+    "text": "Whenever an enemy Staggers, heal 6 HP."
+  },
+  "carrionTalon": {
+    "name": "Carrion Talon",
+    "text": "Whenever an enemy dies, deal 6 damage to a random enemy."
+  },
+  "emberIdol": {
+    "name": "Ember Idol",
+    "text": "At the start of each turn, deal 3 damage to ALL enemies."
+  },
+  "crownOfStitches": {
+    "name": "Crown of Stitches",
+    "text": "Begin each combat with 2 Strength — and 1 Frail. New limbs are heavy."
+  },
+  "wardenHorn": {
+    "name": "Warden Horn",
+    "text": "Draw 1 extra card each turn. At the start of each combat, lose 2 HP."
+  },
+  "ashOfRemembrance": {
+    "name": "Ash of Remembrance",
+    "text": "Gain 1 extra Energy each turn. At the start of each combat, gain 1 Madness."
+  },
+  "cinderOfTheFallen": {
+    "name": "Cinder of the Fallen",
+    "text": "Whenever an enemy dies, gain 1 Energy. At the start of each combat, gain 1 Madness."
+  },
+  "crimsonCovenant": {
+    "name": "Crimson Covenant",
+    "text": "Your attacks apply 2 Bleed. At the start of each combat, lose 5 HP."
+  },
+  "travelersWhetstone": {
+    "name": "Traveler's Whetstone",
+    "text": "At the start of each combat, gain 1 Strength."
+  },
+  "moonlitVial": {
+    "name": "Moonlit Vial",
+    "text": "At the start of each combat, gain 3 Block."
+  },
+  "wardensLantern": {
+    "name": "Warden's Lantern",
+    "text": "The first time you lose HP each combat, draw 1 card."
+  },
+  "saltedRelic": {
+    "name": "Salted Relic",
+    "text": "Gain 20% more Cinders from combats."
+  },
+  "hollowedHorn": {
+    "name": "Hollowed Horn",
+    "text": "Whenever an enemy Staggers, apply 1 Vulnerable to ALL enemies."
+  },
+  "gildedTear": {
+    "name": "Gilded Tear",
+    "text": "On your first turn each combat, heal 3 HP."
+  },
+  "watchmansBadge": {
+    "name": "Watchman's Badge",
+    "text": "At the start of each turn, if you are not Weak: gain 1 Strength."
+  },
+  "howlingStandard": {
+    "name": "Howling Standard",
+    "text": "Whenever an enemy Staggers, gain 1 Strength."
+  },
+  "emberwickCharm": {
+    "name": "Emberwick Charm",
+    "text": "The first time you lose HP each combat, gain 1 Energy."
+  },
+  "carrionMorsel": {
+    "name": "Carrion Morsel",
+    "text": "Whenever an enemy dies, heal 2 HP."
+  },
+  "gravetendersBell": {
+    "name": "Gravetender's Bell",
+    "text": "Whenever an enemy dies, draw 1 card."
+  },
+  "sentinelsOath": {
+    "name": "Sentinel's Oath",
+    "text": "Every 12th card you play each combat: gain 1 Strength."
+  },
+  "forsakenWarflag": {
+    "name": "Forsaken Warflag",
+    "text": "At the start of each turn, apply 1 Weak to ALL enemies."
+  },
+  "wayfarersKnot": {
+    "name": "Wayfarer's Knot",
+    "text": "Gain 10% more Cinders from combats. Resting heals 10% more."
+  },
+  "prismaticThorn": {
+    "name": "Prismatic Thorn",
+    "text": "Your hits build 25% more Arcane Exposure. Flasks are 25% weaker (rounded up)."
+  },
+  "restlessClasp": {
+    "name": "Restless Clasp",
+    "text": "Flasks are 100% stronger. Resting heals 50% less."
+  },
+  "paupersDiadem": {
+    "name": "Pauper's Diadem",
+    "text": "Power cards cost 1 less (minimum 0). Gain 35% fewer Cinders from combats."
+  },
+  "wrathCoil": {
+    "name": "Wrath Coil",
+    "text": "Whenever you lose HP, deal 3 damage to a random enemy."
+  },
+  "ashenGrip": {
+    "name": "Ashen Grip",
+    "text": "The first stance you enter each turn refunds 1 Stamina."
+  },
+  "lodestarShard": {
+    "name": "Lodestar Shard",
+    "text": "Begin each combat with 1 extra Mana."
+  },
+  "waxenSeal": {
+    "name": "Waxen Seal",
+    "text": "The first time you heal each combat, heal 3 more."
+  },
+  "whetstonePouch": {
+    "name": "Whetstone Pouch",
+    "text": "Your first attack while Prepared each combat applies 2 Bleed."
+  }
+}

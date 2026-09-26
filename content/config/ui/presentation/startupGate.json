@@ -1,0 +1,47 @@
+{
+  "components": {
+    "prompts": {
+      "pointer": "CLICK TO CONTINUE",
+      "touch": "TAP TO CONTINUE",
+      "keyboard": "PRESS ENTER OR SPACE",
+      "controller": "PRESS A / CROSS OR START / MENU"
+    }
+  },
+  "motion": {
+    "entrance": {
+      "lightUpMs": 560,
+      "fadeMs": 880,
+      "holdDefault": "2s",
+      "holdDurations": {
+        "0s": 0,
+        "0.3s": 300,
+        "0.5s": 500,
+        "1s": 1000,
+        "2s": 2000
+      }
+    },
+    "particles": {
+      "defaultCount": 7,
+      "maxCount": 12,
+      "leftPct": {
+        "base": 9,
+        "step": 17,
+        "span": 82
+      },
+      "delayMs": {
+        "step": 1130,
+        "cycle": 6200
+      },
+      "durationMs": {
+        "base": 7600,
+        "cycle": 4,
+        "step": 1400
+      },
+      "sizePx": {
+        "base": 1,
+        "cycle": 3
+      },
+      "idPrefix": "ash-"
+    }
+  }
+}

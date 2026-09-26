@@ -1,0 +1,19 @@
+# content/source/speakers.csv — who speaks in the dialogue screen (W4c; plan phase 10a).
+#
+# A speaker is a data row: a stable id, the name the caption and the name
+# plate wear, and a portrait art key. The key names art that already ships —
+# today an enemy id, drawn through the shared enemySprite() — and a blank key
+# is a speaker with no portrait yet: the dialogue screen shows the name plate
+# in the portrait's place, never a blank.
+#
+# Event chains name their speaker in src/content/events.js (eventSpeakers);
+# atlas quest rows name theirs in content/source/worldAtlas.json
+# (quests.speakerId). Validation refuses a speaker id no row defines and a
+# portrait key no shipped art answers to.
+#
+# PROVISIONAL (owner decision, 2026-09-14): names and portraits were chosen by
+# the implementing change from docs/LORE-CAST.md, using existing art only.
+id,name,portraitKey
+theNameless,The Nameless,graveWisp
+keeperOfTheNameless,The Keeper of the Nameless,emberStarvedPilgrim
+roadWarden,The Road Warden,
