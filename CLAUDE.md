@@ -10,6 +10,17 @@ the owner's standing rule for every session: reviewed by another agent or
 session, conflicts resolved by you, tests green, re-checked after every merge
 to the base until it lands.
 
+**When you need the owner to decide or do something**, ask in this shape, and
+nothing longer (owner's rule, 2026-09-26):
+
+- One bullet per question, one line each, ending in the answer you need
+  (yes/no, A or B, or the exact thing to do).
+  - One sub-bullet for why it matters: what it changes, or what is blocked
+    until it is answered.
+
+No paragraphs, no preamble. Put the detail in the PR or a linked file, not in
+the question.
+
 (`AGENTS.md` used to hold the working rules and was removed at the owner's
 request in `cef8ed00`. The coordination rules it carried — one task per branch,
 pull requests into `dev` opened ready for review, and only the owner merging to
