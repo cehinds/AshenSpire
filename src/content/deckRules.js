@@ -18,7 +18,16 @@ export const deckRules = Object.freeze({
     deckMaxUnlimited: true,
     // The draw pile is the deck in the order the editor arranged it.
     playInDeckOrder: false,
+    // Owner ruling 2026-09-26: a class's own spells and Powers are limited to
+    // this many copies in the deck (Strike/Defend stay unlimited; arts and
+    // techniques stay limited to the copies owned).
+    classSpellPowerCopies: 1,
   }),
+  // What counts as a class spell or Power: a card of a class (not colorless)
+  // whose type is one of `types` or that carries one of `tags`.
+  singleCopy: Object.freeze({ types: Object.freeze(['power']), tags: Object.freeze(['source:spell']) }),
+  // The range the copy-limit Settings row accepts.
+  copyRange: Object.freeze({ min: 1, max: 10 }),
   // The range the Settings rows for the deck size accept.
   sizeRange: Object.freeze({ min: 0, max: 200 }),
   // Where the editor may be opened from ('free' | 'restOnly').

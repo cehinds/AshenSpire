@@ -143,11 +143,26 @@ export function moveToSideboard(registries, run, instanceId) {
   return true;
 }
 
-/** moveFromSideboard(registries, run, instanceId) → true when the card returned to the deck. */
-export function moveFromSideboard(registries, run, instanceId) {
+/**
+ * deckCopyLimit(registries, cardId, settings) → the most copies of a card the
+ * deck may hold, or Infinity. A class's own spells and Powers are limited
+ * (owner ruling 2026-09-26); every other limit is the copies the run owns.
+ */
+export function deckCopyLimit(registries, cardId, settings) {
+  const def = registries && registries.cards && registries.cards.has(cardId) ? registries.cards.get(cardId) : null;
+  if (!def || !def.class || def.class === 'colorless') return Infinity;
+  const rule = deckRules.singleCopy;
+  const limited = rule.types.includes(def.type) || (def.tags || []).some((tag) => rule.tags.includes(tag));
+  return limited ? wholeNumber(setting(settings, 'classSpellPowerCopies'), 'classSpellPowerCopies', 1) : Infinity;
+}
+
+/** moveFromSideboard(registries, run, instanceId, settings) → true when the card returned to the deck. */
+export function moveFromSideboard(registries, run, instanceId, settings = {}) {
   const pile = sideboard(run);
   const index = pile.findIndex((c) => c && c.instanceId === instanceId);
   if (index < 0) return false;
+  const inDeck = run.deck.filter((c) => c && c.cardId === pile[index].cardId).length;
+  if (inDeck >= deckCopyLimit(registries, pile[index].cardId, settings)) return false;
   const [card] = pile.splice(index, 1);
   if (card.equipmentAttackSlotId) {
     run.removedAttackSlotIds = (run.removedAttackSlotIds || []).filter((id) => id !== card.equipmentAttackSlotId);

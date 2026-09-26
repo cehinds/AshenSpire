@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Deck rules: set cards aside, draw in your own order",
     "detail": "The groundwork for the deck editor, which arrives next. A new Settings tab, Advanced → Deck, holds its rules: editing on or off, where you may edit, the smallest and largest deck, and Play in deck order, which draws your cards in the order you arranged them instead of shuffling. A card you take out of your deck is kept, not lost, so you can put it back later; Strike and Defend stay unlimited and still wear your weapon's face.",
-    "build": "0.7.1.604",
+    "build": "0.7.1.607",
     "pullRequest": 1343,
     "url": "https://github.com/cehinds/AshenSpire/pull/1343"
+  },
+  {
+    "id": "pr-1328",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "A full recorded score, written as code",
+    "detail": "Hosted builds now play thirteen recorded tracks. There is one for the title, shop, rest, combat, elite, boss and victory screens, and the map has its own track in each of the five regions. Each track is built on the music the game already plays, with a strong low cello bass under it and a quiet cello phrase from before the Burning that is snuffed out like a flame. Victory is short. Tracks loop without a gap. The two tracks made with an AI music service are gone. The score was composed as code by AI: every note is written in the repository and rendered by an AI-written synthesizer, with no samples, no licensed music and no AI music model.",
+    "build": "0.7.1.605",
+    "pullRequest": 1328,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1328"
+  },
+  {
+    "id": "pr-1345",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the slow checks run when a build is promoted",
+    "detail": "Nothing you play changes. A change proposed for the development build is now checked by the fast checks only, about five minutes' worth. The long suites — every platform, the rebuilt-file comparison and the browser checks — run when a build moves to test or release. No check was removed.",
+    "build": "0.7.1.603",
+    "pullRequest": 1345,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1345"
   },
   {
     "id": "pr-1340",

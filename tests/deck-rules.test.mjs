@@ -286,3 +286,21 @@ test('a restored ordered fight returns its discard in deck order, Innate cards o
   const pile = [...back.piles.hand, ...back.piles.draw].map((c) => c.instanceId);
   assert.deepEqual(pile, [...pile].sort((a, b) => order.indexOf(a) - order.indexOf(b)));
 });
+
+test('owner ruling: a class spell or Power is limited to one copy in the deck; basics and colorless cards are not', async () => {
+  const { deckCopyLimit } = await import('../src/model/deckRules.js');
+  const power = contentBundle.cards.find((d) => d.class === 'reaver' && d.type === 'power').id;
+  const spell = contentBundle.cards.find((d) => d.class !== 'colorless' && d.type !== 'power' && (REG.cards.get(d.id).tags || []).includes('source:spell')).id;
+  const colorless = contentBundle.cards.find((d) => d.class === 'colorless' && d.type === 'skill').id;
+  assert.equal(deckCopyLimit(REG, power, {}), DECK_RULES.defaults.classSpellPowerCopies);
+  assert.equal(deckCopyLimit(REG, spell, {}), 1);
+  assert.equal(deckCopyLimit(REG, colorless, {}), Infinity);
+  assert.equal(deckCopyLimit(REG, 'strike', {}), Infinity, 'Strike stays unlimited');
+  assert.equal(deckCopyLimit(REG, power, { classSpellPowerCopies: 2 }), 2, 'the limit is a setting');
+
+  const run = freshRun();
+  run.deck.push(createCardInstance(power, false, () => 'pw1'));
+  run.sideboard.push(createCardInstance(power, false, () => 'pw2'));
+  assert.equal(moveFromSideboard(REG, run, 'pw2'), false, 'a second copy of a class Power is refused');
+  assert.equal(moveFromSideboard(REG, run, 'pw2', { classSpellPowerCopies: 2 }), true, 'and allowed when the setting raises the limit');
+});

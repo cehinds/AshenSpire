@@ -7,14 +7,17 @@
 #
 # SOP 3's four requirements, and where each is honestly met or not:
 #
-#  1. RUNS ON EVERY PUSH AND PR — → NOT MET since `b55e078`. The `on:` block
-#     below is `workflow_dispatch:` alone: exactly the "workflow_dispatch-only"
-#     shape the old text here ruled out while still reading "→ MET". The edit
-#     that turned automatic runs off changed `on:` and said so; this header sits
-#     fifty lines above it and nobody edited it. That is how a second copy is
-#     born — one fact, two homes, nothing checking they agree. EldenSpire#35.
-#     Under SOP 2's silence guard a workflow that never fires is `unknown`, and
-#     unknown blocks. Every gate in this repo is now a seat's hand-run.
+#  1. RUNS ON EVERY PUSH AND PR — → NOT MET since `b55e078`, and PARTLY MET
+#     since 2026-09-26. `b55e078` made the `on:` block `workflow_dispatch:`
+#     alone: exactly the "workflow_dispatch-only" shape the old text here ruled
+#     out while still reading "→ MET". The edit that turned automatic runs off
+#     changed `on:` and said so; this header sits fifty lines above it and nobody
+#     edited it. That is how a second copy is born — one fact, two homes,
+#     nothing checking they agree. EldenSpire#35. Today every job runs on a push
+#     to `test` or `release`, and a PR's legs are read at promotion (the `on:`
+#     block below states it once). A push to `dev` or a feature branch
+#     still fires nothing here: under SOP 2's silence guard that is `unknown`
+#     until the tree reaches `test`, and unknown blocks.
 #
 #     THE STANDING BOUNDARY, and it belongs here rather than on a card. Nothing
 #     in this repo is `verified-at` a CI ref while this holds. The permanent
@@ -145,18 +148,30 @@ on:
   # allowance; the allowance itself has never been read off this account's
   # billing page by anyone.
   #
-  # ONE AUTOMATIC TRIGGER, by the owner's ruling D7 (2026-09-24): a push to
-  # `release`. That branch moves only when the owner cuts a release, so it is a
-  # handful of runs, and it is the one ref whose tree ships — the 3-OS claims
-  # above are read there at least. Every other ref stays dispatch-only.
+  # AUTOMATIC TRIGGERS. By the owner's ruling D7 (2026-09-24): a push to
+  # `release`, the one ref whose tree ships, so the 3-OS claims above are read
+  # there at least. By the owner's ruling of 2026-09-26 ("the long shipped
+  # artifact should be on test and release branches"): a push to `test` as well.
+  #   push to test / release   — every job below.
+  #   workflow_dispatch        — every job below, on any ref.
+  # Pull requests into `dev` do not run this file: re-enabling that is the
+  # owner's call (above), and `display-first`'s self-test has not been measured
+  # against the five-minute dev-PR budget. `push` names only `test` and
+  # `release`, so no commit runs twice. Nothing was removed: every job and step
+  # runs, unchanged, on every push to `test` and `release`.
   push:
-    branches: [release]
+    branches: [test, release]
   workflow_dispatch:
 
-# One in-flight run per ref; a superseded run's result is not evidence about HEAD.
+# A PUSH to `test` or `release` is a promotion, and each promoted tree is its
+# own answer: a second push must not cancel the first's 10-60 min run, nor
+# replace it while queued (a group holds one pending run). So a push is grouped
+# by its SHA, one group per commit, and never cancelled. A DISPATCH is grouped
+# by its ref, so a newer dispatch on the same branch supersedes the older one
+# and a 3-OS matrix is not paid for twice.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
 
 permissions:
   contents: read
@@ -174,6 +189,7 @@ jobs:
   # ---------------------------------------------------------------------------
   test:
     name: tests (${{ matrix.os }})
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false # a Windows-only failure is a FINDING; do not hide it
@@ -327,6 +343,7 @@ jobs:
   # ---------------------------------------------------------------------------
   reproducible:
     name: shipped artifact is this source (${{ matrix.os }})
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -402,6 +419,7 @@ jobs:
   reproducible-agree:
     name: the three runners built the same bytes
     needs: reproducible
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -458,6 +476,7 @@ jobs:
     # in it. A job name is what a red run shows first; one naming a single check
     # sends the reader to the wrong tool. — Bjorn
     name: the checks that need a real browser
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

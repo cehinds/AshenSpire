@@ -361,8 +361,11 @@ jobs:
   # about the gates' own ability to fail. It is the cheapest thing that would
   # have caught #720 on the day it landed.
   #
-  # COST: one ubuntu-latest runner, roughly 2 minutes, per push to `dev` and per
-  # pull request targeting it — measured from run 321's own step timings:
+  # COST: one ubuntu-latest runner, roughly 2 minutes when proposed (about 8 by
+  # 2026-09-26, with the external-play and pose-studio steps), per push to
+  # `test`, `release` and `main` since 2026-09-26 (see the job's `if:`); it was
+  # per push to `dev` and per pull request targeting it — measured from run
+  # 321's own step timings:
   #   hand-side-probe            9s
   #   shotguard-probe           26s
   #   startup-gate              72s
@@ -372,6 +375,14 @@ jobs:
   # across two promotions and cost three dispatched 3-OS matrices to find.
   browser-gates:
     name: the reachability gates a phone would fail
+    # MOVED OFF dev, 2026-09-26, by the owner's ruling that a pull request into
+    # `dev` is gated by fast checks only (about five minutes or less). This job
+    # measured about 8 minutes, so it runs on every push to `test`, `release`
+    # and `main` and on any dispatch — not on a pull request into `dev` or a
+    # push to `dev`, where the `preview` job above still builds and uploads.
+    # Every step below is unchanged; the job-level `if:` reports it as skipped
+    # on a dev PR rather than absent.
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref_name != 'dev')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -404,8 +415,8 @@ jobs:
       # `scrollLeft = 0`, which is the vertical-only camera's honest answer and
       # the two-axis camera's far-left pan, and every pick threw the act into
       # the right half of the screen. The tool is a gate only where something
-      # runs it, and ci.yml has been dispatch-only since 2026-08-01, so this is
-      # the door. `--no-screenshots` because the writing arm would dirty
+      # runs it, and ci.yml was dispatch-only from 2026-08-01 (today it runs on
+      # push to test and release), so this is the door. `--no-screenshots` because the writing arm would dirty
       # docs/preview/ in a tree the `reproducible` job diffs.
       - name: Picking a map node brings it to the middle, on both axes
         run: node tools/verdict.mjs -- node tools/map-two-axis-pan.mjs --no-screenshots
