@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1343",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Deck rules: set cards aside, draw in your own order",
+    "detail": "The groundwork for the deck editor, which arrives next. A new Settings tab, Advanced → Deck, holds its rules: editing on or off, where you may edit, the smallest and largest deck, and Play in deck order, which draws your cards in the order you arranged them instead of shuffling. A card you take out of your deck is kept, not lost, so you can put it back later; Strike and Defend stay unlimited and still wear your weapon's face.",
+    "build": "0.7.1.549",
+    "pullRequest": 1343,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1343"
+  },
+  {
     "id": "pr-1322",
     "date": "2026-09-25",
     "group": "2026-09-25",
