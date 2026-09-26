@@ -163,7 +163,7 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §13 | #1304 follow-up: an in-run Load on a newer-build slot keeps the live run | G20 |
 | §13 | LICENSE and docs use the current name and version | G20 |
 | §13 | Web and store metadata | G20 |
-| §13 | Release notes, store listing and post-launch roadmap drafted | waived: an owner step. Drafted release notes are a *Before the owner signs* box; the store listing, roadmap, cut, tag and publish come after sign-off. |
+| §13 | Release notes and post-launch roadmap drafted | waived: an owner step. Drafted release notes are a *Before the owner signs* box; the roadmap, cut, tag and publish come after sign-off, and the store listing waits for D8's store pick. |
 
 If a gate is red, the RC is not ready. Fix the cause in a pull request into `dev`,
 pick a new RC SHA, and run **every** gate again on it. Do not re-run only the
