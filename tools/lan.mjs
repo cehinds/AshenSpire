@@ -257,6 +257,9 @@ export function attachLan(server, { port, root }) {
         // Reconnect into a running game as the same member, if it exists.
         if (session.game && msg.rejoinId && session.game.session.members.has(msg.rejoinId)) {
           pl.id = msg.rejoinId;
+          // The returning player's Play in deck order is read afresh from this
+          // hello (SPEC §14.1), so a change made while away applies next fight.
+          session.game.session.members.get(pl.id).playInDeckOrder = pl.playInDeckOrder;
           session.game.setConnected(pl.id, true);
           sock.write(wsEncode(JSON.stringify({ t: 'rejoined', id: pl.id })));
           broadcastState();
