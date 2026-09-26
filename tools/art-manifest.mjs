@@ -69,6 +69,9 @@ export function dimensions(buf, ext) {
       // Any number of 0xFF fill bytes may precede a marker code.
       while (i + 9 < buf.length && buf[i + 1] === 0xff) i += 1;
       const marker = buf[i + 1];
+      // Standalone markers carry no length: TEM (01), RSTn (D0–D7), SOI (D8).
+      if (marker === 0x01 || (marker >= 0xd0 && marker <= 0xd8)) { i += 2; continue; }
+      if (marker === 0xd9) return null; // EOI before any frame
       if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
         return { width: buf.readUInt16BE(i + 7), height: buf.readUInt16BE(i + 5) };
       }
@@ -80,10 +83,9 @@ export function dimensions(buf, ext) {
     // The root element's width and height attributes when both are plain
     // numbers (px), else its viewBox size — what the browser uses as the
     // intrinsic size of an <img> that names neither.
-    // The whole payload: a long prolog (comments, a DOCTYPE) may precede the root.
-    const root = /<svg\b[^>]*>/i.exec(buf.toString('utf8').replace(/<!--[\s\S]*?-->/g, ''));
+    const root = svgRootTag(buf.toString('utf8'));
     if (!root) return null;
-    const attr = (name) => new RegExp(`\\s${name}\\s*=\\s*["']([^"']*)["']`, 'i').exec(root[0])?.[1];
+    const attr = (name) => new RegExp(`\\s${name}\\s*=\\s*["']([^"']*)["']`, 'i').exec(root)?.[1];
     const px = (v) => (v !== undefined && /^\d+(?:\.\d+)?(?:px)?$/.test(v.trim()) ? Number.parseFloat(v) : null);
     const w = px(attr('width'));
     const h = px(attr('height'));
@@ -92,6 +94,40 @@ export function dimensions(buf, ext) {
     return box && box.length === 4 && box.every(Number.isFinite) ? { width: box[2], height: box[3] } : null;
   }
   return null;
+}
+
+/**
+ * The SVG document element's start tag, or null. The XML prolog is SCANNED,
+ * not searched: an XML declaration or processing instruction (`<?…?>`),
+ * comments (`<!--…-->`) and a DOCTYPE (with an internal subset `[…]`) are
+ * skipped whole, in any number and order, so markup-like text inside them is
+ * never mistaken for the root. The first element after them must be <svg>.
+ */
+export function svgRootTag(text) {
+  let i = text.charCodeAt(0) === 0xfeff ? 1 : 0;
+  const skip = (close) => { const j = text.indexOf(close, i); return j < 0 ? -1 : j + close.length; };
+  for (;;) {
+    while (i < text.length && /\s/.test(text[i])) i += 1;
+    if (text.startsWith('<?', i)) i = skip('?>');
+    else if (text.startsWith('<!--', i)) i = skip('-->');
+    else if (/^<!DOCTYPE/i.test(text.slice(i, i + 9))) {
+      // Up to the '>' that closes the DOCTYPE, past any bracketed internal subset
+      // (whose own declarations and quoted strings may contain '>').
+      let depth = 0; let quote = null; let j = i + 9;
+      for (; j < text.length; j++) {
+        const c = text[j];
+        if (quote) { if (c === quote) quote = null; }
+        else if (c === '"' || c === "'") quote = c;
+        else if (c === '[') depth += 1;
+        else if (c === ']') depth -= 1;
+        else if (c === '>' && depth <= 0) break;
+      }
+      i = j < text.length ? j + 1 : -1;
+    } else break;
+    if (i < 0) return null;
+  }
+  const m = /^<svg\b(?:[^>"']|"[^"]*"|'[^']*')*>/i.exec(text.slice(i));
+  return m ? m[0] : null;
 }
 
 /** One tier's record of one file. SVG line endings are canonical, as bundle.mjs ships them. */
