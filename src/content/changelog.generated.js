@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Art quality: play with full-resolution art from your own folder",
     "detail": "Settings → Display → Art quality now offers Built-in, the art this build carries, or Local high-res, which uses full-resolution art from a folder on your device: one served beside the game, or one you choose (even when you opened the game straight from a file). Anything the folder lacks keeps the built-in art, pictures already on screen switch over in place, and the choice stays on this device and is never synced. Backdrops drawn by the stylesheet keep the built-in art for now.",
-    "build": "0.7.1.598",
+    "build": "0.7.1.600",
     "pullRequest": 1339,
     "url": "https://github.com/cehinds/AshenSpire/pull/1339"
   },

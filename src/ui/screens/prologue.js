@@ -248,26 +248,27 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   async function ready(image) {
     // Missing art must not strand a new run. Keep readable text and controls.
     // The plate is still detached here, so the document's missing-high-res
-    // listener cannot see a failure: a high-res file that does not load
-    // retries once with the built-in art (builtInFor) before it is hidden.
+    // listener cannot see a failure. Every failure is re-resolved: a failed
+    // high-res file falls back to the built-in art (builtInFor), and a URL the
+    // art source has moved away from mid-decode retries at the tier in use now
+    // (currentArtUrl) — and so does a failure of THAT retry, until nothing new
+    // is left to try. Only then is the image hidden.
     let timeout;
     const decoded = () => Promise.race([image.decode(), new Promise(resolve=>{timeout=setTimeout(resolve,8000);})]);
-    try { await decoded(); }
-    catch {
-      clearTimeout(timeout);
-      // A failed high-res file retries with the built-in art; a URL the art
-      // source has moved away from since (a switch mid-decode) retries with
-      // the tier in use now, rather than being hidden.
-      const was = image.getAttribute('src');
-      const now = currentArtUrl(was);
-      const fallback = builtInFor(was) || (now !== was ? now : null);
-      if (fallback) {
-        image.setAttribute('src', fallback);
-        try { await decoded(); return; } catch { /* the built-in art is missing too */ }
+    const tried = new Set();
+    for (;;) {
+      try { await decoded(); return; }
+      catch {
+        clearTimeout(timeout);
+        const was = image.getAttribute('src');
+        tried.add(was);
+        const now = currentArtUrl(was);
+        const next = builtInFor(was) || (now !== was ? now : null);
+        if (!next || tried.has(next) || tried.size > 4) { image.hidden = true; return; }
+        image.setAttribute('src', next);
       }
-      image.hidden = true;
+      finally { clearTimeout(timeout); }
     }
-    finally { clearTimeout(timeout); }
   }
   async function showScene(at,{resumeAt = 0,notify = true} = {}) {
     const token = ++serial; loading = true; next.disabled = true;
