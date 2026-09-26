@@ -479,6 +479,10 @@ export function initAudio(settings = {}) {
       el = new Audio(url);
       el.crossOrigin = 'anonymous';
       el.preload = 'auto';
+      // One track: let the element loop it natively. Waiting for `ended` and
+      // building a fresh element costs a load and a gap at every boundary,
+      // which undoes a score rendered to loop seamlessly (tools/score/).
+      el.loop = urls.length === 1;
       if (!state.mediaSources.has(el)) {
         const src = ctx.createMediaElementSource(el);
         src.connect(bedGain(bed));
