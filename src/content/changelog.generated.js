@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1327",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the attribute retune is measured and closed",
+    "detail": "Nothing you see in the game changes. The balance plan now records how each class opens (3 Actions, 2 cards drawn a turn) and where runs actually end (the act-2 boss, not act 1), and the rules text no longer claims a new Reaver draws 5.",
+    "build": "0.7.1.528",
+    "pullRequest": 1327,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1327"
+  },
+  {
     "id": "pr-1324",
     "date": "2026-09-25",
     "group": "2026-09-25",

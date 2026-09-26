@@ -145,27 +145,34 @@ amended before code moves.
     120); measure incoming damage per encounter with the A1 simulator and
     retune pools or enemy damage from that, not from the old figure.
     (Closed 2026-09-26, measured: act-1 HP lost per fight is 1.9–5.3 normal,
-    6.3–14.5 elite, 7.4–14.4 boss against pools of 34–39, and no run dies
-    in act 1; 66–88% of deaths are the act-2 boss. The wall is
+    6.3–14.5 elite, 7.4–14.4 boss against effective starting max HP of
+    38–49 (Rogue/Herald 38, Starseer 48, Reaver 49, with starting equipment
+    and relics), and no run dies in act 1; 56–88% of all deaths are the
+    act-2 boss. The wall is
     `balance.bossTiers`, not starting pools. Post-sync `runsim 40`: Reaver
     35%, Starseer 52.5%, Rogue 37.5%, Herald 37.5% — inside the band, spread
     17.5. Winning runs reach ~26 levels, above the 10–20 band: an XP-curve
     question for plan phase 6.)
   - [x] SPEC §13.4m still describes the conversion scale removed on 09-21.
-- [ ] **A4 Hand rules (M).** Defaults `retain: true`, `drawMode: 'fill'`,
+- [x] **A4 Hand rules (M).** Defaults `retain: true`, `drawMode: 'fill'`,
   capacity 10 (`src/content/handRules.js`) show ~10 of an 11-card deck, skip
   the derived draw stat (`src/engine/handRules.js` ~6–10) and make 21 draw
   cards and 6 draw relics near-dead.
-  - [ ] **(owner ruling)** Default solo combat to drawing the derived Draw
-    stat each turn with end-of-turn discard, and retune the Draw row so a new
-    character draws about 5 (`3 + floor(INT/5)` is 3 at creation). SPEC §4.1
-    makes retain-and-fill the solo default; the discard sequence it also
-    describes applies to older saves and LAN combat.
-  - [ ] Keep Retain as a keyword or class trait; keep the current mode
-    selectable.
-  - [ ] Within the current rules: rebalance draw cards and relics so they
-    matter under retain-and-fill (for example, by raising capacity only
-    through them).
+  (Closed 2026-09-26. Owner ruling: keep the hand (retain) and draw the Draw
+  stat each turn. That already shipped as the default in b9bdfcd77 (#1273:
+  `drawMode: 'fixed'`, `overflow: 'discard'`), with the counts as stat rows
+  since ruleset 7 (#1296); SPEC §4.1 describes it. Measured on the gameplay
+  line, `runsim` N=100: Reaver 43%, Starseer 58%, Rogue 52%, Herald 45%
+  (spread 15). The old fill default measured 90/85/97.5/42.5% (spread 55);
+  drawing 3–5 a turn put three classes at 70–97.5%, so the "draw about 5"
+  retune was not made. Draw cards and draw relics are live: 92% of their
+  requested cards reach the hand under fixed, against 67% under fill.
+  Owner rulings: a profile that saved `drawMode: 'fill'` keeps it as the
+  player's choice; co-op seats follow the host's hand settings (follow-up PR).)
+  - [x] **(owner ruling)** Keep the hand and draw the derived Draw stat each
+    turn (shipped; no Draw-row retune).
+  - [x] Keep the current mode selectable (Settings → hand behaviour).
+  - [x] Draw cards and relics matter under the default (measured above).
 
 ### E1. Test hygiene (one session, beside A)
 
