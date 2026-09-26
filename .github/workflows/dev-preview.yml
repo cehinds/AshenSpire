@@ -56,9 +56,9 @@ jobs:
 
       # BUILT FIRST, AND UPLOADED WHENEVER THIS SUCCEEDS. The built HTML is not
       # committed, so this run's artifacts are the only copy of this commit's
+      # build: a failing gate below still fails the job, but it must not cost the
       # commit its download (the standalone uploads right below; the preview
       # package collects and uploads on `steps.build.outcome`).
-      # commit its download (collect + upload run on `steps.build.outcome`).
       - name: Build the standalone
         id: build
         run: node tools/launch.mjs --build-only
