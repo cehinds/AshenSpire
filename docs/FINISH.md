@@ -40,13 +40,22 @@ the code, a test or a command run on that tree, not against a PR title.
 - [ ] **The 7 orphan cards get a route in, or an owner-ruled allowlist row.** `node tools/contentreach.mjs` on `dev` lists `rondelParry`, `sunderplate`, `astralInsight`, `blightwardLash`, `lastMercy`, `wound` and `slimed` as "NO ROUTE IN". Test: the tool reports `cards 195 of 195 reached`, and `KNOWN_ORPHANS` in `tests/contentreach.test.mjs` is empty.
 - [x] **SPEC text matches what shipped**: §5.1 gives 40 Rogue cards (§13.4f Prepare), §5.2 has the Goreblood row, and §12 is marked shipped. Test: `grep -n '39 authored' SPEC.md` gives 0 hits, and each §12 claim has a verdict in `docs/SPEC-RECONCILE.md`. Spec PR only. — [#1282](https://github.com/cehinds/AshenSpire/pull/1282): 0 hits; stage 3 of SPEC-RECONCILE gives every §12 item a verdict, with P6 and P8b to-build.
 - [ ] **SPEC P8b: Powers hold a resting stance until the next turn** (SPEC §12.5, SPEC-RECONCILE stage 3 P8b, to-build). `resolveCombatPose` keeps only guard, shieldGuard and parry, and `combatPoseStates.json` has no Power pose. Test: `node -e "import('./src/model/combatPose.js').then(m=>console.log(m.resolveCombatPose({hp:1},'cast',[])))"` prints a Power resting pose instead of `idle` (it prints `idle` on `dev`), and a test asserts the pose holds until that character's next turn starts.
-- [ ] **COMBAT-EQUIPMENT-RULES prototype gate, and each class pool from 36 to 50 cards** (SPEC lines 17–32, rules §7). Test: COMBAT-WORKSHOP.md records the gate closed, and a card census shows 50 pool cards per class. *D3: possibly post-1.0.*
+- [ ] **COMBAT-EQUIPMENT-RULES prototype gate, and each class pool from 36 to 50 cards** (SPEC lines 17–32, rules §7). *Post-1.0 (D3, ruled 2026-09-26).* Test: SPEC marks it post-1.0.
 
 ## 2. Content
 
 - [x] Counts meet SPEC: 4 classes, 195 cards, 63 relics (≥40), 25 events (≥10), 7 flasks, 35 colorless, 20 regular enemies, 3 elites, 10 bosses (§12.4). `validateContent` 0 errors; `scripts.js` at 0.23% (<5%).
 - [x] **Stale content validators are fixed and gated**: `tools/rogue-parity.mjs` (27/30) and `tools/enemy-level-content.mjs` (3/6) read counts from the bundle, group by seat rather than the retired `act`, and run in the suite. Test: both exit 0 and a `*.test.mjs` runs each. — [#1276](https://github.com/cehinds/AshenSpire/pull/1276): rogue-parity 31/31, enemy-level-content 6/6, both run by `tests/content-validators.test.mjs`.
-- [ ] **More than one elite per seat**. Test: each seat has 2 or more `pool==='elite'` encounters and `validateContent` passes. *D4.*
+- [ ] **1–5 elites per seat, averaging 3** (D4, ruled 2026-09-26). Test: every seat has between 1 and 5 `pool==='elite'` encounters, the mean across seats is 3 (±0.5), and `validateContent` passes.
+
+- [ ] **Deck editor between runs** (owner spec 2026-09-26; built in its own session, SPEC PR first). Setting on by default; a dropdown picks Free or Rest sites only. Min deck size default 10 and a max, each with an unlimited flag. An optional "play in deck order" draw. Basic Strike/Defend unlimited; weapon arts and techniques limited to owned copies, which stack at the blacksmith with smith stones. Drag and drop on touch, mouse and gamepad. Test: the SPEC section exists, the editor enforces each setting in an engine test, and a browser check drags a card in and out at 390×844.
+- [ ] **Three shop types: shop, blacksmith, wise master** (owner spec 2026-09-26; same session). Every offering has configurable probabilities, and at least 2 features always appear. The wise master sells skill books, weapon arts and armaments for its 3–4 skills, offers training, and runs a respec: the skill drops to level 1 and 50–75% (configurable) of the spent experience is refunded. Test: an engine test per shop type over seeded rolls, plus the respec math.
+- [ ] **D11 design issues are in 1.0 scope** (ruled 2026-09-26). Each needs its own PR, SPEC first where a contract changes:
+  - [ ] [#845](https://github.com/cehinds/AshenSpire/issues/845) combat foundations and three-build prototypes (depends on spec PR #844).
+  - [ ] [#785](https://github.com/cehinds/AshenSpire/issues/785) painted character rigs with weapon grips (isolated preview first).
+  - [ ] [#239](https://github.com/cehinds/AshenSpire/issues/239) enemy abilities as deterministic action cards → [#240](https://github.com/cehinds/AshenSpire/issues/240) encounters by hidden combat-power budgets → [#241](https://github.com/cehinds/AshenSpire/issues/241) persist and sync those plans (in order; all depend on #237/#238).
+  - [ ] [#1026](https://github.com/cehinds/AshenSpire/issues/1026) world-atlas W4b bands, with no screen scroll at 1280×800 or 390×844.
+  - [ ] [#601](https://github.com/cehinds/AshenSpire/issues/601) bring Reaver, Starseer and Herald art in line with the rogue's motif.
 
 ## 3. Full run
 
@@ -57,7 +66,7 @@ the code, a test or a command run on that tree, not against a PR title.
 ## 4. Balance
 
 - [x] **A1: the simulators play by the live rules**. Test: `node tools/balance.mjs --check` exits 0; the class HP rows in BALANCE.md equal the live maxHp. — [#1270](https://github.com/cehinds/AshenSpire/pull/1270): `--check` exits 0 on `dev`; the rows are derived through the live door (Starseer 48, as #1284 states), and `tests/balance-doc.test.mjs` gates drift.
-- [~] **A2–A4: bring the classes into the target band** (plan §A). Test: `node tools/runsim.mjs 100` puts each class inside the accepted band (*D1*), with best minus worst ≤ 20 points. — A2 [#1284](https://github.com/cehinds/AshenSpire/pull/1284) and the lean A3 Dodge Roll rows [#1309](https://github.com/cehinds/AshenSpire/pull/1309) landed. #1309 measured `node tools/runsim.mjs 240 --seeded-seats`: Reaver 112, Starseer 104, Rogue 141, Herald 136 of 240 (46.7%, 43.3%, 58.8%, 56.7%; spread 15.4 points), inside D1's proposed 35–65% band. Left: A4 (hand rules) and the rest of A3 (Actions and draw breakpoints, starting pools) are not built, D1 is not yet accepted, and the line's own `runsim 100` has not been run on this tree.
+- [~] **A2–A4: bring the classes into the target band** (plan §A). *D1 (ruled 2026-09-26): no win-rate gate for 1.0; the owner tunes balance later, so every balance number must stay configurable.* Test: `node tools/runsim.mjs 100` runs clean for every class and the report lands in BALANCE.md; no pass band. — A2 [#1284](https://github.com/cehinds/AshenSpire/pull/1284) and the lean A3 Dodge Roll rows [#1309](https://github.com/cehinds/AshenSpire/pull/1309) landed. #1309 measured `node tools/runsim.mjs 240 --seeded-seats`: Reaver 112, Starseer 104, Rogue 141, Herald 136 of 240 (46.7%, 43.3%, 58.8%, 56.7%; spread 15.4 points), inside D1's proposed 35–65% band. Left: A4 (hand rules) and the rest of A3 (Actions and draw breakpoints, starting pools) are not built, and the line's own `runsim 100` has not been run on this tree.
 - [ ] **The Mana-aware A/B balance run** (SPEC §5.5.1, a release gate). Test: `node tools/runsim.mjs 50 --mana-ab` prints per-class win rate and Mana spent with Mana on and off, and the result lands in BALANCE.md.
 - [ ] **Seat-tier tolerance is stated** (SPEC §13 lines 1793–1795). Test: BALANCE.md states the tolerance, and the 300-seed per-tier runsim results fall within it.
 
@@ -144,19 +153,19 @@ the code, a test or a command run on that tree, not against a PR title.
 
 ## Owner decisions
 
-Proposals only. Nothing below is built until the owner rules.
+Ruled by the owner on 2026-09-26.
 
-- **D1 — Balance gate.** SPEC §9 asks for about 35–50% for an experienced player; the plan's bot band is 35–65% with a spread of 20 points or less. *Proposal:* gate on the bot band at ≥ 40 seeded runs per class, and treat the experienced-player range as the design aim.
-- **D2 — Guilt and Warrior's Vow.** Build the engine hooks (an in-hand turn-end trigger and a choose-one choice), or amend SPEC §5.2 to match what shipped. *Proposal:* build both. (Frostbite is already CUT in SPEC §4.4.) **Guilt is built** ([#1286](https://github.com/cehinds/AshenSpire/pull/1286)); Warrior's Vow is still open.
-- **D3 — COMBAT-EQUIPMENT-RULES** (the prototype gate and 50-card pools). *Proposal:* mark it post-1.0 in SPEC.
-- **D4 — Elites per seat.** Is 1 the v1 scope, or 2 or more? *Proposal:* 2 per seat.
-- **D5 — Web edition.** Ship Pages as external art with a service worker (installable, under 5 MB of HTML/JS), and keep the 254 MB file as a download (plan §D). *Proposal:* yes.
-- **D6 — Mobile certification device and profile.** Which phone reported the crash? *Proposal:* Chromium with 4× CPU throttle at 390×844 in CI, plus one physical iPhone in Safari before release.
-- **D7 — ci.yml trigger.** Its browser gates and 3-OS matrix only run when dispatched by hand. *Proposal:* run it on push to `release`, plus a hand-dispatched green on the RC SHA. (The push-to-`release` trigger shipped in [#1279](https://github.com/cehinds/AshenSpire/pull/1279); the RC run is §12's open line.)
-- **D8 — Storefronts.** Web only, or Steam/itch as well? This decides whether capsule art and store copy are needed.
-- **D9 — The tracker.** Close the ~35 stale agentops issues (#258–#273, #394–#465, #505, #564)? Keep #553 (the builds site deploys only when dispatched by hand) and decide whether it should deploy automatically.
-- **D10 — The receipt for #1263**, and whether squash merges count as PR merges for the receipts gate. *Proposal:* backfill it at the ordinal committed at its merge, and count squash merges.
-- **D11 — Design issues in 1.0 scope**: #845, #785, #239–#241, #1026, #601. *Proposal:* post-1.0.
+- **D1 — Balance gate.** No win-rate gate for 1.0. Keep every balance number highly configurable; the owner will tune balance later.
+- **D2 — Guilt and Warrior's Vow.** Build the engine hooks.
+- **D3 — COMBAT-EQUIPMENT-RULES.** Post-1.0. The owner added the deck editor and three shop types to 1.0 instead (§2).
+- **D4 — Elites per seat.** 1–5 per seat, averaging 3.
+- **D5 — Web edition.** Accepted: Pages with external art and a service worker, installable; the 254 MB file stays a download.
+- **D6 — Mobile certification device.** Undecided; use the proposal for now (Chromium, 4× CPU throttle at 390×844, plus one iPhone in Safari before release).
+- **D7 — ci.yml trigger.** Done: push to `release`, plus a dispatched run on the RC SHA.
+- **D8 — Storefronts.** Probably Steam, but this is a proof of concept. Web for now; no store art or copy yet.
+- **D9 — The tracker.** Close the stale agentops issues. Already done: the owner closed them on 2026-09-24. #553 stays open.
+- **D10 — The #1263 receipt and squash merges.** Done: #1263 was backfilled on 2026-09-24, and squash merges count (receipts gate, #1275).
+- **D11 — Design issues.** In 1.0 scope (§2): #845, #785, #239–#241, #1026, #601.
 
 ## Waves
 
