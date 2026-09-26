@@ -100,7 +100,7 @@ import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { openConfirmationModal } from './ui/components/confirmationModal.js';
 import { runIdentity } from './ui/models/ConfirmationReviewModel.js';
-import { openNewerSaveNotice, openReplaceSaveReview, openSaveSlotSelector, openSaveStatusReview, slotFacts } from './ui/components/saveSlotSelector.js';
+import { openNewerSaveNotice, openRefusedSaveNotice, openReplaceSaveReview, openSaveSlotSelector, openSaveStatusReview, slotFacts } from './ui/components/saveSlotSelector.js';
 import { loadOverRunReview } from './ui/models/ConfirmationReviewModel.js';
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
 import { mountStartupGate } from './ui/components/startupGate.js';
@@ -1227,15 +1227,31 @@ function refusedRunLanding(slot) {
   openNewerSaveNotice({ slot });
 }
 
-function resumeRun(slot = 1) {
+// THE LIVE RUN IS SWAPPED ONLY AFTER A LOAD SUCCEEDS. Both loadRun passes
+// land in a local; `run`, `activeSlot`, the Armoury tray and the registries
+// (rebuilt for the slot's own snapshot between the passes) are the climb in
+// hand until the second pass hands back a run. A refusal restores the
+// registries and calls `onRefused` — the title by default; the in-run Load
+// door passes its own, which keeps the run on screen (confirmSlotLoad).
+function resumeRun(slot = 1, { onRefused = refusedRunLanding } = {}) {
+  const liveRegistries = registries;
+  const refused = () => {
+    if (registries !== liveRegistries) {
+      registries = liveRegistries;
+      configureTooltipGlossary(registries);
+      setClassGlyphs(registries.classes.all());
+    }
+    return onRefused(slot);
+  };
+  const authoredRegistries = createRegistries(contentBundle);
+  let loaded = saves.loadRun(authoredRegistries, slot);
+  if (!loaded) return refused();
+  rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} });
+  loaded = saves.loadRun(registries, slot);
+  if (!loaded) return refused();
   resetArmouryTraySession();
   activeSlot = slot;
-  const authoredRegistries = createRegistries(contentBundle);
-  run = saves.loadRun(authoredRegistries, slot);
-  if (!run) return refusedRunLanding(slot);
-  rebuildRegistries(run.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} });
-  run = saves.loadRun(registries, slot);
-  if (!run) return refusedRunLanding(slot);
+  run = loaded;
   if (run.journey) syncWorldPosition();
   rng = createRng(run.seed, run.streamCounters);
   // A snapshot still carrying the retired ×20 Cinder key: the bundle above
@@ -1307,12 +1323,18 @@ function confirmSlotLoad(slot, { returnFocusElement } = {}) {
     tone: registries.framework.confirmationTone('action.loadSlot'),
     returnFocusElement,
     onConfirm: () => {
-      // AND AGAIN AT THE PRESS. Run saves share localStorage across tabs and
-      // this confirmation can stay open indefinitely, so a newer build in
-      // another tab can rewrite the slot after the check above passed.
-      if (saves.slotSummary(slot)?.newer) return openNewerSaveNotice({ slot, returnFocusElement });
       closeOverlay();
-      resumeRun(slot);
+      // AND AGAIN AT THE PRESS. Run saves share localStorage across tabs and
+      // this confirmation can stay open indefinitely, so another tab can
+      // rewrite the slot (a newer build), clear it or corrupt it after the
+      // check above passed; content validation and migration refuse only
+      // inside loadRun. resumeRun swaps the live run only after a successful
+      // load, so every refusal lands here, on the run still in hand.
+      resumeRun(slot, {
+        onRefused: () => (saves.runStatus().state === 'newer'
+          ? openNewerSaveNotice({ slot, returnFocusElement })
+          : openRefusedSaveNotice({ slot, returnFocusElement })),
+      });
     },
   });
 }
@@ -3104,6 +3126,16 @@ if (shotState === 'combat-test') {
       const aged = JSON.parse(bootStorage.getItem(runKey(slot)));
       bootStorage.setItem(runKey(slot), JSON.stringify({ ...aged, schemaVersion: aged.schemaVersion + 1 }));
     };
+  }
+  // `?shotRefusedSlot=<n>` — STAND BESIDE A CLIMB THIS BUILD REFUSES. Slot n
+  // gets slot 1's bytes with a seat order no registry holds: slotSummary
+  // parses it (the picker offers it as a climb), loadRun's content validation
+  // refuses and archives it (SPEC §3.12). Memory storage only, as above.
+  // tools/slot-load-door.mjs is the reader.
+  const shotRefusedSlot = Number(shotParams.get('shotRefusedSlot'));
+  if (Number.isInteger(shotRefusedSlot) && shotRefusedSlot > 1 && shotRefusedSlot <= SLOTS) {
+    const bytes = JSON.parse(bootStorage.getItem(runKey(1)));
+    bootStorage.setItem(runKey(shotRefusedSlot), JSON.stringify({ ...bytes, seatOrder: ['no-such-seat'] }));
   }
   if (shotState === 'combat' && shotParams.get('shotKit') === '1') {
     configureArmamentKitPreview(registries, run, shotParams.get('shotMainHand'), shotParams.get('shotOffHand'));

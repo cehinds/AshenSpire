@@ -588,6 +588,23 @@ export function saveSlotCopyHtml({ slot, summary }) {
  * fine, just from the future, so the one way on is to leave them be. There is
  * no confirm, only the way out; Delete stays the slot's own confirmed act.
  */
+/**
+ * openRefusedSaveNotice({ slot, returnFocusElement }) — the in-run Load door's
+ * landing when loadRun refuses a slot that is not newer (content validation,
+ * migration, or another tab cleared it): the live run was never swapped, and
+ * this says so. Nothing to confirm; the only way on is back to the climb.
+ */
+export function openRefusedSaveNotice({ slot, returnFocusElement = null }) {
+  openConfirmationModal({
+    title: t('save.refused.title'),
+    message: t('save.refused.message', { slot }),
+    cancelLabel: t('save.refused.close'),
+    confirmEnabled: false,
+    onConfirm: () => {},
+    returnFocusElement,
+  });
+}
+
 export function openNewerSaveNotice({ slot, returnFocusElement = null }) {
   openConfirmationModal({
     title: t('save.newer.title'),
