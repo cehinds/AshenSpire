@@ -2228,37 +2228,62 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 1. Content is data. The rules' defaults live in two new content files, `src/content/deckRules.js` and `src/content/shops.js`. `validateContent` refuses a malformed row by name.
 2. Each rule is configurable. Settings reads its default from that data, and a value the player picks is stored in the profile's `settings`, the one home §3.12 already gives.
 3. Reuse what exists. That means the merchant's `buildShopStock` and `ShopWorkspaceModel`, the smith's `smithingPlan`/`commitItemUpgrade`, `cardExtraction`, `cardMounts`, the location visit (§13.4j), `run.skills` (§13.4d), the plan/commit transactions of `armamentTrading.js`, and the save migration door. A second copy of any of them is a defect.
-4. New run state is additive. Each feature PR that adds a persisted field bumps `RUN_SCHEMA_VERSION` once, adds a `RUN_SHAPE` row, adds the default at `migrateRunSchema`, and appends one captured save of the new version to `tests/fixtures/run-save-schema-versions.json`. It never edits an existing entry. A missing field never archives a save.
+4. New run state is additive. Each feature PR that adds a persisted field bumps `RUN_SCHEMA_VERSION` once, adds a `RUN_SHAPE` row, adds the default at `migrateRunSchema`, and appends one captured save of the new version to `tests/fixtures/run-save-schema-versions.json`. It never edits an existing entry. A missing field never archives a save. The new fields, their defaults at the migration door, and the step (§14.6) whose PR adds them:
+
+| Field | Default for an older save | Step |
+|---|---|---|
+| `sideboard` | `[]` | 2 |
+| `editMintCounter` | `0` | 2 |
+| `equipmentGuardSlotCount`, `removedGuardSlotIds` | derived from the deck's guard instances, and `[]` (only if the guard plan needs them) | 2 |
+| shop `stock.kind`, `stock.offerings` | `'market'`, and today's shelves as offerings (read at the load door, with no reroll) | 4 |
+| `consumables` | `{}` | 5 |
+| `sigils`, `sigilSlots` | `[]`, `{}` | 5 |
+| `companions` | `[]` | 5 |
+| `smithingStonesRefined` | `0` | 6 |
+| atlas smith `serviceStates[pointId].stock` | absent, rolled on first entry | 6 |
+| `trainingPool` | `0` | 7 |
 
 ### 14.1 The deck editor
 
-**Settings.** These rows sit in a new Advanced group, **Deck**. Each default is `deckRules.defaults.<key>`.
+**Settings.** These rows sit in a new Advanced group, **Deck**. Each default is `deckRules.defaults.<key>`; the column below names the shipped value, which the data file owns. They are plain profile settings read live, like `shrineMultiUse` (Advanced → World), not `gameConfig.*` rows, so they are **not** copied into `run.advancedConfigSnapshot`: changing one applies to the next time the editor opens, and `playInDeckOrder` to the next combat created.
 
-| Key | Type | Default | Meaning |
+| Key | Type | Shipped default | Meaning |
 |---|---|---|---|
 | `deckEditing` | bool | on | The editor exists at all. When it is off, no door opens it, and the deck changes only through today's paths: rewards, removal, and the Armoury. |
 | `deckEditingWhere` | choice (dropdown) `free` \| `restOnly` | `free` | **Free** opens the editor from the map's Quick Access and from the Armoury at any moment out of combat, including right after character creation and before the first node. **Rest sites only** offers it only as an option card on the Rest screen of a place whose tag set carries the new `deckEdit` service tag. `deckEdit` is a service marker like `smith`, with no rule. `tagging.csv` gives it to **shrine**, **inn** and **chapel**, and not to camp. |
 | `deckMinSize` | number ≥ 0 | 10 | The fewest cards the editor lets you confirm. |
-| `deckMinUnlimited` | bool | off | When on, there is no minimum and `deckMinSize` is ignored. The row is shown disabled. |
+| `deckMinUnlimited` | bool | off | When on, there is no minimum and `deckMinSize` is ignored; the `deckMinSize` row is shown disabled. |
 | `deckMaxSize` | number ≥ 1 | `deckRules.defaults.deckMaxSize` | The most cards the editor lets you confirm. A max below the effective min is refused in Settings by name. |
-| `deckMaxUnlimited` | bool | on | When on, there is no maximum. |
+| `deckMaxUnlimited` | bool | on | When on, there is no maximum; the `deckMaxSize` row is shown disabled. |
 | `playInDeckOrder` | bool | off | The draw pile is not shuffled (below). |
 
 **The collection is what the run owns plus the unlimited basics.**
 
-- **Unlimited cards.** These are the ids in `deckRules.unlimitedCardIds`, shipped as `['strike', 'defend']`. They show a count of ∞. Adding one mints a fresh ordinary instance (`createCardInstance`, `instanceId` of the form `edit:<n>`, where n comes from a run counter). Removing one deletes the instance, because there is nothing to keep.
+- **Unlimited basics are matched by role, not by `cardId`.** On an equipped run a starting Strike is an attack-slot instance (`equipmentRole: 'attack'`, `equipmentAttackSlotId`) whose `cardId` is the weapon's face, and a Defend is a guard instance (`equipmentRole: 'guard'`); `stampDeck` re-derives both from the slot plan (§3.8 "no re-minting of base cards mid-run", §13.4b). The editor keeps that model instead of minting bare cards:
+  - **Removing a basic retires its slot**, through the same retirement `removeDeckCard` uses (`removedAttackSlotIds`), and the instance is kept in `run.sideboard`.
+  - **Adding a basic first un-retires** a retired slot (its sideboarded instance returns). When none is retired, it **grows the allocation**: `equipmentAttackSlotCount` rises by one and the next `stampDeck` stamps slot `attack:<count>` with the weapon's current face and modifiers, exactly as it stamps a born slot. So a basic is unlimited, but never a bare card outside the plan.
+  - **Guard basics** follow the same rule through a guard allocation. The step-2 PR adds `equipmentGuardSlotCount` and `removedGuardSlotIds`, mirroring the attack pair, if the guard plan has no slot allocation today, with the same schema rule as every other new field (table below).
+  - A run with no equipment (a pre-equipment save the load door heals, §3.12) has plain `strike` and `defend` instances. For those, `deckRules.unlimitedCardIds` (shipped `['strike', 'defend']`) names the unlimited ids, and adding one mints a plain instance, `instanceId` `edit:<n>`, where n is the run counter `run.editMintCounter`.
+  - Every basic shows a count of ∞.
 - **Every other card is limited to the copies the run owns.** A run owns the instances in `run.deck` plus those in the new **`run.sideboard`**, a `CardInstance[]` holding owned cards that are out of the deck. This covers weapon arts bought or extracted, skill-draft cards (§13.4e, the "techniques" earned by levelling), class-tree cards, and reward cards. Removing one in the editor moves the instance, with its `upgraded`, `mods` and every other field, to `run.sideboard`. Adding one moves it back. The editor never mints or destroys a limited card. The collection tile reads "N owned · M in deck" and greys out when M = N.
+- **Owned means deck ∪ sideboard everywhere.** Every existing reader that answers "which cards does the run own" reads both piles:
+  - `projectZones`, so `run.collection` includes sideboard cards (§13.4a);
+  - `cardExtraction`'s installable-card list, so a sideboarded art can be installed;
+  - `applySkillUpgrades` and `reconcileSkillUpgrades`, so the standing upgrade rule of §13.4e reaches sideboard cards.
+  Combat reads only `run.deck`.
 - **Item-owned cards stay locked.** A card with `grantedBy` or `isItemOwned` (§13.4b) is shown in the deck list with a lock and its piece's name. The editor cannot remove it, and it counts toward the size rules. The Armoury, not the editor, decides these cards.
 - **The shop's Remove service** (today's `removeDeckCard`) still destroys a card and does not sideboard it. That is the paid, permanent removal it has always been.
 
-**Size rules.** `effectiveMin = deckMinUnlimited ? 0 : deckMinSize` and `effectiveMax = deckMaxUnlimited ? ∞ : deckMaxSize`. `deckEditRefusal(run, settings, draft)` returns `''` when `effectiveMin ≤ draft.length ≤ effectiveMax`. Otherwise it returns one sentence that names the count and the bound it breaks, for example "Your deck has 8 cards; it needs at least 10." **Done** is disabled with that sentence shown as visible text beside it (FINISH §6), never only as a colour. **Cancel** restores the deck and sideboard as they were when the editor opened, instance for instance. The editor's rule is independent of the Armoury floor of §13.4b (`deckMinimum`), which still governs leaving the Armoury. The two are separate settings so the owner can compare them, and FINISH's Owner decisions list records whether to fold them together.
+**Size rules.** `effectiveMin = deckMinUnlimited ? 0 : deckMinSize` and `effectiveMax = deckMaxUnlimited ? ∞ : deckMaxSize`. `deckEditRefusal(run, settings, draft)` returns `''` when `effectiveMin ≤ draft.length ≤ effectiveMax`. Otherwise it returns one sentence that names the count and the bound it breaks, for example "Your deck has 8 cards; it needs at least 10." **Done** is disabled with that sentence shown as visible text beside it (FINISH §6), never only as a colour. **Cancel** restores the deck and sideboard as they were when the editor opened, instance for instance. The bounds are checked **only when the editor confirms**. A reward, a purchase or an equipment swap may leave the deck outside them, and the next editor visit then shows the refusal until the deck is brought back inside. The editor's rule is independent of the Armoury floor of §13.4b (`deckMinimum`), which still governs leaving the Armoury. The two are separate settings so the owner can compare them, and FINISH's Owner decisions list records whether to fold them together.
 
 **Play in deck order.** While `playInDeckOrder` is on, the editor's deck list is one row per instance and has a reorder handle. `run.deck`'s array order is the arrangement, so no new field is needed.
 - `createCombat` builds the draw pile in `run.deck` order in place of `rng.shuffle('shuffle', deck)`. The draw pile is drawn from the top, so the first card in the list is drawn first. Innate cards still go to the top, keeping their relative order.
-- When the draw pile empties, `drawCards` returns the discard pile ordered by each instance's index in `run.deck`. Cards that are not in the deck, meaning ones created in combat, follow in the order they were discarded.
-- No `shuffle`-stream value is consumed while the setting is on. A seed played with it off is unchanged.
-- Card effects that say "shuffle" still shuffle. The setting governs only the start of combat and the empty-pile return.
+- When the draw pile empties, `drawCards` takes its **own ordered path**. It does not call `reshuffleDiscardIntoDraw`, which the `shuffleDiscardIntoDraw` effect also uses. It returns the discard pile ordered by each instance's index in `run.deck`. Cards that are not in the deck, meaning ones created in combat, follow in the order they were discarded.
+- Combat start and the empty-pile return consume **no** `shuffle`-stream value while the setting is on. A seed played with it off is unchanged.
+- Card effects that shuffle still draw on that stream, as they do today: the `shuffleDiscardIntoDraw` effect, and `addCard`'s random position. The setting governs only the start of combat and the empty-pile return.
 - The setting is read once at combat creation and carried on the combat as `orderedDraw`, so a saved fight resumes under the rule it started with.
+  - A combat snapshot without the field restores as `orderedDraw: false`.
+  - The co-op path (`coopCombat.js`) reads each seat's owner's setting when it builds that seat's pile, and carries it per seat.
 
 **UX.** The component is `DeckEditorModel` plus `mountDeckEditor`, with an entry in `docs/component-catalog.html`.
 - **Layout.** The collection pane is on the left (top on a portrait phone) and the deck pane is on the right (bottom).
@@ -2270,8 +2295,10 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 
 *Falsify:*
 - With defaults, a fresh run's map Quick Access offers **Deck**. With `restOnly` it does not, and the shrine's Rest screen does while the camp's does not.
-- Removing a weapon art moves the same instance to `run.sideboard` with its fields, and re-adding it moves it back. A second copy cannot be added when one is owned.
-- Adding 5 Strikes mints 5 fresh instances, and removing them leaves no trace.
+- Removing a weapon art moves the same instance to `run.sideboard` with its fields, and re-adding it moves it back. A further copy cannot be added when every owned copy is already in the deck.
+- The sideboarded art appears in `run.collection` and in the smith's installable list.
+- Removing an equipped Strike retires its slot and sideboards it, and adding a Strike un-retires that slot first.
+- With no slot retired, adding a Strike raises `equipmentAttackSlotCount` by one, and the next `stampDeck` stamps it with the weapon's face without throwing.
 - A 9-card draft is refused under min 10 with a sentence naming 9 and 10, and is allowed with `deckMinUnlimited`.
 - A granted card cannot be removed.
 - Cancel restores both piles exactly.
@@ -2283,13 +2310,21 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 
 A shop has a **kind**, one of `market` (the usual shop), `blacksmith` and `master`. `shops.js` authors each kind as a list of **offerings**: `{ id, chance, weight, ...offering-specific stock and price keys }`. It also authors `guaranteedMinimum` per kind.
 
-**The visit roll.** A visit rolls, once and on the `shop` stream, `chance` (0–100) for each offering in authored order. A chance of 100 rolls nothing, as in §3.8's smith table, and 0 means never. When fewer than `guaranteedMinimum` offerings came up, the missing ones with the highest `weight` are added in authored order until the minimum is met, consuming no further randomness. `guaranteedMinimum` is at least 2, and `validateContent` and Settings refuse a lower value by name. It is at most the number of enabled offerings. The rolled offering list and each offering's stock persist on the visit exactly as `run.shopStock` and `serviceStates[pointId].stock` do today, so a reload neither rerolls a shelf nor restores sold stock (§12.2).
+**The visit roll uses a new stream, `shopOffers`** (added to `rng.js` beside `smith`, `armaments` and `seats`). The roll never draws on `shop`, so today's shelves keep every value they roll on a seed.
+- A visit rolls, once and in authored order, `chance` (0–100) for each **enabled** offering, on `shopOffers`.
+- `chance` is the odds of appearing **by the roll**. A chance of 100 rolls nothing, and 0 never comes up by the roll. A chance-0 offering is still eligible for the guarantee.
+- Only **disabled** offerings never appear.
+- When fewer than `guaranteedMinimum` offerings came up, the missing enabled ones with the highest `weight` are added, in authored order, until the minimum is met. This consumes no further randomness.
+- `guaranteedMinimum` is at least 2, and `validateContent` and Settings refuse a lower value by name. Settings also refuses disabling an offering when that would leave fewer enabled offerings than the kind's `guaranteedMinimum`, again by name.
+- The **stock** of each new offering (stones, sigils, books…) rolls on `shopOffers` after the offering roll. The stock of today's shelves still rolls on `shop` exactly as `buildShopStock` does now. The rolled offering list and each offering's stock persist on the visit exactly as `run.shopStock` and `serviceStates[pointId].stock` do today, so a reload neither rerolls a shelf nor restores sold stock (§12.2).
 
-**Settings, Advanced → Shops.** For each kind there is a `guaranteedMinimum` number, and for each offering an **enabled** bool and a **chance** number. These are generated from `shops.js` the way `advancedConfigRows` generates the balance rows, so adding an offering to the data adds its rows. A disabled offering is never rolled and never guaranteed.
+**Settings, Advanced → Shops.** For each kind there is a `guaranteedMinimum` number, and for each offering an **enabled** bool and a **chance** number. These are generated from `shops.js` the way `advancedConfigRows` generates the balance rows, so adding an offering to the data adds its rows. They are `gameConfig.shops.<kind>.<offering>.enabled|chance` and `gameConfig.shops.<kind>.guaranteedMinimum`, and like every `gameConfig.*` row they are **frozen into `run.advancedConfigSnapshot` when a run begins**. A disabled offering is never rolled and never guaranteed.
 
 **Where each kind appears.**
-- A classic `merchant` node rolls its kind from `shops.kindWeights` on the `shop` stream (shipped weights favour `market`).
-- The atlas `shop` service is a `market`, the atlas `smith` service is a `blacksmith`, and a new atlas service type `master` ("Wise master") is a `master`.
+- **Classic `merchant` node.** It rolls its kind from `gameConfig.shops.kindWeights` on `shopOffers`. The shipped weights are `market` 100, `blacksmith` 0 and `master` 0, so shipped seeds are unchanged; the owner raises the other two to let a classic merchant be a blacksmith or a master. A merchant that rolls `blacksmith` or `master` offers that kind's offerings only, not market shelves.
+- **Atlas services.** The atlas `shop` service is a `market`, and the atlas `smith` service is a `blacksmith`. It gains a persisted `serviceStates[pointId].stock`, which it lacks today.
+- **The wise master** is a new atlas service type, `master`, with its own `handlerId` in `worldAtlas.json` `service_types`, and a branch in `main.js`'s service dispatch, which throws on an unknown handler today.
+- **The smith services that exist today stay where they are.** These are the shrine's `smith` tag and a merchant's rolled smith add-on (`smithServicesAt`, §3.8). Both keep opening today's upgrade, extract and install services, and neither becomes a blacksmith. The blacksmith kind is a superset reached only through its own doors.
 - The kind rides the persisted stock as `stock.kind`. A pre-§14 stock without `kind` is read as `market` with today's shelves, and nothing is rerolled.
 
 All prices are in cinders unless stated otherwise, and all are data.
@@ -2306,18 +2341,27 @@ These offerings extend `buildShopStock`. The existing shelves become offerings w
 | `armour` | Body, head, hands and feet pieces | Same transaction as armaments, filtered to the worn slots (§13.4b). |
 | `cards`, `weaponArts`, `remove` | As today | Unchanged. |
 | `smithStones` | Smithing Stones | Priced per stone, with a per-visit stock. Adds to `run.smithingStones`. |
-| `runes` | Runes (new item kind) | See **Runes** below. |
-| `innRest` | A full rest | Offered only when the shop stands at a place tagged `inn`, or when its chance rolls. Buying it runs `restAt` for the visit with the `restHpFull, restManaFull` tags on the run's own streams (§13.4j), once per visit. |
+| `sigils` | Sigils (new item kind, the brief's "runes") | See **Sigils** below. |
+| `innRest` | A full rest | Always offered when the shop stands at an atlas point whose town has an inn, and otherwise when its chance rolls. Buying it runs `createLocationVisit(ctx, 'inn')`, then `restAt`, then `leaveLocation`, on the run's own streams (§13.4j), so the inn's own tag set decides what it restores. It can be bought once per visit, and a relic's `restDenied` refuses it by name, as it refuses the inn's bed. |
 | `skillBooks` | Skill books (new consumable) | See **Consumables**. |
 | `reviveTokens` | Revive tokens (new consumable) | Rare by default chance. |
 | `questEvent` | One random event | An event from the `events.js` pool the run has not seen, run through the existing event door. Entering it closes the shop visit. |
 | `companions` | Temporary companions | See **Companions**. |
 
-**Runes** are a new content collection, `src/content/runes.js`: `{ id, name, rarity, cost, triggers | modifiers }`, the same `{on, if?, do}` DSL relics use. Nothing new is added to the engine vocabulary. A rune works only while it is **installed in a rune slot** of an equipped armament. Owned, uninstalled runes live in **`run.runes: string[]`**. Slots live in **`run.runeSlots: { [itemRef]: (runeId|null)[] }`**, keyed like `itemMounts`. Selling or unequipping the piece keeps the record, as §12.2 keeps mounts. An armament has `runeSlots.base` slots from data (0 by default), and the blacksmith sells more.
+**Sigils** are the brief's "runes". They are renamed because "runes" is already this spec's pre-scrub word for the currency (`addRunes`, `runeGainMult`); the currency is cinders. They are a new content collection, `src/content/sigils.js`: `{ id, name, rarity, cost, triggers | modifiers }`, in the same `{on, if?, do}` DSL relics use, so nothing is added to the engine vocabulary.
+- A sigil works only while it is **installed in a sigil slot** of an equipped armament.
+- Owned, uninstalled sigils live in **`run.sigils: string[]`**.
+- Slots live in **`run.sigilSlots: { [itemRef]: (sigilId|null)[] }`**, keyed like `itemMounts`.
+- Selling or unequipping the piece keeps the record, as §12.2 keeps mounts.
+- An armament has `sigilSlots.base` slots from data (0 by default), and the blacksmith sells more.
+- Sigil slots are **not** card mounts. `equipment.cardMounts.extraMounts`, the seam §3.8 reserves, still adds card mounts and stays off. A sigil holds triggers, not a card.
 
 **Consumables** are **`run.consumables: { [consumableId]: count }`**, authored in `src/content/consumables.js` as `{ id, kind, cost, sellValue, ...}`.
 - A **skill book** has `kind: 'skillBook'` and `{ skill, xp }`. Using it outside combat calls `awardSkillXp` for its track (§13.4d is the one writer). Its `sellValue` is high by default, which makes it a store of trade value.
-- A **revive token** has `kind: 'revive'` and `{ hpPct }`. When the player would drop to 0 HP in combat, one token is spent and HP is set to `hpPct` of max. This is a new `wouldDie` check at the existing death point, emitted as an event and recorded in the combat log so a saved fight replays it.
+- **Selling.** Any consumable can be sold at a market or master for its `sellValue`, through a new **Sell consumables** shelf beside the armament sale of §12.2. That shelf uses the same plan/commit pair and the same stale-quote refusal. The price is never above the buy price, so buying and immediately selling can never turn a profit.
+- A **revive token** has `kind: 'revive'` and `{ hpPct }`. When the player would drop to 0 HP in combat, one token is spent and HP is set to `hpPct` of max.
+  - No death-prevention hook exists today. The step-5 PR adds one at the player's death point, and a new event, **`reviveSpent`**, in `EVENTS` (`model/schemas.js`).
+  - The event is recorded in the combat log, so a saved fight replays it.
 
 **Companions** are authored in `src/content/companions.js` as `{ id, name, cost, combats, triggers }`, with relic DSL triggers and no AI seat in v1. They are held in **`run.companions: [{ id, combatsLeft }]`**. A companion's triggers mount at combat start like a relic's. `combatsLeft` drops by one at each combat end, and the companion leaves at 0. It is shown as an ally portrait beside the player.
 
@@ -2331,8 +2375,8 @@ The blacksmith is a screen of its own, reusing `SmithSelectionModel` and the smi
 | `upgrade` | Item tier upgrade | `smithingPlan` / `commitItemUpgrade` |
 | `smithStones` | Buy stones | as the market |
 | `refineStones` | Upgrade smithing stones: `refine.from` ordinary stones plus cinders make one **refined stone** (`run.smithingStonesRefined`), which pays `refine.value` stones toward any upgrade | `smithingPlan` accepts either purse |
-| `runeSlots` | Buy and install a rune slot on an owned armament, up to `runeSlots.max` | `run.runeSlots` |
-| `runes` | Install and remove runes in slots (removal is free, and the rune returns to `run.runes`) | — |
+| `sigilSlots` | Buy and install a sigil slot on an owned armament, up to `sigilSlots.max` | `run.sigilSlots` |
+| `sigils` | Install and remove sigils in slots (removal is free, and the sigil returns to `run.sigils`) | — |
 | `extractArt` / `installArt` | Extract and install weapon arts | `cardExtraction` |
 | `upgradeArt` | Upgrade a loose weapon-art card (sets `upgraded`), priced in stones | — |
 | `stackCopy` | **Stack a copy**: one more instance of an owned, limited, loose card (a weapon art or a technique, never item-owned, never an unlimited basic) goes to `run.sideboard`, priced `stack.stones` plus `stack.cinders`, each rising by `stack.stepPerOwned` per copy already owned | the deck editor's ownership rule (§14.1) |
@@ -2345,11 +2389,14 @@ The blacksmith is a screen of its own, reusing `SmithSelectionModel` and the smi
 
 ### 14.5 The wise master
 
-Masters are authored in `shops.js` under `masters: [{ id, name, speakerId, skills: [3 or 4 track ids] }]`. `validateContent` refuses fewer than 3 or more than 4 skills, or an id that `skillTracks` does not derive, by name. A master visit picks one master on the `shop` stream.
+Masters are authored in `shops.js` under `masters: [{ id, name, speakerId, skills: [3 or 4 track ids] }]`. `validateContent` refuses, by name:
+- fewer than 3 or more than 4 skills;
+- an id that `skillTracks` does not derive;
+- a track that is not a weapon, focus or `dualWield` track. Armour tracks have no item type or schools, and a `class:` respec would strand the class-tree picks of §13.4g. A master visit picks one master on the `shop` stream.
 
 | Offering | What it does |
 |---|---|
-| `skillBooks`, `weaponArts`, `armaments` | Stock filtered to the master's skills: books whose `skill` is one of them, arts whose schools (§13.4e `skillSchools`) meet them, and armaments whose item type is one of them. |
+| `skillBooks`, `weaponArts`, `armaments` | Stock filtered to the master's skills: books whose `skill` is one of them; armaments whose item type is one of them; and arts that the item types of those tracks carry, read from `weaponArtDefaults` across every armament of the type. The art shelf does **not** go through `skillSchools`, which reads the pieces held now, so the shelf does not depend on the current loadout. |
 | `training` | Pay `training.cinders` for `training.xp` XP on one of the master's tracks through `awardSkillXp`, up to `training.perVisit` times. |
 | `respec` | See below. |
 | `lesson` (added) | Buy one skill draft (§13.4e) for one of the master's tracks at the reward door's own roll, for cinders, without levelling. It reuses `rollSkillDraftIds`. |
@@ -2359,15 +2406,17 @@ Masters are authored in `shops.js` under `masters: [{ id, name, speakerId, skill
 **Respec.** Pick one track at level 2 or higher. The master quotes `respec.cost.base + respec.cost.perLevel × level` cinders.
 - On commit, the track's `level` becomes **1, not 0**, and `xp` becomes 0.
 - `pendingDrafts` drops by the levels lost, floored at 0.
-- The XP spent above level 1 (the sum of `xpToNext` over the levels removed, plus the row's `xp`) is refunded at **`respecRefundPct`**, a Settings number clamped to 50–75, with its default in `shops.js`. The refund goes into the new **`run.trainingPool: number`**, which the player spends through `redistribute` on other tracks, through `awardSkillXp`.
+- **The refund.** For a track at level L with row XP x, the XP spent above level 1 is spent = Σ_{l=1}^{L−1} `xpToNext(kind, l)` + x. The refund is `floor((respecRefundPct / 100) × spent)`.
+- **`respecRefundPct`** is a whole percentage, `gameConfig.shops.master.respecRefundPct`, frozen per run like every `gameConfig.*` row. It is clamped to 50–75, and its default is in `shops.js`.
+- The refund goes into the new **`run.trainingPool: number`**. The player spends it through `redistribute` on other tracks, and every point goes through `awardSkillXp`.
 - Cards already drafted, and deck upgrades already applied by `applySkillUpgrades`, stay. The price is the check against that, and FINISH's Owner decisions list records whether a respec should also withdraw them.
 - The respec is atomic. A refusal (level below 2, too few cinders, a stale quote) changes nothing.
 
 *Falsify:*
-- A level-4 track respecs to level 1 with xp 0, and the pool gains `floor(pct × spent)`.
+- A level-4 track respecs to level 1 with xp 0, and the pool gains `floor((respecRefundPct / 100) × spent)`. With 60, a track that spent 500 XP adds 300.
 - A level-1 track is refused by name.
 - `respecRefundPct: 80` clamps to 75.
-- A master authored with 2 skills is refused by name.
+- A master authored with 2 skills, or with an armour or `class:` track, is refused by name.
 - The pool spent on another track levels it through the one writer.
 
 ### 14.6 Build order
@@ -2378,8 +2427,8 @@ Each item is one PR into `dev`, test-first, with a receipt, and a screenshot and
 2. **The deck rules engine and settings.** It adds `deckRules.js`, the Deck settings group, `run.sideboard` (a schema bump), `deckEditRefusal`, and ordered draw in `createCombat`/`drawCards`. It has no UI beyond the settings rows.
 3. **The deck editor UI.** It adds `DeckEditorModel`, `mountDeckEditor`, the Quick Access and Rest doors, the `deckEdit` tag, and drag, tap and gamepad input.
 4. **The shop-kind framework.** It adds `shops.js`, the offering roll with the guaranteed minimum, the Shops settings group, `stock.kind`, and the existing shelves re-expressed as offerings, with seeds byte-identical.
-5. **The market additions.** It adds the smith-stone shelf, armour, and inn rest, then consumables (skill books and revive tokens), runes (inventory only), the quest event and companions. Each is its own PR if it grows past one review.
-6. **The blacksmith screen.** It adds refining, rune slots and rune install, art upgrade, and stack copy.
+5. **The market additions.** It adds the smith-stone shelf, armour, and inn rest, then consumables (skill books and revive tokens), sigils (inventory only), the quest event and companions. Each is its own PR if it grows past one review.
+6. **The blacksmith screen.** It adds refining, sigil slots and sigil install, art upgrade, and stack copy.
 7. **The wise master.** It adds masters data, the atlas service type, training, respec with the training pool, lesson, appraisal and redistribute.
 
 ### 14.7 Deck-editor research — what we adopt, and why
