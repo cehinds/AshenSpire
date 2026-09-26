@@ -156,6 +156,7 @@ reward.progress.classTrack,,{class} mastery,Your class track — its levels are 
 reward.progress.level,,Lv {level},,
 reward.progress.next,,Lv. {level},,
 reward.progress.gained,,Gained: {xp} xp,What this fight paid into this track.,
+reward.progress.discarded,,{xp} xp lost to the level cap,"{xp} XP went past the most levels one fight can give, and was lost.",
 reward.progress.xp,,{xp} / {next} XP,{xp} of {next} XP toward level {level}.,
 reward.progress.capped,,Max,This track has reached its ceiling; XP still banks.,
 reward.progress.more,,+{count} other skill{plural},Tracks the panel does not list.,

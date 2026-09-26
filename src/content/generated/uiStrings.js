@@ -871,6 +871,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.progress.discarded",
+    "extends": "",
+    "short": "{xp} xp lost to the level cap",
+    "full": "{xp} XP went past the most levels one fight can give, and was lost.",
+    "tip": ""
+  },
+  {
     "id": "reward.progress.xp",
     "extends": "",
     "short": "{xp} / {next} XP",

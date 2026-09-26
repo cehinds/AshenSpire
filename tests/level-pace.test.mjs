@@ -199,3 +199,40 @@ test('§15.2: a profile setting the preview reads redraws it when edited', async
   const commit = source.slice(source.indexOf('const commit = (raw) => {'), source.indexOf('// change/blur, NEVER per keystroke'));
   assert.match(commit, /if \(LEVEL_PACE_PROFILE_KEYS\.includes\(key\)\) refreshStatsPreviews\(\);/);
 });
+
+// Codex on #1349: with the cap discarding XP, the award still reported the
+// full amount and the spoils receipt read "Gained: 215 xp" with no word of the
+// loss. The award now returns what it discarded, the receipt carries it, and
+// the door says how much the cap threw away.
+test('§15.2: the spoils receipt says how much XP the level cap discarded', async () => {
+  const { combatXpGains, rewardProgress } = await import('../src/model/rewardprogress.js');
+  const { mountRewards } = await import('../src/ui/screens/reward.js');
+  const { rewardDom } = await import('./helpers/reward-dom.mjs');
+  const reg = withCap(1);
+  const run = { class: 'reaver', cinders: 0, deck: [], flasks: [], relics: [], coreTags: [], loadout: { storage: [] }, level: emptyLevel(), skills: {} };
+  const award = awardLevelXp(reg, run, 215);
+  assert.equal(award.gained, 215, 'what the fight paid');
+  assert.equal(award.discarded, 215 - xpToNext(reg, 1) - (xpToNext(reg, 2) - 1), 'what the cap threw away');
+  assert.equal(award.gained - award.discarded, xpToNext(reg, 1) + run.level.xp, 'paid = spent on the level + kept + discarded');
+  // Uncapped, nothing is discarded and the receipt keeps its old shape.
+  assert.equal(awardLevelXp(REG, { level: emptyLevel() }, 215).discarded, 0);
+  assert.deepEqual(combatXpGains({ levelGained: 215 }), { level: 215, tracks: {} });
+  const gains = combatXpGains({ levelGained: award.gained, levelDiscarded: award.discarded });
+  assert.deepEqual(gains, { level: 215, levelDiscarded: award.discarded, tracks: {} });
+  assert.equal(rewardProgress(reg, run, gains).character.discarded, award.discarded);
+  // The door.
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main');
+    document.body.append(app);
+    mountRewards(app, { registries: reg, run, onDone() {}, rewards: { cinders: 10, xpGains: gains } });
+    const row = app.querySelector('.reward-progress-row');
+    const text = (cls) => row.children.find((child) => child.className.includes(cls))?.textContent;
+    assert.equal(text('rp-gain'), 'Gained: 215 xp');
+    assert.equal(text('rp-discarded'), `${award.discarded} xp lost to the level cap`);
+  } finally {
+    Object.assign(globalThis, saved);
+  }
+});

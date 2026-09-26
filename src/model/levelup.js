@@ -106,7 +106,7 @@ function pointsFor(registries, pointsPerLevel) {
 }
 
 /**
- * climbLevels(registries, { level, xp, gain }) → { level, xp, levelUps, capped, cappedBy }
+ * climbLevels(registries, { level, xp, gain }) → { level, xp, levelUps, capped, cappedBy, discarded }
  * — THE CLIMB, pure: `gain` XP added to a ledger at `level` with `xp` banked,
  * stepping up the curve while the XP pays for the next step. Two ceilings stop
  * it, both read off `registries.balance`:
@@ -117,7 +117,8 @@ function pointsFor(registries, pointsPerLevel) {
  *     most one XP short of the next step and a progress bar never reads past
  *     full.
  * `capped` says a ceiling, not the XP, stopped the climb, and `cappedBy`
- * which: 'level' (maxLevels) or 'fight' (maxLevelsPerFight). `awardLevelXp`
+ * which: 'level' (maxLevels) or 'fight' (maxLevelsPerFight). `discarded` is
+ * the XP the per-fight cap threw away (0 otherwise). `awardLevelXp`
  * writes this to the run; `levelPace` reads it for the Levelling preview, so
  * the preview cannot describe a climb play does not make.
  */
@@ -130,14 +131,15 @@ export function climbLevels(registries, { level = 1, xp = 0, gain = 0 } = {}) {
   let bank = (Number.isFinite(xp) ? xp : 0) + (Number.isFinite(gain) ? Math.max(0, Math.floor(gain)) : 0);
   let cost = xpToNext(registries, lv);
   let cappedBy = null;
+  let discarded = 0;
   while (bank >= cost) {
     if (ceiling !== null && lv >= ceiling) { cappedBy = 'level'; break; }
-    if (perAward !== null && lv - start >= perAward) { cappedBy = 'fight'; bank = cost - 1; break; }
+    if (perAward !== null && lv - start >= perAward) { cappedBy = 'fight'; discarded = bank - (cost - 1); bank = cost - 1; break; }
     bank -= cost;
     lv += 1;
     cost = xpToNext(registries, lv);
   }
-  return { level: lv, xp: bank, levelUps: lv - start, capped: cappedBy !== null, cappedBy };
+  return { level: lv, xp: bank, levelUps: lv - start, capped: cappedBy !== null, cappedBy, discarded };
 }
 
 /** The fights the preview prices: a normal fight of three kills (SPEC §15.2),
@@ -199,15 +201,17 @@ export function levelPace(registries, { pointsPerLevel = null } = {}) {
 
 /**
  * awardLevelXp(registries, run, amount, { pointsPerLevel }) → { before,
- * after, levelUps, points, thresholds, gained } — writes the ledger and climbs as
+ * after, levelUps, points, thresholds, gained, discarded } — writes the ledger and climbs as
  * many steps as the XP buys (`climbLevels`, the climb the Levelling preview
  * reads), each step granting `pointsPerLevel` points to `unspentPoints` (the
  * caller resolves the player's dial; omitted, the content default). A step
  * that crosses a `perLevel` threshold re-derives the pools from the run's own
  * snapshot, the deficit carried. `maxLevels` (balance.levelUp) caps the run's
  * level, the XP past it staying on the ledger; `maxLevelsPerFight`
- * (balance.level) caps one award's climb, the XP past it discarded. A
- * non-positive or non-finite amount writes nothing.
+ * (balance.level) caps one award's climb, the XP past it discarded.
+ * `gained` is what the award paid; `discarded` is how much of it the
+ * per-fight cap threw away, so the spoils receipt can say both (Codex, #1349).
+ * A non-positive or non-finite amount writes nothing.
  */
 export function awardLevelXp(registries, run, amount, { pointsPerLevel = null } = {}) {
   if (!run) throw new Error('awardLevelXp: no run');
@@ -215,7 +219,7 @@ export function awardLevelXp(registries, run, amount, { pointsPerLevel = null } 
   const row = run.level;
   const before = row.level;
   const gain = Number.isFinite(amount) ? Math.floor(amount) : 0;
-  if (gain <= 0) return { before, after: before, levelUps: 0, points: 0, thresholds: 0, gained: 0 };
+  if (gain <= 0) return { before, after: before, levelUps: 0, points: 0, thresholds: 0, gained: 0, discarded: 0 };
   const perLevel = pointsFor(registries, pointsPerLevel);
   const climb = climbLevels(registries, { level: row.level, xp: row.xp, gain });
   const levelUps = climb.levelUps;
@@ -232,10 +236,10 @@ export function awardLevelXp(registries, run, amount, { pointsPerLevel = null } 
       field: 'level',
       was: { level: before, unspentPoints: row.unspentPoints - points },
       now: { level: row.level, unspentPoints: row.unspentPoints },
-      why: `${gain} XP paid; ${levelUps} level${levelUps === 1 ? '' : 's'} climbed at ${perLevel} point(s) each (${row.xp} XP toward level ${row.level + 1}, ${xpToNext(registries, row.level)} needed)${climb.cappedBy === 'fight' ? `; capped at ${levelUps} a fight, the XP past it discarded` : ''}`,
+      why: `${gain} XP paid; ${levelUps} level${levelUps === 1 ? '' : 's'} climbed at ${perLevel} point(s) each (${row.xp} XP toward level ${row.level + 1}, ${xpToNext(registries, row.level)} needed)${climb.cappedBy === 'fight' ? `; capped at ${levelUps} a fight, ${climb.discarded} XP past it discarded` : ''}`,
     });
   }
-  return { before, after: row.level, levelUps, points, thresholds, gained: gain };
+  return { before, after: row.level, levelUps, points, thresholds, gained: gain, discarded: climb.discarded };
 }
 
 /**

@@ -536,6 +536,8 @@ export function mountRewards(app, {
       bar,
       next,
       row.gained ? el('span', { class: 'rp-gain', text: t('reward.progress.gained', { xp: row.gained }) }) : null,
+      // The per-fight level cap threw some of it away (SPEC §15.2): say how much.
+      row.discarded ? el('span', { class: 'rp-discarded', title: tFull('reward.progress.discarded', { xp: row.discarded }), text: t('reward.progress.discarded', { xp: row.discarded }) }) : null,
     ]);
     // The exact XP is the tooltip, not the row: the row carries the shape of
     // the climb and the gain; the numbers are for the player who asks.
