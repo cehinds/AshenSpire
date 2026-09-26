@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-26",
     "group": "2026-09-26",
     "summary": "Behind the scenes: the 1.0 checklist records the owner's decisions",
-    "detail": "Docs only. docs/FINISH.md now holds the owner's rulings: no win-rate target for 1.0 (balance stays configurable), 1 to 5 elites per region with 3 on average, and a web proof of concept before any store. It adds three things to 1.0: a deck editor between runs, three kinds of shop (shop, blacksmith and wise master), and the design issues that were parked for later.",
-    "build": "0.7.1.606",
+    "detail": "Docs only. docs/FINISH.md now holds the owner's rulings: no win-rate target for 1.0 (balance stays configurable), 1 to 5 elites in each of the three climbable regions, 3 on average, and a web proof of concept before any store. It adds three things to 1.0: a deck editor between runs, three kinds of shop (shop, blacksmith and wise master), and the design issues that were parked for later.",
+    "build": "0.7.1.607",
     "pullRequest": 1330,
     "url": "https://github.com/cehinds/AshenSpire/pull/1330"
   },
