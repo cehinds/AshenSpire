@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-26
 
+- **A full recorded score, written as code** ([#1328](https://github.com/cehinds/AshenSpire/pull/1328), `0.7.1.556`). Hosted builds now play thirteen recorded tracks. There is one for the title, shop, rest, combat, elite, boss and victory screens, and the map has its own track in each of the five regions. Each track is built on the music the game already plays, with a strong low cello bass under it and a quiet cello phrase from before the Burning that is snuffed out like a flame. Victory is short. Tracks loop without a gap. The two tracks made with an AI music service are gone: every note is now written as code in the repository, and no licensed or AI-generated music is used.
 - **Behind the scenes: development builds are no longer stored in the repository** ([#1332](https://github.com/cehinds/AshenSpire/pull/1332), `0.7.1.554`). Nothing you play changes. Every rebuild used to store a fresh 255 MB copy of the game plus its 29 MB mobile edition, and the repository ran out of room for them. Development builds are now made by the automated checks on every change and downloaded from there as the `dev-standalone` file; the build number and its changelog entry are still checked to agree before a change can merge.
 
 ## 2026-09-25
