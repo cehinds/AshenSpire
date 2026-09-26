@@ -1,40 +1,36 @@
-// The Hollow Weald — "growth without a Field Flame does not stop; it goes wrong"
-// (docs/LORE.md). Overgrown and heavy: a D drone under slow minor harmony, a
-// harp that plucks slightly out of true, a cello that never resolves, and a
-// choir whose "oo" sours into a cluster before it settles. No drums.
-import { Score, chord, n } from '../../tools/score/compose.mjs';
+// The Hollow Weald — "growth without a Field Flame does not stop; it goes
+// wrong" (docs/LORE.md). D aeolian, heavy and still: a damp organ drone, a
+// wordless choir "oo" chord that sours into a cluster once per loop, and one
+// lead — single harp notes, far apart, a few of them plucked slightly out of
+// true. Bowed metal creaks like wood under strain. No drums.
+// Original material (music/score/_STYLE.md).
+import { Score, n } from '../../tools/score/compose.mjs';
 
 export const context = 'map-hollow-weald';
 
-const s = new Score({ bpm: 56, bars: 20, seed: 11, reverb: { room: 0.9, damp: 0.45 }, gain: 0.9 });
+// 48 BPM, 16 bars of 4 = 64 beats = 80 s.
+const s = new Score({ bpm: 48, bars: 16, seed: 11, reverb: { room: 0.9, damp: 0.45 }, gain: 0.9 });
 
-// Harmony: i – VI – iv – v, then a darker turn through bII before home.
-const prog = [
-  [chord('D3', 'm'), 2], [chord('Bb2', 'M'), 2], [chord('G2', 'm', 1), 2], [chord('A2', 'm'), 2],
-  [chord('D3', 'm'), 2], [chord('Eb3', 'M'), 2], [chord('G2', 'm', 1), 2], [chord('A2', 'sus4'), 1], [chord('A2', 'm'), 1],
-  [chord('D3', 'madd9'), 2], [chord('D3', 'm'), 2],
-];
-s.note('drone', 0, s.beats, 'D2', { vel: 0.55, rev: 0.2 });
-s.note('drone', 0, s.beats, 'A2', { vel: 0.25, rev: 0.2, cut: 300 });
-s.pad('strings', prog, { note: { vel: 0.45, rev: 0.45, cut: 900 } });
+// Bed: soft organ pedal on D and A for the whole loop.
+s.note('organ', 0, s.beats, 'D2', { stop: 'soft', vel: 0.34, rev: 0.35, a: 3, r: 4 });
+s.note('organ', 0, s.beats, 'A2', { stop: 'soft', vel: 0.18, rev: 0.35, a: 3, r: 4 });
+s.note('drone', 0, s.beats, 'D2', { vel: 0.32, rev: 0.2, cut: 280 });
 
-// Choir: an "oo" chord that leans into a sour cluster on the Eb bars.
-s.pad('choir', [[[n('D4'), n('F4'), n('A4')], 8], [[n('Eb4'), n('F4'), n('Bb4')], 4], [[n('D4'), n('E4'), n('A4')], 8]],
-  { note: { vel: 0.3, rev: 0.6, vowel: 'oo' } });
+// Choir "oo": one chord per four bars; the third one sours (E against F).
+s.pad('choir', [
+  [[n('D4'), n('F4'), n('A4')], 4], [[n('D4'), n('F4'), n('Bb4')], 4],
+  [[n('E4'), n('F4'), n('A4')], 4], [[n('D4'), n('E4'), n('A4')], 4],
+], { spread: 0.7, note: { vel: 0.24, rev: 0.65, vowel: 'oo', a: 3, r: 3 } });
 
-// Harp, sparse and a little out of true, falling figures every two bars.
-for (let bar = 0; bar < s.bars; bar += 2) {
-  const top = [n('A4'), n('F4'), n('G4'), n('E4')][(bar / 2) % 4];
-  s.line('harp', bar * 4 + 1, [[top, 1], [top - 3, 1], [top - 7, 2]], { note: { vel: 0.35, rev: 0.55, pan: 0.35, nudge: 0.03 } });
-}
+// Lead: harp, single notes, long rings. Slightly flat notes where it goes wrong.
+const harp = { note: { vel: 0.5, rev: 0.55, pan: 0.2, ring: 6 } };
+const sour = (name) => n(name) - 0.18;
+s.line('harp', 2, [['A4', 2], ['F4', 2], ['E4', 4], [null, 4], ['D4', 2], ['E4', 2], ['F4', 3], [sour('G4'), 1], ['E4', 6]], harp);
+s.line('harp', 38, [['A4', 2], ['C5', 2], ['Bb4', 4], [null, 2], [sour('A4'), 2], ['G4', 2], ['F4', 2], ['E4', 4], ['D4', 8]], harp);
 
-// Cello: a lament that climbs and never lands on the tonic.
-s.line('cello', 16, [['A3', 3], ['Bb3', 1], ['A3', 2], ['G3', 2], ['F3', 4], ['E3', 4]], { note: { vel: 0.5, rev: 0.4, pan: -0.25 } });
-s.line('cello', 48, [['D4', 2], ['C4', 2], ['Bb3', 3], ['A3', 1], ['G3', 4], ['A3', 4]], { note: { vel: 0.5, rev: 0.4, pan: -0.25 } });
-
-// Wood under strain: bowed metal, low and slow. One distant bell per cycle.
-s.note('metal', 8, 10, 'D3', { vel: 0.18, rev: 0.7, pan: 0.6 });
-s.note('metal', 52, 10, 'Ab2', { vel: 0.16, rev: 0.7, pan: -0.6 });
-s.note('bell', 36, 1, 'D5', { vel: 0.14, rev: 0.8, pan: 0.5, ring: 8 });
+// Wood under strain: two low bowed-metal swells, and one distant bell.
+s.note('metal', 12, 10, 'D3', { vel: 0.15, rev: 0.7, pan: 0.6, a: 3 });
+s.note('metal', 44, 10, 'Ab2', { vel: 0.13, rev: 0.7, pan: -0.6, a: 3 });
+s.note('bell', 30, 1, 'D5', { vel: 0.1, rev: 0.85, pan: 0.5, ring: 8 });
 
 export default s;

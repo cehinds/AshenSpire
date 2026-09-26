@@ -1,57 +1,32 @@
 // The Ashen Crown — the causeway to the Spire's summit, laid by the Ember;
-// reached from any seat, belonging to none (docs/LORE.md). A slow procession
-// toward something terrible in G minor: a measured frame drum on every
-// step, organ chords that fall through the Neapolitan (Ab) instead of rising,
-// a full "ah" choir that climbs and sinks back each phrase, a cello over
-// brass-like low strings, and a bell tolling the march. Solemn dread; the
-// dominant is always answered by a darker chord, never by triumph.
+// reached from any seat, belonging to none (docs/LORE.md). G minor, a slow
+// procession toward something terrible: soft organ chords a whole four bars
+// each, falling through the Neapolitan (Ab) instead of rising; one distant
+// taiko stroke every two bars as the only step; and one lead — a lone "ah"
+// voice that climbs a little and sinks back. A bell tolls once. Never triumphant.
+// Original material (music/score/_STYLE.md).
 import { Score, chord, n } from '../../tools/score/compose.mjs';
 
 export const context = 'map-ashen-crown';
 
-const s = new Score({ bpm: 54, bars: 18, seed: 71, reverb: { room: 0.9, damp: 0.4 }, gain: 0.9 });
+// 50 BPM, 16 bars of 4 = 64 beats ≈ 77 s.
+const s = new Score({ bpm: 50, bars: 16, seed: 71, reverb: { room: 0.9, damp: 0.4 }, gain: 0.9 });
 
-// Harmony, two bars a chord at the procession's pace.
-const prog = [
-  [chord('G2', 'm'), 2], [chord('Eb2', 'M'), 2], [chord('C3', 'm', 1), 2], [chord('D2', 'sus4'), 1], [chord('D2', 'M'), 1],
-  [chord('G2', 'm'), 2], [chord('Ab2', 'M'), 2], [chord('F2', 'm'), 2], [chord('D2', 'dim'), 1], [chord('D2', 'M'), 1],
-  [chord('G2', 'm'), 2],
-];
-// Organ chords (full stop, but held low and soft), plus low pedal.
-s.pad('organ', prog, { overlap: 0.1, spread: 0.6, note: { stop: 'full', vel: 0.26, rev: 0.45, a: 1.2, r: 2 } });
-s.note('drone', 0, s.beats, 'G1', { vel: 0.4, rev: 0.2, cut: 300 });
+// Bed: organ chords over a low G pedal.
+s.note('organ', 0, s.beats, 'G1', { stop: 'soft', vel: 0.36, rev: 0.3, a: 3, r: 4 });
+s.pad('organ', [
+  [chord('G2', 'm'), 4], [chord('Eb2', 'M', 1), 4], [chord('Ab2', 'M'), 4], [chord('D2', 'sus4'), 2], [[n('D2'), n('A2'), n('D3')], 2],
+], { overlap: 0.1, spread: 0.6, note: { stop: 'full', vel: 0.2, rev: 0.5, a: 2, r: 2.5 } });
 
-// Brass-like low strings: the same chords an octave down, brighter bow.
-s.pad('strings', prog.map(([c, l]) => [[c[0] - 12, c[0] - 5], l]), { note: { vel: 0.38, rev: 0.35, cut: 1500, a: 1.6 } });
+// The step: one far taiko stroke every two bars.
+s.hits('taiko', 'G1', [0], { every: 2, note: { vel: 0.3, rev: 0.7, ring: 1.6 } });
 
-// The procession: frame drum on beats 1 and 3, a ghost before each step.
-s.hits('frame', 'G2', [0, 2], { accent: [0], note: { vel: 0.5, rev: 0.5, pan: 0.1 } });
-s.hits('frame', 'D2', [3.5], { every: 2, note: { vel: 0.22, rev: 0.5, pan: -0.1 } });
+// Lead: a lone "ah" voice.
+const voice = { note: { vel: 0.55, rev: 0.6, vowel: 'ah', pan: -0.1, a: 1.2, r: 2.5 } };
+s.line('choir', 2, [['D4', 4], ['Eb4', 4], ['D4', 8], [null, 4], ['C4', 3], ['Bb3', 1], ['A3', 8]], voice);
+s.line('choir', 38, [['Bb3', 3], ['C4', 1], ['D4', 4], ['Eb4', 4], ['C4', 4], ['G3', 8]], voice);
 
-// Bell tolling at each chord change, low and distant.
-for (let bar = 0; bar < s.bars; bar += 2) {
-  s.note('bell', bar * 4, 1, bar % 8 === 6 ? 'D4' : 'G3', { vel: 0.2, rev: 0.75, pan: -0.45, ring: 8 });
-}
-
-// Choir "ah": each phrase rises by step and sinks back further than it began.
-const rise = (from, voices) => voices.forEach(([m, pan]) => s.note('choir', from, 8.5, m, { vowel: 'ah', vel: 0.2, rev: 0.65, pan, a: 2.5, r: 3 }));
-const phrase = [
-  [0, [['G3', -0.4], ['D4', 0], ['Bb4', 0.4]]],
-  [8, [['G3', -0.4], ['Eb4', 0], ['Bb4', 0.4]]],
-  [16, [['G3', -0.4], ['Eb4', 0], ['C5', 0.4]]],
-  [24, [['F#3', -0.4], ['D4', 0], ['A4', 0.4]]],
-  [32, [['G3', -0.4], ['D4', 0], ['Bb4', 0.4]]],
-  [40, [['Ab3', -0.4], ['Eb4', 0], ['C5', 0.4]]],
-  [48, [['F3', -0.4], ['C4', 0], ['Ab4', 0.4]]],
-  [56, [['F#3', -0.4], ['C4', 0], ['A4', 0.4]]],
-  [64, [['G3', -0.4], ['D4', 0], ['Bb4', 0.4]]],
-];
-for (const [b, v] of phrase) rise(b, v);
-
-// Cello over the strings: a narrow, falling lament.
-s.line('cello', 8, [['Bb3', 3], ['C4', 1], ['D4', 4], ['Eb4', 3], ['D4', 1], ['C4', 2], ['A3', 2], ['D4', 8]],
-  { note: { vel: 0.44, rev: 0.4, pan: 0.3 } });
-s.line('cello', 40, [['Eb4', 3], ['D4', 1], ['C4', 4], ['Ab3', 3], ['G3', 1], ['F3', 4], ['F#3', 4], ['G3', 8]],
-  { note: { vel: 0.44, rev: 0.4, pan: 0.3 } });
+// One toll per loop.
+s.note('bell', 32, 1, 'G4', { vel: 0.12, rev: 0.85, pan: 0.5, ring: 9 });
 
 export default s;
