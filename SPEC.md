@@ -2218,3 +2218,102 @@ Poise break is Stagger; Ward break is Disruption. Both default to losing one Act
 Status resistance reduces hostile buildup or incoming stacks, not duration or proc severity: effective rating = Poise*physicalWeight + Ward*magicalWeight. Applied amount = base*K/(K+effective rating), subject to the resistance cap. Fractional applications carry forward per target/status rather than making repeated small applications immune. Default profiles: Bleed and Venom 100% Poise; Insanity and Madness 100% Ward; Frost and Crimson Blight 50/50; Burn 25% Poise and 75% Ward. Other effects are unresisted until configured. Both weights may be positive and need not sum to one. Self-applied beneficial effects are unaffected.
 
 The shipped solo combat path adopts these rules. The independent foundation/combat-workshop and LAN paths retain their existing rules until explicitly supplied a compatible rating context.
+
+## 15. Reward schedule, levelling pace, crafting drops and legendary sigils (owner brief, 2026-09-26)
+
+**Status: contract, not yet built.** The owner asked for several things:
+- a choice of when card rewards come: after battle, on level-up, both or neither;
+- a percent chance for a card reward to drop;
+- XP settings that show what they do ("I change them and I'm levelling up way too much");
+- more non-card rewards: armaments and equipment, smithing-stone drop chances, and legendary runes with unique properties built on the tag system.
+
+This section is that contract. The rules from §14's preamble apply here too:
+- Every number is a `balance.*` leaf with a `[NOTE]`, so it gets its `gameConfig.*` Settings row generated and is frozen per run (`advancedConfigRows`, `run.advancedConfigSnapshot`).
+- Every shipped default reproduces today's behaviour, so an existing seed rolls exactly what it rolled before.
+- New run state is additive, with a schema bump and a captured corpus save per PR.
+
+"Runes" are named **sigils** here for the reason §14.3 gives: "runes" is the old currency word.
+
+### 15.1 The card reward schedule
+
+These keys go in `balance.rewards.cardRewards`.
+
+| Key | Shipped default | Meaning |
+|---|---|---|
+| `afterCombat.normal` / `.elite` / `.boss` | `true` | Whether a won fight of that pool offers a card row. |
+| `chancePct.normal` / `.elite` / `.boss` | `100` | The chance, 0–100, that an eligible fight offers the card row. 100 rolls nothing. |
+| `onLevelUp` | `false` | When the fight raised the character level (§13.4i), the spoils add a **level card** row. |
+| `onLevelUpMaxPerFight` | `1` | How many level-card rows one fight can add, however many levels it gained. |
+
+- **Offer size.** It stays `rewards.cardChoices`, which already has a row. The Feral Eye relic still adds +1 at elites.
+- **Chance rolls.** They use a new stream, **`rewardRolls`**, appended to the end of `STREAM_NAMES`, so no existing stream moves. A roll that fails leaves no card row, and the menu says so in one line: "No card this time."
+- **Level card row.** Its cards come from the class reward pool at the door's own rarity odds, through `rollCardRewardIds` on `cardRewards`. It is a new `REWARD_KIND_ORDER` kind, `levelCard`, sitting after `card`. Its row key is `levelCard:<ordinal>`, and it is taken and skipped like the card offer.
+- **Drafts.** Skill and class drafts (§13.4e and §13.4g) are unchanged, and when a draft is waiting it still takes the card row's seat.
+- A saved `pendingReward` written before this section reads as "card row as rolled".
+
+*Falsify:*
+- With `afterCombat.normal: false`, a normal win offers no card row, and an elite win still offers one.
+- With `chancePct.elite: 0`, an elite win never offers a card row. With 100, the `rewardRolls` counter does not move.
+- With `onLevelUp: true`, a fight that levels offers exactly one `levelCard` row, and a fight that doesn't offers none.
+- With every key at its default, 50 fixed seeds offer byte-identical rewards to the ones before this section.
+
+### 15.2 Levelling pace you can see
+
+The shipped curve (`balance.level.xp` base 5, growth 1.15, roundTo 10) costs 10 XP per level up to level 9. Awards pay 15 per win plus 5, 75 or 200 per normal, elite or boss kill. So a three-kill normal fight is worth about 3 levels, an elite about 7 and a boss about 15. `gameConfig.progression.xpMultiplier` multiplies the awards, and `levelUpValue` multiplies the points each level grants. Nothing on the Settings screen shows the result.
+
+- **Levelling preview.** Settings → Progression gains a **Levelling preview**, `ui/models/LevelPacePreviewModel.js`, drawn live from the `gameConfig` values in force, with `xpMultiplier` and `levelUpValue` included. It shows:
+  - the XP to reach each of levels 2–20;
+  - "a normal fight (3 kills) gives N XP", the same for an elite and a boss, and **how many levels each is worth from level 1 and from level 10**;
+  - the stat points those levels grant.
+
+  The preview's numbers come from the one pure function `levelPace(balance, settings)` in `model/levelup.js`, which `awardLevelXp` also uses, so the preview can never disagree with play.
+- **A levelling cap.** It is `balance.level.maxLevelsPerFight` (shipped `null`, meaning no cap). When set, one award never raises the level by more than this. The XP past the cap still counts toward the next level, but cannot carry the level further in that award.
+- **Stale comments.** The out-of-date comments in `balance.js` about the old 100/120… curve are corrected to the live numbers.
+- **Numbers.** No balance number changes here. The owner tunes them through the preview.
+
+*Falsify:*
+- The preview's "normal fight" line equals `combatLevelXp` for three normal kills, times `xpMultiplier`.
+- Its levels-gained figure equals what `awardLevelXp` actually awards from level 1.
+- With `maxLevelsPerFight: 1`, a boss kill from level 1 gains exactly one level.
+
+### 15.3 Armament, equipment and crafting drops
+
+These are chances per reward pool, and the defaults reproduce today's drops.
+- **Armament and equipment drops.** `balance.equipment.drops.chance` gains `normal`, shipped `0`, beside today's treasure 60, elite 30 and boss 100. Drops still roll on the `armaments` stream through `rollArmamentDrop`. The Armoury pool already includes armour pieces, so "equipment" means the same roll.
+- **Smithing stone drop chance.** `balance.smithing.rewardChancePct` holds `{ normal, elite, boss, treasure }`, all shipped at `100`. A stone reward is paid when `rewardByPool[pool] > 0` and the chance passes, rolled on the existing `smith` stream; 100 rolls nothing. Treasure now calls `grantSmithingReward`. Its shipped `rewardByPool.treasure` is 0, so nothing changes until the owner raises it.
+- **Refined stones as a drop.** `balance.smithing.refinedRewardByPool` holds `{ normal: 0, elite: 0, boss: 0, treasure: 0 }` and pays `run.smithingStonesRefined` (the refined stone of §14.4) through the same door and the same chance. This is the crafting-material reward. Spending refined stones arrives with §14.4's blacksmith. Until then they show in the inventory, and the smith's upgrade accepts one as `balance.smithing.refinedValue` stones.
+
+*Falsify:*
+- With defaults, a seed's armament and stone drops are unchanged.
+- With `drops.chance.normal: 100`, every normal win drops an armament while one remains unfound.
+- With `rewardChancePct.elite: 0`, an elite pays no stone. With 100, the `smith` counter does not move.
+- A refined stone reward pays and survives a reload.
+
+### 15.4 Legendary sigils — unique properties through the tag system
+
+A **legendary sigil** is the §14.3 sigil at a new rarity, whose effect is a property rule. No engine code is written per sigil.
+- **Content.** Sigils are authored in `src/content/sigils.js` as `{ id, name, rarity, propertyTag, blurb }`, with the `legendary` rarity added to the sigil rarities only (relic rarities are unchanged).
+  - Each sigil's property node is in `content/source/nodes.csv` under a new `sigil` branch of `property`.
+  - Its `family = sigil` tagging row is in `tagging.csv`, with the family registered in `tagFamilies.csv`.
+  - Its rule is in `nodeEffects.json`, with numbers bound through `variableBindings.csv` to `balance.sigils.*`.
+  - `validateContent` refuses, by name, a sigil whose tag is not a property node or whose rule is missing.
+  - The shipped set is at least three legendaries, each with a trigger no relic has.
+- **Ownership.** It is `run.sigils: string[]`, the same field as §14.3, with schema 12 after §14's 11.
+- **Attunement.** A legendary sigil works while it is **attuned**. The run attunes at most `balance.sigils.attuneMax` (shipped 1) at a time, chosen from the inventory out of combat. Attuned sigils mount through the relic carrier path (`syncRelicProperties`' `relicCarrier` pattern) under `sigil:<id>`, in solo and co-op combat. `run.attunedSigils: string[]` is saved and checked. §14.4's slots, when they arrive, hold non-legendary sigils. A legendary is attuned, never slotted.
+- **The drop.** It is a new reward kind, `sigil`, after `relic`, with chance `balance.sigils.dropChancePct` `{ normal: 0, elite: 0, boss: 0, treasure: 0 }`. It is shipped off; the owner turns it on in Settings. The roll is on a new stream, **`sigils`**, appended to the end of `STREAM_NAMES`. It never drops a sigil the run already owns.
+
+*Falsify:*
+- A sigil with a tag that is not a property node is refused by name.
+- An attuned sigil's trigger fires in a fight, and an unattuned owned sigil's trigger does not.
+- Attuning a second sigil while `attuneMax` is 1 is refused by name.
+- With defaults, no sigil ever drops. With `dropChancePct.boss: 100`, a boss drops one unowned sigil and never a duplicate.
+- A schema-11 save loads with `sigils: []` and `attunedSigils: []`.
+
+### 15.5 Build order
+
+Each item is one PR into `dev`, written test-first, carrying a receipt (and no built HTML):
+1. **This SPEC section.**
+2. **The card reward schedule** (§15.1).
+3. **The levelling preview and cap** (§15.2).
+4. **Crafting drops** (§15.3). The refined-stone field is `smithingStonesRefined`, the name §14 migrates, and this PR adds it if §14.4 has not landed yet.
+5. **Legendary sigils** (§15.4). This one is after §14 step 2 (schema 11).

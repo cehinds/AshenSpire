@@ -142,6 +142,14 @@ the code, a test or a command run on that tree, not against a PR title.
 - [ ] **The `closedsets` run-node rung is not flaky.** One local `run-node --no-selftests` run on #1316 failed only on it and passed on the re-run; not root-caused. Test: 10 consecutive runs of that rung pass, or the cause is named and fixed.
 - [ ] **C12 BOUNDARY stays stated.** C12 reads `styles/kit.css` as text: no cascade (specificity, `@layer` order, `@scope` limits), no `var()` substitution, no per-property value grammar (an invalid later value is read as effective), and `styles/hud-visibility.css` is not read. Test: the BOUNDARY note in `tools/ui-components.mjs` lists these, and any new form is fixed only if the shipped CSS uses it.
 
+## 15. Reward schedule, levelling pace, drops, legendary sigils (SPEC §15, owner brief 2026-09-26)
+
+- [~] **SPEC §15 lands before any code.** Test: `grep -n '^## 15. Reward schedule' SPEC.md` gives 1 hit. — this PR.
+- [ ] **Card reward schedule** (§15.1). Test: `tests/card-reward-schedule.test.mjs`: afterCombat.normal false gives no card row on a normal win and one on an elite; chancePct 0 never offers; defaults leave the rewardRolls counter at 0 and 50 seeded offers byte-identical; onLevelUp adds exactly one levelCard row on a levelling fight.
+- [ ] **Levelling preview and cap** (§15.2). Test: `tests/level-pace.test.mjs`: the preview's normal-fight XP equals combatLevelXp × xpMultiplier; its levels-gained equals awardLevelXp from level 1; maxLevelsPerFight 1 caps a boss kill at one level.
+- [ ] **Crafting drops** (§15.3). Test: `tests/crafting-drops.test.mjs`: defaults leave drops unchanged; drops.chance.normal 100 drops an armament; rewardChancePct.elite 0 pays no stone; a refined stone pays and survives a reload.
+- [ ] **Legendary sigils** (§15.4). Test: `tests/legendary-sigils.test.mjs`: a bad sigil tag is refused by name; an attuned sigil's trigger fires and an unattuned one's does not; a second attune past attuneMax is refused; defaults drop none, boss chance 100 drops one unowned; a schema-11 save loads with empty sigils.
+
 ## Owner decisions
 
 Proposals only. Nothing below is built until the owner rules.
