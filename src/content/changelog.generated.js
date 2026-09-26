@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Settings shows how fast you level",
     "detail": "Settings → Advanced → Progression now has a Levelling preview that updates as you change the numbers. It shows how much XP a normal fight (3 kills), an elite (1 kill) and a boss (1 kill) gives, how many levels each is worth from level 1 and from level 10, the stat points those levels grant, and the XP to reach each level up to 20. The XP multiplier and Level-up value are counted. A new setting can also cap how many levels one fight can give: XP past the cap is lost, and the spoils screen says how much. It is off by default, so nothing changes until you set it.",
-    "build": "0.7.1.613",
+    "build": "0.7.1.615",
     "pullRequest": 1349,
     "url": "https://github.com/cehinds/AshenSpire/pull/1349"
+  },
+  {
+    "id": "pr-1348",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the rules for card rewards, levelling pace, crafting drops and legendary sigils are written down",
+    "detail": "Docs only; nothing you play changes yet. The design spec now describes settings for when card rewards come (after battle, on level-up) and how often they drop, a levelling preview that shows how fast your current XP settings level you, drop chances for armaments and smithing stones, and legendary sigils with unique effects you attune one at a time.",
+    "build": "0.7.1.614",
+    "pullRequest": 1348,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1348"
+  },
+  {
+    "id": "pr-1353",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the full-resolution art has its first release",
+    "detail": "Nothing you see changes. The full-resolution art now lives in its own private repository, and this build names the exact release of it to use, checked file by file before anything reads it.",
+    "build": "0.7.1.613",
+    "pullRequest": 1353,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1353"
   },
   {
     "id": "pr-1331",

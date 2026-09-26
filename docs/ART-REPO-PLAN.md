@@ -200,8 +200,9 @@ Each step is one reviewed PR, or one owner action.
 
 ## Status
 
-- Step 1 is waiting on the owner: this session's GitHub integration cannot create repositories (403), so `cehinds/AshenSpire-art` must be created by hand (private, empty or with a README), with the Claude GitHub App given access to it.
-- Step 2's contents (pack script, CI, README) are prepared and pushed as soon as the repository exists.
+- Steps 1–3 are done (2026-09-26). The owner created `cehinds/AshenSpire-art` (private). [AshenSpire-art#1](https://github.com/cehinds/AshenSpire-art/pull/1) imported `hd/assets/` (5,201 files) and `art/`, and its release workflow published `hd-assets-v1`: zip sha256 `c03e4024…88a4`, the same bytes as a local pack of that commit.
+- Step 4 has started. `tools/fetch-art.mjs` landed in #1340, and #1353 pins `hd-assets-v1` in `art-release.json`. Still to do: move the 23 non-art files, switch the `assets/` readers, and add both files to `BUILD_IDENTITY_FILES` in the PR that first builds full art from the cache.
+- Releases are automatic: the art repo publishes the next `hd-assets-v<N>` on every merge to `main` that changes the pack ([AshenSpire-art#2](https://github.com/cehinds/AshenSpire-art/pull/2)).
 
 ## Open question
 
