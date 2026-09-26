@@ -8,9 +8,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Deck rules: set cards aside, draw in your own order",
     "detail": "The groundwork for the deck editor, which arrives next. A new Settings tab, Advanced → Deck, holds its rules: editing on or off, where you may edit, the smallest and largest deck, and Play in deck order, which draws your cards in the order you arranged them instead of shuffling. A card you take out of your deck is kept, not lost, so you can put it back later; Strike and Defend stay unlimited and still wear your weapon's face.",
-    "build": "0.7.1.609",
+    "build": "0.7.1.611",
     "pullRequest": 1343,
     "url": "https://github.com/cehinds/AshenSpire/pull/1343"
+  },
+  {
+    "id": "pr-1331",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the rules for a deck editor and three kinds of shop are written down",
+    "detail": "Docs only, and nothing you play changes yet. The design spec now describes the deck editor that is planned: you add and remove cards between fights, with Strike and Defend unlimited and every other card limited to the copies you own. Deck size limits and an option to draw in the order you arranged will be settings. It also describes a market, a blacksmith and a wise master: each offers a configurable set of services, and a master can reset one skill back to level 1 for a partial refund of its experience. The 1.0 checklist gains one testable line per step.",
+    "build": "0.7.1.610",
+    "pullRequest": 1331,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1331"
+  },
+  {
+    "id": "pr-1329",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Turning off this device's screen settings no longer reloads your synced profile over local changes",
+    "detail": "Switching \"Include this device's screen settings\" off keeps the record of which profile version was loaded, so the next start leaves edits made here alone; switching it on still reloads, to bring in the screen settings it skipped (settings sync is in development and test builds only).",
+    "build": "0.7.1.609",
+    "pullRequest": 1329,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1329"
+  },
+  {
+    "id": "pr-1330",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the 1.0 checklist records the owner's decisions",
+    "detail": "Docs only. docs/FINISH.md now holds the owner's rulings: no win-rate target for 1.0 (balance stays configurable), 1 to 5 elites in each of the three climbable regions, 3 on average, and a web proof of concept before any store. It adds three things to 1.0: a deck editor between runs, three kinds of shop (shop, blacksmith and wise master), and the design issues that were parked for later.",
+    "build": "0.7.1.607",
+    "pullRequest": 1330,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1330"
   },
   {
     "id": "pr-1328",
