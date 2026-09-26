@@ -2342,7 +2342,7 @@ These offerings extend `buildShopStock`. The existing shelves become offerings w
 | `cards`, `weaponArts`, `remove` | As today | Unchanged. |
 | `smithStones` | Smithing Stones | Priced per stone, with a per-visit stock. Adds to `run.smithingStones`. |
 | `sigils` | Sigils (new item kind, the brief's "runes") | See **Sigils** below. |
-| `innRest` | A full rest | Always offered when the shop stands at an atlas point whose town has an inn, and otherwise when its chance rolls. Buying it runs `createLocationVisit(ctx, 'inn')`, then `restAt`, then `leaveLocation`, on the run's own streams (§13.4j), so the inn's own tag set decides what it restores. It can be bought once per visit, and a relic's `restDenied` refuses it by name, as it refuses the inn's bed. |
+| `innRest` | A full rest | Always offered when the shop stands at an atlas point whose town has an inn, and otherwise when its chance rolls. Buying it runs `createLocationVisit(ctx, 'inn')`, then `arriveAt`, then `restAt`, then `leaveLocation`, on the run's own streams (§13.4j), so the inn's own tag set decides what it restores, and its `arrived` rules (the flask refill) fire too. It can be bought once per visit, and a relic's `restDenied` refuses it by name, as it refuses the inn's bed. |
 | `skillBooks` | Skill books (new consumable) | See **Consumables**. |
 | `reviveTokens` | Revive tokens (new consumable) | Rare by default chance. |
 | `questEvent` | One random event | An event from the `events.js` pool the run has not seen, run through the existing event door. Entering it closes the shop visit. |
