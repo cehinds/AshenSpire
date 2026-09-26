@@ -83,6 +83,9 @@ const BALANCE_DOMAINS = Object.freeze({
   'xp.kill.normal': Object.freeze({ max: 1000 }),
   'xp.kill.elite': Object.freeze({ max: 1000 }),
   'xp.kill.boss': Object.freeze({ max: 2000 }),
+  // The levelling cap (SPEC §15.2) ships at 0, no cap; a range read off 0
+  // would reach 20 only by numberDomain's floor, so it is stated.
+  'level.maxLevelsPerFight': Object.freeze({ integer: true, step: 1, min: 0, max: 20 }),
 });
 
 // A balance path this build renamed keeps its stored override: the old key is

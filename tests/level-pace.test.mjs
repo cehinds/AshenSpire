@@ -157,6 +157,8 @@ test('§15.2: the cap is a generated Progression row with a note', () => {
   assert.equal(row.advancedGroup, 'Progression');
   assert.equal(row.integer, true);
   assert.equal(row.min, 0);
+  assert.equal(row.max, 20, 'the range is stated (BALANCE_DOMAINS), not read off the shipped 0');
+  assert.equal(row.step, 1);
   assert.match(row.note, /0 is no cap/);
   assert.match(row.note, /Applies to a new run\.$/);
   assert.equal(configuredContentBundle(contentBundle, { [CAP]: 3 }).balance.level.maxLevelsPerFight, 3);
