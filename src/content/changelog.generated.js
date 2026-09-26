@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Letting go of the game window mid-hold no longer opens the End Turn check",
     "detail": "If you were holding the End Turn key and the window lost focus (you alt-tabbed, or the phone went to the background), the game used to treat that as a quick tap and open the End Turn confirmation. Now nothing opens and nothing happens. A quick press and release still opens the check as before. Behind the scenes: the test that lists page listeners now also reads one more way of writing a document listener correctly.",
-    "build": "0.7.1.611",
+    "build": "0.7.1.614",
     "pullRequest": 1354,
     "url": "https://github.com/cehinds/AshenSpire/pull/1354"
+  },
+  {
+    "id": "pr-1353",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the full-resolution art has its first release",
+    "detail": "Nothing you see changes. The full-resolution art now lives in its own private repository, and this build names the exact release of it to use, checked file by file before anything reads it.",
+    "build": "0.7.1.613",
+    "pullRequest": 1353,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1353"
   },
   {
     "id": "pr-1331",
