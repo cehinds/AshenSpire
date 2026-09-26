@@ -807,7 +807,9 @@ const ADVANCED_GROUPS = Object.freeze([
 // only where `pageDebug()` is true (src/ui/buildChannel.js says where that is).
 // Stored values are untouched either way: hiding a section changes what is
 // drawn, never what a profile holds.
-export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Interface', 'Text', 'Changelog', 'About']);
+// Deck (SPEC §14.1) is a player choice, not tuning: where the editor opens,
+// the size limits and Play in deck order are the owner's player-facing rows.
+export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Interface', 'Text', 'Changelog', 'About']);
 /** Groups with their own mounted panel instead of rows. */
 const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
 
