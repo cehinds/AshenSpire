@@ -95,6 +95,9 @@ This repository keeps:
 | dev-preview "Collect the playable build" | every push | `cp -r assets/environments`, `pose-effects`, `combat-effects`, `painted-outfits` into `preview/` | copies from the built web edition (which already carries the tier's art) |
 | `tests/run-node.mjs` check 33 | every test run | reads `assets/equipment/manifest.json` (it warns and skips without it) | reads it from its new home in this repo; **it must not start skipping** |
 | `tests/run-node.mjs` check 49 (`assetExists`) | every test run | stats files under `assets/` | checks ids against the manifest |
+| `tests/run-node.mjs` check 79 (pose frames) | every test run | `existsSync` on every generated frame under `POSE_DIR` (`assets/poses/`) | checks the frame ids against the manifest |
+| `tools/bundle.test.mjs` (parse gate, EOL corpus) | every CI run (`ci.yml`, `tests.yml`) | its sandboxes copy `assets/`, run the unflagged (full-art) bundler, and read `assets/bg/bg_act1.webp` | sandboxes copy `assets-mobile/` and build with `--light`; the EOL corpus reads the light twin |
+| `tools/content-build.mjs --mutate` (M6/M7) | by hand and its self-test | sweeps the real `assets/` and copies it into fixtures; M6 renames `assets/sprites/enemy_wanderingSoldier.webp` | builds its fixture tree from the manifest's ids (placeholder bytes, as its other cases already write) |
 | `tests/content-expansion-equipment.test.mjs` | every test run | `existsSync` on `assets/equipment/icon_*`, `weapon_*`, `body_*` | checks ids against the manifest |
 | `tools/rogue-parity.mjs` (spawned by `tests/content-validators.test.mjs`) | every test run | `existsSync` on `assets/sprites/rogue_*.webp` and `assets/equipment/body_rogue_*.webp` | checks ids against the manifest |
 | `src/framework/data/assets.js` | runtime data | names `assets/framework/silence.txt` | keeps working because that file stays tracked (see above) |
