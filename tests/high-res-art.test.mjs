@@ -156,6 +156,13 @@ test('a served file that fails to load falls back to the built-in art', async ()
     assert.ok(stopped, "the image's own placeholder handler does not run");
     assert.equal(assetTier('assets/bg/bg_act1.webp'), 'built-in', 'the missing id is dropped from the source');
     assert.equal(assetTier('assets/ui/frame.webp'), 'high', 'other ids keep their high-res file');
+    // A second copy of the same image fails after the id was already dropped.
+    const attrs2 = { src: 'hd/assets/bg/bg_act1.webp' };
+    const twin = { tagName: 'IMG', getAttribute: (k) => attrs2[k], setAttribute: (k, v) => { attrs2[k] = v; } };
+    let stopped2 = false;
+    onError.fn({ target: twin, stopPropagation: () => { stopped2 = true; } });
+    assert.equal(attrs2.src, 'assets/bg/bg_act1.webp', 'the duplicate falls back too');
+    assert.ok(stopped2, 'and gets no placeholder');
   } finally {
     delete globalThis.document;
   }

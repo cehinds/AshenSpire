@@ -161,19 +161,25 @@ export function refreshMountedArt(root = globalThis.document) {
 // the event stops here, before an image's own error handler swaps in a
 // placeholder: a missing high-res file is not a missing asset.
 let watching = false;
+const failed = new Set(); // high-res URLs that failed to load this session
 export function watchMissingFiles(doc = globalThis.document) {
   if (watching || !doc || typeof doc.addEventListener !== 'function') return;
   watching = true;
   doc.addEventListener('error', (event) => {
     const el = event.target;
-    if (!el || !current || typeof el.getAttribute !== 'function') return;
+    if (!el || typeof el.getAttribute !== 'function') return;
     const attr = artAttr(el);
     if (!attr) return;
     const url = readArt(el, attr);
     const id = urlToId.get(url);
-    if (!id || current.get(id) !== url) return;
-    current.delete(id);
-    setHighResSource(current);
+    if (!id) return;
+    if (current && current.get(id) === url) {
+      current.delete(id);
+      setHighResSource(current);
+      failed.add(url);
+    } else if (!failed.has(url)) return;
+    // Every copy of that file on screen (two of the same enemy) fails too; each
+    // falls back the same way, not only the first.
     event.stopPropagation();
     writeArt(el, attr, assetUrl(id));
   }, true);
@@ -275,6 +281,7 @@ export function resetHighResArt() {
   generation = 0;
   servedPending = null;
   watching = false;
+  failed.clear();
   urlToId.clear();
   inlineIndexed = false;
   setHighResSource(null);
