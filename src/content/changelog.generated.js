@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1345",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the slow checks run when a build is promoted",
+    "detail": "Nothing you play changes. A change proposed for the development build is now checked by the fast checks only, about five minutes' worth. The long suites — every platform, the rebuilt-file comparison and the browser checks — run when a build moves to test or release. No check was removed.",
+    "build": "0.7.1.603",
+    "pullRequest": 1345,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1345"
+  },
+  {
     "id": "pr-1340",
     "date": "2026-09-26",
     "group": "2026-09-26",
