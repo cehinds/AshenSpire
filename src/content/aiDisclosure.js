@@ -57,7 +57,7 @@ const STORE_LEAD = `Ashen Spire was built by AI under human direction. The gameâ
 // this tree derives it. It is not made derived here rather than being given a
 // plausible machine answer; see the session log.
 export const AI_DISCLOSURE = Object.freeze({
-  updated: '2026-09-24',
+  updated: '2026-09-26',
 
   // TRUE again since 2026-09-03, on the CORRECTED wording below.
   //
