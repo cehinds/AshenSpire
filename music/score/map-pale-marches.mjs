@@ -6,44 +6,43 @@
 //       past the point of meaning anything."
 //   §3  "The Stitched King is what a throne looks like when it refuses to be empty."
 //
-// How it sounds (music/score/_STYLE.md, lore table): B minor, 44 BPM. A pedal on B
-// that never moves, the whole loop — the law that outlived itself, the King who
-// will not leave. Above it, knight-like bare fifths in the low strings, changing
-// every two to four bars, never a third. Glassy bowed metal for the ice.
+// Floor (music/score/_STYLE.md, "Direction now"): the current build's map bed,
+// VARIANT 0 — E, 'calm' scale, one note per 2.2 s (≈27.3 BPM), rendered by
+// inGameBeat exactly as the game plays it, plus its strong cello bass every
+// fourth step. It shares the variant with the fallback map track (four
+// variants, six map tracks) and differs in length, placement and lore layer.
+// The floor's drone on E never moves and the game sets its own bare fifth over
+// the walk: that is the pedal, the law that outlived itself, the King who will
+// not leave. Nothing is added under it.
 //
 // Motifs (music/score/_motifs.mjs):
-//   NAMES — one frozen choir voice. Beat 4: F#4–E4–D4–C#4, unfinished. Beat 26:
-//           it starts again, slower, and freezes on its third note (D4, held)
-//           — it stops mid-line and never moves on.
-// Four layers: drone/string pedal, low-string fifths, choir voice (lead), metal.
+//   GOLDBOUGH — cello, beat 2, G major (the walk's relative major; only the cut
+//               note leaves the scale), slower than the map's: G4–B4–D5–E5–D5,
+//               pinched out on F#5 at ≈ beat 9.2 — the night the flame died and
+//               the river froze. Then eleven beats (≈ 24 s) of floor, no lead.
+//   NAMES     — the one extra layer: a single far choir voice, beat 20:
+//               B4–A4 and then G4, held ten beats and going no further — the
+//               name frozen mid-line, like the river. Air from beat 34.
+// Layers: the game's floor + cello bass, cello lead, choir.
 // Original material.
-import { Score, chord, n } from '../../tools/score/compose.mjs';
-import { motif } from './_motifs.mjs';
+import { Score } from '../../tools/score/compose.mjs';
+import { motif, ingame, inGameBeat, snuffed } from './_motifs.mjs';
 
 export const context = 'map-pale-marches';
+const V = 0;
 
-// 44 BPM, 12 bars of 4 = 48 beats ≈ 65 s.
-const s = new Score({ bpm: 44, bars: 12, seed: 29, reverb: { room: 0.94, damp: 0.2 }, gain: 0.85 });
+// 10 bars of 4 = 40 in-game notes = 88 s.
+const s = new Score({ bpm: ingame('map', V).bpm, bars: 10, seed: 29, reverb: { room: 0.94, damp: 0.2 }, gain: 0.9 });
 
-// The pedal: drone and low strings on B and F#, never leaving.
-s.note('drone', 0, s.beats, 'B1', { vel: 0.48, rev: 0.25, cut: 320 });
-s.pad('strings', [[[n('B1'), n('F#2')], 12]], { note: { vel: 0.36, rev: 0.4, cut: 600, a: 3 } });
+// The floor: the game's own map music, and the cello bass under it.
+inGameBeat(s, 'map', { variant: V });
 
-// Knights: bare fifths in the low strings, moving over the pedal.
-s.pad('strings', [
-  [chord('B2', 'five'), 4], [chord('G2', 'five'), 2], [chord('A2', 'five'), 2],
-  [chord('E2', 'five'), 2], [chord('F#2', 'five'), 2],
-], { spread: 0.6, note: { vel: 0.3, rev: 0.5, cut: 800, a: 2.5, r: 3 } });
+// The Court Flame's last night: the kingdom, remembered, and put out.
+snuffed(s, 2, 'G4', { stretch: 0.92, vel: 0.55 });
 
-// NAMES in one far choir voice — unfinished, then frozen mid-line.
-const voice = { legato: 1.05, note: { vowel: 'ah', vel: 0.48, rev: 0.75, pan: 0.1, a: 1.2, r: 2.5 } };
-s.line('choir', 4, motif('B3', 'names', { stretch: 1.5, unfinished: true }), voice);
-const frozen = motif('B3', 'names', { stretch: 2, unfinished: true }).slice(0, 3);
-frozen[2][1] = 12; // the third note is held, and the line goes no further
-s.line('choir', 26, frozen, voice);
-
-// Ice: glassy bowed metal, twice a loop.
-s.note('metal', 14, 8, 'B3', { vel: 0.12, rev: 0.85, pan: 0.6, a: 3 });
-s.note('metal', 38, 8, 'C4', { vel: 0.1, rev: 0.85, pan: -0.6, a: 3 });
+// NAMES in one far choir voice, frozen on its third note.
+const frozen = motif('E4', 'names', { unfinished: true }).slice(0, 3);
+frozen[2][1] = 10;
+s.line('choir', 20, frozen, { legato: 1.05, note: { vowel: 'ah', vel: 0.44, rev: 0.75, pan: 0.2, a: 1.2, r: 2.5 } });
 
 export default s;

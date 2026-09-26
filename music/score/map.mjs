@@ -7,35 +7,41 @@
 //       They are not surviving the winter that came after."
 //   §4  the Forsaken Medallion, "a slug of cold iron, blank on both faces."
 //
-// How it sounds (music/score/_STYLE.md, lore table): E aeolian, 52 BPM, as bare as
-// it can be. A drone on E with a faint fifth — nothing else under it, no chords —
-// and wind-like bowed metal passing over. The one voice is the climber's own.
+// Floor (music/score/_STYLE.md, "Direction now"): the current build's map bed,
+// VARIANT 0 — E, 'calm' scale, one note per 2.2 s (≈27.3 BPM), rendered by
+// inGameBeat exactly as the game plays it (note, fifth, drone), plus its strong
+// cello bass every fourth step. On top, in E calm, as bare as it can be:
+// wind-like bowed metal over the viaducts (the one extra layer) and the cello.
 //
 // Motifs (music/score/_motifs.mjs):
-//   FORSAKEN — solo cello, beat 4: E3–B3–D4–B3, broadened; then air; again at
-//              beat 36, E2–B2–D3–B2, lower and slower, the road going on.
-// Three layers: drone, cello (lead), metal (wind).
+//   GOLDBOUGH — cello, beat 4, G major (the walk's relative major; only the cut
+//               note leaves the scale): G4–B4–D5–E5–D5, pinched out on F#5 at
+//               ≈ beat 9.9. Then twelve beats (≈ 26 s) of floor, no lead.
+//   FORSAKEN  — cello, beat 22: E4–B4–D5–B4, the one voice left on the road;
+//               air from beat 31 to the loop.
+// Layers: the game's floor + cello bass, cello lead, metal.
 // Original material.
 import { Score } from '../../tools/score/compose.mjs';
-import { motif } from './_motifs.mjs';
+import { motif, ingame, inGameBeat, snuffed } from './_motifs.mjs';
 
 export const context = 'map';
+const V = 0;
 
-// 52 BPM, 16 bars of 4 = 64 beats ≈ 74 s.
-const s = new Score({ bpm: 52, bars: 16, seed: 23, reverb: { room: 0.92, damp: 0.5 }, gain: 0.9 });
+// 9 bars of 4 = 36 in-game notes ≈ 79 s.
+const s = new Score({ bpm: ingame('map', V).bpm, bars: 9, seed: 23, reverb: { room: 0.92, damp: 0.5 }, gain: 0.9 });
 
-// The bare drone: E with a faint fifth, unbroken.
-s.note('drone', 0, s.beats, 'E2', { vel: 0.5, rev: 0.2 });
-s.note('drone', 0, s.beats, 'B2', { vel: 0.22, rev: 0.2, cut: 300 });
+// The floor: the game's own map music, and the cello bass under it.
+inGameBeat(s, 'map', { variant: V });
 
-// FORSAKEN on the cello, twice, with the road between.
-const cello = { note: { vel: 0.56, rev: 0.45, pan: -0.15 } };
-s.line('cello', 4, motif('E3', 'forsaken', { stretch: 1.5 }), cello);
-s.line('cello', 36, motif('E2', 'forsaken', { stretch: 1.75 }), { note: { ...cello.note, vel: 0.52 } });
+// The kingdom, remembered, and put out.
+snuffed(s, 4, 'G4', { stretch: 0.75, vel: 0.55 });
+
+// The climber, alone on the ring road.
+s.line('cello', 22, motif('E4', 'forsaken', { stretch: 0.75 }), { note: { vel: 0.56, rev: 0.5, pan: -0.15 } });
 
 // Wind over the viaducts: bowed metal swells, far apart, left and right.
-s.note('metal', 0, 10, 'B3', { vel: 0.1, rev: 0.8, pan: 0.5, a: 4 });
-s.note('metal', 22, 10, 'E4', { vel: 0.11, rev: 0.8, pan: -0.55, a: 4 });
-s.note('metal', 46, 12, 'F#3', { vel: 0.12, rev: 0.8, pan: 0.4, a: 4 });
+s.note('metal', 0, 6, 'B3', { vel: 0.1, rev: 0.8, pan: 0.5, a: 4 });
+s.note('metal', 14, 6, 'E4', { vel: 0.11, rev: 0.8, pan: -0.55, a: 4 });
+s.note('metal', 29, 6, 'A3', { vel: 0.1, rev: 0.8, pan: 0.4, a: 4 });
 
 export default s;
