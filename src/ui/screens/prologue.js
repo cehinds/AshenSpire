@@ -2,7 +2,7 @@ import { prologueSceneMs, prologueTransitionMs } from '../../model/prologueTimin
 import { paintPrologueCharacter, placePrologueCharacter } from '../prologueCharacter.js';
 import { el, button, openModal } from '../kit/index.js';
 import { prologueArtwork } from '../assets.js';
-import { builtInFor, refreshMountedArt, ART_SOURCE_EVENT } from '../highResArt.js';
+import { builtInFor, currentArtUrl, refreshMountedArt, ART_SOURCE_EVENT } from '../highResArt.js';
 import { topVeil } from '../components/veil.js';
 import { prologueConfig, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueResumePosition, prologueSceneArt, prologueBoxBackground, prologueStaging, PROLOGUE_DEFAULTS, PROLOGUE_LAYOUT, PROLOGUE_LAYOUTS } from '../../model/prologue.js';
 
@@ -255,7 +255,12 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     try { await decoded(); }
     catch {
       clearTimeout(timeout);
-      const fallback = builtInFor(image.getAttribute('src'));
+      // A failed high-res file retries with the built-in art; a URL the art
+      // source has moved away from since (a switch mid-decode) retries with
+      // the tier in use now, rather than being hidden.
+      const was = image.getAttribute('src');
+      const now = currentArtUrl(was);
+      const fallback = builtInFor(was) || (now !== was ? now : null);
       if (fallback) {
         image.setAttribute('src', fallback);
         try { await decoded(); return; } catch { /* the built-in art is missing too */ }
