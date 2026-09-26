@@ -234,6 +234,20 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.levelCard.title",
+    "extends": "",
+    "short": "Level card",
+    "full": "A level this fight bought: pick one more card.",
+    "tip": ""
+  },
+  {
+    "id": "reward.note.cardMissed",
+    "extends": "",
+    "short": "No card this time.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.skillDraft.title",
     "extends": "",
     "short": "{skill} · level {level}",

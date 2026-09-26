@@ -20,6 +20,7 @@ import { eligibleWeaponArts } from '../model/armamentTrading.js';
 import { carriedIds } from '../model/loadout.js';
 import { skillSchools, rarityUnlockedAt } from '../model/skills.js';
 import { classDraftPool } from '../model/classTree.js';
+import { cardRewardPlan } from '../model/rewardplan.js';
 
 // ---------------------------------------------------------------------------
 // Encounters
@@ -108,6 +109,54 @@ export function rollCardRewardIds(registries, rng, { classId, pool, relicIds = [
     picks.push(rng.pick('cardRewards', options));
   }
   return picks;
+}
+
+// ---------------------------------------------------------------------------
+// The card reward schedule (SPEC §15.1)
+// ---------------------------------------------------------------------------
+
+// The schedule itself — which rows a fight earns, and the chance roll — is
+// model/rewardplan.js `cardRewardPlan`, the one door solo, co-op
+// (tools/session.mjs) and the simulator (tools/runsim.mjs) read it through.
+// This rolls the CARDS for the rows that plan grants.
+export { cardRewardSchedule, cardRewardPlan } from '../model/rewardplan.js';
+
+/**
+ * rollCombatCardOffer(registries, rng, { classId, pool, relicIds, flatRarity,
+ * draftWaiting, levelUps }) → { cardIds, cardMissed, levelCards, rewards }
+ *
+ * The card rows of a won fight's spoils (SPEC §15.1), as model/rewardplan.js
+ * `cardRewardPlan` grants them, with the cards rolled:
+ *   - a waiting skill or class draft takes the card row's seat (§13.4e/g):
+ *     no card row, and nothing is rolled for one — but it does NOT displace
+ *     a level card, which is the level's own reward;
+ *   - else `afterCombat[pool]` off → no card row, nothing rolled;
+ *   - else `chancePct[pool]` below 100 rolls once on 'rewardRolls'
+ *     (0 never offers and rolls nothing; 100 always offers and rolls
+ *     nothing); a miss leaves no card row and sets `cardMissed`, which the
+ *     menu reads as "No card this time.";
+ *   - then the offer itself through rollCardRewardIds on 'cardRewards';
+ *   - with `onLevelUp` on and `levelUps` > 0, min(levelUps,
+ *     onLevelUpMaxPerFight) level-card rows, each one more rollCardRewardIds
+ *     at the door's own odds, AFTER the offer on the same stream.
+ * `rewards` is the slice of the offer object the caller spreads in: always
+ * `cardIds`, and `cardMissed` / `levelCards` only when they say something,
+ * so the shipped schedule writes exactly the bytes it wrote before.
+ * Pure of the run: the caller hands in the level-ups the fight bought.
+ */
+export function rollCombatCardOffer(registries, rng, { classId, pool, relicIds = [], flatRarity = false, draftWaiting = false, levelUps = 0 } = {}) {
+  const plan = cardRewardPlan(registries.balance, { pool, levelsGained: levelUps, draftWaiting }, rng);
+  const roll = () => rollCardRewardIds(registries, rng, { classId, pool, relicIds, flatRarity });
+  const cardIds = plan.offerCard ? roll() : [];
+  const levelCards = [];
+  for (let i = 0; i < plan.levelCards; i++) {
+    const ids = roll();
+    if (ids.length) levelCards.push({ ordinal: levelCards.length, cardIds: ids });
+  }
+  const rewards = { cardIds };
+  if (plan.cardMissed) rewards.cardMissed = true;
+  if (levelCards.length) rewards.levelCards = levelCards;
+  return { cardIds, cardMissed: plan.cardMissed, levelCards, rewards };
 }
 
 /**

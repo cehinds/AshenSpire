@@ -268,6 +268,8 @@
 :root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .reward-skip {
   grid-column: 2; grid-row: 2; position: relative; left: 2px;
 }
+/* SPEC §15.1: the card chance missed; one line where the card row would sit. */
+.reward-menu .reward-note { flex-basis: 100%; margin: 0; color: var(--muted); font-style: italic; }
 
 @keyframes reward-took {
   0% { border-color: var(--gold); transform: scale(1.04); }

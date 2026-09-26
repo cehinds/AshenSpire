@@ -1047,8 +1047,22 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (!offer) { sceneDoor({ title: 'Spoils', children: [waiting('Waiting for the others to choose…')] }); return; }
     const stone = offer.smithingStoneReceipt;
     const grid = el('div', { class: 'reward-row' });
-    let pick = { cardId: null, takeRelic: false, flask: false };
+    let pick = { cardId: null, takeRelic: false, flask: false, levelCardIds: {} };
     const submit = () => send({ t: 'chooseReward', pick });
+    // LEVEL CARDS (SPEC §15.1): one strip per row. A tap here only SELECTS —
+    // the pick rides along with whichever choice below closes the spoils.
+    const levelStrips = (Array.isArray(offer.levelCards) ? offer.levelCards : []).flatMap((row) => {
+      const strip = el('div', { class: 'reward-row coop-level-card', dataset: { ordinal: String(row.ordinal) } });
+      row.cardIds.forEach((cid) => {
+        const card = renderCard(registries, { cardId: cid, upgraded: false }, {});
+        card.addEventListener('click', () => {
+          pick.levelCardIds[row.ordinal] = cid;
+          for (const other of strip.children) other.classList.toggle('is-chosen', other === card);
+        });
+        strip.appendChild(card);
+      });
+      return [subtitle(t('reward.levelCard.title')), strip];
+    });
     offer.cardIds.forEach((cid) => {
       const card = renderCard(registries, { cardId: cid, upgraded: false }, {});
       card.addEventListener('click', () => { pick.cardId = cid; submit(); });
@@ -1057,12 +1071,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const takes = [
       offer.relicId ? choice({ glyph: '◆', name: 'Take the relic', description: registries.relics.get(offer.relicId).name, className: 'coop-take', attrs: { dataset: { take: 'relic' } } }) : null,
       offer.flaskId ? choice({ glyph: '⚗', name: 'Take the flask', description: registries.flasks.get(offer.flaskId).name, className: 'coop-take', attrs: { dataset: { take: 'flask' } } }) : null,
-      choice({ glyph: '›', name: 'Skip the card', attrs: { dataset: { take: 'skip' } } }),
+      choice({ glyph: '›', name: offer.cardIds.length ? 'Skip the card' : 'Continue', attrs: { dataset: { take: 'skip' } } }),
     ];
     sceneDoor({
       title: `${String(snap.scene.pool || 'The').replace(/^./, (c) => c.toUpperCase())} spoils`,
       note: stone?.amount > 0 ? `⚒ ${stone.amount} Smithing Stone secured · ${stone.stoneBalanceAfter} total` : '',
-      children: [subtitle('Choose a card'), grid, options(takes, { class: 'coop-choices' })],
+      children: [
+        ...levelStrips,
+        ...(offer.cardIds.length ? [subtitle('Choose a card'), grid] : []),
+        ...(offer.cardMissed ? [el('p', { class: 'reward-note', dataset: { note: 'cardMissed' }, text: t('reward.note.cardMissed') })] : []),
+        options(takes, { class: 'coop-choices' }),
+      ],
     });
     app.querySelectorAll('[data-take]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.take === 'relic') pick.takeRelic = true; else if (b.dataset.take === 'flask') pick.flask = true; submit(); }));
   }

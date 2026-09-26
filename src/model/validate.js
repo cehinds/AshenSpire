@@ -673,6 +673,30 @@ function collectContentProblems(bundle, errors = []) {
     }
   }
 
+  // THE CARD REWARD SCHEDULE (SPEC §15.1). Absent reads as the shipped
+  // defaults (engine/encounters.js cardRewardSchedule); present, every key is
+  // checked, and a key it does not know is refused rather than ignored.
+  if (b.balance?.rewards?.cardRewards !== undefined) {
+    const s = b.balance.rewards.cardRewards;
+    const root = 'balance.rewards.cardRewards';
+    const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+    if (!object(s)) err(root, 'must be an object { afterCombat, chancePct, onLevelUp, onLevelUpMaxPerFight }');
+    else {
+      for (const key of Object.keys(s)) if (!['afterCombat', 'chancePct', 'onLevelUp', 'onLevelUpMaxPerFight'].includes(key)) err(`${root}.${key}`, 'Unknown field');
+      for (const [key, check, want] of [
+        ['afterCombat', value => typeof value === 'boolean', 'true or false'],
+        ['chancePct', value => Number.isInteger(value) && value >= 0 && value <= 100, 'an integer percent 0–100'],
+      ]) {
+        const table = s[key];
+        if (!object(table)) { err(`${root}.${key}`, 'must be an object { normal, elite, boss }'); continue; }
+        for (const pool of Object.keys(table)) if (!['normal', 'elite', 'boss'].includes(pool)) err(`${root}.${key}.${pool}`, 'unknown reward pool');
+        for (const pool of ['normal', 'elite', 'boss']) if (!check(table[pool])) err(`${root}.${key}.${pool}`, `must be ${want}, got ${JSON.stringify(table[pool])}`);
+      }
+      if (typeof s.onLevelUp !== 'boolean') err(`${root}.onLevelUp`, `must be true or false, got ${JSON.stringify(s.onLevelUp)}`);
+      if (!(Number.isInteger(s.onLevelUpMaxPerFight) && s.onLevelUpMaxPerFight >= 0)) err(`${root}.onLevelUpMaxPerFight`, `must be a non-negative integer, got ${JSON.stringify(s.onLevelUpMaxPerFight)}`);
+    }
+  }
+
   if (b.balance && b.balance.level !== undefined) {
     const lv = b.balance.level;
     if (!lv || typeof lv !== 'object' || Array.isArray(lv)) err('balance.level', 'must be an object { xp }');

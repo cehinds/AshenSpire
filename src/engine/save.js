@@ -125,6 +125,11 @@ function pendingRewardReferenceProblems(pending, registries) {
       if (!tree.has(nodeId)) problems.push(`class draft node '${nodeId}' is not in the '${draft.classId}' tree`);
     }
   }
+  for (const row of Array.isArray(rewards.levelCards) ? rewards.levelCards : []) {
+    for (const cardId of (row && row.cardIds) || []) {
+      if (!registries.cards.has(cardId)) problems.push(`level card '${cardId}' is unknown`);
+    }
+  }
   for (const draft of rewards.skillDrafts || []) {
     if (!draft || !skillKindOf(registries, draft.skillId)) problems.push(`skill draft track '${draft && draft.skillId}' is unknown`);
     for (const cardId of (draft && draft.cardIds) || []) {

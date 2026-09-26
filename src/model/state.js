@@ -728,7 +728,12 @@ function pendingDraftRows(pending) {
   const cls = (Array.isArray(rewards.classDrafts) ? rewards.classDrafts : [])
     .filter((d) => d && typeof d.classId === 'string' && Array.isArray(d.nodeIds) && d.nodeIds.length > 0)
     .map((d) => ({ key: `classDraft:${d.classId}:${(seen[`c:${d.classId}`] = (seen[`c:${d.classId}`] || 0) + 1) - 1}`, nodeIds: d.nodeIds, ids: d.nodeIds }));
-  return [...cls, ...skill];
+  // A level card (SPEC §15.1) picks a card, keyed by its ordinal; its pick is
+  // kept in chosenDraftCardIds beside the skill drafts', one map keyed by row.
+  const level = (Array.isArray(rewards.levelCards) ? rewards.levelCards : [])
+    .filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
+    .map((d, i) => ({ key: `levelCard:${Number.isInteger(d.ordinal) ? d.ordinal : i}`, cardIds: d.cardIds, ids: d.cardIds }));
+  return [...cls, ...skill, ...level];
 }
 const pendingDraftKeys = (pending) => pendingDraftRows(pending).map((d) => d.key);
 
@@ -909,6 +914,24 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           if (!Number.isInteger(d.level) || d.level < 0) problems.push(`${p}.level must be a non-negative integer`);
           if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
         });
+      }
+      if (pending.rewards?.levelCards !== undefined) {
+        // SPEC §15.1: absent on an offer written before the schedule.
+        const rows = pending.rewards.levelCards;
+        if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelCards must be an array');
+        else {
+          const ordinals = new Set();
+          rows.forEach((d, i) => {
+            const p = `pendingReward.rewards.levelCards[${i}]`;
+            if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { ordinal, cardIds }`); return; }
+            if (!Number.isInteger(d.ordinal) || d.ordinal < 0 || ordinals.has(d.ordinal)) problems.push(`${p}.ordinal must be a distinct non-negative integer`);
+            ordinals.add(d.ordinal);
+            if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
+          });
+        }
+      }
+      if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
+        problems.push('pendingReward.rewards.cardMissed must be a boolean');
       }
       if (pending.chosenDraftCardIds !== undefined) {
         const chosen = pending.chosenDraftCardIds;

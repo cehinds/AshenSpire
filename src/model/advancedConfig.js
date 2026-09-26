@@ -71,6 +71,9 @@ const BALANCE_DOMAINS = Object.freeze({
   'rest.hpSmallPct': PERCENT,
   'rest.hpPartialPct': PERCENT,
   'rest.mana.floorPct': PERCENT,
+  'rewards.cardRewards.chancePct.normal': PERCENT,
+  'rewards.cardRewards.chancePct.elite': PERCENT,
+  'rewards.cardRewards.chancePct.boss': PERCENT,
   'atlas.townsPerActMax': Object.freeze({ min: 1 }),
   // XP CURVES THIS BUILD LOWERED (owner, 2026-09-24: every base to 5). A range
   // read off 5 tops out at 50, which would refuse an exported file written on
