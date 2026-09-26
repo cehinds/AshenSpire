@@ -36,7 +36,10 @@ export function altScore(score) {
     events.push(e);
   }
   if (!thumps.length) {
-    const beats = [...new Set(score.events.filter((e) => e.inst === 'gamenote' && e.wave !== 'sine').map((e) => e.beat))];
+    // One heart per in-game note. The floor's harmony fifth shares its note's
+    // beat, so beats (not waveforms) identify the notes: a sine-wave bed's
+    // main notes are sine too.
+    const beats = [...new Set(score.events.filter((e) => e.inst === 'gamenote').map((e) => e.beat))];
     for (const b of beats) events.push({ inst: 'heart', beat: b, beats: 1, midi: heartMidi, vel: 0.6, pan: 0, rev: 0.08, gap: 0.26 });
   }
   const rv = score.reverb ?? {};

@@ -75,3 +75,17 @@ test('the alt cut swaps cello for bass and brings the heartbeat forward', async 
     assert.ok(render(alt).left.length > 0);
   }
 });
+
+test('the alt cut gives every non-battle bed variant a heart on each in-game note, whatever its wave', async () => {
+  const { altScore } = await import('../tools/score/alt.mjs');
+  const { inGameBeat } = await import('../music/score/_motifs.mjs');
+  for (const [context, bed] of Object.entries(BEDS)) {
+    if (bed.pulse || !bed.variants) continue;
+    bed.variants.forEach((_, variant) => {
+      const s = new Score({ bpm: 60, bars: 2, seed: 1 });
+      inGameBeat(s, context, { variant });
+      const hearts = altScore(s.toJSON()).events.filter((e) => e.inst === 'heart').length;
+      assert.equal(hearts, 8, `${context} variant ${variant}: one heart per note (wave ${bed.variants[variant].wave ?? 'triangle'})`);
+    });
+  }
+});
