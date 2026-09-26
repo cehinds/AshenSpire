@@ -172,10 +172,15 @@ on:
     branches: [dev] # `display-first` and `boundary` only; see above
   workflow_dispatch:
 
-# One in-flight run per ref; a superseded run's result is not evidence about HEAD.
+# A PULL REQUEST's superseded run is not evidence about its head, so it is
+# cancelled. A PUSH to `test` or `release` is a promotion, and each promoted
+# tree is its own answer: a second push must not cancel the first's 10-60 min
+# run, nor replace it while queued (a group holds one pending run). So a push
+# (and a dispatch) is grouped by its SHA, one group per commit, and a pull
+# request by its ref — the same rule as tests.yml and dev-preview.yml.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
