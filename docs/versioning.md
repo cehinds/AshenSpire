@@ -216,12 +216,104 @@ and archived with a named reason only when one does not (`engine/save.js`).
 2. Add the CHANGELOG receipt naming the PR and, per convention, the ordinal
    as committed at that merge.
 3. `node tools/about-changelog.mjs --write` (regenerate the projection).
-4. `node tools/launch.mjs --build-only` (rebuild root + build/ + dist/).
+4. `node tools/launch.mjs --build-only` (rebuild root + build/ + dist/
+   locally; since 2026-09-26 the HTML it writes is not committed, only the
+   box it moves — see "Builds are not committed" below).
 5. `node tools/buildversion.mjs --check` and `node tools/verify-shipped.mjs`
-   must both pass in the same tree that gets pushed.
+   must both pass in the same tree that gets pushed; CI runs both again
+   against its own build of that tree.
 
 A bump PR may carry the milestone it stamps, or stamp an already-merged
 milestone by itself; it never carries unrelated work.
+
+## Builds are not committed (2026-09-26)
+
+Owner, 2026-09-26: "Remove builds from the merge and let a pipeline build it
+when pushed to test." The repository ran out of Git LFS budget: every rebuild
+uploaded a new `AshenSpire.html` (~255 MB) and `AshenSpire-mobile.html`
+(~29 MB) in three homes each, and every push carrying a new LFS object is now
+refused. This section is the contract for what replaces that. It changes
+where the HTML lives, not what a version means: the stamp, the ordinal rule
+and the receipt rule above are unchanged.
+
+**What a commit carries, and what it does not.**
+
+| Committed on `dev` (and every branch after promotion) | Not committed: built by CI, ignored by git |
+|---|---|
+| the source tree | `AshenSpire.html`, `AshenSpire-mobile.html` |
+| `buildordinal.json` (the box) | `build/AshenSpire.html`, `build/AshenSpire-mobile.html` |
+| `src/content/changelog.generated.js` | `dist/AshenSpire.html`, `dist/AshenSpire-mobile.html` |
+| the CHANGELOG.md receipt | |
+
+`.gitignore` lists the six; `.gitattributes` loses their LFS rules;
+`tools/verify-shipped.mjs` fails if any of them is tracked again. A `dev`
+clone needs no Git LFS. The legacy preview files and everything under
+`assets/` are untouched by this change.
+
+**The ordinal stays a committed counter.** `buildordinal.json` is still the
+box, still written only by `bumpOrdinal` (through `tools/bundle.mjs`, or a
+box-only entry point that runs the same function without bundling), still
+moved only when the source digest moves. A receipt is still written in the
+pull request that ships the change, at the box's ordinal plus one, and
+`about-changelog --check-order` still compares numbers that exist in the tree
+at merge.
+
+- *Why not let CI assign the ordinal at build time.* A CI-assigned number
+  exists only after the merge, so a pull request could not carry its own
+  receipt (`receipts.mjs --check --pr auto` would have nothing to read), a
+  bot would have to commit the number back to `dev` after every merge, and
+  `--check-order` would be ordering numbers no reviewer saw. The committed
+  counter keeps every receipt truthful before the merge, with no new moving
+  part.
+- *The cost, stated.* `buildordinal.json` still conflicts between two open
+  pull requests, and each still re-points its receipt after a base merge, as
+  it does today. Writing the box no longer needs the 255 MB bundle: the
+  digest is a function of the source alone (`sourceDigest`).
+- *What proves the box is honest.* CI builds the commit and requires the build
+  to change nothing committed (`git diff --exit-code`): a box that disagrees
+  with its source would be rewritten by that build and fail the job. A
+  rebuild of an unchanged tree is byte-identical (`tools/rebuild-matches.mjs`),
+  so a build is named by its commit and digest, and the artifact is that build.
+
+**Where CI builds, and why each branch.** Every build is the ordinary
+`node tools/launch.mjs --build-only` on a Linux runner, followed by the gates
+that read a build. Artifacts are named `<branch>-standalone-<commit>` and
+hold both editions.
+
+| Trigger | Why it builds | What it keeps |
+|---|---|---|
+| pull request into `dev`, push to `dev` | the gates that read a bundle (`verify-shipped`, `buildversion --check`, the bundler parse gate, the tests that open the HTML) must see one, and a reviewer plays the PR's own build | `dev-standalone-<commit>`, 14 days (today's `dev-preview.yml` retention) |
+| **push to `test`** | the owner's request: the playtest build QA receives on each `dev → test` promotion | `test-standalone-<commit>`, 30 days |
+| push to `release`, push to `main` | Pages publishes those sections, and the release gate (`ci.yml` on push to `release`) reads a build | `<branch>-standalone-<commit>`, 90 days (GitHub's maximum) |
+
+A check that used to read a committed build now builds on demand in the same
+job, or downloads the artifact of the same commit. **A missing build is a
+failure, never a skip**, and no check is deleted or weakened by the move; a
+pull request that moves a check's coverage says where it went.
+
+**How Pages gets its builds.** `tools/pages-site.mjs` keeps walking `dev`,
+`test`, `release` and `main` and keeps its addresses
+(`/<branch>/<ordinal>/`, `/<branch>/latest/`). For a commit after the
+cutover it reads the build from that commit's `<branch>-standalone-<commit>`
+artifact through the Actions API (`actions: read`), instead of from git
+history; for a commit before the cutover it keeps reading history, where the
+LFS objects already exist. A commit whose artifact has expired is left out
+and the branch's index says so, rather than being skipped in silence. The
+publication rules in the header of `pages-builds.yml` do not change.
+
+- *Why artifacts, not GitHub Releases.* Release assets never expire and need
+  no LFS, but creating a release is owner-only (CONTRIBUTING.md,
+  *Coordination and release boundary*). Artifacts need no new permission; the
+  price is that a build older than its retention drops off the site.
+
+**`release` and `main`** keep their committed copies until the owner's next
+`dev → release` promotion, which carries the deletion (a deletion uploads no
+LFS object, so it is not refused). Nothing here merges to either branch.
+
+**The measurable test** (`docs/FINISH.md` §12): a pull request into `dev`
+changes no generated build file, and a push to `test` produces a playable
+`test-standalone-<commit>` artifact whose Settings → About stamp equals the
+box of that commit.
 
 ## MAJOR and the release gate
 
