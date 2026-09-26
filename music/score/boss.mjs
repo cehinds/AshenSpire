@@ -1,59 +1,58 @@
-// Boss — the tower's keeper. G minor at 126 BPM, doom held at one height: a
-// full-organ pedal under everything, a racing sixteenth string ostinato,
-// taiko pounding every beat, and the full choir chanting a four-bar "ah"
-// motif over its own sustained chords, while bells toll the phrase heads. The
-// intensity is constant: no drop-outs and no sudden peaks.
-import { Score, chord, n } from '../../tools/score/compose.mjs';
+// Boss — the tower's keeper. G minor at 92 BPM, in half-time: big through
+// sustain, not speed. A full-stop organ pedal and low strings hold each chord
+// for two bars, the full choir swells "ah" chords over them, and above it all
+// the choir chants one slow line — alone the first time, doubled a fifth below
+// the second. Taiko strikes on 1 and 3; bells toll every phrase head. The Ab
+// chord over the G pedal is the wound; the D major at the end never resolves.
+import { Score, n } from '../../tools/score/compose.mjs';
 
 export const context = 'boss';
 
-const s = new Score({ bpm: 126, bars: 40, seed: 67, reverb: { room: 0.85, damp: 0.4 }, gain: 0.95 });
+const s = new Score({ bpm: 92, bars: 28, seed: 67, reverb: { room: 0.92, damp: 0.4 }, gain: 0.95 });
 
-// Harmony, 8 bars: i – VI – iv – V, then i – bII – VI – V.
+// Harmony, 14 bars, two bars a chord, played twice:
+// i – bVI/G – iv/G – bII/G – bVI – iv – V.
+const v = (...ns) => ns.map(n);
 const prog = [
-  [chord('G2', 'm'), 1], [chord('Eb3', 'M', 2), 1], [chord('C3', 'm', 1), 1], [chord('D3', 'M'), 1],
-  [chord('G2', 'm'), 1], [chord('Ab2', 'M'), 1], [chord('Eb3', 'M', 2), 1], [chord('D3', 'M'), 1],
+  [v('G1', 'G2'), v('G2', 'D3', 'Bb3')],
+  [v('G1', 'G2'), v('G2', 'Eb3', 'Bb3')],
+  [v('G1', 'G2'), v('G2', 'C3', 'Eb3')],
+  [v('G1', 'G2'), v('Ab2', 'C3', 'Eb3')],
+  [v('Eb1', 'Eb2'), v('Eb2', 'Bb2', 'G3')],
+  [v('C1', 'C2'), v('C2', 'G2', 'Eb3')],
+  [v('D1', 'D2'), v('D2', 'A2', 'F#3')],
 ];
-const roots = ['G1', 'Eb1', 'C2', 'D2', 'G1', 'Ab1', 'Eb1', 'D2'];
+const bars = 2;
 
-// Full-organ pedal: root and fifth per bar, legato.
-for (let bar = 0; bar < s.bars; bar++) {
-  const r = n(roots[bar % 8]);
-  s.note('organ', bar * 4, 4.05, r, { stop: 'full', vel: 0.34, rev: 0.4, a: 0.15, r: 0.6 });
-  s.note('organ', bar * 4, 4.05, r + 7, { stop: 'full', vel: 0.18, rev: 0.4, a: 0.15, r: 0.6 });
-}
+// Layer 1 — the floor: full-organ pedal (root in octaves) under low strings.
+s.pad('organ', prog.map(([ped]) => [ped, bars]), { overlap: 0.05, spread: 0, note: { stop: 'full', vel: 0.3, rev: 0.45, a: 0.8, r: 1.6 } });
+s.pad('strings', prog.map(([, c]) => [c, bars]), { overlap: 0.2, spread: 0.6, note: { vel: 0.34, rev: 0.35, cut: 950, a: 1.5, r: 2.8 } });
 
-// Racing string ostinato: sixteenths, root–fifth–octave–fifth with the b2 on 4.
-for (let bar = 0; bar < s.bars; bar++) {
-  const r = n(roots[bar % 8]) + 24;
-  const fig = [0, 7, 12, 7, 0, 7, 12, 13, 0, 7, 12, 7, 0, 3, 7, 3];
-  fig.forEach((iv, k) => s.note('strings', bar * 4 + k * 0.25, 0.2, r + iv,
-    { vel: k % 4 === 0 ? 0.42 : 0.3, a: 0.008, r: 0.08, cut: 1700, rev: 0.15, pan: k % 2 ? 0.3 : -0.3 }));
-}
+// Layer 2 — full choir "ah" chords, an octave above the strings, long swells.
+s.pad('choir', prog.map(([, c]) => [c.map((m) => m + 12), bars]),
+  { overlap: 0.25, spread: 0.8, note: { vel: 0.18, rev: 0.6, vowel: 'ah', a: 3, r: 3 } });
 
-// Pounding taiko on every beat, a lower drum on 1 and 3, frame drum eighths between.
-s.hits('taiko', 'D2', [0, 1, 2, 3], { accent: [0, 2], note: { vel: 0.66, rev: 0.12 } });
-s.hits('taiko', 'G1', [0, 2.5], { note: { vel: 0.55, rev: 0.12, decay: 4, pan: -0.15 } });
-s.hits('frame', 'A2', [0.5, 1.5, 2.5, 3.5, 3.75], { accent: [1.5, 3.5], note: { vel: 0.45, rev: 0.1, pan: 0.35 } });
+// ...and the chant above them: fourteen bars, one note to two beats at most.
+const chant = [
+  ['G4', 4], ['A4', 2], ['Bb4', 2],       // i
+  ['Bb4', 6], ['G4', 2],                  // bVI/G
+  ['Eb5', 4], ['D5', 2], ['C5', 2],       // iv/G
+  ['C5', 4], ['Ab4', 4],                  // bII/G
+  ['G4', 4], ['Bb4', 4],                  // bVI
+  ['Eb5', 2], ['D5', 2], ['C5', 4],       // iv
+  ['Bb4', 2], ['A4', 5], [null, 1],       // V — held, unresolved
+];
+const chantNote = { vel: 0.27, vowel: 'ah', a: 0.7, r: 1.8, rev: 0.5 };
+s.line('choir', 0, chant, { legato: 1.05, note: chantNote });
+s.line('choir', 56, chant, { legato: 1.05, note: { ...chantNote, pan: 0.1 } });
+s.line('choir', 56, chant.map(([m, l]) => [m && n(m) - 7, l]), { legato: 1.05, note: { ...chantNote, vel: 0.17, pan: -0.15 } });
 
-// Choir: sustained "ah" chords throughout (an octave up)...
-s.pad('choir', prog.map(([ns, len]) => [ns.map((m) => m + 12), len]), { overlap: 0.1, note: { vel: 0.17, rev: 0.5, vowel: 'ah', a: 0.5 } });
-// ...and the chant motif, unison with a fifth below, four bars on, four answering.
-const chant = [['G4', 1], ['G4', 1], ['A4', 1], ['Bb4', 1], ['Bb4', 2], ['G4', 2], ['Bb4', 1], ['C5', 1], ['D5', 2], ['Eb5', 1], ['D5', 1], ['C5', 1], ['A4', 1]];
-const reply = [['D5', 2], ['Bb4', 2], ['C5', 1], ['Eb5', 1], ['C5', 1], ['Ab4', 1], ['G4', 2], ['Bb4', 2], ['A4', 1], ['F#4', 1], ['A4', 2]];
-for (let bar = 0; bar < s.bars; bar += 8) {
-  for (const [shift, v] of [[0, 0.24], [-7, 0.15]]) {
-    s.line('choir', bar * 4, chant.map(([m, l]) => [n(m) + shift, l]), { legato: 1.05, note: { vel: v, vowel: 'ah', a: 0.12, r: 0.5, rev: 0.45 } });
-    s.line('choir', (bar + 4) * 4, reply.map(([m, l]) => [n(m) + shift, l]), { legato: 1.05, note: { vel: v, vowel: 'ah', a: 0.12, r: 0.5, rev: 0.45 } });
-  }
-}
+// Layer 3 — taiko on 1 and 3: a deep stroke and a lighter answer.
+s.hits('taiko', 'G1', [0], { accent: [0], note: { vel: 0.5, rev: 0.4, decay: 3.2, ring: 2, pan: -0.08 } });
+s.hits('taiko', 'D2', [2], { note: { vel: 0.45, rev: 0.4, decay: 4, ring: 1.6, pan: 0.1 } });
 
-// Tolling bells at every phrase head, low and high.
-for (let bar = 0; bar < s.bars; bar += 4) {
-  s.note('bell', bar * 4, 1, bar % 8 ? 'D4' : 'G3', { vel: 0.18, rev: 0.45, pan: -0.45, ring: 5 });
-  s.note('bell', bar * 4 + 2, 1, 'G4', { vel: 0.1, rev: 0.5, pan: 0.45, ring: 4 });
-}
-// Bowed metal on the Ab bars.
-for (let bar = 5; bar < s.bars; bar += 8) s.note('metal', bar * 4, 4, 'Ab2', { vel: 0.12, rev: 0.5, pan: 0.6, a: 1 });
+// Layer 4 — bells at every four-bar phrase head, low; a high one on the Ab bar.
+for (let bar = 0; bar < s.bars; bar += 4) s.note('bell', bar * 4, 1, 'G2', { vel: 0.2, rev: 0.6, pan: -0.4, ring: 8 });
+for (const bar of [6, 20]) s.note('bell', bar * 4, 1, 'Ab3', { vel: 0.12, rev: 0.65, pan: 0.45, ring: 7 });
 
 export default s;
