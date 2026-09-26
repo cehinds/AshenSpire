@@ -58,11 +58,35 @@ export function dimensions(buf, ext) {
   if (ext === '.png' && buf.length >= 24 && buf.toString('ascii', 12, 16) === 'IHDR') {
     return { width: buf.readUInt32BE(16), height: buf.readUInt32BE(20) };
   }
+  if (ext === '.gif' && buf.length >= 10 && buf.toString('ascii', 0, 3) === 'GIF') {
+    return { width: buf.readUInt16LE(6), height: buf.readUInt16LE(8) };
+  }
+  if ((ext === '.jpg' || ext === '.jpeg') && buf.length >= 4 && buf[0] === 0xff && buf[1] === 0xd8) {
+    // Walk the segments to the first start-of-frame (SOF0–SOF15 except the
+    // DHT/JPG/DAC markers C4, C8, CC); its height and width follow the precision byte.
+    let i = 2;
+    while (i + 9 < buf.length && buf[i] === 0xff) {
+      const marker = buf[i + 1];
+      if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+        return { width: buf.readUInt16BE(i + 7), height: buf.readUInt16BE(i + 5) };
+      }
+      i += 2 + buf.readUInt16BE(i + 2);
+    }
+    return null;
+  }
   if (ext === '.svg') {
-    const head = buf.toString('utf8', 0, Math.min(buf.length, 4096));
-    const w = /<svg[^>]*\swidth="(\d+(?:\.\d+)?)"/i.exec(head);
-    const h = /<svg[^>]*\sheight="(\d+(?:\.\d+)?)"/i.exec(head);
-    return w && h ? { width: Number(w[1]), height: Number(h[1]) } : null;
+    // The root element's width and height attributes when both are plain
+    // numbers (px), else its viewBox size — what the browser uses as the
+    // intrinsic size of an <img> that names neither.
+    const root = /<svg\b[^>]*>/i.exec(buf.toString('utf8', 0, Math.min(buf.length, 4096)));
+    if (!root) return null;
+    const attr = (name) => new RegExp(`\\s${name}\\s*=\\s*["']([^"']*)["']`, 'i').exec(root[0])?.[1];
+    const px = (v) => (v !== undefined && /^\d+(?:\.\d+)?(?:px)?$/.test(v.trim()) ? Number.parseFloat(v) : null);
+    const w = px(attr('width'));
+    const h = px(attr('height'));
+    if (w !== null && h !== null) return { width: w, height: h };
+    const box = attr('viewBox')?.trim().split(/[\s,]+/).map(Number);
+    return box && box.length === 4 && box.every(Number.isFinite) ? { width: box[2], height: box[3] } : null;
   }
   return null;
 }

@@ -119,10 +119,26 @@ test('authoring-only equipment components are not assets', () => {
   });
 });
 
-test('dimensions reads webp, png and svg sizes and declines what it cannot read', () => {
+test('dimensions reads webp, png, gif, jpeg and svg sizes (svg by viewBox too) and declines what it cannot read', () => {
   assert.deepEqual(dimensions(webp(512, 256), '.webp'), { width: 512, height: 256 });
   const png = Buffer.alloc(24); png.write('IHDR', 12, 'ascii'); png.writeUInt32BE(10, 16); png.writeUInt32BE(20, 20);
   assert.deepEqual(dimensions(png, '.png'), { width: 10, height: 20 });
   assert.deepEqual(dimensions(Buffer.from('<svg width="24" height="12"></svg>'), '.svg'), { width: 24, height: 12 });
+  assert.deepEqual(dimensions(Buffer.from('<svg xmlns="x" viewBox="0 0 32 16"></svg>'), '.svg'), { width: 32, height: 16 });
+  assert.deepEqual(dimensions(Buffer.from('<svg width="100%" viewBox="0,0,8,4"></svg>'), '.svg'), { width: 8, height: 4 });
+  const gif = Buffer.alloc(13); gif.write('GIF89a', 0, 'ascii'); gif.writeUInt16LE(7, 6); gif.writeUInt16LE(5, 8);
+  assert.deepEqual(dimensions(gif, '.gif'), { width: 7, height: 5 });
+  // SOI, an APP0 segment of length 4, then SOF0: length, precision, height 9, width 11.
+  const jpg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x04, 0x00, 0x00, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0x09, 0x00, 0x0b, 0x03]);
+  assert.deepEqual(dimensions(jpg, '.jpg'), { width: 11, height: 9 });
   assert.equal(dimensions(Buffer.from('wOF2'), '.woff2'), null);
+});
+
+test('every image id in the real manifest records a pixel size in both tiers', () => {
+  const m = JSON.parse(readFileSync(new URL(`../${MANIFEST_PATH}`, import.meta.url), 'utf8'));
+  const missing = Object.entries(m.assets)
+    .filter(([id]) => /\.(webp|png|gif|jpe?g|svg)$/i.test(id))
+    .filter(([, e]) => !(e.high?.width > 0 && e.light?.width > 0))
+    .map(([id]) => id);
+  assert.deepEqual(missing, []);
 });
