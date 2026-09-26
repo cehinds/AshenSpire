@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1332",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: development builds are no longer stored in the repository",
+    "detail": "Nothing you play changes. Every rebuild used to store a fresh 255 MB copy of the game plus its 29 MB mobile edition, and the repository ran out of room for them. Development builds are now made by the automated checks on every change and downloaded from there as the dev-standalone file; the build number and its changelog entry are still checked to agree before a change can merge.",
+    "build": "0.7.1.550",
+    "pullRequest": 1332,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1332"
+  },
+  {
     "id": "pr-1322",
     "date": "2026-09-25",
     "group": "2026-09-25",
