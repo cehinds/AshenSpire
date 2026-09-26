@@ -1,0 +1,1576 @@
+{
+  "schema": "ashen-spire/equipment-component-assets/v1",
+  "viewOrder": [
+    "top",
+    "right",
+    "bottom",
+    "left",
+    "back"
+  ],
+  "cell": {
+    "width": 256,
+    "height": 256
+  },
+  "items": [
+    {
+      "id": "herald_prayer_beads",
+      "classId": "herald",
+      "name": "Herald Prayer Beads",
+      "slot": "accessory",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/herald/herald_prayer_beads.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "herald_bell_sleeves",
+      "classId": "herald",
+      "name": "Herald Bell Sleeves",
+      "slot": "arms",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/herald/herald_bell_sleeves.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "herald_cord_belt",
+      "classId": "herald",
+      "name": "Herald Cord Belt",
+      "slot": "belt",
+      "confidence": "medium",
+      "asset": "assets/equipment/components/v1/herald/herald_cord_belt.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "herald_robe",
+      "classId": "herald",
+      "name": "Herald Layered Robe",
+      "slot": "body",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/herald/herald_robe.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "herald_chest_mantle",
+      "classId": "herald",
+      "name": "Herald Chest Mantle",
+      "slot": "chest",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/herald/herald_chest_mantle.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "herald_boots",
+      "classId": "herald",
+      "name": "Herald Ankle Boots",
+      "slot": "feet",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/herald/herald_boots.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "herald_gloves",
+      "classId": "herald",
+      "name": "Herald Gloves",
+      "slot": "hands",
+      "confidence": "medium",
+      "asset": "assets/equipment/components/v1/herald/herald_gloves.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "herald_hood",
+      "classId": "herald",
+      "name": "Herald Hood",
+      "slot": "head",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/herald/herald_hood.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "herald_halo",
+      "classId": "herald",
+      "name": "Herald Halo Headpiece",
+      "slot": "headAccessory",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/herald/herald_halo.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "herald_under_trousers",
+      "classId": "herald",
+      "name": "Herald Under-Trousers",
+      "slot": "legs",
+      "confidence": "low",
+      "asset": "assets/equipment/components/v1/herald/herald_under_trousers.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "herald_star_mace",
+      "classId": "herald",
+      "name": "Herald Star Mace",
+      "slot": "mainHand",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/herald/herald_star_mace.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "reaver_arm_armor",
+      "classId": "reaver",
+      "name": "Knight Arm Armor",
+      "slot": "arms",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/reaver/reaver_arm_armor.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "reaver_cloak",
+      "classId": "reaver",
+      "name": "Knight Cloak",
+      "slot": "back",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/reaver/reaver_cloak.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "reaver_belt_tassels",
+      "classId": "reaver",
+      "name": "Knight Belt and Tassets",
+      "slot": "belt",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/reaver/reaver_belt_tassels.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "reaver_chest_plate",
+      "classId": "reaver",
+      "name": "Knight Chest Plate",
+      "slot": "chest",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/reaver/reaver_chest_plate.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "reaver_boots",
+      "classId": "reaver",
+      "name": "Knight Boots",
+      "slot": "feet",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/reaver/reaver_boots.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "reaver_gauntlets",
+      "classId": "reaver",
+      "name": "Knight Gauntlets",
+      "slot": "hands",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/reaver/reaver_gauntlets.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "reaver_helmet",
+      "classId": "reaver",
+      "name": "Knight Helmet",
+      "slot": "head",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/reaver/reaver_helmet.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "reaver_leg_armor",
+      "classId": "reaver",
+      "name": "Knight Leg Armor",
+      "slot": "legs",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/reaver/reaver_leg_armor.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "reaver_longsword",
+      "classId": "reaver",
+      "name": "Knight Longsword",
+      "slot": "mainHand",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/reaver/reaver_longsword.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "rogue_forearm_bracers",
+      "classId": "rogue",
+      "name": "Rogue Forearm Bracers",
+      "slot": "arms",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/rogue/rogue_forearm_bracers.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "rogue_utility_belt",
+      "classId": "rogue",
+      "name": "Rogue Utility Belt and Tassets",
+      "slot": "belt",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/rogue/rogue_utility_belt.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "rogue_chest_jerkin",
+      "classId": "rogue",
+      "name": "Rogue Chest Jerkin",
+      "slot": "chest",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/rogue/rogue_chest_jerkin.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "rogue_calf_boots",
+      "classId": "rogue",
+      "name": "Rogue Calf Boots",
+      "slot": "feet",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/rogue/rogue_calf_boots.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "rogue_fingerless_gloves",
+      "classId": "rogue",
+      "name": "Rogue Fingerless Gloves",
+      "slot": "hands",
+      "confidence": "medium",
+      "asset": "assets/equipment/components/v1/rogue/rogue_fingerless_gloves.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "rogue_hood",
+      "classId": "rogue",
+      "name": "Rogue Hood",
+      "slot": "head",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/rogue/rogue_hood.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "rogue_trousers",
+      "classId": "rogue",
+      "name": "Rogue Trousers",
+      "slot": "legs",
+      "confidence": "medium",
+      "asset": "assets/equipment/components/v1/rogue/rogue_trousers.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "rogue_daggers",
+      "classId": "rogue",
+      "name": "Rogue Matched Daggers",
+      "slot": "mainHand",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/rogue/rogue_daggers.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "rogue_cowl_cloak",
+      "classId": "rogue",
+      "name": "Rogue Cowl and Shoulder Cloak",
+      "slot": "shoulders",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/rogue/rogue_cowl_cloak.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "starseer_sleeve_bracers",
+      "classId": "starseer",
+      "name": "Starseer Sleeve Bracers",
+      "slot": "arms",
+      "confidence": "medium",
+      "asset": "assets/equipment/components/v1/starseer/starseer_sleeve_bracers.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "starseer_cloak",
+      "classId": "starseer",
+      "name": "Starseer Cloak",
+      "slot": "back",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/starseer/starseer_cloak.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "starseer_belt_tabard",
+      "classId": "starseer",
+      "name": "Starseer Belt and Tabard",
+      "slot": "belt",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/starseer/starseer_belt_tabard.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "starseer_tunic",
+      "classId": "starseer",
+      "name": "Starseer Tunic",
+      "slot": "chest",
+      "confidence": "medium",
+      "asset": "assets/equipment/components/v1/starseer/starseer_tunic.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "starseer_boots",
+      "classId": "starseer",
+      "name": "Starseer Boots",
+      "slot": "feet",
+      "confidence": "medium",
+      "asset": "assets/equipment/components/v1/starseer/starseer_boots.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "starseer_gloves",
+      "classId": "starseer",
+      "name": "Starseer Gloves",
+      "slot": "hands",
+      "confidence": "medium",
+      "asset": "assets/equipment/components/v1/starseer/starseer_gloves.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "starseer_crooked_hat",
+      "classId": "starseer",
+      "name": "Starseer Crooked Hat",
+      "slot": "head",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/starseer/starseer_crooked_hat.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "starseer_trousers",
+      "classId": "starseer",
+      "name": "Starseer Trousers",
+      "slot": "legs",
+      "confidence": "medium",
+      "asset": "assets/equipment/components/v1/starseer/starseer_trousers.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "starseer_star_staff",
+      "classId": "starseer",
+      "name": "Starseer Star Staff",
+      "slot": "mainHand",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/starseer/starseer_star_staff.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    },
+    {
+      "id": "starseer_cowl_mantle",
+      "classId": "starseer",
+      "name": "Starseer Cowl Mantle",
+      "slot": "shoulders",
+      "confidence": "high",
+      "asset": "assets/equipment/components/v1/starseer/starseer_cowl_mantle.webp",
+      "frames": {
+        "top": {
+          "x": 0,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "right": {
+          "x": 256,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "bottom": {
+          "x": 512,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "left": {
+          "x": 768,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        },
+        "back": {
+          "x": 1024,
+          "y": 0,
+          "width": 256,
+          "height": 256
+        }
+      }
+    }
+  ]
+}
