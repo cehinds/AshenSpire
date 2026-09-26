@@ -130,6 +130,7 @@ test('dimensions reads webp, png, gif, jpeg and svg sizes (svg by viewBox too) a
   assert.deepEqual(dimensions(Buffer.from(`${prolog}<svg viewBox="0 0 40 20"></svg>`), '.svg'), { width: 40, height: 20 }, 'root found past a 5 KB prolog, not inside a comment');
   // Markup-like text inside a processing instruction or a DOCTYPE subset is not the root.
   assert.deepEqual(dimensions(Buffer.from('<?xml version="1.0"?><?pi <svg width="1" height="1">?>\n<!DOCTYPE svg [ <!ENTITY e "<svg width=\'2\' height=\'2\'>"> ]>\n<svg viewBox="0 0 40 20"></svg>'), '.svg'), { width: 40, height: 20 });
+  assert.deepEqual(dimensions(Buffer.from('<!DOCTYPE svg [<!-- ] > --><?pi ] > ?>]><svg viewBox="0 0 40 20"/>'), '.svg'), { width: 40, height: 20 }, 'comments and PIs inside the subset are skipped whole');
   assert.equal(dimensions(Buffer.from('<?xml version="1.0"?><g/>'), '.svg'), null, 'a document whose root is not <svg> has no size');
   // TEM (FF 01) and a restart marker before SOF carry no length and are stepped over.
   const tem = Buffer.from([0xff, 0xd8, 0xff, 0x01, 0xff, 0xd0, 0xff, 0xc0, 0x00, 0x11, 0x08, 0x00, 0x09, 0x00, 0x0b, 0x03, 0x00, 0x00]);

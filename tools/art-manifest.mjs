@@ -116,6 +116,10 @@ export function svgRootTag(text) {
       let depth = 0; let quote = null; let j = i + 9;
       for (; j < text.length; j++) {
         const c = text[j];
+        // Inside the subset, comments and PIs are skipped whole: their text may
+        // hold brackets and '>' that are not markup.
+        if (!quote && depth > 0 && text.startsWith('<!--', j)) { const k = text.indexOf('-->', j + 4); if (k < 0) return null; j = k + 2; continue; }
+        if (!quote && depth > 0 && text.startsWith('<?', j)) { const k = text.indexOf('?>', j + 2); if (k < 0) return null; j = k + 1; continue; }
         if (quote) { if (c === quote) quote = null; }
         else if (c === '"' || c === "'") quote = c;
         else if (c === '[') depth += 1;
