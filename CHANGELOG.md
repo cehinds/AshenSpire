@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-26
+
+- **Behind the scenes: the rules for a deck editor and three kinds of shop are written down** ([#1331](https://github.com/cehinds/AshenSpire/pull/1331), `0.7.1.549`). Docs only, and nothing you play changes yet. The design spec now describes the deck editor that is planned: you add and remove cards between fights, with Strike and Defend unlimited and every other card limited to the copies you own. Deck size limits and an option to draw in the order you arranged will be settings. It also describes a market, a blacksmith and a wise master: each offers a configurable set of services, and a master can reset one skill back to level 1 for a partial refund of its experience. The 1.0 checklist gains one testable line per step.
+
 ## 2026-09-25
 
 - **Synced settings keep which values you chose, and a mistyped sync location is refused** ([#1322](https://github.com/cehinds/AshenSpire/pull/1322), `0.7.1.548`). A settings profile now records which of its values are the owner's promoted defaults, so a value you picked on one device stays yours on the next and a later default update leaves it alone. An Undo only ever applies to the settings it came from, a reset that only hands values back to the defaults can be undone, and a sync location with a typo is refused by name instead of quietly saving over the default profile (settings sync is in development and test builds only).
