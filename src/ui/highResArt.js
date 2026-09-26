@@ -35,6 +35,8 @@ let current = null;  // the Map assetmap.js holds now, to tell a change from a n
 let onChange = null;
 let generation = 0;       // bumped by every applyArtQuality call; a stale one does not publish
 let servedPending = null; // the one in-flight look for `hd/`, shared by overlapping calls
+let lastWanted = false;   // what the latest applyArtQuality call asked for
+let pickRound = 0;        // bumped by every folder pick; a slower, older pick is dropped
 
 /**
  * onArtSourceChange(fn) — called with the new covered count whenever the source
@@ -249,6 +251,7 @@ function publish() {
  */
 export async function applyArtQuality(settings, opts = {}) {
   watchMissingFiles();
+  lastWanted = wantsHighRes(settings);
   if (!wantsHighRes(settings)) {
     generation += 1;
     status = '';
@@ -307,14 +310,21 @@ export function pickHighResFolder(settings, doc = globalThis.document) {
     input.multiple = true;
     input.setAttribute('webkitdirectory', '');
     input.addEventListener('change', async () => {
+      // Stamped BEFORE the manifest read (a few MB): a folder picked after
+      // this one, or a switch to Built-in meanwhile, must win over it.
+      const round = ++pickRound;
       const files = [...(input.files || [])];
       let manifest = null;
       const listed = files.find((f) => /(^|[\\/])art-manifest\.json$/.test(f.webkitRelativePath || f.name));
       if (listed) { try { manifest = JSON.parse(await listed.text()); } catch { manifest = null; } }
+      if (round !== pickRound) { done(0); return; }
       if (picked) for (const url of picked.values()) try { URL.revokeObjectURL(url); } catch { /* already gone */ }
       picked = highResFromFiles(files, { manifest });
       if (!picked.size) picked = null;
-      done(await applyArtQuality(settings));
+      // The folder is kept either way; it is published only if Local
+      // high-res is still what the setting asks for now, not what the
+      // (possibly stale) settings object said when the picker opened.
+      done(wantsHighRes(settings) && lastWanted ? await applyArtQuality({ [ART_QUALITY_KEY]: ART_LOCAL_HIGH }) : 0);
     }, { once: true });
     input.click();
   });
@@ -329,6 +339,8 @@ export function resetHighResArt() {
   onChange = null;
   generation = 0;
   servedPending = null;
+  lastWanted = false;
+  pickRound = 0;
   watching = false;
   failed.clear();
   urlToId.clear();

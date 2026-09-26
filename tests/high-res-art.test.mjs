@@ -260,3 +260,42 @@ test('frame warmers registered with whenArtSourceChanges start over on every sou
   await applyArtQuality({ [ART_QUALITY_KEY]: ART_BUILT_IN });
   assert.deepEqual(seen, [2, 0]);
 });
+
+test('a folder read that finishes after a newer pick, or after a switch to Built-in, does not publish', async () => {
+  const { pickHighResFolder } = await import('../src/ui/highResArt.js');
+  const LOCAL = { [ART_QUALITY_KEY]: ART_LOCAL_HIGH };
+  await applyArtQuality(LOCAL);
+  const realCreate = URL.createObjectURL;
+  let n = 0;
+  URL.createObjectURL = () => `blob:${++n}`;
+  // A picker whose folder carries a manifest that resolves only when released.
+  const slowPicker = (paths) => {
+    let release;
+    const text = new Promise((resolve) => { release = () => resolve(JSON.stringify(manifest)); });
+    const input = {
+      files: [...paths.map(file), { webkitRelativePath: 'hd/art-manifest.json', name: 'art-manifest.json', text: () => text }],
+      setAttribute() {}, addEventListener(type, fn) { this.fn = fn; }, click() { this.fn(); },
+    };
+    return { doc: { createElement: () => input }, release: () => release() };
+  };
+  try {
+    const older = slowPicker(['hd/assets/bg/bg_act1.webp']);
+    const newer = slowPicker(['hd/assets/ui/frame.webp']);
+    const first = pickHighResFolder(LOCAL, older.doc);
+    const second = pickHighResFolder(LOCAL, newer.doc);
+    newer.release(); await second;
+    older.release(); assert.equal(await first, 0, 'the older pick is dropped');
+    assert.equal(assetTier('assets/ui/frame.webp'), 'high', 'the newer folder stands');
+    assert.equal(assetTier('assets/bg/bg_act1.webp'), 'built-in');
+
+    const late = slowPicker(['hd/assets/bg/bg_act1.webp']);
+    const pending = pickHighResFolder(LOCAL, late.doc);
+    await applyArtQuality({ [ART_QUALITY_KEY]: ART_BUILT_IN });
+    late.release();
+    assert.equal(await pending, 0);
+    assert.equal(assetTier('assets/bg/bg_act1.webp'), 'built-in', 'Built-in stays built-in');
+    assert.equal(assetTier('assets/ui/frame.webp'), 'built-in');
+  } finally {
+    URL.createObjectURL = realCreate;
+  }
+});
