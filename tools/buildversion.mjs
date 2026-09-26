@@ -701,7 +701,12 @@ export function stampText(root = REPO_ROOT) {
 // the check
 // ---------------------------------------------------------------------------
 
+// NOT COMMITTED ON dev SINCE THE LFS BUDGET RAN OUT (2026-09-26). Every row
+// that reads it reads the file the last local or CI build wrote; CI builds before
+// it runs --check. buildordinal.json is the one derived fact still committed, so
+// the rows that compare commits (H) and the digest lookup (--which) read it.
 const BUNDLE = 'build/AshenSpire.html';
+const BUILD_FIRST = 'build it first: node tools/launch.mjs --build-only (built HTML is not committed; CI builds before this check)';
 
 /** Module ids the committed bundle actually carries: `"src/x.js": function (`. */
 function bundledModuleIds(text) {
@@ -941,7 +946,7 @@ export function check(root = REPO_ROOT) {
   let bundleText = null;
   try { bundleText = src(BUNDLE); } catch { /* reported */ }
   if (bundleText == null) {
-    outside.push(`${BUNDLE} is missing — the module list cannot be bound to the sweep`);
+    outside.push(`${BUNDLE} is missing — the module list cannot be bound to the sweep; ${BUILD_FIRST}`);
   } else {
     for (const id of bundledModuleIds(bundleText)) {
       if (!insideRoots(id)) outside.push(`${BUNDLE} carries module ${id}`);
@@ -960,7 +965,7 @@ export function check(root = REPO_ROOT) {
   //     this tree derives — which is exactly the question that drifted three
   //     times in palworld-server-tools.
   if (bundleText == null) {
-    add(false, 'E SHIPPED STAMP', `${BUNDLE} is missing — nothing to read a stamp from`);
+    add(false, 'E SHIPPED STAMP', `${BUNDLE} is missing — nothing to read a stamp from; ${BUILD_FIRST}`);
   } else {
     const want = sourceDigest(root).digest;
     const found = [...bundleText.matchAll(/const SOURCE = '([^']*)'/g)].map((m) => m[1]);
@@ -1041,7 +1046,7 @@ export function check(root = REPO_ROOT) {
     add(false, 'F ORDINAL ON THE BOX',
       `${ORDINAL_HOME} could not be read — the ordering half has no home: ${recorded ? recorded.message : 'absent'}`);
   } else if (bundleText == null) {
-    add(false, 'F ORDINAL ON THE BOX', `${BUNDLE} is missing — nothing to read an ordinal from`);
+    add(false, 'F ORDINAL ON THE BOX', `${BUNDLE} is missing — nothing to read an ordinal from; ${BUILD_FIRST}`);
   } else {
     const want = padOrdinal(recorded.ordinal);
     const found = [...bundleText.matchAll(/const ORDINAL = '([^']*)'/g)].map((m) => m[1]);
@@ -1101,6 +1106,13 @@ export function check(root = REPO_ROOT) {
   //     HEAD against its FIRST PARENT, so a merge is judged the same way the
   //     first-parent line reads it and nothing is off by one.
   //
+  //     "THE ARTIFACT CHANGED" IS READ FROM buildordinal.json's DIGEST, not from
+  //     a diff of the bundle. The bundle stopped being committed on dev when the
+  //     LFS budget ran out, so a bundle diff would read "unchanged" forever and
+  //     this row would pass as n/a on every commit. The recorded digest moves in
+  //     exactly the act that bumps the ordinal (bumpOrdinal), so a changed digest
+  //     IS a new build, and it is the fact a pull request still commits.
+  //
   //     THE n/a CASES ARE PASSES AND THEY SAY SO. A root commit has no parent
   //     to compare against, and a parent from before this scheme existed has no
   //     ordinal to compare with. Both are honestly nothing-to-rule-on, and a row
@@ -1112,7 +1124,7 @@ export function check(root = REPO_ROOT) {
   const at = (rev) => {
     try {
       const raw = JSON.parse(g('show', `${rev}:${ORDINAL_HOME}`));
-      return { ordinal: Number(raw.ordinal), release: raw.release ?? null };
+      return { ordinal: Number(raw.ordinal), release: raw.release ?? null, digest: raw.digest ?? null };
     } catch { return null; }
   };
   try {
@@ -1121,15 +1133,15 @@ export function check(root = REPO_ROOT) {
     if (!parent) {
       add(true, 'H ORDINAL INCREASES', 'HEAD has no parent — nothing to compare an ordinal against (n/a, stated)');
     } else {
-      const changed = g('diff', '--name-only', parent, 'HEAD', '--', BUNDLE).trim() !== '';
       const before = at(parent);
       const now = at('HEAD');
+      const changed = before === null || now === null || before.digest !== now.digest;
       if (!changed) {
-        add(true, 'H ORDINAL INCREASES', `${BUNDLE} is unchanged between ${parent.slice(0, 7)} and HEAD — no build shipped, so no ordinal was owed (n/a, stated)`);
+        add(true, 'H ORDINAL INCREASES', `${ORDINAL_HOME} records the same source digest at ${parent.slice(0, 7)} and HEAD — no build shipped, so no ordinal was owed (n/a, stated)`);
       } else if (before === null) {
         add(true, 'H ORDINAL INCREASES', `${parent.slice(0, 7)} has no ${ORDINAL_HOME} — the scheme did not exist at the parent (n/a, stated)`);
       } else if (now === null) {
-        add(false, 'H ORDINAL INCREASES', `HEAD changed ${BUNDLE} and has no readable ${ORDINAL_HOME} — a build shipped with no number`);
+        add(false, 'H ORDINAL INCREASES', `${parent.slice(0, 7)} records a build in ${ORDINAL_HOME} and HEAD has no readable one — a build with no number`);
       } else if (before.release === null) {
         // THE TWO NUMBERS ARE NOT IN THE SAME SPACE — 2259 was a position in
         // the retired global sequence and 2 is a count within a candidate — so
@@ -1207,7 +1219,7 @@ export function check(root = REPO_ROOT) {
         const rose = order > 0;
         const where = moved
           ? `the release moved '${before.release}' → '${now.release}' between ${parent.slice(0, 7)} and HEAD`
-          : `${BUNDLE} changed between ${parent.slice(0, 7)} and HEAD within release '${now.release}'`;
+          : `the recorded source digest moved between ${parent.slice(0, 7)} and HEAD within release '${now.release}'`;
         add(rose, 'H ORDINAL INCREASES',
           rose
             ? `${where}, and the version rose ${beforeV.join('.')} → ${nowV.join('.')}`
@@ -1277,11 +1289,18 @@ export function check(root = REPO_ROOT) {
  * pretending the build never existed — the honest answer to "not on this line
  * of history" is not "nowhere".
  */
+//
+// TWO PATHS SINCE THE BUNDLE LEFT GIT. Up to 2026-09-26 the digest was found in
+// the committed bundle; from then on the bundle is built by CI and never
+// committed on dev, and the digest is found where the build records it,
+// buildordinal.json. A commit that shipped either way is a commit that shipped.
+const WHICH_PATHS = Object.freeze([BUNDLE, ORDINAL_HOME]);
+
 export function whichCommits(digest, root = REPO_ROOT) {
   const git = (...a) => execFileSync('git', ['-C', root, ...a], { encoding: 'utf8', maxBuffer: 1 << 28 });
   const candidates = git(
     'log', '--diff-merges=first-parent', '--no-patch', '--format=%H',
-    '-S', digest, '--', BUNDLE,
+    '-S', digest, '--', ...WHICH_PATHS,
   ).split('\n').map((s) => s.trim()).filter(Boolean);
 
   const out = [];
@@ -1290,7 +1309,7 @@ export function whichCommits(digest, root = REPO_ROOT) {
     // git would otherwise decline to grep it. Exit 1 = "not in this blob", which
     // is an answer, not a failure — hence the try rather than a status check.
     let present = false;
-    try { present = git('grep', '-c', '-a', digest, sha, '--', BUNDLE).trim().length > 0; } catch { present = false; }
+    try { present = git('grep', '-c', '-a', digest, sha, '--', ...WHICH_PATHS).trim().length > 0; } catch { present = false; }
     if (present) out.push(git('log', '-1', '--format=%h %s', sha).trim());
   }
   return out;
@@ -1350,8 +1369,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] || '').href) {
       process.exit(2);
     }
     if (!hits.length) {
-      console.log(`buildversion: no commit of ${BUNDLE} carries '${d}'`);
-      console.log(`  searched: every commit whose ${BUNDLE} differs from its FIRST PARENT, merges included,`);
+      console.log(`buildversion: no commit of ${WHICH_PATHS.join(' or ')} carries '${d}'`);
+      console.log(`  searched: every commit whose ${WHICH_PATHS.join(' or ')} differs from its FIRST PARENT, merges included,`);
       console.log(`  then confirmed against that commit's own blob. A digest introduced by a merge is`);
       console.log(`  reachable; one that only ever existed in an unmerged branch is not.`);
       process.exit(1);

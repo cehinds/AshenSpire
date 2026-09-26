@@ -9,11 +9,22 @@ For how work is branched, reviewed, and merged, see
 
 ## Run & test
 
-Install Git LFS before cloning, or run `git lfs install` and `git lfs pull`
-in an existing checkout. The three generated standalone HTML aliases use LFS
-because the full artwork exceeds GitHub's regular-file size limit. Source art
-stays in ordinary Git; LFS preserves the exact offline-playable build bytes.
-CI hydrates these files, and historical build readers verify their content hashes.
+**The built standalone HTML is not committed on `dev`** (since 2026-09-26).
+Every rebuild used to upload ~284 MB of new Git LFS objects (the 255 MB full file
+and the 29 MB mobile one) and the repository's LFS budget ran out. Now
+`AshenSpire.html`, `AshenSpire-mobile.html`, `build/*.html` and `dist/*.html` are
+ignored: `node tools/launch.mjs --build-only` writes them locally, CI builds them
+on every push and pull request, and `.github/workflows/dev-preview.yml` uploads
+them as the `dev-standalone-<commit>` artifact — that is where a `dev` build is
+downloaded. A `dev` clone needs no Git LFS. `tools/verify-shipped.mjs` fails if
+any of them is tracked again. Historical builds (and `release`/`main`, which
+still carry theirs) remain LFS pointers; readers of those verify content hashes.
+
+A pull request still commits the one derived fact the build writes,
+`buildordinal.json` (plus `src/content/changelog.generated.js`), and its receipt
+names that ordinal. CI rebuilds and requires the rebuild to change nothing
+committed, then runs `node tools/buildversion.mjs --check` against the fresh
+build, so the box and the receipt are still checked to agree.
 
 
 Settings: `src/ui/screens/settings.js` draws only the open Advanced topic and
@@ -759,6 +770,8 @@ regenerated from frozen source.
 all CSS inlined, every ES module bundled into one classic `<script>` via a tiny
 per-module-closure runtime (so file:// has no module/CORS issue). Double-click
 to play; no server, no Node, no external files. Re-run after any source change.
+The file is a local build output, ignored by git on `dev`; commit only the
+`buildordinal.json` (and generated changelog module) the rebuild writes.
 
 ## Balance & telemetry
 

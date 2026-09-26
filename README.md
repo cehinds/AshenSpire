@@ -22,11 +22,12 @@ A roguelike deckbuilder for the browser. Vanilla ES modules, HTML and CSS — no
 - **Addresses:** `…/<branch>/<ordinal>/` is that exact build, byte-identical to the `AshenSpire.html` of the commit that produced it. `…/<branch>/latest/` is the branch's newest. Each index entry links the `CHANGELOG.md` at that build's commit.
 - **Publication:** pushes to `dev`, `test` and `release` publish themselves. A push to **`main` publishes nothing** — the stable Play link moves only on the owner's own workflow dispatch with `publish` spelling PUBLISH. Merging to `main` is owner-only.
 - The site is assembled from git history by `node tools/pages-site.mjs`; nothing on it is hand-edited.
+- **`dev` stopped committing its build on 2026-09-26** (the Git LFS budget ran out), so the site's `dev` section ends at the last committed build and says so. Every newer `dev` build — and every pull request's — is the `dev-standalone-<commit>` artifact of the [dev preview workflow](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml).
 - **Weight, and two downloads:** every build is offered twice. The **full** file is one self-contained download, art and all — **~253 MB** on the `0.7.1` line, up from 58 MB on `0.6.0` as the painted animation frames landed. The **mobile** file (`AshenSpire-mobile.html`, at `…/<branch>/<ordinal>/mobile/`) is the same build with every image shrunk (5/16 scale from 384 px; the full-screen backdrops under `environments/`, `bg/` and `map/` keep 0.4 scale at higher quality) and recompressed under `tools/mobileart-policy.mjs`, held **under 30 MB** by a gate (`tools/verify-shipped.mjs`); it plays the same and looks softer. It is a single download with no second request, which is why the number is worth stating: on a phone it is the whole cost of starting, and the mobile file is the one to take there. Saves are compatible between the two.
 
 ### Offline
 
-Download **[`AshenSpire.html`](AshenSpire.html)** (full, ~253 MB) or **[`AshenSpire-mobile.html`](AshenSpire-mobile.html)** (mobile, under 30 MB) from the repository root and double-click it — one self-contained file, no installation. Each is an alias for its [`dist/`](dist/) twin; all four are generated from `build/` by `node tools/launch.mjs --build-only`, and `node tools/verify-shipped.mjs` fails if any copy differs or the mobile file is over budget. External music folders need http — see [dist/README.md](dist/README.md).
+Download `AshenSpire.html` (full, ~253 MB) or `AshenSpire-mobile.html` (mobile, under 30 MB) and double-click it — one self-contained file, no installation. On `main` and `release` both sit at the repository root. On `dev` they are **not committed** (since 2026-09-26): take them from the `dev-standalone-<commit>` artifact of the [dev preview workflow](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml), or build them yourself with `node tools/launch.mjs --build-only`, which writes `build/`, the root aliases and their [`dist/`](dist/) twins; `node tools/verify-shipped.mjs` fails if any copy differs or the mobile file is over budget. External music folders need http — see [dist/README.md](dist/README.md).
 
 ## Running it
 
@@ -119,7 +120,7 @@ More captures — Armoury: [Equipment](docs/preview/armoury-simple-equipment-144
 ```
 PROMPT.md        the build brief
 SPEC.md          the full design + technical specification (source of truth)
-AshenSpire.html  current standalone development build (root convenience copy)
+AshenSpire.html  standalone build (root convenience copy; built locally or by CI on dev, not committed there)
 index.html       game entry point
 styles/          CSS
 src/model/       schemas, registries, formula evaluator, validation

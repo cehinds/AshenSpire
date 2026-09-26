@@ -192,7 +192,10 @@ jobs:
 
       - uses: actions/checkout@v5
         with:
-          lfs: true
+          # Nothing in this job reads an LFS object: the built HTML is not
+          # committed on dev (it exhausted the LFS budget), and the version checks
+          # that read a build moved to `reproducible`, which builds first.
+          lfs: false
           fetch-depth: 0 # verify-shipped --selftest reads a known-bad blob from history
 
       - uses: ./.github/actions/setup-node
@@ -308,24 +311,6 @@ jobs:
       - name: Release series gate rejects older and malformed versions
         run: node tools/release-series.mjs --selftest
 
-      - name: One version, derived — SOP 5's detector, which this file said was missing
-        # Requirement 3's named gap, closed. The header above used to say "SOP 5's
-        # one-version-derived check … NOTHING STOPS a second copy being born, and I
-        # did not build that detector"; that sentence is now edited rather than left
-        # standing, because a boundary that overstates the gap rots the same way one
-        # that understates it does.
-        #
-        # ON EVERY RUNNER, and that is requirement 2 rather than thoroughness: the
-        # digest canonicalizes CRLF, so a Windows checkout and a Linux checkout of one
-        # commit must derive the SAME string or the shipped stamp is a fact about a
-        # filesystem. This repo has already paid once for that (tools/dirorder.mjs).
-        run: node tools/verdict.mjs -- node tools/buildversion.mjs --check
-
-      - name: …and it can fail — six known-bads, each caught by the row that owns it
-        # Inverted expectation, the idiom already in this job twice. Includes the
-        # fixture SOP 5 asks for by name: a tree that RE-TYPES the version.
-        run: node tools/verdict.mjs -- node tools/buildversion.mjs --selftest
-
   # ---------------------------------------------------------------------------
   # Is the artifact we ship the artifact this source builds — on every platform?
   #
@@ -353,26 +338,79 @@ jobs:
 
       - uses: actions/checkout@v5
         with:
-          lfs: true
+          lfs: false # the build is made here from source; nothing reads LFS
           fetch-depth: 0
 
       - uses: ./.github/actions/setup-node
 
-      - name: Rebuild the standalone and refresh root + dist/
+      - name: Build the standalone and refresh root + dist/
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only
 
       - name: Root + dist carry their art, and ARE the build
         run: node tools/verdict.mjs -- node tools/verify-shipped.mjs
 
-      - name: The committed artifact equals a fresh build on THIS runner
-        # The check that catches both staleness and cross-platform build drift.
-        # Building twice in one tree cannot catch the latter: readdir order is
-        # stable per filesystem, so a same-machine double-build was always
-        # identical and always would have been. This is the only place the
-        # platform claim is actually tested.
+      - name: The rebuild changed nothing committed — the ordinal on the box is the one committed
+        # STALENESS, now that the built HTML is not committed. A pull request
+        # commits buildordinal.json (and src/content/changelog.generated.js) from
+        # its own rebuild; if the source moved after that rebuild, this build
+        # bumps the ordinal and the tree is no longer clean. That is the receipt
+        # and the box disagreeing, caught before merge.
+        shell: bash
         run: |
-          git --no-pager diff --stat -- AshenSpire.html AshenSpire-mobile.html build dist
-          git diff --exit-code -- AshenSpire.html AshenSpire-mobile.html build dist
+          git status --porcelain
+          test -z "$(git status --porcelain)"
+
+      - name: One version, derived — SOP 5's detector, which this file said was missing
+        # Requirement 3's named gap, closed. The header above used to say "SOP 5's
+        # one-version-derived check … NOTHING STOPS a second copy being born, and I
+        # did not build that detector"; that sentence is now edited rather than left
+        # standing, because a boundary that overstates the gap rots the same way one
+        # that understates it does.
+        #
+        # ON EVERY RUNNER, and that is requirement 2 rather than thoroughness: the
+        # digest canonicalizes CRLF, so a Windows checkout and a Linux checkout of one
+        # commit must derive the SAME string or the shipped stamp is a fact about a
+        # filesystem. This repo has already paid once for that (tools/dirorder.mjs).
+        #
+        # AFTER THE BUILD, because rows D, E, E2 and F read the bundle and the
+        # bundle is no longer committed on dev.
+        run: node tools/verdict.mjs -- node tools/buildversion.mjs --check
+
+      - name: …and it can fail — six known-bads, each caught by the row that owns it
+        # Inverted expectation, the idiom already in this job twice. Includes the
+        # fixture SOP 5 asks for by name: a tree that RE-TYPES the version.
+        run: node tools/verdict.mjs -- node tools/buildversion.mjs --selftest
+
+
+      - name: Record this runner's build digests
+        # CROSS-PLATFORM DRIFT, the other half of what the old committed-artifact
+        # diff caught. Each runner hashes what it built; `reproducible-agree`
+        # requires all three to be identical.
+        shell: bash
+        run: node -e "const c=require('crypto'),f=require('fs');for(const p of ['build/AshenSpire.html','build/AshenSpire-mobile.html'])console.log(c.createHash('sha256').update(f.readFileSync(p)).digest('hex')+'  '+p)" > build-digest-${{ matrix.os }}.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build-digest-${{ matrix.os }}
+          path: build-digest-${{ matrix.os }}.txt
+          retention-days: 7
+
+  reproducible-agree:
+    name: the three runners built the same bytes
+    needs: reproducible
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: build-digest-*
+          merge-multiple: true
+      - name: Every runner's build digests are identical
+        run: |
+          set -eu
+          ls build-digest-*.txt
+          cat build-digest-*.txt
+          test "$(ls build-digest-*.txt | wc -l)" -eq 3
+          test "$(cat build-digest-*.txt | sort -u | wc -l)" -eq 2
 
   # ---------------------------------------------------------------------------
   # The save-overwrite guard needs a real browser: the defect was a URL reaching
@@ -398,7 +436,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          lfs: true
+          lfs: false # serves the source tree; reads no LFS object
       - uses: ./.github/actions/setup-node
 
       - name: Fullscreen is first and visible through both Settings doors
@@ -417,8 +455,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          lfs: true
+          lfs: false # the standalone about-changelog opens is built below
       - uses: ./.github/actions/setup-node
+
+      - name: Build the standalone (about-changelog opens build/AshenSpire.html)
+        run: node tools/verdict.mjs -- node tools/launch.mjs --build-only
 
       - uses: ./.github/actions/which-browser
 
@@ -696,7 +737,8 @@ jobs:
           # — Sunna, 2026-07-28, one line in Rune's file, said out loud rather than silently.
           echo "  · the whole engine suite passes on Linux, Windows and macOS"
           echo "    (the count is printed by the suite itself in the \`test\` job, not asserted here)"
-          echo "  · the standalone rebuilds byte-identically to what is committed, on each runner"
+          echo "  · a rebuild changes nothing committed (buildordinal.json is this source's), on each runner"
+          echo "  · the three runners build byte-identical standalones (reproducible-agree)"
           echo "  · root AshenSpire.html and dist/AshenSpire.html carry their inlined art and ARE that build"
           echo "  · no version-stamped build artifact is tracked in dist/"
           echo "  · ?shot= cannot write to localStorage, and a normal boot still can"

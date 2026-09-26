@@ -2,9 +2,17 @@ name: dev preview
 
 # GitHub Pages serves `main`, so `dev` has no hosted URL. This workflow gives
 # every push to `dev` (and every PR targeting it) an inspectable artifact of the
-# playable build at that exact commit, without deploying or publishing anything.
+# playable build at that exact commit, without deploying anything.
 #
-# It is deliberately NOT a deployment: it publishes nothing and touches no ref.
+# SINCE 2026-09-26 THIS IS WHERE THE dev BUILD IS PUBLISHED. The built HTML is no
+# longer committed on dev — every rebuild uploaded ~284 MB of new Git LFS objects
+# and exhausted the repository's LFS budget — so the `dev-standalone-<sha>` and
+# `dev-preview-<sha>` artifacts below are the build a tester downloads. A workflow
+# artifact was chosen over GitHub Pages and a Release asset: it already existed for
+# every push and PR, costs no LFS, needs no write token, and is per-commit; Pages
+# caps a site at 1 GB (four 255 MB builds) and a Release is the owner's act.
+#
+# It is deliberately NOT a deployment: it touches no ref.
 
 on:
   push:
@@ -26,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          lfs: true
+          lfs: false # the build is made below from source; nothing reads LFS
 
       - uses: ./.github/actions/setup-node
 
@@ -93,6 +101,17 @@ jobs:
         run: node tools/release-series.mjs
       - name: Release series gate rejects older and malformed versions
         run: node tools/release-series.mjs --selftest
+
+      # BUILT HERE, NOT CHECKED OUT: the built HTML is not committed on dev.
+      # A clean tree afterwards is what used to be "the committed bundle is this
+      # source": if the rebuild had to bump buildordinal.json, the commit's
+      # receipt and its box disagree.
+      - name: Build the standalone, and the rebuild changes nothing committed
+        run: |
+          set -euo pipefail
+          node tools/launch.mjs --build-only
+          git status --porcelain
+          test -z "$(git status --porcelain)"
 
       - name: The shipped artifact is this source, and the number on it is ours
         run: node tools/buildversion.mjs --check
@@ -304,7 +323,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          lfs: true
+          lfs: false # builds its own de-inlined copy; reads no LFS object
       - uses: ./.github/actions/setup-node
 
       - uses: ./.github/actions/which-browser

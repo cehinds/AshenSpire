@@ -388,8 +388,9 @@ function freshRepo() {
 // not a property of a tree. It is a property of a tree AND ITS PARENT, so no
 // file plant can reach it and neither can the history corpus above, which owns
 // a toy repo with no real bundle in it. This one copies the real tree, makes it
-// a git repository, and commits twice — the second commit shipping a changed
-// build/AshenSpire.html with the ordinal left where it was. That is the defect
+// a git repository, and commits twice — the second commit recording a new
+// source digest in buildordinal.json (a rebuild, which is what row H reads now
+// that the bundle is not committed) with the ordinal left where it was. That is the defect
 // in its natural habitat: somebody rebuilds, the ordinal does not move, and two
 // different artifacts read the same number. Exactly what we replaced.
 //
@@ -432,11 +433,13 @@ function ordinalHistory() {
       writeFileSync(p, `${JSON.stringify(first(JSON.parse(readFileSync(p, 'utf8'))), null, 2)}\n`, 'utf8');
     }
     git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'the build that shipped');
-    // A REAL change to the shipped artifact — the same door a rebuild enters by.
-    appendFileSync(resolve(dir, 'build/AshenSpire.html'), '<!-- a later build -->\n');
-    if (second) {
+    // A NEW BUILD, as row H reads one: the recorded source digest moves — the
+    // same door a rebuild enters by (bumpOrdinal writes the digest and the
+    // ordinal in one act). The ordinal is left to `second`.
+    {
       const p = resolve(dir, ORDINAL_HOME);
-      writeFileSync(p, `${JSON.stringify(second(JSON.parse(readFileSync(p, 'utf8'))), null, 2)}\n`, 'utf8');
+      const moved = { ...JSON.parse(readFileSync(p, 'utf8')), digest: 'f0f0f0f0f0' };
+      writeFileSync(p, `${JSON.stringify(second ? second(moved) : moved, null, 2)}\n`, 'utf8');
     }
     git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'a second build');
     return dir;
@@ -635,6 +638,15 @@ function traceability() {
     say(removed.length === 1 && removed[0].startsWith(first),
       'a digest REPLACED by that merge reports the commit that SHIPPED it, not the one that stopped',
       `whichCommits → ${removed.length === 1 ? removed[0] : JSON.stringify(removed)} (the merge ${merge} must not appear)`);
+
+    // T4 — the shape since the bundle left git: only buildordinal.json records it.
+    writeFileSync(resolve(dir, 'buildordinal.json'), `${JSON.stringify({ ordinal: 1, digest: 'dddddddddd' })}\n`);
+    git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'recorded dddddddddd in buildordinal.json, no bundle committed');
+    const recorded = git(dir, 'log', '-1', '--format=%h', 'main').trim();
+    const viaOrdinal = whichCommits('dddddddddd', dir);
+    say(viaOrdinal.length === 1 && viaOrdinal[0].startsWith(recorded),
+      'a digest recorded only in buildordinal.json (no committed bundle) reports the commit that recorded it',
+      `whichCommits → ${viaOrdinal.length === 1 ? viaOrdinal[0] : JSON.stringify(viaOrdinal)}`);
 
     // T3 — the empty edge. A tool that answers everything answers nothing.
     const none = whichCommits('cccccccccc', dir);
