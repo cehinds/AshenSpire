@@ -235,7 +235,10 @@ jobs:
           cp armament-kits-preview.html preview/
           cp tools/serve-preview.mjs preview/serve-preview.mjs
           cp -r styles preview/styles
-          cp -r assets/environments preview/assets/
+          # --update=none: the build above already placed this tier's art under
+          # preview/assets/ (the light twins on dev/test); these copies only add
+          # the files it does not ship, and never overwrite its art.
+          cp -r --update=none assets/environments preview/assets/
           mkdir -p preview/docs/preview
           cp -r docs/preview/world-atlas preview/docs/preview/
           cp -r docs/preview/combat-ground preview/docs/preview/
@@ -243,10 +246,10 @@ jobs:
           cp -r docs/preview/starting-equipment preview/docs/preview/
           cp -r docs/preview/armament-kits preview/docs/preview/
           cp -r pose-studio preview/pose-studio
-          cp -r assets/pose-effects preview/assets/
+          cp -r --update=none assets/pose-effects preview/assets/
           cp -r art/pose-studio preview/art/
           cp -r art/card-effect-refresh-2026-09-09 preview/art/
-          cp -r assets/combat-effects assets/painted-outfits preview/assets/
+          cp -r --update=none assets/combat-effects assets/painted-outfits preview/assets/
           cp art/combat-effects-2026-09-07/index.html art/combat-effects-2026-09-07/sprite-catalog.html art/combat-effects-2026-09-07/integrated-tag-mappings.html preview/art/combat-effects-2026-09-07/
           cp -r art/combat-effects-2026-09-07/inspection preview/art/combat-effects-2026-09-07/inspection
           {

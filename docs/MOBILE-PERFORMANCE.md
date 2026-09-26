@@ -5,7 +5,8 @@ presentation only; it does not alter damage, resources, targeting, saves or RNG.
 
 ## Builds
 
-Run `node tools/launch.mjs --build-only` to generate all three editions:
+Run `node tools/launch.mjs --build-only --full-art` to generate all three editions
+(without `--full-art` it builds only the light single file and web edition):
 
 - `AshenSpire.html`, `build/AshenSpire.html` and `dist/AshenSpire.html` are the
   portable single-file game with the art as painted (~253 MB on 0.7.1).

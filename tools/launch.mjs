@@ -8,7 +8,7 @@
 // Invoked by run.bat (Windows) and run.sh (macOS/Linux), or: node tools/launch.mjs
 
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, copyFileSync, existsSync, cpSync } from 'node:fs';
+import { mkdirSync, copyFileSync, existsSync, cpSync, readdirSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
@@ -163,7 +163,16 @@ if (landedMobile !== mobileAliases.length) {
 mobileLanded = landedMobile;
 mobileWanted = mobileAliases.length;
 } else {
-  console.log('launch: light art — no separate mobile file (AshenSpire.html already carries the phone-sized art)');
+  // A light build has no mobile file, so one left by an earlier --full-art run
+  // is stale: it would carry an older build under a current-looking name, and
+  // verify-shipped would compare it against nothing. Remove every copy.
+  const stale = [resolve(ROOT, 'AshenSpire-mobile.html'), resolve(ROOT, 'build', 'AshenSpire-mobile.html')];
+  if (existsSync(distDir)) {
+    for (const name of readdirSync(distDir)) if (/^AshenSpire-mobile(-.*)?\.html$/.test(name)) stale.push(resolve(distDir, name));
+  }
+  const removed = stale.filter((f) => existsSync(f));
+  for (const f of removed) rmSync(f, { force: true });
+  console.log(`launch: light art — no separate mobile file (AshenSpire.html already carries the phone-sized art)${removed.length ? `; removed ${removed.length} stale mobile file(s)` : ''}`);
 }
 
 // Produce the hosted/web edition with the same source stamp and external art.
