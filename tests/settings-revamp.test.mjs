@@ -254,13 +254,17 @@ test('a profile that already matches is recorded as loaded', async () => {
   assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?if \(!write\(SYNC_STORAGE\.lastSha, remote\.sha/);
 });
 
-test('the dev-preview standalone files are named so they open as dev builds', async () => {
+test('the preview standalone files are named so they open as their branch\'s builds', async () => {
   const { readFileSync } = await import('node:fs');
   const workflow = readFileSync(new URL('../.github/workflows/dev-preview.yml', import.meta.url), 'utf8');
-  const names = [...workflow.matchAll(/standalone\/(AshenSpire[^\s]*\.html)/g)].map((m) => m[1]);
+  const names = [...workflow.matchAll(/standalone\/(AshenSpire[^\s"]*\.html)/g)].map((m) => m[1]);
   assert.ok(names.length >= 2, 'the workflow still writes the standalone files');
-  for (const name of names) {
-    assert.equal(buildChannel({ pathname: `/Downloads/dev-standalone/${name}`, hostname: '', protocol: 'file:' }, 'standalone file'), 'dev', name);
+  // The workflow names each file for the branch it built (${CHANNEL}: the PR's
+  // base or the pushed branch), so a main build must not open as dev.
+  for (const channel of ['dev', 'test', 'release', 'main']) {
+    for (const name of names.map((n) => n.replace('${CHANNEL}', channel))) {
+      assert.equal(buildChannel({ pathname: `/Downloads/${channel}-standalone/${name}`, hostname: '', protocol: 'file:' }, 'standalone file'), channel, name);
+    }
   }
 });
 
