@@ -299,3 +299,12 @@ test('a folder read that finishes after a newer pick, or after a switch to Built
     URL.createObjectURL = realCreate;
   }
 });
+
+test('currentArtUrl re-resolves a captured frame URL to the tier in use now', async () => {
+  const { currentArtUrl } = await import('../src/ui/highResArt.js');
+  await applyArtQuality({ [ART_QUALITY_KEY]: ART_LOCAL_HIGH }, { fetchImpl: json(manifest), protocol: 'https:' });
+  assert.equal(currentArtUrl('assets/bg/bg_act1.webp'), 'hd/assets/bg/bg_act1.webp');
+  await applyArtQuality({ [ART_QUALITY_KEY]: ART_BUILT_IN });
+  assert.equal(currentArtUrl('hd/assets/bg/bg_act1.webp'), 'assets/bg/bg_act1.webp');
+  assert.equal(currentArtUrl('data:image/png;base64,AAAA'), 'data:image/png;base64,AAAA', 'an unknown URL passes through');
+});

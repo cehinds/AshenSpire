@@ -6,7 +6,7 @@ import {playPresentationSequence} from './presentationSequence.js';
 import {combatEffectAttachment} from '../content/combatEffectAnchors.js';
 import {playCombatantEffectLayers,combatantEmissionBox} from './combatantEffectLayers.js';
 import { hintImage } from './imageHints.js';
-import { whenArtSourceChanges } from './highResArt.js';
+import { whenArtSourceChanges, currentArtUrl } from './highResArt.js';
 import {uiConfig} from '../config/generated/ui.js';
 
 // Every duration, delay fraction and size below is authored in
@@ -71,7 +71,8 @@ export function playCombatEffect(layer,from,kind,{to=null,direction='auto',durat
  const el=hintImage(document.createElement('img'));el.className='painted-combat-effect';el.alt='';el.setAttribute('aria-hidden','true');el.dataset.effect=kind;
  const x=from.left+from.width/2-size/2,y=from.top+from.height/2-size/2;
  el.style.cssText=`position:absolute;pointer-events:none;width:${size}px;height:${size}px;left:${x}px;top:${y}px;object-fit:contain;z-index:4;`;
- const show=i=>{el.src=frames[i];el.dataset.frame=String(i+1);};show(0);layer.appendChild(el);
+ // Each frame re-resolves when shown, so a tier change mid-effect never mixes tiers.
+ const show=i=>{el.src=currentArtUrl(frames[i]);el.dataset.frame=String(i+1);};show(0);layer.appendChild(el);
  let tickets=[],animation=null,impactStop=null,stopped=false;
  const set=active.get(layer)||new Set();active.set(layer,set);
  const stop=()=>{if(stopped)return;stopped=true;tickets.forEach(clearTimeout);animation?.cancel();impactStop?.();el.remove();set.delete(stop);};set.add(stop);

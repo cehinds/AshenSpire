@@ -164,6 +164,16 @@ function writeArt(el, attr, url) {
   if (attr === 'xlink:href') el.setAttributeNS(XLINK, 'xlink:href', url); else el.setAttribute(attr, url);
 }
 
+/**
+ * currentArtUrl(url) — a URL this page handed out for an asset, re-resolved to
+ * whatever tier assetUrl() names now; any other URL passes through. For code
+ * that captured a list of frame URLs and shows them over time.
+ */
+export function currentArtUrl(url) {
+  const id = idOfUrl(url);
+  return id ? assetUrl(id) : url;
+}
+
 /** refreshMountedArt(root) → how many <img> / SVG <image> elements now point at a different tier. */
 export function refreshMountedArt(root = globalThis.document) {
   if (!root || typeof root.querySelectorAll !== 'function') return 0;
