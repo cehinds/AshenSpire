@@ -1,47 +1,56 @@
-// Shop — the merchant's cart. A minor at 54 BPM in 3/4, 18 bars (60 s), with
-// the phrygian Bb and the harmonic-minor G# making it faintly wrong.
+// Shop — the merchant's cart, built on top of the game's own shop music.
+//
+// In-game variant: shop #1 (F, 'calm' minor pentatonic, 2000 ms a note, sine,
+// lift 4) → 30 BPM (one beat = one in-game note), F root.
+// 13 bars of 3 = 39 beats = 78 s.
 //
 // Lore it carries (docs/LORE.md §1, §3): the merchant "was a Saint of the
 // Furnace Chapel who left before the Burning with a censer under his coat, and
 // he keeps one small hearth alive in the back of the cart on the names he
 // buys". His buy-back line: "Half price. The other half is already burning."
 //
-// So a small bell ticks once a bar, swinging left and right like a censer on a
-// chain (and, like a swing, it slows and misses a stroke at each phrase end);
-// the harp and the low cello are the counter; and under it, barely audible,
-// the choir hums the names he bought, burning:
-//   beat 0  bell starts its swing; harp phrase 1; cello floor on A.
-//   beat 12 NAMES — a choir hum ("oo"), very quiet, unfinished and slow
-//           (E–D–C–B, the A never comes): the names in the back of the cart.
-//   beat 18, 36 harp phrases 2 and 3; the bell misses a stroke before each.
-// Four layers: bell (the censer), harp (lead), cello (floor), choir hum (NAMES).
+// The floor (inGameBeat): the current build's shop bed note for note — the
+// sine walk, its fifth, the game drone — plus the strong cello bass on F every
+// fourth step. Everything below sits on top of it, in F calm.
+//   beats 0–14  the censer: a small bell on every beat (F5 / Eb5), swinging
+//               left and right.
+//   beat 2      GOLDBOUGH — snuffed(), cello, in the key's own major (Ab, the
+//               relative major): Ab3–C4–Eb4–F4–Eb4–G4, pinched out before the
+//               Ab4; the lead then stays silent for the rest of the loop.
+//   beat 15     the bell stops, and in its place NAMES is hummed ("oo"), barely
+//               audible, unfinished: C4–Bb3–Ab3–G3, the F never comes — the
+//               names he bought, burning in the back of the cart.
+//   beats 28–39 the censer swings again into the loop point.
+// Added layers: cello lead, and one extra layer at a time — the bell, then the
+// choir hum in its place (never both at once). The earlier harp is gone.
+// Original material.
 import { Score } from '../../tools/score/compose.mjs';
-import { motif } from './_motifs.mjs';
+import { motif, ingame, inGameBeat, snuffed } from './_motifs.mjs';
 
 export const context = 'shop';
+const v = 1;
+const g = ingame(context, v);
 
-const s = new Score({ bpm: 54, meter: 3, bars: 18, seed: 41, reverb: { room: 0.9, damp: 0.45 }, gain: 0.85 });
+const s = new Score({ bpm: g.bpm, meter: 3, bars: 13, seed: 41, reverb: { room: 0.9, damp: 0.45 }, gain: 0.9 });
 
-// The censer: one small bell a bar, swinging L/R, the outer swing a hair lower.
-// No stroke on bars 5 and 11 (the swing slowing), none on 17 (back into the loop).
-for (let bar = 0; bar < 18; bar++) {
-  if ([5, 11, 17].includes(bar)) continue;
-  const left = bar % 2 === 0;
-  s.note('bell', bar * 3, 1, left ? 'E5' : 'D5', { vel: left ? 0.07 : 0.055, rev: 0.7, pan: left ? -0.45 : 0.45, ring: 5 });
-}
+// The floor: the game's own shop bed, the whole loop.
+inGameBeat(s, context, { variant: v });
 
-// Harp: three short phrases of single notes, three beats apart, then air.
-const harp = { note: { vel: 0.5, rev: 0.6, pan: 0.3, ring: 5 } };
-s.line('harp', 0, [['E4', 3], ['C4', 3], ['Bb3', 3], ['A3', 6], [null, 3]], harp);
-s.line('harp', 18, [['E4', 3], ['F4', 3], ['D4', 3], ['G#3', 6], [null, 3]], harp);
-s.line('harp', 36, [['C4', 3], ['Bb3', 3], ['A3', 9], [null, 3]], harp);
+// The censer: one small bell a beat, swinging L/R, the outer swing a hair lower.
+const censer = (from, to) => {
+  for (let b = from; b < to; b++) {
+    const left = b % 2 === 0;
+    s.note('bell', b, 1, left ? g.root + 24 : g.root + 22, { vel: left ? 0.07 : 0.055, rev: 0.7, pan: left ? -0.45 : 0.45, ring: 4 });
+  }
+};
+censer(0, 15);
+censer(28, s.beats);
 
-// Low cello: the floor of the room, long notes, leaning on E at the loop point.
-s.line('cello', 0, [['A2', 12], ['F2', 9], ['E2', 9], ['D2', 12], ['E2', 12]],
-  { legato: 1.02, note: { vel: 0.4, rev: 0.45, pan: -0.25, a: 1.5, r: 3, cut: 700 } });
+// GOLDBOUGH, once, in the relative major, snuffed out; then no lead.
+snuffed(s, 2, g.root + 3, { stretch: 0.75, vel: 0.58 });
 
-// NAMES, hummed and nearly lost: the names he bought, burning.
-s.line('choir', 12, motif('A3', 'names', { stretch: 3, unfinished: true }),
-  { legato: 1.1, note: { vowel: 'oo', vel: 0.11, rev: 0.7, pan: 0.1, a: 2.5, r: 4 } });
+// NAMES, hummed and nearly lost, while the censer is still.
+s.line('choir', 15, motif(g.root - 12, 'names', { stretch: 1.5, unfinished: true }),
+  { legato: 1.1, note: { vowel: 'oo', vel: 0.12, rev: 0.7, pan: 0.1, a: 2.5, r: 4 } });
 
 export default s;

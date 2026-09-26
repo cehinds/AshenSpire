@@ -1,53 +1,51 @@
-// Title — the premise of Ashen Spire. D minor at 52 BPM, 16 bars (~74 s).
+// Title — the premise of Ashen Spire, built on top of the game's own title music.
+//
+// In-game variant: title #0 (D, 'calm' minor pentatonic, 2600 ms a note,
+// triangle, lift 3) → 23.08 BPM (one beat = one in-game note), D root.
+// 8 bars of 4 = 32 beats ≈ 83 s.
 //
 // Lore it carries (docs/LORE.md, premise and §1–§4): "You are a Forsaken."
 // "The flames are cold. The cities are ash." A Forsaken is "a name nobody
-// promised to the fire"; the written dead fed the Ember, and the Blight is "a
-// name the fire has not quite finished reading". The Ember itself is "loose on
-// the ring since, thin and starving".
+// promised to the fire"; the Blight is "a name the fire has not quite finished
+// reading". So: the kingdom remembered and put out, the pulse of the world
+// going on regardless, the climber setting out alone, the dead answering.
 //
-// So the track is the Forsaken setting out alone, the dead answering, and the
-// starving fire moving once, underneath, where you almost cannot hear it:
-//   beat 2  FORSAKEN — solo cello, alone over nothing but a cold organ fifth
-//           (the blank medallion: open fifth, a minor third lifted, settle).
-//   beat 16 low strings enter; the kingdom's ash, one chord per 1–3 bars.
-//   beat 22 NAMES — the choir answers, unfinished: A–G–F–E and the D never
-//           comes (the reading not finished).
-//   beat 36 EMBER — once, low in the organ pedal, under everything: D, the
-//           semitone up to Eb that cannot hold, the tritone fall to A, back to D.
-//   beat 50 the cello returns to its open fifth, D and A, and the loop turns.
-// Four layers: organ (pedal / EMBER), strings, cello (the Forsaken), choir (NAMES).
-import { Score, chord } from '../../tools/score/compose.mjs';
-import { motif } from './_motifs.mjs';
+// The floor (inGameBeat): the current build's title bed note for note — the
+// triangle walk, its fifth, the game drone — plus the strong cello bass on D
+// every fourth step. Everything below sits on top of it, in D calm.
+//   beat 1      GOLDBOUGH — snuffed(), cello, in the key's own major (F, the
+//               relative major): F4–A4–C5–D5–C5–E5, pinched out before the F5.
+//   beats 7–14  no lead: the kingdom went out; the game's walk goes on.
+//   beat 14     FORSAKEN — cello, alone above the walk: D4–A4–C5–A4.
+//   beat 21     NAMES — the choir answers quietly, unfinished: A4–G4–F4–E4, and
+//               the D never comes (the reading not finished).
+//   beats 29–32 the floor alone into the loop.
+// Added layers: cello lead, choir (the one extra layer). EMBER is no longer
+// quoted here (the organ it lived in is gone).
+// Original material.
+import { Score } from '../../tools/score/compose.mjs';
+import { motif, ingame, inGameBeat, snuffed } from './_motifs.mjs';
 
 export const context = 'title';
+const v = 0;
+const g = ingame(context, v);
 
-const s = new Score({ bpm: 52, bars: 16, seed: 3, reverb: { room: 0.92, damp: 0.4 }, gain: 0.9 });
+const s = new Score({ bpm: g.bpm, bars: 8, seed: 3, reverb: { room: 0.9, damp: 0.4 }, gain: 0.9 });
 
-// Organ: the cold fifth. A holds the whole loop; D holds until the Ember moves it.
-const organ = { stop: 'soft', rev: 0.4, a: 2, r: 3 };
-s.note('organ', 0, s.beats, 'A2', { ...organ, vel: 0.2, rev: 0.45 });
-s.note('organ', 0, 37, 'D2', { ...organ, vel: 0.36 });
-// EMBER, once, in the pedal (beats 36–60), then D again into the loop point.
-const end = s.line('organ', 36, motif('D2', 'ember', { stretch: 2 }), { note: { ...organ, vel: 0.4 } });
-s.note('organ', end, s.beats - end + 1, 'D2', { ...organ, vel: 0.36 });
+// The floor: the game's own title bed, the whole loop.
+inGameBeat(s, context, { variant: v });
 
-// Low strings from bar 4, following the pedal: i – VI – iv – bII (under the Ember's Eb)
-// – V(sus4) (under its A) – i.
-s.pad('strings', [
-  [chord('D2', 'm'), 3], [chord('Bb1', 'M', 1), 2], [chord('G1', 'm', 1), 1],
-  [chord('Eb2', 'M'), 1.5], [chord('A1', 'sus4'), 1.5], [chord('D2', 'm'), 3],
-], { from: 4, overlap: 0.3, note: { vel: 0.26, rev: 0.55, cut: 650, a: 2.5, r: 3 } });
+const lead = g.root + 12; // D4
 
-// FORSAKEN, the cello alone.
-const cello = { vel: 0.6, rev: 0.45, pan: -0.15, a: 0.5, r: 2 };
-s.line('cello', 2, motif('D3', 'forsaken', { stretch: 4 / 3 }), { note: cello });
+// GOLDBOUGH, once, in the relative major, snuffed out.
+snuffed(s, 1, lead + 3, { stretch: 0.75, vel: 0.58 });
 
-// NAMES, the choir's answer, unfinished.
-s.line('choir', 22, motif('D4', 'names', { stretch: 2, unfinished: true }),
-  { legato: 1.05, note: { vowel: 'ah', vel: 0.32, rev: 0.6, pan: 0.2, a: 1.4, r: 3 } });
+// FORSAKEN, after the silence.
+s.line('cello', 14, motif(lead, 'forsaken', { stretch: 0.5 }),
+  { note: { vel: 0.6, rev: 0.45, pan: -0.15, a: 0.5, r: 1.5 } });
 
-// The cello's open fifth again, closing the loop.
-s.line('cello', 50, [['A2', 4], ['D3', 8]], { note: { ...cello, vel: 0.5 } });
+// NAMES, the choir's answer, quiet and unfinished.
+s.line('choir', 21, motif(lead, 'names', { unfinished: true }),
+  { legato: 1.05, note: { vowel: 'ah', vel: 0.2, rev: 0.6, pan: 0.2, a: 1.2, r: 2.5 } });
 
 export default s;

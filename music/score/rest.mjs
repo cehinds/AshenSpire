@@ -1,38 +1,52 @@
-// Rest — a shrine, the one warm place. D minor at 44 BPM, 12 bars (~65 s),
-// the slowest thing in the game.
+// Rest — a shrine, the one warm place, built on top of the game's own rest
+// music. The gentlest track in the score.
+//
+// In-game variant: rest #1 (D, 'hymn' major pentatonic, 3000 ms a note, sine,
+// lift 2) → 20 BPM (one beat = one in-game note), D root.
+// 7 bars of 4 = 28 beats = 84 s.
 //
 // Lore it carries (docs/LORE.md §3–§4): cinders "are the only thing in the Spire
 // that is still alive ... The shrines drink them." A Forsaken is someone "the
-// light did not reach"; "They are not surviving the winter that came after."
-// Here, for once, the climber is warm.
+// light did not reach"; here, for once, the climber is warm. The warm hymn
+// variant keeps the floor in the major, so the snuffed prosperity is nearest.
 //
-// So a soft organ and a breathing choir "oo" hold one chord per three bars
-// (the shrine drinking, slow swell, slow fade), a few harp notes fall far
-// apart, and the Forsaken's own line is heard once, gently, at rest:
-//   beat 22 FORSAKEN — solo cello, slow and soft: D, up the open fifth to A,
-//           lifted to C, settling on A over iv – V, unresolved, so the loop
-//           returns to D on its own.
-// The choir only sings chords here; no NAMES — nobody is being read tonight.
-// Four layers: organ, choir "oo" chords, harp, cello (the Forsaken).
-import { Score, chord } from '../../tools/score/compose.mjs';
-import { motif } from './_motifs.mjs';
+// The floor (inGameBeat): the current build's rest bed note for note — the
+// sine walk, its fifth, the game drone — plus the cello bass on D every fourth
+// step, softer than elsewhere (bassVel 0.55, the bottom of the strong range).
+// Everything below sits on top of it, in D hymn.
+//   beat 1      GOLDBOUGH — snuffed(), slow and soft: D4–F#4–A4–B4–A4–C#5,
+//               pinched out before the D5; a faint ember under the silence.
+//   beats 8–15  no lead: the game's walk breathing on its own.
+//   beat 15     FORSAKEN — once, gently, at rest, on the scale's second so its
+//               open fifth and minor third stay in the hymn: E4–B4–D5–B4.
+// The choir only breathes here — a slow open fifth, D3–A3, two long swells;
+// no NAMES, nobody is being read tonight.
+// Added layers: cello lead, choir breath (the one extra layer).
+// Original material.
+import { Score } from '../../tools/score/compose.mjs';
+import { motif, ingame, inGameBeat, snuffed } from './_motifs.mjs';
 
 export const context = 'rest';
+const v = 1;
+const g = ingame(context, v);
 
-const s = new Score({ bpm: 44, bars: 12, seed: 17, reverb: { room: 0.93, damp: 0.35 }, gain: 0.85 });
+const s = new Score({ bpm: g.bpm, bars: 7, seed: 17, reverb: { room: 0.93, damp: 0.35 }, gain: 0.9 });
 
-// i – VI – iv – V(sus4), three bars each.
-const prog = [[chord('D3', 'm'), 3], [chord('Bb2', 'M', 1), 3], [chord('G2', 'm', 1), 3], [chord('A2', 'sus4'), 3]];
+// The floor: the game's own rest bed, the whole loop; the cello bass gentler.
+inGameBeat(s, context, { variant: v, bassVel: 0.55 });
 
-s.pad('organ', prog, { overlap: 0.4, note: { stop: 'soft', vel: 0.26, rev: 0.5, a: 3, r: 4 } });
-s.note('organ', 0, s.beats, 'D2', { stop: 'soft', vel: 0.22, rev: 0.4, a: 3, r: 4 });
-s.pad('choir', prog.map(([c, l]) => [c.map((m) => m + 12), l]), { overlap: 0.5, note: { vowel: 'oo', vel: 0.2, rev: 0.65, a: 4, r: 5 } });
+const lead = g.root + 12; // D4
 
-// A few harp notes, far apart, kept out of the cello's way.
-for (const [beat, m, pan] of [[4, 'A4', 0.35], [14, 'F4', -0.3], [42, 'E4', -0.25]])
-  s.note('harp', beat, 1, m, { vel: 0.36, rev: 0.7, pan, ring: 6 });
+// GOLDBOUGH, once, snuffed out, softly.
+snuffed(s, 1, lead, { stretch: 0.85, vel: 0.52, rev: 0.6 });
 
 // FORSAKEN, once, gently.
-s.line('cello', 22, motif('D3', 'forsaken', { stretch: 1.5 }), { note: { vel: 0.42, rev: 0.55, pan: -0.15, a: 1, r: 3.5 } });
+s.line('cello', 15, motif(lead + 2, 'forsaken', { stretch: 0.6 }),
+  { note: { vel: 0.5, rev: 0.55, pan: -0.15, a: 1, r: 3 } });
+
+// The shrine breathing: an open fifth in the choir, two long swells.
+for (const [beat, len] of [[0, 14], [14, 14]])
+  for (const [m, pan] of [[g.root - 12, -0.2], [g.root - 5, 0.2]])
+    s.note('choir', beat, len, m, { vowel: 'oo', vel: 0.12, rev: 0.65, pan, a: 5, r: 5 });
 
 export default s;
