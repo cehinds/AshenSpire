@@ -56,11 +56,30 @@ jobs:
 
       # BUILT FIRST, AND UPLOADED WHENEVER THIS SUCCEEDS. The built HTML is not
       # committed, so this run's artifacts are the only copy of this commit's
-      # build: a failing gate below still fails the job, but it must not cost the
+      # commit its download (the standalone uploads right below; the preview
+      # package collects and uploads on `steps.build.outcome`).
       # commit its download (collect + upload run on `steps.build.outcome`).
       - name: Build the standalone
         id: build
         run: node tools/launch.mjs --build-only
+
+      # The names carry the channel: src/ui/buildChannel.js reads `-dev-` from
+      # a saved file's name to open the dev-only settings, and a plain
+      # AshenSpire.html is an unknown file with them locked. Collected and
+      # uploaded HERE, straight after the build and before any gate or the
+      # preview package, so this commit's only copy of its build always ships.
+      - name: Collect the standalone
+        run: |
+          set -euo pipefail
+          mkdir -p standalone
+          cp AshenSpire.html "standalone/AshenSpire-${CHANNEL}-preview.html"
+          cp AshenSpire-mobile.html "standalone/AshenSpire-mobile-${CHANNEL}-preview.html"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.CHANNEL }}-standalone-${{ github.sha }}
+          path: standalone/
+          retention-days: ${{ (env.CHANNEL == 'release' || env.CHANNEL == 'main') && 90 || (env.CHANNEL == 'test' && 30 || 14) }}
 
       - name: Complete armament kits and temporary Guardian skill
         run: node tests/armament-combat-kits.test.mjs
@@ -193,14 +212,8 @@ jobs:
           # those by hand are gone with it.
           node tools/bundle.mjs --external-art --out preview
           cp preview/AshenSpire.html preview/index.html
-          # The standalone is uploaded as its OWN artifact rather than nested
-          # here — see the two upload steps below for why.
-          mkdir -p standalone
-          # The names carry the channel: src/ui/buildChannel.js reads `-dev-` from
-          # a saved file's name to open the dev-only settings, and a plain
-          # AshenSpire.html is an unknown file with them locked.
-          cp AshenSpire.html "standalone/AshenSpire-${CHANNEL}-preview.html"
-          cp AshenSpire-mobile.html "standalone/AshenSpire-mobile-${CHANNEL}-preview.html"
+          # The standalone is collected and uploaded by its own steps, right
+          # after the build, so nothing here can cost a commit its download.
           mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
           cp -r src preview/src
           cp world-atlas-preview.html preview/
@@ -301,13 +314,6 @@ jobs:
           name: ${{ env.CHANNEL }}-preview-${{ github.sha }}
           path: preview/
           retention-days: 14
-
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() && steps.collect.outcome == 'success' }}
-        with:
-          name: ${{ env.CHANNEL }}-standalone-${{ github.sha }}
-          path: standalone/
-          retention-days: ${{ (env.CHANNEL == 'release' || env.CHANNEL == 'main') && 90 || (env.CHANNEL == 'test' && 30 || 14) }}
 
   # THE BROWSER GATES THAT NOTHING RAN ON `dev`, AND WHAT THAT COST.
   #

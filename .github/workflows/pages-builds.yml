@@ -202,6 +202,12 @@ jobs:
           fi
           git worktree add --detach "$RUNNER_TEMP/main" origin/main
           (cd "$RUNNER_TEMP/main" && node tools/launch.mjs --build-only)
+          # The same gate every other build workflow applies: a rebuild that had
+          # to rewrite main's committed box is a build main's receipts do not
+          # name, and it must not become the stable Play link.
+          git -C "$RUNNER_TEMP/main" status --porcelain
+          test -z "$(git -C "$RUNNER_TEMP/main" status --porcelain)"
+          (cd "$RUNNER_TEMP/main" && node tools/buildversion.mjs --check)
           mkdir -p "$RUNNER_TEMP/main-build"
           cp "$RUNNER_TEMP/main/AshenSpire.html" "$RUNNER_TEMP/main/AshenSpire-mobile.html" "$RUNNER_TEMP/main-build/"
           echo "MAIN_BUILD_ARGS=--main-build $RUNNER_TEMP/main-build" >> "$GITHUB_ENV"
