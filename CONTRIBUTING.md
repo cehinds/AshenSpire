@@ -12,22 +12,23 @@
 
 How work is branched, reviewed, and merged is the [Branch model](#branch-model)
 below.
-Review or approval may permit integration to `dev`; only the owner merges to
-`release` or `main`, creates a release tag, or publishes a release.
+Every session merges its own PRs into `dev` and promotes `dev` to `test`
+(rule 6 below, owner, 2026-09-26); only the owner merges to `release` or
+`main`, creates a release tag, or publishes a release.
 
 ## Branch model
 
 ```
 feature/* ──► dev ──► release ──► main
-                └──► test (playtest experiments; may never merge back)
+                └──► test (heavy CI + playtest builds; never merges back)
 ```
 
 | Branch | Rules |
 |---|---|
 | `main` | Always playable. Merge-only from `release`. Tag releases here (`v0.1.0` = M1, `v0.2.0` = M2, …). |
 | `release` | Staging. Cut from `dev` when a milestone's acceptance criteria (spec §9) are met; only fixes land here before merging to `main`. |
-| `dev` | Default integration branch. All feature PRs target `dev`. |
-| `test` | Sandbox for balance experiments and playtest builds. Branch from `dev`, cherry-pick winners back. Force-pushes allowed here, and on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
+| `dev` | Default integration branch. All feature PRs target `dev`, and each session merges its own once the fast checks pass. |
+| `test` | Where the heavy CI runs: every push to `test` runs the long suites. Sessions promote `dev` here with a `dev` → `test` PR they merge themselves (rule 6). Also the sandbox for balance experiments and playtest builds; never merges back into `dev` (cherry-pick winners instead). Force-pushes allowed only on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
 | `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. |
 
 ## Commits & PRs
@@ -77,10 +78,18 @@ owner reads the PR list and merges; nothing else is theirs to do there.
    yourself (an hour apart is enough);
    if two open PRs touch the same code, message the other session and agree
    who lands first and who rebases.
-6. **Leave the merge to the owner.** A finished PR waits in the list for
-   the owner to merge; merge it to `dev` yourself only when the owner has
-   asked you to land work, and never to `release` or `main` (see
-   [Coordination and release boundary](#coordination-and-release-boundary)).
+6. **Merge to `dev` yourself, then promote to `test`** (owner, 2026-09-26).
+   `dev` takes every change whose fast checks pass; the long suites run at
+   `test`.
+   - Once rules 1–4 hold (reviewed, mergeable, fast checks green), merge
+     your PR into `dev` yourself. Use a merge commit.
+   - Then open a PR from `dev` into `test` and merge it yourself. That push
+     to `test` runs the heavy suites. If one is already open, merge that one
+     rather than opening another.
+   - Watch the `test` run. A red there is yours to fix with a new PR into
+     `dev`, which you then promote again.
+   - Never merge to `release` or `main` (see
+     [Coordination and release boundary](#coordination-and-release-boundary)).
 
 ## Adding content (quick reference)
 
