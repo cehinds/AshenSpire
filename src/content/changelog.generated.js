@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Behind the scenes: a changelog entry must name the build it ships in",
     "detail": "Nothing you play changes. Before a change can merge, its own entry here is now checked against the build number it actually ships, so an entry that names the build before or after it is caught instead of going out one number off, as the entry for #1315 did.",
-    "build": "0.7.1.614",
+    "build": "0.7.1.615",
     "pullRequest": 1356,
     "url": "https://github.com/cehinds/AshenSpire/pull/1356"
+  },
+  {
+    "id": "pr-1348",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the rules for card rewards, levelling pace, crafting drops and legendary sigils are written down",
+    "detail": "Docs only; nothing you play changes yet. The design spec now describes settings for when card rewards come (after battle, on level-up) and how often they drop, a levelling preview that shows how fast your current XP settings level you, drop chances for armaments and smithing stones, and legendary sigils with unique effects you attune one at a time.",
+    "build": "0.7.1.614",
+    "pullRequest": 1348,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1348"
   },
   {
     "id": "pr-1353",
