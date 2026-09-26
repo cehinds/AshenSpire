@@ -6,7 +6,7 @@ import {playPresentationSequence} from './presentationSequence.js';
 import {combatEffectAttachment} from '../content/combatEffectAnchors.js';
 import {playCombatantEffectLayers,combatantEmissionBox} from './combatantEffectLayers.js';
 import { hintImage } from './imageHints.js';
-import { whenArtSourceChanges, currentArtUrl } from './highResArt.js';
+import { whenArtSourceChanges, currentArtUrl, builtInFor } from './highResArt.js';
 import {uiConfig} from '../config/generated/ui.js';
 
 // Every duration, delay fraction and size below is authored in
@@ -20,7 +20,8 @@ whenArtSourceChanges(()=>warmedKinds.clear());
 function warmEffectFrames(kind,frames){
  if(warmedKinds.has(kind))return;
  warmedKinds.add(kind);
- frames.forEach(src=>{const warm=new Image();warm.src=src;});
+ // A missing high-res frame retries once with the built-in art while warming.
+ frames.forEach(src=>{const warm=new Image();warm.addEventListener('error',()=>{const fallback=builtInFor(src);if(fallback)warm.src=fallback;},{once:true});warm.src=src;});
 }
 // Shared solo/co-op sequence: one cast, then one release per actual recipient.
 export function playCombatEffectPlan(layer,from,plan,{targets=[],authoredTargets=[],duration=M.defaultDurationMs,size=SZ.planEffectSize,actor=null,localBox=null}={}){
