@@ -9,7 +9,7 @@ moved. SPEC.md, CONTRIBUTING.md and DEVELOPER.md govern; nothing here
 overrides them.
 
 Every workstream lands as pull requests into `dev` under CONTRIBUTING.md's
-[one-click rule](../CONTRIBUTING.md#a-pull-request-is-not-done-until-the-owner-can-merge-it-with-one-click):
+[one-click rule](../CONTRIBUTING.md#a-pull-request-is-not-done-until-it-is-merged-and-promoted):
 ready for review, reviewed, green, receipted, mergeable.
 
 Effort: **S** = hours, **M** = a PR of a day or two, **L** = several PRs.

@@ -19,16 +19,16 @@ Every session merges its own PRs into `dev` and promotes `dev` to `test`
 ## Branch model
 
 ```
-feature/* ──► dev ──► release ──► main
-                └──► test (heavy CI + playtest builds; never merges back)
+feature/* ──► dev ──► test ──► release ──► main
+                      (heavy CI runs on every push to test and release)
 ```
 
 | Branch | Rules |
 |---|---|
 | `main` | Always playable. Merge-only from `release`. Tag releases here (`v0.1.0` = M1, `v0.2.0` = M2, …). |
-| `release` | Staging. Cut from `dev` when a milestone's acceptance criteria (spec §9) are met; only fixes land here before merging to `main`. |
+| `release` | Staging. Promoted from `test` (owner only) when a milestone's acceptance criteria (spec §9) are met; only fixes land here before merging to `main`. |
 | `dev` | Default integration branch. All feature PRs target `dev`, and each session merges its own once the fast checks pass. |
-| `test` | Where the heavy CI runs: every push to `test` runs the long suites. Sessions promote `dev` here with a `dev` → `test` PR they merge themselves (rule 6). Also the sandbox for balance experiments and playtest builds; never merges back into `dev` (cherry-pick winners instead). Force-pushes allowed only on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
+| `test` | Where the heavy CI runs: every push to `test` runs the long suites. Sessions promote `dev` here with a `dev` → `test` PR they merge themselves (rule 6). Only `dev` promotions land here, so every heavy run tests exactly what `dev` held, and `release` is promoted from `test` (owner only); balance experiments go on their own `experiment/<topic>` branch cut from `dev` (cherry-pick winners back), never on `test`. Force-pushes allowed only on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
 | `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. |
 
 ## Commits & PRs
@@ -38,10 +38,12 @@ feature/* ──► dev ──► release ──► main
 - UI changes also include the [component catalog](docs/component-catalog.html) in the PR/merge summary. Update the catalog and its visual miniature when a component ID, model, renderer, composition, or reuse surface changes.
 - Balance number changes cite the reasoning (spec §9 M3 targets: ~35–50% experienced-player win rate).
 
-### A pull request is not done until the owner can merge it with one click
+### A pull request is not done until it is merged and promoted
 
-Owner's rule, 2026-09-18, for every session and agent working here. The
-owner reads the PR list and merges; nothing else is theirs to do there.
+Owner's rule, 2026-09-18 (merging handed to sessions 2026-09-26), for every
+session and agent working here. The session that opens a PR takes it all the
+way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
+`release` and `main`.
 
 1. **Open it ready for review, never as a draft.** Say in the body what is
    unverified rather than hiding it behind draft status.
@@ -83,9 +85,11 @@ owner reads the PR list and merges; nothing else is theirs to do there.
    `test`.
    - Once rules 1–4 hold (reviewed, mergeable, fast checks green), merge
      your PR into `dev` yourself. Use a merge commit.
-   - Then open a PR from `dev` into `test` and merge it yourself. That push
-     to `test` runs the heavy suites. If one is already open, merge that one
-     rather than opening another.
+   - Then open a PR from `dev` into `test` and merge it yourself, with a
+     merge commit. That push to `test` runs the heavy suites. If one is
+     already open, merge that one rather than opening another. Each
+     promotion runs the full 3-OS matrix, so when several of your PRs land
+     together, promote once after the last.
    - Watch the `test` run. A red there is yours to fix with a new PR into
      `dev`, which you then promote again.
    - Never merge to `release` or `main` (see
