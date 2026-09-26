@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1337",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: a plan to move the art sources out of the repository",
+    "detail": "Docs only. docs/ART-REPO-PLAN.md sets out how the 1.6 GB of source art and the full-resolution game art would move to their own repository and be downloaded as a checked release instead of stored here, what reads them today, and the owner questions to answer first. Nothing has moved.",
+    "build": "0.7.1.559",
+    "pullRequest": 1337,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1337"
+  },
+  {
     "id": "pr-1336",
     "date": "2026-09-26",
     "group": "2026-09-26",
