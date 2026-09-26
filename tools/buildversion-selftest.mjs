@@ -411,7 +411,7 @@ function ordinalHistory() {
    * rewrites the ordinal record for that second commit, so one function reaches
    * the continuation case AND the candidate-boundary cases review named on #574.
    */
-  const build = (second, first = null) => {
+  const build = (second, first = null, moveDigest = true) => {
     const dir = fresh();
     git(dir, 'init', '-q', '-b', 'main');
     git(dir, 'config', 'user.email', 'selftest@family.local');
@@ -438,10 +438,11 @@ function ordinalHistory() {
     // ordinal in one act). The ordinal is left to `second`.
     {
       const p = resolve(dir, ORDINAL_HOME);
-      const moved = { ...JSON.parse(readFileSync(p, 'utf8')), digest: 'f0f0f0f0f0' };
+      const rec = JSON.parse(readFileSync(p, 'utf8'));
+      const moved = moveDigest ? { ...rec, digest: 'f0f0f0f0f0' } : rec;
       writeFileSync(p, `${JSON.stringify(second ? second(moved) : moved, null, 2)}\n`, 'utf8');
     }
-    git(dir, 'add', '-A'); git(dir, 'commit', '-q', '-m', 'a second build');
+    git(dir, 'add', '-A'); git(dir, 'commit', '-q', '--allow-empty', '-m', 'a second build');
     return dir;
   };
 
@@ -576,9 +577,20 @@ function ordinalHistory() {
   // THREE VERDICTS, NOT TWO. `unknown` is its own expectation because it is its
   // own outcome: check() treats null as blocking exactly as false does, and a
   // case watched merely "not green" could not tell the two apart.
+  // THE DIGEST-UNCHANGED BRANCH. Every case above moves the digest; these two
+  // leave it where it was. A record edit with the same digest used to be row F's
+  // catch against the committed bundle, and since CI rebuilds from the record,
+  // only row H can see it (#1332 review).
+  CASES.push(
+    [(j) => ({ ...j, ordinal: Math.max(0, j.ordinal - 5) }), 'red',
+      'the ordinal is LOWERED by hand with the source digest unchanged — no rebuild moved it, and the box went backwards', null, false],
+    [null, 'green',
+      'the control: the record is untouched and the digest unchanged — no build shipped, n/a', null, false],
+  );
+
   const WANT = { red: false, green: true, unknown: null };
-  for (const [second, want, label, first = null] of CASES) {
-    const dir = build(second, first);
+  for (const [second, want, label, first = null, moveDigest = true] of CASES) {
+    const dir = build(second, first, moveDigest);
     try {
       const row = check(dir).rows.find((r) => r.name === 'H ORDINAL INCREASES');
       const detail = row ? row.detail.split('\n')[0].trim() : 'NO SUCH ROW';

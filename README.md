@@ -27,7 +27,7 @@ A roguelike deckbuilder for the browser. Vanilla ES modules, HTML and CSS — no
 
 ### Offline
 
-Download `AshenSpire.html` (full, ~253 MB) or `AshenSpire-mobile.html` (mobile, under 30 MB) and double-click it — one self-contained file, no installation. On `main` and `release` both sit at the repository root. On `dev` they are **not committed** (since 2026-09-26): take them from the `dev-standalone-<commit>` artifact of the [dev preview workflow](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml), or build them yourself with `node tools/launch.mjs --build-only`, which writes `build/`, the root aliases and their [`dist/`](dist/) twins; `node tools/verify-shipped.mjs` fails if any copy differs or the mobile file is over budget. External music folders need http — see [dist/README.md](dist/README.md).
+Download `AshenSpire.html` (full, ~253 MB) or `AshenSpire-mobile.html` (mobile, under 30 MB) and double-click it — one self-contained file, no installation. They are **not committed** on `dev` (since 2026-09-26) nor on any branch this change has been promoted to: take them from the `<branch>-standalone-<commit>` artifact of the [dev preview workflow](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml) (`dev-standalone-…`, `test-standalone-…`, `main-standalone-…`), or build them yourself with `node tools/launch.mjs --build-only`, which writes `build/`, the root aliases and their [`dist/`](dist/) twins; `node tools/verify-shipped.mjs` fails if any copy differs or the mobile file is over budget. External music folders need http — see [dist/README.md](dist/README.md).
 
 ## Running it
 

@@ -52,8 +52,8 @@
 #     the only home and tools/launch.mjs derives it — but NOTHING STOPS a second
 #     copy being born, and I did not build that detector." Built 2026-08-15
 #     (Sten, with Constantine's ask for a build version on three screens):
-#     `tools/buildversion.mjs --check` runs in the `test` job on all three
-#     runners, `--selftest` proves it can fail on six known-bads including the
+#     `tools/buildversion.mjs --check` runs in the `reproducible` job on all
+#     three runners (after the build it reads, since 2026-09-26), `--selftest` proves it can fail on six known-bads including the
 #     re-typed-version fixture SOP 5 names, and `tools/buildstamp-shot.mjs` in
 #     `browser-guard` asks the other half — whether the string is INK on the
 #     three screens rather than merely in the DOM. The sentence is EDITED rather
@@ -721,12 +721,12 @@ jobs:
   boundary:
     name: what this green does NOT cover
     runs-on: ubuntu-latest
-    needs: [test, reproducible, browser-guard, display-first]
+    needs: [test, reproducible, reproducible-agree, browser-guard, display-first]
     if: always()
     steps:
       - name: Named boundary
         run: |
-          echo "upstream results: test=${{ needs.test.result }} reproducible=${{ needs.reproducible.result }} browser-guard=${{ needs.browser-guard.result }} display-first=${{ needs['display-first'].result }}"
+          echo "upstream results: test=${{ needs.test.result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }} browser-guard=${{ needs.browser-guard.result }} display-first=${{ needs['display-first'].result }}"
           echo ""
           echo "A GREEN RUN OF THIS WORKFLOW MEANS:"
           # Was "34 engine tests". #10 adds test 35, so the number was wrong the moment

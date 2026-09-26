@@ -148,7 +148,7 @@ function buildsOf(branch, keep) {
 /** The note a branch that no longer commits its build carries, or ''. */
 function uncommittedNote(branch, headTracksBuild) {
   if (headTracksBuild !== false) return '';
-  return `<p class="meta"><strong>Newer ${esc(branch)} builds are not committed</strong> — each commit's build is the <code>dev-standalone-&lt;commit&gt;</code> artifact of the <a href="${REPO_URL}/actions/workflows/dev-preview.yml?query=branch%3A${encodeURIComponent(branch)}">dev preview workflow</a>. The builds listed here are the last ones committed.</p>`;
+  return `<p class="meta"><strong>Newer ${esc(branch)} builds are not committed</strong> — each commit's build is the <code>${esc(branch)}-standalone-&lt;commit&gt;</code> artifact of the <a href="${REPO_URL}/actions/workflows/dev-preview.yml?query=branch%3A${encodeURIComponent(branch)}">dev preview workflow</a>. The builds listed here are the last ones committed.</p>`;
 }
 
 function versionIn(html) {

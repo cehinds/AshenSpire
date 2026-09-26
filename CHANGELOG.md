@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-26
 
-- **Behind the scenes: development builds are no longer stored in the repository** ([#1332](https://github.com/cehinds/AshenSpire/pull/1332), `0.7.1.550`). Nothing you play changes. Every rebuild used to store a fresh 255 MB copy of the game plus its 29 MB mobile edition, and the repository ran out of room for them. Development builds are now made by the automated checks on every change and downloaded from there as the `dev-standalone` file; the build number and its changelog entry are still checked to agree before a change can merge.
+- **Behind the scenes: development builds are no longer stored in the repository** ([#1332](https://github.com/cehinds/AshenSpire/pull/1332), `0.7.1.552`). Nothing you play changes. Every rebuild used to store a fresh 255 MB copy of the game plus its 29 MB mobile edition, and the repository ran out of room for them. Development builds are now made by the automated checks on every change and downloaded from there as the `dev-standalone` file; the build number and its changelog entry are still checked to agree before a change can merge.
 
 ## 2026-09-25
 

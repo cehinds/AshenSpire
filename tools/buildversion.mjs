@@ -1135,9 +1135,14 @@ export function check(root = REPO_ROOT) {
     } else {
       const before = at(parent);
       const now = at('HEAD');
-      const changed = before === null || now === null || before.digest !== now.digest;
+      // THE ORDINAL AND RELEASE COUNT TOO, not only the digest. A hand-edit (or a
+      // bad hand-merge) of the record that leaves the digest alone used to be
+      // caught by row F against the committed bundle; CI now rebuilds from the
+      // edited record, so F agrees with it and only this row can see the move.
+      const changed = before === null || now === null || before.digest !== now.digest
+        || before.ordinal !== now.ordinal || before.release !== now.release;
       if (!changed) {
-        add(true, 'H ORDINAL INCREASES', `${ORDINAL_HOME} records the same source digest at ${parent.slice(0, 7)} and HEAD — no build shipped, so no ordinal was owed (n/a, stated)`);
+        add(true, 'H ORDINAL INCREASES', `${ORDINAL_HOME} records the same build (digest, ordinal and release) at ${parent.slice(0, 7)} and HEAD — no build shipped, so no ordinal was owed (n/a, stated)`);
       } else if (before === null) {
         add(true, 'H ORDINAL INCREASES', `${parent.slice(0, 7)} has no ${ORDINAL_HOME} — the scheme did not exist at the parent (n/a, stated)`);
       } else if (now === null) {
@@ -1219,7 +1224,7 @@ export function check(root = REPO_ROOT) {
         const rose = order > 0;
         const where = moved
           ? `the release moved '${before.release}' → '${now.release}' between ${parent.slice(0, 7)} and HEAD`
-          : `the recorded source digest moved between ${parent.slice(0, 7)} and HEAD within release '${now.release}'`;
+          : `the recorded build moved between ${parent.slice(0, 7)} and HEAD within release '${now.release}'`;
         add(rose, 'H ORDINAL INCREASES',
           rose
             ? `${where}, and the version rose ${beforeV.join('.')} → ${nowV.join('.')}`

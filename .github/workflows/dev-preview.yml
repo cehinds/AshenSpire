@@ -12,24 +12,36 @@ name: dev preview
 # every push and PR, costs no LFS, needs no write token, and is per-commit; Pages
 # caps a site at 1 GB (four 255 MB builds) and a Release is the owner's act.
 #
+# PROMOTED BRANCHES TOO. A push to `test`, `release` or `main` builds and uploads
+# `<branch>-standalone-<commit>` the same way, because once this change is
+# promoted those branches stop committing their build as well: `test` is the
+# playtest build, and `release`/`main` keep theirs 90 days (GitHub's maximum)
+# until the owner-approved Releases/Pages publication replaces this.
+#
 # It is deliberately NOT a deployment: it touches no ref.
 
 on:
   push:
-    branches: [dev]
+    branches: [dev, test, release, main]
   pull_request:
     branches: [dev]
   workflow_dispatch:
 
 concurrency:
   group: dev-preview-${{ github.ref }}
-  # A PULL REQUEST'S superseded run may be cancelled; a push to `dev` may not.
+  # A PULL REQUEST'S superseded run may be cancelled; a branch push may not.
   # The built HTML is not committed on dev, so this run's upload is the only copy
   # of that commit's build — cancelling it would leave the commit with none.
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
+
+env:
+  # The branch a build belongs to: the PR's base, or the pushed branch. It names
+  # the artifacts and the standalone files (src/ui/buildChannel.js reads the
+  # channel from a saved file's name, so a main build must not say `dev`).
+  CHANNEL: ${{ github.base_ref || github.ref_name }}
 
 jobs:
   preview:
@@ -178,8 +190,8 @@ jobs:
           # The names carry the channel: src/ui/buildChannel.js reads `-dev-` from
           # a saved file's name to open the dev-only settings, and a plain
           # AshenSpire.html is an unknown file with them locked.
-          cp AshenSpire.html standalone/AshenSpire-dev-preview.html
-          cp AshenSpire-mobile.html standalone/AshenSpire-mobile-dev-preview.html
+          cp AshenSpire.html "standalone/AshenSpire-${CHANNEL}-preview.html"
+          cp AshenSpire-mobile.html "standalone/AshenSpire-mobile-${CHANNEL}-preview.html"
           mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
           cp -r src preview/src
           cp world-atlas-preview.html preview/
@@ -275,15 +287,15 @@ jobs:
       # source. Naming the sha in both makes that visible at the download.
       - uses: actions/upload-artifact@v4
         with:
-          name: dev-preview-${{ github.sha }}
+          name: ${{ env.CHANNEL }}-preview-${{ github.sha }}
           path: preview/
           retention-days: 14
 
       - uses: actions/upload-artifact@v4
         with:
-          name: dev-standalone-${{ github.sha }}
+          name: ${{ env.CHANNEL }}-standalone-${{ github.sha }}
           path: standalone/
-          retention-days: 14
+          retention-days: ${{ (env.CHANNEL == 'release' || env.CHANNEL == 'main') && 90 || (env.CHANNEL == 'test' && 30 || 14) }}
 
   # THE BROWSER GATES THAT NOTHING RAN ON `dev`, AND WHAT THAT COST.
   #
