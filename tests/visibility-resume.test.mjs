@@ -321,7 +321,7 @@ const KNOWN = {
   'src/ui/screens/equipment.js': ["'pointermove'", "'pointerup'", "'pointercancel'", "'keydown'"],
   'src/ui/screens/map.js': ["'click'", "'keydown'", "'resize'", ['type', "one of 'fullscreenchange', 'webkitfullscreenchange' (the literal loop): re-centres the map camera only"]],
   'src/ui/screens/profileNotice.js': ["'keydown'"],
-  'src/ui/screens/prologue.js': [["'visibilitychange'", 'resets the opening slideshow frame clock (`last = 0`) only; the prologue runs before any run or fight exists']],
+  'src/ui/screens/prologue.js': [["'visibilitychange'", 'resets the opening slideshow frame clock (`last = 0`) only; the prologue runs before any run or fight exists'], ['ART_SOURCE_EVENT', "the constant 'ashen:art-source' (src/ui/highResArt.js), fired by the Art quality setting, not the page cycle: repaints the prologue character canvas from assetUrl() only"]],
   'src/ui/screens/settings.js': ["'resize'", "'fullscreenchange'", "'webkitfullscreenchange'", "'fullscreenerror'", "'webkitfullscreenerror'"],
   'src/ui/screens/title.js': ["'keydown'"],
   'src/ui/screens/combatTest.js': ['.title'],

@@ -215,3 +215,16 @@ test('a detached loader gets the built-in URL for a failed high-res file, and no
   assert.equal(assetTier('assets/bg/bg_act1.webp'), 'built-in', 'dropped from the source');
   assert.equal(builtInFor('hd/assets/bg/bg_act1.webp'), 'assets/bg/bg_act1.webp', 'a second loader of the same file falls back too');
 });
+
+test('a source change is also announced as a DOM event for canvas-painted art', async () => {
+  const { ART_SOURCE_EVENT } = await import('../src/ui/highResArt.js');
+  const seen = [];
+  globalThis.document = { querySelectorAll: () => [], dispatchEvent: (e) => { seen.push([e.type, e.detail.covered]); return true; } };
+  try {
+    await applyArtQuality({ [ART_QUALITY_KEY]: ART_LOCAL_HIGH }, { fetchImpl: json(manifest), protocol: 'https:' });
+    await applyArtQuality({ [ART_QUALITY_KEY]: ART_BUILT_IN });
+    assert.deepEqual(seen, [[ART_SOURCE_EVENT, 2], [ART_SOURCE_EVENT, 0]]);
+  } finally {
+    delete globalThis.document;
+  }
+});

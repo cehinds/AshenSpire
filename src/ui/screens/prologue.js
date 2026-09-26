@@ -2,7 +2,7 @@ import { prologueSceneMs, prologueTransitionMs } from '../../model/prologueTimin
 import { paintPrologueCharacter, placePrologueCharacter } from '../prologueCharacter.js';
 import { el, button, openModal } from '../kit/index.js';
 import { prologueArtwork } from '../assets.js';
-import { builtInFor } from '../highResArt.js';
+import { builtInFor, ART_SOURCE_EVENT } from '../highResArt.js';
 import { topVeil } from '../components/veil.js';
 import { prologueConfig, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueResumePosition, prologueSceneArt, prologueBoxBackground, prologueStaging, PROLOGUE_DEFAULTS, PROLOGUE_LAYOUT, PROLOGUE_LAYOUTS } from '../../model/prologue.js';
 
@@ -197,8 +197,28 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     animations.forEach(a=>a.cancel());
     portrait.removeEventListener('change',rotate);
     document.removeEventListener('visibilitychange',visibility);
+    document.removeEventListener(ART_SOURCE_EVENT,repaintActor);
   }
   function finish(reason) { if (stopped) return; cleanup(); onFinish(reason); }
+  // The character painting, at whatever tier assetUrl() names now. A missing
+  // high-res painting retries once with the built-in art.
+  async function characterSource() {
+    let source = new Image(); source.src = prologueArtwork(classId);
+    await ready(source);
+    const fallback = !source.naturalWidth && builtInFor(source.getAttribute('src'));
+    if (fallback) { source = new Image(); source.src = fallback; await ready(source); }
+    return source;
+  }
+  // Art quality changed while this scene is up (Settings opened from the
+  // pause): the canvas holds pixels, not a URL, so repaint it.
+  let mountedActor = null;
+  async function repaintActor() {
+    const mounted = mountedActor;
+    if (!mounted || stopped || mounted.token !== serial) return;
+    const source = await characterSource();
+    if (stopped || mountedActor !== mounted || mounted.token !== serial || !source.naturalWidth) return;
+    paintPrologueCharacter(mounted.actor,source,p.shadowStrength);
+  }
   function togglePause() { paused = !paused; last = 0; pause.textContent = paused ? config.labels.resume : config.labels.pause; }
   function visibility() { last = 0; }
   function rotate() { showScene(position,{resumeAt:elapsed,notify:false}); }
@@ -254,15 +274,12 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
       plate.classList.add('prologue-plate-bare');
     }
     if (scene.character) {
-      let source = new Image(); source.src = prologueArtwork(classId);
       const actor = el('canvas',{class:'prologue-actor'});
-      await ready(source);
-      // A missing high-res painting retries once with the built-in art.
-      const fallback = !source.naturalWidth && builtInFor(source.getAttribute('src'));
-      if (fallback) { source = new Image(); source.src = fallback; await ready(source); }
+      const source = await characterSource();
       if (stopped || token !== serial) return;
       if (source.naturalWidth) {
         paintPrologueCharacter(actor,source,p.shadowStrength);
+        mountedActor = { actor, token };
         placePrologueCharacter(actor,scene.actor[layout]);
         plate.append(actor);
       }
@@ -380,6 +397,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   }
   if (!forceLayout) portrait.addEventListener('change',rotate);
   document.addEventListener('visibilitychange',visibility);
+  document.addEventListener(ART_SOURCE_EVENT,repaintActor);
   // THE FRAME IS UP BEFORE THE ARTWORK IS. `showScene` applies the staging when
   // it appends the plate, which waits on the painting decoding (up to eight
   // seconds when the file is missing) — so the opening used to draw its first

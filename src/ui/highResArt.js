@@ -44,6 +44,17 @@ let servedPending = null; // the one in-flight look for `hd/`, shared by overlap
  */
 export function onArtSourceChange(fn) { onChange = typeof fn === 'function' ? fn : null; }
 
+/**
+ * The same moment as a DOM event, for a screen that painted art somewhere this
+ * module cannot reach — the prologue rasterises its character into a <canvas>.
+ * It listens while mounted and repaints from assetUrl().
+ */
+export const ART_SOURCE_EVENT = 'ashen:art-source';
+function announce(n) {
+  if (onChange) try { onChange(n); } catch { /* a listener must not break the setting */ }
+  try { globalThis.document?.dispatchEvent?.(new CustomEvent(ART_SOURCE_EVENT, { detail: { covered: n } })); } catch { /* as above */ }
+}
+
 /** True when the setting asks for high-res art. */
 export function wantsHighRes(settings) {
   return (settings || {})[ART_QUALITY_KEY] === ART_LOCAL_HIGH;
@@ -219,7 +230,7 @@ function publish() {
   if (source !== current) {
     current = source;
     refreshMountedArt();
-    if (onChange) try { onChange(n); } catch { /* a listener must not break the setting */ }
+    announce(n);
   }
   if (typeof document !== 'undefined') {
     for (const el of document.querySelectorAll('[data-art-status]')) el.textContent = status;
@@ -244,7 +255,7 @@ export async function applyArtQuality(settings, opts = {}) {
     setHighResSource(null);
     if (hadSource) {
       refreshMountedArt();
-      if (onChange) try { onChange(0); } catch { /* as above */ }
+      announce(0);
     }
     return 0;
   }
