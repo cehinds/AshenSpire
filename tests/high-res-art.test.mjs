@@ -206,3 +206,12 @@ test('an inlined URL shared by byte-identical assets resolves to the alias the s
     delete ASSET_MAP['assets/ui/b.webp'];
   }
 });
+
+test('a detached loader gets the built-in URL for a failed high-res file, and nothing for other URLs', async () => {
+  const { builtInFor } = await import('../src/ui/highResArt.js');
+  await applyArtQuality({ [ART_QUALITY_KEY]: ART_LOCAL_HIGH }, { fetchImpl: json(manifest), protocol: 'https:' });
+  assert.equal(builtInFor('assets/nope.webp'), null, 'not a high-res URL: stays a missing asset');
+  assert.equal(builtInFor('hd/assets/bg/bg_act1.webp'), 'assets/bg/bg_act1.webp');
+  assert.equal(assetTier('assets/bg/bg_act1.webp'), 'built-in', 'dropped from the source');
+  assert.equal(builtInFor('hd/assets/bg/bg_act1.webp'), 'assets/bg/bg_act1.webp', 'a second loader of the same file falls back too');
+});

@@ -2,6 +2,7 @@ import { prologueSceneMs, prologueTransitionMs } from '../../model/prologueTimin
 import { paintPrologueCharacter, placePrologueCharacter } from '../prologueCharacter.js';
 import { el, button, openModal } from '../kit/index.js';
 import { prologueArtwork } from '../assets.js';
+import { builtInFor } from '../highResArt.js';
 import { topVeil } from '../components/veil.js';
 import { prologueConfig, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueResumePosition, prologueSceneArt, prologueBoxBackground, prologueStaging, PROLOGUE_DEFAULTS, PROLOGUE_LAYOUT, PROLOGUE_LAYOUTS } from '../../model/prologue.js';
 
@@ -253,9 +254,12 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
       plate.classList.add('prologue-plate-bare');
     }
     if (scene.character) {
-      const source = new Image(); source.src = prologueArtwork(classId);
+      let source = new Image(); source.src = prologueArtwork(classId);
       const actor = el('canvas',{class:'prologue-actor'});
       await ready(source);
+      // A missing high-res painting retries once with the built-in art.
+      const fallback = !source.naturalWidth && builtInFor(source.getAttribute('src'));
+      if (fallback) { source = new Image(); source.src = fallback; await ready(source); }
       if (stopped || token !== serial) return;
       if (source.naturalWidth) {
         paintPrologueCharacter(actor,source,p.shadowStrength);

@@ -2,6 +2,7 @@
 // byte-distinct images; the repeat table avoids inlining forty-four duplicate
 // WebPs into the standalone build.
 import { assetUrl } from './assetmap.js';
+import { builtInFor } from './highResArt.js';
 import { DEFAULT_SPRITE_STYLE } from '../model/spriteStyle.js';
 import { liteRendering } from './performance.js';
 import { hintImage } from './imageHints.js';
@@ -51,7 +52,13 @@ export function preloadReaverAttackFrames() {
   for (const src of reaverAttackFrameUrls()) {
     const image = new Image();
     image.addEventListener('load', () => settled(true), { once: true });
-    image.addEventListener('error', () => settled(false), { once: true });
+    image.addEventListener('error', function retry() {
+      // A missing high-res frame retries once with the built-in art.
+      const fallback = builtInFor(src);
+      if (fallback && image.getAttribute('src') !== fallback) { image.src = fallback; return; }
+      image.removeEventListener('error', retry);
+      settled(false);
+    });
     image.src = src;
   }
 }

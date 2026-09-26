@@ -171,6 +171,24 @@ export function refreshMountedArt(root = globalThis.document) {
 // placeholder: a missing high-res file is not a missing asset.
 let watching = false;
 const failed = new Set(); // high-res URLs that failed to load this session
+
+/**
+ * builtInFor(url) — `url` failed to load. When it is a high-res file this page
+ * handed out, drop its id from the source and return the built-in URL to load
+ * instead; otherwise null (a missing asset is still a missing asset). Loaders
+ * that never join the document (`new Image()` painted to a canvas) call this
+ * themselves, because their error events never pass the listener below.
+ */
+export function builtInFor(url) {
+  const id = urlToId.get(url);
+  if (!id) return null;
+  if (current && current.get(id) === url) {
+    current.delete(id);
+    setHighResSource(current);
+    failed.add(url);
+  } else if (!failed.has(url)) return null;
+  return assetUrl(id);
+}
 export function watchMissingFiles(doc = globalThis.document) {
   if (watching || !doc || typeof doc.addEventListener !== 'function') return;
   watching = true;
@@ -179,18 +197,12 @@ export function watchMissingFiles(doc = globalThis.document) {
     if (!el || typeof el.getAttribute !== 'function') return;
     const attr = artAttr(el);
     if (!attr) return;
-    const url = readArt(el, attr);
-    const id = urlToId.get(url);
-    if (!id) return;
-    if (current && current.get(id) === url) {
-      current.delete(id);
-      setHighResSource(current);
-      failed.add(url);
-    } else if (!failed.has(url)) return;
+    const fallback = builtInFor(readArt(el, attr));
+    if (!fallback) return;
     // Every copy of that file on screen (two of the same enemy) fails too; each
     // falls back the same way, not only the first.
     event.stopPropagation();
-    writeArt(el, attr, assetUrl(id));
+    writeArt(el, attr, fallback);
   }, true);
 }
 
