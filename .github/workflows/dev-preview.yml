@@ -2,23 +2,49 @@ name: dev preview
 
 # GitHub Pages serves `main`, so `dev` has no hosted URL. This workflow gives
 # every push to `dev` (and every PR targeting it) an inspectable artifact of the
-# playable build at that exact commit, without deploying or publishing anything.
+# playable build at that exact commit, without deploying anything.
 #
-# It is deliberately NOT a deployment: it publishes nothing and touches no ref.
+# SINCE 2026-09-26 THIS IS WHERE THE dev BUILD IS PUBLISHED. The built HTML is no
+# longer committed on dev — every rebuild uploaded ~284 MB of new Git LFS objects
+# and exhausted the repository's LFS budget — so the `dev-standalone-<sha>` and
+# `dev-preview-<sha>` artifacts below are the build a tester downloads. A workflow
+# artifact was chosen over GitHub Pages and a Release asset: it already existed for
+# every push and PR, costs no LFS, needs no write token, and is per-commit; Pages
+# caps a site at 1 GB (four 255 MB builds) and a Release is the owner's act.
+#
+# PROMOTED BRANCHES TOO. A push to `test`, `release` or `main` builds and uploads
+# `<branch>-standalone-<commit>` the same way, because once this change is
+# promoted those branches stop committing their build as well: `test` is the
+# playtest build, and `release`/`main` keep theirs 90 days (GitHub's maximum)
+# until the owner-approved Releases/Pages publication replaces this.
+#
+# It is deliberately NOT a deployment: it touches no ref.
 
 on:
   push:
-    branches: [dev]
+    branches: [dev, test, release, main]
   pull_request:
     branches: [dev]
   workflow_dispatch:
 
 concurrency:
-  group: dev-preview-${{ github.ref }}
-  cancel-in-progress: true
+  # A PULL REQUEST'S superseded run may be cancelled; a branch push may not, and
+  # may not be REPLACED while queued either (a group holds one pending run). The
+  # built HTML is not committed, so a push run's upload is the only copy of that
+  # commit's build — so push runs are grouped by commit, never by branch.
+  group: dev-preview-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
+
+env:
+  # The branch a build belongs to: the PR's base, or the pushed branch. It names
+  # the artifacts and the standalone files (src/ui/buildChannel.js reads the
+  # channel from a saved file's name, so a main build must not say `dev`).
+  # A dispatch from `feature/x` carries a slash; the preview job's first step
+  # rewrites CHANNEL without it before anything names a file or an artifact.
+  CHANNEL: ${{ github.base_ref || github.ref_name }}
 
 jobs:
   preview:
@@ -26,9 +52,39 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          lfs: true
+          lfs: false # the build is made below from source; nothing reads LFS
 
       - uses: ./.github/actions/setup-node
+
+      # BUILT FIRST, AND UPLOADED WHENEVER THIS SUCCEEDS. The built HTML is not
+      # committed, so this run's artifacts are the only copy of this commit's
+      # build: a failing gate below still fails the job, but it must not cost the
+      # commit its download (the standalone uploads right below; the preview
+      # package collects and uploads on `steps.build.outcome`).
+      - name: Make the channel safe for a file and artifact name
+        run: echo "CHANNEL=${CHANNEL//\//-}" >> "$GITHUB_ENV"
+
+      - name: Build the standalone
+        id: build
+        run: node tools/launch.mjs --build-only
+
+      # The names carry the channel: src/ui/buildChannel.js reads `-dev-` from
+      # a saved file's name to open the dev-only settings, and a plain
+      # AshenSpire.html is an unknown file with them locked. Collected and
+      # uploaded HERE, straight after the build and before any gate or the
+      # preview package, so this commit's only copy of its build always ships.
+      - name: Collect the standalone
+        run: |
+          set -euo pipefail
+          mkdir -p standalone
+          cp AshenSpire.html "standalone/AshenSpire-${CHANNEL}-preview.html"
+          cp AshenSpire-mobile.html "standalone/AshenSpire-mobile-${CHANNEL}-preview.html"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.CHANNEL }}-standalone-${{ github.sha }}
+          path: standalone/
+          retention-days: ${{ (env.CHANNEL == 'release' || env.CHANNEL == 'main') && 90 || (env.CHANNEL == 'test' && 30 || 14) }}
 
       - name: Complete armament kits and temporary Guardian skill
         run: node tests/armament-combat-kits.test.mjs
@@ -44,14 +100,6 @@ jobs:
 
       - name: World Journey normalized data and seeded routes
         run: node tests/world-atlas.test.mjs
-
-      # #498: 28 plant sites had drifted and only one gate went red — the rest
-      # stayed green while unable to fail. This cheap static detector (no
-      # execution, no browser, <1s) runs on every PR: any NEW drifted
-      # find-string fails here the day the refactor lands, and the checked-in
-      # baseline holds the known backlog to exactly itself.
-      - name: No plant site has drifted beyond the recorded baseline
-        run: node tools/plantsites.mjs --check
 
       # The harness that decides, for every corpus above and in the dispatch-only
       # lane, whether a known-bad was armed at all. It read plants as exact bytes,
@@ -94,6 +142,26 @@ jobs:
       - name: Release series gate rejects older and malformed versions
         run: node tools/release-series.mjs --selftest
 
+      # A clean tree after the build (first step of this job) is what used to be
+      # "the committed bundle is this source": if the rebuild had to bump
+      # buildordinal.json, the commit's receipt and its box disagree.
+      - name: The rebuild changed nothing committed
+        run: |
+          set -euo pipefail
+          git status --porcelain
+          test -z "$(git status --porcelain)"
+
+      # #498: 28 plant sites had drifted and only one gate went red — the rest
+      # stayed green while unable to fail. This cheap static detector (no
+      # execution, no browser, <1s) runs on every PR: any NEW drifted
+      # find-string fails here the day the refactor lands, and the checked-in
+      # baseline holds the known backlog to exactly itself.
+      #
+      # AFTER THE BUILD: several plants target the built HTML, which is no
+      # longer committed, so before a build their files do not exist.
+      - name: No plant site has drifted beyond the recorded baseline
+        run: node tools/plantsites.mjs --check
+
       - name: The shipped artifact is this source, and the number on it is ours
         run: node tools/buildversion.mjs --check
 
@@ -124,6 +192,8 @@ jobs:
         run: node --test pose-studio/tests/model.test.mjs
 
       - name: Collect the playable build
+        id: collect
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           set -euo pipefail
           mkdir -p preview
@@ -147,14 +217,8 @@ jobs:
           # those by hand are gone with it.
           node tools/bundle.mjs --external-art --out preview
           cp preview/AshenSpire.html preview/index.html
-          # The standalone is uploaded as its OWN artifact rather than nested
-          # here — see the two upload steps below for why.
-          mkdir -p standalone
-          # The names carry the channel: src/ui/buildChannel.js reads `-dev-` from
-          # a saved file's name to open the dev-only settings, and a plain
-          # AshenSpire.html is an unknown file with them locked.
-          cp AshenSpire.html standalone/AshenSpire-dev-preview.html
-          cp AshenSpire-mobile.html standalone/AshenSpire-mobile-dev-preview.html
+          # The standalone is collected and uploaded by its own steps, right
+          # after the build, so nothing here can cost a commit its download.
           mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
           cp -r src preview/src
           cp world-atlas-preview.html preview/
@@ -177,7 +241,7 @@ jobs:
           cp art/combat-effects-2026-09-07/index.html art/combat-effects-2026-09-07/sprite-catalog.html art/combat-effects-2026-09-07/integrated-tag-mappings.html preview/art/combat-effects-2026-09-07/
           cp -r art/combat-effects-2026-09-07/inspection preview/art/combat-effects-2026-09-07/inspection
           {
-            echo "AshenSpire dev preview"
+            echo "AshenSpire ${CHANNEL} preview"
             echo "commit:   ${GITHUB_SHA}"
             echo "ref:      ${GITHUB_REF}"
             echo "built:    $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -199,12 +263,13 @@ jobs:
             echo
             echo "This folder is the DE-INLINED build: serve it and open AshenSpire.html"
             echo "(or run serve-preview.mjs). It needs a server. For the double-clickable"
-            echo "single file that needs none, download the dev-standalone artifact from"
-            echo "this same run: AshenSpire.html is the full game (~250 MB) and"
-            echo "AshenSpire-mobile.html the same build with its art shrunk under 30 MB."
+            echo "single file that needs none, download the ${CHANNEL}-standalone artifact"
+            echo "from this same run: AshenSpire-${CHANNEL}-preview.html is the full game"
+            echo "(~250 MB) and AshenSpire-mobile-${CHANNEL}-preview.html the same build with"
+            echo "its art shrunk under 30 MB."
             echo
-            echo "This is an inspection artifact, not a deployment. Pages serves main;"
-            echo "dev has no hosted URL."
+            echo "This is an inspection artifact, not a deployment. The built HTML is not"
+            echo "committed; this run's artifacts are this commit's build."
           } > preview/README.txt
           echo "collected $(find preview -type f | wc -l) files"
 
@@ -249,15 +314,10 @@ jobs:
       # AshenSpire.html that verify-shipped.mjs has already proven is this
       # source. Naming the sha in both makes that visible at the download.
       - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() && steps.collect.outcome == 'success' }}
         with:
-          name: dev-preview-${{ github.sha }}
+          name: ${{ env.CHANNEL }}-preview-${{ github.sha }}
           path: preview/
-          retention-days: 14
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: dev-standalone-${{ github.sha }}
-          path: standalone/
           retention-days: 14
 
   # THE BROWSER GATES THAT NOTHING RAN ON `dev`, AND WHAT THAT COST.
@@ -304,7 +364,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          lfs: true
+          lfs: false # builds its own de-inlined copy; reads no LFS object
       - uses: ./.github/actions/setup-node
 
       - uses: ./.github/actions/which-browser

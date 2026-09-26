@@ -1,5 +1,16 @@
-// tools/rebuild-matches.mjs — does a build from THIS source reproduce the
-// committed build/ ?
+// tools/rebuild-matches.mjs — does a build from THIS source reproduce what is
+// committed, and does it reproduce itself?
+//
+// ---- SINCE 2026-09-26 THE BUILD IS NOT COMMITTED ON dev ----------------------
+//
+// The Git LFS budget ran out, so build/AshenSpire.html is ignored and CI builds
+// it. What a commit still carries from its build is the BOX, buildordinal.json:
+// the ordinal and the source digest the build wrote. So the generative question
+// is now asked of that: build from the source in front of you, and the box must
+// not move (a moved box is a receipt pointing at a build this source did not
+// make — the old "foreign bundle" class, arriving through the file that is
+// still committed). Then build again: the two builds must be byte-identical, so
+// the artifact CI publishes for a commit is THE build of that commit.
 //
 // ---- WHY THIS FILE EXISTS AT ALL --------------------------------------------
 //
@@ -33,24 +44,26 @@
 // Printed by the tool itself, not only here, because a suite that prints only
 // PASS is "green wasn't clearance" shipped as infrastructure.
 
-import { readGitArtifact } from './git-artifact.mjs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const TRACKED = 'build/AshenSpire.html';
-const ABS = resolve(ROOT, TRACKED);
+const BUNDLE = 'build/AshenSpire.html';
+const ABS = resolve(ROOT, BUNDLE);
+// What a build writes that IS committed: the box, and the changelog projection
+// the receipt flow regenerates. Both must survive a rebuild untouched.
+const COMMITTED_OUTPUTS = ['buildordinal.json', 'src/content/changelog.generated.js'];
 
-// Git stores this text artifact with LF, while a Windows checkout may feed the
-// bundler CRLF source and produce mixed newline bytes. That is checkout format,
+// A Windows checkout may feed the bundler CRLF source. That is checkout format,
 // not foreign content. Canonicalize CRLF only; every other byte still binds.
 const md5 = (buf) => createHash('md5').update(
   Buffer.from(buf.toString('utf8').replace(/\r\n/g, '\n'))
 ).digest('hex');
 const git = (...args) => execFileSync('git', ['-C', ROOT, ...args], { encoding: 'utf8' }).trim();
+const restore = () => spawnSync('git', ['-C', ROOT, 'checkout', '--', ...COMMITTED_OUTPUTS]);
 
 /** unknown is not the softer bucket — it BLOCKS, exactly as red does (SOP 2). */
 function unknown(why, detail) {
@@ -61,92 +74,78 @@ function unknown(why, detail) {
   process.exit(2);
 }
 
-// ---- the referent gate: prove there is something to rule on ------------------
-//
-// SOP 2's ⚙ clause. An empty or unresolvable answer and a genuinely clean one
-// are identical and mean the opposite, so every precondition below resolves to
-// UNKNOWN rather than to a quiet green.
+// ---- the referent gate -------------------------------------------------------
 let head;
 try {
   head = git('rev-parse', 'HEAD');
 } catch {
-  unknown(`${ROOT} is not a git repository`, 'nothing here has a committed build to compare against');
+  unknown(`${ROOT} is not a git repository`, 'nothing here has a committed box to compare against');
 }
 const shortHead = head.slice(0, 7);
 
-let committed;
-try {
-  committed = readGitArtifact(ROOT, 'HEAD', TRACKED);
-} catch (error) {
-  unknown(`cannot read the committed ${TRACKED}`, `at ${head} — ${error.message}`);
-}
-if (!committed.length) unknown(`the committed ${TRACKED} is empty`, `at ${head}`);
-
-// A build/ that already disagrees with HEAD makes the comparison below measure
-// somebody's working tree, not this commit. That is not a red — it is a wrong
-// question, and it gets the bucket that blocks.
-if (spawnSync('git', ['-C', ROOT, 'diff', '--quiet', '--', TRACKED]).status !== 0) {
-  unknown(`${TRACKED} is already modified in the working tree`,
+// An edited box makes the comparison measure somebody's working tree, not this
+// commit. Not a red — a wrong question, and it gets the bucket that blocks.
+if (spawnSync('git', ['-C', ROOT, 'diff', '--quiet', '--', ...COMMITTED_OUTPUTS]).status !== 0) {
+  unknown(`${COMMITTED_OUTPUTS.join(' or ')} is already modified in the working tree`,
     `at ${head} — commit it or restore it, then this can measure the source instead of the edit`);
 }
 
-const before = md5(committed);
-const mtimeBefore = statSync(ABS).mtimeMs;
-
-// ---- generate --------------------------------------------------------------
+// ---- generate, twice ---------------------------------------------------------
 //
-// THE NUMERATOR NEEDS A GUARD, NOT ONLY THE DENOMINATOR — Bjorn's UNPLANTABLE
-// finding, one tool over, and the same shape here. If the bundler dies, or is
-// replaced by something that writes nothing, `build/` is untouched and the byte
-// comparison below passes with a confident smile. So the run has to prove it
-// RAN: exit 0, and the file it owns actually rewritten.
-const built = spawnSync('node', ['tools/bundle.mjs'], { cwd: ROOT, encoding: 'utf8' });
-const restore = () => spawnSync('git', ['-C', ROOT, 'checkout', '--', TRACKED]);
-
-if (built.status !== 0) {
-  restore();
-  unknown(`tools/bundle.mjs exited ${built.status === null ? 'on a signal' : built.status}`,
-    `at ${head} — a bundler that cannot run has not disagreed with anything`
-    + `${built.stderr ? `\n  ${built.stderr.trim().split('\n').slice(-3).join('\n  ')}` : ''}`);
+// THE NUMERATOR NEEDS A GUARD. If the bundler dies or writes nothing, the
+// comparisons below pass for the wrong reason, so each run must prove it RAN:
+// exit 0, and the bundle actually (re)written.
+function build(n) {
+  const mtimeBefore = existsSync(ABS) ? statSync(ABS).mtimeMs : null;
+  const built = spawnSync('node', ['tools/bundle.mjs'], { cwd: ROOT, encoding: 'utf8' });
+  if (built.status !== 0) {
+    restore();
+    unknown(`tools/bundle.mjs exited ${built.status === null ? 'on a signal' : built.status} (build ${n})`,
+      `at ${head} — a bundler that cannot run has not disagreed with anything`
+      + `${built.stderr ? `\n  ${built.stderr.trim().split('\n').slice(-3).join('\n  ')}` : ''}`);
+  }
+  if (!existsSync(ABS) || statSync(ABS).mtimeMs === mtimeBefore) {
+    restore();
+    unknown(`tools/bundle.mjs exited 0 without writing ${BUNDLE} (build ${n})`,
+      `at ${head} — an unwritten file matches for the wrong reason`);
+  }
+  return md5(readFileSync(ABS));
 }
-if (statSync(ABS).mtimeMs === mtimeBefore) {
+
+const first = build(1);
+const moved = COMMITTED_OUTPUTS.filter((f) => spawnSync('git', ['-C', ROOT, 'diff', '--quiet', '--', f]).status !== 0);
+if (moved.length) {
   restore();
-  unknown(`tools/bundle.mjs exited 0 without writing ${TRACKED}`,
-    `at ${head} — an unwritten file matches the committed one for the wrong reason`);
+  console.log(`rebuild-matches: RED — a build from the source at ${shortHead} rewrote ${moved.join(', ')}.`);
+  console.log('  The committed box was NOT written by this source: the source moved after the');
+  console.log('  last rebuild, or the box came from another tree. The receipt names a build');
+  console.log('  this commit does not make.');
+  console.log('  Fix: node tools/launch.mjs --build-only at this head, re-point the receipt,');
+  console.log('  and commit the box. (The working tree was restored.)');
+  process.exit(1);
 }
+const second = build(2);
 
-const after = md5(readFileSync(ABS));
-restore();
-
-// ---- the verdict ------------------------------------------------------------
-console.log(`rebuild-matches: ${TRACKED} at ${shortHead}`);
-console.log(`  committed  canonical-LF md5 ${before}  at ${head}`);
-console.log(`  rebuilt    canonical-LF md5 ${after}  from the source at ${head}`);
+console.log(`rebuild-matches: ${BUNDLE} at ${shortHead}`);
+console.log(`  build 1  canonical-LF md5 ${first}`);
+console.log(`  build 2  canonical-LF md5 ${second}`);
+console.log(`  ${COMMITTED_OUTPUTS.join(', ')} unchanged by the rebuild`);
 console.log('');
 
-if (before !== after) {
-  console.log('RED — the committed build was NOT produced by this source.');
-  console.log('  Either the bundle is stale, or it came from another commit. This is the');
-  console.log('  only check in the tree that can tell you so: verify-shipped compares the');
-  console.log('  two committed copies to each other and artifact-provenance reads what the');
-  console.log('  file says about itself, and a foreign bundle satisfies both.');
-  console.log('  Fix: node tools/launch.mjs --build-only, at this head, and commit it.');
-  console.log('  (The working tree was restored — this tool leaves no edit behind.)');
+if (first !== second) {
+  console.log('RED — two builds of the same source differ. The artifact CI publishes for a');
+  console.log('  commit would not be THE build of that commit. The fix belongs in');
+  console.log('  tools/bundle.mjs or tools/dirorder.mjs.');
   process.exit(1);
 }
 
-console.log('GREEN — a build from this source reproduces the committed build/.');
+console.log('GREEN — this source rebuilds its committed box, and rebuilds identically.');
 console.log('');
 console.log('BOUNDARY — what this green does NOT mean:');
-console.log(`  · nothing about dist/. "dist equals build" is verify-shipped check B, one`);
-console.log('    home each, and this row owns build/ only — deliberately narrow.');
-console.log('  · nothing about whether the game plays, renders, or is any good. It compares');
-console.log('    content produced by a bundler against content in a commit. CRLF is');
-console.log('    canonicalized to LF; verify-shipped still owns exact build/dist bytes.');
+console.log('  · nothing about dist/ or the root aliases: that is verify-shipped check B.');
+console.log('  · nothing about whether the game plays, renders, or is any good.');
 console.log(`  · reproducibility ON THIS MACHINE only — Node ${process.version}, ${process.platform}.`);
-console.log('    A bundler whose output varies by platform is a defect this cannot see from');
-console.log('    one runner; that is the git-diff step in .github/workflows/ci.yml.');
-console.log('  · nothing about the SOURCE being right. It proves the artifact came from the');
-console.log('    tree, never that the tree is correct — Bjorn\'s standing distinction between');
-console.log('    "the copies agree" and "the survivor is right".');
+console.log('    Cross-platform agreement is ci.yml\'s reproducible-agree job.');
+console.log('  · nothing about the SOURCE being right. It proves the box came from the tree,');
+console.log('    never that the tree is correct.');
 process.exit(0);
