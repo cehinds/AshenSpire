@@ -27,7 +27,8 @@ wrapping it would read as silence; judge it by its exit code. Exit codes from th
 `0` green, `1` a real failure, `2` the harness could not run, `3` silence,
 `4` killed by a signal. A `2` is not a pass. Fix the harness and run again.
 
-Gates G1–G10 need only Node. G11 and G12 need a headless Chromium (Playwright
+Gates G1–G10 need only Node. Run G9 (the build) before G2 and G10, which read it:
+the built HTML is not committed, so a clean RC checkout has none until G9 runs. G11 and G12 need a headless Chromium (Playwright
 or a local Edge/Chrome). G13 is a GitHub Actions run, not a local command.
 G14–G20 gate the docs/FINISH.md release criteria that G1–G13 do not cover (see
 *Criterion map*). G14 and G16 need only Node. G15, G17, G18 and G19 have no
@@ -38,7 +39,7 @@ command yet, and G20 is read from docs/FINISH.md.
 | Gate | Command | Expected result | Where CI runs it |
 |------|---------|-----------------|------------------|
 | G1 | `node tools/verdict.mjs -- node tests/run-node.mjs` | Exit 0. The whole suite runs (engine suite, every `*.test.mjs`, tool verdicts and each tool's `--selftest`) and reports 0 failures. | `tests.yml` (as two halves), `ci.yml` |
-| G2 | `node tools/verdict.mjs -- node tools/buildversion.mjs --check` | Exit 0. The build version is derived and matches the tree, and nobody typed it by hand. | `ci.yml` |
+| G2 | `node tools/verdict.mjs -- node tools/buildversion.mjs --check` | Exit 0, run after G9. The build version is derived and matches the tree, and nobody typed it by hand. Rows D–F read the build, which is not committed (since 2026-09-26), so G9 comes first. | `ci.yml` |
 | G3 | `node tools/verdict.mjs -- node tools/receipts.mjs --check --since origin/test` | Exit 0. Every PR merged in `origin/test..HEAD` has a CHANGELOG.md receipt. The range is pinned: without `--since` a checkout that lacks `origin/test` silently falls back to the last 40 merges. Exit 2 means `origin/test` was not fetched, or CHANGELOG.md yielded no PR references at all. | `receipts.yml` (push to `dev`) |
 | G4 | `node tools/release-series.mjs` | Exit 0. The version series in the tree is the one the owner approved (docs/versioning.md). | `ci.yml` |
 | G5 | `node tools/config-build.mjs --check` | Exit 0. The generated UI config is current with `content/config/`. Run it bare: its "is current with N source file(s)" line is not a form the verdict door accepts, so wrapped it exits 3 on a green tree. | `tests/run-node.mjs` |
