@@ -15,8 +15,8 @@
 // Either way the result is a Map from asset id (the runtime `assets/…` path) to
 // a loadable URL, holding only the files that exist. src/ui/assetmap.js consults
 // it first and falls back to the built-in art for every id it lacks, so a
-// partial folder is never a broken screen. The setting is per-device
-// (DEVICE_KEYS in src/model/settingsSync.js): a folder on this machine means
+// partial folder is never a broken screen. The setting is per-device and never
+// synced (LOCAL_ONLY_KEYS in src/model/settingsSync.js): a folder on this machine means
 // nothing on another.
 
 import { setHighResSource, assetUrl, ASSET_MAP } from './assetmap.js';
@@ -33,6 +33,8 @@ let served = null;   // Map from `hd/` beside the game, when found
 let status = '';
 let current = null;  // the Map assetmap.js holds now, to tell a change from a no-op
 let onChange = null;
+let generation = 0;       // bumped by every applyArtQuality call; a stale one does not publish
+let servedPending = null; // the one in-flight look for `hd/`, shared by overlapping calls
 
 /**
  * onArtSourceChange(fn) — called with the new covered count whenever the source
@@ -122,18 +124,65 @@ function idOfUrl(url) {
   return urlToId.get(url) || null;
 }
 
-/** refreshMountedArt(root) → how many <img> elements now point at a different tier. */
+// An <img> carries its URL in src; an SVG <image> (the environment, map and
+// atlas art) in href, or xlink:href in older markup.
+const XLINK = 'http://www.w3.org/1999/xlink';
+function artAttr(el) {
+  if (el.tagName === 'IMG') return 'src';
+  if (el.hasAttribute('href')) return 'href';
+  return el.hasAttributeNS?.(XLINK, 'href') ? 'xlink:href' : null;
+}
+function readArt(el, attr) { return attr === 'xlink:href' ? el.getAttributeNS(XLINK, 'href') : el.getAttribute(attr); }
+function writeArt(el, attr, url) {
+  if (attr === 'xlink:href') el.setAttributeNS(XLINK, 'xlink:href', url); else el.setAttribute(attr, url);
+}
+
+/** refreshMountedArt(root) → how many <img> / SVG <image> elements now point at a different tier. */
 export function refreshMountedArt(root = globalThis.document) {
   if (!root || typeof root.querySelectorAll !== 'function') return 0;
   let moved = 0;
-  for (const img of root.querySelectorAll('img[src]')) {
-    const was = img.getAttribute('src');
+  for (const el of root.querySelectorAll('img[src], image')) {
+    const attr = artAttr(el);
+    if (!attr) continue;
+    const was = readArt(el, attr);
     const id = idOfUrl(was);
     if (!id) continue;
     const now = assetUrl(id);
-    if (now && now !== was) { img.setAttribute('src', now); moved += 1; }
+    if (now && now !== was) { writeArt(el, attr, now); moved += 1; }
   }
   return moved;
+}
+
+// ---- a served file that is missing ------------------------------------------
+//
+// A served `hd/` folder is listed by its manifest, not by what is on disk, so a
+// partial copy maps ids to files that 404. The first image that fails to load
+// from the source drops its id from it and falls back to the built-in art, and
+// the event stops here, before an image's own error handler swaps in a
+// placeholder: a missing high-res file is not a missing asset.
+let watching = false;
+export function watchMissingFiles(doc = globalThis.document) {
+  if (watching || !doc || typeof doc.addEventListener !== 'function') return;
+  watching = true;
+  doc.addEventListener('error', (event) => {
+    const el = event.target;
+    if (!el || !current || typeof el.getAttribute !== 'function') return;
+    const attr = artAttr(el);
+    if (!attr) return;
+    const url = readArt(el, attr);
+    const id = urlToId.get(url);
+    if (!id || current.get(id) !== url) return;
+    current.delete(id);
+    setHighResSource(current);
+    event.stopPropagation();
+    writeArt(el, attr, assetUrl(id));
+  }, true);
+}
+
+/** False on browsers whose file picker cannot hand over a folder (phones). */
+export function canPickFolder(doc = globalThis.document) {
+  if (!doc || typeof doc.createElement !== 'function') return false;
+  return 'webkitdirectory' in doc.createElement('input');
 }
 
 function publish() {
@@ -157,7 +206,9 @@ function publish() {
  * served `hd/` folder, else nothing (and says so).
  */
 export async function applyArtQuality(settings, opts = {}) {
+  watchMissingFiles();
   if (!wantsHighRes(settings)) {
+    generation += 1;
     status = '';
     // Kept, not revoked: switching back to Local high-res this session reuses
     // the folder already chosen. A new pick revokes the old object URLs.
@@ -170,10 +221,18 @@ export async function applyArtQuality(settings, opts = {}) {
     }
     return 0;
   }
-  if (!picked && served === null) served = await findServedHighRes(opts) || false;
+  const gen = ++generation;
+  if (!picked && served === null) {
+    servedPending ??= findServedHighRes(opts).then((map) => { served = map || false; servedPending = null; });
+    await servedPending;
+    // The player changed the setting (or picked a folder) while the manifest
+    // loaded: that later call has already published, so this one must not.
+    if (gen !== generation) return 0;
+  }
   const n = (picked && picked.size) || (served && served.size) || 0;
-  const from = picked ? `${n} high-res files from the folder you chose`
-    : served ? `${n} high-res files served beside the game` : '';
+  const files = `${n} high-res file${n === 1 ? '' : 's'}`;
+  const from = picked ? `${files} from the folder you chose`
+    : served ? `${files} served beside the game` : '';
   status = from ? `${from}; anything it lacks stays built-in.`
     : 'No high-res folder found. Choose one; anything it lacks stays built-in.';
   return publish() && n;
@@ -213,6 +272,9 @@ export function resetHighResArt() {
   status = '';
   current = null;
   onChange = null;
+  generation = 0;
+  servedPending = null;
+  watching = false;
   urlToId.clear();
   inlineIndexed = false;
   setHighResSource(null);

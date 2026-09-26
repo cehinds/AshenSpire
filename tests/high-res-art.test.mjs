@@ -100,7 +100,7 @@ test('images already on the page move to the high-res file and back', async () =
   const { refreshMountedArt } = await import('../src/ui/highResArt.js');
   const imgs = ['assets/bg/bg_act1.webp', 'assets/bg/bg_act2.webp', 'data:image/png;base64,AAAA'].map((src) => {
     const attrs = { src };
-    return { getAttribute: (k) => attrs[k], setAttribute: (k, v) => { attrs[k] = v; } };
+    return { tagName: 'IMG', getAttribute: (k) => attrs[k], setAttribute: (k, v) => { attrs[k] = v; } };
   });
   const root = { querySelectorAll: () => imgs };
   globalThis.document = root;
@@ -115,4 +115,66 @@ test('images already on the page move to the high-res file and back', async () =
   } finally {
     delete globalThis.document;
   }
+});
+
+test('switching to Built-in while the served manifest loads stays built-in', async () => {
+  let release;
+  const slow = () => new Promise((resolve) => { release = () => resolve({ ok: true, json: async () => manifest }); });
+  const pending = applyArtQuality({ [ART_QUALITY_KEY]: ART_LOCAL_HIGH }, { fetchImpl: slow, protocol: 'https:' });
+  await applyArtQuality({ [ART_QUALITY_KEY]: ART_BUILT_IN });
+  release();
+  assert.equal(await pending, 0);
+  assert.equal(assetTier('assets/bg/bg_act1.webp'), 'built-in');
+  assert.equal(artQualityStatus(), '');
+});
+
+test('overlapping Local high-res calls share one manifest fetch', async () => {
+  let fetches = 0;
+  const counted = async () => { fetches += 1; return { ok: true, json: async () => manifest }; };
+  const opts = { fetchImpl: counted, protocol: 'https:' };
+  await Promise.all([
+    applyArtQuality({ [ART_QUALITY_KEY]: ART_LOCAL_HIGH }, opts),
+    applyArtQuality({ [ART_QUALITY_KEY]: ART_LOCAL_HIGH }, opts),
+  ]);
+  assert.equal(fetches, 1);
+  assert.equal(assetTier('assets/bg/bg_act1.webp'), 'high');
+});
+
+test('a served file that fails to load falls back to the built-in art', async () => {
+  const listeners = [];
+  const attrs = { src: 'assets/bg/bg_act1.webp' };
+  const img = { tagName: 'IMG', getAttribute: (k) => attrs[k], setAttribute: (k, v) => { attrs[k] = v; } };
+  globalThis.document = { querySelectorAll: () => [img], addEventListener: (type, fn, capture) => listeners.push({ type, fn, capture }) };
+  try {
+    await applyArtQuality({ [ART_QUALITY_KEY]: ART_LOCAL_HIGH }, { fetchImpl: json(manifest), protocol: 'https:' });
+    assert.equal(attrs.src, 'hd/assets/bg/bg_act1.webp');
+    const onError = listeners.find((l) => l.type === 'error' && l.capture);
+    assert.ok(onError, 'a capture-phase error listener is installed');
+    let stopped = false;
+    onError.fn({ target: img, stopPropagation: () => { stopped = true; } });
+    assert.equal(attrs.src, 'assets/bg/bg_act1.webp', 'back to built-in');
+    assert.ok(stopped, "the image's own placeholder handler does not run");
+    assert.equal(assetTier('assets/bg/bg_act1.webp'), 'built-in', 'the missing id is dropped from the source');
+    assert.equal(assetTier('assets/ui/frame.webp'), 'high', 'other ids keep their high-res file');
+  } finally {
+    delete globalThis.document;
+  }
+});
+
+test('SVG <image href> art moves tier too', async () => {
+  const attrs = { href: 'assets/bg/bg_act1.webp' };
+  const image = { tagName: 'image', hasAttribute: (k) => k in attrs, getAttribute: (k) => attrs[k], setAttribute: (k, v) => { attrs[k] = v; } };
+  globalThis.document = { querySelectorAll: () => [image] };
+  try {
+    await applyArtQuality({ [ART_QUALITY_KEY]: ART_LOCAL_HIGH }, { fetchImpl: json(manifest), protocol: 'https:' });
+    assert.equal(attrs.href, 'hd/assets/bg/bg_act1.webp');
+  } finally {
+    delete globalThis.document;
+  }
+});
+
+test('the status counts one file in the singular', async () => {
+  const one = { assets: { 'assets/bg/bg_act1.webp': manifest.assets['assets/bg/bg_act1.webp'] } };
+  await applyArtQuality({ [ART_QUALITY_KEY]: ART_LOCAL_HIGH }, { fetchImpl: json(one), protocol: 'https:' });
+  assert.match(artQualityStatus(), /^1 high-res file served/);
 });

@@ -19,7 +19,7 @@ import { settingsPreviewHtml, settingsPreviewShown, mountSettingsPreview } from 
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
-import { ART_QUALITY_KEY, ART_BUILT_IN, ART_QUALITY_CHOICES, wantsHighRes, artQualityStatus, pickHighResFolder } from '../highResArt.js';
+import { ART_QUALITY_KEY, ART_BUILT_IN, ART_QUALITY_CHOICES, wantsHighRes, artQualityStatus, pickHighResFolder, canPickFolder } from '../highResArt.js';
 import { setTabRing, hasTabRing } from '../input.js';
 import { renderAboutSection, renderChangelogSection } from './about.js';
 import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
@@ -396,7 +396,7 @@ const ROWS = [
   // this build carries — the light tier on dev/test, full art on release/main.
   // Local high-res lays full-resolution files from this device over it
   // (src/ui/highResArt.js); anything the folder lacks stays built-in. A
-  // per-device key (DEVICE_KEYS): a folder here means nothing on another device.
+  // per-device key (LOCAL_ONLY_KEYS, never synced): a folder here means nothing on another device.
   { cat: 'Display', key: ART_QUALITY_KEY, type: 'choice', def: ART_BUILT_IN,
     choices: ART_QUALITY_CHOICES, label: 'Art quality', applied: artQualityHtml,
     note: 'Built-in uses the art this game carries. Local high-res uses full-resolution art from a folder on this device, either served beside the game or one you choose, and keeps the built-in art for anything it lacks. This device only.' },
@@ -1979,8 +1979,12 @@ function tapCostHtml(settings) {
 /** The Art quality row's live line: where the high-res art came from, and the folder button. */
 function artQualityHtml(settings) {
   if (!wantsHighRes(settings)) return '';
-  return `<span class="ls-hint set-note" data-art-status aria-live="polite">${esc(artQualityStatus())}</span>`
-    + ' <button type="button" class="as-btn" data-art-folder>Choose folder…</button>';
+  const status = `<span class="ls-hint set-note" data-art-status aria-live="polite">${esc(artQualityStatus())}</span>`;
+  // Phone browsers have no folder picker: a plain file picker hands over names
+  // without the folder path, so no file could be matched to an asset id.
+  return canPickFolder()
+    ? `${status} <button type="button" class="as-btn" data-art-folder>Choose folder…</button>`
+    : `${status} <span class="ls-hint set-note">Choosing a folder needs a desktop browser.</span>`;
 }
 
 function appliedHtml(settings) {
