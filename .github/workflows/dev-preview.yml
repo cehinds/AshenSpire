@@ -53,14 +53,6 @@ jobs:
       - name: World Journey normalized data and seeded routes
         run: node tests/world-atlas.test.mjs
 
-      # #498: 28 plant sites had drifted and only one gate went red — the rest
-      # stayed green while unable to fail. This cheap static detector (no
-      # execution, no browser, <1s) runs on every PR: any NEW drifted
-      # find-string fails here the day the refactor lands, and the checked-in
-      # baseline holds the known backlog to exactly itself.
-      - name: No plant site has drifted beyond the recorded baseline
-        run: node tools/plantsites.mjs --check
-
       # The harness that decides, for every corpus above and in the dispatch-only
       # lane, whether a known-bad was armed at all. It read plants as exact bytes,
       # so on a CRLF checkout every MULTI-LINE plant reported PLANT SITE DRIFTED —
@@ -112,6 +104,17 @@ jobs:
           node tools/launch.mjs --build-only
           git status --porcelain
           test -z "$(git status --porcelain)"
+
+      # #498: 28 plant sites had drifted and only one gate went red — the rest
+      # stayed green while unable to fail. This cheap static detector (no
+      # execution, no browser, <1s) runs on every PR: any NEW drifted
+      # find-string fails here the day the refactor lands, and the checked-in
+      # baseline holds the known backlog to exactly itself.
+      #
+      # AFTER THE BUILD: several plants target the built HTML, which is no
+      # longer committed, so before a build their files do not exist.
+      - name: No plant site has drifted beyond the recorded baseline
+        run: node tools/plantsites.mjs --check
 
       - name: The shipped artifact is this source, and the number on it is ours
         run: node tools/buildversion.mjs --check

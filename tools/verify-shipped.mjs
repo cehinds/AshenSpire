@@ -439,11 +439,15 @@ if (SELFTEST) {
 console.log('verify-shipped: checking the file a player is handed.\n');
 
 const buildPath = resolve(ROOT, BUILD);
-if (!existsSync(buildPath)) {
-  console.error(`verify-shipped: ${BUILD} does not exist. Run \`node tools/bundle.mjs\` first.`);
-  process.exit(1);
-}
-const buildBytes = readFileSync(buildPath);
+// A MISSING BUILD IS A RECORDED FAILURE, NOT AN EARLY EXIT. Since the built HTML
+// stopped being committed, a fresh checkout has none; recording it keeps the
+// run on its one verdict path (FAILED, or REFUSED when nothing was recorded —
+// the zero-check plant in --selftest depends on reaching that line), and the
+// tracked-file checks below still run.
+const buildBytes = existsSync(buildPath) ? readFileSync(buildPath) : null;
+if (!buildBytes) {
+  record({ ok: false, code: 'MISSING', detail: `${BUILD} does not exist — build it first: node tools/launch.mjs --build-only (built HTML is not committed; CI builds before this check).` });
+} else {
 
 // A on the build first: the chain dist===build only terminates in a true claim if
 // build itself is sound. This is the assertion bundle.mjs printed and never gated.
@@ -487,6 +491,8 @@ if (!existsSync(mobileBuildPath)) {
     record(checkCarriesArt(rel, bytes));
     record(checkShippedIsBuilt(rel, bytes, mobileBuildBytes, MOBILE_BUILD));
   }
+}
+
 }
 
 // C from git, not the filesystem: an ignored file sitting in dist/ after a
