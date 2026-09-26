@@ -223,8 +223,12 @@ export function attachLan(server, { port, root }) {
   }
 
   // Start the server-authoritative run from the lobby roster.
-  function startGame() {
-    const game = createSession({ registries: REG, seedString: session.seedString || 'GOLDBOUGH', endless: !!session.endless });
+  // `handBehaviour` is the host client's own hand behaviour (its settings,
+  // resolved by model/handRules.js handBehaviour), sent with its Start: the
+  // party plays the host's hand rules. An older host sends none (the shipped
+  // options); a malformed one refuses the start by name (createSession).
+  function startGame(handBehaviour = null) {
+    const game = createSession({ registries: REG, seedString: session.seedString || 'GOLDBOUGH', endless: !!session.endless, handBehaviour });
     const fallbackClass = REG.classes.all()[0].id;
     for (const cl of session.clients.values()) {
       game.addMember({ id: cl.id, name: cl.name, classId: cl.classId || fallbackClass, startingKitId: cl.startingKitId, discoveredArmaments: cl.discoveredArmaments, tint: cl.tint, spriteStyle: cl.spriteStyle });
@@ -335,7 +339,7 @@ export function attachLan(server, { port, root }) {
         break;
       case 'start':
         if (!pl.isHost) return;
-        try { startGame(); }
+        try { startGame(msg.handBehaviour ?? null); }
         catch (error) {
           sock.write(wsEncode(JSON.stringify({ t: 'startRefused', reason: error && error.message ? error.message : 'invalid starting kit' })));
         }

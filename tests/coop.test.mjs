@@ -23,6 +23,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createRunState } from '../src/model/state.js';
 import { statRow } from '../src/model/statRows.js';
 import { statRowValue } from '../src/model/derivedStats.js';
+import { handBehaviour, HAND_RULES_PREFIX } from '../src/model/handRules.js';
 import { createCombat, dispatch } from '../src/engine/combat.js';
 import { createCoopCombat, playCard as coopPlayCard, endTurn as coopEndTurn, coopHpMult } from '../src/engine/coopCombat.js';
 import { seatOrderProblems } from '../src/model/seats.js';
@@ -578,5 +579,54 @@ test('co-op: a seeded party plays the shared run through the host and the LAN do
       assert.equal(P.piles.hand.length, Math.min(own('openingHand'), own('handSize')), `${seat.classId} seat: opening hand is its own row`);
       assert.equal(P.entity.drawPerTurn, own('draw'), `${seat.classId} seat: Draw / turn is its own row`);
     }
+  }
+  // ---- every seat's hand behaves by the HOST's options, fixed at session start ----------
+  {
+    const shipped = handBehaviour({});
+    const hostRules = handBehaviour({ [`${HAND_RULES_PREFIX}drawMode`]: 'fill', [`${HAND_RULES_PREFIX}retain`]: false });
+    assert.equal(hostRules.drawMode, 'fill'); assert.equal(hostRules.retain, false);
+    assert.notDeepEqual(hostRules, shipped, 'the host options differ from the shipped ones');
+    const H = createSession({ registries: REG, seedString: 'HOSTHAND', handBehaviour: hostRules });
+    H.addMember({ id: 'p1', name: 'Wren', classId: 'reaver' });
+    H.addMember({ id: 'p2', name: 'Fenn', classId: 'starseer' });
+    H.start();
+    assert.deepEqual(H.session.handBehaviour, hostRules, 'the session stores the host\'s hand behaviour');
+    const saved = JSON.parse(JSON.stringify(H.serialize()));
+    assert.deepEqual(saved.handBehaviour, hostRules, 'and writes it into its save');
+    // A seat's rows stay its own; how its hand behaves is the session's.
+    const dealsBy = (G, rules, label) => {
+      forceFight(G, 'monster');
+      const C = G.live.combat;
+      for (const e of C.enemies) { e.hp = e.maxHp = 999; e.intent = null; }
+      for (const P of C.players.values()) {
+        for (const key of Object.keys(rules)) assert.equal(P.handRules[key], rules[key], `${label} ${P.id}: ${key} is the session's`);
+        P.entity.hp = P.entity.maxHp = 999;
+      }
+      for (const P of [...C.players.values()]) intent(G, P.id, { t: 'endTurn' });
+      assert.equal(C.phase, 'player', `${label}: the next player turn opened`);
+      for (const P of C.players.values()) {
+        const held = P.piles.hand.length;
+        const pool = held + P.piles.draw.length + P.piles.discard.length;
+        if (rules.drawMode === 'fill') assert.equal(held, Math.min(P.handMax, pool), `${label} ${P.id}: fill tops the hand to its size`);
+        else assert.ok(held <= P.handMax, `${label} ${P.id}: a fixed draw stays within the hand size`);
+      }
+    };
+    dealsBy(H, hostRules, 'host rules');
+    // A restore keeps the rules the run started with.
+    const R = restoreSession(REG, structuredClone(saved));
+    assert.deepEqual(R.session.handBehaviour, hostRules, 'a restored session keeps its hand behaviour');
+    R.setConnectedMany(['p1', 'p2'], true);
+    dealsBy(R, hostRules, 'restored');
+    // A save from before the field plays the shipped options.
+    const old = structuredClone(saved); delete old.handBehaviour;
+    const O = restoreSession(REG, old);
+    assert.deepEqual(O.session.handBehaviour, shipped, 'an old session uses the shipped hand behaviour');
+    assert.deepEqual(O.serialize().handBehaviour, shipped);
+    O.setConnectedMany(['p1', 'p2'], true);
+    dealsBy(O, shipped, 'old save');
+    // Malformed options are refused by name, at the restore door and at creation.
+    assert.throws(() => restoreSession(REG, { ...structuredClone(saved), handBehaviour: { ...hostRules, drawMode: 'sideways' } }), /Malformed session save: .*invalid drawMode/);
+    assert.throws(() => restoreSession(REG, { ...structuredClone(saved), handBehaviour: 'fill' }), /Malformed session save: hand behaviour must be an object/);
+    assert.throws(() => createSession({ registries: REG, seedString: 'HOSTHAND', handBehaviour: { ...hostRules, discardLimit: -1 } }), /Malformed host hand behaviour: .*invalid discardLimit/);
   }
 });

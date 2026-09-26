@@ -62,9 +62,12 @@ export function coopHpMult(headcount, factor = 0.6) {
  *   players = [{ id, classId, maxHp, hp, deck, relicIds, flasks }]
  * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom);
  * enemy move damage × enemyDamageMult (balance.bossTiers, SPEC §13.3).
+ * `handBehaviour` is the host's hand behaviour (model/handRules.js
+ * handBehaviour) every seat's hand obeys; absent, the shipped options.
  */
-export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null }) {
+export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null, handBehaviour = null }) {
   const C = {
+    handBehaviour: handBehaviour ? { ...handBehaviour } : null,
     ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
     registries,
@@ -207,12 +210,13 @@ function addPlayerState(C, p, { initial = false } = {}) {
     (C.registries.framework.isInnate(resolveCard(C.registries, card)) ? innate : rest).push(card);
   }
   // THE SAME ROWS A SOLO FIGHT READS (ruleset 7): the seat's hand rules are
-  // the shipped behaviour options plus its own opening-hand, draw and
+  // the HOST's behaviour options (captured at session start; the shipped ones
+  // when none were handed in) plus the seat's own opening-hand, draw and
   // hand-size rows, and its ratings its own rating rows. A seat born before
   // ruleset 7 keeps what co-op always gave it — a fresh hand of its derived
   // draw each turn, capped by the retired fallback hand size.
   const legacy = readsLegacyStatHomes(p);
-  const handRules = legacy ? null : resolveHandRules({}, handStatRows(C.registries, p));
+  const handRules = legacy ? null : { ...resolveHandRules({}, handStatRows(C.registries, p)), ...(C.handBehaviour || {}) };
   const level = Number.isInteger(p.level) && p.level >= 1 ? p.level : 1;
   const ratingRows = C.ratingsRules ? ratingStatRows(C.registries, p) : null;
   const P = {
