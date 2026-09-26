@@ -75,7 +75,7 @@ or not a command for it exists yet.
 
 ## Criterion map
 
-Every release criterion in docs/FINISH.md §1–§13 (each `- [ ]`, `- [~]` or `- [x]`
+Every release criterion in docs/FINISH.md §1–§15 (each `- [ ]`, `- [~]` or `- [x]`
 line) maps to one gate above, or to a waiver that gives its reason. A criterion is
 named by the words its FINISH.md line starts with, not by its line number, because
 FINISH.md is edited after every pull request and its line numbers move.
@@ -164,6 +164,18 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §13 | LICENSE and docs use the current name and version | G20 |
 | §13 | Web and store metadata | G20 |
 | §13 | Release notes and post-launch roadmap drafted | waived: an owner step. Drafted release notes are a *Before the owner signs* box; the roadmap, cut, tag and publish come after sign-off, and the store listing waits for D8's store pick. |
+| §14 | SPEC §14 lands before any code | G20 |
+| §14 | Deck rules and ordered draw | G20 |
+| §14 | Deck editor UI | G20 |
+| §14 | Shop kinds and the guaranteed minimum | G20 |
+| §14 | Market additions | G20 |
+| §14 | Blacksmith screen | G20 |
+| §14 | Wise master | G20 |
+| §15 | SPEC §15 lands before any code | G20 |
+| §15 | Card reward schedule | G20 |
+| §15 | Levelling preview and cap | G20 |
+| §15 | Crafting drops | G20 |
+| §15 | Legendary sigils | G20 |
 
 If a gate is red, the RC is not ready. Fix the cause in a pull request into `dev`,
 pick a new RC SHA, and run **every** gate again on it. Do not re-run only the
