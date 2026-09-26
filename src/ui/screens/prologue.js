@@ -2,7 +2,7 @@ import { prologueSceneMs, prologueTransitionMs } from '../../model/prologueTimin
 import { paintPrologueCharacter, placePrologueCharacter } from '../prologueCharacter.js';
 import { el, button, openModal } from '../kit/index.js';
 import { prologueArtwork } from '../assets.js';
-import { builtInFor, ART_SOURCE_EVENT } from '../highResArt.js';
+import { builtInFor, refreshMountedArt, ART_SOURCE_EVENT } from '../highResArt.js';
 import { topVeil } from '../components/veil.js';
 import { prologueConfig, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueResumePosition, prologueSceneArt, prologueBoxBackground, prologueStaging, PROLOGUE_DEFAULTS, PROLOGUE_LAYOUT, PROLOGUE_LAYOUTS } from '../../model/prologue.js';
 
@@ -351,6 +351,9 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
       progress.textContent = `${position+1} / ${order.length}`;
     }
     stage.append(plate);
+    // The background decoded while the plate was detached, where no source
+    // change could reach it: point it at whatever assetUrl() names now.
+    refreshMountedArt(plate);
     const duration = transitionMs(scene,stage_);
     if (duration) {
       const frames = scene.effect === 'ash' ? [{opacity:0,clipPath:'inset(0 0 100% 0)'},{opacity:1,clipPath:'inset(0)'}]
