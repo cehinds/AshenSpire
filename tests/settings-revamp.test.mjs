@@ -398,10 +398,10 @@ test('a key a profile leaves out goes back to its promoted default, not the code
   assert.deepEqual(profileDiff(here, parsed).map((d) => d.to), [undefined, undefined], 'no promoted default: cleared');
 });
 
-test('changing the device-key scope forgets the loaded version, and Changed counts only what it can show', async () => {
+test('widening the device-key scope forgets the loaded version (narrowing keeps it), and Changed counts only what it can show', async () => {
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
-  assert.match(panel, /write\(SYNC_STORAGE\.includeDevice[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*write\(SYNC_STORAGE\.lastSha, null\);/);
+  assert.match(panel, /write\(SYNC_STORAGE\.includeDevice[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(next\) write\(SYNC_STORAGE\.lastSha, null\);/, 'widening re-reads the loaded version; narrowing keeps it');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.match(screen, /const count = settingsSearchHits\('', pageDebug\(\), settings, \{ changedOnly: true \}\)\.length;/);
   const hidden = settingsSearchHits('', false, { 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 }, { changedOnly: true });
