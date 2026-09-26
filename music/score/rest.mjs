@@ -1,10 +1,21 @@
-// Rest — stillness at a grace. D minor at 44 BPM, the slowest thing in the
-// game: a soft organ and a choir "oo" hold one chord per three bars and let it
-// breathe (slow swell, slow fade, overlapping), a few harp notes fall far apart,
-// and a solo cello sings one short phrase that stops on A, unresolved, so the
-// loop returns to D on its own.
-// Four layers: organ, choir "oo", harp, cello.
+// Rest — a shrine, the one warm place. D minor at 44 BPM, 12 bars (~65 s),
+// the slowest thing in the game.
+//
+// Lore it carries (docs/LORE.md §3–§4): cinders "are the only thing in the Spire
+// that is still alive ... The shrines drink them." A Forsaken is someone "the
+// light did not reach"; "They are not surviving the winter that came after."
+// Here, for once, the climber is warm.
+//
+// So a soft organ and a breathing choir "oo" hold one chord per three bars
+// (the shrine drinking, slow swell, slow fade), a few harp notes fall far
+// apart, and the Forsaken's own line is heard once, gently, at rest:
+//   beat 22 FORSAKEN — solo cello, slow and soft: D, up the open fifth to A,
+//           lifted to C, settling on A over iv – V, unresolved, so the loop
+//           returns to D on its own.
+// The choir only sings chords here; no NAMES — nobody is being read tonight.
+// Four layers: organ, choir "oo" chords, harp, cello (the Forsaken).
 import { Score, chord } from '../../tools/score/compose.mjs';
+import { motif } from './_motifs.mjs';
 
 export const context = 'rest';
 
@@ -17,11 +28,11 @@ s.pad('organ', prog, { overlap: 0.4, note: { stop: 'soft', vel: 0.26, rev: 0.5, 
 s.note('organ', 0, s.beats, 'D2', { stop: 'soft', vel: 0.22, rev: 0.4, a: 3, r: 4 });
 s.pad('choir', prog.map(([c, l]) => [c.map((m) => m + 12), l]), { overlap: 0.5, note: { vowel: 'oo', vel: 0.2, rev: 0.65, a: 4, r: 5 } });
 
-// A few harp notes, far apart.
-for (const [beat, m, pan] of [[4, 'A4', 0.35], [16, 'F4', -0.3], [28, 'D5', 0.3], [42, 'E4', -0.25]])
+// A few harp notes, far apart, kept out of the cello's way.
+for (const [beat, m, pan] of [[4, 'A4', 0.35], [14, 'F4', -0.3], [42, 'E4', -0.25]])
   s.note('harp', beat, 1, m, { vel: 0.36, rev: 0.7, pan, ring: 6 });
 
-// One short cello phrase over iv – V.
-s.line('cello', 24, [['D3', 4], ['C3', 2], ['Bb2', 4], ['A2', 6]], { note: { vel: 0.45, rev: 0.5, pan: -0.15, a: 0.8, r: 3 } });
+// FORSAKEN, once, gently.
+s.line('cello', 22, motif('D3', 'forsaken', { stretch: 1.5 }), { note: { vel: 0.42, rev: 0.55, pan: -0.15, a: 1, r: 3.5 } });
 
 export default s;

@@ -1,37 +1,53 @@
-// Title — the main theme of Ashen Spire. D minor at 52 BPM, almost nothing
-// moving: a soft organ holds the bare fifth D–A for the whole loop, low strings
-// change chord once every few bars, and a solo cello sings one plain, falling
-// line that stops on an open A. A single choir voice answers it once, from
-// above, and the cello closes on D just before the loop turns over.
-// Four layers: organ pedal, string pad, cello (lead), one choir voice (answer).
+// Title — the premise of Ashen Spire. D minor at 52 BPM, 16 bars (~74 s).
+//
+// Lore it carries (docs/LORE.md, premise and §1–§4): "You are a Forsaken."
+// "The flames are cold. The cities are ash." A Forsaken is "a name nobody
+// promised to the fire"; the written dead fed the Ember, and the Blight is "a
+// name the fire has not quite finished reading". The Ember itself is "loose on
+// the ring since, thin and starving".
+//
+// So the track is the Forsaken setting out alone, the dead answering, and the
+// starving fire moving once, underneath, where you almost cannot hear it:
+//   beat 2  FORSAKEN — solo cello, alone over nothing but a cold organ fifth
+//           (the blank medallion: open fifth, a minor third lifted, settle).
+//   beat 16 low strings enter; the kingdom's ash, one chord per 1–3 bars.
+//   beat 22 NAMES — the choir answers, unfinished: A–G–F–E and the D never
+//           comes (the reading not finished).
+//   beat 36 EMBER — once, low in the organ pedal, under everything: D, the
+//           semitone up to Eb that cannot hold, the tritone fall to A, back to D.
+//   beat 50 the cello returns to its open fifth, D and A, and the loop turns.
+// Four layers: organ (pedal / EMBER), strings, cello (the Forsaken), choir (NAMES).
 import { Score, chord } from '../../tools/score/compose.mjs';
+import { motif } from './_motifs.mjs';
 
 export const context = 'title';
 
 const s = new Score({ bpm: 52, bars: 16, seed: 3, reverb: { room: 0.92, damp: 0.4 }, gain: 0.9 });
 
-// i (6 bars) – VI – iv – V(sus4) – i (4 bars). One chord per two bars or more.
-const prog = [
-  [chord('D2', 'm'), 6], [chord('Bb1', 'M', 1), 2], [chord('G1', 'm', 1), 2],
-  [chord('A1', 'sus4'), 2], [chord('D2', 'm'), 4],
-];
+// Organ: the cold fifth. A holds the whole loop; D holds until the Ember moves it.
+const organ = { stop: 'soft', rev: 0.4, a: 2, r: 3 };
+s.note('organ', 0, s.beats, 'A2', { ...organ, vel: 0.2, rev: 0.45 });
+s.note('organ', 0, 37, 'D2', { ...organ, vel: 0.36 });
+// EMBER, once, in the pedal (beats 36–60), then D again into the loop point.
+const end = s.line('organ', 36, motif('D2', 'ember', { stretch: 2 }), { note: { ...organ, vel: 0.4 } });
+s.note('organ', end, s.beats - end + 1, 'D2', { ...organ, vel: 0.36 });
 
-// Organ pedal: the open fifth, unbroken.
-s.note('organ', 0, s.beats, 'D2', { stop: 'soft', vel: 0.34, rev: 0.4, a: 2, r: 3 });
-s.note('organ', 0, s.beats, 'A2', { stop: 'soft', vel: 0.2, rev: 0.45, a: 2, r: 3 });
+// Low strings from bar 4, following the pedal: i – VI – iv – bII (under the Ember's Eb)
+// – V(sus4) (under its A) – i.
+s.pad('strings', [
+  [chord('D2', 'm'), 3], [chord('Bb1', 'M', 1), 2], [chord('G1', 'm', 1), 1],
+  [chord('Eb2', 'M'), 1.5], [chord('A1', 'sus4'), 1.5], [chord('D2', 'm'), 3],
+], { from: 4, overlap: 0.3, note: { vel: 0.26, rev: 0.55, cut: 650, a: 2.5, r: 3 } });
 
-// Low strings, dark and quiet, one chord per 2–6 bars.
-s.pad('strings', prog, { overlap: 0.3, note: { vel: 0.26, rev: 0.55, cut: 650, a: 2.5, r: 3 } });
+// FORSAKEN, the cello alone.
+const cello = { vel: 0.6, rev: 0.45, pan: -0.15, a: 0.5, r: 2 };
+s.line('cello', 2, motif('D3', 'forsaken', { stretch: 4 / 3 }), { note: cello });
 
-// The theme, solo cello: rises a step, turns, and falls to an open A.
-const cello = { note: { vel: 0.6, rev: 0.45, pan: -0.15, a: 0.5, r: 2 } };
-s.line('cello', 4, [['A2', 2], ['D3', 3], ['E3', 1], ['F3', 4], ['E3', 2], ['D3', 2], ['C3', 2], ['A2', 6]], cello);
-
-// The answer: one choir voice, once, over VI – iv – V.
-s.line('choir', 28, [['F4', 3], ['E4', 1], ['D4', 4], ['Bb3', 4], ['A3', 8]],
+// NAMES, the choir's answer, unfinished.
+s.line('choir', 22, motif('D4', 'names', { stretch: 2, unfinished: true }),
   { legato: 1.05, note: { vowel: 'ah', vel: 0.32, rev: 0.6, pan: 0.2, a: 1.4, r: 3 } });
 
-// The cello closes the arc on D.
-s.line('cello', 48, [['A2', 2], ['D3', 4], ['C3', 2], ['D3', 6]], { note: { ...cello.note, vel: 0.52 } });
+// The cello's open fifth again, closing the loop.
+s.line('cello', 50, [['A2', 4], ['D3', 8]], { note: { ...cello, vel: 0.5 } });
 
 export default s;
