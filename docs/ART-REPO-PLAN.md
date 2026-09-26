@@ -171,11 +171,22 @@ Each step is one reviewed PR, or one owner action.
   permanent URL.** No file here comes near the 2 GiB per-asset limit: the
   largest single file in `art/` or `assets/` is under 50 MB.
 
-## Questions for the owner
+## Owner answers (2026-09-26)
 
-- Q1. Public or private `cehinds/AshenSpire-art`? (public / private)
-  - Why it matters: a public repo's release zip is public too; private needs a token in CI.
-- Q2. Package each release as `.zip` rather than `.tar.zst`? (zip / zst)
-  - Why it matters: `.zip` unpacks on Windows without extra tools; `.tar.zst` is smaller.
-- Q3. Go ahead with steps 1–4 once #1332, #1336 and #1338 land? (yes/no)
-  - Why it matters: nothing moves until you say yes; steps 5–7 each get their own go-ahead.
+- Q1. **Private.** `cehinds/AshenSpire-art` is a private repository.
+  - CI in this repo cannot read its releases with the default `GITHUB_TOKEN`. The jobs that fetch (full-art builds, pages-builds' main build) read a repository secret `ART_REPO_TOKEN`: a fine-grained token with read-only *Contents* access to `AshenSpire-art`. The owner creates it; step 4 names the secret and fails with that name when it is missing.
+  - `tools/fetch-art.mjs` reads the same token from `ART_REPO_TOKEN` (or `GITHUB_TOKEN`) for a local fetch.
+  - A private release is downloadable only by people with access to the repo, so it does not by itself reach players who want **Local high-res**; see the open question below.
+- Q2. **Zip.** Releases are `hd-assets-v<N>.zip`.
+- Q3. **Yes.** Go ahead with steps 1–4; steps 5–7 each still need their own go-ahead.
+- #1332 is approved for promotion to `release` (the owner merges it there).
+
+## Status
+
+- Step 1 is waiting on the owner: this session's GitHub integration cannot create repositories (403), so `cehinds/AshenSpire-art` must be created by hand (private, empty or with a README), with the Claude GitHub App given access to it.
+- Step 2's contents (pack script, CI, README) are prepared and pushed as soon as the repository exists.
+
+## Open question
+
+- Should players get the high-res zip from somewhere public, since the art repo is private? (attach to AshenSpire releases / collaborators only)
+  - Why it matters: the Local high-res setting needs the files on the player's device; a private release reaches only people with repo access.
