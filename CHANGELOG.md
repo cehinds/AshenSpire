@@ -34,7 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-26
 
-- **Turning off this device's screen settings no longer reloads your synced profile over local changes** ([#1329](https://github.com/cehinds/AshenSpire/pull/1329), `0.7.1.550`). Switching "Include this device's screen settings" off keeps the record of which profile version was loaded, so the next start leaves edits made here alone; switching it on still reloads, to bring in the screen settings it skipped (settings sync is in development and test builds only).
+- **Turning off this device's screen settings no longer reloads your synced profile over local changes** ([#1329](https://github.com/cehinds/AshenSpire/pull/1329), `0.7.1.560`). Switching "Include this device's screen settings" off keeps the record of which profile version was loaded, so the next start leaves edits made here alone; switching it on still reloads, to bring in the screen settings it skipped (settings sync is in development and test builds only).
+- **Behind the scenes: development builds carry lighter art** ([#1336](https://github.com/cehinds/AshenSpire/pull/1336), `0.7.1.558`). Development and test builds now carry the lighter art the mobile edition already uses, so each is one download of about 29 MB instead of 255 MB plus a separate mobile file; Settings → About says "light art" on them. Release builds keep the full art as painted.
+- **Behind the scenes: development builds are no longer stored in the repository** ([#1332](https://github.com/cehinds/AshenSpire/pull/1332), `0.7.1.554`). Nothing you play changes. Every rebuild used to store a fresh 255 MB copy of the game plus its 29 MB mobile edition, and the repository ran out of room for them. Development builds are now made by the automated checks on every change and downloaded from there as the `dev-standalone` file; the build number and its changelog entry are still checked to agree before a change can merge.
 
 ## 2026-09-25
 

@@ -46,6 +46,10 @@ const has = (name) => argv.includes(name);
 const REMOTE = flag('--remote', 'origin');
 const BRANCHES = flag('--branches', 'dev,test,release,main').split(',').map((s) => s.trim()).filter(Boolean);
 const KEEP = Math.max(1, Number(flag('--keep', '10')) || 10);
+// A directory holding AshenSpire.html and AshenSpire-mobile.html built by CI from
+// main's source. Needed once main no longer commits its build (the Git LFS budget
+// ran out, 2026-09-26): without it the stable Play links at the site root 404.
+const MAIN_BUILD = flag('--main-build', null);
 // A BRANCH'S ROLE IS READ FROM THE CONTRACT THAT GOVERNS IT, not typed here.
 // `.agentops/governance/git-ownership.json` already carries one note per ref and
 // is the thing that actually decides who may write to each; duplicating that
@@ -136,7 +140,19 @@ function buildsOf(branch, keep) {
     out.push({ branch, ordinal, digest: String(meta.digest || ''), built: String(meta.built || date.slice(0, 10)), sha, date });
     if (out.length >= keep) break;
   }
-  return { ref, head: git(['rev-parse', ref]).trim(), builds: out };
+  // SINCE 2026-09-26 dev DOES NOT COMMIT ITS BUILD (the Git LFS budget ran out),
+  // so its newest builds are not in git and cannot be listed from it. A branch
+  // whose head tracks no AshenSpire.html says so on every page rather than
+  // presenting its last committed build as its latest.
+  let headTracksBuild = true;
+  try { git(['cat-file', '-e', `${ref}:AshenSpire.html`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { headTracksBuild = false; }
+  return { ref, head: git(['rev-parse', ref]).trim(), builds: out, headTracksBuild };
+}
+
+/** The note a branch that no longer commits its build carries, or ''. */
+function uncommittedNote(branch, headTracksBuild) {
+  if (headTracksBuild !== false) return '';
+  return `<p class="meta"><strong>Newer ${esc(branch)} builds are not committed</strong> — each commit's build is the <code>${esc(branch)}-standalone-&lt;commit&gt;</code> artifact of the <a href="${REPO_URL}/actions/workflows/dev-preview.yml?query=branch%3A${encodeURIComponent(branch)}">dev preview workflow</a>. The builds listed here are the last ones committed.</p>`;
 }
 
 function versionIn(html) {
@@ -328,10 +344,10 @@ function titleOf(file) {
 }
 
 function rootIndex(branchData, generatedAt, otherPages) {
-  const cards = branchData.map(({ branch, builds }) => {
+  const cards = branchData.map(({ branch, builds, headTracksBuild }) => {
     const b = builds[0];
-    if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p><p class="meta">no build found on this branch</p></section>`;
-    return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p>
+    if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p><p class="meta">no build found on this branch</p>${uncommittedNote(branch, headTracksBuild)}</section>`;
+    return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p>${uncommittedNote(branch, headTracksBuild)}
 <p class="stamp">${esc(stampOf(b))}</p><p class="meta">built ${esc(b.built)} · commit <a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a> · <a href="${changelogUrl(b)}">changelog</a></p>
 <a class="play" href="${branch}/${b.ordinal}/">Play ${esc(branch)} ${b.ordinal}</a>${b.mobileBytes ? ` <a class="play" href="${branch}/${b.ordinal}/mobile/">Play mobile</a>` : ''} ${downloadButtons('', b, '')} <a href="${branch}/">all ${esc(branch)} builds (${builds.length})</a></section>`;
   }).join('\n');
@@ -350,7 +366,7 @@ ${otherPages.length ? `<ul>${otherPages.map((pg) => `<li><a href="${esc(pg.href)
 </main></body></html>`;
 }
 
-function branchIndex(branch, builds, head, generatedAt) {
+function branchIndex(branch, builds, head, generatedAt, headTracksBuild = true) {
   // NO HEAD MEANS THE BRANCH IS GONE, and the page says exactly that rather
   // than linking a commit that does not exist. `head` is null only on that
   // path — buildsOf returns it for a branch with no ref.
@@ -359,8 +375,10 @@ function branchIndex(branch, builds, head, generatedAt) {
     : '<b>this branch does not exist on the remote</b> — nothing to publish for it';
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — ${esc(branch)} builds</title><style>${CSS}</style></head><body><main>
 <p><a href="../">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(BRANCH_ROLE[branch] || NO_ROLE)} · ${headLine}</p>
-${builds.length ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons('../', builds[0], ` latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
-<p class="meta">A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 30 MB. On a phone or tablet, download from here rather than from inside the game.</p>` : '<p class="meta">no build on this branch</p>'}
+${uncommittedNote(branch, headTracksBuild)}
+${builds.length && headTracksBuild === false ? `<p><a class="play" href="${builds[0].ordinal}/">Play last committed (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play last committed mobile</a>` : ''}</p>` : ''}
+${builds.length && headTracksBuild !== false ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons('../', builds[0], ` latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
+<p class="meta">A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 30 MB. On a phone or tablet, download from here rather than from inside the game.</p>` : (builds.length ? '' : '<p class="meta">no build on this branch</p>')}
 ${rowsTable(builds, '../')}
 <footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code>.</footer></main></body></html>`;
 }
@@ -386,6 +404,15 @@ function assemble(outDir, keep) {
     MOBILE_ARTIFACT, `build/${MOBILE_ARTIFACT}`, `dist/${MOBILE_ARTIFACT}`]) {
     if (existsSync(join(outDir, artifact))) writeFileSync(join(outDir, artifact), readGitArtifact(ROOT, mainRef, artifact));
   }
+  // THE STABLE PLAY LINKS (README: /AshenSpire.html, /AshenSpire-mobile.html).
+  // A main tree that no longer tracks them gets main's CI build instead; with no
+  // build handed in, the run fails rather than publishing a site whose primary
+  // links are 404s.
+  for (const artifact of ['AshenSpire.html', MOBILE_ARTIFACT]) {
+    if (existsSync(join(outDir, artifact))) continue;
+    if (!MAIN_BUILD) throw new Error(`main's tree carries no ${artifact} — pass --main-build <dir> holding a build of main's source, or the stable Play link at /${artifact} 404s`);
+    cpSync(resolve(MAIN_BUILD, artifact), join(outDir, artifact));
+  }
   if (existsSync(join(outDir, 'index.html'))) cpSync(join(outDir, 'index.html'), join(outDir, 'index-game.html'));
   // The build/ and dist/ aliases fetch the shipped score from beside themselves
   // (content/music.js SHIPPED_MUSIC_FOLDER); git carries it only at the root.
@@ -397,7 +424,7 @@ function assemble(outDir, keep) {
   let checks = 0;
   const branchData = [];
   for (const branch of BRANCHES) {
-    const { head, builds } = buildsOf(branch, keep);
+    const { head, builds, headTracksBuild } = buildsOf(branch, keep);
     for (const b of builds) {
       const html = readGitArtifact(ROOT, b.sha, 'AshenSpire.html');
       b.version = versionIn(html.toString('latin1'));
@@ -457,7 +484,10 @@ function assemble(outDir, keep) {
       if (Buffer.compare(readFileSync(join(dir, 'index.html')), html) !== 0) throw new Error(`${branch}/${b.ordinal}: written build differs from git blob`);
       checks++;
     }
-    if (builds[0]) {
+    // NO /latest/ FOR A BRANCH THAT STOPPED COMMITTING ITS BUILD: its newest
+    // listed build is only its last COMMITTED one, and an alias called latest
+    // would launch an ever-staler game. The page says where newer builds are.
+    if (builds[0] && headTracksBuild !== false) {
       const latest = join(outDir, branch, 'latest');
       mkdirSync(latest, { recursive: true });
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'index.html'), join(latest, 'index.html'));
@@ -470,11 +500,11 @@ function assemble(outDir, keep) {
       if (existsSync(mobile)) cpSync(mobile, join(latest, 'mobile'), { recursive: true });
     }
     mkdirSync(join(outDir, branch), { recursive: true });
-    const idx = branchIndex(branch, builds, head, generatedAt);
+    const idx = branchIndex(branch, builds, head, generatedAt, headTracksBuild);
     writeFileSync(join(outDir, branch, 'index.html'), idx);
     for (const b of builds) if (!idx.includes(`href="../${branch}/${b.ordinal}/"`)) throw new Error(`${branch} index does not link build ${b.ordinal}`);
     checks++;
-    branchData.push({ branch, head, builds });
+    branchData.push({ branch, head, builds, headTracksBuild });
   }
   // Discovered AFTER the branch directories exist, so this tool's own output is
   // excluded by name-of-thing-we-just-wrote rather than by a hardcoded list.
