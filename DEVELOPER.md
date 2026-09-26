@@ -71,6 +71,16 @@ first (built from a manifest by the Art quality setting), then the built-in
 art. Not yet covered: game code still builds many `assets/…` paths from
 templates, and 14 CSS `url(../assets/…)` backdrops bypass `assetUrl()`.
 
+**The high-res release** (docs/ART-REPO-PLAN.md). `art-release.json` pins one
+release of the private `cehinds/AshenSpire-art` (repo, tag, zip, sha256; it is
+unset until `hd-assets-v1` is published). `node tools/fetch-art.mjs` downloads
+it with `ART_REPO_TOKEN` (a token with read access to that repo's Contents),
+refuses unless the zip's sha256 is the pinned one and every file matches its
+`high` record in `art-manifest.json`, and unpacks it into `.art-cache/<tag>/`
+(gitignored). `--from <zip>` verifies a zip already on disk; `--recheck`
+re-hashes a cache. `tools/zip.mjs` is the same file the art repository packs
+with; `tests/fetch-art.test.mjs` pins their shared vector.
+
 **Settings → Display → Art quality** (`src/ui/highResArt.js`): *Built-in* uses
 the art the build carries; *Local high-res* lays full-resolution files over it
 from a folder served beside the game (`hd/art-manifest.json` plus `hd/assets/…`,

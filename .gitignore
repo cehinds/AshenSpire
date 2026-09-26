@@ -533,3 +533,6 @@ build/pose-studio-app.zip
 # UI Studio (ui-studio/) keeps its config backups here
 ui-studio/.state/
 ui-studio/workspace/settings.json
+
+# High-res art fetched by tools/fetch-art.mjs (docs/ART-REPO-PLAN.md)
+/.art-cache/

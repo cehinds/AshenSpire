@@ -176,6 +176,12 @@ export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/dirorder.mjs',
   'tools/mobileart-policy.mjs',
   'tools/head-meta.mjs',
+  // The art the tree names: which asset ids exist and what each tier holds, and
+  // the high-res release it pins. Once assets/ leaves the tree (the art-repo
+  // plan, step 6) these are the only record of the full art a --full-art build
+  // fetches, so moving the pin must move the build number.
+  'art-manifest.json',
+  'art-release.json',
 ]);
 
 /**

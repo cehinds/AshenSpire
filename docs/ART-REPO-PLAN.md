@@ -56,10 +56,12 @@ This repository keeps:
 
 - `assets-mobile/` (the light tier);
 - `map-detail/` and `music/`;
-- `art-manifest.json`, pinned to one release tag and its zip's sha256, and
-  **added to the build identity** (`BUILD_IDENTITY_FILES` in
-  `tools/buildversion.mjs`): once `assets/` is gone the digest no longer sees the
-  full art, so bumping the pin must move the build number;
+- `art-manifest.json` (derived, as today) and **`art-release.json`**, the
+  authored pin: the release's repo, tag, zip name and zip sha256. The pin is its
+  own file because `--write` regenerates the manifest from the trees. Both are
+  **in the build identity** (`BUILD_IDENTITY_FILES` in `tools/buildversion.mjs`):
+  once `assets/` is gone the digest no longer sees the full art, so moving the
+  pin must move the build number;
 - `tools/fetch-art.mjs`;
 - **the 23 non-art files now under `assets/`**, moved to a tracked root folder such as `asset-data/` (`content/` accepts only compiled sources)
   (or kept in a tracked `assets/` that holds only them; decided in step 4).
@@ -74,7 +76,7 @@ This repository keeps:
 
 1. A PR in AshenSpire-art changes `hd/assets/` (or `art/` and a ship tool).
 2. The owner publishes `hd-assets-v<N+1>`.
-3. A PR here bumps the pin in `art-manifest.json`, runs
+3. A PR here bumps the pin in `art-release.json`, runs
    `tools/fetch-art.mjs`, and regenerates `assets-mobile/` with
    `tools/mobile-art.mjs` from the fetched cache. `art-manifest.mjs --check`
    then confirms that the light and high tiers agree.
@@ -145,9 +147,9 @@ Each step is one reviewed PR, or one owner action.
    - Add `tools/fetch-art.mjs`. It downloads the pinned release, checks the
      zip's sha256 and then every file's sha256 against the manifest, unpacks
      into `.art-cache/` (gitignored), and refuses on any mismatch.
-   - Pin the tag and hash in `art-manifest.json`.
+   - Pin the tag and hash in `art-release.json`.
    - Move the 23 non-art files.
-   - Add `art-manifest.json` to `BUILD_IDENTITY_FILES`.
+   - Add `art-manifest.json` and `art-release.json` to `BUILD_IDENTITY_FILES`.
    - Switch every `assets/` reader in the first table to the manifest, or to a
      fetch in the jobs that build full art.
 5. **PR here — readers stop needing `art/`:** move or repoint every reader in the
