@@ -73,9 +73,11 @@ The answer is semver's own pre-release segment, not a bent ladder:
   this is its first candidate"; it orders BELOW `0.5.0`, so the final stamp
   still marks the milestone (the cutover gate SUCCESS) and nothing is
   claimed early.
-- **`rc.<n>` advances at each `dev → test` promotion** — every candidate QA
-  receives is distinguishable by its stamp, and the ordinal keeps ordering
-  builds between promotions exactly as before.
+- **`rc.<n>` advances when the owner names a new candidate for QA** — every
+  candidate QA receives is distinguishable by its stamp, and the ordinal keeps
+  ordering builds within it. It once advanced at every `dev → test` promotion;
+  since 2026-09-26 every session promotes `dev` to `test` after each merge
+  (CONTRIBUTING.md rule 6), so a promotion alone no longer advances it.
 - **Ordering is by the WHOLE version, component-wise numeric** — superseded
   2026-09-01, see "The candidate is the third component" below. Until then the
   ordinal was the one monotonic key: it never reset, so any two builds sorted

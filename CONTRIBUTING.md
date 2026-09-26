@@ -28,7 +28,7 @@ feature/* ──► dev ──► test ──► release ──► main
 | `main` | Always playable. Merge-only from `release`. Tag releases here (`v0.1.0` = M1, `v0.2.0` = M2, …). |
 | `release` | Staging. Promoted from `test` (owner only) when a milestone's acceptance criteria (spec §9) are met; only fixes land here before merging to `main`. |
 | `dev` | Default integration branch. All feature PRs target `dev`, and each session merges its own once the fast checks pass. |
-| `test` | Where the heavy CI runs: every push to `test` runs the long suites. Sessions promote `dev` here with a `dev` → `test` PR they merge themselves (rule 6). Only `dev` promotions land here, so every heavy run tests exactly what `dev` held, and `release` is promoted from `test` (owner only); balance experiments go on their own `experiment/<topic>` branch cut from `dev` (cherry-pick winners back), never on `test`. Force-pushes allowed only on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
+| `test` | Where the heavy CI runs: every push to `test` runs the long suites. Sessions promote `dev` here with a `dev` → `test` PR they merge themselves (rule 6). Only `dev` promotions land here, and `release` is promoted from `test` (owner only). When `test` is deleted after a `test` → `release` merge, `restore-test-branch.yml` recreates it from `release`, so a fix that landed only on `release` must be merged back into `dev` (a `release` → `dev` PR) before the next promotion; then every heavy run tests what `dev` holds; balance experiments go on their own `experiment/<topic>` branch cut from `dev` (cherry-pick winners back), never on `test`. Force-pushes allowed only on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
 | `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. |
 
 ## Commits & PRs
@@ -90,6 +90,9 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
      already open, merge that one rather than opening another. Each
      promotion runs the full 3-OS matrix, so when several of your PRs land
      together, promote once after the last.
+   - A promotion does not advance the release candidate (the third
+     component of `contentBundle.version`); only the owner names a new
+     candidate ([docs/versioning.md](docs/versioning.md)).
    - Watch the `test` run. A red there is yours to fix with a new PR into
      `dev`, which you then promote again.
    - Never merge to `release` or `main` (see
