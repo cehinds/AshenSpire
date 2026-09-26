@@ -1102,7 +1102,7 @@ console.log('  build version    : ' + buildDigest + ' (derived from this source;
 console.log('  modules bundled  : ' + order.length);
 console.log('  stylesheets      : ' + cssHrefs.length + ' (' + cssHrefs.join(', ') + ')');
 console.log('  authoring omitted: ' + Math.round(authoringBytes / 1024) + ' KiB (equipment component experiments)');
-console.log('  shape            : ' + (EXTERNAL_ART ? 'external art (needs a server; assets/ beside the HTML)'
+console.log('  shape            : ' + (EXTERNAL_ART ? `external art (needs a server; assets/ beside the HTML; ${LIGHT ? `light tier from ${MOBILE_ASSET_DIR}/` : 'full art'})`
   : MOBILE ? `consolidated single file, MOBILE edition (art from ${MOBILE_ASSET_DIR}/; runs from file://; budget ${MOBILE_BUNDLE_BUDGET_BYTES} bytes)`
     : LIGHT ? `consolidated single file, LIGHT art tier (art from ${MOBILE_ASSET_DIR}/; runs from file://; no budget)`
       : 'consolidated single file (runs from file://)'));

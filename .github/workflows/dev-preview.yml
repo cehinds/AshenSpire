@@ -45,6 +45,9 @@ env:
   # A dispatch from `feature/x` carries a slash; the preview job's first step
   # rewrites CHANNEL without it before anything names a file or an artifact.
   CHANNEL: ${{ github.base_ref || github.ref_name }}
+  # The web (external-art) edition's tier flag for bundle.mjs: light on
+  # dev/test (owner, 2026-09-26), full on release/main.
+  WEB_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && ' ' || '--light' }}
 
 jobs:
   preview:
@@ -68,7 +71,7 @@ jobs:
         id: build
         # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
         env:
-          ART_TIER: ${{ (github.ref_name == 'release' || github.ref_name == 'main') && '--full-art' || '' }}
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         run: node tools/launch.mjs --build-only $ART_TIER
 
       # The names carry the channel: src/ui/buildChannel.js reads `-dev-` from
@@ -220,7 +223,8 @@ jobs:
           # AshenSpire.html plus assets/ and map-detail/ into preview/ in one
           # pass (and the shipped score, music/), so the copies that used to place
           # those by hand are gone with it.
-          node tools/bundle.mjs --external-art --out preview
+          # The same tier as the standalone: light on dev/test, full on release/main.
+          node tools/bundle.mjs --external-art $WEB_TIER --out preview
           cp preview/AshenSpire.html preview/index.html
           # The standalone is collected and uploaded by its own steps, right
           # after the build, so nothing here can cost a commit its download.
@@ -379,7 +383,7 @@ jobs:
       # the build is cheap without the 52.8 MB of base64 the single file carries.
       - name: The de-inlined build plays, and its art arrives over the wire
         run: |
-          node tools/bundle.mjs --external-art --out build/web
+          node tools/bundle.mjs --external-art $WEB_TIER --out build/web
           node tools/verdict.mjs -- node tools/external-play.mjs --dir build/web
 
       - name: Hand-side placement reaches the correct rendered side
