@@ -110,6 +110,10 @@ export async function findServedHighRes({ fetchImpl = globalThis.fetch, base = S
 // from any URL this page has handed out for it: the served path itself, the
 // inlined data URI (the single file), or a high-res URL from an earlier source.
 const urlToId = new Map();
+// The single file gives byte-identical assets one shared data URI (50 groups on
+// 0.7.1, every one identical in the high tier too), so an inlined URL maps to
+// all its ids and the one a source covers is taken: any of them is the same art.
+const inlineIds = new Map();
 let inlineIndexed = false;
 function remember(map) {
   if (map) for (const [id, url] of map) urlToId.set(url, id);
@@ -119,8 +123,13 @@ function idOfUrl(url) {
   if (url.startsWith('assets/')) return url;
   if (!inlineIndexed) {
     inlineIndexed = true;
-    for (const [id, data] of Object.entries(ASSET_MAP)) if (!urlToId.has(data)) urlToId.set(data, id);
+    for (const [id, data] of Object.entries(ASSET_MAP)) {
+      const list = inlineIds.get(data);
+      if (list) list.push(id); else inlineIds.set(data, [id]);
+    }
   }
+  const aliases = inlineIds.get(url);
+  if (aliases) return aliases.find((id) => current && current.has(id)) || aliases[0];
   return urlToId.get(url) || null;
 }
 
@@ -283,6 +292,7 @@ export function resetHighResArt() {
   watching = false;
   failed.clear();
   urlToId.clear();
+  inlineIds.clear();
   inlineIndexed = false;
   setHighResSource(null);
 }

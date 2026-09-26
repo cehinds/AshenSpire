@@ -185,3 +185,24 @@ test('the status counts one file in the singular', async () => {
   await applyArtQuality({ [ART_QUALITY_KEY]: ART_LOCAL_HIGH }, { fetchImpl: json(one), protocol: 'https:' });
   assert.match(artQualityStatus(), /^1 high-res file served/);
 });
+
+test('an inlined URL shared by byte-identical assets resolves to the alias the source covers', async () => {
+  const { ASSET_MAP } = await import('../src/ui/assetmap.js');
+  const data = 'data:image/webp;base64,SAME';
+  ASSET_MAP['assets/ui/a.webp'] = data;
+  ASSET_MAP['assets/ui/b.webp'] = data;
+  const attrs = { src: data };
+  const img = { tagName: 'IMG', getAttribute: (k) => attrs[k], setAttribute: (k, v) => { attrs[k] = v; } };
+  globalThis.document = { querySelectorAll: () => [img] };
+  try {
+    const only = { assets: { 'assets/ui/b.webp': { high: { path: 'assets/ui/b.webp' } } } };
+    await applyArtQuality({ [ART_QUALITY_KEY]: ART_LOCAL_HIGH }, { fetchImpl: json(only), protocol: 'https:' });
+    assert.equal(attrs.src, 'hd/assets/ui/b.webp', 'the covered alias, not the first listed');
+    await applyArtQuality({ [ART_QUALITY_KEY]: ART_BUILT_IN });
+    assert.equal(attrs.src, data, 'back to the shared inlined art');
+  } finally {
+    delete globalThis.document;
+    delete ASSET_MAP['assets/ui/a.webp'];
+    delete ASSET_MAP['assets/ui/b.webp'];
+  }
+});
