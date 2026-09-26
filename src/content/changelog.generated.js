@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1330"
   },
   {
+    "id": "pr-1328",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "A full recorded score, written as code",
+    "detail": "Hosted builds now play thirteen recorded tracks. There is one for the title, shop, rest, combat, elite, boss and victory screens, and the map has its own track in each of the five regions. Each track is built on the music the game already plays, with a strong low cello bass under it and a quiet cello phrase from before the Burning that is snuffed out like a flame. Victory is short. Tracks loop without a gap. The two tracks made with an AI music service are gone. The score was composed as code by AI: every note is written in the repository and rendered by an AI-written synthesizer, with no samples, no licensed music and no AI music model.",
+    "build": "0.7.1.605",
+    "pullRequest": 1328,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1328"
+  },
+  {
     "id": "pr-1345",
     "date": "2026-09-26",
     "group": "2026-09-26",
