@@ -114,7 +114,7 @@ amended before code moves.
     Warhorn duplicates Traveler's Whetstone (`balance.js` ~1599, ~1618).
   - [ ] Consider one or two relics that bend Stamina or Mana (none of the 55
     non-starter relics do).
-- [ ] **A3 Lean attribute retune (M).** Systems still tuned for the old stat
+- [x] **A3 Lean attribute retune (M).** Systems still tuned for the old stat
   scale:
   (Status 2026-09-24: the Dodge Roll and §13.4m rows landed on
   `claude/balance-a3-lean`. Load was met by `itemWeightScale` 0.2, and the
@@ -129,14 +129,28 @@ amended before code moves.
     ~55); it sits in two starter decks. (In combat the card face already
     shows the weight-priced cost through `previewCard`; only the balance is
     at issue.)
-  - [ ] Actions `3+floor(DEX/5)` and draw `3+floor(INT/5)` breakpoints are
+  - [x] Actions `3+floor(DEX/5)` and draw `3+floor(INT/5)` breakpoints are
     out of reach at creation; DEX 5 is the dominant level-up pick.
+    (Closed 2026-09-26, owner ruling: the Actions row keeps DEX 0.2 and the
+    draw row is unchanged. Re-measured on the stat rows (#1296): every class
+    opens on 3 Actions and 2 draw; +1 Action needs DEX 5 or level 11, +1 draw
+    needs INT 9. "DEX dominant" is stale — all-in single-attribute levelling
+    in `runsim` wins CON 14/21/15/15, INT 7/24/18/26, DEX 1/5/6/6 of 40
+    (Reaver/Starseer/Rogue/Herald). Every creation-reachable draw breakpoint
+    tried put its class at 80%+, so draw belongs to A4.)
   - [ ] Starting pools fell with the rebase: a stock Reaver opens on 48 HP
     where #1238 shipped 70 (`src/content/attributes.js` ~74, which calls
     moving them "a retune of `derivedStatRules` and the rating weights").
     Enemy HP is not the comparison (act-1 normals 10–34, elites 68–72, boss
     120); measure incoming damage per encounter with the A1 simulator and
     retune pools or enemy damage from that, not from the old figure.
+    (Closed 2026-09-26, measured: act-1 HP lost per fight is 1.9–5.3 normal,
+    6.3–14.5 elite, 7.4–14.4 boss against pools of 34–39, and no run dies
+    in act 1; 66–88% of deaths are the act-2 boss. The wall is
+    `balance.bossTiers`, not starting pools. Post-sync `runsim 40`: Reaver
+    35%, Starseer 52.5%, Rogue 37.5%, Herald 37.5% — inside the band, spread
+    17.5. Winning runs reach ~26 levels, above the 10–20 band: an XP-curve
+    question for plan phase 6.)
   - [x] SPEC §13.4m still describes the conversion scale removed on 09-21.
 - [ ] **A4 Hand rules (M).** Defaults `retain: true`, `drawMode: 'fill'`,
   capacity 10 (`src/content/handRules.js`) show ~10 of an 11-card deck, skip
