@@ -1,3 +1,4 @@
+import { applyArtQuality, onArtSourceChange } from './ui/highResArt.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
@@ -764,6 +765,10 @@ function applyCardSizeSettings(settings) {
 }
 
 function applyDisplaySettings(settings) {
+  // Art quality: lay a local high-res source over the built-in art, or clear
+  // it. Asynchronous (a served hd/ folder is fetched); screens drawn after it
+  // resolves use the new tier, and anything the source lacks stays built-in.
+  applyArtQuality(settings);
   applyHudVisibility(document.documentElement, settings);
   applyCardSizeSettings(settings);
   const advancedPresentation = presentationConfig(settings);
@@ -901,6 +906,9 @@ function applyDisplaySettings(settings) {
   restampWorkspaceFrames(document);
   replanCategoryNavs();
 }
+// A new high-res source (Art quality) must not be undercut by pose preloads,
+// which are keyed by pose, not URL, and would keep serving the old art.
+onArtSourceChange(() => clearPosePreloads());
 applyDisplaySettings(activeSettings);
 // The resting width depends on the viewport, so it is re-resolved when the
 // viewport changes — a phone rotated into landscape crosses the compact

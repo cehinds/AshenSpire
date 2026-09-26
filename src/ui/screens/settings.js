@@ -19,6 +19,7 @@ import { settingsPreviewHtml, settingsPreviewShown, mountSettingsPreview } from 
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
+import { ART_QUALITY_KEY, ART_BUILT_IN, ART_QUALITY_CHOICES, wantsHighRes, artQualityStatus, pickHighResFolder } from '../highResArt.js';
 import { setTabRing, hasTabRing } from '../input.js';
 import { renderAboutSection, renderChangelogSection } from './about.js';
 import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
@@ -391,6 +392,14 @@ const ROWS = [
   { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
+  // ART QUALITY (LFS / art-tier plan, step 4, 2026-09-26). Built-in is the art
+  // this build carries — the light tier on dev/test, full art on release/main.
+  // Local high-res lays full-resolution files from this device over it
+  // (src/ui/highResArt.js); anything the folder lacks stays built-in. A
+  // per-device key (DEVICE_KEYS): a folder here means nothing on another device.
+  { cat: 'Display', key: ART_QUALITY_KEY, type: 'choice', def: ART_BUILT_IN,
+    choices: ART_QUALITY_CHOICES, label: 'Art quality', applied: artQualityHtml,
+    note: 'Built-in uses the art this game carries. Local high-res uses full-resolution art from a folder on this device, either served beside the game or one you choose, and keeps the built-in art for anything it lacks. This device only.' },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
     choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size', applied: appliedHtml,
     note: 'Auto flexes the whole interface with your screen; S–XL asks for a fixed size and gets as much of it as fits.' },
@@ -1967,6 +1976,13 @@ function tapCostHtml(settings) {
 // is worse than no readout. The requested value comes from the same balance
 // data main.js caps against, so "limited" is a comparison of one computed
 // number against one authored one, not of two computations.
+/** The Art quality row's live line: where the high-res art came from, and the folder button. */
+function artQualityHtml(settings) {
+  if (!wantsHighRes(settings)) return '';
+  return `<span class="ls-hint set-note" data-art-status aria-live="polite">${esc(artQualityStatus())}</span>`
+    + ' <button type="button" class="as-btn" data-art-folder>Choose folder…</button>';
+}
+
 function appliedHtml(settings) {
   if (typeof document === 'undefined') return '';
   const applied = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom'));
@@ -3526,6 +3542,19 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   wire();
   paintTip();
   paintUndo();
+
+  // THE ART-QUALITY FOLDER BUTTON, delegated once per container: the button
+  // lives in an applied slot that refreshApplied() rebuilds, so a listener on
+  // the button itself would be lost on the next change. The handler reads the
+  // settings of the latest render; the folder picker must open inside the click.
+  container._artQualitySettings = settings;
+  if (!container._artQualityWired) {
+    container._artQualityWired = true;
+    container.addEventListener('click', (event) => {
+      if (!event.target.closest?.('[data-art-folder]')) return;
+      pickHighResFolder(container._artQualitySettings);
+    });
+  }
 
   // Declared before the observer that reads it: the early return below skips
   // the claim, and a `let` read before its declaration is a crash, not a false.
