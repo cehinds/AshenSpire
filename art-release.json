@@ -1,0 +1,7 @@
+{
+  "_": "AUTHORED — the high-res release this tree pins (docs/ART-REPO-PLAN.md). tools/fetch-art.mjs downloads it and checks the zip's sha256, then every file against art-manifest.json. Bumped by hand in the PR that adopts a new release. It joins the build identity with the PR that first builds full art from the fetched cache (docs/ART-REPO-PLAN.md, step 4).",
+  "repo": "cehinds/AshenSpire-art",
+  "tag": null,
+  "zip": null,
+  "sha256": null
+}
