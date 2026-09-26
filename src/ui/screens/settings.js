@@ -39,6 +39,8 @@ import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExport
 import { contentBundle } from '../../content/index.js';
 import { pageDebug } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
+import { deckRules } from '../../content/deckRules.js';
+import { deckSettingsProblems } from '../../model/deckRules.js';
 import { SEED_KEY, seedAfterChange, sameSetting } from '../../model/settingsDefaults.js';
 import { renderSettingsSync } from '../components/settingsSync.js';
 import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
@@ -658,6 +660,29 @@ const ROWS = [
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
     label: 'Level-up value', applied: numberAppliedHtml,
     note: 'How many stat points one level grants — type any whole number from 1 to 20. Takes effect on the next level you reach, in any run, including one already in progress; the points wait at the shrine until you assign them.' },
+  // THE DECK EDITOR'S RULES (SPEC §14.1, owner brief 2026-09-26). Each
+  // default is content/deckRules.js — the one home; model/deckRules.js reads
+  // the stored choice against the same object. Live settings, not gameConfig
+  // rows: a change applies the next time the editor opens (and Play in deck
+  // order at the next fight), never to a fight already under way.
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckEditing', def: deckRules.defaults.deckEditing, label: 'Deck editing',
+    note: 'Add, remove and arrange your cards between fights. Off: the deck changes only through rewards, the merchant and the Armoury.' },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckEditingWhere', type: 'choice', dropdown: true, def: deckRules.defaults.deckEditingWhere,
+    choices: [...deckRules.where], choiceLabels: { free: 'Free (anywhere out of combat)', restOnly: 'Rest sites only' },
+    gates: [{ key: 'deckEditing' }], label: 'Where you can edit',
+    note: 'Free opens the editor from the map and the Armoury at any moment out of combat. Rest sites only offers it at a Shrine, an inn or a chapel.' },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMinUnlimited', def: deckRules.defaults.deckMinUnlimited, label: 'No minimum deck size',
+    gates: [{ key: 'deckEditing' }], note: 'Let the editor confirm a deck of any size, however small.' },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMinSize', type: 'number', def: deckRules.defaults.deckMinSize, min: deckRules.sizeRange.min, max: deckRules.sizeRange.max,
+    gates: [{ key: 'deckEditing' }, { key: 'deckMinUnlimited', when: false }], label: 'Minimum deck size', applied: numberAppliedHtml,
+    note: 'The fewest cards the editor lets you confirm. Rewards and purchases can still move the deck outside it; the editor then asks you to bring it back.' },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMaxUnlimited', def: deckRules.defaults.deckMaxUnlimited, label: 'No maximum deck size',
+    gates: [{ key: 'deckEditing' }], note: 'Let the editor confirm a deck of any size, however large.' },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMaxSize', type: 'number', def: deckRules.defaults.deckMaxSize, min: Math.max(1, deckRules.sizeRange.min), max: deckRules.sizeRange.max,
+    gates: [{ key: 'deckEditing' }, { key: 'deckMaxUnlimited', when: false }], label: 'Maximum deck size', applied: numberAppliedHtml,
+    note: 'The most cards the editor lets you confirm. It may not sit below the minimum.' },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'playInDeckOrder', def: deckRules.defaults.playInDeckOrder, label: 'Play in deck order',
+    note: 'Your draw pile is not shuffled: you draw your cards in the order you arranged them, and a spent pile returns in that order. Card effects that shuffle still shuffle. Applies from the next fight.' },
   ...ADVANCED_CONFIG_ROWS,
   { cat: 'Advanced', advancedGroup: 'Export', key: 'promptSettingsExport', def: true, label: 'Offer export when done',
     note: 'Ask to export a configuration file after Done and Save.' },
@@ -745,6 +770,7 @@ const ADVANCED_GROUPS = Object.freeze([
   // (models/StatsPreviewModel.js).
   { id: 'Stats', label: 'Stats', tip: 'Everything that turns attributes into Actions, Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.' },
   { id: 'Rewards', label: 'Rewards & economy', tip: 'Cinders, reward rarity, merchants, flasks and smithing.' },
+  { id: 'Deck', label: 'Deck', tip: 'The deck editor: where you can edit, the deck’s size limits, and playing your cards in the order you arranged them.' },
   { id: 'Equipment', label: 'Equipment & relics', tip: 'Starting kits, drops, swapping, equipment balance and relic values.' },
   { id: 'World', label: 'Run & world', tip: 'Rest and shrines, the atlas and seats, run modifiers, gauntlet, co-op and endless.' },
   { id: 'Interface', label: 'Interface', tip: 'Map and HUD, card appearance, and confirmation controls.' },
@@ -2041,7 +2067,7 @@ export function paintConfigProblems(container, settings, extra = []) {
   // `extra` carries the refusals the MODEL cannot see, because the value never
   // reached it: a typed number the field clamped on its way in (see
   // `typedNumberRefusal`). Same shape, same painting, same dedupe.
-  const entries = [...advancedConfigProblemRows(contentBundle, settings), ...extra];
+  const entries = [...advancedConfigProblemRows(contentBundle, settings), ...deckSettingsProblems(settings), ...extra];
   const byKey = new Map();
   for (const entry of entries) {
     for (const key of entry.keys || []) {

@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-26
+
+- **Deck rules: set cards aside, draw in your own order** ([#1343](https://github.com/cehinds/AshenSpire/pull/1343), `0.7.1.549`). The groundwork for the deck editor, which arrives next. A new Settings tab, Advanced → Deck, holds its rules: editing on or off, where you may edit, the smallest and largest deck, and Play in deck order, which draws your cards in the order you arranged them instead of shuffling. A card you take out of your deck is kept, not lost, so you can put it back later; Strike and Defend stay unlimited and still wear your weapon's face.
+
 ## 2026-09-25
 
 - **Synced settings keep which values you chose, and a mistyped sync location is refused** ([#1322](https://github.com/cehinds/AshenSpire/pull/1322), `0.7.1.548`). A settings profile now records which of its values are the owner's promoted defaults, so a value you picked on one device stays yours on the next and a later default update leaves it alone. An Undo only ever applies to the settings it came from, a reset that only hands values back to the defaults can be undone, and a sync location with a typo is refused by name instead of quietly saving over the default profile (settings sync is in development and test builds only).

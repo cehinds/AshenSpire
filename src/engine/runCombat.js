@@ -15,6 +15,7 @@
 
 import { createCombat } from './combat.js';
 import { runHandRules } from '../model/handRules.js';
+import { playInDeckOrder } from '../model/deckRules.js';
 import { ratingsConfigFor } from '../model/statRows.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
 import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/resources.js';
@@ -86,6 +87,8 @@ export function createRunCombat({
     // fight keeps the hand it was born with.
     ratingsRules: ratingsConfigFor(registries, run) || null,
     handRules: runHandRules(registries, run, settings),
+    // Play in deck order (SPEC §14.1): read here, once, like the other rules.
+    orderedDraw: playInDeckOrder(settings),
     registries,
     rng,
     player: { ...runCombatPlayer(run), ...player },

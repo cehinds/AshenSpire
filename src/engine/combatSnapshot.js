@@ -46,6 +46,7 @@ export function serializeCombatSnapshot(combat) {
     version: COMBAT_SNAPSHOT_VERSION,
     ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
+    ...(combat.orderedDraw ? { orderedDraw: combat.orderedDraw } : {}),
     ...(combat.foundation ? { foundation: combat.foundation } : {}),
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
@@ -116,6 +117,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     // rated by the one calculation, like every other. `combatSnapshotProblems`
     // still tolerates the field on disk, so an older save still loads.
     ...(saved.handRules ? { handRules: saved.handRules, pendingDiscardDraw: saved.pendingDiscardDraw || 0 } : {}),
+    // Absent on a snapshot written before Play in deck order: that fight shuffles.
+    orderedDraw: saved.orderedDraw || null,
     foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
     removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),

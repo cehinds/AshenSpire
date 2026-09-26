@@ -46,7 +46,7 @@ import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 // legacy fields stay authoritative until phase 3b flips the readers and
 // writers; until then a save whose zones disagree with its legacy fields is
 // re-projected at the load door with a ledger note, never refused.
-export const RUN_SCHEMA_VERSION = 10;
+export const RUN_SCHEMA_VERSION = 11;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -177,6 +177,7 @@ export function createRunState({
     itemUpgradeLevels: {},
     smithingRewardClaims: [],
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
+    sideboard: [], // owned cards the deck editor took out of the deck (SPEC §14.1)
     loadout,
     // THE BIRTH QUOTA, WRITTEN DOWN. How many attack slots this run was composed
     // with is a fact about the run, not something to re-derive from whatever
@@ -636,6 +637,12 @@ export const RUN_SHAPE = [
   // Plan phase 4a. Required at schema 8; a preSkills save (≤ 7) is filled
   // with the empty ledger at the migration door.
   { key: 'skills', type: 'object' },
+  // SPEC §14.1. Required at schema 11: the owned cards the deck editor took out
+  // of the deck. A preSideboard save (≤ 10) is filled with none at the
+  // migration door. `editMintCounter` keeps minted basics' instance ids unique;
+  // absent means none minted.
+  { key: 'sideboard', type: 'array' },
+  { key: 'editMintCounter', type: 'number', optional: true },
   { key: 'seedString', type: 'string', nullable: true },
   { key: 'savedAt', type: 'string', optional: true }, // ISO time of the last landed save (W1l–W1r)
   { key: 'mapNodeId', type: 'string', nullable: true },
@@ -747,7 +754,7 @@ export function levelProblems(level) {
   return problems;
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags } = {}) {
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels } = {}) {
   const problems = [];
   problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
@@ -761,6 +768,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (preSkills && f.key === 'skills') continue;
     if (preCoreTags && f.key === 'coreTags') continue;
     if (preXpLevels && f.key === 'level') continue;
+    if (preSideboard && f.key === 'sideboard') continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -780,6 +788,16 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
+  if (Array.isArray(run.sideboard)) {
+    run.sideboard.forEach((card, i) => {
+      if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
+        problems.push(`sideboard[${i}] must be a card instance with instanceId and cardId`);
+      }
+    });
+  }
+  if (run.editMintCounter !== undefined && (!Number.isInteger(run.editMintCounter) || run.editMintCounter < 0)) {
+    problems.push('editMintCounter must be a non-negative integer');
+  }
   if (Array.isArray(run.collection)) {
     run.collection.forEach((card, i) => {
       if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
@@ -1171,12 +1189,16 @@ export function migrateRunSchema(run) {
   // Filled HERE (plan phase 6): the displayed level those purchases reached,
   // no XP toward the next, nothing waiting — the points were spent as bought.
   const preXpLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, ${RUN_SCHEMA_VERSION})`);
+  // v10 and older: no sideboard. Filled HERE with none (SPEC §14.1): a run the
+  // deck editor never touched has no owned card out of its deck.
+  const preSideboard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(run.schemaVersion);
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard });
   if (preSkills && (run.skills === undefined || run.skills === null)) run.skills = {};
   if (preCoreTags && (run.coreTags === undefined || run.coreTags === null)) run.coreTags = [];
+  if (preSideboard && (run.sideboard === undefined || run.sideboard === null)) run.sideboard = [];
   if (preXpLevels && (run.level === undefined || run.level === null)) {
     run.level = { xp: 0, level: 1 + (Number.isInteger(run.levelUps) && run.levelUps > 0 ? run.levelUps : 0), unspentPoints: 0 };
   }

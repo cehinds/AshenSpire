@@ -217,6 +217,7 @@ export function createSession({ registries, seedString, endless = false, restore
           id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || DEFAULT_SPRITE_STYLE,
           connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
           discoveredArmaments,
+          playInDeckOrder: md.playInDeckOrder === true,
           catchup: md.catchup || [], cardSeq: md.cardSeq || 0, alive: md.alive !== false,
         });
       } catch (e) {
@@ -280,7 +281,7 @@ export function createSession({ registries, seedString, endless = false, restore
     return endless ? Math.floor((session.actNumber - 1) / LAST_ACT) : 0;
   }
 
-  function addMember({ id, name, classId, tint, spriteStyle, attributeMode = undefined, attributes = undefined, startingKitId = undefined, discoveredArmaments = [] }) {
+  function addMember({ id, name, classId, tint, spriteStyle, attributeMode = undefined, attributes = undefined, startingKitId = undefined, discoveredArmaments = [], playInDeckOrder = false }) {
     const index = order++;
     const entitlement = [...new Set(discoveredArmaments || [])];
     const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: { discoveredArmaments: entitlement } });
@@ -298,6 +299,7 @@ export function createSession({ registries, seedString, endless = false, restore
       run, // per-member build: deck/relics/flasks/hp/maxHp/cinders
       discoveredArmaments: entitlement,
       rng: memberRng(seed, index),
+      playInDeckOrder: playInDeckOrder === true, // the seat owner's Play in deck order (SPEC §14.1)
       catchup: [], // pending missed-node choices (S4 replay)
       cardSeq: 0, // monotonic counter for reward/catch-up card instance ids
       alive: true,
@@ -480,6 +482,7 @@ export function createSession({ registries, seedString, endless = false, restore
     return {
       id: m.id, name: m.name, classId: m.classId,
       maxHp: m.run.maxHp, hp: m.run.hp, deck: m.run.deck,
+      orderedDraw: !!m.playInDeckOrder, // Play in deck order, per seat (SPEC §14.1)
       maxMana: m.run.maxMana, mana: m.run.mana,
       maxStamina: m.run.maxStamina, stamina: staminaAtCombatStart({ currentStamina: m.run.stamina, maxStamina: m.run.maxStamina }),
       energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,
@@ -1392,6 +1395,7 @@ export function createSession({ registries, seedString, endless = false, restore
       members: [...members.values()].map((m) => ({
         id: m.id, name: m.name, index: m.index, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, alive: m.alive,
         run: m.run, discoveredArmaments: [...m.discoveredArmaments], catchup: m.catchup, cardSeq: m.cardSeq, rng: m.rng.getCounters(),
+        ...(m.playInDeckOrder ? { playInDeckOrder: true } : {}),
       })),
       // THE EVIDENCE BYTES, byte-equal to what came in. A refused member's
       // original record rides every save the host writes after a partial

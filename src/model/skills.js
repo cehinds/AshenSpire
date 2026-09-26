@@ -194,7 +194,9 @@ export function applySkillUpgrades(registries, run, skillId) {
   if (!schools.size || !Array.isArray(run.deck)) return [];
   const cards = registries && registries.cards;
   const out = [];
-  for (const inst of run.deck) {
+  // Owned means deck ∪ sideboard (SPEC §14.1): a card set aside by the deck
+  // editor keeps the standing rule and comes back upgraded.
+  for (const inst of [...run.deck, ...(Array.isArray(run.sideboard) ? run.sideboard : [])]) {
     if (!inst || inst.upgraded || inst.sourceArmamentId || ITEM_OWNED_ROLES.includes(inst.equipmentRole)) continue;
     const def = cards && cards.has(inst.cardId) ? cards.get(inst.cardId) : null;
     if (!def || !(def.tags || []).some((t) => schools.has(t))) continue;

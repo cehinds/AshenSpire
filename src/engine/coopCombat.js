@@ -46,6 +46,7 @@ import { refreshCombatRatings } from './combatRatings.js';
 import { resolveHandRules, handRow, scaledCards } from '../model/handRules.js';
 import { handStatRows, ratingStatRows, readsLegacyStatHomes, LEGACY_HAND_MAX } from '../model/statRows.js';
 import { turnDrawCount, endTurnCardFate } from './handRules.js';
+import { orderedDrawPile } from '../model/deckRules.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -195,12 +196,11 @@ function addPlayerState(C, p, { initial = false } = {}) {
     ...(c.sourceArmamentId ? { sourceArmamentId: c.sourceArmamentId } : {}),
     ...(Number.isInteger(c.smithingLevel) ? { smithingLevel: c.smithingLevel } : {}),
   }));
-  const shuffled = C.rng.shuffle('shuffle', deck);
-  const innate = [];
-  const rest = [];
-  for (const card of shuffled) {
-    (C.registries.framework.isInnate(resolveCard(C.registries, card)) ? innate : rest).push(card);
-  }
+  // Play in deck order is each seat owner's own setting (SPEC §14.1): that
+  // seat draws its deck as arranged and rolls nothing for it.
+  const orderedDraw = p.orderedDraw ? { order: deck.map((card) => card.instanceId) } : null;
+  const drawPile = orderedDrawPile(orderedDraw ? deck : C.rng.shuffle('shuffle', deck),
+    (card) => C.registries.framework.isInnate(resolveCard(C.registries, card)));
   // THE SAME ROWS A SOLO FIGHT READS (ruleset 7): the seat's hand rules are
   // the shipped behaviour options plus its own opening-hand, draw and
   // hand-size rows, and its ratings its own rating rows. A seat born before
@@ -228,7 +228,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
     skills: p.skills ? structuredClone(p.skills) : {},
     coreTags: Array.isArray(p.coreTags) ? [...p.coreTags] : [],
     entity,
-    piles: { draw: [...innate, ...rest], hand: [], discard: [], exhaust: [] },
+    orderedDraw,
+    piles: { draw: drawPile, hand: [], discard: [], exhaust: [] },
     connected: true,
     ended: false,
   };
@@ -278,6 +279,7 @@ function setActive(C, P) {
   // The seat's own stat rows: the hand rules and hand size its draws obey,
   // the level its rows read, and the rating rows its ratings are priced by.
   C.handRules = P ? P.handRules : null;
+  C.orderedDraw = P ? P.orderedDraw || null : null;
   C.handMax = P ? P.handMax : LEGACY_HAND_MAX;
   C.characterLevel = P ? P.level : undefined;
   C.derivedStatRuleSnapshot = P ? P.derivedStatRuleSnapshot : null;

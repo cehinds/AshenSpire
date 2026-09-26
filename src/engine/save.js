@@ -659,7 +659,7 @@ export function createSaveManager(storage) {
       }
       if (run.contentVersion !== registries.contentVersion) {
         const dangling =
-          (run.deck || []).find((c) => !registries.cards.has(c.cardId)) ||
+          [...(run.deck || []), ...(run.sideboard || [])].find((c) => !registries.cards.has(c.cardId)) ||
           (run.relics || []).find((id) => !registries.relics.has(id)) ||
           (run.flasks || []).find((f) => !registries.flasks.has(f.flaskId));
         if (dangling) {
