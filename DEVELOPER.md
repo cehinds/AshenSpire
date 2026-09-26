@@ -59,7 +59,14 @@ file (~255 MB) plus the mobile one (`AshenSpire-mobile.html`, the same twins, he
 under 30 MB). CI passes `--full-art` only for `release` and `main`. Changing anything under `assets/`
 means regenerating the twins with `node tools/mobile-art.mjs` (needs `cwebp`
 from libwebp on PATH); `node tools/mobile-art.mjs --check` is the Node-only gate
-CI runs, and the policy lives in `tools/mobileart-policy.mjs`. Serve the whole web directory for
+CI runs, and the policy lives in `tools/mobileart-policy.mjs`. Then run
+`node tools/art-manifest.mjs --write`: `content/art-manifest.json` lists every
+asset id (its runtime `assets/…` path) with the file each tier ships —
+`light` (`assets-mobile/`) and `high` (`assets/`), each with bytes, sha256 and
+pixel size; the placeholder tier has no file. `tests/art-manifest.test.mjs`
+fails the core suite while it is stale. `src/ui/assetmap.js` resolves an id
+through a high-res source when one is set (Settings → Display → Art quality),
+else the built-in art. Serve the whole web directory for
 mobile testing. Rendering-quality behavior and performance checks are described
 in [Mobile performance](docs/MOBILE-PERFORMANCE.md).
 
