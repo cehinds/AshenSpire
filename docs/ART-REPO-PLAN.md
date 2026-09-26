@@ -58,10 +58,15 @@ This repository keeps:
 - `map-detail/` and `music/`;
 - `art-manifest.json` (derived, as today) and **`art-release.json`**, the
   authored pin: the release's repo, tag, zip name and zip sha256. The pin is its
-  own file because `--write` regenerates the manifest from the trees. Both are
-  **in the build identity** (`BUILD_IDENTITY_FILES` in `tools/buildversion.mjs`):
-  once `assets/` is gone the digest no longer sees the full art, so moving the
-  pin must move the build number;
+  own file because `--write` regenerates the manifest from the trees. Both
+  **join the build identity** (`BUILD_IDENTITY_FILES` in `tools/buildversion.mjs`)
+  in the step-4 PR that first builds full art from the fetched cache: from then
+  on the digest no longer sees the full art itself, so moving the pin must move
+  the build number. (While `assets/` is still here both files are derived from
+  inputs the digest already covers.) That PR also adds the two root files to
+  every sandbox that copies the repo and builds or serves it: doorplant's
+  `COPY_SET`, `tools/bundle.test.mjs`, `tools/sfx-filename-convention.mjs` and
+  the rest a `git grep mkdtempSync` finds, or `sourceDigest` refuses there;
 - `tools/fetch-art.mjs`;
 - **the 23 non-art files now under `assets/`**, moved to a tracked root folder such as `asset-data/` (`content/` accepts only compiled sources)
   (or kept in a tracked `assets/` that holds only them; decided in step 4).
@@ -149,7 +154,7 @@ Each step is one reviewed PR, or one owner action.
      into `.art-cache/` (gitignored), and refuses on any mismatch.
    - Pin the tag and hash in `art-release.json`.
    - Move the 23 non-art files.
-   - Add `art-manifest.json` and `art-release.json` to `BUILD_IDENTITY_FILES`.
+   - Add `art-manifest.json` and `art-release.json` to `BUILD_IDENTITY_FILES`, with the sandbox copies that need them (above), in the PR that first builds full art from the cache.
    - Switch every `assets/` reader in the first table to the manifest, or to a
      fetch in the jobs that build full art.
 5. **PR here — readers stop needing `art/`:** move or repoint every reader in the

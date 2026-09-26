@@ -18,12 +18,15 @@
 //      is found by), naming the same ids with the same high records;
 //   4. the zip holds nothing else.
 //
-// Any mismatch exits 1 and leaves no cache behind. A cache that verified once is
-// marked with the zip's sha256 and reused; --recheck hashes it again.
+// Any mismatch exits 1 before anything is unpacked. A cache is marked verified
+// LAST, with the zip's sha256 and a digest of the manifest's high records, and
+// is reused only while both still match; --recheck hashes its files again. A
+// cache without that marker (an interrupted unpack) is never reused.
 //
 // THE TOKEN. The art repository is private, so the download needs a token with
 // read access to its Contents: ART_REPO_TOKEN (CI secret of that name), else
-// GITHUB_TOKEN. Without one the tool says which variable to set.
+// GITHUB_TOKEN. Without one the tool says which variable to set. Node's fetch
+// ignores HTTPS_PROXY unless NODE_USE_ENV_PROXY=1 is set; behind a proxy, set it.
 
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -46,11 +49,25 @@ export function readPin(root = ROOT) {
   if (missing.length) {
     throw new Error(`${PIN_PATH} pins no release yet (${missing.join(', ')} unset). The owner publishes hd-assets-v1 from cehinds/AshenSpire-art first; a PR then pins its tag, zip name and sha256 here.`);
   }
+  // Strict shapes: the tag names a directory this tool deletes and recreates,
+  // so it can never be `..` or a path, and the zip is that tag's own asset.
+  if (!/^[A-Za-z0-9-]+\/[A-Za-z0-9._-]+$/.test(pin.repo)) throw new Error(`${PIN_PATH}: repo must be owner/name`);
+  if (!/^hd-assets-v[1-9]\d*$/.test(pin.tag)) throw new Error(`${PIN_PATH}: tag must be hd-assets-v<N>`);
+  if (pin.zip !== `${pin.tag}.zip`) throw new Error(`${PIN_PATH}: zip must be ${pin.tag}.zip`);
   if (!/^[0-9a-f]{64}$/.test(pin.sha256)) throw new Error(`${PIN_PATH}: sha256 must be 64 lowercase hex characters`);
   return pin;
 }
 
 export const cacheDirFor = (pin, root = ROOT) => join(root, CACHE_DIR, pin.tag);
+
+/** What the verified marker records: the zip, and the manifest it was checked against. */
+export function markerFor(pin, manifest) {
+  const highs = Object.keys(manifest.assets || {}).sort().map((id) => {
+    const h = manifest.assets[id].high || {};
+    return `${id}\t${h.path}\t${h.bytes}\t${h.sha256}`;
+  }).join('\n');
+  return `${pin.sha256} ${sha256(Buffer.from(highs, 'utf8'))}`;
+}
 
 /**
  * verifyRelease(zipBuf, pin, manifest) → { problems, entries }. The checks the
@@ -94,7 +111,7 @@ export function verifyRelease(zipBuf, pin, manifest) {
 }
 
 /** unpack(entries, dir, zipSha) — write every entry under dir, then the verified marker last. */
-function unpack(entries, dir, zipSha) {
+function unpack(entries, dir, mark) {
   rmSync(dir, { recursive: true, force: true });
   for (const [name, data] of entries) {
     const target = resolve(dir, name);
@@ -102,7 +119,7 @@ function unpack(entries, dir, zipSha) {
     mkdirSync(dirname(target), { recursive: true });
     writeFileSync(target, data);
   }
-  writeFileSync(join(dir, VERIFIED), `${zipSha}\n`);
+  writeFileSync(join(dir, VERIFIED), `${mark}\n`);
 }
 
 /** recheck(dir, manifest) → problems: every listed file on disk still matches. */
@@ -122,11 +139,14 @@ async function download(pin) {
   if (!token) throw new Error(`${pin.repo} is private: set ART_REPO_TOKEN (a token with read access to its Contents) to download ${pin.tag}.`);
   const api = `https://api.github.com/repos/${pin.repo}`;
   const headers = { authorization: `Bearer ${token}`, 'x-github-api-version': '2022-11-28', 'user-agent': 'ashenspire-fetch-art' };
-  const rel = await fetch(`${api}/releases/tags/${encodeURIComponent(pin.tag)}`, { headers: { ...headers, accept: 'application/vnd.github+json' } });
+  const timed = (ms) => ({ signal: AbortSignal.timeout(ms) });
+  const rel = await fetch(`${api}/releases/tags/${encodeURIComponent(pin.tag)}`, { headers: { ...headers, accept: 'application/vnd.github+json' }, ...timed(30_000) });
   if (!rel.ok) throw new Error(`release ${pin.tag} of ${pin.repo}: HTTP ${rel.status} (a 404 on a private repo also means the token cannot read it)`);
   const asset = (await rel.json()).assets?.find((a) => a.name === pin.zip);
   if (!asset) throw new Error(`release ${pin.tag} has no asset named ${pin.zip}`);
-  const res = await fetch(`${api}/releases/assets/${asset.id}`, { headers: { ...headers, accept: 'application/octet-stream' } });
+  // The asset URL redirects to storage; fetch drops Authorization on that
+  // cross-origin hop, so the token never leaves api.github.com.
+  const res = await fetch(`${api}/releases/assets/${asset.id}`, { headers: { ...headers, accept: 'application/octet-stream' }, ...timed(15 * 60_000) });
   if (!res.ok) throw new Error(`downloading ${pin.zip}: HTTP ${res.status}`);
   return Buffer.from(await res.arrayBuffer());
 }
@@ -137,7 +157,8 @@ export async function fetchArt({ root = ROOT, from = null, recheck: again = fals
   const manifest = JSON.parse(readFileSync(join(root, MANIFEST_PATH), 'utf8'));
   const dir = cacheDirFor(pin, root);
   const marker = join(dir, VERIFIED);
-  if (!from && existsSync(marker) && readFileSync(marker, 'utf8').trim() === pin.sha256) {
+  const mark = markerFor(pin, manifest);
+  if (!from && existsSync(marker) && readFileSync(marker, 'utf8').trim() === mark) {
     if (!again) return { dir, reused: true };
     const problems = recheck(dir, manifest);
     if (!problems.length) return { dir, reused: true };
@@ -147,7 +168,7 @@ export async function fetchArt({ root = ROOT, from = null, recheck: again = fals
   const zipBuf = from ? readFileSync(from) : await download(pin);
   const { problems, entries } = verifyRelease(zipBuf, pin, manifest);
   if (problems.length) throw Object.assign(new Error(`${pin.tag} failed verification`), { problems });
-  unpack(entries, dir, pin.sha256);
+  unpack(entries, dir, mark);
   return { dir, reused: false, count: entries.size - (entries.has(MANIFEST_PATH) ? 1 : 0) };
 }
 
@@ -158,7 +179,8 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       console.log(relative(process.cwd(), cacheDirFor(readPin())) || '.');
     } else {
       const at = args.indexOf('--from');
-      const r = await fetchArt({ from: at >= 0 ? resolve(args[at + 1] || '') : null, recheck: args.includes('--recheck') });
+      if (at >= 0 && (!args[at + 1] || args[at + 1].startsWith('--'))) throw new Error('--from needs the path of a zip');
+      const r = await fetchArt({ from: at >= 0 ? resolve(args[at + 1]) : null, recheck: args.includes('--recheck') });
       const rel = relative(ROOT, r.dir);
       console.log(r.reused ? `fetch-art: OK — ${rel} already verified` : `fetch-art: OK — ${r.count} assets verified into ${rel}`);
     }

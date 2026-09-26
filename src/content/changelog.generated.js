@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Behind the scenes: the full-resolution art can be fetched and checked",
     "detail": "Nothing you see changes. A new tool fetches the full-resolution art from its own private repository and checks every file against the art list before anything uses it. This prepares for moving the art out of this repository.",
-    "build": "0.7.1.600",
+    "build": "0.7.1.602",
     "pullRequest": 1340,
     "url": "https://github.com/cehinds/AshenSpire/pull/1340"
   },

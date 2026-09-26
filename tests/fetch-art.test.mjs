@@ -103,3 +103,37 @@ test('known-bad: --recheck finds a cached file edited after it was verified', as
     assert.ok(!existsSync(dir), 'a cache that no longer matches is removed');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('known-bad: a cache verified against another manifest is not reused', async () => {
+  const { root, zip, manifest } = fixture();
+  try {
+    await fetchArt({ root, from: zip });
+    manifest.assets['assets/bg/a.webp'].high.sha256 = '0'.repeat(64);
+    writeFileSync(join(root, MANIFEST_PATH), JSON.stringify(manifest));
+    await assert.rejects(fetchArt({ root }), /no release|HTTP|ART_REPO_TOKEN|fetch/i, 'it goes to download again instead of reusing');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('known-bad: a pin whose tag or zip could escape the cache is refused', () => {
+  const root = tmp();
+  try {
+    const base = { repo: 'cehinds/AshenSpire-art', tag: 'hd-assets-v1', zip: 'hd-assets-v1.zip', sha256: 'a'.repeat(64) };
+    for (const [bad, want] of [[{ tag: '..' }, /tag must be/], [{ tag: '../../x' }, /tag must be/], [{ zip: 'other.zip' }, /zip must be/], [{ repo: 'x/../y' }, /repo must be/]]) {
+      writeFileSync(join(root, PIN_PATH), JSON.stringify({ ...base, ...bad }));
+      assert.throws(() => readPin(root), want);
+    }
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('known-bad: the zip reader refuses duplicate names, and the writer refuses the zip64 sentinel count', () => {
+  const dir = tmp();
+  try {
+    const out = join(dir, 'd.zip');
+    writeZip(out, [{ name: 'a.txt', data: Buffer.from('1') }, { name: 'B.txt', data: Buffer.from('2') }]);
+    const buf = readFileSync(out);
+    buf.write('b', buf.indexOf('B.txt', buf.indexOf('B.txt') + 1), 'latin1'); // central name only: B.txt -> b.txt
+    buf.write('A', buf.lastIndexOf('b.txt'), 'latin1');                          // -> A.txt, a case-fold duplicate of a.txt
+    assert.throws(() => readZip(buf), /appears twice/);
+    assert.throws(() => writeZip(join(dir, 'x.zip'), Array.from({ length: 0xffff }, (_, i) => ({ name: `f${i}`, data: Buffer.alloc(0) }))), /65535 or more/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});

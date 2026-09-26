@@ -11,8 +11,11 @@
 // release's sha256 is reproducible by anyone with the tree.
 //
 // The reader accepts stored and deflated entries (a zip re-saved by another tool
-// still reads), refuses zip64, encryption and data descriptors it cannot trust,
-// and never writes outside the target directory.
+// still reads), takes sizes and CRCs from the central directory (so a data
+// descriptor is harmless), refuses zip64, encryption, duplicate names (exact or
+// differing only in case, which collide on Windows and macOS) and a deflated
+// entry that inflates past its declared size, and never writes outside the
+// target directory.
 
 import { closeSync, mkdirSync, openSync, readFileSync, writeSync } from 'node:fs';
 import { dirname, resolve, sep } from 'node:path';
@@ -51,7 +54,8 @@ function checkName(name) {
  */
 export function writeZip(outPath, entries) {
   const list = [...entries].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
-  if (list.length > 0xffff) throw new Error('zip: more than 65535 entries needs zip64, which this writer does not do');
+  // 0xffff itself is the zip64 sentinel in the end record, so 65534 is the most.
+  if (list.length >= 0xffff) throw new Error('zip: 65535 or more entries needs zip64, which this writer does not do');
   const fd = openSync(outPath, 'w');
   let offset = 0;
   const central = [];
@@ -62,7 +66,7 @@ export function writeZip(outPath, entries) {
       const data = typeof entry.data === 'function' ? entry.data() : entry.data;
       const name = Buffer.from(entry.name, 'utf8');
       const crc = crc32(data);
-      if (offset + data.length > 0xfffffffe) throw new Error('zip: archive over 4 GiB needs zip64');
+      if (offset + 30 + name.length + data.length > 0xfffffffe) throw new Error('zip: archive over 4 GiB needs zip64');
       const local = Buffer.alloc(30);
       local.writeUInt32LE(0x04034b50, 0);
       local.writeUInt16LE(10, 4);          // version needed
@@ -79,6 +83,8 @@ export function writeZip(outPath, entries) {
       write(local); write(name); write(data);
     }
     const cdStart = offset;
+    const cdBytes = central.reduce((n, c) => n + 46 + c.name.length, 0);
+    if (cdStart + cdBytes + 22 > 0xfffffffe) throw new Error('zip: archive over 4 GiB needs zip64');
     for (const c of central) {
       const h = Buffer.alloc(46);
       h.writeUInt32LE(0x02014b50, 0);
@@ -123,6 +129,7 @@ export function readZip(buf) {
   let p = buf.readUInt32LE(eocd + 16);
   if (count === 0xffff || p === 0xffffffff) throw new Error('zip: zip64 archives are not supported');
   const out = [];
+  const seen = new Set();
   for (let n = 0; n < count; n++) {
     if (buf.readUInt32LE(p) !== 0x02014b50) throw new Error(`zip: bad central directory entry ${n}`);
     const flags = buf.readUInt16LE(p + 8);
@@ -139,12 +146,18 @@ export function readZip(buf) {
     if (flags & 0x1) throw new Error(`zip: ${name} is encrypted`);
     if (name.endsWith('/')) continue; // a directory entry
     checkName(name);
+    const folded = name.toLowerCase();
+    if (seen.has(folded)) throw new Error(`zip: ${name} appears twice (names are compared case-insensitively)`);
+    seen.add(folded);
     if (buf.readUInt32LE(loff) !== 0x04034b50) throw new Error(`zip: bad local header for ${name}`);
     const start = loff + 30 + buf.readUInt16LE(loff + 26) + buf.readUInt16LE(loff + 28);
     const raw = buf.subarray(start, start + csize);
     let data;
-    if (method === 0) data = Buffer.from(raw);
-    else if (method === 8) data = inflateRawSync(raw);
+    if (method === 0) data = raw;
+    else if (method === 8) {
+      try { data = inflateRawSync(raw, { maxOutputLength: Math.max(usize, 1) }); }
+      catch { throw new Error(`zip: ${name} does not inflate to its declared ${usize} bytes`); }
+    }
     else throw new Error(`zip: ${name} uses compression method ${method}`);
     if (data.length !== usize) throw new Error(`zip: ${name} is ${data.length} bytes, header says ${usize}`);
     if (crc32(data) !== crc) throw new Error(`zip: ${name} fails its CRC`);
