@@ -1,4 +1,32 @@
-# Score style guide (owner feedback 2026-09-26: "way too upbeat — more like Elden Ring, but simple")
+# Score style guide
+
+## Direction now (owner, 2026-09-26, latest — this wins over anything below it)
+
+"I'd prefer more like a quiet cello that's an echo of great prosperity suddenly
+snuffed out like flame."
+
+- **The quiet cello leads.** Title, the six maps, rest and shop are carried by a
+  solo cello, quietly (vel ≈ 0.35–0.45), with almost nothing else: a faint pad or
+  drone, an occasional bell far away. 2 layers is the norm, 3 at most. No choir
+  in these tracks unless the lore row needs one NAMES phrase, and then barely audible.
+- **Echo of prosperity.** Each of those tracks states GOLDBOUGH (`snuffed()` in
+  `_motifs.mjs`): a warm, noble phrase that rises in the MAJOR — the kingdom at its
+  height — in the track's key or its relative major.
+- **Snuffed like a flame.** The phrase is cut off dead, mid-rise, before its peak
+  (a pinch, not a fade). Then: nothing but the reverb dying and a faint ember
+  drone. Hold that near-silence for a few beats; it is the point. The rest of the
+  track is the aftermath in the minor: the cello alone, slower, lower, FORSAKEN or
+  a broken fragment of GOLDBOUGH that never rises as far again.
+- **Quieter overall:** score `gain` 0.7–0.8; per-second RMS roughly -34..-20 dB.
+  The near-silence after the snuff may dip to about -40 dB for up to ~3 s; no
+  longer.
+- **Battles and victory** keep their current lore scores. Victory may add GOLDBOUGH
+  once, and there alone the phrase is allowed to reach its octave (relit, briefly).
+- The cello is both the memory (GOLDBOUGH) and the climber (FORSAKEN): the one
+  voice left that remembers.
+
+---
+ (owner feedback 2026-09-26: "way too upbeat — more like Elden Ring, but simple")
 
 The model is the *style* of a sombre open-world soulslike score, never its notes:
 no melody, motif, chord progression or title may be copied from any game. Original material only.

@@ -19,6 +19,15 @@
 //              flame is relit, because the Blight is "a name the fire has not
 //              quite finished reading". Victory is the one place it completes.
 //
+//   GOLDBOUGH — the kingdom at its height, remembered. Owner, 2026-09-26: "a
+//              quiet cello that's an echo of great prosperity suddenly snuffed
+//              out like flame". A warm, noble phrase that rises in the MAJOR
+//              (the Goldbough before the Burning) and is cut off dead on its
+//              way up, before the peak it is reaching for: the release is a
+//              pinch, not a fade. What remains is the room's reverb dying and,
+//              under it, a faint low ember. Solo cello, quiet. Written with
+//              snuffed() below, which places the phrase and the cut.
+//
 //   FORSAKEN — the climber, whose name was never written. Solo cello, never a
 //              voice: an open fifth (a blank medallion, "cold iron, blank on
 //              both faces") that rises a minor third and settles. Heard alone,
@@ -37,6 +46,9 @@ const SHAPES = {
   names: [[7, 2], [5, 2], [3, 2], [2, 2], [0, 4]],
   // open fifth, lift a minor third, settle on the fifth
   forsaken: [[0, 3], [7, 3], [10, 2], [7, 4]],
+  // a noble rise in the major: root, third, fifth, sixth, reaching for the
+  // octave — the last note is where the flame is pinched out (see snuffed()).
+  goldbough: [[0, 2], [4, 1], [7, 2], [9, 1], [7, 1], [11, 2]],
 };
 
 /**
@@ -53,3 +65,25 @@ export function motif(root, which, { stretch = 1, unfinished = false } = {}) {
 }
 
 export const MOTIFS = Object.keys(SHAPES);
+
+/**
+ * snuffed(score, beat, root, opts) — write GOLDBOUGH on the cello, quietly,
+ * and pinch it out: every note sings with a normal bow, but the last one (the
+ * leading tone, reaching for the octave it never gets) stops dead after
+ * `cutAt` of its length with a near-instant release. The octave is never
+ * played. Optionally lays a faint ember (the root, two octaves down, very low
+ * and dark) under the silence that follows, so the phrase dies into the key.
+ * Returns the beat after the cut.
+ */
+export function snuffed(score, beat, root, { stretch = 1, vel = 0.42, cutAt = 0.45, ember = true, emberBeats = 8, pan = -0.15, rev = 0.55 } = {}) {
+  const notes = motif(root, 'goldbough', { stretch });
+  let b = beat;
+  notes.forEach(([m, len], i) => {
+    const last = i === notes.length - 1;
+    score.note('cello', b, last ? len * cutAt : len * 0.98, m,
+      { vel: last ? vel * 1.08 : vel, pan, rev, a: 0.3, r: last ? 0.04 : 0.9 });
+    b += last ? len * cutAt : len;
+  });
+  if (ember) score.note('drone', b, emberBeats, n(root) - 24, { vel: 0.22, rev: 0.3, a: 1.5, r: 3, cut: 240 });
+  return b;
+}
