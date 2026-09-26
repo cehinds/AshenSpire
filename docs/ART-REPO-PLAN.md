@@ -28,7 +28,7 @@ questions at the end.
 1. **Where the originals go:** a **tarball attached to a GitHub Release** (for
    example `hd-assets-v1`), **not Git LFS**. LFS is billed per account.
 2. **A committed manifest** lists every file: path, sha256, size and pixel
-   dimensions. It is `content/art-manifest.json` from #1338
+   dimensions. It is `art-manifest.json` from #1338
    (`tools/art-manifest.mjs`).
 3. **A fetch tool** downloads a release and checks every hash before anything
    uses it.
@@ -53,9 +53,9 @@ This repository keeps:
 
 - `assets-mobile/` (the light tier);
 - `map-detail/` and `music/`;
-- `content/art-manifest.json`, pinned to one release tag and its zip's sha256;
+- `art-manifest.json`, pinned to one release tag and its zip's sha256;
 - `tools/fetch-art.mjs`;
-- **the 64 non-art files now under `assets/`**, moved to `content/asset-data/`
+- **the 64 non-art files now under `assets/`**, moved to a tracked root folder such as `asset-data/` (`content/` accepts only compiled sources)
   (or kept in a tracked `assets/` that holds only them; decided in step 4).
   They are:
   - 12 JSON manifests: `equipment/manifest.json`, `poses/pose-sprites.manifest.json`,
@@ -68,7 +68,7 @@ This repository keeps:
 
 1. A PR in AshenSpire-art changes `hd/assets/` (or `art/` and a ship tool).
 2. The owner publishes `hd-assets-v<N+1>`.
-3. A PR here bumps the pin in `content/art-manifest.json`, runs
+3. A PR here bumps the pin in `art-manifest.json`, runs
    `tools/fetch-art.mjs`, and regenerates `assets-mobile/` with
    `tools/mobile-art.mjs` from the fetched cache. `art-manifest.mjs --check`
    then confirms that the light and high tiers agree.
@@ -79,7 +79,7 @@ This repository keeps:
 
 | reader | when it runs | reads | becomes |
 |---|---|---|---|
-| `tools/bundle.mjs --light` / `--mobile` | **every dev/test build** (ci.yml, dev-preview.yml, launch.mjs) | walks `assets/` as the reference list the twins must mirror | reads the id list from `content/art-manifest.json`; no fetch needed |
+| `tools/bundle.mjs --light` / `--mobile` | **every dev/test build** (ci.yml, dev-preview.yml, launch.mjs) | walks `assets/` as the reference list the twins must mirror | reads the id list from `art-manifest.json`; no fetch needed |
 | `tools/bundle.mjs --full-art` | release/main builds, including pages-builds' main build | `assets/` | `.art-cache/hd-assets-v<N>/` filled by `tools/fetch-art.mjs`; each of those jobs fetches first |
 | `tools/mobile-art.mjs --check` | **every push** (ci.yml, dev-preview.yml) | sizes `assets/` against its twins | checks the twins against the manifest's high-tier sizes and dimensions; no fetch |
 | `tools/mobile-art.mjs` (regenerate) | when art changes | `assets/` | the fetched cache |
@@ -124,7 +124,7 @@ Each step is one reviewed PR, or one owner action.
    - Add `tools/fetch-art.mjs`. It downloads the pinned release, checks the
      zip's sha256 and then every file's sha256 against the manifest, unpacks
      into `.art-cache/` (gitignored), and refuses on any mismatch.
-   - Pin the tag and hash in `content/art-manifest.json`.
+   - Pin the tag and hash in `art-manifest.json`.
    - Move the 64 non-art files.
    - Switch every `assets/` reader in the first table to the manifest, or to a
      fetch in the jobs that build full art.
