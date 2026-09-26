@@ -1061,7 +1061,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     ];
     sceneDoor({
       title: `${String(snap.scene.pool || 'The').replace(/^./, (c) => c.toUpperCase())} spoils`,
-      note: stone?.amount > 0 ? `⚒ ${stone.amount} Smithing Stone secured · ${stone.stoneBalanceAfter} total` : '',
+      // Ordinary and refined stones (SPEC §15.3) on the one line, each when paid.
+      note: [
+        stone?.amount > 0 ? `⚒ ${stone.amount} Smithing Stone secured · ${stone.stoneBalanceAfter} total` : '',
+        stone?.refined > 0 ? `${stone.refined} Refined Stone${stone.refined === 1 ? '' : 's'} · ${stone.refinedBalanceAfter} refined` : '',
+      ].filter(Boolean).join(' · '),
       children: [subtitle('Choose a card'), grid, options(takes, { class: 'coop-choices' })],
     });
     app.querySelectorAll('[data-take]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.take === 'relic') pick.takeRelic = true; else if (b.dataset.take === 'flask') pick.flask = true; submit(); }));

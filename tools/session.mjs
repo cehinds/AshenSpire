@@ -816,6 +816,7 @@ export function createSession({ registries, seedString, endless = false, restore
         m.run,
         pool,
         `coop:${session.actNumber}:${session.floor}:${pool}:${m.id}`,
+        m.rng,
       );
       if (m.connected) {
         pending[m.id] = offer;

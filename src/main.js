@@ -27,7 +27,7 @@ import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
 import { stampDeck, addToStorage, carriedIds } from './model/loadout.js';
-import { grantSmithingReward, smithingPlan, commitSmithing } from './model/smithing.js';
+import { grantSmithingReward, smithingPlan, commitSmithing, smithingRewardId, smithingRewardPays } from './model/smithing.js';
 import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode } from './model/worldAtlas.js';
 import { atlasQuestAction, boardQuestResponse } from './engine/quests.js';
 import { mountQuestBoard, QUEST_EXCHANGE_COPY } from './ui/screens/questBoard.js';
@@ -1753,6 +1753,12 @@ function recordCollectedArmament(id, source) {
   return true;
 }
 
+/** A treasure node's Smithing Stone door (SPEC §15.3); null when it pays nothing. */
+function treasureSmithingReward() {
+  if (!smithingRewardPays(registries, 'treasure')) return null;
+  return grantSmithingReward(registries, run, 'treasure', smithingRewardId(run, 'treasure'), rng);
+}
+
 function finishRun(victory) {
   const result = runResult(victory);
   const meta = saves.recordResult(result);
@@ -2103,6 +2109,10 @@ function enterNode(nodeId) {
     case 'treasure': {
       const relicId = rollRelicReward(registries, rng, run.relics);
       const armamentId = rollDrop('treasure');
+      // Treasure pays Smithing Stones through the combat door's faucet (SPEC
+      // §15.3), and only when its tables pay anything: both ship at 0, so no
+      // zero-amount claim is written and a save is unchanged.
+      const smithingStoneReceipt = treasureSmithingReward();
       return mountRewards(app, {
         registries,
         run,
@@ -2110,7 +2120,7 @@ function enterNode(nodeId) {
         rng,
         onCollectArmament: (id) => collectArmament(id, 'treasure'),
         onPersist: persist,
-        rewards: { relicId, armamentId, title: 'TREASURE' },
+        rewards: { relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), title: 'TREASURE' },
         onDone: () => {
           rewardDoneCount++;
           if (run.journey) completeJourneyNode(run.journey);
@@ -2176,8 +2186,9 @@ function enterDungeonLocation() {
     case 'treasure': {
       const relicId = rollRelicReward(registries, rng, run.relics);
       const armamentId = rollDrop('treasure');
+      const smithingStoneReceipt = treasureSmithingReward();
       resolveDungeonNode(run);
-      return beginPendingReward({ relicId, armamentId, title: 'TREASURE' }, { source: 'treasure', after: 'map' });
+      return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
     }
     case 'combat': return enterCombat(run.legacyDungeon.parentNodeId, dungeonNode(run).encounter);
     case 'dialogue': return showDungeonDialogue();
@@ -2429,12 +2440,9 @@ async function onCombatEnd(result, combat, enc) {
   if (run.legacyDungeon) resolveDungeonNode(run);
   else if (run.journey) completeJourneyNode(run.journey);
   run.combatEntered = null;
-  const smithingStoneReceipt = grantSmithingReward(
-    registries,
-    run,
-    enc.pool,
-    `combat:${run.actNumber}:${run.floor}:${run.mapNodeId || 'unknown'}${run.legacyDungeon ? `:${run.legacyDungeon.current}` : ''}:${enc.pool}`,
-  );
+  // The claim id is the one this door has always written (smithingRewardId);
+  // a partial rewardChancePct rolls once on the `smith` stream (SPEC §15.3).
+  const smithingStoneReceipt = grantSmithingReward(registries, run, enc.pool, smithingRewardId(run, enc.pool), rng);
   // The Stone, its idempotent claim, the cleared combat receipt, every RNG
   // counter used to roll the offer, and the offer itself cross one persistence
   // boundary below. A reload therefore resumes the reward menu instead of
@@ -2490,9 +2498,9 @@ async function onCombatEnd(result, combat, enc) {
     cardIds: drafts.length || classDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
-    // Elites are the mid-run source of armaments; ordinary fights are not
-    // (balance.equipment.drops.chance has no 'normal' key, so the roll is a
-    // no-op there rather than a hidden 0%).
+    // Elites are the mid-run source of armaments; ordinary fights are not by
+    // default (balance.equipment.drops.chance.normal ships at 0, which rolls
+    // nothing — SPEC §15.3 — until the owner raises it).
     armamentId: rollDrop(enc.pool),
     smithingStoneReceipt,
     xpGains,
@@ -3386,7 +3394,7 @@ if (shotState === 'combat-test') {
     const pose = shotParams.get('shotReward') || 'full';
     const smithingStoneReceipt = pose === 'empty'
       ? null
-      : grantSmithingReward(registries, run, 'elite', 'shot:reward');
+      : grantSmithingReward(registries, run, 'elite', 'shot:reward', rng);
     // `?shotReward=draft` poses a skill draft in the card row's seat (plan
     // phase 4b): the ledger is given the queued draft the row spends, so the
     // take runs the real door, and the cards are the pool's first three of

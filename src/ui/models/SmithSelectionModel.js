@@ -136,7 +136,10 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       consequence: `Click Upgrade to review the change and cost. Hold Upgrade to commit immediately. ${multiUse ? 'You stay at the Shrine.' : 'The upgrade leaves the Shrine.'}`,
       consequenceBadge: multiUse ? 'STAYS AT SHRINE' : 'LEAVES SHRINE',
       decisionConsequence: multiUse ? 'you stay at the Shrine' : 'and leaves the Shrine',
-      purseLabel: `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'}`,
+      // Refined stones (SPEC §15.3) join the purse line once the run holds
+      // any. They are shown, not spent: spending is §14.4's blacksmith.
+      purseLabel: `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'}`
+        + (plan.refined > 0 ? ` · ${plan.refined} Refined Stone${plan.refined === 1 ? '' : 's'}` : ''),
       candidates: freeze(items),
       selected,
       canConfirm: Boolean(selected?.affordable),

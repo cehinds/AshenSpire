@@ -72,6 +72,13 @@ const BALANCE_DOMAINS = Object.freeze({
   'rest.hpPartialPct': PERCENT,
   'rest.mana.floorPct': PERCENT,
   'atlas.townsPerActMax': Object.freeze({ min: 1 }),
+  // SPEC §15.3's drop chances are percents: a normal fight's armament chance
+  // ships at 0, which a range read off the value would cap at 20.
+  'equipment.drops.chance.normal': PERCENT,
+  'smithing.rewardChancePct.normal': PERCENT,
+  'smithing.rewardChancePct.elite': PERCENT,
+  'smithing.rewardChancePct.boss': PERCENT,
+  'smithing.rewardChancePct.treasure': PERCENT,
   // XP CURVES THIS BUILD LOWERED (owner, 2026-09-24: every base to 5). A range
   // read off 5 tops out at 50, which would refuse an exported file written on
   // the old bases (100, 60, 30) and every larger tuning — and a refused value

@@ -58,7 +58,8 @@ const KINDS = {
     blocked: () => null,
   },
   smithingStone: {
-    present: (r) => Number.isInteger(r.smithingStoneReceipt?.amount) && r.smithingStoneReceipt.amount > 0,
+    // Ordinary stones, refined stones (SPEC §15.3), or both: one row, one receipt.
+    present: (r) => smithingStonesPaid(r.smithingStoneReceipt),
     row: (r) => ({ ...r.smithingStoneReceipt }),
     blocked: () => null,
   },
@@ -131,6 +132,12 @@ const KINDS = {
  * — an unstated fact reads as no room, so a caller that forgets to state one
  * gets a blocked row it can see, never a silent over-grant.
  */
+/** Whether a Smithing Stone receipt paid anything, ordinary or refined. */
+export function smithingStonesPaid(receipt) {
+  const paid = (value) => Number.isInteger(value) && value > 0;
+  return !!receipt && (paid(receipt.amount) || paid(receipt.refined));
+}
+
 export function rewardPlan(rewards = {}, facts = { flaskSlotsFree: 0, armamentSlotsFree: 0 }) {
   const rows = [];
   for (const kind of REWARD_KIND_ORDER) {

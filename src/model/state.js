@@ -602,6 +602,10 @@ export const RUN_SHAPE = [
   { key: 'drawPerTurn', type: 'number', optional: true },
   { key: 'cinders', type: 'number' },
   { key: 'smithingStones', type: 'number', optional: true },
+  // Refined Smithing Stones (SPEC §15.3, the §14.4 refined stone). Optional
+  // with no schema gate: a save without it reads 0, and nothing writes it
+  // until a refined stone is paid.
+  { key: 'smithingStonesRefined', type: 'number', optional: true },
   { key: 'itemUpgradeLevels', type: 'object', optional: true },
   { key: 'armamentLevels', type: 'object', optional: true },
   { key: 'smithingRewardClaims', type: 'array', optional: true },
@@ -829,6 +833,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.level !== undefined) problems.push(...levelProblems(run.level));
   if (run.smithingStones !== undefined && (!Number.isInteger(run.smithingStones) || run.smithingStones < 0)) {
     problems.push('smithingStones must be a non-negative integer');
+  }
+  if (run.smithingStonesRefined !== undefined && (!Number.isInteger(run.smithingStonesRefined) || run.smithingStonesRefined < 0)) {
+    problems.push('smithingStonesRefined must be a non-negative integer');
   }
   if (run.armamentLevels !== undefined && typeOk(run.armamentLevels, 'object')) {
     for (const [pieceId, level] of Object.entries(run.armamentLevels)) {

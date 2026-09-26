@@ -534,6 +534,26 @@ export const balance = {
         '{kind}': 'How many Smithing Stones {pool} pays out.',
       },
     },
+    // THE STONE DOOR'S CHANCE (SPEC §15.3). A stone reward is paid when the
+    // pool pays anything and this percent passes, rolled once per door on the
+    // `smith` stream. 100 is always and rolls nothing, so the shipped table
+    // pays exactly what it always did; 0 is never, and rolls nothing either.
+    rewardChancePct: {
+      normal: 100, elite: 100, boss: 100, treasure: 100,
+      [NOTE]: {
+        '{kind}': 'Percent chance {pool} pays its Smithing Stone reward, ordinary and refined alike. 100 is always and rolls nothing; 0 is never.',
+      },
+    },
+    // Refined stones as a drop — the crafting-material reward. Paid through
+    // the same door and the same chance as the ordinary stones above, into
+    // `run.smithingStonesRefined`. Shipped off everywhere. They are paid and
+    // shown only: spending them is §14.4's blacksmith (`refine.value`).
+    refinedRewardByPool: {
+      normal: 0, elite: 0, boss: 0, treasure: 0,
+      [NOTE]: {
+        '{kind}': 'How many Refined Smithing Stones {pool} pays out, through the same chance as its ordinary stones.',
+      },
+    },
 
     // THE SMITH'S SERVICES, AND WHO OFFERS THEM (owner ruling, 2026-09-03).
     // A smith does three things: upgrade an item (the tier promotion above),
@@ -2020,13 +2040,17 @@ export const balance = {
       reveal: 'teased',
       // Chance a node of each kind yields an armament, and the rarity odds when
       // it does. Bosses always drop; their table is weighted to the good stuff.
+      // `normal` (SPEC §15.3) ships at 0, which returns before any draw, so an
+      // ordinary fight drops nothing until the owner raises it. The roll draws
+      // from the authored weapons only; armour has no run inventory to drop into.
       chance: {
-        treasure: 60, elite: 30, boss: 100, shop: 0,
+        normal: 0, treasure: 60, elite: 30, boss: 100, shop: 0,
         [NOTE]: {
           '{kind}': 'Percent chance {pool} yields an armament.',
         },
       },
       rarityWeights: {
+        normal: { common: 40, uncommon: 45, rare: 15 },
         treasure: { common: 55, uncommon: 35, rare: 10 },
         elite: { common: 40, uncommon: 45, rare: 15 },
         boss: { common: 15, uncommon: 45, rare: 40 },

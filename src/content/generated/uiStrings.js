@@ -227,6 +227,20 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.stone.refinedTitle",
+    "extends": "",
+    "short": "{amount} Refined Stone{plural}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.stone.refinedBody",
+    "extends": "",
+    "short": "<b>{total} refined</b> · kept for the blacksmith.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.kind.card",
     "extends": "",
     "short": "Card",
