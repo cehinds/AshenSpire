@@ -246,12 +246,9 @@ function artifactsOf(b) {
   if (b.source === 'git') {
     const html = committedArtifact(b.sha, 'AshenSpire.html');
     if (!html) return { error: 'its committed HTML can no longer be fetched (LFS object unavailable)' };
-    // ONLY THE EXISTENCE PROBE IS GUARDED. A build that predates the mobile
-    // edition is the expected case; a mobile pointer that fails its SHA-256 is
-    // corruption and committedArtifact throws it.
     let hasMobile = true;
     try { git(['cat-file', '-e', `${b.sha}:${MOBILE_ARTIFACT}`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { hasMobile = false; }
-    return { html, mobile: hasMobile ? committedArtifact(b.sha, MOBILE_ARTIFACT) : null };
+    return committedEditions(html, hasMobile, () => committedArtifact(b.sha, MOBILE_ARTIFACT));
   }
   const fullArt = FULL_ART_BRANCHES.has(b.branch);
   const seeded = MAIN_BUILD && b.branch === 'main' && b.sha === mainHeadSha ? { dir: resolve(MAIN_BUILD) } : null;
@@ -265,6 +262,19 @@ function artifactsOf(b) {
   const mobilePath = join(r.dir, MOBILE_ARTIFACT);
   return { html, mobile: existsSync(mobilePath) ? readFileSync(mobilePath) : null };
 }
+/**
+ * ONLY "THE COMMIT HAS NO MOBILE FILE" MEANS "PREDATES THE EDITION". A commit
+ * that tracks the mobile file whose object cannot be fetched is a build this
+ * run cannot serve whole: it is skipped and named, never published with its
+ * mobile link quietly missing (Codex, #1360). A pointer that fails its SHA-256
+ * is corruption and committedArtifact throws it.
+ */
+function committedEditions(html, hasMobile, fetchMobile) {
+  if (!hasMobile) return { html, mobile: null };
+  const mobile = fetchMobile();
+  if (!mobile) return { error: `its committed ${MOBILE_ARTIFACT} can no longer be fetched (LFS object unavailable)` };
+  return { html, mobile };
+}
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
 let mainHeadSha = null;
 
@@ -273,11 +283,18 @@ function uncommittedNote(branch, current) {
   if (current) return '';
   return `<p class="meta"><strong>This branch's newest build is not on this site</strong> — it is not committed and was not rebuilt here. Each commit's build is the <code>${esc(branch)}-standalone-&lt;commit&gt;</code> artifact of the <a href="${REPO_URL}/actions/workflows/dev-preview.yml?query=branch%3A${encodeURIComponent(branch)}">dev preview workflow</a>. The builds listed here are older.</p>`;
 }
-/** Whether the newest listed build IS the branch head's build (so /latest/ may alias it). */
+/**
+ * Whether the newest SERVED build IS the branch head's build, so /latest/ may
+ * alias it. Decided by ordinal for committed heads too: a head whose committed
+ * build was skipped (its LFS object gone) must not hand /latest/ to an older
+ * one (Codex, #1360). Only a head with no buildordinal.json at all falls back
+ * to "the head tracks its build".
+ */
 function isCurrent(d) {
   const b = d.builds[0];
   if (!b) return d.headTracksBuild !== false;
-  return d.headTracksBuild !== false || (d.headOrdinal != null && b.ordinal === d.headOrdinal);
+  if (d.headOrdinal == null || !Number.isInteger(d.headOrdinal)) return d.headTracksBuild !== false;
+  return b.ordinal === d.headOrdinal;
 }
 function skippedNote(branch) {
   const mine = skippedBuilds.filter((s) => s.branch === branch);
@@ -632,6 +649,11 @@ function assemble(outDir, keep) {
     // an older one, and an alias called latest would launch an ever-staler
     // game; the page says where newer builds are instead.
     const current = isCurrent({ builds, headTracksBuild, headOrdinal });
+    if (builds[0] && !current) {
+      const why = `${branch}/latest/ not published: the head's build ${headOrdinal ?? '(unnamed)'} is not served; the newest served build is ${builds[0].ordinal}`;
+      console.log(`  NO LATEST ${why}`);
+      if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site ${branch} has no /latest/::${why}`);
+    }
     if (builds[0] && current) {
       const latest = join(outDir, branch, 'latest');
       mkdirSync(latest, { recursive: true });
@@ -877,6 +899,20 @@ try {
     rmSync(dir, { recursive: true, force: true });
     if (!repairClean) process.exitCode = 1;
     if (!fixtureOk) process.exitCode = 1;
+    // THE TWO RULES CODEX CAUGHT ON #1360, each checked against a hand-written
+    // answer: an unfetchable mobile object is an error, not "predates"; and a
+    // head whose committed build was skipped gets no /latest/.
+    const rules = [
+      ['a tracked mobile file that cannot be fetched skips the build', Boolean(committedEditions(Buffer.from('x'), true, () => null).error)],
+      ['a commit with no mobile file serves the full one alone', committedEditions(Buffer.from('x'), false, () => { throw new Error('probed'); }).mobile === null],
+      ['a committed head whose build was skipped gets no /latest/', isCurrent({ builds: [{ ordinal: 5 }], headTracksBuild: true, headOrdinal: 6 }) === false],
+      ['a committed head whose build is served gets /latest/', isCurrent({ builds: [{ ordinal: 6 }], headTracksBuild: true, headOrdinal: 6 }) === true],
+      ['a rebuilt head gets /latest/', isCurrent({ builds: [{ ordinal: 7 }], headTracksBuild: false, headOrdinal: 7 }) === true],
+    ];
+    for (const [name, ok] of rules) {
+      if (ok) console.log(`OK ${name}`);
+      else { console.error(`MISS ${name}`); process.exitCode = 1; }
+    }
     // THE VERDICT LINE IS A GRAMMAR, NOT A SENTENCE OF MY CHOOSING. tools/verdict.mjs
     // accepts `label: OK — N <words>, N caught` and nothing else that fits here:
     // a NUMBER right after `OK —`, and the line ENDING at `caught`. This line had
