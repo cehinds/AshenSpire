@@ -21,7 +21,7 @@ const run = (...args) => spawnSync(process.execPath, ['tools/contentreach.mjs', 
 
 // kind:id — first seen by `node tools/contentreach.mjs` at dev = 7fb05c9a9.
 const KNOWN_ORPHANS = [
-  // Empty since feature/orphan-card-routes (FINISH §2, owner decision D-n):
+  // Empty since feature/orphan-card-routes (FINISH §2, docs/FINISH.md D22):
   // the five class cards joined their class cardPool at their authored rarity,
   // and Wound / Slimed gained enemy injectors (Court Surgeon scalpel, Husk
   // Brute bellow). A new orphan fails here; route it, don't pin it.
