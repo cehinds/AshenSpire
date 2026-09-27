@@ -5,6 +5,17 @@
 #   /<branch>/<ordinal>/   that exact build, playable (byte-identical to the commit's AshenSpire.html)
 #   /<branch>/latest/      alias for the branch's newest build
 #
+# BUILDS THAT ARE NO LONGER COMMITTED ARE REBUILT HERE. Since #1332 (2026-09-26)
+# dev commits no built HTML (test, release and main follow on promotion), so git
+# names each build (buildordinal.json) but no longer holds it. The assemble step
+# passes --build-missing: tools/pages-site.mjs rebuilds each such build from its
+# own commit's source (light art on dev/test, --full-art on release/main — the
+# tiers dev-preview.yml builds), refuses one whose rebuild moves the committed
+# box, and serves the rest at /<branch>/<ordinal>/ and /<branch>/latest/.
+# Builds that are still committed are read from git as before, fetching only
+# their own LFS objects; one whose object is gone (the coming purge,
+# docs/ART-REPO-PLAN.md step 7) is skipped and named, not fatal.
+#
 # Everything the site served before (/AshenSpire.html, /docs/…) is still served:
 # the whole `main` tree is the base of the artifact and the only replaced file is
 # the root index.html (main's own is kept at /index-game.html).
@@ -140,6 +151,9 @@ permissions:
 jobs:
   assemble:
     runs-on: ubuntu-latest
+    # Bounded: about 20 light rebuilds (~20 s each) plus hydrating the committed
+    # builds. A run that needs more than this is broken, not slow.
+    timeout-minutes: 45
     # pages: read is what actions/configure-pages needs to read the site's
     # configuration; it deploys nothing. The write and the OIDC token stay on
     # the deploy job alone.
@@ -149,7 +163,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          lfs: true
+          # NO LFS CHECKOUT. Nothing here reads the working tree's LFS files: the
+          # generator hydrates only the committed builds it lists
+          # (tools/git-artifact.mjs smudges one object on demand), and it rebuilds
+          # the uncommitted ones from source. Checking out with LFS pulled every
+          # LFS file at the pushed head, and it is a precondition of the LFS purge
+          # (docs/ART-REPO-PLAN.md step 7) that this job stop doing so.
+          lfs: false
           fetch-depth: 0
       # ONE MISSING BRANCH USED TO TAKE DOWN EVERY RUN. `git fetch origin dev
       # test release main` is atomic: `fatal: couldn't find remote ref test`
@@ -178,6 +198,12 @@ jobs:
             echo "::warning title=A published branch is missing::not on origin:$missing — the site will be assembled without it"
           fi
       - uses: ./.github/actions/setup-node
+      # The checkout above takes no LFS, so the committed builds the generator
+      # lists are hydrated one object at a time with `git lfs smudge`. Without
+      # git-lfs that fails, and the generator throws rather than calling the
+      # builds purged — so say it here, first, by name.
+      - name: git-lfs is available to hydrate committed builds on demand
+        run: git lfs version
       # NO RELEASE-SERIES GATE HERE, and its absence is the point. This workflow
       # runs on pushes to dev, test, release AND main, and it assembles a site
       # out of all four branches' histories — series deliberately mixed, which
@@ -211,8 +237,16 @@ jobs:
           mkdir -p "$RUNNER_TEMP/main-build"
           cp "$RUNNER_TEMP/main/AshenSpire.html" "$RUNNER_TEMP/main/AshenSpire-mobile.html" "$RUNNER_TEMP/main-build/"
           echo "MAIN_BUILD_ARGS=--main-build $RUNNER_TEMP/main-build" >> "$GITHUB_ENV"
-      - name: Assemble the site from git history — every listed build proven byte-identical
-        run: node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "${{ inputs.keep || '10' }}" ${MAIN_BUILD_ARGS:-}
+      - name: Assemble the site from git history — committed builds proven byte-identical, uncommitted ones rebuilt from their commit
+        # `keep` from a dispatch is clamped here (1..25) and again in the
+        # generator: each listed uncommitted build is a rebuild.
+        env:
+          KEEP_INPUT: ${{ inputs.keep || '10' }}
+        run: |
+          keep=$(printf '%s' "$KEEP_INPUT" | tr -cd '0-9' | cut -c1-3); keep=${keep:-10}
+          if [ "$keep" -lt 1 ]; then keep=1; fi
+          if [ "$keep" -gt 25 ]; then keep=25; fi
+          node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "$keep" --build-missing "$RUNNER_TEMP/pages-rebuilds" ${MAIN_BUILD_ARGS:-}
       - name: The generator's own drift plant is still caught
         run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest ${MAIN_BUILD_ARGS:-}
       - uses: actions/configure-pages@v5

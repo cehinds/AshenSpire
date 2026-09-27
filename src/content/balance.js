@@ -622,19 +622,26 @@ export const balance = {
   // THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): XP from a
   // won fight and from each kill by the door's pool (and per quest once phase
   // 10a's door pays it), on the one curve shape every track shares —
-  // `xpToNext(n) = round(base × growth^(n − 1), roundTo)`. Curve receipt at
-  // these numbers: the steps from level 1 cost 100, 120, 130, 150, 170, 200,
-  // 230, 270, 310, 350 — 2,030 XP to level 11. The owner's band is 10–20
-  // levels a full run and `tools/runsim.mjs --xp-levels` measures it (a
-  // greedy bot, the ceiling a real climb approaches).
+  // `xpToNext(n) = round(base × growth^(n − 1), roundTo)`, never below one
+  // `roundTo`. Curve receipt at the live numbers (base 5, growth 1.15, roundTo
+  // 10, the owner's 2026-09-24 lowering): the steps from level 1 cost 10, 10,
+  // 10, 10, 10, 10, 10, 10, 20, 20 — 120 XP to level 11, and 460 to level 20.
+  // (The proposal's curve, base 100 — 100, 120, 130, 150 … 2,030 XP to level
+  // 11 — is gone with that lowering.) The owner's band is 10–20 levels a full
+  // run and `tools/runsim.mjs --xp-levels` measures it (a greedy bot, the
+  // ceiling a real climb approaches). Settings → Progression → Experience
+  // draws the Levelling preview (SPEC §15.2, model/levelup.js `levelPace`):
+  // at these numbers a normal fight (3 kills, 30 XP) is worth 3 levels from
+  // level 1, an elite (90 XP) 8 and a boss (215 XP) 13.
   //
   // THE AWARDS, MEASURED (2026-09-19, 4 runs/class). The proposal's table
   // (20 a win; 10 / 30 / 80 a kill; 50 a quest) assumed about 36 normal
   // fights, 6 elites and 3 bosses a run; this map pays fewer, and at those
-  // numbers a full run earned ~1,030 XP — 6.7 levels, under the band. The
-  // curve is the proposal's and stays (its receipt above is quoted in SPEC);
-  // the awards are what a run of THIS length has to pay to land in it, so
-  // they were raised ×2.5 and re-measured — see the fleet line the sim prints.
+  // numbers a full run earned ~1,030 XP — 6.7 levels, under the band, on the
+  // proposal's base-100 curve; the awards were raised ×2.5 and re-measured
+  // for a run of THIS length (see the fleet line the sim prints). The curve
+  // was then lowered to base 5 without re-measuring the awards, which is why
+  // the pace is fast now; the Levelling preview is where the owner tunes it.
   // Cinders buy no level any more: the ladder that sat here (firstCost /
   // costStep, measured twice) is gone with the purse.
   level: {
@@ -645,6 +652,14 @@ export const balance = {
         growth: 'The character level curve: how much dearer each step is than the one before it.',
         roundTo: 'The character level curve: every step cost is rounded to a multiple of this.',
       },
+    },
+    // THE LEVELLING CAP (SPEC §15.2). 0 is no cap, as shipped. Above 0, one
+    // award (a fight's XP, or a quest's) never raises the level by more than
+    // this, and the XP past the cap is DISCARDED: the ledger keeps at most one
+    // XP short of the next step, so the progress bar never reads past full.
+    maxLevelsPerFight: 0,
+    [NOTE]: {
+      maxLevelsPerFight: 'The most character levels one fight or quest can raise you; 0 is no cap. XP past the cap is lost, leaving you just short of the next level.',
     },
     // The maxima bump cadence is authored on the derived-stat rows that carry
     // it (content/derivedStats.js `perLevel`), where the snapshot keeps it.
