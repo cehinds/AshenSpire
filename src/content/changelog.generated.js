@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1385",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Bigger fighters on phones, a Developer tools switch, and recovery settings",
+    "detail": "Combat figures were squeezed into narrow spaces on a phone and drew about half as tall as the room allows; they now draw about twice as tall, and a bigger enemy size setting no longer pushes a foe off the edge of the screen. Settings → Advanced now always shows a Developer tools row: on a downloaded build it is a switch that shows the tuning and diagnostics sections; on the release builds it says they are locked and where to find them. A new Advanced → Recovery section sets how HP, Stamina and Mana come back: each turn (points or a share of the maximum), only after going unused for some turns, only every few rounds, after a won fight, and at every Rest. Out of the box nothing plays differently: Stamina still recovers after a turn you spend none, and nothing else recovers on its own.",
+    "build": "0.7.1.674",
+    "pullRequest": 1385,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1385"
+  },
+  {
     "id": "pr-1350",
     "date": "2026-09-27",
     "group": "2026-09-27",
