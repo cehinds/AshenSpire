@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Behind the scenes: downloading the high-res art is safe when two copies run at once",
     "detail": "Nothing you play changes. The tool that fetches the optional high-res art no longer fails when another copy of it replaces the same folder at the same moment.",
-    "build": "0.7.1.636",
+    "build": "0.7.1.637",
     "pullRequest": 1370,
     "url": "https://github.com/cehinds/AshenSpire/pull/1370"
+  },
+  {
+    "id": "pr-1366",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: loading a save that can't open from the in-game menu is checked in a real browser",
+    "detail": "Nothing you play changes. When a load from the in-game menu's quick navigation is refused, pressing \"Keep playing\" puts keyboard and controller focus back on the menu button you opened it from. A browser test now proves that, and fails if the menu closes before the load's outcome is known.",
+    "build": "0.7.1.636",
+    "pullRequest": 1366,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1366"
   },
   {
     "id": "pr-1369",
