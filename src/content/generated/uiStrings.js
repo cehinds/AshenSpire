@@ -2985,6 +2985,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "blacksmith.refuse.stackCapped",
+    "extends": "",
+    "short": "{name} is already at its deck limit of {limit}; a further copy could never be played or seated.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "blacksmith.refuse.upgradeNone",
     "extends": "",
     "short": "{name} has no upgrade the blacksmith can make now.",

@@ -458,6 +458,25 @@ test('FINISH: a granted card or a Strike cannot be stacked, each refused by name
   assert.ok(s.reason.includes(OUT.cards.get('strike').name), s.reason);
 });
 
+test('Codex on #1378: a technique Power at its deck copy limit cannot be stacked, by name; under the limit, or an extractable art, it can', () => {
+  const run = createRunState({ seed: 21, classId: 'rogue', registries: OUT });
+  run.cinders = 5000;
+  run.smithingStones = 50;
+  run.deck.push({ instanceId: 'probe:afterimage', cardId: 'afterimageCard', upgraded: false });
+  run.shopStock = buildBlacksmithStock(OUT, createRng(21), run);
+  const capped = stackCopyPlan(OUT, run, 'afterimageCard');
+  assert.equal(capped.ok, false, 'classSpellPowerCopies 1 and one owned: no room');
+  assert.ok(capped.reason.includes(OUT.cards.get('afterimageCard').name), capped.reason);
+  assert.equal(capped.reason, shopSentence('blacksmith.refuse.stackCapped', { name: OUT.cards.get('afterimageCard').name, limit: 1 }));
+  assert.throws(() => commitStackCopy(OUT, run, { ...capped, ok: true }), /deck limit/, 'the commit refuses it too, before anything is paid');
+  assert.equal(run.smithingStones, 50);
+  // With room under the limit, the same Power stacks.
+  const roomy = stackCopyPlan(OUT, run, 'afterimageCard', { settings: { classSpellPowerCopies: 2 } });
+  assert.equal(roomy.ok, true, roomy.reason);
+  commitStackCopy(OUT, run, roomy, { settings: { classSpellPowerCopies: 2 } });
+  assert.equal(ownedCopies(run, 'afterimageCard'), 2);
+});
+
 // ---------------------------------------------------------------------------
 // Schema 17 and the load door
 // ---------------------------------------------------------------------------

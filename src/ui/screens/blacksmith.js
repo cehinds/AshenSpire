@@ -49,6 +49,9 @@ const GLYPH = Object.freeze({
 
 export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged = () => {}, onArmamentPurchased = () => {}, priceMult = 1, hud = null }) {
   const stock = run.shopStock;
+  // The profile's settings, read live: the deck copy limit a stacked copy
+  // must fit (SPEC §14.4, §14.1).
+  const settings = (meta && meta.settings) || {};
   let activeCategory = null;
   let layout = null;
 
@@ -167,9 +170,9 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     },
     stackCopy(shelf) {
       for (const cardId of stackableCardIds(registries, run)) {
-        const plan = stackCopyPlan(registries, run, cardId, { priceMult });
+        const plan = stackCopyPlan(registries, run, cardId, { priceMult, settings });
         const host = tile(GLYPH.stackCopy, plan.name, t('blacksmith.stack.line', { name: plan.name, owned: plan.owned }));
-        actionButton(host, { label: t('blacksmith.action.stack', { stones: plan.stones, cost: plan.cost }), plan, commit: () => commitStackCopy(registries, run, stackCopyPlan(registries, run, cardId, { priceMult }), { priceMult }) });
+        actionButton(host, { label: t('blacksmith.action.stack', { stones: plan.stones, cost: plan.cost }), plan, commit: () => commitStackCopy(registries, run, stackCopyPlan(registries, run, cardId, { priceMult, settings }), { priceMult, settings }) });
         shelf.append(host);
       }
     },

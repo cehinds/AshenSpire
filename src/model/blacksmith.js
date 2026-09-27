@@ -37,6 +37,7 @@ import { carriedIds, isItemOwned } from './loadout.js';
 import { smithingPlan, commitItemUpgrade, SMITHING_PURSES } from './smithing.js';
 import { extractionPlan, installPlan, commitExtraction, commitInstall } from './cardExtraction.js';
 import { deckRules } from '../content/deckRules.js';
+import { deckCopyLimit } from './deckRules.js';
 
 const say = (id, tokens = {}) => shopSentence(id, tokens);
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -332,7 +333,11 @@ export function commitUpgradeArt(registries, run, quote) {
 // Stacking a copy
 // ---------------------------------------------------------------------------
 
-export function stackCopyPlan(registries, run, cardId, { priceMult = 1 } = {}) {
+// A STACKED COPY MUST BE USABLE (SPEC §14.4, Codex on #1378): an extractable
+// art can always be seated in a mount; any other card only while the §14.1
+// deck copy limit still has room for one more owned copy. `settings` is the
+// profile's, read live as the deck editor reads it.
+export function stackCopyPlan(registries, run, cardId, { priceMult = 1, settings = {} } = {}) {
   const stack = blacksmithOffering(registries, 'stackCopy')?.stack || null;
   const def = registries.cards.get(cardId);
   const name = def?.name || cardId;
@@ -347,14 +352,16 @@ export function stackCopyPlan(registries, run, cardId, { priceMult = 1 } = {}) {
   else if (!copies.length) reason = say('blacksmith.refuse.stackUnowned', { name });
   else if (!copies.some(isLooseCard)) reason = say('blacksmith.refuse.stackGranted', { name });
   else if (!isArt(registries, cardId) && !isTechnique(registries, cardId)) reason = say('blacksmith.refuse.stackKind', { name });
-  else if (stones(run) < stonePrice) reason = say('blacksmith.refuse.stones', { cost: stonePrice, have: stones(run) });
+  else if (!isArt(registries, cardId) && copies.length >= deckCopyLimit(registries, cardId, settings, run.class)) {
+    reason = say('blacksmith.refuse.stackCapped', { name, limit: deckCopyLimit(registries, cardId, settings, run.class) });
+  } else if (stones(run) < stonePrice) reason = say('blacksmith.refuse.stones', { cost: stonePrice, have: stones(run) });
   else if (!affordable(run, cost)) reason = say('shop.refuse.cinders');
   return { ok: !reason, reason, cardId, name, owned: copies.length, stones: stonePrice, cost, revision: blacksmithRevision(run) };
 }
 
 /** The new copy is `{ instanceId: 'stack:<n>:<cardId>', cardId, upgraded: false }`, in the sideboard, with no mods. */
-export function commitStackCopy(registries, run, quote, { priceMult = 1 } = {}) {
-  const plan = stackCopyPlan(registries, run, quote.cardId, { priceMult });
+export function commitStackCopy(registries, run, quote, { priceMult = 1, settings = {} } = {}) {
+  const plan = stackCopyPlan(registries, run, quote.cardId, { priceMult, settings });
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan);
   const taken = new Set(owned(run).map((card) => card.instanceId));

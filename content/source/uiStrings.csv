@@ -471,6 +471,7 @@ blacksmith.refuse.stackBasic,,{name} is a basic card; you already have it withou
 blacksmith.refuse.stackGranted,,{name} is granted by an item; only a loose copy you own can be stacked.,,
 blacksmith.refuse.stackUnowned,,You own no {name} to stack.,,
 blacksmith.refuse.stackKind,,{name} is neither a weapon art nor a technique.,,
+blacksmith.refuse.stackCapped,,"{name} is already at its deck limit of {limit}; a further copy could never be played or seated.",,
 blacksmith.refuse.upgradeNone,,{name} has no upgrade the blacksmith can make now.,,
 blacksmith.refuse.noMount,,That mount cannot be worked now.,,
 settings.shops.refuse.sigilSlotBase,,"Blacksmith · Sigil slots: a base of {base} is refused; it must not be above the most slots, {max}, which counts the base. The authored shops stay in force until it is fixed.",,
