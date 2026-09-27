@@ -369,3 +369,13 @@ test('content validation refuses a malformed deck-rules table by name', async ()
   const paths = validateContent({ ...contentBundle, deckRules: bad }).errors.map((e) => e.path);
   for (const path of ['deckRules.defaults.deckMinSize', 'deckRules.singleCopy.types', 'deckRules.unlimitedCardIds[1]']) assert.ok(paths.includes(path), path);
 });
+
+test('a save whose sideboard repeats an owned id is refused at the load door', async () => {
+  const { validateRunShape } = await import('../src/model/state.js');
+  const run = freshRun();
+  const card = run.deck.find((c) => !c.equipmentRole && !c.grantedBy) || run.deck[0];
+  run.sideboard = [{ ...card }];
+  assert.ok(validateRunShape(run).some((p) => /already owned/.test(p)), 'a deck id repeated in the sideboard is named');
+  run.sideboard = [{ instanceId: 'x1', cardId: card.cardId }, { instanceId: 'x1', cardId: card.cardId }];
+  assert.ok(validateRunShape(run).some((p) => /already owned/.test(p)), 'two sideboard cards with one id are named');
+});

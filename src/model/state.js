@@ -794,6 +794,16 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
         problems.push(`sideboard[${i}] must be a card instance with instanceId and cardId`);
       }
     });
+    // A set-aside card keeps its identity, so it may share an id with no other
+    // owned card: returning it would put two instances with one id in play.
+    // Only ids the sideboard holds are checked — a pre-§14 deck is not re-judged.
+    const seen = new Set((Array.isArray(run.deck) ? run.deck : []).map((c) => c && c.instanceId));
+    run.sideboard.forEach((card, i) => {
+      const id = card && card.instanceId;
+      if (typeof id !== 'string' || !id) return;
+      if (seen.has(id)) problems.push(`sideboard[${i}] instanceId '${id}' is already owned by another card (deck ∪ sideboard ids must be unique)`);
+      seen.add(id);
+    });
   }
   if (run.editMintCounter !== undefined && (!Number.isInteger(run.editMintCounter) || run.editMintCounter < 0)) {
     problems.push('editMintCounter must be a non-negative integer');
