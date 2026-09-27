@@ -4,6 +4,8 @@ import { resolveLocationId } from '../../model/locations.js';
 import { smithingPlan } from '../../model/smithing.js';
 import { levelUpPlan } from '../../model/levelup.js';
 import { graceRefillPlan, flaskChargePlan, refillFlaskCharges } from '../../model/gracerefill.js';
+import { shopStockOfferings, MARKET_SHELVES } from '../../model/shopKinds.js';
+import { t } from '../strings.js';
 
 // Read-only projection of the same plans used when a service is activated.
 // No stock rolls, resource changes, completion writes, or node-specific rules.
@@ -65,7 +67,16 @@ export function localServiceModel({ handlerId, registries, run, state = {}, heal
     if (!plan.candidates.length) result.facts.push('No carried equipment has an available upgrade.');
     result.action = 'Compare equipment upgrades';
   } else if (handlerId === 'shop') {
-    result.benefit = 'Spend cinders on cards, equipment, weapon arts, relics, or flasks from this market’s stock. You can also remove a card from your deck.';
+    // WHAT THIS VISIT LAID OUT (SPEC §14.2): Remove is promised only when the
+    // rolled stock offers it; before the first entry nothing is rolled yet,
+    // so it is only a possibility.
+    // Once rolled, the sentence names only the shelves this visit laid out
+    // (Codex, on #1371); before that it describes the market in general.
+    const offerings = state.stock ? shopStockOfferings(state.stock) : null;
+    const removeOffered = offerings ? offerings.includes('remove') : null;
+    const shelves = offerings ? MARKET_SHELVES.filter((id) => offerings.includes(id)).map((id) => t(`settings.shops.offering.${id}`).toLowerCase()) : [];
+    const lead = !offerings ? t('atlas.shop.benefit') : shelves.length ? t('atlas.shop.benefit.rolled', { shelves: shelves.join(', ') }) : '';
+    result.benefit = [lead, removeOffered === null ? t('atlas.shop.benefit.removeMaybe') : removeOffered ? t('atlas.shop.benefit.remove') : ''].filter(Boolean).join(' ');
     result.facts.push(`You have ${run.cinders} cinders. Browsing is free; purchases require confirmation where offered.`);
     if (state.stock) {
       const stock = state.stock;
@@ -74,7 +85,7 @@ export function localServiceModel({ handlerId, registries, run, state = {}, heal
         const prices = [...new Set(items.map(item=>item.cost).filter(Number.isFinite))].sort((a,b)=>a-b);
         if (items.length) result.facts.push(`${({weaponArts:'Weapon arts',armaments:'Equipment',cards:'Cards',relics:'Relics',flasks:'Flasks'})[key]}: ${items.length} remaining${prices.length ? ` · prices ${prices.join(', ')} cinders` : ''}.`);
       }
-      result.facts.push(`Remove a card: ${stock.removeCost} cinders. You must keep at least one card.`);
+      if (removeOffered) result.facts.push(t('atlas.shop.fact.remove', { cost: stock.removeCost }));
     } else result.facts.push('Enter the market to reveal this visit’s inventory and exact prices. Inspection does not roll or reserve stock.');
     result.action = 'Browse market';
   } else if (handlerId === 'lore') {

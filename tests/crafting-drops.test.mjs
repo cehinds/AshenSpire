@@ -14,7 +14,7 @@ import {
   commitItemUpgrade, grantSmithingReward, initializeRunSmithing, smithingPlan, smithingRewardId, smithingRewardPays,
 } from '../src/model/smithing.js';
 import { normalizeSmithingRules } from '../src/model/smithingRules.js';
-import { createRunState, deserializeRun, serializeRun, validateRunShape } from '../src/model/state.js';
+import { createRunState, deserializeRun, serializeRun, validateRunShape, RUN_SCHEMA_VERSION } from '../src/model/state.js';
 import { rewardPlan } from '../src/model/rewardplan.js';
 import { validateContent } from '../src/model/validate.js';
 
@@ -220,7 +220,8 @@ test('Falsify: a refined stone reward pays and survives a reload', () => {
 
 test('run.smithingStonesRefined rides schema 13: a fresh run writes 0, a missing or bad value is refused by name', () => {
   const run = freshRun();
-  assert.equal(run.schemaVersion, 13);
+  // 13 when the purse arrived; a later bump (14, SPEC §14.2) keeps it.
+  assert.equal(run.schemaVersion, RUN_SCHEMA_VERSION);
   assert.equal(run.smithingStonesRefined, 0);
   assert.deepEqual(validateRunShape(run), []);
   const { smithingStonesRefined: _gone, ...missing } = run;
@@ -374,7 +375,7 @@ test('schema-11 and -12 saves load with an empty refined purse, and the v13 capt
     storage.setItem(RUN_KEY, corpus.versions[v].bytes);
     const run = createSaveManager(storage).loadRun(REG);
     assert.ok(run, `the schema-${v} save loads`);
-    assert.equal(run.schemaVersion, 13);
+    assert.equal(run.schemaVersion, RUN_SCHEMA_VERSION);
     assert.equal(run.smithingStonesRefined, 0);
   }
   for (const v of ['11', '12']) assert.equal('smithingStonesRefined' in JSON.parse(corpus.versions[v].bytes), false, `v${v} was written without it`);
