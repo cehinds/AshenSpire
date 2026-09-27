@@ -432,7 +432,7 @@ test('FINISH: with every eligible event seen the quest event is not stocked, and
 // ---------------------------------------------------------------------------
 
 test('consumables and companions ride schema 16: the bump, the appended corpus entry and the migration defaults', () => {
-  assert.equal(RUN_SCHEMA_VERSION, 16);
+  assert.ok(RUN_SCHEMA_VERSION >= 16, 'schema 16 or later (step 6 bumps to 17)');
   const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
   const v16 = JSON.parse(corpus.versions['16'].bytes);
   assert.equal(v16.schemaVersion, 16);
@@ -445,7 +445,7 @@ test('consumables and companions ride schema 16: the bump, the appended corpus e
   storage.setItem(RUN_KEY, JSON.stringify(v15));
   const run = createSaveManager(storage).loadRun(REG);
   assert.ok(run);
-  assert.equal(run.schemaVersion, 16);
+  assert.equal(run.schemaVersion, RUN_SCHEMA_VERSION, 'brought forward to the current schema');
   assert.deepEqual(run.consumables, {});
   assert.deepEqual(run.companions, []);
   const fresh = createRunState({ seed: 3, classId: 'reaver', registries: REG });

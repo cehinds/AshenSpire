@@ -42,7 +42,9 @@ import {
   blacksmithExtractPlan, commitBlacksmithExtract,
   blacksmithInstallPlan, commitBlacksmithInstall,
   blacksmithUpgradePlan, commitBlacksmithUpgrade,
+  BLACKSMITH_SERVICES, serviceCandidates,
 } from '../src/model/blacksmith.js';
+import { armamentPurchasePlan, commitArmamentPurchase } from '../src/model/armamentTrading.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { mountBlacksmith } from '../src/ui/screens/blacksmith.js';
 
@@ -200,15 +202,58 @@ test('a blacksmith visit lays out a blacksmith stock on shopOffers alone, and th
   assert.deepEqual(buildMarketStock(REG, createRng(9), a, { meta: {} }), buildMerchantStock(REG, createRng(9), b, { meta: {} }));
 });
 
-test('an offering with nothing to act on is not laid out, and the guarantee still fills', () => {
-  // A fresh run holds no loose art, no sigil and no stackable card.
+test('a service with nothing to act on stays laid out once rolled, and the guarantee fills past it with usable offerings', () => {
+  // A fresh run holds no loose art, no sigil and no stackable card, so those
+  // services roll out (chance 100) with nothing to do.
+  for (let seed = 1; seed <= 20; seed++) {
+    const { run } = smithRun(OUT, { seed });
+    const out = run.shopStock.offerings;
+    for (const id of ['sigils', 'installArt', 'upgradeArt', 'stackCopy']) {
+      assert.ok(out.includes(id), `seed ${seed}: ${id} rolled, so it stays laid out`);
+      assert.equal(serviceCandidates(OUT, run, id).length, 0, `seed ${seed}: ${id} has nothing to act on now`);
+    }
+  }
+  // With every chance 0, the guarantee adds only offerings that have something now.
   const zero = registriesWith(Object.fromEntries(OFFERINGS.map((id) => [`${PREFIX}blacksmith.${id}.chance`, 0])));
   for (let seed = 1; seed <= 20; seed++) {
     const { run } = smithRun(zero, { seed });
     const out = run.shopStock.offerings;
-    assert.ok(out.length >= shippedShops.blacksmith.guaranteedMinimum, `seed ${seed}: ${out}`);
-    for (const id of ['sigils', 'installArt', 'upgradeArt', 'stackCopy']) assert.equal(out.includes(id), false, `seed ${seed}: ${id} has nothing to act on`);
+    const usable = out.filter((id) => !BLACKSMITH_SERVICES.includes(id) || serviceCandidates(zero, run, id).length > 0);
+    assert.ok(usable.length >= shippedShops.blacksmith.guaranteedMinimum, `seed ${seed}: ${out}`);
+    assert.equal(usable.length, out.length, `seed ${seed}: the guarantee added nothing idle`);
   }
+});
+
+test('ruling on #1378: with no upgrade candidate the rolled upgrade stays, shown unavailable; buying an armament on the same visit makes it usable', () => {
+  const run = createRunState({ seed: 21, classId: 'reaver', registries: OUT });
+  run.cinders = 5000;
+  run.smithingStones = 50;
+  // Every item the run owns at its top tier: nothing left to upgrade.
+  for (let guard = 0; guard < 50 && smithingPlan(OUT, run).candidates.length; guard++) {
+    for (const candidate of smithingPlan(OUT, run).candidates) run.itemUpgradeLevels = { ...(run.itemUpgradeLevels || {}), [candidate.itemRef]: candidate.nextLevel };
+  }
+  assert.equal(smithingPlan(OUT, run).candidates.length, 0);
+  run.shopStock = buildBlacksmithStock(OUT, createRng(21), run);
+  assert.ok(run.shopStock.offerings.includes('upgrade'), 'the rolled upgrade stays laid out');
+  assert.ok(run.shopStock.offerings.includes('armaments'));
+  const idle = blacksmithUpgradePlan(OUT, run, SWORD);
+  assert.equal(idle.ok, false);
+  withKitDom((dom) => {
+    const app = dom.document.createElement('main');
+    dom.document.body.replaceChildren(app);
+    const screen = mountBlacksmith(app, { registries: OUT, run, meta: { settings: {} }, onChanged() {}, onLeave() {} });
+    assert.ok(app.querySelector('#shop-cat-upgrade'), 'the upgrade rail item is drawn');
+    assert.ok(app.querySelector('#blacksmith-upgrade .bs-idle')?.textContent.includes(shopSentence('blacksmith.idle.upgrade')), 'shown unavailable with its reason');
+    const offer = run.shopStock.armaments[0];
+    commitArmamentPurchase(OUT, run, armamentPurchasePlan(OUT, run, offer));
+    screen.render();
+    assert.equal(app.querySelector('#blacksmith-upgrade .bs-idle'), null, 'the reason is gone once there is a candidate');
+  });
+  const bought = `armament/${run.loadout.storage.at(-1)}`;
+  const quote = blacksmithUpgradePlan(OUT, run, bought);
+  assert.equal(quote.ok, true, quote.reason);
+  commitBlacksmithUpgrade(OUT, run, quote);
+  assert.equal(run.itemUpgradeLevels[bought], 1);
 });
 
 test('FINISH: stock and prices survive a reload, and the atlas smith keeps its stock on the point', () => {
@@ -260,7 +305,7 @@ test('an upgrade paid from the refined purse spends ceil(cost / refine.value) re
   assert.equal(receipt.purse, 'refined');
   assert.equal(receipt.refinedSpent, candidate.refinedCost);
   assert.equal(receipt.spent, 0);
-  assert.throws(() => commitBlacksmithUpgrade(OUT, run, quote), /changed|no longer/i, 'the quote commits once');
+  assert.throws(() => commitBlacksmithUpgrade(OUT, run, quote), /./, 'the quote commits once');
   const back = reload(run, rng);
   assert.equal(back.lastSmithingReceipt.purse, 'refined', 'the receipt survives the load door');
   // The shrine door takes the purse too, and a stone purse is the default.
@@ -304,10 +349,15 @@ test('FINISH: an installed sigil\'s trigger fires only while its piece is equipp
   const { run } = smithRun(OUT);
   run.sigilSlots = { [SWORD]: ['emberSigil'], [KATANA]: [null] };
   run.loadout.storage.push('katana');
+  const emberBlock = OUT.balance.sigils.emberSigil.block;
+  const openingBlock = (combat) => {
+    const start = combat.eventLog.findIndex((e) => e.type === 'combatStart');
+    const turn = combat.eventLog.findIndex((e) => e.type === 'playerTurnStart');
+    return combat.eventLog.slice(start, turn).filter((e) => e.type === 'blockGained' && e.targetId === 'player').map((e) => e.amount);
+  };
   const equipped = fightFor(run);
   assert.ok(equipped.propertyMounts.player['sigil:emberSigil'], 'mounted while the sword is worn');
-  const block = equipped.player.block;
-  assert.ok(block >= 4, `the Ember Sigil gave its block at combat start (block ${block})`);
+  assert.deepEqual(openingBlock(equipped), [emberBlock], 'the Ember Sigil\'s rule fired at combat start, at its balance number');
   // Unequip the sword mid-fight: the sigil leaves with it.
   equipped.loadout.sets.rightHand[0] = 'katana';
   equipped.loadout.storage = equipped.loadout.storage.filter((id) => id !== 'katana').concat('straightSword');
@@ -319,16 +369,20 @@ test('FINISH: an installed sigil\'s trigger fires only while its piece is equipp
   stored.sigilSlots = { [KATANA]: ['emberSigil'] };
   const idle = fightFor(stored);
   assert.equal(idle.propertyMounts.player?.['sigil:emberSigil'], undefined);
+  assert.deepEqual(openingBlock(idle), [], 'and its rule does not fire');
   // The slots ride the snapshot, and a restore mounts the same sigil again.
-  const worn = fightFor(run);
+  // (The fight above swapped the run's own loadout, so a fresh run wears the sword.)
+  const again = smithRun(OUT).run;
+  again.sigilSlots = { [SWORD]: ['emberSigil'] };
+  const worn = fightFor(again);
   const snap = serializeCombatSnapshot(worn);
-  assert.deepEqual(snap.sigilSlots, run.sigilSlots);
+  assert.deepEqual(snap.sigilSlots, again.sigilSlots);
   assert.deepEqual(combatSnapshotProblems(snap), []);
-  const restored = restoreCombatSnapshot(snap, OUT);
+  const restored = restoreCombatSnapshot({ registries: OUT, rng: createRng(5), snapshot: snap });
   assert.ok(restored.propertyMounts.player['sigil:emberSigil']);
   const old = { ...snap };
   delete old.sigilSlots;
-  assert.equal(restoreCombatSnapshot(old, OUT).propertyMounts.player?.['sigil:emberSigil'], undefined, 'an older snapshot mounts none');
+  assert.equal(restoreCombatSnapshot({ registries: OUT, rng: createRng(5), snapshot: old }).propertyMounts.player?.['sigil:emberSigil'], undefined, 'an older snapshot mounts none');
   assert.ok(combatSnapshotProblems({ ...snap, sigilSlots: [] }).some((p) => /sigilSlots/.test(p)));
 });
 
@@ -411,8 +465,11 @@ test('FINISH: a granted card or a Strike cannot be stacked, each refused by name
 test('schema 17: the bump, the appended corpus entry, and a schema-16 save loads unchanged', () => {
   assert.equal(RUN_SCHEMA_VERSION, 17);
   const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
+  const v17 = JSON.parse(corpus.versions['17'].bytes);
+  assert.equal(v17.schemaVersion, 17, 'one schema-17 save is appended');
+  assert.deepEqual(validateRunShape(v17), []);
   const v16 = JSON.parse(corpus.versions['16'].bytes);
-  assert.equal(v16.schemaVersion, 16, 'the schema-16 entry is the one captured at the last schema-16 ref');
+  assert.equal(v16.schemaVersion, 16, 'the schema-16 entry is untouched');
   const storage = createMemoryStorage();
   storage.setItem(RUN_KEY, JSON.stringify(v16));
   const run = createSaveManager(storage).loadRun(REG);

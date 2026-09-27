@@ -14,6 +14,8 @@ import { applyShopPriceMult } from '../model/marketStock.js';
 import { innRestPlan, stale } from '../model/marketAdditions.js';
 import { ownedSigilIds } from '../model/sigils.js';
 import { hasRemovableCard } from '../model/cardRemoval.js';
+import { carriedIds } from '../model/loadout.js';
+import { BLACKSMITH_SERVICES, serviceCandidates } from '../model/blacksmith.js';
 
 const STREAM = 'shopOffers';
 
@@ -295,5 +297,81 @@ export function commitInnRest({ run, registries, rng }, quote, { healMult = 1, r
 export function buildMerchantStock(registries, rng, run, opts = {}) {
   const kind = rollShopKind(registries.shops, rng);
   if (!SHOP_KIND_SCREENS.includes(kind)) throw new Error(`buildMerchantStock: the ${kind} shop has no screen registered yet (SPEC §14.6)`);
+  // A merchant that rolls `blacksmith` (weight 0 shipped) offers that kind's
+  // offerings only, not market shelves (SPEC §14.2).
+  if (kind === 'blacksmith') return buildBlacksmithStock(registries, rng, run);
   return buildMarketStock(registries, rng, run, opts);
+}
+
+// ---------------------------------------------------------------------------
+// The blacksmith (SPEC §14.4, §14.6 step 6)
+// ---------------------------------------------------------------------------
+
+// The armaments the blacksmith's rack can draw from: every armament the run
+// does not carry that has a `balance.shop.armamentCost` row, the market's pool.
+function blacksmithArmamentPool(registries, run) {
+  const carried = new Set(carriedIds(run.loadout));
+  const costs = registries.balance.shop.armamentCost || {};
+  return (registries.equipment.armaments || []).filter((piece) => !carried.has(piece.id) && Array.isArray(costs[piece.rarity]));
+}
+
+/**
+ * buildBlacksmithStock(registries, rng, run) → a blacksmith visit:
+ * `{ kind: 'blacksmith', offerings, armaments?, smithStones? }` (SPEC §14.4).
+ *
+ * Every draw is on `shopOffers`, never `shop`, so no market shelf moves. The
+ * offerings roll as every kind's do (rollShopOfferings); then:
+ *   · a STOCKED shelf that comes up empty — no armament left to draw, a rack
+ *     or stone stock of 0 — is omitted, as §14.2's backstop omits one;
+ *   · a SERVICE with nothing to act on now STAYS laid out (coordinator ruling
+ *     on #1378): it is judged live on the screen and when quoted, so it can
+ *     become usable on this visit. It does not count toward the guarantee, so
+ *     the missing enabled offerings that have something now are added by
+ *     weight, with no further draw, until enough usable ones are out.
+ * Then the rack draws `armaments.stock` pieces and prices each over its
+ * rarity's `armamentCost` row, and the stone shelf is `{ price, left }`.
+ * Service prices are never stored: model/blacksmith.js reads them when quoted.
+ */
+export function buildBlacksmithStock(registries, rng, run) {
+  const kindDef = registries.shops.blacksmith;
+  const written = (kindDef.offerings || []).filter(Boolean);
+  const row = (id) => written.find((offering) => offering.id === id);
+  const pool = blacksmithArmamentPool(registries, run);
+  const up = new Set(rollShopOfferings(kindDef, rng));
+  const stockEmpty = (offering) => {
+    if (offering.id === 'armaments') return !pool.length || !(offering.stock > 0);
+    if (offering.id === 'smithStones') return !(offering.perVisit > 0);
+    return false;
+  };
+  const idle = (offering) => BLACKSMITH_SERVICES.includes(offering.id) && serviceCandidates(registries, run, offering.id).length === 0;
+  for (const offering of written) if (up.has(offering.id) && stockEmpty(offering)) up.delete(offering.id);
+  const minimum = Number(kindDef.guaranteedMinimum) || 0;
+  const usable = () => written.filter((offering) => up.has(offering.id) && !idle(offering)).length;
+  if (usable() < minimum) {
+    const missing = written
+      .map((offering, index) => ({ offering, index }))
+      .filter(({ offering }) => offering.enabled === true && !up.has(offering.id) && !stockEmpty(offering) && !idle(offering))
+      .sort((a, b) => (Number(b.offering.weight) || 0) - (Number(a.offering.weight) || 0) || a.index - b.index);
+    for (const { offering } of missing) {
+      if (usable() >= minimum) break;
+      up.add(offering.id);
+    }
+  }
+  const stock = { kind: 'blacksmith', offerings: written.filter((offering) => up.has(offering.id)).map((offering) => offering.id) };
+  if (up.has('armaments')) {
+    const costs = registries.balance.shop.armamentCost;
+    stock.armaments = pickSome(rng, pool, row('armaments').stock).map((piece) => ({ id: piece.id, cost: Math.max(1, rng.int(STREAM, ...costs[piece.rarity])) }));
+  }
+  if (up.has('smithStones')) stock.smithStones = { price: row('smithStones').price, left: row('smithStones').perVisit };
+  return stock;
+}
+
+/**
+ * blacksmithVisitStock(registries, rng, run, { priceMult }) → the stock an
+ * atlas smith point opens with (SPEC §14.2, §14.4), rolled on first entry and
+ * kept on the point; a custom run's price multiplier scales its stone price,
+ * rounding up, as it scales the market's.
+ */
+export function blacksmithVisitStock(registries, rng, run, { priceMult = 1 } = {}) {
+  return applyShopPriceMult(buildBlacksmithStock(registries, rng, run), priceMult);
 }

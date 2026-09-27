@@ -69,7 +69,12 @@ import { sigilInventoryProblems } from './sigils.js';
 // 16 (SPEC §14.3, §14.6 step 5b): `consumables` ({ [id]: count }, skill books
 // and revive tokens) and `companions` ([{ id, combatsLeft }]) ride the save. A
 // v15-or-older save is filled with {} and [] at migrateRunSchema.
-export const RUN_SCHEMA_VERSION = 16;
+// 17 (SPEC §14.4, §14.6 step 6): a `blacksmith` stock can sit on `shopStock`
+// and on an atlas smith point's `serviceStates[pointId].stock` (rolled on
+// first entry). The bump is what makes an OLDER build refuse-and-keep such a
+// save rather than open a kind it has no screen for; a v16 save has no
+// blacksmith stock, so 16 → 17 fills nothing at the migration door.
+export const RUN_SCHEMA_VERSION = 17;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -1327,8 +1332,9 @@ export function migrateRunSchema(run) {
   // v15 and older: no consumables, no companions. Filled HERE (SPEC §14.3): a
   // run that could not buy either holds none.
   const preConsumables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, ${RUN_SCHEMA_VERSION})`);
+  // v16: no blacksmith stock could be written (SPEC §14.4); nothing to fill.
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, ${RUN_SCHEMA_VERSION})`);
   }
   if (preShopKinds) bringShopStockForward(run);
   const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables });

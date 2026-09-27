@@ -91,6 +91,9 @@ export function serializeCombatSnapshot(combat) {
     // companions it mounted, which a restore mounts again.
     ...(combat.consumables && typeof combat.consumables === 'object' ? { consumables: combat.consumables } : {}),
     companions: combat.companions || [],
+    // SPEC §14.4: the sigil slots the fight mounts from, so a restore mounts
+    // the same sigils while their armaments are worn.
+    sigilSlots: combat.sigilSlots && typeof combat.sigilSlots === 'object' ? combat.sigilSlots : {},
   });
   assertCombatSnapshot(snapshot);
   return snapshot;
@@ -175,6 +178,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     // its combat end leaves the run's alone) and no companion mounted.
     consumables: saved.consumables && typeof saved.consumables === 'object' ? saved.consumables : null,
     companions: Array.isArray(saved.companions) ? saved.companions : [],
+    // A snapshot from before SPEC §14.4 carries no slots and mounts no sigil.
+    sigilSlots: saved.sigilSlots && typeof saved.sigilSlots === 'object' && !Array.isArray(saved.sigilSlots) ? saved.sigilSlots : {},
   };
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
   combat._emitEvent = emitEvent;

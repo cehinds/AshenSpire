@@ -123,6 +123,14 @@ export function combatSnapshotProblems(snapshot) {
       if (!Number.isSafeInteger(n) || n < 1) problems.push(`consumables.${id} must be a whole count of at least 1 (a spent-out entry is deleted)`);
     }
   }
+  // SPEC §14.4: the sigil slots, `{ [itemRef]: (sigilId|null)[] }`.
+  if (snapshot.sigilSlots !== undefined) {
+    const slots = snapshot.sigilSlots;
+    if (!slots || typeof slots !== 'object' || Array.isArray(slots)
+      || Object.values(slots).some((list) => !Array.isArray(list) || list.some((id) => id !== null && !nonEmptyString(id)))) {
+      problems.push('sigilSlots must be an object { [itemRef]: (sigilId|null)[] }');
+    }
+  }
   if (snapshot.companions !== undefined) {
     if (!Array.isArray(snapshot.companions) || snapshot.companions.some((id) => !nonEmptyString(id)) || new Set(snapshot.companions).size !== snapshot.companions.length) {
       problems.push('companions must be a list of distinct companion ids');

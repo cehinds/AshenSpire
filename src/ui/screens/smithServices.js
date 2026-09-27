@@ -32,6 +32,9 @@ export function mountServiceOffer(registries, run, service) {
 export function openMountService(host, {
   service, registries, run, meta, returnFocusElement,
   multiUse = false, place = 'shrine', onCommitted, onBack = () => {},
+  // A door with its own transaction (the blacksmith's quote-checked commit,
+  // SPEC §14.4) hands it in; otherwise the smith's own commit runs.
+  commit = null,
 }) {
   const planner = service === 'extract' ? extractionPlan : installPlan;
   let selection = {};
@@ -45,7 +48,7 @@ export function openMountService(host, {
     onSelectCard: (instanceId) => { selection = { ...selection, instanceId }; modal.update(model()); },
     onBack,
     onConfirm: (chosen) => {
-      const receipt = service === 'extract'
+      const receipt = commit ? commit(chosen) : service === 'extract'
         ? commitExtraction(registries, run, chosen.itemRef, chosen.mountKey)
         : commitInstall(registries, run, chosen.itemRef, chosen.mountKey, chosen.instanceId);
       onCommitted(receipt);
