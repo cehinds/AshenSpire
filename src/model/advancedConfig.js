@@ -89,10 +89,9 @@ const BALANCE_DOMAINS = Object.freeze({
   'smithing.refinedRewardByPool.elite': Object.freeze({ integer: true, step: 1, min: 0, max: 100 }),
   'smithing.refinedRewardByPool.boss': Object.freeze({ integer: true, step: 1, min: 0, max: 100 }),
   'smithing.refinedRewardByPool.treasure': Object.freeze({ integer: true, step: 1, min: 0, max: 100 }),
-  // XP CURVES THIS BUILD LOWERED (owner, 2026-09-24: every base to 5). A range
-  // read off 5 tops out at 50, which would refuse an exported file written on
-  // the old bases (100, 60, 30) and every larger tuning — and a refused value
-  // aborts the whole import. These are costs and awards with no natural cap.
+  // XP CURVES (owner, 2026-09-24: every base to 5; skill and class back to 100
+  // on 2026-09-27). A range read off the shipped base would refuse an exported
+  // file written on another base, and a refused value aborts the whole import. These are costs and awards with no natural cap.
   'level.xp.base': Object.freeze({ max: 1000 }),
   'skill.xp.base': Object.freeze({ max: 1000 }),
   'skill.class.xp.base': Object.freeze({ max: 1000 }),

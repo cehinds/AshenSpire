@@ -9169,9 +9169,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE CLASS TRACK is paid by the run's owner: a win, more for a boss, a loss nothing.
     const paid = createRunState({ seed: 0x5b5b, classId: 'reaver', registries: REG });
     eq(awardClassXp(REG, paid, { victory: false, pool: 'boss' }), null, 'a lost fight pays nothing');
-    // Read off the award's own receipt, not the ledger's remainder: since the
-    // class curve's base became 5 (2026-09-24) a single win of 10 climbs two
-    // levels and leaves 0 on the ledger, so the remainder no longer shows the pay.
+    // Read off the award's own receipt, not the ledger's remainder: a tuned
+    // curve can let one win climb a level, and the remainder then hides the pay.
     eq(awardClassXp(REG, paid, { victory: true, pool: 'normal' }).gained, c.xp.perWin, 'a won fight pays perWin');
     eq(awardClassXp(REG, paid, { victory: true, pool: 'boss' }).gained, c.xp.perWin + c.xp.bossKill, 'a boss pays bossKill on top');
     const classRow = paid.skills['class:reaver'];

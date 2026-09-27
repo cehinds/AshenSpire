@@ -331,7 +331,7 @@ export const balance = {
   // ---- Skill tracks (plan phase 4a, proposal §6.1 and §10) ----------------
   // One curve shape for every track: the step from level n costs
   // round(base × growth^n, roundTo). `xp` is the weapon, armour, focus and
-  // dual-wield curve; `class.xp` the slower class curve. The award rows are
+  // dual-wield curve; `class.xp` the class curve (the same numbers since 2026-09-27). The award rows are
   // what the engine's hooks pay (engine/skillXp.js): perHit for a hit or a
   // block a group's card resolves on a live target; perWinEquipped per
   // equipped group on a win, × killMult when that group landed the killing
@@ -353,7 +353,7 @@ export const balance = {
         buildupPerXp: 'Arcane Exposure buildup a caster must deal per point of focus skill XP.',
       },
     },
-    // The class track (plan phase 5b): a slower curve; paid by the run's
+    // The class track (plan phase 5b): its own curve; paid by the run's
     // owner for a won fight, more for a boss (the owner knows the door's
     // pool; the combat does not), and per quest once phase 10a's event
     // exists. `tierAt` is the class level each tree tier opens at.
