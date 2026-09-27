@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1384",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "The Armoury's Inventory is easier to see on phones",
+    "detail": "On a phone the item list used to share the Inventory with an empty details area, so it showed about one item at a time. Until you pick an item, the list now fills the Inventory. Once you pick one, its details take about two-thirds of the space and the list keeps the rest. Wide screens are unchanged.",
+    "build": "0.7.1.675",
+    "pullRequest": 1384,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1384"
+  },
+  {
     "id": "pr-1379",
     "date": "2026-09-27",
     "group": "2026-09-27",
