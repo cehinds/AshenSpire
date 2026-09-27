@@ -26,7 +26,7 @@ import { awardLevelXp, combatLevelXp } from '../src/model/levelup.js';
 import { playerWeightClass } from '../src/engine/combat.js';
 import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import {
-  commitSmithing, grantSmithingReward, initializeRunSmithing, smithingPlan,
+  commitSmithing, grantSmithingReward, initializeRunSmithing, smithingPlan, smithingRewardPays,
 } from '../src/model/smithing.js';
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
@@ -443,6 +443,8 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   function travelTo(nodeId) {
+    // The last treasure's stone notice is read on the map it left; moving on clears it.
+    for (const m of members.values()) delete m.treasureStoneReceipt;
     const node = session.mapGraph.nodes[nodeId];
     session.cursorId = nodeId;
     session.floor = node.floor;
@@ -838,6 +840,7 @@ export function createSession({ registries, seedString, endless = false, restore
         m.run,
         pool,
         `coop:${session.actNumber}:${session.floor}:${pool}:${m.id}`,
+        m.rng,
       );
       if (m.connected) {
         pending[m.id] = offer;
@@ -992,10 +995,21 @@ export function createSession({ registries, seedString, endless = false, restore
   function enterTreasure() {
     for (const m of livingMembers()) {
       const relicId = rollRelicReward(registries, m.rng, m.run.relics);
+      // The solo treasure door's Smithing Stones (SPEC §15.3), granted to the
+      // seat like a fight's are, present or not, and only when a treasure
+      // table pays: both ship at 0, so no claim is written by default.
+      const smithingStoneReceipt = smithingRewardPays(registries, 'treasure')
+        ? grantSmithingReward(registries, m.run, 'treasure', `coop-treasure:${session.actNumber}:${session.floor}:${m.id}`, m.rng)
+        : null;
       if (m.connected) {
         if (relicId && !m.run.relics.includes(relicId)) m.run.relics.push(relicId);
+        // A present seat has no treasure door to read it on, so the receipt
+        // rides this seat's snapshot until the party travels on. DISPLAY-ONLY:
+        // it is not serialized, so a host restore drops the notice (the stones
+        // themselves are on the seat's run and survive).
+        if (smithingStoneReceipt) m.treasureStoneReceipt = { ...smithingStoneReceipt, act: session.actNumber, floor: session.floor };
       } else {
-        m.catchup.push({ type: 'treasure', relicId, act: session.actNumber, floor: session.floor });
+        m.catchup.push({ type: 'treasure', relicId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), act: session.actNumber, floor: session.floor });
       }
     }
     advanceFromNode();
@@ -1385,6 +1399,7 @@ export function createSession({ registries, seedString, endless = false, restore
       ...(m.run.lastSmithingReceipt
         ? { lastSmithingReceipt: structuredClone(m.run.lastSmithingReceipt) }
         : {}),
+      ...(m.treasureStoneReceipt ? { treasureStoneReceipt: structuredClone(m.treasureStoneReceipt) } : {}),
       mana: m.run.mana, maxMana: m.run.maxMana,
       stamina: m.run.stamina, maxStamina: m.run.maxStamina,
       energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,

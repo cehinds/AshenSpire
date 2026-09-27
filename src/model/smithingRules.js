@@ -57,19 +57,42 @@ function normalizeServices(raw) {
   return Object.freeze({ offeredAt: Object.freeze(offeredAt), ...priced });
 }
 
+export const SMITHING_REWARD_POOLS = Object.freeze(['normal', 'elite', 'boss', 'treasure']);
+
+function poolTable(raw, label, fallback, maximum = Infinity) {
+  if (raw == null) return Object.freeze(Object.fromEntries(SMITHING_REWARD_POOLS.map((pool) => [pool, fallback])));
+  const source = ownObject(raw, label);
+  const table = {};
+  for (const pool of SMITHING_REWARD_POOLS) {
+    table[pool] = integer(source[pool], `${label}.${pool}`);
+    if (table[pool] > maximum) throw new Error(`${label}.${pool} must be 0..${maximum}`);
+  }
+  for (const key of Object.keys(source)) {
+    if (!Object.hasOwn(table, key)) throw new Error(`${label}.${key}: unknown pool`);
+  }
+  return Object.freeze(table);
+}
+
 /** Validate and freeze the balance-owned Smithing rules. */
 export function normalizeSmithingRules(raw) {
   const source = ownObject(raw, 'smithing rules');
   const rewards = ownObject(source.rewardByPool, 'smithing.rewardByPool');
   const rewardByPool = {};
-  for (const pool of ['normal', 'elite', 'boss', 'treasure']) {
+  for (const pool of SMITHING_REWARD_POOLS) {
     rewardByPool[pool] = integer(rewards[pool], `smithing.rewardByPool.${pool}`);
   }
   for (const key of Object.keys(rewards)) {
     if (!Object.hasOwn(rewardByPool, key)) throw new Error(`smithing.rewardByPool.${key}: unknown pool`);
   }
+  // SPEC §15.3. Each block is optional so a hand-built fixture keeps the
+  // faucet it had: an absent chance is 100 (always, no roll), an absent
+  // refined payout is 0.
+  const rewardChancePct = poolTable(source.rewardChancePct, 'smithing.rewardChancePct', 100, 100);
+  const refinedRewardByPool = poolTable(source.refinedRewardByPool, 'smithing.refinedRewardByPool', 0);
   return Object.freeze({
     rewardByPool: Object.freeze(rewardByPool),
+    rewardChancePct,
+    refinedRewardByPool,
     services: normalizeServices(source.services),
   });
 }

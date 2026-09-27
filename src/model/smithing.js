@@ -204,6 +204,11 @@ function stoneBalance(run) {
   return integer(value, 'run.smithingStones');
 }
 
+function refinedBalance(run) {
+  const value = run?.smithingStonesRefined == null ? 0 : run.smithingStonesRefined;
+  return integer(value, 'run.smithingStonesRefined');
+}
+
 function levels(run) {
   const current = run?.itemUpgradeLevels == null
     ? null
@@ -343,6 +348,9 @@ export function smithingPlan(registries, run, explicitRules = undefined) {
     if (level > (tiers.at(-1) || 0)) throw new Error(`run.itemUpgradeLevels.${itemRef} exceeds its highest authored tier ${tiers.at(-1) || 0}`);
   }
   const stones = stoneBalance(run);
+  // Refined stones (SPEC §15.3) are shown beside the purse and not yet
+  // spent: spending them is §14.4's blacksmith (`refine.value`).
+  const refined = refinedBalance(run);
   const inventory = carriedIds(run.loadout);
   const candidates = [];
   for (const itemRef of ownedItemRefs(registries, run)) {
@@ -395,7 +403,7 @@ export function smithingPlan(registries, run, explicitRules = undefined) {
     };
     candidates.push(Object.freeze(candidate));
   }
-  return Object.freeze({ schemaVersion: SMITHING_SCHEMA_VERSION, stones, candidates: Object.freeze(candidates) });
+  return Object.freeze({ schemaVersion: SMITHING_SCHEMA_VERSION, stones, refined, candidates: Object.freeze(candidates) });
 }
 
 /** Add stable source/tier carriers to deck or hand instances after promotion. */
@@ -454,8 +462,41 @@ export function commitSmithing(registries, run, itemRefOrArmamentId, explicitRul
   return commitItemUpgrade(registries, run, itemRefOrArmamentId, explicitRules, options);
 }
 
-/** Grant the balance-owned faucet exactly once for a resolved reward. */
-export function grantSmithingReward(registries, run, pool, rewardId) {
+/**
+ * smithingRewardPays(registries, pool) → whether the pool's door pays any
+ * stone at all, ordinary or refined. Treasure calls grantSmithingReward only
+ * when it does (SPEC §15.3): both treasure tables ship at 0, so a treasure
+ * node writes no zero-amount claim and a save is unchanged.
+ */
+export function smithingRewardPays(registries, pool) {
+  const rules = rulesFor(registries);
+  if (!Object.hasOwn(rules.rewardByPool, pool)) throw new Error(`Unknown Smithing reward pool '${pool}'`);
+  return rules.rewardByPool[pool] > 0 || rules.refinedRewardByPool[pool] > 0;
+}
+
+/**
+ * smithingRewardId(run, pool) → the idempotent claim id of one reward door.
+ * A fight's id is the one the combat door has always written (saved claims
+ * depend on it byte for byte); a treasure node's is its own `treasure:` door.
+ */
+export function smithingRewardId(run, pool) {
+  const dungeon = run.legacyDungeon ? `:${run.legacyDungeon.current}` : '';
+  const place = `${run.actNumber}:${run.floor}:${run.mapNodeId || 'unknown'}${dungeon}`;
+  return pool === 'treasure' ? `treasure:${place}` : `combat:${place}:${pool}`;
+}
+
+/**
+ * Grant the balance-owned faucet exactly once for a resolved reward.
+ *
+ * SPEC §15.3: the door pays `rewardByPool[pool]` ordinary stones and
+ * `refinedRewardByPool[pool]` refined stones when the pool pays anything and
+ * `rewardChancePct[pool]` passes — ONE roll for both purses, on the `smith`
+ * stream. 100 and 0 roll nothing, so the shipped table (every chance 100)
+ * moves no stream and pays exactly what it always did. `rng` is needed only
+ * for a partial chance. The claim is recorded whether or not the roll paid,
+ * so a resumed door can never roll twice.
+ */
+export function grantSmithingReward(registries, run, pool, rewardId, rng = null) {
   const rules = rulesFor(registries);
   if (!Object.hasOwn(rules.rewardByPool, pool)) throw new Error(`Unknown Smithing reward pool '${pool}'`);
   if (typeof rewardId !== 'string' || !rewardId) throw new Error('Smithing reward id must be a non-empty string');
@@ -463,10 +504,28 @@ export function grantSmithingReward(registries, run, pool, rewardId) {
   if (claimed.includes(rewardId)) {
     return Object.freeze({ pool, rewardId, amount: 0, duplicate: true, stoneBalanceAfter: stoneBalance(run) });
   }
-  const amount = rules.rewardByPool[pool];
+  const table = rules.rewardByPool[pool];
+  const refinedTable = rules.refinedRewardByPool[pool];
+  const chance = rules.rewardChancePct[pool];
+  let passes = chance >= 100;
+  if (!passes && chance > 0 && (table > 0 || refinedTable > 0)) {
+    if (!rng || typeof rng.chance !== 'function') throw new Error(`Smithing reward pool '${pool}' has a ${chance}% chance and needs the run's rng to roll it`);
+    passes = rng.chance('smith', chance);
+  }
+  const amount = passes ? table : 0;
+  const refined = passes ? refinedTable : 0;
   run.smithingStones = stoneBalance(run) + amount;
+  // The refined purse is optional on the run (absent reads 0), and is
+  // written only when a refined stone is paid, so a run that never saw one
+  // saves exactly the fields it always did.
+  if (refined > 0) run.smithingStonesRefined = refinedBalance(run) + refined;
   run.smithingRewardClaims = [...claimed, rewardId];
-  return Object.freeze({ pool, rewardId, amount, duplicate: false, stoneBalanceAfter: run.smithingStones });
+  // The receipt names the refined purse only when it paid, so a door that
+  // paid ordinary stones alone hands the spoils the receipt it always did.
+  return Object.freeze({
+    pool, rewardId, amount, duplicate: false, stoneBalanceAfter: run.smithingStones,
+    ...(refined > 0 ? { refined, refinedBalanceAfter: run.smithingStonesRefined } : {}),
+  });
 }
 
 /** Initialize or migrate one run in place, returning an explicit receipt. */

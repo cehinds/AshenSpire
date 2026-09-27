@@ -8,9 +8,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Behind the scenes: a hand-rules test comment catches up",
     "detail": "Tests only. The fixed-draw test's comment now works its numbers from the one-row hand stats, counting Intelligence from each row's baseline, instead of the retired weights; the values it checks are unchanged.",
-    "build": "0.7.1.631",
+    "build": "0.7.1.634",
     "pullRequest": 1334,
     "url": "https://github.com/cehinds/AshenSpire/pull/1334"
+  },
+  {
+    "id": "pr-1365",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the owner's scope decisions are written into the design docs",
+    "detail": "Docs only; nothing you play changes. The docs now record seven decisions the owner made on 2026-09-27: this game stays the product, the win-rate target is gone, companions belong to the shop plan, three progression extras wait until after 1.0, the old-names rename is dropped, the high-res art stays private, and an old frozen preview file is deleted.",
+    "build": "0.7.1.633",
+    "pullRequest": 1365,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1365"
+  },
+  {
+    "id": "pr-1364",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the 1.0 checklist records the card reward schedule and crafting drops as done",
+    "detail": "Docs only. docs/FINISH.md ticks §15.1 (#1351) and §15.3 (#1352), each with its test file. Legendary sigils (§15.4) stay open until the market sigils step of §14 is built.",
+    "build": "0.7.1.632",
+    "pullRequest": 1364,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1364"
+  },
+  {
+    "id": "pr-1352",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Drop chances for armaments and Smithing Stones, and refined stones as a reward",
+    "detail": "Nothing drops differently until you change a setting. Advanced → Rewards now has a chance for ordinary fights to drop an armament (0% by default, so they still drop none), a chance for each kind of fight and treasure to pay its Smithing Stones (100% by default), and how many Refined Stones each pays (none by default). Treasure can now pay Smithing Stones too, once you raise its amount. Refined Stones you earn show on the spoils screen and next to your Smithing Stones at the smith, and they are kept for the blacksmith that will spend them.",
+    "build": "0.7.1.631",
+    "pullRequest": 1352,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1352"
   },
   {
     "id": "pr-1363",

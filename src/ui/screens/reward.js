@@ -61,7 +61,7 @@ import { isEngaged, focusFirst } from '../input.js';
 import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
-import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds, rewardNotes, CARD_CHOICE_KINDS } from '../../model/rewardplan.js';
+import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds, rewardNotes, CARD_CHOICE_KINDS, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
 import { rewardProgress } from '../../model/rewardprogress.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
@@ -111,7 +111,7 @@ export function mountRewards(app, {
   const progress = rewards.xpGains ? rewardProgress(registries, run, rewards.xpGains) : null;
   const states = {
     ...(checkpoint?.states || {}),
-    ...(rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {}),
+    ...(smithingStonesPaid(rewards.smithingStoneReceipt) ? { smithingStone: 'taken' } : {}),
   }; // kind → 'taken'|'skipped' (absent = pending / implicitly left in manual mode)
   let chosenCardId = checkpoint?.chosenCardId || null;
   // The skill drafts' picks, keyed by ROW KEY (plan phase 4b): one offer may
@@ -284,10 +284,9 @@ export function mountRewards(app, {
           body: state === 'taken' ? t('reward.cinders.taken', { total: run.cinders }) : tFull('reward.cinders.title'),
         };
       case 'smithingStone':
-        return {
-          title: t('reward.stone.title', { amount: row.amount, plural: row.amount === 1 ? '' : 's' }),
-          body: t('reward.stone.body', { total: row.stoneBalanceAfter }),
-        };
+        // Ordinary stones, refined stones (SPEC §15.3), or both, on one row:
+        // title and body each name only the purse that was paid.
+        return smithingStoneRowCopy(row, t);
       case 'card': {
         if (state === 'taken') {
           const def = registries.cards.get(chosenCardId);

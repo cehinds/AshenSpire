@@ -372,7 +372,7 @@ broken swords, the graves of Forsaken who climbed before you and were never
 written into memory. What the player does there follows them up the Spire.
 **One of them did not finish dying.** The Keeper of the Nameless is a Forsaken
 who climbed, fell, and was never written — so there was nothing for the fire to
-read, and nothing to stop. They walk. They can be a companion (seat plan §5):
+read, and nothing to stop. They walk. They can be a companion (companions are owned by SPEC §14.3, D17; seat plan §5 is design input):
 the only one with no mark, no seat and no voice of their own, who speaks in the
 Forsaken voice because that is all they have left. At the end, in the Spire's
 hearth-room, their name is the one thing the player can choose to feed a hearth
