@@ -43,6 +43,7 @@ import {
   rollRelicReward,
 } from '../src/engine/encounters.js';
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
+import { cardRewardPlan } from '../src/model/rewardplan.js';
 import {
   createCoopCombat, coopOutcome, playCard, endTurn, useFlask, joinCombat, leaveCombat,
 } from '../src/engine/coopCombat.js';
@@ -717,6 +718,8 @@ export function createSession({ registries, seedString, endless = false, restore
     if (!c.result) { session.scene = combatScene(); return { ok: true }; }
     const pool = live.pool;
     const outcome = coopOutcome(c);
+    // The levels each seat's award bought, for its level card (SPEC §15.1).
+    const levelUpsBy = {};
     for (const m of livingMembers()) {
       const s = outcome.survivors[m.id];
       if (!s) continue;
@@ -734,9 +737,9 @@ export function createSession({ registries, seedString, endless = false, restore
         // The character level (plan phase 6), per seat: the party's kills are
         // every seat's. No settings dial here — the server is authoritative
         // and reads the authored points per level.
-        awardLevelXp(registries, m.run, combatLevelXp(registries, {
+        levelUpsBy[m.id] = awardLevelXp(registries, m.run, combatLevelXp(registries, {
           victory: c.result === 'victory', pool: live && live.pool, kills: c.eventLog.filter((e) => e.type === 'enemyDied').length,
-        }));
+        })).levelUps;
       }
     }
     live = null;
@@ -762,7 +765,7 @@ export function createSession({ registries, seedString, endless = false, restore
     }
     // Victory: revive any downed-but-not-dead members at 1 HP for the next floor.
     for (const m of livingMembers()) if (m.run.hp <= 0) m.run.hp = registries.balance.coop.reviveHp;
-    grantRewards(pool);
+    grantRewards(pool, levelUpsBy);
     if (pool === 'boss') session.scene.afterReward = 'advanceAct';
     return { ok: true, result: c.result };
   }
@@ -792,27 +795,43 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // ---- rewards + catch-up --------------------------------------------------
-  function rollRewardFor(m, pool) {
-    const cardIds = rollCardRewardIds(registries, m.rng, {
+  function rollRewardFor(m, pool, levelsGained = 0) {
+    // THE CARD REWARD SCHEDULE (SPEC §15.1), read through the one door solo
+    // and the simulator read (model/rewardplan.js cardRewardPlan). Co-op has
+    // no skill or class drafts at its door, so nothing takes the card row's
+    // seat here. The shipped schedule offers every fight and rolls nothing
+    // on 'rewardRolls', so an existing co-op seed rolls what it rolled.
+    const plan = cardRewardPlan(registries.balance, { pool, levelsGained }, m.rng);
+    const cardIds = plan.offerCard ? rollCardRewardIds(registries, m.rng, {
       classId: m.classId, pool, relicIds: m.run.relics,
-    });
+    }) : [];
     // Co-op-only cards (StS2): with a real party, every combat reward carries
-    // one team-play option on top of the normal class picks.
-    if (livingMembers().length > 1) {
+    // one team-play option on top of the normal class picks — when there is
+    // a card row to carry it.
+    if (plan.offerCard && livingMembers().length > 1) {
       cardIds.push(m.rng.pick('cardRewards', COOP_CARD_IDS));
+    }
+    const levelCards = [];
+    for (let i = 0; i < plan.levelCards; i++) {
+      const ids = rollCardRewardIds(registries, m.rng, { classId: m.classId, pool, relicIds: m.run.relics });
+      if (ids.length) levelCards.push({ ordinal: levelCards.length, cardIds: ids });
     }
     const cinders = rollRuneReward(registries, m.rng, pool, m.run.relics);
     const flaskId = pool !== 'boss' ? rollFlaskDrop(registries, m.rng, m.run) : null;
     const relicId = pool === 'elite' || pool === 'boss'
       ? rollRelicReward(registries, m.rng, m.run.relics, pool === 'boss' ? { rarities: ['boss'] } : {})
       : null;
-    return { pool, cardIds, cinders, flaskId, relicId };
+    return {
+      pool, cardIds, cinders, flaskId, relicId,
+      ...(plan.cardMissed ? { cardMissed: true } : {}),
+      ...(levelCards.length ? { levelCards } : {}),
+    };
   }
 
-  function grantRewards(pool) {
+  function grantRewards(pool, levelUpsBy = {}) {
     const pending = {}; // memberId → reward offer (for present members to choose)
     for (const m of livingMembers()) {
-      const offer = rollRewardFor(m, pool);
+      const offer = rollRewardFor(m, pool, levelUpsBy[m.id] || 0);
       m.run.cinders += offer.cinders; // gold is auto-granted; card/relic are choices
       offer.smithingStoneReceipt = grantSmithingReward(
         registries,
@@ -830,15 +849,34 @@ export function createSession({ registries, seedString, endless = false, restore
     session.scene = { kind: 'reward', pool, offers: pending, chosen: {}, afterReward: null };
   }
 
+  // A level card (SPEC §15.1): one pick per row, by ordinal. A row the seat
+  // left unpicked — or picked a card it did not offer — is picked FOR it on
+  // the seat's own 'cardRewards' stream, as the solo door's auto-collect
+  // picks a choice row (model/rewardplan.js resolveContinue): closing the
+  // spoils never silently forfeits a level card.
+  function takeLevelCards(m, offer, levelCardIds) {
+    const picks = levelCardIds && typeof levelCardIds === 'object' ? levelCardIds : {};
+    for (const row of Array.isArray(offer.levelCards) ? offer.levelCards : []) {
+      if (!Array.isArray(row.cardIds) || !row.cardIds.length) continue;
+      const chosen = picks[row.ordinal];
+      const cardId = chosen && row.cardIds.includes(chosen) ? chosen : row.cardIds[m.rng.int('cardRewards', 0, row.cardIds.length - 1)];
+      m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
+    }
+  }
+
   // A present member takes their card/relic pick (or skips with null).
-  function chooseReward(memberId, { cardId = null, takeRelic = false, flask = false } = {}) {
+  function chooseReward(memberId, { cardId = null, takeRelic = false, flask = false, levelCardIds = null } = {}) {
     if (session.scene.kind !== 'reward') return { ok: false, error: 'no reward open' };
     const offer = session.scene.offers[memberId];
     const m = members.get(memberId);
     if (!offer || !m) return { ok: false, error: 'no offer for member' };
+    // A repeat (a double tap, a duplicated message) while others still choose
+    // must grant nothing twice.
+    if (session.scene.chosen[memberId]) return { ok: false, error: 'already chosen' };
     if (cardId && offer.cardIds.includes(cardId)) {
       m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
     }
+    takeLevelCards(m, offer, levelCardIds);
     if (takeRelic && offer.relicId && !m.run.relics.includes(offer.relicId)) {
       m.run.relics.push(offer.relicId);
     }
@@ -1209,6 +1247,7 @@ export function createSession({ registries, seedString, endless = false, restore
       if (pick && pick.cardId && offer.cardIds.includes(pick.cardId)) {
         m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
       }
+      takeLevelCards(m, offer, pick && pick.levelCardIds);
       // THE RELIC MAY BE IN HAND ALREADY: a missed event replayed before this
       // entry can have granted the very relic the offer rolled (rolled against
       // the relics the seat held then). The seat is owed a relic, not this

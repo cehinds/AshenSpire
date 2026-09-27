@@ -14,6 +14,10 @@ ready for review, reviewed, green, receipted, mergeable.
 
 Effort: **S** = hours, **M** = a PR of a day or two, **L** = several PRs.
 
+**Status (2026-09-27): active.** [FINISH.md](FINISH.md) tracks which of these
+items are done, citing their IDs; A1 and A2 shipped (#1270, #1284) and part of
+A3 (#1309). Archive this plan when FINISH has no open line that cites it.
+
 ## Order and parallelism
 
 ```

@@ -1,3 +1,5 @@
+> Archived 2026-09-27 (docs audit): a dated QA record from build 0.4.0 (August 2026); it describes that build, not the current one. The current QA process is [docs/QA-TESTING.md](../../QA-TESTING.md).
+
 # Load-slot selection and review remediation — item #1
 
 ## Status and authority
@@ -102,11 +104,11 @@ The controller remains `title.mountTitle`; the shared pointer/touch gesture is
 Exact-build visual captures were refreshed after the single serialized rebuild
 and reviewed at original resolution:
 
-- [390x844 Load list](../preview/qa-load-slot-list-mobile-390x844.png)
+- [390x844 Load list](../../preview/qa-load-slot-list-mobile-390x844.png)
   — SHA-256 `698e9a24e663e8360de0190b28b1d242c9c12edebe427d42471a06bd76463c9b`
-- [390x844 load review](../preview/qa-load-slot-review-mobile-390x844.png)
+- [390x844 load review](../../preview/qa-load-slot-review-mobile-390x844.png)
   — SHA-256 `93b3b12f5e37126f934d6dc2ba823f8fc7338faffe21156c7243ab1cef241ff9`
-- [1200x730 load review](../preview/qa-load-slot-review-wide-1200x730.png)
+- [1200x730 load review](../../preview/qa-load-slot-review-wide-1200x730.png)
   — SHA-256 `add67683f339afeb493f535c749efa79d4307829a4b8818759111df5afe7841d`
 
 The phone list shows the selected occupied slot, enabled Continue, visible HOLD

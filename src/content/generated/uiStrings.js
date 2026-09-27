@@ -234,6 +234,27 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.levelCard.title",
+    "extends": "",
+    "short": "Level card",
+    "full": "A level this fight bought: pick one more card.",
+    "tip": ""
+  },
+  {
+    "id": "reward.note.cardMissed",
+    "extends": "",
+    "short": "No card this time.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.note.levelCardAuto",
+    "extends": "",
+    "short": "A level card left unpicked is chosen for you.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.skillDraft.title",
     "extends": "",
     "short": "{skill} · level {level}",
@@ -868,6 +889,13 @@ export const uiStrings = [
     "extends": "",
     "short": "Gained: {xp} xp",
     "full": "What this fight paid into this track.",
+    "tip": ""
+  },
+  {
+    "id": "reward.progress.discarded",
+    "extends": "",
+    "short": "{xp} xp lost to the level cap",
+    "full": "{xp} XP went past the most levels one fight can give, and was lost.",
     "tip": ""
   },
   {
@@ -1569,6 +1597,125 @@ export const uiStrings = [
     "short": "Settings section: {section}",
     "full": "Show the list of settings sections.",
     "tip": "Choose a section"
+  },
+  {
+    "id": "settings.levelPace.title",
+    "extends": "",
+    "short": "Levelling preview",
+    "full": "What the XP settings in force make of a climb.",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.subtitle",
+    "extends": "",
+    "short": "A new run under these settings",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.multiplier",
+    "extends": "",
+    "short": "XP ×{multiplier}",
+    "full": "The XP multiplier applied to every award.",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.pointsPerLevel",
+    "extends": "",
+    "short": "{count} stat point{plural} a level",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.cap",
+    "extends": "",
+    "short": "at most {count} level{plural} an award",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.noCap",
+    "extends": "",
+    "short": "no cap an award",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.fight.normal",
+    "extends": "",
+    "short": "A normal fight",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.fight.elite",
+    "extends": "",
+    "short": "An elite fight",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.fight.boss",
+    "extends": "",
+    "short": "A boss fight",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.fightLine",
+    "extends": "",
+    "short": "{fight} ({kills} kill{killsPlural}) gives {xp} XP: {worth}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.worth",
+    "extends": "",
+    "short": "{count} level{plural} from level {level}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.worthCapped",
+    "extends": "",
+    "short": "{count} level{plural} from level {level} (capped)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.points",
+    "extends": "",
+    "short": "{count} stat point{plural} from level {level}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.curveTitle",
+    "extends": "",
+    "short": "XP to reach each level",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.curveLevel",
+    "extends": "",
+    "short": "Lv {level}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.curveTotal",
+    "extends": "",
+    "short": "{total} total",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.refused",
+    "extends": "",
+    "short": "These settings are not applied, so this preview shows the authored defaults a new run keeps: {problem}",
+    "full": "",
+    "tip": ""
   },
   {
     "id": "nav.categorySelector",
