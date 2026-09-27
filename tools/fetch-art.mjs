@@ -158,11 +158,15 @@ function unpack(entries, dir, mark) {
       writeFileSync(target, data);
     }
     writeFileSync(join(stage, VERIFIED), `${mark}\n`);
+    // Always replace what is there (a stale or damaged cache can carry the
+    // right marker; --from relies on this). Only a cache another run
+    // published between our discard and our rename is kept, and only when
+    // its marker matches: it was unpacked from a verified release too.
     for (let attempt = 0; ; attempt += 1) {
-      if (markOf(dir) === mark) return; // another run published the same release
       discard(dir);
       try { renameSync(stage, dir); return; } catch (e) {
         if (!['EEXIST', 'ENOTEMPTY', 'EPERM'].includes(e.code) || attempt >= 20) throw e;
+        if (markOf(dir) === mark) return;
       }
     }
   } finally {
