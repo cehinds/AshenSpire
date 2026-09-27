@@ -23,7 +23,7 @@
 //
 // WHAT THE DIGEST COVERS, and it is a closed set stated in one place:
 //
-//     index.html · styles/** · src/** · assets/**
+//     index.html · styles/** · src/** · assets/** · assets-mobile/** · asset-data/**
 //     tools/bundle.mjs · tools/buildversion.mjs · tools/dirorder.mjs
 //
 // `buildordinal.json` is deliberately OUTSIDE that set — see INPUT_ROOTS for
@@ -161,7 +161,11 @@ export const DIGEST_CHARS = 10;
  * subject arriving through a new door, and rows F and G below are the door's
  * lock. They are not a follow-up; they are why this is allowed to exist.
  */
-export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'assets', 'assets-mobile']);
+// `asset-data` holds the non-art files that used to sit under assets/ (JSON
+// manifests, the class-art packet, the OFL text; docs/ART-REPO-PLAN.md step 4).
+// It stays a root so the digest and row B sweep the same files they did before
+// the move, including the successor packet CONTRACT_COLUMN_SITES names.
+export const INPUT_ROOTS = Object.freeze(['index.html', 'styles', 'src', 'assets', 'assets-mobile', 'asset-data']);
 
 /**
  * The closed executable seam that turns INPUT_ROOTS into the shipped bundle.
@@ -274,7 +278,7 @@ function isDerived(value) {
  */
 const CONTRACT_COLUMN_SITES = Object.freeze([
   {
-    file: 'assets/classes/successor-packet.manifest.json',
+    file: 'asset-data/classes/successor-packet.manifest.json',
     key: 'source_export_recipe_and_tool_version',
     why: 'art runbook §3 twelve-column manifest contract; the value is the column\'s prose answer, not a build version',
   },
@@ -810,7 +814,7 @@ export function check(root = REPO_ROOT) {
   //     argued: on this tree the site predicate returns 1 hit and it is the real
   //     defect. The obvious alternative — a version-SHAPED literal, /\d+\.\d+/ —
   //     returns 37, of which 36 are SVG stroke widths in src/ui/assets.js and
-  //     `"scale"` values in assets/equipment/manifest.json. A predicate with 36
+  //     `"scale"` values in asset-data/equipment/manifest.json. A predicate with 36
   //     standing false positives gets muted, and a muted check is arm 1's defect
   //     again by another route.
   //

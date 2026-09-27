@@ -412,3 +412,99 @@ test('only an :empty on the rail itself may hide the rail', () => {
     '.shared-hud .hud-bottom:is(:empty) { display: none; }',
   ]) assert.equal(c12({ ...r, kit: `${r.kit}\n${extra}\n` }).length, 0, extra);
 });
+
+// FINISH "C12 BOUNDARY stays stated": C12 reads CSS as text, and the limits of
+// that reading are written down in tools/ui-components.mjs. Each one is named
+// here so a later edit cannot drop a limit from the note without going red.
+test('the C12 BOUNDARY note names each limit of reading CSS as text', () => {
+  const src = readFileSync(new URL('../tools/ui-components.mjs', import.meta.url), 'utf8');
+  const start = src.indexOf('// BOUNDARY:');
+  assert.ok(start > 0, 'tools/ui-components.mjs lost its C12 BOUNDARY note');
+  const lines = src.slice(start).split('\n');
+  const note = lines.slice(0, lines.findIndex((line) => !line.startsWith('//'))).join('\n');
+  for (const limit of [/cascade/, /specificity/, /!important/, /@layer order/, /@scope limits/, /var\(\) substitution/,
+    /per-property value grammar/, /invalid later value/, /hud-visibility\.css/, /combat\.css/,
+    /guard written with CSS nesting is rejected/, /hexadecimal escape in a quoted guard value/]) {
+    assert.match(note, limit, `the C12 BOUNDARY note no longer names ${limit}`);
+  }
+});
+
+// FINISH "C12 BOUNDARY stays stated": styles/hud-visibility.css is shipped and
+// writes display on the rail (.hud-bottom), a property C12 judges. C12 reads
+// it too: the player-preference hides it ships stay legal, and any other rail
+// override written there fails exactly as it would in kit.css.
+test('C12 judges the rail in styles/hud-visibility.css as well as kit.css', () => {
+  const r = receipt();
+  assert.ok(/\.hud-bottom/.test(r.hudVisibility), 'receipt() does not read styles/hud-visibility.css');
+  assert.equal(c12(r).length, 0, 'the shipped preference hides must stay legal');
+  for (const extra of [
+    ":root[data-hud-show-relics='false'] .shared-hud .hud-bottom { position: absolute; }",
+    '.shared-hud .hud-bottom.expanded { display: none !important; }',
+    ":root[data-hud-show-relics='true'] .hud-bottom { display: none !important; }",
+    '.shared-hud .hud-bottom { grid-area: auto; }',
+  ]) {
+    assert.equal(c12({ ...r, hudVisibility: `${r.hudVisibility}\n${extra}\n` }).length, 1, extra);
+  }
+});
+
+// Review of #1368: a preference guard counts only when it is positive (a
+// leading `:root[…]` compound, never inside :not()/:is()) and only when the
+// preferences it names leave the rail empty. Both hide the rail while the
+// default (preference on) holds, or hide relics still turned on, so each is
+// judged in kit.css and in hud-visibility.css alike.
+test('a HUD-preference guard hides the rail only when it empties the rail', () => {
+  const r = receipt();
+  const fail = [
+    ":root:not([data-hud-show-relics='false']) .hud-bottom { display: none !important; }",
+    ".shared-hud .hud-bottom:not([data-hud-show-relics='false']) { display: none; }",
+    ".shared-hud .hud-bottom:is([data-hud-show-relics='false'], .expanded) { display: none; }",
+    ':root[data-hud-show-potions="false"] .hud-bottom { display: none; }',
+    ":root[data-hud-show-relics='false'] .hud-bottom { display: none; }",
+    ":root[data-hud-show-vitality='false'] .hud-bottom { display: none; }",
+    ":root[data-hud-show-currency='false'][data-hud-show-position='false'] .hud-bottom { display: none; }",
+    ":root[data-hud-show-nonsense='false'] .hud-bottom { display: none; }",
+    ":root[data-hud-show-relics='false'] .hud-bottom:not(:has(.hud-relics)) { display: none; }",
+    ":root[data-hud-show-relics='false'] .hud-bottom:not(:not(:has(.hud-potions))) { display: none; }",
+    ":root[data-hud-show-relics='false'].hud-bottom { display: none; }",
+    // Review of #1368 (equivalent attribute syntax): the value stays
+    // case-sensitive without the `i` flag, and only `=` means "is exactly".
+    ":root[data-hud-show-relics='False'][data-hud-show-potions='false'] .hud-bottom { display: none; }",
+    ":root[data-hud-show-relics~='false'][data-hud-show-potions='false'] .hud-bottom { display: none; }",
+    // Review of #1368 (whitespace is a combinator): whitespace that is a
+    // descendant combinator changes what the guard means, so it must never be
+    // normalised away. `.hud- potions` is `.hud-` with a descendant
+    // `potions`, which does not prove the potions are gone.
+    ":root[data-hud-show-relics='false'] .hud-bottom:not(:has(.hud- potions)) { display: none; }",
+    ":root[data-hud-show-relics='false'] .hud-bottom:not(:has(.hud-potions .x)) { display: none; }",
+    ":root[data-hud-show-relics='false'] .hud-bottom:not(:has(. hud-potions)) { display: none; }",
+    ":root [data-hud-show-relics='false'][data-hud-show-potions='false'] .hud-bottom { display: none; }",
+    // Review of #1368: a guard written with CSS nesting reads as
+    // `:is(:root[…]) .hud-bottom`, which is not a leading `:root[…]` compound,
+    // so it is rejected (fails closed). No shipped sheet nests these rules;
+    // the BOUNDARY note says to un-nest one instead.
+    ":root[data-hud-show-relics='false'][data-hud-show-potions='false'] { .hud-bottom { display: none; } }",
+    // Review of #1368: a hexadecimal escape in a quoted value is not decoded,
+    // so the guard is rejected (fails closed). No shipped selector uses one.
+    ":root[data-hud-show-relics='fal\\73 e'][data-hud-show-potions=false] .hud-bottom { display: none; }",
+  ];
+  const pass = [
+    ":root[data-hud-show-relics='false'][data-hud-show-potions='false'] .shared-hud .hud-bottom { display: none; }",
+    ':root[data-hud-show-relics="false"] .hud-bottom:not(:has(.hud-potions)) { display: none; }',
+    ":root[data-hud-show-potions='false'] .shared-hud .hud-bottom:not( :has(.hud-relics) ) { display: none; }",
+    // The same guards in equivalent CSS attribute syntax: whitespace around
+    // `=`, an unquoted identifier value, an upper-case attribute name, the
+    // `i` flag.
+    ":root[data-hud-show-relics = 'false'][data-hud-show-potions = 'false'] .hud-bottom { display: none; }",
+    ":root[data-hud-show-relics=false][ data-hud-show-potions=false ] .hud-bottom { display: none; }",
+    ":root[DATA-HUD-SHOW-RELICS='false'] .hud-bottom:not(:has(.hud-potions)) { display: none; }",
+    ":root[data-hud-show-potions='FALSE' i] .hud-bottom:not(:has(.hud-relics)) { display: none; }",
+    // Whitespace that is not a combinator (inside parentheses, next to them)
+    // and a CSS escape read as their plain forms.
+    ":root[data-hud-show-relics='false'] .hud-bottom:not( :has( .hud-potions ) ) { display: none; }",
+    ":root[data-hud-show-relics='false'] .hud-bottom:not(:has(.hud\\-potions)) { display: none; }",
+  ];
+  for (const sheet of ['kit', 'hudVisibility']) {
+    for (const extra of fail) assert.equal(c12({ ...r, [sheet]: `${r[sheet]}\n${extra}\n` }).length, 1, `${sheet}: ${extra}`);
+    for (const extra of pass) assert.equal(c12({ ...r, [sheet]: `${r[sheet]}\n${extra}\n` }).length, 0, `${sheet}: ${extra}`);
+  }
+});

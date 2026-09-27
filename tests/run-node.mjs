@@ -32,7 +32,7 @@ try {
   const { resolve, dirname } = await import('node:path');
   const { fileURLToPath } = await import('node:url');
   const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-  artManifest = JSON.parse(readFileSync(resolve(root, 'assets/equipment/manifest.json'), 'utf8'));
+  artManifest = JSON.parse(readFileSync(resolve(root, 'asset-data/equipment/manifest.json'), 'utf8'));
 } catch (e) {
   console.warn('  (no art manifest — test 33 will skip; run tools/equipment-blender.py)');
 }
