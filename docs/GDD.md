@@ -235,7 +235,7 @@ Each class requires at least two viable build directions and a silhouette that r
 - Relics alter the shape of a run rather than merely adding small percentages.
 - Shrines preserve the recurring heal-versus-improve dilemma.
 - Equipment changes combat verbs and ownership while preserving clear before-and-after receipts.
-- Progression is experience as well as cinders: skill tracks and a character level (SPEC §13.4d–§13.4i, built). A configurable card-reward schedule, a levelling-pace preview, crafting drops and legendary sigils are specified in SPEC §15 and **planned**, not built.
+- Progression is experience as well as cinders: skill tracks and a character level (SPEC §13.4d–§13.4i, built; the smithing re-point 4b-ii and co-op drafts are still open). A configurable card-reward schedule, a levelling-pace preview, crafting drops and legendary sigils are specified in SPEC §15 and **planned**, not built.
 
 Nothing enters the player's run merely because a reward screen opened. Collection occurs only through an explicit action or an explicitly configured Auto collection policy.
 
