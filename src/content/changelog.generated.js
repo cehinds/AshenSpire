@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Behind the scenes: every new dev build is playable on the build site again",
     "detail": "The build site had stopped updating after built files stopped being saved with each change. It now rebuilds each recent build from its own source, so the newest dev build is at /dev/latest/ and every recent one has its own page.",
-    "build": "0.7.1.620",
+    "build": "0.7.1.621",
     "pullRequest": 1360,
     "url": "https://github.com/cehinds/AshenSpire/pull/1360"
+  },
+  {
+    "id": "pr-1354",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Letting go of the game window mid-hold no longer opens the End Turn check",
+    "detail": "If you were holding the End Turn key and the window lost focus (you alt-tabbed, or the phone went to the background), the game used to treat that as a quick tap and open the End Turn confirmation. Now nothing opens and nothing happens. A quick press and release still opens the check as before. Behind the scenes: the test that lists page listeners now also reads one more way of writing a document listener correctly.",
+    "build": "0.7.1.620",
+    "pullRequest": 1354,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1354"
   },
   {
     "id": "pr-1355",
