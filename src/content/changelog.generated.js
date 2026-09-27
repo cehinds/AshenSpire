@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Behind the scenes: the build site publishes again after its first run failed",
     "detail": "One older test build, rebuilt with the phone-sized mobile copy, was mislabelled, so the site refused to publish. It is now labelled by what was actually built, and the site builds cleanly across all four branches.",
-    "build": "0.7.1.626",
+    "build": "0.7.1.628",
     "pullRequest": 1363,
     "url": "https://github.com/cehinds/AshenSpire/pull/1363"
+  },
+  {
+    "id": "pr-1361",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the developer docs are checked against the code",
+    "detail": "Docs only; nothing you play changes. The developer and process guides lose facts that had gone stale (committed builds, a removed rules file, draft pull requests, moved source paths), and dated QA records move to docs/archive/.",
+    "build": "0.7.1.627",
+    "pullRequest": 1361,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1361"
+  },
+  {
+    "id": "pr-1359",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the design and 1.0 plan documents say what is built and what is still planned",
+    "detail": "Docs only; nothing you play changes. The design spec now opens with a table marking each of its sections as built, partly built or planned: the deck editor, the three shops and most of the new reward rules are written down but not built yet (the levelling preview is built). The 1.0 checklist catches up with the last week's merges, and an implemented map-contrast proposal moves to an archive folder.",
+    "build": "0.7.1.626",
+    "pullRequest": 1359,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1359"
   },
   {
     "id": "pr-1362",

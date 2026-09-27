@@ -1,3 +1,5 @@
+> Archived 2026-09-27 (docs audit): implementation record for the approved-wireframes work (PR #1005, issue #1008), with its coverage data beside it. The current wireframe authority is [docs/architecture-handoff/CURRENT-SPECIFICATION.md](../../architecture-handoff/CURRENT-SPECIFICATION.md).
+
 # Approved wireframes: implementation
 
 Reference: documentation commit `dcb3d1cd`, draft PR #1005. The owner requested

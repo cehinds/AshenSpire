@@ -134,6 +134,16 @@ const HARNESS_DIRS = new Set(['tools', 'tests']);
 function git(args, opts = {}) {
   return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28, ...opts });
 }
+// `git show <rev>:<path>` for a file the commit may not have. Only a missing
+// path is expected (main's 84895c14 deleted buildordinal.json, and older
+// commits predate it); any other git failure is re-thrown, not swallowed.
+function showIfPresent(rev, path) {
+  try { return git(['show', `${rev}:${path}`], { stdio: ['ignore', 'pipe', 'pipe'] }); }
+  catch (error) {
+    if (/exists on disk, but not in|does not exist in/.test(String(error.stderr || ''))) return null;
+    throw error;
+  }
+}
 function gitBuf(args) {
   return execFileSync('git', args, { cwd: ROOT, maxBuffer: 1 << 28 });
 }
@@ -166,9 +176,11 @@ function buildsOf(branch, keep) {
   for (const line of log ? log.split('\n') : []) {
     const [sha, date] = line.split('\t');
     let meta;
-    // Quiet: `git log -- buildordinal.json` also lists the commit that DELETED
-    // or predates it (main's 84895c14), whose show fails by design.
-    try { meta = JSON.parse(git(['show', `${sha}:buildordinal.json`], { stdio: ['ignore', 'pipe', 'ignore'] })); } catch { continue; }
+    // `git log -- buildordinal.json` also lists the commit that DELETED it
+    // (main's 84895c14); showIfPresent returns null for it.
+    const raw = showIfPresent(sha, 'buildordinal.json');
+    if (raw === null) continue;
+    try { meta = JSON.parse(raw); } catch { continue; }
     const ordinal = Number(meta.ordinal);
     if (!Number.isInteger(ordinal) || seen.has(ordinal)) continue;
     // A committed build is the artifact at that commit. A commit with no
@@ -190,7 +202,8 @@ function buildsOf(branch, keep) {
   let headTracksBuild = true;
   try { git(['cat-file', '-e', `${ref}:AshenSpire.html`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { headTracksBuild = false; }
   let headOrdinal = null;
-  try { headOrdinal = Number(JSON.parse(git(['show', `${ref}:buildordinal.json`], { stdio: ['ignore', 'pipe', 'ignore'] })).ordinal); } catch { /* no box at head */ }
+  const headBox = showIfPresent(ref, 'buildordinal.json');
+  try { if (headBox !== null) headOrdinal = Number(JSON.parse(headBox).ordinal); } catch { /* unreadable box at head */ }
   return { ref, head: git(['rev-parse', ref]).trim(), builds: out, headTracksBuild, headOrdinal };
 }
 

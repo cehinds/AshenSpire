@@ -21,8 +21,9 @@ Run `node tools/launch.mjs --build-only --full-art` to generate all three editio
   the budget was 50 MB before 2026-09-24), with the inlined art itself held
   under 20 MB — `bundle.mjs --mobile` refuses to write one over the budget,
   `mobile-art.mjs --check` refuses an art tree over its share, and
-  `verify-shipped.mjs` fails a committed one. The Pages site serves it at
-  `/<branch>/<ordinal>/mobile/` and offers both downloads side by side.
+  `verify-shipped.mjs` fails if any built HTML is tracked. `tools/pages-site.mjs`
+  places it at `/<branch>/<ordinal>/mobile/` beside the full download when a
+  build has one (only `--full-art` builds do).
   Regenerate the twins after any change under `assets/` with
   `node tools/mobile-art.mjs` (needs `cwebp`); `--check` proves the tree without
   an encoder and is the CI gate. Settings → About names the edition.
