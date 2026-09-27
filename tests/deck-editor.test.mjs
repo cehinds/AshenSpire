@@ -214,6 +214,21 @@ test('a plain run: a kept Strike+ has its own tile, and the ∞ tile mints a new
   edit.cancel();
 });
 
+test('a locked card names its piece for a bare id and for both namespaced refs (Codex review on #1372)', () => {
+  const armament = REG.equipment.armaments[0];
+  const armour = REG.equipment.armour.find((a) => a.classId && a.name);
+  for (const [grantedBy, name] of [
+    [armament.id, armament.name],
+    [`armament/${armament.id}`, armament.name],
+    [`armor/${armour.classId}/${armour.id}`, armour.name],
+  ]) {
+    const run = freshRun();
+    run.deck.push({ instanceId: `lock-${grantedBy}`, cardId: 'strike', upgraded: false, equipmentRole: 'granted', grantedBy });
+    const row = deckEditorModel({ registries: REG, run, settings: {} }).deck.find((r) => r.instanceId === `lock-${grantedBy}`);
+    assert.equal(row.lockText, `Locked · ${name}`, `grantedBy '${grantedBy}' names ${name}`);
+  }
+});
+
 test('every card type the content uses has its own filter label', async () => {
   const { has } = await import('../src/ui/strings.js');
   const types = [...new Set(REG.cards.all().map((def) => def.type))];
@@ -327,6 +342,8 @@ function withDom(fn) {
     removeEventListener: drop(listeners),
     dispatchEvent: (event) => { for (const listener of listeners.get(event.type) || []) listener(event); return true; },
     KeyboardEvent: dom.Event,
+    MouseEvent: dom.Event,
+    PointerEvent: dom.Event,
     innerWidth: 390,
     // A key press as a browser delivers it: window capture (input.js), then
     // document capture (the modal shell), then window bubble, unless stopped.
@@ -602,6 +619,52 @@ test('DOM: under Play in deck order no sort chip is offered', async () => {
     const sorted = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: {} });
     assert.equal(sortChips(sorted).length, 4);
     sorted.close();
+  });
+});
+
+test('DOM: Enter on the Rest card through input.js\'s real listener opens exactly one editor (Codex review on #1372)', async () => {
+  const { mountRest } = await import('../src/ui/screens/rest.js');
+  const { createLocationVisit } = await import('../src/engine/locations.js');
+  const { initInput, focusElement } = await import('../src/ui/input.js');
+  withDom((dom, win) => {
+    initInput({ getSettings: () => ({}) });
+    const run = freshRun();
+    const app = document.createElement('main');
+    app.id = 'app';
+    document.body.append(app);
+    const visit = createLocationVisit({ run, registries: REG, rng: null }, 'shrine', {});
+    let opened = 0;
+    mountRest(app, { registries: REG, run, meta: { settings: {} }, onDone() {}, visit, deckEditor: { onOpen: () => { opened += 1; } } });
+    const card = app.querySelector('#deck-opt');
+    card.focus();
+    focusElement(card);
+    win.press('Enter');
+    assert.ok(opened <= 1, `Enter opened the editor ${opened} times`);
+    // With no focus cursor on it (a plain browser Enter on the focused card), the card's own handler opens it once.
+    opened = 0;
+    const plain = new dom.Event('keydown', { key: 'Enter', bubbles: true });
+    card.dispatchEvent(plain);
+    assert.equal(opened, 1, 'the card\'s own Enter opens it once');
+    const consumed = new dom.Event('keydown', { key: 'Enter', bubbles: true });
+    consumed.preventDefault();
+    card.dispatchEvent(consumed);
+    assert.equal(opened, 1, 'a keydown already consumed opens nothing more');
+    app.remove();
+  });
+});
+
+test('DOM: a second editor cannot open while one is live', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun();
+    const first = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const second = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    assert.equal(second, first, 'the live editor is returned, no second session');
+    assert.equal(document.body.querySelectorAll('.deck-editor-veil').length, 1);
+    first.close();
+    const third = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    assert.notEqual(third, first, 'after closing, a new editor opens');
+    third.close();
   });
 });
 
