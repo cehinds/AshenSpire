@@ -27,10 +27,13 @@ reads the selected branch's latest feed and pins its numbered build URL, validat
 count when supplied, and downloads that HTML. Older published metadata without
 a byte count is supported; the size is measured after preparation. Opening the
 panel checks the release automatically; **Check for updates** refreshes it.
-A development preview does not publish a release. Each feed is only as current
-as the last successful Pages deploy (`.github/workflows/pages-builds.yml`: a
-push to `dev`, or the owner's dispatch); a failed deploy leaves the previous
-build in the feed.
+A development preview does not publish a release. A feed exists only when
+the Pages site has a `/<branch>/latest/build.json` for that branch. `dev` and
+`test` builds are no longer committed, so the site has no Dev feed until the
+Pages rebuild of uncommitted builds (#1360) is in; from then on the Dev feed
+follows each deployed `dev` push. Until then, and whenever `/dev/latest/` is
+absent, current `dev` builds come from the `dev-standalone-<commit>` workflow
+artifact (DEVELOPER.md, *Run & test*).
 
 Branch labels and feed URLs are configured in `src/content/offlinePlay.js`.
 Files include the branch and version in their names. The native save picker runs
