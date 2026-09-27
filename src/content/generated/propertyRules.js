@@ -435,6 +435,12 @@ export const propertyRules = [
     "textTemplate": ""
   },
   {
+    "tag": "deckEdit",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
     "tag": "warlord",
     "requires": "",
     "excludes": [
