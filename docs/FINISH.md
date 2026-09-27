@@ -186,7 +186,7 @@ Ruled by the owner on 2026-09-26.
 - **D2 — Guilt and Warrior's Vow.** Build the engine hooks.
 - **D3 — COMBAT-EQUIPMENT-RULES.** Post-1.0. The owner added the deck editor and three shop types to 1.0 instead (§2).
 - **D4 — Elites per seat.** 1–5 per seat, averaging 3.
-- **D5 — Web edition.** Accepted: Pages with external art and a service worker, installable; the 254 MB file stays a download.
+- **D5 — Web edition.** Accepted: Pages with external art and a service worker, installable; the 254 MB file stays a download. *(Second half superseded by D24.)*
 - **D6 — Mobile certification device.** Undecided; use the proposal for now (Chromium, 4× CPU throttle at 390×844, plus one iPhone in Safari before release).
 - **D7 — ci.yml trigger.** Done: push to `release` (#1279) and to `test` (#1345), plus a dispatched run on the RC SHA.
 - **D8 — Storefronts.** Probably Steam, but this is a proof of concept. Web for now; no store art or copy yet.
@@ -201,8 +201,16 @@ Ruled by the owner on 2026-09-27, answering the scope-docs audit (#1359):
 - **D17 — Companions.** Owned by SPEC §14.3, not seat-adventure phase 5.
 - **D18 — Progression leftovers.** 3b-ii, the class-swap boss-reward door and quest XP are post-1.0 (§1).
 - **D19 — SPEC pre-scrub rename.** Dropped; not wanted.
-- **D20 — High-res art zip.** Stays private to `cehinds/AshenSpire-art`; not attached to public releases (ART-REPO-PLAN.md).
+- **D20 — High-res art zip.** Stays private to `cehinds/AshenSpire-art`; not attached to public releases (ART-REPO-PLAN.md). *(Superseded by D22.)*
 - **D21 — `AshenSpire-LegacyPreview.html`.** Deleted.
+
+Ruled by the owner on 2026-09-27, answering EXTERNAL-ASSETS-PLAN.md's questions:
+
+- **D22 — Art repository visibility.** `cehinds/AshenSpire-art` becomes public, the high-res zip included; supersedes D20. No token is needed to fetch its releases. Flipping the visibility is a pending owner action, due before EXTERNAL-ASSETS-PLAN step 11.
+- **D23 — Mobile edition.** Dropped: one HTML picks light or high art at runtime, and `AshenSpire-mobile.html` redirects (EXTERNAL-ASSETS-PLAN step 8e).
+- **D24 — Single-file download.** One light-art single file (about 30 MB, self-contained, plays by double-click) is kept as the download, beside the service-worker install and the game-built zip; the 254 MB full-art file is retired. Supersedes D5's second half.
+- **D25 — High-res on Pages.** Main and release hosted builds serve the high tier's files publicly on Pages.
+- **D26 — `docs/preview`.** Kept in the Pages site.
 
 Proposals from SPEC §14, awaiting the owner's ruling:
 
