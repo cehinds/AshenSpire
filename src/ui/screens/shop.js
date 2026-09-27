@@ -13,7 +13,7 @@ import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
-import { unusedInstanceId } from '../../model/deckRules.js';
+import { unusedInstanceId, ownedCopies as ownedCopiesOf } from '../../model/deckRules.js';
 import { flaskIdentityHtml } from '../components/flask.js';
 import { canRemoveDeckCard, removeDeckCard } from '../../model/cardRemoval.js';
 import { carriedIds } from '../../model/loadout.js';
@@ -196,7 +196,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
 
     const cardsRow = app.querySelector('#shop-cards');
     // WCI3: an offer's metadata band ends with how many the deck already holds.
-    const ownedCopies = (cardId) => run.deck.filter((c) => c.cardId === cardId).length;
+    const ownedCopies = (cardId) => ownedCopiesOf(run, cardId);
     const cardRefs = offerRefs('cards', stock.cards.map((item) => item.id));
     stock.cards.forEach((item, i) => {
       const wrap = document.createElement('div');
