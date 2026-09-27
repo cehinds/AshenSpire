@@ -9476,7 +9476,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // flasks refilled on arrival, the smith and the level-up offered.
     const shrineRun = fresh();
     const shrine = visitTo(shrineRun, 'shrine');
-    eq(shrine.tags.join(','), 'restHpPartial,restManaFloor,restFlasks,smith,levelUp', 'restMana resolves to the mode\'s own tag at the carrier');
+    eq(shrine.tags.join(','), 'restHpPartial,restManaFloor,restFlasks,smith,levelUp,deckEdit', 'restMana resolves to the mode\'s own tag at the carrier');
     eq(JSON.stringify(shrine.services), JSON.stringify({ smith: true, levelUp: true, flasks: true, questBoard: false, deckEdit: true }), 'the services read off the set');
     assert(shrine.ctx.propertyMounts.player['location:shrine'], 'the place is mounted under its owner');
     const arrival = arriveAt(shrine);

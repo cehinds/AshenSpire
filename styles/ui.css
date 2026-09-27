@@ -1371,6 +1371,11 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-tile.spent .deck-editor-name { color: var(--muted); }
 .deck-editor-row.held .deck-editor-main { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.5); }
 .deck-editor-empty { margin: 0.6rem; color: var(--muted); }
+/* The pointer drag (a finger as well as a mouse): the lifted item dims, the
+   place it would land is outlined, and nothing selects text meanwhile. */
+.deck-editor-dragging { user-select: none; -webkit-user-select: none; }
+.deck-editor-item.drag-source { opacity: 0.45; }
+.deck-editor-pane.drop-target, .deck-editor-row.drop-target { outline: 2px dashed var(--gold); outline-offset: -2px; }
 .deck-editor-footer { display: grid; gap: 0.4rem; min-width: 0; }
 .deck-editor-refusal { margin: 0; color: var(--danger); font-weight: 700; }
 .deck-editor-refusal[hidden] { display: none; }

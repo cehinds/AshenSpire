@@ -11,7 +11,7 @@
 // EVERY DRAG HAS TWO TWINS (SPEC §14.1 UX). A card moves by:
 //   · a tap on its tile or row (the main face is one big button),
 //   · the row's own ＋ or － button,
-//   · a drag (HTML5 drag and drop, on a pointer that has one),
+//   · a drag, on pointer events so a finger drags as well as a mouse,
 //   · the keyboard: + adds the focused tile, − or Delete removes the focused
 //     row, `[` / `]` switch panes, the Deck key cycles the filters, the End
 //     Turn key picks a row up and ▲/▼ place it, Menu is Done, Esc is Cancel;
@@ -34,6 +34,10 @@ import { t, tFull } from '../strings.js';
 // Standard-mapping pad buttons the editor reads directly while a row is held
 // (input.js hands every other press to the focus cursor and the bindings).
 const PAD = Object.freeze({ a: 0, b: 1, x: 2, y: 3, lb: 4, rb: 5, start: 9, up: 12, down: 13 });
+// How far (CSS px) a press travels before it is a drag rather than a tap, and
+// how long a finger holds still before it may drag (so a swipe still scrolls).
+const DRAG_SLOP = 10;
+const DRAG_HOLD_MS = 250;
 
 /**
  * mountDeckEditor(host, { registries, run, settings, onDone, onCancel }) →
@@ -45,7 +49,7 @@ const PAD = Object.freeze({ a: 0, b: 1, x: 2, y: 3, lb: 4, rb: 5, start: 9, up: 
  * key }` or `{ family: 'controller', button }` — and performs exactly what the
  * real key or button does, so a test drives the same path a player does.
  */
-export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null }) {
+export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, dragHoldMs = DRAG_HOLD_MS }) {
   const session = openDeckEdit(registries, run, settings);
   let view = deckEditorView({});
   let pane = 'collection';
@@ -54,7 +58,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   let notice = '';
   let model = null;
   let releaseGate = null;
-  let dragging = null; // { kind: 'tile' | 'row', key }
+
 
   const root = el('div', { class: 'modal-veil deck-editor-veil' });
   const panel = el('section', {
@@ -149,10 +153,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         'aria-label': tFull('deckEditor.add', { name: tile.name }),
         'aria-disabled': tile.addable ? 'false' : 'true',
         title: tile.refusal || tFull('deckEditor.add', { name: tile.name }),
-        draggable: tile.addable ? 'true' : 'false',
       }, cardFace(tile, tile.countText)), `tile:${tile.key}`);
       main.addEventListener('click', () => add(tile.key));
-      main.addEventListener('dragstart', (ev) => { dragging = { kind: 'tile', key: tile.key }; ev.dataTransfer?.setData('text/plain', tile.key); });
       const plus = focusable(el('button', {
         type: 'button', class: 'deck-editor-step', dataset: { action: 'add', key: tile.key },
         'aria-label': tFull('deckEditor.add', { name: tile.name }), 'aria-disabled': tile.addable ? 'false' : 'true',
@@ -176,10 +178,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         'aria-label': row.locked ? row.lockSentence : tFull('deckEditor.remove', { name: row.name }),
         'aria-disabled': row.removable ? 'false' : 'true',
         title: row.locked ? row.lockSentence : tFull('deckEditor.remove', { name: row.name }),
-        draggable: row.removable || model.ordered ? 'true' : 'false',
       }, cardFace(row, row.locked ? row.lockText : t(`deckEditor.source.${row.source}`))), `row:${row.instanceId}`);
       main.addEventListener('click', () => remove(row.instanceId));
-      main.addEventListener('dragstart', (ev) => { dragging = { kind: 'row', key: row.instanceId }; ev.dataTransfer?.setData('text/plain', row.instanceId); });
       const item = el('div', {
         class: `deck-editor-item deck-editor-row${row.locked ? ' locked' : ''}${held === row.instanceId ? ' held' : ''}`, role: 'listitem',
         dataset: { instanceId: row.instanceId, source: row.source },
@@ -187,15 +187,6 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       const actions = el('div', { class: 'deck-editor-actions' });
       item.appendChild(actions);
       if (model.ordered) {
-        item.addEventListener('dragover', (ev) => { if (dragging?.kind === 'row') ev.preventDefault(); });
-        item.addEventListener('drop', (ev) => {
-          if (dragging?.kind !== 'row') return;
-          ev.preventDefault();
-          const to = run.deck.findIndex((c) => c.instanceId === row.instanceId);
-          session.moveTo(dragging.key, to);
-          dragging = null;
-          draw();
-        });
         for (const [dir, id, can] of [[-1, 'deckEditor.up', row.canUp], [1, 'deckEditor.down', row.canDown]]) {
           const step = focusable(el('button', {
             type: 'button', class: 'deck-editor-step deck-editor-order', dataset: { action: dir < 0 ? 'up' : 'down', instanceId: row.instanceId },
@@ -229,19 +220,105 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const section = el('section', {
       class: `deck-editor-pane${pane === id ? ' active' : ''}`, dataset: { pane: id }, 'aria-label': title,
     }, [el('h3', { class: 'deck-editor-pane-title', text: title }), list]);
-    // A tile dropped on the deck pane adds it; a row dropped on the collection
-    // pane takes it out. The tap and the ＋/－ buttons do the same.
-    section.addEventListener('dragover', (ev) => {
-      if ((id === 'deck' && dragging?.kind === 'tile') || (id === 'collection' && dragging?.kind === 'row')) ev.preventDefault();
-    });
-    section.addEventListener('drop', (ev) => {
-      if (!dragging) return;
-      if (id === 'deck' && dragging.kind === 'tile') { ev.preventDefault(); add(dragging.key); }
-      else if (id === 'collection' && dragging.kind === 'row') { ev.preventDefault(); remove(dragging.key); }
-      dragging = null;
-    });
     return section;
   }
+
+  // ---- the drag (pointer events, so a finger drags too) -----------------------
+  //
+  // HTML5 drag and drop never fires from a finger, so the drag is built on
+  // pointer events for every pointer: press a tile or a row's face, move past
+  // DRAG_SLOP, and let go over the target. A tile let go over the deck pane is
+  // added; a row let go over the collection pane is taken out; under Play in
+  // deck order a row let go over another row takes its place. The target is
+  // hit-tested at the release point (document.elementFromPoint). A press that
+  // never passes the slop is a TAP and keeps the click path untouched; a drag
+  // that happened swallows the click that follows it.
+  //
+  // A finger must HOLD still for `dragHoldMs` before it may drag, so a swipe
+  // still scrolls the lists; once armed, the touchmove that follows is
+  // prevented so the browser does not claim the gesture as a scroll. A mouse
+  // or a pen drags at once.
+  let press = null; // { pointerId, x, y, kind, key, armed, dragging, source, timer }
+  let swallowClick = false;
+  const payloadOf = (target) => {
+    const main = target?.closest?.('.deck-editor-main');
+    if (!main || !isInside(main, panel)) return null;
+    if (main.dataset.action === 'add' && main.getAttribute('aria-disabled') !== 'true') return { kind: 'tile', key: main.dataset.key, source: main };
+    if (main.dataset.action === 'remove' && (main.getAttribute('aria-disabled') !== 'true' || model.ordered)) return { kind: 'row', key: main.dataset.instanceId, source: main };
+    return null;
+  };
+  const clearMarks = () => {
+    for (const node of panel.querySelectorAll('.drag-source, .drop-target')) node.classList.remove('drag-source', 'drop-target');
+  };
+  const dropTargetAt = (x, y, kind) => {
+    const hit = typeof document.elementFromPoint === 'function' ? document.elementFromPoint(x, y) : null;
+    if (!hit || !isInside(hit, panel)) return null;
+    const row = hit.closest?.('.deck-editor-row');
+    if (kind === 'row' && model.ordered && row) return { kind: 'row', node: row, instanceId: row.dataset.instanceId };
+    const paneNode = hit.closest?.('[data-pane]');
+    if (!paneNode) return null;
+    if (kind === 'tile' && paneNode.dataset.pane === 'deck') return { kind: 'pane', node: paneNode, pane: 'deck' };
+    if (kind === 'row' && paneNode.dataset.pane === 'collection') return { kind: 'pane', node: paneNode, pane: 'collection' };
+    return null;
+  };
+  const endPress = () => {
+    if (press?.timer) clearTimeout(press.timer);
+    press = null;
+    clearMarks();
+    root.classList.remove('deck-editor-dragging');
+  };
+  panel.addEventListener('pointerdown', (ev) => {
+    if (ev.button != null && ev.button !== 0) return;
+    const payload = payloadOf(ev.target);
+    if (!payload) return;
+    const holdMs = ev.pointerType === 'touch' ? dragHoldMs : 0;
+    press = { pointerId: ev.pointerId, x: ev.clientX, y: ev.clientY, ...payload, armed: holdMs <= 0, dragging: false, timer: null };
+    if (!press.armed) {
+      const armed = press;
+      press.timer = setTimeout(() => { if (press === armed) armed.armed = true; }, holdMs);
+    }
+  });
+  panel.addEventListener('pointermove', (ev) => {
+    if (!press || ev.pointerId !== press.pointerId) return;
+    const moved = Math.hypot(ev.clientX - press.x, ev.clientY - press.y);
+    if (!press.dragging) {
+      if (moved < DRAG_SLOP) return;
+      // A finger that moved before the hold armed it is scrolling, not dragging.
+      if (!press.armed) { endPress(); return; }
+      press.dragging = true;
+      root.classList.add('deck-editor-dragging');
+      press.source.closest?.('.deck-editor-item')?.classList.add('drag-source');
+    }
+    ev.preventDefault?.();
+    for (const node of panel.querySelectorAll('.drop-target')) node.classList.remove('drop-target');
+    dropTargetAt(ev.clientX, ev.clientY, press.kind)?.node.classList.add('drop-target');
+  });
+  panel.addEventListener('touchmove', (ev) => { if (press?.armed) ev.preventDefault?.(); }, { passive: false });
+  panel.addEventListener('pointerup', (ev) => {
+    if (!press || ev.pointerId !== press.pointerId) return;
+    const done = press;
+    endPress();
+    if (!done.dragging) return; // a tap: the click that follows does the work
+    swallowClick = true;
+    setTimeout(() => { swallowClick = false; }, 0);
+    const target = dropTargetAt(ev.clientX, ev.clientY, done.kind);
+    if (!target) return;
+    if (target.kind === 'row') {
+      if (target.instanceId === done.key) return;
+      session.moveTo(done.key, run.deck.findIndex((c) => c.instanceId === target.instanceId));
+      draw();
+    } else if (target.pane === 'deck') add(done.key);
+    else remove(done.key);
+  });
+  panel.addEventListener('pointercancel', (ev) => { if (press && ev.pointerId === press.pointerId) endPress(); });
+  // The click a finished drag leaves behind is not a tap.
+  panel.addEventListener('click', (ev) => {
+    if (!swallowClick) return;
+    swallowClick = false;
+    ev.stopPropagation?.();
+    ev.stopImmediatePropagation?.();
+    ev.preventDefault?.();
+  }, true);
 
   function footer() {
     const cancel = button({ label: t('deckEditor.cancel'), id: 'deck-editor-cancel', className: 'deck-editor-cancel', attrs: { title: tFull('deckEditor.cancel') } });
@@ -462,6 +539,11 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
   if (first) focusNode(first);
 
   return { root, dispatch, close: () => { if (!session.closed) session.cancel(); close(); }, session };
+}
+
+function isInside(node, ancestor) {
+  for (let at = node; at; at = at.parentNode) if (at === ancestor) return true;
+  return false;
 }
 
 function cssEscape(value) {

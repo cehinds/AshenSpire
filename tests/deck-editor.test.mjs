@@ -18,7 +18,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { locationServices, locationTags } from '../src/model/locations.js';
-import { deckEditorModel, deckEditorDoors, openDeckEdit, nextFilterPreset, deckEditorView } from '../src/ui/models/DeckEditorModel.js';
+import { deckEditorModel, deckEditorDoors, deckVariantKey, openDeckEdit, nextFilterPreset, deckEditorView } from '../src/ui/models/DeckEditorModel.js';
 import { setKeyBindings } from '../src/ui/input.js';
 import { rewardDom } from './helpers/reward-dom.mjs';
 
@@ -79,7 +79,7 @@ test('the collection: basics are ∞, every other card says owned and in deck, a
   assert.deepEqual(basics.map((tile) => tile.key), ['basic:attack', 'basic:guard'], 'an equipped run offers its basics by role');
   assert.ok(basics.every((tile) => tile.countText.startsWith('∞') && tile.addable));
   const card = ordinary(run);
-  const tile = model.collection.find((x) => x.key === `card:${card.cardId}`);
+  const tile = model.collection.find((x) => x.key === `card:${deckVariantKey(card)}`);
   assert.equal(tile.addable, false, 'every owned copy is already in the deck');
   assert.match(tile.countText, /owned · \d+ in deck/);
   assert.match(tile.refusal, new RegExp(tile.name));
@@ -127,10 +127,47 @@ test('a limited card comes back from the sideboard, and a class Power past its l
   const refused = edit.add(`card:${powerId}`);
   assert.equal(refused.ok, false);
   assert.match(refused.refusal, new RegExp(REG.cards.get(powerId).name));
-  const tile = deckEditorModel({ registries: REG, run, settings: {} }).collection.find((x) => x.key === `card:${powerId}`);
+  const tile = deckEditorModel({ registries: REG, run, settings: {} }).collection.find((x) => x.key === `card:${deckVariantKey({ cardId: powerId })}`);
   assert.equal(tile.addable, false);
   assert.equal(tile.countText, '2 owned · 1 in deck');
   edit.cancel();
+});
+
+test('each variant is its own tile, and its tap moves that variant (Codex review on #1372)', () => {
+  const run = freshRun();
+  const powerId = REG.classes.get('reaver').cardPool.find((id) => REG.cards.get(id).type === 'power');
+  // Two loose copies that differ only in `upgraded`, the plain one first, under the one-copy limit.
+  run.sideboard = [
+    { instanceId: 'plain', cardId: powerId, upgraded: false },
+    { instanceId: 'better', cardId: powerId, upgraded: true, mods: [] },
+  ];
+  const model = deckEditorModel({ registries: REG, run, settings: {} });
+  const tiles = model.collection.filter((tile) => tile.cardId === powerId);
+  assert.equal(tiles.length, 2, 'the plain and the upgraded copy are two tiles');
+  const upgradedTile = tiles.find((tile) => tile.upgraded);
+  assert.equal(upgradedTile.name, REG.cards.get(powerId).name + '+', 'the upgraded tile shows the upgraded card');
+  const edit = openDeckEdit(REG, run, {});
+  assert.equal(edit.add(upgradedTile.key).ok, true);
+  assert.ok(run.deck.some((c) => c.instanceId === 'better'), 'the tapped variant moved, not the first match');
+  assert.ok(run.sideboard.some((c) => c.instanceId === 'plain'), 'the plain copy stays loose');
+  const after = deckEditorModel({ registries: REG, run, settings: {} }).collection.filter((tile) => tile.cardId === powerId);
+  assert.equal(after.find((tile) => !tile.upgraded).addable, false, 'the one-copy limit counts the card id across variants');
+  // And it can come back out: the upgraded copy is never stranded.
+  assert.equal(edit.remove('better').ok, true);
+  assert.ok(run.sideboard.some((c) => c.instanceId === 'better'));
+  edit.cancel();
+});
+
+test('a technique (a technique:* tag, not extractable) is its own source', () => {
+  const run = freshRun();
+  const def = REG.cards.get('quickCut');
+  assert.ok(def.tags.some((tag) => tag.startsWith('technique:')) && !def.tags.includes('extractable'));
+  run.sideboard = [{ instanceId: 'qc', cardId: 'quickCut', upgraded: false }];
+  const model = deckEditorModel({ registries: REG, run, settings: {} });
+  assert.equal(model.collection.find((tile) => tile.cardId === 'quickCut').source, 'technique');
+  assert.ok(model.filters.source.some((chip) => chip.id === 'technique' && chip.label === 'Technique'));
+  const only = deckEditorModel({ registries: REG, run, settings: {}, view: { filters: { source: ['technique'] } } });
+  assert.ok(only.collection.length > 0 && only.collection.every((tile) => tile.source === 'technique'));
 });
 
 test('under play-in-deck-order the rows keep run.deck order and move one place at a time', () => {
@@ -257,7 +294,7 @@ test('DOM: tap, ＋/－, a keyboard and a gamepad dispatch add and remove cards;
     assert.equal(done, 0, 'a disabled Done confirms nothing');
 
     // Tap its collection tile: the same instance comes back.
-    root.querySelector(`.deck-editor-tile[data-key="card:${card.cardId}"] .deck-editor-main`).click();
+    root.querySelector(`.deck-editor-tile[data-key="card:${deckVariantKey(card)}"] .deck-editor-main`).click();
     assert.ok(run.deck.some((c) => c.instanceId === card.instanceId));
     assert.equal(refusal().hasAttribute('hidden'), true, 'back in bounds, no refusal');
 
@@ -269,7 +306,7 @@ test('DOM: tap, ＋/－, a keyboard and a gamepad dispatch add and remove cards;
     assert.equal(run.deck.length, n);
 
     // The keyboard: focus the tile, press +; focus a row, press −.
-    root.querySelector(`.deck-editor-tile[data-key="card:${card.cardId}"] .deck-editor-main`).focus();
+    root.querySelector(`.deck-editor-tile[data-key="card:${deckVariantKey(card)}"] .deck-editor-main`).focus();
     win.dispatchEvent(new dom.Event('keydown', { key: '+' }));
     assert.equal(run.deck.length, n + 1, 'the window keydown listener adds the focused tile');
     root.querySelector(`.deck-editor-row[data-instance-id="${card.instanceId}"] .deck-editor-main`).focus();
@@ -342,6 +379,71 @@ test('DOM: a held row moves with the arrows under play-in-deck-order', async () 
     editor.root.querySelector(`.deck-editor-row[data-instance-id="${second.instanceId}"] .deck-editor-order[data-action="up"]`).click();
     assert.equal(run.deck[0].instanceId, second.instanceId, 'the ▲ button reorders too');
     editor.close();
+  });
+});
+
+test('DOM: a finger drag moves cards between panes and reorders rows (pointer events, Codex review on #1372)', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom((dom) => {
+    const run = freshRun();
+    const settings = { playInDeckOrder: true, deckMinSize: 1 };
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings, dragHoldMs: 0 });
+    const root = editor.root;
+    // Hit-testing: the release point names the element under it.
+    let under = null;
+    document.elementFromPoint = () => under;
+    const fire = (node, type, x, y, pointerType = 'touch') => node.dispatchEvent(new dom.Event(type, {
+      bubbles: true, pointerId: 7, pointerType, button: 0, clientX: x, clientY: y,
+    }));
+    const drag = (source, target, pointerType) => {
+      fire(source, 'pointerdown', 10, 10, pointerType);
+      under = target;
+      fire(source, 'pointermove', 10, 60, pointerType);
+      fire(source, 'pointerup', 10, 60, pointerType);
+      under = null;
+    };
+    const card = ordinary(run);
+    const rowMain = (id) => root.querySelector(`.deck-editor-row[data-instance-id="${id}"] .deck-editor-main`);
+    const pane = (id) => root.querySelector(`[data-pane="${id}"]`);
+    const size = run.deck.length;
+
+    // A row dropped on the collection pane leaves the deck.
+    drag(rowMain(card.instanceId), pane('collection').querySelector('.deck-editor-list'));
+    assert.equal(run.deck.length, size - 1);
+    assert.ok(run.sideboard.some((c) => c.instanceId === card.instanceId));
+    // Its tile dropped on the deck pane comes back.
+    const tileMain = root.querySelector(`.deck-editor-tile[data-key="card:${deckVariantKey(card)}"] .deck-editor-main`);
+    drag(tileMain, pane('deck').querySelector('.deck-editor-pane-title'));
+    assert.equal(run.deck.length, size);
+    assert.ok(run.deck.some((c) => c.instanceId === card.instanceId), 'the same instance returns');
+    // A row dropped on another row takes its place.
+    const [first, second] = run.deck;
+    drag(rowMain(second.instanceId), root.querySelector(`.deck-editor-row[data-instance-id="${first.instanceId}"]`));
+    assert.equal(run.deck[0].instanceId, second.instanceId, 'reordered by the drop');
+    // A press that never passes the slop is a tap, left to the click path.
+    const before = run.deck.map((c) => c.instanceId);
+    fire(rowMain(first.instanceId), 'pointerdown', 10, 10);
+    under = pane('collection');
+    fire(rowMain(first.instanceId), 'pointermove', 12, 13);
+    fire(rowMain(first.instanceId), 'pointerup', 12, 13);
+    assert.deepEqual(run.deck.map((c) => c.instanceId), before, 'a short press drags nothing');
+    // A tile let go outside any target changes nothing.
+    drag(root.querySelector('.deck-editor-tile[data-key="basic:attack"] .deck-editor-main'), null);
+    assert.deepEqual(run.deck.map((c) => c.instanceId), before, 'no target, no move');
+    editor.close();
+
+    // With the real hold, a finger that moves at once is scrolling, not dragging.
+    const again = freshRun();
+    const held = mountDeckEditor(document.body, { registries: REG, run: again, settings: { deckMinSize: 1 } });
+    const target = again.deck.find((c) => !c.equipmentRole && !c.grantedBy);
+    const main = held.root.querySelector(`.deck-editor-row[data-instance-id="${target.instanceId}"] .deck-editor-main`);
+    fire(main, 'pointerdown', 10, 10);
+    under = held.root.querySelector('[data-pane="collection"]');
+    fire(main, 'pointermove', 10, 80);
+    fire(main, 'pointerup', 10, 80);
+    assert.ok(again.deck.includes(target), 'a swipe before the hold scrolls instead');
+    held.close();
+    delete document.elementFromPoint;
   });
 });
 

@@ -3090,6 +3090,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "deckEditor.source.technique",
+    "extends": "",
+    "short": "Technique",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "deckEditor.source.reward",
     "extends": "",
     "short": "Reward",

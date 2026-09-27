@@ -27,13 +27,25 @@ import { has, t } from '../strings.js';
 /** The cost buckets the curve and the cost filter share. */
 export const DECK_COST_BUCKETS = Object.freeze(['0', '1', '2', '3', '4', '5+', 'X']);
 /** Where a card came from, for the source filter and sort (SPEC §14.1 UX). */
-export const DECK_SOURCES = Object.freeze(['basic', 'art', 'reward', 'item']);
+export const DECK_SOURCES = Object.freeze(['basic', 'art', 'technique', 'reward', 'item']);
 export const DECK_SORTS = Object.freeze(['cost', 'name', 'type', 'source']);
 /** The two panes, in the order LB/RB and `[`/`]` cycle them. */
 export const DECK_PANES = Object.freeze(['collection', 'deck']);
 
 // The tag model/cardExtraction.js reads as "this card is a weapon art".
 const ART_TAG = 'extractable';
+// The tag family that marks a technique (`technique:flourish`, `technique:cleave`…).
+const TECHNIQUE_TAG_PREFIX = 'technique:';
+
+/**
+ * deckVariantKey(card) → the collection key of a card's variant: its id, its
+ * upgrade and its mods. Two copies that differ in any of them are two tiles,
+ * and a tile's tap moves a copy of exactly that variant.
+ */
+export function deckVariantKey(card) {
+  const mods = Array.isArray(card.mods) ? card.mods.join(',') : '';
+  return `${card.cardId}~${card.upgraded ? 'u' : ''}~${mods}`;
+}
 
 function costBucket(cost) {
   if (!Number.isFinite(cost) || cost < 0) return 'X';
@@ -45,7 +57,10 @@ function isLocked(card) { return !!(card && (card.grantedBy || isItemOwned(card)
 function sourceOf(card, def) {
   if (isLocked(card)) return 'item';
   if (isUnlimitedBasic(card)) return 'basic';
-  if ((def.tags || []).includes(ART_TAG)) return 'art';
+  const tags = def.tags || [];
+  if (tags.includes(ART_TAG)) return 'art';
+  // A technique (a skill-draft card, SPEC §13.4e) carries a `technique:*` tag.
+  if (tags.some((tag) => String(tag).startsWith(TECHNIQUE_TAG_PREFIX))) return 'technique';
   return 'reward';
 }
 
@@ -197,24 +212,29 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
       countText: t('deckEditor.tile.basic', { inDeck: basic.inDeck }), addable: true, refusal: '',
     });
   }
+  // One tile per VARIANT (card id + upgraded + mods), so the copy a tile shows
+  // is the copy its tap moves: an upgraded card and a plain one are two tiles,
+  // and neither can be stranded behind the other under a copy limit. The copy
+  // limit still counts the card id across every variant in the deck.
   const limited = new Map();
+  const inDeckById = new Map();
+  for (const card of deck) if (card) inDeckById.set(card.cardId, (inDeckById.get(card.cardId) || 0) + 1);
   for (const card of [...deck, ...sideboard]) {
     if (!card || isLocked(card) || isUnlimitedBasic(card)) continue;
-    const entry = limited.get(card.cardId) || { card, owned: 0, inDeck: 0, loose: 0 };
+    const variant = deckVariantKey(card);
+    const entry = limited.get(variant) || { card, owned: 0, inDeck: 0, loose: 0 };
     entry.owned += 1;
     if (deck.includes(card)) entry.inDeck += 1; else entry.loose += 1;
-    // The tile shows the copy a tap would add: a loose one when there is one.
-    if (!deck.includes(card) && deck.includes(entry.card)) entry.card = card;
-    limited.set(card.cardId, entry);
+    limited.set(variant, entry);
   }
-  for (const [cardId, entry] of limited) {
+  for (const [variant, entry] of limited) {
     const row = describe(registries, entry.card);
-    const limit = deckCopyLimit(registries, cardId, settings, run.class);
+    const limit = deckCopyLimit(registries, entry.card.cardId, settings, run.class);
     let tileRefusal = '';
     if (!entry.loose) tileRefusal = t('deckEditor.refuse.allInDeck', { name: row.name });
-    else if (entry.inDeck >= limit) tileRefusal = t('deckEditor.refuse.copyLimit', { name: row.name, limit });
+    else if ((inDeckById.get(entry.card.cardId) || 0) >= limit) tileRefusal = t('deckEditor.refuse.copyLimit', { name: row.name, limit });
     tiles.push({
-      ...row, key: `card:${cardId}`, unlimited: false, owned: entry.owned, inDeck: entry.inDeck,
+      ...row, key: `card:${variant}`, unlimited: false, owned: entry.owned, inDeck: entry.inDeck,
       countText: t('deckEditor.tile.owned', { owned: entry.owned, inDeck: entry.inDeck }),
       addable: !tileRefusal, refusal: tileRefusal,
     });
@@ -295,13 +315,18 @@ export function openDeckEdit(registries, run, settings = {}) {
         return { ok: true, refusal: '' };
       }
       if (kind !== 'card') throw new Error(`openDeckEdit.add: unknown collection key '${key}'`);
-      const loose = (run.sideboard || []).find((c) => c && c.cardId === id && !isLocked(c) && !isUnlimitedBasic(c));
+      // `card:<variant>` (a tile's key) moves a copy of exactly that variant;
+      // a bare `card:<cardId>` takes any loose copy of the card.
+      const variant = String(key).slice('card:'.length);
+      const matches = variant.includes('~') ? (c) => deckVariantKey(c) === variant : (c) => c.cardId === variant;
+      const cardId = variant.split('~')[0];
+      const loose = (run.sideboard || []).find((c) => c && matches(c) && !isLocked(c) && !isUnlimitedBasic(c));
       if (!loose) {
-        const any = (run.deck || []).find((c) => c && c.cardId === id);
-        return { ok: false, refusal: t('deckEditor.refuse.allInDeck', { name: any ? nameOf(any) : id }) };
+        const any = (run.deck || []).find((c) => c && matches(c));
+        return { ok: false, refusal: t('deckEditor.refuse.allInDeck', { name: any ? nameOf(any) : cardId }) };
       }
       if (moveFromSideboard(registries, run, loose.instanceId, settings)) return { ok: true, refusal: '' };
-      const limit = deckCopyLimit(registries, id, settings, run.class);
+      const limit = deckCopyLimit(registries, cardId, settings, run.class);
       return { ok: false, refusal: t('deckEditor.refuse.copyLimit', { name: nameOf(loose), limit }) };
     },
     remove(instanceId) {
