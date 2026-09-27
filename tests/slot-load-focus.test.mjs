@@ -4,8 +4,10 @@
 // overlay. Closing the overlay before resumeRun knew the outcome disconnected
 // it, so a refused load's "Keep playing" could not restore focus and keyboard
 // and gamepad players were left on <body> with the live run still onscreen.
-// tools/slot-load-door.mjs drives the refusal in the real page through the
-// combat menu; this pins the order the overlay path depends on.
+// tools/slot-load-door.mjs drives the refusal in the real page, through the
+// combat menu and (SLOT-LOAD-OVERLAY-FOCUS) through the overlay's quick
+// navigation, asserting focus lands back on its launcher; this pins the order
+// the overlay path depends on.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
