@@ -1130,6 +1130,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "atlas.shop.benefit.rolled",
+    "extends": "",
+    "short": "Spend cinders on this visit’s {shelves}.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "atlas.shop.benefit.remove",
     "extends": "",
     "short": "You can also remove a card from your deck.",

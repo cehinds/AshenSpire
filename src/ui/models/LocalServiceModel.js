@@ -4,7 +4,7 @@ import { resolveLocationId } from '../../model/locations.js';
 import { smithingPlan } from '../../model/smithing.js';
 import { levelUpPlan } from '../../model/levelup.js';
 import { graceRefillPlan, flaskChargePlan, refillFlaskCharges } from '../../model/gracerefill.js';
-import { shopStockOfferings } from '../../model/shopKinds.js';
+import { shopStockOfferings, MARKET_SHELVES } from '../../model/shopKinds.js';
 import { t } from '../strings.js';
 
 // Read-only projection of the same plans used when a service is activated.
@@ -70,8 +70,13 @@ export function localServiceModel({ handlerId, registries, run, state = {}, heal
     // WHAT THIS VISIT LAID OUT (SPEC §14.2): Remove is promised only when the
     // rolled stock offers it; before the first entry nothing is rolled yet,
     // so it is only a possibility.
-    const removeOffered = state.stock ? shopStockOfferings(state.stock).includes('remove') : null;
-    result.benefit = `${t('atlas.shop.benefit')}${removeOffered === null ? ` ${t('atlas.shop.benefit.removeMaybe')}` : removeOffered ? ` ${t('atlas.shop.benefit.remove')}` : ''}`;
+    // Once rolled, the sentence names only the shelves this visit laid out
+    // (Codex, on #1371); before that it describes the market in general.
+    const offerings = state.stock ? shopStockOfferings(state.stock) : null;
+    const removeOffered = offerings ? offerings.includes('remove') : null;
+    const shelves = offerings ? MARKET_SHELVES.filter((id) => offerings.includes(id)).map((id) => t(`settings.shops.offering.${id}`).toLowerCase()) : [];
+    const lead = !offerings ? t('atlas.shop.benefit') : shelves.length ? t('atlas.shop.benefit.rolled', { shelves: shelves.join(', ') }) : '';
+    result.benefit = [lead, removeOffered === null ? t('atlas.shop.benefit.removeMaybe') : removeOffered ? t('atlas.shop.benefit.remove') : ''].filter(Boolean).join(' ');
     result.facts.push(`You have ${run.cinders} cinders. Browsing is free; purchases require confirmation where offered.`);
     if (state.stock) {
       const stock = state.stock;

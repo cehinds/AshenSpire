@@ -196,6 +196,7 @@ atlas.enterNamed,,Enter {name},,
 atlas.inspect,,Details,Open the full view of the selected place.,Details
 atlas.context.aria,,Selected place,,
 atlas.shop.benefit,,"Spend cinders on cards, equipment, weapon arts, relics, or flasks from this market’s stock.",,
+atlas.shop.benefit.rolled,,Spend cinders on this visit’s {shelves}.,,
 atlas.shop.benefit.remove,,You can also remove a card from your deck.,,
 atlas.shop.benefit.removeMaybe,,This visit may also offer to remove a card from your deck.,,
 atlas.shop.fact.remove,,Remove a card: {cost} cinders. You must keep at least one card.,,

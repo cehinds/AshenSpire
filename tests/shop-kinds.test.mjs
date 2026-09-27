@@ -449,6 +449,12 @@ test('the atlas shop inspection promises Remove only when the visit offered it (
   assert.ok(!without.offerings.includes('remove'));
   const hidden = localServiceModel({ handlerId: 'shop', registries: noRemove, run, state: { stock: without } });
   assert.doesNotMatch(hidden.benefit, /remove/i);
+  // Once rolled, the benefit names only the shelves the visit laid out (Codex, on #1371).
+  assert.match(offered.benefit, /^Spend cinders on this visit’s cards, relics, flasks, armaments, weapon arts\./);
+  const noCards = registriesWith({ [`${PREFIX}market.cards.enabled`]: false, [`${PREFIX}market.relics.enabled`]: false });
+  const fewer = localServiceModel({ handlerId: 'shop', registries: noCards, run, state: { stock: buildMarketStock(noCards, createRng(6), run) } });
+  assert.doesNotMatch(fewer.benefit, /cards|relics/);
+  assert.match(fewer.benefit, /flasks, armaments, weapon arts/);
   assert.ok(!hidden.facts.some((fact) => /Remove a card/.test(fact)));
   // Before the first entry nothing is rolled: removal is only a possibility.
   const unrolled = localServiceModel({ handlerId: 'shop', registries: REG, run, state: {} });
