@@ -7,6 +7,7 @@
       "controls": 5
     },
     "figureReference": 150,
+    "artWidthAllowance": 1.8,
     "ceiling": {
       "heightFraction": 0.52,
       "widthFraction": 0.16

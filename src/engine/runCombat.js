@@ -16,6 +16,7 @@
 import { createCombat } from './combat.js';
 import { runHandRules } from '../model/handRules.js';
 import { playInDeckOrder } from '../model/deckRules.js';
+import { recoveryRulesFor } from '../model/recoveryRules.js';
 import { ratingsConfigFor } from '../model/statRows.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
 import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/resources.js';
@@ -96,6 +97,9 @@ export function createRunCombat({
     handRules: runHandRules(registries, run, settings),
     // Play in deck order (SPEC §14.1): read here, once, like the other rules.
     orderedDraw: playInDeckOrder(settings),
+    // Settings → Advanced → Recovery, read once here and snapshotted: null at
+    // the defaults (model/recoveryRules.js).
+    recoveryRules: recoveryRulesFor(settings),
     registries,
     rng,
     player: { ...runCombatPlayer(run), ...player },

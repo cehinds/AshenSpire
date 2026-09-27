@@ -75,6 +75,38 @@ function safeStorage() {
   try { return globalThis.localStorage || null; } catch { return null; }
 }
 
+/**
+ * debugSwitch(channel, { search, storage }) → { on, canToggle, note } — what the
+ * Developer tools switch at the top of Settings → Advanced shows. Before it,
+ * the only door on an unrecognised file was typing `?debug=1` into the address
+ * bar, which a phone opening a downloaded build cannot do and nobody could
+ * find (owner, 2026-09-27: "I don't see a button to turn on debug").
+ */
+export function debugSwitch(channel = buildChannel(), options = {}) {
+  // With no options this is the page's own answer — the cache setDebugEnabled
+  // writes — so the switch never disagrees with the sections on screen (a
+  // browser with no storage, or a `?debug=1` page switched off).
+  const on = options.search === undefined && options.storage === undefined ? pageDebug() : debugEnabled(channel, options);
+  if (DEBUG_CHANNELS.has(channel)) return { on, canToggle: false, note: `Always on in ${channel} builds.` };
+  if (LOCKED_CHANNELS.has(channel)) return { on, canToggle: false, note: `Locked off in ${channel} builds. Open a dev or test build (Download & saves) to tune the game.` };
+  const storage = options.storage === undefined ? safeStorage() : options.storage;
+  return { on, canToggle: true, note: storage ? 'Shows tuning, rules, layout, import/export and diagnostics sections. Remembered on this device.' : 'Shows tuning, rules, layout, import/export and diagnostics sections for this page (this browser cannot remember it).' };
+}
+
+/**
+ * setDebugEnabled(on, { channel, storage }) → the page's new answer. Only an
+ * unrecognised build can be switched; dev/test stay on and main/release off.
+ */
+export function setDebugEnabled(on, { channel = buildChannel(), storage = safeStorage() } = {}) {
+  if (DEBUG_CHANNELS.has(channel) || LOCKED_CHANNELS.has(channel)) return pageDebug();
+  try {
+    if (on) storage?.setItem(DEBUG_STORAGE_KEY, '1');
+    else storage?.removeItem(DEBUG_STORAGE_KEY);
+  } catch { /* unwritable storage: the answer still holds for this page */ }
+  cached = !!on;
+  return cached;
+}
+
 let cached = null;
 /** The page's own answer, computed once. Tests call the two functions above. */
 export function pageDebug() {

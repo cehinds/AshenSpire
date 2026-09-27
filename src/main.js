@@ -39,6 +39,7 @@ import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
+import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
 import { skillTracks, skillSchools, classSkillId } from './model/skills.js';
 import { equippedPieces } from './model/loadout.js';
@@ -1934,6 +1935,7 @@ function showMap() {
     serviceContext: {
       healMult: run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1,
       refillCounts: resolveGraceRefill(saves.loadMeta().settings || {}).counts,
+      restBonus: restRecoveryBonus(saves.loadMeta().settings || {}),
       // The run's live streams: the rest preview copies their position, so a
       // rolling rule shows the roll the visit will make and advances nothing.
       rng,
@@ -2493,6 +2495,9 @@ async function onCombatEnd(result, combat, enc) {
     const earnedOnDeath = finishRun(false);
     return mountGameOver(app, { registries, game: run, victory: false, earned: earnedOnDeath, onTitle: showTitle, onHistory: showHistory });
   }
+  // Settings → Advanced → Recovery: a won fight restores its after-combat
+  // percent of each pool (0 at the defaults, model/recoveryRules.js).
+  applyAfterCombatRecovery(run, saves.loadMeta().settings);
 
   // A breath between the last blow and the spoils (components/victoryBeat.js):
   // the combat screen is still mounted here, so the beat stands over it and
@@ -2724,7 +2729,7 @@ function showRest(openPanel = null, locationId = null) {
   const worldRest = run.journey?.activeService;
   const restState = run.legacyDungeon?.activeRest || (worldRest ? run.journey.serviceStates[worldRest.pointId] : null);
   if (!openVisit || openVisit.locationId !== restLocationId || openVisit.ctx.run !== run) {
-    openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts });
+    openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts, restBonus: restRecoveryBonus(saves.loadMeta().settings || {}) });
     // A resumed atlas visit arrived once already (the service state says so);
     // a resumed classic shrine arrives again, and the refill is a top-up so
     // that pours nothing twice. The arrival's effects — the refill, or any
@@ -2818,7 +2823,7 @@ function showShop() {
     restAtInn: (quote) => {
       const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
       const { counts } = resolveGraceRefill(saves.loadMeta().settings || {});
-      return commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts: counts });
+      return commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts: counts, restBonus: restRecoveryBonus(saves.loadMeta().settings || {}) });
     },
     // A custom run's price multiplier: what a consumable sells back for is
     // capped at what one would cost here now (SPEC §14.3).

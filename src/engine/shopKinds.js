@@ -247,7 +247,7 @@ const ADDITION_STOCK = Object.freeze({
 });
 
 /**
- * commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts }) →
+ * commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts, restBonus }) →
  * the rest receipt (SPEC §14.3). Runs the inn's own visit on the run's own
  * streams — createLocationVisit(ctx, 'inn') → arriveAt → restAt →
  * leaveLocation (§13.4j) — so the inn's `arrived` rules (the flask refill)
@@ -259,11 +259,12 @@ const ADDITION_STOCK = Object.freeze({
  * refusal names the relic; otherwise the real visit, being the same rules on
  * the same values, does exactly what the copy did.
  */
-export function commitInnRest({ run, registries, rng }, quote, { healMult = 1, refillCounts = null } = {}) {
+export function commitInnRest({ run, registries, rng }, quote, { healMult = 1, refillCounts = null, restBonus = null } = {}) {
   const plan = innRestPlan(registries, run);
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan);
-  const opts = { healMult, refillCounts };
+  // restBonus: Settings → Advanced → Recovery's at-Rest percents, as every Rest.
+  const opts = { healMult, refillCounts, restBonus };
   const dryRng = rng && typeof rng.getCounters === 'function' ? createRng(rng.seed, rng.getCounters()) : createRng((run.seed ?? 0) >>> 0);
   const dry = createLocationVisit({ run: structuredClone(run), registries, rng: dryRng }, INN_LOCATION, opts);
   try {
