@@ -817,6 +817,11 @@ export function ownership(registries, { meta = {}, loadout = null } = {}) {
     ...(cfg.persistence !== 'unlocked' ? carriedIds(loadout) : []),
   ]);
   const creationArmourGrant = loadout && loadout.creationArmourGrant;
+  // A THIRD ROUTE, AND IT IS THE RUN'S (SPEC §14.3): an armour set bought at
+  // a market is this run's own, whatever the profile has earned. Recorded on
+  // the loadout beside the creation grant, as `{ classId, id }` because armour
+  // ids repeat across classes.
+  const boughtArmour = loadout && Array.isArray(loadout.boughtArmour) ? loadout.boughtArmour : [];
   // A missing piece resolves to 'unearned' rather than to a fourth value: there
   // is no row to read a hint from, and 'unearned' is the route whose sentence is
   // generic. 'unfound' would promise the player it turns up in treasure, which
@@ -839,6 +844,7 @@ export function ownership(registries, { meta = {}, loadout = null } = {}) {
     if (creationArmourGrant
       && creationArmourGrant.classId === piece.classId
       && creationArmourGrant.id === piece.id) return null;
+    if (boughtArmour.some((row) => row && row.classId === piece.classId && row.id === piece.id)) return null;
     if (piece.unlock !== '' && piece.unlock != null) {
       return unlocked.has(piece.unlock) ? null : 'unearned';
     }

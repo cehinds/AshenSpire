@@ -35,6 +35,8 @@ import { coreTagsProblems } from './classTree.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
+import { boughtArmourProblems } from './marketStock.js';
+import { sigilInventoryProblems } from './sigils.js';
 
 // v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
 // granted — and capacity must derive from the three (validateRunShape). v2
@@ -59,7 +61,12 @@ import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
 // laid out (`shopStock.kind`, `shopStock.offerings`, and the same on an atlas
 // shop point's persisted stock). A v13-or-older stock is read as `market`
 // offering today's shelves, filled at migrateRunSchema with nothing rerolled.
-export const RUN_SCHEMA_VERSION = 14;
+// 15 (SPEC §14.3, §14.6 step 5a): `sigils` (owned, uninstalled sigil ids) and
+// `sigilSlots` (the slots cut into items, keyed like itemMounts) ride the
+// save, and a loadout may carry `boughtArmour`, the armour sets bought at a
+// market. A v14-or-older save is filled with [] and {} at migrateRunSchema;
+// `boughtArmour` is optional (absent means none bought).
+export const RUN_SCHEMA_VERSION = 15;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -192,6 +199,10 @@ export function createRunState({
     smithingRewardClaims: [],
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
     sideboard: [], // owned cards the deck editor took out of the deck (SPEC §14.1)
+    // SPEC §14.3: owned sigils not installed anywhere, and the sigil slots cut
+    // into items ({ [itemRef]: (sigilId|null)[] }, keyed like itemMounts).
+    sigils: [],
+    sigilSlots: {},
     loadout,
     // THE BIRTH QUOTA, WRITTEN DOWN. How many attack slots this run was composed
     // with is a fact about the run, not something to re-derive from whatever
@@ -661,6 +672,11 @@ export const RUN_SHAPE = [
   // absent means none minted.
   { key: 'sideboard', type: 'array' },
   { key: 'editMintCounter', type: 'number', optional: true },
+  // SPEC §14.3. Required at schema 15: the owned, uninstalled sigils and the
+  // sigil slots cut into items (sigilInventoryProblems). A preSigils save
+  // (≤ 14) is filled with [] and {} at the migration door.
+  { key: 'sigils', type: 'array' },
+  { key: 'sigilSlots', type: 'object' },
   // SPEC §14.2. The open shop visit's stock, null between visits. Since
   // schema 14 it carries `kind` and `offerings` (shopStockProblems); a
   // preShopKinds save (≤ 13) is read as a market at the migration door.
@@ -781,7 +797,7 @@ export function levelProblems(level) {
   return problems;
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones } = {}) {
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds } = {}) {
   const problems = [];
   problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
@@ -801,6 +817,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (preXpLevels && f.key === 'level') continue;
     if (preSideboard && f.key === 'sideboard') continue;
     if (preRefinedStones && f.key === 'smithingStonesRefined') continue;
+    if (preSigils && (f.key === 'sigils' || f.key === 'sigilSlots')) continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -820,6 +837,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
+  problems.push(...sigilInventoryProblems(run), ...boughtArmourProblems(run.loadout));
   if (Array.isArray(run.sideboard)) {
     run.sideboard.forEach((card, i) => {
       if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
@@ -1287,11 +1305,16 @@ export function migrateRunSchema(run) {
   // v13 and older: a shop stock without a kind. Filled HERE (SPEC §14.2): it
   // is a market offering today's shelves, and its shelves are kept as saved.
   const preShopKinds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, ${RUN_SCHEMA_VERSION})`);
+  // v14 and older: no sigil inventory. Filled HERE (SPEC §14.3): a run that
+  // could not buy a sigil owns none and has cut no slot.
+  const preSigils = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].includes(run.schemaVersion);
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, ${RUN_SCHEMA_VERSION})`);
   }
   if (preShopKinds) bringShopStockForward(run);
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils });
+  if (preSigils && (run.sigils === undefined || run.sigils === null)) run.sigils = [];
+  if (preSigils && (run.sigilSlots === undefined || run.sigilSlots === null)) run.sigilSlots = {};
   if (preSkills && (run.skills === undefined || run.skills === null)) run.skills = {};
   if (preCoreTags && (run.coreTags === undefined || run.coreTags === null)) run.coreTags = [];
   if (preSideboard && (run.sideboard === undefined || run.sideboard === null)) run.sideboard = [];

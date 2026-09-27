@@ -12,6 +12,12 @@ export function canRemoveDeckCard(card) {
   return !!card && !card.grantedBy;
 }
 
+/** Whether the Remove service has anything it could take out of this run's deck (never its last card). */
+export function hasRemovableCard(run) {
+  const deck = (run && run.deck) || [];
+  return deck.length > 1 && deck.some(canRemoveDeckCard);
+}
+
 export function removeDeckCard(run, instanceId, { keepOne = false } = {}) {
   const index = run.deck.findIndex(card => card.instanceId === instanceId);
   const card = run.deck[index];

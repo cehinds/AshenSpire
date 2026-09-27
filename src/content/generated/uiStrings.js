@@ -1340,6 +1340,62 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "shop.review.buy.stone",
+    "extends": "",
+    "short": "Buy a Smithing Stone?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.stone.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). The stone pays toward a smith's upgrade.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.armour",
+    "extends": "",
+    "short": "Buy this armour?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.armour.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). The set is yours for the rest of the run; wear it from the Armoury.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.sigil",
+    "extends": "",
+    "short": "Buy this sigil?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.sigil.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). You carry the sigil until a blacksmith sets it into a slot.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.rest",
+    "extends": "",
+    "short": "Rest here?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.rest.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). You rest exactly as the inn's bed rests you.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "shop.review.burn",
     "extends": "",
     "short": "Burn this card?",
@@ -1627,6 +1683,167 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "shop.bar.armour",
+    "extends": "",
+    "short": "ARMOUR",
+    "full": "Armour sets of your class the merchant has for sale.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.smithStones",
+    "extends": "",
+    "short": "SMITHING STONES",
+    "full": "The stones a smith's upgrades are paid in.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.sigils",
+    "extends": "",
+    "short": "SIGILS",
+    "full": "Sigils to carry until a blacksmith sets them into a slot.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.innRest",
+    "extends": "",
+    "short": "REST",
+    "full": "A full rest at the inn, bought here.",
+    "tip": ""
+  },
+  {
+    "id": "shop.stones.name",
+    "extends": "",
+    "short": "Smithing Stone",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.stones.desc",
+    "extends": "",
+    "short": "One stone toward a smith's upgrade. {left} left this visit.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.armour.desc",
+    "extends": "",
+    "short": "An armour set for your class. Wear it from the Armoury.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.sigil.desc",
+    "extends": "",
+    "short": "{blurb} Carried until a blacksmith sets it into a slot.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.inn.name",
+    "extends": "",
+    "short": "A full rest",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.inn.desc",
+    "extends": "",
+    "short": "Rest exactly as the inn's bed rests you. Once this visit.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.inn.done",
+    "extends": "",
+    "short": "You rested here this visit.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.notOffered",
+    "extends": "",
+    "short": "This market is not offering that.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.gone",
+    "extends": "",
+    "short": "This offer is no longer available.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.unpriced",
+    "extends": "",
+    "short": "This offer has no valid price.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.cinders",
+    "extends": "",
+    "short": "Not enough cinders.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.stale",
+    "extends": "",
+    "short": "The offer changed. Inspect it again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.stones",
+    "extends": "",
+    "short": "The market has {left} Smithing Stone(s) left this visit; you asked for {count}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.noLoadout",
+    "extends": "",
+    "short": "Your equipment is unavailable.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.armourOwned",
+    "extends": "",
+    "short": "You already own {name}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.armourClass",
+    "extends": "",
+    "short": "{name} was stocked for another class; it is not yours to wear.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.sigilOwned",
+    "extends": "",
+    "short": "You already hold {name}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.innBought",
+    "extends": "",
+    "short": "You have already rested here this visit.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.innDenied",
+    "extends": "",
+    "short": "The {relic} will not let you rest here.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "customRun.seat.group",
     "extends": "",
     "short": "First seat",
@@ -1812,7 +2029,7 @@ export const uiStrings = [
     "id": "settings.shops.topic.market",
     "extends": "",
     "short": "Market",
-    "full": "The usual merchant: cards, relics, flasks, armaments, weapon arts and card removal.",
+    "full": "The usual merchant: cards, relics, flasks, armaments, weapon arts and card removal, and on some visits armour, Smithing Stones, sigils and a full rest.",
     "tip": ""
   },
   {
@@ -1903,6 +2120,27 @@ export const uiStrings = [
     "id": "settings.shops.offering.sigils",
     "extends": "",
     "short": "Sigil setting",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.market.sigils",
+    "extends": "",
+    "short": "Sigils",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.armour",
+    "extends": "",
+    "short": "Armour",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.innRest",
+    "extends": "",
+    "short": "Inn rest",
     "full": "",
     "tip": ""
   },
@@ -2043,6 +2281,27 @@ export const uiStrings = [
     "id": "settings.shops.refuse.disabled",
     "extends": "",
     "short": "{kind}: turning off {offerings} leaves {enabled} offering(s) enabled, fewer than its guaranteed minimum of {minimum}. Turn one back on or lower the minimum.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.conditional",
+    "extends": "",
+    "short": "{kind}: only {enabled} of its enabled offerings can never come up empty, fewer than its guaranteed minimum of {minimum}. The conditional ones ({conditional}) can have nothing to sell on a visit, so they do not count. Turn another offering on or lower the minimum.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.emptyStock",
+    "extends": "",
+    "short": "{kind}: with the stock of {stocks} at 0, only {enabled} of its enabled offerings have anything to lay out, fewer than its guaranteed minimum of {minimum}. Raise that stock above 0, turn another offering on, or lower the minimum.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.armourCost",
+    "extends": "",
+    "short": "{kind} · {offering}: a cost from {min} to {max} is refused; the least must not be above the most. The authored shops stay in force until it is fixed.",
     "full": "",
     "tip": ""
   },

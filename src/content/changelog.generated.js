@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Behind the scenes: a hand-rules test comment catches up",
     "detail": "Tests only. The fixed-draw test's comment now works its numbers from the one-row hand stats, counting Intelligence from each row's baseline, instead of the retired weights; the values it checks are unchanged.",
-    "build": "0.7.1.664",
+    "build": "0.7.1.669",
     "pullRequest": 1334,
     "url": "https://github.com/cehinds/AshenSpire/pull/1334"
+  },
+  {
+    "id": "pr-1376",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the rules for skill books, revive tokens, companions and the market's quest event are written down",
+    "detail": "Docs only; nothing you play changes yet. The design document now says what a skill book, a revive token and a companion are made of, that their prices, sale values, XP, revive health and fight counts will be rows in Advanced → Shops, that a skill book is read from the Armoury's inventory, that selling one back never pays more than buying it costs, how much health a revive token leaves you with, that only one of each companion travels with you at a time, and how the market's one-off event is priced, opened once, and closes the shop behind you. What a companion or a sigil does is now written as a property in the game's tag data, the same way a legendary sigil's is, rather than on the item itself.",
+    "build": "0.7.1.668",
+    "pullRequest": 1376,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1376"
+  },
+  {
+    "id": "pr-1374",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "The market sells more: Smithing Stones, armour, sigils and a bed for the night",
+    "detail": "On some visits a market now also lays out Smithing Stones (a few per visit, priced per stone), armour sets of your class you do not own yet (yours for the rest of the run; wear them from the Armoury), and sigils, which you carry until a blacksmith can set them into a slot. A market in a town with an inn always offers a full rest, once per visit, that rests you exactly as the inn's bed does; a relic that forbids resting refuses it by name. What you bought and what is left on the shelves stay as they were after a reload. The shelves you already know are unchanged, except that a shelf with nothing left to sell you (every relic already yours, say) is now left out and another shelf takes its place (so is card removal when no card could be removed), so a visit still lays out at least as many shelves as it promises. Each new offering's chance, weight, prices and stock are rows in Advanced → Shops, and so is a switch that stops the market selling armour you have not unlocked. An offer on a saved shelf for a sigil or armour set that a later update removed is dropped when the save loads, without rerolling the shelf. An armour set on the shelf stays tied to the class it was stocked for, so a set stocked before your class changed cannot be bought as yours. Settings now refuses a setup that could leave a visit short: with the shipped minimum of two, cards and flasks must stay on with something to sell. An older save loads with no sigils.",
+    "build": "0.7.1.665",
+    "pullRequest": 1374,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1374"
   },
   {
     "id": "pr-1375",

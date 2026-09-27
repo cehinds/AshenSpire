@@ -1,5 +1,6 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { cardShelf, cardShelfWidthPx } from './CardSizeModel.js';
+import { MARKET_ADDITIONS } from '../../model/marketStock.js';
 
 // W1d / W1v: THE MERCHANT AS A WORKSPACE. A category rail beside (or above) one
 // active pane; the pane shows the category's offers with a price and an
@@ -21,12 +22,21 @@ export const SHOP_CATEGORIES = Object.freeze(['cards', 'armaments', 'weaponArts'
  */
 export function shopCategories({ sellOn = true, offered = null, services = true } = {}) {
   const has = (key) => !offered || (offered instanceof Set ? offered.has(key) : offered.includes(key));
-  return Object.freeze(SHOP_CATEGORIES.filter((key) => {
+  const base = SHOP_CATEGORIES.filter((key) => {
     if (key === 'sell') return sellOn;
     if (key === 'services') return services;
     return has(key);
-  }));
+  });
+  // The market additions (SPEC §14.3) each have a rail item only when this
+  // visit laid them out — never for a stock that names no offerings, which
+  // was saved before any addition could be — and stand after the flasks.
+  const additions = offered ? MARKET_ADDITION_CATEGORIES.filter(has) : [];
+  const at = base.findIndex((key) => key === 'services' || key === 'sell');
+  return Object.freeze(at < 0 ? [...base, ...additions] : [...base.slice(0, at), ...additions, ...base.slice(at)]);
 }
+
+/** The market additions' rail items, keyed by their offering ids (SPEC §14.3): the one list, model/marketStock.js. */
+export const MARKET_ADDITION_CATEGORIES = MARKET_ADDITIONS;
 
 /**
  * The {Status} line a category carries on its rail item and its pane head.

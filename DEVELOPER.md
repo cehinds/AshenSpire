@@ -203,7 +203,16 @@ per run); `src/engine/shopKinds.js` rolls the kind and the offerings on the
 `shopOffers` stream, while the market's shelves still roll on `shop` through
 `buildShopStock`. A kind gets a weight row, and may carry a non-zero weight,
 only once its screen is in `SHOP_KIND_SCREENS`. Run
-`node --test tests/shop-kinds.test.mjs`. How many cards a shelf of resting cards
+`node --test tests/shop-kinds.test.mjs`.
+The market additions (SPEC §14.3) are market offerings too: `armour`,
+`smithStones`, `sigils` and `innRest`, each at a chance below 100. Their stock
+rolls on `shopOffers` after the offering roll (`buildMarketStock`), their
+purchases are plan/commit pairs in `src/model/marketAdditions.js` (the inn
+rest's commit, which runs the inn's location visit, is `commitInnRest` in
+`src/engine/shopKinds.js`), sigils are `src/content/sigils.js` (owned in
+`run.sigils`, slots in `run.sigilSlots`, `src/model/sigils.js`), and a bought
+armour set is recorded in `run.loadout.boughtArmour`, which `ownership()`
+reads. Run `node --test tests/market-additions.test.mjs`. How many cards a shelf of resting cards
 holds — the merchant's shelves, a mount's deck list — is authored once at
 `content/config/ui/components/card.json -> sizing.shelf`, laid out by
 `.card-shelf` in styles/kit.css, and checked by

@@ -33,7 +33,8 @@ function assertW2(review, label) {
 }
 
 test('W2a merchant purchases name the offer and the exact cinders', () => {
-  for (const kind of ['card', 'relic', 'flask']) {
+  // The market additions (SPEC §14.3) buy through the same review.
+  for (const kind of ['card', 'relic', 'flask', 'stone', 'armour', 'sigil', 'rest']) {
     const review = purchaseReview({ kind, name: 'War Surgeon', cost: 242, cinders: 999 });
     assertW2(review, `buy ${kind}`);
     assert.equal(review.target, 'War Surgeon');
@@ -43,7 +44,7 @@ test('W2a merchant purchases name the offer and the exact cinders', () => {
     assert.equal(review.confirmLabel, 'BUY IT');
     assert.equal(policyTone(review.policyAction), 'normal', 'a purchase is not a destructive door');
   }
-  assert.throws(() => purchaseReview({ kind: 'armour', name: 'x', cost: 1, cinders: 1 }), /unknown kind 'armour'/);
+  assert.throws(() => purchaseReview({ kind: 'companion', name: 'x', cost: 1, cinders: 1 }), /unknown kind 'companion'/);
 });
 
 test('W2a card burn names the card and cost, and is an alert door by policy', () => {
