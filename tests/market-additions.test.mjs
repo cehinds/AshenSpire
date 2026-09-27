@@ -367,7 +367,8 @@ test('FINISH: a sigil bought goes to run.sigils and survives a reload', () => {
 // ---------------------------------------------------------------------------
 
 test('sigils and sigilSlots ride schema 15: the bump, the corpus entry, and the migration default', () => {
-  assert.equal(RUN_SCHEMA_VERSION, 15);
+  // Schema 15 added them; 16 (5b) came after, so a current build is 15 or later.
+  assert.ok(RUN_SCHEMA_VERSION >= 15);
   const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
   const v15 = JSON.parse(corpus.versions['15'].bytes);
   assert.equal(v15.schemaVersion, 15);
@@ -381,7 +382,7 @@ test('sigils and sigilSlots ride schema 15: the bump, the corpus entry, and the 
   storage.setItem(RUN_KEY, JSON.stringify(v14));
   const run = createSaveManager(storage).loadRun(REG);
   assert.ok(run);
-  assert.equal(run.schemaVersion, 15);
+  assert.equal(run.schemaVersion, RUN_SCHEMA_VERSION);
   assert.deepEqual(run.sigils, []);
   assert.deepEqual(run.sigilSlots, {});
   // A current save must carry both.
