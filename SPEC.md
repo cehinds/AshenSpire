@@ -318,10 +318,10 @@ owner's budget: a row's attribute weights sum to about 2; Mana's and Stamina's t
 
 | Row (id) | Base | STR | DEX | CON | WIS | INT | Per level | Min–max | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| HP (`hp`) | 30 | 0.35 | — | 4 | 0.1 | — | 2 | — | Preserved from ruleset 6; the run clamps max HP to ≥ 1. |
+| HP (`hp`) | 51 | 0.35 | — | 4 | 0.1 | — | 2 | — | Base 30 → 51 (A3, FINISH D24, 2026-09-27): the lowest stock pool covers the simulator's 90th-percentile HP lost over a run's first three fights; stock pools Reaver 70, Starseer 69, Rogue and Herald 59. The run clamps max HP to ≥ 1. |
 | Mana (`mana`) | 1 | 0.125 | — | 0.25 | 0.5 | 0.125 | 0.2 | — | Budget 1; Wisdom leads. |
 | Stamina (`stamina`) | 1 | 0.25 | 0.25 | 0.5 | — | — | 0.2 | — | Budget 1. |
-| Actions / turn (`energy`) | 3 | 0.1 | 0.2 | — | 0.01 | 0.01 | 0.1 | — | Preserved; engine id stays `energy`. |
+| Actions / turn (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | DEX 0.2 → 0.25 (A3, FINISH D24, 2026-09-27): the first extra Action at DEX 4, the lean creation ceiling, so it is reachable at creation and three level-ups from DEX 1. Engine id stays `energy`. |
 | Opening hand (`openingHand`) | per class | per class | per class | — | per class | per class | — | 4–6 | #1294's class hand: base 3/4/4/5 and 0.5 on the primary (STR/DEX/WIS/INT) for Reaver/Rogue/Herald/Starseer, counted from 1 (§4.1). Shared fallback: 4 + 0.5 INT. |
 | Draw / turn (`draw`) | 2 | — | — | — | — | 0.2 | — | 2–10 | Counted from INT 4 (`attributeBaseline: 4`): exactly the retired hand rules `turn` group at every INT; every fight, co-op included. |
 | Hand size (`handSize`) | 7 | — | — | — | — | 0.2 | — | 1–30 | Counted from INT 1 (`attributeBaseline: 1`): exactly the retired `capacity` group at every INT (it also replaced `balance.handMax`). |
