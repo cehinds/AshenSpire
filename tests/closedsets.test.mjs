@@ -13,10 +13,10 @@
 // so a transient copy could hide a real orphan.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { collect } from '../tools/closedsets.mjs';
+import { collect, report } from '../tools/closedsets.mjs';
 
 function tree() {
   const root = mkdtempSync(join(tmpdir(), 'closedsets-test-'));
@@ -29,12 +29,33 @@ function tree() {
 test('a file that is listed but gone by the time it is read does not crash the scan', () => {
   const root = tree();
   try {
-    // A dangling link is the deterministic form of "readdir saw it, then it was
-    // unlinked": readdir lists the name and readFileSync throws ENOENT.
-    symlinkSync(join(root, 'src/model/never-existed.js'), join(root, 'src/model/vanished.js'));
-    const r = collect(root);
+    // "readdir saw it, then it was unlinked", staged the same way on every OS:
+    // the file is on disk so readdir lists it, and the reader throws ENOENT for
+    // it as if the writer had won the race. (A dangling symlink did this too,
+    // but needs elevated rights on Windows, where CI runs this file.)
+    writeFileSync(join(root, 'src/model/vanished.js'), "export const GONE_SET = Object.freeze(['g']);\n");
+    const readFile = (f) => {
+      if (f.endsWith('vanished.js')) throw Object.assign(new Error(`ENOENT: ${f}`), { code: 'ENOENT' });
+      return readFileSync(f, 'utf8');
+    };
+    const r = collect(root, { readFile });
     assert.deepEqual(r.sets.map((s) => [s.name, s.readers.length]), [['REAL_SET', 1]]);
     assert.deepEqual(r.vanished, ['src/model/vanished.js']);
+
+    // ...but a scan that lost a file is INCOMPLETE, and an incomplete scan is
+    // never a pass: the vanished file's sets silently left the population. The
+    // verdict is unknown (exit 2), and the file is named ON the RESULT line,
+    // because that one line is all tests/run-node.mjs shows for rung 53.
+    const lines = [];
+    const log = console.log;
+    console.log = (...a) => lines.push(a.join(' '));
+    let out;
+    try { out = report(root, { readFile }); } finally { console.log = log; }
+    assert.equal(out.code, 2);
+    const result = lines.filter((l) => l.startsWith('RESULT:'));
+    assert.equal(result.length, 1);
+    assert.match(result[0], /INCOMPLETE/);
+    assert.match(result[0], /src\/model\/vanished\.js/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
