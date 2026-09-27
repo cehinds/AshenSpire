@@ -10,6 +10,10 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 import { generateJourney, journeyGraph, journeyEncounter } from '../src/model/worldAtlas.js';
 import { combatEncounterFor, victoryCompletesJourneyNode, serviceEventCombatEntry } from '../src/model/serviceCombat.js';
+import { createRng } from '../src/engine/rng.js';
+import { createRunCombat } from '../src/engine/runCombat.js';
+import { commitCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 
 const REG = createRegistries(contentBundle);
 const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
@@ -55,6 +59,30 @@ test('winning an atlas quest event\'s fight neither advances nor completes the j
   const classic = createRunState({ seed: 11, classId: 'reaver', registries: REG });
   classic.combatEntered = serviceEventCombatEntry('n1', fightEncounterId);
   assert.equal(victoryCompletesJourneyNode(classic), false);
+});
+
+test('a quest event\'s fight saved mid-combat through the real snapshot path reloads as that fight, and still completes no node (Codex P1 on #1377)', () => {
+  const run = atlasRun();
+  const nodeId = run.journey.currentNodeId;
+  run.combatEntered = serviceEventCombatEntry(nodeId, fightEncounterId);
+  const rng = createRng(11);
+  const combat = createRunCombat({ registries: REG, rng, run, enemyIds: REG.encounters.get(fightEncounterId).enemies });
+  // Save Game / Save and Quit: the exact committed turn.
+  commitCombatSnapshot({ run, combat, nodeId, encounterId: fightEncounterId });
+  assert.equal(run.combatEntered.serviceEvent, true, 'the snapshot writer keeps the flag');
+  assert.ok(run.combatEntered.snapshot);
+  const storage = createMemoryStorage();
+  createSaveManager(storage).saveRun(run, rng);
+  const back = createSaveManager(storage).loadRun(REG);
+  assert.ok(back, 'the save loads');
+  assert.equal(back.combatEntered.serviceEvent, true, 'the flag survives the reload');
+  assert.equal(combatEncounterFor(REG, back, back.combatEntered).id, fightEncounterId, 'it resumes the event\'s own encounter');
+  assert.equal(victoryCompletesJourneyNode(back), false, 'and a win still completes no node');
+  // A node fight's snapshot stays a node fight.
+  const plain = atlasRun();
+  plain.combatEntered = { nodeId, encounterId: fightEncounterId };
+  commitCombatSnapshot({ run: plain, combat: createRunCombat({ registries: REG, rng: createRng(11), run: plain, enemyIds: REG.encounters.get(fightEncounterId).enemies }), nodeId, encounterId: fightEncounterId });
+  assert.equal(plain.combatEntered.serviceEvent, undefined);
 });
 
 test('main.js carries the quest event\'s fight as a service-event combat and returns to the atlas', () => {
