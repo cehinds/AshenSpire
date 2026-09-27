@@ -98,7 +98,7 @@ test('Falsify: with defaults, a seed\'s stone drops are unchanged and the smith 
       assert.deepEqual(Object.keys(receipt).sort(), ['amount', 'duplicate', 'pool', 'rewardId', 'stoneBalanceAfter']);
     }
     assert.equal(run.smithingStones, 2);
-    assert.equal(run.smithingStonesRefined, undefined, 'no refined field is written when nothing refined was paid');
+    assert.equal(run.smithingStonesRefined, 0, 'the refined purse is untouched when nothing refined was paid');
     assert.equal(rng.getCounters().smith, 0);
   }
 });
@@ -218,10 +218,14 @@ test('Falsify: a refined stone reward pays and survives a reload', () => {
   assert.equal(grantSmithingReward(normal, nrun, 'normal', 'n', createRng(1)).refined, 1);
 });
 
-test('run.smithingStonesRefined is optional: absent reads 0, a bad value is refused by name', () => {
+test('run.smithingStonesRefined rides schema 12: a fresh run writes 0, a missing or bad value is refused by name', () => {
   const run = freshRun();
-  assert.equal(run.smithingStonesRefined, undefined);
+  assert.equal(run.schemaVersion, 12);
+  assert.equal(run.smithingStonesRefined, 0);
   assert.deepEqual(validateRunShape(run), []);
+  const { smithingStonesRefined: _gone, ...missing } = run;
+  assert.ok(validateRunShape(missing).includes("missing 'smithingStonesRefined'"), 'required at schema 12');
+  assert.deepEqual(validateRunShape(missing, { preRefinedStones: true }), [], 'a pre-12 save may lack it');
   assert.equal(smithingPlan(REG, run).refined, 0);
   for (const bad of [-1, 1.5, '2']) {
     const problems = validateRunShape({ ...run, smithingStonesRefined: bad });
@@ -359,4 +363,19 @@ test('refined payout rows allow up to 100 in Settings', () => {
     assert.equal(row.min, 0);
     assert.equal(row.max, 100);
   }
+});
+
+test('a schema-11 save loads with an empty refined purse, and the v12 capture keeps its own', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { createSaveManager, createMemoryStorage, RUN_KEY } = await import('../src/engine/save.js');
+  const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
+  for (const v of ['11', '12']) {
+    const storage = createMemoryStorage();
+    storage.setItem(RUN_KEY, corpus.versions[v].bytes);
+    const run = createSaveManager(storage).loadRun(REG);
+    assert.ok(run, `the schema-${v} save loads`);
+    assert.equal(run.schemaVersion, 12);
+    assert.equal(run.smithingStonesRefined, 0);
+  }
+  assert.equal('smithingStonesRefined' in JSON.parse(corpus.versions['11'].bytes), false, 'v11 was written without it');
 });
