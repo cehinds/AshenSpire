@@ -23,6 +23,7 @@ import {
   shopConfigRows, shopSettingsProblems, shopStockKind, shopStockOfferings, bringShopStockForward,
 } from '../src/model/shopKinds.js';
 import { rollShopKind, rollShopOfferings, buildMarketStock, buildMerchantStock } from '../src/engine/shopKinds.js';
+import { MARKET_ADDITIONS } from '../src/model/marketStock.js';
 import { t } from '../src/ui/strings.js';
 import { shopCategories } from '../src/ui/models/ShopWorkspaceModel.js';
 import { localServiceModel } from '../src/ui/models/LocalServiceModel.js';
@@ -177,22 +178,24 @@ test('FINISH: a numeric offering leaf without a [NOTE] is refused by name', () =
 });
 
 test('FINISH: a disabled offering never appears, and disabling below the minimum is refused by name', () => {
-  // Disabled at chance 100: never rolled.
-  const off = registriesWith({ [`${PREFIX}market.cards.enabled`]: false });
-  for (const seed of SEEDS.slice(0, 50)) assert.ok(!rollShopOfferings(off.shops.market, createRng(seed)).includes('cards'));
+  // Disabled at chance 100: never rolled. (Relics, since cards and flasks are
+  // the two offerings the shipped minimum of 2 needs on: SPEC §14.2.)
+  const off = registriesWith({ [`${PREFIX}market.relics.enabled`]: false });
+  assert.equal(off.shops.market.offerings.find((row) => row.id === 'relics').enabled, false, 'the setting applied');
+  for (const seed of SEEDS.slice(0, 50)) assert.ok(!rollShopOfferings(off.shops.market, createRng(seed)).includes('relics'));
   // Disabled while the guarantee is short: never added either, though it is the heaviest.
-  const zeroOff = registriesWith({ ...allChancesZero(), [`${PREFIX}market.cards.enabled`]: false });
+  const zeroOff = registriesWith({ ...allChancesZero(), [`${PREFIX}market.relics.weight`]: 1000, [`${PREFIX}market.relics.enabled`]: false });
   for (const seed of SEEDS) {
     const ids = rollShopOfferings(zeroOff.shops.market, createRng(seed));
-    assert.ok(!ids.includes('cards'), `seed ${seed}`);
+    assert.ok(!ids.includes('relics'), `seed ${seed}`);
     assert.equal(ids.length, 2);
   }
   // Its shelf is empty on the visit, and the screen has no rail item for it.
   const run = createRunState({ seed: 3, classId: 'reaver', registries: off });
   const stock = buildMarketStock(off, createRng(3), run);
-  assert.deepEqual(stock.cards, []);
-  assert.ok(!stock.offerings.includes('cards'));
-  assert.ok(!shopCategories({ offered: new Set(stock.offerings), services: true }).includes('cards'));
+  assert.deepEqual(stock.relics, []);
+  assert.ok(!stock.offerings.includes('relics'));
+  assert.ok(!shopCategories({ offered: new Set(stock.offerings), services: true }).includes('relics'));
 
   // Disabling below the minimum: five of six off leaves one, under a minimum of 2.
   const market = offeringsOf('market').map((row) => row.id);
@@ -209,8 +212,10 @@ test('FINISH: a disabled offering never appears, and disabling below the minimum
   assert.equal(errors.length, 1);
   assert.match(errors[0].msg, /relics/);
   assert.match(errors[0].msg, /guaranteedMinimum/);
-  // Four off leaves two: allowed.
-  const fine = Object.fromEntries(market.slice(2).map((id) => [`${PREFIX}market.${id}.enabled`, false]));
+  // All but two off, both of them offerings that can never come up empty
+  // (not `conditional`, SPEC §14.2): allowed.
+  const keep = ['cards', 'flasks'];
+  const fine = Object.fromEntries(market.filter((id) => !keep.includes(id)).map((id) => [`${PREFIX}market.${id}.enabled`, false]));
   assert.deepEqual(shopSettingsProblems(contentBundle, fine), []);
 });
 
@@ -283,15 +288,21 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
     // main.js's merchant case, in its order: the stock, then the smith's roll.
     const stock = buildMerchantStock(REG, rng, run);
     stock.smith = smithServicesAt(REG, 'merchant', rng);
-    const { kind, offerings, ...shelvesNow } = stock;
+    const { kind, offerings } = stock;
     assert.equal(kind, 'market');
-    assert.deepEqual(offerings, offeringsOf('market').map((row) => row.id));
+    // Every shelf that existed before shop kinds is out on every visit. The
+    // market additions of §14.3 (step 5) may join them by their own chances.
+    assert.deepEqual(offerings.filter((id) => LEGACY_MARKET_OFFERINGS.includes(id)), [...LEGACY_MARKET_OFFERINGS]);
+    for (const id of offerings) assert.ok(LEGACY_MARKET_OFFERINGS.includes(id) || MARKET_ADDITIONS.includes(id), `seed ${n}: ${id}`);
+    // The captured shelves, byte for byte, in their captured key order; any
+    // other key is an addition's own stock.
+    const shelvesNow = Object.fromEntries(Object.keys(before.stock).map((key) => [key, stock[key]]));
     assert.equal(JSON.stringify(shelvesNow), JSON.stringify(before.stock), `seed ${n}: the shelves, byte for byte`);
-    // Nothing new is drawn on any existing stream, and the shipped defaults
-    // draw nothing on the new one either.
-    const { shopOffers, ...counters } = rng.getCounters();
+    for (const key of Object.keys(stock)) assert.ok(key in before.stock || key === 'kind' || key === 'offerings' || MARKET_ADDITIONS.includes(key), `seed ${n}: stray stock key ${key}`);
+    // Nothing new is drawn on any existing stream. Only the additions' own
+    // rolls (§14.3, on shopOffers after the offering roll) draw on the new one.
+    const { shopOffers: _offers, ...counters } = rng.getCounters();
     assert.deepEqual(counters, before.counters, `seed ${n}: every existing stream`);
-    assert.equal(shopOffers, 0, `seed ${n}: shopOffers untouched by the shipped defaults`);
   }
 });
 
@@ -309,12 +320,16 @@ test('shopOffers is appended to the END of STREAM_NAMES, so no existing stream m
 
 test('a chance between 0 and 100 rolls once per enabled offering, in written order, on shopOffers only', () => {
   const registries = registriesWith({ [`${PREFIX}market.relics.chance`]: 50, [`${PREFIX}market.flasks.chance`]: 50 });
+  // The two set to 50 here, plus every shipped offering whose own chance is
+  // between 0 and 100 (the §14.3 additions).
+  const between = registries.shops.market.offerings.filter((row) => row.enabled && row.chance > 0 && row.chance < 100).length;
+  assert.ok(between >= 2);
   let withRelics = 0;
   for (const seed of SEEDS) {
     const rng = createRng(seed);
     const ids = rollShopOfferings(registries.shops.market, rng);
     const { shopOffers, ...rest } = rng.getCounters();
-    assert.equal(shopOffers, 2, 'one draw for each offering whose chance is between 0 and 100');
+    assert.equal(shopOffers, between, 'one draw for each offering whose chance is between 0 and 100');
     assert.ok(Object.values(rest).every((count) => count === 0), 'no other stream is drawn');
     if (ids.includes('relics')) withRelics += 1;
   }
@@ -374,7 +389,8 @@ test('Settings files every Shops row under its kind, with its label from uiStrin
 });
 
 test('stock.kind rides schema 14: the bump, the RUN_SHAPE row and the captured corpus entry', () => {
-  assert.equal(RUN_SCHEMA_VERSION, 14);
+  // 14 added the kind; later bumps (15, the sigil inventory) keep it.
+  assert.ok(RUN_SCHEMA_VERSION >= 14);
   const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
   assert.equal(JSON.parse(corpus.versions['14'].bytes).schemaVersion, 14);
   const run = createRunState({ seed: 9, classId: 'reaver', registries: REG });
@@ -395,11 +411,12 @@ test('a configuration import that leaves a kind below its minimum is refused who
   assert.ok(problems.some((line) => /Market/.test(line) && /guaranteed minimum of 2/.test(line)), problems.join(' | '));
   const file = advancedConfigExport(disabled);
   assert.throws(() => parseAdvancedConfigFile(file, contentBundle, {}), /Nothing was imported\. Market: /);
-  // Four off (two left) imports.
-  const fine = Object.fromEntries(market.slice(2).map((id) => [`${PREFIX}market.${id}.enabled`, false]));
+  // All but two unconditional offerings off (cards and flasks left) imports.
+  const keep = ['cards', 'flasks'];
+  const fine = Object.fromEntries(market.filter((id) => !keep.includes(id)).map((id) => [`${PREFIX}market.${id}.enabled`, false]));
   const changes = parseAdvancedConfigFile(advancedConfigExport(fine), contentBundle, {});
-  assert.equal(changes[`${PREFIX}market.relics.enabled`], undefined);
-  assert.equal(changes[`${PREFIX}market.flasks.enabled`], false);
+  assert.equal(changes[`${PREFIX}market.flasks.enabled`], undefined);
+  assert.equal(changes[`${PREFIX}market.relics.enabled`], false);
 });
 
 test('a saved stock naming an offering its kind has not got is refused by name (Codex, on #1371)', () => {
@@ -451,10 +468,11 @@ test('the atlas shop inspection promises Remove only when the visit offered it (
   assert.doesNotMatch(hidden.benefit, /remove/i);
   // Once rolled, the benefit names only the shelves the visit laid out (Codex, on #1371).
   assert.match(offered.benefit, /^Spend cinders on this visit’s cards, relics, flasks, armaments, weapon arts\./);
-  const noCards = registriesWith({ [`${PREFIX}market.cards.enabled`]: false, [`${PREFIX}market.relics.enabled`]: false });
+  // (Cards and flasks are the offerings the minimum counts, so two others go.)
+  const noCards = registriesWith({ [`${PREFIX}market.relics.enabled`]: false, [`${PREFIX}market.weaponArts.enabled`]: false });
   const fewer = localServiceModel({ handlerId: 'shop', registries: noCards, run, state: { stock: buildMarketStock(noCards, createRng(6), run) } });
-  assert.doesNotMatch(fewer.benefit, /cards|relics/);
-  assert.match(fewer.benefit, /flasks, armaments, weapon arts/);
+  assert.doesNotMatch(fewer.benefit, /relics|weapon arts/);
+  assert.match(fewer.benefit, /cards, flasks, armaments\./);
   assert.ok(!hidden.facts.some((fact) => /Remove a card/.test(fact)));
   // Before the first entry nothing is rolled: removal is only a possibility.
   const unrolled = localServiceModel({ handlerId: 'shop', registries: REG, run, state: {} });

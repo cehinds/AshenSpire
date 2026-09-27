@@ -17,6 +17,8 @@ import { NOTE } from '../content/balance.js';
 import { shops as shippedShops } from '../content/shops.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { NEW_RUN_CLAUSE } from './balanceNotes.js';
+import { marketAdditionStockProblems } from './marketStock.js';
+import { utilityFlaskIds } from './gracerefill.js';
 
 /** The kinds a shop can be (SPEC §14.2) — a closed set; a new kind is a spec change. */
 export const SHOP_KINDS = Object.freeze(['market', 'blacksmith', 'master']);
@@ -36,6 +38,60 @@ export const MARKET_SHELVES = Object.freeze(['cards', 'relics', 'flasks', 'armam
 
 /** Today's market offerings — the shelves plus the Remove service. A pre-§14 stock offered all of them. */
 export const LEGACY_MARKET_OFFERINGS = Object.freeze([...MARKET_SHELVES, 'remove']);
+
+/**
+ * THE CONDITIONAL OFFERINGS (SPEC §14.2, coordinator ruling on #1375). Each
+ * offering authors a boolean `conditional` in content/shops.js: true when its
+ * pool can be empty on a visit (every relic held, every armament carried, …),
+ * so stock generation omits it and the guarantee fills from the others. None
+ * of them counts toward the enablement minimum: a kind must keep at least
+ * `guaranteedMinimum` enabled offerings that are not conditional, so the
+ * guarantee can always be met. Read off the flag, never off a list of ids.
+ */
+export const isConditionalOffering = (row) => !!row && row.conditional === true;
+// Authored per offering, never a Settings row (and so never overridden).
+const AUTHORED_KEYS = Object.freeze(['conditional', 'stockKey']);
+// A NON-CONDITIONAL OFFERING COUNTS ONLY WHILE ITS STOCK IS AT LEAST 1 (SPEC
+// §14.2, coordinator ruling on #1375). `stockKey` names the bundle path of
+// its per-visit count (`balance.shop.cardStock`); a service names none and
+// always counts. `valueAt` resolves the path, through a Settings override
+// when one is given.
+const resolvePath = (root, path) => String(path).split('.').reduce((at, key) => (at == null ? undefined : at[key]), root);
+// A NON-CONDITIONAL OFFERING ALSO NEEDS A NON-EMPTY AUTHORED POOL (SPEC
+// §14.2): content that could never stock it is refused by name. Each reader
+// returns why the pool is empty, or null. Read off the raw bundle, before any
+// registry exists.
+const SHOP_RARITIES = Object.freeze(['common', 'uncommon', 'rare']);
+const AUTHORED_POOLS = Object.freeze({
+  market: Object.freeze({
+    // Utility flasks: every flask that is not a charge vessel (utilityFlaskIds).
+    flasks(bundle) {
+      const defs = Array.isArray(bundle.flasks) ? bundle.flasks : [];
+      let ids;
+      try {
+        ids = utilityFlaskIds({ flasks: { ids: () => defs.map((def) => def && def.id), all: () => defs } });
+      } catch { return null; } // a missing charge vessel is refused by its own check
+      return ids.length ? null : 'no utility flask is authored (every flask is a charge vessel)';
+    },
+    // Cards: each class's shop pool, its card pool plus the colourless shop cards.
+    cards(bundle) {
+      const cards = Array.isArray(bundle.cards) ? bundle.cards : [];
+      const known = new Set(cards.map((card) => card && card.id));
+      const colourless = cards.filter((card) => card && card.class === 'colorless' && SHOP_RARITIES.includes(card.rarity)).length;
+      const empty = (Array.isArray(bundle.classes) ? bundle.classes : [])
+        .filter((row) => row && !colourless && !(row.cardPool || []).some((id) => known.has(id)))
+        .map((row) => `'${row.id}'`);
+      return empty.length ? `the shop card pool of ${empty.join(', ')} is empty (no class card and no colourless shop card)` : null;
+    },
+  }),
+});
+
+function countsTowardMinimum(row, valueAt) {
+  if (!row || row.enabled === false || isConditionalOffering(row)) return false;
+  if (row.stockKey === undefined) return true;
+  const stock = Number(valueAt(row.stockKey));
+  return Number.isFinite(stock) && stock >= 1;
+}
 
 // The three keys every offering rolls by; any other number an offering carries
 // is its own stock or price.
@@ -131,6 +187,8 @@ export function shopStockProblems(stock, path = 'shopStock', { required = false 
       for (const id of stock.offerings) if (!known.has(id)) problems.push(`${path}.offerings names '${id}', which is not a ${kind} offering`);
     }
   }
+  // The market additions' shelves (SPEC §14.3), each shape-checked by name.
+  problems.push(...marketAdditionStockProblems(stock, path));
   return problems;
 }
 
@@ -145,8 +203,9 @@ function nonNumericLeaves(value, path, err) {
   for (const [key, child] of Object.entries(value)) {
     if (typeof child === 'number') {
       if (!Number.isFinite(child)) err(`${path}.${key}`, `must be a finite number, got ${child}`);
-    } else if (object(child)) nonNumericLeaves(child, `${path}.${key}`, err);
-    else err(`${path}.${key}`, `must be a number (or an object of numbers), got ${JSON.stringify(child)}`);
+    } else if (typeof child === 'boolean') continue; // a switch (SPEC §14.3 armour.includeLocked); it gets a bool row
+    else if (object(child)) nonNumericLeaves(child, `${path}.${key}`, err);
+    else err(`${path}.${key}`, `must be a number, true or false (or an object of those), got ${JSON.stringify(child)}`);
   }
 }
 
@@ -161,7 +220,7 @@ function carriesNotes(value) {
 function unnotedNumbers(value, path, err) {
   if (!object(value)) return;
   for (const [key, child] of Object.entries(value)) {
-    if (typeof child === 'number' && typeof noteFor(value, key) !== 'string') err(`${path}.${key}`, 'is a number with no [NOTE] beside it: write the sentence its Settings row shows');
+    if ((typeof child === 'number' || typeof child === 'boolean') && typeof noteFor(value, key) !== 'string') err(`${path}.${key}`, `is a ${typeof child === 'number' ? 'number' : 'switch'} with no [NOTE] beside it: write the sentence its Settings row shows`);
     else if (object(child)) unnotedNumbers(child, `${path}.${key}`, err);
   }
 }
@@ -174,7 +233,7 @@ function unnotedNumbers(value, path, err) {
  * `kindWeights` that give a non-zero weight only to a kind whose screen is
  * registered.
  */
-export function shopsTableProblems(table, err) {
+export function shopsTableProblems(table, err, bundle = null) {
   const at = (path, msg) => err(path ? `shops.${path}` : 'shops', msg);
   if (!object(table)) { at('', 'must be an object { kindWeights, market, blacksmith, master }'); return; }
   // THE SENTENCES ARE CHECKED ON A TABLE THAT CARRIES THEM. A [NOTE] is a
@@ -221,13 +280,36 @@ export function shopsTableProblems(table, err) {
       if (typeof row.enabled !== 'boolean') at(`${where}.enabled`, `must be true or false, got ${JSON.stringify(row.enabled)}`);
       if (!(Number.isInteger(row.chance) && row.chance >= 0 && row.chance <= 100)) at(`${where}.chance`, `must be a whole percent 0–100, got ${JSON.stringify(row.chance)}`);
       if (!(Number.isFinite(row.weight) && row.weight >= 0)) at(`${where}.weight`, `must be a number of at least 0, got ${JSON.stringify(row.weight)}`);
-      nonNumericLeaves(without(row, ['id', ...ROLL_KEYS]), where, at);
+      if (typeof row.conditional !== 'boolean') at(`${where}.conditional`, `must be true or false (can its pool be empty on a visit? SPEC §14.2), got ${JSON.stringify(row.conditional)}`);
+      if (row.stockKey !== undefined) {
+        if (typeof row.stockKey !== 'string' || !row.stockKey) at(`${where}.stockKey`, `must name the bundle path of its per-visit stock, got ${JSON.stringify(row.stockKey)}`);
+        else if (bundle && !Number.isFinite(resolvePath(bundle, row.stockKey))) at(`${where}.stockKey`, `names '${row.stockKey}', which is not a number in the content`);
+      }
+      nonNumericLeaves(without(row, ['id', ...ROLL_KEYS, ...AUTHORED_KEYS]), where, at);
       unnoted(without(row, ['id']), where, at);
     });
     const enabled = offerings.filter((row) => object(row) && row.enabled === true);
     if (Number.isInteger(minimum) && minimum >= SHOP_MINIMUM_FLOOR && enabled.length < minimum) {
       const off = offerings.filter((row) => object(row) && row.enabled !== true).map((row) => `'${row.id}'`);
       at(kind, `disabling ${off.join(', ')} leaves ${enabled.length} enabled offering${enabled.length === 1 ? '' : 's'}, fewer than its guaranteedMinimum of ${minimum}`);
+    } else if (Number.isInteger(minimum) && minimum >= SHOP_MINIMUM_FLOOR && SHOP_KIND_SCREENS.includes(kind)) {
+      // The non-conditional minimum binds a kind once its screen is registered
+      // (SPEC §14.2): until then its classification is provisional, and steps
+      // 6 and 7 must satisfy it when they register the blacksmith and master.
+      const sure = enabled.filter((row) => !isConditionalOffering(row));
+      const stocked = bundle ? sure.filter((row) => countsTowardMinimum(row, (path) => resolvePath(bundle, path))) : sure;
+      if (sure.length < minimum) {
+        const maybe = enabled.filter(isConditionalOffering).map((row) => `'${row.id}'`);
+        at(kind, `keeps ${sure.length} enabled offering${sure.length === 1 ? '' : 's'} that can never come up empty, fewer than its guaranteedMinimum of ${minimum}; ${maybe.join(', ')} ${maybe.length === 1 ? 'is' : 'are'} conditional (an empty pool is not laid out) and do${maybe.length === 1 ? 'es' : ''} not count (SPEC §14.2)`);
+      }
+      if (bundle) for (const row of sure) {
+        const why = AUTHORED_POOLS[kind]?.[row.id]?.(bundle);
+        if (why) at(`${kind}.${row.id}`, `is not conditional, but its authored pool is empty: ${why} (SPEC §14.2)`);
+      }
+      if (sure.length >= minimum && stocked.length < minimum) {
+        const empty = sure.filter((row) => !stocked.includes(row)).map((row) => `'${row.id}' (${row.stockKey})`);
+        at(kind, `keeps ${stocked.length} enabled offering${stocked.length === 1 ? '' : 's'} with a stock of at least 1, fewer than its guaranteedMinimum of ${minimum}; the stock of ${empty.join(', ')} is 0, so it lays out nothing and does not count (SPEC §14.2)`);
+      }
     }
   }
 }
@@ -249,9 +331,18 @@ const PERCENT = Object.freeze({ integer: true, step: 1, min: 0, max: 100 });
 // to 50–75 by SPEC §14.5.
 const SHOP_DOMAINS = Object.freeze({
   'master.respecRefundPct': Object.freeze({ integer: true, step: 1, min: 50, max: 75 }),
+  // The sigil markup may rise above 100 as well as discount (coordinator
+  // ruling, #1374), bounded at 300.
+  'market.sigils.pricePct': Object.freeze({ integer: true, step: 1, min: 1, max: 300 }),
 });
+// A PAID OFFERING IS NEVER FREE (Codex, on #1374): a price in cinders — a
+// `price`, a `cinders` cost, an armour cost bound — or the percent of its own
+// cost a sigil sells at starts at 1. A 0 would either silently close the
+// purchase or roll a free item the saved-stock check refuses on the next load.
+const PAID = /(^|\.)(price|cinders|pricePct)$|(^|\.)cost\.(min|max)$/;
 function shopDomain(path, value) {
   if (SHOP_DOMAINS[path]) return { ...numberDomain(value), ...SHOP_DOMAINS[path] };
+  if (PAID.test(path)) return { ...numberDomain(value), min: 1 };
   if (/(^|\.)chance$|Pct$/.test(path)) return { ...numberDomain(value), ...PERCENT };
   return numberDomain(value);
 }
@@ -269,6 +360,19 @@ function numberRows(value, keyPath, configPath, kind, offeringId, rows) {
       const leaf = [...keyPath.slice(offeringId ? 2 : 1), key].join('.');
       rows.push(row({
         key: `${PREFIX}${path}`, type: 'number', def: child, ...shopDomain(path, child),
+        label: `${words(kind)} — ${offeringId ? `${words(offeringId)}: ` : ''}${words(leaf)}`,
+        shopLabel: { id: offeringId ? 'settings.shops.row.offeringValue' : 'settings.shops.row.kindValue', tokens: { kind: words(kind), offering: words(offeringId || ''), value: words(leaf) }, names: { kind, offering: offeringId } },
+        shopTopic: kind,
+        note: noted(noteFor(value, key) || ''),
+        configPath: [...configPath, key], searchPath: `shops ${path.replace(/\./g, ' ')}`,
+      }));
+    } else if (typeof child === 'boolean') {
+      // A switch an offering carries (SPEC §14.3 `armour.includeLocked`): a
+      // bool row, generated the same way.
+      const path = [...keyPath, key].join('.');
+      const leaf = [...keyPath.slice(offeringId ? 2 : 1), key].join('.');
+      rows.push(row({
+        key: `${PREFIX}${path}`, def: child,
         label: `${words(kind)} — ${offeringId ? `${words(offeringId)}: ` : ''}${words(leaf)}`,
         shopLabel: { id: offeringId ? 'settings.shops.row.offeringValue' : 'settings.shops.row.kindValue', tokens: { kind: words(kind), offering: words(offeringId || ''), value: words(leaf) }, names: { kind, offering: offeringId } },
         shopTopic: kind,
@@ -349,7 +453,7 @@ export function shopConfigRows(bundle) {
         gates: [{ key: `${base}.enabled` }],
         note: noted(noteFor(offering, 'weight') || ''), configPath: [...at, 'weight'], searchPath: `shops ${kind} ${offering.id} weight`,
       }));
-      numberRows(without(offering, ['id', ...ROLL_KEYS]), [kind, offering.id], at, kind, offering.id, rows);
+      numberRows(without(offering, ['id', ...ROLL_KEYS, ...AUTHORED_KEYS]), [kind, offering.id], at, kind, offering.id, rows);
     });
   }
   return rows;
@@ -358,7 +462,7 @@ export function shopConfigRows(bundle) {
 // The sentence a refusal's uiStrings row says, filled with its tokens. Read
 // from the generated table (content), so the model's import and structural
 // checks can say it without reaching up into the UI layer.
-function sentence(id, tokens) {
+export function shopSentence(id, tokens = {}) {
   const text = uiStrings.find((row) => row.id === id)?.short;
   if (!text) throw new Error(`uiStrings: '${id}' has no short form`);
   return text.replace(/\{(\w+)\}/g, (_, key) => {
@@ -381,6 +485,8 @@ export function shopSettingsProblems(bundle, settings = {}) {
   if (!object(table)) return [];
   const problems = [];
   const read = (key, fallback) => (Object.hasOwn(settings, key) ? settings[key] : fallback);
+  // A stock key read through its own Settings row (`gameConfig.<path>`).
+  const stockAt = (path) => read(`gameConfig.${path}`, resolvePath(bundle, path));
   // Some kind with a shipped screen must keep a weight above 0, or no merchant
   // can open (validateContent refuses it, and the run would fall back to the
   // authored content, dropping every Advanced setting).
@@ -409,9 +515,53 @@ export function shopSettingsProblems(bundle, settings = {}) {
         id: 'settings.shops.refuse.disabled',
         tokens: { kind: words(kind), offerings: off.map((offering) => words(offering.id)).join(', '), enabled: on.length, minimum },
       });
+    } else if (SHOP_KIND_SCREENS.includes(kind)) {
+      // Only an offering that can never come up empty counts toward the
+      // minimum (SPEC §14.2), once the kind's screen is registered: a conditional one's pool may be empty on a
+      // visit, and then nothing is left to fill the guarantee from.
+      const sure = on.filter((offering) => !isConditionalOffering(offering));
+      if (sure.length < minimum) {
+        const maybe = on.filter(isConditionalOffering);
+        const off = def.offerings.filter((offering) => !isOn(offering) && !isConditionalOffering(offering));
+        problems.push({
+          kind,
+          keys: [minimumKey, ...maybe.map(enabledKey), ...off.map(enabledKey)],
+          id: 'settings.shops.refuse.conditional',
+          tokens: { kind: words(kind), conditional: maybe.map((offering) => words(offering.id)).join(', '), enabled: sure.length, minimum },
+        });
+      } else {
+        // And one of those counts only while its named stock is at least 1
+        // (coordinator ruling, #1375): a cards stock of 0 lays out nothing.
+        const stocked = sure.filter((offering) => countsTowardMinimum({ ...offering, enabled: true }, stockAt));
+        if (stocked.length < minimum) {
+          const empty = sure.filter((offering) => !stocked.includes(offering));
+          const stockKeys = empty.map((offering) => `gameConfig.${offering.stockKey}`);
+          problems.push({
+            kind,
+            keys: [minimumKey, ...stockKeys],
+            aside: stockKeys,
+            id: 'settings.shops.refuse.emptyStock',
+            tokens: { kind: words(kind), stocks: empty.map((offering) => words(offering.id)).join(', '), enabled: stocked.length, minimum },
+          });
+        }
+      }
     }
+    // A cost range runs from its min to its max (SPEC §14.3, the market's
+    // armour): refused here by name, so it costs only this kind, not the whole
+    // configuration at validateContent (review, #1374).
+    def.offerings.forEach((offering) => {
+      const cost = offering && offering.cost;
+      if (!object(cost) || !Number.isFinite(cost.min) || !Number.isFinite(cost.max)) return;
+      const minKey = `${PREFIX}${kind}.${offering.id}.cost.min`;
+      const maxKey = `${PREFIX}${kind}.${offering.id}.cost.max`;
+      const lo = Number(read(minKey, cost.min));
+      const hi = Number(read(maxKey, cost.max));
+      if (lo > hi) {
+        problems.push({ kind, keys: [minKey, maxKey], id: 'settings.shops.refuse.armourCost', tokens: { kind: words(kind), offering: words(offering.id), min: lo, max: hi } });
+      }
+    });
   }
-  return problems.map((problem) => ({ ...problem, message: sentence(problem.id, problem.tokens) }));
+  return problems.map((problem) => ({ ...problem, message: shopSentence(problem.id, problem.tokens) }));
 }
 
 /**
@@ -423,7 +573,9 @@ export function shopSettingsProblems(bundle, settings = {}) {
  * `configuredContentBundle` already follows for one bad class.
  */
 export function shopOverridesSetAside(bundle, settings = {}) {
-  return [...new Set(shopSettingsProblems(bundle, settings).map((problem) => `${PREFIX}${problem.kind}.`))];
+  // A problem may also name rows outside the shops group that break it (a
+  // `balance.shop` stock at 0): those are set aside with the kind.
+  return [...new Set(shopSettingsProblems(bundle, settings).flatMap((problem) => [`${PREFIX}${problem.kind}.`, ...(problem.aside || [])]))];
 }
 
 /** A deep copy of a shops table that keeps each [NOTE] (structuredClone drops a Symbol key). */

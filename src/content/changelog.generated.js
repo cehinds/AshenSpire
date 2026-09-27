@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Behind the scenes: finished changes reach development builds without waiting",
     "detail": "Nothing you play changes. A change now lands in development as soon as its quick checks pass, and the long checks run when development is promoted to the test build.",
-    "build": "0.7.1.664",
+    "build": "0.7.1.666",
     "pullRequest": 1350,
     "url": "https://github.com/cehinds/AshenSpire/pull/1350"
+  },
+  {
+    "id": "pr-1374",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "The market sells more: Smithing Stones, armour, sigils and a bed for the night",
+    "detail": "On some visits a market now also lays out Smithing Stones (a few per visit, priced per stone), armour sets of your class you do not own yet (yours for the rest of the run; wear them from the Armoury), and sigils, which you carry until a blacksmith can set them into a slot. A market in a town with an inn always offers a full rest, once per visit, that rests you exactly as the inn's bed does; a relic that forbids resting refuses it by name. What you bought and what is left on the shelves stay as they were after a reload. The shelves you already know are unchanged, except that a shelf with nothing left to sell you (every relic already yours, say) is now left out and another shelf takes its place (so is card removal when no card could be removed), so a visit still lays out at least as many shelves as it promises. Each new offering's chance, weight, prices and stock are rows in Advanced → Shops, and so is a switch that stops the market selling armour you have not unlocked. An offer on a saved shelf for a sigil or armour set that a later update removed is dropped when the save loads, without rerolling the shelf. An armour set on the shelf stays tied to the class it was stocked for, so a set stocked before your class changed cannot be bought as yours. Settings now refuses a setup that could leave a visit short: with the shipped minimum of two, cards and flasks must stay on with something to sell. An older save loads with no sigils.",
+    "build": "0.7.1.665",
+    "pullRequest": 1374,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1374"
   },
   {
     "id": "pr-1375",
