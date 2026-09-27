@@ -151,6 +151,9 @@ permissions:
 jobs:
   assemble:
     runs-on: ubuntu-latest
+    # Bounded: about 20 light rebuilds (~20 s each) plus hydrating the committed
+    # builds. A run that needs more than this is broken, not slow.
+    timeout-minutes: 45
     # pages: read is what actions/configure-pages needs to read the site's
     # configuration; it deploys nothing. The write and the OIDC token stay on
     # the deploy job alone.
@@ -195,6 +198,12 @@ jobs:
             echo "::warning title=A published branch is missing::not on origin:$missing — the site will be assembled without it"
           fi
       - uses: ./.github/actions/setup-node
+      # The checkout above takes no LFS, so the committed builds the generator
+      # lists are hydrated one object at a time with `git lfs smudge`. Without
+      # git-lfs that fails, and the generator throws rather than calling the
+      # builds purged — so say it here, first, by name.
+      - name: git-lfs is available to hydrate committed builds on demand
+        run: git lfs version
       # NO RELEASE-SERIES GATE HERE, and its absence is the point. This workflow
       # runs on pushes to dev, test, release AND main, and it assembles a site
       # out of all four branches' histories — series deliberately mixed, which
@@ -229,7 +238,15 @@ jobs:
           cp "$RUNNER_TEMP/main/AshenSpire.html" "$RUNNER_TEMP/main/AshenSpire-mobile.html" "$RUNNER_TEMP/main-build/"
           echo "MAIN_BUILD_ARGS=--main-build $RUNNER_TEMP/main-build" >> "$GITHUB_ENV"
       - name: Assemble the site from git history — committed builds proven byte-identical, uncommitted ones rebuilt from their commit
-        run: node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "${{ inputs.keep || '10' }}" --build-missing "$RUNNER_TEMP/pages-rebuilds" ${MAIN_BUILD_ARGS:-}
+        # `keep` from a dispatch is clamped here (1..25) and again in the
+        # generator: each listed uncommitted build is a rebuild.
+        env:
+          KEEP_INPUT: ${{ inputs.keep || '10' }}
+        run: |
+          keep=$(printf '%s' "$KEEP_INPUT" | tr -cd '0-9' | cut -c1-3); keep=${keep:-10}
+          if [ "$keep" -lt 1 ]; then keep=1; fi
+          if [ "$keep" -gt 25 ]; then keep=25; fi
+          node tools/verdict.mjs -- node tools/pages-site.mjs --out _site --keep "$keep" --build-missing "$RUNNER_TEMP/pages-rebuilds" ${MAIN_BUILD_ARGS:-}
       - name: The generator's own drift plant is still caught
         run: node tools/verdict.mjs -- node tools/pages-site.mjs --selftest ${MAIN_BUILD_ARGS:-}
       - uses: actions/configure-pages@v5

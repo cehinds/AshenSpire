@@ -49,7 +49,10 @@ const has = (name) => argv.includes(name);
 
 const REMOTE = flag('--remote', 'origin');
 const BRANCHES = flag('--branches', 'dev,test,release,main').split(',').map((s) => s.trim()).filter(Boolean);
-const KEEP = Math.max(1, Number(flag('--keep', '10')) || 10);
+// Clamped: each listed build that is no longer committed costs a rebuild, so a
+// dispatch typo must not turn one run into hundreds of them.
+const KEEP_MAX = 25;
+const KEEP = Math.min(KEEP_MAX, Math.max(1, Number(flag('--keep', '10')) || 10));
 // A directory holding AshenSpire.html and AshenSpire-mobile.html built by CI from
 // main's source. Needed once main no longer commits its build (the Git LFS budget
 // ran out, 2026-09-26): without it the stable Play links at the site root 404.
@@ -70,7 +73,15 @@ const MAIN_BUILD = flag('--main-build', null);
 // Why rebuild rather than download each commit's dev-preview artifact: it
 // needs no Actions token, cannot race the dev-preview run of the same push,
 // and does not expire after 14 days. It costs about 20 s per light build.
-const BUILD_MISSING = flag('--build-missing', null);
+let BUILD_MISSING = flag('--build-missing', null);
+// THE HEAD'S OWN BUILD MUST SERVE on these branches (review of #1360). A skipped
+// OLDER build is a named warning; a head build that fails to rebuild would
+// leave the branch with no /latest/ while the run stays green, and Pages
+// replaces the whole site, so the published alias would silently vanish.
+// release/main are not listed: their --full-art rebuilds wait on the art fetch
+// (docs/ART-REPO-PLAN.md step 4), and a failure there must not take down dev's
+// publication.
+const HEAD_REQUIRED = new Set(flag('--require-head', 'dev').split(',').map((x) => x.trim()).filter(Boolean));
 const FULL_ART_BRANCHES = new Set(['release', 'main']);
 // A BRANCH'S ROLE IS READ FROM THE CONTRACT THAT GOVERNS IT, not typed here.
 // `.agentops/governance/git-ownership.json` already carries one note per ref and
@@ -196,9 +207,18 @@ function skip(b, reason) {
  */
 function committedArtifact(sha, path) {
   try { return readGitArtifact(ROOT, sha, path); } catch (error) {
-    if (/does not match|Malformed/.test(error.message)) throw error;
-    return null;
+    return purgedOrThrow(error);
   }
+}
+/**
+ * ONLY A GENUINE "NOT ON THE SERVER" COUNTS AS PURGED (review of #1360). A
+ * missing git-lfs binary, a 401/403, a timeout or a hash mismatch is a broken
+ * run, not a purged object, and it throws.
+ */
+function purgedOrThrow(error) {
+  const text = `${error.message || ''}\n${error.stderr || ''}`;
+  if (/Object does not exist|\[404\]|404 Not Found/i.test(text) && !/does not match|Malformed/.test(text)) return null;
+  throw error;
 }
 
 const rebuilt = new Map();   // `${sha}:${tier}` → { dir } | { error }
@@ -241,6 +261,13 @@ function rebuildAt(sha, fullArt) {
   return result;
 }
 
+function dropBuildTree() {
+  if (!buildTree) return;
+  try { execFileSync('git', ['worktree', 'remove', '--force', buildTree], { cwd: ROOT, stdio: 'ignore' }); } catch { /* left for the runner to discard */ }
+  rmSync(buildTree, { recursive: true, force: true });
+  buildTree = null;
+}
+
 /** The HTML (and mobile HTML, or null) a listed build serves, or { error }. */
 function artifactsOf(b) {
   if (b.source === 'git') {
@@ -277,6 +304,13 @@ function committedEditions(html, hasMobile, fetchMobile) {
 }
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
 let mainHeadSha = null;
+
+/** Throws when a branch that must serve its head lost the head's own build. */
+function enforceHead(branch, headTracksBuild, headOrdinal, skipped) {
+  if (!HEAD_REQUIRED.has(branch)) return;
+  const lost = skipped.find((x) => x.branch === branch && x.ordinal === headOrdinal);
+  if (lost) throw new Error(`${branch}'s head build ${headOrdinal} (${lost.sha.slice(0, 10)}) cannot be served — ${lost.reason}; publishing would drop /${branch}/latest/`);
+}
 
 /** The note a branch that no longer commits its build carries, or ''. */
 function uncommittedNote(branch, current) {
@@ -591,6 +625,7 @@ function assemble(outDir, keep) {
       if (a.error) skip(b, a.error); else served.set(b, a);
     }
     const builds = listed.filter((b) => served.has(b));
+    enforceHead(branch, headTracksBuild, headOrdinal, skippedBuilds);
     for (const b of builds) {
       const { html, mobile: mobileHtml } = served.get(b);
       b.version = versionIn(html.toString('latin1'));
@@ -692,7 +727,7 @@ function assemble(outDir, keep) {
       checks++;
     }
   }
-  if (buildTree) { try { execFileSync('git', ['worktree', 'remove', '--force', buildTree], { cwd: ROOT, stdio: 'ignore' }); } catch { /* left for the runner to discard */ } buildTree = null; }
+  dropBuildTree();
   writeFileSync(join(outDir, 'builds.json'), JSON.stringify({ generatedAt, keep, otherPages, skipped: skippedBuilds, branches: branchData.map((d) => ({ branch: d.branch, head: d.head, builds: d.builds.map((b) => ({ ...b, stamp: stampOf(b), changelog: changelogUrl(b) })) })) }, null, 2) + '\n');
   return { checks, branchData };
 }
@@ -909,6 +944,37 @@ try {
       ['a committed head whose build is served gets /latest/', isCurrent({ builds: [{ ordinal: 6 }], headTracksBuild: true, headOrdinal: 6 }) === true],
       ['a rebuilt head gets /latest/', isCurrent({ builds: [{ ordinal: 7 }], headTracksBuild: false, headOrdinal: 7 }) === true],
     ];
+    // THE REBUILD PATH'S OWN KNOWN-BADS (review of #1360), on one real light
+    // rebuild of dev's head (~20 s): the good rebuild serves; the same bytes
+    // against a digest their commit does not name are refused; a rebuild that
+    // cannot run is an error; and that error on dev's head build turns the run
+    // red while the same error on an older build does not. dev's head, not
+    // HEAD: this runs on pushes to main too, whose old tree is not dev's shape.
+    const rbDir = mkdtempSync(join(tmpdir(), 'pages-site-rebuild-'));
+    const savedBuildMissing = BUILD_MISSING;
+    BUILD_MISSING = rbDir;
+    try {
+      const devRef = refFor('dev') || 'HEAD';
+      const headSha = git(['rev-parse', devRef]).trim();
+      const box = JSON.parse(git(['show', `${headSha}:buildordinal.json`]));
+      const probe = { branch: 'dev', ordinal: Number(box.ordinal), sha: headSha, source: 'rebuild' };
+      const good = artifactsOf({ ...probe, digest: String(box.digest) });
+      rules.push([`a rebuild of dev's head ${headSha.slice(0, 10)} serves${good.error ? ` (${good.error})` : ''}`, !good.error && good.html.includes(String(box.digest))]);
+      const wrong = artifactsOf({ ...probe, digest: `not-a-digest-${process.pid}-planted` });
+      rules.push(['a rebuild that lacks its commit\'s source digest is refused', /does not carry src digest/.test(wrong.error || '')]);
+      const broken = rebuildAt('0'.repeat(40), false);
+      rules.push(['a rebuild that cannot run is an error', Boolean(broken.error)]);
+      let headRed = false;
+      try { enforceHead('dev', false, probe.ordinal, [{ branch: 'dev', ordinal: probe.ordinal, sha: headSha, reason: broken.error }]); } catch { headRed = true; }
+      rules.push(['a failed rebuild of dev\'s head build turns the run red', headRed]);
+      let olderRed = false;
+      try { enforceHead('dev', false, probe.ordinal, [{ branch: 'dev', ordinal: probe.ordinal - 1, sha: headSha, reason: broken.error }]); } catch { olderRed = true; }
+      rules.push(['a failed rebuild of an older dev build stays a warning', !olderRed]);
+    } finally {
+      dropBuildTree();
+      rmSync(rbDir, { recursive: true, force: true });
+      BUILD_MISSING = savedBuildMissing;
+    }
     for (const [name, ok] of rules) {
       if (ok) console.log(`OK ${name}`);
       else { console.error(`MISS ${name}`); process.exitCode = 1; }
