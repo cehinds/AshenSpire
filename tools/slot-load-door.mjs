@@ -8,9 +8,15 @@
 //           the newer-save notice opens and the live run is still standing.
 //           It used to close the menu and call resumeRun, whose loadRun is
 //           null for a newer slot, so the climb in hand was dropped and the
-//           player landed on the title. The confirm press checks again: a
+//           player landed on the title. The confirm press refuses too: a
 //           newer build in another tab can rewrite the slot while the
 //           confirmation is open (NEWER-AT-CONFIRM).
+//   REFUSED A slot the picker can read but loadRun refuses (content
+//           validation, migration, a slot another tab cleared) passes both
+//           newer checks, so the refusal is only known after the confirm.
+//           resumeRun swaps the live run only after a successful load, so
+//           the climb in hand stands and a notice says the slot could not
+//           open (REFUSED-KEEPS-RUN). `?shotRefusedSlot=3` plants it.
 //   RESTART Abandoning a fight mid-combat (no Save Game) and loading the slot
 //           restarts that fight from its entry receipt: turn 1, the same HP,
 //           the same opening hand, an unchanged deck. tests/midcombat-reload
@@ -55,11 +61,18 @@ if (process.argv.includes('--selftest')) {
         expectRed: /RED SLOT-LOAD-NEWER-NOTICE/,
       },
       {
-        name: 'the confirm press stops rechecking for a newer slot',
+        name: 'the confirm press stops naming a newer slot as newer',
         file: 'src/main.js',
-        find: '      if (saves.slotSummary(slot)?.newer) return openNewerSaveNotice({ slot, returnFocusElement });',
-        replace: '      // slot-load-door selftest plant',
+        find: "        onRefused: () => (saves.runStatus().state === 'newer'",
+        replace: "        onRefused: () => (false // slot-load-door selftest plant",
         expectRed: /RED SLOT-LOAD-NEWER-AT-CONFIRM/,
+      },
+      {
+        name: 'resumeRun swaps the live run before the load succeeds',
+        file: 'src/main.js',
+        find: '  let loaded = saves.loadRun(authoredRegistries, slot);',
+        replace: '  let loaded = run = saves.loadRun(authoredRegistries, slot); // slot-load-door selftest plant',
+        expectRed: /RED SLOT-LOAD-REFUSED-KEEPS-RUN/,
       },
       {
         name: 'combat entry stops writing its receipt',
@@ -190,7 +203,7 @@ try {
     }
   };
 
-  await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat&shotNewerSlot=2` }, sessionId);
+  await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat&shotNewerSlot=2&shotRefusedSlot=3` }, sessionId);
   await until(`!!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'combat boot');
   measuring = true;
   const opening = await pose();
@@ -225,6 +238,35 @@ try {
   }
   await ev(`document.querySelector('.confirmation-cancel')?.click()`);
   await until(`!document.querySelector('.confirmation-veil')`, 'the notice to close');
+
+  // ---- REFUSED: a slot the picker can read but loadRun refuses -----------
+  // Not newer, so both up-front checks pass and the player confirms. The
+  // load itself is refused (content validation archives it); the live run
+  // must still be standing, with a notice saying the slot could not open.
+  try {
+    await until(`!document.querySelector('.modal-veil, .quick-nav-veil, .confirmation-veil')`, 'a clear board');
+    await openLoadSlot(3);
+    const asked = await ev(`(() => { const b=document.querySelector('.confirmation-confirm'); return !!b && !b.hidden; })()`);
+    if (!asked) throw new Error('slot 3 opened no load confirmation');
+    await click('.confirmation-confirm');
+    await wait(300);
+    const notice = await ev(`document.querySelector('#confirmation-modal-title')?.textContent || ''`);
+    const after = await ev(`({
+      board: !!document.querySelector('.end-turn'),
+      title: !!document.querySelector('.title-menu, [data-title-action="load"]'),
+      liveDeck: window.__spoils().liveDeck || [],
+    })`);
+    const keptDeck = JSON.stringify(after.liveDeck) === JSON.stringify(opening.liveDeck) && after.liveDeck.length > 0;
+    check(keptDeck && after.board && !after.title && /could not be loaded/i.test(notice), 'SLOT-LOAD-REFUSED-KEEPS-RUN',
+      `a slot loadRun refuses leaves the live run and its fight standing, and says so (${JSON.stringify({ notice, ...after, liveDeck: after.liveDeck.length, keptDeck })})`);
+  } catch (error) {
+    check(false, 'SLOT-LOAD-REFUSED-KEEPS-RUN', error.message);
+  }
+  if (!(await ev(`!!window.__combat && !!document.querySelector('.end-turn')`))) {
+    throw new Error('the fight did not survive the refused-slot load; RESTART cannot run');
+  }
+  await ev(`document.querySelector('.confirmation-cancel')?.click()`);
+  await until(`!document.querySelector('.confirmation-veil')`, 'the refused notice to close');
 
   // ---- RESTART: abandon mid-combat, load slot 1 ---------------------------
   try {
