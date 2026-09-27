@@ -53,8 +53,10 @@ table; a skipped job shows on the PR as *skipped*, not as missing.
 
 Settings: `src/ui/screens/settings.js` draws only the open Advanced topic and
 searches every section; `src/ui/buildChannel.js` decides whether the debug-only
-sections (tuning, layout, import/export, Defaults & sync) are shown — dev and
-test builds only, never main or release; `src/model/settingsSync.js` keeps a
+sections (tuning, layout, import/export, Defaults & sync) are shown — the
+Settings → Advanced → Developer tools toggle, on by default for dev and test,
+off for an unrecognised file, and hidden (always off) on main and release;
+`src/model/settingsSync.js` keeps a
 settings profile on GitHub. Review, design and next steps are in
 [docs/SETTINGS-REVAMP.md](docs/SETTINGS-REVAMP.md); run
 `node --test tests/settings-revamp.test.mjs`.
