@@ -320,9 +320,14 @@ function enforceHead(branch, headTracksBuild, headOrdinal, skipped) {
 }
 
 /** The note a branch that no longer commits its build carries, or ''. */
-function uncommittedNote(branch, current) {
+function uncommittedNote(branch, current, headTracksBuild = false) {
   if (current) return '';
-  return `<p class="meta"><strong>This branch's newest build is not on this site</strong> — it is not committed and was not rebuilt here. Each commit's build is the <code>${esc(branch)}-standalone-&lt;commit&gt;</code> artifact of the <a href="${REPO_URL}/actions/workflows/dev-preview.yml?query=branch%3A${encodeURIComponent(branch)}">dev preview workflow</a>. The builds listed here are older.</p>`;
+  // A head that still COMMITS its build but whose object could not be fetched
+  // is a different case from a head that commits none; say which (Codex, #1360).
+  const why = headTracksBuild
+    ? "its committed build's LFS object could not be fetched (see the skipped builds below)"
+    : 'it is not committed and was not rebuilt here';
+  return `<p class="meta"><strong>This branch's newest build is not on this site</strong> — ${why}. Each commit's build is the <code>${esc(branch)}-standalone-&lt;commit&gt;</code> artifact of the <a href="${REPO_URL}/actions/workflows/dev-preview.yml?query=branch%3A${encodeURIComponent(branch)}">dev preview workflow</a>. The builds listed here are older.</p>`;
 }
 /**
  * Whether the newest SERVED build IS the branch head's build, so /latest/ may
@@ -544,8 +549,8 @@ function rootIndex(branchData, generatedAt, otherPages) {
   const cards = branchData.map((d) => {
     const { branch, builds } = d;
     const b = builds[0];
-    if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p><p class="meta">no build found on this branch</p>${uncommittedNote(branch, isCurrent(d))}</section>`;
-    return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p>${uncommittedNote(branch, isCurrent(d))}
+    if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p><p class="meta">no build found on this branch</p>${uncommittedNote(branch, isCurrent(d), d.headTracksBuild)}</section>`;
+    return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p>${uncommittedNote(branch, isCurrent(d), d.headTracksBuild)}
 <p class="stamp">${esc(stampOf(b))}</p><p class="meta">built ${esc(b.built)} · commit <a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a> · <a href="${changelogUrl(b)}">changelog</a></p>
 <a class="play" href="${branch}/${b.ordinal}/">Play ${esc(branch)} ${b.ordinal}</a>${b.mobileBytes ? ` <a class="play" href="${branch}/${b.ordinal}/mobile/">Play mobile</a>` : ''} ${downloadButtons('', b, '')} <a href="${branch}/">all ${esc(branch)} builds (${builds.length})</a></section>`;
   }).join('\n');
@@ -564,7 +569,7 @@ ${otherPages.length ? `<ul>${otherPages.map((pg) => `<li><a href="${esc(pg.href)
 </main></body></html>`;
 }
 
-function branchIndex(branch, builds, head, generatedAt, current = true) {
+function branchIndex(branch, builds, head, generatedAt, current = true, headTracksBuild = false) {
   // NO HEAD MEANS THE BRANCH IS GONE, and the page says exactly that rather
   // than linking a commit that does not exist. `head` is null only on that
   // path — buildsOf returns it for a branch with no ref.
@@ -573,7 +578,7 @@ function branchIndex(branch, builds, head, generatedAt, current = true) {
     : '<b>this branch does not exist on the remote</b> — nothing to publish for it';
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — ${esc(branch)} builds</title><style>${CSS}</style></head><body><main>
 <p><a href="../">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(BRANCH_ROLE[branch] || NO_ROLE)} · ${headLine}</p>
-${uncommittedNote(branch, current)}
+${uncommittedNote(branch, current, headTracksBuild)}
 ${skippedNote(branch)}
 ${builds.length && !current ? `<p><a class="play" href="${builds[0].ordinal}/">Play newest listed (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play newest listed mobile</a>` : ''}</p>` : ''}
 ${builds.length && current ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons('../', builds[0], ` latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
@@ -732,7 +737,7 @@ function assemble(outDir, keep) {
       if (existsSync(mobile)) cpSync(mobile, join(latest, 'mobile'), { recursive: true });
     }
     mkdirSync(join(outDir, branch), { recursive: true });
-    const idx = branchIndex(branch, builds, head, generatedAt, current);
+    const idx = branchIndex(branch, builds, head, generatedAt, current, headTracksBuild);
     writeFileSync(join(outDir, branch, 'index.html'), idx);
     for (const b of builds) if (!idx.includes(`href="../${branch}/${b.ordinal}/"`)) throw new Error(`${branch} index does not link build ${b.ordinal}`);
     checks++;
@@ -1007,6 +1012,8 @@ try {
       const row = { branch: 'test', ordinal: 5, sha: 'f'.repeat(40), digest: 'd', built: '2026-09-27', version: '0.7.1', bytes: 1, source: 'rebuild', edition: 'light' };
       rules.push(['a table whose branch is not current marks no build latest', !rowsTable([row], '', new Set()).includes('(latest)')]);
       rules.push(['a table whose branch is current marks its newest build latest', rowsTable([row], '', new Set([row])).includes('(latest)')]);
+      rules.push(['a committed head whose object is unavailable is not called uncommitted', uncommittedNote('release', false, true).includes('could not be fetched') && !uncommittedNote('release', false, true).includes('not committed')]);
+      rules.push(['a head with no committed build is called uncommitted', uncommittedNote('dev', false, false).includes('not committed')]);
       rules.push(['a light build is not labelled full, nor as predating mobile', !downloadButtons('', row, '').includes('full') && !rowsTable([row], '').includes('predates')]);
     }
     // AFTER THE PURGE (Codex, #1360): every committed build reads as a 404.
