@@ -4,6 +4,7 @@
 // Adding content = adding a data object in one file here (SPEC §3.1(2)).
 
 import { balance } from './balance.js';
+import { shops } from './shops.js';
 import { statuses } from './statuses.js';
 import { stances } from './stances.js';
 import { resources } from './resources.js';
@@ -70,6 +71,9 @@ export const contentBundle = {
   // MINOR under docs/versioning.md rule 2; the owner's release cut names 0.7.0.
   version: '0.7.1',
   balance,
+  // The shop kinds and their offerings (SPEC §14.2). A bundle key, not a
+  // balance leaf, so Advanced → Shops can generate its own rows from it.
+  shops,
   cards,
   relics,
   statuses,

@@ -13,6 +13,8 @@
 
 import { handRulesDefaults } from '../content/handRules.js';
 import { deckRules as shippedDeckRules } from '../content/deckRules.js';
+import { shops as shippedShops } from '../content/shops.js';
+import { shopsTableProblems } from './shopKinds.js';
 import { resolveFloorPlan } from './floorplan.js';
 import { validateAttack } from './combatRules.js';
 import { assertTableSane } from './secondbeat.js';
@@ -103,6 +105,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'version',
   'contentVersion',
   'balance',
+  'shops', // SPEC §14.2: the shop kinds and their offerings (content/shops.js)
   'mapConfigs',
   'scripts',
   'equipment',
@@ -649,6 +652,10 @@ function collectContentProblems(bundle, errors = []) {
     // The deck editor's rules (content/deckRules.js, SPEC §14.1) are data the
     // editor reads at use; a malformed table is refused here, by name, at boot.
     deckRulesTableProblems(b.deckRules || shippedDeckRules, b.cards, err, b.nodes);
+    // The shop kinds (content/shops.js, SPEC §14.2): the guaranteed minimum,
+    // the offerings, a [NOTE] beside every number, and no weight for a kind
+    // whose screen has not shipped.
+    shopsTableProblems(b.shops || shippedShops, err);
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
       if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);
