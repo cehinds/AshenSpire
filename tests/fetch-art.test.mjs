@@ -190,3 +190,14 @@ test('known-bad: --from replaces a cache whose marker still matches but whose fi
     assert.equal(readFileSync(join(again.dir, 'assets/ui/b.webp'), 'utf8'), 'high-b');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('a cache copy an earlier run set aside but could not delete is swept by the next publish', async () => {
+  const { root, zip } = fixture();
+  try {
+    const leftover = join(root, '.art-cache', 'hd-assets-v1.discard-1-abandoned');
+    mkdirSync(join(leftover, 'assets'), { recursive: true });
+    writeFileSync(join(leftover, 'assets', 'old.webp'), 'old');
+    await fetchArt({ root, from: zip });
+    assert.deepEqual(readdirSync(join(root, '.art-cache')), ['hd-assets-v1'], 'the abandoned copy is gone');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});

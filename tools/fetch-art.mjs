@@ -31,8 +31,8 @@
 // ignores HTTPS_PROXY unless NODE_USE_ENV_PROXY=1 is set; behind a proxy, set it.
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readZip } from './zip.mjs';
 
@@ -133,11 +133,35 @@ function markOf(dir) {
   }
 }
 
-/** discard(dir) — take a cache out of reach in one rename, then delete it where no reader looks. */
-function discard(dir) {
+/**
+ * setAside(dir) → the name it was moved to, or null when there was nothing:
+ * takes a cache out of reach in one rename. Deleting it is separate (sweep),
+ * so a delete Windows refuses never reads as a failed rename.
+ */
+function setAside(dir) {
   const gone = beside(dir, 'discard');
-  try { renameSync(dir, gone); } catch (e) { if (e.code === 'ENOENT') return; throw e; }
-  rmSync(gone, { recursive: true, force: true, maxRetries: 5 });
+  try { renameSync(dir, gone); return gone; } catch (e) { if (e.code === 'ENOENT') return null; throw e; }
+}
+
+/**
+ * sweep(dir) — delete every directory set aside beside `dir`, this run's and
+ * any an earlier run could not delete (a Windows handle, a killed process).
+ * No reader looks at them, so a failure is reported and left for the next run.
+ */
+function sweep(dir) {
+  const prefix = `${basename(dir)}.discard-`;
+  let names = [];
+  try { names = readdirSync(dirname(dir)).filter((n) => n.startsWith(prefix)); } catch { return; }
+  for (const n of names) {
+    try { rmSync(join(dirname(dir), n), { recursive: true, force: true, maxRetries: 5 }); }
+    catch (e) { console.error(`fetch-art: could not delete ${n} (${e.code}); the next run retries`); }
+  }
+}
+
+/** discard(dir) — take a cache out of reach, then delete it where no reader looks. */
+function discard(dir) {
+  setAside(dir);
+  sweep(dir);
 }
 
 /**
@@ -168,7 +192,7 @@ function unpack(entries, dir, mark) {
     for (let attempt = 0; ; attempt += 1) {
       // EPERM/EBUSY/EACCES: Windows refuses to rename a directory another
       // process holds a file open in (a sibling's marker read, an indexer).
-      try { discard(dir); } catch (e) {
+      try { setAside(dir); } catch (e) {
         if (!['EPERM', 'EBUSY', 'EACCES'].includes(e.code) || attempt >= 20) throw e;
         pause(attempt); continue; // the old cache is still there: never accept its marker
       }
@@ -180,6 +204,7 @@ function unpack(entries, dir, mark) {
     }
   } finally {
     rmSync(stage, { recursive: true, force: true });
+    sweep(dir);
   }
 }
 
