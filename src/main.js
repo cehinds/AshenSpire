@@ -65,7 +65,7 @@ import {
   rollRelicReward,
   rollArmamentDrop,
 } from './engine/encounters.js';
-import { buildMarketStock, buildMerchantStock } from './engine/shopKinds.js';
+import { buildMarketStock, marketVisitStock, commitInnRest } from './engine/shopKinds.js';
 import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
 import { restLocationAtPoint, questBoardPointAt, CAMP_LOCATION } from './model/locations.js';
 import { mountTitle, focusTitleDefault } from './ui/screens/title.js';
@@ -2049,8 +2049,10 @@ function worldLocationAction(action) {
   j.activeService = { ownerId: action.ownerId, pointId: action.pointId, handlerId };
   if (handlerId === 'shop') {
     // The atlas `shop` service is a market (SPEC §14.2): today's shelves on
-    // `shop`, and which of them are out on `shopOffers`.
-    state.stock ||= buildMarketStock(registries, rng, run);
+    // `shop`, and which of them are out on `shopOffers`. A custom run's price
+    // multiplier reaches it as it reaches a classic merchant (review, #1374;
+    // before that no atlas shelf was scaled).
+    state.stock ||= marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'atlas', ownerId: action.ownerId, priceMult: shopPriceMult() });
     run.shopStock = state.stock;
     persist(); return showShop();
   }
@@ -2153,14 +2155,9 @@ function enterNode(nodeId) {
       // A classic merchant rolls its kind first (SPEC §14.2, `shopOffers`); the
       // shipped weights make every one a market with every shelf out, drawing
       // nothing new, so a seed's shelves are what they always were.
-      const stock = buildMerchantStock(registries, rng, run);
-      const pm = shopPriceMult();
-      if (pm !== 1) {
-        for (const kind of ['cards', 'relics', 'flasks']) {
-          for (const item of stock[kind]) item.cost = Math.ceil(item.cost * pm);
-        }
-        stock.removeCost = Math.ceil(stock.removeCost * pm);
-      }
+      // Greedy Merchants and Hoarder scale every price it lays out, the
+      // market additions included (SPEC §14.3).
+      const stock = marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'merchant', priceMult: shopPriceMult() });
       // Does a smith travel with him? Rolled once here, on the smith's own
       // stream (balance.smithing.services.offeredAt.merchant), and kept with
       // the stock so leaving and re-entering the screen does not roll again.
@@ -2797,6 +2794,14 @@ function showShop() {
     meta: saves.loadMeta(),
     onChanged: () => persist(),
     onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
+    // A full rest bought at the market (SPEC §14.3): the inn's own visit on
+    // the run's streams, with the same heal scale and refill counts the Rest
+    // screen's visit is given (showRest).
+    restAtInn: (quote) => {
+      const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
+      const { counts } = resolveGraceRefill(saves.loadMeta().settings || {});
+      return commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts: counts });
+    },
     onLeave: () => {
       finishWorldService();
       run.shopStock = null;
@@ -3461,7 +3466,7 @@ if (shotState === 'combat-test') {
     // ABSENT on the only screen the census can open, and "not wired" and
     // "nothing to sell" read identically. One flask, authored id, no rng.
     run.flasks.push({ flaskId: 'crimsonFlask' });
-    run.shopStock = buildMarketStock(registries, rng, run);
+    run.shopStock = buildMarketStock(registries, rng, run, { meta: saves.loadMeta() });
     showShop();
   } else if (shotState === 'reward') {
     // A REACH STATE for the reward MENU (E11/#256), the same shape and reason

@@ -5,6 +5,7 @@
 
 import { balance } from './balance.js';
 import { shops } from './shops.js';
+import { sigils } from './sigils.js';
 import { statuses } from './statuses.js';
 import { stances } from './stances.js';
 import { resources } from './resources.js';
@@ -74,6 +75,9 @@ export const contentBundle = {
   // The shop kinds and their offerings (SPEC §14.2). A bundle key, not a
   // balance leaf, so Advanced → Shops can generate its own rows from it.
   shops,
+  // Sigils (SPEC §14.3): owned in `run.sigils`, sold at the market; they work
+  // only once installed in a slot (the blacksmith, §14.6 step 6).
+  sigils,
   cards,
   relics,
   statuses,
