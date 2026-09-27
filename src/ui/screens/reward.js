@@ -174,7 +174,7 @@ export function mountRewards(app, {
     // is kept by row key beside the skill drafts' (one offer may carry
     // several level cards), in the map the pending-reward save already checks.
     levelCard(row) {
-      run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
+      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: false });
       chosenDraftCardIds[row.key] = row.cardId;
       return true;
     },

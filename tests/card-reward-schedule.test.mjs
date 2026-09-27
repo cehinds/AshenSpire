@@ -493,6 +493,30 @@ test('co-op: a level-card pick survives a redraw, and a row left unpicked is pic
   assert.ok(spoils.levelCards[0].cardIds.includes(deck.at(-1).cardId));
 });
 
+test('a taken level card never reuses an instance id a sideboarded card holds', () => {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    // The id `r0_rend` is what a naive `r${deck.length}_…` would mint into an empty deck.
+    const run = { cinders: 0, deck: [], sideboard: [{ instanceId: 'r0_rend', cardId: 'rend', upgraded: false }], flasks: [], relics: [], loadout: { storage: [] } };
+    const checkpoint = { states: {}, chosenCardId: null, chosenDraftCardIds: {} };
+    const app = document.createElement('main'); document.body.append(app);
+    mountRewards(app, { registries: REG, run, checkpoint, onDone() {}, onPersist() {}, rewards: { cardIds: [], levelCards: [{ ordinal: 0, cardIds: ['rend', 'stomp'] }] } });
+    app.querySelector('[data-kind="levelCard"]').click();
+    app.querySelectorAll('.reward-row .card')[0].click();
+    app.querySelector('#reward-card-confirm').click();
+    assert.equal(run.deck.length, 1);
+    assert.equal(run.deck[0].cardId, 'rend');
+    assert.notEqual(run.deck[0].instanceId, 'r0_rend', 'the sideboarded id is not reused');
+    const ids = [...run.deck, ...run.sideboard].map((c) => c.instanceId);
+    assert.equal(new Set(ids).size, ids.length, 'every instance id is unique across deck and sideboard');
+    app.remove();
+  } finally {
+    for (const [key, value] of Object.entries(saved)) globalThis[key] = value;
+  }
+});
+
 test('co-op couch seats: a level-card pick on seat A survives switching to seat B and back, and ends with its door', () => {
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
