@@ -1540,6 +1540,8 @@ export function mountEquipment(host, {
       revealHost: detail,
       onReveal: (key) => {
         prompt.hidden = !!key;
+        // Phone rows collapse the detail track until an item is chosen (kit.css).
+        box.dataset.detailOpen = key ? 'true' : 'false';
         setFooterPrimary(key ? footerAction(footerPlans.get(key)) : null);
       },
       armFace: ({ button, entry, onTap }) => {
