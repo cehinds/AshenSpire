@@ -46,6 +46,7 @@ status* table lists each spec section as built, partly built or planned.
 - [x] **SPEC text matches what shipped**: §5.1 gives 40 Rogue cards (§13.4f Prepare), §5.2 has the Goreblood row, and §12 is marked shipped. Test: `grep -n '39 authored' SPEC.md` gives 0 hits, and each §12 claim has a verdict in `docs/SPEC-RECONCILE.md`. Spec PR only. — [#1282](https://github.com/cehinds/AshenSpire/pull/1282): 0 hits; stage 3 of SPEC-RECONCILE gives every §12 item a verdict, with P6 and P8b to-build.
 - [ ] **SPEC P8b: Powers hold a resting stance until the next turn** (SPEC §12.5, SPEC-RECONCILE stage 3 P8b, to-build). `resolveCombatPose` keeps only guard, shieldGuard and parry, and `combatPoseStates.json` has no Power pose. Test: `node -e "import('./src/model/combatPose.js').then(m=>console.log(m.resolveCombatPose({hp:1},'cast',[])))"` prints a Power resting pose instead of `idle` (it prints `idle` on `dev`), and a test asserts the pose holds until that character's next turn starts.
 - [ ] **COMBAT-EQUIPMENT-RULES prototype gate, and each class pool from 36 to 50 cards** (SPEC lines 17–32, rules §7). *Post-1.0 (D3, ruled 2026-09-26).* Test: SPEC marks it post-1.0.
+- [ ] **Progression leftovers: 3b-ii, the class-swap boss-reward door, quest XP** (SPEC §13.4h, §13.4n; plan 3b-ii, 5c, 10b). *Post-1.0 (D18, ruled 2026-09-27).* Test: SPEC's *Scope status* row 13 marks them post-1.0.
 
 ## 2. Content
 
@@ -172,9 +173,9 @@ status* table lists each spec section as built, partly built or planned.
 ## 15. Reward schedule, levelling pace, drops, legendary sigils (SPEC §15, owner brief 2026-09-26)
 
 - [x] **SPEC §15 lands before any code.** Test: `grep -n '^## 15. Reward schedule' SPEC.md` gives 1 hit. — [#1348](https://github.com/cehinds/AshenSpire/pull/1348): 1 hit on `dev`.
-- [ ] **Card reward schedule** (§15.1). Test: `tests/card-reward-schedule.test.mjs`: afterCombat.normal false gives no card row on a normal win and one on an elite; chancePct 0 never offers; defaults leave the rewardRolls counter at 0 and 50 seeded offers byte-identical; onLevelUp adds exactly one levelCard row on a levelling fight; two taken levelCard rows survive a reload.
+- [x] **Card reward schedule** (§15.1). Test: `tests/card-reward-schedule.test.mjs`: afterCombat.normal false gives no card row on a normal win and one on an elite; chancePct 0 never offers; defaults leave the rewardRolls counter at 0 and 50 seeded offers byte-identical; onLevelUp adds exactly one levelCard row on a levelling fight; two taken levelCard rows survive a reload. — [#1351](https://github.com/cehinds/AshenSpire/pull/1351): `tests/card-reward-schedule.test.mjs`.
 - [x] **Levelling preview and cap** (§15.2). Test: `tests/level-pace.test.mjs`: the preview's normal-fight XP equals combatLevelXp on the configured registries (xpMultiplier counted once); its levels-gained equals awardLevelXp from level 1; maxLevelsPerFight 1 caps a boss kill at one level and discards the excess, 0 means no cap. — [#1349](https://github.com/cehinds/AshenSpire/pull/1349): `tests/level-pace.test.mjs` passes (14/14) on `dev` after its merge (927a35c3b).
-- [ ] **Crafting drops** (§15.3). Test: `tests/crafting-drops.test.mjs`: defaults leave drops unchanged and write no treasure claim; drops.chance.normal 100 drops an armament (rarityWeights.normal exists); rewardChancePct.elite 0 pays no stone; a refined stone pays and survives a reload.
+- [x] **Crafting drops** (§15.3). Test: `tests/crafting-drops.test.mjs`: defaults leave drops unchanged and write no treasure claim; drops.chance.normal 100 drops an armament (rarityWeights.normal exists); rewardChancePct.elite 0 pays no stone; a refined stone pays and survives a reload. — [#1352](https://github.com/cehinds/AshenSpire/pull/1352): `tests/crafting-drops.test.mjs`.
 - [ ] **Legendary sigils** (§15.4). Test: `tests/legendary-sigils.test.mjs`: a legendary that does not derive exactly one sigil property tag from tagging.csv is refused by name; an attuned sigil's trigger fires and an unattuned one's does not; a second attune past attuneMax is refused; the Armoury Sigils panel attunes and unattunes through taps (DOM test); no shop stocks a legendary; defaults drop none, boss chance 100 drops one unowned; a save at §14's last schema loads with empty attunedSigils (after §14 step 5).
 
 ## Owner decisions
@@ -192,6 +193,16 @@ Ruled by the owner on 2026-09-26.
 - **D9 — The tracker.** Close the stale agentops issues. Already done: the owner closed them on 2026-09-24. #553 stays open.
 - **D10 — The #1263 receipt and squash merges.** Done: #1263 was backfilled on 2026-09-24, and squash merges count (receipts gate, #1275).
 - **D11 — Design issues.** In 1.0 scope (§2): #845, #785, #239–#241, #1026, #601.
+
+Ruled by the owner on 2026-09-27, answering the scope-docs audit (#1359):
+
+- **D15 — The product.** The vanilla-JS game stays the product; the GDD .NET rebuild is not planned (GDD §24).
+- **D16 — SPEC §9 M3 win rate.** The ~35–50% target is removed; D1 governs.
+- **D17 — Companions.** Owned by SPEC §14.3, not seat-adventure phase 5.
+- **D18 — Progression leftovers.** 3b-ii, the class-swap boss-reward door and quest XP are post-1.0 (§1).
+- **D19 — SPEC pre-scrub rename.** Dropped; not wanted.
+- **D20 — High-res art zip.** Stays private to `cehinds/AshenSpire-art`; not attached to public releases (ART-REPO-PLAN.md).
+- **D21 — `AshenSpire-LegacyPreview.html`.** Deleted.
 
 Proposals from SPEC §14, awaiting the owner's ruling:
 

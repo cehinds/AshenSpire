@@ -3,14 +3,24 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1366",
+    "id": "pr-1365",
     "date": "2026-09-27",
     "group": "2026-09-27",
-    "summary": "Behind the scenes: loading a save that can't open from the in-game menu is checked in a real browser",
-    "detail": "Nothing you play changes. When a load from the in-game menu's quick navigation is refused, pressing \"Keep playing\" puts keyboard and controller focus back on the menu button you opened it from. A browser test now proves that, and fails if the menu closes before the load's outcome is known.",
+    "summary": "Behind the scenes: the owner's scope decisions are written into the design docs",
+    "detail": "Docs only; nothing you play changes. The docs now record seven decisions the owner made on 2026-09-27: this game stays the product, the win-rate target is gone, companions belong to the shop plan, three progression extras wait until after 1.0, the old-names rename is dropped, the high-res art stays private, and an old frozen preview file is deleted.",
+    "build": "0.7.1.633",
+    "pullRequest": 1365,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1365"
+  },
+  {
+    "id": "pr-1364",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the 1.0 checklist records the card reward schedule and crafting drops as done",
+    "detail": "Docs only. docs/FINISH.md ticks §15.1 (#1351) and §15.3 (#1352), each with its test file. Legendary sigils (§15.4) stay open until the market sigils step of §14 is built.",
     "build": "0.7.1.632",
-    "pullRequest": 1366,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1366"
+    "pullRequest": 1364,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1364"
   },
   {
     "id": "pr-1352",

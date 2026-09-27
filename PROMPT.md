@@ -1,5 +1,7 @@
 # Ashen Spire Rebuild — .NET-First Master Prompt
 
+**Status (owner decision D15, 2026-09-27): the .NET rebuild is not planned; the vanilla-JS game is the product (GDD §24).** This prompt is kept for reference.
+
 > Use this document as the primary prompt for an implementation team or coding
 > agent. It describes **what to preserve**, **what to improve**, and **how to
 > deliver the game in reviewable increments** through a familiar .NET solution
