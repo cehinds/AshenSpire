@@ -338,7 +338,9 @@ function uncommittedNote(branch, current, headTracksBuild = false) {
  */
 function isCurrent(d) {
   const b = d.builds[0];
-  if (!b) return d.headTracksBuild !== false;
+  // No served build means nothing is current, whatever the head tracks: a
+  // branch whose every object 404s must still explain itself (Codex, #1360).
+  if (!b) return false;
   if (d.headOrdinal == null || !Number.isInteger(d.headOrdinal)) return d.headTracksBuild !== false;
   return b.ordinal === d.headOrdinal;
 }
@@ -1012,6 +1014,7 @@ try {
       const row = { branch: 'test', ordinal: 5, sha: 'f'.repeat(40), digest: 'd', built: '2026-09-27', version: '0.7.1', bytes: 1, source: 'rebuild', edition: 'light' };
       rules.push(['a table whose branch is not current marks no build latest', !rowsTable([row], '', new Set()).includes('(latest)')]);
       rules.push(['a table whose branch is current marks its newest build latest', rowsTable([row], '', new Set([row])).includes('(latest)')]);
+      rules.push(['a branch with no served build is never current', isCurrent({ builds: [], headTracksBuild: true, headOrdinal: 3 }) === false && isCurrent({ builds: [], headTracksBuild: true, headOrdinal: null }) === false]);
       rules.push(['a committed head whose object is unavailable is not called uncommitted', uncommittedNote('release', false, true).includes('could not be fetched') && !uncommittedNote('release', false, true).includes('not committed')]);
       rules.push(['a head with no committed build is called uncommitted', uncommittedNote('dev', false, false).includes('not committed')]);
       rules.push(['a light build is not labelled full, nor as predating mobile', !downloadButtons('', row, '').includes('full') && !rowsTable([row], '').includes('predates')]);
