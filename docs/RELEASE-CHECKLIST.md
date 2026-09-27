@@ -199,7 +199,7 @@ The sign-off is **not** recorded in this file. Editing a tracked file makes a ne
 commit, so a sign-off written here would sit on a commit that never ran the gates,
 and a commit cannot name its own SHA. This file stays a template.
 
-The owner signs by commenting on the release pull request (`release` ← `dev`), or
+The owner signs by commenting on the release pull request (`release` ← `test`), or
 on a release issue. The comment names:
 
 - the version,
