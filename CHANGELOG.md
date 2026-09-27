@@ -34,7 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-27
 
-- **Behind the scenes: the 1.0 checklist records the four fixes that just landed** ([#1362](https://github.com/cehinds/AshenSpire/pull/1362), `0.7.1.622`). Docs only. `docs/FINISH.md` now marks as done: a save that cannot be loaded keeps your run, a cancelled End Turn hold opens nothing, each change's changelog build number is checked, and the map camera check runs on every change. It adds one more check: the save-load fix should also be tested in a real browser when loading from the in-game menu screen.
+- **Behind the scenes: the 1.0 checklist records the four fixes that just landed** ([#1362](https://github.com/cehinds/AshenSpire/pull/1362), `0.7.1.623`). Docs only. `docs/FINISH.md` now marks as done: a save that cannot be loaded keeps your run, a cancelled End Turn hold opens nothing, each change's changelog build number is checked, and the map camera check runs on every change. It adds one more check: the save-load fix should also be tested in a real browser when loading from the in-game menu screen.
 
 ## 2026-09-26
 
