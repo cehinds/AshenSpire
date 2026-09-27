@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-27
 
+- **Behind the scenes: the build site publishes again after its first run failed** ([#1363](https://github.com/cehinds/AshenSpire/pull/1363), `0.7.1.626`). One older test build, rebuilt with the phone-sized mobile copy, was mislabelled, so the site refused to publish. It is now labelled by what was actually built, and the site builds cleanly across all four branches.
 - **Behind the scenes: the 1.0 checklist records the four fixes that just landed** ([#1362](https://github.com/cehinds/AshenSpire/pull/1362), `0.7.1.625`). Docs only. `docs/FINISH.md` now marks as done: a save that cannot be loaded keeps your run, a cancelled End Turn hold opens nothing, each change's changelog build number is checked, and the map camera check runs on every change. It adds one more check: the save-load fix should also be tested in a real browser when loading from the in-game menu screen.
 
 ## 2026-09-26
