@@ -88,6 +88,7 @@ architecture reason. The intended categories are:
 | `index.html`, `run.bat`, `run.sh` | Obvious player/developer entry points |
 | `src/`, `content/` | Runtime source and authoritative source data |
 | `assets/`, `assets-mobile/`, `map-detail/`, `styles/`, `music/` | Static presentation resources (`assets-mobile/` is the light-tier twin of `assets/`) |
+| `asset-data/` | The non-art files that used to sit under `assets/` (JSON manifests, class-art notes and checkers, the font licence text, the silent audio stub), at the same paths below the folder ([ART-REPO-PLAN.md](./ART-REPO-PLAN.md), step 4) |
 | `art/`, `art-manifest.json`, `art-release.json` | Source art (moving to `cehinds/AshenSpire-art`, [ART-REPO-PLAN.md](./ART-REPO-PLAN.md)), the per-tier asset manifest, and the pinned high-res release |
 | `editor/`, `pose-studio/`, `ui-studio/`, `*-preview.html` | Local authoring tools and content preview pages |
 | `tests/`, `tools/` | Verification and development support |

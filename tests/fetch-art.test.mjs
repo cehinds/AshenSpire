@@ -177,3 +177,27 @@ test('runs at the same time each publish a whole cache, and leave no staging beh
     assert.equal(again.reused, true, 'the published cache is whole and verified');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('known-bad: --from replaces a cache whose marker still matches but whose files were damaged', async () => {
+  const { root, zip } = fixture();
+  try {
+    const first = await fetchArt({ root, from: zip });
+    writeFileSync(join(first.dir, 'assets/bg/a.webp'), 'edited');
+    rmSync(join(first.dir, 'assets/ui/b.webp'));
+    const again = await fetchArt({ root, from: zip });
+    assert.equal(again.reused, false, '--from unpacks again rather than trusting the marker');
+    assert.equal(readFileSync(join(again.dir, 'assets/bg/a.webp'), 'utf8'), 'high-a');
+    assert.equal(readFileSync(join(again.dir, 'assets/ui/b.webp'), 'utf8'), 'high-b');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a cache copy an earlier run set aside but could not delete is swept by the next publish', async () => {
+  const { root, zip } = fixture();
+  try {
+    const leftover = join(root, '.art-cache', 'hd-assets-v1.discard-1-abandoned');
+    mkdirSync(join(leftover, 'assets'), { recursive: true });
+    writeFileSync(join(leftover, 'assets', 'old.webp'), 'old');
+    await fetchArt({ root, from: zip });
+    assert.deepEqual(readdirSync(join(root, '.art-cache')), ['hd-assets-v1'], 'the abandoned copy is gone');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});

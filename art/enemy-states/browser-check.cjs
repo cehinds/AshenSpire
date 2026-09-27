@@ -17,7 +17,7 @@ const {mkdirSync}=require('node:fs');
   }
   await page.evaluate(async()=>{
    const {enemySprite}=await import('/src/ui/assets.js'),{stageFor}=await import('/src/ui/services/PoseAnimator.js');
-   const {entries}=await(await fetch('/assets/enemy-poses/manifest.json')).json();document.body.innerHTML='';window.stages=[];
+   const {entries}=await(await fetch('/asset-data/enemy-poses/manifest.json')).json();document.body.innerHTML='';window.stages=[];
    for(const e of entries){const host=document.createElement('div');host.className='enemy';const sprite=document.createElement('div');sprite.className='sprite';sprite.append(enemySprite({...e,size:'medium'}));host.append(sprite);document.body.append(host);window.stages.push(stageFor(sprite));}
    await Promise.all([...document.images].map(i=>i.decode()));
   });

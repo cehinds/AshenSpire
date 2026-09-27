@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Behind the scenes: the HUD layout check says what it cannot see, and reads the HUD visibility settings too",
     "detail": "Nothing you play changes. The check that keeps the relic rail inside the HUD now lists what its simple style reader does not model, and a test keeps that list from being dropped. It also reads the style sheet that hides relics and potions when you turn them off, so a later change there that knocks the rail out of place is caught. Hiding the whole rail is allowed only when your settings leave it empty: relics and potions both off, or one off when the rail holds nothing else.",
-    "build": "0.7.1.637",
+    "build": "0.7.1.639",
     "pullRequest": 1368,
     "url": "https://github.com/cehinds/AshenSpire/pull/1368"
+  },
+  {
+    "id": "pr-1367",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the non-art files beside the art move to their own folder",
+    "detail": "Nothing a player sees changes. The 23 manifests, notes, checker scripts, font licence text and silent audio stub that sat under assets/ now live under asset-data/, so the high-resolution art can leave this repository without taking them along; every tool, test and document that reads them follows.",
+    "build": "0.7.1.638",
+    "pullRequest": 1367,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1367"
+  },
+  {
+    "id": "pr-1370",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: downloading the high-res art is safe when two copies run at once",
+    "detail": "Nothing you play changes. The tool that fetches the optional high-res art no longer fails when another copy of it replaces the same folder at the same moment.",
+    "build": "0.7.1.637",
+    "pullRequest": 1370,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1370"
   },
   {
     "id": "pr-1366",

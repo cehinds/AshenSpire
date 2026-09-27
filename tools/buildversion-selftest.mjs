@@ -62,7 +62,7 @@ import { pathToFileURL } from 'node:url';
 import { check, REPO_ROOT, release, versionPrefix, sourceDigest, whichCommits, ORDINAL_HOME, BUILD_IDENTITY_FILES } from './buildversion.mjs';
 
 /** The files a real tree needs for every row to have something to rule on. */
-const COPY = ['index.html', 'styles', 'src', 'assets', 'assets-mobile', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
+const COPY = ['index.html', 'styles', 'src', 'assets', 'assets-mobile', 'asset-data', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
 
 // macOS can report ENOTEMPTY for a just-closed Git worktree while directory
 // entries settle. Node retries that class of recursive-removal failure only
@@ -143,7 +143,7 @@ const PLANTS = [
     // caught", the clearance has widened into a hole.
     name: 'a version TYPED into the manifest column arm 2 clears only while it is prose',
     row: 'B NO SECOND COPY',
-    plant: (root) => edit(root, 'assets/classes/successor-packet.manifest.json',
+    plant: (root) => edit(root, 'asset-data/classes/successor-packet.manifest.json',
       (t) => t.replace(/"source_export_recipe_and_tool_version": "[^"]*"/, '"source_export_recipe_and_tool_version": "9.9.z"')),
   },
   // ---- rows F and G, THE LOCK ON A FILE THE DIGEST CANNOT SEE ---------------
