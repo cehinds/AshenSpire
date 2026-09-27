@@ -137,7 +137,7 @@ function markOf(dir) {
 function discard(dir) {
   const gone = beside(dir, 'discard');
   try { renameSync(dir, gone); } catch (e) { if (e.code === 'ENOENT') return; throw e; }
-  rmSync(gone, { recursive: true, force: true });
+  rmSync(gone, { recursive: true, force: true, maxRetries: 5 });
 }
 
 /**
@@ -146,6 +146,8 @@ function discard(dir) {
  * one rename. A reader therefore sees either no cache or a whole one: two runs
  * at once never share a half-written directory, and the one that loses the
  * race keeps the winner's cache when it carries the same marker.
+ * A run that replaces the cache (every --from run does) can remove one another
+ * run has just returned; that run's `dir` is then briefly absent, never partial.
  */
 function unpack(entries, dir, mark) {
   const stage = beside(dir, 'staging');
@@ -163,10 +165,12 @@ function unpack(entries, dir, mark) {
     // published between our discard and our rename is kept, and only when
     // its marker matches: it was unpacked from a verified release too.
     for (let attempt = 0; ; attempt += 1) {
-      discard(dir);
-      try { renameSync(stage, dir); return; } catch (e) {
-        if (!['EEXIST', 'ENOTEMPTY', 'EPERM'].includes(e.code) || attempt >= 20) throw e;
+      try { discard(dir); renameSync(stage, dir); return; } catch (e) {
+        // EPERM/EBUSY/EACCES: Windows refuses to rename a directory another
+        // process holds a file open in (a sibling's marker read, an indexer).
+        if (!['EEXIST', 'ENOTEMPTY', 'EPERM', 'EBUSY', 'EACCES'].includes(e.code) || attempt >= 20) throw e;
         if (markOf(dir) === mark) return;
+        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Math.min(10 * (attempt + 1), 200)); // brief backoff before the next try
       }
     }
   } finally {
