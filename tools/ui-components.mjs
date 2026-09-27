@@ -144,10 +144,13 @@ export function catalogDisagreement(md, html) {
 // CSS form is fixed here only if the shipped CSS uses it; otherwise this note
 // is the answer. Checked against the shipped sheets 2026-09-27: no @layer, no
 // @scope, no CSS nesting, and no var() or invalid value in a property C12
-// judges. A preference guard written with CSS nesting is rejected (fails
-// closed); un-nest it. Unseen
-// here: combat.css's co-op formation rule sets the HUD top to display:flex
-// (`.combat.coop[data-layout='formation'] .topbar .hud-top`).
+// judges, and no escape in any selector. Two guard forms are therefore
+// rejected (fail closed), not parsed:
+//   - a preference guard written with CSS nesting is rejected; un-nest it;
+//   - a hexadecimal escape in a quoted guard value (`'fal\73 e'`) is not
+//     decoded, so the guard is rejected; write the value plainly.
+// Unseen here: combat.css's co-op formation rule sets the HUD top to
+// display:flex (`.combat.coop[data-layout='formation'] .topbar .hud-top`).
 function splitTop(text, sep) {
   const out = []; let depth = 0; let quote = null; let cur = ''; let escaped = false;
   for (const ch of text) {
