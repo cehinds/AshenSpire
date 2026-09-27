@@ -68,3 +68,22 @@ test('transparent padding does not consume overhead clearance or erase the visib
   const padded = fitCombatSprites({width:1000,height:405,actors:actors.map(a=>({...a,boxHeight:a.boxHeight*2}))});
   assert.deepEqual(padded.map(a=>a.visibleHeight),[p.visibleHeight,b.visibleHeight]);
 });
+
+test('a presentation multiplier grows figures after the fit, capped per side to the screen', () => {
+  const slot = (id, x) => ({ id, ground: 300, x, artWidth: 60, depth: 1 });
+  const actor = (id, side, x, multiplier) => ({ slot: slot(id, x), side, ratio: 1, leading: 30, visibleHeight: 100, visibleWidth: 150, multiplier });
+  const sizes = fitCombatSprites({ width: 360, height: 400, actors: [actor('p', 'player', 90, 1.1), actor('e1', 'enemy', 230, 2.2), actor('e2', 'enemy', 300, 2.2)] });
+  const [p, e1, e2] = sizes;
+  assert.equal(e1.multiplier, e2.multiplier, 'two of the same foe stay the same size');
+  assert.ok(e1.multiplier >= 1 && e1.multiplier < 2.2, 'the edge caps the enemy multiplier');
+  for (const [s, a] of [[p, 90], [e2, 300]]) assert.ok(a + s.scale * 150 / 2 <= 360 - 6 + 1e-8 && a - s.scale * 150 / 2 >= 6 - 1e-8);
+  const shrunk = fitCombatSprites({ width: 360, height: 400, actors: [actor('p', 'player', 90, 0.5)] });
+  assert.equal(shrunk[0].multiplier, 0.5, 'a multiplier below 1 is never capped');
+});
+
+test('a phone cell no longer boxes the figure into a thumbnail', () => {
+  const plan = combatFormation({ width: 360, height: 400, friends: ['p'], enemies: ['e'] });
+  const actors = plan.slots.map((slot) => ({ slot, ratio: 1, leading: 28, visibleHeight: 180, visibleWidth: 180 }));
+  const [player] = fitCombatSprites({ width: 360, height: 400, actors });
+  assert.ok(player.visibleHeight >= 80, `player figure ${player.visibleHeight}px`);
+});

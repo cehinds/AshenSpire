@@ -101,7 +101,9 @@ export function wireBattlefieldStage(field, model) {
       const ratio = combatSpriteRatio(frame.dataset.stature, enemyId);
       const leadingHost = frame.querySelector('.combatant-leading');
       const leadingHeight = leadingHost ? leadingHost.getBoundingClientRect().height / zoom : 0;
-      return { slot, frame, stack, sprite, ratio, ...geometry, leadingHost,
+      const multiplier = (presentation[`row${FORMATION_ROWS[slot.row]}Scale`] ?? 1) * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale)
+        * wireframeUi.formation.displayScale;
+      return { slot, side: frame.classList.contains('player') ? 'player' : 'enemy', frame, stack, sprite, ratio, multiplier, ...geometry, leadingHost,
         // The overhead stack's own height (Inspect, when shown, over the
         // intent), in local px, for the headroom clamp below.
         leadingHeight,
@@ -116,10 +118,12 @@ export function wireBattlefieldStage(field, model) {
       const fitted = sizes.find(size => size.id === slot.id);
       if (!fitted) continue;
       const growth = frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[Math.min(2, slot.row)] : 1;
-      const multiplier = (presentation[`row${FORMATION_ROWS[slot.row]}Scale`] ?? 1) * (frame.classList.contains('player') ? presentation.playerSpriteScale : presentation.enemySpriteScale);
-      const scale = fitted.scale * wireframeUi.formation.displayScale * growth * multiplier;
+      // The fit already carries the presentation multiplier, capped to the
+      // screen (CombatSpriteScaleModel); only the selection growth is added.
+      const multiplier = fitted.multiplier / wireframeUi.formation.displayScale;
+      const scale = fitted.scale * growth;
       const x = fitted.x;
-      const visibleHeight = fitted.visibleHeight * wireframeUi.formation.displayScale * growth * multiplier;
+      const visibleHeight = fitted.visibleHeight * growth;
       sprite.style.zoom = String(scale / zoom);
       sprite.firstElementChild.style.top = `${footOffset}px`;
       const paintedHeight = boxHeight * scale;
