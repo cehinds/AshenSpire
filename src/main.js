@@ -81,6 +81,8 @@ import { mountCombat } from './ui/screens/combat.js';
 import { mountCombatTest } from './ui/screens/combatTest.js';
 import { mountRewards } from './ui/screens/reward.js';
 import { mountRest } from './ui/screens/rest.js';
+import { mountDeckEditor } from './ui/screens/deckEditor.js';
+import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
 import { mountShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
@@ -1606,6 +1608,29 @@ function showArmoury(request = '', returnTo = showMap) {
       persist();
     },
     onClose: returnTo,
+    onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo) : null,
+  });
+}
+
+// ---- the deck editor (SPEC §14.1) --------------------------------------------
+// Which doors open it is the settings' answer (DeckEditorModel.deckEditorDoors):
+// under `free` the map's Quick Access and the Armoury, under `restOnly` the
+// Rest screen of a place carrying `deckEdit`, and none with deck editing off.
+// Every door here is out of combat; the fight's Armoury gets none.
+function deckDoors(services = null) {
+  return deckEditorDoors({ settings: saves.loadMeta().settings || {}, inCombat: false, services });
+}
+
+function showDeckEditor(returnTo = showMap) {
+  if (!run) return;
+  mountDeckEditor(document.body, {
+    registries,
+    run,
+    settings: saves.loadMeta().settings || {},
+    // A confirmed edit is written at once; a cancelled one restored the run
+    // exactly (cancelDeckEdit), so there is nothing to write.
+    onDone: () => { persist(); returnTo(); },
+    onCancel: () => returnTo(),
   });
 }
 
@@ -1913,6 +1938,7 @@ function showMap() {
     },
     onTravel: enterWorldNode, onAction: worldLocationAction, onSave: persist,
     onMenu: showOverlay, onArmoury: showArmoury,
+    onEditDeck: deckDoors().quickAccess ? () => showDeckEditor(showMap) : null,
     onQuit: () => { persist(); showCollapsedTitle(); },
     inspectNodeId: run.journey.inspectNodeId || null,
   });
@@ -1925,6 +1951,7 @@ function showMap() {
     onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     onArmoury: showArmoury,
+    onEditDeck: deckDoors().quickAccess ? () => showDeckEditor(showMap) : null,
     onLoad: loadActiveSlot,
     onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
@@ -2731,6 +2758,9 @@ function showRest(openPanel = null, locationId = null) {
       // A place whose town posts no quest (a dungeon's rescue inn) offers no board.
       return counts.offered ? { ready: counts.ready, open: counts.open, onOpen: () => showQuestBoard(worldRest.ownerId, () => showRest()) } : null;
     })() : null,
+    // The deck editor under Rest sites only (SPEC §14.1): where the place
+    // carries `deckEdit`; it closes back onto this visit.
+    deckEditor: deckDoors(visit.services).rest ? { onOpen: () => showDeckEditor(() => showRest()) } : null,
     onReallocate: () => persist(),
     // An assigned point is permanent. It persists the moment it is assigned,
     // not when the player leaves the shrine, for the same reason the

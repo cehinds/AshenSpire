@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1371",
+    "id": "pr-1372",
     "date": "2026-09-27",
     "group": "2026-09-27",
-    "summary": "Shops now have kinds, and Settings decides what a merchant lays out",
-    "detail": "With the shipped settings every merchant is the market you know, with the same shelves at the same prices on every seed. New in Advanced → Shops: each shelf (cards, relics, flasks, armaments, weapon arts, card removal) can be turned off or given a chance to appear, and every visit still lays out at least two, adding the heaviest missing ones first. The blacksmith and the wise master are listed with their offerings and prices, but no merchant turns into one until their screens ship. An open shop in an older save loads as a market with its shelves as they were.",
-    "build": "0.7.1.650",
-    "pullRequest": 1371,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1371"
+    "summary": "Edit your deck",
+    "detail": "A new deck editor shows the cards you own on one side and your deck on the other. Tap a card, or use its ＋ and － buttons, to move it; a keyboard and a controller can do every move too. The top shows how many cards the deck holds against the smallest and largest deck allowed, and a chart of card costs; chips filter and sort the lists. Done stays off, with a sentence saying why, while the deck is too small or too large, and Cancel puts everything back as it was. By default a Deck button on the map and an Edit deck button in the Armoury's Cards view open it outside combat. With Settings → Advanced → Deck → Where set to Rest sites only, it opens instead from the Rest screen of a shrine, inn or chapel (not a camp); with deck editing off, nothing opens it.",
+    "build": "0.7.1.645",
+    "pullRequest": 1372,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1372"
   },
   {
     "id": "pr-1373",
