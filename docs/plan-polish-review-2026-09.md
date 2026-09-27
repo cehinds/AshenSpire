@@ -485,7 +485,7 @@ amended before code moves.
   `tools/results/*`; 22 tools launch Chromium themselves. A tools manifest,
   archive the unreferenced, ignore results.
 - [ ] **Repo hygiene (S).** Root preview HTML files and
-  `AshenSpire-LegacyPreview.html` (7.1 MB, not LFS); committed `scratch/`;
+  `AshenSpire-LegacyPreview.html` (7.1 MB, not LFS; deleted 2026-09-27 by owner decision); committed `scratch/`;
   `docs/preview` 160 MB of PNGs; five overlapping architecture docs; a
   duplicated section in DEVELOPER.md; CONTRIBUTING.md titled "EldenSpire".
 - [ ] **Duplicated helpers (S).** `ownObject`/`integer` copied in four files;

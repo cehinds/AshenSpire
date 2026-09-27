@@ -153,8 +153,9 @@ src/content/music.js src/net/lan.js`.
    disagrees with itself. Map section's ground; recorded, not edited here.
 5. **SPEC's vocabulary is pre-scrub document-wide** (runes/Vagabond/Erdtree/Scarlet
    Rot/Watchful Omen/…, vs shipped cinders/Reaver/Goldbough/Crimson Blight/Fell
-   Warden — `docs/IP-SCRUB.md` is the map). One rename act, not per-section nibbles;
-   left intact so SPEC stays internally consistent until that act.
+   Warden — `docs/IP-SCRUB.md` is the map). Left intact so SPEC stays internally
+   consistent. The one rename act proposed for it is dropped (owner decision, 2026-09-27:
+   not wanted).
 
 ## Boundary of this sweep
 
@@ -218,9 +219,9 @@ grep before it was written down; `verify-shipped: OK`; suite green at the releas
 ## Standing debts, unchanged and named
 
 1. **Pre-scrub vocabulary, document-wide** — 24 remaining hits
-   (`grep -cE "runes|Vagabond|Astrologer|Prophet|Erdtree|Scarlet Rot" SPEC.md`). One
-   deliberate rename act; now stated once in the header as **to-build** rather than
-   apologised for per section.
+   (`grep -cE "runes|Vagabond|Astrologer|Prophet|Erdtree|Scarlet Rot" SPEC.md`). Stated
+   once in the header rather than apologised for per section. The rename act once proposed
+   for it is dropped (owner decision, 2026-09-27: not wanted).
 2. **The dangling unlock refs** (`graveWardenUnlock`, `ashChildUnlock` → classes that do not
    exist; green because the ref check is written per *known* kind) — **still open, and it is
    a code/test defect, not a SPEC defect.** It does not belong in a documentation pass:
