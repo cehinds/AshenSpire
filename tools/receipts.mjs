@@ -69,6 +69,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve as pathResolve } from 'node:path';
+import { versionTuple, compareVersions } from './buildversion.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CHANGELOG = join(ROOT, 'CHANGELOG.md');
@@ -130,10 +131,19 @@ export function ownReceipt(pull, changelogText) {
 // The stamp on `pull`'s own receipt: the backticked stamp in the parenthetical
 // that links it, ([#N](…/pull/N), `0.7.1.519`). null when nothing stamped
 // follows the link; the raw text when the stamp is there but is prose.
+//
+// NOT TRIMMED. tools/about-changelog.mjs applies its anchored stamp grammar to
+// the span exactly as written, so ` 0.7.1.615 ` is prose there — skipped by
+// the build-order checks and projected with its padding. Trimming here let this
+// gate certify a receipt the authoritative parser does not read as a build.
 export function receiptStamp(pull, changelogText) {
   const m = new RegExp(`/pull/${pull}\\),\\s*\`([^\`\\n]+)\``).exec(changelogText);
-  return m ? m[1].trim() : null;
+  return m ? m[1] : null;
 }
+
+// The stamp grammar tools/about-changelog.mjs reads (its STAMP): a release,
+// optionally tagged, then the ordinal. Anchored, so padding is not a stamp.
+const STAMP = /^(\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?)\.(\d+)$/;
 
 // Whether `pull`'s receipt names the box this tree ships. `box` is the parsed
 // buildordinal.json ({ release, ordinal }). null when it does, else the reason
@@ -142,12 +152,23 @@ export function stampMismatch(pull, changelogText, box) {
   const expected = `${box.release}.${box.ordinal}`;
   const stamp = receiptStamp(pull, changelogText);
   if (stamp === null) return `#${pull}'s receipt carries no \`<release>.<ordinal>\` stamp after its link (expected \`${expected}\`)`;
-  if (stamp === expected) return null;
-  const m = /^(.+)\.(\d+)$/.exec(stamp);
+  const m = STAMP.exec(stamp);
   if (!m) return `#${pull}'s receipt is stamped \`${stamp}\`, not a build; this tree ships \`${expected}\``;
   const [, release, ordinal] = m;
-  if (release !== box.release) return `#${pull}'s receipt is stamped release ${release}; this tree ships \`${expected}\``;
-  const side = Number(ordinal) < box.ordinal ? 'BELOW' : 'ABOVE';
+  // ORDERED THE WAY about-changelog ORDERS IT: buildversion's versionTuple and
+  // compareVersions, digit strings compared as numbers. A raw string compare
+  // called `00.7.1.613` another release while --check-order reads it as the
+  // same build as `0.7.1.613`, so the two required checks disagreed.
+  const got = versionTuple(release, Number(ordinal));
+  const want = versionTuple(box.release, box.ordinal);
+  if (got === null || want === null) return `#${pull}'s receipt is stamped \`${stamp}\`, which cannot be ordered against \`${expected}\``;
+  const releaseOrder = compareVersions(got.slice(0, -1), want.slice(0, -1));
+  if (releaseOrder !== 0 || release.includes('-') !== box.release.includes('-')) {
+    return `#${pull}'s receipt is stamped release ${release}; this tree ships \`${expected}\``;
+  }
+  const order = compareVersions(got, want);
+  if (order === 0) return null;
+  const side = order < 0 ? 'BELOW' : 'ABOVE';
   return `#${pull}'s receipt is stamped \`${stamp}\`, ${side} the committed box \`${expected}\``;
 }
 
@@ -403,6 +424,7 @@ function selftest() {
     ['a receipt stamped with another release', CLEAN_MD.replace('`0.5.5.2`', '`0.5.4.2`'), /release 0\.5\.4/],
     ['a receipt with prose where its stamp belongs', CLEAN_MD.replace('`0.5.5.2`', '`dev artifact`'), /not a build/],
     ['a receipt with no stamp after its link', CLEAN_MD.replace(', `0.5.5.2`', ''), /no `<release>\.<ordinal>` stamp/],
+    ['a receipt whose stamp is padded, which about-changelog reads as prose', CLEAN_MD.replace('`0.5.5.2`', '` 0.5.5.2 `'), /not a build/],
   ];
   const cleanStamp = stampMismatch('13', CLEAN_MD, BOX);
   if (cleanStamp === null) { console.log('  PASS  clean copy: #13\'s receipt is stamped with the committed box'); passed += 1; }

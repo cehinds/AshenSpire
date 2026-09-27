@@ -54,6 +54,18 @@ test('stampMismatch: the pull request\'s own receipt must carry the committed bo
   assert.equal(receiptStamp('1', MD), null);
 });
 
+// Codex review on #1356: the gate must agree with about-changelog's reading.
+test('stampMismatch: leading-zero spellings are the same build; padded stamps are prose', () => {
+  const box = { release: '0.5.5', ordinal: 1 };
+  assert.equal(stampMismatch('12', MD.replace('`0.5.5.1`', '`00.5.5.1`'), box), null);
+  assert.equal(stampMismatch('12', MD.replace('`0.5.5.1`', '`0.5.5.0001`'), box), null);
+  assert.match(stampMismatch('12', MD.replace('`0.5.5.1`', '`00.5.5.2`'), box), /ABOVE/);
+  assert.match(stampMismatch('12', MD.replace('`0.5.5.1`', '`0.5.05.0`'), box), /BELOW/);
+  assert.equal(receiptStamp('12', MD.replace('`0.5.5.1`', '` 0.5.5.1 `')), ' 0.5.5.1 ');
+  assert.match(stampMismatch('12', MD.replace('`0.5.5.1`', '` 0.5.5.1 `'), box), /not a build/);
+  assert.match(stampMismatch('12', MD.replace('`0.5.5.1`', '`0.5.5.1 `'), box), /not a build/);
+});
+
 function cli(args, env) {
   return spawnSync(process.execPath, [TOOL, ...args], {
     cwd: ROOT, encoding: 'utf8', env: { ...process.env, GITHUB_EVENT_PATH: '', GITHUB_REF: '', ...env },
