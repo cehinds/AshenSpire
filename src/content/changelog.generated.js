@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Skills and your class level up more slowly",
     "detail": "Every weapon, armour, focus, dual-wield and class skill now needs 100 XP for its first level, and each level after costs 1.75 times the one before (100, 175, 305, 535, 940).",
-    "build": "0.7.1.675",
+    "build": "0.7.1.677",
     "pullRequest": 1386,
     "url": "https://github.com/cehinds/AshenSpire/pull/1386"
   },
