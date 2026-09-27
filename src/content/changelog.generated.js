@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Behind the scenes: finished changes reach development builds without waiting",
     "detail": "Nothing you play changes. A change now lands in development as soon as its quick checks pass, and the long checks run when development is promoted to the test build.",
-    "build": "0.7.1.666",
+    "build": "0.7.1.670",
     "pullRequest": 1350,
     "url": "https://github.com/cehinds/AshenSpire/pull/1350"
+  },
+  {
+    "id": "pr-1334",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: a hand-rules test comment catches up",
+    "detail": "Tests only. The fixed-draw test's comment now works its numbers from the one-row hand stats, counting Intelligence from each row's baseline, instead of the retired weights; the values it checks are unchanged.",
+    "build": "0.7.1.669",
+    "pullRequest": 1334,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1334"
+  },
+  {
+    "id": "pr-1376",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the rules for skill books, revive tokens, companions and the market's quest event are written down",
+    "detail": "Docs only; nothing you play changes yet. The design document now says what a skill book, a revive token and a companion are made of, that their prices, sale values, XP, revive health and fight counts will be rows in Advanced → Shops, that a skill book is read from the Armoury's inventory, that selling one back never pays more than buying it costs, how much health a revive token leaves you with, that only one of each companion travels with you at a time, and how the market's one-off event is priced, opened once, and closes the shop behind you. What a companion or a sigil does is now written as a property in the game's tag data, the same way a legendary sigil's is, rather than on the item itself.",
+    "build": "0.7.1.668",
+    "pullRequest": 1376,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1376"
   },
   {
     "id": "pr-1374",
