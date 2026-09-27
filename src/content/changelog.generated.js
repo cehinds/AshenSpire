@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1381",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "You draw more cards each turn",
+    "detail": "A new character now draws 3 cards at the start of each turn instead of 2, and still keeps the cards it did not play, up to its hand size. Cards and relics that draw more matter again because the hand is no longer full every turn. Advanced → Stats → Draw & hand still lets you fill the hand to its size each turn or discard unplayed cards at the end of the turn. Runs already under way keep the draw they started with.",
+    "build": "0.7.1.676",
+    "pullRequest": 1381,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1381"
+  },
+  {
     "id": "pr-1384",
     "date": "2026-09-27",
     "group": "2026-09-27",
