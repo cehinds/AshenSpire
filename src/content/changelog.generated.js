@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1364",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the 1.0 checklist records the card reward schedule and crafting drops as done",
+    "detail": "Docs only. docs/FINISH.md ticks §15.1 (#1351) and §15.3 (#1352), each with its test file. Legendary sigils (§15.4) stay open until the market sigils step of §14 is built.",
+    "build": "0.7.1.632",
+    "pullRequest": 1364,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1364"
+  },
+  {
     "id": "pr-1352",
     "date": "2026-09-27",
     "group": "2026-09-27",
