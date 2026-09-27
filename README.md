@@ -71,7 +71,7 @@ From the last two weeks of [CHANGELOG.md](CHANGELOG.md), which names the PR and 
 - **Settings** (#1277): Advanced opens one topic at a time, Find searches every section, every number has − · slider · field · +, and changed values show a dot and their own Reset.
 - **Dodge and Stamina** (#1309, #1284): a landed Dodge Roll gives real Block; each fight opens with full Stamina; bosses scale with the order you meet them in.
 - **Quest boards** (#1261): every town's inn lists its quests; taking and turning one in is a conversation with the Road Warden.
-- **Character creation** (#1238, #1273): every attribute starts at 1 with three points to assign; new players start on the owner's tuned defaults.
+- **Character creation** (#1238, #1273): choose **Standard** (your class's preset spread) or **Assign points** (every attribute at 1, three points to place); new players start on the owner's tuned defaults.
 - **Progression** (#1192, #1228): each class level buys a node in a class tree whose top tier names your subclass; the Armoury shows bars for your level and every skill you train.
 - **The opening** (#1211): after creation, six painted scenes lead to your starting place; Advanced → Opening sequence edits them.
 
