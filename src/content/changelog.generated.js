@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Behind the scenes: the design and 1.0 plan documents say what is built and what is still planned",
     "detail": "Docs only; nothing you play changes. The design spec now opens with a table marking each of its sections as built, partly built or planned: the deck editor, the three shops and the new reward rules are written down but not built yet. The 1.0 checklist catches up with the last week's merges, and an implemented map-contrast proposal moves to an archive folder.",
-    "build": "0.7.1.623",
+    "build": "0.7.1.625",
     "pullRequest": 1359,
     "url": "https://github.com/cehinds/AshenSpire/pull/1359"
+  },
+  {
+    "id": "pr-1349",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Settings shows how fast you level",
+    "detail": "Settings → Advanced → Progression now has a Levelling preview that updates as you change the numbers. It shows how much XP a normal fight (3 kills), an elite (1 kill) and a boss (1 kill) gives, how many levels each is worth from level 1 and from level 10, the stat points those levels grant, and the XP to reach each level up to 20. The XP multiplier and Level-up value are counted. A new setting can also cap how many levels one fight can give: XP past the cap is lost, and the spoils screen says how much. It is off by default, so nothing changes until you set it.",
+    "build": "0.7.1.624",
+    "pullRequest": 1349,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1349"
   },
   {
     "id": "pr-1360",

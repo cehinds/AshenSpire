@@ -386,11 +386,11 @@ The D2 hooks: Guilt shipped in #1286 (`tests/guilt.test.mjs`). Warrior's Vow is 
 | S14.4 | Blacksmith screen | **to-build** (the existing smith services stay as they are) | no `smithingStonesRefined` in `src/` |
 | S14.5 | Wise master | **to-build** | `grep -rl respecRefundPct src` → nothing |
 | S15.1 | Card reward schedule | **to-build**, open as #1351 | no `levelCard` in `src/` |
-| S15.2 | Levelling preview and cap | **to-build**, open as #1349 | `grep -rl maxLevelsPerFight src` → nothing |
+| S15.2 | Levelling preview and cap | **shipped (#1349)** | `node --test tests/level-pace.test.mjs` |
 | S15.3 | Crafting drops | **to-build**, open as #1352 | `grep -rl rewardChancePct src` → nothing |
 | S15.4 | Legendary sigils | **to-build**, after §14 step 5 | `grep -rl attunedSigils src` → nothing |
 
-**Counts, stage 4: §14 and §15 have 10 rows: 1 shipped (S14.1, #1343) and 9 to-build; their spec steps landed (#1331, #1348).
+**Counts, stage 4: §14 and §15 have 10 rows: 2 shipped (S14.1, #1343; S15.2, #1349) and 8 to-build; their spec steps landed (#1331, #1348).
 Stage 3's two to-build rows are unchanged.**
 
 ## Boundary of stage 4

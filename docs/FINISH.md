@@ -19,7 +19,7 @@ the code, a test or a command run on that tree, not against a PR title. The
 art-repo plan ([ART-REPO-PLAN.md](ART-REPO-PLAN.md): steps 1–3 done, step 4
 started) could move. The wave-3 follow-ups #1354, #1355 and #1357 merged after that tree and are
 ticked below with their merges. Open PRs that will move lines here when they
-merge, and tick them themselves: #1349, #1351 and #1352 (§15). SPEC.md's *Scope
+merge, and tick them themselves: #1351 and #1352 (§15); #1349 (§15 levelling pace) merged after that tree. SPEC.md's *Scope
 status* table lists each spec section as built, partly built or planned.
 
 ## Baseline (2026-09-24, `dev` @ `7fb05c9a`, build `0.7.1.449`)

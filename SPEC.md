@@ -36,7 +36,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | 13 | Seats, zones, skill tracks, class card and tree, levels, recovery, Mana, attributes, quest board | **partly built** | Phase 0 of [proposal-seat-adventure](docs/proposal-seat-adventure.md); plan phases 1–10 of [plan-progression-and-property-system](docs/plan-progression-and-property-system.md), phase 2 only as 2a (2b, relic passives as property rules, is unscheduled). Open, as each subsection's *Not in this phase* line states: the smithing re-point (4b-ii, §13.4e); co-op offers no skill or class draft (§13.4e, §13.4g); no tree screen (§13.4g); four ability-card sentences are approximated (§13.4f); quest XP is unpaid and the co-op host has no quest board (§13.4n). The tower, city, companions and later seat phases are **planned** in that proposal, with no SPEC section yet. |
 | — | World Journey, shared armour sets, legacy dungeons, the opening prologue, configurable stat pools | **built**, one boundary | `ui/screens/worldAtlas.js`, `legacyDungeon.js`, `prologue.js`; `src/content/derivedStats.js`. The stat-pool rules apply to the solo path only; the combat workshop and LAN paths keep their existing rules until given a rating context (that section's last line). |
 | 14 | Deck editor and the three shops | **partly built** (steps 1–2 of 7) | The SPEC section landed in #1331; step 2, deck rules, the sideboard and ordered draw, landed in #1343 (`tests/deck-rules.test.mjs`). Steps 3–7 (editor UI, shop kinds, market, blacksmith, wise master) are planned, with no code on `dev`. |
-| 15 | Reward schedule, levelling pace, crafting drops, legendary sigils | **planned** (step 1 of 5 done) | The SPEC section landed in #1348. No code is on `dev` yet; steps 2–4 are open as #1351, #1349 and #1352. |
+| 15 | Reward schedule, levelling pace, crafting drops, legendary sigils | **partly built** (steps 1 and 3 of 5) | The SPEC section landed in #1348; §15.2 levelling preview and per-fight cap landed in #1349 (`tests/level-pace.test.mjs`). Steps 2 and 4 are open as #1351 and #1352; §15.4 waits on §14 step 5. |
 
 ### Combat and equipment revision: implementation contract
 
@@ -2479,7 +2479,7 @@ Inscryption, and Slay the Spire's deck-view / "Deck Builder" mods.
 
 ## 15. Reward schedule, levelling pace, crafting drops and legendary sigils (owner brief, 2026-09-26)
 
-**Status: contract, not yet built** (2026-09-27: step 1, this section, landed in #1348; no step 2–5 code is on `dev`). The owner asked for several things:
+**Status: partly built** (2026-09-27: step 1, this section, landed in #1348; §15.2 levelling preview and per-fight cap landed in #1349; no other step's code is on `dev`). The owner asked for several things:
 - a choice of when card rewards come: after battle, on level-up, both or neither;
 - a percent chance for a card reward to drop;
 - XP settings that show what they do ("I change them and I'm levelling up way too much");
