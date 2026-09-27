@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-27",
     "group": "2026-09-27",
     "summary": "Behind the scenes: the rules for buying armour at the market are written down",
-    "detail": "Docs only; nothing you play changes yet. The design document now says the market will sell armour sets of your class that you have not unlocked, for the current run only, that a setting can turn this off, and where a bought set is recorded in a save. It also says that a shelf which can run out of things to sell (armour, sigils, a quest event) never counts toward the least number of shelves a shop must keep switched on, so a shop always has enough shelves that can never come up empty.",
-    "build": "0.7.1.655",
+    "detail": "Docs only; nothing you play changes yet. The design document now says the market will sell armour sets of your class that you have not unlocked, for the current run only, that a setting can turn this off, and where a bought set is recorded in a save. It also says that each shop offering is marked in the data as one that can run out of things to sell or not (relics, armaments, weapon arts, armour, stones, sigils and the inn rest can), that such a shelf is left out when it has nothing on it, and that it never counts toward the least number of shelves a shop must keep switched on, so a shop always has enough shelves that can never come up empty.",
+    "build": "0.7.1.656",
     "pullRequest": 1375,
     "url": "https://github.com/cehinds/AshenSpire/pull/1375"
   },
