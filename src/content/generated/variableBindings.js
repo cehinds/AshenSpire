@@ -715,5 +715,19 @@ export const variableBindings = [
     "nodeId": "restManaFloor",
     "variable": "floorPct",
     "balancePath": "rest.mana.floorPct"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "hollowSquire",
+    "variable": "block",
+    "balancePath": "powers.hollowSquire.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "emberHound",
+    "variable": "damage",
+    "balancePath": "powers.emberHound.damage"
   }
 ];

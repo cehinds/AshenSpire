@@ -42,6 +42,7 @@ import { isMagicalAttack, ratingDamageMultiplier } from '../model/combatRatings.
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
 import { orderedReturn } from '../model/deckRules.js';
+import { reviveTokenFor, reviveHp, adjustCount } from '../model/consumables.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -290,6 +291,19 @@ export function applyHeal(ctx, target, amount) {
 }
 
 function afterHpChange(ctx, target) {
+  // THE DEATH-PREVENTION HOOK (SPEC §14.3): the player about to drop to 0 HP
+  // spends one revive token from the fight's copy of the counts and rises at
+  // hpPct of max. The copy rides the combat snapshot, so a fight saved after a
+  // revive and reloaded still has the token spent; the run's owner settles it
+  // back at combat end. Solo only: a co-op seat carries no consumables.
+  if (target.hp <= 0 && target.alive && target.kind === 'player' && target === ctx.player && ctx.consumables) {
+    const token = reviveTokenFor(ctx.registries, ctx.consumables);
+    if (token) {
+      adjustCount(ctx.consumables, token.id, -1);
+      target.hp = reviveHp(target.maxHp, token.hpPct);
+      ctx.emit('reviveSpent', { targetId: target.id, consumableId: token.id, hp: target.hp, left: ctx.consumables[token.id] || 0 });
+    }
+  }
   if (target.hp <= 0 && target.alive) {
     target.hp = 0;
     target.alive = false;

@@ -1688,6 +1688,10 @@ export const balance = {
     lodestarShard: { restoreMana: 1 },
     waxenSeal: { heal: 3 },
     whetstonePouch: { bleed: 2 },
+    // The two companions (SPEC §14.3): their property rules read these, so a
+    // companion's numbers are tuned beside every relic's.
+    hollowSquire: { block: 5 },
+    emberHound: { damage: 3 },
     [NOTE]: {
       '{relic}.{variable}': '{relicName} — {effect}.',
     },

@@ -187,7 +187,9 @@ test('M2 parity: main.js still orders entry persist, snapshot guard and reload r
   assert.ok(persistAt < buildAt, 'the entry persist still happens before the fight is built');
   const resume = functionBody(main, 'resumeRun');
   const rngAt = resume.indexOf('rng = createRng(run.seed, run.streamCounters);');
-  const reenterAt = resume.indexOf('{ resuming: true }');
+  // The re-entry's options open with `resuming: true` (a service event's
+  // fight also carries its flag, SPEC §14.3); the order below is unchanged.
+  const reenterAt = resume.indexOf('enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true');
   assert.ok(rngAt >= 0, 'resumeRun still rebuilds the rng from the saved stream counters');
   assert.ok(reenterAt > rngAt, 'resumeRun still re-enters the fight after rebuilding the rng');
 });

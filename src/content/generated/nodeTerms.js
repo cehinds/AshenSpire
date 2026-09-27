@@ -499,5 +499,17 @@ export const nodeTerms = [
     "playerTermId": "",
     "tooltipTermId": "",
     "template": "Arriving refills your flask charges."
+  },
+  {
+    "nodeId": "hollowSquire",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "At the start of each fight, gain {block} Block."
+  },
+  {
+    "nodeId": "emberHound",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "At the start of each of your turns, deal {damage} damage to a random enemy."
   }
 ];

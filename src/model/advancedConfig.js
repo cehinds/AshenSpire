@@ -17,6 +17,7 @@ import { STAT_ROWS_MARKER, STAT_ROWS_VERSION, STAT_ROW_NO_MAX, hasLegacyStatSett
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 import { gateOpen, ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
 import { shopConfigRows, cloneShops, shopSettingsProblems, shopOverridesSetAside } from './shopKinds.js';
+import { consumableConfigRows, cloneItems } from './consumables.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
@@ -885,7 +886,7 @@ function withGates(rows, bundle) {
 
 export function advancedConfigRows(bundle) {
   const generated = leafRows(materializeCardValueBonuses(bundle).balance || {}, [], [], bundle).filter((row) => !row.searchPath.startsWith('ui.') && !LEGACY_BALANCE_PATHS.has(row.searchPath));
-  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...shopConfigRows(bundle), ...generated], bundle);
+  return withGates([...combatRatingRows(bundle), ...startingStatRows(bundle), ...handRulesRows(), ...prologueRows(), ...progressionRows(bundle), ...explicitRows(bundle), ...presentationRows(), ...balanceOwnRows(bundle), ...shopConfigRows(bundle), ...consumableConfigRows(bundle), ...generated], bundle);
 }
 
 /**
@@ -930,6 +931,9 @@ function cloneConfigurableBundle(bundle) {
     // Advanced → Shops writes into this copy (SPEC §14.2); cloneShops keeps
     // each [NOTE], which validateContent reads on the configured bundle too.
     ...(bundle.shops ? { shops: cloneShops(bundle.shops) } : {}),
+    // …and the item rows' numbers (SPEC §14.3), each [NOTE] kept.
+    ...(bundle.consumables ? { consumables: cloneItems(bundle.consumables) } : {}),
+    ...(bundle.companions ? { companions: cloneItems(bundle.companions) } : {}),
   };
 }
 

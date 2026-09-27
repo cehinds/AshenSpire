@@ -12,6 +12,8 @@ import { nodeTree } from './tree.js';
 import { itemTypeLabel } from '../content/equipment.js';
 import { shops as shippedShops } from '../content/shops.js';
 import { sigils as shippedSigils } from '../content/sigils.js';
+import { consumables as shippedConsumables } from '../content/consumables.js';
+import { companions as shippedCompanions } from '../content/companions.js';
 import { cloneShops } from './shopKinds.js';
 import { applyCardMods } from './loadout.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
@@ -234,6 +236,11 @@ export function createRegistries(contentBundle) {
   // Sigils (SPEC §14.3): what the market's sigil shelf sells into `run.sigils`.
   // A bundle without them reads the shipped collection.
   registries.sigils = makeRegistry('sigil', bundle.sigils || shippedSigils);
+  // Consumables and companions (SPEC §14.3), as configured for this run. A
+  // companion is a tagged collection (its property rows are tagging.csv's),
+  // so it is read stamped; a bundle without either reads the shipped one.
+  registries.consumables = makeRegistry('consumable', bundle.consumables || shippedConsumables);
+  registries.companions = makeRegistry('companion', collection('companions', bundle.companions || shippedCompanions));
   // Quest steps (E12): which events an Unknown node may roll only once the
   // run's history earns them. Keyed by event id; absent means ungated.
   registries.eventHistoryRequirements = deepFreeze({ ...(bundle.eventHistoryRequirements || {}) });
