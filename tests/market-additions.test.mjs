@@ -25,7 +25,7 @@ import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/s
 import { ownership, equipPiece } from '../src/model/loadout.js';
 import { inventoryRows } from '../src/model/inventoryPresentation.js';
 import { innInTown } from '../src/model/locations.js';
-import { MARKET_SHELVES, shopStockProblems, shopSettingsProblems } from '../src/model/shopKinds.js';
+import { MARKET_SHELVES, SHOP_KIND_SCREENS, shopStockProblems, shopSettingsProblems } from '../src/model/shopKinds.js';
 import { MARKET_ADDITIONS, applyShopPriceMult } from '../src/model/marketStock.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { mountShop } from '../src/ui/screens/shop.js';
@@ -1057,4 +1057,22 @@ test('only cards plus remove enabled at minimum 2 is refused: cards and flasks a
   // The shipped defaults still pass.
   assert.deepEqual(shopSettingsProblems(contentBundle, {}), []);
   assert.deepEqual(validateContent(contentBundle).errors.filter((e) => e.path.startsWith('shops')), []);
+});
+
+test('the non-conditional minimum binds only a kind whose screen is registered: the shipped bundle passes while the blacksmith and master have none (coordinator ruling, #1375)', () => {
+  assert.deepEqual(SHOP_KIND_SCREENS, ['market']);
+  assert.deepEqual(validateContent(contentBundle).errors.filter((e) => e.path.startsWith('shops')), []);
+  assert.deepEqual(shopSettingsProblems(contentBundle, {}), []);
+  // A blacksmith and a master with only conditional offerings left on are
+  // not refused while they have no screen (steps 6 and 7 classify their own)...
+  const table = structuredClone(shippedShops);
+  for (const kind of ['blacksmith', 'master']) for (const row of table[kind].offerings) row.enabled = row.conditional;
+  assert.deepEqual(validateContent({ ...contentBundle, shops: table }).errors.filter((e) => e.path.startsWith('shops')), []);
+  const settings = Object.fromEntries(['blacksmith', 'master'].flatMap((kind) => shippedShops[kind].offerings
+    .filter((row) => !row.conditional).map((row) => [`${PREFIX}${kind}.${row.id}.enabled`, false])));
+  assert.deepEqual(shopSettingsProblems(contentBundle, settings), []);
+  // ...but the plain enablement minimum still binds every kind.
+  const bare = structuredClone(shippedShops);
+  bare.blacksmith.offerings.forEach((row, i) => { row.enabled = i === 0; });
+  assert.equal(validateContent({ ...contentBundle, shops: bare }).errors.filter((e) => e.path === 'shops.blacksmith').length, 1);
 });

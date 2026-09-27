@@ -262,7 +262,10 @@ export function shopsTableProblems(table, err, bundle = null) {
     if (Number.isInteger(minimum) && minimum >= SHOP_MINIMUM_FLOOR && enabled.length < minimum) {
       const off = offerings.filter((row) => object(row) && row.enabled !== true).map((row) => `'${row.id}'`);
       at(kind, `disabling ${off.join(', ')} leaves ${enabled.length} enabled offering${enabled.length === 1 ? '' : 's'}, fewer than its guaranteedMinimum of ${minimum}`);
-    } else if (Number.isInteger(minimum) && minimum >= SHOP_MINIMUM_FLOOR) {
+    } else if (Number.isInteger(minimum) && minimum >= SHOP_MINIMUM_FLOOR && SHOP_KIND_SCREENS.includes(kind)) {
+      // The non-conditional minimum binds a kind once its screen is registered
+      // (SPEC §14.2): until then its classification is provisional, and steps
+      // 6 and 7 must satisfy it when they register the blacksmith and master.
       const sure = enabled.filter((row) => !isConditionalOffering(row));
       const stocked = bundle ? sure.filter((row) => countsTowardMinimum(row, (path) => resolvePath(bundle, path))) : sure;
       if (sure.length < minimum) {
@@ -477,9 +480,9 @@ export function shopSettingsProblems(bundle, settings = {}) {
         id: 'settings.shops.refuse.disabled',
         tokens: { kind: words(kind), offerings: off.map((offering) => words(offering.id)).join(', '), enabled: on.length, minimum },
       });
-    } else {
+    } else if (SHOP_KIND_SCREENS.includes(kind)) {
       // Only an offering that can never come up empty counts toward the
-      // minimum (SPEC §14.2): a conditional one's pool may be empty on a
+      // minimum (SPEC §14.2), once the kind's screen is registered: a conditional one's pool may be empty on a
       // visit, and then nothing is left to fill the guarantee from.
       const sure = on.filter((offering) => !isConditionalOffering(offering));
       if (sure.length < minimum) {
