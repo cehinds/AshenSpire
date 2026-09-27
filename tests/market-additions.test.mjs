@@ -39,6 +39,7 @@ import {
 import { shopCategories } from '../src/ui/models/ShopWorkspaceModel.js';
 import { t } from '../src/ui/strings.js';
 import { beatFor } from '../src/model/secondbeat.js';
+import { flaskKindOf } from '../src/model/gracerefill.js';
 
 const REG = createRegistries(contentBundle);
 const PREFIX = 'gameConfig.shops.';
@@ -1075,4 +1076,76 @@ test('the non-conditional minimum binds only a kind whose screen is registered: 
   const bare = structuredClone(shippedShops);
   bare.blacksmith.offerings.forEach((row, i) => { row.enabled = i === 0; });
   assert.equal(validateContent({ ...contentBundle, shops: bare }).errors.filter((e) => e.path === 'shops.blacksmith').length, 1);
+});
+
+test('an armour offer names its class: a class change between stocking and buying refuses the purchase by name, and nothing changes (Codex, on #1375)', () => {
+  const { run } = marketRun(OUT);
+  for (const item of run.shopStock.armour) assert.equal(item.classId, 'reaver', `${item.id} carries its classId`);
+  const item = run.shopStock.armour[0];
+  const quote = armourPurchasePlan(OUT, run, item);
+  assert.equal(quote.ok, true);
+  // The Turncoat's Mirror swaps the class after the shelf was stocked.
+  run.class = 'rogue';
+  const before = JSON.stringify(run);
+  const plan = armourPurchasePlan(OUT, run, item);
+  assert.equal(plan.ok, false);
+  assert.match(plan.reason, new RegExp(OUT.equipment.armour.find((row) => row.classId === 'reaver' && row.id === item.id).name));
+  assert.throws(() => commitArmourPurchase(OUT, run, quote), new RegExp(plan.reason.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.equal(JSON.stringify(run), before, 'no cinders spent, no set recorded');
+});
+
+test('a saved atlas stock stocked for the old class does not sell the wrong set: the shelf shows it unavailable, and a stock without classId is refused (Codex, on #1375)', () => {
+  withKitDom((dom) => {
+    // A rogue's run holding a saved stock that was stocked for a reaver (the
+    // class swapped since), naming a set id the rogue's class also has.
+    const { run: reaver } = marketRun(OUT);
+    const run = createRunState({ seed: 21, classId: 'rogue', registries: OUT });
+    run.cinders = 5000;
+    const rng = createRng(21);
+    const shared = OUT.equipment.armour.find((row) => row.classId === 'reaver' && OUT.equipment.armour.some((o) => o.classId === 'rogue' && o.id === row.id));
+    const rogueSet = OUT.equipment.armour.find((row) => row.classId === 'rogue' && row.unlock);
+    const stale = { classId: 'reaver', id: shared.id, cost: 300 };
+    const mount = (target) => {
+      const app = dom.document.createElement('main');
+      dom.document.body.replaceChildren(app);
+      mountShop(app, { registries: OUT, run: target, meta: { settings: {} }, onLeave() {}, onChanged() {}, restAtInn() {} });
+      return app;
+    };
+    // Beside an offer for this class, the stale one is shown but cannot be bought.
+    run.shopStock = { ...structuredClone(reaver.shopStock), armour: [stale, { classId: 'rogue', id: rogueSet.id, cost: 300 }] };
+    assert.deepEqual(shopStockProblems(run.shopStock), []);
+    const back = reload(run, rng, OUT);
+    assert.equal(back.class, 'rogue');
+    assert.deepEqual(back.shopStock.armour[0], stale, 'the saved offer keeps its class');
+    let app = mount(back);
+    app.querySelector('#shop-cat-armour').click();
+    const tiles = app.querySelectorAll('#shop-armour .shop-offer');
+    assert.equal(tiles.length, 2, 'both offers are shown');
+    tiles[0].click();
+    const primary = app.querySelector('#shop-primary');
+    assert.ok(!primary || primary.disabled, 'the stale offer cannot be bought');
+    assert.equal((back.loadout.boughtArmour || []).length, 0);
+    // With no offer for this class at all, the armour shelf is hidden, and
+    // nothing backfills it (coordinator ruling, #1375).
+    back.shopStock.armour = [stale];
+    app = mount(back);
+    assert.equal(app.querySelector('#shop-cat-armour'), null, 'no armour rail item');
+    assert.ok(!app.querySelectorAll('[data-shop-category]').map((el) => el.dataset.shopCategory).includes('armour'));
+    assert.deepEqual(back.shopStock.armour, [stale], 'the saved stock is not rerolled');
+  });
+  // The saved-stock check requires the classId.
+  assert.ok(shopStockProblems({ kind: 'market', offerings: ['armour'], armour: [{ id: 'bastion', cost: 300 }] }).some((p) => /armour\[0\]/.test(p) && /classId/.test(p)));
+});
+
+test('a non-conditional offering needs a non-empty authored pool: content with only charge vessels is refused by name (coordinator ruling, #1375)', () => {
+  const onlyVessels = contentBundle.flasks.filter((def) => flaskKindOf(def) !== 'utility');
+  assert.ok(onlyVessels.length > 0 && onlyVessels.length < contentBundle.flasks.length);
+  const errors = validateContent({ ...contentBundle, flasks: onlyVessels }).errors.filter((e) => e.path === 'shops.market.flasks');
+  assert.equal(errors.length, 1, JSON.stringify(validateContent({ ...contentBundle, flasks: onlyVessels }).errors.slice(0, 5)));
+  assert.match(errors[0].msg, /pool/);
+  // A class with no shop cards at all is refused the same way.
+  const classes = contentBundle.classes.map((row, i) => (i === 0 ? { ...row, cardPool: [] } : row));
+  const cards = contentBundle.cards.filter((card) => card.class !== 'colorless');
+  const cardErrors = validateContent({ ...contentBundle, classes, cards }).errors.filter((e) => e.path === 'shops.market.cards');
+  assert.equal(cardErrors.length, 1, JSON.stringify(cardErrors));
 });

@@ -1816,6 +1816,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "shop.refuse.armourClass",
+    "extends": "",
+    "short": "{name} was stocked for another class; it is not yours to wear.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "shop.refuse.sigilOwned",
     "extends": "",
     "short": "You already hold {name}.",

@@ -136,6 +136,11 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     // come up has no rail item, and Remove is absent, not greyed. A stock
     // saved before shop kinds existed laid out every shelf.
     const offered = new Set(shopStockOfferings(stock));
+    // A SAVED ARMOUR SHELF WITH NO OFFER FOR THIS CLASS IS HIDDEN (SPEC
+    // §14.2-§14.3): the class changed since it was stocked (the Turncoat's
+    // Mirror). Saved stock is never rerolled or backfilled, so the visit may
+    // lay out fewer than its minimum: the accepted edge the scope names.
+    if (offered.has('armour') && !(stock.armour || []).some((item) => item && item.classId === run.class)) offered.delete('armour');
     const removeOffered = offered.has('remove');
     const smithOffered = !!(stock.smith && stock.smith.offered && stock.smith.services.length);
     const categories = shopCategories({ sellOn: sellOn(), offered, services: removeOffered || smithOffered });

@@ -34,9 +34,9 @@ export function stale(quote, plan) {
   if (quote.revision !== plan.revision || quote.cost !== plan.cost) throw new Error(say('shop.refuse.stale'));
 }
 
-/** The armour row a stock item names: the run's own class, by id (armour ids repeat across classes). */
-export function armourPiece(registries, run, id) {
-  return (registries.equipment.armour || []).find((row) => row.classId === run.class && row.id === id) || null;
+/** The armour row a stock offer names, by its `{ classId, id }` (armour ids repeat across classes). */
+export function armourPiece(registries, item) {
+  return (registries.equipment.armour || []).find((row) => row.classId === item.classId && row.id === item.id) || null;
 }
 
 // ---------------------------------------------------------------------------
@@ -72,10 +72,13 @@ export function commitSmithStonePurchase(registries, run, quote) {
 // ---------------------------------------------------------------------------
 
 export function armourPurchasePlan(registries, run, item, { meta = {} } = {}) {
-  const piece = item ? armourPiece(registries, run, item.id) : null;
+  const piece = item ? armourPiece(registries, item) : null;
   let reason = '';
   if (!offered(run, 'armour') || !item || !(run.shopStock.armour || []).includes(item)) reason = say('shop.refuse.gone');
   else if (!piece || !priced(item.cost)) reason = say('shop.refuse.unpriced');
+  // Stocked for another class (the Turncoat's Mirror changed `run.class`
+  // since): refused by name, never sold as the run's own set.
+  else if (item.classId !== run.class) reason = say('shop.refuse.armourClass', { name: piece.name });
   else if (!run.loadout) reason = say('shop.refuse.noLoadout');
   else if (ownership(registries, { meta, loadout: run.loadout }).has(piece)) reason = say('shop.refuse.armourOwned', { name: piece.name });
   else if (!affordable(run, item.cost)) reason = say('shop.refuse.cinders');

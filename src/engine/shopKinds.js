@@ -192,8 +192,10 @@ const ADDITION_POOLS = Object.freeze({
 const ADDITION_STOCK = Object.freeze({
   // Each set priced in the offering's cost range (validateContent and Settings
   // keep min ≤ max), and never below 1.
+  // Each offer names its class (SPEC §14.3): armour ids repeat across
+  // classes, and a run's class can change while a saved stock keeps it.
   armour(registries, rng, run, row, pool) {
-    return pickSome(rng, pool, row.stock).map((piece) => ({ id: piece.id, cost: Math.max(1, rng.int(STREAM, row.cost.min, row.cost.max)) }));
+    return pickSome(rng, pool, row.stock).map((piece) => ({ classId: piece.classId, id: piece.id, cost: Math.max(1, rng.int(STREAM, row.cost.min, row.cost.max)) }));
   },
   // Priced per stone, with a per-visit stock; no roll.
   smithStones(registries, rng, run, row) {

@@ -18,6 +18,7 @@ import { shops as shippedShops } from '../content/shops.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { NEW_RUN_CLAUSE } from './balanceNotes.js';
 import { marketAdditionStockProblems } from './marketStock.js';
+import { utilityFlaskIds } from './gracerefill.js';
 
 /** The kinds a shop can be (SPEC §14.2) — a closed set; a new kind is a spec change. */
 export const SHOP_KINDS = Object.freeze(['market', 'blacksmith', 'master']);
@@ -56,6 +57,35 @@ const AUTHORED_KEYS = Object.freeze(['conditional', 'stockKey']);
 // always counts. `valueAt` resolves the path, through a Settings override
 // when one is given.
 const resolvePath = (root, path) => String(path).split('.').reduce((at, key) => (at == null ? undefined : at[key]), root);
+// A NON-CONDITIONAL OFFERING ALSO NEEDS A NON-EMPTY AUTHORED POOL (SPEC
+// §14.2): content that could never stock it is refused by name. Each reader
+// returns why the pool is empty, or null. Read off the raw bundle, before any
+// registry exists.
+const SHOP_RARITIES = Object.freeze(['common', 'uncommon', 'rare']);
+const AUTHORED_POOLS = Object.freeze({
+  market: Object.freeze({
+    // Utility flasks: every flask that is not a charge vessel (utilityFlaskIds).
+    flasks(bundle) {
+      const defs = Array.isArray(bundle.flasks) ? bundle.flasks : [];
+      let ids;
+      try {
+        ids = utilityFlaskIds({ flasks: { ids: () => defs.map((def) => def && def.id), all: () => defs } });
+      } catch { return null; } // a missing charge vessel is refused by its own check
+      return ids.length ? null : 'no utility flask is authored (every flask is a charge vessel)';
+    },
+    // Cards: each class's shop pool, its card pool plus the colourless shop cards.
+    cards(bundle) {
+      const cards = Array.isArray(bundle.cards) ? bundle.cards : [];
+      const known = new Set(cards.map((card) => card && card.id));
+      const colourless = cards.filter((card) => card && card.class === 'colorless' && SHOP_RARITIES.includes(card.rarity)).length;
+      const empty = (Array.isArray(bundle.classes) ? bundle.classes : [])
+        .filter((row) => row && !colourless && !(row.cardPool || []).some((id) => known.has(id)))
+        .map((row) => `'${row.id}'`);
+      return empty.length ? `the shop card pool of ${empty.join(', ')} is empty (no class card and no colourless shop card)` : null;
+    },
+  }),
+});
+
 function countsTowardMinimum(row, valueAt) {
   if (!row || row.enabled === false || isConditionalOffering(row)) return false;
   if (row.stockKey === undefined) return true;
@@ -271,7 +301,12 @@ export function shopsTableProblems(table, err, bundle = null) {
       if (sure.length < minimum) {
         const maybe = enabled.filter(isConditionalOffering).map((row) => `'${row.id}'`);
         at(kind, `keeps ${sure.length} enabled offering${sure.length === 1 ? '' : 's'} that can never come up empty, fewer than its guaranteedMinimum of ${minimum}; ${maybe.join(', ')} ${maybe.length === 1 ? 'is' : 'are'} conditional (an empty pool is not laid out) and do${maybe.length === 1 ? 'es' : ''} not count (SPEC §14.2)`);
-      } else if (stocked.length < minimum) {
+      }
+      if (bundle) for (const row of sure) {
+        const why = AUTHORED_POOLS[kind]?.[row.id]?.(bundle);
+        if (why) at(`${kind}.${row.id}`, `is not conditional, but its authored pool is empty: ${why} (SPEC §14.2)`);
+      }
+      if (sure.length >= minimum && stocked.length < minimum) {
         const empty = sure.filter((row) => !stocked.includes(row)).map((row) => `'${row.id}' (${row.stockKey})`);
         at(kind, `keeps ${stocked.length} enabled offering${stocked.length === 1 ? '' : 's'} with a stock of at least 1, fewer than its guaranteedMinimum of ${minimum}; the stock of ${empty.join(', ')} is 0, so it lays out nothing and does not count (SPEC §14.2)`);
       }

@@ -28,7 +28,13 @@ export function marketAdditionStockProblems(stock, path = 'shopStock') {
     const shelf = stock.smithStones;
     if (!object(shelf) || !count(shelf.price) || !count(shelf.left)) problems.push(`${path}.smithStones must be { price, left }, both whole numbers of at least 0`);
   }
-  if (stock.armour !== undefined) itemList(stock.armour, `${path}.armour`, problems);
+  if (stock.armour !== undefined) {
+    itemList(stock.armour, `${path}.armour`, problems);
+    // An armour offer names its class (SPEC §14.3): ids repeat across classes.
+    if (Array.isArray(stock.armour)) stock.armour.forEach((item, index) => {
+      if (object(item) && !(typeof item.classId === 'string' && item.classId)) problems.push(`${path}.armour[${index}] must carry the classId it was stocked for, a non-empty string`);
+    });
+  }
   if (stock.sigils !== undefined) itemList(stock.sigils, `${path}.sigils`, problems);
   if (stock.innRest !== undefined) {
     const offer = stock.innRest;
