@@ -127,6 +127,10 @@ const SHAPES = [
   { tag: '1200x730', w: 1200, h: 730, d: 1, mobile: false },
   // Every market addition out (SPEC §14.3): chance 100 for each, through ?shotSettings.
   { tag: '1200x730+additions', w: 1200, h: 730, d: 1, mobile: false, settings: ADDITIONS_OUT },
+  // …and on a phone, where step 5b's four shelves (skill books, revive
+  // tokens, the quest event, companions) push the rail to twelve items and
+  // the compact selector must still reach every one.
+  { tag: '390x844+additions', w: 390, h: 844, d: 2, mobile: true, settings: ADDITIONS_OUT },
 ];
 const settingsQuery = (settings) => (settings ? `&shotSettings=${encodeURIComponent(JSON.stringify(settings))}` : '');
 
