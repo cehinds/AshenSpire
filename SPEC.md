@@ -796,8 +796,8 @@ cards by the run's three hand rows of §3.5 — **Opening hand** (`openingHand`)
 run. Advanced → Stats → Draw & hand edits those rows with the same fields as every other stat,
 beside the hand's behaviour options, which are not stat rows: retain, optional discard prompt,
 discard limit, replacement draws, overflow, reshuffle and draw mode (`content/handRules.js`).
-The opening hand is also bounded by the hand size. **Solo default (owner's ruling, FINISH D22,
-2026-09-27): retain the hand; draw the Draw stat each turn, up to capacity.** Unplayed cards stay
+The opening hand is also bounded by the hand size. **Solo default (FINISH D22, decided 2026-09-27 under the
+owner's delegation): retain the hand; draw the Draw stat each turn, up to capacity.** Unplayed cards stay
 in hand at turn end (nothing is discarded), and each later turn draws a **fixed** number — the
 Draw / turn row, never past the hand size (a data row). Both other modes stay selectable: fill
 mode (with retain, the old retain-and-fill) draws up to the hand size, and retain off discards
