@@ -2809,7 +2809,7 @@ function showShop() {
     restAtInn: (quote) => {
       const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
       const { counts } = resolveGraceRefill(saves.loadMeta().settings || {});
-      return commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts: counts });
+      return commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts: counts, restBonus: restRecoveryBonus(saves.loadMeta().settings || {}) });
     },
     // A custom run's price multiplier: what a consumable sells back for is
     // capped at what one would cost here now (SPEC §14.3).
