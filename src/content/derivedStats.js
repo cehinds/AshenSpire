@@ -61,7 +61,19 @@ export const derivedStatRules = {
   rules: {
     // Owner defaults, 2026-09-24 (ashen-spire-game-config_4.json): every
     // pool reads a spread of attributes, not one.
-    energy: { base: 3, strength: 0.1, dexterity: 0.2, wisdom: 0.01, intelligence: 0.01, perLevel: 0.1 },
+    //
+    // A3 LEAN RETUNE (2026-09-27, FINISH D24). Two numbers moved, each sized
+    // from `node tools/runsim.mjs 100 --seeded-seats --incoming`:
+    //   energy.dexterity 0.2 → 0.25   the first extra Action at DEX 4, not 5:
+    //       reachable at creation (Assign points can put all three points
+    //       there), one level-up away for the Standard Rogue (DEX 3) and three
+    //       for every DEX-1 preset. The level term (0.1) is unchanged.
+    //   hp.base 30 → 51               the lowest stock pool (Rogue and Herald,
+    //       38 before) now covers the fleet's 90th-percentile HP lost over a
+    //       run's first three fights (59, every class pooled). Every stock
+    //       pool rises by the same 21: Reaver 70, Starseer 69, Rogue and
+    //       Herald 59. Only the base moved; CON still pays 4 a point.
+    energy: { base: 3, strength: 0.1, dexterity: 0.25, wisdom: 0.01, intelligence: 0.01, perLevel: 0.1 },
     // The hand. Draw / turn and Hand size were single-attribute rules on INT,
     // base + floor(max(0, INT − baseline) ÷ pointsPerCard); each is restated
     // EXACTLY as a weight of 1 ÷ pointsPerCard counted from its baseline
@@ -87,7 +99,7 @@ export const derivedStatRules = {
     },
     draw: { base: 2, intelligence: 0.2, attributeBaseline: 4, min: 2, max: 10 },
     handSize: { base: 7, intelligence: 0.2, attributeBaseline: 1, min: 1, max: 30 },
-    hp: { base: 30, strength: 0.35, constitution: 4, wisdom: 0.1, perLevel: 2 },
+    hp: { base: 51, strength: 0.35, constitution: 4, wisdom: 0.1, perLevel: 2 },
     // Budget 1 each, the owner's own sums.
     stamina: { base: 1, strength: 0.25, dexterity: 0.25, constitution: 0.5, perLevel: 0.2 },
     mana: { base: 1, strength: 0.125, constitution: 0.25, wisdom: 0.5, intelligence: 0.125, perLevel: 0.2 },

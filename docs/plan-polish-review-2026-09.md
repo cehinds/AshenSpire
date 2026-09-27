@@ -134,9 +134,13 @@ amended before code moves.
     ~55); it sits in two starter decks. (In combat the card face already
     shows the weight-priced cost through `previewCard`; only the balance is
     at issue.)
-  - [ ] Actions `3+floor(DEX/5)` and draw `3+floor(INT/5)` breakpoints are
+  - [~] Actions `3+floor(DEX/5)` and draw `3+floor(INT/5)` breakpoints are
     out of reach at creation; DEX 5 is the dominant level-up pick.
-  - [ ] Starting pools fell with the rebase: a stock Reaver opens on 48 HP
+    (2026-09-27, FINISH D24: the Actions half is done — `energy.dexterity`
+    0.2 → 0.25 puts the first extra Action at DEX 4, the lean creation
+    ceiling. The draw half is A4's.)
+  - [x] (2026-09-27, FINISH D24: `hp.base` 30 → 51 from `runsim --incoming`.)
+    Starting pools fell with the rebase: a stock Reaver opens on 48 HP
     where #1238 shipped 70 (`src/content/attributes.js` ~74, which calls
     moving them "a retune of `derivedStatRules` and the rating weights").
     Enemy HP is not the comparison (act-1 normals 10–34, elites 68–72, boss
