@@ -100,7 +100,11 @@ export function bringShopStockForward(run) {
  * #1371).
  */
 export function shopStockProblems(stock, path = 'shopStock', { required = false } = {}) {
-  if (!object(stock)) return [];
+  // Absent or null is no stock at all (between visits, or a point never
+  // entered). Anything else must be an object: an array or a string would
+  // reach the shop screen and crash it reading a shelf (Codex, on #1371).
+  if (stock === undefined || stock === null) return [];
+  if (!object(stock)) return [`${path} must be an object (a shop visit's stock), got ${Array.isArray(stock) ? 'an array' : JSON.stringify(stock)}`];
   const problems = [];
   // A schema-14 stock was written by a build that always writes both fields;
   // only an older save gets the market fallback, at the migration door. A
@@ -133,6 +137,18 @@ export function shopStockProblems(stock, path = 'shopStock', { required = false 
 // ---------------------------------------------------------------------------
 // The content table
 // ---------------------------------------------------------------------------
+
+// Every leaf under `value` that is not a number, refused by its whole path: an
+// offering (or a kind) carries numbers, or objects of numbers, and nothing
+// else (Codex, on #1371).
+function nonNumericLeaves(value, path, err) {
+  for (const [key, child] of Object.entries(value)) {
+    if (typeof child === 'number') {
+      if (!Number.isFinite(child)) err(`${path}.${key}`, `must be a finite number, got ${child}`);
+    } else if (object(child)) nonNumericLeaves(child, `${path}.${key}`, err);
+    else err(`${path}.${key}`, `must be a number (or an object of numbers), got ${JSON.stringify(child)}`);
+  }
+}
 
 // Whether any object in the table carries a [NOTE].
 function carriesNotes(value) {
@@ -191,10 +207,7 @@ export function shopsTableProblems(table, err) {
     if (!object(def)) { at(kind, 'must be an object { guaranteedMinimum, offerings }'); continue; }
     const minimum = def.guaranteedMinimum;
     if (!(Number.isInteger(minimum) && minimum >= SHOP_MINIMUM_FLOOR)) at(`${kind}.guaranteedMinimum`, `must be a whole number of at least ${SHOP_MINIMUM_FLOOR}, got ${JSON.stringify(minimum)}`);
-    for (const [key, value] of Object.entries(def)) {
-      if (KIND_KEYS.includes(key)) continue;
-      if (typeof value !== 'number' && !object(value)) at(`${kind}.${key}`, 'must be a number or an object of numbers');
-    }
+    nonNumericLeaves(without(def, KIND_KEYS), kind, at);
     // Kind-level numbers (guaranteedMinimum, respecRefundPct, …) each need a sentence.
     unnoted(without(def, ['offerings']), kind, at);
     const offerings = def.offerings;
@@ -208,10 +221,7 @@ export function shopsTableProblems(table, err) {
       if (typeof row.enabled !== 'boolean') at(`${where}.enabled`, `must be true or false, got ${JSON.stringify(row.enabled)}`);
       if (!(Number.isInteger(row.chance) && row.chance >= 0 && row.chance <= 100)) at(`${where}.chance`, `must be a whole percent 0–100, got ${JSON.stringify(row.chance)}`);
       if (!(Number.isFinite(row.weight) && row.weight >= 0)) at(`${where}.weight`, `must be a number of at least 0, got ${JSON.stringify(row.weight)}`);
-      for (const [key, value] of Object.entries(row)) {
-        if (key === 'id' || ROLL_KEYS.includes(key)) continue;
-        if (typeof value !== 'number' && !object(value)) at(`${where}.${key}`, 'must be a number or an object of numbers');
-      }
+      nonNumericLeaves(without(row, ['id', ...ROLL_KEYS]), where, at);
       unnoted(without(row, ['id']), where, at);
     });
     const enabled = offerings.filter((row) => object(row) && row.enabled === true);

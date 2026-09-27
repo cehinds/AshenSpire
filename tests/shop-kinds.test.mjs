@@ -502,3 +502,26 @@ test('a saved stock of a kind whose screen has not shipped is refused by name (C
   storage.setItem(RUN_KEY, JSON.stringify({ ...JSON.parse(JSON.stringify(run)), schemaVersion: RUN_SCHEMA_VERSION, shopStock: smithy }));
   assert.equal(createSaveManager(storage).loadRun(REG), null, 'archived and refused, never opened onto an empty market');
 });
+
+test('a saved stock that is not an object is refused by name, wherever it is kept (Codex, on #1371)', () => {
+  for (const bad of [['cards'], 'market']) {
+    const problems = shopStockProblems(bad, 'journey.serviceStates.p.stock', { required: true });
+    assert.ok(problems.some((problem) => problem.startsWith('journey.serviceStates.p.stock must be an object')), `${JSON.stringify(bad)}: ${problems.join(' | ')}`);
+  }
+  // Absent or null is simply no stock, as before.
+  assert.deepEqual(shopStockProblems(undefined, 'journey.serviceStates.p.stock', { required: true }), []);
+  assert.deepEqual(shopStockProblems(null, 'shopStock', { required: true }), []);
+  const run = createRunState({ seed: 12, classId: 'reaver', registries: REG });
+  assert.ok(validateRunShape({ ...run, shopStock: ['cards'] }).some((problem) => /shopStock must be an object/.test(problem)));
+});
+
+test('an offering\'s nested value that is not a number is refused by name (Codex, on #1371)', () => {
+  const bundle = bundleWithShops((table) => { table.market.offerings[0].bad = { nested: 'oops' }; });
+  const errors = errorsAt(bundle, 'shops.market.cards.bad');
+  assert.equal(errors.length, 1, JSON.stringify(errors));
+  assert.equal(errors[0].path, 'shops.market.cards.bad.nested');
+  assert.match(errors[0].msg, /must be a number/);
+  // A top-level string, and a kind-level nested string, too.
+  assert.equal(errorsAt(bundleWithShops((table) => { table.market.offerings[0].label = 'oops'; }), 'shops.market.cards.label').length, 1);
+  assert.equal(errorsAt(bundleWithShops((table) => { table.master.refund = { pct: true }; }), 'shops.master.refund.pct').length, 1);
+});
