@@ -34,7 +34,7 @@ import {
 import { flasks } from '../../content/flasks.js';
 import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
 import { openModal, button } from '../kit/index.js';
-import { t } from '../strings.js';
+import { t, tFull } from '../strings.js';
 import { LORE_FACES, LORE_SIZES, LORE_LEADING, LORE_TRACKING, LORE_SLANTS, LORE_TYPE_DEFAULTS } from '../models/LoreTypeModel.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
@@ -43,6 +43,7 @@ import { pageDebug } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
 import { deckRules } from '../../content/deckRules.js';
 import { deckSettingsProblems } from '../../model/deckRules.js';
+import { shopSettingsProblems } from '../../model/shopKinds.js';
 import { SEED_KEY, seedAfterChange, sameSetting } from '../../model/settingsDefaults.js';
 import { renderSettingsSync } from '../components/settingsSync.js';
 import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
@@ -111,7 +112,10 @@ const LEVEL_DEFAULTS = balance.levelUp || {};
 const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !row.retired)
   // An override switch shows its EFFECTIVE state: stored, else on when the
   // class ships its own value or a profile already pinned one.
-  .map((row) => (row.own ? { ...row, resolve: (settings) => ownOn(settings, row.own) } : row));
+  .map((row) => (row.own ? { ...row, resolve: (settings) => ownOn(settings, row.own) } : row))
+  // A Shops row (SPEC §14.2) wears its label and its kind's topic from
+  // content/source/uiStrings.csv; the model names the row and its tokens.
+  .map((row) => (row.shopLabel ? { ...row, label: t(row.shopLabel.id, row.shopLabel.tokens), shopTopic: t(`settings.shops.topic.${row.shopTopic}`) } : row));
 const INERT_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => row.inert);
 // The Draw / turn stat row's editors, which only a fixed draw reads.
 const FIXED_DRAW_ROWS = ADVANCED_CONFIG_ROWS.filter((row) => row.fixedOnly);
@@ -783,6 +787,7 @@ const ADVANCED_GROUPS = Object.freeze([
   // (models/StatsPreviewModel.js).
   { id: 'Stats', label: 'Stats', tip: 'Everything that turns attributes into Actions, Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.' },
   { id: 'Rewards', label: 'Rewards & economy', tip: 'Cinders, reward rarity, merchants, flasks and smithing.' },
+  { id: 'Shops', label: t('settings.shops.group.label'), tip: tFull('settings.shops.group.label') },
   { id: 'Deck', label: 'Deck', tip: 'The deck editor: where you can edit, the deck’s size limits, and playing your cards in the order you arranged them.' },
   { id: 'Equipment', label: 'Equipment & relics', tip: 'Starting kits, drops, swapping, equipment balance and relic values.' },
   { id: 'World', label: 'Run & world', tip: 'Rest and shrines, the atlas and seats, run modifiers, gauntlet, co-op and endless.' },
@@ -2093,7 +2098,9 @@ export function paintConfigProblems(container, settings, extra = []) {
   // `extra` carries the refusals the MODEL cannot see, because the value never
   // reached it: a typed number the field clamped on its way in (see
   // `typedNumberRefusal`). Same shape, same painting, same dedupe.
-  const entries = [...advancedConfigProblemRows(contentBundle, settings), ...deckSettingsProblems(settings), ...extra];
+  const entries = [...advancedConfigProblemRows(contentBundle, settings), ...deckSettingsProblems(settings),
+    // The Shops refusals (SPEC §14.2), each naming its kind, in uiStrings' words.
+    ...shopSettingsProblems(contentBundle, settings).map(({ keys, id, tokens }) => ({ keys, message: t(id, tokens) })), ...extra];
   const byKey = new Map();
   for (const entry of entries) {
     for (const key of entry.keys || []) {

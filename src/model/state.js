@@ -34,6 +34,7 @@ import { skillsProblems } from './skills.js';
 import { coreTagsProblems } from './classTree.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
+import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
 
 // v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
 // granted — and capacity must derive from the three (validateRunShape). v2
@@ -54,7 +55,11 @@ import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 // 13 (SPEC §15.3): `smithingStonesRefined`, the refined-stone purse, rides
 // the save. A v12-or-older save is filled with 0 at migrateRunSchema, so an
 // older build can never be the one to write the field away.
-export const RUN_SCHEMA_VERSION = 13;
+// 14 (SPEC §14.2): a shop stock carries its kind and the offerings its visit
+// laid out (`shopStock.kind`, `shopStock.offerings`, and the same on an atlas
+// shop point's persisted stock). A v13-or-older stock is read as `market`
+// offering today's shelves, filled at migrateRunSchema with nothing rerolled.
+export const RUN_SCHEMA_VERSION = 14;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -656,6 +661,10 @@ export const RUN_SHAPE = [
   // absent means none minted.
   { key: 'sideboard', type: 'array' },
   { key: 'editMintCounter', type: 'number', optional: true },
+  // SPEC §14.2. The open shop visit's stock, null between visits. Since
+  // schema 14 it carries `kind` and `offerings` (shopStockProblems); a
+  // preShopKinds save (≤ 13) is read as a market at the migration door.
+  { key: 'shopStock', type: 'object', optional: true, nullable: true },
   { key: 'seedString', type: 'string', nullable: true },
   { key: 'savedAt', type: 'string', optional: true }, // ISO time of the last landed save (W1l–W1r)
   { key: 'mapNodeId', type: 'string', nullable: true },
@@ -776,6 +785,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   const problems = [];
   problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
+  problems.push(...shopStockProblems(run.shopStock));
   try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
@@ -1271,9 +1281,13 @@ export function migrateRunSchema(run) {
   // v12 and older: no refined-stone purse. Filled HERE with 0 (SPEC §15.3):
   // no refined stone was ever paid before the purse existed.
   const preRefinedStones = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, ${RUN_SCHEMA_VERSION})`);
+  // v13 and older: a shop stock without a kind. Filled HERE (SPEC §14.2): it
+  // is a market offering today's shelves, and its shelves are kept as saved.
+  const preShopKinds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].includes(run.schemaVersion);
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, ${RUN_SCHEMA_VERSION})`);
   }
+  if (preShopKinds) bringShopStockForward(run);
   const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones });
   if (preSkills && (run.skills === undefined || run.skills === null)) run.skills = {};
   if (preCoreTags && (run.coreTags === undefined || run.coreTags === null)) run.coreTags = [];

@@ -63,9 +63,9 @@ import {
   rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
-  buildShopStock,
   rollArmamentDrop,
 } from './engine/encounters.js';
+import { buildMarketStock, buildMerchantStock } from './engine/shopKinds.js';
 import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
 import { restLocationAtPoint, questBoardPointAt, CAMP_LOCATION } from './model/locations.js';
 import { mountTitle, focusTitleDefault } from './ui/screens/title.js';
@@ -2021,7 +2021,9 @@ function worldLocationAction(action) {
   }
   j.activeService = { ownerId: action.ownerId, pointId: action.pointId, handlerId };
   if (handlerId === 'shop') {
-    state.stock ||= buildShopStock(registries, rng, run);
+    // The atlas `shop` service is a market (SPEC §14.2): today's shelves on
+    // `shop`, and which of them are out on `shopOffers`.
+    state.stock ||= buildMarketStock(registries, rng, run);
     run.shopStock = state.stock;
     persist(); return showShop();
   }
@@ -2121,7 +2123,10 @@ function enterNode(nodeId) {
       // small rest and no services. A shrine node is the Shrine.
       return showRest(null, node.type === 'event' ? CAMP_LOCATION : 'shrine');
     case 'merchant': {
-      const stock = buildShopStock(registries, rng, run);
+      // A classic merchant rolls its kind first (SPEC §14.2, `shopOffers`); the
+      // shipped weights make every one a market with every shelf out, drawing
+      // nothing new, so a seed's shelves are what they always were.
+      const stock = buildMerchantStock(registries, rng, run);
       const pm = shopPriceMult();
       if (pm !== 1) {
         for (const kind of ['cards', 'relics', 'flasks']) {
@@ -3426,7 +3431,7 @@ if (shotState === 'combat-test') {
     // ABSENT on the only screen the census can open, and "not wired" and
     // "nothing to sell" read identically. One flask, authored id, no rng.
     run.flasks.push({ flaskId: 'crimsonFlask' });
-    run.shopStock = buildShopStock(registries, rng, run);
+    run.shopStock = buildMarketStock(registries, rng, run);
     showShop();
   } else if (shotState === 'reward') {
     // A REACH STATE for the reward MENU (E11/#256), the same shape and reason

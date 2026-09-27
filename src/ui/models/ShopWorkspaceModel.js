@@ -12,8 +12,20 @@ import { cardShelf, cardShelfWidthPx } from './CardSizeModel.js';
 /** The rail, in order. `sell` exists only while the player's toggle is on. */
 export const SHOP_CATEGORIES = Object.freeze(['cards', 'armaments', 'weaponArts', 'relics', 'flasks', 'services', 'sell']);
 
-export function shopCategories({ sellOn = true } = {}) {
-  return Object.freeze(SHOP_CATEGORIES.filter((key) => key !== 'sell' || sellOn));
+/**
+ * The rail this visit shows. `offered` is the set of offering ids the visit
+ * laid out (SPEC §14.2; absent: every shelf, as before shop kinds): a shelf
+ * that did not come up has no rail item at all. `services` says whether the
+ * Services pane holds anything — the Remove offering, or a smith the merchant
+ * keeps.
+ */
+export function shopCategories({ sellOn = true, offered = null, services = true } = {}) {
+  const has = (key) => !offered || (offered instanceof Set ? offered.has(key) : offered.includes(key));
+  return Object.freeze(SHOP_CATEGORIES.filter((key) => {
+    if (key === 'sell') return sellOn;
+    if (key === 'services') return services;
+    return has(key);
+  }));
 }
 
 /**

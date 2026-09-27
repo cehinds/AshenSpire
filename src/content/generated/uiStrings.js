@@ -1760,6 +1760,104 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "settings.shops.group.label",
+    "extends": "",
+    "short": "Shops",
+    "full": "The market, the blacksmith and the wise master: which offerings a visit lays out, the fewest it guarantees, and what each one sells.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.kindWeights",
+    "extends": "",
+    "short": "Merchant kinds",
+    "full": "Which kind of shop a merchant on the map turns out to be. A kind appears here once its screen has shipped.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.market",
+    "extends": "",
+    "short": "Market",
+    "full": "The usual merchant: cards, relics, flasks, armaments, weapon arts and card removal.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.blacksmith",
+    "extends": "",
+    "short": "Blacksmith",
+    "full": "The blacksmith's offerings and prices. No merchant is a blacksmith until its screen ships.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.master",
+    "extends": "",
+    "short": "Wise master",
+    "full": "The wise master's offerings and prices. No merchant is a master until its screen ships.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.kindWeight",
+    "extends": "",
+    "short": "Merchant is a {kind}: weight",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.minimum",
+    "extends": "",
+    "short": "{kind}: guaranteed minimum",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.enabled",
+    "extends": "",
+    "short": "{kind} · {offering}: offered",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.chance",
+    "extends": "",
+    "short": "{kind} · {offering}: chance",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.weight",
+    "extends": "",
+    "short": "{kind} · {offering}: guarantee weight",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.offeringValue",
+    "extends": "",
+    "short": "{kind} · {offering}: {value}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.kindValue",
+    "extends": "",
+    "short": "{kind}: {value}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.minimum",
+    "extends": "",
+    "short": "{kind}: a guaranteed minimum of {value} is refused; it must be at least {floor}. The authored shops stay in force until it is.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.disabled",
+    "extends": "",
+    "short": "{kind}: turning off {offerings} leaves {enabled} offering(s) enabled, fewer than its guaranteed minimum of {minimum}. Turn one back on or lower the minimum.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "nav.categorySelector",
     "extends": "",
     "short": "{categories}: {current}",
