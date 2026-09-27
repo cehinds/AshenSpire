@@ -198,8 +198,15 @@ const ADDITION_POOLS = Object.freeze({
   },
   // The events an Unknown node could offer now, minus what the run has seen;
   // never the reset to the full pool resolveUnknownNode falls back on.
+  // Nor an event already waiting on an Unknown node of the current map that
+  // the run has not visited: the quest never pre-empts a node's event (review
+  // of #1377).
   questEvent(registries, run) {
-    const seen = new Set(run.seenEvents || []);
+    const visited = new Set(run.path || []);
+    const waiting = Object.entries((run.mapGraph && run.mapGraph.nodes) || {})
+      .filter(([id, node]) => node && node.resolved && node.resolved.kind === 'event' && !visited.has(id))
+      .map(([, node]) => node.resolved.eventId);
+    const seen = new Set([...(run.seenEvents || []), ...waiting]);
     return eligibleEventIds(registries, { history: run.history || [] }).filter((id) => !seen.has(id));
   },
 });

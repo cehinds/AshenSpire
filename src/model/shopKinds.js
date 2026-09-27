@@ -17,7 +17,7 @@ import { NOTE } from '../content/balance.js';
 import { shops as shippedShops } from '../content/shops.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { NEW_RUN_CLAUSE } from './balanceNotes.js';
-import { marketAdditionStockProblems } from './marketStock.js';
+import { marketAdditionStockProblems, MARKET_ADDITIONS } from './marketStock.js';
 import { utilityFlaskIds } from './gracerefill.js';
 import { consumableSettingsProblems } from './consumables.js';
 
@@ -130,6 +130,15 @@ const noteFor = (holder, key) => (object(holder?.[NOTE]) && Object.hasOwn(holder
 // Reading a persisted stock
 // ---------------------------------------------------------------------------
 
+// The shelves a persisted stock still holds something on: a non-empty
+// shelf list, or any market addition's stock at all.
+function stockedShelves(stock) {
+  return [
+    ...MARKET_SHELVES.filter((key) => Array.isArray(stock[key]) && stock[key].length),
+    ...MARKET_ADDITIONS.filter((key) => stock[key] !== undefined && !(Array.isArray(stock[key]) && !stock[key].length)),
+  ];
+}
+
 /** The kind a persisted stock is. A stock saved before kinds existed is a market. */
 export function shopStockKind(stock) {
   return object(stock) && typeof stock.kind === 'string' ? stock.kind : 'market';
@@ -202,6 +211,10 @@ export function shopStockProblems(stock, path = 'shopStock', { required = false 
     // rather than an empty rail item. A visit is never BUILT empty.
     if (!(Array.isArray(stock.offerings) && stock.offerings.every((id) => typeof id === 'string' && id))) {
       problems.push(`${path}.offerings must be a list of offering ids`);
+    } else if (!stock.offerings.length && stockedShelves(stock).length) {
+      // Empty only as the prune leaves it, with nothing on any shelf (review
+      // of #1377): stock with no offering laying it out is a tampered save.
+      problems.push(`${path}.offerings is empty, but ${stockedShelves(stock).map((key) => `'${key}'`).join(', ')} still hold${stockedShelves(stock).length === 1 ? 's' : ''} stock`);
     } else {
       const kind = shopStockKind(stock);
       const known = new Set([...(shippedShops[kind]?.offerings || []).map((row) => row.id), ...(kind === 'market' ? LEGACY_MARKET_OFFERINGS : [])]);

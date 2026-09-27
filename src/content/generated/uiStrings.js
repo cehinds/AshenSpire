@@ -1879,6 +1879,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "consumable.refuse.inCombat",
+    "extends": "",
+    "short": "{name} cannot be read during a fight.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "armoury.consumable.read",
     "extends": "",
     "short": "Read",

@@ -1496,7 +1496,7 @@ export function mountEquipment(host, {
         // awardSkillXp on its track (model/consumables.js), then one fewer.
         const label = t('armoury.consumable.read');
         const act = () => {
-          commitSkillBookRead(registries, run, skillBookReadPlan(registries, run, row.id));
+          commitSkillBookRead(registries, run, skillBookReadPlan(registries, run, row.id, { inCombat }), { inCombat });
           commit();
         };
         actionButton = button({ label, weight: 'primary', className: 'ep-equip armoury-read-book' });

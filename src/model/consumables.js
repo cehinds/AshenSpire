@@ -85,17 +85,19 @@ export function consumableBuyPrice(def, priceMult = 1) {
 // Reading a skill book (the Armoury's Inventory)
 // ---------------------------------------------------------------------------
 
-export function skillBookReadPlan(registries, run, id) {
+export function skillBookReadPlan(registries, run, id, { inCombat = false } = {}) {
   const def = registries.consumables.has(id) ? registries.consumables.get(id) : null;
   let reason = '';
   if (!def || def.kind !== 'skillBook') reason = say('consumable.refuse.notBook');
+  // Read outside combat only (SPEC §14.3): the model refuses, not only the door.
+  else if (inCombat) reason = say('consumable.refuse.inCombat', { name: def.name });
   else if (heldCount(run, id) < 1) reason = say('consumable.refuse.none', { name: def.name });
   return { ok: !reason, reason, id, def, count: heldCount(run, id) };
 }
 
 /** One awardSkillXp on the book's track, then one fewer book. Returns the award's receipt. */
-export function commitSkillBookRead(registries, run, quote) {
-  const plan = skillBookReadPlan(registries, run, quote.id);
+export function commitSkillBookRead(registries, run, quote, { inCombat = false } = {}) {
+  const plan = skillBookReadPlan(registries, run, quote.id, { inCombat });
   if (!plan.ok) throw new Error(plan.reason);
   const receipt = awardSkillXp(registries, run, plan.def.skill, plan.def.xp);
   adjustCount(run.consumables, plan.id, -1);

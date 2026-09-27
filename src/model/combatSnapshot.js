@@ -120,7 +120,7 @@ export function combatSnapshotProblems(snapshot) {
   if (snapshot.consumables !== undefined) {
     if (!record(snapshot.consumables)) problems.push('consumables must be an object { [consumableId]: count }');
     else for (const [id, n] of Object.entries(snapshot.consumables)) {
-      if (!Number.isSafeInteger(n) || n < 0) problems.push(`consumables.${id} must be a whole count of at least 0`);
+      if (!Number.isSafeInteger(n) || n < 1) problems.push(`consumables.${id} must be a whole count of at least 1 (a spent-out entry is deleted)`);
     }
   }
   if (snapshot.companions !== undefined) {
