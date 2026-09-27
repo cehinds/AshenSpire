@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // tools/coop-hud-top.mjs — the co-op formation HUD top, measured in Chromium.
 //
-// WHY THIS FILE EXISTS (#1368's open question, decided as D-coop-hud-top in
+// WHY THIS FILE EXISTS (#1368's open question, decided as D22 in
 // docs/FINISH.md). The co-op board (src/ui/screens/coop.js) mounts its own
 // `.topbar > .hud-top` — the active seat's resource bars, the fight label and
 // the Leave button — beside the HUD quick-settings cluster. styles/combat.css
@@ -12,13 +12,20 @@
 // WHAT IT JUDGES, at 390x844, 844x390 and 1280x800 through `?shot=coop`
 // (the real co-op renderer fed the canned host snapshot):
 //   * the document does not scroll horizontally;
-//   * every visible part of the HUD top (resource bars, fight label, Leave,
-//     quick settings) lies inside the viewport and inside the topbar band;
+//   * no part is lost: the resource bars, Leave and the quick-settings cluster
+//     are always there, the fight label is there off the compact band (the
+//     compact band hides it by design), and exactly EXPECTED_RESOURCE_ROWS
+//     resource rows (HP, Mana, Stamina) are shown;
+//   * every visible part of the HUD top lies inside the viewport on all four
+//     sides, and every part but the floating quick-settings cluster inside the
+//     topbar band;
 //   * no two of those parts overlap;
+//   * in the compact band, every part sits mostly on the row of the tallest;
 //   * every resource bar is inside the viewport and has a width.
 //
 //   node tools/coop-hud-top.mjs                 judge, exit 0 green / 1 red / 2 harness
 //   node tools/coop-hud-top.mjs --shots <dir>   also write coop-hud-top-<w>x<h>.png
+//   COOP_HUD_PORT=<n>                           serve on another port (default 8571)
 //
 // It serves the SOURCE tree (no build, no LFS).
 
@@ -39,6 +46,13 @@ export const VIEWPORTS = [
   { width: 1280, height: 800, singleRow: false },
 ];
 const TOLERANCE = 0.5; // px: sub-pixel rounding, never a real overlap
+// The canned co-op host snapshot's seat shows HP, Mana and Stamina, one
+// `.resline` each. A row that goes missing is a lost part.
+export const EXPECTED_RESOURCE_ROWS = 3;
+// Compact band: a part must share at least this share of its own height with
+// the tallest part's row, so one sitting mostly on a second line is caught.
+const ROW_SHARE = 0.5;
+const PORT = Number(process.env.COOP_HUD_PORT) || 8571;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 function connectCdp(wsUrl) {
@@ -106,8 +120,12 @@ export function judge(g, label, { singleRow = false } = {}) {
   if (g.scrollWidth > g.innerWidth + TOLERANCE) bad.push(`${label}: horizontal overflow (${g.scrollWidth} > ${g.innerWidth})`);
   if (!g.parts.some((p) => p.name === 'resbars-host')) bad.push(`${label}: resource bars missing from the HUD top`);
   if (!g.parts.some((p) => p.name === 'coop-leave')) bad.push(`${label}: Leave button missing from the HUD top`);
+  if (!g.parts.some((p) => p.name === 'hud-quick-settings')) bad.push(`${label}: quick-settings cluster missing from the topbar`);
+  if (!singleRow && !g.parts.some((p) => p.name === 'fight-label')) bad.push(`${label}: fight label missing from the HUD top`);
+  if ((g.bars || []).length !== EXPECTED_RESOURCE_ROWS) bad.push(`${label}: ${(g.bars || []).length} resource rows shown, want ${EXPECTED_RESOURCE_ROWS} (HP, Mana, Stamina)`);
   for (const p of g.parts) {
     if (p.left < -TOLERANCE || p.right > g.innerWidth + TOLERANCE) bad.push(`${label}: ${p.name} clipped by the viewport (${p.left.toFixed(1)}..${p.right.toFixed(1)} of ${g.innerWidth})`);
+    if (p.top < -TOLERANCE || p.bottom > g.innerHeight + TOLERANCE) bad.push(`${label}: ${p.name} clipped by the viewport (${p.top.toFixed(1)}..${p.bottom.toFixed(1)} of ${g.innerHeight} tall)`);
     if (!p.floating && (p.top < g.topbar.top - TOLERANCE || p.bottom > g.topbar.bottom + TOLERANCE)) bad.push(`${label}: ${p.name} spills out of the topbar band (${p.top.toFixed(1)}..${p.bottom.toFixed(1)} vs ${g.topbar.top.toFixed(1)}..${g.topbar.bottom.toFixed(1)})`);
   }
   // The band is the grid row the topbar sits in. The topbar box itself is
@@ -119,8 +137,9 @@ export function judge(g, label, { singleRow = false } = {}) {
   }
   if (singleRow) {
     const inBand = g.parts.filter((p) => !p.floating);
-    const rowTop = Math.max(...inBand.map((p) => p.top)), rowBottom = Math.min(...inBand.map((p) => p.bottom));
-    if (inBand.length > 1 && rowBottom - rowTop <= TOLERANCE) bad.push(`${label}: compact band is not one row (${inBand.map((p) => `${p.name} ${p.top.toFixed(1)}..${p.bottom.toFixed(1)}`).join(', ')})`);
+    const tall = inBand.reduce((a, p) => (!a || p.bottom - p.top > a.bottom - a.top ? p : a), null);
+    const offRow = inBand.filter((p) => p !== tall && Math.min(p.bottom, tall.bottom) - Math.max(p.top, tall.top) < ROW_SHARE * (p.bottom - p.top) - TOLERANCE);
+    if (offRow.length) bad.push(`${label}: compact band is not one row (${inBand.map((p) => `${p.name} ${p.top.toFixed(1)}..${p.bottom.toFixed(1)}`).join(', ')})`);
   }
   for (let i = 0; i < g.parts.length; i++) for (let j = i + 1; j < g.parts.length; j++) {
     const a = g.parts[i], b = g.parts[j];
@@ -146,16 +165,25 @@ export function selftest() {
     parts: [
       { name: 'resbars-host', left: 8, top: 40, right: 300, bottom: 76 },
       { name: 'coop-leave', left: 310, top: 40, right: 380, bottom: 76 },
+      { name: 'fight-label', left: 8, top: 4, right: 300, bottom: 36 },
       { name: 'hud-quick-settings', floating: true, left: 346, top: 84, right: 388, bottom: 180 },
-    ], bars: [{ name: 'resline hp', left: 8, top: 40, right: 300, bottom: 50, width: 292 }] };
+    ], bars: [40, 52, 64].map((top) => ({ name: 'resline', left: 8, top, right: 300, bottom: top + 10, width: 292 })) };
+  const without = (name) => ({ ...base, parts: base.parts.filter((p) => p.name !== name) });
   const cases = [
     ['clean layout', base, 0],
-    ['overlap', { ...base, parts: [...base.parts.slice(0, 1), { ...base.parts[1], left: 250 }, base.parts[2]] }, 1],
+    ['overlap', { ...base, parts: base.parts.map((p) => p.name === 'coop-leave' ? { ...p, left: 250 } : p) }, 1],
     ['overflow', { ...base, scrollWidth: 420 }, 1],
-    ['clipped Leave', { ...base, parts: [base.parts[0], { ...base.parts[1], left: 380, right: 450 }, base.parts[2]] }, 1],
-    ['lost Leave', { ...base, parts: [base.parts[0], base.parts[2]] }, 1],
-    ['wrapped inline label beside Leave is not an overlap', { ...base, parts: [...base.parts, { name: 'fight-label', left: 8, top: 10, right: 380, bottom: 38, boxes: [{ left: 8, top: 10, right: 380, bottom: 24 }, { left: 8, top: 24, right: 90, bottom: 38 }] }].map((p) => p.name === 'coop-leave' ? { ...p, top: 24, bottom: 40, left: 100 } : p) }, 0],
-    ['wrapped inline label painted under Leave is an overlap', { ...base, parts: [...base.parts, { name: 'fight-label', left: 8, top: 10, right: 380, bottom: 38, boxes: [{ left: 8, top: 10, right: 380, bottom: 24 }, { left: 8, top: 24, right: 150, bottom: 38 }] }].map((p) => p.name === 'coop-leave' ? { ...p, top: 24, bottom: 40, left: 100 } : p) }, 1],
+    ['clipped Leave', { ...base, parts: base.parts.map((p) => p.name === 'coop-leave' ? { ...p, left: 380, right: 450 } : p) }, 1],
+    ['lost Leave', without('coop-leave'), 1],
+    ['lost resource bars', without('resbars-host'), 1, {}, /resource bars missing/],
+    ['lost fight label off the compact band', without('fight-label'), 1, {}, /fight label missing/],
+    ['lost quick settings', without('hud-quick-settings'), 1, {}, /quick-settings cluster missing/],
+    ['lost resource row', { ...base, bars: base.bars.slice(0, 2) }, 1, {}, /2 resource rows shown/],
+    ['extra resource row', { ...base, bars: [...base.bars, { ...base.bars[0] }] }, 1, {}, /4 resource rows shown/],
+    ['quick settings run past the bottom of the screen', { ...base, parts: base.parts.map((p) => p.name === 'hud-quick-settings' ? { ...p, top: 780, bottom: 900 } : p) }, 1, {}, /hud-quick-settings clipped by the viewport .* tall/],
+    ['part pushed above the top of the screen', { ...base, topbar: { ...base.topbar, top: -40 }, parts: base.parts.map((p) => p.name === 'fight-label' ? { ...p, top: -30, bottom: -2 } : p) }, 1, {}, /fight-label clipped by the viewport .* tall/],
+    ['wrapped inline label beside Leave is not an overlap', { ...base, parts: [...without('fight-label').parts, { name: 'fight-label', left: 8, top: 10, right: 380, bottom: 38, boxes: [{ left: 8, top: 10, right: 380, bottom: 24 }, { left: 8, top: 24, right: 90, bottom: 38 }] }].map((p) => p.name === 'coop-leave' ? { ...p, top: 24, bottom: 40, left: 100 } : p) }, 0],
+    ['wrapped inline label painted under Leave is an overlap', { ...base, parts: [...without('fight-label').parts, { name: 'fight-label', left: 8, top: 10, right: 380, bottom: 38, boxes: [{ left: 8, top: 10, right: 380, bottom: 24 }, { left: 8, top: 24, right: 150, bottom: 38 }] }].map((p) => p.name === 'coop-leave' ? { ...p, top: 24, bottom: 40, left: 100 } : p) }, 1],
     ['wrapped Leave painted over the battlefield', { ...base, field: { left: 0, top: 60, right: 390, bottom: 500 } }, 1],
     ['parts end above the battlefield', { ...base, field: { left: 0, top: 80, right: 390, bottom: 500 } }, 0],
     ['spills out of band', { ...base, parts: [{ ...base.parts[0], bottom: 120 }, ...base.parts.slice(1)] }, 1],
@@ -163,13 +191,25 @@ export function selftest() {
   const oneRow = { ...base, parts: [
     { name: 'resbars-host', left: 8, top: 0, right: 780, bottom: 8 },
     { name: 'coop-leave', left: 788, top: 0, right: 836, bottom: 32 },
-    { name: 'hud-quick-settings', floating: true, left: 796, top: 36, right: 840, bottom: 128 }], bars: [], innerWidth: 844, scrollWidth: 844,
+    { name: 'hud-quick-settings', floating: true, left: 796, top: 36, right: 840, bottom: 128 }], innerWidth: 844, innerHeight: 390, scrollWidth: 844,
+    bars: [8, 270, 530].map((left) => ({ name: 'resline', left, top: 12, right: left + 250, bottom: 20, width: 250 })),
     topbar: { left: 0, top: 0, right: 844, bottom: 33 } };
   const twoRows = { ...oneRow, parts: [oneRow.parts[0], { ...oneRow.parts[1], left: 8, right: 56, top: 8, bottom: 40 }, oneRow.parts[2]], topbar: { left: 0, top: 0, right: 844, bottom: 41 } };
   cases.push(['compact band on one row', oneRow, 0, { singleRow: true }]);
   cases.push(['compact band wrapped to two rows', twoRows, 1, { singleRow: true }]);
-  cases.push(['two rows allowed off the compact band', twoRows, 0, { singleRow: false }]);
-  const wrong = cases.filter(([, g, want, opts]) => (judge(g, 'st', opts).length > 0 ? 1 : 0) !== want);
+  // The bars share 2px with Leave's row but sit mostly below it: still two
+  // rows, though every pair of parts shares some vertical band.
+  const mostlyBelow = { ...oneRow, parts: [{ ...oneRow.parts[0], top: 30, bottom: 38 }, oneRow.parts[1], { ...oneRow.parts[2], top: 42, bottom: 134 }],
+    bars: oneRow.bars.map((b) => ({ ...b, top: 30, bottom: 38 })), topbar: { left: 0, top: 0, right: 844, bottom: 39 } };
+  cases.push(['compact band part mostly below the row', mostlyBelow, 1, { singleRow: true }, /not one row/]);
+  cases.push(['compact band hides the fight label by design', oneRow, 0, { singleRow: true }]);
+  cases.push(['two rows allowed off the compact band', { ...twoRows, parts: [...twoRows.parts, { name: 'fight-label', left: 100, top: 12, right: 500, bottom: 30 }] }, 0, { singleRow: false }]);
+  // An optional fifth field names the failure the case must be caught BY, so a
+  // case cannot pass on some other, accidental failure.
+  const wrong = cases.filter(([, g, want, opts, why]) => {
+    const bad = judge(g, 'st', opts);
+    return (bad.length > 0 ? 1 : 0) !== want || (why && !bad.some((m) => why.test(m)));
+  });
   for (const [name] of wrong) console.error(`  selftest: ${name} judged wrongly`);
   console.log(`coop-hud-top selftest: ${wrong.length ? 'RED' : 'GREEN'} (${cases.length - wrong.length}/${cases.length})`);
   return wrong.length ? 1 : 0;
@@ -182,7 +222,7 @@ async function main(args) {
   if (shotDir) mkdirSync(shotDir, { recursive: true });
   const browser = resolveBrowser(['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files/Microsoft/Edge/Application/msedge.exe']);
   if (!browser) { console.error('coop-hud-top HARNESS — no Chrome/Chromium (set CHROME)'); return 2; }
-  const served = await serve({ root: ROOT, port: 8571, open: false });
+  const served = await serve({ root: ROOT, port: PORT, open: false });
   const launched = await launchBrowser({ prefix: 'coophud-', browser, timeoutMs: 20000 });
   const cdp = connectCdp(launched.wsUrl);
   const failures = [];
@@ -220,7 +260,7 @@ async function main(args) {
     served.server.close();
   }
   for (const f of failures) console.error(`  ${f}`);
-  console.log(failures.length ? `  ${failures.length} failure(s)` : '  no overlap, clipping, lost part, battlefield spill or horizontal overflow');
+  console.log(failures.length ? `  ${failures.length} failure(s)` : '  no overlap, clipping, lost part, two-row compact band, battlefield spill or horizontal overflow');
   console.log(`coop-hud-top: ${failures.length ? 'RED' : 'GREEN'} (${clean}/${VIEWPORTS.length})`);
   return failures.length ? 1 : 0;
 }
