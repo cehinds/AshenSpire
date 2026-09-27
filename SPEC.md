@@ -788,6 +788,23 @@ restore them. The refill also clears the Stamina deficit an equipment swap
 carried, so the next swap cannot take the refilled points back. Rules text:
 [Combat and equipment rules](docs/COMBAT-EQUIPMENT-RULES.md) §5.
 
+**Recovery settings (2026-09-27, owner).** Settings → Advanced → Recovery (a
+debug section) gives HP, Stamina and Mana one row each of five triggers, any
+combination on at once, each adding what it restores
+(`content/recoveryRules.js`, `model/recoveryRules.js`): **per turn** (points or
+a percent of the maximum, rounded down, at the end of the player's turn),
+gated by **only after unused turns** (the pool's streak of rounds with no
+Stamina/Mana spent or no HP lost, the enemies' turn included; 0 = every turn)
+and **only every N rounds**; **after a won fight** (percent of the maximum,
+applied after the fight's pools are written back); and **at every Rest**
+(percent of the maximum on top of the place's own tags, §13.4j, included in the
+Rest preview). The defaults are the rules above — Stamina recovers
+`mechanics.stamina.idleRecoveryPerTurn` after an idle turn, nothing else
+recovers — and a fight built at the defaults carries no recovery state, so its
+behaviour and its save are unchanged. A fight built under changed rules
+snapshots them with the idle streaks (`combat.recovery`); a restored fight keeps
+them. Co-op seats and the foundation ruleset keep their own recovery rules.
+
 ### 4.1 Turn loop
 
 **Configurable hand rules (2026-09-19; counts are stat rows since ruleset 7):** A fight counts
