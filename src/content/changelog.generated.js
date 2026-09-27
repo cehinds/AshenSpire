@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Behind the scenes: the README says how to play the newest build",
     "detail": "Docs only; nothing you play changes. The README now explains where to get each build: the stable link, the newest development build from its download page, or running the game from source. Its notes on builds, art quality, recent additions and content counts now match the game.",
-    "build": "0.7.1.615",
+    "build": "0.7.1.616",
     "pullRequest": 1358,
     "url": "https://github.com/cehinds/AshenSpire/pull/1358"
+  },
+  {
+    "id": "pr-1326",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: sessions ask the owner in short bullets",
+    "detail": "Docs only. CLAUDE.md now tells every session to put a question for the owner as one line per bullet, ending in the answer needed, with one sub-bullet saying why it matters, and no paragraphs.",
+    "build": "0.7.1.615",
+    "pullRequest": 1326,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1326"
   },
   {
     "id": "pr-1348",
