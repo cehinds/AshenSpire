@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Bigger fighters on phones, a Developer tools switch, and recovery settings",
     "detail": "Combat figures were squeezed into narrow spaces on a phone and drew about half as tall as the room allows; they now draw about twice as tall, and a bigger enemy size setting no longer pushes a foe off the edge of the screen. Settings → Advanced now always shows a Developer tools row: on a downloaded build it is a switch that shows the tuning and diagnostics sections; on the release builds it says they are locked and where to find them. A new Advanced → Recovery section sets how HP, Stamina and Mana come back: each turn (points or a share of the maximum), only after going unused for some turns, only every few rounds, after a won fight, and at every Rest. Out of the box nothing plays differently: Stamina still recovers after a turn you spend none, and nothing else recovers on its own.",
-    "build": "0.7.1.682",
+    "build": "0.7.1.677",
     "pullRequest": 1385,
     "url": "https://github.com/cehinds/AshenSpire/pull/1385"
+  },
+  {
+    "id": "pr-1384",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "The Armoury's Inventory is easier to see on phones",
+    "detail": "On a phone the item list used to share the Inventory with an empty details area, so it showed about one item at a time. Until you pick an item, the list now fills the Inventory. Once you pick one, its details take about two-thirds of the space and the list keeps the rest. Wide screens are unchanged.",
+    "build": "0.7.1.675",
+    "pullRequest": 1384,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1384"
+  },
+  {
+    "id": "pr-1379",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: a plan for loading every asset from outside the game file",
+    "detail": "Docs only; nothing you play changes. A new design document, docs/EXTERNAL-ASSETS-PLAN.md, sets out how the art, fonts, music and map tiles will move out of the game file: they will be stored with the art in the art repository, and the game will load them when it runs, checking each against its fingerprint. The plan covers offline play (an install for phones and desktops, and a download the game assembles itself), the Pages site, every check that assumes one self-contained file, the migration steps, and the questions for the owner. docs/ART-REPO-PLAN.md now marks the lines the new plan replaces.",
+    "build": "0.7.1.673",
+    "pullRequest": 1379,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1379"
   },
   {
     "id": "pr-1350",
