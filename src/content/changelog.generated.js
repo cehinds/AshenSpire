@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Behind the scenes: loading a save that can't open from the in-game menu is checked in a real browser",
     "detail": "Nothing you play changes. When a load from the in-game menu's quick navigation is refused, pressing \"Keep playing\" puts keyboard and controller focus back on the menu button you opened it from. A browser test now proves that, and fails if the menu closes before the load's outcome is known.",
-    "build": "0.7.1.634",
+    "build": "0.7.1.636",
     "pullRequest": 1366,
     "url": "https://github.com/cehinds/AshenSpire/pull/1366"
+  },
+  {
+    "id": "pr-1369",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: a code check no longer fails at random while another check runs",
+    "detail": "Nothing you play changes. The check that every fixed list in the game is used by something could crash if another check briefly wrote a scratch file beside it. It now ignores those scratch files. If some other file disappears while it reads, it names that file and reports that it could not finish, instead of crashing or passing on a partial read.",
+    "build": "0.7.1.635",
+    "pullRequest": 1369,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1369"
   },
   {
     "id": "pr-1365",
