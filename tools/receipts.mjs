@@ -35,8 +35,18 @@
 // WHAT IT DOES NOT CHECK, stated so the silence is a decision:
 //   · whether the receipt is TRUE. Prose is not machine-checkable, and a gate
 //     that pretended otherwise would license worse prose, not better.
-//   · whether the ordinal on the receipt is the one committed at that merge.
-//     tools/about-changelog.mjs owns the file's shape; this owns its coverage.
+//   · whether the ordinal on a receipt is the one committed at that merge, for
+//     any merge but the pull request `--pr` names. History is not re-derived
+//     here; tools/about-changelog.mjs owns the file's shape and order (and
+//     rejects only a stamp AHEAD of the committed build), this its coverage.
+//
+// WHAT `--pr` DOES CHECK ON THE STAMP, because #1315's receipt read
+// `0.7.1.518` while its merge commit shipped box 519 and every gate was green:
+// the named pull request's receipt must carry exactly the release and ordinal
+// of `buildordinal.json` in the tree being checked — the box that pull request
+// ships. On `pull_request` that tree is GitHub's merge of the head into the
+// base, and a head rebuilt against a moved base conflicts on buildordinal.json
+// rather than merging, so the tree's box is the pull request's own.
 //   · direct landings that name no pull request. A receipt names a pull
 //     request; a commit that has none cannot be named by one, and the file's
 //     header already records that class rather than hiding it.
@@ -45,7 +55,9 @@
 //   node tools/receipts.mjs --check              origin/test..HEAD (the promotion)
 //   node tools/receipts.mjs --check --since dev  any other range
 //   node tools/receipts.mjs --check --pr <N>     a pull request head: its OWN
-//                                                number must carry a receipt
+//                                                number must carry a receipt,
+//                                                stamped with this tree's
+//                                                buildordinal.json box
 //   node tools/receipts.mjs --check --pr auto    the same, N read from the
 //                                                Actions event (GITHUB_EVENT_PATH,
 //                                                then GITHUB_REF refs/pull/N/merge)
@@ -57,9 +69,11 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve as pathResolve } from 'node:path';
+import { versionTuple, compareVersions } from './buildversion.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const CHANGELOG = join(ROOT, 'CHANGELOG.md');
+const BUILDORDINAL = join(ROOT, 'buildordinal.json');
 
 // The one shape a receipt is required to carry. It is the shape every receipt
 // in the file already uses, and it is the shape the in-game projection reads.
@@ -114,6 +128,58 @@ export function ownReceipt(pull, changelogText) {
   return unreceipted([`Merge pull request #${pull} from head`], changelogText).missing.length === 0;
 }
 
+// The stamp on `pull`'s own receipt: the backticked stamp in the parenthetical
+// that links it, ([#N](…/pull/N), `0.7.1.519`). null when nothing stamped
+// follows the link; the raw text when the stamp is there but is prose.
+//
+// NOT TRIMMED. tools/about-changelog.mjs applies its anchored stamp grammar to
+// the span exactly as written, so ` 0.7.1.615 ` is prose there — skipped by
+// the build-order checks and projected with its padding. Trimming here let this
+// gate certify a receipt the authoritative parser does not read as a build.
+export function receiptStamp(pull, changelogText) {
+  const m = new RegExp(`/pull/${pull}\\),\\s*\`([^\`\\n]+)\``).exec(changelogText);
+  return m ? m[1] : null;
+}
+
+// The stamp grammar tools/about-changelog.mjs reads (its STAMP): a release,
+// optionally tagged, then the ordinal. Anchored, so padding is not a stamp.
+const STAMP = /^(\d+\.\d+\.\d+(?:-[A-Za-z]+\.\d+)?)\.(\d+)$/;
+
+// Whether `pull`'s receipt names the box this tree ships. `box` is the parsed
+// buildordinal.json ({ release, ordinal }). null when it does, else the reason
+// it does not — a receipt one build behind the box is exactly #1315.
+export function stampMismatch(pull, changelogText, box) {
+  const expected = `${box.release}.${box.ordinal}`;
+  const stamp = receiptStamp(pull, changelogText);
+  if (stamp === null) return `#${pull}'s receipt carries no \`<release>.<ordinal>\` stamp after its link (expected \`${expected}\`)`;
+  const m = STAMP.exec(stamp);
+  if (!m) return `#${pull}'s receipt is stamped \`${stamp}\`, not a build; this tree ships \`${expected}\``;
+  const [, release, ordinal] = m;
+  // ORDERED THE WAY about-changelog ORDERS IT: buildversion's versionTuple and
+  // compareVersions, digit strings compared as numbers. A raw string compare
+  // called `00.7.1.613` another release while --check-order reads it as the
+  // same build as `0.7.1.613`, so the two required checks disagreed.
+  const got = versionTuple(release, Number(ordinal));
+  const want = versionTuple(box.release, box.ordinal);
+  if (got === null || want === null) return `#${pull}'s receipt is stamped \`${stamp}\`, which cannot be ordered against \`${expected}\``;
+  const releaseOrder = compareVersions(got.slice(0, -1), want.slice(0, -1));
+  if (releaseOrder !== 0 || release.includes('-') !== box.release.includes('-')) {
+    return `#${pull}'s receipt is stamped release ${release}; this tree ships \`${expected}\``;
+  }
+  const order = compareVersions(got, want);
+  if (order === 0) return null;
+  const side = order < 0 ? 'BELOW' : 'ABOVE';
+  return `#${pull}'s receipt is stamped \`${stamp}\`, ${side} the committed box \`${expected}\``;
+}
+
+function readBox() {
+  try {
+    const box = JSON.parse(readFileSync(BUILDORDINAL, 'utf8'));
+    if (typeof box.release === 'string' && Number.isInteger(box.ordinal)) return box;
+  } catch { /* reported by the caller */ }
+  return null;
+}
+
 function checkPull(prArg) {
   const pull = !prArg || prArg === 'auto' ? pullFromEnv() : prArg;
   if (!pull || !/^\d+$/.test(pull)) {
@@ -139,8 +205,25 @@ function checkPull(prArg) {
     return 1;
   }
   console.log(`  PASS  #${pull} has a receipt`);
+  const box = readBox();
+  if (!box) {
+    console.error('receipts: HARNESS COULD NOT RUN — buildordinal.json is missing or has no release and integer ordinal.');
+    return 2;
+  }
+  const wrong = stampMismatch(pull, changelog, box);
+  if (wrong) {
+    console.log(`  FAIL  ${wrong}`);
+    console.log('');
+    console.log('  The stamp is the box this pull request ships: buildordinal.json as committed');
+    console.log('  in this tree. Re-point the receipt, run node tools/about-changelog.mjs --write,');
+    console.log('  rebuild, and confirm the ordinal did not move again.');
+    console.log('');
+    console.log(`receipts: FAIL — pull request #${pull}'s receipt names a build it does not ship`);
+    return 1;
+  }
+  console.log(`  PASS  #${pull}'s receipt is stamped \`${box.release}.${box.ordinal}\`, the committed box`);
   console.log('');
-  console.log('receipts: OK — 1 checks passed');
+  console.log('receipts: OK — 2 checks passed');
   return 0;
 }
 
@@ -331,6 +414,26 @@ function selftest() {
   // A pull request head (--pr): its own number, unnamed, must go red; named, green.
   if (!ownReceipt('14', CLEAN_MD) && ownReceipt('13', CLEAN_MD)) { console.log('  CAUGHT  "a pull request head with no receipt of its own" -> #14 missing, #13 present'); passed += 1; }
   else { console.log('  RED  "a pull request head with no receipt of its own" -> ownReceipt did not separate #14 from #13'); red += 1; }
+
+  // The stamp on a pull request head's own receipt (--pr) must be the box the
+  // tree commits. #1315 merged at 0.7.1.518 while its merge shipped box 519.
+  const BOX = { release: '0.5.5', ordinal: 2 };
+  const stampPlants = [
+    ['a receipt stamped below the committed buildordinal.json (#1315)', CLEAN_MD.replace('`0.5.5.2`', '`0.5.5.1`'), /BELOW/],
+    ['a receipt stamped above the committed buildordinal.json', CLEAN_MD.replace('`0.5.5.2`', '`0.5.5.3`'), /ABOVE/],
+    ['a receipt stamped with another release', CLEAN_MD.replace('`0.5.5.2`', '`0.5.4.2`'), /release 0\.5\.4/],
+    ['a receipt with prose where its stamp belongs', CLEAN_MD.replace('`0.5.5.2`', '`dev artifact`'), /not a build/],
+    ['a receipt with no stamp after its link', CLEAN_MD.replace(', `0.5.5.2`', ''), /no `<release>\.<ordinal>` stamp/],
+    ['a receipt whose stamp is padded, which about-changelog reads as prose', CLEAN_MD.replace('`0.5.5.2`', '` 0.5.5.2 `'), /not a build/],
+  ];
+  const cleanStamp = stampMismatch('13', CLEAN_MD, BOX);
+  if (cleanStamp === null) { console.log('  PASS  clean copy: #13\'s receipt is stamped with the committed box'); passed += 1; }
+  else { console.log(`  RED  clean copy: #13's stamp read as wrong -> ${cleanStamp}`); red += 1; }
+  for (const [name, md, expect] of stampPlants) {
+    const got = stampMismatch('13', md, BOX);
+    if (got && expect.test(got)) { console.log(`  CAUGHT  "${name}" -> ${got}`); passed += 1; }
+    else { console.log(`  RED  "${name}" -> ${got || 'read as correct'}`); red += 1; }
+  }
 
   // The plant that guards the guard: a changelog whose reference syntax moved
   // must NOT read as "every merge unreceipted" out in the world — check() turns

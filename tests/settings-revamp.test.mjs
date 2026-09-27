@@ -46,6 +46,7 @@ test('a release build shows only the player-facing Advanced sections, and search
   assert.deepEqual(visibleAdvancedGroups(true).map((g) => g.id), [...ADVANCED_GROUP_IDS]);
   assert.deepEqual(visibleAdvancedGroups(false).map((g) => g.id), [...RELEASE_ADVANCED_GROUP_IDS]);
   assert.ok(ADVANCED_GROUP_IDS.includes('Sync'), 'Defaults & sync is a debug section');
+  assert.ok(visibleAdvancedGroups(false).some((g) => g.id === 'Deck'), 'the deck editor settings reach release players (SPEC §14.1)');
   const debugHits = settingsSearchHits('poise', true);
   const releaseHits = settingsSearchHits('poise', false);
   assert.ok(debugHits.some(({ row }) => row.key.startsWith('gameConfig.')), 'debug search reaches tuning rows');
