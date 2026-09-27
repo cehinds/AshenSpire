@@ -3319,6 +3319,12 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   grid-template-rows: auto minmax(0, var(--armoury-collection-track, 1fr)) minmax(0, var(--armoury-detail-track, 1fr));
 }
 .armoury[data-split='rows'] .ep-list.armoury-split > .armoury-item-detail { grid-column: 1; grid-row: 3; border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 0.8rem; }
+/* Before a selection the phone detail row holds one line of instruction; a
+   half-height track for it squeezed the item list to a sliver. It sizes to
+   its content until an item is chosen. */
+.armoury[data-split='rows'] .armoury-inventory > .ep-list.armoury-split:not([data-detail-open='true']) {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
 .armoury .armoury-item-detail > .disc-reveal { margin: 0; }
 /* The shared equipment inspection is laid out for a 450px face (220px art
    beside its details) and stacks only under the phone media rule below. The
