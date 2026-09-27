@@ -76,8 +76,8 @@ test('attribute choice, whole-point flooring, bounds and scaling off', () => {
 
 test('fixed draws are the shipped default, two below the turn baseline, and can be changed or scaled', () => {
   assert.equal(handRulesDefaults.drawMode, 'fixed');
-  // INT 4: opening 4 + floor(4 × 0.45) = 5, hand size 7 + floor(4 × 0.19) = 7,
-  // then a fixed 2 + floor(4 × 0.1) = 2.
+  // INT 4, counted from each row's baseline: opening 4 + floor((4 − 1) × 0.5) = 5,
+  // hand size 7 + floor((4 − 1) × 0.2) = 7, then a fixed 2 + floor((4 − 4) × 0.2) = 2.
   const shipped = fight({}, { intelligence: 4 }, {}, SHIPPED_ROWS);
   assert.equal(shipped.piles.hand.length, 5);
   dispatch(shipped, { type: 'endTurn' });

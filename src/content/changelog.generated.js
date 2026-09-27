@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1334",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: a hand-rules test comment catches up",
+    "detail": "Tests only. The fixed-draw test's comment now works its numbers from the one-row hand stats, counting Intelligence from each row's baseline, instead of the retired weights; the values it checks are unchanged.",
+    "build": "0.7.1.669",
+    "pullRequest": 1334,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1334"
+  },
+  {
     "id": "pr-1376",
     "date": "2026-09-27",
     "group": "2026-09-27",
