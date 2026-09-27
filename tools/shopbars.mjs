@@ -69,8 +69,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the toggled-off SELL category comes back greyed instead of absent',
         edits: [{
           file: 'src/ui/screens/shop.js',
-          find: '    const categories = shopCategories({ sellOn: sellOn() });',
-          replace: '    const categories = shopCategories({ sellOn: true }); // planted: discoverable over absent',
+          find: '    const categories = shopCategories({ sellOn: sellOn(), offered, services: removeOffered || smithOffered });',
+          replace: '    const categories = shopCategories({ sellOn: true, offered, services: removeOffered || smithOffered }); // planted: discoverable over absent',
         }],
         expectRed: /BAD\s+S6 .*sell/,
       },
@@ -80,8 +80,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the re-render forgets the selected category',
         edits: [{
           file: 'src/ui/screens/shop.js',
-          find: "    if (!categories.includes(activeCategory)) activeCategory = 'cards';",
-          replace: "    activeCategory = 'cards'; // planted: every purchase snaps the shop back to the first shelf",
+          find: '    if (!categories.includes(activeCategory)) activeCategory = categories[0];',
+          replace: "    activeCategory = categories[0]; // planted: every purchase snaps the shop back to the first shelf",
         }],
         expectRed: /BAD\s+S4 .*category after the purchase/,
       },

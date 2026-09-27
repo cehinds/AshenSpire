@@ -37,6 +37,13 @@ export const STREAM_NAMES = Object.freeze([
   // shipped schedule every existing seed rolls exactly what it rolled before.
   // A save written before the stream existed starts it at 0.
   'rewardRolls',
+  // The shop visit's rolls (SPEC §14.2): which kind a classic merchant is and
+  // which offerings a visit lays out. Appended last so no stream above moves;
+  // the market's shelves still roll on `shop`, and the shipped table (one
+  // rollable kind, every market chance 100) draws nothing here, so every
+  // existing seed's shelves are byte-identical. A save written before the
+  // stream existed starts it at 0.
+  'shopOffers',
 ]);
 
 const MULBERRY_INC = 0x6d2b79f5;

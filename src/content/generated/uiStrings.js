@@ -1123,6 +1123,41 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "atlas.shop.benefit",
+    "extends": "",
+    "short": "Spend cinders on cards, equipment, weapon arts, relics, or flasks from this market’s stock.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.shop.benefit.rolled",
+    "extends": "",
+    "short": "Spend cinders on this visit’s {shelves}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.shop.benefit.remove",
+    "extends": "",
+    "short": "You can also remove a card from your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.shop.benefit.removeMaybe",
+    "extends": "",
+    "short": "This visit may also offer to remove a card from your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.shop.fact.remove",
+    "extends": "",
+    "short": "Remove a card: {cost} cinders. You must keep at least one card.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "atlas.status.here",
     "extends": "",
     "short": "You are here.",
@@ -1756,6 +1791,258 @@ export const uiStrings = [
     "id": "settings.levelPace.refused",
     "extends": "",
     "short": "These settings are not applied, so this preview shows the authored defaults a new run keeps: {problem}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.group.label",
+    "extends": "",
+    "short": "Shops",
+    "full": "The market, the blacksmith and the wise master: which offerings a visit lays out, the fewest it guarantees, and what each one sells.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.kindWeights",
+    "extends": "",
+    "short": "Merchant kinds",
+    "full": "Which kind of shop a merchant on the map turns out to be. A kind appears here once its screen has shipped.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.market",
+    "extends": "",
+    "short": "Market",
+    "full": "The usual merchant: cards, relics, flasks, armaments, weapon arts and card removal.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.blacksmith",
+    "extends": "",
+    "short": "Blacksmith",
+    "full": "The blacksmith's offerings and prices. No merchant is a blacksmith until its screen ships.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.master",
+    "extends": "",
+    "short": "Wise master",
+    "full": "The wise master's offerings and prices. No merchant is a master until its screen ships.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.cards",
+    "extends": "",
+    "short": "Cards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.relics",
+    "extends": "",
+    "short": "Relics",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.flasks",
+    "extends": "",
+    "short": "Flasks",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.armaments",
+    "extends": "",
+    "short": "Armaments",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.weaponArts",
+    "extends": "",
+    "short": "Weapon arts",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.remove",
+    "extends": "",
+    "short": "Card removal",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.upgrade",
+    "extends": "",
+    "short": "Item upgrade",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.smithStones",
+    "extends": "",
+    "short": "Smithing Stones",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.refineStones",
+    "extends": "",
+    "short": "Refined stones",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.sigilSlots",
+    "extends": "",
+    "short": "Sigil slots",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.sigils",
+    "extends": "",
+    "short": "Sigil setting",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.extractArt",
+    "extends": "",
+    "short": "Art extraction",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.installArt",
+    "extends": "",
+    "short": "Art seating",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.upgradeArt",
+    "extends": "",
+    "short": "Art upgrade",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.stackCopy",
+    "extends": "",
+    "short": "Stacked copies",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.skillBooks",
+    "extends": "",
+    "short": "Skill books",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.training",
+    "extends": "",
+    "short": "Training",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.respec",
+    "extends": "",
+    "short": "Respec",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.lesson",
+    "extends": "",
+    "short": "Lessons",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.appraisal",
+    "extends": "",
+    "short": "Appraisal",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.redistribute",
+    "extends": "",
+    "short": "Redistribution",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.kindWeight",
+    "extends": "",
+    "short": "Merchant is a {kind}: weight",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.minimum",
+    "extends": "",
+    "short": "{kind}: guaranteed minimum",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.enabled",
+    "extends": "",
+    "short": "{kind} · {offering}: offered",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.chance",
+    "extends": "",
+    "short": "{kind} · {offering}: chance",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.weight",
+    "extends": "",
+    "short": "{kind} · {offering}: guarantee weight",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.offeringValue",
+    "extends": "",
+    "short": "{kind} · {offering}: {value}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.kindValue",
+    "extends": "",
+    "short": "{kind}: {value}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.minimum",
+    "extends": "",
+    "short": "{kind}: a guaranteed minimum of {value} is refused; it must be at least {floor}. The authored shops stay in force until it is.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.noKind",
+    "extends": "",
+    "short": "Merchant kinds: every kind that can open ({kinds}) has a weight of 0, so no merchant could open. Give one a weight above 0.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.disabled",
+    "extends": "",
+    "short": "{kind}: turning off {offerings} leaves {enabled} offering(s) enabled, fewer than its guaranteed minimum of {minimum}. Turn one back on or lower the minimum.",
     "full": "",
     "tip": ""
   },

@@ -4,7 +4,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
 import { createRng } from '../src/engine/rng.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
-import { buildShopStock } from '../src/engine/encounters.js';
+import { buildMarketStock } from '../src/engine/shopKinds.js';
 import { carriedIds } from '../src/model/loadout.js';
 import { installPlan, extractionPlan, commitExtraction, commitInstall } from '../src/model/cardExtraction.js';
 import { armamentPurchasePlan, armamentSalePlan, commitArmamentPurchase, commitArmamentSale, eligibleWeaponArts } from '../src/model/armamentTrading.js';
@@ -15,7 +15,9 @@ function test(name, fn) { fn(); passed++; console.log(`ok ${name}`); }
 function fixture(reg = registries) {
   const run = createRunState({ seed: 671, classId: 'reaver', registries: reg });
   run.cinders = 1000;
-  run.shopStock = buildShopStock(reg, createRng(671), run);
+  // The market visit's own door (SPEC §14.2): today's shelves, plus the kind
+  // and offerings a schema-14 save must carry.
+  run.shopStock = buildMarketStock(reg, createRng(671), run);
   return run;
 }
 const bytes = (run) => JSON.stringify(run);

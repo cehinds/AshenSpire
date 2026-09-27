@@ -26,6 +26,7 @@ import { purchaseReview, burnReview, sellReview } from '../models/ConfirmationRe
 import { renderEquipmentCard, renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleCard } from '../components/collectibleCard.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
+import { shopStockOfferings } from '../../model/shopKinds.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { settingOn } from './settings.js';
 import { commitSmithing, smithingPlan } from '../../model/smithing.js';
@@ -120,8 +121,14 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     releaseFooter();
     if (layout) layout.release();
     if (shelves) shelves.release();
-    const categories = shopCategories({ sellOn: sellOn() });
-    if (!categories.includes(activeCategory)) activeCategory = 'cards';
+    // WHAT THIS VISIT LAID OUT (SPEC §14.2): a shelf whose offering did not
+    // come up has no rail item, and Remove is absent, not greyed. A stock
+    // saved before shop kinds existed laid out every shelf.
+    const offered = new Set(shopStockOfferings(stock));
+    const removeOffered = offered.has('remove');
+    const smithOffered = !!(stock.smith && stock.smith.offered && stock.smith.services.length);
+    const categories = shopCategories({ sellOn: sellOn(), offered, services: removeOffered || smithOffered });
+    if (!categories.includes(activeCategory)) activeCategory = categories[0];
     // THE PURSE IS THE BAND'S. This screen used to print its own "Cinders N ·
     // HP" line here as a `.as-status`, and the kit's ellipsis rule (overflow:
     // hidden) let the overflowing column crush it to 0 px — measured at both
@@ -148,7 +155,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
                   <div class="card-shelf shop-shelf" id="shop-relics" data-shop-shelf="relics"></div>
                   <div class="card-shelf shop-shelf" id="shop-flasks" data-shop-shelf="flasks"></div>
                   <div class="shop-shelf shop-services" data-shop-shelf="services">
-                    <div id="shop-remove">
+                    <div id="shop-remove"${removeOffered ? '' : ' hidden'}>
                       <div class="class-row">
                         <div class="class-pick shop-offer${run.cinders >= stock.removeCost && run.deck.length > 1 ? '' : ' locked'}" id="remove-opt" role="button" tabindex="0">
                           <div class="glyph">✂</div><div class="cp-body"><h3>Remove a card</h3><p>${stock.removeCost} cinders. The deck remembers what you cut.</p></div>
@@ -186,6 +193,9 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     // existing plan; nothing here prices or rolls. ------------------------
     const offers = Object.fromEntries(categories.map((key) => [key, []]));
     const addOffer = (key, offer) => {
+      // A category this visit did not lay out takes no offers (its shelf is
+      // empty, and a Remove the visit did not offer is never listed).
+      if (!offers[key]) return;
       offer.tile.dataset.shopRef = offer.ref;
       offer.tile.classList.add('shop-offer');
       offers[key].push(offer);
@@ -433,7 +443,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       // The burn button in the pane is now the action; the footer keeps Leave.
       if (activeCategory === 'services') paint();
     };
-    addOffer('services', {
+    if (removeOffered) addOffer('services', {
       ref: 'services:remove#0', tile: removeOpt, name: 'Remove a card', desc: `${stock.removeCost} cinders. The deck remembers what you cut.`,
       price: t('shop.price', { cost: stock.removeCost }),
       avail: removeOpen ? removeAvail : (removeAvail.available ? offerAvailability({ reason: t('shop.avail.locked') }) : removeAvail),
@@ -445,7 +455,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       event.preventDefault();
       removeOpt.click();
     });
-    if (removeOpen) removeOpt.addEventListener('click', openRemoveGrid);
+    if (removeOpen && removeOffered) removeOpt.addEventListener('click', openRemoveGrid);
 
     // ---- THE SMITH THE MERCHANT KEEPS, when the roll at the door said so ----
     // `stock.smith` is smithServicesAt(registries, 'merchant', rng), rolled
