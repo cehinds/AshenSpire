@@ -382,3 +382,16 @@ test('a save whose sideboard repeats an owned id is refused at the load door', a
   run.sideboard = [{ instanceId: 'x1', cardId: card.cardId }, { instanceId: 'x1', cardId: card.cardId }];
   assert.ok(validateRunShape(run).some((p) => /already owned/.test(p)), 'two sideboard cards with one id are named');
 });
+
+test('two set-aside basics on one retired slot are refused at the load door', async () => {
+  const { validateRunShape } = await import('../src/model/state.js');
+  const run = freshRun();
+  run.removedAttackSlotIds = ['attack:0'];
+  run.sideboard = [
+    { instanceId: 'sb1', cardId: 'strike', upgraded: false, equipmentRole: 'attack', equipmentAttackSlotId: 'attack:0' },
+    { instanceId: 'sb2', cardId: 'strike', upgraded: false, equipmentRole: 'attack', equipmentAttackSlotId: 'attack:0' },
+  ];
+  assert.ok(validateRunShape(run).some((p) => /held by another set-aside card/.test(p)));
+  run.sideboard.pop();
+  assert.ok(!validateRunShape(run).some((p) => /held by another set-aside card/.test(p)));
+});

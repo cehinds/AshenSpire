@@ -1026,6 +1026,17 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       }
     }
   }
+  // Each retired slot holds at most one set-aside basic: a second would be
+  // pushed back into the deck before the restamp refused the duplicate.
+  if (Array.isArray(run.sideboard)) {
+    const slots = new Set();
+    run.sideboard.forEach((card, i) => {
+      const slot = card && card.equipmentAttackSlotId;
+      if (slot === undefined) return;
+      if (slots.has(slot)) problems.push(`sideboard[${i}].equipmentAttackSlotId '${slot}' is held by another set-aside card`);
+      slots.add(slot);
+    });
+  }
   if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {
     problems.push('maxHp must be > 0');
   }
