@@ -2448,7 +2448,7 @@ export const nodes = [
     "priority": "",
     "domain": "",
     "aside": "",
-    "blurb": "The shard drinks what falls."
+    "blurb": "The shard drinks from a staggering foe."
   },
   {
     "id": "burningGrace",
@@ -2513,7 +2513,7 @@ export const nodes = [
   {
     "id": "feint",
     "parentId": "property",
-    "label": "Feint",
+    "label": "Baiting Feint",
     "color": "9FC3E8",
     "glyph": "🎭",
     "visibility": "",

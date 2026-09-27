@@ -1025,8 +1025,8 @@ warned when not the stock value.
 
 **Rogue full parity slice.** Rogue ships as a complete fourth class, not a selectable shell:
 
-- 40 authored Rogue cards (`src/content/cards/rogue.js`), all with upgrades and
-  validation-clean player text: exactly 36 in its ordinary reward pool (the class row's
+- 47 authored Rogue cards (`src/content/cards/rogue.js`), all with upgrades and
+  validation-clean player text: exactly 43 in its ordinary reward pool (the class row's
   `cardPool`), the signature card Ambush, the class ability card Prepare (§13.4f), and the
   two generated cards other Rogue cards add to the hand (Shiv, Smoke Pellet). A new Rogue
   starts with an 11-card deck, signature and ability card included (`balance.startingDeckSize`

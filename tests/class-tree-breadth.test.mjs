@@ -73,3 +73,17 @@ test('Low Profile: becoming Prepared braces the rogue', () => {
   play();
   assert.equal(cb.player.block - block, REG.balance.classTree.lowProfile.block);
 });
+
+test('Shard Hunger: a foe that Staggers restores the owner\'s Mana, not the foe\'s', () => {
+  const { cb, foe } = fight('starseer', ['shardHunger']);
+  foe.poiseMeter.value = foe.poiseMeter.max - 1;
+  const inst = { instanceId: 'shard-hunger-kick', cardId: 'kickOff' };
+  cb.piles.hand.push(inst);
+  cb.player.energy = Math.max(cb.player.energy, 1);
+  const mana = cb.player.mana;
+  const r = dispatch(cb, { type: 'playCard', cardInstanceId: inst.instanceId, targetId: foe.id });
+  assert.ok(!r || r.ok !== false, `the kick plays: ${JSON.stringify(r)}`);
+  assert.equal(foe.intent.kind, 'staggered', 'the kick fills the bar');
+  assert.equal(cb.player.mana - mana, REG.balance.classTree.shardHunger.restoreMana);
+  assert.ok(!Number.isNaN(foe.mana ?? 0), 'the foe is never handed Mana');
+});

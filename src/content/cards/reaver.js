@@ -689,15 +689,15 @@ export const reaverCards = [
     flavor: "Downward blow meant to split a shield.\n\nThe Vanguard's smiths measured their work by it. A shield that survived three chops was sent to the wall; one that did not was sent back to the forge with the smith's name chalked upon it.\n\nFew names were chalked twice.",
     keywords: [], icon: '🪓',
     effects: [
-      { op: 'damage', target: 'enemy', amount: 11 },
-      { op: 'poiseDamage', target: 'enemy', amount: 8 },
+      { op: 'damage', target: 'enemy', amount: 9 },
+      { op: 'poiseDamage', target: 'enemy', amount: 7 },
       { op: 'draw', amount: 1 },
     ],
     textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage. Draw {draw} card.',
     upgrade: {
       effects: [
-        { op: 'damage', target: 'enemy', amount: 14 },
-        { op: 'poiseDamage', target: 'enemy', amount: 10 },
+        { op: 'damage', target: 'enemy', amount: 12 },
+        { op: 'poiseDamage', target: 'enemy', amount: 9 },
         { op: 'draw', amount: 1 },
       ],
     },
@@ -724,13 +724,13 @@ export const reaverCards = [
     keywords: [], icon: '🔰',
     effects: [
       { op: 'block', target: 'self', amount: 14 },
-      { op: 'applyStatus', target: 'self', status: 'strength', stacks: 2, if: { p: 'inStance', stance: 'bulwark' } },
+      { op: 'applyStatus', target: 'self', status: 'strength', stacks: 1, if: { p: 'inStance', stance: 'bulwark' } },
     ],
     textTemplate: 'Gain {block} Block. If in Bulwark Stance: gain {strength} Strength.',
     upgrade: {
       effects: [
         { op: 'block', target: 'self', amount: 18 },
-        { op: 'applyStatus', target: 'self', status: 'strength', stacks: 3, if: { p: 'inStance', stance: 'bulwark' } },
+        { op: 'applyStatus', target: 'self', status: 'strength', stacks: 2, if: { p: 'inStance', stance: 'bulwark' } },
       ],
     },
   },

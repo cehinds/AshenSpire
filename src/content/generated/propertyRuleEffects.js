@@ -1919,6 +1919,7 @@ export const propertyRuleEffects = {
         "do": [
           {
             "op": "restoreMana",
+            "target": "owner",
             "amount": {
               "balance": "classTree.spentStars.restoreMana"
             }
@@ -1975,10 +1976,11 @@ export const propertyRuleEffects = {
   "shardHunger": {
     "triggers": [
       {
-        "on": "enemyDied",
+        "on": "enemyStaggered",
         "do": [
           {
             "op": "restoreMana",
+            "target": "owner",
             "amount": {
               "balance": "classTree.shardHunger.restoreMana"
             }

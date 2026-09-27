@@ -809,14 +809,14 @@ export const starseerCards = [
     flavor: "The sky asked to rain ash, and answering.\n\nThe rite is recorded once, in Hollis's hand, on the night after the eclipse. It names no author. It names the Observatory as the altar, and the reach as the congregation.\n\nThe reach has been grey since, and is said to be listening.",
     keywords: [], icon: '🌋',
     effects: [
-      { op: 'damage', target: 'allEnemies', amount: 6, hits: 2 },
+      { op: 'damage', target: 'allEnemies', amount: 5, hits: 2 },
       { op: 'applyStatus', target: 'allEnemies', status: 'burn', stacks: 3, if: CHARGED },
       GAIN_CHARGE,
     ],
     textTemplate: 'Deal {damage} damage to ALL enemies {hits} times. Starstone: apply {burn} Burn to ALL.',
     upgrade: {
       effects: [
-        { op: 'damage', target: 'allEnemies', amount: 8, hits: 2 },
+        { op: 'damage', target: 'allEnemies', amount: 7, hits: 2 },
         { op: 'applyStatus', target: 'allEnemies', status: 'burn', stacks: 4, if: CHARGED },
         GAIN_CHARGE,
       ],
@@ -829,12 +829,14 @@ export const starseerCards = [
     effects: [
       { op: 'heal', target: 'self', amount: 8 },
       { op: 'block', target: 'self', amount: 8 },
+      GAIN_CHARGE,
     ],
     textTemplate: 'Heal {heal} HP. Gain {block} Block. Exhaust.',
     upgrade: {
       effects: [
         { op: 'heal', target: 'self', amount: 12 },
         { op: 'block', target: 'self', amount: 12 },
+        GAIN_CHARGE,
       ],
     },
   },
@@ -843,15 +845,15 @@ export const starseerCards = [
     flavor: "The last light of a burning star.\n\nThe Astronomer claimed a star gives its brightest light as it dies, and that the light can be caught if one is quick. His apprentices thought it a figure of speech.\n\nHe was holding a lens when the tower burned. The lens was found.",
     keywords: ['exhaust'], icon: '☀',
     effects: [
-      { op: 'damage', target: 'enemy', amount: 18 },
-      { op: 'damage', target: 'enemy', amount: 10, if: CHARGED },
+      { op: 'damage', target: 'enemy', amount: 15 },
+      { op: 'damage', target: 'enemy', amount: 8, if: CHARGED },
       GAIN_CHARGE,
     ],
     textTemplate: 'Deal {damage} damage. Starstone: deal {damage.2} more. Exhaust.',
     upgrade: {
       effects: [
-        { op: 'damage', target: 'enemy', amount: 24 },
-        { op: 'damage', target: 'enemy', amount: 12, if: CHARGED },
+        { op: 'damage', target: 'enemy', amount: 20 },
+        { op: 'damage', target: 'enemy', amount: 10, if: CHARGED },
         GAIN_CHARGE,
       ],
     },

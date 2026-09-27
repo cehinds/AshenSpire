@@ -1769,6 +1769,7 @@ export const nodeEffects = {
         "do": [
           {
             "op": "restoreMana",
+            "target": "owner",
             "amount": {
               "variable": "restoreMana"
             }
@@ -1825,10 +1826,11 @@ export const nodeEffects = {
   "shardHunger": {
     "triggers": [
       {
-        "on": "enemyDied",
+        "on": "enemyStaggered",
         "do": [
           {
             "op": "restoreMana",
+            "target": "owner",
             "amount": {
               "variable": "restoreMana"
             }

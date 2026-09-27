@@ -2059,3 +2059,8 @@ card,,riteOfCinders,ritual
 card,,riteOfCinders,fx:ritual
 card,,riteOfCinders,theme:astral
 card,,riteOfCinders,classification.skill
+card,,nockAndWait,fx:ranged
+card,,nockAndWait,fx:precision
+card,,bindingParry,fx:flourish
+card,,whirlingGuard,fx:flourish
+card,,hewingArc,fx:blood

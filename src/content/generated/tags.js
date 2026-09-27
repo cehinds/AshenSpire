@@ -1719,7 +1719,7 @@ export const tags = [
     "color": "9FC3E8",
     "glyph": "💠",
     "visibility": "",
-    "blurb": "The shard drinks what falls."
+    "blurb": "The shard drinks from a staggering foe."
   },
   {
     "id": "burningGrace",
@@ -1769,7 +1769,7 @@ export const tags = [
   {
     "id": "feint",
     "domain": "property",
-    "label": "Feint",
+    "label": "Baiting Feint",
     "color": "9FC3E8",
     "glyph": "🎭",
     "visibility": "",

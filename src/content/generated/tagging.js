@@ -11779,5 +11779,35 @@ export const tagging = [
     "scope": "",
     "objectId": "riteOfCinders",
     "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "nockAndWait",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "nockAndWait",
+    "tagId": "fx:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bindingParry",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "whirlingGuard",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hewingArc",
+    "tagId": "fx:blood"
   }
 ];

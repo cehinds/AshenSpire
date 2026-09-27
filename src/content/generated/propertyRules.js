@@ -632,7 +632,7 @@ export const propertyRules = [
     "tag": "shardHunger",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Whenever an enemy dies, restore {restoreMana} Mana."
+    "textTemplate": "Whenever an enemy Staggers, restore {restoreMana} Mana."
   },
   {
     "tag": "burningGrace",
@@ -662,13 +662,13 @@ export const propertyRules = [
     "tag": "lowProfile",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Whenever you become Prepared, gain {block} Block."
+    "textTemplate": "Each time Prepared is applied to you, gain {block} Block."
   },
   {
     "tag": "feint",
     "requires": "",
     "excludes": "",
-    "textTemplate": "The first time you become Prepared each turn, deal {poiseDamage} Poise damage to a random enemy."
+    "textTemplate": "The first time Prepared is applied to you each turn, deal {poiseDamage} Poise damage to a random enemy."
   },
   {
     "tag": "spareWhetstone",
@@ -680,6 +680,6 @@ export const propertyRules = [
     "tag": "whettedGuard",
     "requires": "",
     "excludes": "",
-    "textTemplate": "Your attacks while Prepared grant {block} Block."
+    "textTemplate": "Each hit you land while Prepared grants {block} Block."
   }
 ];

@@ -1675,7 +1675,7 @@ export const balance = {
         gainEnergy: 1
     },
     whettedGuard: {
-        block: 2
+        block: 1
     },
   [NOTE]: {
     '{node}.{variable}': '{talent}, {talentPlace} — {effect}.{blurbSuffix}',

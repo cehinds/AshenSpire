@@ -504,7 +504,7 @@ export const nodeTerms = [
     "nodeId": "shardHunger",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Whenever an enemy dies, restore {restoreMana} Mana."
+    "template": "Whenever an enemy Staggers, restore {restoreMana} Mana."
   },
   {
     "nodeId": "burningGrace",
@@ -534,13 +534,13 @@ export const nodeTerms = [
     "nodeId": "lowProfile",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Whenever you become Prepared, gain {block} Block."
+    "template": "Each time Prepared is applied to you, gain {block} Block."
   },
   {
     "nodeId": "feint",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "The first time you become Prepared each turn, deal {poiseDamage} Poise damage to a random enemy."
+    "template": "The first time Prepared is applied to you each turn, deal {poiseDamage} Poise damage to a random enemy."
   },
   {
     "nodeId": "spareWhetstone",
@@ -552,7 +552,7 @@ export const nodeTerms = [
     "nodeId": "whettedGuard",
     "playerTermId": "",
     "tooltipTermId": "",
-    "template": "Your attacks while Prepared grant {block} Block."
+    "template": "Each hit you land while Prepared grants {block} Block."
   },
   {
     "nodeId": "restHpSmall",

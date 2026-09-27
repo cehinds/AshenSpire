@@ -10,6 +10,9 @@ import test from 'node:test';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { characterCreation } from '../src/content/generated/characterCreation.js';
+import { createRunState } from '../src/model/state.js';
+import { createRng } from '../src/engine/rng.js';
+import { rollSkillDraftIds } from '../src/engine/encounters.js';
 
 const MIN_PER_TIER = 4;
 const reg = createRegistries(contentBundle);
@@ -32,4 +35,14 @@ test('every creation hand drafts at least four distinct cards per rarity tier', 
     }
   }
   assert.deepEqual(short, []);
+});
+
+test("a fresh Starseer's Ash Focus drafts its ash rites at every tier", () => {
+  const run = createRunState({ seed: 0x4b4b, classId: 'starseer', registries: reg });
+  for (const rarity of tiers) {
+    const level = reg.balance.skill.rarityUnlock[rarity];
+    const ids = rollSkillDraftIds(reg, createRng(7), { classId: 'starseer', loadout: run.loadout, skillId: 'item:magic-focus', level });
+    assert.equal(ids.length, reg.balance.skill.draftSize, `level ${level}`);
+    assert.ok(ids.every((id) => reg.cards.get(id).tags.includes('ritual')), `level ${level}: ${ids}`);
+  }
 });

@@ -1766,6 +1766,7 @@
         "do": [
           {
             "op": "restoreMana",
+            "target": "owner",
             "amount": {
               "variable": "restoreMana"
             }
@@ -1822,10 +1823,11 @@
   "shardHunger": {
     "triggers": [
       {
-        "on": "enemyDied",
+        "on": "enemyStaggered",
         "do": [
           {
             "op": "restoreMana",
+            "target": "owner",
             "amount": {
               "variable": "restoreMana"
             }
