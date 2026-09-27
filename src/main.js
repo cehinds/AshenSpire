@@ -58,7 +58,7 @@ import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import {
   rollEncounter,
   rollRuneReward,
-  rollCardRewardIds,
+  rollCombatCardOffer,
   rollSkillDraftIds,
   rollClassDraftIds,
   rollFlaskDrop,
@@ -2447,7 +2447,7 @@ async function onCombatEnd(result, combat, enc) {
   // sentence. Ledger state is read live from the run; only the GAIN is kept,
   // and it is the amount each award SAYS it paid, never a second reading of
   // the same numbers beside it.
-  const xpGains = combatXpGains({ receipt: trackReceipt, awards: [classAward], levelGained: levelAward.gained });
+  const xpGains = combatXpGains({ receipt: trackReceipt, awards: [classAward], levelGained: levelAward.gained, levelDiscarded: levelAward.discarded });
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
   stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
@@ -2507,7 +2507,7 @@ async function onCombatEnd(result, combat, enc) {
       cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0),
       classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
-      cardIds: bossDrafts.length || bossClassDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
+      ...rollCardRows('boss', bossDrafts.length || bossClassDrafts.length, levelAward.levelUps),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
       armamentId: bossArmament,
       smithingStoneReceipt,
@@ -2526,7 +2526,7 @@ async function onCombatEnd(result, combat, enc) {
     cinders: rollRuneReward(registries, rng, enc.pool, run.relics),
     classDrafts,
     skillDrafts: drafts,
-    cardIds: drafts.length || classDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
+    ...rollCardRows(enc.pool, drafts.length || classDrafts.length, levelAward.levelUps),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
     // Elites are the mid-run source of armaments; ordinary fights are not by
@@ -2537,6 +2537,21 @@ async function onCombatEnd(result, combat, enc) {
     xpGains,
   };
   beginPendingReward(rewards, { source: enc.pool, after: 'map' });
+}
+
+/**
+ * The spoils' card rows (SPEC §15.1): the card offer — unless a draft holds
+ * its seat, the schedule turns it off for this pool, or its chance misses —
+ * and a level card per level this fight bought when `onLevelUp` is on. The
+ * decision is engine/encounters.js rollCombatCardOffer's; this hands it the
+ * run's facts and returns the offer fields (`cardIds`, and `cardMissed` /
+ * `levelCards` only when they say something, so the shipped schedule writes
+ * the offer it wrote before).
+ */
+function rollCardRows(pool, draftWaiting, levelUps) {
+  return rollCombatCardOffer(registries, rng, {
+    classId: run.class, pool, relicIds: run.relics, flatRarity: chaosRewardsOn(), draftWaiting: !!draftWaiting, levelUps,
+  }).rewards;
 }
 
 /**

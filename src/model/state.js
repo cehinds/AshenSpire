@@ -46,10 +46,15 @@ import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 // legacy fields stay authoritative until phase 3b flips the readers and
 // writers; until then a save whose zones disagree with its legacy fields is
 // re-projected at the load door with a ledger note, never refused.
-// 12 (SPEC §15.3): `smithingStonesRefined`, the refined-stone purse, rides
-// the save. A v11-or-older save is filled with 0 at migrateRunSchema, so an
+// 12 (SPEC §15.1): a pending reward may carry `levelCards` rows (keyed
+// `levelCard:<n>`, picks in `chosenDraftCardIds`) and `cardMissed`. The bump
+// is what makes an OLDER build refuse-and-keep such a save rather than read
+// it and drop the rows; an 11 save has no level-card rows, so 11 → 12 is a
+// no-op at the migration door.
+// 13 (SPEC §15.3): `smithingStonesRefined`, the refined-stone purse, rides
+// the save. A v12-or-older save is filled with 0 at migrateRunSchema, so an
 // older build can never be the one to write the field away.
-export const RUN_SCHEMA_VERSION = 12;
+export const RUN_SCHEMA_VERSION = 13;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -608,7 +613,7 @@ export const RUN_SHAPE = [
   { key: 'cinders', type: 'number' },
   { key: 'smithingStones', type: 'number', optional: true },
   // Refined Smithing Stones (SPEC §15.3, the §14.4 refined stone). Required
-  // at schema 12; a preRefinedStones save (≤ 11) is filled with 0 at the
+  // at schema 13; a preRefinedStones save (≤ 12) is filled with 0 at the
   // migration door.
   { key: 'smithingStonesRefined', type: 'number' },
   { key: 'itemUpgradeLevels', type: 'object', optional: true },
@@ -743,7 +748,12 @@ function pendingDraftRows(pending) {
   const cls = (Array.isArray(rewards.classDrafts) ? rewards.classDrafts : [])
     .filter((d) => d && typeof d.classId === 'string' && Array.isArray(d.nodeIds) && d.nodeIds.length > 0)
     .map((d) => ({ key: `classDraft:${d.classId}:${(seen[`c:${d.classId}`] = (seen[`c:${d.classId}`] || 0) + 1) - 1}`, nodeIds: d.nodeIds, ids: d.nodeIds }));
-  return [...cls, ...skill];
+  // A level card (SPEC §15.1) picks a card, keyed by its ordinal; its pick is
+  // kept in chosenDraftCardIds beside the skill drafts', one map keyed by row.
+  const level = (Array.isArray(rewards.levelCards) ? rewards.levelCards : [])
+    .filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
+    .map((d, i) => ({ key: `levelCard:${Number.isInteger(d.ordinal) ? d.ordinal : i}`, cardIds: d.cardIds, ids: d.cardIds }));
+  return [...cls, ...skill, ...level];
 }
 const pendingDraftKeys = (pending) => pendingDraftRows(pending).map((d) => d.key);
 
@@ -950,8 +960,29 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
         });
       }
-      if (pending.chosenDraftCardIds !== undefined) {
-        const chosen = pending.chosenDraftCardIds;
+      if (pending.rewards?.levelCards !== undefined) {
+        // SPEC §15.1: absent on an offer written before the schedule.
+        const rows = pending.rewards.levelCards;
+        if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelCards must be an array');
+        else {
+          const ordinals = new Set();
+          rows.forEach((d, i) => {
+            const p = `pendingReward.rewards.levelCards[${i}]`;
+            if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { ordinal, cardIds }`); return; }
+            if (!Number.isInteger(d.ordinal) || d.ordinal < 0 || ordinals.has(d.ordinal)) problems.push(`${p}.ordinal must be a distinct non-negative integer`);
+            ordinals.add(d.ordinal);
+            if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
+          });
+        }
+      }
+      if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
+        problems.push('pendingReward.rewards.cardMissed must be a boolean');
+      }
+      {
+        // The map may be absent (a save written before it existed); the rule
+        // that a Taken draft or level card (SPEC §15.1) names its card holds
+        // all the same, as the class-draft rule below does.
+        const chosen = pending.chosenDraftCardIds === undefined ? {} : pending.chosenDraftCardIds;
         if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftCardIds must be an object keyed by draft row');
         else {
           const drafts = pendingDraftRows(pending).filter((d) => d.cardIds);
@@ -1236,11 +1267,12 @@ export function migrateRunSchema(run) {
   // v10 and older: no sideboard. Filled HERE with none (SPEC §14.1): a run the
   // deck editor never touched has no owned card out of its deck.
   const preSideboard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(run.schemaVersion);
-  // v11 and older: no refined-stone purse. Filled HERE with 0 (SPEC §15.3):
+  // v11: no level-card rows could be written (SPEC §15.1); nothing to fill.
+  // v12 and older: no refined-stone purse. Filled HERE with 0 (SPEC §15.3):
   // no refined stone was ever paid before the purse existed.
-  const preRefinedStones = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, ${RUN_SCHEMA_VERSION})`);
+  const preRefinedStones = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(run.schemaVersion);
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, ${RUN_SCHEMA_VERSION})`);
   }
   const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones });
   if (preSkills && (run.skills === undefined || run.skills === null)) run.skills = {};

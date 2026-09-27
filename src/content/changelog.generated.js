@@ -3,14 +3,84 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1352",
+    "id": "pr-1351",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Choose when card rewards come",
+    "detail": "Settings → Rewards has new card reward settings. You can turn the card offer on or off for normal, elite and boss fights, and give each a percent chance to offer a card. When the chance misses, the spoils say \"No card this time.\" A new \"Level card\" option adds one more card to choose whenever a fight raises your level, with a limit on how many one fight can add. Out of the box nothing changes: every fight offers its card as before, level cards are off, and an existing seed gives the same rewards.",
+    "build": "0.7.1.629",
+    "pullRequest": 1351,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1351"
+  },
+  {
+    "id": "pr-1361",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the developer docs are checked against the code",
+    "detail": "Docs only; nothing you play changes. The developer and process guides lose facts that had gone stale (committed builds, a removed rules file, draft pull requests, moved source paths), and dated QA records move to docs/archive/.",
+    "build": "0.7.1.627",
+    "pullRequest": 1361,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1361"
+  },
+  {
+    "id": "pr-1359",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the design and 1.0 plan documents say what is built and what is still planned",
+    "detail": "Docs only; nothing you play changes. The design spec now opens with a table marking each of its sections as built, partly built or planned: the deck editor, the three shops and most of the new reward rules are written down but not built yet (the levelling preview is built). The 1.0 checklist catches up with the last week's merges, and an implemented map-contrast proposal moves to an archive folder.",
+    "build": "0.7.1.626",
+    "pullRequest": 1359,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1359"
+  },
+  {
+    "id": "pr-1362",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the 1.0 checklist records the four fixes that just landed",
+    "detail": "Docs only. docs/FINISH.md now marks as done: a save that cannot be loaded keeps your run, a cancelled End Turn hold opens nothing, each change's changelog build number is checked, and the map camera check runs on every change. It adds one more check: the save-load fix should also be tested in a real browser when loading from the in-game menu screen.",
+    "build": "0.7.1.625",
+    "pullRequest": 1362,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1362"
+  },
+  {
+    "id": "pr-1349",
     "date": "2026-09-26",
     "group": "2026-09-26",
-    "summary": "Drop chances for armaments and Smithing Stones, and refined stones as a reward",
-    "detail": "Nothing drops differently until you change a setting. Advanced → Rewards now has a chance for ordinary fights to drop an armament (0% by default, so they still drop none), a chance for each kind of fight and treasure to pay its Smithing Stones (100% by default), and how many Refined Stones each pays (none by default). Treasure can now pay Smithing Stones too, once you raise its amount. Refined Stones you earn show on the spoils screen and next to your Smithing Stones at the smith, and they are kept for the blacksmith that will spend them.",
+    "summary": "Settings shows how fast you level",
+    "detail": "Settings → Advanced → Progression now has a Levelling preview that updates as you change the numbers. It shows how much XP a normal fight (3 kills), an elite (1 kill) and a boss (1 kill) gives, how many levels each is worth from level 1 and from level 10, the stat points those levels grant, and the XP to reach each level up to 20. The XP multiplier and Level-up value are counted. A new setting can also cap how many levels one fight can give: XP past the cap is lost, and the spoils screen says how much. It is off by default, so nothing changes until you set it.",
+    "build": "0.7.1.624",
+    "pullRequest": 1349,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1349"
+  },
+  {
+    "id": "pr-1360",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: every new dev build is playable on the build site again",
+    "detail": "The build site had stopped updating after built files stopped being saved with each change. It now rebuilds each recent build from its own source, so the newest dev build is at /dev/latest/ and every recent one has its own page.",
+    "build": "0.7.1.622",
+    "pullRequest": 1360,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1360"
+  },
+  {
+    "id": "pr-1357",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: every change is now checked for the map camera fitting the screen",
+    "detail": "Nothing you see changes. Each proposed change now opens the real map in a browser, resizes its view after it settles, and fails if the camera stops filling the view or loses the destination you picked. The longer map-camera check also makes a new character again, through the Class, Character, Starting equip and Review steps and past the opening, and runs to the end.",
+    "build": "0.7.1.621",
+    "pullRequest": 1357,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1357"
+  },
+  {
+    "id": "pr-1354",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Letting go of the game window mid-hold no longer opens the End Turn check",
+    "detail": "If you were holding the End Turn key and the window lost focus (you alt-tabbed, or the phone went to the background), the game used to treat that as a quick tap and open the End Turn confirmation. Now nothing opens and nothing happens. A quick press and release still opens the check as before. Behind the scenes: the test that lists page listeners now also reads one more way of writing a document listener correctly.",
     "build": "0.7.1.620",
-    "pullRequest": 1352,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1352"
+    "pullRequest": 1354,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1354"
   },
   {
     "id": "pr-1355",

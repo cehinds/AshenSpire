@@ -71,6 +71,9 @@ const BALANCE_DOMAINS = Object.freeze({
   'rest.hpSmallPct': PERCENT,
   'rest.hpPartialPct': PERCENT,
   'rest.mana.floorPct': PERCENT,
+  'rewards.cardRewards.chancePct.normal': PERCENT,
+  'rewards.cardRewards.chancePct.elite': PERCENT,
+  'rewards.cardRewards.chancePct.boss': PERCENT,
   'atlas.townsPerActMax': Object.freeze({ min: 1 }),
   // SPEC §15.3's drop chances are percents: a normal fight's armament chance
   // ships at 0, which a range read off the value would cap at 20.
@@ -95,6 +98,9 @@ const BALANCE_DOMAINS = Object.freeze({
   'xp.kill.normal': Object.freeze({ max: 1000 }),
   'xp.kill.elite': Object.freeze({ max: 1000 }),
   'xp.kill.boss': Object.freeze({ max: 2000 }),
+  // The levelling cap (SPEC §15.2) ships at 0, no cap; a range read off 0
+  // would reach 20 only by numberDomain's floor, so it is stated.
+  'level.maxLevelsPerFight': Object.freeze({ integer: true, step: 1, min: 0, max: 20 }),
 });
 
 // A balance path this build renamed keeps its stored override: the old key is
@@ -478,6 +484,7 @@ const BALANCE_LABELS = Object.freeze({
   'stagger.player.statuses.weak': 'Weak stacks when your meter fills',
   'mana.minActionCost': 'Least action cost of a mana card',
   'mana.minStaminaCost': 'Least stamina cost of a mana card',
+  'level.maxLevelsPerFight': 'Most levels one award can give',
 });
 
 /**
@@ -731,6 +738,19 @@ function presentationRows() {
   ];
 }
 
+/**
+ * appliedXpMultiplier(settings) → the XP multiplier `configuredContentBundle`
+ * applies to the awards, or null when none is stored (the authored awards
+ * stand). One reading, so the Levelling preview's "XP ×N" names the number
+ * play multiplied by, never a second parse of the raw setting.
+ */
+export function appliedXpMultiplier(settings = {}) {
+  // Number() exactly as this file always read it, so no stored value plays
+  // differently: absent (NaN) is null; anything finite is applied as is.
+  const value = Number((settings || {})[`${ADVANCED_CONFIG_PREFIX}progression.xpMultiplier`]);
+  return Number.isFinite(value) ? value : null;
+}
+
 function progressionRows(bundle) {
   return [
     {
@@ -968,8 +988,8 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   for (const row of Object.values(configured.derivedStatRules?.rules || {})) {
     if (row.max === STAT_ROW_NO_MAX) delete row.max;
   }
-  const xpMultiplier = Number(settings[`${ADVANCED_CONFIG_PREFIX}progression.xpMultiplier`]);
-  if (Number.isFinite(xpMultiplier) && configured.balance.xp) {
+  const xpMultiplier = appliedXpMultiplier(settings);
+  if (xpMultiplier !== null && configured.balance.xp) {
     const xp = configured.balance.xp;
     for (const key of ['combatWin', 'quest']) if (Number.isFinite(xp[key])) xp[key] = Math.max(0, Math.round(xp[key] * xpMultiplier));
     for (const key of Object.keys(xp.kill || {})) xp.kill[key] = Math.max(0, Math.round(xp.kill[key] * xpMultiplier));

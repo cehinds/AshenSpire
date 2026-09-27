@@ -2,7 +2,7 @@
 
 Companion to [LORE.md](LORE.md). The bible says what the world is; this says who
 is in it and what the Burning did to everything else. Every name here already
-exists in content (`content/events.js`, `content/enemies/*`, `docs/ENEMY-ROSTER.md`)
+exists in content (`src/content/events.js`, `src/content/enemies/*`, `docs/ENEMY-ROSTER.md`)
 or in the seat plan, so nothing below needs a new id to start being written.
 
 Rule from the bible, restated: none of this is stated in one place in the game.

@@ -1,3 +1,5 @@
+> Historical: a dated design and QA record from build 0.4.0 (August 2026); it describes that build, not the current one.
+
 # Smith upgrade modal — design and QA write-up
 
 ## Outcome
