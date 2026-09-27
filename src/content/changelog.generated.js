@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1368",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the HUD layout check says what it cannot see, and reads the HUD visibility settings too",
+    "detail": "Nothing you play changes. The check that keeps the relic rail inside the HUD now lists what its simple style reader does not model, and a test keeps that list from being dropped. It also reads the style sheet that hides relics and potions when you turn them off, so a later change there that knocks the rail out of place is caught. Hiding the whole rail is allowed only when your settings leave it empty: relics and potions both off, or one off when the rail holds nothing else.",
+    "build": "0.7.1.639",
+    "pullRequest": 1368,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1368"
+  },
+  {
     "id": "pr-1367",
     "date": "2026-09-27",
     "group": "2026-09-27",
