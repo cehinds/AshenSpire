@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1358",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the README says how to play the newest build",
+    "detail": "Docs only; nothing you play changes. The README now explains where to get each build: the stable link, the newest development build from its download page, or running the game from source. Its notes on builds, art quality, recent additions and content counts now match the game.",
+    "build": "0.7.1.618",
+    "pullRequest": 1358,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1358"
+  },
+  {
     "id": "pr-1343",
     "date": "2026-09-26",
     "group": "2026-09-26",
