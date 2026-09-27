@@ -72,8 +72,13 @@ export function withKitDom(fn) {
   dom.document.removeEventListener = drop(docListeners);
   dom.document.getElementById = (id) => dom.document.body.querySelector(`#${id}`);
   dom.document.activeElement = dom.document.body;
+  // Custom elements are registered and never upgraded: the fixture has no
+  // connection lifecycle, so a registered tag builds a plain element.
+  const registry = new Map();
   const win = {
     ...dom,
+    HTMLElement: class {},
+    customElements: { get: (name) => registry.get(name), define: (name, ctor) => { registry.set(name, ctor); } },
     addEventListener: add(listeners),
     removeEventListener: drop(listeners),
     dispatchEvent: (event) => { for (const listener of listeners.get(event.type) || []) listener(event); return true; },

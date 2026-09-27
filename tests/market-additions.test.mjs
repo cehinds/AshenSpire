@@ -17,7 +17,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { advancedConfigRows, configuredContentBundle, advancedConfigExport, parseAdvancedConfigFile } from '../src/model/advancedConfig.js';
 import { createRng } from '../src/engine/rng.js';
 import { buildShopStock } from '../src/engine/encounters.js';
-import { buildMarketStock, commitInnRest } from '../src/engine/shopKinds.js';
+import { buildMarketStock, commitInnRest, marketVisitStock } from '../src/engine/shopKinds.js';
 import { createLocationVisit, arriveAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import { createRunState, RUN_SCHEMA_VERSION, migrateRunSchema, validateRunShape } from '../src/model/state.js';
 import { validateContent } from '../src/model/validate.js';
@@ -25,10 +25,11 @@ import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/s
 import { ownership, equipPiece } from '../src/model/loadout.js';
 import { inventoryRows } from '../src/model/inventoryPresentation.js';
 import { innInTown } from '../src/model/locations.js';
-import { MARKET_SHELVES, shopStockProblems } from '../src/model/shopKinds.js';
+import { MARKET_SHELVES, shopStockProblems, shopSettingsProblems } from '../src/model/shopKinds.js';
 import { MARKET_ADDITIONS, applyShopPriceMult } from '../src/model/marketStock.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { mountShop } from '../src/ui/screens/shop.js';
+import { shopRowLabel } from '../src/ui/screens/settings.js';
 import {
   smithStonePurchasePlan, commitSmithStonePurchase,
   armourPurchasePlan, commitArmourPurchase,
@@ -37,6 +38,7 @@ import {
 } from '../src/model/marketAdditions.js';
 import { shopCategories } from '../src/ui/models/ShopWorkspaceModel.js';
 import { t } from '../src/ui/strings.js';
+import { beatFor } from '../src/model/secondbeat.js';
 
 const REG = createRegistries(contentBundle);
 const PREFIX = 'gameConfig.shops.';
@@ -45,6 +47,8 @@ const registriesWith = (settings) => createRegistries(configuredContentBundle(co
 // Every 5a addition forced out on the visit, through the Settings rows.
 const ALL_OUT = Object.fromEntries(ADDITIONS_5A.map((id) => [`${PREFIX}market.${id}.chance`, 100]));
 const OUT = registriesWith(ALL_OUT);
+// Every market chance at 0: only the guarantee lays anything out.
+const allMarketChancesZero = () => Object.fromEntries(shippedShops.market.offerings.map((row) => [`${PREFIX}market.${row.id}.chance`, 0]));
 
 function marketRun(registries = OUT, { seed = 21, cinders = 5000, innHere = false, meta = {} } = {}) {
   const run = createRunState({ seed, classId: 'reaver', registries });
@@ -446,39 +450,63 @@ test('the offering notes are sentences, not placeholders', () => {
 // Codex on #1374: the screen mounts with every new shelf, and prices scale
 // ---------------------------------------------------------------------------
 
-test('DOM: the merchant mounts with every new shelf out and buys one of each through the footer and its review (Codex, on #1374)', () => {
-  // The existing shelves are off here (Settings), so the screen draws only the
-  // additions and Remove; the shelves' own renderers have their own tests.
-  const ONLY = registriesWith({ ...ALL_OUT, ...Object.fromEntries(['cards', 'armaments', 'weaponArts', 'relics', 'flasks'].map((id) => [`${PREFIX}market.${id}.enabled`, false])) });
+test('DOM: with every shelf on, the rail lays the additions after the flasks, each shelf holds its stock, one click buys each, and a remount shows them sold (review, #1374)', () => {
+  // The Buy in the footer is the shopBuy beat, which the second-beat table
+  // gives no review ("tempo", refilled by a faucet): one click commits, and no
+  // dialog opens. Asserted, not guessed.
+  assert.equal(beatFor('shopBuy').form, 'none');
   withKitDom((dom) => {
-    const { run, rng } = marketRun(ONLY, { innHere: true });
+    const { run, rng } = marketRun(OUT, { innHere: true });
     run.hp = 5;
-    const app = dom.document.createElement('main');
-    dom.document.body.appendChild(app);
+    run.flasks.push({ flaskId: 'crimsonFlask' });
     let changed = 0;
-    mountShop(app, {
-      registries: ONLY, run, meta: { settings: { shopSell: false } },
-      onLeave() {}, onChanged() { changed += 1; },
-      restAtInn: (quote) => commitInnRest({ run, registries: ONLY, rng }, quote),
-    });
-    for (const key of ADDITIONS_5A) assert.ok(app.querySelector(`#shop-cat-${key}`), `${key} has its rail item`);
-    const before = { stones: run.smithingStones, sigils: run.sigils.length, armour: (run.loadout.boughtArmour || []).length, cinders: run.cinders };
+    const mount = (target) => {
+      const app = dom.document.createElement('main');
+      dom.document.body.replaceChildren(app);
+      mountShop(app, {
+        registries: OUT, run: target, meta: { settings: {} },
+        onLeave() {}, onChanged() { changed += 1; },
+        restAtInn: (quote) => commitInnRest({ run: target, registries: OUT, rng }, quote),
+      });
+      return app;
+    };
+    let app = mount(run);
+    // The rail's order: the shelves, then the additions, then services and sell.
+    const rail = app.querySelectorAll('[data-shop-category]').map((item) => item.dataset.shopCategory);
+    assert.deepEqual(rail, ['cards', 'armaments', 'weaponArts', 'relics', 'flasks', 'armour', 'smithStones', 'sigils', 'innRest', 'services', 'sell']);
+    // Each addition shelf holds one tile per stock item.
+    const tiles = (key) => app.querySelectorAll(`#shop-${key} .shop-offer`).length;
+    assert.equal(tiles('armour'), run.shopStock.armour.length);
+    assert.equal(tiles('sigils'), run.shopStock.sigils.length);
+    assert.equal(tiles('smithStones'), 1);
+    assert.equal(tiles('innRest'), 1);
+    const before = { stones: run.smithingStones, sigils: run.sigils.length, armour: run.shopStock.armour.length, sigilShelf: run.shopStock.sigils.length, left: run.shopStock.smithStones.left, cinders: run.cinders };
     for (const key of ADDITIONS_5A) {
       app.querySelector(`#shop-cat-${key}`).click();
       const primary = app.querySelector('#shop-primary');
       assert.ok(primary && !primary.disabled, `${key}: the footer offers Buy`);
+      assert.equal(primary.dataset.shopAction, 'buy');
       primary.click();
-      // The shopBuy beat's review, when the table asks for one.
-      const confirm = dom.document.body.querySelector('.modal-confirm, [data-confirm="yes"], .as-modal .as-btn-primary');
-      if (confirm && !confirm.disabled) confirm.click();
+      assert.equal(dom.document.body.querySelector('[role="dialog"]'), null, `${key}: no review opens`);
+      assert.equal(dom.document.body.querySelector('[role="alertdialog"]'), null, `${key}: no alert opens`);
     }
     assert.equal(run.smithingStones, before.stones + 1, 'a stone bought');
     assert.equal(run.sigils.length, before.sigils + 1, 'a sigil bought');
-    assert.equal(run.loadout.boughtArmour.length, before.armour + 1, 'an armour set bought');
+    assert.equal(run.loadout.boughtArmour.length, 1, 'an armour set bought');
     assert.equal(run.shopStock.innRest.bought, true, 'the rest bought');
     assert.equal(run.hp, run.maxHp);
     assert.ok(run.cinders < before.cinders);
     assert.ok(changed >= 4, 'each purchase persisted');
+    // Sold stays sold: a reload and a fresh mount show the shelves as left.
+    const back = reload(run, rng, OUT);
+    app = mount(back);
+    const again = (key) => app.querySelectorAll(`#shop-${key} .shop-offer`).length;
+    assert.equal(again('armour'), before.armour - 1);
+    assert.equal(again('sigils'), before.sigilShelf - 1);
+    assert.equal(back.shopStock.smithStones.left, before.left - 1);
+    app.querySelector('#shop-cat-innRest').click();
+    const restBuy = app.querySelector('#shop-primary');
+    assert.ok(restBuy && restBuy.disabled, 'the rest cannot be bought again after a reload');
   });
 });
 
@@ -556,4 +584,224 @@ test('a bought armour set this build does not know archives the save by name, li
   assert.equal(save([{ classId: 'reaver', id: 'eclipse' }]).run, null);
   // A known set loads.
   assert.ok(save([{ classId: 'reaver', id: 'vigil' }]).run);
+});
+
+// ---------------------------------------------------------------------------
+// Review of #1374 (should-fix and nits), and Codex's third round
+// ---------------------------------------------------------------------------
+
+test('an atlas market and a classic merchant both scale every price on a custom run, through the one door main.js opens them by (review, #1374)', () => {
+  const run = createRunState({ seed: 8, classId: 'reaver', registries: OUT });
+  const plain = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'atlas', ownerId: 'crownfall', priceMult: 1 });
+  const dear = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'atlas', ownerId: 'crownfall', priceMult: 2 });
+  assert.ok(plain.offerings.includes('innRest'), 'a town with an inn always offers the rest');
+  assert.equal(dear.innRest.price, plain.innRest.price * 2);
+  assert.equal(dear.smithStones.price, plain.smithStones.price * 2);
+  for (const kind of ['cards', 'relics', 'flasks', 'armour', 'sigils']) dear[kind].forEach((item, i) => assert.equal(item.cost, plain[kind][i].cost * 2, `atlas ${kind}[${i}]`));
+  assert.equal(dear.removeCost, plain.removeCost * 2);
+  const merchant = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'merchant', priceMult: 2 });
+  const merchantPlain = marketVisitStock(OUT, createRng(8), run, { meta: {}, door: 'merchant', priceMult: 1 });
+  assert.equal(merchant.smithStones.price, merchantPlain.smithStones.price * 2);
+  // main.js opens both doors through it, with the run's own multiplier.
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /marketVisitStock\(registries, rng, run, \{[^}]*door: 'atlas'[^}]*priceMult: shopPriceMult\(\)/);
+  assert.match(main, /marketVisitStock\(registries, rng, run, \{[^}]*door: 'merchant'[^}]*priceMult: shopPriceMult\(\)/);
+  assert.doesNotMatch(main, /buildMarketStock\(registries, rng, run, \{ meta: saves\.loadMeta\(\), innInTown/);
+});
+
+test('armour is sold for this run only: the profile unlock is untouched, and a new run does not own the set (coordinator ruling, #1374)', () => {
+  const meta = { unlocked: [] };
+  const { run } = marketRun(OUT, { meta });
+  const item = run.shopStock.armour[0];
+  const piece = OUT.equipment.armour.find((row) => row.classId === run.class && row.id === item.id);
+  assert.ok(piece.unlock, 'a locked set is on sale');
+  commitArmourPurchase(OUT, run, armourPurchasePlan(OUT, run, item, { meta }), { meta });
+  assert.deepEqual(meta.unlocked, [], 'the profile unlock is not written');
+  const next = createRunState({ seed: 99, classId: 'reaver', registries: OUT });
+  assert.equal(ownership(OUT, { meta, loadout: next.loadout }).has(piece), false, 'a new run does not own it');
+});
+
+test('a set bought this run is never restocked, and once every eligible set is bought the shelf is omitted and the guarantee fills (Codex, on #1375)', () => {
+  const meta = { unlocked: [] };
+  const { run } = marketRun(OUT, { meta });
+  const item = run.shopStock.armour[0];
+  commitArmourPurchase(OUT, run, armourPurchasePlan(OUT, run, item, { meta }), { meta });
+  for (let seed = 1; seed <= 20; seed++) {
+    const stock = buildMarketStock(OUT, createRng(seed), run, { meta });
+    assert.ok(!(stock.armour || []).some((row) => row.id === item.id), `seed ${seed}: the bought set is not offered again`);
+  }
+  // Every eligible set bought: no armour shelf, and a chance-0 visit still lays out its guarantee.
+  run.loadout.boughtArmour = OUT.equipment.armour.filter((row) => row.classId === run.class).map((row) => ({ classId: row.classId, id: row.id }));
+  const onlyArmour = registriesWith({ ...allMarketChancesZero(), [`${PREFIX}market.armour.chance`]: 100 });
+  const stock = buildMarketStock(onlyArmour, createRng(4), run, { meta });
+  assert.ok(!stock.offerings.includes('armour'), 'the empty armour shelf is not laid out');
+  assert.equal(stock.armour, undefined);
+  assert.equal(stock.offerings.length, onlyArmour.shops.market.guaranteedMinimum, 'the guarantee fills from the others');
+  assert.deepEqual(stock.offerings, ['cards', 'remove'], 'by weight, in written order');
+});
+
+test('armour.includeLocked (default on) is a generated Settings row; off, the armour shelf is empty and omitted (coordinator ruling, #1374)', () => {
+  const row = advancedConfigRows(contentBundle).find((r) => r.key === `${PREFIX}market.armour.includeLocked`);
+  assert.ok(row, 'the toggle has its row');
+  assert.equal(row.def, true);
+  assert.ok(row.note && row.note.length > 20);
+  assert.equal(shippedShops.market.offerings.find((o) => o.id === 'armour').includeLocked, true);
+  const on = marketRun(OUT).run;
+  assert.ok(on.shopStock.offerings.includes('armour') && on.shopStock.armour.length > 0);
+  const off = registriesWith({ ...ALL_OUT, [`${PREFIX}market.armour.includeLocked`]: false });
+  for (let seed = 1; seed <= 10; seed++) {
+    const run = createRunState({ seed, classId: 'reaver', registries: off });
+    const stock = buildMarketStock(off, createRng(seed), run, { meta: {} });
+    assert.ok(!stock.offerings.includes('armour'), `seed ${seed}`);
+    assert.equal(stock.armour, undefined);
+  }
+  // A non-boolean toggle is refused by name at the content door.
+  const table = structuredClone(shippedShops);
+  table.market.offerings.find((o) => o.id === 'armour').includeLocked = 'yes';
+  const errors = validateContent({ ...contentBundle, shops: table }).errors.filter((e) => e.path.startsWith('shops.market.armour.includeLocked'));
+  assert.equal(errors.length, 1);
+});
+
+test('an empty sigil shelf is not laid out, and the guarantee fills from the others (review, #1374)', () => {
+  const onlySigils = registriesWith({ ...allMarketChancesZero(), [`${PREFIX}market.sigils.chance`]: 100 });
+  const run = createRunState({ seed: 5, classId: 'reaver', registries: onlySigils });
+  run.sigils = onlySigils.sigils.ids();
+  const stock = buildMarketStock(onlySigils, createRng(5), run, { meta: {} });
+  assert.ok(!stock.offerings.includes('sigils'));
+  assert.equal(stock.sigils, undefined);
+  assert.deepEqual(stock.offerings, ['cards', 'remove']);
+  // With a sigil left to sell, the same visit lays it out.
+  run.sigils = [];
+  assert.ok(buildMarketStock(onlySigils, createRng(5), run, { meta: {} }).offerings.includes('sigils'));
+});
+
+test('an inverted armour cost range is refused by name in Settings, so it costs only the market, not every setting (review, #1374)', () => {
+  const settings = { [`${PREFIX}market.armour.cost.min`]: 500, [`${PREFIX}market.armour.cost.max`]: 400 };
+  const problems = shopSettingsProblems(contentBundle, settings);
+  assert.equal(problems.length, 1);
+  assert.deepEqual(problems[0].keys.sort(), Object.keys(settings).sort());
+  assert.equal(problems[0].id, 'settings.shops.refuse.armourCost');
+  assert.match(problems[0].message, /500/);
+  assert.match(problems[0].message, /400/);
+  assert.deepEqual(shopSettingsProblems(contentBundle, { [`${PREFIX}market.armour.cost.min`]: 400 }), []);
+  // One bad kind costs that kind: the market keeps its authored table, and
+  // an unrelated Advanced setting still applies.
+  const bundle = configuredContentBundle(contentBundle, { ...settings, [`${PREFIX}blacksmith.smithStones.price`]: 77 });
+  assert.equal(validateContent(bundle).ok, true);
+  const kept = bundle.shops.market.offerings.find((o) => o.id === 'armour').cost;
+  assert.deepEqual([kept.min, kept.max], [300, 390]);
+  assert.equal(bundle.shops.blacksmith.offerings.find((o) => o.id === 'smithStones').price, 77);
+});
+
+test('the sigil markup rises above 100 but is bounded at 1-300 (coordinator ruling, #1374)', () => {
+  const row = advancedConfigRows(contentBundle).find((r) => r.key === `${PREFIX}market.sigils.pricePct`);
+  assert.deepEqual([row.min, row.max, row.integer], [1, 300, true]);
+});
+
+test('every addition stock and per-visit count is a whole number at the content door, and an integer Settings row (Codex, on #1374)', () => {
+  const counts = [['smithStones', 'perVisit'], ['armour', 'stock'], ['sigils', 'stock']];
+  const rows = new Map(advancedConfigRows(contentBundle).map((r) => [r.key, r]));
+  for (const [id, key] of counts) {
+    const row = rows.get(`${PREFIX}market.${id}.${key}`);
+    assert.equal(row.integer, true, `${id}.${key} is an integer row`);
+    assert.equal(row.step, 1);
+    const table = structuredClone(shippedShops);
+    table.market.offerings.find((o) => o.id === id)[key] = 1.5;
+    const errors = validateContent({ ...contentBundle, shops: table }).errors.filter((e) => e.path === `shops.market.${id}.${key}`);
+    assert.equal(errors.length, 1, `${id}.${key}: 1.5 refused by name`);
+    assert.match(errors[0].msg, /whole/);
+  }
+  // Prices too: a fractional stone price or rest price would roll a stock the saved check refuses.
+  for (const [id, key] of [['smithStones', 'price'], ['innRest', 'price']]) {
+    const table = structuredClone(shippedShops);
+    table.market.offerings.find((o) => o.id === id)[key] = 10.5;
+    assert.equal(validateContent({ ...contentBundle, shops: table }).errors.filter((e) => e.path === `shops.market.${id}.${key}`).length, 1, `${id}.${key}`);
+  }
+});
+
+test('the market sigil offering has its own label; the blacksmith keeps "Sigil setting" (review, #1374)', () => {
+  assert.equal(t('settings.shops.offering.market.sigils'), 'Sigils');
+  assert.equal(t('settings.shops.offering.sigils'), 'Sigil setting');
+  const rows = advancedConfigRows(contentBundle);
+  const market = rows.find((r) => r.key === `${PREFIX}market.sigils.enabled`);
+  const smith = rows.find((r) => r.key === `${PREFIX}blacksmith.sigils.enabled`);
+  assert.match(shopRowLabel(market.shopLabel), /Sigils:/);
+  assert.match(shopRowLabel(smith.shopLabel), /Sigil setting/);
+});
+
+test('inn rest is refused by a restDenied relic in its tag-list form, naming the relic (review, #1374)', () => {
+  const relic = { ...structuredClone(contentBundle.relics[0]), id: 'probeLightSleeper', name: 'Probe of Light Sleep', rarity: 'common', passives: { restDenied: ['restHpFull'] } };
+  delete relic.triggers;
+  const registries = createRegistries({ ...configuredContentBundle(contentBundle, ALL_OUT), relics: [...contentBundle.relics, relic] });
+  const { run } = marketRun(registries, { innHere: true });
+  run.relics.push('probeLightSleeper');
+  const quote = innRestPlan(registries, run);
+  assert.equal(quote.ok, false);
+  assert.match(quote.reason, /Probe of Light Sleep/);
+  // A list naming a tag the inn does not carry does not refuse it.
+  const shrineOnly = { ...relic, id: 'probeShrineAverse', name: 'Probe of Shrine Aversion', passives: { restDenied: ['restHpPartial'] } };
+  const reg2 = createRegistries({ ...configuredContentBundle(contentBundle, ALL_OUT), relics: [...contentBundle.relics, shrineOnly] });
+  const other = marketRun(reg2, { innHere: true }).run;
+  other.relics.push('probeShrineAverse');
+  assert.equal(innRestPlan(reg2, other).ok, true);
+});
+
+test('a relic an arrival rule hands over that denies the rest refuses the bought rest by name, and nothing changes (review, #1374)', () => {
+  const relic = { ...structuredClone(contentBundle.relics[0]), id: 'probeInsomnia', name: 'Probe of Sleeplessness', rarity: 'common', passives: { restDenied: true } };
+  delete relic.triggers;
+  const configured = configuredContentBundle(contentBundle, ALL_OUT);
+  const propertyRules = configured.propertyRules.map((rule) => (rule.tag === 'restFlasks'
+    ? { ...rule, triggers: [...rule.triggers, { on: 'arrived', do: [{ op: 'addRelic', id: 'probeInsomnia' }] }] }
+    : rule));
+  const registries = createRegistries({ ...configured, relics: [...contentBundle.relics, relic], propertyRules });
+  const { run, rng } = marketRun(registries, { innHere: true });
+  run.hp = 5;
+  const quote = innRestPlan(registries, run);
+  assert.equal(quote.ok, true, 'the plan cannot see what the arrival will hand over');
+  const before = JSON.stringify(run);
+  const counters = JSON.stringify(rng.getCounters());
+  assert.throws(() => commitInnRest({ run, registries, rng }, quote), /Probe of Sleeplessness/);
+  assert.equal(JSON.stringify(run), before, 'no relic, no heal, no cinders spent');
+  assert.equal(JSON.stringify(rng.getCounters()), counters, 'no stream moved');
+});
+
+test('the addition stock rolls on shopOffers in written order: armour, then sigils (review, #1374)', () => {
+  // Armour is written before sigils, so a sigil setting never moves the armour
+  // shelf; the sigil shelf does move when the armour shelf draws more.
+  const run = createRunState({ seed: 12, classId: 'reaver', registries: OUT });
+  const base = buildMarketStock(OUT, createRng(12), run, { meta: {} });
+  const moreSigils = registriesWith({ ...ALL_OUT, [`${PREFIX}market.sigils.stock`]: 4 });
+  assert.deepEqual(buildMarketStock(moreSigils, createRng(12), run, { meta: {} }).armour, base.armour);
+  let moved = 0;
+  for (let seed = 1; seed <= 30; seed++) {
+    const r = createRunState({ seed, classId: 'reaver', registries: OUT });
+    const a = buildMarketStock(OUT, createRng(seed), r, { meta: {} });
+    const b = buildMarketStock(registriesWith({ ...ALL_OUT, [`${PREFIX}market.armour.stock`]: 1 }), createRng(seed), r, { meta: {} });
+    if (JSON.stringify(a.sigils) !== JSON.stringify(b.sigils)) moved += 1;
+  }
+  assert.ok(moved > 0, 'the sigil shelf draws after the armour shelf');
+  // The offering roll comes first: the same visit with the additions' chances
+  // at 100 (no draw) and at 99 (one draw each) rolls different stock.
+  const drawn = registriesWith(Object.fromEntries(ADDITIONS_5A.map((id) => [`${PREFIX}market.${id}.chance`, 99])));
+  const c = createRng(12);
+  buildMarketStock(drawn, c, run, { meta: {} });
+  const d = createRng(12);
+  buildMarketStock(OUT, d, run, { meta: {} });
+  assert.ok(c.getCounters().shopOffers >= d.getCounters().shopOffers);
+});
+
+test('a v15 save carrying bought armour and addition stock loads with every field kept (review, #1374)', () => {
+  const fixture = JSON.parse(readFileSync(new URL('./fixtures/market-additions-v15.json', import.meta.url), 'utf8'));
+  const saved = JSON.parse(fixture.bytes);
+  assert.equal(saved.schemaVersion, 15);
+  assert.ok(saved.loadout.boughtArmour.length > 0);
+  assert.ok(saved.sigils.length > 0);
+  const storage = createMemoryStorage();
+  storage.setItem(RUN_KEY, fixture.bytes);
+  const run = createSaveManager(storage).loadRun(OUT);
+  assert.ok(run, 'it loads');
+  assert.deepEqual(run.loadout.boughtArmour, saved.loadout.boughtArmour);
+  assert.deepEqual(run.sigils, saved.sigils);
+  for (const key of ADDITIONS_5A) assert.deepEqual(run.shopStock[key], saved.shopStock[key], key);
+  assert.deepEqual(run.shopStock.offerings, saved.shopStock.offerings);
 });
