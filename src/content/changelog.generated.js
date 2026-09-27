@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Behind the scenes: a hand-rules test comment catches up",
     "detail": "Tests only. The fixed-draw test's comment now works its numbers from the one-row hand stats, counting Intelligence from each row's baseline, instead of the retired weights; the values it checks are unchanged.",
-    "build": "0.7.1.652",
+    "build": "0.7.1.664",
     "pullRequest": 1334,
     "url": "https://github.com/cehinds/AshenSpire/pull/1334"
+  },
+  {
+    "id": "pr-1375",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the rules for buying armour at the market are written down",
+    "detail": "Docs only; nothing you play changes yet. The design document now says the market will sell armour sets of your class that you have not unlocked, for the current run only, that a setting can turn this off, how each set's price is rolled between the lowest and highest armour price, that a set on the shelf stays tied to the class it was stocked for, and where a bought set is recorded in a save. It also says that each shop offering is marked in the data as one that can run out of things to sell or not (relics, armaments, weapon arts, card removal, armour, stones, sigils and the inn rest can; only cards and flasks cannot), that such a shelf is left out when it has nothing on it, and that it never counts toward the least number of shelves a shop must keep switched on, so a shop always has enough shelves that can never come up empty. A shelf whose stock is set to 0 does not count either, and any shelf that comes up empty is left out, as is card removal when no card could be removed. The blacksmith and the wise master are held to this once their screens ship, and content with no cards or utility flasks to sell is refused.",
+    "build": "0.7.1.663",
+    "pullRequest": 1375,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1375"
   },
   {
     "id": "pr-1371",
