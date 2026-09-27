@@ -85,9 +85,9 @@ export const derivedStatRules = {
         starseer: { base: 5, intelligence: 0.5 },
       },
     },
-    // Base 3 since FINISH D22 (owner, 2026-09-27: retain the hand and draw the
-    // Draw stat each turn, up to capacity). The owner asked for about 5 unless
-    // that floods a retained hand; `node tools/runsim.mjs` and a turn census
+    // Base 3 since FINISH D22 (2026-09-27, decided under the owner's
+    // delegation: retain the hand and draw the Draw stat each turn, up to
+    // capacity). The target was about 5 unless that floods a retained hand; `node tools/runsim.mjs` and a turn census
     // showed 5 (and 4) clipped by the hand size of 7 on up to 83% (36%) of
     // turns, so 3 is the largest draw that is never capped at creation. A run
     // born earlier keeps its snapshotted base 2.

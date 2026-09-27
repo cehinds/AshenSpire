@@ -1,4 +1,5 @@
-// A4 hand rules (FINISH D22, owner's ruling 2026-09-27; SPEC §4.1): a solo
+// A4 hand rules (FINISH D22, decided 2026-09-27 under the owner's delegation;
+// SPEC §4.1): a solo
 // fight RETAINS the hand between turns and draws the derived Draw stat each
 // turn, up to the hand size — it neither fills to capacity nor discards at
 // turn end. The Draw row's base is 3 (the largest draw a retained hand of 7 is
