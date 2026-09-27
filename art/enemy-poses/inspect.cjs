@@ -22,7 +22,7 @@ const fs=require('node:fs');
  await page.evaluate(async()=>{
   const base=document.createElement('base');base.href='/';document.head.append(base);
   const {enemySprite}=await import('/src/ui/assets.js');
-  const roster=await (await fetch('/assets/enemy-poses/manifest.json')).json();
+  const roster=await (await fetch('/asset-data/enemy-poses/manifest.json')).json();
   document.body.innerHTML='<main id="test"></main>';
   const css=document.createElement('link');css.rel='stylesheet';css.href='/styles/combat.css';document.head.append(css);
   for(const e of roster.entries){const host=document.createElement('div');host.className='enemy';host.style.display='inline-block';const sprite=document.createElement('div');sprite.className='sprite';sprite.append(enemySprite({...e,size:'medium'}));host.append(sprite);document.querySelector('#test').append(host);}

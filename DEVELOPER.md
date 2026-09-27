@@ -171,7 +171,7 @@ the shared `enemySprite()` asset function. The twelve PNGs in
 `assets/enemies-unity/` are unchanged imports from the Unity fork; retain their
 384px square canvas and common foot anchor when replacing them. Keep the
 original sprite files as fallback assets. See CREDITS.md and the extraction
-manifest beside the images for provenance.
+manifest (`asset-data/enemies-unity/provenance.json`) for provenance.
 Combat stature is presentation-only: `CombatSpriteScaleModel.js` uses the
 encounter pool to keep elites at 1.75x and bosses at 2x (Ashheart Dragon at 3x).
 `combatSpriteGeometry.js` caches visible idle bounds, while painted player
@@ -526,8 +526,9 @@ node tools/startup-gate.mjs --selftest
 
 Changes to the in-run Load door (`confirmSlotLoad`, `resumeRun`) run the real
 Quick Menu → Load path: a newer-build slot must be refused with the run kept,
-and a fight abandoned mid-combat must reload at turn 1 with the same HP, opening
-hand and deck:
+a fight abandoned mid-combat must reload at turn 1 with the same HP, opening
+hand and deck, and a refused load from the in-run overlay's quick navigation
+must return focus to that overlay's launcher:
 
 ```bash
 node tools/slot-load-door.mjs

@@ -102,7 +102,7 @@ ACCENT_CLOTH = make_mat("accentCloth", srgb(*TINTS["gold"]), metallic=0.0, rough
 # The rogue had no builder at all: equipment-blender.py mapped it to build_reaver,
 # which is the silhouette defect the class facelift failed on. Its palette is
 # derived from the one look the owner approved on 2026-09-02 — see
-# assets/classes/LOOK-REFERENCE-ROGUE.md: high chroma held at LOW value, warm
+# asset-data/classes/LOOK-REFERENCE-ROGUE.md: high chroma held at LOW value, warm
 # earth hues, gold as a single clasp rather than a costume.
 #
 # The 60-80 degree olive band is 10.2% of the approved reference and 2.8% of the

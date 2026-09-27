@@ -7,7 +7,7 @@ This supersedes the packet's recorded status. `SUCCESSOR-CONTRACT.md` §2 carrie
 the hub's *Proof Accepted · 20/20 gates · findings 0* for all four; that reading
 is now known-wrong for three of them. See §4 below.
 
-Verify with `node assets/classes/check-look-conformance.mjs`. The reference
+Verify with `node asset-data/classes/check-look-conformance.mjs`. The reference
 envelope is re-measured from the pinned rogue blob on every run, so it cannot
 drift away from the asset it describes.
 
@@ -145,14 +145,14 @@ approved look is an IT Manager III call.
 ## 7. Reproducing
 
 ```
-node assets/classes/check-look-conformance.mjs                # all four vs rogue
-node assets/classes/check-look-conformance.mjs cand.png       # score a candidate
-node assets/classes/check-look-conformance.mjs --selftest     # replay known attacks
+node asset-data/classes/check-look-conformance.mjs                # all four vs rogue
+node asset-data/classes/check-look-conformance.mjs cand.png       # score a candidate
+node asset-data/classes/check-look-conformance.mjs --selftest     # replay known attacks
 ```
 After landing `build_rogue` in `tools/sprites-blender.py`:
 ```
 blender --background --factory-startup --python tools/sprites-blender.py -- <out>
-node assets/classes/check-look-conformance.mjs <out>/rogue_gold.webp
+node asset-data/classes/check-look-conformance.mjs <out>/rogue_gold.webp
 ```
 The renderer emits **WEBP**, so the checker converts it before profiling, using
 whichever of `dwebp`, `ffmpeg`, `magick` or `convert` is installed. With none of
@@ -193,7 +193,7 @@ discriminate art from corruption without adding failures to the ruling.
 each is caught:
 
 ```
-node assets/classes/check-look-conformance.mjs --selftest
+node asset-data/classes/check-look-conformance.mjs --selftest
   → SELFTEST OK: all 2 negative plants correctly caught.
 ```
 

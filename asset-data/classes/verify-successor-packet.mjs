@@ -5,7 +5,7 @@
 // frozen packet bytes and fails on any drift. Read-only: it opens the packet
 // files, writes nothing, and no runtime code path imports it.
 //
-//   node assets/classes/verify-successor-packet.mjs
+//   node asset-data/classes/verify-successor-packet.mjs
 //
 // Exit 0 = the frozen packet still satisfies the recorded acceptance criteria.
 

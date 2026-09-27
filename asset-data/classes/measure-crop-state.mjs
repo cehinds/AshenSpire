@@ -5,10 +5,10 @@
 //
 // Nothing here is asserted: every field this prints is computed from the bytes.
 // Usage:
-//   node assets/classes/measure-crop-state.mjs            human table
-//   node assets/classes/measure-crop-state.mjs --json     full measurement
-//   node assets/classes/measure-crop-state.mjs --emit     write class-assets.manifest.json
-//   node assets/classes/measure-crop-state.mjs --check    regenerate and diff it (exit 1 on drift)
+//   node asset-data/classes/measure-crop-state.mjs            human table
+//   node asset-data/classes/measure-crop-state.mjs --json     full measurement
+//   node asset-data/classes/measure-crop-state.mjs --emit     write class-assets.manifest.json
+//   node asset-data/classes/measure-crop-state.mjs --check    regenerate and diff it (exit 1 on drift)
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
@@ -217,7 +217,7 @@ function buildManifest() {
   return {
     schema: 'ashenspire.class-assets/1',
     ticket: 'AS-HD-040',
-    generated_by: 'assets/classes/measure-crop-state.mjs --emit',
+    generated_by: 'asset-data/classes/measure-crop-state.mjs --emit',
     generated_from_pin: PIN,
     adopted: false,
     authority_note: 'Decision D1 authorises a proof-only successor. This manifest '
