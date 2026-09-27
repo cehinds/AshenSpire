@@ -151,7 +151,13 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     el('span', { class: 'deck-editor-cost', 'aria-hidden': 'true', text: row.costBucket === 'X' ? 'X' : String(row.cost) }),
     el('span', { class: 'deck-editor-name', text: row.name }),
     el('span', { class: 'deck-editor-meta', text: extra }),
-  ];
+    // Unordered, a deck row stands for every copy of its variant (SPEC §14.7).
+    row.countText ? el('span', { class: 'deck-editor-count', title: tFull('deckEditor.count', { count: row.count }), text: row.countText }) : null,
+  ].filter(Boolean);
+
+
+
+
 
   function collectionPane() {
     const list = el('div', { class: 'deck-editor-list', role: 'list' });
@@ -186,7 +192,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         'aria-label': row.locked ? row.lockSentence : tFull('deckEditor.remove', { name: row.name }),
         'aria-disabled': row.removable ? 'false' : 'true',
         title: row.locked ? row.lockSentence : tFull('deckEditor.remove', { name: row.name }),
-      }, cardFace(row, row.locked ? row.lockText : t(`deckEditor.source.${row.source}`))), `row:${row.instanceId}`);
+      }, cardFace(row, row.locked ? row.lockText : t(`deckEditor.source.${row.source}`))), `row:${row.groupKey}`);
       main.addEventListener('click', () => remove(row.instanceId));
       const item = el('div', {
         class: `deck-editor-item deck-editor-row${row.locked ? ' locked' : ''}${held === row.instanceId ? ' held' : ''}`, role: 'listitem',
@@ -215,7 +221,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         type: 'button', class: 'deck-editor-step', dataset: { action: 'remove', instanceId: row.instanceId },
         'aria-label': row.locked ? row.lockSentence : tFull('deckEditor.remove', { name: row.name }),
         'aria-disabled': row.removable ? 'false' : 'true', text: t('deckEditor.remove', { name: row.name }),
-      }), `row-remove:${row.instanceId}`);
+      }), `row-remove:${row.groupKey}`);
       minus.addEventListener('click', () => remove(row.instanceId));
       actions.appendChild(minus);
       list.appendChild(item);

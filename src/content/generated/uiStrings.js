@@ -3160,6 +3160,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "deckEditor.count",
+    "extends": "",
+    "short": "×{count}",
+    "full": "{count} copies in the deck.",
+    "tip": ""
+  },
+  {
     "id": "deckEditor.tile.kept",
     "extends": "",
     "short": "{count} set aside",

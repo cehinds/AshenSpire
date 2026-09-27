@@ -1354,13 +1354,14 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .deck-editor-item { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.3rem; align-items: stretch; min-width: 0; }
 .deck-editor-main {
   flex: 1 1 12em; min-width: 0; min-height: var(--deck-editor-target);
-  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 0.6rem; align-items: center;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 0.6rem; align-items: center;
   padding: 0.3rem 0.8rem; text-align: start; font: inherit; color: inherit; cursor: pointer;
   background: var(--bg-raise); border: 1px solid var(--line); border-radius: 4px;
 }
 .deck-editor-actions { display: flex; gap: 0.3rem; flex: none; }
 .deck-editor-cost { grid-row: 1 / span 2; display: grid; place-items: center; width: 2.4em; height: 2.4em; border-radius: 50%; border: 1px solid var(--gold); color: var(--gold); font-weight: 700; }
 .deck-editor-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deck-editor-count { grid-column: 3; grid-row: 1 / span 2; align-self: center; font-weight: 700; color: var(--gold); font-variant-numeric: tabular-nums; }
 .deck-editor-meta { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .deck-editor-step {
   flex: none; min-width: var(--deck-editor-target); min-height: var(--deck-editor-target); padding: 0 0.6rem;

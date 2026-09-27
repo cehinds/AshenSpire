@@ -220,9 +220,26 @@ export function deckEditorModel({ registries, run, settings = {}, view = {} }) {
       removable: !locked,
     };
   }).filter((row) => passes(row, state.filters));
-  if (!ordered) deckRows.sort(sorter(state.sort));
+  // SPEC §14.7: unordered, the deck list is ONE ROW PER VARIANT with a ×N
+  // count (the key the collection tiles use, plus the owner for a locked
+  // card, so two pieces' grants never merge); its － takes the last copy. In
+  // Play in deck order each copy is its own row so it can be placed.
+  if (!ordered) {
+    const groups = new Map();
+    for (const row of deckRows) {
+      const card = deck[row.index];
+      const key = `${deckVariantKey(card)}~${row.locked ? String(card.grantedBy || card.equipmentRole) : ''}~${card.equipmentRole || ''}`;
+      const group = groups.get(key);
+      if (group) { group.instanceIds.push(row.instanceId); group.instanceId = row.instanceId; group.index = row.index; }
+      else groups.set(key, { ...row, groupKey: key, instanceIds: [row.instanceId] });
+    }
+    deckRows = [...groups.values()].sort(sorter(state.sort));
+  } else deckRows = deckRows.map((row) => ({ ...row, groupKey: row.instanceId, instanceIds: [row.instanceId] }));
   deckRows = deckRows.map((row) => Object.freeze({
     ...row,
+    instanceIds: Object.freeze(row.instanceIds),
+    count: row.instanceIds.length,
+    countText: row.instanceIds.length > 1 ? t('deckEditor.count', { count: row.instanceIds.length }) : '',
     canUp: ordered && row.index > 0,
     canDown: ordered && row.index < deck.length - 1,
   }));
