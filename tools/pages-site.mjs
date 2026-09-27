@@ -12,7 +12,8 @@
 // branch, the first-parent commits that touched buildordinal.json name the
 // builds; each commit's buildordinal.json gives ordinal, digest and date; that
 // commit's AshenSpire.html IS the build, copied byte-for-byte (the check below
-// proves it). The version triple is read out of the copied bundle itself
+// proves it). A build commit that no longer carries its HTML (dev since #1332)
+// is rebuilt from that commit's source under --build-missing; see BUILD_MISSING. The version triple is read out of the copied bundle itself
 // (`version: '…'` in src/content/index.js), so a bump shows up here without an
 // edit. The changelog link points at CHANGELOG.md AT THAT COMMIT, not at a
 // moving branch head, so a build's changelog stays the one it shipped with.
@@ -24,17 +25,20 @@
 //
 // USAGE
 //   node tools/pages-site.mjs --out _site [--keep 12] [--branches dev,test,release,main] [--remote origin]
+//                             [--main-build <dir>] [--build-missing <workdir>]
 //   node tools/pages-site.mjs --check _site        re-verify an assembled site against git
 //   node tools/pages-site.mjs --selftest           generate into a temp dir with --keep 1 and verify
 //
 // VERDICT (tools/verdict.mjs form): "pages-site: OK — N checks passed", where a
-// check is one build page proven byte-identical to its git blob, plus one per
+// check is one build page proven byte-identical to its git blob (or, for a build
+// no longer committed, to the rebuild made from its commit), plus one per
 // index page proven to link every build it lists.
 import { readGitArtifact } from './git-artifact.mjs';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, cpSync, readdirSync, statSync, mkdtempSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -50,6 +54,24 @@ const KEEP = Math.max(1, Number(flag('--keep', '10')) || 10);
 // main's source. Needed once main no longer commits its build (the Git LFS budget
 // ran out, 2026-09-26): without it the stable Play links at the site root 404.
 const MAIN_BUILD = flag('--main-build', null);
+// BUILDS THAT ARE NO LONGER COMMITTED ARE REBUILT FROM THEIR COMMIT'S SOURCE.
+//
+// Since 2026-09-26 (#1332) dev commits no built HTML; test, release and main
+// follow as they are promoted. A build commit still writes buildordinal.json,
+// so git still NAMES every build — it just no longer holds the file. With
+// `--build-missing <workdir>`, each such build newer than the branch's last
+// committed one is rebuilt here: one reusable sparse worktree (art/ left out;
+// the bundle never reads it), `node tools/launch.mjs --build-only` at that
+// commit, in the art tier CI gives the branch (light on dev/test, --full-art on
+// release/main, as dev-preview.yml does). A rebuild that leaves the worktree
+// dirty moved the committed box: it is not the build that commit names, so it
+// is skipped and said to be, never published.
+//
+// Why rebuild rather than download each commit's dev-preview artifact: it
+// needs no Actions token, cannot race the dev-preview run of the same push,
+// and does not expire after 14 days. It costs about 20 s per light build.
+const BUILD_MISSING = flag('--build-missing', null);
+const FULL_ART_BRANCHES = new Set(['release', 'main']);
 // A BRANCH'S ROLE IS READ FROM THE CONTRACT THAT GOVERNS IT, not typed here.
 // `.agentops/governance/git-ownership.json` already carries one note per ref and
 // is the thing that actually decides who may write to each; duplicating that
@@ -128,16 +150,23 @@ function buildsOf(branch, keep) {
   const log = git(['log', '--first-parent', '--format=%H%x09%cI', ref, '--', 'buildordinal.json']).trim();
   const seen = new Set();
   const out = [];
+  let committedSeen = false;
   for (const line of log ? log.split('\n') : []) {
     const [sha, date] = line.split('\t');
     let meta;
     try { meta = JSON.parse(git(['show', `${sha}:buildordinal.json`])); } catch { continue; }
     const ordinal = Number(meta.ordinal);
     if (!Number.isInteger(ordinal) || seen.has(ordinal)) continue;
-    // A build is only a build if its artifact is at that commit.
-    try { git(['cat-file', '-e', `${sha}:AshenSpire.html`]); } catch { continue; }
+    // A committed build is the artifact at that commit. A commit with no
+    // artifact is a build only when it is NEWER than the branch's last
+    // committed one (the branch stopped committing its build) and this run
+    // may rebuild it; older gaps are commits that never shipped a build.
+    let committed = true;
+    try { git(['cat-file', '-e', `${sha}:AshenSpire.html`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { committed = false; }
+    if (!committed && (committedSeen || !BUILD_MISSING)) continue;
+    if (committed) committedSeen = true;
     seen.add(ordinal);
-    out.push({ branch, ordinal, digest: String(meta.digest || ''), built: String(meta.built || date.slice(0, 10)), sha, date });
+    out.push({ branch, ordinal, digest: String(meta.digest || ''), built: String(meta.built || date.slice(0, 10)), sha, date, source: committed ? 'git' : 'rebuild' });
     if (out.length >= keep) break;
   }
   // SINCE 2026-09-26 dev DOES NOT COMMIT ITS BUILD (the Git LFS budget ran out),
@@ -146,13 +175,114 @@ function buildsOf(branch, keep) {
   // presenting its last committed build as its latest.
   let headTracksBuild = true;
   try { git(['cat-file', '-e', `${ref}:AshenSpire.html`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { headTracksBuild = false; }
-  return { ref, head: git(['rev-parse', ref]).trim(), builds: out, headTracksBuild };
+  let headOrdinal = null;
+  try { headOrdinal = Number(JSON.parse(git(['show', `${ref}:buildordinal.json`])).ordinal); } catch { /* no box at head */ }
+  return { ref, head: git(['rev-parse', ref]).trim(), builds: out, headTracksBuild, headOrdinal };
 }
 
+// Builds skipped this run, each with its reason — printed above the verdict and
+// on the branch's page, so a gap in the list is explained rather than silent.
+const skippedBuilds = [];
+function skip(b, reason) {
+  skippedBuilds.push({ branch: b.branch, ordinal: b.ordinal, sha: b.sha, reason });
+  if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site skipped ${b.branch}/${b.ordinal}::${reason}`);
+}
+
+/**
+ * A committed artifact, or null when its bytes can no longer be fetched (the
+ * LFS objects of old builds are due to be purged — docs/ART-REPO-PLAN.md step
+ * 7). A pointer whose content does not match is still fatal: that is
+ * corruption, not absence.
+ */
+function committedArtifact(sha, path) {
+  try { return readGitArtifact(ROOT, sha, path); } catch (error) {
+    if (/does not match|Malformed/.test(error.message)) throw error;
+    return null;
+  }
+}
+
+const rebuilt = new Map();   // `${sha}:${tier}` → { dir } | { error }
+let buildTree = null;
+/** Rebuild one commit's standalone from source; returns { dir } or { error }. */
+function rebuildAt(sha, fullArt) {
+  const key = `${sha}:${fullArt ? 'full' : 'light'}`;
+  if (rebuilt.has(key)) return rebuilt.get(key);
+  const env = { ...process.env, GIT_LFS_SKIP_SMUDGE: '1' };
+  const run = (cmd, args, cwd) => execFileSync(cmd, args, { cwd, env, encoding: 'utf8', maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'pipe'] });
+  let result;
+  try {
+    if (!buildTree) {
+      buildTree = join(resolve(BUILD_MISSING), 'tree');
+      rmSync(buildTree, { recursive: true, force: true });
+      try { run('git', ['worktree', 'prune'], ROOT); } catch { /* nothing to prune */ }
+      run('git', ['worktree', 'add', '--no-checkout', '--detach', buildTree, sha], ROOT);
+      run('git', ['sparse-checkout', 'set', '--no-cone', '/*', '!/art/'], buildTree);
+    }
+    run('git', ['checkout', '--force', '--detach', sha], buildTree);
+    run('git', ['clean', '-ffdxq'], buildTree);
+    const t0 = Date.now();
+    run(process.execPath, ['tools/launch.mjs', '--build-only', ...(fullArt ? ['--full-art'] : [])], buildTree);
+    // The same gate every build workflow applies: a rebuild that rewrote the
+    // committed box is not the build this commit names.
+    const dirty = run('git', ['status', '--porcelain'], buildTree).trim();
+    if (dirty) throw new Error(`the rebuild changed committed files (${dirty.split('\n').slice(0, 3).join('; ')}) — not the build this commit names`);
+    const dir = join(resolve(BUILD_MISSING), 'out', key.replace(':', '-'));
+    mkdirSync(dir, { recursive: true });
+    for (const artifact of ['AshenSpire.html', MOBILE_ARTIFACT]) {
+      if (existsSync(join(buildTree, artifact))) cpSync(join(buildTree, artifact), join(dir, artifact));
+    }
+    console.log(`  rebuilt ${sha.slice(0, 10)} (${fullArt ? 'full' : 'light'} art) in ${Math.round((Date.now() - t0) / 1000)}s`);
+    result = { dir };
+  } catch (error) {
+    const detail = String(error.stderr || error.message || error).trim().split('\n').slice(-2).join(' ');
+    result = { error: `rebuild failed: ${detail}` };
+  }
+  rebuilt.set(key, result);
+  return result;
+}
+
+/** The HTML (and mobile HTML, or null) a listed build serves, or { error }. */
+function artifactsOf(b) {
+  if (b.source === 'git') {
+    const html = committedArtifact(b.sha, 'AshenSpire.html');
+    if (!html) return { error: 'its committed HTML can no longer be fetched (LFS object unavailable)' };
+    // ONLY THE EXISTENCE PROBE IS GUARDED. A build that predates the mobile
+    // edition is the expected case; a mobile pointer that fails its SHA-256 is
+    // corruption and committedArtifact throws it.
+    let hasMobile = true;
+    try { git(['cat-file', '-e', `${b.sha}:${MOBILE_ARTIFACT}`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { hasMobile = false; }
+    return { html, mobile: hasMobile ? committedArtifact(b.sha, MOBILE_ARTIFACT) : null };
+  }
+  const fullArt = FULL_ART_BRANCHES.has(b.branch);
+  const seeded = MAIN_BUILD && b.branch === 'main' && b.sha === mainHeadSha ? { dir: resolve(MAIN_BUILD) } : null;
+  const r = seeded || rebuildAt(b.sha, fullArt);
+  if (r.error) return r;
+  const html = readFileSync(join(r.dir, 'AshenSpire.html'));
+  // THE REBUILD MUST CARRY THE SOURCE DIGEST ITS COMMIT'S BOX NAMES — the
+  // bundle stamps it into the title screen, so a file built from other source
+  // cannot pass.
+  if (b.digest && !html.includes(b.digest)) return { error: `the rebuilt HTML does not carry src digest ${b.digest}` };
+  const mobilePath = join(r.dir, MOBILE_ARTIFACT);
+  return { html, mobile: existsSync(mobilePath) ? readFileSync(mobilePath) : null };
+}
+const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
+let mainHeadSha = null;
+
 /** The note a branch that no longer commits its build carries, or ''. */
-function uncommittedNote(branch, headTracksBuild) {
-  if (headTracksBuild !== false) return '';
-  return `<p class="meta"><strong>Newer ${esc(branch)} builds are not committed</strong> — each commit's build is the <code>${esc(branch)}-standalone-&lt;commit&gt;</code> artifact of the <a href="${REPO_URL}/actions/workflows/dev-preview.yml?query=branch%3A${encodeURIComponent(branch)}">dev preview workflow</a>. The builds listed here are the last ones committed.</p>`;
+function uncommittedNote(branch, current) {
+  if (current) return '';
+  return `<p class="meta"><strong>This branch's newest build is not on this site</strong> — it is not committed and was not rebuilt here. Each commit's build is the <code>${esc(branch)}-standalone-&lt;commit&gt;</code> artifact of the <a href="${REPO_URL}/actions/workflows/dev-preview.yml?query=branch%3A${encodeURIComponent(branch)}">dev preview workflow</a>. The builds listed here are older.</p>`;
+}
+/** Whether the newest listed build IS the branch head's build (so /latest/ may alias it). */
+function isCurrent(d) {
+  const b = d.builds[0];
+  if (!b) return d.headTracksBuild !== false;
+  return d.headTracksBuild !== false || (d.headOrdinal != null && b.ordinal === d.headOrdinal);
+}
+function skippedNote(branch) {
+  const mine = skippedBuilds.filter((s) => s.branch === branch);
+  if (!mine.length) return '';
+  return `<p class="meta"><strong>Not served:</strong> ${mine.map((s) => `${esc(branch)}/${s.ordinal} (<a href="${REPO_URL}/commit/${s.sha}">${s.sha.slice(0, 10)}</a>) — ${esc(s.reason)}`).join('; ')}</p>`;
 }
 
 function versionIn(html) {
@@ -231,7 +361,7 @@ function tableDownload(rel, b, edition) {
 
 function rowsTable(builds, rel) {
   return `<table><thead><tr><th>Build</th><th class="mono">Stamp</th><th>Built</th><th>Full download</th><th>Mobile download</th><th>Commit</th><th>Changelog</th></tr></thead><tbody>${
-    builds.map((b, i) => `<tr><td><a href="${rel}${b.branch}/${b.ordinal}/">${b.branch}/${b.ordinal}</a>${i === 0 ? ' <em>(latest)</em>' : ''}</td><td class="mono">${esc(stampOf(b))}</td><td>${esc(b.built)}</td><td>${tableDownload(rel, b, 'full')}</td><td>${tableDownload(rel, b, 'mobile')}</td><td class="mono"><a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a></td><td><a href="${changelogUrl(b)}">CHANGELOG at this build</a></td></tr>`).join('')
+    builds.map((b, i) => `<tr><td><a href="${rel}${b.branch}/${b.ordinal}/">${b.branch}/${b.ordinal}</a>${i === 0 ? ' <em>(latest)</em>' : ''}${b.source === 'rebuild' ? ' <span class="meta">rebuilt from source</span>' : ''}</td><td class="mono">${esc(stampOf(b))}</td><td>${esc(b.built)}</td><td>${tableDownload(rel, b, 'full')}</td><td>${tableDownload(rel, b, 'mobile')}</td><td class="mono"><a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a></td><td><a href="${changelogUrl(b)}">CHANGELOG at this build</a></td></tr>`).join('')
   }</tbody></table>`;
 }
 
@@ -344,17 +474,18 @@ function titleOf(file) {
 }
 
 function rootIndex(branchData, generatedAt, otherPages) {
-  const cards = branchData.map(({ branch, builds, headTracksBuild }) => {
+  const cards = branchData.map((d) => {
+    const { branch, builds } = d;
     const b = builds[0];
-    if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p><p class="meta">no build found on this branch</p>${uncommittedNote(branch, headTracksBuild)}</section>`;
-    return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p>${uncommittedNote(branch, headTracksBuild)}
+    if (!b) return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p><p class="meta">no build found on this branch</p>${uncommittedNote(branch, isCurrent(d))}</section>`;
+    return `<section class="card"><h3>${esc(branch)}</h3><p class="role">${esc(BRANCH_ROLE[branch] || NO_ROLE)}</p>${uncommittedNote(branch, isCurrent(d))}
 <p class="stamp">${esc(stampOf(b))}</p><p class="meta">built ${esc(b.built)} · commit <a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a> · <a href="${changelogUrl(b)}">changelog</a></p>
 <a class="play" href="${branch}/${b.ordinal}/">Play ${esc(branch)} ${b.ordinal}</a>${b.mobileBytes ? ` <a class="play" href="${branch}/${b.ordinal}/mobile/">Play mobile</a>` : ''} ${downloadButtons('', b, '')} <a href="${branch}/">all ${esc(branch)} builds (${builds.length})</a></section>`;
   }).join('\n');
   const all = branchData.flatMap((d) => d.builds).sort((a, b) => b.ordinal - a.ordinal);
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — builds</title><style>${CSS}</style></head><body><main>
 <h1>AshenSpire — every build, by branch</h1>
-<p class="lead">Each build is the exact <code>AshenSpire.html</code> that commit shipped, served at <code>/&lt;branch&gt;/&lt;build&gt;/</code>, and its mobile edition <code>AshenSpire-mobile.html</code> at <code>/&lt;branch&gt;/&lt;build&gt;/mobile/</code>. The stamp here is the one the game shows on its title screen.</p>
+<p class="lead">Each build is the <code>AshenSpire.html</code> that commit shipped — the committed file byte for byte, or, for a commit that no longer commits its build, rebuilt here from that commit's source and checked against the source digest its <code>buildordinal.json</code> names — served at <code>/&lt;branch&gt;/&lt;build&gt;/</code>, and its mobile edition <code>AshenSpire-mobile.html</code> at <code>/&lt;branch&gt;/&lt;build&gt;/mobile/</code>. The stamp here is the one the game shows on its title screen.</p>
 <div class="grid">${cards}</div>
 <div class="note"><strong>Two downloads, one game.</strong> <em>Full</em> is the whole game with its art as painted. <em>Mobile</em> is the same build with every image shrunk to under a third of its size and recompressed, held under 30 MB — the one to take on a phone or a slow connection; it plays the same, looks softer. Both are single self-contained <code>.html</code> files: the link saves the file straight from this site (the path that works on phones, where the in-game downloader cannot hold the whole file in memory), and the saved file plays offline in any browser. Use <em>Export saves</em> in the game to carry saves across; saves are compatible between the two editions.</div>
 <div class="note">Saves live in this site's browser storage and are shared between builds; a build that cannot read a save archives it by name instead of losing it. <strong>main</strong> is the stable line; <strong>dev</strong> is unreviewed integration work.</div>
@@ -366,7 +497,7 @@ ${otherPages.length ? `<ul>${otherPages.map((pg) => `<li><a href="${esc(pg.href)
 </main></body></html>`;
 }
 
-function branchIndex(branch, builds, head, generatedAt, headTracksBuild = true) {
+function branchIndex(branch, builds, head, generatedAt, current = true) {
   // NO HEAD MEANS THE BRANCH IS GONE, and the page says exactly that rather
   // than linking a commit that does not exist. `head` is null only on that
   // path — buildsOf returns it for a branch with no ref.
@@ -375,9 +506,10 @@ function branchIndex(branch, builds, head, generatedAt, headTracksBuild = true) 
     : '<b>this branch does not exist on the remote</b> — nothing to publish for it';
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — ${esc(branch)} builds</title><style>${CSS}</style></head><body><main>
 <p><a href="../">← all branches</a></p><h1>${esc(branch)} builds</h1><p class="lead">${esc(BRANCH_ROLE[branch] || NO_ROLE)} · ${headLine}</p>
-${uncommittedNote(branch, headTracksBuild)}
-${builds.length && headTracksBuild === false ? `<p><a class="play" href="${builds[0].ordinal}/">Play last committed (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play last committed mobile</a>` : ''}</p>` : ''}
-${builds.length && headTracksBuild !== false ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons('../', builds[0], ` latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
+${uncommittedNote(branch, current)}
+${skippedNote(branch)}
+${builds.length && !current ? `<p><a class="play" href="${builds[0].ordinal}/">Play newest listed (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play newest listed mobile</a>` : ''}</p>` : ''}
+${builds.length && current ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons('../', builds[0], ` latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
 <p class="meta">A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 30 MB. On a phone or tablet, download from here rather than from inside the game.</p>` : (builds.length ? '' : '<p class="meta">no build on this branch</p>')}
 ${rowsTable(builds, '../')}
 <footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code>.</footer></main></body></html>`;
@@ -404,12 +536,21 @@ function assemble(outDir, keep) {
     MOBILE_ARTIFACT, `build/${MOBILE_ARTIFACT}`, `dist/${MOBILE_ARTIFACT}`]) {
     if (existsSync(join(outDir, artifact))) writeFileSync(join(outDir, artifact), readGitArtifact(ROOT, mainRef, artifact));
   }
+  mainHeadSha = git(['rev-parse', mainRef]).trim();
   // THE STABLE PLAY LINKS (README: /AshenSpire.html, /AshenSpire-mobile.html).
-  // A main tree that no longer tracks them gets main's CI build instead; with no
-  // build handed in, the run fails rather than publishing a site whose primary
-  // links are 404s.
+  // A main tree that no longer tracks its build gets main's CI build instead;
+  // with no build handed in, the run fails rather than publishing a site whose
+  // primary link is a 404.
+  //
+  // A main tree that DOES track AshenSpire.html but predates the mobile edition
+  // (0.6.0, 2026-09-13 — the edition arrived on 2026-09-20) has no mobile file
+  // to serve and never had one; demanding it failed every run from 2026-09-26
+  // ("main's tree carries no AshenSpire-mobile.html"). That link is absent
+  // until main is promoted past the edition, and the run says so.
+  const mainTracksBuild = existsSync(join(outDir, 'AshenSpire.html'));
   for (const artifact of ['AshenSpire.html', MOBILE_ARTIFACT]) {
     if (existsSync(join(outDir, artifact))) continue;
+    if (mainTracksBuild) { console.log(`  note: main's committed build predates ${artifact}; /${artifact} is not served until main is promoted past it`); continue; }
     if (!MAIN_BUILD) throw new Error(`main's tree carries no ${artifact} — pass --main-build <dir> holding a build of main's source, or the stable Play link at /${artifact} 404s`);
     cpSync(resolve(MAIN_BUILD, artifact), join(outDir, artifact));
   }
@@ -424,32 +565,34 @@ function assemble(outDir, keep) {
   let checks = 0;
   const branchData = [];
   for (const branch of BRANCHES) {
-    const { head, builds, headTracksBuild } = buildsOf(branch, keep);
+    const { head, builds: listed, headTracksBuild, headOrdinal } = buildsOf(branch, keep);
+    // Fetch or rebuild every listed build FIRST, so one that cannot be served
+    // leaves the list (named in skippedBuilds) before any page links it.
+    const served = new Map();
+    for (const b of listed) {
+      const a = artifactsOf(b);
+      if (a.error) skip(b, a.error); else served.set(b, a);
+    }
+    const builds = listed.filter((b) => served.has(b));
     for (const b of builds) {
-      const html = readGitArtifact(ROOT, b.sha, 'AshenSpire.html');
+      const { html, mobile: mobileHtml } = served.get(b);
       b.version = versionIn(html.toString('latin1'));
       b.bytes = html.length;
+      b.sha256 = sha256(html);
       const dir = join(outDir, branch, String(b.ordinal));
       mkdirSync(dir, { recursive: true });
       writeFileSync(join(dir, 'index.html'), html);
-      // THE MOBILE EDITION, WHERE THE COMMIT HAS ONE. Read by the same door
-      // (readGitArtifact hydrates and verifies the LFS pointer), served beside
-      // the full file, proven the same way below. `mobileBytes` is the fact
-      // every page reads to decide whether to offer the second link.
-      // ONLY THE EXISTENCE PROBE IS GUARDED. A build that predates the edition
-      // is the expected case (stderr dropped, nothing printed); a build that HAS
-      // the file and cannot hydrate it — an unfetched LFS object, a size or
-      // SHA-256 mismatch — is a failure readGitArtifact throws, and it must
-      // take the run down rather than publish the build without its mobile
-      // link and call that "predates".
-      let hasMobile = true;
-      try { git(['cat-file', '-e', `${b.sha}:${MOBILE_ARTIFACT}`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { hasMobile = false; }
+      // THE MOBILE EDITION, WHERE THE BUILD HAS ONE: a committed mobile file,
+      // or the one a --full-art rebuild writes (a light build has none — it IS
+      // the phone-sized file). `mobileBytes` is the fact every page reads to
+      // decide whether to offer the second link.
+      const hasMobile = Boolean(mobileHtml);
       if (hasMobile) {
-        const mobileHtml = readGitArtifact(ROOT, b.sha, MOBILE_ARTIFACT);
         mkdirSync(join(dir, 'mobile'), { recursive: true });
         writeFileSync(join(dir, 'mobile', 'index.html'), mobileHtml);
-        if (Buffer.compare(readFileSync(join(dir, 'mobile', 'index.html')), mobileHtml) !== 0) throw new Error(`${branch}/${b.ordinal}: written mobile build differs from git blob`);
+        if (Buffer.compare(readFileSync(join(dir, 'mobile', 'index.html')), mobileHtml) !== 0) throw new Error(`${branch}/${b.ordinal}: written mobile build differs from its source`);
         b.mobileBytes = mobileHtml.length;
+        b.mobileSha256 = sha256(mobileHtml);
         checks++;
       }
       // Detail belongs to this exact build, not main's potentially older art.
@@ -479,15 +622,17 @@ function assemble(outDir, keep) {
           writeFileSync(destination, blob);
         }
       }
-      writeFileSync(join(dir, 'build.json'), JSON.stringify({ branch, ordinal: b.ordinal, version: b.version, bytes: html.length, mobileBytes: b.mobileBytes ?? null, digest: b.digest, built: b.built, commit: b.sha, changelog: changelogUrl(b), stamp: stampOf(b) }, null, 2) + '\n');
-      // The proof: what was written is the blob, byte for byte.
-      if (Buffer.compare(readFileSync(join(dir, 'index.html')), html) !== 0) throw new Error(`${branch}/${b.ordinal}: written build differs from git blob`);
+      writeFileSync(join(dir, 'build.json'), JSON.stringify({ branch, ordinal: b.ordinal, version: b.version, bytes: html.length, mobileBytes: b.mobileBytes ?? null, digest: b.digest, built: b.built, commit: b.sha, source: b.source, changelog: changelogUrl(b), stamp: stampOf(b) }, null, 2) + '\n');
+      // The proof: what was written is the blob (or the rebuild), byte for byte.
+      if (Buffer.compare(readFileSync(join(dir, 'index.html')), html) !== 0) throw new Error(`${branch}/${b.ordinal}: written build differs from its source`);
       checks++;
     }
-    // NO /latest/ FOR A BRANCH THAT STOPPED COMMITTING ITS BUILD: its newest
-    // listed build is only its last COMMITTED one, and an alias called latest
-    // would launch an ever-staler game. The page says where newer builds are.
-    if (builds[0] && headTracksBuild !== false) {
+    // /latest/ ONLY WHEN THE NEWEST LISTED BUILD IS THE HEAD'S BUILD — committed,
+    // or rebuilt from the head's source. Otherwise the newest listed build is
+    // an older one, and an alias called latest would launch an ever-staler
+    // game; the page says where newer builds are instead.
+    const current = isCurrent({ builds, headTracksBuild, headOrdinal });
+    if (builds[0] && current) {
       const latest = join(outDir, branch, 'latest');
       mkdirSync(latest, { recursive: true });
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'index.html'), join(latest, 'index.html'));
@@ -500,11 +645,11 @@ function assemble(outDir, keep) {
       if (existsSync(mobile)) cpSync(mobile, join(latest, 'mobile'), { recursive: true });
     }
     mkdirSync(join(outDir, branch), { recursive: true });
-    const idx = branchIndex(branch, builds, head, generatedAt, headTracksBuild);
+    const idx = branchIndex(branch, builds, head, generatedAt, current);
     writeFileSync(join(outDir, branch, 'index.html'), idx);
     for (const b of builds) if (!idx.includes(`href="../${branch}/${b.ordinal}/"`)) throw new Error(`${branch} index does not link build ${b.ordinal}`);
     checks++;
-    branchData.push({ branch, head, builds, headTracksBuild });
+    branchData.push({ branch, head, builds, headTracksBuild, headOrdinal });
   }
   // Discovered AFTER the branch directories exist, so this tool's own output is
   // excluded by name-of-thing-we-just-wrote rather than by a hardcoded list.
@@ -525,7 +670,8 @@ function assemble(outDir, keep) {
       checks++;
     }
   }
-  writeFileSync(join(outDir, 'builds.json'), JSON.stringify({ generatedAt, keep, otherPages, branches: branchData.map((d) => ({ branch: d.branch, head: d.head, builds: d.builds.map((b) => ({ ...b, stamp: stampOf(b), changelog: changelogUrl(b) })) })) }, null, 2) + '\n');
+  if (buildTree) { try { execFileSync('git', ['worktree', 'remove', '--force', buildTree], { cwd: ROOT, stdio: 'ignore' }); } catch { /* left for the runner to discard */ } buildTree = null; }
+  writeFileSync(join(outDir, 'builds.json'), JSON.stringify({ generatedAt, keep, otherPages, skipped: skippedBuilds, branches: branchData.map((d) => ({ branch: d.branch, head: d.head, builds: d.builds.map((b) => ({ ...b, stamp: stampOf(b), changelog: changelogUrl(b) })) })) }, null, 2) + '\n');
   return { checks, branchData };
 }
 
@@ -533,20 +679,28 @@ function check(outDir) {
   const manifest = JSON.parse(readFileSync(join(outDir, 'builds.json'), 'utf8'));
   let checks = 0;
   for (const d of manifest.branches) for (const b of d.builds) {
-    const blob = readGitArtifact(ROOT, b.sha, 'AshenSpire.html');
+    // A committed build is proven against its git blob; a rebuilt one against
+    // the SHA-256 recorded when it was built and the digest its commit names.
+    const rebuiltBuild = b.source === 'rebuild';
+    const expectedFile = (path, hash) => {
+      const onDisk = readFileSync(path);
+      if (!rebuiltBuild) return null;
+      return sha256(onDisk) === hash && (!b.digest || onDisk.includes(b.digest)) ? onDisk : Buffer.from('');
+    };
+    const blob = rebuiltBuild ? expectedFile(join(outDir, d.branch, String(b.ordinal), 'index.html'), b.sha256) : readGitArtifact(ROOT, b.sha, 'AshenSpire.html');
     const onDisk = readFileSync(join(outDir, d.branch, String(b.ordinal), 'index.html'));
     const download = JSON.parse(readFileSync(join(outDir, d.branch, String(b.ordinal), 'build.json'), 'utf8'));
     if (download.bytes !== onDisk.length || download.ordinal !== b.ordinal || download.version !== b.version) {
       console.error(`DOWNLOAD DRIFT ${d.branch}/${b.ordinal}: metadata differs from the downloadable file`); process.exitCode = 1;
     } else checks++;
-    if (Buffer.compare(blob, onDisk) !== 0) { console.error(`DRIFT ${d.branch}/${b.ordinal}: site file differs from git blob ${b.sha.slice(0, 10)}`); process.exitCode = 1; }
+    if (Buffer.compare(blob, onDisk) !== 0) { console.error(`DRIFT ${d.branch}/${b.ordinal}: site file differs from ${rebuiltBuild ? 'the recorded rebuild of' : 'git blob'} ${b.sha.slice(0, 10)}`); process.exitCode = 1; }
     else checks++;
     if (b.mobileBytes) {
-      const mobileBlob = readGitArtifact(ROOT, b.sha, MOBILE_ARTIFACT);
+      const mobileBlob = rebuiltBuild ? expectedFile(join(outDir, d.branch, String(b.ordinal), 'mobile', 'index.html'), b.mobileSha256) : readGitArtifact(ROOT, b.sha, MOBILE_ARTIFACT);
       const mobileOnDisk = readFileSync(join(outDir, d.branch, String(b.ordinal), 'mobile', 'index.html'));
       if (download.mobileBytes !== mobileOnDisk.length) { console.error(`DOWNLOAD DRIFT ${d.branch}/${b.ordinal}/mobile: metadata differs from the downloadable file`); process.exitCode = 1; }
       else checks++;
-      if (Buffer.compare(mobileBlob, mobileOnDisk) !== 0) { console.error(`DRIFT ${d.branch}/${b.ordinal}/mobile: site file differs from git blob ${b.sha.slice(0, 10)}`); process.exitCode = 1; }
+      if (Buffer.compare(mobileBlob, mobileOnDisk) !== 0) { console.error(`DRIFT ${d.branch}/${b.ordinal}/mobile: site file differs from ${rebuiltBuild ? 'the recorded rebuild of' : 'git blob'} ${b.sha.slice(0, 10)}`); process.exitCode = 1; }
       else checks++;
     }
   }
@@ -639,7 +793,7 @@ function discoveryFixture() {
 }
 
 function boundary() {
-  console.log(`BOUNDARY: this proves each served build is byte-identical to the commit it names and that every index links every build it lists. It does not run any build, does not prove a build boots, and lists only the newest ${KEEP} builds per branch — older ordinals are in git, not on this site.`);
+  console.log(`BOUNDARY: this proves each committed build served is byte-identical to its git blob, each rebuilt one carries the source digest its commit's buildordinal.json names and left the committed box unmoved, and every index links every build it lists. It does not prove a build boots, and lists only the newest ${KEEP} builds per branch — older ordinals are in git, not on this site.`);
 }
 
 try {
@@ -654,8 +808,8 @@ try {
     const dir = mkdtempSync(join(tmpdir(), 'pages-site-selftest-'));
     const { checks, branchData } = assemble(dir, 1);
     // Plant: corrupt one served build and prove --check goes red for it by name.
-    const victim = branchData.find((d) => d.builds[0]);
-    if (!victim) throw new Error('selftest needs at least one branch with a build');
+    const victim = branchData.find((d) => d.builds[0] && d.builds[0].source === 'git');
+    if (!victim) throw new Error('selftest needs at least one branch with a committed build');
     const f = join(dir, victim.branch, String(victim.builds[0].ordinal), 'index.html');
     writeFileSync(f, Buffer.concat([readFileSync(f), Buffer.from('\n<!-- planted -->\n')]));
     // Two checks per served edition: metadata, then bytes. The planted drift
@@ -745,6 +899,7 @@ try {
     for (const d of branchData) console.log(`  ${d.branch}: ${d.builds.length} build(s), latest ${d.builds[0] ? stampOf(d.builds[0]) : 'none'}`);
     // Named on its own line, above the verdict, so it cannot hide inside a green.
     if (missingBranches.length) console.log(`  MISSING: ${missingBranches.join(', ')} — no such branch on ${REMOTE}; assembled without it`);
+    for (const s of skippedBuilds) console.log(`  SKIPPED ${s.branch}/${s.ordinal} (${s.sha.slice(0, 10)}): ${s.reason}`);
     console.log(`pages-site: OK — ${checks} checks passed`);
   }
   boundary();
