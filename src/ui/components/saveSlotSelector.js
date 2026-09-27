@@ -582,6 +582,23 @@ export function saveSlotCopyHtml({ slot, summary }) {
 }
 
 /**
+ * openRefusedSaveNotice({ slot, returnFocusElement }) — the in-run Load door's
+ * landing when loadRun refuses a slot that is not newer (content validation,
+ * migration, or another tab cleared it): the live run was never swapped, and
+ * this says so. Nothing to confirm; the only way on is back to the climb.
+ */
+export function openRefusedSaveNotice({ slot, returnFocusElement = null }) {
+  openConfirmationModal({
+    title: t('save.refused.title'),
+    message: t('save.refused.message', { slot }),
+    cancelLabel: t('save.refused.close'),
+    confirmEnabled: false,
+    onConfirm: () => {},
+    returnFocusElement,
+  });
+}
+
+/**
  * openNewerSaveNotice({ slot }) → the notice a Continue on a slot saved by a
  * NEWER build lands on (SPEC §3.12: refused and kept). The run-side twin of
  * the profile's 'newer' notice (ui/screens/profileNotice.js): the bytes are
