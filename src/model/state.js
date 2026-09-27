@@ -904,6 +904,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     const entered = run.combatEntered;
     if (typeof entered.nodeId !== 'string' || !entered.nodeId) problems.push('combatEntered.nodeId must be a non-empty string');
     if (typeof entered.encounterId !== 'string' || !entered.encounterId) problems.push('combatEntered.encounterId must be a non-empty string');
+    // SPEC §14.3: a fight a service event started (the market's quest event)
+    // says so, so a resumed save fights that encounter and completes no node.
+    if (entered.serviceEvent !== undefined && typeof entered.serviceEvent !== 'boolean') problems.push('combatEntered.serviceEvent must be true or false when present');
     if (entered.snapshot !== undefined) {
       for (const problem of combatSnapshotProblems(entered.snapshot)) problems.push(`combatEntered.snapshot.${problem}`);
     }

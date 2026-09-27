@@ -67,6 +67,7 @@ import {
 } from './engine/encounters.js';
 import { buildMarketStock, marketVisitStock, commitInnRest } from './engine/shopKinds.js';
 import { commitQuestEvent } from './model/marketAdditions.js';
+import { combatEncounterFor, victoryCompletesJourneyNode, serviceEventCombatEntry } from './model/serviceCombat.js';
 import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
 import { restLocationAtPoint, questBoardPointAt, CAMP_LOCATION } from './model/locations.js';
 import { mountTitle, focusTitleDefault } from './ui/screens/title.js';
@@ -1278,7 +1279,7 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   } else if (run.combatEntered && run.combatEntered.encounterId) {
     // Current saves resume the exact committed turn. Older saves that only
     // carry the encounter receipt still use the deterministic restart path.
-    enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true });
+    enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true, serviceEvent: run.combatEntered.serviceEvent === true });
   } else if (run.shopStock) {
     showShop();
   } else if (run.journey?.activeService?.handlerId === 'rest') {
@@ -2316,7 +2317,7 @@ function startFight(pool, nodeId) {
   enterCombat(nodeId, encounterId);
 }
 
-function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
+function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = false } = {}) {
   const storedSnapshot = resuming ? run.combatEntered?.snapshot : null;
   // SAVES IN THE WILD ALREADY CARRY THE POISONED SHAPE. Saving during the
   // victory hand-off wrote a checkpoint whose `result` was 'victory', and
@@ -2327,11 +2328,13 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   // encounter receipt alone has always supported. A refought encounter is a
   // far smaller loss than an unplayable slot.
   const savedSnapshot = storedSnapshot && !storedSnapshot.result ? storedSnapshot : null;
-  run.combatEntered = { nodeId, encounterId, ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
+  // A service event's fight (the market's quest event, SPEC §14.3) says so on
+  // its receipt, so a resumed save still fights the event's own encounter.
+  run.combatEntered = { ...(serviceEvent ? serviceEventCombatEntry(nodeId, encounterId) : { nodeId, encounterId }), ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
   // The entry receipt is a deterministic recovery checkpoint. An explicit Save
   // Game replaces it with an exact committed-turn snapshot below.
   if (!resuming) persist();
-  const enc = run.journey && !run.legacyDungeon ? journeyEncounter(run.journey, nodeId, registries) : registries.encounters.get(encounterId);
+  const enc = combatEncounterFor(registries, run, run.combatEntered);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool, enc);
   const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot, fallbackAttributeMode: run.attributeMode }) : createRunCombat({
@@ -2499,7 +2502,7 @@ async function onCombatEnd(result, combat, enc) {
 
   run.stats.fightsWon += 1;
   if (run.legacyDungeon) resolveDungeonNode(run);
-  else if (run.journey) completeJourneyNode(run.journey);
+  else if (victoryCompletesJourneyNode(run)) completeJourneyNode(run.journey);
   run.combatEntered = null;
   // The claim id is the one this door has always written (smithingRewardId);
   // a partial rewardChancePct rolls once on the `smith` stream (SPEC §15.3).
@@ -2813,7 +2816,9 @@ function showShop() {
       finishWorldService();
       run.shopStock = null;
       persist();
-      return showEvent(eventId);
+      // A service event: a fight its choice starts is the event's own, and
+      // winning it completes no journey node (Codex P1 on #1377).
+      return showEvent(eventId, { serviceEvent: true });
     },
     onLeave: () => {
       finishWorldService();
@@ -2824,11 +2829,14 @@ function showShop() {
   });
 }
 
-function showEvent(eventId) {
+// `serviceEvent`: the event was opened by a service (the market's quest event,
+// SPEC §14.3), so a fight it starts is its own encounter and completes no
+// journey node.
+function showEvent(eventId, { serviceEvent = false } = {}) {
   mountEvent(app, {
     registries,
     run,
-    hud: roomHud(() => showEvent(eventId)),
+    hud: roomHud(() => showEvent(eventId, { serviceEvent })),
     // The hold-to-confirm dial lives in meta.settings; the screen reads it the
     // same way every other screen reads a display setting.
     meta: saves.loadMeta(),
@@ -2839,7 +2847,10 @@ function showEvent(eventId) {
         // A startCombat effect stored the encounter id (string form).
         const encounterId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
         run.combatEntered = null;
-        return enterCombat(run.mapNodeId, encounterId);
+        // An atlas run may stand on no classic map node; the fight is labelled
+        // with the journey node it happens at.
+        const nodeId = run.mapNodeId || run.journey?.currentNodeId;
+        return enterCombat(nodeId, encounterId, { serviceEvent });
       }
       persist();
       showMap();
