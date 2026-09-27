@@ -75,7 +75,7 @@
   },
   "armoury": {
     "collectionShare": 0.5,
-    "compactCollectionShare": 0.5
+    "compactCollectionShare": 0.35
   },
   "combatantStack": {
     "maxRows": 5
