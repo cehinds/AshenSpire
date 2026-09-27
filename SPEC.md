@@ -2263,7 +2263,6 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 | shop `stock.kind`, `stock.offerings` | `'market'`, and today's shelves as offerings (read at the load door, with no reroll) | 4 |
 | `consumables` | `{}` | 5 |
 | `sigils`, `sigilSlots` | `[]`, `{}` | 5 |
-| `loadout.boughtArmour` (armour sets bought at a market, `{ classId, id }`, read by `ownership()`; added by the 5a PR, which found no other home for a run-owned armour set) | absent (none bought) | 5 |
 | `companions` | `[]` | 5 |
 | `smithingStonesRefined` | `0` | 6 |
 | atlas smith `serviceStates[pointId].stock` | absent, rolled on first entry | 6 |
