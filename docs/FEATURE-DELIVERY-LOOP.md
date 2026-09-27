@@ -33,7 +33,8 @@ HTML or build ordinals. Preserve unrelated dirty work.
 1. Syntax and focused model/component contracts.
 2. Content and catalog consistency.
 3. One exact build regeneration.
-4. Exact-artifact Node and shipped-alias checks.
+4. Exact-artifact Node checks (`node tools/buildversion.mjs --check`,
+   `node tools/verify-shipped.mjs`).
 5. Real browser flow in the browser selected for the task.
 6. Responsive matrix and touch/keyboard checks where available.
 7. Console and command-log review.
@@ -56,7 +57,8 @@ Before requesting integration:
 - update `docs/component-catalog.html` and `docs/COMPONENT-CATALOG.md` for every
   changed stable UI component;
 - update README, specification, QA process, and relevant focused docs;
-- state exact branch, SHA/build/source receipt, checks, and preview URL;
+- state exact branch, SHA/build/source receipt, checks, and the CI
+  `dev-standalone-<commit>` artifact or preview URL;
 - distinguish local, committed, pushed, PR, merged, hosted, and released states;
 - add changelog/status receipts only when their real PR/build identifiers exist.
 

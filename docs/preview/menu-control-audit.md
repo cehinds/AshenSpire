@@ -1,5 +1,8 @@
 # Armoury and menu control audit
 
+> Historical (PR #779). The current Armoury contract is
+> [ARMOURY-LAYOUT-BRIEF.md](../ARMOURY-LAYOUT-BRIEF.md).
+
 PR #779 replaces resizable Armoury trays with natural-height sections in one scrolling modal. Character, Equipment, Inventory and Cards retain the game's existing gold, parchment, dark-panel and sprite treatment. Gear selection does not require dragging, and resizing does not close disclosures.
 
 ## Confirmed fixes

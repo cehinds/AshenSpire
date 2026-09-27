@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Choose when card rewards come",
     "detail": "Settings → Rewards has new card reward settings. You can turn the card offer on or off for normal, elite and boss fights, and give each a percent chance to offer a card. When the chance misses, the spoils say \"No card this time.\" A new \"Level card\" option adds one more card to choose whenever a fight raises your level, with a limit on how many one fight can add. Out of the box nothing changes: every fight offers its card as before, level cards are off, and an existing seed gives the same rewards.",
-    "build": "0.7.1.628",
+    "build": "0.7.1.629",
     "pullRequest": 1351,
     "url": "https://github.com/cehinds/AshenSpire/pull/1351"
+  },
+  {
+    "id": "pr-1361",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the developer docs are checked against the code",
+    "detail": "Docs only; nothing you play changes. The developer and process guides lose facts that had gone stale (committed builds, a removed rules file, draft pull requests, moved source paths), and dated QA records move to docs/archive/.",
+    "build": "0.7.1.627",
+    "pullRequest": 1361,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1361"
   },
   {
     "id": "pr-1359",
