@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1359",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the design and 1.0 plan documents say what is built and what is still planned",
+    "detail": "Docs only; nothing you play changes. The design spec now opens with a table marking each of its sections as built, partly built or planned: the deck editor, the three shops and the new reward rules are written down but not built yet. The 1.0 checklist catches up with the last week's merges, and an implemented map-contrast proposal moves to an archive folder.",
+    "build": "0.7.1.616",
+    "pullRequest": 1359,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1359"
+  },
+  {
     "id": "pr-1348",
     "date": "2026-09-26",
     "group": "2026-09-26",

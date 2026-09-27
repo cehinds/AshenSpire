@@ -22,7 +22,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 |---|---|---|---|
 | top | Combat and equipment revision ([COMBAT-EQUIPMENT-RULES](docs/COMBAT-EQUIPMENT-RULES.md)) | **partly built** | Parts serve live play (the Dodge Roll in `src/framework/weight.js`, §12.1). The full framework cutover is not performed ([framework-cutover-report](docs/framework-cutover-report.md)); the three-build prototype gate and the 36→50 class pools are post-1.0 (D3). |
 | 1 | Product overview | **built** | 4 classes, 3 seats climbed as 3 tiers, profile and slots. |
-| 2 | Legal and asset constraints | **built** | `tools/credits-check.mjs` 26/26 directories (FINISH §10). |
+| 2 | Legal and asset constraints | **built** | `tools/credits-check.mjs`: 40 checks, 33/33 asset directories (FINISH §10). |
 | 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema 10 (`RUN_SCHEMA_VERSION`, `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
 | 4 | Combat rules | **built**, one deviation | Warrior's Vow enters Gorefire instead of a chosen stance (DEVELOPER "M1 known deviations"; FINISH §1, open). |
 | 5 | Content | **built** | 5.2–5.4 are the historical M1/M2 sets under pre-scrub names. Live counts: 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |

@@ -3,9 +3,12 @@
 Executes [proposal-progression-and-property-system.md](proposal-progression-and-property-system.md).
 
 **Status (2026-09-27):** phases 1–10 and T are built; SPEC §13.4a–§13.4n state
-each as shipped. Still open, as each phase's *as built* note says: 3b-ii
-(equipment rows joining the deck; the owner's call) and the boss-reward door
-for the class-swap item (phase 5c). Kept here, not archived, until those close.
+each as shipped. Still open, among others (each phase's *as built* or *not
+done* note is the full list): 3b-ii (equipment rows joining the deck; the
+owner's call), the boss-reward door for the class-swap item (phase 5c), and
+phase 10b's quest rewards (quest XP is unpaid, since nothing listens to
+`questCompleted`, and the co-op host has no board). Kept here, not archived,
+until those close.
 Each phase is one or more pull requests into `dev`, each with a CHANGELOG
 receipt and rebuild. Paths and symbols below are the seams as they exist at
 `0.6.0.160` (phase 10 at `0.7.1.51`); a phase that finds a seam moved
