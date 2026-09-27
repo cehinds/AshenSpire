@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Behind the scenes: a hand-rules test comment catches up",
     "detail": "Tests only. The fixed-draw test's comment now works its numbers from the one-row hand stats, counting Intelligence from each row's baseline, instead of the retired weights; the values it checks are unchanged.",
-    "build": "0.7.1.640",
+    "build": "0.7.1.641",
     "pullRequest": 1334,
     "url": "https://github.com/cehinds/AshenSpire/pull/1334"
+  },
+  {
+    "id": "pr-1373",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the 1.0 checklist records three more fixes",
+    "detail": "Docs only. docs/FINISH.md now marks as done: a test that failed only sometimes is fixed, loading a save from the in-game menu is checked in a real browser, and the layout checker's limits are written down.",
+    "build": "0.7.1.640",
+    "pullRequest": 1373,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1373"
   },
   {
     "id": "pr-1368",
