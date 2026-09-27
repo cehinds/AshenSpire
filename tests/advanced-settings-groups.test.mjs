@@ -891,7 +891,7 @@ test('the example shows what a run is born with at the edges', async () => {
   const eighth = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.stamina.perLevel': 0.125 }, 'Stamina', { constitution: 1 }, 9);
   assert.match(eighth.examples[0].lines[0].expression, /8 levels × 0\.125 → 1/);
   const drawGrowth = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.draw.perLevel': 0.125 }, 'Draw & hand', { intelligence: 1 }, 9);
-  // Stock Draw / turn at INT 1, level 9: 2 base + nothing above 4 + floor(8 × 0.125) = 3.
-  assert.equal(drawGrowth.examples[0].lines[1].total, 3);
-  assert.match(drawGrowth.examples[0].lines[1].expression, /^2 base \+ INT 1 \(none above 4\) × 0\.2 → 0 \+ 1 from level/);
+  // Stock Draw / turn at INT 1, level 9: 3 base (FINISH D22) + nothing above 4 + floor(8 × 0.125) = 4.
+  assert.equal(drawGrowth.examples[0].lines[1].total, 4);
+  assert.match(drawGrowth.examples[0].lines[1].expression, /^3 base \+ INT 1 \(none above 4\) × 0\.2 → 0 \+ 1 from level/);
 });

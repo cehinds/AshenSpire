@@ -6377,11 +6377,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
     // Herald lean is STR 1 · DEX 1 · CON 2 · WIS 3 · INT 1. HP 30 + ⌊0.35⌋ +
     // ⌊4 × 2⌋ + ⌊0.1 × 3⌋ = 38; Actions 3 (every weight floors to 0 at 1–3
-    // points); Draw is the ruleset-7 draw row, 2 + ⌊0.1 × INT 1⌋ = 2 (min 2).
-    // It read 3 under ruleset 6, whose draw row had base 3; the hand's draw
-    // now IS that row, and it lands on the old hand-rule turn draw (2 below
-    // INT 9) rather than the old derived one.
-    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '38/3/2', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
+    // points); Draw is the ruleset-7 draw row, base 3 since FINISH D22
+    // (2026-09-27) and nothing from INT 1, below the row's baseline of 4. It
+    // read 3 under ruleset 6 and 2 under ruleset 7 before D22.
+    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '38/3/3', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
     // THE OWNER'S CURVE SINCE 2026-09-24 (base 5, growth 1.15, roundTo 10 —
     // 100,120,…,350 before). The rounding holds the first eight steps at its
     // own floor of 10: 5 × 1.15^n does not reach 15 until n = 8.
@@ -6394,8 +6393,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 120, '120 XP reaches level 11 (2,030 before 2026-09-24) — a curve receipt, not a second hard-coded total');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
-    // Rogue: HP 30 + ⌊4 × 2⌋ = 38; Actions 3 + ⌊0.2 × DEX 3⌋ = 3; Draw 2 + ⌊0.1 × INT 1⌋ = 2.
-    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/38/3/2', 'Rogue lean stats reach the HP, action, and hand formulas');
+    // Rogue: HP 30 + ⌊4 × 2⌋ = 38; Actions 3 + ⌊0.2 × DEX 3⌋ = 3; Draw 3 (D22) + nothing from INT 1.
+    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/38/3/3', 'Rogue lean stats reach the HP, action, and hand formulas');
     eq(rogue.startingKitId, 'rogueBaseline', 'Rogue starts through its authored baseline equipment profile');
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
