@@ -11,6 +11,7 @@ import { openPrologueSceneEditor } from './prologueSceneEditor.js';
 import { HUD_VISIBILITY_SETTINGS } from '../models/HudVisibilityModel.js';
 import { advancedSubgroups, statsSection, CLASS_TOPICS } from '../models/AdvancedSettingsGroups.js';
 import { statsTopicPreview, statsExampleClasses, STATS_EXAMPLE_CLASS_KEY } from '../models/StatsPreviewModel.js';
+import { levelPacePreview } from '../models/LevelPacePreviewModel.js';
 import { WIREFRAME_CHOICE_GROUPS } from '../models/WireframeChoiceModel.js';
 import { handRulesRows, resolveHandRules, HAND_RULES_PREFIX } from '../../model/handRules.js';
 import { formationSettingsHtml, mountFormationSettings, applyPendingFormationSettings } from '../components/formationSettings.js';
@@ -40,6 +41,8 @@ import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExport
 import { contentBundle } from '../../content/index.js';
 import { pageDebug } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
+import { deckRules } from '../../content/deckRules.js';
+import { deckSettingsProblems } from '../../model/deckRules.js';
 import { SEED_KEY, seedAfterChange, sameSetting } from '../../model/settingsDefaults.js';
 import { renderSettingsSync } from '../components/settingsSync.js';
 import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
@@ -667,6 +670,32 @@ const ROWS = [
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
     label: 'Level-up value', applied: numberAppliedHtml,
     note: 'How many stat points one level grants — type any whole number from 1 to 20. Takes effect on the next level you reach, in any run, including one already in progress; the points wait at the shrine until you assign them.' },
+  // THE DECK EDITOR'S RULES (SPEC §14.1, owner brief 2026-09-26). Each
+  // default is content/deckRules.js — the one home; model/deckRules.js reads
+  // the stored choice against the same object. Live settings, not gameConfig
+  // rows: a change applies the next time the editor opens (and Play in deck
+  // order at the next fight), never to a fight already under way.
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckEditing', def: deckRules.defaults.deckEditing, label: 'Deck editing',
+    note: 'Add, remove and arrange your cards between fights. Off: the deck changes only through rewards, the merchant and the Armoury.' },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckEditingWhere', type: 'choice', dropdown: true, def: deckRules.defaults.deckEditingWhere,
+    choices: [...deckRules.where], choiceLabels: { free: 'Free (anywhere out of combat)', restOnly: 'Rest sites only' },
+    gates: [{ key: 'deckEditing' }], label: 'Where you can edit',
+    note: 'Free opens the editor from the map and the Armoury at any moment out of combat. Rest sites only offers it at a Shrine, an inn or a chapel.' },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMinUnlimited', def: deckRules.defaults.deckMinUnlimited, label: 'No minimum deck size',
+    gates: [{ key: 'deckEditing' }], note: 'Let the editor confirm a deck of any size, however small.' },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMinSize', type: 'number', def: deckRules.defaults.deckMinSize, min: deckRules.sizeRange.min, max: deckRules.sizeRange.max,
+    gates: [{ key: 'deckEditing' }, { key: 'deckMinUnlimited', when: false }], label: 'Minimum deck size', applied: numberAppliedHtml,
+    note: 'The fewest cards the editor lets you confirm. Rewards and purchases can still move the deck outside it; the editor then asks you to bring it back.' },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMaxUnlimited', def: deckRules.defaults.deckMaxUnlimited, label: 'No maximum deck size',
+    gates: [{ key: 'deckEditing' }], note: 'Let the editor confirm a deck of any size, however large.' },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMaxSize', type: 'number', def: deckRules.defaults.deckMaxSize, min: Math.max(1, deckRules.sizeRange.min), max: deckRules.sizeRange.max,
+    gates: [{ key: 'deckEditing' }, { key: 'deckMaxUnlimited', when: false }], label: 'Maximum deck size', applied: numberAppliedHtml,
+    note: 'The most cards the editor lets you confirm. It may not sit below the minimum.' },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'classSpellPowerCopies', type: 'number', def: deckRules.defaults.classSpellPowerCopies,
+    min: deckRules.copyRange.min, max: deckRules.copyRange.max, gates: [{ key: 'deckEditing' }], label: 'Copies of a class spell or Power', applied: numberAppliedHtml,
+    note: 'How many copies of one of your class’s own spells or Powers the editor lets your deck hold. Strike and Defend stay unlimited; weapon arts and techniques stay limited to the copies you own.' },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'playInDeckOrder', def: deckRules.defaults.playInDeckOrder, label: 'Play in deck order',
+    note: 'Your draw pile is not shuffled: you draw your cards in the order you arranged them, and a spent pile returns in that order. Card effects that shuffle still shuffle. Applies from the next fight.' },
   ...ADVANCED_CONFIG_ROWS,
   { cat: 'Advanced', advancedGroup: 'Export', key: 'promptSettingsExport', def: true, label: 'Offer export when done',
     note: 'Ask to export a configuration file after Done and Save.' },
@@ -754,6 +783,7 @@ const ADVANCED_GROUPS = Object.freeze([
   // (models/StatsPreviewModel.js).
   { id: 'Stats', label: 'Stats', tip: 'Everything that turns attributes into Actions, Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.' },
   { id: 'Rewards', label: 'Rewards & economy', tip: 'Cinders, reward rarity, merchants, flasks and smithing.' },
+  { id: 'Deck', label: 'Deck', tip: 'The deck editor: where you can edit, the deck’s size limits, and playing your cards in the order you arranged them.' },
   { id: 'Equipment', label: 'Equipment & relics', tip: 'Starting kits, drops, swapping, equipment balance and relic values.' },
   { id: 'World', label: 'Run & world', tip: 'Rest and shrines, the atlas and seats, run modifiers, gauntlet, co-op and endless.' },
   { id: 'Interface', label: 'Interface', tip: 'Map and HUD, card appearance, and confirmation controls.' },
@@ -778,7 +808,9 @@ const ADVANCED_GROUPS = Object.freeze([
 // only where `pageDebug()` is true (src/ui/buildChannel.js says where that is).
 // Stored values are untouched either way: hiding a section changes what is
 // drawn, never what a profile holds.
-export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Interface', 'Text', 'Changelog', 'About']);
+// Deck (SPEC §14.1) is a player choice, not tuning: where the editor opens,
+// the size limits and Play in deck order are the owner's player-facing rows.
+export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Interface', 'Text', 'Changelog', 'About']);
 /** Groups with their own mounted panel instead of rows. */
 const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
 
@@ -2061,7 +2093,7 @@ export function paintConfigProblems(container, settings, extra = []) {
   // `extra` carries the refusals the MODEL cannot see, because the value never
   // reached it: a typed number the field clamped on its way in (see
   // `typedNumberRefusal`). Same shape, same painting, same dedupe.
-  const entries = [...advancedConfigProblemRows(contentBundle, settings), ...extra];
+  const entries = [...advancedConfigProblemRows(contentBundle, settings), ...deckSettingsProblems(settings), ...extra];
   const byKey = new Map();
   for (const entry of entries) {
     for (const key of entry.keys || []) {
@@ -2285,6 +2317,40 @@ function statsTopicPreviewMarkup(settings, topic, previewAttributes, previewLeve
     + `<p class="set-example-attrs">${esc(preview.attributes)}</p>${examples}</div>`;
 }
 
+// ---- Advanced → Progression: the Levelling preview (SPEC §15.2) -------------
+//
+// "I change XP settings and I'm levelling up way too much" (owner,
+// 2026-09-26). Drawn by models/LevelPacePreviewModel.js from the settings in
+// force, the XP multiplier and Level-up value included, and redrawn after
+// every edit beside the Stats examples (`refreshStatsPreviews`).
+export const LEVEL_PACE_TOPICS = Object.freeze(['Experience', 'Level-up']);
+// The profile (non-gameConfig) keys the preview reads. A gameConfig edit
+// redraws it through reportAdvancedProblems; these must ask for it themselves.
+export const LEVEL_PACE_PROFILE_KEYS = Object.freeze(['levelUpValue']);
+let lastLevelPace = { key: null, html: '' };
+
+export function levelPacePreviewHtml(settings) {
+  const pointsPerLevel = resolveLevelUpValue(settings);
+  const key = JSON.stringify([pointsPerLevel, settings]);
+  if (key === lastLevelPace.key) return lastLevelPace.html;
+  const html = levelPacePreviewMarkup(settings, pointsPerLevel);
+  lastLevelPace = { key, html };
+  return html;
+}
+
+function levelPacePreviewMarkup(settings, pointsPerLevel) {
+  // Every word comes from the model, which reads settings.levelPace.* rows.
+  const pace = levelPacePreview(settings, { pointsPerLevel });
+  const fights = pace.fights.map((fight) => `<div class="set-example-block" data-level-pace-fight="${esc(fight.pool)}">`
+    + `<div class="set-example-title">${esc(fight.text)}</div>`
+    + `<p class="set-example-hint set-level-pace-points">${esc(fight.pointsText)}</p></div>`).join('');
+  const curve = `<div class="set-example-block" data-level-pace-curve><div class="set-example-title">${esc(pace.curveTitle)}</div>`
+    + `<ol class="set-level-pace-curve">${pace.curve.map((row) => `<li><span>${esc(row.label)}</span> <b>${row.step}</b> <small>${esc(row.totalText)}</small></li>`).join('')}</ol></div>`;
+  return `<div class="set-example set-level-pace" data-level-pace aria-live="polite"><div class="set-example-head"><strong>${esc(pace.title)}</strong><span>${esc(pace.subtitle)}</span></div>`
+    + (pace.refused ? `<p class="set-example-refused" role="status" data-level-pace-refused>${esc(pace.refused)}</p>` : '')
+    + `<p class="set-example-attrs">${esc(pace.terms)}</p>${fights}${curve}</div>`;
+}
+
 function visibleAdvancedSubgroups(rows, groupId) {
   const groups = advancedSubgroups(rows, groupId);
   // The scene editor owns per-scene values and shows their actual effect beside
@@ -2420,6 +2486,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
           ? `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}" data-lazy hidden></div>`
           : `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}">`
           + (group.id === 'Stats' ? `<div data-stats-preview="${esc(sub.id)}">${statsTopicPreviewHtml(settings, sub.id, previewAttributes, previewLevel, previewClassId)}</div>` : '')
+          + (group.id === 'Progression' && LEVEL_PACE_TOPICS.includes(sub.id) ? `<div data-level-pace-preview>${levelPacePreviewHtml(settings)}</div>` : '')
           + (sub.id === 'Formation layout' ? formationSettingsHtml(settings, sub.rows)
             : sub.rows.map((row, rowIndex) => {
               // A Stats topic reads as short subsections (Formula, Level
@@ -2762,6 +2829,13 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
         // The picker was redrawn under the focus; hand it back.
         node.querySelector('[data-stats-example-class]')?.focus();
       });
+    });
+    container.querySelectorAll('[data-level-pace-preview]').forEach((node) => {
+      const shown = !searching && !node.closest('.set-advanced-group')?.hidden && !node.closest('.set-topic-panel')?.hidden;
+      const html = shown ? levelPacePreviewHtml(settings) : '';
+      if (drawnPreviews.get(node) === html) return;
+      node.innerHTML = html;
+      drawnPreviews.set(node, html);
     });
   };
   // A subsection whose every row is hidden (fixed-draw rows while drawing to
@@ -3165,9 +3239,14 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       onChange({ [key]: val });
       if (refusal) typedRefusals.set(key, refusal); else typedRefusals.delete(key);
       if (key.startsWith('gameConfig.')) reportAdvancedProblems();
-      // A profile key can be what a gated row inherits, so the inherited
-      // values and their sentences are redrawn whatever the key (Codex, #1260).
-      else refreshGates(container, settings);
+      else {
+        // A profile key can be what a gated row inherits, so the inherited
+        // values and their sentences are redrawn whatever the key (Codex, #1260).
+        refreshGates(container, settings);
+        // Level-up value is a profile key the Levelling preview reads, and
+        // only a gameConfig key reaches reportAdvancedProblems (Codex, #1349).
+        if (LEVEL_PACE_PROFILE_KEYS.includes(key)) refreshStatsPreviews();
+      }
     };
     // change/blur, NEVER per keystroke: typing "12" passes through "1", and a
     // clamp on every keypress would rewrite the value under his fingers.

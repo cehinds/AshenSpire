@@ -4,13 +4,103 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1361",
-    "date": "2026-09-26",
-    "group": "2026-09-26",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
     "summary": "Behind the scenes: the developer docs are checked against the code",
     "detail": "Docs only; nothing you play changes. The developer and process guides lose facts that had gone stale (committed builds, a removed rules file, draft pull requests, moved source paths), and dated QA records move to docs/archive/.",
-    "build": "0.7.1.617",
+    "build": "0.7.1.627",
     "pullRequest": 1361,
     "url": "https://github.com/cehinds/AshenSpire/pull/1361"
+  },
+  {
+    "id": "pr-1359",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the design and 1.0 plan documents say what is built and what is still planned",
+    "detail": "Docs only; nothing you play changes. The design spec now opens with a table marking each of its sections as built, partly built or planned: the deck editor, the three shops and most of the new reward rules are written down but not built yet (the levelling preview is built). The 1.0 checklist catches up with the last week's merges, and an implemented map-contrast proposal moves to an archive folder.",
+    "build": "0.7.1.626",
+    "pullRequest": 1359,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1359"
+  },
+  {
+    "id": "pr-1362",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the 1.0 checklist records the four fixes that just landed",
+    "detail": "Docs only. docs/FINISH.md now marks as done: a save that cannot be loaded keeps your run, a cancelled End Turn hold opens nothing, each change's changelog build number is checked, and the map camera check runs on every change. It adds one more check: the save-load fix should also be tested in a real browser when loading from the in-game menu screen.",
+    "build": "0.7.1.625",
+    "pullRequest": 1362,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1362"
+  },
+  {
+    "id": "pr-1349",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Settings shows how fast you level",
+    "detail": "Settings → Advanced → Progression now has a Levelling preview that updates as you change the numbers. It shows how much XP a normal fight (3 kills), an elite (1 kill) and a boss (1 kill) gives, how many levels each is worth from level 1 and from level 10, the stat points those levels grant, and the XP to reach each level up to 20. The XP multiplier and Level-up value are counted. A new setting can also cap how many levels one fight can give: XP past the cap is lost, and the spoils screen says how much. It is off by default, so nothing changes until you set it.",
+    "build": "0.7.1.624",
+    "pullRequest": 1349,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1349"
+  },
+  {
+    "id": "pr-1360",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: every new dev build is playable on the build site again",
+    "detail": "The build site had stopped updating after built files stopped being saved with each change. It now rebuilds each recent build from its own source, so the newest dev build is at /dev/latest/ and every recent one has its own page.",
+    "build": "0.7.1.622",
+    "pullRequest": 1360,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1360"
+  },
+  {
+    "id": "pr-1357",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: every change is now checked for the map camera fitting the screen",
+    "detail": "Nothing you see changes. Each proposed change now opens the real map in a browser, resizes its view after it settles, and fails if the camera stops filling the view or loses the destination you picked. The longer map-camera check also makes a new character again, through the Class, Character, Starting equip and Review steps and past the opening, and runs to the end.",
+    "build": "0.7.1.621",
+    "pullRequest": 1357,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1357"
+  },
+  {
+    "id": "pr-1354",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Letting go of the game window mid-hold no longer opens the End Turn check",
+    "detail": "If you were holding the End Turn key and the window lost focus (you alt-tabbed, or the phone went to the background), the game used to treat that as a quick tap and open the End Turn confirmation. Now nothing opens and nothing happens. A quick press and release still opens the check as before. Behind the scenes: the test that lists page listeners now also reads one more way of writing a document listener correctly.",
+    "build": "0.7.1.620",
+    "pullRequest": 1354,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1354"
+  },
+  {
+    "id": "pr-1355",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Loading a save that can't be opened keeps your current climb",
+    "detail": "If you load a slot from the in-run menu and it turns out to be damaged, or another tab cleared it while you were deciding, the game now keeps you in the run you were already playing and tells you the slot could not be loaded. Before, it dropped that run and sent you to the title screen. Saves from a newer version were already handled this way.",
+    "build": "0.7.1.619",
+    "pullRequest": 1355,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1355"
+  },
+  {
+    "id": "pr-1358",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the README says how to play the newest build",
+    "detail": "Docs only; nothing you play changes. The README now explains where to get each build: the stable link, the newest development build from its download page, or running the game from source. Its notes on builds, art quality, recent additions and content counts now match the game.",
+    "build": "0.7.1.618",
+    "pullRequest": 1358,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1358"
+  },
+  {
+    "id": "pr-1343",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Deck rules: set cards aside, draw in your own order",
+    "detail": "The groundwork for the deck editor, which arrives next. A new Settings tab, Advanced → Deck, holds its rules: editing on or off, where you may edit, the smallest and largest deck, and Play in deck order, which draws your cards in the order you arranged them instead of shuffling. A card you take out of your deck is kept, not lost, so you can put it back later; Strike and Defend stay unlimited and still wear your weapon's face.",
+    "build": "0.7.1.617",
+    "pullRequest": 1343,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1343"
   },
   {
     "id": "pr-1356",

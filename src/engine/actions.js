@@ -41,6 +41,7 @@ import { cardRatingBonus, applyRatingImpact } from './combatRatings.js';
 import { isMagicalAttack, ratingDamageMultiplier } from '../model/combatRatings.js';
 import { swapRunClass } from '../model/classSwap.js';
 import { applyGraceRefill } from './encounters.js';
+import { orderedReturn } from '../model/deckRules.js';
 
 // ---------------------------------------------------------------------------
 // Shared math (also used by combat.js previews — no duplicated math in the UI)
@@ -409,7 +410,10 @@ export function drawCards(ctx, n) {
     if (ctx.piles.draw.length === 0) {
       if (ctx.handRules?.reshuffle === false) return;
       if (ctx.piles.discard.length === 0) return;
-      reshuffleDiscardIntoDraw(ctx);
+      // Play in deck order (SPEC §14.1) returns the discard in deck order and
+      // rolls nothing; the `shuffleDiscardIntoDraw` effect still shuffles.
+      if (ctx.orderedDraw) returnDiscardInOrder(ctx);
+      else reshuffleDiscardIntoDraw(ctx);
     }
     const card = ctx.piles.draw.shift();
     if (ctx.piles.hand.length >= ctx.handMax) {
@@ -436,6 +440,12 @@ export function discardFromHand(ctx, n, { random = false } = {}) {
     ctx.piles.discard.push(card);
     ctx.emit('cardDiscarded', { cardInstanceId: card.instanceId, cardId: card.cardId, reason: 'effect' });
   }
+}
+
+export function returnDiscardInOrder(ctx) {
+  ctx.piles.draw.push(...orderedReturn(ctx.piles.discard, ctx.orderedDraw.order));
+  ctx.piles.discard.length = 0;
+  ctx.emit('deckShuffled', { size: ctx.piles.draw.length, ordered: true });
 }
 
 export function reshuffleDiscardIntoDraw(ctx) {
@@ -1050,8 +1060,13 @@ export function createRunContext({ run, registries, rng }, { healMult = 1, refil
     enqueue(a) {
       ctx.queue.push(a);
     },
+    // Each run context starts its counter at 0, so an id is skipped while any
+    // owned card (deck ∪ sideboard, §14.1) still holds it.
     nextInstanceId() {
-      return `run${++ctx._idCounter}`;
+      const owned = new Set([...(run.deck || []), ...(run.sideboard || [])].map((c) => c && c.instanceId));
+      let id;
+      do id = `run${++ctx._idCounter}`; while (owned.has(id));
+      return id;
     },
   };
   return ctx;

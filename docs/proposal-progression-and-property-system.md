@@ -1,8 +1,16 @@
 # Proposal: progression, equipment-as-cards, and the property system
 
-Status: owner-accepted design, 2026-09-11, awaiting implementation; §7.5
-(quests and dialogue) added by owner amendment 2026-09-14. Nothing in it is
-shipped. Parent authority: [SPEC.md](../SPEC.md) and
+Status: owner-accepted design, 2026-09-11; §7.5 (quests and dialogue) added by
+owner amendment 2026-09-14. **Largely built (checked 2026-09-27):** the
+[implementation plan](plan-progression-and-property-system.md)'s phases 1 and
+3–10 shipped as SPEC §13.4a–§13.4n, and phase 2 only as 2a. Each phase's *as
+built* note in the plan names what it left undone; the list is there, and this
+is not exhaustive. It includes phase 2b (relic passives and `textTemplate` not
+yet moved to property rules; not scheduled), 3b-ii (equipment rows joining the deck, which needs the owner's call), the
+boss-reward door for the class-swap item (phase 5c), and the quest rewards of
+phase 10b: quest XP is unpaid (nothing listens to `questCompleted`) and the
+co-op host has no quest board. This document is kept, not
+archived, because the tests and the plan still cite its sections. Parent authority: [SPEC.md](../SPEC.md) and
 [COMBAT-EQUIPMENT-RULES.md](COMBAT-EQUIPMENT-RULES.md). Where this document
 conflicts with either, it is the amendment the owner has accepted; the older
 text stays normative for shipped runs until the migration in §7 lands.

@@ -72,6 +72,7 @@ import { el, modalHead, modalFooter, button, meter } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t, tFull, tTip } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
+import { unusedInstanceId, ownedCopies } from '../../model/deckRules.js';
 
 const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
 
@@ -135,7 +136,7 @@ export function mountRewards(app, {
   const meta = (saves && saves.loadMeta && saves.loadMeta()) || {};
   const seenStore = meta.seen || {};
   const marks = unseenIds(rewards, {
-    cards: new Set([...run.deck.map((c) => c.cardId), ...(seenStore.cards || [])]),
+    cards: new Set([...run.deck.map((c) => c.cardId), ...(run.sideboard || []).map((c) => c.cardId), ...(seenStore.cards || [])]),
     relics: new Set([...run.relics, ...(seenStore.relics || [])]),
     flasks: new Set([...run.flasks.map((f) => f.flaskId), ...(seenStore.flasks || [])]),
     armaments: new Set([...(meta.found || [])]),
@@ -165,7 +166,7 @@ export function mountRewards(app, {
     // and begins in Taken state; reaching this function would be a contract bug.
     smithingStone() { return false; },
     card(row) {
-      run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
+      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: false });
       chosenCardId = row.cardId;
       return true;
     },
@@ -183,7 +184,7 @@ export function mountRewards(app, {
     },
     skillDraft(row) {
       if (!spendSkillDraft(run, row.skillId)) return false;
-      run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: skillUpgradesCards(registries, skillLevel(run, row.skillId)) });
+      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: skillUpgradesCards(registries, skillLevel(run, row.skillId)) });
       chosenDraftCardIds[row.key] = row.cardId;
       return true;
     },
@@ -536,6 +537,8 @@ export function mountRewards(app, {
       bar,
       next,
       row.gained ? el('span', { class: 'rp-gain', text: t('reward.progress.gained', { xp: row.gained }) }) : null,
+      // The per-fight level cap threw some of it away (SPEC §15.2): say how much.
+      row.discarded ? el('span', { class: 'rp-discarded', title: tFull('reward.progress.discarded', { xp: row.discarded }), text: t('reward.progress.discarded', { xp: row.discarded }) }) : null,
     ]);
     // The exact XP is the tooltip, not the row: the row carries the shape of
     // the climb and the gain; the numbers are for the player who asks.
@@ -681,7 +684,7 @@ export function mountRewards(app, {
       // lights the same card behind it and presses the same Confirm, so there
       // is one commit and one place the receipt is written.
       const el = renderCard(registries, { cardId, upgraded: row.kind === 'skillDraft' && skillUpgradesCards(registries, skillLevel(run, row.skillId)) }, {
-        owned: run.deck.filter((c) => c.cardId === cardId).length,
+        owned: ownedCopies(run, cardId),
         actionOwnsTouch: true,
         surface: 'reward',
         availability: { choose: taken() ? t('reward.card.alreadyTaken') : true },

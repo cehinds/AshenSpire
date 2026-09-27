@@ -454,10 +454,13 @@ export function armHold(btn, {
         // Combat may repaint the pressed card's children when the hold lights
         // it. The browser can then omit its trailing click. Finish that safe
         // selecting tap on release, and consume any click that does follow.
+        // A CANCELLED END IS NO RELEASE, SO IT IS NO TAP on any source: a key
+        // or pad press ended by a window blur, a pad unplug or a focus move
+        // must open nothing (End Turn's review included).
         const releaseTap = () => {
-          if (!tapOnEarlyRelease || !onTap) return;
+          if (!tapOnEarlyRelease || !onTap || info?.cancelled) return;
           if (origin.source !== 'pointer') onTap(ev);
-          else if (tapOnPointerRelease && !info?.cancelled && !movedThisPress) {
+          else if (tapOnPointerRelease && !movedThisPress) {
             committedThisPress = true;
             onTap(endEv);
           }

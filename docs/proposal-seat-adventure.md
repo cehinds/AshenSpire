@@ -1,5 +1,13 @@
 # The Seat as an adventure — design and implementation plan
 
+**Status (2026-09-27): partly built.** Phase 0 (seats) shipped as SPEC §13.
+Phases 1–6 (the tower, the city, road vocabulary, quest light, consequence
+targets, companions, and the later items) are **planned**: none has a SPEC
+section or code yet (no `content/cities.js`, `companions.js` or
+`hearthSequences.js`). SPEC §14.3 separately plans companions as a market
+offering, and the quest board shipped as plan phase 10b
+([plan-progression-and-property-system.md](plan-progression-and-property-system.md)).
+
 *Design and plan, not a change. Per CONTRIBUTING rule 1, each phase below lands as
 a SPEC PR first, then a feature branch into `dev` as a draft PR. Lore terms are
 from [LORE.md](LORE.md). Owner's brief: 2026-09-11.*

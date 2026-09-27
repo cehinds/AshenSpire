@@ -37,6 +37,8 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `receipts.yml` → receipts | yes | — (runs on push to `dev`) |
 | `dev-preview.yml` → preview (build, standalone artifact, fast gates) | yes | yes (also `dev`, `main`) |
 | `tests.yml` → core suite | yes | yes (also on push to `dev`) |
+| `map-camera.yml` → map camera re-fit (`map-camera-persistence.mjs --check`, real browser) | yes | yes (also on push to `dev`) |
+| `map-camera.yml` → the full map-camera persistence drive (same job) | no | yes |
 | `tests.yml` → tool self-tests, bundler parse gate | no | yes |
 | `ci.yml` → Fullscreen first through both Settings doors | no | yes |
 | `ci.yml` → what this green does NOT cover (boundary) | no | yes |
