@@ -17,7 +17,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { advancedConfigRows, configuredContentBundle } from '../src/model/advancedConfig.js';
 import { createRng } from '../src/engine/rng.js';
 import { buildShopStock } from '../src/engine/encounters.js';
-import { buildMarketStock } from '../src/engine/shopKinds.js';
+import { buildMarketStock, commitInnRest } from '../src/engine/shopKinds.js';
 import { createLocationVisit, arriveAt, previewRest, leaveLocation } from '../src/engine/locations.js';
 import { createRunState, RUN_SCHEMA_VERSION, migrateRunSchema, validateRunShape } from '../src/model/state.js';
 import { validateContent } from '../src/model/validate.js';
@@ -31,7 +31,7 @@ import {
   smithStonePurchasePlan, commitSmithStonePurchase,
   armourPurchasePlan, commitArmourPurchase,
   sigilPurchasePlan, commitSigilPurchase,
-  innRestPlan, commitInnRest,
+  innRestPlan,
 } from '../src/model/marketAdditions.js';
 import { shopCategories } from '../src/ui/models/ShopWorkspaceModel.js';
 import { t } from '../src/ui/strings.js';

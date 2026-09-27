@@ -1,0 +1,66 @@
+// src/model/marketStock.js — the market additions' saved shapes (SPEC §14.3),
+// headless and import-free.
+//
+// A LEAF ON PURPOSE. state.js (validateRunShape) and shopKinds.js
+// (shopStockProblems) both read these checks, and the purchases beside them
+// (model/marketAdditions.js) need loadout.js, which sits above state.js in the
+// import graph. Keeping the shapes here, with no imports at all, is what keeps
+// that graph acyclic.
+
+/** The market offerings §14.3 adds beyond today's shelves, in the order content/shops.js writes them. */
+export const MARKET_ADDITIONS = Object.freeze(['armour', 'smithStones', 'sigils', 'innRest']);
+
+const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+const count = (value) => Number.isSafeInteger(value) && value >= 0;
+function itemList(list, path, problems) {
+  if (!Array.isArray(list)) { problems.push(`${path} must be a list of { id, cost }`); return; }
+  list.forEach((item, index) => {
+    if (!object(item) || typeof item.id !== 'string' || !item.id || !(Number.isSafeInteger(item.cost) && item.cost > 0)) {
+      problems.push(`${path}[${index}] must be { id, cost } with a non-empty id and a whole cost above 0`);
+    }
+  });
+}
+
+/** The addition shelves a persisted stock carries, refused by name (shopStockProblems reads it). */
+export function marketAdditionStockProblems(stock, path = 'shopStock') {
+  const problems = [];
+  if (stock.smithStones !== undefined) {
+    const shelf = stock.smithStones;
+    if (!object(shelf) || !count(shelf.price) || !count(shelf.left)) problems.push(`${path}.smithStones must be { price, left }, both whole numbers of at least 0`);
+  }
+  if (stock.armour !== undefined) itemList(stock.armour, `${path}.armour`, problems);
+  if (stock.sigils !== undefined) itemList(stock.sigils, `${path}.sigils`, problems);
+  if (stock.innRest !== undefined) {
+    const offer = stock.innRest;
+    if (!object(offer) || !count(offer.price) || typeof offer.bought !== 'boolean') problems.push(`${path}.innRest must be { price, bought } with a whole price and a true/false bought`);
+  }
+  return problems;
+}
+
+/** The bought-armour record's shape, refused by name (validateRunShape). Absent means none bought. */
+export function boughtArmourProblems(loadout) {
+  if (!loadout || loadout.boughtArmour === undefined) return [];
+  const list = loadout.boughtArmour;
+  if (!Array.isArray(list)) return ['loadout.boughtArmour must be a list of { classId, id }'];
+  const problems = [];
+  list.forEach((row, index) => {
+    if (!object(row) || typeof row.classId !== 'string' || !row.classId || typeof row.id !== 'string' || !row.id) {
+      problems.push(`loadout.boughtArmour[${index}] must be { classId, id } with both non-empty strings`);
+    }
+  });
+  return problems;
+}
+
+/**
+ * The market additions' content rules beyond the generic offering checks
+ * (validateContent): an armour cost range runs from its min to its max.
+ */
+export function marketAdditionTableProblems(table, err) {
+  const offerings = table?.market?.offerings;
+  if (!Array.isArray(offerings)) return;
+  const armour = offerings.find((row) => row && row.id === 'armour');
+  const range = armour && armour.cost;
+  if (range && Number.isFinite(range.min) && Number.isFinite(range.max) && range.min > range.max) {
+    err('shops.market.armour.cost', `min (${range.min}) must not be above max (${range.max})`);
+  }
+}

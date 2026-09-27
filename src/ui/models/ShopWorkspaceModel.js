@@ -21,12 +21,21 @@ export const SHOP_CATEGORIES = Object.freeze(['cards', 'armaments', 'weaponArts'
  */
 export function shopCategories({ sellOn = true, offered = null, services = true } = {}) {
   const has = (key) => !offered || (offered instanceof Set ? offered.has(key) : offered.includes(key));
-  return Object.freeze(SHOP_CATEGORIES.filter((key) => {
+  const base = SHOP_CATEGORIES.filter((key) => {
     if (key === 'sell') return sellOn;
     if (key === 'services') return services;
     return has(key);
-  }));
+  });
+  // The market additions (SPEC §14.3) each have a rail item only when this
+  // visit laid them out — never for a stock that names no offerings, which
+  // was saved before any addition could be — and stand after the flasks.
+  const additions = offered ? MARKET_ADDITION_CATEGORIES.filter(has) : [];
+  const at = base.findIndex((key) => key === 'services' || key === 'sell');
+  return Object.freeze(at < 0 ? [...base, ...additions] : [...base.slice(0, at), ...additions, ...base.slice(at)]);
 }
+
+/** The market additions' rail items, keyed by their offering ids (SPEC §14.3). */
+export const MARKET_ADDITION_CATEGORIES = Object.freeze(['armour', 'smithStones', 'sigils', 'innRest']);
 
 /**
  * The {Status} line a category carries on its rail item and its pane head.

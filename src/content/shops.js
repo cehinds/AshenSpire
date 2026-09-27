@@ -65,6 +65,34 @@ export const shops = {
       offering('armaments', { weight: 30 }),
       offering('weaponArts', { weight: 20 }),
       offering('remove', { weight: 50 }),
+      // THE MARKET ADDITIONS (SPEC §14.3, §14.6 step 5). Each ships at a chance
+      // below 100 and a weight below the shelves above, so the shelves stay the
+      // visit's certainties and the guarantee still fills from them first. Their
+      // stock rolls on `shopOffers` after the offering roll, never on `shop`.
+      offering('armour', {
+        chance: 35, weight: 20, stock: 2,
+        cost: {
+          min: 300, max: 390,
+          [NOTE]: {
+            min: 'The least one armour set on the market\'s shelf costs, in cinders.',
+            max: 'The most one armour set on the market\'s shelf costs, in cinders. Each set\'s price is rolled between the two.',
+          },
+        },
+      }, {
+        stock: 'How many armour sets the market\'s armour shelf holds each visit. Only sets of your class that you do not already own are offered.',
+      }),
+      offering('smithStones', { chance: 50, weight: 25, price: 110, perVisit: 2 }, {
+        price: 'What one Smithing Stone costs at the market, in cinders.',
+        perVisit: 'How many Smithing Stones the market sells each visit.',
+      }),
+      offering('sigils', { chance: 25, weight: 10, stock: 2, pricePct: 100 }, {
+        stock: 'How many sigils the market\'s sigil shelf holds each visit. It never offers one you already own.',
+        pricePct: 'The percent of each sigil\'s authored cost the market charges for it. At 100 it sells at the sigil\'s own price.',
+      }),
+      offering('innRest', { chance: 30, weight: 15, price: 150 }, {
+        chance: 'The percent chance a market away from any inn offers a full rest. A market in a town with an inn always offers it while it is enabled.',
+        price: 'What a full rest bought at the market costs, in cinders. It rests you exactly as the inn\'s bed does, once per visit.',
+      }),
     ],
     [NOTE]: {
       guaranteedMinimum: 'The fewest offerings a market visit lays out. When fewer came up by their chances, the heaviest missing ones are added. At least 2.',

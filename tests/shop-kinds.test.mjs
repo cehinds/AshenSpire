@@ -23,6 +23,7 @@ import {
   shopConfigRows, shopSettingsProblems, shopStockKind, shopStockOfferings, bringShopStockForward,
 } from '../src/model/shopKinds.js';
 import { rollShopKind, rollShopOfferings, buildMarketStock, buildMerchantStock } from '../src/engine/shopKinds.js';
+import { MARKET_ADDITIONS } from '../src/model/marketAdditions.js';
 import { t } from '../src/ui/strings.js';
 import { shopCategories } from '../src/ui/models/ShopWorkspaceModel.js';
 import { localServiceModel } from '../src/ui/models/LocalServiceModel.js';
@@ -283,15 +284,21 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
     // main.js's merchant case, in its order: the stock, then the smith's roll.
     const stock = buildMerchantStock(REG, rng, run);
     stock.smith = smithServicesAt(REG, 'merchant', rng);
-    const { kind, offerings, ...shelvesNow } = stock;
+    const { kind, offerings } = stock;
     assert.equal(kind, 'market');
-    assert.deepEqual(offerings, offeringsOf('market').map((row) => row.id));
+    // Every shelf that existed before shop kinds is out on every visit. The
+    // market additions of §14.3 (step 5) may join them by their own chances.
+    assert.deepEqual(offerings.filter((id) => LEGACY_MARKET_OFFERINGS.includes(id)), [...LEGACY_MARKET_OFFERINGS]);
+    for (const id of offerings) assert.ok(LEGACY_MARKET_OFFERINGS.includes(id) || MARKET_ADDITIONS.includes(id), `seed ${n}: ${id}`);
+    // The captured shelves, byte for byte, in their captured key order; any
+    // other key is an addition's own stock.
+    const shelvesNow = Object.fromEntries(Object.keys(before.stock).map((key) => [key, stock[key]]));
     assert.equal(JSON.stringify(shelvesNow), JSON.stringify(before.stock), `seed ${n}: the shelves, byte for byte`);
-    // Nothing new is drawn on any existing stream, and the shipped defaults
-    // draw nothing on the new one either.
-    const { shopOffers, ...counters } = rng.getCounters();
+    for (const key of Object.keys(stock)) assert.ok(key in before.stock || key === 'kind' || key === 'offerings' || MARKET_ADDITIONS.includes(key), `seed ${n}: stray stock key ${key}`);
+    // Nothing new is drawn on any existing stream. Only the additions' own
+    // rolls (§14.3, on shopOffers after the offering roll) draw on the new one.
+    const { shopOffers: _offers, ...counters } = rng.getCounters();
     assert.deepEqual(counters, before.counters, `seed ${n}: every existing stream`);
-    assert.equal(shopOffers, 0, `seed ${n}: shopOffers untouched by the shipped defaults`);
   }
 });
 
@@ -309,12 +316,16 @@ test('shopOffers is appended to the END of STREAM_NAMES, so no existing stream m
 
 test('a chance between 0 and 100 rolls once per enabled offering, in written order, on shopOffers only', () => {
   const registries = registriesWith({ [`${PREFIX}market.relics.chance`]: 50, [`${PREFIX}market.flasks.chance`]: 50 });
+  // The two set to 50 here, plus every shipped offering whose own chance is
+  // between 0 and 100 (the §14.3 additions).
+  const between = registries.shops.market.offerings.filter((row) => row.enabled && row.chance > 0 && row.chance < 100).length;
+  assert.ok(between >= 2);
   let withRelics = 0;
   for (const seed of SEEDS) {
     const rng = createRng(seed);
     const ids = rollShopOfferings(registries.shops.market, rng);
     const { shopOffers, ...rest } = rng.getCounters();
-    assert.equal(shopOffers, 2, 'one draw for each offering whose chance is between 0 and 100');
+    assert.equal(shopOffers, between, 'one draw for each offering whose chance is between 0 and 100');
     assert.ok(Object.values(rest).every((count) => count === 0), 'no other stream is drawn');
     if (ids.includes('relics')) withRelics += 1;
   }
@@ -374,7 +385,8 @@ test('Settings files every Shops row under its kind, with its label from uiStrin
 });
 
 test('stock.kind rides schema 14: the bump, the RUN_SHAPE row and the captured corpus entry', () => {
-  assert.equal(RUN_SCHEMA_VERSION, 14);
+  // 14 added the kind; later bumps (15, the sigil inventory) keep it.
+  assert.ok(RUN_SCHEMA_VERSION >= 14);
   const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
   assert.equal(JSON.parse(corpus.versions['14'].bytes).schemaVersion, 14);
   const run = createRunState({ seed: 9, classId: 'reaver', registries: REG });

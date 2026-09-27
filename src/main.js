@@ -65,9 +65,9 @@ import {
   rollRelicReward,
   rollArmamentDrop,
 } from './engine/encounters.js';
-import { buildMarketStock, buildMerchantStock } from './engine/shopKinds.js';
+import { buildMarketStock, buildMerchantStock, commitInnRest } from './engine/shopKinds.js';
 import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
-import { restLocationAtPoint, questBoardPointAt, CAMP_LOCATION } from './model/locations.js';
+import { restLocationAtPoint, questBoardPointAt, innInTown, CAMP_LOCATION } from './model/locations.js';
 import { mountTitle, focusTitleDefault } from './ui/screens/title.js';
 import { refreshHudQuickSettings } from './ui/components/hudQuickSettings.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
@@ -2050,7 +2050,7 @@ function worldLocationAction(action) {
   if (handlerId === 'shop') {
     // The atlas `shop` service is a market (SPEC §14.2): today's shelves on
     // `shop`, and which of them are out on `shopOffers`.
-    state.stock ||= buildMarketStock(registries, rng, run);
+    state.stock ||= buildMarketStock(registries, rng, run, { meta: saves.loadMeta(), innInTown: innInTown(registries, action.ownerId) });
     run.shopStock = state.stock;
     persist(); return showShop();
   }
@@ -2153,7 +2153,7 @@ function enterNode(nodeId) {
       // A classic merchant rolls its kind first (SPEC §14.2, `shopOffers`); the
       // shipped weights make every one a market with every shelf out, drawing
       // nothing new, so a seed's shelves are what they always were.
-      const stock = buildMerchantStock(registries, rng, run);
+      const stock = buildMerchantStock(registries, rng, run, { meta: saves.loadMeta() });
       const pm = shopPriceMult();
       if (pm !== 1) {
         for (const kind of ['cards', 'relics', 'flasks']) {
@@ -2797,6 +2797,14 @@ function showShop() {
     meta: saves.loadMeta(),
     onChanged: () => persist(),
     onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
+    // A full rest bought at the market (SPEC §14.3): the inn's own visit on
+    // the run's streams, with the same heal scale and refill counts the Rest
+    // screen's visit is given (showRest).
+    restAtInn: (quote) => {
+      const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
+      const { counts } = resolveGraceRefill(saves.loadMeta().settings || {});
+      return commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts: counts });
+    },
     onLeave: () => {
       finishWorldService();
       run.shopStock = null;
@@ -3461,7 +3469,7 @@ if (shotState === 'combat-test') {
     // ABSENT on the only screen the census can open, and "not wired" and
     // "nothing to sell" read identically. One flask, authored id, no rng.
     run.flasks.push({ flaskId: 'crimsonFlask' });
-    run.shopStock = buildMarketStock(registries, rng, run);
+    run.shopStock = buildMarketStock(registries, rng, run, { meta: saves.loadMeta() });
     showShop();
   } else if (shotState === 'reward') {
     // A REACH STATE for the reward MENU (E11/#256), the same shape and reason

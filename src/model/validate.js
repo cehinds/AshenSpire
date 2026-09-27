@@ -14,7 +14,9 @@
 import { handRulesDefaults } from '../content/handRules.js';
 import { deckRules as shippedDeckRules } from '../content/deckRules.js';
 import { shops as shippedShops } from '../content/shops.js';
+import { sigils as shippedSigils } from '../content/sigils.js';
 import { shopsTableProblems } from './shopKinds.js';
+import { marketAdditionTableProblems } from './marketStock.js';
 import { resolveFloorPlan } from './floorplan.js';
 import { validateAttack } from './combatRules.js';
 import { assertTableSane } from './secondbeat.js';
@@ -42,6 +44,7 @@ import {
   NODE_RELATIONS,
   VARIABLE_SCOPES,
   CARD_RARITIES,
+  SIGIL_RARITIES,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { treeProblems, nodeTokens, nodeVariableBindings, cardKind } from './tree.js';
@@ -106,6 +109,7 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'contentVersion',
   'balance',
   'shops', // SPEC §14.2: the shop kinds and their offerings (content/shops.js)
+  'sigils', // SPEC §14.3: sigils, sold at the market into run.sigils (content/sigils.js)
   'mapConfigs',
   'scripts',
   'equipment',
@@ -656,6 +660,7 @@ function collectContentProblems(bundle, errors = []) {
     // the offerings, a [NOTE] beside every number, and no weight for a kind
     // whose screen has not shipped.
     shopsTableProblems(b.shops || shippedShops, err);
+    marketAdditionTableProblems(b.shops || shippedShops, err);
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
       if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);
@@ -1864,6 +1869,12 @@ function collectContentProblems(bundle, errors = []) {
     }
   }
 
+  // ---- sigils (SPEC §14.3): { id, name, rarity, cost, blurb, triggers } ------
+  // The triggers are the relic DSL, checked by the same walker, so a sigil adds
+  // nothing to the engine's vocabulary. A legendary sigil is §15.4's (attuned,
+  // no triggers, never stock) and is refused until that section lands.
+  validateSigils(b.sigils === undefined ? shippedSigils : b.sigils, vctx);
+
   // ---- threshold-proc second layer (#61): meaning, not shape ---------------
   // Every red names its row and, for tag errors, lists the legal tags — a
   // wrong tag teaches the vocabulary instead of just refusing (silence-word
@@ -2366,6 +2377,28 @@ export function validateEffects(effects, path, vctx) {
         err(`${p}.position`, `Unknown position '${eff.position}' (legal: ${PILE_POSITIONS.join(', ')})`);
       }
     }
+  });
+}
+
+const SIGIL_FIELDS = new Set(['id', 'name', 'rarity', 'cost', 'blurb', 'triggers']);
+
+function validateSigils(rows, vctx) {
+  const { err } = vctx;
+  if (!Array.isArray(rows)) { err('sigils', `must be an array of sigil rows, got ${describe(rows)}`); return; }
+  const seen = new Set();
+  rows.forEach((row, index) => {
+    if (!isPlainObject(row) || typeof row.id !== 'string' || !row.id) { err(`sigils[${index}]`, 'must be a sigil { id, name, rarity, cost, blurb, triggers }'); return; }
+    const at = `sigils.${row.id}`;
+    if (seen.has(row.id)) err(at, 'is listed twice');
+    seen.add(row.id);
+    for (const key of Object.keys(row)) if (!SIGIL_FIELDS.has(key)) err(`${at}.${key}`, `is not a sigil field (fields: ${[...SIGIL_FIELDS].join(', ')})`);
+    if (typeof row.name !== 'string' || !row.name) err(`${at}.name`, 'must be a non-empty string');
+    if (typeof row.blurb !== 'string' || !row.blurb) err(`${at}.blurb`, 'must be a non-empty string (the sentence the shelf shows)');
+    if (!SIGIL_RARITIES.includes(row.rarity)) err(`${at}.rarity`, `must be one of ${SIGIL_RARITIES.join(', ')}, got ${describe(row.rarity)}`);
+    else if (row.rarity === 'legendary') err(`${at}.rarity`, 'is legendary, which SPEC §15.4 authors as an attuned sigil with no triggers and no cost; it cannot ship before that section lands');
+    if (!(Number.isSafeInteger(row.cost) && row.cost > 0)) err(`${at}.cost`, `must be a whole number of cinders above 0, got ${describe(row.cost)}`);
+    if (!Array.isArray(row.triggers) || !row.triggers.length) err(`${at}.triggers`, 'must be a non-empty list of triggers ({ on, if?, do }) — what the sigil does once installed');
+    else validateTriggers(row.triggers, `${at}.triggers`, vctx);
   });
 }
 

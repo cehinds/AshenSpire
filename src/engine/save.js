@@ -45,6 +45,7 @@ import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
 import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
+import { unknownSigilId } from '../model/sigils.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -654,6 +655,10 @@ export function createSaveManager(storage) {
             why: `the class tree of '${run.class}' no longer holds ${stale.map((id) => `'${id}'`).join(', ')}: the pick was dropped, the rest kept`,
           });
         }
+        // A sigil id this build does not know (SPEC §14.3) is refused by name:
+        // it would be a carried item with no row to show or install.
+        const strangeSigil = unknownSigilId(registries, run);
+        if (strangeSigil) throw new Error(`sigil '${strangeSigil}' is unknown to this build`);
         normalizeRunAttributes(run, registries);
         validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
       } catch (e) {

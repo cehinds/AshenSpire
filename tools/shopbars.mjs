@@ -121,6 +121,10 @@ const SHAPES = [
 // drawn is red by name, a category that appears unnamed is red by name. The
 // Smith's services live on SERVICES, so no rail item is a roll any more.
 const CATEGORIES = ['cards', 'armaments', 'weaponArts', 'relics', 'flasks', 'services', 'sell'];
+// The market additions (SPEC §14.3) come up by their own chances, so a visit
+// may or may not draw them; each is named here, so one is never a stray, and
+// the roster above is still required whole.
+const ADDITIONS = ['armour', 'smithStones', 'sigils', 'innRest'];
 
 const findings = [];
 let checks = 0;
@@ -231,7 +235,7 @@ async function main() {
     // S1 — the roster, both directions, and every item speaks.
     const drawn = arrival.bars.map((b) => b.key);
     const missing = CATEGORIES.filter((k) => !drawn.includes(k));
-    const stray = drawn.filter((k) => !CATEGORIES.includes(k));
+    const stray = drawn.filter((k) => !CATEGORIES.includes(k) && !ADDITIONS.includes(k));
     const mute = arrival.bars.filter((b) => !b.labelOnGlass || !b.valueOnGlass || b.value === '' || b.label === '');
     if (missing.length || stray.length || mute.length) {
       bad('S1', shape, `the rail is not the roster — missing: [${missing.join(', ')}] stray: [${stray.join(', ')}]`

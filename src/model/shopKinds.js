@@ -17,6 +17,7 @@ import { NOTE } from '../content/balance.js';
 import { shops as shippedShops } from '../content/shops.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { NEW_RUN_CLAUSE } from './balanceNotes.js';
+import { marketAdditionStockProblems } from './marketStock.js';
 
 /** The kinds a shop can be (SPEC §14.2) — a closed set; a new kind is a spec change. */
 export const SHOP_KINDS = Object.freeze(['market', 'blacksmith', 'master']);
@@ -131,6 +132,8 @@ export function shopStockProblems(stock, path = 'shopStock', { required = false 
       for (const id of stock.offerings) if (!known.has(id)) problems.push(`${path}.offerings names '${id}', which is not a ${kind} offering`);
     }
   }
+  // The market additions' shelves (SPEC §14.3), each shape-checked by name.
+  problems.push(...marketAdditionStockProblems(stock, path));
   return problems;
 }
 
@@ -358,7 +361,7 @@ export function shopConfigRows(bundle) {
 // The sentence a refusal's uiStrings row says, filled with its tokens. Read
 // from the generated table (content), so the model's import and structural
 // checks can say it without reaching up into the UI layer.
-function sentence(id, tokens) {
+export function shopSentence(id, tokens = {}) {
   const text = uiStrings.find((row) => row.id === id)?.short;
   if (!text) throw new Error(`uiStrings: '${id}' has no short form`);
   return text.replace(/\{(\w+)\}/g, (_, key) => {
@@ -411,7 +414,7 @@ export function shopSettingsProblems(bundle, settings = {}) {
       });
     }
   }
-  return problems.map((problem) => ({ ...problem, message: sentence(problem.id, problem.tokens) }));
+  return problems.map((problem) => ({ ...problem, message: shopSentence(problem.id, problem.tokens) }));
 }
 
 /**
