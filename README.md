@@ -113,7 +113,7 @@ More captures — Armoury: [Equipment](docs/preview/armoury-simple-equipment-144
 | Branch | Purpose |
 |---|---|
 | `main` | Stable, playable. Only receives merges from `release`. |
-| `release` | Release staging, promoted from `test` by the owner — final checks before `main`. |
+| `release` | Release staging, promoted from `test` by the owner through a pinned `rc/<version>` branch — final checks before `main`. |
 | `test` | Heavy CI: each session promotes `dev` here after merging, and the long suites run on that push. Only `dev` promotions land here; balance experiments go on `experiment/*` branches. |
 | `dev` | Integration. Each session merges its own feature PR here once the fast checks pass. |
 | `feature/*` | One branch per unit of work, branched from `dev`, merged back via PR. |

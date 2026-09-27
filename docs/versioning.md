@@ -83,7 +83,7 @@ The answer is semver's own pre-release segment, not a bent ladder:
   ordinal was the one monotonic key: it never reset, so any two builds sorted
   by it alone, and every tool that orders builds (`about-changelog`,
   `buildversion` row H) read the ordinal column.
-- **The `-rc` suffix is dropped by the owner's release cut** (`test → release`,
+- **The `-rc` suffix is dropped by the owner's release cut** (`rc/<version>` → `release`, a branch pinned at the tested RC SHA on `test`,
   owner-exclusive), which is the MINOR bump
   the ladder already names. Nothing else removes it.
 - The triple in the pre-release (`0.5.0` here) is the ladder's answer for the
