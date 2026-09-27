@@ -90,8 +90,10 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
      `dev`, and a newer push cancels the older run. Promote only when the
      latest run on `dev` has succeeded and `dev`'s tip is the commit it
      covered or its own bot commit. Then open a PR from `dev` into `test` and
-     merge it yourself, with a merge commit, checking that its head is still
-     the current `dev` tip. That push to `test` runs the heavy suites. If one is
+     merge it yourself, with a merge commit. Immediately before merging,
+     check again: the PR's head must still be the `dev` tip and that tip's
+     latest `architecture-sync` run must have succeeded. If `dev` moved,
+     wait for its sync to settle and check again. That push to `test` runs the heavy suites. If one is
      already open, merge that one rather than opening another. Each
      promotion runs the full 3-OS matrix, so when several of your PRs land
      together, promote once after the last.
