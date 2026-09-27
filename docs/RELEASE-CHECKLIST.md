@@ -101,6 +101,7 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §1 | SPEC text matches what shipped | G20 |
 | §1 | SPEC P8b: Powers hold a resting stance until the next turn | G20 |
 | §1 | COMBAT-EQUIPMENT-RULES prototype gate, and each class pool from 36 to 50 cards | waived: post-1.0 by owner ruling D3 (2026-09-26). |
+| §1 | Progression leftovers: 3b-ii, the class-swap boss-reward door, quest XP | waived: post-1.0 by owner ruling D18 (2026-09-27). |
 | §2 | Counts meet SPEC | G20 |
 | §2 | Stale content validators are fixed and gated | G20 |
 | §2 | 1–5 elites per seat, averaging 3 | G20 |
