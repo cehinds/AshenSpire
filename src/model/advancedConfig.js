@@ -16,7 +16,7 @@ import { RATING_STAT_IDS, resolvedRuleRow } from './derivedStats.js';
 import { STAT_ROWS_MARKER, STAT_ROWS_VERSION, STAT_ROW_NO_MAX, hasLegacyStatSettings, hasRetiredOpeningHand, migrateLegacyStatSettings, withoutRetiredOpeningHand } from './statRows.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 import { gateOpen, ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
-import { shopConfigRows, cloneShops } from './shopKinds.js';
+import { shopConfigRows, cloneShops, shopSettingsProblems } from './shopKinds.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
@@ -1166,7 +1166,12 @@ export function advancedConfigProblemRows(bundle, settings = {}) {
       message: `${byName.get(classId) || classId}: ${attributeLabel} ${problem.msg}. Authored defaults stay active until the set is valid.`,
     });
   }
-  return [...problems, ...advancedConfigStructuralProblems(bundle, settings).map((message) => ({ keys: structuralKeys(message), message }))];
+  return [...problems,
+    // The Shops combinations (SPEC §14.2): refused here, so an import or a
+    // restore that would leave a kind below its minimum is rejected whole
+    // before it replaces the profile, not discovered at the next run (Codex, on #1371).
+    ...shopSettingsProblems(bundle, settings).map(({ keys, message }) => ({ keys, message })),
+    ...advancedConfigStructuralProblems(bundle, settings).map((message) => ({ keys: structuralKeys(message), message }))];
 }
 
 export function advancedConfigProblems(bundle, settings = {}) {

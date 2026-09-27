@@ -43,7 +43,6 @@ import { pageDebug } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
 import { deckRules } from '../../content/deckRules.js';
 import { deckSettingsProblems } from '../../model/deckRules.js';
-import { shopSettingsProblems } from '../../model/shopKinds.js';
 import { SEED_KEY, seedAfterChange, sameSetting } from '../../model/settingsDefaults.js';
 import { renderSettingsSync } from '../components/settingsSync.js';
 import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
@@ -2098,9 +2097,8 @@ export function paintConfigProblems(container, settings, extra = []) {
   // `extra` carries the refusals the MODEL cannot see, because the value never
   // reached it: a typed number the field clamped on its way in (see
   // `typedNumberRefusal`). Same shape, same painting, same dedupe.
-  const entries = [...advancedConfigProblemRows(contentBundle, settings), ...deckSettingsProblems(settings),
-    // The Shops refusals (SPEC §14.2), each naming its kind, in uiStrings' words.
-    ...shopSettingsProblems(contentBundle, settings).map(({ keys, id, tokens }) => ({ keys, message: t(id, tokens) })), ...extra];
+  // The Shops refusals (SPEC §14.2) arrive through advancedConfigProblemRows.
+  const entries = [...advancedConfigProblemRows(contentBundle, settings), ...deckSettingsProblems(settings), ...extra];
   const byKey = new Map();
   for (const entry of entries) {
     for (const key of entry.keys || []) {

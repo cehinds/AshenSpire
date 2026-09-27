@@ -14,6 +14,8 @@
 //
 // The roll itself is engine/shopKinds.js.
 import { NOTE } from '../content/balance.js';
+import { shops as shippedShops } from '../content/shops.js';
+import { uiStrings } from '../content/generated/uiStrings.js';
 import { NEW_RUN_CLAUSE } from './balanceNotes.js';
 
 /** The kinds a shop can be (SPEC §14.2) — a closed set; a new kind is a spec change. */
@@ -86,13 +88,27 @@ export function bringShopStockForward(run) {
   return run;
 }
 
-/** The shape of a persisted stock's kind fields, refused by name (validateRunShape). */
+/**
+ * The shape of a persisted stock's kind fields, refused by name
+ * (validateRunShape): a known kind, and a non-empty list of that kind's own
+ * offering ids. The ids are read from content/shops.js, where every offering
+ * a kind can have is written — Settings tunes an offering, never adds one — so
+ * a save naming an offering its kind has not got is malformed, and is archived
+ * and refused rather than opened onto a shop with no shelf to show (Codex, on
+ * #1371).
+ */
 export function shopStockProblems(stock, path = 'shopStock') {
   if (!object(stock)) return [];
   const problems = [];
   if (stock.kind !== undefined && !SHOP_KINDS.includes(stock.kind)) problems.push(`${path}.kind must be one of ${SHOP_KINDS.join(', ')}, got ${JSON.stringify(stock.kind)}`);
-  if (stock.offerings !== undefined && !(Array.isArray(stock.offerings) && stock.offerings.every((id) => typeof id === 'string' && id))) {
-    problems.push(`${path}.offerings must be a list of offering ids`);
+  if (stock.offerings !== undefined) {
+    if (!(Array.isArray(stock.offerings) && stock.offerings.length && stock.offerings.every((id) => typeof id === 'string' && id))) {
+      problems.push(`${path}.offerings must be a non-empty list of offering ids`);
+    } else {
+      const kind = shopStockKind(stock);
+      const known = new Set([...(shippedShops[kind]?.offerings || []).map((row) => row.id), ...(kind === 'market' ? LEGACY_MARKET_OFFERINGS : [])]);
+      for (const id of stock.offerings) if (!known.has(id)) problems.push(`${path}.offerings names '${id}', which is not a ${kind} offering`);
+    }
   }
   return problems;
 }
@@ -312,12 +328,26 @@ export function shopConfigRows(bundle) {
   return rows;
 }
 
+// The sentence a refusal's uiStrings row says, filled with its tokens. Read
+// from the generated table (content), so the model's import and structural
+// checks can say it without reaching up into the UI layer.
+function sentence(id, tokens) {
+  const text = uiStrings.find((row) => row.id === id)?.short;
+  if (!text) throw new Error(`uiStrings: '${id}' has no short form`);
+  return text.replace(/\{(\w+)\}/g, (_, key) => {
+    if (!Object.hasOwn(tokens, key)) throw new Error(`uiStrings: '${id}.short' wants {${key}}`);
+    return String(tokens[key]);
+  });
+}
+
 /**
- * shopSettingsProblems(bundle, settings) → [{ keys, id, tokens }], the
+ * shopSettingsProblems(bundle, settings) → [{ keys, id, tokens, message }], the
  * refusals Settings shows by name (SPEC §14.2): a guaranteed minimum below 2,
  * and disabling offerings until fewer are enabled than the kind's minimum.
  * Each names its kind and addresses the rows that cause it; `id` is the
- * sentence's row in content/source/uiStrings.csv.
+ * sentence's row in content/source/uiStrings.csv, and `message` that
+ * sentence filled in. advancedConfigProblemRows carries them, so Settings, a
+ * configuration import and a sync restore all refuse the same combinations.
  */
 export function shopSettingsProblems(bundle, settings = {}) {
   const table = bundle?.shops;
@@ -353,7 +383,7 @@ export function shopSettingsProblems(bundle, settings = {}) {
       });
     }
   }
-  return problems;
+  return problems.map((problem) => ({ ...problem, message: sentence(problem.id, problem.tokens) }));
 }
 
 /** A deep copy of a shops table that keeps each [NOTE] (structuredClone drops a Symbol key). */

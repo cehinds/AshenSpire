@@ -11,7 +11,7 @@ import { contentBundle } from '../src/content/index.js';
 import { shops as shippedShops } from '../src/content/shops.js';
 import { NOTE } from '../src/content/balance.js';
 import { createRegistries } from '../src/model/registries.js';
-import { advancedConfigRows, advancedConfigSnapshot, configuredContentBundle } from '../src/model/advancedConfig.js';
+import { advancedConfigRows, advancedConfigSnapshot, configuredContentBundle, advancedConfigExport, parseAdvancedConfigFile, advancedConfigProblems } from '../src/model/advancedConfig.js';
 import { createRng, STREAM_NAMES } from '../src/engine/rng.js';
 import { buildShopStock } from '../src/engine/encounters.js';
 import { smithServicesAt } from '../src/model/cardExtraction.js';
@@ -381,4 +381,33 @@ test('stock.kind rides schema 14: the bump, the RUN_SHAPE row and the captured c
   // A current save round-trips its stock untouched.
   const back = migrateRunSchema(JSON.parse(JSON.stringify(run)));
   assert.deepEqual(back.shopStock, JSON.parse(JSON.stringify(run.shopStock)));
+});
+
+test('a configuration import that leaves a kind below its minimum is refused whole, by name (Codex, on #1371)', () => {
+  const market = offeringsOf('market').map((row) => row.id);
+  const disabled = Object.fromEntries(market.slice(1).map((id) => [`${PREFIX}market.${id}.enabled`, false]));
+  // The model-level list every door reads carries the same sentence Settings shows.
+  const problems = advancedConfigProblems(contentBundle, disabled);
+  assert.ok(problems.some((line) => /Market/.test(line) && /guaranteed minimum of 2/.test(line)), problems.join(' | '));
+  const file = advancedConfigExport(disabled);
+  assert.throws(() => parseAdvancedConfigFile(file, contentBundle, {}), /Nothing was imported\. Market: /);
+  // Four off (two left) imports.
+  const fine = Object.fromEntries(market.slice(2).map((id) => [`${PREFIX}market.${id}.enabled`, false]));
+  const changes = parseAdvancedConfigFile(advancedConfigExport(fine), contentBundle, {});
+  assert.equal(changes[`${PREFIX}market.relics.enabled`], undefined);
+  assert.equal(changes[`${PREFIX}market.flasks.enabled`], false);
+});
+
+test('a saved stock naming an offering its kind has not got is refused by name (Codex, on #1371)', () => {
+  const run = createRunState({ seed: 4, classId: 'reaver', registries: REG });
+  run.shopStock = buildMerchantStock(REG, createRng(4), run);
+  assert.deepEqual(validateRunShape(run), []);
+  const bogus = { ...structuredClone(run), shopStock: { ...structuredClone(run.shopStock), offerings: ['bogus'] } };
+  assert.ok(validateRunShape(bogus).some((problem) => /shopStock\.offerings names 'bogus'/.test(problem)));
+  const empty = { ...structuredClone(run), shopStock: { ...structuredClone(run.shopStock), offerings: [] } };
+  assert.ok(validateRunShape(empty).some((problem) => /shopStock\.offerings must be a non-empty list/.test(problem)));
+  // Through the real load door: archived and refused, never opened.
+  const storage = createMemoryStorage();
+  storage.setItem(RUN_KEY, JSON.stringify({ ...JSON.parse(JSON.stringify(run)), schemaVersion: RUN_SCHEMA_VERSION, shopStock: bogus.shopStock }));
+  assert.equal(createSaveManager(storage).loadRun(REG), null);
 });
