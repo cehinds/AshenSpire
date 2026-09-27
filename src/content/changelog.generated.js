@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Choose when card rewards come",
     "detail": "Settings → Rewards has new card reward settings. You can turn the card offer on or off for normal, elite and boss fights, and give each a percent chance to offer a card. When the chance misses, the spoils say \"No card this time.\" A new \"Level card\" option adds one more card to choose whenever a fight raises your level, with a limit on how many one fight can add. Out of the box nothing changes: every fight offers its card as before, level cards are off, and an existing seed gives the same rewards.",
-    "build": "0.7.1.620",
+    "build": "0.7.1.621",
     "pullRequest": 1351,
     "url": "https://github.com/cehinds/AshenSpire/pull/1351"
+  },
+  {
+    "id": "pr-1355",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Loading a save that can't be opened keeps your current climb",
+    "detail": "If you load a slot from the in-run menu and it turns out to be damaged, or another tab cleared it while you were deciding, the game now keeps you in the run you were already playing and tells you the slot could not be loaded. Before, it dropped that run and sent you to the title screen. Saves from a newer version were already handled this way.",
+    "build": "0.7.1.619",
+    "pullRequest": 1355,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1355"
   },
   {
     "id": "pr-1358",
