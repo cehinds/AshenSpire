@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1370",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: downloading the high-res art is safe when two copies run at once",
+    "detail": "Nothing you play changes. The tool that fetches the optional high-res art no longer fails when another copy of it replaces the same folder at the same moment.",
+    "build": "0.7.1.637",
+    "pullRequest": 1370,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1370"
+  },
+  {
     "id": "pr-1366",
     "date": "2026-09-27",
     "group": "2026-09-27",
