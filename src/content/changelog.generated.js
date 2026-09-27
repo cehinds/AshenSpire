@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Behind the scenes: finished changes reach development builds without waiting",
     "detail": "Nothing you play changes. A change now lands in development as soon as its quick checks pass, and the long checks run when development is promoted to the test build.",
-    "build": "0.7.1.639",
+    "build": "0.7.1.641",
     "pullRequest": 1350,
     "url": "https://github.com/cehinds/AshenSpire/pull/1350"
+  },
+  {
+    "id": "pr-1373",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the 1.0 checklist records three more fixes",
+    "detail": "Docs only. docs/FINISH.md now marks as done: a test that failed only sometimes is fixed, loading a save from the in-game menu is checked in a real browser, and the layout checker's limits are written down.",
+    "build": "0.7.1.640",
+    "pullRequest": 1373,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1373"
+  },
+  {
+    "id": "pr-1368",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the HUD layout check says what it cannot see, and reads the HUD visibility settings too",
+    "detail": "Nothing you play changes. The check that keeps the relic rail inside the HUD now lists what its simple style reader does not model, and a test keeps that list from being dropped. It also reads the style sheet that hides relics and potions when you turn them off, so a later change there that knocks the rail out of place is caught. Hiding the whole rail is allowed only when your settings leave it empty: relics and potions both off, or one off when the rail holds nothing else.",
+    "build": "0.7.1.639",
+    "pullRequest": 1368,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1368"
   },
   {
     "id": "pr-1367",
