@@ -68,9 +68,11 @@ export function shopStockOfferings(stock) {
 }
 
 function stockForward(stock) {
-  if (!object(stock) || stock.kind !== undefined) return;
-  stock.kind = 'market';
-  stock.offerings = [...LEGACY_MARKET_OFFERINGS];
+  if (!object(stock)) return;
+  // Each field is filled only where it is missing: a pre-14 stock has
+  // neither, and a hand-edited one keeps whatever it does carry.
+  if (stock.kind === undefined) stock.kind = 'market';
+  if (stock.offerings === undefined) stock.offerings = [...LEGACY_MARKET_OFFERINGS];
 }
 
 /**
@@ -97,9 +99,17 @@ export function bringShopStockForward(run) {
  * and refused rather than opened onto a shop with no shelf to show (Codex, on
  * #1371).
  */
-export function shopStockProblems(stock, path = 'shopStock') {
+export function shopStockProblems(stock, path = 'shopStock', { required = false } = {}) {
   if (!object(stock)) return [];
   const problems = [];
+  // A schema-14 stock was written by a build that always writes both fields;
+  // only an older save gets the market fallback, at the migration door. A
+  // current save missing one would otherwise reopen every legacy shelf — a
+  // Remove the visit never offered, say (Codex, on #1371).
+  if (required) {
+    if (stock.kind === undefined) problems.push(`${path}.kind is missing (a schema-14 stock names its kind)`);
+    if (stock.offerings === undefined) problems.push(`${path}.offerings is missing (a schema-14 stock lists what its visit laid out)`);
+  }
   if (stock.kind !== undefined && !SHOP_KINDS.includes(stock.kind)) problems.push(`${path}.kind must be one of ${SHOP_KINDS.join(', ')}, got ${JSON.stringify(stock.kind)}`);
   if (stock.offerings !== undefined) {
     if (!(Array.isArray(stock.offerings) && stock.offerings.length && stock.offerings.every((id) => typeof id === 'string' && id))) {

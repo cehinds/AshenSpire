@@ -781,13 +781,13 @@ export function levelProblems(level) {
   return problems;
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard } = {}) {
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones } = {}) {
   const problems = [];
   problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
-  problems.push(...shopStockProblems(run.shopStock));
+  problems.push(...shopStockProblems(run.shopStock, 'shopStock', { required: !preShopKinds }));
   for (const [pointId, state] of Object.entries(run.journey?.serviceStates || {})) {
-    if (state && typeof state === 'object') problems.push(...shopStockProblems(state.stock, `journey.serviceStates.${pointId}.stock`));
+    if (state && typeof state === 'object') problems.push(...shopStockProblems(state.stock, `journey.serviceStates.${pointId}.stock`, { required: !preShopKinds }));
   }
   try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
   for (const f of RUN_SHAPE) {
@@ -1291,7 +1291,7 @@ export function migrateRunSchema(run) {
     throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, ${RUN_SCHEMA_VERSION})`);
   }
   if (preShopKinds) bringShopStockForward(run);
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds });
   if (preSkills && (run.skills === undefined || run.skills === null)) run.skills = {};
   if (preCoreTags && (run.coreTags === undefined || run.coreTags === null)) run.coreTags = [];
   if (preSideboard && (run.sideboard === undefined || run.sideboard === null)) run.sideboard = [];

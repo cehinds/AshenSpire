@@ -464,3 +464,23 @@ test('an atlas point\'s saved stock is shape-checked like run.shopStock, and Sho
   assert.equal(rows.get(`${PREFIX}market.weaponArts.chance`).label, 'Market · Weapon arts: chance');
   assert.equal(rows.get(`${PREFIX}master.training.training.xp`).label, 'Wise master · Training: Training xp');
 });
+
+test('a schema-14 stock must name its kind and offerings; only an older save gets the market fallback (Codex, on #1371)', () => {
+  const run = createRunState({ seed: 8, classId: 'reaver', registries: REG });
+  run.shopStock = buildMarketStock(registriesWith({ [`${PREFIX}market.remove.enabled`]: false }), createRng(8), run);
+  assert.ok(!run.shopStock.offerings.includes('remove'));
+  const { offerings: _gone, ...noOfferings } = run.shopStock;
+  const { kind: _kindGone, ...noKind } = run.shopStock;
+  assert.ok(validateRunShape({ ...run, shopStock: noOfferings }).some((problem) => /shopStock\.offerings is missing/.test(problem)));
+  assert.ok(validateRunShape({ ...run, shopStock: noKind }).some((problem) => /shopStock\.kind is missing/.test(problem)));
+  assert.ok(shopStockProblems(noOfferings, 'journey.serviceStates.p.stock', { required: true })
+    .some((problem) => problem.startsWith('journey.serviceStates.p.stock.offerings is missing')));
+  // Through the load door a current save missing the field is refused, so a
+  // Remove the visit never offered cannot come back on reload.
+  const storage = createMemoryStorage();
+  storage.setItem(RUN_KEY, JSON.stringify({ ...JSON.parse(JSON.stringify(run)), schemaVersion: RUN_SCHEMA_VERSION, shopStock: noOfferings }));
+  assert.equal(createSaveManager(storage).loadRun(REG), null);
+  // A schema-13 save of the same shape is brought forward instead.
+  const older = migrateRunSchema({ ...JSON.parse(JSON.stringify(run)), schemaVersion: 13, shopStock: JSON.parse(JSON.stringify(noOfferings)) });
+  assert.deepEqual(older.shopStock.offerings, [...LEGACY_MARKET_OFFERINGS]);
+});
