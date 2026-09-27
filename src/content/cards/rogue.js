@@ -327,4 +327,57 @@ export const rogueCards = [
       textTemplate: 'Become Prepared.',
     },
   },
+  // ---- Skill-draft depth (bow and parrying-hand tracks) --------------------
+  // A levelled shortbow drafts pierce/ranged/precision cards, a buckler or
+  // parrying dagger guard/flourish ones; these give each at least four per
+  // rarity it has opened.
+  {
+    id: 'pinningShot', name: 'Pinning Shot', class: 'rogue', rarity: 'common', cost: 1, type: 'attack', keywords: [], icon: '➹',
+    flavor: "An arrow through the hem, not the heart.\n\nDock archers learned it on the gulls first, then on the Court's bailiffs, whose long coats caught on every piling. A pinned bailiff is a patient one.\n\nThe docks still tell which bailiff wore the longest coat, and laugh.",
+    effects: [{ op: 'damage', target: 'enemy', amount: 6 }, { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 }],
+    textTemplate: 'Deal {damage} damage. Apply {weak} Weak.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 9 }, { op: 'applyStatus', target: 'enemy', status: 'weak', stacks: 1 }] },
+  },
+  {
+    id: 'arrowVolley', name: 'Arrow Volley', class: 'rogue', rarity: 'common', cost: 1, type: 'attack', keywords: [], icon: '🏹',
+    flavor: "Loose, nock, loose again.\n\nThe dock crews kept a barrel of salvaged arrows beneath every stair, few of them straight. A volley did not need them straight, only many and quick, and the crews were both.\n\nThe barrels are empty now. Nobody admits to refilling them.",
+    effects: [{ op: 'damage', target: 'allEnemies', amount: 3, hits: 2 }],
+    textTemplate: 'Deal {damage} damage to ALL enemies {hits} times.',
+    upgrade: { effects: [{ op: 'damage', target: 'allEnemies', amount: 4, hits: 2 }] },
+  },
+  {
+    id: 'nockAndWait', name: 'Nock and Wait', class: 'rogue', rarity: 'common', cost: 1, staminaCost: 1, type: 'skill', keywords: [], icon: '🎯',
+    flavor: "The string drawn, the breath held.\n\nA dock archer waits for the tide bell, when every head on the quay turns at once. The bell has rung at the wrong hours since the Burning.\n\nThe archers have learned to wait for the heads instead.",
+    effects: [{ op: 'draw', amount: 2 }, prepare()],
+    textTemplate: 'Draw {draw} cards. Become Prepared.',
+    upgrade: { effects: [{ op: 'draw', amount: 3 }, prepare()] },
+  },
+  {
+    id: 'aimedShot', name: 'Aimed Shot', class: 'rogue', rarity: 'uncommon', cost: 2, type: 'attack', keywords: [], icon: '🎯',
+    flavor: "One arrow, one seam in the armour.\n\nThe stitched knights of the Court wear plate sewn at the joints, and the stitching is the weak place. A dock archer who knows a surgeon's work knows where to aim.\n\nSome of them learned it on the surgeons' tables.",
+    effects: [{ op: 'damage', target: 'enemy', amount: 10 }, { op: 'damage', target: 'enemy', amount: 8, if: PREPARED }, { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 2, if: PREPARED }, spendPrepared()],
+    textTemplate: 'Deal {damage} damage. Prepared: deal {damage.2} more and apply {vulnerable} Vulnerable. Consume Prepared.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 13 }, { op: 'damage', target: 'enemy', amount: 10, if: PREPARED }, { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 2, if: PREPARED }, spendPrepared()] },
+  },
+  {
+    id: 'barbedArrow', name: 'Barbed Arrow', class: 'rogue', rarity: 'uncommon', cost: 1, type: 'attack', keywords: [], icon: '⤞',
+    flavor: "A head filed backward so it will not come out.\n\nFishhook smiths on the docks made them in secret, for the Court forbade barbs after a bailiff died of one. The smiths still make fishhooks.\n\nThe fish on the docks are said to be larger than they were.",
+    effects: [{ op: 'damage', target: 'enemy', amount: 5 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 4 }],
+    textTemplate: 'Deal {damage} damage. Apply {bleed} Bleed.',
+    upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 7 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 6 }] },
+  },
+  {
+    id: 'bindingParry', name: 'Binding Parry', class: 'rogue', rarity: 'rare', cost: 1, type: 'skill', keywords: [], icon: '⚔',
+    flavor: "The blade caught, turned, and held aside.\n\nA duelling master of the Court taught it for coin to anyone who asked, dock thieves among them. When the Court learned whom he had taught, it stitched his hands.\n\nHe teaches it still, by describing it.",
+    effects: [{ op: 'block', target: 'self', amount: 12 }, prepare(), { op: 'draw', amount: 1 }],
+    textTemplate: 'Gain {block} Block. Become Prepared. Draw {draw} card.',
+    upgrade: { effects: [{ op: 'block', target: 'self', amount: 16 }, prepare(), { op: 'draw', amount: 1 }] },
+  },
+  {
+    id: 'whirlingGuard', name: 'Whirling Guard', class: 'rogue', rarity: 'rare', cost: 1, type: 'attack', keywords: [], icon: '🌀',
+    flavor: "A spin that is both parry and cut.\n\nDock dancers performed it for the Court at feast days, with painted wooden knives. After the Burning they were seen performing it on the quay, with other knives, and without the paint.\n\nNo feast has been held since.",
+    effects: [{ op: 'block', target: 'self', amount: 7 }, { op: 'damage', target: 'enemy', amount: 3, hits: 3 }],
+    textTemplate: 'Gain {block} Block. Deal {damage} damage {hits} times.',
+    upgrade: { effects: [{ op: 'block', target: 'self', amount: 10 }, { op: 'damage', target: 'enemy', amount: 4, hits: 3 }] },
+  },
 ];
