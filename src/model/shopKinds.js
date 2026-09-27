@@ -110,7 +110,14 @@ export function shopStockProblems(stock, path = 'shopStock', { required = false 
     if (stock.kind === undefined) problems.push(`${path}.kind is missing (a schema-14 stock names its kind)`);
     if (stock.offerings === undefined) problems.push(`${path}.offerings is missing (a schema-14 stock lists what its visit laid out)`);
   }
-  if (stock.kind !== undefined && !SHOP_KINDS.includes(stock.kind)) problems.push(`${path}.kind must be one of ${SHOP_KINDS.join(', ')}, got ${JSON.stringify(stock.kind)}`);
+  // A kind whose screen has not shipped cannot be resumed: the market screen
+  // cannot show its offerings, so such a save is refused, not opened empty
+  // (Codex, on #1371). §14.6 steps 6 and 7 widen SHOP_KIND_SCREENS with theirs.
+  if (stock.kind !== undefined && !SHOP_KIND_SCREENS.includes(stock.kind)) {
+    problems.push(SHOP_KINDS.includes(stock.kind)
+      ? `${path}.kind is '${stock.kind}', whose screen is not registered yet (open kinds: ${SHOP_KIND_SCREENS.join(', ')})`
+      : `${path}.kind must be one of ${SHOP_KINDS.join(', ')}, got ${JSON.stringify(stock.kind)}`);
+  }
   if (stock.offerings !== undefined) {
     if (!(Array.isArray(stock.offerings) && stock.offerings.length && stock.offerings.every((id) => typeof id === 'string' && id))) {
       problems.push(`${path}.offerings must be a non-empty list of offering ids`);

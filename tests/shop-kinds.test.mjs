@@ -484,3 +484,15 @@ test('a schema-14 stock must name its kind and offerings; only an older save get
   const older = migrateRunSchema({ ...JSON.parse(JSON.stringify(run)), schemaVersion: 13, shopStock: JSON.parse(JSON.stringify(noOfferings)) });
   assert.deepEqual(older.shopStock.offerings, [...LEGACY_MARKET_OFFERINGS]);
 });
+
+test('a saved stock of a kind whose screen has not shipped is refused by name (Codex, on #1371)', () => {
+  const run = createRunState({ seed: 10, classId: 'reaver', registries: REG });
+  run.shopStock = buildMarketStock(REG, createRng(10), run);
+  const smithy = { ...structuredClone(run.shopStock), kind: 'blacksmith', offerings: ['upgrade'] };
+  assert.ok(validateRunShape({ ...run, shopStock: smithy }).some((problem) => /shopStock\.kind is 'blacksmith', whose screen is not registered/.test(problem)));
+  const master = { ...structuredClone(run.shopStock), kind: 'master', offerings: ['training'] };
+  assert.ok(validateRunShape({ ...run, shopStock: master }).some((problem) => /'master', whose screen is not registered/.test(problem)));
+  const storage = createMemoryStorage();
+  storage.setItem(RUN_KEY, JSON.stringify({ ...JSON.parse(JSON.stringify(run)), schemaVersion: RUN_SCHEMA_VERSION, shopStock: smithy }));
+  assert.equal(createSaveManager(storage).loadRun(REG), null, 'archived and refused, never opened onto an empty market');
+});
