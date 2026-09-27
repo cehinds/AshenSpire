@@ -692,6 +692,8 @@ function inventoryReveal(registries, row, {
  */
 export function mountEquipment(host, {
   registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
+  // SPEC §14.1: the deck editor's Armoury door (under `free`, out of combat).
+  onEditDeck = null,
   handRules = null,
 }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
@@ -2235,7 +2237,17 @@ export function mountEquipment(host, {
     } else inventory.remove();
     if (view === 'cards') {
       wrap.querySelector('.armoury-content').remove();
-      cards.append(titleS(`Cards · ${(run.deck || []).length}`), prose('Your complete deck, including class and equipment cards.'), cardStrip());
+      cards.append(titleS(`Cards · ${(run.deck || []).length}`), prose('Your complete deck, including class and equipment cards.'));
+      // The deck editor's Armoury door (SPEC §14.1): the host hands it in only
+      // under `free` and out of combat; the Armoury closes onto the editor.
+      if (onEditDeck && !inCombat) {
+        const edit = button({ label: t('deckEditor.armoury'), weight: 'primary', id: 'armoury-edit-deck', className: 'armoury-edit-deck', attrs: { title: t('deckEditor.armoury') } });
+        // Through `leave`, so the Armoury's own deck floor still gates the way
+        // out; a refused leave keeps the Armoury open and opens no editor.
+        edit.addEventListener('click', () => { leave(); if (!wrap.isConnected) onEditDeck(); });
+        cards.append(edit);
+      }
+      cards.append(cardStrip());
     } else cards.parentElement.remove();
 
     let lastPaneWidths = null;

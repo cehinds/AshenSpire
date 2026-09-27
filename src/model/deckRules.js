@@ -188,20 +188,41 @@ export function moveFromSideboard(registries, run, instanceId, settings = {}) {
   return true;
 }
 
+/** True for a run whose basics are slot-true (attack/guard by role): it has a loadout. */
+export function isEquippedRun(run) { return !!(run && run.loadout); }
+
 /**
- * addBasicCard(registries, run, role, { plain }) → the instance added.
+ * isSetAsideBasic(card) → true for a sideboarded basic worth keeping apart
+ * from a fresh one: a PLAIN basic (a run with no equipment) that is upgraded
+ * or carries mods of its own. An equipped run's attack and guard basics never
+ * are: stampDeck derives their face, mods and upgrade from the source piece
+ * (loadout.js, "equipment-bound basics derive their upgrade from the source
+ * piece"), so every copy of a role is the same card once it is back.
+ */
+export function isSetAsideBasic(card) {
+  if (!card || card.equipmentRole || !isUnlimitedBasic(card)) return false;
+  return !!card.upgraded || (Array.isArray(card.mods) && card.mods.length > 0);
+}
+
+/**
+ * addBasicCard(registries, run, role, { plain, freshOnly }) → the instance added.
  * role 'attack' | 'guard' on an equipped run: a sideboarded one of that role
  * comes back first; otherwise a new one is minted (an attack grows the slot
  * allocation by one) and stampDeck gives it the current face. With `plain`,
- * `role` is a plain unlimited card id (a run with no equipment).
+ * `role` is a plain unlimited card id (a run with no equipment). With
+ * `freshOnly`, a set-aside copy (isSetAsideBasic: upgraded or modded) is
+ * never the one brought back — the deck editor restores those only by their
+ * own tile — and a minted attack never takes a retired slot whose instance
+ * is kept in the sideboard.
  */
-export function addBasicCard(registries, run, role, { plain = false } = {}) {
+export function addBasicCard(registries, run, role, { plain = false, freshOnly = false } = {}) {
+  const restorable = (c) => !freshOnly || !isSetAsideBasic(c);
   if (plain) {
     // An equipped run's basics are slot-true: a bare Strike would sit outside
     // stampDeck's projection and the attack-slot allocation.
-    if (run.loadout) throw new Error(`addBasicCard: an equipped run adds basics by role ('attack' | 'guard'), not { plain: true }`);
+    if (isEquippedRun(run)) throw new Error(`addBasicCard: an equipped run adds basics by role ('attack' | 'guard'), not { plain: true }`);
     if (!deckRules.unlimitedCardIds.includes(role)) throw new Error(`'${role}' is not an unlimited card id (${deckRules.unlimitedCardIds.join(', ')})`);
-    const kept = sideboard(run).find((c) => c && !c.equipmentRole && !c.grantedBy && c.cardId === role);
+    const kept = sideboard(run).find((c) => c && !c.equipmentRole && !c.grantedBy && c.cardId === role && restorable(c));
     if (kept) {
       moveFromSideboard(registries, run, kept.instanceId);
       return kept;
@@ -211,8 +232,8 @@ export function addBasicCard(registries, run, role, { plain = false } = {}) {
     return card;
   }
   if (role !== 'attack' && role !== 'guard') throw new Error(`addBasicCard: role must be 'attack' or 'guard' (got '${role}')`);
-  if (!run.loadout || !run.attributes) throw new Error(`addBasicCard: an ${role} basic takes its face from the run's loadout; a run without one adds plain cards ({ plain: true })`);
-  const back = sideboard(run).find((c) => c && c.equipmentRole === role && !c.grantedBy);
+  if (!isEquippedRun(run) || !run.attributes) throw new Error(`addBasicCard: an ${role} basic takes its face from the run's loadout; a run without one adds plain cards ({ plain: true })`);
+  const back = sideboard(run).find((c) => c && c.equipmentRole === role && !c.grantedBy && restorable(c));
   if (back) {
     moveFromSideboard(registries, run, back.instanceId);
     return back;
@@ -222,7 +243,11 @@ export function addBasicCard(registries, run, role, { plain = false } = {}) {
     // A slot retired with no instance kept (the merchant's paid removal) is
     // re-used before the allocation grows, so remove-and-add never inflates it.
     const count = slotCount(run);
+    // A slot whose instance waits in the sideboard is that instance's to take
+    // back (moveFromSideboard un-retires it); a mint never takes it.
+    const held = new Set(sideboard(run).map((c) => c && c.equipmentAttackSlotId).filter(Boolean));
     const retired = [...retiredAttackSlots(count, run.removedAttackSlotIds || [])]
+      .filter((id) => !held.has(id))
       .sort((a, b) => Number(a.slice(7)) - Number(b.slice(7)));
     const slotId = retired.length ? retired[0] : `attack:${count}`;
     card = { instanceId: mintId(run), cardId: 'strike', upgraded: false, equipmentRole: 'attack', equipmentAttackSlotId: slotId };
