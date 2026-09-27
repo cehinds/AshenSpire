@@ -106,9 +106,9 @@ Restructure one seam per pull request:
 1. Name the old public path and its consumers.
 2. Add the destination or compatibility adapter without deleting the old door.
 3. Run the same-door tests and rebuild checks relevant to that seam. If the seam
-   changes bundled source, rebuild and commit the `buildordinal.json` and
-   changelog module the rebuild writes (DEVELOPER.md, *Run & test*); built HTML
-   is not committed on `dev`.
+   changes bundled source, rebuild and commit what the tools regenerate
+   (generated content/config modules, `buildordinal.json`, the changelog
+   module; DEVELOPER.md, *Run & test*); built HTML is never committed on `dev`.
 4. Move consumers in a separate, reviewable step.
 5. Remove the adapter only after repository-wide search proves no live reader.
 

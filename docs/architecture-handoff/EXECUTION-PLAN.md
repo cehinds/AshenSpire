@@ -64,7 +64,7 @@ Some later tasks require a field-by-field mapping before implementation. This pl
 6. Run applicable existing tests on the baseline. If red, record the failure and distinguish it from your changes. Never suppress a check to make the migration pass.
 7. Implement only the current task. Preserve public entry points with small explicit compatibility adapters until their callers are migrated. No dual writes or alternative rule implementations.
 8. Add behavioral tests for the moved responsibility. Update source-shape checks to assert the real contract after extraction; do not retain tests that require the obsolete implementation location.
-9. Rebuild generated content with `node tools/content-build.mjs`; rebuild with `node tools/launch.mjs --build-only` when applicable and commit only `buildordinal.json` and the generated changelog module; built HTML (`AshenSpire.html`, `build/`, `dist/`) is not committed on `dev`. Never hand-edit generated JS or `buildordinal.json`.
+9. Rebuild generated content with `node tools/content-build.mjs`; rebuild with `node tools/launch.mjs --build-only` when applicable. Commit every tracked generated module the tools write (for example `src/content/generated/` and `src/config/generated/`), `buildordinal.json` and the generated changelog module; never commit built HTML (`AshenSpire.html`, `build/`, `dist/`), which is ignored on `dev`. Never hand-edit generated JS or `buildordinal.json`.
 10. Complete applicable CI gates, summarize exact results and limits, and open the PR ready for review. Never merge it yourself.
 
 ## 4. Target ownership and dependency contract
