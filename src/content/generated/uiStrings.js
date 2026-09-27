@@ -2621,6 +2621,27 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "save.refused.title",
+    "extends": "",
+    "short": "This save could not be loaded",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.refused.message",
+    "extends": "",
+    "short": "Slot {slot} could not be opened, so your current climb is still in hand and nothing in it changed.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.refused.close",
+    "extends": "",
+    "short": "Keep playing",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "save.review.delete",
     "extends": "",
     "short": "Delete slot {slot}?",
