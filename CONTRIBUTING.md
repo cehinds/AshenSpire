@@ -35,7 +35,7 @@ feature/* ──► dev ──► release ──► main
 - Small, focused commits; imperative subject line ≤ 72 chars (`Add Bleed burst threshold scaling`), body explains *why* when it isn't obvious.
 - PRs into `dev` include: what changed, how it was verified (which tests / manual steps), and a screenshot or GIF for UI changes.
 - UI changes also include the [component catalog](docs/component-catalog.html) in the PR/merge summary. Update the catalog and its visual miniature when a component ID, model, renderer, composition, or reuse surface changes.
-- Balance number changes cite the reasoning (spec §9 M3 targets: ~35–50% experienced-player win rate).
+- Balance number changes cite the reasoning. There is no win-rate target (owner rulings D1 and D16 in docs/FINISH.md), and every balance number stays configurable.
 
 ### A pull request is not done until the owner can merge it with one click
 

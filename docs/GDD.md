@@ -1,7 +1,7 @@
 # Ashen Spire — Game Design Document
 
 - **Rebuild baseline:** 2026-08-23
-- **Status:** Design baseline approved for planning. The rebuild this document plans (§17, §22–§24) has **not started**: its gating decisions in §24 are still open (checked 2026-09-27). The vanilla-JS game on `dev` is the maintained product, and most of the player experience below ships in it; [SPEC.md](../SPEC.md)'s *Scope status* table says per section what is built, partly built or planned.
+- **Status:** Design baseline approved for planning. The rebuild this document plans (§17, §22–§24) has **not started** and is **not planned**: the owner decided on 2026-09-27 to keep the vanilla-JS game as the product (§24). The vanilla-JS game on `dev` is the maintained product, and most of the player experience below ships in it; [SPEC.md](../SPEC.md)'s *Scope status* table says per section what is built, partly built or planned.
 - **Product:** Ashen Spire (`AshenSpire`)
 - **Platform:** Modern desktop and mobile browsers
 - **Genre:** Single-player, run-based tactical deckbuilder with optional co-op seams
@@ -807,10 +807,12 @@ The first rebuild milestone is acceptable when:
 
 ## 24. Open decisions before implementation
 
-These choices remain explicit rebuild gates (on 2026-09-27 none of the six is recorded as decided):
+**Owner decision (2026-09-27): the JavaScript game stays the product, and the rebuild is not planned.** This settles gate 2: the existing vanilla JavaScript game is the maintained product. The other five gates stay undecided and matter only if a rebuild is ever planned again.
+
+These choices were the rebuild gates:
 
 1. Final runtime and presentation stack for the .NET-oriented rebuild.
-2. Whether the existing vanilla JavaScript game remains the behavioral oracle, a maintained product, or a migration source only.
+2. Whether the existing vanilla JavaScript game remains the behavioral oracle, a maintained product, or a migration source only. **Decided 2026-09-27: it stays the product.**
 3. Final production-art sourcing mix: first-party rendered, commissioned, generated, and licensed library assets.
 4. The authoritative naming and coding convention document referred to as the Dimitar convention; it must be supplied or written before enforcement.
 5. Which co-op features belong in the first rebuild milestone versus preserved extension seams.

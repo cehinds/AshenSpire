@@ -197,7 +197,7 @@ Each step is one reviewed PR, or one owner action.
 - Q1. **Private.** `cehinds/AshenSpire-art` is a private repository.
   - CI in this repo cannot read its releases with the default `GITHUB_TOKEN`. The jobs that fetch (full-art builds, pages-builds' main build) read a repository secret `ART_REPO_TOKEN`: a fine-grained token with read-only *Contents* access to `AshenSpire-art`. The owner creates it; step 4 names the secret and fails with that name when it is missing.
   - `tools/fetch-art.mjs` reads the same token from `ART_REPO_TOKEN` (or `GITHUB_TOKEN`) for a local fetch.
-  - A private release is downloadable only by people with access to the repo, so it does not by itself reach players who want **Local high-res**; see the open question below.
+  - A private release is downloadable only by people with access to the repo, so it does not by itself reach players who want **Local high-res**; the owner decided on 2026-09-27 that it stays that way (below).
 - Q2. **Zip.** Releases are `hd-assets-v<N>.zip`.
 - Q3. **Yes.** Go ahead with steps 1–4; steps 5–7 each still need their own go-ahead.
 - #1332 is approved for promotion to `release` (the owner merges it there).
@@ -208,7 +208,6 @@ Each step is one reviewed PR, or one owner action.
 - Step 4 has started. `tools/fetch-art.mjs` landed in #1340, and #1353 pins `hd-assets-v1` in `art-release.json`. #1367 moved the 23 non-art files to `asset-data/` and switched every reader of them (tools, tests, `src/framework/data/assets.js`, the ship tools that write those manifests, the art pages that fetch `enemy-poses/manifest.json`, CREDITS and the docs). Still to do: switch the `assets/` (high-tier) readers, and add both files to `BUILD_IDENTITY_FILES` in the PR that first builds full art from the cache.
 - Releases are automatic: the art repo publishes the next `hd-assets-v<N>` on every merge to `main` that changes the pack ([AshenSpire-art#2](https://github.com/cehinds/AshenSpire-art/pull/2)).
 
-## Open question
+## Owner answer (2026-09-27)
 
-- Should players get the high-res zip from somewhere public, since the art repo is private? (attach to AshenSpire releases / collaborators only)
-  - Why it matters: the Local high-res setting needs the files on the player's device; a private release reaches only people with repo access.
+- **The high-res zip stays private.** It is published only as the `hd-assets-v<N>` releases of the private `cehinds/AshenSpire-art` repository and is **not** attached to public AshenSpire releases. The Local high-res setting therefore reaches only people with access to that repository.
