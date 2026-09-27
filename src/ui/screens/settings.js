@@ -39,7 +39,7 @@ import { LORE_FACES, LORE_SIZES, LORE_LEADING, LORE_TRACKING, LORE_SLANTS, LORE_
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
-import { pageDebug } from '../buildChannel.js';
+import { pageDebug, debugSwitch, setDebugEnabled } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
 import { deckRules } from '../../content/deckRules.js';
 import { deckSettingsProblems } from '../../model/deckRules.js';
@@ -49,6 +49,8 @@ import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
 import { gateOpen, ownOn } from '../../model/settingOverrides.js';
 import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 import { saveAdvancedConfigFile, saveJsonFile } from '../services/saveJsonFile.js';
+import { RECOVERY_POOLS, RECOVERY_UNITS, recoveryRules } from '../../content/recoveryRules.js';
+import { recoveryKey } from '../../model/recoveryRules.js';
 import {
   prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
   prologueSettingKey, isPrologueSlot, prologueReorderChanges, prologueSceneCopy, prologueSceneClear,
@@ -275,6 +277,32 @@ const PROMOTED_DEFAULTS = Object.freeze({ ...(SETTINGS_DEFAULTS.values || {}) })
 
 /** settingsRows() → every row this screen draws (the sync profile's key list). */
 export function settingsRows() { return ROWS; }
+
+// ---- RECOVERY (owner, 2026-09-27) ------------------------------------------
+// "a setting to set recovery rate for hp stamina and mp to at rest and or after
+// combat and or after x rounds and or if not being used for x turns". One topic
+// per pool, five triggers each; every default is content/recoveryRules.js and
+// model/recoveryRules.js reads the stored keys against it.
+function recoverySettingRows() {
+  const names = { hp: 'HP', stamina: 'Stamina', mana: 'Mana' };
+  const use = { hp: 'you lose no HP', stamina: 'you spend no Stamina', mana: 'you spend no Mana' };
+  const range = recoveryRules.ranges;
+  return RECOVERY_POOLS.flatMap((pool) => {
+    const D = recoveryRules.defaults[pool];
+    const name = names[pool];
+    const row = (field, extra) => ({ cat: 'Advanced', advancedGroup: 'Recovery', statTopic: name, key: recoveryKey(pool, field), ...extra });
+    const number = (field, label, note) => row(field, { type: 'number', def: D[field], min: range[field].min, max: range[field].max, label, applied: numberAppliedHtml, note });
+    return [
+      number('perTurn', `${name} per turn`, `What a qualifying combat turn restores, at the end of your turn. 0: ${name} does not recover in a fight.`),
+      row('unit', { type: 'choice', def: D.unit, choices: [...RECOVERY_UNITS], choiceLabels: { flat: 'Points', percent: '% of max' }, label: 'Per-turn amount is',
+        note: `Points, or a percent of your maximum ${name} rounded down.` }),
+      number('idleTurns', 'Only after unused turns', `A turn restores ${name} only after this many turns in a row in which ${use[pool]} (the enemies’ turn counts). 0: every turn.`),
+      number('everyRounds', 'Only every N rounds', `Restore only on every Nth round of the fight. 1: every round.`),
+      number('afterCombat', 'After a won fight', `Percent of your maximum ${name} restored when you win a fight.`),
+      number('atRest', 'At every Rest', `Percent of your maximum ${name} restored when you Rest, on top of what the place restores. The Rest preview includes it.`),
+    ];
+  });
+}
 
 const ROWS = [
   ...tooltipSettingsRows(),
@@ -716,6 +744,7 @@ const ROWS = [
     note: 'How many copies of one of your class’s own spells or Powers the editor lets your deck hold. Strike and Defend stay unlimited; weapon arts and techniques stay limited to the copies you own.' },
   { cat: 'Advanced', advancedGroup: 'Deck', key: 'playInDeckOrder', def: deckRules.defaults.playInDeckOrder, label: 'Play in deck order',
     note: 'Your draw pile is not shuffled: you draw your cards in the order you arranged them, and a spent pile returns in that order. Card effects that shuffle still shuffle. Applies from the next fight.' },
+  ...recoverySettingRows(),
   ...ADVANCED_CONFIG_ROWS,
   { cat: 'Advanced', advancedGroup: 'Export', key: 'promptSettingsExport', def: true, label: 'Offer export when done',
     note: 'Ask to export a configuration file after Done and Save.' },
@@ -802,6 +831,9 @@ const ADVANCED_GROUPS = Object.freeze([
   // topic here (models/AdvancedSettingsGroups.js) with a live worked example
   // (models/StatsPreviewModel.js).
   { id: 'Stats', label: 'Stats', tip: 'Everything that turns attributes into Actions, Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.' },
+  // Owner, 2026-09-27: HP, Stamina and Mana recovery — per turn, after going
+  // unused, every few rounds, after a fight, at a rest — one topic per pool.
+  { id: 'Recovery', label: 'Recovery', tip: 'How HP, Stamina and Mana come back: each turn, after going unused for a few turns, every few rounds, after a won fight, and at every Rest. Applies from the next fight.' },
   { id: 'Rewards', label: 'Rewards & economy', tip: 'Cinders, reward rarity, merchants, flasks and smithing.' },
   { id: 'Shops', label: t('settings.shops.group.label'), tip: tFull('settings.shops.group.label') },
   { id: 'Deck', label: 'Deck', tip: 'The deck editor: where you can edit, the deck’s size limits, and playing your cards in the order you arranged them.' },
@@ -834,6 +866,20 @@ const ADVANCED_GROUPS = Object.freeze([
 export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Interface', 'Text', 'Changelog', 'About']);
 /** Groups with their own mounted panel instead of rows. */
 const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
+
+/**
+ * developerSwitchHtml() → the Developer tools row drawn above every Advanced
+ * section, on every build, so the switch that reveals the debug-only sections
+ * can always be found; where the build decides for itself the row says why.
+ */
+export function developerSwitchHtml(state = debugSwitch()) {
+  const control = state.canToggle
+    ? `<button type="button" class="as-toggle toggle${state.on ? ' on' : ''}" role="switch" aria-checked="${state.on}" aria-label="Developer tools" data-developer-switch><span class="knob"></span></button>`
+    : `<span class="set-note">${state.on ? 'On' : 'Off'}</span>`;
+  return '<div class="as-row setting set-row set-developer-switch" data-row-key="developerTools">'
+    + `<span class="as-labelstack"><span class="set-label-line"><span class="ls-label">Developer tools</span></span><span class="ls-hint set-note">${esc(state.note)}</span></span>`
+    + `<span class="r-trail">${control}</span></div>`;
+}
 
 /** visibleAdvancedGroups(debug) → the Advanced sections this build shows. */
 export function visibleAdvancedGroups(debug = pageDebug()) {
@@ -2522,6 +2568,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
           + '</div>').join('') + '</section>';
     }).join('');
     return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
+      + developerSwitchHtml()
       + `<div class="set-mobile-pickers"><select class="set-section-select" aria-label="Advanced section">${shownGroups.map(group => `<option value="${esc(group.id)}"${group.id === active ? ' selected' : ''}>${esc(group.label)}</option>`).join('')}</select><select class="set-topic-select" aria-label="Option group"></select></div>`
       + groups;
   }
@@ -3303,6 +3350,14 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       resetKeys(settings, onChange, [key], `${stripTags(rowByKey(key)?.label || key)} reset`);
       repaintPanel({ keepScroll: true });
       container.querySelector(`[data-row-key="${CSS.escape(key)}"] [data-key], [data-row-key="${CSS.escape(key)}"] .toggle`)?.focus({ preventScroll: true });
+    });
+  });
+
+  container.querySelectorAll('[data-developer-switch]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const on = setDebugEnabled(btn.getAttribute('aria-checked') !== 'true');
+      showSettingsNotice(on ? 'Developer tools on: tuning and diagnostics sections are shown.' : 'Developer tools off.');
+      repaintPanel({ keepScroll: true });
     });
   });
 

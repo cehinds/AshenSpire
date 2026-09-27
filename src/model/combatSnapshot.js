@@ -1,5 +1,6 @@
 import { retiredAttackSlots } from './cardRemoval.js';
 import { handRulesProblems } from './handRules.js';
+import { recoveryRulesProblems } from './recoveryRules.js';
 import { combatRatingProblems, ratingIds } from './combatRatings.js';
 // src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
 //
@@ -85,6 +86,16 @@ export function combatSnapshotProblems(snapshot) {
     const order = record(snapshot.orderedDraw) ? snapshot.orderedDraw.order : undefined;
     if (!Array.isArray(order) || order.some((id) => typeof id !== 'string' || !id) || new Set(order).size !== order.length) {
       problems.push('orderedDraw.order must be an array of unique card instance ids');
+    }
+  }
+  // Settings → Advanced → Recovery: absent on a fight built at the defaults.
+  if (snapshot.recovery !== undefined) {
+    const state = snapshot.recovery;
+    if (!record(state)) problems.push('recovery must be an object');
+    else {
+      problems.push(...recoveryRulesProblems(state.rules));
+      if (!record(state.idle) || ['hp', 'stamina', 'mana'].some((pool) => !Number.isInteger(state.idle[pool]) || state.idle[pool] < 0)) problems.push('recovery.idle must hold a whole-number streak per pool');
+      if (!Number.isInteger(state.logIndex) || state.logIndex < 0) problems.push('recovery.logIndex must be a whole number');
     }
   }
   if (snapshot.ratingsRules !== undefined) {

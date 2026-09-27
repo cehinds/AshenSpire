@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildChannel, debugEnabled, DEBUG_STORAGE_KEY } from '../src/ui/buildChannel.js';
+import { buildChannel, debugEnabled, debugSwitch, setDebugEnabled, setPageDebugForTests, DEBUG_STORAGE_KEY } from '../src/ui/buildChannel.js';
 import {
-  visibleAdvancedGroups, RELEASE_ADVANCED_GROUP_IDS, ADVANCED_GROUP_IDS, settingsSearchHits,
+  visibleAdvancedGroups, developerSwitchHtml, RELEASE_ADVANCED_GROUP_IDS, ADVANCED_GROUP_IDS, settingsSearchHits,
   settingsRowHtml, settingsRow, sliderSpan, niceCeil, buttonStep, rowModified, settingsRows,
 } from '../src/ui/screens/settings.js';
 import {
@@ -40,6 +40,27 @@ test('debug opens on dev and test, never on main or release, and on unknown only
   assert.equal(store.getItem(DEBUG_STORAGE_KEY), '1', 'remembered on the device');
   assert.equal(debugEnabled('unknown', { search: '', storage: store }), true);
   assert.equal(debugEnabled('unknown', { search: '?debug=0', storage: store }), false, '?debug=0 forgets it');
+});
+
+test('the Developer tools switch can always be found, and flips only an unrecognised build', () => {
+  const memory = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v), removeItem: (k) => m.delete(k) }; };
+  assert.deepEqual({ ...debugSwitch('dev', { search: '', storage: memory() }), note: '' }, { on: true, canToggle: false, note: '' });
+  const locked = debugSwitch('main', { search: '', storage: memory() });
+  assert.equal(locked.canToggle, false); assert.equal(locked.on, false); assert.match(locked.note, /Locked off in main builds/);
+  const store = memory();
+  assert.equal(debugSwitch('unknown', { search: '', storage: store }).canToggle, true);
+  try {
+    assert.equal(setDebugEnabled(true, { channel: 'unknown', storage: store }), true);
+    assert.equal(store.getItem(DEBUG_STORAGE_KEY), '1', 'the switch is remembered like ?debug=1');
+    assert.equal(debugSwitch('unknown', { search: '', storage: store }).on, true);
+    assert.equal(setDebugEnabled(false, { channel: 'unknown', storage: store }), false);
+    assert.equal(store.getItem(DEBUG_STORAGE_KEY), null);
+    setPageDebugForTests(false);
+    assert.equal(setDebugEnabled(true, { channel: 'release', storage: store }), false, 'release stays locked');
+    assert.equal(store.getItem(DEBUG_STORAGE_KEY), null);
+  } finally { setPageDebugForTests(null); }
+  assert.match(developerSwitchHtml({ on: false, canToggle: true, note: 'x' }), /data-developer-switch/);
+  assert.doesNotMatch(developerSwitchHtml({ on: false, canToggle: false, note: 'x' }), /data-developer-switch/);
 });
 
 test('a release build shows only the player-facing Advanced sections, and search follows', () => {
