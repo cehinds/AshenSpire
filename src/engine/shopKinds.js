@@ -123,7 +123,7 @@ const ADDITION_STOCK = Object.freeze({
     const pool = (registries.equipment.armour || []).filter((piece) => piece.classId === run.class && !mine.has(piece));
     const lo = Math.min(row.cost.min, row.cost.max);
     const hi = Math.max(row.cost.min, row.cost.max);
-    return pickSome(rng, pool, row.stock).map((piece) => ({ id: piece.id, cost: rng.int(STREAM, lo, hi) }));
+    return pickSome(rng, pool, row.stock).map((piece) => ({ id: piece.id, cost: Math.max(1, rng.int(STREAM, lo, hi)) }));
   },
   // Priced per stone, with a per-visit stock; no roll.
   smithStones(registries, rng, run, row) {

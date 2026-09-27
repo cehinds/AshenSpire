@@ -253,8 +253,14 @@ const PERCENT = Object.freeze({ integer: true, step: 1, min: 0, max: 100 });
 const SHOP_DOMAINS = Object.freeze({
   'master.respecRefundPct': Object.freeze({ integer: true, step: 1, min: 50, max: 75 }),
 });
+// A PAID OFFERING IS NEVER FREE (Codex, on #1374): a price in cinders — a
+// `price`, a `cinders` cost, an armour cost bound — or the percent of its own
+// cost a sigil sells at starts at 1. A 0 would either silently close the
+// purchase or roll a free item the saved-stock check refuses on the next load.
+const PAID = /(^|\.)(price|cinders|pricePct)$|(^|\.)cost\.(min|max)$/;
 function shopDomain(path, value) {
   if (SHOP_DOMAINS[path]) return { ...numberDomain(value), ...SHOP_DOMAINS[path] };
+  if (PAID.test(path)) return { ...numberDomain(value), min: 1 };
   if (/(^|\.)chance$|Pct$/.test(path)) return { ...numberDomain(value), ...PERCENT };
   return numberDomain(value);
 }

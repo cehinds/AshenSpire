@@ -659,6 +659,11 @@ export function createSaveManager(storage) {
         // it would be a carried item with no row to show or install.
         const strangeSigil = unknownSigilId(registries, run);
         if (strangeSigil) throw new Error(`sigil '${strangeSigil}' is unknown to this build`);
+        // So is a bought armour set (SPEC §14.3, `loadout.boughtArmour`): a set
+        // this build has no row for, for that class, would vanish from the
+        // run's wardrobe without a word (Codex, on #1374).
+        const strangeArmour = (run.loadout?.boughtArmour || []).find((row) => !(registries.equipment.armour || []).some((piece) => piece.classId === row.classId && piece.id === row.id));
+        if (strangeArmour) throw new Error(`bought armour '${strangeArmour.id}' (class '${strangeArmour.classId}') is unknown to this build`);
         normalizeRunAttributes(run, registries);
         validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
       } catch (e) {
