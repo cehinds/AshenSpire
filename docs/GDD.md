@@ -1,7 +1,7 @@
 # Ashen Spire — Game Design Document
 
 - **Rebuild baseline:** 2026-08-23
-- **Status:** Design baseline approved for planning; implementation not started by this document
+- **Status:** Design baseline approved for planning. The rebuild this document plans (§17, §22–§24) has **not started**: its gating decisions in §24 are still open (checked 2026-09-27). The vanilla-JS game on `dev` is the maintained product, and most of the player experience below ships in it; [SPEC.md](../SPEC.md)'s *Scope status* table says per section what is built, partly built or planned.
 - **Product:** Ashen Spire (`AshenSpire`)
 - **Platform:** Modern desktop and mobile browsers
 - **Genre:** Single-player, run-based tactical deckbuilder with optional co-op seams
@@ -9,8 +9,10 @@
 
 ## 0. Purpose and authority
 
-The September encounter expansion adds seven regular enemies and seven bosses
-to the existing roster, with multiple named terminal destinations per act.
+The September encounter expansion added seven regular enemies and seven bosses
+to the existing roster, with multiple named terminal destinations per act. The
+roster now ships 20 regular enemies, 10 bosses and 3 elites (SPEC §12.4); the
+1.0 elite target is one to five per seat, averaging three.
 The [roster checklist](ENEMY-ROSTER.md) records the current content and verification
 scope. Enemy moves retain seeded weighted selection; their new cards explain
 the live intent, base values and phase requirements without changing selection.
@@ -159,7 +161,7 @@ The replay driver is mastery: class identity, route knowledge, equipment combina
 
 ### 6.1 Core resources
 
-- Energy and actions govern what can be done this turn.
+- Actions (the engine id is still `energy`), Stamina and Mana govern what can be done this turn.
 - Cards move through explicit draw, hand, discard, exhaust, and in-play ownership states.
 - Guard or Block absorbs damage before HP according to the current rules contract.
 - Mana supports class and equipment actions where authored.
@@ -233,6 +235,7 @@ Each class requires at least two viable build directions and a silhouette that r
 - Relics alter the shape of a run rather than merely adding small percentages.
 - Shrines preserve the recurring heal-versus-improve dilemma.
 - Equipment changes combat verbs and ownership while preserving clear before-and-after receipts.
+- Progression is experience as well as cinders: skill tracks and a character level (SPEC §13.4d–§13.4i, built). A configurable card-reward schedule, a levelling-pace preview, crafting drops and legendary sigils are specified in SPEC §15 and **planned**, not built.
 
 Nothing enters the player's run merely because a reward screen opened. Collection occurs only through an explicit action or an explicitly configured Auto collection policy.
 
@@ -461,7 +464,8 @@ and refusal states remain equivalent between List and Grid.
 
 ### 12.2 Merchant
 
-- Cards, Relics, Flasks, Remove a Card, and Sell are progressive-disclosure sections.
+- Cards, Relics, Flasks, Remove a Card, and Sell are progressive-disclosure sections; armaments and weapon arts are sold too (SPEC §12.2, built).
+- A market, a blacksmith and a wise master as three shop kinds, and a deck editor between fights, are specified in SPEC §14 and **planned**, not built.
 - One section is open at a time on compact layouts.
 - Buying preserves the current browsing context.
 - Disabled or absent features use truthful authored policy; they are not decorative dead controls.
@@ -803,7 +807,7 @@ The first rebuild milestone is acceptable when:
 
 ## 24. Open decisions before implementation
 
-These choices remain explicit rebuild gates:
+These choices remain explicit rebuild gates (on 2026-09-27 none of the six is recorded as decided):
 
 1. Final runtime and presentation stack for the .NET-oriented rebuild.
 2. Whether the existing vanilla JavaScript game remains the behavioral oracle, a maintained product, or a migration source only.

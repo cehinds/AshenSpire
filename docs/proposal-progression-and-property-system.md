@@ -1,8 +1,12 @@
 # Proposal: progression, equipment-as-cards, and the property system
 
-Status: owner-accepted design, 2026-09-11, awaiting implementation; §7.5
-(quests and dialogue) added by owner amendment 2026-09-14. Nothing in it is
-shipped. Parent authority: [SPEC.md](../SPEC.md) and
+Status: owner-accepted design, 2026-09-11; §7.5 (quests and dialogue) added by
+owner amendment 2026-09-14. **Largely built (checked 2026-09-27):** the
+[implementation plan](plan-progression-and-property-system.md)'s phases 1–10
+shipped as SPEC §13.4a–§13.4n. What is not built is named in the plan: 3b-ii
+(equipment rows joining the deck, which needs the owner's call) and the
+boss-reward door for the class-swap item (phase 5c). This document is kept, not
+archived, because the tests and the plan still cite its sections. Parent authority: [SPEC.md](../SPEC.md) and
 [COMBAT-EQUIPMENT-RULES.md](COMBAT-EQUIPMENT-RULES.md). Where this document
 conflicts with either, it is the amendment the owner has accepted; the older
 text stays normative for shipped runs until the migration in §7 lands.

@@ -354,3 +354,47 @@ played.** The §12.3 and §12.5 presentation claims are verified as code plus wi
 tests, not as pixels. Not checked: that a Rogue deck is exactly 11 cards in a live browser run
 (the number is read from `balance.startingDeckSize` and the loadout tests); Guilt and Warrior's
 Vow behaviour (D2 is to-build and outside a spec PR); the balance of any row.
+
+# Stage 4: scope status after the §14 and §15 spec PRs
+
+*2026-09-27, at `dev` = `7ef3ffc3` (build `0.7.1.614`). The owner asked for the scope docs
+to match the game. This stage adds no new SPEC claims. It re-runs stage 3's open rows, and it
+gives §14 and §15 a verdict per subsection so that planned work reads as planned. SPEC.md's
+new *Scope status* table (under the opening notes) is the one-line-per-section summary, and
+this stage is its evidence.*
+
+## Stage 3's open rows, re-run
+
+| Row | Stage 3 verdict | 2026-09-27 | Falsifier, as run |
+|---|---|---|---|
+| P6 elites per seat | to-build | **to-build**, unchanged | The stage 3 command prints `{ weald: 1, marches: 1, reach: 1 }` (`wyrmAspirant`, `courtDuelist`, `wyrmLord`) |
+| P8b Power resting stance | to-build | **to-build**, unchanged | `resolveCombatPose({hp:1},'cast',[])` prints `idle` |
+| P1 ⚠ dodge receipt text | shipped ⚠ | **shipped ⚠**, boundary unchanged | `grep -rln dodgeReceipt tests` still finds nothing |
+| C1/C2 content rows | rewritten | hold | 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies = 20 regular + 10 boss + 3 elite, read from `contentBundle` |
+
+The D2 hooks: Guilt shipped in #1286 (`tests/guilt.test.mjs`). Warrior's Vow is still
+**to-build**: `src/content/cards/reaver.js` `warriorsVow` enters `gorefire`, not a chosen stance.
+
+## §14 and §15: contract landed, code not
+
+| Row | Claim | Verdict | Falsifier |
+|---|---|---|---|
+| S14.1 | Deck rules, sideboard, ordered draw, Deck settings | **to-build**, open as #1343 | `grep -rl sideboard src` → nothing on `dev` |
+| S14.1b | Deck editor UI | **to-build** | no `DeckEditorModel` in `src/` |
+| S14.2 | Shop kinds and the guaranteed minimum | **to-build** | `grep -rl guaranteedMinimum src` → nothing |
+| S14.3 | Market additions | **to-build** | no `consumables` or `sigils` row in `RUN_SHAPE` |
+| S14.4 | Blacksmith screen | **to-build** (the existing smith services stay as they are) | no `smithingStonesRefined` in `src/` |
+| S14.5 | Wise master | **to-build** | `grep -rl respecRefundPct src` → nothing |
+| S15.1 | Card reward schedule | **to-build**, open as #1351 | no `levelCard` in `src/` |
+| S15.2 | Levelling preview and cap | **to-build**, open as #1349 | `grep -rl maxLevelsPerFight src` → nothing |
+| S15.3 | Crafting drops | **to-build**, open as #1352 | `grep -rl rewardChancePct src` → nothing |
+| S15.4 | Legendary sigils | **to-build**, after §14 step 5 | `grep -rl attunedSigils src` → nothing |
+
+**Counts, stage 4: §14 and §15 have 10 rows, all to-build; their spec steps landed (#1331, #1348).
+Stage 3's two to-build rows are unchanged.**
+
+## Boundary of stage 4
+
+Source and `contentBundle` reads on one Linux runner, in a checkout without `art/`. Nothing
+was rendered or played. The open PRs named above were not read: a verdict here moves when one
+of them merges, and that PR updates its row.

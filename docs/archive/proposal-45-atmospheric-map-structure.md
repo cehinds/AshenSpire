@@ -1,3 +1,8 @@
+> **Archived 2026-09-27: implemented.** Recommendation R2 shipped as the scoped
+> `--map-structure` token (`styles/base.css`: `#7a6b54`, and `#85714f` under high
+> contrast; `styles/map.css` `.map-edge` and `.map-node circle`), and
+> `tools/contrast-audit.mjs` measures the map edge and ring. Kept as the record of why.
+
 # Proposal — map structure in the atmospheric palette (#45)
 
 *Freja Falk, 2026-08-06, at `dev` = `70d35e2`. A proposal, not a change: the shipped

@@ -17,8 +17,10 @@ CONTRIBUTING.md, *Coordination and release boundary*).
 
 ## How to run
 
-Start from a clean checkout of the RC SHA with LFS content pulled
-(`git lfs pull`) and the promotion target fetched
+Start from a clean checkout of the RC SHA (since #1332 `dev` tracks nothing in
+Git LFS, so no `git lfs pull` is needed; the full art is still in `assets/` until
+docs/ART-REPO-PLAN.md step 4 moves its readers to `tools/fetch-art.mjs`) with the
+promotion target fetched
 (`git fetch --no-tags origin test:refs/remotes/origin/test`). Run each command from the repository root exactly as the
 table gives it. A gate wrapped in `node tools/verdict.mjs -- …` runs as CI runs
 it: a silent exit 0 or a zero-count green is then refused (DEVELOPER.md, *The CI
@@ -38,14 +40,14 @@ command yet, and G20 is read from docs/FINISH.md.
 
 | Gate | Command | Expected result | Where CI runs it |
 |------|---------|-----------------|------------------|
-| G1 | `node tools/verdict.mjs -- node tests/run-node.mjs` | Exit 0. The whole suite runs (engine suite, every `*.test.mjs`, tool verdicts and each tool's `--selftest`) and reports 0 failures. | `tests.yml` (as two halves), `ci.yml` |
+| G1 | `node tools/verdict.mjs -- node tests/run-node.mjs` | Exit 0. The whole suite runs (engine suite, every `*.test.mjs`, tool verdicts and each tool's `--selftest`) and reports 0 failures. | `tests.yml` (core suite, tool self-tests and bundler parse gate; all three on a push to `test` or `release`, core only on a `dev` PR or push, since #1345), `ci.yml` |
 | G2 | `node tools/verdict.mjs -- node tools/buildversion.mjs --check` | Exit 0, run after G9. The build version is derived and matches the tree, and nobody typed it by hand. Rows D–F read the build, which is not committed (since 2026-09-26), so G9 comes first. | `ci.yml` |
-| G3 | `node tools/verdict.mjs -- node tools/receipts.mjs --check --since origin/test` | Exit 0. Every PR merged in `origin/test..HEAD` has a CHANGELOG.md receipt. The range is pinned: without `--since` a checkout that lacks `origin/test` silently falls back to the last 40 merges. Exit 2 means `origin/test` was not fetched, or CHANGELOG.md yielded no PR references at all. | `receipts.yml` (push to `dev`) |
+| G3 | `node tools/verdict.mjs -- node tools/receipts.mjs --check --since origin/test` | Exit 0. Every PR merged in `origin/test..HEAD` has a CHANGELOG.md receipt. The range is pinned: without `--since` a checkout that lacks `origin/test` silently falls back to the last 40 merges. Exit 2 means `origin/test` was not fetched, or CHANGELOG.md yielded no PR references at all. | `receipts.yml` (push to `dev`; a PR into `dev` runs `--check --pr auto` instead) |
 | G4 | `node tools/release-series.mjs` | Exit 0. The version series in the tree is the one the owner approved (docs/versioning.md). | `ci.yml` |
 | G5 | `node tools/config-build.mjs --check` | Exit 0. The generated UI config is current with `content/config/`. Run it bare: its "is current with N source file(s)" line is not a form the verdict door accepts, so wrapped it exits 3 on a green tree. | `tests/run-node.mjs` |
 | G6 | `node tools/balance.mjs --check` | Exit 0. docs/BALANCE.md matches a fresh run. | `tests/balance-doc.test.mjs` |
 | G7 | `node tools/verdict.mjs -- node tools/workflow-lint.mjs` | Exit 0. No workflow step is missing `run:`/`uses:` and no key is duplicated. | `ci.yml` |
-| G8 | `node tools/bundle.test.mjs` | Exit 0. The bundler's parse-gate fixtures pass (this takes several minutes). | `tests.yml` `bundler parse gate` job, `ci.yml` |
+| G8 | `node tools/bundle.test.mjs` | Exit 0. The bundler's parse-gate fixtures pass (this takes several minutes). | `tests.yml` `bundler parse gate` job and `ci.yml`, on a push to `test` or `release` |
 | G9 | `node tools/verdict.mjs -- node tools/launch.mjs --build-only --full-art` | Exit 0. The standalone builds are regenerated from the RC source with the full art and the mobile file, as release/main CI builds them. Without `--full-art` launch builds the light dev/test tier, which is not a release build. | `ci.yml` |
 | G10 | `node tools/verdict.mjs -- node tools/verify-shipped.mjs` | Exit 0, run after G9. The root and `dist/` copies a player is handed carry art and equal the fresh `build/`. | `ci.yml` |
 | G11 | `node tools/contrast-audit.mjs --gate` | Exit 0, **and** the tool's `GATED_PROFILES` includes `cb-safe` beside `default` and `hi-contrast-off`, **and** its `KNOWN_BELOW` ledger has no text rows (FINISH.md §9, *The palettes pass contrast*). Exit 0 alone only means no new or worsened failure at the profiles it gates. **RED:** since #1291 `cb-safe` is gated, but `KNOWN_BELOW` still holds 12 text rows (the reward Continue HOLD cue and the TAKEN chip and title in each gated profile), all from `opacity` rules in `styles/kit.css`. Green also needs a workflow to run `contrast-audit.mjs --gate` (FINISH.md §9 asks for it in CI); today only a `ci.yml` echo names it. | not yet: no workflow runs it |

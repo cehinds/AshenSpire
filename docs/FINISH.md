@@ -12,9 +12,15 @@ the detailed evidence behind the feel, screen and structure items. Its IDs
 Marks: `[ ]` open · `[~]` PR open, or partly done with the remainder stated · `[x]` merged to `dev`, with the PR
 linked. Update this file after every PR.
 
-**Status (2026-09-25, `dev` @ `eb36e19e`, build `0.7.1.525`):** synced against
-every merge to `dev` from #1270 to #1318. Each tick below was checked against
-the code, a test or a command run on that tree, not against a PR title.
+**Status (2026-09-27, `dev` @ `7ef3ffc3`, build `0.7.1.614`):** synced against
+every merge to `dev` from #1270 to #1353. Each tick below was checked against
+the code, a test or a command run on that tree, not against a PR title. The
+2026-09-27 pass re-checked the lines #1332, #1336–#1340, #1345, #1353 and the
+art-repo plan ([ART-REPO-PLAN.md](ART-REPO-PLAN.md): steps 1–3 done, step 4
+started) could move. Open PRs that will move lines here when they merge, and
+tick them themselves: #1343 (§14 deck rules), #1349, #1351 and #1352 (§15),
+#1354, #1355, #1356 and #1357 (the wave-3 follow-ups). SPEC.md's *Scope
+status* table lists each spec section as built, partly built or planned.
 
 ## Baseline (2026-09-24, `dev` @ `7fb05c9a`, build `0.7.1.449`)
 
@@ -22,7 +28,7 @@ the code, a test or a command run on that tree, not against a PR title.
 |---|---|---|
 | Fast suite | 130 files, 969 tests, 0 failed; 144/144 gates; 2m28s | `node tests/run-node.mjs --no-selftests`, local |
 | PR wall time to full green | ~19 min (self-test job 19m10s; `bundle.test.mjs` 12m19s) | Actions run 35969669596 |
-| Build size | 254.2 MB single file; 49.1 MB mobile | `ls -l build/*.html` |
+| Build size | 254.2 MB single file; 49.1 MB mobile (since #1336, a dev/test build carries the light art only: one file of about 29 MB; release builds keep the full art) | `ls -l build/*.html` |
 | Full-run bot wins | Reaver 4/20, Starseer 1/20, Rogue 9/20, Herald 15/20 | `node tools/runsim.mjs 20` (sim does not yet play by live rules, see A1) |
 | FPS on a low-end phone | **unmeasured** | no device profile run yet |
 | Load time | **unmeasured** | — |
@@ -98,7 +104,7 @@ the code, a test or a command run on that tree, not against a PR title.
 - [x] **#1289 follow-up: a re-fit keeps the tray's selected-destination framing** (Codex P2 on #1289). Test: with the tray open on node X, a scrollport resize leaves the camera centred on X. — [#1314](https://github.com/cehinds/AshenSpire/pull/1314): the watch's `onChange` re-applies the tray's look (`refitCamera`); `map-camera-persistence.mjs --check` goes red if it is reverted to `centerOnCurrent()`.
 - [x] **#1164: the card door stacks between 601 and 703 px**. Test: a layout assertion at 601, 650 and 703 px. — [#1288](https://github.com/cehinds/AshenSpire/pull/1288): the door-stack probe in `tools/weapon-card-preview.mjs` asserts (hand-run, in no workflow) the bare and Armoury hosts in Chromium at 601, 650, 703 and 1280 px, and `tests/card-door-stack.test.mjs` holds the CSS to card.json.
 - [ ] **Offline and installable web edition** (manifest plus service worker). Test: after one visit, a reload with the network off starts a run. *D5.*
-- [ ] **Pages serves the external-art edition, and the single-file download stays available** (D5, ruled 2026-09-26). Test: the published Pages page loads its art from separate files (its HTML/JS is under 5 MB), and the release names a working link to the standalone single-file build.
+- [~] **Pages serves the external-art edition, and the single-file download stays available** (D5, ruled 2026-09-26). Test: the published Pages page loads its art from separate files (its HTML/JS is under 5 MB), and the release names a working link to the standalone single-file build. — Groundwork only: [#1336](https://github.com/cehinds/AshenSpire/pull/1336) light-art dev/test builds (~29 MB, one file), [#1338](https://github.com/cehinds/AshenSpire/pull/1338) `art-manifest.json` (5,201 files, light and full), [#1339](https://github.com/cehinds/AshenSpire/pull/1339) Settings → Display → Art quality → Local high-res (a folder beside the game or one the player picks), [#1340](https://github.com/cehinds/AshenSpire/pull/1340) `tools/fetch-art.mjs`, [#1353](https://github.com/cehinds/AshenSpire/pull/1353) `art-release.json` pins `hd-assets-v1`. Left: no Pages build loads its art from separate files yet (`pages-builds.yml` publishes the single file), and ART-REPO-PLAN step 4 (switch the `assets/` readers) is unfinished.
 - [ ] **One physical iPhone in Safari plays a run before release** (D6 proposal, standing in until the owner picks a device). Test: a recorded Safari-on-iPhone run on the RC SHA from Title through at least one combat, with 0 console errors, noted in the release checklist.
 - [x] **Background and resume keep the run**. Test: a `visibilitychange` hidden→visible cycle mid-combat leaves the state unchanged. — [#1298](https://github.com/cehinds/AshenSpire/pull/1298): `tests/visibility-resume.test.mjs`, with every page listener pinned per call site.
 
@@ -113,7 +119,7 @@ the code, a test or a command run on that tree, not against a PR title.
 ## 10. Art and audio
 
 - [ ] **One style guide, with off-style assets listed** (plan §H and P2 identity). Test: the guide exists, and every `assets/*` directory is marked in style or listed as off-style.
-- [x] **Every asset directory has a CREDITS row, and README §Legal agrees with the AI disclosure** — [#1299](https://github.com/cehinds/AshenSpire/pull/1299). Test: `node tools/credits-check.mjs` exits 0 on `dev` (33 checks, 26/26 directories), and it and its `--selftest` run in `tests/run-node.mjs` (so `tests.yml` runs them on every push to `test` and `release`; since 2026-09-26 a `dev` PR runs the check but not its `--selftest`, which is in the `tool self-tests` job), and again as `ci.yml` steps.
+- [x] **Every asset directory has a CREDITS row, and README §Legal agrees with the AI disclosure** — [#1299](https://github.com/cehinds/AshenSpire/pull/1299). Test: `node tools/credits-check.mjs` exits 0 on `dev` (40 checks, 33/33 directories at `7ef3ffc3`, after #1328 replaced the score), and it and its `--selftest` run in `tests/run-node.mjs` (so `tests.yml` runs them on every push to `test` and `release`; since 2026-09-26 a `dev` PR runs the check but not its `--selftest`, which is in the `tool self-tests` job), and again as `ci.yml` steps.
 
 ## 11. Code health
 
@@ -130,8 +136,8 @@ the code, a test or a command run on that tree, not against a PR title.
 - [x] **`codex/` and squash merges land with a receipt.** #1305, #1307 and #1310 merged to `dev` without one; [#1303](https://github.com/cehinds/AshenSpire/pull/1303) backfilled them. — [#1317](https://github.com/cehinds/AshenSpire/pull/1317): `receipts.yml` now runs on `pull_request` into `dev` (`receipts.mjs --check --pr auto`), so a PR without its own receipt is red before it merges. That stops a merge only if the owner's merge rule or branch protection requires the check.
 - [x] **The CHANGELOG ordering gate runs on PRs** (about-changelog has a mode that needs no browser). Test: a PR with a date out of order fails `tests.yml`. — [#1279](https://github.com/cehinds/AshenSpire/pull/1279)
 - [x] **Push runs of `tests.yml` on `dev` are not cancelled**. Test: `cancel-in-progress` applies only to `pull_request`, and every push run concludes success or failure. (Since 2026-09-26 a push to `dev` runs `core` only and a push to `test` or `release` runs all three jobs; the same rule holds for every push run.) — [#1279](https://github.com/cehinds/AshenSpire/pull/1279)
-- [~] **PR wall time is under 10 minutes**. Test: the measured green run after `bundle.test.mjs` moves to its own parallel job. — [#1279](https://github.com/cehinds/AshenSpire/pull/1279) moved the parse gate to its own `bundler parse gate` job. Measured on the #1282 push (run 36079775059): core suite 3m41s, tool self-tests 5m16s, bundler parse gate 12m59s, so wall time is about 13 min. Left: the parse gate, next line.
-- [ ] **The slowest `tests.yml` job fits the <10 min target.** Before #1279 the `tool self-tests` job carried the parse gate and ran 18–19 min (runs 36075414039, 36077405836), and longer on some earlier runs. After it, `tool self-tests` takes about 5 min and `bundler parse gate` about 13 min, 12m22s of which is the parse-gate step. Test: three consecutive green `tests.yml` push runs (on `test` or `release` since 2026-09-26) each finish in under 10 minutes from start to last job.
+- [x] **PR wall time is under 10 minutes**. Test: the measured green run after `bundle.test.mjs` moves to its own parallel job. — [#1279](https://github.com/cehinds/AshenSpire/pull/1279) moved the parse gate to its own job, and [#1345](https://github.com/cehinds/AshenSpire/pull/1345) gates a PR into `dev` on the fast checks only (DEVELOPER.md, *Which checks gate a pull request*). Measured on #1343's head `7db04856`: `tests.yml` run 36282733782 4m02s, `dev preview` run 36282733797 2m39s, both green. The heavy jobs now run on a push to `test` or `release` (next line).
+- [ ] **The slowest `tests.yml` job fits the <10 min target.** Before #1279 the `tool self-tests` job carried the parse gate and ran 18–19 min (runs 36075414039, 36077405836), and longer on some earlier runs. After it, `tool self-tests` takes about 5 min and `bundler parse gate` about 13 min, 12m22s of which is the parse-gate step. Test: three consecutive green `tests.yml` push runs (on `test` or `release` since 2026-09-26) each finish in under 10 minutes from start to last job. Measured 2026-09-27: the only `test` push run so far (36273426261, `cc569f50`) took about 17 minutes.
 - [ ] **A browser-gate run of `ci.yml` exists on the release candidate**. Test: a dispatched `ci.yml` run on the RC SHA concludes success. *D7.*
 
 ## 13. Release readiness
@@ -155,7 +161,7 @@ the code, a test or a command run on that tree, not against a PR title.
 
 ## 14. Deck editor and shops (SPEC §14, owner brief 2026-09-26)
 
-- [~] **SPEC §14 lands before any code** (deck editor, three shop kinds, research note). Test: `grep -n '^## 14. The deck editor and the three shops' SPEC.md` gives 1 hit and §14.7 holds the research table. — this PR.
+- [x] **SPEC §14 lands before any code** (deck editor, three shop kinds, research note). Test: `grep -n '^## 14. The deck editor and the three shops' SPEC.md` gives 1 hit and §14.7 holds the research table. — [#1331](https://github.com/cehinds/AshenSpire/pull/1331): 1 hit on `dev`, and §14.7 holds the table.
 - [ ] **Deck rules and ordered draw** (§14.1, build step 2). Test: `tests/deck-rules.test.mjs` covers the following: `deckEditRefusal` refuses 9 cards under min 10 with a sentence naming both numbers and passes under `deckMinUnlimited`; removing a weapon art moves the same instance to `run.sideboard` and back; adding Strikes mints fresh instances; a granted card is refused; a second copy of a class Power or spell is refused, and `classSpellPowerCopies: 2` allows it; removing an equipped Strike retires its slot and adding one un-retires it, and with none retired raises `equipmentAttackSlotCount` so `stampDeck` does not throw; a sideboarded card is in `run.collection`; with `playInDeckOrder` the opening hand is the first `run.deck` cards (Innate first), in solo and in each co-op seat, and combat start consumes no `shuffle` value, while off it leaves a seeded opening hand unchanged; a fight saved ordered resumes ordered after the setting is turned off, and a snapshot without the field resumes unordered; a schema-10 save loads with `sideboard: []`.
 - [ ] **Deck editor UI** (§14.1, step 3). Test: a DOM test adds and removes cards by tap, ＋/－ and a keyboard/gamepad dispatch; Done is disabled with visible refusal text when out of bounds; Cancel restores both piles, the attack and guard slot allocations and the mint counter; the Quick Access door shows under `free` only and the shrine Rest card under `restOnly`; a browser probe at 360×640 and 390×844 finds every editor target ≥ 48 CSS px on a coarse pointer.
 - [ ] **Shop kinds and the guaranteed minimum** (§14.2, step 4). Test: `tests/shop-kinds.test.mjs` covers the following: every kind rolls at least `guaranteedMinimum` offerings over 200 seeds with every chance set to 0 (chance-0 offerings fill the guarantee); a `guaranteedMinimum` of 1 is refused by name; raising an offering's weight in Settings changes which one the guarantee adds; every numeric offering leaf (a price, a stock count) has a generated `gameConfig.shops.*` row frozen per run, and one without a `[NOTE]` is refused by name; a disabled offering never appears, and disabling below the minimum is refused by name; a pre-§14 `run.shopStock` loads as `market` unchanged; a non-zero `blacksmith` or `master` weight is refused by name while that kind's screen is unregistered; the classic merchant's existing shelves are byte-identical on 50 fixed seeds.
@@ -165,7 +171,7 @@ the code, a test or a command run on that tree, not against a PR title.
 
 ## 15. Reward schedule, levelling pace, drops, legendary sigils (SPEC §15, owner brief 2026-09-26)
 
-- [~] **SPEC §15 lands before any code.** Test: `grep -n '^## 15. Reward schedule' SPEC.md` gives 1 hit. — this PR.
+- [x] **SPEC §15 lands before any code.** Test: `grep -n '^## 15. Reward schedule' SPEC.md` gives 1 hit. — [#1348](https://github.com/cehinds/AshenSpire/pull/1348): 1 hit on `dev`.
 - [ ] **Card reward schedule** (§15.1). Test: `tests/card-reward-schedule.test.mjs`: afterCombat.normal false gives no card row on a normal win and one on an elite; chancePct 0 never offers; defaults leave the rewardRolls counter at 0 and 50 seeded offers byte-identical; onLevelUp adds exactly one levelCard row on a levelling fight; two taken levelCard rows survive a reload.
 - [ ] **Levelling preview and cap** (§15.2). Test: `tests/level-pace.test.mjs`: the preview's normal-fight XP equals combatLevelXp on the configured registries (xpMultiplier counted once); its levels-gained equals awardLevelXp from level 1; maxLevelsPerFight 1 caps a boss kill at one level and discards the excess, 0 means no cap.
 - [ ] **Crafting drops** (§15.3). Test: `tests/crafting-drops.test.mjs`: defaults leave drops unchanged and write no treasure claim; drops.chance.normal 100 drops an armament (rarityWeights.normal exists); rewardChancePct.elite 0 pays no stone; a refined stone pays and survives a reload.
