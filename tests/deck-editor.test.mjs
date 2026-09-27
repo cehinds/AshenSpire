@@ -700,6 +700,59 @@ test('DOM: a grouped deck row shows ×N and its － takes one copy', async () =>
   });
 });
 
+test('DOM: a collection tile carries no ×N badge (Codex review on #1372)', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const editor = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: {} });
+    const tiles = editor.root.querySelectorAll('.deck-editor-tile');
+    assert.ok(tiles.length > 0);
+    for (const tile of tiles) assert.equal(tile.querySelector('.deck-editor-count'), null, `tile ${tile.dataset.key} has no badge`);
+    editor.close();
+  });
+});
+
+test('DOM: with a row held, Escape and pad B cancel the whole edit; Enter, A and X only drop (Codex review on #1372)', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const { initInput } = await import('../src/ui/input.js');
+  withDom((dom, win) => {
+    initInput({ getSettings: () => ({}) });
+    const settings = { playInDeckOrder: true };
+    const pickUp = (editor, run) => {
+      editor.root.querySelector(`.deck-editor-row[data-instance-id="${run.deck[0].instanceId}"] .deck-editor-main`).focus();
+      editor.dispatch({ family: 'controller', button: 2 });
+      assert.ok(editor.root.querySelector('.deck-editor-row.held'), 'a row is held');
+    };
+    for (const [how, fire] of [
+      ['Escape through the real input listener', (editor) => win.press('Escape')],
+      ['pad B', (editor) => editor.dispatch({ family: 'controller', button: 1 })],
+    ]) {
+      const run = freshRun();
+      const before = editState(run);
+      let cancelled = 0;
+      const editor = mountDeckEditor(document.body, { registries: REG, run, settings, onCancel: () => { cancelled += 1; } });
+      pickUp(editor, run);
+      editor.dispatch({ family: 'controller', button: 13 }); // move it, so there is something to restore
+      fire(editor);
+      assert.equal(cancelled, 1, `${how} cancels the edit`);
+      assert.equal(editor.root.isConnected, false, `${how} closes the editor`);
+      assert.deepEqual(editState(run), before, `${how} restores the deck order`);
+    }
+    for (const [how, fire] of [
+      ['Enter', (editor) => editor.dispatch({ family: 'keyboard', key: 'Enter' })],
+      ['pad A', (editor) => editor.dispatch({ family: 'controller', button: 0 })],
+      ['pad X', (editor) => editor.dispatch({ family: 'controller', button: 2 })],
+    ]) {
+      const run = freshRun();
+      const editor = mountDeckEditor(document.body, { registries: REG, run, settings });
+      pickUp(editor, run);
+      fire(editor);
+      assert.equal(editor.root.isConnected, true, `${how} keeps the editor open`);
+      assert.equal(editor.root.querySelector('.deck-editor-row.held'), null, `${how} drops the row`);
+      editor.close();
+    }
+  });
+});
+
 test('DOM: a second editor cannot open while one is live', async () => {
   const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
   withDom(() => {
