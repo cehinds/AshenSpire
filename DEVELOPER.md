@@ -740,15 +740,21 @@ URL, making a bad asset diagnosable without delaying combat feedback. Run
 Combat feedback is **CSS-driven**: JS only toggles short-lived classes and
 appends floating numbers/banners that self-remove after ≤320 ms (`src/ui/fx.js`),
 staggered `STEP_MS` apart and skippable on click. Paced combat playback
-(`playTimeline`) is `setTimeout`-driven beat by beat. There is no always-on
-render loop, but there are bounded `requestAnimationFrame` loops that run only
-while something moves — the hold-to-confirm progress
-(`src/ui/components/holdconfirm.js`), map camera glides
-(`mapboard.js`, `localMapCamera.js`) and frame sequences
-(`src/ui/presentationSequence.js`) — and a few timers: the gamepad poller
-(`src/ui/input.js`, only while a controller is connected), the music scheduler
-(`src/ui/audio.js`), and 2 s polls for fullscreen state
-(`hudQuickSettings.js`) and the co-op lobby. Ambient title effects (embers, gold
+(`playTimeline`) is `setTimeout`-driven beat by beat. The JS loops and timers
+are:
+
+- `requestAnimationFrame` loops that stop when their motion ends: the
+  hold-to-confirm progress (`src/ui/components/holdconfirm.js`), map camera
+  glides (`mapboard.js`, `localMapCamera.js`), frame sequences
+  (`src/ui/presentationSequence.js`) and combatant effect layers
+  (`playCombatantEffectLayers`, `src/ui/combatantEffectLayers.js`);
+- the opening's `tick` (`src/ui/screens/prologue.js`), a `requestAnimationFrame`
+  loop that runs every frame while the prologue is mounted, paused or not;
+- timers: the gamepad poller (`src/ui/input.js`, only while a controller is
+  connected), the co-op seat gamepad poll (`src/ui/screens/coop.js`, every
+  120 ms for as long as the co-op screen is open), the music scheduler
+  (`src/ui/audio.js`), and 2 s polls for fullscreen state
+  (`hudQuickSettings.js`) and the co-op lobby. Ambient title effects (embers, gold
 glow) are pure CSS and honor `prefers-reduced-motion` (`styles/ui.css`).
 Rendering-quality options and phone measurements are in
 [docs/MOBILE-PERFORMANCE.md](docs/MOBILE-PERFORMANCE.md).

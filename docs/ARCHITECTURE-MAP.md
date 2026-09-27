@@ -94,6 +94,7 @@ architecture reason. The intended categories are:
 | `build/`, `dist/`, `buildordinal.json` | Build outputs: the built HTML is ignored on `dev` (only `dist/README.md` is tracked); `buildordinal.json` is committed and checked by `tools/buildversion.mjs --check` |
 | `desktop/` | Optional desktop wrapper kept separate from the browser application |
 | `docs/` | Supporting design, architecture, and evidence documents |
+| `scratch/`, `tooltip-review.html`, `tooltip-review-scene.html`, `AshenSpire-LegacyPreview.html`, `.nojekyll` | Also tracked at the root today: a scratch area, tooltip review pages, a legacy preview build, and the Pages no-Jekyll marker |
 
 IDE state, scratch files, ad-hoc reports, and one-off scripts do not belong at
 the root. They stay ignored, live under an existing owned folder, or remain
