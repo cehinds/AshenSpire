@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Choose when card rewards come",
     "detail": "Settings → Rewards has new card reward settings. You can turn the card offer on or off for normal, elite and boss fights, and give each a percent chance to offer a card. When the chance misses, the spoils say \"No card this time.\" A new \"Level card\" option adds one more card to choose whenever a fight raises your level, with a limit on how many one fight can add. Out of the box nothing changes: every fight offers its card as before, level cards are off, and an existing seed gives the same rewards.",
-    "build": "0.7.1.621",
+    "build": "0.7.1.622",
     "pullRequest": 1351,
     "url": "https://github.com/cehinds/AshenSpire/pull/1351"
+  },
+  {
+    "id": "pr-1354",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Letting go of the game window mid-hold no longer opens the End Turn check",
+    "detail": "If you were holding the End Turn key and the window lost focus (you alt-tabbed, or the phone went to the background), the game used to treat that as a quick tap and open the End Turn confirmation. Now nothing opens and nothing happens. A quick press and release still opens the check as before. Behind the scenes: the test that lists page listeners now also reads one more way of writing a document listener correctly.",
+    "build": "0.7.1.620",
+    "pullRequest": 1354,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1354"
   },
   {
     "id": "pr-1355",
