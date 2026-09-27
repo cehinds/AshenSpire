@@ -8,6 +8,7 @@
 // settings when they happen.
 
 import { RECOVERY_POOLS, RECOVERY_UNITS, recoveryRules } from '../content/recoveryRules.js';
+import { mechanics } from '../framework/data/mechanics.js';
 
 export const RECOVERY_PREFIX = 'recovery.';
 export const RECOVERY_FIELDS = Object.freeze(['perTurn', 'unit', 'idleTurns', 'everyRounds', 'afterCombat', 'atRest']);
@@ -82,9 +83,14 @@ export function turnRecovery({ rules, pool, round, idleStreak, current, max }) {
   return Math.min(max - current, recoveryAmount(row.perTurn, row.unit, max));
 }
 
+// Between fights Stamina is inert while every fight opens with it full
+// (mechanics.stamina.combatStartRefill 'full'): Settings shows no rows for it,
+// and a stored value (an import, an older profile) restores nothing, so the
+// Rest preview, which reports HP and Mana, never omits a gain the Rest gives.
 function percents(settings, field) {
   const all = resolvedRecovery(settings);
-  return Object.fromEntries(RECOVERY_POOLS.map((pool) => [pool, all[pool][field]]));
+  return Object.fromEntries(RECOVERY_POOLS.map((pool) => [pool,
+    pool === 'stamina' && mechanics.stamina.combatStartRefill === 'full' ? 0 : all[pool][field]]));
 }
 
 /**

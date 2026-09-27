@@ -88,3 +88,11 @@ test('after a won fight and at a Rest, the percents restore each pool', () => {
   const receipt = restAt(visit);
   assert.equal(receipt.hp, preview.hp, 'the Rest gives what the preview said');
 });
+
+test('Stamina between fights is inert while fights open with it full', () => {
+  assert.equal(mechanics.stamina.combatStartRefill, 'full');
+  assert.equal(restRecoveryBonus({ [recoveryKey('stamina', 'atRest')]: 100 }).stamina, 0);
+  const run = createRunState({ seed: 5, classId: 'reaver', registries });
+  run.stamina = 0;
+  assert.equal(applyAfterCombatRecovery(run, { [recoveryKey('stamina', 'afterCombat')]: 100 }).stamina, 0);
+});
