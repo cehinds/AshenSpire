@@ -164,13 +164,18 @@ function unpack(entries, dir, mark) {
     // right marker; --from relies on this). Only a cache another run
     // published between our discard and our rename is kept, and only when
     // its marker matches: it was unpacked from a verified release too.
+    const pause = (attempt) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Math.min(10 * (attempt + 1), 200));
     for (let attempt = 0; ; attempt += 1) {
-      try { discard(dir); renameSync(stage, dir); return; } catch (e) {
-        // EPERM/EBUSY/EACCES: Windows refuses to rename a directory another
-        // process holds a file open in (a sibling's marker read, an indexer).
+      // EPERM/EBUSY/EACCES: Windows refuses to rename a directory another
+      // process holds a file open in (a sibling's marker read, an indexer).
+      try { discard(dir); } catch (e) {
+        if (!['EPERM', 'EBUSY', 'EACCES'].includes(e.code) || attempt >= 20) throw e;
+        pause(attempt); continue; // the old cache is still there: never accept its marker
+      }
+      try { renameSync(stage, dir); return; } catch (e) {
         if (!['EEXIST', 'ENOTEMPTY', 'EPERM', 'EBUSY', 'EACCES'].includes(e.code) || attempt >= 20) throw e;
-        if (markOf(dir) === mark) return;
-        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Math.min(10 * (attempt + 1), 200)); // brief backoff before the next try
+        if (markOf(dir) === mark) return; // published by another run since our discard
+        pause(attempt);
       }
     }
   } finally {
