@@ -308,6 +308,7 @@ settings.shops.row.weight,,{kind} · {offering}: guarantee weight,,
 settings.shops.row.offeringValue,,{kind} · {offering}: {value},,
 settings.shops.row.kindValue,,{kind}: {value},,
 settings.shops.refuse.minimum,,"{kind}: a guaranteed minimum of {value} is refused; it must be at least {floor}. The authored shops stay in force until it is.",,
+settings.shops.refuse.noKind,,"Merchant kinds: every kind that can open ({kinds}) has a weight of 0, so no merchant could open. Give one a weight above 0.",,
 settings.shops.refuse.disabled,,"{kind}: turning off {offerings} leaves {enabled} offering(s) enabled, fewer than its guaranteed minimum of {minimum}. Turn one back on or lower the minimum.",,
 # ---- W1 category navigation (kit categoryNav) ------------------------------
 nav.categorySelector,,{categories}: {current},Show the list of {categories}.,

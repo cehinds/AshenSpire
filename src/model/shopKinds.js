@@ -254,11 +254,16 @@ export function shopConfigRows(bundle) {
   const table = bundle?.shops;
   if (!object(table)) return [];
   const rows = [];
+  // While one kind alone can open, its weight is what makes a merchant open
+  // at all: 0 would leave no rollable kind, which validateContent refuses and
+  // which would cost every Advanced setting at the next run. So its row starts
+  // at 1 (Codex, on #1371); with two or more kinds, any one may be 0.
+  const weightFloor = SHOP_KIND_SCREENS.length === 1 ? 1 : 0;
   for (const kind of SHOP_KIND_SCREENS) {
     const weight = table.kindWeights?.[kind];
     if (!Number.isFinite(weight)) continue;
     rows.push(row({
-      key: `${PREFIX}kindWeights.${kind}`, type: 'number', def: weight, integer: true, step: 1, min: 0, max: Math.max(1000, weight * 10),
+      key: `${PREFIX}kindWeights.${kind}`, type: 'number', def: weight, integer: true, step: 1, min: weightFloor, max: Math.max(1000, weight * 10),
       label: `Merchant kind weight — ${words(kind)}`,
       shopLabel: { id: 'settings.shops.row.kindWeight', tokens: { kind: words(kind) } },
       shopTopic: 'kindWeights',
@@ -319,6 +324,14 @@ export function shopSettingsProblems(bundle, settings = {}) {
   if (!object(table)) return [];
   const problems = [];
   const read = (key, fallback) => (Object.hasOwn(settings, key) ? settings[key] : fallback);
+  // Some kind with a shipped screen must keep a weight above 0, or no merchant
+  // can open (validateContent refuses it, and the run would fall back to the
+  // authored content, dropping every Advanced setting).
+  const weightKeys = SHOP_KIND_SCREENS.map((kind) => `${PREFIX}kindWeights.${kind}`);
+  const weightOf = (kind) => Number(read(`${PREFIX}kindWeights.${kind}`, table.kindWeights?.[kind]));
+  if (object(table.kindWeights) && !SHOP_KIND_SCREENS.some((kind) => weightOf(kind) > 0)) {
+    problems.push({ keys: weightKeys, id: 'settings.shops.refuse.noKind', tokens: { kinds: SHOP_KIND_SCREENS.map(words).join(', ') } });
+  }
   for (const kind of SHOP_KINDS) {
     const def = table[kind];
     if (!object(def) || !Array.isArray(def.offerings)) continue;

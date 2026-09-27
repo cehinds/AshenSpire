@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1371",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Shops now have kinds, and Settings decides what a merchant lays out",
+    "detail": "With the shipped settings every merchant is the market you know, with the same shelves at the same prices on every seed. New in Advanced → Shops: each shelf (cards, relics, flasks, armaments, weapon arts, card removal) can be turned off or given a chance to appear, and every visit still lays out at least two, adding the heaviest missing ones first. The blacksmith and the wise master are listed with their offerings and prices, but no merchant turns into one until their screens ship. An open shop in an older save loads as a market with its shelves as they were.",
+    "build": "0.7.1.642",
+    "pullRequest": 1371,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1371"
+  },
+  {
     "id": "pr-1367",
     "date": "2026-09-27",
     "group": "2026-09-27",

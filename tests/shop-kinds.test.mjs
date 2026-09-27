@@ -254,6 +254,15 @@ test('FINISH: a non-zero blacksmith or master weight is refused by name while th
   assert.ok(rows.has(`${PREFIX}kindWeights.market`));
   assert.ok(!rows.has(`${PREFIX}kindWeights.blacksmith`));
   assert.ok(!rows.has(`${PREFIX}kindWeights.master`));
+  // The sole open kind cannot be weighted to 0: its row starts at 1, and a
+  // stored 0 (an old profile, an import) is refused by name (Codex, on #1371).
+  assert.equal(rows.get(`${PREFIX}kindWeights.market`).min, 1);
+  const zeroKind = shopSettingsProblems(contentBundle, { [`${PREFIX}kindWeights.market`]: 0 });
+  assert.equal(zeroKind.length, 1);
+  assert.deepEqual(zeroKind[0].keys, [`${PREFIX}kindWeights.market`]);
+  assert.match(t(zeroKind[0].id, zeroKind[0].tokens), /Market/);
+  assert.equal(errorsAt(configured({ [`${PREFIX}kindWeights.market`]: 0 }), 'shops.kindWeights').length, 1, 'the bundle it would build is refused too');
+  assert.deepEqual(shopSettingsProblems(contentBundle, { [`${PREFIX}kindWeights.market`]: 3 }), []);
   // A stored weight for a locked kind has no row, so it never reaches a run.
   const locked = createRegistries(configured({ [`${PREFIX}kindWeights.blacksmith`]: 50 }));
   assert.equal(locked.shops.kindWeights.blacksmith, 0);

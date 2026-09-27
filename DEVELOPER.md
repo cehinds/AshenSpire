@@ -194,7 +194,16 @@ are rechecked at commit. Selling retains upgrades, mount history and permanent
 discovery; it removes only card instances granted by the sold item. Legacy shops
 without the new shelves retain empty shelves instead of rerolling their stock.
 Run `node --test tests/armamentTrading.test.mjs` for purchase, sale, stale quote,
-mounting and save round-trip coverage. How many cards a shelf of resting cards
+mounting and save round-trip coverage.
+Shop kinds (SPEC §14.2) are data in `src/content/shops.js`: each kind is a list
+of offerings (`enabled`, `chance`, `weight`, and any price or stock number, each
+with a `[NOTE]`) plus a `guaranteedMinimum`. `src/model/shopKinds.js` validates
+the table and generates the Advanced → Shops rows (`gameConfig.shops.*`, frozen
+per run); `src/engine/shopKinds.js` rolls the kind and the offerings on the
+`shopOffers` stream, while the market's shelves still roll on `shop` through
+`buildShopStock`. A kind gets a weight row, and may carry a non-zero weight,
+only once its screen is in `SHOP_KIND_SCREENS`. Run
+`node --test tests/shop-kinds.test.mjs`. How many cards a shelf of resting cards
 holds — the merchant's shelves, a mount's deck list — is authored once at
 `content/config/ui/components/card.json -> sizing.shelf`, laid out by
 `.card-shelf` in styles/kit.css, and checked by

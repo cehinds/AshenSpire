@@ -1851,6 +1851,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "settings.shops.refuse.noKind",
+    "extends": "",
+    "short": "Merchant kinds: every kind that can open ({kinds}) has a weight of 0, so no merchant could open. Give one a weight above 0.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "settings.shops.refuse.disabled",
     "extends": "",
     "short": "{kind}: turning off {offerings} leaves {enabled} offering(s) enabled, fewer than its guaranteed minimum of {minimum}. Turn one back on or lower the minimum.",
