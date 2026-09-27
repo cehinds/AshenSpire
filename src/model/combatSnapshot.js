@@ -95,7 +95,10 @@ export function combatSnapshotProblems(snapshot) {
     else {
       problems.push(...recoveryRulesProblems(state.rules));
       if (!record(state.idle) || ['hp', 'stamina', 'mana'].some((pool) => !Number.isInteger(state.idle[pool]) || state.idle[pool] < 0)) problems.push('recovery.idle must hold a whole-number streak per pool');
-      if (!Number.isInteger(state.logIndex) || state.logIndex < 0) problems.push('recovery.logIndex must be a whole number');
+      // The cursor is where the next turn end starts reading the log: past the
+      // log's end, every spend and loss before it would read as an idle turn.
+      const logLength = Array.isArray(snapshot.eventLog) ? snapshot.eventLog.length : 0;
+      if (!Number.isInteger(state.logIndex) || state.logIndex < 0 || state.logIndex > logLength) problems.push('recovery.logIndex must be a whole number within the saved event log');
     }
   }
   if (snapshot.ratingsRules !== undefined) {

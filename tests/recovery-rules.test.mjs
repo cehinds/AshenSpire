@@ -65,6 +65,9 @@ test('a fight under custom rules recovers every pool at the end of the turn, and
   assert.ok(p.stamina >= 1, 'Stamina recovered although idleTurns is 0');
   const snapshot = serializeCombatSnapshot(combat);
   assert.deepEqual(combatSnapshotProblems(snapshot, registries).filter((m) => /recovery/.test(m)), []);
+  const tampered = structuredClone(snapshot);
+  tampered.recovery.logIndex = tampered.eventLog.length + 1;
+  assert.ok(combatSnapshotProblems(tampered).some((m) => /recovery\.logIndex/.test(m)), 'a cursor past the log is refused');
   const restored = restoreCombatSnapshot({ registries, rng: createRng(9), snapshot });
   assert.deepEqual(restored.recovery, combat.recovery);
 });
