@@ -494,7 +494,12 @@ manifest["audit"] = audit["measure"](OUT, manifest)
 # The manifest is not art: for an output folder under assets/ it is tracked at
 # the same path under asset-data/ (tools/asset-data.mjs, docs/ART-REPO-PLAN.md).
 _rel = os.path.relpath(OUT, ROOT).replace(os.sep, "/")
-MANIFEST_DIR = os.path.join(ROOT, "asset-data", _rel[len("assets/"):]) if _rel.startswith("assets/") else OUT
+if _rel == "assets":
+    MANIFEST_DIR = os.path.join(ROOT, "asset-data")
+elif _rel.startswith("assets/"):
+    MANIFEST_DIR = os.path.join(ROOT, "asset-data", _rel[len("assets/"):])
+else:
+    MANIFEST_DIR = OUT
 os.makedirs(MANIFEST_DIR, exist_ok=True)
 with open(os.path.join(MANIFEST_DIR, "manifest.json"), "w", encoding="utf-8", newline="\n") as fh:
     json.dump(manifest, fh, indent=2, sort_keys=True)

@@ -649,6 +649,11 @@ if __name__ == "__main__":
     # The manifest for an assets/ folder is tracked under asset-data/ (tools/asset-data.mjs).
     _root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     _rel = os.path.relpath(_out, _root_dir).replace(os.sep, "/")
-    _manifest_dir = os.path.join(_root_dir, "asset-data", _rel[len("assets/"):]) if _rel.startswith("assets/") else _out
+    if _rel == "assets":
+        _manifest_dir = os.path.join(_root_dir, "asset-data")
+    elif _rel.startswith("assets/"):
+        _manifest_dir = os.path.join(_root_dir, "asset-data", _rel[len("assets/"):])
+    else:
+        _manifest_dir = _out
     with open(os.path.join(_manifest_dir, "manifest.json"), encoding="utf-8") as fh:
         measure(_out, json.load(fh))

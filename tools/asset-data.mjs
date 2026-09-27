@@ -21,10 +21,15 @@ import { fileURLToPath } from 'node:url';
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const ASSET_DATA = 'asset-data';
 
-/** The folder a manifest for art written into `dir` lives in. */
+/**
+ * The folder a manifest for art written into `dir` lives in. `dir` is resolved
+ * against the working directory, exactly as the frame writes beside it are, and
+ * the result is always absolute.
+ */
 export function dataHome(dir, root = ROOT) {
-  const rel = relative(root, resolve(root, dir)).split(sep).join('/');
+  const abs = resolve(dir);
+  const rel = relative(root, abs).split(sep).join('/');
   if (rel === 'assets') return resolve(root, ASSET_DATA);
   if (rel.startsWith('assets/')) return resolve(root, ASSET_DATA, rel.slice('assets/'.length));
-  return dir;
+  return abs;
 }
