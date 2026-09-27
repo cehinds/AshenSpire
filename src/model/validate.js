@@ -705,7 +705,11 @@ function collectContentProblems(bundle, errors = []) {
     const lv = b.balance.level;
     if (!lv || typeof lv !== 'object' || Array.isArray(lv)) err('balance.level', 'must be an object { xp }');
     else {
-      for (const key of Object.keys(lv)) if (!['xp'].includes(key)) err(`balance.level.${key}`, 'Unknown field');
+      for (const key of Object.keys(lv)) if (!['xp', 'maxLevelsPerFight'].includes(key)) err(`balance.level.${key}`, 'Unknown field');
+      // The levelling cap (SPEC §15.2): 0 is no cap, else a whole number of levels.
+      if (lv.maxLevelsPerFight !== undefined && !(Number.isInteger(lv.maxLevelsPerFight) && lv.maxLevelsPerFight >= 0)) {
+        err('balance.level.maxLevelsPerFight', `must be a non-negative integer (0 is no cap), got ${JSON.stringify(lv.maxLevelsPerFight)}`);
+      }
       const xp = lv.xp;
       if (!xp || typeof xp !== 'object' || Array.isArray(xp)) err('balance.level.xp', 'must be an object { base, growth, roundTo }');
       else {

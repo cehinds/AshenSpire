@@ -72,7 +72,9 @@ function attributeList(subject) {
 // The last verdict, keyed by every setting that can reach the content bundle
 // (the `settings…` keys only remember what the screen shows).
 let lastRefusal = { key: null, refused: null };
-function refusalFor(settings, configured) {
+// Exported so the Levelling preview (LevelPacePreviewModel.js) refuses the
+// same configurations, with the same verdict, as this one and main.js do.
+export function refusalFor(settings, configured) {
   const key = JSON.stringify(Object.entries(settings || {}).filter(([name]) => !name.startsWith('settings')));
   if (key === lastRefusal.key) return lastRefusal.refused;
   const validation = validateContent(configured);
