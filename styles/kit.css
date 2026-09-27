@@ -1538,6 +1538,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .rp-next { grid-area: next; white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
 .reward-door .rp-gain { grid-area: gain; margin-top: .15rem; color: var(--muted); font-size: .92em; font-variant-numeric: tabular-nums; }
 .reward-door .rp-bar { grid-area: bar; min-width: 0; }
+/* What the per-fight level cap threw away (SPEC §15.2): its own line under the row. */
+.reward-door .rp-discarded { grid-column: 1 / -1; margin-top: .1rem; color: var(--ember, var(--gold)); font-size: .88em; font-variant-numeric: tabular-nums; }
 .reward-door .reward-progress-more { margin: 0; color: var(--muted); font-size: .92em; }
 :root[data-layout='narrow'] .reward-door .reward-progress { grid-template-columns: minmax(0, 1fr) auto; }
 :root[data-layout='narrow'] .reward-door .reward-progress-row {
