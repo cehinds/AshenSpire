@@ -206,7 +206,11 @@ function skip(b, reason) {
  * 7). A pointer whose content does not match is still fatal: that is
  * corruption, not absence.
  */
+// Selftest only: every listed committed build reads as purged (a 404), the
+// state docs/ART-REPO-PLAN.md step 7 leaves behind.
+let SIMULATE_PURGE = false;
 function committedArtifact(sha, path) {
+  if (SIMULATE_PURGE) return purgedOrThrow(Object.assign(new Error('simulated purge'), { stderr: 'Object does not exist on the server: [404] Object does not exist on the server' }));
   try { return readGitArtifact(ROOT, sha, path); } catch (error) {
     return purgedOrThrow(error);
   }
@@ -580,6 +584,7 @@ ${rowsTable(builds, '../', new Set(current && builds[0] ? [builds[0]] : []))}
 
 function assemble(outDir, keep) {
   const generatedAt = new Date().toISOString();
+  skippedBuilds.length = 0;
   rmSync(outDir, { recursive: true, force: true });
   mkdirSync(outDir, { recursive: true });
   // 1. main's tree is the base so every existing URL keeps resolving.
@@ -616,6 +621,18 @@ function assemble(outDir, keep) {
     if (mainTracksBuild) { console.log(`  note: main's committed build predates ${artifact}; /${artifact} is not served until main is promoted past it`); continue; }
     if (!MAIN_BUILD) throw new Error(`main's tree carries no ${artifact} — pass --main-build <dir> holding a build of main's source, or the stable Play link at /${artifact} 404s`);
     cpSync(resolve(MAIN_BUILD, artifact), join(outDir, artifact));
+  }
+  // THE build/ AND dist/ ALIASES TOO (Codex, #1360): the hydration loop above
+  // serves them when main tracks its build, and tools/launch.mjs writes the
+  // same file there, so a seeded main must not 404 at /build/ or /dist/.
+  if (!mainTracksBuild && MAIN_BUILD) {
+    for (const artifact of ['AshenSpire.html', MOBILE_ARTIFACT]) {
+      if (!existsSync(resolve(MAIN_BUILD, artifact))) continue;
+      for (const alias of ['build', 'dist']) {
+        mkdirSync(join(outDir, alias), { recursive: true });
+        cpSync(resolve(MAIN_BUILD, artifact), join(outDir, alias, artifact));
+      }
+    }
   }
   if (existsSync(join(outDir, 'index.html'))) cpSync(join(outDir, 'index.html'), join(outDir, 'index-game.html'));
   // The build/ and dist/ aliases fetch the shipped score from beside themselves
@@ -862,6 +879,30 @@ function discoveryFixture() {
   return { same, kept: expected.length, excluded: planted - expected.length };
 }
 
+/**
+ * A VICTIM THE DRIFT PLANT CAN ALWAYS HAVE (Codex, #1360). Once the LFS purge
+ * lands every committed build is skipped, and a selftest run without rebuilds
+ * serves none — so the plant used to throw and Pages could never assemble
+ * again. When nothing was served, a synthetic rebuilt entry is written into the
+ * assembled site and its manifest, and check() proves it like any other.
+ */
+function syntheticVictim(dir) {
+  const branch = BRANCHES[0];
+  const bytes = Buffer.from(`<!doctype html><title>synthetic build</title>\n<!-- src synthetic-digest -->\n`);
+  const b = { branch, ordinal: 0, digest: 'synthetic-digest', built: '1970-01-01', sha: git(['rev-parse', 'HEAD']).trim(), source: 'rebuild', edition: 'light', version: null, bytes: bytes.length, sha256: sha256(bytes) };
+  const bdir = join(dir, branch, '0');
+  mkdirSync(bdir, { recursive: true });
+  writeFileSync(join(bdir, 'index.html'), bytes);
+  writeFileSync(join(bdir, 'build.json'), JSON.stringify({ branch, ordinal: 0, version: null, bytes: bytes.length, mobileBytes: null }) + '\n');
+  const manifestPath = join(dir, 'builds.json');
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  let entry = manifest.branches.find((d) => d.branch === branch);
+  if (!entry) { entry = { branch, head: null, builds: [] }; manifest.branches.push(entry); }
+  entry.builds.push(b);
+  writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+  return { branch, builds: [b], bytes };
+}
+
 function boundary() {
   console.log(`BOUNDARY: this proves each committed build served is byte-identical to its git blob, each rebuilt one carries the source digest its commit's buildordinal.json names and left the committed box unmoved, and every index links every build it lists. It does not prove a build boots, and lists only the newest ${KEEP} builds per branch — older ordinals are in git, not on this site.`);
 }
@@ -878,13 +919,17 @@ try {
     const dir = mkdtempSync(join(tmpdir(), 'pages-site-selftest-'));
     const { checks, branchData } = assemble(dir, 1);
     // Plant: corrupt one served build and prove --check goes red for it by name.
-    const victim = branchData.find((d) => d.builds[0] && d.builds[0].source === 'git');
-    if (!victim) throw new Error('selftest needs at least one branch with a committed build');
+    // Any served build will do; with none served (every committed build
+    // purged, nothing rebuilt) a synthetic one stands in, said by name.
+    let victim = branchData.find((d) => d.builds[0]);
+    const synthetic = victim ? null : syntheticVictim(dir);
+    if (synthetic) { victim = synthetic; console.log(`  note: no build served — the drift plant uses a synthetic ${synthetic.branch}/0`); }
     const f = join(dir, victim.branch, String(victim.builds[0].ordinal), 'index.html');
-    writeFileSync(f, Buffer.concat([readFileSync(f), Buffer.from('\n<!-- planted -->\n')]));
+    const original = readFileSync(f);
+    writeFileSync(f, Buffer.concat([original, Buffer.from('\n<!-- planted -->\n')]));
     // Two checks per served edition: metadata, then bytes. The planted drift
     // takes the victim's two FULL checks and leaves its mobile pair standing.
-    const pages = branchData.reduce((n, d) => n + d.builds.reduce((m, b) => m + 2 + (b.mobileBytes ? 2 : 0), 0), 0);
+    const pages = branchData.reduce((n, d) => n + d.builds.reduce((m, b) => m + 2 + (b.mobileBytes ? 2 : 0), 0), 0) + (synthetic ? 2 : 0);
     const discovered = JSON.parse(readFileSync(join(dir, 'builds.json'), 'utf8')).otherPages || [];
     const before = process.exitCode;
     const ok = check(dir);
@@ -906,7 +951,7 @@ try {
       // the deletion is noticed at all — a known-bad that cannot fail, which is
       // the exact defect these plants exist to catch. So the build goes back to
       // its git blob and the deletion is then the ONLY thing wrong.
-      writeFileSync(f, readGitArtifact(ROOT, victim.builds[0].sha, 'AshenSpire.html'));
+      writeFileSync(f, original);
       const b1 = process.exitCode;
       check(dir);
       // CARRY THE FAILURE, DO NOT PRINT AND DROP IT. Restoring the exit code
@@ -963,6 +1008,34 @@ try {
       rules.push(['a table whose branch is not current marks no build latest', !rowsTable([row], '', new Set()).includes('(latest)')]);
       rules.push(['a table whose branch is current marks its newest build latest', rowsTable([row], '', new Set([row])).includes('(latest)')]);
       rules.push(['a light build is not labelled full, nor as predating mobile', !downloadButtons('', row, '').includes('full') && !rowsTable([row], '').includes('predates')]);
+    }
+    // AFTER THE PURGE (Codex, #1360): every committed build reads as a 404.
+    // Assembly must still pass, name each build it skipped, and the drift
+    // plant must still find a victim (the synthetic one) and catch it.
+    {
+      const pdir = mkdtempSync(join(tmpdir(), 'pages-site-purged-'));
+      SIMULATE_PURGE = true;
+      let assembled = false; let allSkipped = false; let plantCaught = false;
+      try {
+        const r = assemble(pdir, 1);
+        assembled = true;
+        allSkipped = r.branchData.every((d) => d.builds.length === 0) && skippedBuilds.length > 0 && skippedBuilds.every((x) => /LFS object unavailable/.test(x.reason));
+        const v = syntheticVictim(pdir);
+        const vf = join(pdir, v.branch, '0', 'index.html');
+        writeFileSync(vf, Buffer.concat([v.bytes, Buffer.from('<!-- planted -->')]));
+        const saved = process.exitCode;
+        check(pdir);
+        plantCaught = process.exitCode === 1;
+        process.exitCode = saved || 0;
+      } catch (error) {
+        console.error(`  purge simulation threw: ${error.message}`);
+      } finally {
+        SIMULATE_PURGE = false;
+        rmSync(pdir, { recursive: true, force: true });
+      }
+      rules.push(['with every committed build purged, the site still assembles', assembled]);
+      rules.push(['with every committed build purged, each is skipped by name', allSkipped]);
+      rules.push(['with every committed build purged, the drift plant still catches a synthetic victim', plantCaught]);
     }
     // THE REBUILD PATH'S OWN KNOWN-BADS (review of #1360), on one real light
     // rebuild of dev's head (~20 s): the good rebuild serves; the same bytes
