@@ -27,7 +27,10 @@ reads the selected branch's latest feed and pins its numbered build URL, validat
 count when supplied, and downloads that HTML. Older published metadata without
 a byte count is supported; the size is measured after preparation. Opening the
 panel checks the release automatically; **Check for updates** refreshes it.
-A development preview does not publish a release.
+A development preview does not publish a release. Each feed is only as current
+as the last successful Pages deploy (`.github/workflows/pages-builds.yml`: a
+push to `dev`, or the owner's dispatch); a failed deploy leaves the previous
+build in the feed.
 
 Branch labels and feed URLs are configured in `src/content/offlinePlay.js`.
 Files include the branch and version in their names. The native save picker runs

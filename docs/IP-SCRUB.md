@@ -14,6 +14,9 @@ rewards, card-based turn combat), themed dark-fantasy. All art is
 procedurally generated in-repo (no downloaded assets); all music is a built-in
 generated score. See `CREDITS.md`.
 
+> Since the scrub the game also ships painted and imported art (for example the
+> Unity-fork enemy portraits); `CREDITS.md` lists every source and license.
+
 ## Non-affiliation notice (shipped in CREDITS.md)
 
 > AshenSpire is an original fan-inspired work. It contains no assets, music,

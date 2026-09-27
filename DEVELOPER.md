@@ -444,8 +444,9 @@ For migrated slices, keep these responsibilities separate:
   accessibility attributes.
 - `src/ui/screens/` projects game state, owns lifecycle, and translates semantic
   commands into domain actions. It does not duplicate extracted markup.
-- `src/ui/behaviors/` owns reusable interaction binding when a migrated slice
-  needs it; callbacks do not live inside models.
+- Reusable interaction binding goes in `src/ui/behaviors/` when a migrated
+  slice first needs it (the folder does not exist yet); callbacks do not live
+  inside models.
 
 Menu and Armoury are the reference implementations. Keep public entry points
 compatible while migrating a vertical slice; do not bulk-move unrelated code.
@@ -487,7 +488,11 @@ model IDs remain in [`docs/COMPONENT-CATALOG.md`](docs/COMPONENT-CATALOG.md).
   `changeEquipment`. Both are player-turn-only, pay the authored equipment
   action price, and let the engine reconcile cards, resource vessels, Poise,
   events, and the persisted combat snapshot atomically.
-- Armaments, Inventory, Cards, and Stats compose `trayModel` and `renderTray`.
+- Armaments, Inventory, Cards, and Stats follow the Folding Tray contract
+  ([docs/TRAY-COMPONENTS.md](docs/TRAY-COMPONENTS.md)); the Armoury screen
+  (`src/ui/screens/equipment.js`) draws them itself and keeps sizes through
+  `TraySizeService` — `trayModel`/`renderTray` are used today only by the
+  combatant inspector.
   Folding collapses to the standard header without erasing the remembered
   expanded size. Sort controls and resize handles exist only while expanded
   and only when that tray model declares the corresponding capability.
@@ -703,7 +708,7 @@ validation refusals and the dialogue model.
 | Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, missingMana, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
 | Trigger events | `TRIGGER_EVENTS` | every bus event (ENGINE-API §7) + ownerTurnStart/ownerTurnEnd + hpBelowPct |
 | Predicates | `PREDICATES` | inStance, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, cardTagIs, everyNthCardThisCombat, random, eventIsAttack, hpDamagePositive, healPositive, manaPositive, eventSourceIsOwner, eventTargetIsOwner, eventStatusIs, skillLevelAtLeast, classLevelAtLeast, all, any, not |
-| Relic passives | `PASSIVE_KEYS` | runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, restHealMult, restDenied, powerCostReduction, poiseThresholdAdd, swapCostDelta, exposureBuildupMult, skillXpMult |
+| Relic passives | `PASSIVE_KEYS` | arBonus, drBonus, prBonus, poiseBonus, wardBonus, runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, restHealMult, restDenied, powerCostReduction, poiseThresholdAdd, swapCostDelta, exposureBuildupMult, skillXpMult |
 | Modifier keys | `MODIFIER_KEYS` | damageDealtMult, damageTakenMult, blockGainedMult, attackDamageAdd, blockAdd, skipTurn, retainBlock, blockCap, meterMaxGrowthDisabled |
 
 Escape hatch: `src/content/scripts.js` (named functions callable as
@@ -730,15 +735,19 @@ URL, making a bad asset diagnosable without delaying combat feedback. Run
 
 Combat feedback is **CSS-driven**: JS only toggles short-lived classes and
 appends floating numbers/banners that self-remove after ≤320 ms (`src/ui/fx.js`),
-staggered `STEP_MS` apart and skippable on click. There are **no per-frame
-render loops** — paced combat playback (`playTimeline`) is `setTimeout`-driven
-beat by beat, and the one timed loop in the codebase is the gamepad poller
-(`src/ui/input.js`, ~60 Hz `setInterval`) which is **input, not render**, and
-runs only while a controller is connected (started on `gamepadconnected`,
-stopped when the last pad disconnects) — no idle cost. So there are **no
-per-frame JS allocations**; frame rate is just the browser compositing a handful
-of transitions, comfortably 60 fps. Ambient title effects (embers, gold glow)
-are pure CSS and honor `prefers-reduced-motion` (`styles/ui.css`).
+staggered `STEP_MS` apart and skippable on click. Paced combat playback
+(`playTimeline`) is `setTimeout`-driven beat by beat. There is no always-on
+render loop, but there are bounded `requestAnimationFrame` loops that run only
+while something moves — the hold-to-confirm progress
+(`src/ui/components/holdconfirm.js`), map camera glides
+(`mapboard.js`, `localMapCamera.js`) and frame sequences
+(`src/ui/presentationSequence.js`) — and a few timers: the gamepad poller
+(`src/ui/input.js`, only while a controller is connected), the music scheduler
+(`src/ui/audio.js`), and 2 s polls for fullscreen state
+(`hudQuickSettings.js`) and the co-op lobby. Ambient title effects (embers, gold
+glow) are pure CSS and honor `prefers-reduced-motion` (`styles/ui.css`).
+Rendering-quality options and phone measurements are in
+[docs/MOBILE-PERFORMANCE.md](docs/MOBILE-PERFORMANCE.md).
 
 ## Input — keyboard + gamepad (SPEC §7.3)
 
@@ -806,8 +815,6 @@ drives the player flow's stats step at desktop and 390×844 mobile sizes:
 Standard and Assign points for every class, with the Hand and Draw chips
 checked against the hand a solo fight deals. It does not visit the catalog.
 
-## Standalone build (`build/AshenSpire.html`)
-
 ## Shared Load / Quit confirmation
 
 `node tools/confirmation-modal.mjs` drives Load and Quit Without Saving from
@@ -826,6 +833,10 @@ regenerated from frozen source.
 all CSS inlined, every ES module bundled into one classic `<script>` via a tiny
 per-module-closure runtime (so file:// has no module/CORS issue). Double-click
 to play; no server, no Node, no external files. Re-run after any source change.
+With no flag it bundles the full art from `assets/`; `--light` reads the
+`assets-mobile/` twins (the dev/test tier), `--mobile` writes the budgeted
+`AshenSpire-mobile.html`, and `--external-art` leaves the art beside the HTML.
+`node tools/launch.mjs --build-only` picks the flags for you (see *Run & test*).
 The file is a local build output, ignored by git on `dev`; commit only the
 `buildordinal.json` (and generated changelog module) the rebuild writes.
 
@@ -932,7 +943,7 @@ them. `presets.<id>` are three slots a whole opening parks in
 the change set names the keys to unset as well). Per-scene `music`/`stinger`
 reach the audio engine through the `audio` option `main.js` passes to
 `mountPrologue`; the settings preview passes none and keeps what is playing.
-Deliberate quiet is the `quiet` bed (`content/music.js`), never `stopMusic()` —
+Deliberate quiet is the `quiet` bed (`src/content/music.js`), never `stopMusic()` —
 the engine remembers the context it is in.
 
 The controls are the FRAME's, not the caption's: a band (`.prologue-bar`) that

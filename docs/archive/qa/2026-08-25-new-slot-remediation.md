@@ -1,3 +1,5 @@
+> Archived 2026-09-27 (docs audit): a dated QA record from build 0.4.0 (August 2026); it describes that build, not the current one. The current QA process is [docs/QA-TESTING.md](../../QA-TESTING.md).
+
 # New-game save-slot selection remediation — item #2
 
 ## Status and authority
@@ -88,9 +90,9 @@ Model owner: `saveSlotSelectionModel`. Screen host/renderer:
   `c281747ab43c06471609ea1fe9f067cb622e4fec29e3c543f422efdef3d45f1a`.
 - Local exact-source preview: <http://localhost:8583/?shot=title>.
 
-- [390x844 selected New Game slot](../preview/qa-new-slot-selected-mobile-390x844.png)
+- [390x844 selected New Game slot](../../preview/qa-new-slot-selected-mobile-390x844.png)
   — SHA-256 `fb1f8630cdcabdabfa6d6e2157a458019f714442d066c06b09974548ffe68d26`.
-- [1200x730 selected New Game slot](../preview/qa-new-slot-selected-wide-1200x730.png)
+- [1200x730 selected New Game slot](../../preview/qa-new-slot-selected-wide-1200x730.png)
   — SHA-256 `55958086bac63a51f0b9d0518c17371db906ae370f73617e50015feb18521a18`.
 
 Both captures were reviewed at original resolution. Slot 3 has one visible

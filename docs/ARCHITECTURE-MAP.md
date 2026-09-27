@@ -15,7 +15,9 @@ it does not rewrite this core contract or the component-model contract.
 - Windows: `run.bat`
 - macOS/Linux: `run.sh`
 - Source entry: `index.html` -> `src/main.js`
-- Portable build: `dist/AshenSpire.html`
+- Portable build: `dist/AshenSpire.html`, written locally by `run.sh` / `run.bat`
+  (`tools/launch.mjs`); not tracked on `dev`, where CI publishes it as the
+  `dev-standalone-<commit>` workflow artifact
 
 Those public doors remain compatible throughout any restructuring. A structural
 pull request must prove each door it touches before and after the change.
@@ -82,12 +84,14 @@ architecture reason. The intended categories are:
 | Root entry | Purpose |
 |---|---|
 | `.claude/`, `.github/`, `.gitignore`, `.gitattributes` | Repository automation and contributor guidance |
-| `README.md`, `CONTRIBUTING.md`, `DEVELOPER.md`, `SPEC.md`, `PROMPT.md`, `CREDITS.md`, `LICENSE` | Human entry points, contracts, and licensing |
+| `README.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `DEVELOPER.md`, `SPEC.md`, `PROMPT.md`, `CHANGELOG.md`, `CREDITS.md`, `LICENSE` | Human entry points, contracts, receipts, and licensing |
 | `index.html`, `run.bat`, `run.sh` | Obvious player/developer entry points |
 | `src/`, `content/` | Runtime source and authoritative source data |
-| `assets/`, `styles/`, `music/` | Static presentation resources |
+| `assets/`, `assets-mobile/`, `map-detail/`, `styles/`, `music/` | Static presentation resources (`assets-mobile/` is the light-tier twin of `assets/`) |
+| `art/`, `art-manifest.json`, `art-release.json` | Source art (moving to `cehinds/AshenSpire-art`, [ART-REPO-PLAN.md](./ART-REPO-PLAN.md)), the per-tier asset manifest, and the pinned high-res release |
+| `editor/`, `pose-studio/`, `ui-studio/`, `*-preview.html` | Local authoring tools and content preview pages |
 | `tests/`, `tools/` | Verification and development support |
-| `build/`, `dist/`, `buildordinal.json` | Derived and distributable artifacts governed by existing provenance checks |
+| `build/`, `dist/`, `buildordinal.json` | Build outputs: the built HTML is ignored on `dev` (only `dist/README.md` is tracked); `buildordinal.json` is committed and checked by `tools/buildversion.mjs --check` |
 | `desktop/` | Optional desktop wrapper kept separate from the browser application |
 | `docs/` | Supporting design, architecture, and evidence documents |
 
@@ -102,17 +106,15 @@ Restructure one seam per pull request:
 1. Name the old public path and its consumers.
 2. Add the destination or compatibility adapter without deleting the old door.
 3. Run the same-door tests and rebuild checks relevant to that seam. If the seam
-   changes bundled source, regenerate and verify the affected tracked
-   `build/`/`dist/` twins in the same integration act; do not leave derived
-   artifacts stale.
+   changes bundled source, rebuild and commit the `buildordinal.json` and
+   changelog module the rebuild writes (DEVELOPER.md, *Run & test*); built HTML
+   is not committed on `dev`.
 4. Move consumers in a separate, reviewable step.
 5. Remove the adapter only after repository-wide search proves no live reader.
 
 Do not combine structural work with balance changes, generated content, or
-player-facing UI changes. Derived `build/`/`dist/` twins are carried only when
-the existing provenance rules say the changed seam affects them; carrying them
-does not authorize independent release work, a release branch, a tag, or a
-release. Never mass-move `src/`: its existing layers are already the desired
+player-facing UI changes. A rebuild does not authorize independent release
+work, a release branch, a tag, or a release. Never mass-move `src/`: its existing layers are already the desired
 architecture, and moving them would create import churn without improving
 ownership.
 
