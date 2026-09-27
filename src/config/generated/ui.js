@@ -24,7 +24,7 @@
 // source content/config/ui/presentation/combatEffectDirection.json a658eb3dfdfe9d03
 // source content/config/ui/presentation/combatEffectPlayback.json 4b0ffab1ce763e37
 // source content/config/ui/presentation/combatEffectPresentation.json ff8285c5d6ef2192
-// source content/config/ui/presentation/combatFormationModel.json fafe847869663431
+// source content/config/ui/presentation/combatFormationModel.json 7b45c4e60eafd36a
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
 // source content/config/ui/presentation/equipmentAnimations.json 5f145ed3602bc65f
@@ -42,7 +42,7 @@
 // source content/config/ui/scenes/w4a-combat.json 2938240981e3b612
 // source content/config/ui/scenes/w4b-map.json a92277251e883bec
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
-// source content/config/ui/screens/armoury.json 6fac3586aba302e3
+// source content/config/ui/screens/armoury.json b44124e6a29150d9
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
 // source content/config/ui/screens/prologue.json 0e189386a8548f8f
 // source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
@@ -729,7 +729,7 @@ export const uiConfig = deepFreeze({
     "armoury": {
       "sizing": {
         "collectionShare": 0.5,
-        "compactCollectionShare": 0.5
+        "compactCollectionShare": 0.35
       }
     },
     "creation": {
@@ -2907,6 +2907,7 @@ export const uiConfig = deepFreeze({
           "controls": 5
         },
         "figureReference": 150,
+        "artWidthAllowance": 1.8,
         "ceiling": {
           "heightFraction": 0.52,
           "widthFraction": 0.16
