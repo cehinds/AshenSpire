@@ -229,6 +229,38 @@ test('a locked card names its piece for a bare id and for both namespaced refs (
   }
 });
 
+test('unordered, the deck list is one row per variant with a ×N count; ordered, one row per copy (SPEC §14.7, Codex review on #1372)', () => {
+  // A fresh Starseer: its three attack-slot Strikes and two guard Defends are one row each.
+  const fresh = createRunState({ seed: 0x5eed, classId: 'starseer', registries: REG });
+  const freshModel = deckEditorModel({ registries: REG, run: fresh, settings: {} });
+  const attacks = fresh.deck.filter((c) => c.equipmentRole === 'attack');
+  const guards = fresh.deck.filter((c) => c.equipmentRole === 'guard');
+  assert.ok(attacks.length > 1 && guards.length > 1);
+  assert.equal(freshModel.deck.filter((row) => attacks.some((c) => row.instanceIds.includes(c.instanceId))).length, 1, 'one Strike row');
+  assert.equal(freshModel.deck.find((row) => row.instanceIds.includes(attacks[0].instanceId)).countText, `×${attacks.length}`);
+  assert.equal(freshModel.deck.find((row) => row.instanceIds.includes(guards[0].instanceId)).countText, `×${guards.length}`, 'one Defend row');
+  assert.equal(deckEditorModel({ registries: REG, run: fresh, settings: { playInDeckOrder: true } }).deck.length, fresh.deck.length);
+  const run = freshRun();
+  run.deck.push({ instanceId: 'x1', cardId: 'strike', upgraded: false }, { instanceId: 'x2', cardId: 'strike', upgraded: false }, { instanceId: 'x3', cardId: 'strike', upgraded: true });
+  const grouped = deckEditorModel({ registries: REG, run, settings: {} });
+  const plain = grouped.deck.filter((row) => row.cardId === 'strike' && !row.upgraded && !row.locked && !row.instanceIds.some((id) => !['x1', 'x2'].includes(id)));
+  assert.equal(plain.length, 1, 'two plain copies are one row');
+  assert.equal(plain[0].count, 2);
+  assert.equal(plain[0].countText, '×2');
+  assert.equal(plain[0].instanceId, 'x2', 'the row removes its last copy');
+  assert.equal(grouped.deck.find((row) => row.instanceIds.includes('x3')).count, 1, 'the upgraded copy is its own row');
+  assert.equal(grouped.deck.reduce((sum, row) => sum + row.count, 0), run.deck.length, 'every copy is counted once');
+  const ordered = deckEditorModel({ registries: REG, run, settings: { playInDeckOrder: true } });
+  assert.equal(ordered.deck.length, run.deck.length, 'ordered: one row per copy');
+  assert.ok(ordered.deck.every((row) => row.count === 1));
+  // Removing from the grouped row takes one copy: the count drops.
+  const edit = openDeckEdit(REG, run, {});
+  assert.equal(edit.remove(plain[0].instanceId).ok, true);
+  const after = deckEditorModel({ registries: REG, run, settings: {} }).deck.find((row) => row.instanceIds.includes('x1'));
+  assert.equal(after.count, 1);
+  edit.cancel();
+});
+
 test('every card type the content uses has its own filter label', async () => {
   const { has } = await import('../src/ui/strings.js');
   const types = [...new Set(REG.cards.all().map((def) => def.type))];
@@ -650,6 +682,21 @@ test('DOM: Enter on the Rest card through input.js\'s real listener opens exactl
     card.dispatchEvent(consumed);
     assert.equal(opened, 1, 'a keydown already consumed opens nothing more');
     app.remove();
+  });
+});
+
+test('DOM: a grouped deck row shows ×N and its － takes one copy', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const run = freshRun();
+    run.deck.push({ instanceId: 'x1', cardId: 'strike', upgraded: false }, { instanceId: 'x2', cardId: 'strike', upgraded: false });
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    const row = () => editor.root.querySelector('.deck-editor-row[data-instance-id="x2"]') || editor.root.querySelector('.deck-editor-row[data-instance-id="x1"]');
+    assert.equal(row().querySelector('.deck-editor-count').textContent, '×2');
+    row().querySelector('.deck-editor-step[data-action="remove"]').click();
+    assert.ok(!run.deck.some((c) => c.instanceId === 'x2') && run.deck.some((c) => c.instanceId === 'x1'), 'one copy left');
+    assert.equal(row().querySelector('.deck-editor-count'), null, 'a single copy shows no count');
+    editor.close();
   });
 });
 
