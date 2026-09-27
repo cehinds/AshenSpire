@@ -147,12 +147,14 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     ]);
   }
 
-  const cardFace = (row, extra) => [
+  // `grouped` is a deck row standing for several copies; a collection tile's
+  // own counts are its meta line, never a badge.
+  const cardFace = (row, extra, grouped = false) => [
     el('span', { class: 'deck-editor-cost', 'aria-hidden': 'true', text: row.costBucket === 'X' ? 'X' : String(row.cost) }),
     el('span', { class: 'deck-editor-name', text: row.name }),
     el('span', { class: 'deck-editor-meta', text: extra }),
     // Unordered, a deck row stands for every copy of its variant (SPEC §14.7).
-    row.countText ? el('span', { class: 'deck-editor-count', title: tFull('deckEditor.count', { count: row.count }), text: row.countText }) : null,
+    grouped && row.countText ? el('span', { class: 'deck-editor-count', title: tFull('deckEditor.count', { count: row.count }), text: row.countText }) : null,
   ].filter(Boolean);
 
 
@@ -192,7 +194,7 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
         'aria-label': row.locked ? row.lockSentence : tFull('deckEditor.remove', { name: row.name }),
         'aria-disabled': row.removable ? 'false' : 'true',
         title: row.locked ? row.lockSentence : tFull('deckEditor.remove', { name: row.name }),
-      }, cardFace(row, row.locked ? row.lockText : t(`deckEditor.source.${row.source}`))), `row:${row.groupKey}`);
+      }, cardFace(row, row.locked ? row.lockText : t(`deckEditor.source.${row.source}`), true)), `row:${row.groupKey}`);
       main.addEventListener('click', () => remove(row.instanceId));
       const item = el('div', {
         class: `deck-editor-item deck-editor-row${row.locked ? ' locked' : ''}${held === row.instanceId ? ' held' : ''}`, role: 'listitem',
@@ -433,9 +435,12 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       draw();
       return true;
     }
+    // Cancel is Cancel even mid-move: Esc and B restore the whole edit (the
+    // hold included). Only Enter, A and X (the End Turn key) drop the row.
+    if (keyboard ? input.key === 'Escape' : input.button === PAD.b) { doCancel(); return true; }
     const dropNow = keyboard
-      ? (input.key === 'Enter' || input.key === 'Escape' || matchAction({ key: input.key }, 'endTurn'))
-      : [PAD.a, PAD.x, PAD.b].includes(input.button);
+      ? (input.key === 'Enter' || matchAction({ key: input.key }, 'endTurn'))
+      : [PAD.a, PAD.x].includes(input.button);
     if (dropNow) { drop(); draw(); return true; }
     return false;
   }
