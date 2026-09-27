@@ -71,8 +71,9 @@ P3  D payload & release model (owner sign-off) · K code structure · L engine p
 **Target after A4:** every class at 35–65% bot win rate at default settings,
 best-to-worst spread ≤ 20 points, no class dying mostly to act-1 normal
 fights. Before/after tables in each PR body. Balance moves are data rows, not
-code literals. The bot win rate is a proxy: SPEC §9 M3's target for an
-experienced player stays ~35–50%.
+code literals. The bot win rate is a proxy. The 35–65% band is advisory
+under D1 (no win-rate gate for 1.0), and SPEC §9 M3 no longer sets a target
+(D16, owner decision 2026-09-27; D1 governs).
 
 Items marked **(owner ruling)** change a number or rule the owner approved or
 SPEC states. They go to the owner with simulator evidence first; SPEC is

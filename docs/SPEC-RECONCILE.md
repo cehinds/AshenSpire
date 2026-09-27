@@ -128,8 +128,8 @@ At `70d35e2` the same sentences are :590 and :657. Status before this branch:
 - §1 titled the game "Spire of the Erdtree" (heading and Working-title row) — the
   shipped title is **Ashen Spire** (`title.js:47` `ASHEN SPIRE`, bundle
   `dist/AshenSpire.html`). **Both fixed**, with a header note naming
-  `docs/IP-SCRUB.md` as the authority for shipped names until the document-wide
-  pre-scrub-vocabulary rename lands (finding 5 below).
+  `docs/IP-SCRUB.md` as the authority for shipped names (finding 5 below). The
+  document-wide rename once planned is dropped (owner decision, 2026-09-27).
 
 Falsify any of it: `grep -n "no-op" SPEC.md` → 0 audio hits; `ls src/ui/audio.js
 src/content/music.js src/net/lan.js`.
