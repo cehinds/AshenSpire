@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-27
+
+- **Behind the scenes: the 1.0 checklist records the four fixes that just landed** ([#1362](https://github.com/cehinds/AshenSpire/pull/1362), `0.7.1.622`). Docs only. `docs/FINISH.md` now marks as done: a save that cannot be loaded keeps your run, a cancelled End Turn hold opens nothing, the changelog's build numbers are checked, and the map camera check runs on every change. It adds one more check: the save-load fix should also be tested in a real browser through the in-run Load button.
+
 ## 2026-09-26
 
 - **Behind the scenes: every change is now checked for the map camera fitting the screen** ([#1357](https://github.com/cehinds/AshenSpire/pull/1357), `0.7.1.621`). Nothing you see changes. Each proposed change now opens the real map in a browser, resizes its view after it settles, and fails if the camera stops filling the view or loses the destination you picked. The longer map-camera check also makes a new character again, through the Class, Character, Starting equip and Review steps and past the opening, and runs to the end.

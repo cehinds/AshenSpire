@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1362",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the 1.0 checklist records the four fixes that just landed",
+    "detail": "Docs only. docs/FINISH.md now marks as done: a save that cannot be loaded keeps your run, a cancelled End Turn hold opens nothing, the changelog's build numbers are checked, and the map camera check runs on every change. It adds one more check: the save-load fix should also be tested in a real browser through the in-run Load button.",
+    "build": "0.7.1.622",
+    "pullRequest": 1362,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1362"
+  },
+  {
     "id": "pr-1357",
     "date": "2026-09-26",
     "group": "2026-09-26",
