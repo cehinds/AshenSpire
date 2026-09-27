@@ -9465,9 +9465,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     };
 
     // THE TAG SETS ARE CONTENT, AND THE DOOR RESOLVES THE MODE.
-    eq(locationTags(REG, 'shrine').join(','), 'restHpPartial,restMana,restFlasks,smith,levelUp', 'the shrine carries the proposal\'s set');
+    eq(locationTags(REG, 'shrine').join(','), 'restHpPartial,restMana,restFlasks,smith,levelUp,deckEdit', 'the shrine carries the proposal\'s set, and SPEC §14.1\'s deckEdit marker');
     eq(locationTags(REG, 'camp').join(','), 'restHpSmall,restMana', 'the field camp: a small rest and Mana, no services');
-    eq(locationTags(REG, 'inn').join(','), 'restHpFull,restManaFull,restFlasks,levelUp,questBoard', 'the town\'s inn restores everything, and keeps the quest board (phase 10b)');
+    eq(locationTags(REG, 'inn').join(','), 'restHpFull,restManaFull,restFlasks,levelUp,questBoard,deckEdit', 'the town\'s inn restores everything, keeps the quest board (phase 10b) and the deckEdit marker (SPEC §14.1)');
     eq(resolveLocationId(REG, { nodeId: 'crownfall/inn', serviceTypeId: 'inn' }), 'inn', 'an untagged point falls back to its service type');
     eq(resolveLocationId(REG, { nodeId: 'nowhere', serviceTypeId: 'shop' }), null, 'a point of no location kind resolves to nothing');
     refuses(() => visitTo(fresh(), 'merchant'), /carries no tags/, 'an untagged id is refused by name');
@@ -9477,7 +9477,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const shrineRun = fresh();
     const shrine = visitTo(shrineRun, 'shrine');
     eq(shrine.tags.join(','), 'restHpPartial,restManaFloor,restFlasks,smith,levelUp', 'restMana resolves to the mode\'s own tag at the carrier');
-    eq(JSON.stringify(shrine.services), JSON.stringify({ smith: true, levelUp: true, flasks: true, questBoard: false }), 'the services read off the set');
+    eq(JSON.stringify(shrine.services), JSON.stringify({ smith: true, levelUp: true, flasks: true, questBoard: false, deckEdit: true }), 'the services read off the set');
     assert(shrine.ctx.propertyMounts.player['location:shrine'], 'the place is mounted under its owner');
     const arrival = arriveAt(shrine);
     assert(arrival.events.some((e) => e.type === 'arrived' && e.locationId === 'shrine'), '`arrived` is emitted with the place');
@@ -9525,7 +9525,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE CAMP: a small rest, the same Mana mode, no refill and no services.
     const campRun = fresh();
     const camp = visitTo(campRun, 'camp');
-    eq(JSON.stringify(camp.services), JSON.stringify({ smith: false, levelUp: false, flasks: false, questBoard: false }), 'the camp offers nothing');
+    eq(JSON.stringify(camp.services), JSON.stringify({ smith: false, levelUp: false, flasks: false, questBoard: false, deckEdit: false }), 'the camp offers nothing');
     eq(arriveAt(camp).refill, null, 'no refill rule, no receipt');
     eq(campRun.flaskCharges.hpCurrent, 0, 'the camp refills no flask');
     restAt(camp);

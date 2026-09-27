@@ -39,9 +39,12 @@ import { settingOn } from '../screens/settings.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { mountRelicRail } from './relicRail.js';
 import { observeIconTray, setIconTrayItems, trayIcon } from './iconTray.js';
+import { t, tFull } from '../strings.js';
 
 export const RUN_HUD_ARMOURY_ID = 'open-armoury';
 export const RUN_HUD_MENU_ID = 'open-menu';
+// SPEC §14.1: the deck editor's Quick Access door (the map, under `free`).
+export const RUN_HUD_DECK_ID = 'open-deck-editor';
 
 /**
  * runHudHtml({ registries, run, meta, place, headerClass }) → markup string.
@@ -57,7 +60,7 @@ export function seatNameOf(registries, run) {
   return registries.seats.has(id) ? registries.seats.get(id).name : null;
 }
 
-export function runHudHtml({ registries, run, meta, place, headerClass = 'map-header', layout = '', orientationHtml = '' }) {
+export function runHudHtml({ registries, run, meta, place, headerClass = 'map-header', layout = '', orientationHtml = '', deckDoor = false }) {
   const map = run.mapGraph;
   const className = runClassIdentity(registries, run).name;
   return hudShellHtml(runHudViewModel({
@@ -80,6 +83,9 @@ export function runHudHtml({ registries, run, meta, place, headerClass = 'map-he
     controls: {
       armouryId: RUN_HUD_ARMOURY_ID,
       menuId: RUN_HUD_MENU_ID,
+      // The Deck door exists only where the host opens one (deckDoor), so a
+      // room or a fight never reserves its slot.
+      deckId: deckDoor ? RUN_HUD_DECK_ID : null,
       menuHint: actionHint('menu'),
     },
     // The settings bag. `presentation` went with the fullscreen/music pair,
@@ -106,7 +112,7 @@ export function runHudHtml({ registries, run, meta, place, headerClass = 'map-he
 export function wireRunHud(app, {
   registries, run, meta,
   onArmoury = null, onMenu = null, onLoad = null, onSave = null, onQuit = null, onQuitWithoutSave = null,
-  quickControls = {}, onSettingsChange = null, remount = null,
+  quickControls = {}, onSettingsChange = null, remount = null, onEditDeck = null,
 }) {
   wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
   const hud = app.querySelector('.shared-hud');
@@ -235,6 +241,15 @@ export function wireRunHud(app, {
   const armouryBtn = hud.querySelector(`#${RUN_HUD_ARMOURY_ID}`);
   if (armouryBtn && onArmoury) armouryBtn.addEventListener('click', () => onArmoury());
   else armouryBtn?.remove();
+
+  // SPEC §14.1 — the Deck door. Drawn only when the host asked for it
+  // (runHudHtml's deckDoor); a band drawn with it and wired without a handler
+  // loses the control rather than keeping a dead one.
+  const deckBtn = hud.querySelector(`#${RUN_HUD_DECK_ID}`);
+  if (deckBtn && onEditDeck) {
+    deckBtn.addEventListener('click', () => onEditDeck());
+    attachTooltip(deckBtn, () => `<div class="tt-title">${esc(t('deckEditor.title'))}</div>${esc(tFull('deckEditor.open'))}`);
+  } else deckBtn?.remove();
 
   // ☰ — today it opens the overlay at Settings; under the quick-nav experiment
   // it opens the list of everywhere this screen can go. Every row below calls

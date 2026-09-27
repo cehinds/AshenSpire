@@ -1305,3 +1305,76 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .hand-discard-item { display: flex; flex-direction: column; gap: 8px; align-items: center; width: min(100%, calc(220px / var(--ui-zoom, 1))); }
 .hand-discard-item label { cursor: pointer; min-height: 44px; }
 .hand-discard-item input { width: 20px; height: 20px; accent-color: #c5a32b; }
+
+/* ---- THE DECK EDITOR (SPEC §14.1 UX; src/ui/screens/deckEditor.js) ----------
+   Every target is at least 48 CSS px on a coarse pointer and 44 otherwise, ON
+   GLASS: the lengths divide by the app's zoom exactly as --tap-floor does, and
+   never drop below the player's own Minimum tap size (--tap-floor). Text is at
+   least 11 px on glass at 360x640 (FINISH §8). Collection left, deck right;
+   collection on top, deck below on a portrait phone. */
+.deck-editor-veil {
+  --deck-editor-target: max(var(--tap-floor), calc(44px / var(--ui-zoom, 1)));
+  --deck-editor-text: max(1.3rem, calc(11px / var(--ui-zoom, 1)));
+  align-items: stretch;
+}
+@media (pointer: coarse) {
+  .deck-editor-veil { --deck-editor-target: max(var(--tap-floor), calc(48px / var(--ui-zoom, 1))); }
+}
+.deck-editor {
+  display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto; gap: 0.8rem;
+  width: min(100%, 120rem); height: 100%; box-sizing: border-box; padding: 1rem;
+  background: var(--bg-raise); border: 1px solid var(--line); color: var(--parchment);
+  font-size: var(--deck-editor-text); overflow: hidden;
+}
+.deck-editor-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.2rem; min-width: 0; }
+.deck-editor-title { margin: 0; font-size: max(1.8rem, calc(14px / var(--ui-zoom, 1))); }
+.deck-editor-counter { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--gold); }
+.deck-editor-counter[data-state="out"] { color: var(--danger); }
+.deck-editor-curve { display: flex; align-items: flex-end; gap: 0.3rem; height: calc(3.2rem + 1.2 * var(--deck-editor-text)); margin-inline-start: auto; }
+.deck-editor-curve-bar { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; width: max(1.8rem, calc(16px / var(--ui-zoom, 1))); height: 100%; }
+.deck-editor-curve-fill { display: block; width: 100%; height: calc(var(--share, 0) * 3.2rem); min-height: 1px; background: var(--gold); border-radius: 2px 2px 0 0; }
+.deck-editor-curve-label { font-size: var(--deck-editor-text); color: var(--muted); line-height: 1.1; }
+.deck-editor-tools { display: grid; gap: 0.4rem; min-width: 0; }
+.deck-editor-chips { display: flex; align-items: center; gap: 0.4rem; overflow-x: auto; overscroll-behavior-x: contain; min-width: 0; scrollbar-width: thin; }
+.deck-editor-chips-label { flex: none; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.deck-editor-chip {
+  flex: none; min-height: var(--deck-editor-target); min-width: var(--deck-editor-target); padding: 0 1rem;
+  border: 1px solid var(--line-soft); border-radius: 999px; background: transparent; color: var(--parchment);
+  font: inherit; cursor: pointer;
+}
+.deck-editor-chip.on { border-color: var(--gold); background: rgba(var(--accent-rgb), 0.18); color: var(--gold); }
+.deck-editor-panes { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.8rem; min-height: 0; }
+@media (orientation: portrait) and (max-width: 760px) {
+  .deck-editor-panes { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
+}
+.deck-editor-pane { display: flex; flex-direction: column; min-height: 0; min-width: 0; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+.deck-editor-pane.active { border-color: var(--gold); }
+.deck-editor-pane-title { margin: 0; padding: 0.4rem 0.8rem; font-size: var(--deck-editor-text); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.deck-editor-list { display: grid; align-content: start; gap: 0.3rem; padding: 0 0.4rem 0.4rem; overflow-y: auto; overscroll-behavior: contain; min-height: 0; flex: 1; }
+.deck-editor-item { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.3rem; align-items: stretch; min-width: 0; }
+.deck-editor-main {
+  flex: 1 1 12em; min-width: 0; min-height: var(--deck-editor-target);
+  display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 0.6rem; align-items: center;
+  padding: 0.3rem 0.8rem; text-align: start; font: inherit; color: inherit; cursor: pointer;
+  background: var(--bg-raise); border: 1px solid var(--line); border-radius: 4px;
+}
+.deck-editor-actions { display: flex; gap: 0.3rem; flex: none; }
+.deck-editor-cost { grid-row: 1 / span 2; display: grid; place-items: center; width: 2.4em; height: 2.4em; border-radius: 50%; border: 1px solid var(--gold); color: var(--gold); font-weight: 700; }
+.deck-editor-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deck-editor-meta { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deck-editor-step {
+  flex: none; min-width: var(--deck-editor-target); min-height: var(--deck-editor-target); padding: 0 0.6rem;
+  font: inherit; font-weight: 700; color: var(--parchment); background: var(--bg-raise);
+  border: 1px solid var(--line-soft); border-radius: 4px; cursor: pointer;
+}
+.deck-editor-main[aria-disabled="true"], .deck-editor-step[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
+.deck-editor-tile.spent .deck-editor-name { color: var(--muted); }
+.deck-editor-row.held .deck-editor-main { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.5); }
+.deck-editor-empty { margin: 0.6rem; color: var(--muted); }
+.deck-editor-footer { display: grid; gap: 0.4rem; min-width: 0; }
+.deck-editor-refusal { margin: 0; color: var(--danger); font-weight: 700; }
+.deck-editor-refusal[hidden] { display: none; }
+.deck-editor-keys { margin: 0; color: var(--muted); }
+@media (pointer: coarse) { .deck-editor-keys { display: none; } }
+.deck-editor-foot .as-btn { min-height: var(--deck-editor-target); font-size: max(1em, var(--deck-editor-text)); }
+.armoury-edit-deck { align-self: flex-start; min-height: var(--tap-floor); }

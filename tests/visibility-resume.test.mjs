@@ -379,6 +379,7 @@ const KNOWN = {
   'src/ui/screens/combat.js': ["'keydown'", '.__combat', '.__combatRunForShot', '.__renderCombatForShot'],
   'src/ui/screens/coop.js': ["'keydown'", "'keydown'", '.__coopSnapshot', '.__guardCoopTool'],
   'src/ui/screens/customize.js': ["'pointermove'", "'pointerup'", "'keydown'"],
+  'src/ui/screens/deckEditor.js': ["'keydown'"],
   'src/ui/screens/equipment.js': ["'pointermove'", "'pointerup'", "'pointercancel'", "'keydown'"],
   'src/ui/screens/map.js': ["'click'", "'keydown'", "'resize'", ['type', "one of 'fullscreenchange', 'webkitfullscreenchange' (the literal loop): re-centres the map camera only"]],
   'src/ui/screens/profileNotice.js': ["'keydown'"],

@@ -478,3 +478,50 @@ creation.review.slot,,Slot {slot},,
 creation.view.grid,,Grid view,The choices as a grid.,
 creation.view.list,,List view,The choices as a list.,
 creation.catalog.portrait,,Live portrait (W1c head),The head portrait as the catalogue shows it.,
+# ---- the deck editor (SPEC §14.1) ------------------------------------------
+deckEditor.title,,Edit deck,Move cards between your deck and the cards you own.,Edit deck
+deckEditor.open,,Deck,Open the deck editor.,Edit deck
+deckEditor.rest,,Edit deck,Rearrange your deck with the cards you own. Leaving the editor keeps this visit open.,
+deckEditor.armoury,,Edit deck,Open the deck editor with the cards you own.,Edit deck
+deckEditor.counter,,{count} / {min}–{max},"Cards in the deck, then the fewest and the most the editor lets you confirm.",Deck size
+deckEditor.unlimited,,∞,No limit.,
+deckEditor.pane.deck,,Deck,The cards you will fight with. Tap one to take it out.,Deck
+deckEditor.pane.collection,,Collection,Every card you own. Tap one to add it to the deck.,Collection
+deckEditor.panes.switch,,Switch pane,Move between the collection and the deck.,Switch pane
+deckEditor.curve,,Cost curve,How many cards in the deck cost each amount.,Cost curve
+deckEditor.curve.bar,,{bucket},{count} cards cost {bucket}.,
+deckEditor.filters,,Filter,Show only the cards that match.,Filter
+deckEditor.sort,,Sort,Order the cards.,Sort
+deckEditor.filter.cost,,Cost {cost},,
+deckEditor.filter.upgraded,,Upgraded,,
+deckEditor.type.attack,,Attack,,
+deckEditor.type.skill,,Skill,,
+deckEditor.type.power,,Power,,
+deckEditor.type.curse,,Curse,,
+deckEditor.type.status,,Status,,
+deckEditor.source.basic,,Basic,,
+deckEditor.source.art,,Weapon art,,
+deckEditor.source.reward,,Reward,,
+deckEditor.source.item,,Item-owned,,
+deckEditor.sort.cost,,Cost,,
+deckEditor.sort.name,,Name,,
+deckEditor.sort.type,,Type,,
+deckEditor.sort.source,,Source,,
+deckEditor.tile.owned,,{owned} owned · {inDeck} in deck,,
+deckEditor.tile.basic,,∞ · {inDeck} in deck,,
+deckEditor.add,,＋,Add {name} to the deck.,
+deckEditor.remove,,－,Take {name} out of the deck.,
+deckEditor.up,,▲,Move {name} one place earlier in the deck.,
+deckEditor.down,,▼,Move {name} one place later in the deck.,
+deckEditor.pickUp,,Move,"Pick up {name}, then place it with the arrows.",
+deckEditor.held,,"Moving {name}: ▲ and ▼ place it, and Move or Enter drops it.",,
+deckEditor.locked,,Locked · {piece},,
+deckEditor.locked.sentence,,{name} comes with {piece}; the Armoury decides it.,,
+deckEditor.lock.equipment,,your equipment,,
+deckEditor.refuse.copyLimit,,{name} is limited to {limit} in the deck.,,
+deckEditor.refuse.allInDeck,,Every {name} you own is already in the deck.,,
+deckEditor.empty.deck,,No card in the deck matches these filters.,,
+deckEditor.empty.collection,,No card you own matches these filters.,,
+deckEditor.keys,,"Tap, ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Done · {cancel} Cancel",,
+deckEditor.done,,Done,Keep this deck.,Done
+deckEditor.cancel,,Cancel,Put the deck back exactly as it was when the editor opened.,Cancel
