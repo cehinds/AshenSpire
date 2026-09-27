@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Edit your deck",
     "detail": "A new deck editor shows the cards you own on one side and your deck on the other. Tap a card, or use its ＋ and － buttons, to move it; a keyboard and a controller can do every move too. The top shows how many cards the deck holds against the smallest and largest deck allowed, and a chart of card costs; chips filter and sort the lists. Done stays off, with a sentence saying why, while the deck is too small or too large, and Cancel puts everything back as it was. By default a Deck button on the map and an Edit deck button in the Armoury's Cards view open it outside combat. With Settings → Advanced → Deck → Where set to Rest sites only, it opens instead from the Rest screen of a shrine, inn or chapel (not a camp); with deck editing off, nothing opens it.",
-    "build": "0.7.1.640",
+    "build": "0.7.1.641",
     "pullRequest": 1372,
     "url": "https://github.com/cehinds/AshenSpire/pull/1372"
+  },
+  {
+    "id": "pr-1373",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the 1.0 checklist records three more fixes",
+    "detail": "Docs only. docs/FINISH.md now marks as done: a test that failed only sometimes is fixed, loading a save from the in-game menu is checked in a real browser, and the layout checker's limits are written down.",
+    "build": "0.7.1.640",
+    "pullRequest": 1373,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1373"
   },
   {
     "id": "pr-1368",
