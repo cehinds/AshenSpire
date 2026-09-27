@@ -993,6 +993,51 @@ export const tags = [
     "blurb": "A hound of banked coals bites at your foes."
   },
   {
+    "id": "sigil",
+    "domain": "property",
+    "label": "Sigil",
+    "color": "7A6FB0",
+    "glyph": "◈",
+    "visibility": "",
+    "blurb": "What a sigil confers while it sits in a slot of an equipped armament: a branch, not a tag; each sigil's own node sits under it."
+  },
+  {
+    "id": "emberSigil",
+    "domain": "property",
+    "label": "Ember Sigil",
+    "color": "C9502E",
+    "glyph": "🔥",
+    "visibility": "",
+    "blurb": "An ember set in steel warms a guard before the first blow."
+  },
+  {
+    "id": "thornSigil",
+    "domain": "property",
+    "label": "Thorn Sigil",
+    "color": "8E3B3B",
+    "glyph": "🌿",
+    "visibility": "",
+    "blurb": "A thorn set in steel opens the first wound of a fight."
+  },
+  {
+    "id": "tideSigil",
+    "domain": "property",
+    "label": "Tide Sigil",
+    "color": "3F6FA0",
+    "glyph": "🌊",
+    "visibility": "",
+    "blurb": "A tide set in steel brings a card back with every fifth one played."
+  },
+  {
+    "id": "hearthSigil",
+    "domain": "property",
+    "label": "Hearth Sigil",
+    "color": "B08D57",
+    "glyph": "🏠",
+    "visibility": "",
+    "blurb": "A hearth set in steel turns every mending into a guard."
+  },
+  {
     "id": "warhorn",
     "domain": "property",
     "label": "Warhorn",
@@ -2215,5 +2260,14 @@ export const tags = [
     "glyph": "",
     "visibility": "INTERNAL",
     "blurb": "What a companion is. Every object in the companion collection carries this, and nothing outside it may."
+  },
+  {
+    "id": "classification.sigil",
+    "domain": "classification",
+    "label": "sigil",
+    "color": "",
+    "glyph": "",
+    "visibility": "INTERNAL",
+    "blurb": "What a sigil is. Every object in the sigil collection carries this, and nothing outside it may."
   }
 ];

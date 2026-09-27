@@ -1831,5 +1831,89 @@ export const nodeEffects = {
         ]
       }
     ]
+  },
+  "emberSigil": {
+    "triggers": [
+      {
+        "on": "combatStart",
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "variable": "block"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "thornSigil": {
+    "triggers": [
+      {
+        "on": "damageDealt",
+        "once": true,
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventIsAttack"
+            },
+            {
+              "p": "eventSourceIsOwner"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "applyStatus",
+            "status": "bleed",
+            "stacks": {
+              "variable": "bleed"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "tideSigil": {
+    "triggers": [
+      {
+        "on": "cardPlayed",
+        "if": {
+          "p": "everyNthCardThisCombat",
+          "n": {
+            "variable": "n"
+          }
+        },
+        "do": [
+          {
+            "op": "draw",
+            "amount": {
+              "variable": "draw"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "hearthSigil": {
+    "triggers": [
+      {
+        "on": "healed",
+        "if": {
+          "p": "eventTargetIsOwner"
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "variable": "block"
+            }
+          }
+        ]
+      }
+    ]
   }
 };

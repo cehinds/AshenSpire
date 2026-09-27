@@ -521,5 +521,30 @@ export const nodeVariables = [
     "nodeId": "emberHound",
     "variable": "damage",
     "role": "amount"
+  },
+  {
+    "nodeId": "emberSigil",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "thornSigil",
+    "variable": "bleed",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "tideSigil",
+    "variable": "n",
+    "role": "n"
+  },
+  {
+    "nodeId": "tideSigil",
+    "variable": "draw",
+    "role": "amount"
+  },
+  {
+    "nodeId": "hearthSigil",
+    "variable": "block",
+    "role": "amount"
   }
 ];

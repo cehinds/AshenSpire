@@ -119,3 +119,8 @@ default,,restManaFlat,restoreMana,rest.mana.flat
 default,,restManaFloor,floorPct,rest.mana.floorPct
 default,,hollowSquire,block,powers.hollowSquire.block
 default,,emberHound,damage,powers.emberHound.damage
+default,,emberSigil,block,sigils.emberSigil.block
+default,,thornSigil,bleed,sigils.thornSigil.bleed
+default,,tideSigil,n,sigils.tideSigil.n
+default,,tideSigil,draw,sigils.tideSigil.draw
+default,,hearthSigil,block,sigils.hearthSigil.block

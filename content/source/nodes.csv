@@ -152,6 +152,11 @@ blightTouchedIdol,property,Blight-Touched Idol,6E9C6E,☣,,,,,What Blight-Touche
 companion,property,Companion,B08D57,☥,,,,,"What a companion confers while it travels with you: a branch, not a tag; each companion's own node sits under it."
 hollowSquire,companion,Hollow Squire,B08D57,🛡,,,,,A squire without a knight raises a shield before you.
 emberHound,companion,Ember Hound,C9502E,🐕,,,,,A hound of banked coals bites at your foes.
+sigil,property,Sigil,7A6FB0,◈,,,,,"What a sigil confers while it sits in a slot of an equipped armament: a branch, not a tag; each sigil's own node sits under it."
+emberSigil,sigil,Ember Sigil,C9502E,🔥,,,,,An ember set in steel warms a guard before the first blow.
+thornSigil,sigil,Thorn Sigil,8E3B3B,🌿,,,,,A thorn set in steel opens the first wound of a fight.
+tideSigil,sigil,Tide Sigil,3F6FA0,🌊,,,,,A tide set in steel brings a card back with every fifth one played.
+hearthSigil,sigil,Hearth Sigil,B08D57,🏠,,,,,A hearth set in steel turns every mending into a guard.
 warhorn,property,Warhorn,6E9C6E,📣,,,,,What Warhorn does when the fight gives it its moment.
 vowOfVengeance,property,Vow of Vengeance,6E9C6E,⚔,,,,,What Vow of Vengeance does when the fight gives it its moment.
 pearlOfSagacity,property,Pearl of Sagacity,6E9C6E,🔮,,,,,What Pearl of Sagacity does when the fight gives it its moment.
@@ -297,3 +302,4 @@ classification.slot,classification,slot,,,INTERNAL,30,,,"What a slot is. Every o
 classification.startingKit,classification,startingKit,,,INTERNAL,30,,,"What a startingKit is. Every object in the startingKit collection carries this, and nothing outside it may."
 classification.unlock,classification,unlock,,,INTERNAL,30,,,"What a unlock is. Every object in the unlock collection carries this, and nothing outside it may."
 classification.companion,classification,companion,,,INTERNAL,30,,,"What a companion is. Every object in the companion collection carries this, and nothing outside it may."
+classification.sigil,classification,sigil,,,INTERNAL,30,,,"What a sigil is. Every object in the sigil collection carries this, and nothing outside it may."

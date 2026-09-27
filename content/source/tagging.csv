@@ -1884,3 +1884,13 @@ companion,,hollowSquire,hollowSquire
 companion,,hollowSquire,classification.companion
 companion,,emberHound,emberHound
 companion,,emberHound,classification.companion
+# Sigils (SPEC §14.3, §14.4): what each does is its property row, mounted
+# while its armament is equipped; its kind is stated once.
+sigil,,emberSigil,emberSigil
+sigil,,emberSigil,classification.sigil
+sigil,,thornSigil,thornSigil
+sigil,,thornSigil,classification.sigil
+sigil,,tideSigil,tideSigil
+sigil,,tideSigil,classification.sigil
+sigil,,hearthSigil,hearthSigil
+sigil,,hearthSigil,classification.sigil
