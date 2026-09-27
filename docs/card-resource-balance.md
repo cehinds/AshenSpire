@@ -14,7 +14,7 @@ nearest whole card in each rarity. Each selected resource costs one point.
 Upgrading a card preserves its resource category.
 
 The current combat-reward census is 54 Common, 54 Uncommon and 41 Rare cards.
-The resulting Stamina-bearing/dual counts are 16/8, 26/15 and 29/21.
+The resulting Stamina-bearing/dual counts are 16/8, 27/16 and 29/21.
 
 **A2 exceptions (caster starvation).** The four Starseer common attacks —
 Comet Fragment, Starblade Phalanx, Starlance and Frost Nova — cost Actions
