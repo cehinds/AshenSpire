@@ -426,10 +426,12 @@ test('a saved stock naming an offering its kind has not got is refused by name (
   const bogus = { ...structuredClone(run), shopStock: { ...structuredClone(run.shopStock), offerings: ['bogus'] } };
   assert.ok(validateRunShape(bogus).some((problem) => /shopStock\.offerings names 'bogus'/.test(problem)));
   const empty = { ...structuredClone(run), shopStock: { ...structuredClone(run.shopStock), offerings: [] } };
-  // An empty list is no longer refused (5a re-review, follow-up 2): the load
-  // door's prune drops a shelf it empties even when it was the only one, so no
-  // empty rail item is left. A list that is not a list of ids still is.
-  assert.deepEqual(validateRunShape(empty), []);
+  // An empty list is refused while any shelf still holds stock (review of
+  // #1377): the load door's prune empties the list only with its last shelf
+  // (5a re-review, follow-up 2), so stock with no offerings is a tampered save.
+  assert.ok(validateRunShape(empty).some((problem) => /shopStock\.offerings is empty/.test(problem)));
+  const emptied = { ...structuredClone(run), shopStock: { kind: 'market', offerings: [], cards: [], relics: [], flasks: [], armaments: [], weaponArts: [], removeCost: 75 } };
+  assert.deepEqual(validateRunShape(emptied), [], 'with nothing on any shelf, an empty list is the prune\'s honest result');
   const notIds = { ...structuredClone(run), shopStock: { ...structuredClone(run.shopStock), offerings: [3] } };
   assert.ok(validateRunShape(notIds).some((problem) => /shopStock\.offerings must be a list of offering ids/.test(problem)));
   // Through the real load door: archived and refused, never opened.

@@ -22,7 +22,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { advancedConfigRows, configuredContentBundle, advancedConfigExport, parseAdvancedConfigFile } from '../src/model/advancedConfig.js';
 import { createRng, STREAM_NAMES } from '../src/engine/rng.js';
 import { buildMarketStock, marketVisitStock } from '../src/engine/shopKinds.js';
-import { eligibleEventIds } from '../src/engine/encounters.js';
+import { eligibleEventIds, buildShopStock } from '../src/engine/encounters.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { applyLoseHp } from '../src/engine/actions.js';
 import { serializeCombatSnapshot, restoreCombatSnapshot, commitCombatSnapshot } from '../src/engine/combatSnapshot.js';
@@ -164,13 +164,26 @@ test('Settings refuses a sale value above the price by name, and only that item\
   assert.equal(cheaper.consumables.find((def) => def.id === b.id).sellValue, 1);
 });
 
-test('with shipped defaults the existing shelves are unmoved, no stream but shopOffers moves, and no new stream was added', () => {
+test('with shipped defaults the pre-§14 shelves are byte-identical to buildShopStock, only shopOffers moves, and no stream was added', () => {
+  // The pre-§14 shelves (cards, relics, flasks, armaments, weapon arts and the
+  // Remove price) roll on `shop` and are compared byte for byte. The 5a
+  // additions' stock (armour, sigils) and which of them come up DO shift on a
+  // given seed, because the 5b offerings' chance rolls come before them on
+  // `shopOffers`: SPEC §14.2 orders the roll by the written offerings, and
+  // only today's shelves are promised unmoved (review, #1377).
   assert.equal(STREAM_NAMES[STREAM_NAMES.length - 1], 'shopOffers', 'shopOffers is still the last stream');
-  for (let seed = 1; seed <= 20; seed++) {
+  for (let seed = 1; seed <= 30; seed++) {
     const run = createRunState({ seed, classId: 'reaver', registries: REG });
     run.seenEvents = [];
+    const plainRng = createRng(seed);
+    const plain = buildShopStock(REG, plainRng, run);
     const rng = createRng(seed);
     const stock = buildMarketStock(REG, rng, run, { meta: {} });
+    for (const shelf of ['cards', 'relics', 'flasks', 'armaments', 'weaponArts']) assert.equal(JSON.stringify(stock[shelf]), JSON.stringify(plain[shelf]), `${shelf} seed ${seed}`);
+    assert.equal(stock.removeCost, plain.removeCost, `removeCost seed ${seed}`);
+    const { shopOffers: _a, ...before } = plainRng.getCounters();
+    const { shopOffers: _b, ...after } = rng.getCounters();
+    assert.deepEqual(after, before, `seed ${seed}: no stream but shopOffers moves`);
     for (const id of ['cards', 'relics', 'flasks', 'armaments', 'weaponArts', 'remove']) assert.ok(stock.offerings.includes(id), `${id} seed ${seed}`);
     assert.deepEqual(shopStockProblems(stock), [], `seed ${seed}`);
   }
