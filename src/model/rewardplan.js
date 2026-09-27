@@ -131,7 +131,8 @@ const KINDS = {
     blocked: () => null,
   },
   smithingStone: {
-    present: (r) => Number.isInteger(r.smithingStoneReceipt?.amount) && r.smithingStoneReceipt.amount > 0,
+    // Ordinary stones, refined stones (SPEC §15.3), or both: one row, one receipt.
+    present: (r) => smithingStonesPaid(r.smithingStoneReceipt),
     row: (r) => ({ ...r.smithingStoneReceipt }),
     blocked: () => null,
   },
@@ -213,6 +214,48 @@ const KINDS = {
  * — an unstated fact reads as no room, so a caller that forgets to state one
  * gets a blocked row it can see, never a silent over-grant.
  */
+/**
+ * smithingStoneNote(receipt, t) → the one-line spoils note a co-op door shows for
+ * a Smithing Stone receipt: ordinary and refined stones (SPEC §15.3), each
+ * named when paid; '' when nothing was. `t` is the UI string lookup, handed in.
+ */
+export function smithingStoneNote(receipt, t) {
+  if (!receipt) return '';
+  return [
+    receipt.amount > 0 ? t('reward.stone.note', { amount: receipt.amount, total: receipt.stoneBalanceAfter }) : '',
+    receipt.refined > 0 ? t('reward.stone.refinedNote', { amount: receipt.refined, plural: receipt.refined === 1 ? '' : 's', total: receipt.refinedBalanceAfter }) : '',
+  ].filter(Boolean).join(' · ');
+}
+
+/**
+ * smithingStoneRowCopy(row, t) → { title, body } for the spoils screen's
+ * Smithing Stone row. The ordinary and refined parts of each are built only
+ * for the purse that was paid, so a refined-only door never reads "0 total".
+ * `t` is the UI string lookup, handed in so this file stays headless.
+ */
+export function smithingStoneRowCopy(row, t) {
+  const ordinary = row.amount > 0 ? row.amount : 0;
+  const refined = row.refined > 0 ? row.refined : 0;
+  const plural = (n) => (n === 1 ? '' : 's');
+  const title = [];
+  const body = [];
+  if (ordinary) {
+    title.push(t('reward.stone.title', { amount: ordinary, plural: plural(ordinary) }));
+    body.push(t('reward.stone.body', { total: row.stoneBalanceAfter }));
+  }
+  if (refined) {
+    title.push(t('reward.stone.refinedTitle', { amount: refined, plural: plural(refined) }));
+    body.push(t('reward.stone.refinedBody', { total: row.refinedBalanceAfter }));
+  }
+  return { title: title.join(' · '), body: body.join(' · ') };
+}
+
+/** Whether a Smithing Stone receipt paid anything, ordinary or refined. */
+export function smithingStonesPaid(receipt) {
+  const paid = (value) => Number.isInteger(value) && value > 0;
+  return !!receipt && (paid(receipt.amount) || paid(receipt.refined));
+}
+
 export function rewardPlan(rewards = {}, facts = { flaskSlotsFree: 0, armamentSlotsFree: 0 }) {
   const rows = [];
   for (const kind of REWARD_KIND_ORDER) {

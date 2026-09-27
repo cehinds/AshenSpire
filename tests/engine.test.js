@@ -4629,9 +4629,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       .filter(Boolean).filter((id) => rarityOf(id) === 'rare').length;
     assert(bossRares > treasureRares, `bosses drop rares more often (${bossRares} vs ${treasureRares})`);
 
-    // Ordinary fights are not a source: with no 'normal' key the roll is a
-    // no-op rather than a hidden 0%.
-    eq(drops.chance.normal, undefined, "there is no 'normal' drop chance");
+    // Ordinary fights are not a source by default: SPEC §15.3 gives them a
+    // `normal` chance that ships at 0, which returns before any draw.
+    eq(drops.chance.normal, 0, "the 'normal' drop chance ships at 0");
     eq(roll(3, 'normal'), null, 'an ordinary fight drops no armament');
 
     // Storage: what you find is carried, capped, and never duplicated.

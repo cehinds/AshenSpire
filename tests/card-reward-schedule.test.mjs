@@ -520,7 +520,8 @@ test('a taken level card never reuses an instance id a sideboarded card holds', 
 test('run schema 12: a schema-11 save (the captured corpus bytes) loads unchanged, and a pending level card rides a v12 save', async () => {
   const { readFileSync } = await import('node:fs');
   const { RUN_SCHEMA_VERSION } = await import('../src/model/state.js');
-  assert.equal(RUN_SCHEMA_VERSION, 12);
+  // 12 is this section's bump; later ones (13: the refined-stone purse, §15.3) sit above it.
+  assert.ok(RUN_SCHEMA_VERSION >= 12);
   const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
   const v11 = JSON.parse(corpus.versions['11'].bytes);
   assert.equal(v11.schemaVersion, 11);
@@ -528,7 +529,7 @@ test('run schema 12: a schema-11 save (the captured corpus bytes) loads unchange
   // 11 → 12 is a no-op: every field the v11 build wrote reads back as written,
   // and only the stamp (and its migration receipt) moves.
   const { schemaVersion, migratedFromRunSchemaVersion, ...rest } = loaded;
-  assert.equal(schemaVersion, 12);
+  assert.equal(schemaVersion, RUN_SCHEMA_VERSION);
   assert.equal(migratedFromRunSchemaVersion, 11);
   const { schemaVersion: _was, ...writtenAt11 } = v11;
   for (const [key, value] of Object.entries(writtenAt11)) assert.deepEqual(rest[key], value, `field '${key}' is unchanged`);
@@ -537,7 +538,7 @@ test('run schema 12: a schema-11 save (the captured corpus bytes) loads unchange
   run.pendingReward = { schemaVersion: 1, source: 'normal', after: 'map', chosenCardId: null, chosenDraftNodeIds: {},
     rewards: { cardIds: [], levelCards: [{ ordinal: 0, cardIds: ['stomp', 'rend'] }] }, states: {}, chosenDraftCardIds: {} };
   const back = deserializeRun(serializeRun(run));
-  assert.equal(back.schemaVersion, 12);
+  assert.equal(back.schemaVersion, RUN_SCHEMA_VERSION);
   assert.deepEqual(back.pendingReward.rewards.levelCards, run.pendingReward.rewards.levelCards);
 });
 

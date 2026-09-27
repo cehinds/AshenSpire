@@ -322,6 +322,7 @@ const EXPLAINED_CHANGES = {
   skills: 'a save from before the skill ledger (schema ≤ 7) gains the empty ledger at the migration door (plan phase 4a)',
   coreTags: 'a save from before the class tree (schema ≤ 8) gains no picks at the migration door (plan phase 5b)',
   sideboard: 'a save from before the deck editor (schema ≤ 10) gains an empty sideboard at the migration door (SPEC §14.1)',
+  smithingStonesRefined: 'a save from before refined stones (schema ≤ 11) gains an empty refined purse (0) at the migration door (SPEC §15.3)',
   hp: 'pools are re-derived under the current rules; the ABSOLUTE deficit is checked separately',
   maxHp: 'pools are re-derived under the current rules; the ABSOLUTE deficit is checked separately',
   mana: 'pools are re-derived under the current rules',
