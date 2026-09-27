@@ -357,7 +357,7 @@ Vow behaviour (D2 is to-build and outside a spec PR); the balance of any row.
 
 # Stage 4: scope status after the §14 and §15 spec PRs
 
-*2026-09-27, at `dev` = `bd4ce38a` (build `0.7.1.617`). The owner asked for the scope docs
+*2026-09-27, at `dev` = `7f78c5d0` (build `0.7.1.625`). The owner asked for the scope docs
 to match the game. This stage adds no new SPEC claims. It re-runs stage 3's open rows, and it
 gives §14 and §15 a verdict per subsection so that planned work reads as planned. SPEC.md's
 new *Scope status* table (under the opening notes) is the one-line-per-section summary, and
@@ -375,7 +375,7 @@ this stage is its evidence.*
 The D2 hooks: Guilt shipped in #1286 (`tests/guilt.test.mjs`). Warrior's Vow is still
 **to-build**: `src/content/cards/reaver.js` `warriorsVow` enters `gorefire`, not a chosen stance.
 
-## §14 and §15: contract landed, code only for §14 step 2
+## §14 and §15: contract landed, code for §14 step 2 and §15.2
 
 | Row | Claim | Verdict | Falsifier |
 |---|---|---|---|

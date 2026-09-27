@@ -16,7 +16,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 
 ### Scope status — what is built, partly built and planned
 
-*Checked 2026-09-27 against `dev` @ `bd4ce38a` (build `0.7.1.617`). One line per section, so the real scope is visible in one place. A section marked **planned** is a contract written before its code (CONTRIBUTING rule 1), not stale text. **built** means the section's features ship; the "what is left" column names the known gaps and is not exhaustive, so a gap found later is a correction to this table, not a contradiction of it. Per-item verdicts for §12 and §14–§15 are in [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md); the release criteria are in [docs/FINISH.md](docs/FINISH.md). Update a line here in the PR that changes it.*
+*Checked 2026-09-27 against `dev` @ `7f78c5d0` (build `0.7.1.625`). One line per section, so the real scope is visible in one place. A section marked **planned** is a contract written before its code (CONTRIBUTING rule 1), not stale text. **built** means the section's features ship; the "what is left" column names the known gaps and is not exhaustive, so a gap found later is a correction to this table, not a contradiction of it. Per-item verdicts for §12 and §14–§15 are in [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md); the release criteria are in [docs/FINISH.md](docs/FINISH.md). Update a line here in the PR that changes it.*
 
 | § | Area | Status | Evidence, and what is left |
 |---|---|---|---|
