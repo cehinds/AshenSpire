@@ -204,6 +204,10 @@ Ruled by the owner on 2026-09-27, answering the scope-docs audit (#1359):
 - **D20 — High-res art zip.** Stays private to `cehinds/AshenSpire-art`; not attached to public releases (ART-REPO-PLAN.md).
 - **D21 — `AshenSpire-LegacyPreview.html`.** Deleted.
 
+Decided under the owner's 2026-09-27 delegation ("Stop asking questions and just finish it"):
+
+- **D22 — Co-op formation HUD top (#1368's open question).** Decided by the FINISH agent under the owner's 2026-09-27 delegation: the `styles/combat.css` rule `.combat.coop[data-layout='formation'] .topbar .hud-top { display:flex }` is intended and stays unchanged. Measured in Chromium through `?shot=coop` at 390x844, 844x390 and 1280x800: no overlap, clipping, lost part or horizontal overflow. The co-op `.hud-top` has no `.shared-hud` ancestor, so the shared grid never applied to it; the rule overrides block flow, not the shared HUD. With the rule removed, at 844x390 Leave drops to a second line and the band grows from 33 to 41 px, taking that height from the battlefield. A comment next to the rule says why. `tools/coop-hud-top.mjs` (selftest 13/13, wired into `tests/run-node.mjs`; browser run in `.github/workflows/coop-hud.yml` on every PR into `dev`) fails on overlap, clipping, a lost part, horizontal overflow or a two-row compact band. C12 still does not read `combat.css`, so its scope note is unchanged.
+
 Proposals from SPEC §14, awaiting the owner's ruling:
 
 - **D12 — Deck floors.** The editor's `deckMinSize` (default 10) and the Armoury's `deckMinimum` (8, rising with level, §13.4b) are separate rules. *Proposal:* keep both while the owner compares **Free** and **Rest sites only**, then fold them into one.

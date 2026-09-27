@@ -39,6 +39,7 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `tests.yml` → core suite | yes | yes (also on push to `dev`) |
 | `map-camera.yml` → map camera re-fit (`map-camera-persistence.mjs --check`, real browser) | yes | yes (also on push to `dev`) |
 | `map-camera.yml` → the full map-camera persistence drive (same job) | no | yes |
+| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | yes | yes (also on push to `dev`) |
 | `tests.yml` → tool self-tests, bundler parse gate | no | yes |
 | `ci.yml` → Fullscreen first through both Settings doors | no | yes |
 | `ci.yml` → what this green does NOT cover (boundary) | no | yes |

@@ -1368,6 +1368,15 @@
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .resbars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:calc(12px / var(--ui-zoom,1)); }
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .resline { min-width:0; }
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .topbar-btn { height:calc(32px / var(--ui-zoom,1)); min-height:0; width:calc(32px / var(--ui-zoom,1)); }
+ /* INTENDED, measured in Chromium (#1368; D22 in docs/FINISH.md). The co-op
+    board's `.hud-top` (src/ui/screens/coop.js) is not the shared run HUD: it
+    has no `.shared-hud` ancestor, so kit.css's `.shared-hud > .hud-top` grid
+    never applies and this row overrides nothing shared; without it the box is
+    block flow. In short landscape block flow drops Leave to a second line and
+    the band takes that height from the battlefield. This row keeps the bars
+    (flex:1) and Leave on one row, fight label hidden: the compact band above.
+    tools/coop-hud-top.mjs holds it (overlap, clipping, lost parts, horizontal
+    overflow at 390x844, 844x390, 1280x800; one row at 844x390). */
  :root .combat.coop[data-layout='formation'] .topbar .hud-top { display:flex; flex-direction:row; align-items:center; }
  :root .combat.coop[data-layout='formation'] .topbar .resbars-host { flex:1; min-width:0; }
  :root .combat.coop[data-layout='formation'] .topbar .fight-label { display:none; }
