@@ -82,9 +82,16 @@ const POPULATION_DIRS = ['src']; // the SHIPPED vocabulary; a tool's own set is 
 // to raise here, not a row to lose.
 const DECL = /^export const ([A-Z][A-Z0-9_]*)\s*=\s*(?:Object\.freeze\(|\[)/;
 
+// DOT-ENTRIES ARE NOT THE TREE. tools/weapon-card-packages.mjs --selftest
+// writes a copy of src/model/loadout.js to src/model/.weapon-card-package-mutant-
+// <pid>.mjs and unlinks it a moment later. Scanned, that transient copy was
+// either an ENOENT crash (listed, then gone: no RESULT line, FAIL 53) or a set of
+// false READERS for loadout.js's sets. No shipped source is a dot-file, and
+// run-node's own test discovery skips dot-directories the same way.
 function walk(dir, out = []) {
   if (!existsSync(dir)) return out;
   for (const e of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
+    if (e.name.startsWith('.')) continue;
     const p = join(dir, e.name);
     if (e.isDirectory()) walk(p, out);
     else if (/\.(js|mjs)$/.test(e.name)) out.push(p);
@@ -136,14 +143,38 @@ function isSpecifierLine(line, name) {
  * Reads from DISK under `root`. The selftest plants into a copied tree and calls
  * this exact function on it, so a known-bad enters by the same door the real
  * input does — nothing is injected as a string.
+ *
+ * `readFile` is the one seam, and it exists for one race: a file readdir listed
+ * and another process unlinked before it was read. That cannot be staged on
+ * disk on every OS (a dangling symlink needs elevated rights on Windows, where
+ * CI runs tests/closedsets.test.mjs too), so the test swaps in a reader that
+ * throws ENOENT for one path. Every real call uses readFileSync.
  */
-export function collect(root) {
+export function collect(root, { readFile = (f) => readFileSync(f, 'utf8') } = {}) {
   const popFiles = POPULATION_DIRS.flatMap((d) => walk(join(root, d)));
   const readFiles = READER_DIRS.flatMap((d) => walk(join(root, d)))
     .filter((f) => relative(root, f).split(/[\\/]/).join('/') !== NOT_A_READER);
+  // A FILE LISTED AND THEN GONE has no lines to scan, so its sets drop out of
+  // the population while popFiles still counts it. That scan is INCOMPLETE, and
+  // an incomplete scan is never a pass: the file is NAMED in the result
+  // (`vanished`) and report() turns it into an unknown verdict (exit 2) on the
+  // RESULT line itself. The dot-file skip in walk() removes the known cause;
+  // this names any other one instead of crashing with no RESULT line at all.
+  // Anything other than ENOENT is still thrown.
   const blanked = new Map();
+  const vanished = [];
   const linesOf = (f) => {
-    if (!blanked.has(f)) blanked.set(f, blankNonCode(readFileSync(f, 'utf8')).split('\n'));
+    if (!blanked.has(f)) {
+      let text;
+      try {
+        text = readFile(f);
+      } catch (e) {
+        if (e.code !== 'ENOENT') throw e;
+        vanished.push(relative(root, f).split(/[\\/]/).join('/'));
+        text = '';
+      }
+      blanked.set(f, blankNonCode(text).split('\n'));
+    }
     return blanked.get(f);
   };
 
@@ -166,13 +197,13 @@ export function collect(root) {
       });
     }
   }
-  return { files: readFiles.length, popFiles: popFiles.length, sets };
+  return { files: readFiles.length, popFiles: popFiles.length, sets, vanished };
 }
 
 const pad = (s, n) => String(s).padEnd(n).slice(0, n);
 
-function report(root, { quiet = false } = {}) {
-  const { files, popFiles, sets } = collect(root);
+export function report(root, { quiet = false, readFile } = {}) {
+  const { files, popFiles, sets, vanished } = collect(root, readFile ? { readFile } : {});
 
   // FLOORS — an empty result set is never a pass (Vira's floor, SOP 2's ⚙).
   if (!files || !popFiles) {
@@ -196,13 +227,17 @@ function report(root, { quiet = false } = {}) {
       for (const s of orphans) console.log(`  ${s.name}  ${s.file}:${s.line}`);
       console.log('');
     }
-    console.log(`RESULT: ${sets.length} exported closed set(s) over ${popFiles} source file(s); readers searched across ${files} file(s) in ${READER_DIRS.join('/, ')}/. ${orphans.length} with no reader.`);
+    // run-node shows ONLY this line for rung 53, so an incomplete scan says so here.
+    const incomplete = vanished.length
+      ? ` INCOMPLETE — ${vanished.length} file(s) vanished during the scan (listed, then gone before read; another process is writing this tree): ${vanished.join(', ')}. Their sets were not counted, so this is unknown, not green.`
+      : '';
+    console.log(`RESULT: ${sets.length} exported closed set(s) over ${popFiles} source file(s); readers searched across ${files} file(s) in ${READER_DIRS.join('/, ')}/. ${orphans.length} with no reader.${incomplete}`);
     console.log(`EXCLUDED as a reader: ${NOT_A_READER} — its own known-bad corpus names sets, and a check may not cite itself as their consumer.`);
     console.log('BOUNDARY: this asks ONLY whether each set is read. It cannot see a second, hand-typed');
     console.log('copy of a set living elsewhere — green here is never a claim that nothing is duplicated.');
     console.log('Comments and string literals are blanked before scanning; import/export specifiers do not count.');
   }
-  return { code: orphans.length ? 1 : 0, sets, orphans };
+  return { code: vanished.length ? 2 : orphans.length ? 1 : 0, sets, orphans, vanished };
 }
 
 // ---------------------------------------------------------------------------
@@ -329,9 +364,10 @@ if (!RUN_AS_CLI) {
   // pipe, and the suite harness reads the RESULT line through one.
   process.exitCode = selftest();
 } else if (process.argv.includes('--json')) {
-  const { sets } = collect(ROOT);
+  const { sets, vanished } = collect(ROOT);
   console.log(JSON.stringify(sets, null, 2));
-  process.exitCode = sets.some((s) => !s.readers.length) ? 1 : 0;
+  if (vanished.length) console.error(`closedsets: INCOMPLETE — vanished during the scan: ${vanished.join(', ')}`);
+  process.exitCode = vanished.length ? 2 : sets.some((s) => !s.readers.length) ? 1 : 0;
 } else {
   process.exitCode = report(ROOT).code;
 }
