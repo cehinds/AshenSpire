@@ -21,9 +21,8 @@ import { shopSentence, shopStockOfferings } from './shopKinds.js';
 import { restDeniedBy, locationTags, locationRestTags, INN_LOCATION } from './locations.js';
 import { ownedSigilIds } from './sigils.js';
 
-// The shapes of what these purchases write are a leaf of their own
-// (model/marketStock.js), re-exported here for the readers of this file.
-export { MARKET_ADDITIONS, marketAdditionStockProblems, boughtArmourProblems, marketAdditionTableProblems } from './marketStock.js';
+// The shapes of what these purchases write, and the list of additions, are a
+// leaf of their own: model/marketStock.js.
 
 export const revision = (run) => run.shopStock?.tradeRevision || 0;
 const say = (id, tokens = {}) => shopSentence(id, tokens);

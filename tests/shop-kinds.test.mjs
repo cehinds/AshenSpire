@@ -23,7 +23,7 @@ import {
   shopConfigRows, shopSettingsProblems, shopStockKind, shopStockOfferings, bringShopStockForward,
 } from '../src/model/shopKinds.js';
 import { rollShopKind, rollShopOfferings, buildMarketStock, buildMerchantStock } from '../src/engine/shopKinds.js';
-import { MARKET_ADDITIONS } from '../src/model/marketAdditions.js';
+import { MARKET_ADDITIONS } from '../src/model/marketStock.js';
 import { t } from '../src/ui/strings.js';
 import { shopCategories } from '../src/ui/models/ShopWorkspaceModel.js';
 import { localServiceModel } from '../src/ui/models/LocalServiceModel.js';

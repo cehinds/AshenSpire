@@ -26,8 +26,8 @@ import { ownership, equipPiece } from '../src/model/loadout.js';
 import { inventoryRows } from '../src/model/inventoryPresentation.js';
 import { innInTown } from '../src/model/locations.js';
 import { MARKET_SHELVES, shopStockProblems } from '../src/model/shopKinds.js';
+import { MARKET_ADDITIONS } from '../src/model/marketStock.js';
 import {
-  MARKET_ADDITIONS,
   smithStonePurchasePlan, commitSmithStonePurchase,
   armourPurchasePlan, commitArmourPurchase,
   sigilPurchasePlan, commitSigilPurchase,
