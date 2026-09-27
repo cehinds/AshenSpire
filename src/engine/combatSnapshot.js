@@ -234,6 +234,9 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
     const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
     run[maxField] = combat.player[maxField];
   }
-  run.combatEntered = { nodeId, encounterId, snapshot };
+  // A fight a service event started (the market's quest event, SPEC §14.3)
+  // keeps saying so, or a reload would resume it as the journey node's fight.
+  const serviceEvent = run.combatEntered?.serviceEvent === true && run.combatEntered.encounterId === encounterId;
+  run.combatEntered = { nodeId, encounterId, ...(serviceEvent ? { serviceEvent: true } : {}), snapshot };
   return snapshot;
 }
