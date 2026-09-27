@@ -103,15 +103,28 @@ import { clearSelection } from '../components/cardSelection.js';
 // door's auto-collect does. Exported so a test can redraw between the tap
 // and the close.
 
-/** A pick store that survives redraws: one map per (key, offer); a new offer starts clean. */
+/**
+ * A pick store that survives redraws AND seat switches: one entry per key
+ * (a seat and the door it is at — `<seat>|reward|…` or `<seat>|catchup|…`),
+ * holding that door's offer and its picks. A different offer under the same
+ * key starts clean; `retain(keep)` drops every entry whose key no longer
+ * names an open door, so a resolved offer's picks do not linger.
+ */
 export function createLevelCardPicks() {
-  let current = { id: null, picks: {} };
+  const entries = new Map(); // key → { offerId, picks }
   return {
     picksFor(key, offer) {
-      const id = `${key}|${JSON.stringify((offer && offer.levelCards) || [])}`;
-      if (id !== current.id) current = { id, picks: {} };
-      return current.picks;
+      const offerId = JSON.stringify((offer && offer.levelCards) || []);
+      const entry = entries.get(key);
+      if (entry && entry.offerId === offerId) return entry.picks;
+      const fresh = { offerId, picks: {} };
+      entries.set(key, fresh);
+      return fresh.picks;
     },
+    retain(keep) {
+      for (const key of [...entries.keys()]) if (!keep(key)) entries.delete(key);
+    },
+    keys: () => [...entries.keys()],
   };
 }
 
@@ -234,6 +247,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // co-op board, so nothing has driven a key or a pad at THIS End Turn. What is
   // measured is that it goes through the same `arm()` as combat's.
   let endTurnBeat = null;
+  // The level-card picks OUTLIVE a redraw and a couch-seat switch: every
+  // snapshot (another seat's choice, a resync) and every seat tab rebuilds
+  // the door, so the picks are kept here, one entry per seat and door.
+  const levelPicks = createLevelCardPicks();
 
   conn.setHandlers({
     onMessage: (msg) => {
@@ -513,6 +530,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
+    // Level-card picks outlive a redraw and a seat switch, and end with their
+    // door: a reward entry lives while its seat's offer is open and unchosen,
+    // a catch-up entry while it is still the seat's queue head.
+    levelPicks.retain((key) => {
+      const [seat, door, at] = key.split('|');
+      if (door === 'reward') return snap.scene.kind === 'reward' && !!snap.scene.offers?.[seat] && !snap.scene.chosen?.[seat] && at === String(snap.floor ?? '');
+      const member = (snap.party || []).find((p) => p.id === seat);
+      return !member || !Array.isArray(member.catchupQueue) || String(member.catchupQueue.length) === at;
+    });
     const mm = myMember();
     if (mm && mm.catchupQueue && mm.catchupQueue.length) return renderCatchup(mm);
     if (snap.scene.kind !== 'combat') prevCombat = null;
@@ -1079,10 +1105,6 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (reason) attachTooltip(card, () => esc(reason));
     return card;
   }
-  // The level-card picks OUTLIVE a redraw: every snapshot (another seat's
-  // choice, a resync) rebuilds the door, so the picks are kept here, keyed by
-  // the seat and the offer they belong to, and a new offer starts clean.
-  const levelPicks = createLevelCardPicks();
   function renderReward() {
     const offer = snap.scene.offers[me];
     if (!offer) { sceneDoor({ title: 'Spoils', children: [waiting('Waiting for the others to choose…')] }); return; }

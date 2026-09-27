@@ -492,3 +492,38 @@ test('co-op: a level-card pick survives a redraw, and a row left unpicked is pic
   assert.equal(deck.length, before + 2, 'the card and the auto-picked level card');
   assert.ok(spoils.levelCards[0].cardIds.includes(deck.at(-1).cardId));
 });
+
+test('co-op couch seats: a level-card pick on seat A survives switching to seat B and back, and ends with its door', () => {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const offerA = { cardIds: [], levelCards: [{ ordinal: 0, cardIds: ['rend', 'gildedOath', 'stomp'] }] };
+    const offerB = { cardIds: [], levelCards: [{ ordinal: 0, cardIds: ['stomp', 'rend', 'gildedOath'] }] };
+    const store = createLevelCardPicks();
+    // renderReward's own key for a seat: `${seat}|reward|${floor}`.
+    const draw = (seat, offer) => {
+      const app = document.createElement('main'); document.body.append(app);
+      const picks = store.picksFor(`${seat}|reward|3`, offer);
+      app.append(...levelCardStrips(REG, structuredClone(offer), picks));
+      return { app, picks };
+    };
+    const a = draw('p1', offerA);
+    a.app.querySelectorAll('.coop-level-card .card')[2].click();
+    a.app.remove();
+    const b = draw('p2', offerB); // the Tab: seat B's door
+    b.app.querySelectorAll('.coop-level-card .card')[0].click();
+    b.app.remove();
+    const back = draw('p1', offerA); // and back to seat A
+    assert.deepEqual(back.app.querySelectorAll('.coop-level-card .is-chosen').map((c) => c.dataset.cardId), ['stomp'], 'A\'s pick is still lit');
+    assert.deepEqual(back.picks, { 0: 'stomp' }, 'and is what A\'s close sends');
+    assert.deepEqual(store.picksFor('p2|reward|3', offerB), { 0: 'stomp' }, 'B kept its own pick');
+    back.app.remove();
+    // Seat A's offer resolves (A chose): its entry goes; B's open door keeps its own.
+    store.retain((key) => key !== 'p1|reward|3');
+    assert.deepEqual(store.keys(), ['p2|reward|3']);
+    assert.deepEqual(store.picksFor('p1|reward|3', offerA), {}, 'a resolved door leaves no pick behind');
+  } finally {
+    for (const [key, value] of Object.entries(saved)) globalThis[key] = value;
+  }
+});
