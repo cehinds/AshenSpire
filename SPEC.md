@@ -2246,7 +2246,7 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 
 ## 14. The deck editor and the three shops (owner brief, 2026-09-26)
 
-**Status: partly built** (2026-09-27: step 1, this section, landed in #1331; step 2, deck rules, landed in #1343; step 3, the deck editor UI, in #1372; no code for steps 4–7 is on `dev`). This section lands before any of its code, in its own PR (CONTRIBUTING ground rule 1). The feature PRs follow in the order of §14.6, each ticking its `docs/FINISH.md` §14 line. Every number below that a player could want tuned is a **Settings row with a default read from content data**, never a screen or engine literal. The owner tunes balance later, so the defaults here are placeholders that the data files own, and the spec names the key, not a value it would have to keep in step.
+**Status: partly built** (2026-09-27: step 1, this section, landed in #1331; step 2, deck rules, landed in #1343; step 3, the deck editor UI, in #1372; step 4, the shop-kind framework, in #1371; step 5 is in progress as two PRs, 5a (#1374) and 5b; no code for steps 6–7 is on `dev`). This section lands before any of its code, in its own PR (CONTRIBUTING ground rule 1). The feature PRs follow in the order of §14.6, each ticking its `docs/FINISH.md` §14 line. Every number below that a player could want tuned is a **Settings row with a default read from content data**, never a screen or engine literal. The owner tunes balance later, so the defaults here are placeholders that the data files own, and the spec names the key, not a value it would have to keep in step.
 
 **The four owner rules this section carries:**
 
@@ -2263,6 +2263,7 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 | shop `stock.kind`, `stock.offerings` | `'market'`, and today's shelves as offerings (read at the load door, with no reroll) | 4 |
 | `consumables` | `{}` | 5 |
 | `sigils`, `sigilSlots` | `[]`, `{}` | 5 |
+| `loadout.boughtArmour` (the armour sets bought at a market, `[{ classId, id }]`, read by `ownership()`; optional, so no bump of its own) | absent (none bought) | 5 |
 | `companions` | `[]` | 5 |
 | `smithingStonesRefined` | `0` | 6 |
 | atlas smith `serviceStates[pointId].stock` | absent, rolled on first entry | 6 |
@@ -2364,7 +2365,7 @@ These offerings extend `buildShopStock`. The existing shelves become offerings w
 | `flasks` | Utility flasks | Today's shelf. |
 | `relics` | Relics | Today's shelf. |
 | `armaments` | Weapons, shields and foci | Today's shelf and §12.2 transactions. |
-| `armour` | Body, head, hands and feet pieces | Same transaction as armaments, filtered to the worn slots (§13.4b). |
+| `armour` | Body, head, hands and feet pieces | The same plan/commit shape as the armament transactions of §12.2 (a quote, a stale-quote refusal, one commit), but its own pair, because armour never sits in `loadout.storage`: that inventory holds hand armaments only, and an armour set is owned by an unlock, not carried. A bought set is recorded in `loadout.boughtArmour` as `{ classId, id }` (armour ids repeat across classes), and `ownership()` reads it beside the creation grant. The shelf sells only sets of the run's class that the run does not already own **and whose `unlock` the profile has met**, so it matches how the Armoury gates armour; with none eligible, the offering is not laid out and the guarantee fills from the others. |
 | `cards`, `weaponArts`, `remove` | As today | Unchanged. |
 | `smithStones` | Smithing Stones | Priced per stone, with a per-visit stock. Adds to `run.smithingStones`. |
 | `sigils` | Sigils (new item kind, the brief's "runes") | See **Sigils** below. |
