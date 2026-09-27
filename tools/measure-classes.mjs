@@ -1402,8 +1402,8 @@ console.log('    consistency-verified — run `--check` (and `--selftest` to see
 console.log('  · and --check would only prove CONSISTENCY with runsim, never correctness:');
 console.log('    two copies of one bot can agree and both be wrong about the game.');
 console.log(`  · naive-bot floor only under policy=${POLICY} — no combo piloting, no deck curation,`);
-console.log('    no merchant. Absolute rates say nothing about the spec band for experienced');
-console.log('    players (SPEC.md M3: ~35–50%). Class-agnostic arms support between-class');
+console.log('    no merchant. Absolute rates say nothing about how experienced players');
+console.log('    fare. Class-agnostic arms support between-class');
 console.log('    comparisons; targeted kit arms support paired policy effects plus their');
 console.log('    explicitly checked non-target identity controls.');
 console.log('  · the counters above read the event log; Starseer conversion also attributes');

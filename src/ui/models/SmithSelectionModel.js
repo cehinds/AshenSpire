@@ -5,6 +5,7 @@ import { armourMenuAsset } from '../../model/paintedOutfitArt.js';
 // A DOM-free read model for the Shrine armament Smith transaction.
 // Selection is reversible; only the modal's explicit Confirm command commits.
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
+import { t } from '../strings.js';
 
 const freeze = (value) => Object.freeze(value);
 
@@ -136,7 +137,10 @@ export function smithSelectionModel(registries, plan, selectedItemRef = null, { 
       consequence: `Click Upgrade to review the change and cost. Hold Upgrade to commit immediately. ${multiUse ? 'You stay at the Shrine.' : 'The upgrade leaves the Shrine.'}`,
       consequenceBadge: multiUse ? 'STAYS AT SHRINE' : 'LEAVES SHRINE',
       decisionConsequence: multiUse ? 'you stay at the Shrine' : 'and leaves the Shrine',
-      purseLabel: `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'}`,
+      // Refined stones (SPEC §15.3) join the purse line once the run holds
+      // any. They are shown, not spent: spending is §14.4's blacksmith.
+      purseLabel: `${plan.stones} Smithing Stone${plan.stones === 1 ? '' : 's'}`
+        + (plan.refined > 0 ? ` · ${t('smith.purse.refined', { amount: plan.refined, plural: plan.refined === 1 ? '' : 's' })}` : ''),
       candidates: freeze(items),
       selected,
       canConfirm: Boolean(selected?.affordable),

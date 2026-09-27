@@ -95,6 +95,7 @@ import {
 
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { clearSelection } from '../components/cardSelection.js';
+import { smithingStoneNote } from '../../model/rewardplan.js';
 
 // LEVEL CARDS (SPEC §15.1) in the co-op spoils and the away-seat catch-up.
 // A tap only SELECTS: the pick is written into `picks` (ordinal → card id)
@@ -964,6 +965,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       : '';
 
     const smithReceipts = snap.party.filter((member) => member.lastSmithingReceipt);
+    // The stones this seat's last treasure paid (SPEC §15.3), shown to a
+    // present player here as the catch-up shows them to one who was away.
+    const treasureStone = smithingStoneNote(myMember()?.treasureStoneReceipt, t);
     app.innerHTML = `
       <div class="mapscreen">
         <header class="topbar map-header">
@@ -982,6 +986,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           const receipt = member.lastSmithingReceipt;
           return kitItem({ glyph: '⚒', name: `${member.name} smithed ${receipt.armamentName} · tier ${receipt.beforeLevel}→${receipt.afterLevel} · ${receipt.cost} Stone · ${receipt.affectedCards.length} cards` });
         }))) : ''}
+        ${treasureStone ? html(el('div', { class: 'as-kitline coop-treasure-stones', 'aria-live': 'polite' }, [kitItem({ glyph: '⚒', name: t('reward.stone.treasureNote', { note: treasureStone }) })])) : ''}
       </div>`;
     wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
@@ -1126,7 +1131,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     ];
     sceneDoor({
       title: `${String(snap.scene.pool || 'The').replace(/^./, (c) => c.toUpperCase())} spoils`,
-      note: stone?.amount > 0 ? `⚒ ${stone.amount} Smithing Stone secured · ${stone.stoneBalanceAfter} total` : '',
+      // Ordinary and refined stones (SPEC §15.3) on the one line, each when paid.
+      note: smithingStoneNote(stone, t),
       children: [
         ...levelStrips,
         ...(levelStrips.length ? [el('p', { class: 'reward-note', dataset: { note: 'levelCardAuto' }, text: t('reward.note.levelCardAuto') })] : []),
@@ -1296,11 +1302,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     }
     const grid = item.type === 'reward' && item.offer.cardIds.length ? el('div', { class: 'reward-row' }) : null;
     const relic = (item.type === 'reward' && item.offer.relicId) || (item.type === 'treasure' && item.relicId);
+    // The stones were granted when the party earned them; the catch-up says so.
+    const stoneNote = smithingStoneNote(item.type === 'reward' ? item.offer.smithingStoneReceipt : item.smithingStoneReceipt, t);
     const levelCardIds = item.type === 'reward' ? levelPicks.picksFor(`${me}|catchup|${remaining}`, item.offer) : {};
     const levelStrips = item.type === 'reward' ? levelCardStrips(registries, item.offer, levelCardIds) : [];
     sceneDoor({
       title, eyebrow: debt,
-      note: 'Claim what you would have earned while away.',
+      note: ['Claim what you would have earned while away.', stoneNote].filter(Boolean).join(' '),
       children: [
         ...levelStrips,
         grid,

@@ -227,6 +227,48 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.stone.refinedTitle",
+    "extends": "",
+    "short": "{amount} Refined Stone{plural}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.stone.note",
+    "extends": "",
+    "short": "⚒ {amount} Smithing Stone secured · {total} total",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.stone.refinedNote",
+    "extends": "",
+    "short": "{amount} Refined Stone{plural} · {total} refined",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.stone.treasureNote",
+    "extends": "",
+    "short": "Treasure: {note}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "smith.purse.refined",
+    "extends": "",
+    "short": "{amount} Refined Stone{plural}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.stone.refinedBody",
+    "extends": "",
+    "short": "<b>{total} refined</b> · kept for the blacksmith.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.kind.card",
     "extends": "",
     "short": "Card",

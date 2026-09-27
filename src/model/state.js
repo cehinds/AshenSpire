@@ -51,7 +51,10 @@ import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 // is what makes an OLDER build refuse-and-keep such a save rather than read
 // it and drop the rows; an 11 save has no level-card rows, so 11 → 12 is a
 // no-op at the migration door.
-export const RUN_SCHEMA_VERSION = 12;
+// 13 (SPEC §15.3): `smithingStonesRefined`, the refined-stone purse, rides
+// the save. A v12-or-older save is filled with 0 at migrateRunSchema, so an
+// older build can never be the one to write the field away.
+export const RUN_SCHEMA_VERSION = 13;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -179,6 +182,7 @@ export function createRunState({
     equipmentPoolDeficits: { hp: 0, mana: 0, stamina: 0 },
     cinders: registries.balance.startingCinders || 0,
     smithingStones: 0,
+    smithingStonesRefined: 0, // refined Smithing Stones (SPEC §15.3)
     itemUpgradeLevels: {},
     smithingRewardClaims: [],
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
@@ -608,6 +612,10 @@ export const RUN_SHAPE = [
   { key: 'drawPerTurn', type: 'number', optional: true },
   { key: 'cinders', type: 'number' },
   { key: 'smithingStones', type: 'number', optional: true },
+  // Refined Smithing Stones (SPEC §15.3, the §14.4 refined stone). Required
+  // at schema 13; a preRefinedStones save (≤ 12) is filled with 0 at the
+  // migration door.
+  { key: 'smithingStonesRefined', type: 'number' },
   { key: 'itemUpgradeLevels', type: 'object', optional: true },
   { key: 'armamentLevels', type: 'object', optional: true },
   { key: 'smithingRewardClaims', type: 'array', optional: true },
@@ -764,7 +772,7 @@ export function levelProblems(level) {
   return problems;
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels } = {}) {
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard } = {}) {
   const problems = [];
   problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
@@ -779,6 +787,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (preCoreTags && f.key === 'coreTags') continue;
     if (preXpLevels && f.key === 'level') continue;
     if (preSideboard && f.key === 'sideboard') continue;
+    if (preRefinedStones && f.key === 'smithingStonesRefined') continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -867,6 +876,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.level !== undefined) problems.push(...levelProblems(run.level));
   if (run.smithingStones !== undefined && (!Number.isInteger(run.smithingStones) || run.smithingStones < 0)) {
     problems.push('smithingStones must be a non-negative integer');
+  }
+  if (run.smithingStonesRefined !== undefined && (!Number.isInteger(run.smithingStonesRefined) || run.smithingStonesRefined < 0)) {
+    problems.push('smithingStonesRefined must be a non-negative integer');
   }
   if (run.armamentLevels !== undefined && typeOk(run.armamentLevels, 'object')) {
     for (const [pieceId, level] of Object.entries(run.armamentLevels)) {
@@ -1256,13 +1268,17 @@ export function migrateRunSchema(run) {
   // deck editor never touched has no owned card out of its deck.
   const preSideboard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(run.schemaVersion);
   // v11: no level-card rows could be written (SPEC §15.1); nothing to fill.
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, ${RUN_SCHEMA_VERSION})`);
+  // v12 and older: no refined-stone purse. Filled HERE with 0 (SPEC §15.3):
+  // no refined stone was ever paid before the purse existed.
+  const preRefinedStones = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(run.schemaVersion);
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones });
   if (preSkills && (run.skills === undefined || run.skills === null)) run.skills = {};
   if (preCoreTags && (run.coreTags === undefined || run.coreTags === null)) run.coreTags = [];
   if (preSideboard && (run.sideboard === undefined || run.sideboard === null)) run.sideboard = [];
+  if (preRefinedStones && (run.smithingStonesRefined === undefined || run.smithingStonesRefined === null)) run.smithingStonesRefined = 0;
   if (preXpLevels && (run.level === undefined || run.level === null)) {
     run.level = { xp: 0, level: 1 + (Number.isInteger(run.levelUps) && run.levelUps > 0 ? run.levelUps : 0), unspentPoints: 0 };
   }
