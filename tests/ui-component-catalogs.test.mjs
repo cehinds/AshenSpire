@@ -423,7 +423,8 @@ test('the C12 BOUNDARY note names each limit of reading CSS as text', () => {
   const lines = src.slice(start).split('\n');
   const note = lines.slice(0, lines.findIndex((line) => !line.startsWith('//'))).join('\n');
   for (const limit of [/cascade/, /specificity/, /!important/, /@layer order/, /@scope limits/, /var\(\) substitution/,
-    /per-property value grammar/, /invalid later value/, /hud-visibility\.css/, /combat\.css/]) {
+    /per-property value grammar/, /invalid later value/, /hud-visibility\.css/, /combat\.css/,
+    /guard written with CSS nesting is rejected/]) {
     assert.match(note, limit, `the C12 BOUNDARY note no longer names ${limit}`);
   }
 });
@@ -477,6 +478,11 @@ test('a HUD-preference guard hides the rail only when it empties the rail', () =
     ":root[data-hud-show-relics='false'] .hud-bottom:not(:has(.hud-potions .x)) { display: none; }",
     ":root[data-hud-show-relics='false'] .hud-bottom:not(:has(. hud-potions)) { display: none; }",
     ":root [data-hud-show-relics='false'][data-hud-show-potions='false'] .hud-bottom { display: none; }",
+    // Review of #1368: a guard written with CSS nesting reads as
+    // `:is(:root[…]) .hud-bottom`, which is not a leading `:root[…]` compound,
+    // so it is rejected (fails closed). No shipped sheet nests these rules;
+    // the BOUNDARY note says to un-nest one instead.
+    ":root[data-hud-show-relics='false'][data-hud-show-potions='false'] { .hud-bottom { display: none; } }",
   ];
   const pass = [
     ":root[data-hud-show-relics='false'][data-hud-show-potions='false'] .shared-hud .hud-bottom { display: none; }",

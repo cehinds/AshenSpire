@@ -143,7 +143,9 @@ export function catalogDisagreement(md, html) {
 // does not parse combat.css, ui.css, map.css or any other sheet. A further
 // CSS form is fixed here only if the shipped CSS uses it; otherwise this note
 // is the answer. Checked against the shipped sheets 2026-09-27: no @layer, no
-// @scope, and no var() or invalid value in a property C12 judges. Unseen
+// @scope, no CSS nesting, and no var() or invalid value in a property C12
+// judges. A preference guard written with CSS nesting is rejected (fails
+// closed); un-nest it. Unseen
 // here: combat.css's co-op formation rule sets the HUD top to display:flex
 // (`.combat.coop[data-layout='formation'] .topbar .hud-top`).
 function splitTop(text, sep) {
