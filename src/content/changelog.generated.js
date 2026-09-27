@@ -8,9 +8,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "Behind the scenes: the non-art files beside the art move to their own folder",
     "detail": "Nothing a player sees changes. The 23 manifests, notes, checker scripts, font licence text and silent audio stub that sat under assets/ now live under asset-data/, so the high-resolution art can leave this repository without taking them along; every tool, test and document that reads them follows.",
-    "build": "0.7.1.634",
+    "build": "0.7.1.638",
     "pullRequest": 1367,
     "url": "https://github.com/cehinds/AshenSpire/pull/1367"
+  },
+  {
+    "id": "pr-1370",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: downloading the high-res art is safe when two copies run at once",
+    "detail": "Nothing you play changes. The tool that fetches the optional high-res art no longer fails when another copy of it replaces the same folder at the same moment.",
+    "build": "0.7.1.637",
+    "pullRequest": 1370,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1370"
+  },
+  {
+    "id": "pr-1366",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: loading a save that can't open from the in-game menu is checked in a real browser",
+    "detail": "Nothing you play changes. When a load from the in-game menu's quick navigation is refused, pressing \"Keep playing\" puts keyboard and controller focus back on the menu button you opened it from. A browser test now proves that, and fails if the menu closes before the load's outcome is known.",
+    "build": "0.7.1.636",
+    "pullRequest": 1366,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1366"
+  },
+  {
+    "id": "pr-1369",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: a code check no longer fails at random while another check runs",
+    "detail": "Nothing you play changes. The check that every fixed list in the game is used by something could crash if another check briefly wrote a scratch file beside it. It now ignores those scratch files. If some other file disappears while it reads, it names that file and reports that it could not finish, instead of crashing or passing on a partial read.",
+    "build": "0.7.1.635",
+    "pullRequest": 1369,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1369"
   },
   {
     "id": "pr-1365",

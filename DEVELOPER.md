@@ -526,8 +526,9 @@ node tools/startup-gate.mjs --selftest
 
 Changes to the in-run Load door (`confirmSlotLoad`, `resumeRun`) run the real
 Quick Menu → Load path: a newer-build slot must be refused with the run kept,
-and a fight abandoned mid-combat must reload at turn 1 with the same HP, opening
-hand and deck:
+a fight abandoned mid-combat must reload at turn 1 with the same HP, opening
+hand and deck, and a refused load from the in-run overlay's quick navigation
+must return focus to that overlay's launcher:
 
 ```bash
 node tools/slot-load-door.mjs
