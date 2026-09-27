@@ -1344,8 +1344,8 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     for (const id of combat.companions || []) {
       if (!registries.companions.has(id)) continue;
       const def = registries.companions.get(id);
-      const left = ((run.companions || []).find((row) => row.id === id) || {}).combatsLeft || 1;
-      const chip = pill({ label: t('combat.companion.left', { name: def.name, n: left }), attrs: { class: 'companion-chip', dataset: { companion: id } } });
+      const fightsLeft = ((run.companions || []).find((row) => row.id === id) || {}).combatsLeft || 1;
+      const chip = pill({ label: t('combat.companion.left', { name: def.name, n: fightsLeft }), attrs: { class: 'companion-chip', dataset: { companion: id } } });
       chip.setAttribute('title', def.blurb);
       trailing.push(chip);
     }

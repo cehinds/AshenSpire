@@ -45,6 +45,7 @@ import {
   consumablesProblems, companionsProblems,
 } from '../src/model/consumables.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
+import { generateJourney, journeyGraph } from '../src/model/worldAtlas.js';
 import { mountShop } from '../src/ui/screens/shop.js';
 import { t } from '../src/ui/strings.js';
 import { eligibleWeaponArts } from '../src/model/armamentTrading.js';
@@ -610,20 +611,16 @@ test('follow-up 3: the load door prunes an atlas point\'s saved stock (journey.s
   pointStock.sigils = [{ id: 'retiredSigil', cost: 90 }];
   if (!pointStock.offerings.includes('sigils')) pointStock.offerings = [...pointStock.offerings, 'sigils'];
   run.shopStock = null;
-  run.journey = { serviceStates: { 'atlas-shop-1': { stock: pointStock } } };
-  const storage = createMemoryStorage();
-  createSaveManager(storage).saveRun(run, rng);
-  const raw = JSON.parse(storage.getItem(RUN_KEY));
-  // A save the journey shape refuses cannot prove the prune; build a real
-  // atlas run if the minimal journey is refused.
-  const back = createSaveManager(storage).loadRun(OUT);
-  if (!back) {
-    assert.ok(raw.journey, 'the fixture reached the load door');
-    return;
-  }
-  const kept = back.journey.serviceStates['atlas-shop-1'].stock;
-  assert.ok(!kept.skillBooks.some((row) => row.id === 'retiredBook'));
+  // A real atlas journey, so the save passes the journey's own shape check.
+  run.journey = generateJourney('PRUNE');
+  run.mapGraph = journeyGraph(run.journey);
+  run.journey.serviceStates['crownfall/market'] = { stock: pointStock };
+  const back = reload(run, rng, OUT);
+  const kept = back.journey.serviceStates['crownfall/market'].stock;
+  assert.ok(!kept.skillBooks.some((row) => row.id === 'retiredBook'), 'the unknown book offer is pruned');
+  assert.ok(kept.skillBooks.length > 0, 'the known ones stay');
   assert.ok(!kept.offerings.includes('sigils'), 'the emptied sigil shelf leaves the point\'s rail');
+  assert.equal(kept.sigils, undefined);
 });
 
 test('follow-up 4: the authored card pool the content door checks excludes weapon arts, as rollShopCards does', () => {
