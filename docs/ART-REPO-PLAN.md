@@ -1,9 +1,8 @@
 # Moving high-res art out of this repository — plan
 
-Status: **PLAN ONLY — nothing has moved.** This is step 5 of the LFS / art-tier
-work (2026-09-26). Every step below that creates a repository, publishes a
-release, or deletes files from the tree waits for the owner's answers to the
-questions at the end.
+Status: **steps 1–3 done, step 4 in progress** (see [Status](#status)). This is
+step 5 of the LFS / art-tier work (2026-09-26). `art/` and `assets/` are still
+tracked here; steps 5–7 each need their own owner go-ahead.
 
 ## Why
 

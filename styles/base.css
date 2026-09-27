@@ -16,7 +16,7 @@
      (rendered 3.78 vs field, 3.36 worst adjacency) while staying the visibly
      dimmer sibling of high contrast's 4.19 — two settings, two looks.
      Evidence: tools/contrast-audit.mjs --profile hi-contrast-off;
-     docs/proposal-45-atmospheric-map-structure.md (R2). */
+     docs/archive/proposal-45-atmospheric-map-structure.md (R2). */
   --map-structure: #7a6b54;
   --parchment: #e8dcc0;
   --muted: #8e826a;

@@ -268,6 +268,8 @@
 :root:not([data-layout='narrow']) .reward-kind:has(.reward-skip) .reward-skip {
   grid-column: 2; grid-row: 2; position: relative; left: 2px;
 }
+/* SPEC §15.1: the card chance missed; one line where the card row would sit. */
+.reward-menu .reward-note { flex-basis: 100%; margin: 0; color: var(--muted); font-style: italic; }
 
 @keyframes reward-took {
   0% { border-color: var(--gold); transform: scale(1.04); }
@@ -1097,6 +1099,13 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 .set-example-refused { margin: 0 0 .35rem; padding: .3rem .5rem; border-left: 3px solid var(--danger); color: var(--parchment); }
 .set-example-problem { border-left-color: var(--blood); }
 @media (max-width: 520px) { .set-example-lines > div { grid-template-columns: 1fr; } }
+/* The Levelling preview (SPEC §15.2): the curve as a wrapping grid of steps. */
+.set-level-pace-curve { display: grid; grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); gap: .25rem .5rem; margin: .35rem 0 0; padding: 0; list-style: none; font-variant-numeric: tabular-nums; }
+.set-level-pace-curve li { display: flex; flex-wrap: wrap; gap: 0 .35rem; align-items: baseline; padding: .15rem .3rem; border: 1px solid var(--line); border-radius: var(--r-2); }
+.set-level-pace-curve span { color: var(--muted); }
+.set-level-pace-curve b { color: var(--gold); }
+.set-level-pace-curve small { color: var(--muted); font-size: .8em; }
+.set-level-pace-points { font-style: normal; }
 .set-subsection-heading { margin: .9rem .2rem .3rem; color: var(--gold); font-size: .95rem; letter-spacing: .05em; text-transform: uppercase; }
 .set-subsection-heading:first-child { margin-top: .2rem; }
 .set-topic-panel[data-searching='true']::before { content: attr(data-topic-panel); display: block; color: var(--accent); padding: .7rem; }

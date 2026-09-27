@@ -1,3 +1,5 @@
+> Archived 2026-09-27 (docs audit): one-off design QA for the smithing item-upgrade redesign; its reference images were local temp files. The current QA process is [docs/QA-TESTING.md](../QA-TESTING.md).
+
 # Smithing item-upgrade redesign — design QA
 
 ## Source and implementation evidence

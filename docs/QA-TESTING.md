@@ -23,7 +23,7 @@ For every player-facing feature:
 1. write the observed problem, acceptance criteria, affected stable component IDs,
    and an ASCII state/flow illustration before editing;
 2. identify the existing model, component, service, and design-system primitives to reuse;
-3. implement source changes without regenerating shipped aliases mid-edit;
+3. implement source changes without rebuilding mid-edit;
 4. run focused static/model checks, then regenerate the build once after source freezes;
 5. test the real player flow in the selected browser, including cancel/back, keyboard,
    destructive confirmation, focus return, responsive geometry, and console state;

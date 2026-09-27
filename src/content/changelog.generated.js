@@ -4,13 +4,83 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1334",
-    "date": "2026-09-26",
-    "group": "2026-09-26",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
     "summary": "Behind the scenes: a hand-rules test comment catches up",
     "detail": "Tests only. The fixed-draw test's comment now works its numbers from the one-row hand stats, counting Intelligence from each row's baseline, instead of the retired weights; the values it checks are unchanged.",
-    "build": "0.7.1.622",
+    "build": "0.7.1.631",
     "pullRequest": 1334,
     "url": "https://github.com/cehinds/AshenSpire/pull/1334"
+  },
+  {
+    "id": "pr-1363",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the build site publishes again after its first run failed",
+    "detail": "One older test build, rebuilt with the phone-sized mobile copy, was mislabelled, so the site refused to publish. It is now labelled by what was actually built, and the site builds cleanly across all four branches.",
+    "build": "0.7.1.630",
+    "pullRequest": 1363,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1363"
+  },
+  {
+    "id": "pr-1351",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Choose when card rewards come",
+    "detail": "Settings → Rewards has new card reward settings. You can turn the card offer on or off for normal, elite and boss fights, and give each a percent chance to offer a card. When the chance misses, the spoils say \"No card this time.\" A new \"Level card\" option adds one more card to choose whenever a fight raises your level, with a limit on how many one fight can add. Out of the box nothing changes: every fight offers its card as before, level cards are off, and an existing seed gives the same rewards.",
+    "build": "0.7.1.629",
+    "pullRequest": 1351,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1351"
+  },
+  {
+    "id": "pr-1361",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the developer docs are checked against the code",
+    "detail": "Docs only; nothing you play changes. The developer and process guides lose facts that had gone stale (committed builds, a removed rules file, draft pull requests, moved source paths), and dated QA records move to docs/archive/.",
+    "build": "0.7.1.627",
+    "pullRequest": 1361,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1361"
+  },
+  {
+    "id": "pr-1359",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the design and 1.0 plan documents say what is built and what is still planned",
+    "detail": "Docs only; nothing you play changes. The design spec now opens with a table marking each of its sections as built, partly built or planned: the deck editor, the three shops and most of the new reward rules are written down but not built yet (the levelling preview is built). The 1.0 checklist catches up with the last week's merges, and an implemented map-contrast proposal moves to an archive folder.",
+    "build": "0.7.1.626",
+    "pullRequest": 1359,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1359"
+  },
+  {
+    "id": "pr-1362",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the 1.0 checklist records the four fixes that just landed",
+    "detail": "Docs only. docs/FINISH.md now marks as done: a save that cannot be loaded keeps your run, a cancelled End Turn hold opens nothing, each change's changelog build number is checked, and the map camera check runs on every change. It adds one more check: the save-load fix should also be tested in a real browser when loading from the in-game menu screen.",
+    "build": "0.7.1.625",
+    "pullRequest": 1362,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1362"
+  },
+  {
+    "id": "pr-1349",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Settings shows how fast you level",
+    "detail": "Settings → Advanced → Progression now has a Levelling preview that updates as you change the numbers. It shows how much XP a normal fight (3 kills), an elite (1 kill) and a boss (1 kill) gives, how many levels each is worth from level 1 and from level 10, the stat points those levels grant, and the XP to reach each level up to 20. The XP multiplier and Level-up value are counted. A new setting can also cap how many levels one fight can give: XP past the cap is lost, and the spoils screen says how much. It is off by default, so nothing changes until you set it.",
+    "build": "0.7.1.624",
+    "pullRequest": 1349,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1349"
+  },
+  {
+    "id": "pr-1360",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: every new dev build is playable on the build site again",
+    "detail": "The build site had stopped updating after built files stopped being saved with each change. It now rebuilds each recent build from its own source, so the newest dev build is at /dev/latest/ and every recent one has its own page.",
+    "build": "0.7.1.622",
+    "pullRequest": 1360,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1360"
   },
   {
     "id": "pr-1357",

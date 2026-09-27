@@ -1,3 +1,5 @@
+> Archived 2026-09-27 (docs audit): a dated QA record from build 0.4.0 (August 2026); it describes that build, not the current one. The current QA process is [docs/QA-TESTING.md](../../QA-TESTING.md).
+
 # QA remediation item #5 — Escape rebind cancellation
 
 ## Routing and scope
