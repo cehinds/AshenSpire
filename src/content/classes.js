@@ -20,11 +20,11 @@ export const classes = [
       // Commons
       'crimsonCleave', 'shieldBash', 'quickstep', 'guardCounter', 'ironResolve',
       'serratedBlade', 'enterGorefire', 'enterBulwark',
-      'riposte', 'rend', 'cleavingBlow', 'goreslash', 'bracingStance',
+      'riposte', 'rend', 'cleavingBlow', 'goreslash', 'bracingStance', 'rondelParry',
       // Uncommons
       'stomp', 'rallyingStandard', 'warSurgeon', 'hemorrhage', 'twinbladeFlurry',
       'shieldwall', 'kickOff',
-      'wardingLunge', 'impale', 'warcry', 'flameToBlade', 'ironVowCard',
+      'wardingLunge', 'impale', 'warcry', 'flameToBlade', 'ironVowCard', 'sunderplate',
       // Rares
       'executioner', 'goreblood', 'unbreakable', 'stitchedArms', 'lastStand', 'warriorsVow',
       'ruinousBlow', 'bloodhuntersStrike', 'sanguinePactCard', 'bloodTithe', 'poiseBreaker',
@@ -51,6 +51,7 @@ export const classes = [
       // Uncommons
       'starstoneArc', 'lucidity', 'stargazerCard', 'astralArmorCard', 'moonrendCut', 'meteorite',
       'meteorSwarm', 'gravityWell', 'azureCoilCard', 'astralCleave', 'radiantSpray', 'starPath', 'moonlitShieldCard',
+      'astralInsight',
       // Rares
       'supernova', 'timeDilation', 'starstoneKris', 'constellationCard',
       'starfallBeam', 'starcaller', 'umbralWard', 'waxingMoonCard', 'celestialLance', 'astromancerCard',
@@ -96,9 +97,11 @@ export const classes = [
       // Commons
       'bloodPact', 'blightTouch', 'flagellation', 'penance', 'litany', 'graveOffering',
       'bloodletting', 'contagion', 'cullTheWeak', 'transfusion', 'blightward', 'painOffering', 'witheringTouch',
+      'blightwardLash',
       // Uncommons
       'martyrBlood', 'blightBloom', 'sacredHarvest', 'thornHaloCard', 'communionCard', 'gildedOath',
       'plagueBearer', 'exsanguinate', 'stigmataCard', 'scourge', 'reclamation', 'desperateRite', 'emberTideCard',
+      'lastMercy',
       // Rares
       'secondBloom', 'butterflyPlague', 'lifeTitheCard', 'crimsonRite',
       'blightNova', 'lastRites', 'zealotryCard', 'bloodHarvest', 'bloodOfferingRite', 'harbingerOfBlightCard',

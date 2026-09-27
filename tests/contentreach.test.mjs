@@ -21,16 +21,10 @@ const run = (...args) => spawnSync(process.execPath, ['tools/contentreach.mjs', 
 
 // kind:id — first seen by `node tools/contentreach.mjs` at dev = 7fb05c9a9.
 const KNOWN_ORPHANS = [
-  // Class cards authored with a rarity but in no class cardPool, no kit, no
-  // shop shelf and no injector.
-  'cards:rondelParry',
-  'cards:sunderplate',
-  'cards:astralInsight',
-  'cards:blightwardLash',
-  'cards:lastMercy',
-  // Status cards with no injector: nothing does { op: 'addCard', card: <id> }.
-  'cards:wound',
-  'cards:slimed',
+  // Empty since feature/orphan-card-routes (FINISH §2, owner decision D-n):
+  // the five class cards joined their class cardPool at their authored rarity,
+  // and Wound / Slimed gained enemy injectors (Court Surgeon scalpel, Husk
+  // Brute bellow). A new orphan fails here; route it, don't pin it.
 ].sort();
 
 test('contentreach: the shipped tree has exactly the pinned orphans, and no floor fired', () => {

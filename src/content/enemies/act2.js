@@ -40,7 +40,11 @@ export const act2Enemies = [
     levelProfile: { min: 6, max: 9 },
     art: '⚕',
     moves: {
-      scalpel: { intent: 'attack', damage: 7, weight: 40 },
+      scalpel: {
+        // A cut that closes wrong (colorless.js wound; SPEC §5.2: "enemies and events inject these").
+        intent: 'attack', damage: 7, weight: 40,
+        effects: [{ op: 'addCard', card: 'wound', pile: 'discard' }],
+      },
       sedate: {
         intent: 'debuff', weight: 30, maxConsecutive: 1,
         effects: [
