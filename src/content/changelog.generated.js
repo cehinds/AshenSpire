@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1382",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the co-op fight's top bar is checked in a real browser",
+    "detail": "Nothing you play changes. On a short landscape screen the co-op top bar keeps your health, mana and stamina bars and the Leave button on one line, so the battlefield keeps its height. A new check opens the co-op fight on a phone held upright, a phone held sideways and a laptop screen, and fails if anything in that bar overlaps, gets cut off, goes missing or pushes the page sideways.",
+    "build": "0.7.1.674",
+    "pullRequest": 1382,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1382"
+  },
+  {
     "id": "pr-1350",
     "date": "2026-09-27",
     "group": "2026-09-27",
