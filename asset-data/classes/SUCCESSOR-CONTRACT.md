@@ -3,8 +3,8 @@
 STATUS | CLOSED BY SUPERSESSION · PROOF-ONLY · NOT ADOPTED
 DECISION | `AS-HD-040-0003` (owner D1, 2026-08-29, issue #389)
 BASE | `284fd6e2dcf0` on `recovery/as-hd-040`
-CHECK | `node assets/classes/verify-successor-packet.mjs` → `PACKET INTACT — 0 failing check(s)` (87/87)
-KNOWN-BAD | `node assets/classes/verify-successor-packet.mjs --selftest` → `SELFTEST OK: all 20 negative plants correctly caught.`
+CHECK | `node asset-data/classes/verify-successor-packet.mjs` → `PACKET INTACT — 0 failing check(s)` (87/87)
+KNOWN-BAD | `node asset-data/classes/verify-successor-packet.mjs --selftest` → `SELFTEST OK: all 20 negative plants correctly caught.`
 QA | Requested. Candidate frozen and handed to an independent non-maker reviewer; agenda in §7. No verdict exists yet.
 
 > **SUPERSEDED IN PART — owner ruling, 2026-09-02.** Only **rogue** carries the
@@ -65,7 +65,7 @@ looks 4 proof-only and disabled.
 - mobile proofs — `proofs/mobile-{future,header,status-unavailable}-390x844.jpg`
 
 Exact bytes, SHA-256, git blobs and measured facts are pinned in
-`assets/classes/successor-packet.manifest.json`.
+`asset-data/classes/successor-packet.manifest.json`.
 
 **These files no longer exist at a working-tree path.** The Hub rebuild
 `3e98769e` removed `review-approval-hub/evidence/**`; `origin/dev` holds zero
@@ -76,7 +76,7 @@ recorded. It never reads the working tree. Proven: with
 `review-approval-hub/evidence/` removed from the checkout entirely, the verifier
 still reports `PACKET INTACT — 0 failing check(s)` and exits 0, and `--selftest`
 still catches all 15 plants. The inputs the evidence rules
-out are pinned separately in `assets/classes/rejected-inputs.json` — the four
+out are pinned separately in `asset-data/classes/rejected-inputs.json` — the four
 concept crops and the rejected Reaver alpha retry — so AC9 can prove none of
 them was swapped in or quietly repaired.
 
@@ -166,7 +166,7 @@ The candidate is frozen and handed to an independent non-maker reviewer. A maker
 may not author a verdict on its own object, so nothing below is a finding — it
 is what the reviewer is asked to test.
 
-1. **Re-derive, don't trust.** `node assets/classes/verify-successor-packet.mjs`
+1. **Re-derive, don't trust.** `node asset-data/classes/verify-successor-packet.mjs`
    should print `PACKET INTACT — 0 failing check(s)` (87) — in any clone holding the
    objects, including one where `review-approval-hub/evidence/**` does not exist. Every number in the
    manifest is re-measured from the frozen bytes by that run; if the reviewer's

@@ -1,7 +1,7 @@
 {
   "schema": "ashenspire.class-assets/1",
   "ticket": "AS-HD-040",
-  "generated_by": "assets/classes/measure-crop-state.mjs --emit",
+  "generated_by": "asset-data/classes/measure-crop-state.mjs --emit",
   "generated_from_pin": "62f6867a",
   "adopted": false,
   "authority_note": "Decision D1 authorises a proof-only successor. This manifest describes the frozen packet for a future reader; it adopts nothing, maps no runtime path, and grants no integration authority.",

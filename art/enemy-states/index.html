@@ -11,7 +11,7 @@ import {enemySprite} from './src/ui/assets.js';
 import {stageFor} from './src/ui/services/PoseAnimator.js';
 import {ENEMY_STATE_POSES} from './src/ui/enemyStates.js';
 import {ENEMY_STATE_SCALE} from './src/content/enemyStateArt.js';
-const {entries}=await(await fetch('assets/enemy-poses/manifest.json')).json();
+const {entries}=await(await fetch('asset-data/enemy-poses/manifest.json')).json();
 const labels={idle:'Idle',attack:'Attack',buff:'Buffing',wounded:'Wounded',afflicted:'Negative status',projectile:'Projectile',guard:'Guard',guardHit:'Guarded impact',hurt:'Getting hurt'};
 for(const enemy of entries){
  const article=document.createElement('article');article.dataset.name=enemy.name.toLowerCase();article.dataset.enemy=enemy.id;

@@ -10,7 +10,7 @@ const assert=require('node:assert/strict');
    const css=document.createElement('link');css.rel='stylesheet';css.href='/styles/combat.css';
    await new Promise(resolve=>{css.onload=resolve;document.head.append(css);});
    const {enemySprite}=await import('/src/ui/assets.js');
-   const {entries}=await(await fetch('/assets/enemy-poses/manifest.json')).json();
+   const {entries}=await(await fetch('/asset-data/enemy-poses/manifest.json')).json();
    document.body.innerHTML='';
    for(const e of entries){
     const host=document.createElement('div');host.className='enemy';
