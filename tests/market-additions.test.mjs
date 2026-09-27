@@ -14,7 +14,7 @@ import { shops as shippedShops } from '../src/content/shops.js';
 import { sigils as shippedSigils } from '../src/content/sigils.js';
 import { NOTE } from '../src/content/balance.js';
 import { createRegistries } from '../src/model/registries.js';
-import { advancedConfigRows, configuredContentBundle } from '../src/model/advancedConfig.js';
+import { advancedConfigRows, configuredContentBundle, advancedConfigExport, parseAdvancedConfigFile } from '../src/model/advancedConfig.js';
 import { createRng } from '../src/engine/rng.js';
 import { buildShopStock } from '../src/engine/encounters.js';
 import { buildMarketStock, commitInnRest } from '../src/engine/shopKinds.js';
@@ -503,4 +503,57 @@ test('the Greedy Merchants and Hoarder price multiplier reaches every addition\'
   assert.deepEqual(bare, { cards: [], relics: [], flasks: [], removeCost: 200 });
   // The scaled stock still passes the saved-shape check.
   assert.deepEqual(shopStockProblems(scaled), []);
+});
+
+test('a paid offering\'s price rows start at 1, so Settings refuses a free one (Codex, on #1374)', () => {
+  const rows = new Map(advancedConfigRows(contentBundle).map((row) => [row.key, row]));
+  const paid = ['market.smithStones.price', 'market.innRest.price', 'market.armour.cost.min', 'market.armour.cost.max', 'market.sigils.pricePct', 'blacksmith.smithStones.price'];
+  for (const leaf of paid) {
+    const key = `${PREFIX}${leaf}`;
+    assert.equal(rows.get(key).min, 1, `${leaf} starts at 1`);
+    assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ [key]: 0 }), contentBundle, {}), /Invalid value/, `${leaf}: 0 is refused`);
+    assert.doesNotThrow(() => parseAdvancedConfigFile(advancedConfigExport({ [key]: 1 }), contentBundle, {}), `${leaf}: 1 is taken`);
+  }
+});
+
+test('no generated addition stock fails its own saved-shape check, even at every price row\'s floor (Codex, on #1374)', () => {
+  const rows = advancedConfigRows(contentBundle).filter((row) => row.key.startsWith(`${PREFIX}market.`) && row.type === 'number' && !/\.(chance|weight)$/.test(row.key));
+  const floors = Object.fromEntries(rows.map((row) => [row.key, row.min]));
+  for (const settings of [{}, floors]) {
+    const registries = registriesWith({ ...ALL_OUT, ...settings });
+    for (let seed = 1; seed <= 40; seed++) {
+      const run = createRunState({ seed, classId: ['reaver', 'starseer', 'herald', 'rogue'][seed % 4], registries });
+      const stock = buildMarketStock(registries, createRng(seed), run, { meta: {}, innInTown: true });
+      assert.deepEqual(shopStockProblems(stock), [], `seed ${seed}`);
+    }
+  }
+  // Even a table that reached the roll with a free armour range (a stored
+  // value that got past Settings), the shelf never prices below 1.
+  const table = structuredClone(REG.shops);
+  const armour = table.market.offerings.find((row) => row.id === 'armour');
+  armour.cost = { min: 0, max: 0 };
+  armour.chance = 100;
+  const run = createRunState({ seed: 2, classId: 'reaver', registries: REG });
+  const stock = buildMarketStock({ ...REG, shops: table }, createRng(2), run, { meta: {} });
+  assert.ok(stock.armour.length && stock.armour.every((item) => item.cost >= 1));
+  assert.deepEqual(shopStockProblems(stock), []);
+});
+
+test('a bought armour set this build does not know archives the save by name, like an unknown sigil (Codex, on #1374)', () => {
+  const save = (boughtArmour) => {
+    const run = createRunState({ seed: 3, classId: 'reaver', registries: REG });
+    run.loadout.boughtArmour = boughtArmour;
+    const storage = createMemoryStorage();
+    createSaveManager(storage).saveRun(run, createRng(3));
+    const saves = createSaveManager(storage);
+    return { run: saves.loadRun(REG), status: saves.runStatus() };
+  };
+  const unknown = save([{ classId: 'reaver', id: 'noSuchPlate' }]);
+  assert.equal(unknown.run, null);
+  assert.equal(unknown.status.state, 'archived');
+  assert.match(unknown.status.reason, /noSuchPlate/);
+  // Another class's set that this class lacks is unknown for it too.
+  assert.equal(save([{ classId: 'reaver', id: 'eclipse' }]).run, null);
+  // A known set loads.
+  assert.ok(save([{ classId: 'reaver', id: 'vigil' }]).run);
 });
