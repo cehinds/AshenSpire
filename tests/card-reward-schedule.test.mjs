@@ -517,6 +517,30 @@ test('a taken level card never reuses an instance id a sideboarded card holds', 
   }
 });
 
+test('run schema 12: a schema-11 save (the captured corpus bytes) loads unchanged, and a pending level card rides a v12 save', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { RUN_SCHEMA_VERSION } = await import('../src/model/state.js');
+  assert.equal(RUN_SCHEMA_VERSION, 12);
+  const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
+  const v11 = JSON.parse(corpus.versions['11'].bytes);
+  assert.equal(v11.schemaVersion, 11);
+  const loaded = deserializeRun(corpus.versions['11'].bytes);
+  // 11 → 12 is a no-op: every field the v11 build wrote reads back as written,
+  // and only the stamp (and its migration receipt) moves.
+  const { schemaVersion, migratedFromRunSchemaVersion, ...rest } = loaded;
+  assert.equal(schemaVersion, 12);
+  assert.equal(migratedFromRunSchemaVersion, 11);
+  const { schemaVersion: _was, ...writtenAt11 } = v11;
+  for (const [key, value] of Object.entries(writtenAt11)) assert.deepEqual(rest[key], value, `field '${key}' is unchanged`);
+  // A v12 save with a pending level card round-trips.
+  const run = createRunState({ registries: REG, classId: 'reaver', seed: 5 });
+  run.pendingReward = { schemaVersion: 1, source: 'normal', after: 'map', chosenCardId: null, chosenDraftNodeIds: {},
+    rewards: { cardIds: [], levelCards: [{ ordinal: 0, cardIds: ['stomp', 'rend'] }] }, states: {}, chosenDraftCardIds: {} };
+  const back = deserializeRun(serializeRun(run));
+  assert.equal(back.schemaVersion, 12);
+  assert.deepEqual(back.pendingReward.rewards.levelCards, run.pendingReward.rewards.levelCards);
+});
+
 test('co-op couch seats: a level-card pick on seat A survives switching to seat B and back, and ends with its door', () => {
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
