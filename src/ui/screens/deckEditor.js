@@ -25,7 +25,7 @@
 // map's own hotkeys stand down while it is open (components/veil.js).
 
 import { el, button } from '../kit/index.js';
-import { modalFooter } from '../components/modalShell.js';
+import { bindModalDismiss, modalFooter } from '../components/modalShell.js';
 import { markUiComponent, UI_COMPONENTS as UI } from '../components/uiComponents.js';
 import { actionLabel, focusElement, matchAction, setInputGate, setTabRing } from '../input.js';
 import { DECK_PANES, deckEditorModel, deckEditorView, nextFilterPreset, openDeckEdit } from '../models/DeckEditorModel.js';
@@ -133,7 +133,9 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
       el('div', { class: 'deck-editor-chips', role: 'group', 'aria-label': t('deckEditor.filters') }, [
         el('span', { class: 'deck-editor-chips-label', text: t('deckEditor.filters') }), ...filterChips,
       ]),
-      el('div', { class: 'deck-editor-chips', role: 'group', 'aria-label': t('deckEditor.sort') }, [
+      // Under Play in deck order the deck's order IS the arrangement, so no
+      // sort is offered (a sort chip that did nothing to the deck would lie).
+      model.ordered ? null : el('div', { class: 'deck-editor-chips', role: 'group', 'aria-label': t('deckEditor.sort') }, [
         el('span', { class: 'deck-editor-chips-label', text: t('deckEditor.sort') }), ...sortChips,
       ]),
     ]);
@@ -486,7 +488,8 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     const key = input.key || '';
     const probe = { key };
     if (key === 'Escape') { doCancel(); return true; }
-    if (key === '[' || key === ']') { switchPane(key === ']' ? 1 : -1); return true; }
+    // `[` / `]` are the tab ring's (input.js), which switches the pane once;
+    // answering them here too switched it twice, i.e. not at all.
     if (matchAction(probe, 'menu')) { doDone(); return true; }
     if (matchAction(probe, 'deck')) { cycleFilters(); return true; }
     if (matchAction(probe, 'endTurn')) { const row = focusedRow(); if (row && model.ordered) togglePick(row); return !!row; }
@@ -523,14 +526,30 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     }
   };
   addEventListener('keydown', onKey);
-  // LB/RB (and `[` / `]`) switch panes while the editor stands (Law 3: the
+  // LB/RB and `[` / `]` switch panes while the editor stands, through the
+  // tab ring alone (Law 3: the
   // bumpers ride the open surface's set).
   setTabRing({ prev: () => switchPane(-1), next: () => switchPane(1) });
+
+  // A REAL MODAL. Everything beside the veil is `inert` while it stands, so
+  // neither Tab nor a pointer can reach the map's Save & quit (which would
+  // persist a half-edited deck) or a second Deck door (which would snapshot
+  // the mid-edit state). The shell's dismiss binding adds the Tab wrap and
+  // Escape (topmost modal only), and returns focus to the opener on close.
+  const madeInert = [];
+  for (const sibling of [...(host.children || [])]) {
+    if (sibling === root || sibling.hasAttribute?.('inert')) continue;
+    sibling.setAttribute('inert', '');
+    madeInert.push(sibling);
+  }
+  const releaseDismiss = bindModalDismiss({ veil: root, panel, close: () => doCancel() });
 
   function close() {
     drop();
     removeEventListener('keydown', onKey);
     setTabRing(null);
+    for (const sibling of madeInert.splice(0)) sibling.removeAttribute('inert');
+    releaseDismiss({ restoreFocus: true });
     root.remove();
   }
 

@@ -158,6 +158,68 @@ test('each variant is its own tile, and its tap moves that variant (Codex review
   edit.cancel();
 });
 
+test('set-aside basics: each kept variant is its own tile, shown and chosen as itself (Codex review on #1372)', () => {
+  const modded = { instanceId: 'm1', cardId: 'defend', upgraded: false, mods: [Object.keys(REG.equipment.modFields || {})[0] || 'mod'] };
+  const run = {
+    class: 'reaver', editMintCounter: 0,
+    deck: [{ instanceId: 's1', cardId: 'strike', upgraded: false }],
+    sideboard: [{ instanceId: 'u1', cardId: 'strike', upgraded: true }, { instanceId: 'u2', cardId: 'strike', upgraded: true }, modded],
+  };
+  const model = deckEditorModel({ registries: REG, run, settings: {} });
+  const strikePlus = model.collection.find((tile) => tile.key === `kept:${deckVariantKey(run.sideboard[0])}`);
+  assert.ok(strikePlus, 'the kept Strike+ has its own tile');
+  assert.equal(strikePlus.name, `${REG.cards.get('strike').name}+`, 'shown as the upgraded card');
+  assert.equal(strikePlus.countText, '2 set aside · upgraded');
+  assert.ok(model.collection.some((tile) => tile.key === `kept:${deckVariantKey(modded)}`), 'the modded Defend is another tile');
+  assert.equal(model.collection.find((tile) => tile.key === 'basic:strike').upgraded, false, 'the ∞ tile is a fresh Strike');
+  const upgradedOnly = deckEditorModel({ registries: REG, run, settings: {}, view: { filters: { upgraded: true } } });
+  assert.deepEqual(upgradedOnly.collection.map((tile) => tile.key), [strikePlus.key], 'the Upgraded filter finds exactly the kept Strike+');
+  const edit = openDeckEdit(REG, run, {});
+  assert.equal(edit.add(`kept:${deckVariantKey(modded)}`).ok, true);
+  assert.equal(run.deck.at(-1).instanceId, 'm1', 'the modded Defend tile restores exactly it');
+  assert.equal(edit.add('basic:defend').ok, true);
+  assert.equal(run.deck.at(-1).instanceId, 'edit:1', 'the ∞ Defend mints');
+  edit.cancel();
+});
+
+test('an equipped run never splits a role basic: its upgrade comes from the source piece', () => {
+  const run = freshRun();
+  const strike = run.deck.find((c) => c.equipmentRole === 'attack' && !c.grantedBy);
+  strike.upgraded = true;
+  const edit = openDeckEdit(REG, run, {});
+  edit.remove(strike.instanceId);
+  const model = deckEditorModel({ registries: REG, run, settings: {} });
+  assert.deepEqual(model.collection.filter((tile) => tile.source === 'basic').map((tile) => tile.key), ['basic:attack', 'basic:guard'],
+    'stampDeck restamps every attack copy from its weapon, so there is no kept variant to choose');
+  assert.equal(edit.add('basic:attack').ok, true);
+  const slots = [...run.deck, ...run.sideboard].map((c) => c.equipmentAttackSlotId).filter(Boolean);
+  assert.equal(new Set(slots).size, slots.length, 'no two attack instances share a slot');
+  edit.cancel();
+});
+
+test('a plain run: a kept Strike+ has its own tile, and the ∞ tile mints a new Strike', () => {
+  const run = {
+    class: 'reaver', editMintCounter: 0,
+    deck: [{ instanceId: 's1', cardId: 'strike', upgraded: false }],
+    sideboard: [{ instanceId: 's2', cardId: 'strike', upgraded: true }],
+  };
+  const model = deckEditorModel({ registries: REG, run, settings: {} });
+  assert.deepEqual(model.collection.filter((tile) => tile.source === 'basic').map((tile) => tile.key),
+    ['basic:strike', 'basic:defend', `kept:${deckVariantKey(run.sideboard[0])}`]);
+  const edit = openDeckEdit(REG, run, {});
+  assert.equal(edit.add('basic:strike').ok, true);
+  assert.equal(run.deck.at(-1).instanceId, 'edit:1', 'minted, not the kept Strike+');
+  assert.equal(edit.add(`kept:${deckVariantKey({ cardId: 'strike', upgraded: true })}`).ok, true);
+  assert.equal(run.deck.at(-1).instanceId, 's2');
+  edit.cancel();
+});
+
+test('every card type the content uses has its own filter label', async () => {
+  const { has } = await import('../src/ui/strings.js');
+  const types = [...new Set(REG.cards.all().map((def) => def.type))];
+  for (const type of types) assert.ok(has(`deckEditor.type.${type}`), `uiStrings has deckEditor.type.${type}`);
+});
+
 test('a technique (a technique:* tag, not extractable) is its own source', () => {
   const run = freshRun();
   const def = REG.cards.get('quickCut');
@@ -241,14 +303,42 @@ function withDom(fn) {
   proto.hasAttribute = function hasIt(key) {
     return hasAttribute.call(this, key) || (key.startsWith('data-') && this.dataset[dataKey(key)] !== undefined);
   };
+  // What the Tab wrap (modalShell.bindModalDismiss) reads off a control.
+  proto.contains = function contains(node) { for (let at = node; at; at = at.parentNode) if (at === this) return true; return false; };
+  proto.getClientRects = function rects() { return this.isConnected ? [{}] : []; };
+  Object.defineProperty(proto, 'tabIndex', { configurable: true, get() { return ['BUTTON', 'A', 'INPUT', 'SELECT', 'TEXTAREA'].includes(this.tagName) ? 0 : Number(this.getAttribute('tabindex') ?? -1); } });
+  const { matches } = proto;
+  proto.matches = function match(selector) {
+    if (selector === ':disabled') return !!this.disabled;
+    if (selector === '[inert]') return this.hasAttribute('inert');
+    return matches.call(this, selector);
+  };
   const listeners = new Map();
+  const docListeners = new Map();
+  const add = (map) => (type, listener) => map.set(type, [...(map.get(type) || []), listener]);
+  const drop = (map) => (type, listener) => map.set(type, (map.get(type) || []).filter((l) => l !== listener));
+  dom.document.addEventListener = add(docListeners);
+  dom.document.removeEventListener = drop(docListeners);
+  dom.document.getElementById = (id) => dom.document.body.querySelector(`#${id}`);
+  dom.document.activeElement = dom.document.body;
   const win = {
     ...dom,
-    addEventListener: (type, listener) => listeners.set(type, [...(listeners.get(type) || []), listener]),
-    removeEventListener: (type, listener) => listeners.set(type, (listeners.get(type) || []).filter((l) => l !== listener)),
+    addEventListener: add(listeners),
+    removeEventListener: drop(listeners),
     dispatchEvent: (event) => { for (const listener of listeners.get(event.type) || []) listener(event); return true; },
     KeyboardEvent: dom.Event,
     innerWidth: 390,
+    // A key press as a browser delivers it: window capture (input.js), then
+    // document capture (the modal shell), then window bubble, unless stopped.
+    press(key, extra = {}) {
+      const event = new dom.Event('keydown', { key, bubbles: true, target: dom.document.activeElement, ...extra });
+      const [first, ...rest] = listeners.get('keydown') || [];
+      const run = (fnList) => { for (const l of fnList) { if (event.immediatePropagationStopped) return; l(event); } };
+      if (first) run([first]);
+      if (!event.immediatePropagationStopped) run(docListeners.get('keydown') || []);
+      if (!event.immediatePropagationStopped && !event.propagationStopped) run(rest);
+      return event;
+    },
   };
   const saved = Object.fromEntries(Object.keys(win).map((key) => [key, globalThis[key]]));
   Object.assign(globalThis, win);
@@ -444,6 +534,74 @@ test('DOM: a finger drag moves cards between panes and reorders rows (pointer ev
     assert.ok(again.deck.includes(target), 'a swipe before the hold scrolls instead');
     held.close();
     delete document.elementFromPoint;
+  });
+});
+
+test('DOM: the editor is a real modal — Tab wraps inside it, and the page under it is inert', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom((dom, win) => {
+    // The page the editor opens over: the atlas header's Save & quit and a Deck door.
+    const app = document.createElement('div');
+    app.id = 'app';
+    const saveQuit = document.createElement('button');
+    saveQuit.setAttribute('data-atlas-quit', '');
+    const door = document.createElement('button');
+    door.setAttribute('data-atlas-deck', '');
+    app.append(saveQuit, door);
+    document.body.append(app);
+    const run = freshRun();
+    const editor = mountDeckEditor(document.body, { registries: REG, run, settings: {} });
+    assert.equal(app.hasAttribute('inert'), true, 'everything beside the veil is inert');
+    const panel = editor.root.querySelector('.deck-editor');
+    assert.equal(panel.getAttribute('aria-modal'), 'true');
+    const controls = [...panel.querySelectorAll('button')].filter((b) => !b.disabled);
+    const [first, last] = [controls[0], controls.at(-1)];
+    last.focus();
+    win.press('Tab');
+    assert.equal(document.activeElement, first, 'Tab from the last control wraps to the first');
+    win.press('Tab', { shiftKey: true });
+    assert.equal(document.activeElement, last, 'Shift+Tab from the first wraps to the last');
+    // Focus that has escaped the panel is pulled back in, never onto the page.
+    saveQuit.focus();
+    win.press('Tab');
+    assert.ok(panel.contains(document.activeElement), 'Tab from outside lands inside the editor');
+    assert.notEqual(document.activeElement, saveQuit);
+    assert.notEqual(document.activeElement, door);
+    // Escape reaches the modal shell and cancels (topmost modal only).
+    win.press('Escape');
+    assert.equal(editor.root.isConnected, false);
+    assert.equal(app.hasAttribute('inert'), false, 'closing gives the page back');
+  });
+});
+
+test('DOM: [ and ] switch panes once, through input.js\'s real listener', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  const { initInput } = await import('../src/ui/input.js');
+  withDom((dom, win) => {
+    initInput({ getSettings: () => ({}) });
+    const editor = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: {} });
+    const active = () => editor.root.querySelector('.deck-editor-panes').dataset.active;
+    assert.equal(active(), 'collection');
+    win.press(']');
+    assert.equal(active(), 'deck', '] moves to the deck pane (once)');
+    win.press(']');
+    assert.equal(active(), 'collection', 'and again wraps back');
+    win.press('[');
+    assert.equal(active(), 'deck', '[ moves the other way');
+    editor.close();
+  });
+});
+
+test('DOM: under Play in deck order no sort chip is offered', async () => {
+  const { mountDeckEditor } = await import('../src/ui/screens/deckEditor.js');
+  withDom(() => {
+    const ordered = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: { playInDeckOrder: true } });
+    const sortChips = (editor) => editor.root.querySelectorAll('.deck-editor-chip').filter((c) => String(c.dataset.focusKey).startsWith('sort:'));
+    assert.equal(sortChips(ordered).length, 0);
+    ordered.close();
+    const sorted = mountDeckEditor(document.body, { registries: REG, run: freshRun(), settings: {} });
+    assert.equal(sortChips(sorted).length, 4);
+    sorted.close();
   });
 });
 

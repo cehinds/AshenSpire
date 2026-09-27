@@ -3076,6 +3076,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "deckEditor.type.other",
+    "extends": "",
+    "short": "Other",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "deckEditor.source.basic",
     "extends": "",
     "short": "Basic",
@@ -3149,6 +3156,20 @@ export const uiStrings = [
     "id": "deckEditor.tile.basic",
     "extends": "",
     "short": "∞ · {inDeck} in deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.tile.kept",
+    "extends": "",
+    "short": "{count} set aside",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.tile.keptUpgraded",
+    "extends": "",
+    "short": "{count} set aside · upgraded",
     "full": "",
     "tip": ""
   },
