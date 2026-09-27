@@ -1233,7 +1233,7 @@ function refusedRunLanding(slot) {
 // hand until the second pass hands back a run. A refusal restores the
 // registries and calls `onRefused` — the title by default; the in-run Load
 // door passes its own, which keeps the run on screen (confirmSlotLoad).
-function resumeRun(slot = 1, { onRefused = refusedRunLanding } = {}) {
+function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } = {}) {
   const liveRegistries = registries;
   const refused = () => {
     if (registries !== liveRegistries) {
@@ -1249,6 +1249,9 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding } = {}) {
   rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} });
   loaded = saves.loadRun(registries, slot);
   if (!loaded) return refused();
+  // The load is certain from here; a caller that must tear down what the
+  // refusal would have returned to (the in-run overlay) does it now, not before.
+  onLoaded?.();
   resetArmouryTraySession();
   activeSlot = slot;
   run = loaded;
@@ -1323,14 +1326,20 @@ function confirmSlotLoad(slot, { returnFocusElement } = {}) {
     tone: registries.framework.confirmationTone('action.loadSlot'),
     returnFocusElement,
     onConfirm: () => {
-      closeOverlay();
       // AND AGAIN AT THE PRESS. Run saves share localStorage across tabs and
       // this confirmation can stay open indefinitely, so another tab can
       // rewrite the slot (a newer build), clear it or corrupt it after the
       // check above passed; content validation and migration refuse only
       // inside loadRun. resumeRun swaps the live run only after a successful
       // load, so every refusal lands here, on the run still in hand.
+      //
+      // THE OVERLAY CLOSES ONLY ONCE THE LOAD IS CERTAIN. Opened from the
+      // in-run overlay's quick navigation, `returnFocusElement` is a button
+      // inside that overlay; closing it before the outcome disconnected the
+      // button, so a refusal's "Keep playing" had nowhere to return focus and
+      // keyboard and gamepad players landed on <body> (Codex review, #1355).
       resumeRun(slot, {
+        onLoaded: closeOverlay,
         onRefused: () => (saves.runStatus().state === 'newer'
           ? openNewerSaveNotice({ slot, returnFocusElement })
           : openRefusedSaveNotice({ slot, returnFocusElement })),
