@@ -13,13 +13,13 @@ Marks: `[ ]` open · `[~]` PR open, or partly done with the remainder stated · 
 linked. Update this file after every PR.
 
 **Status (2026-09-27, `dev` @ `7ef3ffc3`, build `0.7.1.614`):** synced against
-every merge to `dev` from #1270 to #1353. Each tick below was checked against
+every merge to `dev` from #1270 to #1356. Each tick below was checked against
 the code, a test or a command run on that tree, not against a PR title. The
 2026-09-27 pass re-checked the lines #1332, #1336–#1340, #1345, #1353 and the
 art-repo plan ([ART-REPO-PLAN.md](ART-REPO-PLAN.md): steps 1–3 done, step 4
 started) could move. Open PRs that will move lines here when they merge, and
 tick them themselves: #1343 (§14 deck rules), #1349, #1351 and #1352 (§15),
-#1354, #1355, #1356 and #1357 (the wave-3 follow-ups). SPEC.md's *Scope
+#1354, #1355 and #1357 (the wave-3 follow-ups). SPEC.md's *Scope
 status* table lists each spec section as built, partly built or planned.
 
 ## Baseline (2026-09-24, `dev` @ `7fb05c9a`, build `0.7.1.449`)
@@ -155,7 +155,7 @@ status* table lists each spec section as built, partly built or planned.
 - [ ] **Every other `loadRun` refusal keeps the live run.** #1315 fixed the newer-build case only. A slot that `slotSummary` can parse but `loadRun` refuses (content validation, migration), or one another tab clears or corrupts while the confirmation is open, still goes through `closeOverlay` and `resumeRun` and drops the run to the title. Test: `resumeRun` swaps `run` only after a successful load, and a `slot-load-door` step with a corrupted slot keeps the run.
 - [ ] **#1314's re-fit guard runs in CI.** `tests/mapboard-refit.test.mjs` only covers the `refitCamera` helper (reverting the watch leaves it green), and `tools/map-camera-persistence.mjs --check` is not called by any workflow or `run-node.mjs`. Its full run (no `--check`) also throws `missing [data-face="class"]`, which predates #1314. Test: a CI job runs `map-camera-persistence.mjs --check`, and the full run completes.
 - [ ] **#1298 post-merge Codex P2s.** (a) A keyboard End Turn hold cancelled by a window blur still calls `onTap` (`src/ui/components/holdconfirm.js` `releaseTap`, ~l.457) and opens the End Turn confirmation. (b) `tests/visibility-resume.test.mjs` records `document?.['addEventListener'](…)` as a `window` listener. Test: a blur-cancelled keyboard hold opens nothing; the inventory names `document` for that spelling.
-- [ ] **Some gate checks a receipt's ordinal against its merge's box.** #1315's receipt merged at `0.7.1.518` while its merge commit shipped box 519 (corrected in #1316). `receipts.mjs` does not check ordinals at all (its header lists it under what it does not check), and `about-changelog --check` rejects only a future build. Test: a `--selftest` plant whose receipt is below the committed `buildordinal.json` goes red.
+- [x] **Some gate checks a receipt's ordinal against its merge's box.** #1315's receipt merged at `0.7.1.518` while its merge commit shipped box 519 (corrected in #1316). `receipts.mjs` does not check ordinals at all (its header lists it under what it does not check), and `about-changelog --check` rejects only a future build. Test: a `--selftest` plant whose receipt is below the committed `buildordinal.json` goes red. — [#1356](https://github.com/cehinds/AshenSpire/pull/1356): `receipts.mjs --check --pr <N>` requires the PR's own receipt to carry the tree's `buildordinal.json` box, and the `--selftest` plant "a receipt stamped below the committed buildordinal.json (#1315)" goes red with BELOW.
 - [ ] **The `closedsets` run-node rung is not flaky.** One local `run-node --no-selftests` run on #1316 failed only on it and passed on the re-run; not root-caused. Test: 10 consecutive runs of that rung pass, or the cause is named and fixed.
 - [ ] **C12 BOUNDARY stays stated.** C12 reads `styles/kit.css` as text: no cascade (specificity, `@layer` order, `@scope` limits), no `var()` substitution, no per-property value grammar (an invalid later value is read as effective), and `styles/hud-visibility.css` is not read. Test: the BOUNDARY note in `tools/ui-components.mjs` lists these, and any new form is fixed only if the shipped CSS uses it.
 

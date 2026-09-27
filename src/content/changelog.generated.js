@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Behind the scenes: the design and 1.0 plan documents say what is built and what is still planned",
     "detail": "Docs only; nothing you play changes. The design spec now opens with a table marking each of its sections as built, partly built or planned: the deck editor, the three shops and the new reward rules are written down but not built yet. The 1.0 checklist catches up with the last week's merges, and an implemented map-contrast proposal moves to an archive folder.",
-    "build": "0.7.1.616",
+    "build": "0.7.1.618",
     "pullRequest": 1359,
     "url": "https://github.com/cehinds/AshenSpire/pull/1359"
+  },
+  {
+    "id": "pr-1356",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: a changelog entry must name the build it ships in",
+    "detail": "Nothing you play changes. Before a change can merge, its own entry here is now checked against the build number it actually ships, so an entry that names the build before or after it is caught instead of going out one number off, as the entry for #1315 did.",
+    "build": "0.7.1.616",
+    "pullRequest": 1356,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1356"
+  },
+  {
+    "id": "pr-1326",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: sessions ask the owner in short bullets",
+    "detail": "Docs only. CLAUDE.md now tells every session to put a question for the owner as one line per bullet, ending in the answer needed, with one sub-bullet saying why it matters, and no paragraphs.",
+    "build": "0.7.1.615",
+    "pullRequest": 1326,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1326"
   },
   {
     "id": "pr-1348",
