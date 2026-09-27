@@ -368,6 +368,9 @@ test('content validation refuses a malformed deck-rules table by name', async ()
   const bad = { ...DECK_RULES, defaults: { ...DECK_RULES.defaults, deckMinSize: 'ten' }, singleCopy: { types: 'power', tags: [] }, unlimitedCardIds: ['strike', 'nosuchcard'] };
   const paths = validateContent({ ...contentBundle, deckRules: bad }).errors.map((e) => e.path);
   for (const path of ['deckRules.defaults.deckMinSize', 'deckRules.singleCopy.types', 'deckRules.unlimitedCardIds[1]']) assert.ok(paths.includes(path), path);
+  const typos = { ...DECK_RULES, singleCopy: { types: ['powre'], tags: ['source:nosuch'] } };
+  const typoPaths = validateContent({ ...contentBundle, deckRules: typos }).errors.map((e) => e.path);
+  for (const path of ['deckRules.singleCopy.types[0]', 'deckRules.singleCopy.tags[0]']) assert.ok(typoPaths.includes(path), `a typo that would lift the copy limit is refused: ${path}`);
 });
 
 test('a save whose sideboard repeats an owned id is refused at the load door', async () => {

@@ -648,7 +648,7 @@ function collectContentProblems(bundle, errors = []) {
     }
     // The deck editor's rules (content/deckRules.js, SPEC §14.1) are data the
     // editor reads at use; a malformed table is refused here, by name, at boot.
-    deckRulesTableProblems(b.deckRules || shippedDeckRules, b.cards, err);
+    deckRulesTableProblems(b.deckRules || shippedDeckRules, b.cards, err, b.nodes);
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
       if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);
@@ -2733,7 +2733,7 @@ function usesScript(node) {
  * `where` list holding the default, string lists for `singleCopy`, and
  * unlimited ids that name real cards.
  */
-export function deckRulesTableProblems(table, cards, err) {
+export function deckRulesTableProblems(table, cards, err, nodes) {
   const at = (path, msg) => err(`deckRules.${path}`, msg);
   if (!table || typeof table !== 'object') { at('', 'must be an object'); return; }
   const range = (key) => {
@@ -2762,6 +2762,11 @@ export function deckRulesTableProblems(table, cards, err) {
   for (const key of ['types', 'tags']) {
     if (!Array.isArray(single[key]) || !single[key].every((v) => typeof v === 'string' && v)) at(`singleCopy.${key}`, 'must be a list of non-empty strings');
   }
+  // A typo here would silently lift the copy limit, so each value must name a
+  // real card type or tag node.
+  const nodeIds = new Set((Array.isArray(nodes) ? nodes : []).map((n) => n && n.id));
+  if (Array.isArray(single.types)) single.types.forEach((v, i) => { if (!CARD_TYPES.includes(v)) at(`singleCopy.types[${i}]`, `names no card type: '${v}' (one of ${CARD_TYPES.join(', ')})`); });
+  if (Array.isArray(single.tags) && nodeIds.size) single.tags.forEach((v, i) => { if (!nodeIds.has(v)) at(`singleCopy.tags[${i}]`, `names no tag node: '${v}'`); });
   const ids = new Set((Array.isArray(cards) ? cards : []).map((c) => c && c.id));
   if (!Array.isArray(table.unlimitedCardIds)) at('unlimitedCardIds', 'must be a list of card ids');
   else table.unlimitedCardIds.forEach((id, i) => { if (ids.size && !ids.has(id)) at(`unlimitedCardIds[${i}]`, `names no card: '${id}'`); });
