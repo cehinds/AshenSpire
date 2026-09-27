@@ -8,9 +8,69 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Behind the scenes: every change is now checked for the map camera fitting the screen",
     "detail": "Nothing you see changes. Each proposed change now opens the real map in a browser, resizes its view after it settles, and fails if the camera stops filling the view or loses the destination you picked. The longer map-camera check also makes a new character again, through the Class, Character, Starting equip and Review steps and past the opening, and runs to the end.",
-    "build": "0.7.1.615",
+    "build": "0.7.1.621",
     "pullRequest": 1357,
     "url": "https://github.com/cehinds/AshenSpire/pull/1357"
+  },
+  {
+    "id": "pr-1354",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Letting go of the game window mid-hold no longer opens the End Turn check",
+    "detail": "If you were holding the End Turn key and the window lost focus (you alt-tabbed, or the phone went to the background), the game used to treat that as a quick tap and open the End Turn confirmation. Now nothing opens and nothing happens. A quick press and release still opens the check as before. Behind the scenes: the test that lists page listeners now also reads one more way of writing a document listener correctly.",
+    "build": "0.7.1.620",
+    "pullRequest": 1354,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1354"
+  },
+  {
+    "id": "pr-1355",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Loading a save that can't be opened keeps your current climb",
+    "detail": "If you load a slot from the in-run menu and it turns out to be damaged, or another tab cleared it while you were deciding, the game now keeps you in the run you were already playing and tells you the slot could not be loaded. Before, it dropped that run and sent you to the title screen. Saves from a newer version were already handled this way.",
+    "build": "0.7.1.619",
+    "pullRequest": 1355,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1355"
+  },
+  {
+    "id": "pr-1358",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the README says how to play the newest build",
+    "detail": "Docs only; nothing you play changes. The README now explains where to get each build: the stable link, the newest development build from its download page, or running the game from source. Its notes on builds, art quality, recent additions and content counts now match the game.",
+    "build": "0.7.1.618",
+    "pullRequest": 1358,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1358"
+  },
+  {
+    "id": "pr-1343",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Deck rules: set cards aside, draw in your own order",
+    "detail": "The groundwork for the deck editor, which arrives next. A new Settings tab, Advanced → Deck, holds its rules: editing on or off, where you may edit, the smallest and largest deck, and Play in deck order, which draws your cards in the order you arranged them instead of shuffling. A card you take out of your deck is kept, not lost, so you can put it back later; Strike and Defend stay unlimited and still wear your weapon's face.",
+    "build": "0.7.1.617",
+    "pullRequest": 1343,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1343"
+  },
+  {
+    "id": "pr-1356",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: a changelog entry must name the build it ships in",
+    "detail": "Nothing you play changes. Before a change can merge, its own entry here is now checked against the build number it actually ships, so an entry that names the build before or after it is caught instead of going out one number off, as the entry for #1315 did.",
+    "build": "0.7.1.616",
+    "pullRequest": 1356,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1356"
+  },
+  {
+    "id": "pr-1326",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: sessions ask the owner in short bullets",
+    "detail": "Docs only. CLAUDE.md now tells every session to put a question for the owner as one line per bullet, ending in the answer needed, with one sub-bullet saying why it matters, and no paragraphs.",
+    "build": "0.7.1.615",
+    "pullRequest": 1326,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1326"
   },
   {
     "id": "pr-1348",
