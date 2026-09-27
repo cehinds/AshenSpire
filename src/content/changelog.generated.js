@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1375",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the rules for buying armour at the market are written down",
+    "detail": "Docs only; nothing you play changes yet. The design document now says the market will sell armour sets of your class that you have not unlocked, for the current run only, that a setting can turn this off, and where a bought set is recorded in a save.",
+    "build": "0.7.1.652",
+    "pullRequest": 1375,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1375"
+  },
+  {
     "id": "pr-1371",
     "date": "2026-09-27",
     "group": "2026-09-27",
