@@ -19,7 +19,7 @@ test('combat reward costs meet inclusive rounded rarity shares, including upgrad
   const a2ActionOnly = { common: 4, uncommon: 0, rare: 0 };
   const a2StaminaOnly = { common: 1, uncommon: 0, rare: 0 };
   for (const [rarity, count, staminaShare, dualShare] of [
-    ['common', 52, 0.3, 0.15], ['uncommon', 51, 0.5, 0.3], ['rare', 41, 0.7, 0.5],
+    ['common', 59, 0.3, 0.15], ['uncommon', 60, 0.5, 0.3], ['rare', 49, 0.7, 0.5],
   ]) {
     const cards = reg.cards.all().filter(c => rewardIds.has(c.id) && c.rarity === rarity);
     assert.equal(cards.length, count, `${rarity}: distinct combat-reward denominator`);

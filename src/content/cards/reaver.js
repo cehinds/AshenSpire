@@ -665,4 +665,89 @@ export const reaverCards = [
       textTemplate: 'Enter Brace Stance. Gain {block} Block.',
     },
   },
+  // ---- Skill-draft depth (blade and shield tracks) -------------------------
+  // A levelled sword or shield drafts from its own school at every rarity it
+  // has opened; these join the retagged pool so each has at least four.
+  {
+    id: 'hewingArc', name: 'Hewing Arc', class: 'reaver', rarity: 'uncommon', cost: 1, type: 'attack',
+    flavor: "A wide cut that opens old wounds.\n\nTaught in the Vanguard's yard to recruits who had never held a blade. The sergeants said the arc forgives a poor grip, and the Gorefire does the rest.\n\nThe yard is ash now. The recruits still swing it wide, as they were shown.",
+    keywords: [], icon: '⌒',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 6 },
+      { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3, if: { p: 'inStance', stance: 'gorefire' } },
+    ],
+    textTemplate: 'Deal {damage} damage. If in Gorefire Stance: apply {bleed} Bleed.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 8 },
+        { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 4, if: { p: 'inStance', stance: 'gorefire' } },
+      ],
+    },
+  },
+  {
+    id: 'sunderingChop', name: 'Sundering Chop', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'attack',
+    flavor: "Downward blow meant to split a shield.\n\nThe Vanguard's smiths measured their work by it. A shield that survived three chops was sent to the wall; one that did not was sent back to the forge with the smith's name chalked upon it.\n\nFew names were chalked twice.",
+    keywords: [], icon: '🪓',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 11 },
+      { op: 'poiseDamage', target: 'enemy', amount: 8 },
+      { op: 'draw', amount: 1 },
+    ],
+    textTemplate: 'Deal {damage} damage and {poiseDamage} Poise damage. Draw {draw} card.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 14 },
+        { op: 'poiseDamage', target: 'enemy', amount: 10 },
+        { op: 'draw', amount: 1 },
+      ],
+    },
+  },
+  {
+    id: 'setTheShield', name: 'Set the Shield', class: 'reaver', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'skill',
+    flavor: "The rim planted, the shoulder behind it.\n\nOld Vanguard drill: the shield is set before the enemy is seen, and the man behind it waits. The drill was called cowardice by the Court's duellists, until the night the Court's gate fell.\n\nThe duellists did not drill again.",
+    keywords: [], icon: '🛡',
+    effects: [
+      { op: 'block', target: 'self', amount: 7 },
+      { op: 'enterStance', stance: 'bulwark' },
+    ],
+    textTemplate: 'Gain {block} Block. Enter Bulwark Stance.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 10 },
+        { op: 'enterStance', stance: 'bulwark' },
+      ],
+    },
+  },
+  {
+    id: 'aegisOfEmbers', name: 'Aegis of Embers', class: 'reaver', rarity: 'rare', cost: 2, staminaCost: 1, type: 'skill',
+    flavor: "A shield held into the fire until it glows.\n\nThe last captain of the Vanguard held the causeway so through the whole of the Burning. His shield was found welded to the stones, and his arm was not found at all.\n\nThe stones there are warm still, and soldiers kneel on them.",
+    keywords: [], icon: '🔰',
+    effects: [
+      { op: 'block', target: 'self', amount: 14 },
+      { op: 'applyStatus', target: 'self', status: 'strength', stacks: 2, if: { p: 'inStance', stance: 'bulwark' } },
+    ],
+    textTemplate: 'Gain {block} Block. If in Bulwark Stance: gain {strength} Strength.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 18 },
+        { op: 'applyStatus', target: 'self', status: 'strength', stacks: 3, if: { p: 'inStance', stance: 'bulwark' } },
+      ],
+    },
+  },
+  {
+    id: 'shieldCrash', name: 'Shield Crash', class: 'reaver', rarity: 'rare', cost: 2, type: 'attack',
+    flavor: "The whole weight of the wall, thrown forward.\n\nA Vanguard shieldman who has held long enough may drive his shield into the line before him. The chronicles of the siege praise it; the surgeons who reset the shieldmen's shoulders afterward do not.\n\nBoth kept their records honestly.",
+    keywords: [], icon: '💥',
+    effects: [
+      { op: 'block', target: 'self', amount: 5 },
+      { op: 'damage', target: 'enemy', amount: { f: 'blockOf', of: 'self' } },
+    ],
+    textTemplate: 'Gain {block} Block. Deal damage equal to your Block.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 9 },
+        { op: 'damage', target: 'enemy', amount: { f: 'blockOf', of: 'self' } },
+      ],
+    },
+  },
 ];
