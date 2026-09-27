@@ -166,7 +166,9 @@ function buildsOf(branch, keep) {
   for (const line of log ? log.split('\n') : []) {
     const [sha, date] = line.split('\t');
     let meta;
-    try { meta = JSON.parse(git(['show', `${sha}:buildordinal.json`])); } catch { continue; }
+    // Quiet: `git log -- buildordinal.json` also lists the commit that DELETED
+    // or predates it (main's 84895c14), whose show fails by design.
+    try { meta = JSON.parse(git(['show', `${sha}:buildordinal.json`], { stdio: ['ignore', 'pipe', 'ignore'] })); } catch { continue; }
     const ordinal = Number(meta.ordinal);
     if (!Number.isInteger(ordinal) || seen.has(ordinal)) continue;
     // A committed build is the artifact at that commit. A commit with no
@@ -188,7 +190,7 @@ function buildsOf(branch, keep) {
   let headTracksBuild = true;
   try { git(['cat-file', '-e', `${ref}:AshenSpire.html`], { stdio: ['ignore', 'pipe', 'ignore'] }); } catch { headTracksBuild = false; }
   let headOrdinal = null;
-  try { headOrdinal = Number(JSON.parse(git(['show', `${ref}:buildordinal.json`])).ordinal); } catch { /* no box at head */ }
+  try { headOrdinal = Number(JSON.parse(git(['show', `${ref}:buildordinal.json`], { stdio: ['ignore', 'pipe', 'ignore'] })).ordinal); } catch { /* no box at head */ }
   return { ref, head: git(['rev-parse', ref]).trim(), builds: out, headTracksBuild, headOrdinal };
 }
 
@@ -256,7 +258,7 @@ function rebuildAt(sha, fullArt) {
     for (const artifact of ['AshenSpire.html', MOBILE_ARTIFACT]) {
       if (existsSync(join(buildTree, artifact))) cpSync(join(buildTree, artifact), join(dir, artifact));
     }
-    console.log(`  rebuilt ${sha.slice(0, 10)} (${fullArt ? 'full' : 'light'} art) in ${Math.round((Date.now() - t0) / 1000)}s`);
+    console.log(`  rebuilt ${sha.slice(0, 10)} (${fullArt ? 'full' : 'light'} art requested${!fullArt && existsSync(join(dir, MOBILE_ARTIFACT)) ? '; this commit predates the light tier and built full art with its mobile twin' : ''}) in ${Math.round((Date.now() - t0) / 1000)}s`);
     result = { dir };
   } catch (error) {
     const detail = String(error.stderr || error.message || error).trim().split('\n').slice(-2).join(' ');
@@ -294,7 +296,8 @@ function artifactsOf(b) {
   // cannot pass.
   if (b.digest && !html.includes(b.digest)) return { error: `the rebuilt HTML does not carry src digest ${b.digest}` };
   const mobilePath = join(r.dir, MOBILE_ARTIFACT);
-  return { html, mobile: existsSync(mobilePath) ? readFileSync(mobilePath) : null, edition: fullArt ? 'full' : 'light' };
+  const mobile = existsSync(mobilePath) ? readFileSync(mobilePath) : null;
+  return { html, mobile, edition: rebuiltEdition(fullArt, Boolean(mobile)) };
 }
 /**
  * ONLY "THE COMMIT HAS NO MOBILE FILE" MEANS "PREDATES THE EDITION". A commit
@@ -308,6 +311,17 @@ function committedEditions(html, hasMobile, fetchMobile) {
   const mobile = fetchMobile();
   if (!mobile) return { error: `its committed ${MOBILE_ARTIFACT} can no longer be fetched (LFS object unavailable)` };
   return { html, mobile };
+}
+/**
+ * THE EDITION IS WHAT THE REBUILD PRODUCED, NOT WHAT WAS ASKED FOR. A commit
+ * older than the light tier (test/554, d03ef7db) ignores the light default and
+ * writes the full file plus its mobile twin; calling that "light" hid the
+ * mobile link the root index then required, and the first run on dev failed
+ * ("root index does not offer a mobile download for test/554"). A mobile file
+ * means the full edition; only a light request with no mobile file is light.
+ */
+function rebuiltEdition(fullArt, hasMobile) {
+  return fullArt || hasMobile ? 'full' : 'light';
 }
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
 let mainHeadSha = null;
@@ -417,13 +431,13 @@ function downloadLink(rel, b, label = 'Download', edition = 'full') {
 function downloadButtons(rel, b, suffix) {
   // A LIGHT BUILD (dev/test since 2026-09-26) is one file with phone-sized art
   // and no mobile twin; calling it "full" would promise art it does not carry.
-  if (b.edition === 'light') return downloadLink(rel, b, `Download${suffix} — light art, phone-sized (${mb(b.bytes)})`, 'full');
+  if (b.edition === 'light' && !b.mobileBytes) return downloadLink(rel, b, `Download${suffix} — light art, phone-sized (${mb(b.bytes)})`, 'full');
   const full = downloadLink(rel, b, `Download full${suffix} (${mb(b.bytes)})`, 'full');
   const mobile = b.mobileBytes ? ` ${downloadLink(rel, b, `Download mobile${suffix} (${mb(b.mobileBytes)})`, 'mobile')}` : '';
   return full + mobile;
 }
 function tableDownload(rel, b, edition) {
-  if (edition === 'mobile' && b.edition === 'light') return '<span class="meta">— (light build: the one file is already phone-sized)</span>';
+  if (edition === 'mobile' && b.edition === 'light' && !b.mobileBytes) return '<span class="meta">— (light build: the one file is already phone-sized)</span>';
   if (edition === 'mobile' && !b.mobileBytes) return '<span class="meta">— (predates the mobile edition)</span>';
   return `<a href="${downloadHref(rel, b, edition)}" download="${esc(downloadName(b, edition))}">${esc(downloadName(b, edition))}</a> <span class="meta">${mb(edition === 'mobile' ? b.mobileBytes : b.bytes)}</span>`;
 }
@@ -1017,6 +1031,17 @@ try {
       rules.push(['a branch with no served build is never current', isCurrent({ builds: [], headTracksBuild: true, headOrdinal: 3 }) === false && isCurrent({ builds: [], headTracksBuild: true, headOrdinal: null }) === false]);
       rules.push(['a committed head whose object is unavailable is not called uncommitted', uncommittedNote('release', false, true).includes('could not be fetched') && !uncommittedNote('release', false, true).includes('not committed')]);
       rules.push(['a head with no committed build is called uncommitted', uncommittedNote('dev', false, false).includes('not committed')]);
+      rules.push(['a rebuild that wrote a mobile twin is the full edition, whatever tier was asked', rebuiltEdition(false, true) === 'full' && rebuiltEdition(false, false) === 'light' && rebuiltEdition(true, false) === 'full']);
+      {
+        // A light CURRENT build on a non-dev branch, through the real root index
+        // and its own download assertions: no mobile link offered, none required.
+        const lightTest = { ...row, branch: 'test', mobileBytes: undefined };
+        const fullOld = { ...row, branch: 'test', ordinal: 4, edition: 'full', mobileBytes: 2 };
+        const html = rootIndex([{ branch: 'test', builds: [lightTest, fullOld], headTracksBuild: false, headOrdinal: 5 }], 'now', []);
+        const offersMobileForFull = html.includes(`href="${downloadHref('', fullOld, 'mobile')}" download="`);
+        const offersMobileForLight = html.includes(`href="${downloadHref('', lightTest, 'mobile')}"`);
+        rules.push(['a light current build on test needs no mobile link, and a full one still offers it', offersMobileForFull && !offersMobileForLight && html.includes('(latest)')]);
+      }
       rules.push(['a light build is not labelled full, nor as predating mobile', !downloadButtons('', row, '').includes('full') && !rowsTable([row], '').includes('predates')]);
     }
     // AFTER THE PURGE (Codex, #1360): every committed build reads as a 404.
