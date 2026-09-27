@@ -582,13 +582,6 @@ export function saveSlotCopyHtml({ slot, summary }) {
 }
 
 /**
- * openNewerSaveNotice({ slot }) → the notice a Continue on a slot saved by a
- * NEWER build lands on (SPEC §3.12: refused and kept). The run-side twin of
- * the profile's 'newer' notice (ui/screens/profileNotice.js): the bytes are
- * fine, just from the future, so the one way on is to leave them be. There is
- * no confirm, only the way out; Delete stays the slot's own confirmed act.
- */
-/**
  * openRefusedSaveNotice({ slot, returnFocusElement }) — the in-run Load door's
  * landing when loadRun refuses a slot that is not newer (content validation,
  * migration, or another tab cleared it): the live run was never swapped, and
@@ -605,6 +598,13 @@ export function openRefusedSaveNotice({ slot, returnFocusElement = null }) {
   });
 }
 
+/**
+ * openNewerSaveNotice({ slot }) → the notice a Continue on a slot saved by a
+ * NEWER build lands on (SPEC §3.12: refused and kept). The run-side twin of
+ * the profile's 'newer' notice (ui/screens/profileNotice.js): the bytes are
+ * fine, just from the future, so the one way on is to leave them be. There is
+ * no confirm, only the way out; Delete stays the slot's own confirmed act.
+ */
 export function openNewerSaveNotice({ slot, returnFocusElement = null }) {
   openConfirmationModal({
     title: t('save.newer.title'),
