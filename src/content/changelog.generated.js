@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1379",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: a plan for loading every asset from outside the game file",
+    "detail": "Docs only; nothing you play changes. A new design document, docs/EXTERNAL-ASSETS-PLAN.md, sets out how the art, fonts, music and map tiles will move out of the game file: they will be stored with the art in the art repository, and the game will load them when it runs, checking each against its fingerprint. The plan covers offline play (an install for phones and desktops, and a download the game assembles itself), the Pages site, every check that assumes one self-contained file, the migration steps, and the questions for the owner. docs/ART-REPO-PLAN.md now marks the lines the new plan replaces.",
+    "build": "0.7.1.673",
+    "pullRequest": 1379,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1379"
+  },
+  {
+    "id": "pr-1350",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: finished changes reach development builds without waiting",
+    "detail": "Nothing you play changes. A change now lands in development as soon as its quick checks pass, and the long checks run when development is promoted to the test build.",
+    "build": "0.7.1.672",
+    "pullRequest": 1350,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1350"
+  },
+  {
     "id": "pr-1377",
     "date": "2026-09-27",
     "group": "2026-09-27",

@@ -12,22 +12,23 @@
 
 How work is branched, reviewed, and merged is the [Branch model](#branch-model)
 below.
-Review or approval may permit integration to `dev`; only the owner merges to
-`release` or `main`, creates a release tag, or publishes a release.
+Every session merges its own PRs into `dev` and promotes `dev` to `test`
+(rule 6 below, owner, 2026-09-26); only the owner merges to `release` or
+`main`, creates a release tag, or publishes a release.
 
 ## Branch model
 
 ```
-feature/* ──► dev ──► release ──► main
-                └──► test (playtest experiments; may never merge back)
+feature/* ──► dev ──► test ──► release ──► main
+                      (heavy CI runs on every push to test and release)
 ```
 
 | Branch | Rules |
 |---|---|
 | `main` | Always playable. Merge-only from `release`. Tag releases here (`v0.1.0` = M1, `v0.2.0` = M2, …). |
-| `release` | Staging. Cut from `dev` when a milestone's acceptance criteria (spec §9) are met; only fixes land here before merging to `main`. |
-| `dev` | Default integration branch. All feature PRs target `dev`. |
-| `test` | Sandbox for balance experiments and playtest builds. Branch from `dev`, cherry-pick winners back. Force-pushes allowed here, and on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
+| `release` | Staging. Promoted from `test` (owner only), through an `rc/<version>` branch pinned at the tested RC SHA (docs/RELEASE-CHECKLIST.md), when a milestone's acceptance criteria (spec §9) are met; only fixes land here before merging to `main`. |
+| `dev` | Default integration branch. All feature PRs target `dev`, and each session merges its own once the fast checks pass. |
+| `test` | Where the heavy CI runs: every push to `test` runs the long suites. Sessions promote `dev` here with a `dev` → `test` PR they merge themselves (rule 6). Only `dev` promotions land here, and `release` is promoted from `test` (owner only, through a pinned `rc/<version>` branch). If `test` is ever deleted, `restore-test-branch.yml` recreates it from `release`, so a fix that landed only on `release` must be merged back into `dev` (a `release` → `dev` PR) before the next promotion; then every heavy run tests what `dev` holds; balance experiments go on their own `experiment/<topic>` branch cut from `dev` (cherry-pick winners back), never on `test`. Force-pushes allowed only on a `feature/*` branch only you have pushed to (a rebase onto `dev`); nowhere else. |
 | `feature/<topic>` | One unit of work, branched from `dev`. Prefix milestone work with it, e.g. `feature/m1-combat-slice`, `feature/m2-map-gen`. |
 
 ## Commits & PRs
@@ -37,10 +38,12 @@ feature/* ──► dev ──► release ──► main
 - UI changes also include the [component catalog](docs/component-catalog.html) in the PR/merge summary. Update the catalog and its visual miniature when a component ID, model, renderer, composition, or reuse surface changes.
 - Balance number changes cite the reasoning. There is no win-rate target (owner rulings D1 and D16 in docs/FINISH.md), and every balance number stays configurable.
 
-### A pull request is not done until the owner can merge it with one click
+### A pull request is not done until it is merged and promoted
 
-Owner's rule, 2026-09-18, for every session and agent working here. The
-owner reads the PR list and merges; nothing else is theirs to do there.
+Owner's rule, 2026-09-18 (merging handed to sessions 2026-09-26), for every
+session and agent working here. The session that opens a PR takes it all the
+way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
+`release` and `main`.
 
 1. **Open it ready for review, never as a draft.** Say in the body what is
    unverified rather than hiding it behind draft status.
@@ -77,10 +80,30 @@ owner reads the PR list and merges; nothing else is theirs to do there.
    yourself (an hour apart is enough);
    if two open PRs touch the same code, message the other session and agree
    who lands first and who rebases.
-6. **Leave the merge to the owner.** A finished PR waits in the list for
-   the owner to merge; merge it to `dev` yourself only when the owner has
-   asked you to land work, and never to `release` or `main` (see
-   [Coordination and release boundary](#coordination-and-release-boundary)).
+6. **Merge to `dev` yourself, then promote to `test`** (owner, 2026-09-26).
+   `dev` takes every change whose fast checks pass; the long suites run at
+   `test`.
+   - Once rules 1–4 hold (reviewed, mergeable, fast checks green), merge
+     your PR into `dev` yourself. Use a merge commit.
+   - Wait for `architecture-sync` to settle: every push to `dev` starts a
+     run that commits a refreshed `docs/ARCHITECTURE-CURRENT-DEV.md` back to
+     `dev`, and a newer push cancels the older run. Promote only when the
+     latest run on `dev` has succeeded and `dev`'s tip is the commit it
+     covered or its own bot commit. Then open a PR from `dev` into `test` and
+     merge it yourself, with a merge commit. Immediately before merging,
+     check again: the PR's head must still be the `dev` tip and that tip's
+     latest `architecture-sync` run must have succeeded. If `dev` moved,
+     wait for its sync to settle and check again. That push to `test` runs the heavy suites. If one is
+     already open, merge that one rather than opening another. Each
+     promotion runs the full 3-OS matrix, so when several of your PRs land
+     together, promote once after the last.
+   - A promotion does not advance the release candidate (the third
+     component of `contentBundle.version`); only the owner names a new
+     candidate ([docs/versioning.md](docs/versioning.md)).
+   - Watch the `test` run. A red there is yours to fix with a new PR into
+     `dev`, which you then promote again.
+   - Never merge to `release` or `main` (see
+     [Coordination and release boundary](#coordination-and-release-boundary)).
 
 ## Adding content (quick reference)
 

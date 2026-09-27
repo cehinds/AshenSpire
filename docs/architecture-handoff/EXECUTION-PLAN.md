@@ -58,14 +58,14 @@ Some later tasks require a field-by-field mapping before implementation. This pl
 
 1. Read repository `CLAUDE.md`, `CONTRIBUTING.md`, `SPEC.md`, `DEVELOPER.md`, and any narrower instructions at the implementation checkout.
 2. Check `git status`, current branch, and active work before edits. Do not reset, clean, stash, overwrite, or copy the dirty working tree without explicit direction. Plan against the actual current `dev`; refresh anchors if it differs from this snapshot.
-3. Work serially. Each numbered implementation task is one GitHub issue, one branch off the owner-reviewed `dev`, and one PR targeting `dev`, opened ready for review (CONTRIBUTING.md, *A pull request is not done…*). Each later task starts only after its prerequisites have landed through owner review. Do not stack speculative migrations on an unreviewed foundation.
-4. Posting issues/PRs or pushing is an outward-facing action: follow the current authorization and repository rules. This document does not authorize publication or merging. Prepare the concrete changes and results before requesting any still-required approval.
+3. Work serially. Each numbered implementation task is one GitHub issue, one branch off the current `dev`, and one PR targeting `dev`, opened ready for review (CONTRIBUTING.md, *A pull request is not done…*). Each later task starts only after its prerequisites have landed on `dev`. Do not stack speculative migrations on an unreviewed foundation.
+4. Posting issues/PRs or pushing is an outward-facing action: follow the current authorization and repository rules. Merging to `dev` and promoting to `test` follow CONTRIBUTING.md rule 6; merging to `release` or `main` is the owner's alone. Prepare the concrete changes and results before requesting any still-required approval.
 5. Before extraction, search all callers: `rg -n 'SYMBOL' src tools tests`. Record API inputs, return shape, mutation behavior, side effects, cleanup, and caller assumptions.
 6. Run applicable existing tests on the baseline. If red, record the failure and distinguish it from your changes. Never suppress a check to make the migration pass.
 7. Implement only the current task. Preserve public entry points with small explicit compatibility adapters until their callers are migrated. No dual writes or alternative rule implementations.
 8. Add behavioral tests for the moved responsibility. Update source-shape checks to assert the real contract after extraction; do not retain tests that require the obsolete implementation location.
 9. Rebuild generated content with `node tools/content-build.mjs`; rebuild with `node tools/launch.mjs --build-only` when applicable. Commit every tracked generated module the tools write (for example `src/content/generated/` and `src/config/generated/`), `buildordinal.json` and the generated changelog module; never commit built HTML (`AshenSpire.html`, `build/`, `dist/`), which is ignored on `dev`. Never hand-edit generated JS or `buildordinal.json`.
-10. Complete applicable CI gates, summarize exact results and limits, and open the PR ready for review. Never merge it yourself.
+10. Complete applicable CI gates, summarize exact results and limits, and open the PR ready for review. Once it is reviewed and its fast checks are green, merge it into `dev` and promote `dev` to `test` yourself (CONTRIBUTING.md rule 6); never merge to `release` or `main`.
 
 ## 4. Target ownership and dependency contract
 
