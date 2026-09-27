@@ -26,7 +26,9 @@ import { ownership, equipPiece } from '../src/model/loadout.js';
 import { inventoryRows } from '../src/model/inventoryPresentation.js';
 import { innInTown } from '../src/model/locations.js';
 import { MARKET_SHELVES, shopStockProblems } from '../src/model/shopKinds.js';
-import { MARKET_ADDITIONS } from '../src/model/marketStock.js';
+import { MARKET_ADDITIONS, applyShopPriceMult } from '../src/model/marketStock.js';
+import { withKitDom } from './helpers/kit-dom.mjs';
+import { mountShop } from '../src/ui/screens/shop.js';
 import {
   smithStonePurchasePlan, commitSmithStonePurchase,
   armourPurchasePlan, commitArmourPurchase,
@@ -438,4 +440,67 @@ test('the offering notes are sentences, not placeholders', () => {
     const row = shippedShops.market.offerings.find((offering) => offering.id === id);
     for (const [key, sentence] of Object.entries(row[NOTE])) assert.ok(typeof sentence === 'string' && sentence.length > 20, `${id}.${key}`);
   }
+});
+
+// ---------------------------------------------------------------------------
+// Codex on #1374: the screen mounts with every new shelf, and prices scale
+// ---------------------------------------------------------------------------
+
+test('DOM: the merchant mounts with every new shelf out and buys one of each through the footer and its review (Codex, on #1374)', () => {
+  // The existing shelves are off here (Settings), so the screen draws only the
+  // additions and Remove; the shelves' own renderers have their own tests.
+  const ONLY = registriesWith({ ...ALL_OUT, ...Object.fromEntries(['cards', 'armaments', 'weaponArts', 'relics', 'flasks'].map((id) => [`${PREFIX}market.${id}.enabled`, false])) });
+  withKitDom((dom) => {
+    const { run, rng } = marketRun(ONLY, { innHere: true });
+    run.hp = 5;
+    const app = dom.document.createElement('main');
+    dom.document.body.appendChild(app);
+    let changed = 0;
+    mountShop(app, {
+      registries: ONLY, run, meta: { settings: { shopSell: false } },
+      onLeave() {}, onChanged() { changed += 1; },
+      restAtInn: (quote) => commitInnRest({ run, registries: ONLY, rng }, quote),
+    });
+    for (const key of ADDITIONS_5A) assert.ok(app.querySelector(`#shop-cat-${key}`), `${key} has its rail item`);
+    const before = { stones: run.smithingStones, sigils: run.sigils.length, armour: (run.loadout.boughtArmour || []).length, cinders: run.cinders };
+    for (const key of ADDITIONS_5A) {
+      app.querySelector(`#shop-cat-${key}`).click();
+      const primary = app.querySelector('#shop-primary');
+      assert.ok(primary && !primary.disabled, `${key}: the footer offers Buy`);
+      primary.click();
+      // The shopBuy beat's review, when the table asks for one.
+      const confirm = dom.document.body.querySelector('.modal-confirm, [data-confirm="yes"], .as-modal .as-btn-primary');
+      if (confirm && !confirm.disabled) confirm.click();
+    }
+    assert.equal(run.smithingStones, before.stones + 1, 'a stone bought');
+    assert.equal(run.sigils.length, before.sigils + 1, 'a sigil bought');
+    assert.equal(run.loadout.boughtArmour.length, before.armour + 1, 'an armour set bought');
+    assert.equal(run.shopStock.innRest.bought, true, 'the rest bought');
+    assert.equal(run.hp, run.maxHp);
+    assert.ok(run.cinders < before.cinders);
+    assert.ok(changed >= 4, 'each purchase persisted');
+  });
+});
+
+test('the Greedy Merchants and Hoarder price multiplier reaches every addition\'s price (Codex, on #1374)', () => {
+  const { run } = marketRun(OUT, { innHere: true });
+  const stock = structuredClone(run.shopStock);
+  const scaled = structuredClone(stock);
+  applyShopPriceMult(scaled, 1.5);
+  const up = (n) => Math.ceil(n * 1.5);
+  for (const kind of ['cards', 'relics', 'flasks']) scaled[kind].forEach((item, i) => assert.equal(item.cost, up(stock[kind][i].cost), `${kind}[${i}]`));
+  assert.equal(scaled.removeCost, up(stock.removeCost));
+  scaled.armour.forEach((item, i) => assert.equal(item.cost, up(stock.armour[i].cost), `armour[${i}]`));
+  scaled.sigils.forEach((item, i) => assert.equal(item.cost, up(stock.sigils[i].cost), `sigils[${i}]`));
+  assert.equal(scaled.smithStones.price, up(stock.smithStones.price));
+  assert.equal(scaled.innRest.price, up(stock.innRest.price));
+  // A multiplier of 1 changes nothing, and a shelf that did not come up is left absent.
+  const same = structuredClone(stock);
+  applyShopPriceMult(same, 1);
+  assert.deepEqual(same, stock);
+  const bare = { cards: [], relics: [], flasks: [], removeCost: 100 };
+  applyShopPriceMult(bare, 2);
+  assert.deepEqual(bare, { cards: [], relics: [], flasks: [], removeCost: 200 });
+  // The scaled stock still passes the saved-shape check.
+  assert.deepEqual(shopStockProblems(scaled), []);
 });
