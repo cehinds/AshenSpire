@@ -2067,6 +2067,18 @@ export const nodes = [
     "blurb": "The place keeps a quest board: the quests offered in this town, and a journal of the run's quests."
   },
   {
+    "id": "deckEdit",
+    "parentId": "property",
+    "label": "Deck editing",
+    "color": "C9A227",
+    "glyph": "✎",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Under Rest sites only (Settings → Advanced → Deck), the deck editor opens from this place's Rest screen. A service marker, with no rule."
+  },
+  {
     "id": "warlord",
     "parentId": "property",
     "label": "Warlord",

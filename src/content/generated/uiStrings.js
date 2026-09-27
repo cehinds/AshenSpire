@@ -2934,5 +2934,362 @@ export const uiStrings = [
     "short": "Live portrait (W1c head)",
     "full": "The head portrait as the catalogue shows it.",
     "tip": ""
+  },
+  {
+    "id": "deckEditor.title",
+    "extends": "",
+    "short": "Edit deck",
+    "full": "Move cards between your deck and the cards you own.",
+    "tip": "Edit deck"
+  },
+  {
+    "id": "deckEditor.open",
+    "extends": "",
+    "short": "Deck",
+    "full": "Open the deck editor.",
+    "tip": "Edit deck"
+  },
+  {
+    "id": "deckEditor.rest",
+    "extends": "",
+    "short": "Edit deck",
+    "full": "Rearrange your deck with the cards you own. Leaving the editor keeps this visit open.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.armoury",
+    "extends": "",
+    "short": "Edit deck",
+    "full": "Open the deck editor with the cards you own.",
+    "tip": "Edit deck"
+  },
+  {
+    "id": "deckEditor.counter",
+    "extends": "",
+    "short": "{count} / {min}–{max}",
+    "full": "Cards in the deck, then the fewest and the most the editor lets you confirm.",
+    "tip": "Deck size"
+  },
+  {
+    "id": "deckEditor.unlimited",
+    "extends": "",
+    "short": "∞",
+    "full": "No limit.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.pane.deck",
+    "extends": "",
+    "short": "Deck",
+    "full": "The cards you will fight with. Tap one to take it out.",
+    "tip": "Deck"
+  },
+  {
+    "id": "deckEditor.pane.collection",
+    "extends": "",
+    "short": "Collection",
+    "full": "Every card you own. Tap one to add it to the deck.",
+    "tip": "Collection"
+  },
+  {
+    "id": "deckEditor.panes.switch",
+    "extends": "",
+    "short": "Switch pane",
+    "full": "Move between the collection and the deck.",
+    "tip": "Switch pane"
+  },
+  {
+    "id": "deckEditor.curve",
+    "extends": "",
+    "short": "Cost curve",
+    "full": "How many cards in the deck cost each amount.",
+    "tip": "Cost curve"
+  },
+  {
+    "id": "deckEditor.curve.bar",
+    "extends": "",
+    "short": "{bucket}",
+    "full": "{count} cards cost {bucket}.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.filters",
+    "extends": "",
+    "short": "Filter",
+    "full": "Show only the cards that match.",
+    "tip": "Filter"
+  },
+  {
+    "id": "deckEditor.sort",
+    "extends": "",
+    "short": "Sort",
+    "full": "Order the cards.",
+    "tip": "Sort"
+  },
+  {
+    "id": "deckEditor.filter.cost",
+    "extends": "",
+    "short": "Cost {cost}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.filter.upgraded",
+    "extends": "",
+    "short": "Upgraded",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.type.attack",
+    "extends": "",
+    "short": "Attack",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.type.skill",
+    "extends": "",
+    "short": "Skill",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.type.power",
+    "extends": "",
+    "short": "Power",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.type.curse",
+    "extends": "",
+    "short": "Curse",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.type.status",
+    "extends": "",
+    "short": "Status",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.type.other",
+    "extends": "",
+    "short": "Other",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.source.basic",
+    "extends": "",
+    "short": "Basic",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.source.art",
+    "extends": "",
+    "short": "Weapon art",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.source.technique",
+    "extends": "",
+    "short": "Technique",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.source.reward",
+    "extends": "",
+    "short": "Reward",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.source.item",
+    "extends": "",
+    "short": "Item-owned",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.sort.cost",
+    "extends": "",
+    "short": "Cost",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.sort.name",
+    "extends": "",
+    "short": "Name",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.sort.type",
+    "extends": "",
+    "short": "Type",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.sort.source",
+    "extends": "",
+    "short": "Source",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.tile.owned",
+    "extends": "",
+    "short": "{owned} owned · {inDeck} in deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.tile.basic",
+    "extends": "",
+    "short": "∞ · {inDeck} in deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.count",
+    "extends": "",
+    "short": "×{count}",
+    "full": "{count} copies in the deck.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.tile.kept",
+    "extends": "",
+    "short": "{count} set aside",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.tile.keptUpgraded",
+    "extends": "",
+    "short": "{count} set aside · upgraded",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.add",
+    "extends": "",
+    "short": "＋",
+    "full": "Add {name} to the deck.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.remove",
+    "extends": "",
+    "short": "－",
+    "full": "Take {name} out of the deck.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.up",
+    "extends": "",
+    "short": "▲",
+    "full": "Move {name} one place earlier in the deck.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.down",
+    "extends": "",
+    "short": "▼",
+    "full": "Move {name} one place later in the deck.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.pickUp",
+    "extends": "",
+    "short": "Move",
+    "full": "Pick up {name}, then place it with the arrows.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.held",
+    "extends": "",
+    "short": "Moving {name}: ▲ and ▼ place it, and Move or Enter drops it.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.locked",
+    "extends": "",
+    "short": "Locked · {piece}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.locked.sentence",
+    "extends": "",
+    "short": "{name} comes with {piece}; the Armoury decides it.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.lock.equipment",
+    "extends": "",
+    "short": "your equipment",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.refuse.copyLimit",
+    "extends": "",
+    "short": "{name} is limited to {limit} in the deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.refuse.allInDeck",
+    "extends": "",
+    "short": "Every {name} you own is already in the deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.empty.deck",
+    "extends": "",
+    "short": "No card in the deck matches these filters.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.empty.collection",
+    "extends": "",
+    "short": "No card you own matches these filters.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.keys",
+    "extends": "",
+    "short": "Tap, ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Done · {cancel} Cancel",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.done",
+    "extends": "",
+    "short": "Done",
+    "full": "Keep this deck.",
+    "tip": "Done"
+  },
+  {
+    "id": "deckEditor.cancel",
+    "extends": "",
+    "short": "Cancel",
+    "full": "Put the deck back exactly as it was when the editor opened.",
+    "tip": "Cancel"
   }
 ];

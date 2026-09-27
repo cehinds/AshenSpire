@@ -48,7 +48,7 @@ import { el, html, row, stepper, statusText, subtitle, statPair, button, modalFo
 // Shrine has one (Multi-use). ChoiceBodyModel projects; this screen decides.
 import { mountChoiceBody } from '../components/choiceBody.js';
 import { restChoiceStatus } from '../models/ChoiceBodyModel.js';
-import { t, has } from '../strings.js';
+import { t, tFull, has } from '../strings.js';
 import { restReview } from '../models/ConfirmationReviewModel.js';
 
 const boundedNumber = (value, fallback, minimum, maximum) => {
@@ -110,11 +110,11 @@ function locationTitle(locationId) {
   return t('rest.title');
 }
 
-export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null, questBoard = null }) {
+export function mountRest(app, { registries, run, meta, onDone, onReallocate = null, onLevelUp = null, healMult = 1, refill = null, openPanel = null, multiUse = false, rested = false, services = null, hud = null, visit = null, questBoard = null, deckEditor = null }) {
   // E13's multi-use Shrine: an action re-opens the same screen (with what was
   // already taken recorded) instead of leaving; LEAVE is the one way out.
   const remount = (extra = {}) => mountRest(app, {
-    registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill, openPanel: null, multiUse, rested, services, hud, visit, questBoard, ...extra,
+    registries, run, meta, onDone, onReallocate, onLevelUp, healMult, refill, openPanel: null, multiUse, rested, services, hud, visit, questBoard, deckEditor, ...extra,
   });
   // THE PLACE IS A CARRIER (plan phase 7). The door (main.js) opens the visit
   // — the location's rules mounted, `arrived` already emitted — and hands it
@@ -151,6 +151,11 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // board is the atlas town's and this screen knows no atlas. Reading it takes
   // nothing and ends nothing: the board returns here.
   const board = stay.services.questBoard && questBoard ? questBoard : null;
+  // THE DECK EDITOR (SPEC §14.1) under Rest sites only: a service the place's
+  // tags offer (`deckEdit`) and the door hands in the way to it only when the
+  // setting says so (DeckEditorModel.deckEditorDoors). It ends nothing: the
+  // editor closes back onto this screen.
+  const deckDoor = stay.services.deckEdit && deckEditor ? deckEditor : null;
   const arm = beatArmer(meta, registries);
   // `hpCharge` / `manaCharge` are GONE, and their absence is the point: this
   // screen no longer names a charge kind at all. It used to reach for exactly
@@ -318,6 +323,13 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
             <p>${esc(t('questBoard.open.summary', { ready: board.ready, open: board.open }))}</p>
           </div>
         </div>` : ''}
+        ${deckDoor ? `<div class="class-pick" id="deck-opt" role="button" tabindex="0">
+          <div class="glyph">♠</div>
+          <div class="cp-body">
+            <h3>${esc(t('deckEditor.rest'))}</h3>
+            <p>${esc(tFull('deckEditor.rest'))}</p>
+          </div>
+        </div>` : ''}
       </div>
     `;
 
@@ -371,7 +383,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   for (const [selector, variant] of [
     ['#rest-opt', 'rest'], ['#smith-opt', 'smith'],
     ['#extract-opt', 'extract'], ['#install-opt', 'install'],
-    ['#flask-reallocate', 'flask-allocation'], ['#level-opt', 'level-up'],
+    ['#flask-reallocate', 'flask-allocation'], ['#level-opt', 'level-up'], ['#deck-opt', 'deck-editor'],
   ]) {
     const element = app.querySelector(selector);
     if (element) markUiComponent(element, UI.shrineOptionCard, variant);
@@ -383,6 +395,17 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
       board.onOpen();
+    });
+  }
+  const deckOption = deckDoor ? app.querySelector('#deck-opt') : null;
+  if (deckOption) {
+    deckOption.addEventListener('click', () => deckDoor.onOpen());
+    deckOption.addEventListener('keydown', (event) => {
+      // input.js's capture handler may already have pressed the focused card
+      // (a click, which opened the editor); a consumed keydown opens nothing.
+      if (event.defaultPrevented || (event.key !== 'Enter' && event.key !== ' ')) return;
+      event.preventDefault();
+      deckDoor.onOpen();
     });
   }
   if (leave) leave.addEventListener('click', () => onDone(rested ? 'Left the Shrine, rested.' : 'Left the Shrine.'));

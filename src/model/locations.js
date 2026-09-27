@@ -57,6 +57,9 @@ export const SERVICE_TAGS = Object.freeze({
   // Plan phase 10b: the place keeps a quest board — the atlas quests offered
   // in its town and a journal of the run's quests (ui/screens/questBoard.js).
   questBoard: 'questBoard',
+  // SPEC §14.1: under Rest sites only, the deck editor opens from the Rest
+  // screen of a place carrying this marker (shrine, inn, chapel; not camp).
+  deckEdit: 'deckEdit',
 });
 
 /** The classic node types the door opens a visit at (main.js enterNode). */
@@ -149,6 +152,7 @@ export function locationServices(registries, tags) {
     levelUp: held.has(SERVICE_TAGS.levelUp),
     flasks: held.has(SERVICE_TAGS.flasks),
     questBoard: held.has(SERVICE_TAGS.questBoard),
+    deckEdit: held.has(SERVICE_TAGS.deckEdit),
   });
 }
 
