@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1369",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: a code check no longer fails at random while another check runs",
+    "detail": "Nothing you play changes. The check that every fixed list in the game is used by something could crash if another check briefly wrote a scratch file beside it. It now ignores those scratch files, and names any file that disappears while it reads instead of failing.",
+    "build": "0.7.1.634",
+    "pullRequest": 1369,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1369"
+  },
+  {
     "id": "pr-1352",
     "date": "2026-09-27",
     "group": "2026-09-27",
