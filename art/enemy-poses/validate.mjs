@@ -5,7 +5,7 @@ import {act2Enemies} from '../../src/content/enemies/act2.js';
 import {act3Enemies} from '../../src/content/enemies/act3.js';
 import {ENEMY_POSES} from '../../src/content/enemyArt.js';
 import {decodePng,contentBox} from '../../tools/concept-cutout.mjs';
-const manifest=JSON.parse(readFileSync('assets/enemy-poses/manifest.json'));
+const manifest=JSON.parse(readFileSync('asset-data/enemy-poses/manifest.json'));
 const ids=[...act1Enemies,...act2Enemies,...act3Enemies].map(e=>e.id).sort();
 assert.deepEqual(manifest.entries.map(e=>e.id).sort(),ids);
 assert.deepEqual([...ENEMY_POSES].sort(),ids);

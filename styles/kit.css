@@ -3974,7 +3974,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    card-inspection pane's zoom floor, the same in playing-card and equipment
    inspection. */
 /* FONT LICENCES — carried here so the notices travel inside every build,
-   single-file and mobile alike (the same text is assets/fonts/OFL.txt).
+   single-file and mobile alike (the same text is asset-data/fonts/OFL.txt).
 
 Card lore faces bundled in assets/fonts/ (Latin subset WOFF2, from the Fontsource
 packages of the Google Fonts releases). Each is licensed under the SIL Open Font
