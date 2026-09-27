@@ -870,6 +870,9 @@ export function createSession({ registries, seedString, endless = false, restore
     const offer = session.scene.offers[memberId];
     const m = members.get(memberId);
     if (!offer || !m) return { ok: false, error: 'no offer for member' };
+    // A repeat (a double tap, a duplicated message) while others still choose
+    // must grant nothing twice.
+    if (session.scene.chosen[memberId]) return { ok: false, error: 'already chosen' };
     if (cardId && offer.cardIds.includes(cardId)) {
       m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
     }

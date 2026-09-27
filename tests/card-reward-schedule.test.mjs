@@ -575,3 +575,30 @@ test('co-op couch seats: a level-card pick on seat A survives switching to seat 
     for (const [key, value] of Object.entries(saved)) globalThis[key] = value;
   }
 });
+
+test('co-op: a repeat choice while another seat still chooses grants nothing twice', () => {
+  const host = createSession({ registries: withSchedule({ onLevelUp: true }), seedString: 'SCHEDULE' });
+  host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
+  host.addMember({ id: 'p2', name: 'p2', classId: 'rogue' });
+  host.setConnectedMany(['p1', 'p2'], true);
+  host.start();
+  host.chooseNode('p1', host.session.mapGraph.startIds[0]);
+  if (host.scene.kind !== 'reward') {
+    for (const id of ['p2']) { try { host.chooseNode(id, host.session.mapGraph.startIds[0]); } catch {} }
+  }
+  if (host.live && host.live.combat) {
+    for (const enemy of host.live.combat.enemies) enemy.hp = 1;
+    host.autoResolveCombat(botTurn);
+  }
+  assert.equal(host.scene.kind, 'reward', 'both seats are at the spoils');
+  const p1 = host.livingMembers().find((m) => m.id === 'p1');
+  const before = p1.run.deck.length;
+  const offer = host.scene.offers.p1;
+  const picks = Object.fromEntries((offer.levelCards || []).map((row, i) => [row.ordinal ?? i, row.cardIds[0]]));
+  assert.equal(host.chooseReward('p1', { levelCardIds: picks }).ok, true);
+  const once = p1.run.deck.length;
+  assert.ok(once > before, 'the level card is taken once');
+  assert.equal(host.scene.kind, 'reward', 'p2 is still choosing');
+  assert.deepEqual(host.chooseReward('p1', { levelCardIds: picks }), { ok: false, error: 'already chosen' });
+  assert.equal(p1.run.deck.length, once, 'the repeat grants nothing');
+});
