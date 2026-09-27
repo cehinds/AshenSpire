@@ -257,9 +257,9 @@ export function commitExtraction(registries, run, itemRef, mountKey, explicitRul
 
 // ---- install ---------------------------------------------------------------
 
-/** The run-owned cards a mount of `accepts` could seat. */
+/** The run-owned cards a mount of `accepts` could seat — deck ∪ sideboard (SPEC §14.1). */
 function installableCards(registries, run, accepts) {
-  return (run.deck || [])
+  return [...(run.deck || []), ...(run.sideboard || [])]
     .filter((inst) => inst && !isItemOwned(inst) && !inst.equipmentRole)
     .filter((inst) => cardTags(registries, inst.cardId).some((tag) => accepts.includes(tag)))
     .map((inst) => Object.freeze({
@@ -312,9 +312,11 @@ export function commitInstall(registries, run, itemRef, mountKey, instanceId, ex
   const before = plan.stones;
   run.smithingStones = free ? before : before - candidate.cost;
   const n = nextTransaction(run);
-  const at = run.deck.findIndex((inst) => inst && inst.instanceId === instanceId);
-  if (at === -1) throw new Error(`Deck card '${instanceId}' vanished between plan and commit`);
-  run.deck.splice(at, 1);
+  // The card leaves whichever owned pile holds it (SPEC §14.1): an art the
+  // deck editor set aside is seated without a trip back into the deck.
+  const pile = [run.deck, run.sideboard].find((cards) => Array.isArray(cards) && cards.some((inst) => inst && inst.instanceId === instanceId));
+  if (!pile) throw new Error(`Deck card '${instanceId}' vanished between plan and commit`);
+  pile.splice(pile.findIndex((inst) => inst && inst.instanceId === instanceId), 1);
   writeMount(run, itemRef, mountKey, { card: card.cardId, upgraded: card.upgraded, extractions: mount.extractions });
   stampDeck(registries, run);
   const receipt = Object.freeze({
