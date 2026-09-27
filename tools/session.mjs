@@ -846,15 +846,18 @@ export function createSession({ registries, seedString, endless = false, restore
     session.scene = { kind: 'reward', pool, offers: pending, chosen: {}, afterReward: null };
   }
 
-  // A level card (SPEC §15.1): one pick per row, by ordinal; a pick the row
-  // did not offer is ignored, as an unoffered cardId is.
+  // A level card (SPEC §15.1): one pick per row, by ordinal. A row the seat
+  // left unpicked — or picked a card it did not offer — is picked FOR it on
+  // the seat's own 'cardRewards' stream, as the solo door's auto-collect
+  // picks a choice row (model/rewardplan.js resolveContinue): closing the
+  // spoils never silently forfeits a level card.
   function takeLevelCards(m, offer, levelCardIds) {
-    if (!levelCardIds || typeof levelCardIds !== 'object') return;
+    const picks = levelCardIds && typeof levelCardIds === 'object' ? levelCardIds : {};
     for (const row of Array.isArray(offer.levelCards) ? offer.levelCards : []) {
-      const picked = levelCardIds[row.ordinal];
-      if (picked && row.cardIds.includes(picked)) {
-        m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId: picked, upgraded: false });
-      }
+      if (!Array.isArray(row.cardIds) || !row.cardIds.length) continue;
+      const chosen = picks[row.ordinal];
+      const cardId = chosen && row.cardIds.includes(chosen) ? chosen : row.cardIds[m.rng.int('cardRewards', 0, row.cardIds.length - 1)];
+      m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
     }
   }
 
@@ -1238,7 +1241,7 @@ export function createSession({ registries, seedString, endless = false, restore
       if (pick && pick.cardId && offer.cardIds.includes(pick.cardId)) {
         m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
       }
-      if (pick) takeLevelCards(m, offer, pick.levelCardIds);
+      takeLevelCards(m, offer, pick && pick.levelCardIds);
       // THE RELIC MAY BE IN HAND ALREADY: a missed event replayed before this
       // entry can have granted the very relic the offer rolled (rolled against
       // the relics the seat held then). The seat is owed a relic, not this

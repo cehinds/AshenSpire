@@ -17,6 +17,7 @@ import { rewardPlan, resolveContinue, rewardClaimStatus, rewardNotes, REWARD_KIN
 import { resolveCard } from '../src/model/registries.js';
 import { playCard, endTurn } from '../src/engine/coopCombat.js';
 import { createSession } from '../tools/session.mjs';
+import { createLevelCardPicks, levelCardStrips } from '../src/ui/screens/coop.js';
 import { advancedConfigRows } from '../src/model/advancedConfig.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { t } from '../src/ui/strings.js';
@@ -80,8 +81,8 @@ test('Falsify: with chancePct.elite 0 an elite win never offers a card row; at 1
   for (let seed = 1; seed <= 50; seed++) {
     const offer = rollCombatCardOffer(never, createRng(seed), args('elite'));
     assert.deepEqual(offer.cardIds, [], `seed ${seed}`);
-    assert.equal(offer.cardMissed, true, 'a missed chance says so');
-    assert.deepEqual(rewardNotes(offer.rewards), ['cardMissed']);
+    assert.equal(offer.cardMissed, false, 'a chance of 0 is "never", not a miss "this time"');
+    assert.deepEqual(rewardNotes(offer.rewards), []);
     assert.equal(rewardPlan(offer.rewards).rows.some((r) => r.kind === 'card'), false);
   }
   const always = withSchedule({ chancePct: { elite: 100 } });
@@ -102,7 +103,11 @@ test('a chance between 0 and 100 rolls once on rewardRolls and lands near its od
     const offer = rollCombatCardOffer(half, rng, args('normal'));
     assert.equal(rng.getCounters().rewardRolls, 1, 'one roll per eligible fight');
     if (offer.cardIds.length) offered++;
-    else assert.equal(rng.getCounters().cardRewards, 0, 'a miss rolls no cards');
+    else {
+      assert.equal(rng.getCounters().cardRewards, 0, 'a miss rolls no cards');
+      assert.equal(offer.cardMissed, true, 'a real roll that misses says so');
+      assert.deepEqual(rewardNotes(offer.rewards), ['cardMissed']);
+    }
   }
   assert.ok(offered > 150 && offered < 250, `about half offer (${offered}/400)`);
 });
@@ -451,4 +456,39 @@ test('a co-op seat that was away claims its level card through the catch-up', ()
   assert.equal(host.resolveCatchup('p2', p2.catchup.indexOf(debt), { levelCardIds: { 0: picked } }).ok, true);
   assert.equal(p2.run.deck.length, before + 1);
   assert.equal(p2.run.deck.at(-1).cardId, picked);
+});
+
+test('co-op: a level-card pick survives a redraw, and a row left unpicked is picked for the seat on close', () => {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const offer = { cardIds: ['stomp'], levelCards: [{ ordinal: 0, cardIds: ['rend', 'gildedOath', 'stomp'] }] };
+    const store = createLevelCardPicks();
+    const draw = (snapshotOffer) => {
+      const app = document.createElement('main'); document.body.append(app);
+      app.append(...levelCardStrips(REG, snapshotOffer, store.picksFor('p1|reward|1', snapshotOffer)));
+      return app;
+    };
+    const first = draw(offer);
+    first.querySelectorAll('.coop-level-card .card')[1].click();
+    first.remove();
+    // Another seat chooses: a fresh snapshot (a new object, same offer) redraws the door.
+    const redrawn = draw(structuredClone(offer));
+    assert.deepEqual(redrawn.querySelectorAll('.coop-level-card .is-chosen').map((c) => c.dataset.cardId), ['gildedOath'], 'the tap is still lit');
+    assert.deepEqual(store.picksFor('p1|reward|1', offer), { 0: 'gildedOath' }, 'and still rides with the close');
+    redrawn.remove();
+    // A new offer starts clean.
+    assert.deepEqual(store.picksFor('p1|reward|2', { levelCards: [{ ordinal: 0, cardIds: ['rend'] }] }), {});
+  } finally {
+    for (const [key, value] of Object.entries(saved)) globalThis[key] = value;
+  }
+  // The host: closing with the plain card only still grants the level card.
+  const host = coopFirstSpoils(withSchedule({ onLevelUp: true }), 'SCHEDULE');
+  const spoils = host.scene.offers.p1;
+  const deck = host.livingMembers()[0].run.deck;
+  const before = deck.length;
+  assert.equal(host.chooseReward('p1', { cardId: spoils.cardIds[0] }).ok, true);
+  assert.equal(deck.length, before + 2, 'the card and the auto-picked level card');
+  assert.ok(spoils.levelCards[0].cardIds.includes(deck.at(-1).cardId));
 });

@@ -68,7 +68,8 @@ export function cardRewardSchedule(balance) {
  *                `chancePct[pool]` misses. A chance of 100 always offers and
  *                0 never does; neither rolls. Between them ONE roll on
  *                'rewardRolls'.
- *   cardMissed — that chance missed: the menu says "No card this time."
+ *   cardMissed — that roll missed: the menu says "No card this time." A
+ *                chance of 0 never offers and never says so.
  *   levelCards — how many level-card rows: min(levelsGained,
  *                onLevelUpMaxPerFight) when `onLevelUp` is on, else 0. A
  *                waiting draft does not displace them.
@@ -82,8 +83,9 @@ export function cardRewardPlan(balance, { pool, levelsGained = 0, draftWaiting =
   let cardMissed = false;
   if (!draftWaiting && (!known || schedule.afterCombat[pool])) {
     const pct = known ? schedule.chancePct[pool] : 100;
-    offerCard = pct >= 100 ? true : pct <= 0 ? false : rng.chance('rewardRolls', pct);
-    cardMissed = !offerCard;
+    // Only a REAL roll can miss "this time": 0 means never, and says nothing.
+    if (pct >= 100) offerCard = true;
+    else if (pct > 0) cardMissed = !(offerCard = rng.chance('rewardRolls', pct));
   }
   const levelCards = schedule.onLevelUp && Number.isInteger(levelsGained) && levelsGained > 0
     ? Math.min(levelsGained, schedule.onLevelUpMaxPerFight) : 0;

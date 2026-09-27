@@ -674,7 +674,7 @@ function collectContentProblems(bundle, errors = []) {
   }
 
   // THE CARD REWARD SCHEDULE (SPEC §15.1). Absent reads as the shipped
-  // defaults (engine/encounters.js cardRewardSchedule); present, every key is
+  // defaults (model/rewardplan.js cardRewardSchedule, read by cardRewardPlan); present, every key is
   // checked, and a key it does not know is refused rather than ignored.
   if (b.balance?.rewards?.cardRewards !== undefined) {
     const s = b.balance.rewards.cardRewards;

@@ -248,6 +248,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.note.levelCardAuto",
+    "extends": "",
+    "short": "A level card left unpicked is chosen for you.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.skillDraft.title",
     "extends": "",
     "short": "{skill} · level {level}",
