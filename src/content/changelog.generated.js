@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1383",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "More health to start a climb, and a fourth Action at Dexterity 4",
+    "detail": "Every new character opens with 21 more HP: a Reaver on 70, a Starseer on 69, a Rogue or Herald on 59, sized so the first three fights of a climb rarely take the whole pool. Dexterity now buys an extra Action from 4 points instead of 5, so you can start with four Actions by putting all three creation points into Dexterity, or reach it within three level-ups. Runs already under way keep the numbers they started with.",
+    "build": "0.7.1.674",
+    "pullRequest": 1383,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1383"
+  },
+  {
     "id": "pr-1379",
     "date": "2026-09-27",
     "group": "2026-09-27",
