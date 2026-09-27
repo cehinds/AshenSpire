@@ -11,7 +11,7 @@ sign, because editing it makes a new commit that never ran the gates.
 
 **Only the owner cuts a release.** Agents never cut `release`, tag, or publish.
 They may run these gates and report results in a pull request into `dev`. Cutting
-`release` from `dev`, merging `release` into `main`, creating the `vX.Y.Z` tag and
+`release` from the tested RC SHA on `test` (through a branch pinned to that SHA, below), merging `release` into `main`, creating the `vX.Y.Z` tag and
 publishing any build or storefront listing are the owner's steps alone (see
 CONTRIBUTING.md, *Coordination and release boundary*).
 
@@ -202,8 +202,11 @@ The sign-off is **not** recorded in this file. Editing a tracked file makes a ne
 commit, so a sign-off written here would sit on a commit that never ran the gates,
 and a commit cannot name its own SHA. This file stays a template.
 
-The owner signs by commenting on the release pull request (`release` ← `dev`), or
-on a release issue. The comment names:
+The owner signs by commenting on the release pull request, or on a release issue.
+Sessions keep promoting `dev` to `test` (CONTRIBUTING.md rule 6), so a
+`release` ← `test` pull request would advance past the RC SHA. Its head is
+instead `rc/<version>`, a branch created at the tested RC SHA and never
+moved. The comment names:
 
 - the version,
 - the tested RC SHA,
