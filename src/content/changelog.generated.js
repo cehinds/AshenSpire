@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Behind the scenes: every new dev build is playable on the build site again",
     "detail": "The build site had stopped updating after built files stopped being saved with each change. It now rebuilds each recent build from its own source, so the newest dev build is at /dev/latest/ and every recent one has its own page.",
-    "build": "0.7.1.616",
+    "build": "0.7.1.617",
     "pullRequest": 1360,
     "url": "https://github.com/cehinds/AshenSpire/pull/1360"
+  },
+  {
+    "id": "pr-1356",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: a changelog entry must name the build it ships in",
+    "detail": "Nothing you play changes. Before a change can merge, its own entry here is now checked against the build number it actually ships, so an entry that names the build before or after it is caught instead of going out one number off, as the entry for #1315 did.",
+    "build": "0.7.1.616",
+    "pullRequest": 1356,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1356"
   },
   {
     "id": "pr-1326",
