@@ -178,22 +178,24 @@ test('FINISH: a numeric offering leaf without a [NOTE] is refused by name', () =
 });
 
 test('FINISH: a disabled offering never appears, and disabling below the minimum is refused by name', () => {
-  // Disabled at chance 100: never rolled.
-  const off = registriesWith({ [`${PREFIX}market.cards.enabled`]: false });
-  for (const seed of SEEDS.slice(0, 50)) assert.ok(!rollShopOfferings(off.shops.market, createRng(seed)).includes('cards'));
+  // Disabled at chance 100: never rolled. (Relics, since cards and flasks are
+  // the two offerings the shipped minimum of 2 needs on: SPEC §14.2.)
+  const off = registriesWith({ [`${PREFIX}market.relics.enabled`]: false });
+  assert.equal(off.shops.market.offerings.find((row) => row.id === 'relics').enabled, false, 'the setting applied');
+  for (const seed of SEEDS.slice(0, 50)) assert.ok(!rollShopOfferings(off.shops.market, createRng(seed)).includes('relics'));
   // Disabled while the guarantee is short: never added either, though it is the heaviest.
-  const zeroOff = registriesWith({ ...allChancesZero(), [`${PREFIX}market.cards.enabled`]: false });
+  const zeroOff = registriesWith({ ...allChancesZero(), [`${PREFIX}market.relics.weight`]: 1000, [`${PREFIX}market.relics.enabled`]: false });
   for (const seed of SEEDS) {
     const ids = rollShopOfferings(zeroOff.shops.market, createRng(seed));
-    assert.ok(!ids.includes('cards'), `seed ${seed}`);
+    assert.ok(!ids.includes('relics'), `seed ${seed}`);
     assert.equal(ids.length, 2);
   }
   // Its shelf is empty on the visit, and the screen has no rail item for it.
   const run = createRunState({ seed: 3, classId: 'reaver', registries: off });
   const stock = buildMarketStock(off, createRng(3), run);
-  assert.deepEqual(stock.cards, []);
-  assert.ok(!stock.offerings.includes('cards'));
-  assert.ok(!shopCategories({ offered: new Set(stock.offerings), services: true }).includes('cards'));
+  assert.deepEqual(stock.relics, []);
+  assert.ok(!stock.offerings.includes('relics'));
+  assert.ok(!shopCategories({ offered: new Set(stock.offerings), services: true }).includes('relics'));
 
   // Disabling below the minimum: five of six off leaves one, under a minimum of 2.
   const market = offeringsOf('market').map((row) => row.id);
@@ -466,10 +468,11 @@ test('the atlas shop inspection promises Remove only when the visit offered it (
   assert.doesNotMatch(hidden.benefit, /remove/i);
   // Once rolled, the benefit names only the shelves the visit laid out (Codex, on #1371).
   assert.match(offered.benefit, /^Spend cinders on this visit’s cards, relics, flasks, armaments, weapon arts\./);
-  const noCards = registriesWith({ [`${PREFIX}market.cards.enabled`]: false, [`${PREFIX}market.relics.enabled`]: false });
+  // (Cards and flasks are the offerings the minimum counts, so two others go.)
+  const noCards = registriesWith({ [`${PREFIX}market.relics.enabled`]: false, [`${PREFIX}market.weaponArts.enabled`]: false });
   const fewer = localServiceModel({ handlerId: 'shop', registries: noCards, run, state: { stock: buildMarketStock(noCards, createRng(6), run) } });
-  assert.doesNotMatch(fewer.benefit, /cards|relics/);
-  assert.match(fewer.benefit, /flasks, armaments, weapon arts/);
+  assert.doesNotMatch(fewer.benefit, /relics|weapon arts/);
+  assert.match(fewer.benefit, /cards, flasks, armaments\./);
   assert.ok(!hidden.facts.some((fact) => /Remove a card/.test(fact)));
   // Before the first entry nothing is rolled: removal is only a possibility.
   const unrolled = localServiceModel({ handlerId: 'shop', registries: REG, run, state: {} });

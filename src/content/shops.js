@@ -47,8 +47,8 @@ const ALWAYS = 'It always has something to lay out when it comes up, so it count
 // A NON-CONDITIONAL SHELF STILL NEEDS A STOCK (SPEC §14.2). Its per-visit
 // count lives elsewhere (balance.shop, where Advanced → Rewards lists it) and
 // can be set to 0; `stockKey` names it, so validation and Settings count the
-// offering toward the minimum only while that count is at least 1. A service
-// (remove) names none: it is always available.
+// offering toward the minimum only while that count is at least 1. An
+// offering that names none always counts (a service with nothing to run out).
 const STOCK_KEY = 'Where this shelf\'s per-visit stock lives. While that stock is 0 the shelf lays out nothing, so it does not count toward the guaranteed minimum.';
 const MAYBE = (why) => `It can have nothing to sell on a visit (${why}); then it is not laid out, and it never counts toward the guaranteed minimum.`;
 
@@ -81,7 +81,7 @@ export const shops = {
       offering('flasks', { weight: 40, conditional: false, stockKey: 'balance.shop.flaskStock' }, { conditional: `${ALWAYS} Its pool is every utility flask, whatever the run carries.`, stockKey: STOCK_KEY }),
       offering('armaments', { weight: 30, conditional: true }, { conditional: MAYBE('it never offers an armament you already carry') }),
       offering('weaponArts', { weight: 20, conditional: true }, { conditional: MAYBE('its pool is only the mountable weapon arts the armaments carry') }),
-      offering('remove', { weight: 50, conditional: false }, { conditional: `${ALWAYS} It is a service with a price, not a shelf of goods.` }),
+      offering('remove', { weight: 50, conditional: true }, { conditional: MAYBE('it needs a card in your deck that can be removed, and a deck of one card, or of granted cards only, has none') }),
       // THE MARKET ADDITIONS (SPEC §14.3, §14.6 step 5). Each ships at a chance
       // below 100 and a weight below the shelves above, so the shelves stay the
       // visit's certainties and the guarantee still fills from them first. Their

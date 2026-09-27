@@ -862,7 +862,7 @@ test('a conditional offering does not count toward the enablement minimum: Setti
   // A config import refuses it the same way (Settings and sync read the same rows).
   assert.throws(() => parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle, {}));
   // Two unconditional offerings on beside armour: taken.
-  const two = { ...settings, [`${PREFIX}market.remove.enabled`]: true };
+  const two = { ...settings, [`${PREFIX}market.flasks.enabled`]: true };
   assert.deepEqual(shopSettingsProblems(contentBundle, two), []);
   // Sigils count as conditional too.
   const sigilsOnly = Object.fromEntries(shippedShops.market.offerings
@@ -888,7 +888,7 @@ test('every offering authors a boolean `conditional` with its [NOTE]; the market
   }
   const market = Object.fromEntries(shippedShops.market.offerings.map((row) => [row.id, row.conditional]));
   assert.deepEqual(market, {
-    cards: false, relics: true, flasks: false, armaments: true, weaponArts: true, remove: false,
+    cards: false, relics: true, flasks: false, armaments: true, weaponArts: true, remove: true,
     armour: true, smithStones: true, sigils: true, innRest: true,
   });
   // Authored data, not a Settings row.
@@ -932,13 +932,15 @@ test('PROPERTY: a run that owns every relic and carries every armament still get
     {},
     ALL_OUT,
     { ...allMarketChancesZero(), [`${PREFIX}market.relics.chance`]: 100, [`${PREFIX}market.armaments.chance`]: 100 },
-    { ...allMarketChancesZero(), [`${PREFIX}market.guaranteedMinimum`]: 3 },
-    { ...allMarketChancesZero(), [`${PREFIX}market.guaranteedMinimum`]: 3, [`${PREFIX}market.relics.weight`]: 100, [`${PREFIX}market.armaments.weight`]: 99, [`${PREFIX}market.weaponArts.weight`]: 98 },
+    // The guarantee reaching first for the shelves the run has emptied. (A
+    // minimum of 3 is refused while only cards and flasks count.)
+    { ...allMarketChancesZero(), [`${PREFIX}market.relics.weight`]: 100, [`${PREFIX}market.armaments.weight`]: 99, [`${PREFIX}market.remove.weight`]: 98 },
+    { ...allMarketChancesZero(), [`${PREFIX}market.armour.weight`]: 100, [`${PREFIX}market.sigils.weight`]: 99 },
     // Stock-0 mixes (coordinator ruling, #1375): a shelf whose stock is set
     // to 0 lays out nothing, so it is omitted and the guarantee refills.
-    { 'gameConfig.balance.shop.cardStock': 0 },
-    { ...allMarketChancesZero(), 'gameConfig.balance.shop.flaskStock': 0 },
-    { ...allMarketChancesZero(), 'gameConfig.balance.shop.cardStock': 0, [`${PREFIX}market.cards.chance`]: 100 },
+    // (Cards and flasks at 0 are refused by Settings; the backstop for them
+    // is tested on a bundle below.)
+    { ...allMarketChancesZero(), 'gameConfig.balance.shop.relicStock': 0, [`${PREFIX}market.relics.weight`]: 1000 },
     { ...ALL_OUT, 'gameConfig.balance.shop.relicStock': 0, 'gameConfig.balance.shop.armamentStock': 0, 'gameConfig.balance.shop.weaponArtStock': 0, [`${PREFIX}market.smithStones.perVisit`]: 0, [`${PREFIX}market.sigils.stock`]: 0, [`${PREFIX}market.armour.stock`]: 0 },
   ];
   for (const settings of settingsSets) {
@@ -951,7 +953,10 @@ test('PROPERTY: a run that owns every relic and carries every armament still get
       run.loadout.storage = [...new Set([...(run.loadout.storage || []), ...registries.equipment.armaments.map((piece) => piece.id)])];
       run.sigils = registries.sigils.ids();
       run.loadout.boughtArmour = registries.equipment.armour.filter((row) => row.classId === run.class).map((row) => ({ classId: row.classId, id: row.id }));
+      // Every other seed, a deck with nothing Remove could take.
+      if (seed % 2) run.deck = run.deck.filter((card) => card.grantedBy);
       const stock = buildMarketStock(registries, createRng(seed), run, { meta: {} });
+      if (seed % 2) assert.ok(!stock.offerings.includes('remove'), `seed ${seed}: remove with nothing to remove is omitted`);
       assert.ok(stock.offerings.length >= minimum, `seed ${seed} ${JSON.stringify(settings)}: ${stock.offerings.join(',')} meets ${minimum}`);
       for (const id of ['relics', 'armaments', 'armour', 'sigils']) {
         assert.ok(!stock.offerings.includes(id), `seed ${seed}: the empty ${id} shelf is not laid out`);
@@ -991,11 +996,15 @@ test('a non-conditional offering counts toward the minimum only while its named 
   assert.equal(validateContent(bundle).ok, true, JSON.stringify(validateContent(bundle).errors));
   assert.equal(bundle.balance.shop.cardStock, contentBundle.balance.shop.cardStock);
   assert.equal(bundle.shops.blacksmith.offerings.find((o) => o.id === 'smithStones').price, 77);
-  // cardStock 0 alone leaves flasks and remove: allowed, and at run time the
-  // empty cards shelf is omitted and the guarantee refills.
+  // cardStock 0 alone is refused too: cards and flasks are the only
+  // offerings the shipped minimum of 2 can count.
   const cardsOnly = { 'gameConfig.balance.shop.cardStock': 0 };
-  assert.deepEqual(shopSettingsProblems(contentBundle, cardsOnly), []);
-  const registries = registriesWith({ ...cardsOnly, ...allMarketChancesZero() });
+  assert.equal(shopSettingsProblems(contentBundle, cardsOnly)[0]?.id, 'settings.shops.refuse.emptyStock');
+  // THE RUNTIME BACKSTOP, on a bundle that carries the 0 past Settings: the
+  // empty cards shelf is omitted and the guarantee refills from the rest.
+  const zeroCards = structuredClone(contentBundle.balance);
+  zeroCards.shop.cardStock = 0;
+  const registries = createRegistries({ ...configuredContentBundle(contentBundle, allMarketChancesZero()), balance: zeroCards });
   const run = createRunState({ seed: 2, classId: 'reaver', registries });
   const stock = buildMarketStock(registries, createRng(2), run, { meta: {} });
   assert.ok(!stock.offerings.includes('cards'));
@@ -1011,4 +1020,41 @@ test('a non-conditional offering counts toward the minimum only while its named 
   const table = structuredClone(shippedShops);
   table.market.offerings.find((o) => o.id === 'cards').stockKey = 'balance.shop.noSuchStock';
   assert.equal(validateContent({ ...contentBundle, shops: table }).errors.filter((e) => e.path === 'shops.market.cards.stockKey').length, 1);
+});
+
+test('remove is conditional: with no card it could remove (one card left, or only granted cards) it is omitted and the guarantee refills (coordinator ruling, #1375)', () => {
+  assert.equal(shippedShops.market.offerings.find((o) => o.id === 'remove').conditional, true);
+  const registries = registriesWith(allMarketChancesZero());
+  const minimum = registries.shops.market.guaranteedMinimum;
+  // A fresh deck has cards to remove: the guarantee lays out cards and remove.
+  const fresh = createRunState({ seed: 6, classId: 'reaver', registries });
+  assert.deepEqual(buildMarketStock(registries, createRng(6), fresh, { meta: {} }).offerings, ['cards', 'remove']);
+  // One card left: nothing may be removed.
+  const thin = createRunState({ seed: 6, classId: 'reaver', registries });
+  thin.deck = thin.deck.filter((card) => !card.grantedBy).slice(0, 1);
+  const one = buildMarketStock(registries, createRng(6), thin, { meta: {} });
+  assert.ok(!one.offerings.includes('remove'), 'one card: remove is omitted');
+  assert.equal(one.offerings.length, minimum, 'the guarantee refills');
+  // Only granted cards: none may be removed.
+  const granted = createRunState({ seed: 6, classId: 'reaver', registries });
+  granted.deck = granted.deck.filter((card) => card.grantedBy);
+  assert.ok(granted.deck.length > 1);
+  const locked = buildMarketStock(registries, createRng(6), granted, { meta: {} });
+  assert.ok(!locked.offerings.includes('remove'), 'granted cards only: remove is omitted');
+  assert.equal(locked.offerings.length, minimum);
+});
+
+test('only cards plus remove enabled at minimum 2 is refused: cards and flasks are the only offerings that count (coordinator ruling, #1375)', () => {
+  const settings = Object.fromEntries(shippedShops.market.offerings
+    .filter((row) => !['cards', 'remove'].includes(row.id))
+    .map((row) => [`${PREFIX}market.${row.id}.enabled`, false]));
+  const problems = shopSettingsProblems(contentBundle, settings);
+  assert.equal(problems.length, 1, JSON.stringify(problems));
+  assert.equal(problems[0].id, 'settings.shops.refuse.conditional');
+  assert.match(problems[0].message, /Remove/);
+  const nonConditional = shippedShops.market.offerings.filter((row) => !row.conditional).map((row) => row.id);
+  assert.deepEqual(nonConditional, ['cards', 'flasks']);
+  // The shipped defaults still pass.
+  assert.deepEqual(shopSettingsProblems(contentBundle, {}), []);
+  assert.deepEqual(validateContent(contentBundle).errors.filter((e) => e.path.startsWith('shops')), []);
 });

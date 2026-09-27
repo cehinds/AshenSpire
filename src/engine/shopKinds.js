@@ -13,6 +13,7 @@ import { INN_LOCATION, innInTown } from '../model/locations.js';
 import { applyShopPriceMult } from '../model/marketStock.js';
 import { innRestPlan, stale } from '../model/marketAdditions.js';
 import { ownedSigilIds } from '../model/sigils.js';
+import { hasRemovableCard } from '../model/cardRemoval.js';
 
 const STREAM = 'shopOffers';
 
@@ -107,6 +108,9 @@ export function buildMarketStock(registries, rng, run, { meta = {}, innInTown = 
     if (pools[row.id]) return pools[row.id].length === 0 || !(row.stock > 0);
     if (MARKET_SHELVES.includes(row.id)) return !(Array.isArray(stock[row.id]) && stock[row.id].length > 0);
     if (row.id === 'smithStones') return !(row.perVisit > 0);
+    // A service with nothing to act on is empty too: Remove with no card it
+    // could take (a deck of one, or of granted cards only).
+    if (row.id === 'remove') return !hasRemovableCard(run);
     return false;
   };
   const empty = shelfEmpty;
