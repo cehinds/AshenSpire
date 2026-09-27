@@ -617,7 +617,9 @@ export function findings(r) {
       // scaling is red.
       || !/fitCombatSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors \}\)/.test(r.battlefieldStage)
       || !/base = Math\.min\(base, maxHeight \/ ratio,/.test(r.spriteScale)
-      || !/const visibleHeight = base \* a\.ratio \* a\.slot\.depth;/.test(r.spriteScale)
+      // A presentation multiplier (sprite scale settings) grows a figure after
+      // this shared height, capped per side to the screen (2026-09-27).
+      || !/const heightOf = a => base \* a\.ratio \* a\.slot\.depth;/.test(r.spriteScale)
       || !/function renderCombatantStage\(\)[\s\S]*?renderPlayer\(\);\s*renderEnemies\(\);[\s\S]*?battlefieldStage\.refresh\(\);[\s\S]*?function render\(\)/.test(r.combat)
       || (r.combat.match(/renderCombatantStage\(\);/g) || []).length < 2
       || !/UI\.playerHandTray/.test(r.combat)

@@ -18,6 +18,7 @@
 // Neither of those decisions is in this file. `model/secondbeat.js` holds the
 // characteristics; this screen names its actions.
 
+import { restRecoveryBonus } from '../../model/recoveryRules.js';
 import { createLocationVisit, previewRest, restAt } from '../../engine/locations.js';
 import { locationServiceTypeId } from '../../model/locations.js';
 import { levelUpPlan, applyLevelUp, levelUpBudget } from '../../model/levelup.js';
@@ -121,7 +122,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // in; a screen mounted without one (a fixture, an older caller) stands at
   // the classic Shrine. What Rest restores is read off the same rules the
   // button fires, on a clone, so the line and the result cannot disagree.
-  const stay = visit || createLocationVisit({ run, registries, rng: null }, 'shrine', { healMult });
+  const stay = visit || createLocationVisit({ run, registries, rng: null }, 'shrine', { healMult, restBonus: restRecoveryBonus(meta?.settings) });
   const relicNoRest = !!stay.restDenied;
   const preview = relicNoRest ? null : previewRest(stay);
   const heal = preview ? preview.heal : 0;
