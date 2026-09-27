@@ -342,41 +342,98 @@ function validAreas(rows) {
 // only when the rail's own compound also carries a top-level
 // `:not(:has(.hud-<other>))`. Any other preference (vitality, currency,
 // position, or a key that does not exist) leaves the rail full.
-function topLevelCalls(compound) {
-  const calls = []; let i = 0;
-  while (i < compound.length) {
-    const open = compound.indexOf('(', i);
-    if (open < 0) break;
-    let depth = 0; let close = open;
-    for (; close < compound.length; close++) {
-      if (compound[close] === '(') depth++;
-      if (compound[close] === ')' && --depth === 0) break;
+// The guard is compared as TOKENS, never as text: selectorTokens() reads the
+// selector once (identifiers with CSS escapes decoded, strings, `.`/`#`,
+// pseudo-classes, functions, delimiters) and keeps whitespace only where it
+// is a descendant combinator. So `:not( :has(.hud-relics) )` and
+// `[data-hud-show-relics = false]` read as their plain forms, while
+// `:has(.hud- potions)` stays `.hud-` then a descendant `potions`.
+function selectorTokens(text) {
+  const toks = []; let i = 0; let brackets = 0;
+  const identChar = (ch) => ch !== undefined && (/[\w-]/.test(ch) || ch >= '\u0080');
+  const ident = () => {
+    let out = '';
+    while (i < text.length && (identChar(text[i]) || text[i] === '\\')) {
+      if (text[i] !== '\\') { out += text[i++]; continue; }
+      const hex = /^[0-9a-f]{1,6}\s?/i.exec(text.slice(i + 1));
+      if (hex) { out += String.fromCodePoint(parseInt(hex[0], 16)); i += 1 + hex[0].length; } else { out += text[i + 1] ?? ''; i += 2; }
     }
-    calls.push({ name: /:[\w-]+$/.exec(compound.slice(i, open))?.[0].toLowerCase(), arg: compound.slice(open + 1, close).replace(/\s+/g, '') });
-    i = close + 1;
+    return out;
+  };
+  while (i < text.length) {
+    const ch = text[i];
+    if (/\s/.test(ch)) { while (/\s/.test(text[i] ?? '')) i++; if (!brackets) toks.push({ t: 'ws', v: ' ' }); continue; }
+    if (ch === '"' || ch === "'") {
+      let v = ''; i++;
+      while (i < text.length && text[i] !== ch) { if (text[i] === '\\') i++; v += text[i++] ?? ''; }
+      i++; toks.push({ t: 'str', v }); continue;
+    }
+    if (ch === '.' || ch === '#') { i++; toks.push({ t: 'name', v: ch + ident() }); continue; }
+    if (ch === ':') {
+      i++; const colons = text[i] === ':' ? (i++, '::') : ':';
+      const name = colons + ident().toLowerCase();
+      if (text[i] === '(') { i++; toks.push({ t: 'fn', v: `${name}(` }); } else toks.push({ t: 'name', v: name });
+      continue;
+    }
+    if (identChar(ch) || ch === '\\') { toks.push({ t: 'ident', v: ident() }); continue; }
+    if (ch === '[') brackets++;
+    if (ch === ']') brackets--;
+    toks.push({ t: 'delim', v: ch }); i++;
   }
-  return calls;
+  // Whitespace next to a combinator, a comma or a bracket is not a combinator.
+  const quiet = (tok, open) => !tok || (tok.t === 'delim' && /[>+~,]/.test(tok.v)) || (open ? tok.t === 'fn' || tok.v === '(' : tok.v === ')');
+  return toks.filter((tok, k) => tok.t !== 'ws' || !(quiet(toks[k - 1], true) || quiet(toks[k + 1], false)));
 }
-// One attribute selector's body, parsed as CSS writes it: whitespace around
-// the name, the `=` and the value; a quoted or bare identifier value; an HTML
-// attribute name in any case; and an `i` or `s` flag. Only `=` counts (`~=`
-// and `|=` also match values that are not exactly `false`), and the value is
-// compared case-sensitively unless the `i` flag says otherwise. Returns
-// 'relics' or 'potions' when the selector means that preference is off.
+const tokenText = (toks) => toks.map((tok) => (tok.t === 'str' ? JSON.stringify(tok.v) : tok.v)).join('');
+// Split at top-level combinators: each compound is one token run.
+function compoundsOf(toks) {
+  const out = [[]]; let depth = 0;
+  for (const tok of toks) {
+    if (tok.t === 'fn' || tok.v === '(' || tok.v === '[') depth++;
+    if (tok.v === ')' || tok.v === ']') depth--;
+    if (!depth && (tok.t === 'ws' || (tok.t === 'delim' && /[>+~]/.test(tok.v)))) { out.push([]); continue; }
+    out.at(-1).push(tok);
+  }
+  return out.filter((c) => c.length);
+}
+// One attribute selector's tokens mean "this preference is off" only as
+// name `=` value [flag]: the attribute name in any case, the value quoted or
+// bare and compared case-sensitively unless the `i` flag is given. `~=` and
+// `|=` also match values that are not exactly `false`, so they never count.
 function preferenceOff(body) {
-  const m = /^\s*data-hud-show-(relics|potions)\s*=\s*(?:"([^"]*)"|'([^']*)'|(-?[_a-zA-Z][\w-]*))\s*(?:([is])\s*)?$/i.exec(body);
-  if (!m) return null;
-  const value = m[2] ?? m[3] ?? m[4];
-  const off = m[5]?.toLowerCase() === 'i' ? value.toLowerCase() === 'false' : value === 'false';
-  return off ? m[1].toLowerCase() : null;
+  const [name, eq, value, flag, ...rest] = body;
+  if (rest.length || name?.t !== 'ident' || eq?.v !== '=' || !['ident', 'str'].includes(value?.t)) return null;
+  if (flag && !(flag.t === 'ident' && /^[is]$/i.test(flag.v))) return null;
+  const which = /^data-hud-show-(relics|potions)$/i.exec(name.v)?.[1].toLowerCase();
+  const off = flag?.v.toLowerCase() === 'i' ? value.v.toLowerCase() === 'false' : value.v === 'false';
+  return which && off ? which : null;
 }
 function preferenceEmptiesRail(part) {
-  const compounds = splitTop(part.trim(), /[\s>+~]/).filter(Boolean);
-  if (compounds.length < 2 || !/^:root(?:\[[^\]]*\])+$/i.test(compounds[0])) return false;
-  const off = new Set([...compounds[0].matchAll(/\[([^\]]*)\]/g)].map((m) => preferenceOff(m[1])).filter(Boolean));
+  const compounds = compoundsOf(selectorTokens(part.trim()));
+  const [lead] = compounds;
+  if (compounds.length < 2 || lead[0]?.v !== ':root' || lead.length < 2) return false;
+  const off = new Set();
+  for (let k = 1; k < lead.length;) {
+    const close = lead.findIndex((tok, j) => j > k && tok.v === ']');
+    if (lead[k].v !== '[' || close < 0) return false;
+    off.add(preferenceOff(lead.slice(k + 1, close)));
+    k = close + 1;
+  }
   if (off.has('relics') && off.has('potions')) return true;
   const other = off.has('relics') ? 'potions' : off.has('potions') ? 'relics' : null;
-  return other !== null && topLevelCalls(compounds.at(-1)).some((c) => c.name === ':not' && c.arg === `:has(.hud-${other})`);
+  return other !== null && topLevel(compounds.at(-1)).includes(`:not(:has(.hud-${other}))`);
+}
+// The compound's top-level functional calls, each as its canonical text.
+function topLevel(compound) {
+  const calls = []; let depth = 0; let cur = null;
+  for (const tok of compound) {
+    if (!depth && tok.t === 'fn') cur = [];
+    if (cur) cur.push(tok);
+    if (tok.t === 'fn' || tok.v === '(' || tok.v === '[') depth++;
+    if (tok.v === ')' || tok.v === ']') depth--;
+    if (cur && !depth) { calls.push(tokenText(cur)); cur = null; }
+  }
+  return calls;
 }
 export function railInFlow(css) {
   const rules = cssRules(css)

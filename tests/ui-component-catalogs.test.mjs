@@ -469,6 +469,14 @@ test('a HUD-preference guard hides the rail only when it empties the rail', () =
     // case-sensitive without the `i` flag, and only `=` means "is exactly".
     ":root[data-hud-show-relics='False'][data-hud-show-potions='false'] .hud-bottom { display: none; }",
     ":root[data-hud-show-relics~='false'][data-hud-show-potions='false'] .hud-bottom { display: none; }",
+    // Review of #1368 (whitespace is a combinator): whitespace that is a
+    // descendant combinator changes what the guard means, so it must never be
+    // normalised away. `.hud- potions` is `.hud-` with a descendant
+    // `potions`, which does not prove the potions are gone.
+    ":root[data-hud-show-relics='false'] .hud-bottom:not(:has(.hud- potions)) { display: none; }",
+    ":root[data-hud-show-relics='false'] .hud-bottom:not(:has(.hud-potions .x)) { display: none; }",
+    ":root[data-hud-show-relics='false'] .hud-bottom:not(:has(. hud-potions)) { display: none; }",
+    ":root [data-hud-show-relics='false'][data-hud-show-potions='false'] .hud-bottom { display: none; }",
   ];
   const pass = [
     ":root[data-hud-show-relics='false'][data-hud-show-potions='false'] .shared-hud .hud-bottom { display: none; }",
@@ -481,6 +489,10 @@ test('a HUD-preference guard hides the rail only when it empties the rail', () =
     ":root[data-hud-show-relics=false][ data-hud-show-potions=false ] .hud-bottom { display: none; }",
     ":root[DATA-HUD-SHOW-RELICS='false'] .hud-bottom:not(:has(.hud-potions)) { display: none; }",
     ":root[data-hud-show-potions='FALSE' i] .hud-bottom:not(:has(.hud-relics)) { display: none; }",
+    // Whitespace that is not a combinator (inside parentheses, next to them)
+    // and a CSS escape read as their plain forms.
+    ":root[data-hud-show-relics='false'] .hud-bottom:not( :has( .hud-potions ) ) { display: none; }",
+    ":root[data-hud-show-relics='false'] .hud-bottom:not(:has(.hud\\-potions)) { display: none; }",
   ];
   for (const sheet of ['kit', 'hudVisibility']) {
     for (const extra of fail) assert.equal(c12({ ...r, [sheet]: `${r[sheet]}\n${extra}\n` }).length, 1, `${sheet}: ${extra}`);
