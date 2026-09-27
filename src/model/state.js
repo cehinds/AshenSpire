@@ -46,7 +46,7 @@ import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 // legacy fields stay authoritative until phase 3b flips the readers and
 // writers; until then a save whose zones disagree with its legacy fields is
 // re-projected at the load door with a ledger note, never refused.
-export const RUN_SCHEMA_VERSION = 10;
+export const RUN_SCHEMA_VERSION = 11;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -177,6 +177,7 @@ export function createRunState({
     itemUpgradeLevels: {},
     smithingRewardClaims: [],
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
+    sideboard: [], // owned cards the deck editor took out of the deck (SPEC §14.1)
     loadout,
     // THE BIRTH QUOTA, WRITTEN DOWN. How many attack slots this run was composed
     // with is a fact about the run, not something to re-derive from whatever
@@ -636,6 +637,12 @@ export const RUN_SHAPE = [
   // Plan phase 4a. Required at schema 8; a preSkills save (≤ 7) is filled
   // with the empty ledger at the migration door.
   { key: 'skills', type: 'object' },
+  // SPEC §14.1. Required at schema 11: the owned cards the deck editor took out
+  // of the deck. A preSideboard save (≤ 10) is filled with none at the
+  // migration door. `editMintCounter` keeps minted basics' instance ids unique;
+  // absent means none minted.
+  { key: 'sideboard', type: 'array' },
+  { key: 'editMintCounter', type: 'number', optional: true },
   { key: 'seedString', type: 'string', nullable: true },
   { key: 'savedAt', type: 'string', optional: true }, // ISO time of the last landed save (W1l–W1r)
   { key: 'mapNodeId', type: 'string', nullable: true },
@@ -752,7 +759,7 @@ export function levelProblems(level) {
   return problems;
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags } = {}) {
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels } = {}) {
   const problems = [];
   problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
@@ -766,6 +773,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (preSkills && f.key === 'skills') continue;
     if (preCoreTags && f.key === 'coreTags') continue;
     if (preXpLevels && f.key === 'level') continue;
+    if (preSideboard && f.key === 'sideboard') continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -785,6 +793,26 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
+  if (Array.isArray(run.sideboard)) {
+    run.sideboard.forEach((card, i) => {
+      if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
+        problems.push(`sideboard[${i}] must be a card instance with instanceId and cardId`);
+      }
+    });
+    // A set-aside card keeps its identity, so it may share an id with no other
+    // owned card: returning it would put two instances with one id in play.
+    // Only ids the sideboard holds are checked — a pre-§14 deck is not re-judged.
+    const seen = new Set((Array.isArray(run.deck) ? run.deck : []).map((c) => c && c.instanceId));
+    run.sideboard.forEach((card, i) => {
+      const id = card && card.instanceId;
+      if (typeof id !== 'string' || !id) return;
+      if (seen.has(id)) problems.push(`sideboard[${i}] instanceId '${id}' is already owned by another card (deck ∪ sideboard ids must be unique)`);
+      seen.add(id);
+    });
+  }
+  if (run.editMintCounter !== undefined && (!Number.isInteger(run.editMintCounter) || run.editMintCounter < 0)) {
+    problems.push('editMintCounter must be a non-negative integer');
+  }
   if (Array.isArray(run.collection)) {
     run.collection.forEach((card, i) => {
       if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
@@ -997,21 +1025,43 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
   // worth checking, since a bad entry breaks combat rather than the load.
-  if (Array.isArray(run.deck)) {
-    const bad = run.deck.findIndex((c) => !c || typeof c.cardId !== 'string' || typeof c.instanceId !== 'string');
-    if (bad !== -1) problems.push(`deck[${bad}] is not { instanceId, cardId }`);
-    for (let i = 0; i < run.deck.length; i++) {
-      const card = run.deck[i];
+  // The sideboard holds the same instances (SPEC §14.1), so it is held to the
+  // same invariants: a malformed set-aside card is refused here, at the load
+  // door, not when the editor returns it to the deck.
+  for (const pile of ['deck', 'sideboard']) {
+    const cards = run[pile];
+    if (!Array.isArray(cards)) continue;
+    const bad = cards.findIndex((c) => !c || typeof c.cardId !== 'string' || typeof c.instanceId !== 'string');
+    if (bad !== -1) problems.push(`${pile}[${bad}] is not { instanceId, cardId }`);
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
       if (!card) continue;
       const schoolAbsent = card.damageSchool === undefined;
       const buildupAbsent = card.exposureBuildupPerHit === undefined;
-      if (schoolAbsent !== buildupAbsent) problems.push(`deck[${i}] damageSchool and exposureBuildupPerHit must both be present or both be absent`);
-      if (!schoolAbsent && !DAMAGE_SCHOOLS.includes(card.damageSchool)) problems.push(`deck[${i}].damageSchool '${card.damageSchool}' is unknown`);
-      if (!buildupAbsent && (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0)) problems.push(`deck[${i}].exposureBuildupPerHit must be a non-negative integer`);
-      if (card.ratingId !== undefined && !['ar', 'pr', 'dr', 'poise', 'ward'].includes(card.ratingId)) problems.push(`deck[${i}].ratingId '${card.ratingId}' is unknown`);
-      if (card.ratingValue !== undefined && (!Number.isFinite(card.ratingValue) || card.ratingValue < 0)) problems.push(`deck[${i}].ratingValue must be a finite non-negative number`);
-      if (card.ratingCap !== undefined && (!Number.isFinite(card.ratingCap) || card.ratingCap < 0)) problems.push(`deck[${i}].ratingCap must be a finite non-negative number`);
+      if (schoolAbsent !== buildupAbsent) problems.push(`${pile}[${i}] damageSchool and exposureBuildupPerHit must both be present or both be absent`);
+      if (!schoolAbsent && !DAMAGE_SCHOOLS.includes(card.damageSchool)) problems.push(`${pile}[${i}].damageSchool '${card.damageSchool}' is unknown`);
+      if (!buildupAbsent && (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0)) problems.push(`${pile}[${i}].exposureBuildupPerHit must be a non-negative integer`);
+      if (card.ratingId !== undefined && !['ar', 'pr', 'dr', 'poise', 'ward'].includes(card.ratingId)) problems.push(`${pile}[${i}].ratingId '${card.ratingId}' is unknown`);
+      if (card.ratingValue !== undefined && (!Number.isFinite(card.ratingValue) || card.ratingValue < 0)) problems.push(`${pile}[${i}].ratingValue must be a finite non-negative number`);
+      if (card.ratingCap !== undefined && (!Number.isFinite(card.ratingCap) || card.ratingCap < 0)) problems.push(`${pile}[${i}].ratingCap must be a finite non-negative number`);
+      // A set-aside attack basic's slot is retired; any other would make the
+      // next restamp disagree with the allocation.
+      if (pile === 'sideboard' && card.equipmentAttackSlotId !== undefined
+        && !(Array.isArray(run.removedAttackSlotIds) && run.removedAttackSlotIds.includes(card.equipmentAttackSlotId))) {
+        problems.push(`sideboard[${i}].equipmentAttackSlotId '${card.equipmentAttackSlotId}' must be a retired slot`);
+      }
     }
+  }
+  // Each retired slot holds at most one set-aside basic: a second would be
+  // pushed back into the deck before the restamp refused the duplicate.
+  if (Array.isArray(run.sideboard)) {
+    const slots = new Set();
+    run.sideboard.forEach((card, i) => {
+      const slot = card && card.equipmentAttackSlotId;
+      if (slot === undefined) return;
+      if (slots.has(slot)) problems.push(`sideboard[${i}].equipmentAttackSlotId '${slot}' is held by another set-aside card`);
+      slots.add(slot);
+    });
   }
   if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {
     problems.push('maxHp must be > 0');
@@ -1197,12 +1247,16 @@ export function migrateRunSchema(run) {
   // Filled HERE (plan phase 6): the displayed level those purchases reached,
   // no XP toward the next, nothing waiting — the points were spent as bought.
   const preXpLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, ${RUN_SCHEMA_VERSION})`);
+  // v10 and older: no sideboard. Filled HERE with none (SPEC §14.1): a run the
+  // deck editor never touched has no owned card out of its deck.
+  const preSideboard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(run.schemaVersion);
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard });
   if (preSkills && (run.skills === undefined || run.skills === null)) run.skills = {};
   if (preCoreTags && (run.coreTags === undefined || run.coreTags === null)) run.coreTags = [];
+  if (preSideboard && (run.sideboard === undefined || run.sideboard === null)) run.sideboard = [];
   if (preXpLevels && (run.level === undefined || run.level === null)) {
     run.level = { xp: 0, level: 1 + (Number.isInteger(run.levelUps) && run.levelUps > 0 ? run.levelUps : 0), unspentPoints: 0 };
   }
