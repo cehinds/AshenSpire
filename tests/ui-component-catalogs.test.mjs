@@ -444,5 +444,35 @@ test('C12 judges the rail in styles/hud-visibility.css as well as kit.css', () =
   ]) {
     assert.equal(c12({ ...r, hudVisibility: `${r.hudVisibility}\n${extra}\n` }).length, 1, extra);
   }
-  assert.equal(c12({ ...r, hudVisibility: `${r.hudVisibility}\n:root[data-hud-show-potions="false"] .hud-bottom { display: none; }\n` }).length, 0);
+});
+
+// Review of #1368: a preference guard counts only when it is positive (a
+// leading `:root[…]` compound, never inside :not()/:is()) and only when the
+// preferences it names leave the rail empty. Both hide the rail while the
+// default (preference on) holds, or hide relics still turned on, so each is
+// judged in kit.css and in hud-visibility.css alike.
+test('a HUD-preference guard hides the rail only when it empties the rail', () => {
+  const r = receipt();
+  const fail = [
+    ":root:not([data-hud-show-relics='false']) .hud-bottom { display: none !important; }",
+    ".shared-hud .hud-bottom:not([data-hud-show-relics='false']) { display: none; }",
+    ".shared-hud .hud-bottom:is([data-hud-show-relics='false'], .expanded) { display: none; }",
+    ':root[data-hud-show-potions="false"] .hud-bottom { display: none; }',
+    ":root[data-hud-show-relics='false'] .hud-bottom { display: none; }",
+    ":root[data-hud-show-vitality='false'] .hud-bottom { display: none; }",
+    ":root[data-hud-show-currency='false'][data-hud-show-position='false'] .hud-bottom { display: none; }",
+    ":root[data-hud-show-nonsense='false'] .hud-bottom { display: none; }",
+    ":root[data-hud-show-relics='false'] .hud-bottom:not(:has(.hud-relics)) { display: none; }",
+    ":root[data-hud-show-relics='false'] .hud-bottom:not(:not(:has(.hud-potions))) { display: none; }",
+    ":root[data-hud-show-relics='false'].hud-bottom { display: none; }",
+  ];
+  const pass = [
+    ":root[data-hud-show-relics='false'][data-hud-show-potions='false'] .shared-hud .hud-bottom { display: none; }",
+    ':root[data-hud-show-relics="false"] .hud-bottom:not(:has(.hud-potions)) { display: none; }',
+    ":root[data-hud-show-potions='false'] .shared-hud .hud-bottom:not( :has(.hud-relics) ) { display: none; }",
+  ];
+  for (const sheet of ['kit', 'hudVisibility']) {
+    for (const extra of fail) assert.equal(c12({ ...r, [sheet]: `${r[sheet]}\n${extra}\n` }).length, 1, `${sheet}: ${extra}`);
+    for (const extra of pass) assert.equal(c12({ ...r, [sheet]: `${r[sheet]}\n${extra}\n` }).length, 0, `${sheet}: ${extra}`);
+  }
 });

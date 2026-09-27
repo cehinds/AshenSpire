@@ -333,7 +333,38 @@ function validAreas(rows) {
 // rule whose subject compound carries `.hud-bottom` (the rail itself, in any
 // state, layout or media override; not its children) hangs it again with an
 // effective absolute or fixed position or moves it out of the `rail` area.
-const HUD_PREFERENCE_OFF = /\[data-hud-show-[\w-]+=(["'])false\1\]/;
+// A rail hide that a player's HUD preference allows (styles/hud-visibility.css):
+// the rail holds only relics and potions, so it may be hidden when the
+// preferences leave it empty, and only then. The guard must be positive: the
+// selector's FIRST compound is `:root` plus attribute selectors alone, so a
+// `:root:not([…])`, a `.hud-bottom:not([…])` or an `:is([…], .x)` never counts.
+// Both relics and potions off empties the rail; one of them off empties it
+// only when the rail's own compound also carries a top-level
+// `:not(:has(.hud-<other>))`. Any other preference (vitality, currency,
+// position, or a key that does not exist) leaves the rail full.
+function topLevelCalls(compound) {
+  const calls = []; let i = 0;
+  while (i < compound.length) {
+    const open = compound.indexOf('(', i);
+    if (open < 0) break;
+    let depth = 0; let close = open;
+    for (; close < compound.length; close++) {
+      if (compound[close] === '(') depth++;
+      if (compound[close] === ')' && --depth === 0) break;
+    }
+    calls.push({ name: /:[\w-]+$/.exec(compound.slice(i, open))?.[0].toLowerCase(), arg: compound.slice(open + 1, close).replace(/\s+/g, '') });
+    i = close + 1;
+  }
+  return calls;
+}
+function preferenceEmptiesRail(part) {
+  const compounds = splitTop(part.trim(), /[\s>+~]/).filter(Boolean);
+  if (compounds.length < 2 || !/^:root(?:\[[^\]]*\])+$/i.test(compounds[0])) return false;
+  const off = new Set([...compounds[0].matchAll(/\[data-hud-show-(relics|potions)=(["'])false\2\]/g)].map((m) => m[1]));
+  if (off.has('relics') && off.has('potions')) return true;
+  const other = off.has('relics') ? 'potions' : off.has('potions') ? 'relics' : null;
+  return other !== null && topLevelCalls(compounds.at(-1)).some((c) => c.name === ':not' && c.arg === `:has(.hud-${other})`);
+}
 export function railInFlow(css) {
   const rules = cssRules(css)
     .filter((rule) => splitTop(rule.selector, /,/).some((part) => hasClass(subjectOf(part), 'hud-bottom')));
@@ -350,12 +381,11 @@ export function railInFlow(css) {
       || rule.decls.some((d) => /^grid-(?:row|column)(?:-start|-end)?$/.test(d.prop))
       // Display too: none or contents takes the rail out of the grid. Only a
       // rule whose subject is `:empty` may hide it (a rail with no relics), or
-      // one gated on a player's HUD preference being off
-      // (`[data-hud-show-…='false']`, styles/hud-visibility.css).
+      // one whose HUD preferences leave it empty (preferenceEmptiesRail).
       || (/^(?:none|contents)$/i.test(lastValue(rule.decls, ['display']) ?? '')
         // `:empty` must sit on the rail's own compound alternative: in
         // `:is(.hud-bottom, .x:empty)` it is on `.x`, not on the rail.
-        && !splitTop(rule.selector, /,/).every((part) => HUD_PREFERENCE_OFF.test(part) || subjectAlternatives(part)
+        && !splitTop(rule.selector, /,/).every((part) => preferenceEmptiesRail(part) || subjectAlternatives(part)
           .filter((alt) => hasClass(alt, 'hud-bottom')).every((alt) => /:empty(?![\w-])/i.test(alt)))));
 }
 
@@ -901,6 +931,9 @@ function selftest() {
     ['hide an expanded rail with display: none', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { display: none; }\n` })],
     ['hide a rail rule behind a string holding an escaped quote', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.a::before { content: "\\""; }\n.shared-hud .hud-bottom.x { position: absolute; }\n` })],
     ['hide a rail rule between comment markers inside strings', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.a::before { content: "/*"; }\n.shared-hud .hud-bottom.x { position: absolute; }\n.b::before { content: "*/"; }\n` })],
+    ['hide the rail behind a negated HUD preference', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n:root:not([data-hud-show-relics='false']) .hud-bottom { display: none !important; }\n` })],
+    ['hide the rail behind an optional HUD preference', 'C12 ', (r) => ({ ...r, hudVisibility: `${r.hudVisibility}\n.shared-hud .hud-bottom:is([data-hud-show-relics='false'], .expanded) { display: none; }\n` })],
+    ['hide the whole rail when only potions are off', 'C12 ', (r) => ({ ...r, hudVisibility: `${r.hudVisibility}\n:root[data-hud-show-potions='false'] .hud-bottom { display: none !important; }\n` })],
     ['hang the rail from the HUD preference sheet', 'C12 ', (r) => ({ ...r, hudVisibility: `${r.hudVisibility}\n:root[data-hud-show-relics='false'] .shared-hud .hud-bottom { position: absolute; }\n` })],
     ['reset an expanded rail with all: unset', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { all: unset; }\n` })],
     ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
