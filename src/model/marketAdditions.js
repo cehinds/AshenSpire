@@ -141,3 +141,97 @@ export function innRestPlan(registries, run) {
   else if (!affordable(run, offer.price)) reason = say('shop.refuse.cinders');
   return { ok: !reason, reason, cost: offer?.price, deniedBy, revision: revision(run) };
 }
+
+// ---------------------------------------------------------------------------
+// Skill books and revive tokens (SPEC §14.3, step 5b)
+// ---------------------------------------------------------------------------
+
+const CONSUMABLE_SHELVES = Object.freeze({ skillBooks: 'skillBook', reviveTokens: 'revive' });
+
+/** A book or token off its shelf: plus one to its count in `run.consumables`. */
+export function consumablePurchasePlan(registries, run, shelf, item) {
+  const kind = CONSUMABLE_SHELVES[shelf];
+  const def = item && registries.consumables.has(item.id) ? registries.consumables.get(item.id) : null;
+  let reason = '';
+  if (!kind || !offered(run, shelf) || !item || !(run.shopStock[shelf] || []).includes(item)) reason = say('shop.refuse.gone');
+  else if (!def || def.kind !== kind || !priced(item.cost)) reason = say('shop.refuse.unpriced');
+  else if (!affordable(run, item.cost)) reason = say('shop.refuse.cinders');
+  return { ok: !reason, reason, shelf, item, def, cost: item?.cost, revision: revision(run) };
+}
+
+export function commitConsumablePurchase(registries, run, shelf, quote) {
+  const plan = consumablePurchasePlan(registries, run, shelf, quote.item);
+  if (!plan.ok) throw new Error(plan.reason);
+  stale(quote, plan);
+  run.consumables = { ...(run.consumables || {}) };
+  run.consumables[plan.item.id] = (run.consumables[plan.item.id] || 0) + 1;
+  run.cinders -= plan.cost;
+  run.shopStock[shelf].splice(run.shopStock[shelf].indexOf(plan.item), 1);
+  run.shopStock.tradeRevision = plan.revision + 1;
+  return { id: plan.item.id, spent: plan.cost };
+}
+
+// ---------------------------------------------------------------------------
+// Companions
+// ---------------------------------------------------------------------------
+
+export function companionPurchasePlan(registries, run, item) {
+  const def = item && registries.companions.has(item.id) ? registries.companions.get(item.id) : null;
+  let reason = '';
+  if (!offered(run, 'companions') || !item || !(run.shopStock.companions || []).includes(item)) reason = say('shop.refuse.gone');
+  else if (!def || !priced(item.cost)) reason = say('shop.refuse.unpriced');
+  else if ((run.companions || []).some((row) => row.id === item.id)) reason = say('shop.refuse.companionHas', { name: def.name });
+  else if (!affordable(run, item.cost)) reason = say('shop.refuse.cinders');
+  return { ok: !reason, reason, item, def, cost: item?.cost, revision: revision(run) };
+}
+
+/** Appends `{ id, combatsLeft: combats }` (one of each travels at a time). */
+export function commitCompanionPurchase(registries, run, quote) {
+  const plan = companionPurchasePlan(registries, run, quote.item);
+  if (!plan.ok) throw new Error(plan.reason);
+  stale(quote, plan);
+  run.companions = [...(run.companions || []), { id: plan.def.id, combatsLeft: plan.def.combats }];
+  run.cinders -= plan.cost;
+  run.shopStock.companions.splice(run.shopStock.companions.indexOf(plan.item), 1);
+  run.shopStock.tradeRevision = plan.revision + 1;
+  return { id: plan.def.id, spent: plan.cost };
+}
+
+// ---------------------------------------------------------------------------
+// The quest event
+// ---------------------------------------------------------------------------
+
+/**
+ * questEventPlan(registries, run) → the quote for following the market's
+ * event. Refused by name when taken, when the run has seen the event since
+ * the shelf was stocked, or when the purse is short.
+ */
+export function questEventPlan(registries, run) {
+  const offer = run.shopStock?.questEvent;
+  let reason = '';
+  if (!offered(run, 'questEvent') || !offer) reason = say('shop.refuse.notOffered');
+  else if (offer.taken) reason = say('shop.refuse.questTaken');
+  else if (!registries.events.has(offer.eventId)) reason = say('shop.refuse.gone');
+  else if ((run.seenEvents || []).includes(offer.eventId)) reason = say('shop.refuse.questSeen');
+  else if (!priced(offer.price)) reason = say('shop.refuse.unpriced');
+  else if (!affordable(run, offer.price)) reason = say('shop.refuse.cinders');
+  return { ok: !reason, reason, eventId: offer?.eventId, cost: offer?.price, revision: revision(run) };
+}
+
+/**
+ * commitQuestEvent(registries, run, quote) → { eventId, spent }. Spends the
+ * price, marks the offer taken and the event seen. The host then closes the
+ * visit as Leave does and opens the event door (main.js showShop), so the
+ * door opens once.
+ */
+export function commitQuestEvent(registries, run, quote) {
+  const plan = questEventPlan(registries, run);
+  if (!plan.ok) throw new Error(plan.reason);
+  stale(quote, plan);
+  if (quote.eventId !== plan.eventId) throw new Error(say('shop.refuse.stale'));
+  run.cinders -= plan.cost;
+  run.shopStock.questEvent.taken = true;
+  run.seenEvents = [...(run.seenEvents || []), plan.eventId];
+  run.shopStock.tradeRevision = plan.revision + 1;
+  return { eventId: plan.eventId, spent: plan.cost };
+}

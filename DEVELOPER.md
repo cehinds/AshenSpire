@@ -212,7 +212,19 @@ rest's commit, which runs the inn's location visit, is `commitInnRest` in
 `src/engine/shopKinds.js`), sigils are `src/content/sigils.js` (owned in
 `run.sigils`, slots in `run.sigilSlots`, `src/model/sigils.js`), and a bought
 armour set is recorded in `run.loadout.boughtArmour`, which `ownership()`
-reads. Run `node --test tests/market-additions.test.mjs`. How many cards a shelf of resting cards
+reads. Run `node --test tests/market-additions.test.mjs`.
+Step 5b adds `skillBooks`, `reviveTokens`, `questEvent` and `companions`.
+Skill books and revive tokens are `src/content/consumables.js`, carried as
+counts in `run.consumables`; companions are `src/content/companions.js`,
+travelling in `run.companions`. Every number either file authors is a
+`gameConfig.consumables.*` / `gameConfig.companions.*` Settings row. A
+companion's effect is its `family = companion` row in `tagging.csv` (a leaf
+under the `companion` branch of `property`), mounted at combat start as a
+`companion` carrier. Reading a book (the Armoury's Inventory), selling one
+back, settling a fight and the content checks are `src/model/consumables.js`;
+a revive token is spent at the death point in `src/engine/actions.js` from
+the fight's copy of the counts, which rides the combat snapshot. Run
+`node --test tests/market-additions-5b.test.mjs`. How many cards a shelf of resting cards
 holds — the merchant's shelves, a mount's deck list — is authored once at
 `content/config/ui/components/card.json -> sizing.shelf`, laid out by
 `.card-shelf` in styles/kit.css, and checked by

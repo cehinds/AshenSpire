@@ -36,7 +36,7 @@ import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolv
 // Deck restamping goes through the framework's adopted composition door.
 import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
-import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, propertyMountsOf } from './properties.js';
+import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncCompanionProperties, propertyMountsOf } from './properties.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -174,6 +174,13 @@ export function createCombat({
     skills: player.skills ? structuredClone(player.skills) : {},
     // The core card's picked tree nodes (plan phase 5b), mounted with the class.
     coreTags: Array.isArray(player.coreTags) ? [...player.coreTags] : [],
+    // SPEC §14.3: the run's consumable counts, copied — a revive token spends
+    // from this copy (engine/actions.js) and the run's owner settles it back
+    // at combat end (runCombatEnd). Null for a fight handed none (a headless
+    // fixture), whose end then leaves a run's counts alone.
+    consumables: player.consumables && typeof player.consumables === 'object' ? { ...player.consumables } : null,
+    // …and the companions travelling with the run, mounted below like relics.
+    companions: Array.isArray(player.companionIds) ? [...player.companionIds] : [],
     swapCostRule: swapCostRule || resolveSwapCostRule(registries, null),
     swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
@@ -203,6 +210,9 @@ export function createCombat({
   // …and the class card, the core zone's one card (plan phase 5a): its
   // `favored` leaning is a property like any other.
   syncClassProperties(combat);
+  // …and the companions travelling with the run (SPEC §14.3): each mounts as a
+  // `companion` carrier, its rules its tagging.csv property rows.
+  syncCompanionProperties(combat);
 
   // Enemies — HP rolled on stream 'enemyHP' (SPEC §3.11, §4.6). An optional
   // hpMult (Custom Climb difficulty rules) scales the rolled HP after the roll,

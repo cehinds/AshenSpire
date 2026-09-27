@@ -1878,3 +1878,9 @@ location,,chapel,restMana
 location,,chapel,restFlasks
 location,,chapel,levelUp
 location,,chapel,deckEdit
+# Companions (SPEC §14.3): what each does is its property row; its kind is
+# stated once, as every collection-backed object's is.
+companion,,hollowSquire,hollowSquire
+companion,,hollowSquire,classification.companion
+companion,,emberHound,emberHound
+companion,,emberHound,classification.companion

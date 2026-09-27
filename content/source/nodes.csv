@@ -149,6 +149,9 @@ fellWardenBrand,property,Fell Warden Brand,6E9C6E,🔱,,,,,What Fell Warden Bran
 bloodiedTalisman,property,Bloodied Talisman,6E9C6E,🩸,,,,,What Bloodied Talisman does when the fight gives it its moment.
 twinnedArmor,property,Twinned Armor,6E9C6E,👥,,,,,What Twinned Armor does when the fight gives it its moment.
 blightTouchedIdol,property,Blight-Touched Idol,6E9C6E,☣,,,,,What Blight-Touched Idol does when the fight gives it its moment.
+companion,property,Companion,B08D57,☥,,,,,"What a companion confers while it travels with you: a branch, not a tag; each companion's own node sits under it."
+hollowSquire,companion,Hollow Squire,B08D57,🛡,,,,,A squire without a knight raises a shield before you.
+emberHound,companion,Ember Hound,C9502E,🐕,,,,,A hound of banked coals bites at your foes.
 warhorn,property,Warhorn,6E9C6E,📣,,,,,What Warhorn does when the fight gives it its moment.
 vowOfVengeance,property,Vow of Vengeance,6E9C6E,⚔,,,,,What Vow of Vengeance does when the fight gives it its moment.
 pearlOfSagacity,property,Pearl of Sagacity,6E9C6E,🔮,,,,,What Pearl of Sagacity does when the fight gives it its moment.
@@ -293,3 +296,4 @@ classification.basicCardProfile,classification,basicCardProfile,,,INTERNAL,30,,,
 classification.slot,classification,slot,,,INTERNAL,30,,,"What a slot is. Every object in the slot collection carries this, and nothing outside it may."
 classification.startingKit,classification,startingKit,,,INTERNAL,30,,,"What a startingKit is. Every object in the startingKit collection carries this, and nothing outside it may."
 classification.unlock,classification,unlock,,,INTERNAL,30,,,"What a unlock is. Every object in the unlock collection carries this, and nothing outside it may."
+classification.companion,classification,companion,,,INTERNAL,30,,,"What a companion is. Every object in the companion collection carries this, and nothing outside it may."

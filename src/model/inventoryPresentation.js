@@ -79,6 +79,14 @@ export function inventoryRows(registries, run, meta = {}) {
 
   rows.push(...countedRows(run.relics || [], registries.relics, 'Relic', { equipped: true }));
   rows.push(...countedRows((run.flasks || []).map((entry) => entry.flaskId), registries.flasks, 'Potion'));
+  // SPEC §14.3: skill books and revive tokens, stacked by id. Only a skill
+  // book is read from here (`read`); a revive token burns by itself in a fight.
+  const counts = run.consumables && typeof run.consumables === 'object' ? run.consumables : {};
+  for (const [id, count] of Object.entries(counts)) {
+    const item = registries.consumables && registries.consumables.has(id) ? registries.consumables.get(id) : null;
+    if (!item || !(count > 0)) continue;
+    rows.push({ key: `consumable:${id}`, id, name: item.name, category: 'Consumable', count, equippedLabels: [], item, read: item.kind === 'skillBook' });
+  }
   return rows;
 }
 

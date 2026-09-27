@@ -8,7 +8,10 @@
 // that graph acyclic.
 
 /** The market offerings §14.3 adds beyond today's shelves, in the order content/shops.js writes them. */
-export const MARKET_ADDITIONS = Object.freeze(['armour', 'smithStones', 'sigils', 'innRest']);
+export const MARKET_ADDITIONS = Object.freeze(['armour', 'smithStones', 'sigils', 'innRest', 'skillBooks', 'reviveTokens', 'questEvent', 'companions']);
+
+/** The 5b shelves that hold a list of `{ id, cost }` offers (SPEC §14.3). */
+export const ITEM_LIST_SHELVES = Object.freeze(['skillBooks', 'reviveTokens', 'companions']);
 
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
 const count = (value) => Number.isSafeInteger(value) && value >= 0;
@@ -40,6 +43,15 @@ export function marketAdditionStockProblems(stock, path = 'shopStock') {
     const offer = stock.innRest;
     if (!object(offer) || !count(offer.price) || typeof offer.bought !== 'boolean') problems.push(`${path}.innRest must be { price, bought } with a whole price and a true/false bought`);
   }
+  // SPEC §14.3 (5b): the consumable and companion shelves are lists of
+  // { id, cost }; the quest event is { eventId, price, taken }.
+  for (const shelf of ITEM_LIST_SHELVES) if (stock[shelf] !== undefined) itemList(stock[shelf], `${path}.${shelf}`, problems);
+  if (stock.questEvent !== undefined) {
+    const offer = stock.questEvent;
+    if (!object(offer) || typeof offer.eventId !== 'string' || !offer.eventId || !(Number.isSafeInteger(offer.price) && offer.price > 0) || typeof offer.taken !== 'boolean') {
+      problems.push(`${path}.questEvent must be { eventId, price, taken } with a non-empty eventId, a whole price above 0 and a true/false taken`);
+    }
+  }
   return problems;
 }
 
@@ -52,23 +64,71 @@ export function marketAdditionStockProblems(stock, path = 'shopStock') {
  * empties is no longer laid out (its id leaves `stock.offerings`, unless it is
  * the last one), so no empty rail item is left behind.
  */
-export function pruneUnknownAdditionOffers(stock, { sigilKnown, armourKnown }) {
+export function pruneUnknownAdditionOffers(stock, { sigilKnown, armourKnown, consumableKnown = () => true, companionKnown = () => true, eventKnown = () => true }) {
   if (!object(stock)) return [];
   const removed = [];
-  const keep = { sigils: (item) => sigilKnown(item.id), armour: (item) => armourKnown(item.classId, item.id) };
-  for (const shelf of ['sigils', 'armour']) {
+  const keep = {
+    sigils: (item) => sigilKnown(item.id),
+    armour: (item) => armourKnown(item.classId, item.id),
+    skillBooks: (item) => consumableKnown(item.id),
+    reviveTokens: (item) => consumableKnown(item.id),
+    companions: (item) => companionKnown(item.id),
+  };
+  // A shelf the prune empties is no longer laid out: its id leaves
+  // `stock.offerings` too, even when it was the only one (5a re-review), so
+  // no empty rail item is ever left behind.
+  const retire = (shelf) => {
+    if (Array.isArray(stock.offerings)) stock.offerings = stock.offerings.filter((id) => id !== shelf);
+    delete stock[shelf];
+  };
+  for (const shelf of Object.keys(keep)) {
     if (!Array.isArray(stock[shelf])) continue;
     const before = stock[shelf];
     const kept = before.filter((item) => object(item) && keep[shelf](item));
     if (kept.length === before.length) continue;
     for (const item of before) if (!kept.includes(item)) removed.push({ shelf, ...(shelf === 'armour' ? { classId: item?.classId } : {}), id: item?.id });
     stock[shelf] = kept;
-    if (!kept.length && Array.isArray(stock.offerings) && stock.offerings.length > 1) {
-      stock.offerings = stock.offerings.filter((id) => id !== shelf);
-      delete stock[shelf];
-    }
+    if (!kept.length) retire(shelf);
+  }
+  // The quest event is one offer: an unknown event takes the shelf with it.
+  if (object(stock.questEvent) && !eventKnown(stock.questEvent.eventId)) {
+    removed.push({ shelf: 'questEvent', id: stock.questEvent.eventId });
+    retire('questEvent');
   }
   return removed;
+}
+
+// ---------------------------------------------------------------------------
+// The run's consumables and companions (SPEC §14.3, schema 16)
+// ---------------------------------------------------------------------------
+
+/** `run.consumables` refused by name (validateRunShape): { [id]: whole count ≥ 1 }. */
+export function consumablesProblems(run) {
+  const map = run.consumables;
+  if (map === undefined || map === null) return [];
+  if (!object(map)) return ['consumables must be an object { [consumableId]: count }'];
+  const problems = [];
+  for (const [id, n] of Object.entries(map)) {
+    if (!id) problems.push('consumables has an empty id');
+    else if (!(Number.isSafeInteger(n) && n >= 1)) problems.push(`consumables.${id} must be a whole count of at least 1 (a used-up entry is deleted), got ${JSON.stringify(n)}`);
+  }
+  return problems;
+}
+
+/** `run.companions` refused by name (validateRunShape): [{ id, combatsLeft ≥ 1 }], each id once. */
+export function companionsProblems(run) {
+  const list = run.companions;
+  if (list === undefined || list === null) return [];
+  if (!Array.isArray(list)) return ['companions must be a list of { id, combatsLeft }'];
+  const problems = [];
+  const seen = new Set();
+  list.forEach((row, index) => {
+    if (!object(row) || typeof row.id !== 'string' || !row.id || !(Number.isSafeInteger(row.combatsLeft) && row.combatsLeft >= 1)) {
+      problems.push(`companions[${index}] must be { id, combatsLeft } with a non-empty id and a whole combatsLeft of at least 1`);
+    } else if (seen.has(row.id)) problems.push(`companions[${index}] names '${row.id}' again; one of each travels at a time`);
+    else seen.add(row.id);
+  });
+  return problems;
 }
 
 /** The bought-armour record's shape, refused by name (validateRunShape). Absent means none bought. */
@@ -112,6 +172,10 @@ export function marketAdditionTableProblems(table, err) {
   whole('armour', 'cost.min', 1);
   whole('armour', 'cost.max', 1);
   whole('sigils', 'pricePct', 1);
+  whole('skillBooks', 'stock', 0);
+  whole('reviveTokens', 'stock', 0);
+  whole('companions', 'stock', 0);
+  whole('questEvent', 'price', 1);
   // (A non-boolean `armour.includeLocked` is refused by the generic leaf check,
   // model/shopKinds.js nonNumericLeaves.)
   const armour = row('armour');
@@ -132,11 +196,12 @@ export function marketAdditionTableProblems(table, err) {
 export function applyShopPriceMult(stock, mult) {
   if (!stock || mult === 1) return stock;
   const up = (n) => Math.ceil(n * mult);
-  for (const kind of ['cards', 'relics', 'flasks', 'armour', 'sigils']) {
+  for (const kind of ['cards', 'relics', 'flasks', 'armour', 'sigils', ...ITEM_LIST_SHELVES]) {
     if (Array.isArray(stock[kind])) for (const item of stock[kind]) item.cost = up(item.cost);
   }
   if (Number.isFinite(stock.removeCost)) stock.removeCost = up(stock.removeCost);
   if (stock.smithStones) stock.smithStones.price = up(stock.smithStones.price);
   if (stock.innRest) stock.innRest.price = up(stock.innRest.price);
+  if (stock.questEvent) stock.questEvent.price = up(stock.questEvent.price);
   return stock;
 }
