@@ -3,14 +3,24 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1378",
+    "id": "pr-1379",
     "date": "2026-09-27",
     "group": "2026-09-27",
-    "summary": "Behind the scenes: the rules for the blacksmith are written down",
-    "detail": "Docs only; nothing you play changes yet. The design document now says what a blacksmith visit keeps on its shelves and how a reload leaves them and their prices as they were; that each purchase or service at the blacksmith goes through once and refuses an offer that changed; that an upgrade can be paid wholly in Smithing Stones or wholly in refined stones, never a mix, at the cost the item's own upgrade table sets; how many sigil slots a weapon has and how many more the blacksmith will cut; that a sigil set into a weapon works only while that weapon is equipped, even after a swap mid-fight; what upgrading a loose weapon art and stacking a copy of a card cost; the least each of the blacksmith's numbers may be set to; and that the blacksmith sells no sigils of its own.",
+    "summary": "Behind the scenes: a plan for loading every asset from outside the game file",
+    "detail": "Docs only; nothing you play changes. A new design document, docs/EXTERNAL-ASSETS-PLAN.md, sets out how the art, fonts, music and map tiles will move out of the game file: they will be stored with the art in the art repository, and the game will load them when it runs, checking each against its fingerprint. The plan covers offline play (an install for phones and desktops, and a download the game assembles itself), the Pages site, every check that assumes one self-contained file, the migration steps, and the questions for the owner. docs/ART-REPO-PLAN.md now marks the lines the new plan replaces.",
+    "build": "0.7.1.673",
+    "pullRequest": 1379,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1379"
+  },
+  {
+    "id": "pr-1350",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: finished changes reach development builds without waiting",
+    "detail": "Nothing you play changes. A change now lands in development as soon as its quick checks pass, and the long checks run when development is promoted to the test build.",
     "build": "0.7.1.672",
-    "pullRequest": 1378,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1378"
+    "pullRequest": 1350,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1350"
   },
   {
     "id": "pr-1377",
