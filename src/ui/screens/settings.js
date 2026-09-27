@@ -2341,13 +2341,13 @@ export function levelPacePreviewHtml(settings) {
 function levelPacePreviewMarkup(settings, pointsPerLevel) {
   // Every word comes from the model, which reads settings.levelPace.* rows.
   const pace = levelPacePreview(settings, { pointsPerLevel });
-  if (pace.problem) return `<div class="set-example set-example-problem" role="status"><p>${esc(pace.problem)}</p></div>`;
   const fights = pace.fights.map((fight) => `<div class="set-example-block" data-level-pace-fight="${esc(fight.pool)}">`
     + `<div class="set-example-title">${esc(fight.text)}</div>`
     + `<p class="set-example-hint set-level-pace-points">${esc(fight.pointsText)}</p></div>`).join('');
   const curve = `<div class="set-example-block" data-level-pace-curve><div class="set-example-title">${esc(pace.curveTitle)}</div>`
     + `<ol class="set-level-pace-curve">${pace.curve.map((row) => `<li><span>${esc(row.label)}</span> <b>${row.step}</b> <small>${esc(row.totalText)}</small></li>`).join('')}</ol></div>`;
   return `<div class="set-example set-level-pace" data-level-pace aria-live="polite"><div class="set-example-head"><strong>${esc(pace.title)}</strong><span>${esc(pace.subtitle)}</span></div>`
+    + (pace.refused ? `<p class="set-example-refused" role="status" data-level-pace-refused>${esc(pace.refused)}</p>` : '')
     + `<p class="set-example-attrs">${esc(pace.terms)}</p>${fights}${curve}</div>`;
 }
 

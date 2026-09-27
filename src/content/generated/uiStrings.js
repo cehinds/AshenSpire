@@ -1690,9 +1690,9 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "settings.levelPace.problem",
+    "id": "settings.levelPace.refused",
     "extends": "",
-    "short": "The preview cannot read these settings: {error}",
+    "short": "These settings are not applied, so this preview shows the authored defaults a new run keeps: {problem}",
     "full": "",
     "tip": ""
   },

@@ -296,7 +296,28 @@ test('§15.2: the preview\'s words are uiStrings rows, and "XP ×N" names the mu
     .split('\n').filter((line) => !line.trim().startsWith('//') && !line.trim().startsWith('*')).join('\n');
   const literals = [...source.matchAll(/'([^']*)'|`([^`]*)`/g)].map((m) => m[1] ?? m[2]);
   const english = literals.filter((text) => /[a-z]{2,}/i.test(text)
-    && !/^settings\.levelPace\./.test(text) && !text.startsWith('../') && !text.startsWith('${'));
+    && !/^settings\.levelPace\./.test(text) && !text.startsWith('../') && !text.startsWith('./') && !text.startsWith('${'));
   assert.deepEqual(english, [], 'every word the preview says is a settings.levelPace.* row of uiStrings.csv');
 
+});
+
+// Codex on #1349: the preview priced the configured bundle unvalidated, but a
+// configuration main.js rebuildRegistries refuses is not played — the authored
+// defaults are. The preview runs the same checks, prices that fallback and
+// says why.
+test('§15.2: a refused configuration shows the refusal and prices the authored defaults play falls back to', async () => {
+  const { categoryHtml } = await import('../src/ui/screens/settings.js');
+  const bad = { 'gameConfig.balance.level.xp.growth': 0.5, [XP_MULT]: 2 };
+  const verdict = validateContent(configuredContentBundle(contentBundle, bad));
+  assert.equal(verdict.ok, false, 'growth 0.5 is refused, so play keeps the authored content');
+  const pace = levelPacePreview(bad);
+  assert.match(pace.refused, /balance\.level\.xp\.growth/);
+  const authored = levelPacePreview({});
+  assert.deepEqual(pace.curve.map((row) => row.step), authored.curve.map((row) => row.step), 'the authored curve, not growth 0.5');
+  assert.deepEqual(pace.fights.map((row) => row.xp), [30, 90, 215], 'the fallback applies no multiplier either');
+  assert.equal(pace.xpMultiplier, 1);
+  assert.equal(authored.refused, null);
+  const html = categoryHtml('Advanced', { settingsAdvancedCategory: 'Progression', 'settingsAdvancedSubgroup.Progression': 'Experience', ...bad }, null);
+  assert.match(html, /data-level-pace-refused/);
+  assert.match(html, /A normal fight \(3 kills\) gives 30 XP/);
 });

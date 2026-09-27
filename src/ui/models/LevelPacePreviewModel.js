@@ -14,6 +14,7 @@ import { contentBundle } from '../../content/index.js';
 import { appliedXpMultiplier, configuredContentBundle } from '../../model/advancedConfig.js';
 import { levelPace } from '../../model/levelup.js';
 import { t } from '../strings.js';
+import { refusalFor } from './StatsPreviewModel.js';
 
 const plural = (count) => (count === 1 ? '' : 's');
 // Four places, so a typed multiplier such as 0.125 reads as the number applied.
@@ -23,7 +24,7 @@ const num = (value) => String(Number(Number(value).toFixed(4)));
  * levelPacePreview(settings, { pointsPerLevel }) → levelPace's result on the
  * configured content, plus every line the panel draws:
  *
- *   { ...levelPace(registries, { pointsPerLevel }), xpMultiplier,
+ *   { ...levelPace(registries, { pointsPerLevel }), xpMultiplier, refused,
  *     title, subtitle, terms, curveTitle,
  *     fights: [{ ...fight, text, pointsText }],
  *     curve: [{ ...step, label, totalText }], problem }
@@ -34,15 +35,24 @@ const num = (value) => String(Number(Number(value).toFixed(4)));
  * omitted, the configured bundle's, which already reads `settings.levelUpValue`.
  */
 export function levelPacePreview(settings = {}, { pointsPerLevel = null } = {}) {
-  let balance;
+  // THE BUNDLE A RUN WOULD ACTUALLY GET. `main.js` `rebuildRegistries` refuses
+  // a configuration that fails validateContent or the structural checks and
+  // plays the authored defaults instead; the preview runs the same checks
+  // (StatsPreviewModel `refusalFor`), prices that fallback, and says why
+  // (Codex, #1349: growth 0.5 drew a curve no run would climb).
+  let configured;
+  let refused = null;
   try {
-    balance = configuredContentBundle(contentBundle, settings || {}).balance;
+    configured = configuredContentBundle(contentBundle, settings || {});
+    refused = refusalFor(settings || {}, configured);
   } catch (error) {
-    return { problem: t('settings.levelPace.problem', { error: error.message }), curve: [], fights: [] };
+    refused = error.message;
   }
+  if (refused) configured = contentBundle;
   // levelPace reads only `registries.balance`; the whole registry build is not needed to price a climb.
-  const pace = levelPace({ balance }, { pointsPerLevel });
-  const applied = appliedXpMultiplier(settings);
+  const pace = levelPace({ balance: configured.balance }, { pointsPerLevel });
+  // The fallback applies no multiplier either: the authored awards, ×1.
+  const applied = refused ? null : appliedXpMultiplier(settings);
   const xpMultiplier = applied === null ? 1 : applied;
   const cap = pace.maxLevelsPerFight;
   const terms = [
@@ -69,12 +79,12 @@ export function levelPacePreview(settings = {}, { pointsPerLevel = null } = {}) 
   return {
     ...pace,
     xpMultiplier,
+    refused: refused ? t('settings.levelPace.refused', { problem: refused }) : null,
     title: t('settings.levelPace.title'),
     subtitle: t('settings.levelPace.subtitle'),
     terms,
     curveTitle: t('settings.levelPace.curveTitle'),
     fights,
     curve,
-    problem: null,
   };
 }
