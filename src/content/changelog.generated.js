@@ -7,10 +7,30 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-09-27",
     "group": "2026-09-27",
     "summary": "Behind the scenes: a code check no longer fails at random while another check runs",
-    "detail": "Nothing you play changes. The check that every fixed list in the game is used by something could crash if another check briefly wrote a scratch file beside it. It now ignores those scratch files, and names any file that disappears while it reads instead of failing.",
-    "build": "0.7.1.634",
+    "detail": "Nothing you play changes. The check that every fixed list in the game is used by something could crash if another check briefly wrote a scratch file beside it. It now ignores those scratch files. If some other file disappears while it reads, it names that file and reports that it could not finish, instead of crashing or passing on a partial read.",
+    "build": "0.7.1.635",
     "pullRequest": 1369,
     "url": "https://github.com/cehinds/AshenSpire/pull/1369"
+  },
+  {
+    "id": "pr-1365",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the owner's scope decisions are written into the design docs",
+    "detail": "Docs only; nothing you play changes. The docs now record seven decisions the owner made on 2026-09-27: this game stays the product, the win-rate target is gone, companions belong to the shop plan, three progression extras wait until after 1.0, the old-names rename is dropped, the high-res art stays private, and an old frozen preview file is deleted.",
+    "build": "0.7.1.633",
+    "pullRequest": 1365,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1365"
+  },
+  {
+    "id": "pr-1364",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the 1.0 checklist records the card reward schedule and crafting drops as done",
+    "detail": "Docs only. docs/FINISH.md ticks §15.1 (#1351) and §15.3 (#1352), each with its test file. Legendary sigils (§15.4) stay open until the market sigils step of §14 is built.",
+    "build": "0.7.1.632",
+    "pullRequest": 1364,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1364"
   },
   {
     "id": "pr-1352",

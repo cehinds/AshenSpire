@@ -1,9 +1,9 @@
 # Playable legacy dungeons
 
-The dungeon integration is merged into local `dev`. `AshenSpire-LegacyPreview.html`
-at the repository root is a compiled external-art preview (0.7.1.244), using
-the repository's `assets/` folder. It is separate from the normal build aliases
-so concurrent settings/build work remains intact.
+The dungeon integration is merged into `dev`. It was first previewed through
+`AshenSpire-LegacyPreview.html`, a compiled external-art build (0.7.1.244) at
+the repository root; that frozen file was deleted on 2026-09-27 (owner
+decision). Use the game's own entry point, `index.html`, instead.
 
 Map revision: legacy dungeons now use the actual current game's mountMap and
 mountMapBoard, including native SVG nodes, selection tray, Back/Enter, tooltips,
@@ -25,10 +25,10 @@ passed. Screenshots are in runtime-screenshots/ beside this document.
 
 Open through the local game server:
 
-- `/AshenSpire-LegacyPreview.html?shot=map&shotDungeon=BS` — Briar Sanctum
-- `/AshenSpire-LegacyPreview.html?shot=map&shotDungeon=HM` — Hall of Mirrors
-- `/AshenSpire-LegacyPreview.html?shot=map&shotDungeon=FC` — Furnace Chapel
-- `/AshenSpire-LegacyPreview.html` — normal game, with persistent saves
+- `/index.html?shot=map&shotDungeon=BS` — Briar Sanctum
+- `/index.html?shot=map&shotDungeon=HM` — Hall of Mirrors
+- `/index.html?shot=map&shotDungeon=FC` — Furnace Chapel
+- `/index.html` — normal game, with persistent saves
 
 The `shot` links use temporary memory saves and start a fresh preview on reload.
 They use real combat, dialogue, rewards and dungeon progression, not the earlier
