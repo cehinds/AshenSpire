@@ -122,6 +122,17 @@ export function verifyRelease(zipBuf, pin, manifest) {
 /** A name beside `dir` that no other process picks: the staging and discard directories. */
 const beside = (dir, what) => `${dir}.${what}-${process.pid}-${Math.random().toString(36).slice(2, 10)}`;
 
+/**
+ * markOf(dir) → the verified marker's text, or null. Another run may discard
+ * `dir` between any two calls, so a vanished file is an answer, not an error.
+ */
+function markOf(dir) {
+  try { return readFileSync(join(dir, VERIFIED), 'utf8').trim(); } catch (e) {
+    if (e.code === 'ENOENT' || e.code === 'ENOTDIR') return null;
+    throw e;
+  }
+}
+
 /** discard(dir) — take a cache out of reach in one rename, then delete it where no reader looks. */
 function discard(dir) {
   const gone = beside(dir, 'discard');
@@ -148,11 +159,10 @@ function unpack(entries, dir, mark) {
     }
     writeFileSync(join(stage, VERIFIED), `${mark}\n`);
     for (let attempt = 0; ; attempt += 1) {
+      if (markOf(dir) === mark) return; // another run published the same release
       discard(dir);
       try { renameSync(stage, dir); return; } catch (e) {
-        if (!['EEXIST', 'ENOTEMPTY', 'EPERM'].includes(e.code) || attempt >= 3) throw e;
-        const marker = join(dir, VERIFIED);
-        if (existsSync(marker) && readFileSync(marker, 'utf8').trim() === mark) return; // another run published the same release
+        if (!['EEXIST', 'ENOTEMPTY', 'EPERM'].includes(e.code) || attempt >= 20) throw e;
       }
     }
   } finally {
@@ -206,9 +216,8 @@ export async function fetchArt({ root = ROOT, from = null, recheck: again = fals
   const pin = readPin(root);
   const manifest = JSON.parse(readFileSync(join(root, MANIFEST_PATH), 'utf8'));
   const dir = cacheDirFor(pin, root);
-  const marker = join(dir, VERIFIED);
   const mark = markerFor(pin, manifest);
-  if (!from && existsSync(marker) && readFileSync(marker, 'utf8').trim() === mark) {
+  if (!from && markOf(dir) === mark) {
     if (!again) return { dir, reused: true };
     const problems = recheck(dir, manifest);
     if (!problems.length) return { dir, reused: true };
