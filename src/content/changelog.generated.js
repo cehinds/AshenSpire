@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1352",
+    "id": "pr-1358",
     "date": "2026-09-26",
     "group": "2026-09-26",
-    "summary": "Drop chances for armaments and Smithing Stones, and refined stones as a reward",
-    "detail": "Nothing drops differently until you change a setting. Advanced → Rewards now has a chance for ordinary fights to drop an armament (0% by default, so they still drop none), a chance for each kind of fight and treasure to pay its Smithing Stones (100% by default), and how many Refined Stones each pays (none by default). Treasure can now pay Smithing Stones too, once you raise its amount. Refined Stones you earn show on the spoils screen and next to your Smithing Stones at the smith, and they are kept for the blacksmith that will spend them.",
-    "build": "0.7.1.619",
-    "pullRequest": 1352,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1352"
+    "summary": "Behind the scenes: the README says how to play the newest build",
+    "detail": "Docs only; nothing you play changes. The README now explains where to get each build: the stable link, the newest development build from its download page, or running the game from source. Its notes on builds, art quality, recent additions and content counts now match the game.",
+    "build": "0.7.1.618",
+    "pullRequest": 1358,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1358"
   },
   {
     "id": "pr-1343",
