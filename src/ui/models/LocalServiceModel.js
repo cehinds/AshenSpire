@@ -9,7 +9,7 @@ import { t } from '../strings.js';
 
 // Read-only projection of the same plans used when a service is activated.
 // No stock rolls, resource changes, completion writes, or node-specific rules.
-export function localServiceModel({ handlerId, registries, run, state = {}, healMult = 1, refillCounts = {}, nodeId = null, serviceTypeId = null, rng = null }) {
+export function localServiceModel({ handlerId, registries, run, state = {}, healMult = 1, refillCounts = {}, nodeId = null, serviceTypeId = null, rng = null, restBonus = null }) {
   const result = { benefit: '', facts: [], action: 'Inspect service', used: !!state.used };
   if (!registries) return { ...result, benefit: 'Open this service in an active run to see your benefits, costs, and availability.' };
   if (state.used) result.facts.push('This visit has been used.');
@@ -24,7 +24,7 @@ export function localServiceModel({ handlerId, registries, run, state = {}, heal
     const locationId = resolveLocationId(registries, { nodeId, serviceTypeId }) || 'shrine';
     const dryRun = structuredClone(run);
     const dryRng = rng && typeof rng.getCounters === 'function' ? createRng(rng.seed, rng.getCounters()) : rng;
-    const visit = createLocationVisit({ run: dryRun, registries, rng: dryRng }, locationId, { healMult, refillCounts, arrived: !!state.refilled });
+    const visit = createLocationVisit({ run: dryRun, registries, rng: dryRng }, locationId, { healMult, refillCounts, arrived: !!state.refilled, restBonus });
     arriveAt(visit);
     const noRest = !!visit.restDenied;
     const rest = noRest ? null : previewRest(visit);
