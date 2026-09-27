@@ -133,15 +133,15 @@ const KINDS = {
  * gets a blocked row it can see, never a silent over-grant.
  */
 /**
- * smithingStoneNote(receipt) → the one-line spoils note a co-op door shows for
+ * smithingStoneNote(receipt, t) → the one-line spoils note a co-op door shows for
  * a Smithing Stone receipt: ordinary and refined stones (SPEC §15.3), each
- * named when paid; '' when nothing was.
+ * named when paid; '' when nothing was. `t` is the UI string lookup, handed in.
  */
-export function smithingStoneNote(receipt) {
+export function smithingStoneNote(receipt, t) {
   if (!receipt) return '';
   return [
-    receipt.amount > 0 ? `⚒ ${receipt.amount} Smithing Stone secured · ${receipt.stoneBalanceAfter} total` : '',
-    receipt.refined > 0 ? `${receipt.refined} Refined Stone${receipt.refined === 1 ? '' : 's'} · ${receipt.refinedBalanceAfter} refined` : '',
+    receipt.amount > 0 ? t('reward.stone.note', { amount: receipt.amount, total: receipt.stoneBalanceAfter }) : '',
+    receipt.refined > 0 ? t('reward.stone.refinedNote', { amount: receipt.refined, plural: receipt.refined === 1 ? '' : 's', total: receipt.refinedBalanceAfter }) : '',
   ].filter(Boolean).join(' · ');
 }
 

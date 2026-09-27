@@ -963,7 +963,9 @@ export function createSession({ registries, seedString, endless = false, restore
       if (m.connected) {
         if (relicId && !m.run.relics.includes(relicId)) m.run.relics.push(relicId);
         // A present seat has no treasure door to read it on, so the receipt
-        // rides this seat's snapshot until the party travels on.
+        // rides this seat's snapshot until the party travels on. DISPLAY-ONLY:
+        // it is not serialized, so a host restore drops the notice (the stones
+        // themselves are on the seat's run and survive).
         if (smithingStoneReceipt) m.treasureStoneReceipt = { ...smithingStoneReceipt, act: session.actNumber, floor: session.floor };
       } else {
         m.catchup.push({ type: 'treasure', relicId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), act: session.actNumber, floor: session.floor });

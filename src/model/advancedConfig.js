@@ -79,6 +79,11 @@ const BALANCE_DOMAINS = Object.freeze({
   'smithing.rewardChancePct.elite': PERCENT,
   'smithing.rewardChancePct.boss': PERCENT,
   'smithing.rewardChancePct.treasure': PERCENT,
+  // Refined payouts ship at 0, which a range read off the value caps at 20.
+  'smithing.refinedRewardByPool.normal': Object.freeze({ integer: true, step: 1, min: 0, max: 100 }),
+  'smithing.refinedRewardByPool.elite': Object.freeze({ integer: true, step: 1, min: 0, max: 100 }),
+  'smithing.refinedRewardByPool.boss': Object.freeze({ integer: true, step: 1, min: 0, max: 100 }),
+  'smithing.refinedRewardByPool.treasure': Object.freeze({ integer: true, step: 1, min: 0, max: 100 }),
   // XP CURVES THIS BUILD LOWERED (owner, 2026-09-24: every base to 5). A range
   // read off 5 tops out at 50, which would refuse an exported file written on
   // the old bases (100, 60, 30) and every larger tuning — and a refused value

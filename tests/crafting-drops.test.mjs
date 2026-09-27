@@ -272,6 +272,7 @@ test('the spoils row copy names a refined stone', async () => {
 test('co-op treasure pays the same stone door as solo, and the catch-up names it', async () => {
   const { createSession } = await import('../tools/session.mjs');
   const { smithingStoneNote } = await import('../src/model/rewardplan.js');
+  const { t } = await import('../src/ui/strings.js');
   const party = (registries) => {
     const host = createSession({ registries, seedString: 'GOLDBOUGH' });
     host.addMember({ id: 'p1', name: 'Here', classId: 'reaver' });
@@ -298,7 +299,7 @@ test('co-op treasure pays the same stone door as solo, and the catch-up names it
   const item = raised.away.catchup.at(-1);
   assert.equal(item.type, 'treasure');
   assert.equal(item.smithingStoneReceipt.amount, 2);
-  assert.equal(smithingStoneNote(item.smithingStoneReceipt), '⚒ 2 Smithing Stone secured · 2 total · 1 Refined Stone · 1 refined');
+  assert.equal(smithingStoneNote(item.smithingStoneReceipt, t), '⚒ 2 Smithing Stone secured · 2 total · 1 Refined Stone · 1 refined');
   // The present seat sees its receipt too, on its own snapshot, until the party moves on.
   const seat = (h, id) => h.snapshot().party.find((p) => p.id === id);
   assert.equal(seat(plain.host, 'p1').treasureStoneReceipt, undefined, 'nothing paid, nothing shown');
@@ -309,8 +310,8 @@ test('co-op treasure pays the same stone door as solo, and the catch-up names it
   raised.host.session.scene = { kind: 'map' };
   raised.host.chooseNode('p1', raised.host.session.reachableIds[0]);
   assert.equal(seat(raised.host, 'p1').treasureStoneReceipt, undefined, 'travelling on clears the notice');
-  assert.equal(smithingStoneNote(null), '');
-  assert.equal(smithingStoneNote({ amount: 0, stoneBalanceAfter: 0 }), '');
+  assert.equal(smithingStoneNote(null, t), '');
+  assert.equal(smithingStoneNote({ amount: 0, stoneBalanceAfter: 0 }, t), '');
 });
 
 test('the spoils row names only the purse that was paid, in its title and its body', async () => {
@@ -326,4 +327,36 @@ test('the spoils row names only the purse that was paid, in its title and its bo
   const both = smithingStoneRowCopy({ amount: 2, stoneBalanceAfter: 2, refined: 2, refinedBalanceAfter: 2 }, t);
   assert.equal(both.title, '2 Smithing Stones · 2 Refined Stones');
   assert.match(both.body, /2 total.*2 refined/);
+});
+
+test('a failed roll records its claim, and a retry rolls nothing (chance 1 and chance 0)', () => {
+  const one = registriesWith({ 'smithing.rewardChancePct.elite': 1 });
+  const rng = createRng(5); // seed 5's first smith draw fails a 1% roll
+  const run = freshRun(one);
+  const first = grantSmithingReward(one, run, 'elite', 'combat:1:3:n2:elite', rng);
+  assert.equal(first.amount, 0, 'the roll failed');
+  assert.equal(first.duplicate, false);
+  assert.equal(rng.getCounters().smith, 1);
+  assert.deepEqual(run.smithingRewardClaims, ['combat:1:3:n2:elite'], 'the claim is recorded though the roll failed');
+  const retry = grantSmithingReward(one, run, 'elite', 'combat:1:3:n2:elite', rng);
+  assert.equal(retry.duplicate, true);
+  assert.equal(rng.getCounters().smith, 1, 'the retry rolls nothing');
+  assert.equal(run.smithingStones, 0);
+
+  const zero = registriesWith({ 'smithing.rewardChancePct.elite': 0 });
+  const rng0 = createRng(5);
+  const run0 = freshRun(zero);
+  assert.equal(grantSmithingReward(zero, run0, 'elite', 'e', rng0).amount, 0);
+  assert.deepEqual(run0.smithingRewardClaims, ['e']);
+  assert.equal(grantSmithingReward(zero, run0, 'elite', 'e', rng0).duplicate, true);
+  assert.equal(rng0.getCounters().smith, 0, 'chance 0 never rolls');
+});
+
+test('refined payout rows allow up to 100 in Settings', () => {
+  const rows = new Map(advancedConfigRows(contentBundle).map((row) => [row.key, row]));
+  for (const pool of POOLS) {
+    const row = rows.get(`gameConfig.balance.smithing.refinedRewardByPool.${pool}`);
+    assert.equal(row.min, 0);
+    assert.equal(row.max, 100);
+  }
 });
