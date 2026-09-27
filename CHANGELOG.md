@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-27
+
+- **Behind the scenes: the 1.0 checklist records the four fixes that just landed** ([#1362](https://github.com/cehinds/AshenSpire/pull/1362), `0.7.1.625`). Docs only. `docs/FINISH.md` now marks as done: a save that cannot be loaded keeps your run, a cancelled End Turn hold opens nothing, each change's changelog build number is checked, and the map camera check runs on every change. It adds one more check: the save-load fix should also be tested in a real browser when loading from the in-game menu screen.
+
 ## 2026-09-26
 
 - **Settings shows how fast you level** ([#1349](https://github.com/cehinds/AshenSpire/pull/1349), `0.7.1.624`). Settings → Advanced → Progression now has a Levelling preview that updates as you change the numbers. It shows how much XP a normal fight (3 kills), an elite (1 kill) and a boss (1 kill) gives, how many levels each is worth from level 1 and from level 10, the stat points those levels grant, and the XP to reach each level up to 20. The XP multiplier and Level-up value are counted. A new setting can also cap how many levels one fight can give: XP past the cap is lost, and the spoils screen says how much. It is off by default, so nothing changes until you set it.
