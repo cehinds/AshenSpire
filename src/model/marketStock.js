@@ -64,3 +64,23 @@ export function marketAdditionTableProblems(table, err) {
     err('shops.market.armour.cost', `min (${range.min}) must not be above max (${range.max})`);
   }
 }
+
+/**
+ * applyShopPriceMult(stock, mult) — a custom run's shop price multiplier
+ * (Greedy Merchants, Hoarder: main.js shopPriceMult) applied to a classic
+ * merchant's stock in place: the cards, relics and flasks, the Remove price,
+ * and every market addition's price (armour and sigil items, the price of one
+ * stone and of the rest), each rounded up. A multiplier of 1 changes nothing,
+ * and a shelf the visit did not lay out stays absent.
+ */
+export function applyShopPriceMult(stock, mult) {
+  if (!stock || mult === 1) return stock;
+  const up = (n) => Math.ceil(n * mult);
+  for (const kind of ['cards', 'relics', 'flasks', 'armour', 'sigils']) {
+    if (Array.isArray(stock[kind])) for (const item of stock[kind]) item.cost = up(item.cost);
+  }
+  if (Number.isFinite(stock.removeCost)) stock.removeCost = up(stock.removeCost);
+  if (stock.smithStones) stock.smithStones.price = up(stock.smithStones.price);
+  if (stock.innRest) stock.innRest.price = up(stock.innRest.price);
+  return stock;
+}

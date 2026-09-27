@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "The market sells more: Smithing Stones, armour, sigils and a bed for the night",
     "detail": "On some visits a market now also lays out Smithing Stones (a few per visit, priced per stone), armour sets of your class you do not own yet (yours for the rest of the run; wear them from the Armoury), and sigils, which you carry until a blacksmith can set them into a slot. A market in a town with an inn always offers a full rest, once per visit, that rests you exactly as the inn's bed does; a relic that forbids resting refuses it by name. What you bought and what is left on the shelves stay as they were after a reload. The shelves you already know are unchanged. Each new offering's chance, weight, prices and stock are rows in Advanced → Shops. An older save loads with no sigils.",
-    "build": "0.7.1.654",
+    "build": "0.7.1.656",
     "pullRequest": 1374,
     "url": "https://github.com/cehinds/AshenSpire/pull/1374"
   },

@@ -25,6 +25,11 @@ const BUY = Object.freeze({
   card: Object.freeze({ question: 'shop.review.buy.card', message: 'shop.review.buy.card.message' }),
   relic: Object.freeze({ question: 'shop.review.buy.relic', message: 'shop.review.buy.relic.message' }),
   flask: Object.freeze({ question: 'shop.review.buy.flask', message: 'shop.review.buy.flask.message' }),
+  // The market additions (SPEC §14.3).
+  stone: Object.freeze({ question: 'shop.review.buy.stone', message: 'shop.review.buy.stone.message' }),
+  armour: Object.freeze({ question: 'shop.review.buy.armour', message: 'shop.review.buy.armour.message' }),
+  sigil: Object.freeze({ question: 'shop.review.buy.sigil', message: 'shop.review.buy.sigil.message' }),
+  rest: Object.freeze({ question: 'shop.review.buy.rest', message: 'shop.review.buy.rest.message' }),
 });
 const SELL = Object.freeze({ relic: 'shop.review.sell.relic', flask: 'shop.review.sell.flask' });
 

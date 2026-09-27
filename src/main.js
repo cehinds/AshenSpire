@@ -68,6 +68,7 @@ import {
 import { buildMarketStock, buildMerchantStock, commitInnRest } from './engine/shopKinds.js';
 import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
 import { restLocationAtPoint, questBoardPointAt, innInTown, CAMP_LOCATION } from './model/locations.js';
+import { applyShopPriceMult } from './model/marketStock.js';
 import { mountTitle, focusTitleDefault } from './ui/screens/title.js';
 import { refreshHudQuickSettings } from './ui/components/hudQuickSettings.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
@@ -2154,13 +2155,9 @@ function enterNode(nodeId) {
       // shipped weights make every one a market with every shelf out, drawing
       // nothing new, so a seed's shelves are what they always were.
       const stock = buildMerchantStock(registries, rng, run, { meta: saves.loadMeta() });
-      const pm = shopPriceMult();
-      if (pm !== 1) {
-        for (const kind of ['cards', 'relics', 'flasks']) {
-          for (const item of stock[kind]) item.cost = Math.ceil(item.cost * pm);
-        }
-        stock.removeCost = Math.ceil(stock.removeCost * pm);
-      }
+      // Greedy Merchants and Hoarder scale the cards, relics, flasks, the
+      // Remove price and every market addition's price (SPEC §14.3).
+      applyShopPriceMult(stock, shopPriceMult());
       // Does a smith travel with him? Rolled once here, on the smith's own
       // stream (balance.smithing.services.offeredAt.merchant), and kept with
       // the stock so leaving and re-entering the screen does not roll again.
