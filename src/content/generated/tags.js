@@ -966,6 +966,33 @@ export const tags = [
     "blurb": "What Blight-Touched Idol does when the fight gives it its moment."
   },
   {
+    "id": "companion",
+    "domain": "property",
+    "label": "Companion",
+    "color": "B08D57",
+    "glyph": "☥",
+    "visibility": "",
+    "blurb": "What a companion confers while it travels with you: a branch, not a tag; each companion's own node sits under it."
+  },
+  {
+    "id": "hollowSquire",
+    "domain": "property",
+    "label": "Hollow Squire",
+    "color": "B08D57",
+    "glyph": "🛡",
+    "visibility": "",
+    "blurb": "A squire without a knight raises a shield before you."
+  },
+  {
+    "id": "emberHound",
+    "domain": "property",
+    "label": "Ember Hound",
+    "color": "C9502E",
+    "glyph": "🐕",
+    "visibility": "",
+    "blurb": "A hound of banked coals bites at your foes."
+  },
+  {
     "id": "warhorn",
     "domain": "property",
     "label": "Warhorn",
@@ -2179,5 +2206,14 @@ export const tags = [
     "glyph": "",
     "visibility": "INTERNAL",
     "blurb": "What a unlock is. Every object in the unlock collection carries this, and nothing outside it may."
+  },
+  {
+    "id": "classification.companion",
+    "domain": "classification",
+    "label": "companion",
+    "color": "",
+    "glyph": "",
+    "visibility": "INTERNAL",
+    "blurb": "What a companion is. Every object in the companion collection carries this, and nothing outside it may."
   }
 ];

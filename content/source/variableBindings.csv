@@ -117,3 +117,5 @@ default,,restHpSmall,pct,rest.hpSmallPct
 default,,restHpPartial,pct,rest.hpPartialPct
 default,,restManaFlat,restoreMana,rest.mana.flat
 default,,restManaFloor,floorPct,rest.mana.floorPct
+default,,hollowSquire,block,powers.hollowSquire.block
+default,,emberHound,damage,powers.emberHound.damage

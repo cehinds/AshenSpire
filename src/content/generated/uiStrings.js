@@ -1389,6 +1389,48 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "shop.review.buy.book",
+    "extends": "",
+    "short": "Buy this skill book?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.book.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). Read it from the Armoury's Inventory.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.token",
+    "extends": "",
+    "short": "Buy this revive token?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.token.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). It burns by itself when you would fall in a fight.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.companion",
+    "extends": "",
+    "short": "Hire this companion?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.companion.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). It travels with you for a few fights.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "shop.review.buy.rest.message",
     "extends": "",
     "short": "Spend {cost} of your {cinders} cinders ({left} left). You rest exactly as the inn's bed rests you.",
@@ -1434,6 +1476,13 @@ export const uiStrings = [
     "id": "shop.review.sell.flask",
     "extends": "",
     "short": "Sell this flask?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.sell.consumable",
+    "extends": "",
+    "short": "Sell this?",
     "full": "",
     "tip": ""
   },
@@ -1708,6 +1757,160 @@ export const uiStrings = [
     "extends": "",
     "short": "REST",
     "full": "A full rest at the inn, bought here.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.skillBooks",
+    "extends": "",
+    "short": "SKILL BOOKS",
+    "full": "Books that teach a skill track. Read one from the Armoury's Inventory.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.reviveTokens",
+    "extends": "",
+    "short": "REVIVE TOKENS",
+    "full": "A token that burns to save you when you would fall in a fight.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.questEvent",
+    "extends": "",
+    "short": "QUEST",
+    "full": "One event the market knows of. Taking it closes the market behind you.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.companions",
+    "extends": "",
+    "short": "COMPANIONS",
+    "full": "Allies who travel with you for a few fights.",
+    "tip": ""
+  },
+  {
+    "id": "shop.book.desc",
+    "extends": "",
+    "short": "{text} Read it from the Armoury's Inventory.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.token.desc",
+    "extends": "",
+    "short": "{text} It burns by itself when you need it.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.companion.desc",
+    "extends": "",
+    "short": "{blurb} It travels with you for {combats} fights.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.quest.name",
+    "extends": "",
+    "short": "{name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.quest.desc",
+    "extends": "",
+    "short": "Leave the market and follow this lead. The market closes behind you, and the event plays out once.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.quest.taken",
+    "extends": "",
+    "short": "You followed this lead already.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.action.quest",
+    "extends": "",
+    "short": "Follow · {cost} cinders",
+    "full": "Pay {cost} cinders and leave the market for this event.",
+    "tip": ""
+  },
+  {
+    "id": "shop.consumable.sellDesc",
+    "extends": "",
+    "short": "{text} You hold {count}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.companionHas",
+    "extends": "",
+    "short": "{name} already travels with you.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.questTaken",
+    "extends": "",
+    "short": "You have already followed this lead.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.questSeen",
+    "extends": "",
+    "short": "You have already seen this event.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "consumable.refuse.notBook",
+    "extends": "",
+    "short": "Only a skill book can be read.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "consumable.refuse.none",
+    "extends": "",
+    "short": "You hold no {name}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "consumable.refuse.inCombat",
+    "extends": "",
+    "short": "{name} cannot be read during a fight.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.consumable.read",
+    "extends": "",
+    "short": "Read",
+    "full": "Read this skill book: its track gains the XP it teaches.",
+    "tip": ""
+  },
+  {
+    "id": "armoury.consumable.category",
+    "extends": "",
+    "short": "Consumable",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.consumable.token",
+    "extends": "",
+    "short": "It burns by itself when you would fall in a fight.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.companion.left",
+    "extends": "",
+    "short": "{name} · {n} fights left",
+    "full": "{name} travels with you for {n} more fights.",
     "tip": ""
   },
   {
@@ -2029,7 +2232,7 @@ export const uiStrings = [
     "id": "settings.shops.topic.market",
     "extends": "",
     "short": "Market",
-    "full": "The usual merchant: cards, relics, flasks, armaments, weapon arts and card removal, and on some visits armour, Smithing Stones, sigils and a full rest.",
+    "full": "The usual merchant: cards, relics, flasks, armaments, weapon arts and card removal, and on some visits armour, Smithing Stones, sigils, a full rest, skill books, revive tokens, a quest event and companions.",
     "tip": ""
   },
   {
@@ -2037,6 +2240,20 @@ export const uiStrings = [
     "extends": "",
     "short": "Blacksmith",
     "full": "The blacksmith's offerings and prices. No merchant is a blacksmith until its screen ships.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.consumables",
+    "extends": "",
+    "short": "Consumables",
+    "full": "Skill books and revive tokens: what each costs, what the market pays back, the XP a book teaches and the health a token leaves you with.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.companions",
+    "extends": "",
+    "short": "Companions",
+    "full": "What each companion costs and how many fights it travels with you.",
     "tip": ""
   },
   {
@@ -2180,6 +2397,27 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "settings.shops.offering.reviveTokens",
+    "extends": "",
+    "short": "Revive tokens",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.questEvent",
+    "extends": "",
+    "short": "Quest event",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.companions",
+    "extends": "",
+    "short": "Companions",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "settings.shops.offering.training",
     "extends": "",
     "short": "Training",
@@ -2294,7 +2532,14 @@ export const uiStrings = [
   {
     "id": "settings.shops.refuse.emptyStock",
     "extends": "",
-    "short": "{kind}: with the stock of {stocks} at 0, only {enabled} of its enabled offerings have anything to lay out, fewer than its guaranteed minimum of {minimum}. Raise that stock above 0, turn another offering on, or lower the minimum.",
+    "short": "{kind}: needs at least {minimum} always-stocked offerings with a stock of 1 or more, but only {enabled} have one; raise the stock of {stocks}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.sellValue",
+    "extends": "",
+    "short": "Consumables · {name}: a sale value of {sellValue} is refused; it must not be above its cost of {cost}, or buying one and selling it back would profit. Its authored values stay in force until it is fixed.",
     "full": "",
     "tip": ""
   },

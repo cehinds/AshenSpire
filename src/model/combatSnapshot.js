@@ -115,6 +115,19 @@ export function combatSnapshotProblems(snapshot) {
   // before them, refused by name when present and malformed.
   if (snapshot.skills !== undefined) problems.push(...skillsProblems(snapshot.skills));
   if (snapshot.coreTags !== undefined) problems.push(...coreTagsProblems(snapshot.coreTags).map((p) => `snapshot.${p}`));
+  // SPEC §14.3: the fight's consumable counts and the companions it mounted;
+  // absent on a snapshot written before them, refused by name when malformed.
+  if (snapshot.consumables !== undefined) {
+    if (!record(snapshot.consumables)) problems.push('consumables must be an object { [consumableId]: count }');
+    else for (const [id, n] of Object.entries(snapshot.consumables)) {
+      if (!Number.isSafeInteger(n) || n < 1) problems.push(`consumables.${id} must be a whole count of at least 1 (a spent-out entry is deleted)`);
+    }
+  }
+  if (snapshot.companions !== undefined) {
+    if (!Array.isArray(snapshot.companions) || snapshot.companions.some((id) => !nonEmptyString(id)) || new Set(snapshot.companions).size !== snapshot.companions.length) {
+      problems.push('companions must be a list of distinct companion ids');
+    }
+  }
   if (snapshot.skillXp !== undefined) {
     if (!record(snapshot.skillXp)) problems.push('skillXp must be an object keyed by owner');
     else for (const [owner, receipt] of Object.entries(snapshot.skillXp)) {

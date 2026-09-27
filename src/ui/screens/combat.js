@@ -1339,6 +1339,16 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
       trailing.push(chip);
     }
     trailing.push(statusRow(p));
+    // SPEC §14.3: each companion travelling with the run stands beside the
+    // player as an ally portrait — its name and the fights it has left.
+    for (const id of combat.companions || []) {
+      if (!registries.companions.has(id)) continue;
+      const def = registries.companions.get(id);
+      const fightsLeft = ((run.companions || []).find((row) => row.id === id) || {}).combatsLeft || 1;
+      const chip = pill({ label: t('combat.companion.left', { name: def.name, n: fightsLeft }), attrs: { class: 'companion-chip', dataset: { companion: id } } });
+      chip.setAttribute('title', def.blurb);
+      trailing.push(chip);
+    }
     if (combat.foundation && p.evade > 0) {
       const chip = pill({ label: `Evade ${p.evade}`, attrs: { class: 'foundation-evade' } });
       bindAbilityBadge(chip, p, 'evade');

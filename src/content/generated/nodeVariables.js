@@ -511,5 +511,15 @@ export const nodeVariables = [
     "nodeId": "restManaFloor",
     "variable": "floorPct",
     "role": "toFloorPct"
+  },
+  {
+    "nodeId": "hollowSquire",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "emberHound",
+    "variable": "damage",
+    "role": "amount"
   }
 ];

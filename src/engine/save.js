@@ -47,6 +47,7 @@ import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
 import { unknownSigilId } from '../model/sigils.js';
 import { pruneUnknownAdditionOffers } from '../model/marketStock.js';
+import { unknownConsumableId, unknownCompanionId } from '../model/consumables.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -668,9 +669,19 @@ export function createSaveManager(storage) {
         // An UNSOLD offer is not owned: one for a sigil or an armour set this
         // build no longer has is pruned from the saved shelf, never rerolled,
         // and the run loads (Codex, on #1374; coordinator ruling).
+        // An OWNED consumable or companion this build does not know (SPEC
+        // §14.3) is refused by name, as an owned sigil is: a count with no row
+        // to read or spend, an ally with no rule to mount.
+        const strangeConsumable = unknownConsumableId(registries, run);
+        if (strangeConsumable) throw new Error(`consumable '${strangeConsumable}' is unknown to this build`);
+        const strangeCompanion = unknownCompanionId(registries, run);
+        if (strangeCompanion) throw new Error(`companion '${strangeCompanion}' is unknown to this build`);
         const known = {
           sigilKnown: (id) => registries.sigils.has(id),
           armourKnown: (classId, id) => (registries.equipment.armour || []).some((piece) => piece.classId === classId && piece.id === id),
+          consumableKnown: (id) => registries.consumables.has(id),
+          companionKnown: (id) => registries.companions.has(id),
+          eventKnown: (id) => registries.events.has(id),
         };
         const stocks = [['shopStock', run.shopStock], ...Object.entries(run.journey?.serviceStates || {}).map(([pointId, state]) => [`journey.serviceStates.${pointId}.stock`, state && state.stock])];
         for (const [field, stock] of stocks) {

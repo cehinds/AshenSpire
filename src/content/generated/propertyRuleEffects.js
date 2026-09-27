@@ -471,6 +471,38 @@ export const propertyRuleEffects = {
       }
     ]
   },
+  "hollowSquire": {
+    "triggers": [
+      {
+        "on": "combatStart",
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "balance": "powers.hollowSquire.block"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "emberHound": {
+    "triggers": [
+      {
+        "on": "playerTurnStart",
+        "do": [
+          {
+            "op": "damage",
+            "target": "randomEnemy",
+            "amount": {
+              "balance": "powers.emberHound.damage"
+            }
+          }
+        ]
+      }
+    ]
+  },
   "warhorn": {
     "triggers": [
       {
