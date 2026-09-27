@@ -577,26 +577,47 @@ async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } =
       await waitFor('the new-slot decision door (flush case)', `!!document.querySelector('[data-title-action="review-new"]:not([disabled])')`);
       await press('[data-title-action="review-new"]');
       await waitFor('character creation (flush case)', `!!document.querySelector('#cz-start:not([disabled])')`);
-      // Creation is gated step by step (781da54a): Begin refuses until a class,
-      // a stat mode, a keepsake and starting armour are chosen. Walk the steps
-      // a player walks — the first class, Standard stats, the first keepsake,
-      // the first armour — opening each fold before tapping inside it.
+      // Creation is a stepped workspace — Class, Character, Starting equip,
+      // Review (see tools/character-creation-check.mjs) — gated step by step
+      // (781da54a): Begin refuses until a class, a stat mode, a keepsake and
+      // starting armour are chosen. Walk the steps a player walks: the first
+      // class, the footer's Next, Standard stats and the first keepsake on
+      // the Character stage, Next, the first armour. A fold is opened before
+      // tapping inside it, and OPEN MEANS OPEN, NOT TOGGLE: each fold is a
+      // <details>, so a press on an open face would close it.
       const openFace = async (key) => {
-        const expanded = await evaluate(`document.querySelector('[data-face="${key}"]')?.getAttribute('aria-expanded') === 'true'`);
-        if (!expanded) await press(`[data-face="${key}"]`);
+        await waitFor(`the ${key} fold (flush case)`, `!!document.querySelector('[data-face="${key}"]')`);
+        const open = await evaluate(`document.querySelector('[data-face="${key}"]')?.closest('details')?.open === true`);
+        if (!open) await press(`[data-face="${key}"]`);
       };
-      await openFace('class');
-      await press('.cz-class');
-      await openFace('character');
+      await waitFor('the Class stage (flush case)', `!!document.querySelector('#cz-classes .cz-class')`);
+      await press('#cz-classes .cz-class');
+      await press('#cz-next');
+      await waitFor('the Character stage (flush case)', `!!document.querySelector('#cz-statedit .cc-mode-select')`);
       await openFace('primary');
-      await evaluate(`(() => { const select = document.querySelector('#cz-statedit .cc-mode-select'); select.value = 'standard'; select.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+      // Standard's mode id is `lean` (the option the player reads as
+      // "Standard"); a value the select does not offer leaves it unanswered.
+      const mode = await evaluate(`(() => { const select = document.querySelector('#cz-statedit .cc-mode-select'); select.value = 'lean'; select.dispatchEvent(new Event('change', { bubbles: true })); return select.value; })()`);
+      if (mode !== 'lean') throw new Error(`the stat mode select offers no Standard (lean); value=${JSON.stringify(mode)}`);
       await openFace('keepsake');
       await press('#cz-keepsakes [data-keepsake-id]');
-      await openFace('equipment');
+      await press('#cz-next');
+      await waitFor('the Starting equip stage (flush case)', `document.querySelector('#cz-tab-equipment')?.getAttribute('aria-selected') === 'true'`);
       await openFace('armour');
       await press('#cz-armours .equip-chip .equipment-poker-card');
       await press('#cz-armours .equip-chip .equipment-choose');
-      await openFace('seed');
+      // Begin is the Review stage's footer. On Starting equip, Next is each
+      // open section's own Continue (armour, then the hands, then the relic),
+      // so it takes one press per section to walk there.
+      for (let step = 0; step < 8; step += 1) {
+        if (await evaluate(`document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)) break;
+        await press('#cz-next');
+      }
+      await waitFor('the Review stage (flush case)', `document.querySelector('#cz-tab-review')?.getAttribute('aria-selected') === 'true'`)
+        .catch(async (error) => {
+          const seen = await evaluate(`({ tabs: [...document.querySelectorAll('.cz-tab')].map((tab) => tab.id + '=' + tab.getAttribute('aria-selected')), next: document.querySelector('#cz-next')?.getAttribute('aria-disabled') })`);
+          throw new Error(`${error.message}; saw ${JSON.stringify(seen)}`);
+        });
       await waitFor('Begin to accept the finished character (flush case)', `(() => {
         const begin = document.querySelector('#cz-start');
         return !!begin && begin.getAttribute('aria-disabled') !== 'true';
@@ -605,7 +626,21 @@ async function runProbe(root, { screenshots = WRITE_SHOTS, refitOnly = false } =
         throw new Error(`${error.message}; Begin refuses: ${JSON.stringify(refusal)}`);
       });
       await press('#cz-start');
-      await waitFor('the new run map (flush case)', `!!(document.querySelector('.map-scroll') && document.querySelector('#zoom-in'))`);
+      // A new climb opens on the opening sequence (src/ui/screens/prologue.js)
+      // before its map; the player's way past it is Skip opening.
+      await waitForMount('the opening sequence or the map (flush case)', `!!(document.querySelector('.prologue-screen') || document.querySelector('.map-scroll'))`);
+      if (await evaluate(`(() => {
+        const skip = [...document.querySelectorAll('.prologue-screen .prologue-controls button')]
+          .find((control) => !control.hidden && /skip/i.test(control.textContent));
+        if (!skip) return false;
+        skip.dataset.mapCameraSkip = 'true';
+        return true;
+      })()`)) await press('[data-map-camera-skip="true"]');
+      await waitFor('the new run map (flush case)', `!!(document.querySelector('.map-scroll') && document.querySelector('#zoom-in'))`)
+        .catch(async (error) => {
+          const seen = await evaluate(`({ screen: document.querySelector('.screen')?.className || null, text: (document.querySelector('.screen') || document.body).innerText.slice(0, 160) })`);
+          throw new Error(`${error.message}; saw ${JSON.stringify(seen)}`);
+        });
       await wait(300);
       exceptionsSeen.length = 0;
 
@@ -862,7 +897,11 @@ if (SELFTEST) {
   await selftest();
 } else if (CHECK) {
   const results = await runProbe(ROOT, { refitOnly: true });
-  process.exitCode = printRefit(results.postSettleRefit) ? 0 : 1;
+  // The counted line is what tools/verdict.mjs reads in CI (map-camera.yml);
+  // the PASS/FAIL line above it is the human detail.
+  const ok = printRefit(results.postSettleRefit);
+  console.log(`map-camera re-fit check: ${ok ? 'GREEN' : 'RED'} (${ok ? 1 : 0}/1)`);
+  process.exitCode = ok ? 0 : 1;
 } else {
   const results = await runProbe(ROOT);
   let failures = 0;

@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Settings shows how fast you level",
     "detail": "Settings → Advanced → Progression now has a Levelling preview that updates as you change the numbers. It shows how much XP a normal fight (3 kills), an elite (1 kill) and a boss (1 kill) gives, how many levels each is worth from level 1 and from level 10, the stat points those levels grant, and the XP to reach each level up to 20. The XP multiplier and Level-up value are counted. A new setting can also cap how many levels one fight can give: XP past the cap is lost, and the spoils screen says how much. It is off by default, so nothing changes until you set it.",
-    "build": "0.7.1.622",
+    "build": "0.7.1.623",
     "pullRequest": 1349,
     "url": "https://github.com/cehinds/AshenSpire/pull/1349"
+  },
+  {
+    "id": "pr-1357",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: every change is now checked for the map camera fitting the screen",
+    "detail": "Nothing you see changes. Each proposed change now opens the real map in a browser, resizes its view after it settles, and fails if the camera stops filling the view or loses the destination you picked. The longer map-camera check also makes a new character again, through the Class, Character, Starting equip and Review steps and past the opening, and runs to the end.",
+    "build": "0.7.1.621",
+    "pullRequest": 1357,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1357"
   },
   {
     "id": "pr-1354",
