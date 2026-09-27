@@ -1,7 +1,7 @@
 {
  "_WARNING": "Captured, never hand-edited: the classic merchant shelves origin/dev wrote before SPEC 14.2 shop kinds existed. tests/shop-kinds.test.mjs holds the new merchant flow byte-identical to these on every seed.",
  "_provenance": {
-  "ref": "3611d6b44 (origin/dev, 2026-09-27)",
+  "ref": "3611d6b44 (origin/dev, 2026-09-27), recaptured for #1388 with only its content applied (the five round-4 class cards in their class cardPool, their school tags, Astral Insight cost); the shop code is 3611d6b44 unchanged",
   "method": "For seed n in 1..50: createRunState({ seed: n*7919, classId: classes[n % classes.length], registries }); rng = createRng(n*7919, { shop: n % 5 }); stock = buildShopStock(registries, rng, run); stock.smith = smithServicesAt(registries, \"merchant\", rng) (main.js merchant case, price multiplier 1); counters = rng.getCounters()."
  },
  "classes": [
@@ -218,7 +218,7 @@
       "cost": 220
      },
      {
-      "id": "butterflyPlague",
+      "id": "secondBloom",
       "cost": 423
      },
      {
@@ -226,7 +226,7 @@
       "cost": 150
      },
      {
-      "id": "harbingerOfBlightCard",
+      "id": "bloodOfferingRite",
       "cost": 425
      },
      {
@@ -320,19 +320,19 @@
       "cost": 158
      },
      {
-      "id": "stitchedArms",
+      "id": "unbreakable",
       "cost": 471
      },
      {
-      "id": "rend",
+      "id": "cleavingBlow",
       "cost": 145
      },
      {
-      "id": "sanguinePactCard",
+      "id": "bloodhuntersStrike",
       "cost": 432
      },
      {
-      "id": "flameToBlade",
+      "id": "warcry",
       "cost": 241
      }
     ],
@@ -426,7 +426,7 @@
       "cost": 228
      },
      {
-      "id": "constellationCard",
+      "id": "timeDilation",
       "cost": 450
      },
      {
@@ -614,7 +614,7 @@
    "stock": {
     "cards": [
      {
-      "id": "sacredHarvest",
+      "id": "blightBloom",
       "cost": 240
      },
      {
@@ -622,7 +622,7 @@
       "cost": 143
      },
      {
-      "id": "penance",
+      "id": "litany",
       "cost": 148
      },
      {
@@ -720,11 +720,11 @@
       "cost": 158
      },
      {
-      "id": "kickOff",
+      "id": "shieldwall",
       "cost": 239
      },
      {
-      "id": "goreblood",
+      "id": "executioner",
       "cost": 431
      },
      {
@@ -1018,15 +1018,15 @@
       "cost": 242
      },
      {
-      "id": "secondBloom",
-      "cost": 405
+      "id": "lastMercy",
+      "cost": 204
      },
      {
-      "id": "bloodOfferingRite",
+      "id": "bloodHarvest",
       "cost": 425
      },
      {
-      "id": "gildedOath",
+      "id": "thornHaloCard",
       "cost": 230
      }
     ],
@@ -1112,20 +1112,20 @@
    "stock": {
     "cards": [
      {
-      "id": "bashingBlow",
-      "cost": 149
+      "id": "masterOfStrategy",
+      "cost": 440
      },
      {
       "id": "hex",
       "cost": 242
      },
      {
-      "id": "stomp",
-      "cost": 224
+      "id": "rondelParry",
+      "cost": 149
      },
      {
-      "id": "masterOfStrategy",
-      "cost": 464
+      "id": "bashingBlow",
+      "cost": 159
      },
      {
       "id": "sweepingBlow",
@@ -1214,7 +1214,7 @@
    "stock": {
     "cards": [
      {
-      "id": "astromancerCard",
+      "id": "celestialLance",
       "cost": 478
      },
      {
@@ -1222,7 +1222,7 @@
       "cost": 210
      },
      {
-      "id": "umbralWard",
+      "id": "starcaller",
       "cost": 405
      },
      {
@@ -1418,7 +1418,7 @@
       "cost": 159
      },
      {
-      "id": "butterflyPlague",
+      "id": "secondBloom",
       "cost": 430
      },
      {
@@ -1524,12 +1524,12 @@
       "cost": 222
      },
      {
-      "id": "cleavingBlow",
+      "id": "goreslash",
       "cost": 151
      },
      {
-      "id": "sweepingBlow",
-      "cost": 222
+      "id": "quickGuard",
+      "cost": 148
      }
     ],
     "relics": [
@@ -1806,8 +1806,8 @@
    "stock": {
     "cards": [
      {
-      "id": "secondBloom",
-      "cost": 447
+      "id": "lastMercy",
+      "cost": 228
      },
      {
       "id": "scourge",
@@ -1818,7 +1818,7 @@
       "cost": 159
      },
      {
-      "id": "witheringTouch",
+      "id": "blightwardLash",
       "cost": 157
      },
      {
@@ -2026,7 +2026,7 @@
       "cost": 136
      },
      {
-      "id": "meteorite",
+      "id": "meteorSwarm",
       "cost": 241
      }
     ],
@@ -2206,15 +2206,15 @@
    "stock": {
     "cards": [
      {
-      "id": "hamstring",
-      "cost": 219
+      "id": "blindingSand",
+      "cost": 146
      },
      {
       "id": "enfeeble",
       "cost": 205
      },
      {
-      "id": "lastRites",
+      "id": "blightNova",
       "cost": 448
      },
      {
@@ -2222,7 +2222,7 @@
       "cost": 145
      },
      {
-      "id": "witheringTouch",
+      "id": "blightwardLash",
       "cost": 146
      }
     ],
@@ -2308,11 +2308,11 @@
    "stock": {
     "cards": [
      {
-      "id": "twinbladeFlurry",
+      "id": "hemorrhage",
       "cost": 213
      },
      {
-      "id": "ironResolve",
+      "id": "serratedBlade",
       "cost": 147
      },
      {
@@ -2324,7 +2324,7 @@
       "cost": 150
      },
      {
-      "id": "enterBulwark",
+      "id": "riposte",
       "cost": 146
      }
     ],
@@ -2422,8 +2422,8 @@
       "cost": 137
      },
      {
-      "id": "fieldDressing",
-      "cost": 229
+      "id": "ironSkin",
+      "cost": 153
      }
     ],
     "relics": [
@@ -2614,7 +2614,7 @@
       "cost": 161
      },
      {
-      "id": "blightNova",
+      "id": "crimsonRite",
       "cost": 441
      },
      {
@@ -2622,8 +2622,8 @@
       "cost": 159
      },
      {
-      "id": "masterOfStrategy",
-      "cost": 417
+      "id": "hamstring",
+      "cost": 211
      }
     ],
     "relics": [
@@ -2704,7 +2704,7 @@
    "stock": {
     "cards": [
      {
-      "id": "bracingStance",
+      "id": "rondelParry",
       "cost": 143
      },
      {
@@ -2712,16 +2712,16 @@
       "cost": 246
      },
      {
-      "id": "quickstep",
+      "id": "guardCounter",
       "cost": 143
      },
      {
-      "id": "honedEdge",
-      "cost": 137
+      "id": "poiseBreaker",
+      "cost": 412
      },
      {
-      "id": "twinFang",
-      "cost": 143
+      "id": "transmute",
+      "cost": 425
      }
     ],
     "relics": [
@@ -2802,7 +2802,7 @@
    "stock": {
     "cards": [
      {
-      "id": "astralCleave",
+      "id": "radiantSpray",
       "cost": 213
      },
      {
@@ -2810,11 +2810,11 @@
       "cost": 437
      },
      {
-      "id": "shootingShard",
+      "id": "wardingStar",
       "cost": 153
      },
      {
-      "id": "starPath",
+      "id": "moonlitShieldCard",
       "cost": 224
      },
      {
@@ -3018,7 +3018,7 @@
       "cost": 205
      },
      {
-      "id": "gildedOath",
+      "id": "communionCard",
       "cost": 246
      }
     ],
@@ -3112,7 +3112,7 @@
       "cost": 232
      },
      {
-      "id": "lastStand",
+      "id": "stitchedArms",
       "cost": 431
      },
      {
@@ -3210,11 +3210,11 @@
       "cost": 165
      },
      {
-      "id": "starPath",
+      "id": "moonlitShieldCard",
       "cost": 206
      },
      {
-      "id": "astromancerCard",
+      "id": "celestialLance",
       "cost": 454
      }
     ],
@@ -3398,7 +3398,7 @@
       "cost": 136
      },
      {
-      "id": "ironSkin",
+      "id": "honedEdge",
       "cost": 142
      },
      {
@@ -3406,7 +3406,7 @@
       "cost": 160
      },
      {
-      "id": "litany",
+      "id": "graveOffering",
       "cost": 156
      },
      {
@@ -3500,7 +3500,7 @@
       "cost": 206
      },
      {
-      "id": "warSurgeon",
+      "id": "rallyingStandard",
       "cost": 210
      },
      {
@@ -3598,7 +3598,7 @@
       "cost": 138
      },
      {
-      "id": "astralArmorCard",
+      "id": "moonrendCut",
       "cost": 219
      },
      {
@@ -3606,7 +3606,7 @@
       "cost": 138
      },
      {
-      "id": "stargazerCard",
+      "id": "astralArmorCard",
       "cost": 226
      }
     ],
@@ -3790,7 +3790,7 @@
    "stock": {
     "cards": [
      {
-      "id": "ironSkin",
+      "id": "honedEdge",
       "cost": 144
      },
      {
@@ -3798,11 +3798,11 @@
       "cost": 150
      },
      {
-      "id": "honedEdge",
+      "id": "ironSkin",
       "cost": 149
      },
      {
-      "id": "lastRites",
+      "id": "blightNova",
       "cost": 469
      },
      {
@@ -3904,7 +3904,7 @@
       "cost": 217
      },
      {
-      "id": "lastStand",
+      "id": "stitchedArms",
       "cost": 420
      },
      {
@@ -3994,7 +3994,7 @@
       "cost": 462
      },
      {
-      "id": "radiantSpray",
+      "id": "starPath",
       "cost": 207
      },
      {
@@ -4002,7 +4002,7 @@
       "cost": 138
      },
      {
-      "id": "meteorite",
+      "id": "meteorSwarm",
       "cost": 227
      },
      {
@@ -4284,19 +4284,19 @@
    "stock": {
     "cards": [
      {
-      "id": "bloodTithe",
+      "id": "sanguinePactCard",
       "cost": 436
      },
      {
-      "id": "cleavingBlow",
+      "id": "goreslash",
       "cost": 155
      },
      {
-      "id": "stitchedArms",
+      "id": "unbreakable",
       "cost": 444
      },
      {
-      "id": "blindingSand",
+      "id": "twinFang",
       "cost": 150
      },
      {
@@ -4386,15 +4386,15 @@
       "cost": 427
      },
      {
-      "id": "stargazerCard",
+      "id": "astralArmorCard",
       "cost": 213
      },
      {
-      "id": "timeDilation",
+      "id": "supernova",
       "cost": 411
      },
      {
-      "id": "starstoneKris",
+      "id": "timeDilation",
       "cost": 432
      },
      {
@@ -4590,7 +4590,7 @@
       "cost": 471
      },
      {
-      "id": "witheringTouch",
+      "id": "blightwardLash",
       "cost": 140
      },
      {
@@ -4598,7 +4598,7 @@
       "cost": 211
      },
      {
-      "id": "blightNova",
+      "id": "crimsonRite",
       "cost": 454
      },
      {
@@ -4688,7 +4688,7 @@
    "stock": {
     "cards": [
      {
-      "id": "cleavingBlow",
+      "id": "goreslash",
       "cost": 146
      },
      {
@@ -4696,7 +4696,7 @@
       "cost": 433
      },
      {
-      "id": "blindingSand",
+      "id": "twinFang",
       "cost": 152
      },
      {
@@ -4786,7 +4786,7 @@
    "stock": {
     "cards": [
      {
-      "id": "waxingMoonCard",
+      "id": "umbralWard",
       "cost": 467
      },
      {
@@ -4794,15 +4794,15 @@
       "cost": 215
      },
      {
-      "id": "astralCleave",
+      "id": "radiantSpray",
       "cost": 244
      },
      {
-      "id": "moonlitShieldCard",
+      "id": "astralInsight",
       "cost": 232
      },
      {
-      "id": "starstoneKris",
+      "id": "timeDilation",
       "cost": 415
      }
     ],

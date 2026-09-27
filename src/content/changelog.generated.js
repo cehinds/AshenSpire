@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1388",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Five class cards can now be drafted, and two enemies leave status cards behind",
+    "detail": "Rondel Parry and Sunderplate (Reaver), Astral Insight (Starseer), and Blightward Lash and Last Mercy (Herald) now show up in card rewards and shops for their class; Astral Insight now also costs 1 Stamina and 1 Mana. The Court Surgeon's scalpel now leaves a Wound in your discard pile, and the Husk Brute's bellow leaves a Slimed.",
+    "build": "0.7.1.676",
+    "pullRequest": 1388,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1388"
+  },
+  {
     "id": "pr-1379",
     "date": "2026-09-27",
     "group": "2026-09-27",

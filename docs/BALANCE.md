@@ -136,7 +136,7 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 | Reaver | patrol (normal) | 100 | 15.1 / 49 |
 | Reaver | packHunt (normal) | 100 | 15.6 / 49 |
 | Reaver | twinPatrol (normal) | 99.7 | 16.1 / 49 |
-| Reaver | bruiser (normal) | 100 | 19.9 / 49 |
+| Reaver | bruiser (normal) | 99.7 | 20.2 / 49 |
 | Reaver | eliteWyrm (elite) | 23 | 47.2 / 49 |
 | Reaver | bossOmen (boss) | 42 | 45.5 / 49 |
 | Reaver | lanternFlight (normal) | 100 | 6.2 / 49 |
@@ -148,7 +148,7 @@ assume deck growth (§4 bands). These are a **floor** — real play does better.
 | Starseer | patrol (normal) | 100 | 4.3 / 48 |
 | Starseer | packHunt (normal) | 100 | 4.1 / 48 |
 | Starseer | twinPatrol (normal) | 100 | 4.8 / 48 |
-| Starseer | bruiser (normal) | 100 | 5.8 / 48 |
+| Starseer | bruiser (normal) | 100 | 5.9 / 48 |
 | Starseer | eliteWyrm (elite) | 85 | 33.4 / 48 |
 | Starseer | bossOmen (boss) | 27.7 | 45.2 / 48 |
 | Starseer | lanternFlight (normal) | 100 | 2.3 / 48 |
