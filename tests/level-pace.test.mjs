@@ -108,6 +108,25 @@ test('§15.2: the XP past the cap is discarded, one short of the next step at mo
   awardLevelXp(ceiling, banked, 215);
   assert.equal(banked.level.level, 2);
   assert.equal(banked.level.xp, 205);
+  // Both caps at once (review, #1349): per-fight 2 and a run ceiling of 3 stop
+  // a boss award at the same step. The per-award discard still applies, so the
+  // capped award leaves xp ≤ xpToNext − 1 rather than banking 195.
+  const both = createRegistries({ ...contentBundle, balance: { ...contentBundle.balance,
+    level: { ...contentBundle.balance.level, maxLevelsPerFight: 2 },
+    levelUp: { ...contentBundle.balance.levelUp, maxLevels: 3 } } });
+  const twice = { level: emptyLevel() };
+  const award = awardLevelXp(both, twice, 215);
+  assert.equal(twice.level.level, 3);
+  assert.ok(twice.level.xp <= xpToNext(both, 3) - 1, `xp ${twice.level.xp} must not exceed the step less one`);
+  assert.equal(award.discarded, 215 - xpToNext(both, 1) - xpToNext(both, 2) - twice.level.xp);
+  assert.ok(award.discarded > 0);
+  // The ceiling alone, short of the per-award allowance, still banks.
+  const early = createRegistries({ ...contentBundle, balance: { ...contentBundle.balance,
+    level: { ...contentBundle.balance.level, maxLevelsPerFight: 5 },
+    levelUp: { ...contentBundle.balance.levelUp, maxLevels: 3 } } });
+  const bank = { level: emptyLevel() };
+  assert.equal(awardLevelXp(early, bank, 215).discarded, 0);
+  assert.equal(bank.level.xp, 195);
 });
 
 test('§15.2: the preview lists the XP to reach each of levels 2–20, from the live curve', () => {
@@ -237,4 +256,47 @@ test('§15.2: the spoils receipt says how much XP the level cap discarded', asyn
   } finally {
     Object.assign(globalThis, saved);
   }
+});
+
+// The receipt's discarded XP crosses the save door. No schema bump: it is an
+// optional field inside the existing reward receipt (absent reads as 0), not
+// new run state.
+test('§15.2: the discarded XP on a pending reward survives a save and reload', async () => {
+  const { combatXpGains, rewardProgress } = await import('../src/model/rewardprogress.js');
+  const { createRunState, validateRunShape, serializeRun, deserializeRun } = await import('../src/model/state.js');
+  const run = createRunState({ seed: 0x1349, classId: 'reaver', registries: REG });
+  const gains = combatXpGains({ receipt: { 'item:blade': 6 }, levelGained: 215, levelDiscarded: 196 });
+  run.pendingReward = {
+    schemaVersion: 1, source: 'boss', after: 'map',
+    rewards: { title: 'VICTORY', cinders: 40, xpGains: gains },
+    states: {}, chosenCardId: null, chosenDraftCardIds: {}, chosenDraftNodeIds: {},
+  };
+  assert.deepEqual(validateRunShape(run), []);
+  const back = deserializeRun(serializeRun(run));
+  assert.deepEqual(back.pendingReward.rewards.xpGains, { level: 215, levelDiscarded: 196, tracks: { 'item:blade': 6 } });
+  assert.equal(rewardProgress(REG, back, back.pendingReward.rewards.xpGains).character.discarded, 196);
+  // A receipt saved before the field existed reads as nothing discarded.
+  assert.equal(rewardProgress(REG, back, { level: 215, tracks: {} }).character.discarded, 0);
+});
+
+test('§15.2: the preview\'s words are uiStrings rows, and "XP ×N" names the multiplier play applies', async () => {
+  const { t } = await import('../src/ui/strings.js');
+  const { appliedXpMultiplier } = await import('../src/model/advancedConfig.js');
+  const pace = levelPacePreview({ [XP_MULT]: 2.5 });
+  assert.equal(pace.title, t('settings.levelPace.title'));
+  assert.equal(pace.curveTitle, t('settings.levelPace.curveTitle'));
+  assert.equal(pace.xpMultiplier, appliedXpMultiplier({ [XP_MULT]: 2.5 }));
+  assert.ok(pace.terms.startsWith(t('settings.levelPace.multiplier', { multiplier: '2.5' })));
+  assert.equal(levelPacePreview({}).xpMultiplier, 1, 'none stored: the authored awards, ×1');
+  assert.ok(levelPacePreview({ [CAP]: 2 }).terms.endsWith(t('settings.levelPace.cap', { count: 2, plural: 's' })));
+  assert.equal(fight(pace, 'boss').text.split(' (')[0], t('settings.levelPace.fight.boss'));
+  // The model holds no English of its own.
+  const { readFileSync } = await import('node:fs');
+  const source = readFileSync(new URL('../src/ui/models/LevelPacePreviewModel.js', import.meta.url), 'utf8')
+    .split('\n').filter((line) => !line.trim().startsWith('//') && !line.trim().startsWith('*')).join('\n');
+  const literals = [...source.matchAll(/'([^']*)'|`([^`]*)`/g)].map((m) => m[1] ?? m[2]);
+  const english = literals.filter((text) => /[a-z]{2,}/i.test(text)
+    && !/^settings\.levelPace\./.test(text) && !text.startsWith('../') && !text.startsWith('${'));
+  assert.deepEqual(english, [], 'every word the preview says is a settings.levelPace.* row of uiStrings.csv');
+
 });

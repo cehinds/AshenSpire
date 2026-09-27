@@ -133,8 +133,11 @@ export function climbLevels(registries, { level = 1, xp = 0, gain = 0 } = {}) {
   let cappedBy = null;
   let discarded = 0;
   while (bank >= cost) {
-    if (ceiling !== null && lv >= ceiling) { cappedBy = 'level'; break; }
+    // The per-award cap first: once this award has climbed its allowance the
+    // rest is discarded, whichever ceiling would also stop it here — so a
+    // capped award always leaves xp ≤ xpToNext − 1 (review, #1349).
     if (perAward !== null && lv - start >= perAward) { cappedBy = 'fight'; discarded = bank - (cost - 1); bank = cost - 1; break; }
+    if (ceiling !== null && lv >= ceiling) { cappedBy = 'level'; break; }
     bank -= cost;
     lv += 1;
     cost = xpToNext(registries, lv);

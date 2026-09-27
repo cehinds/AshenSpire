@@ -7,41 +7,74 @@
 // same configured content bundle a new run is born from (the XP multiplier is
 // already rounded into its awards there), through the one pure function the
 // game climbs with (`levelPace` in model/levelup.js, which shares its climb
-// with `awardLevelXp`), so the preview cannot disagree with play.
+// with `awardLevelXp`), so the preview cannot disagree with play. Every word
+// it says is a `settings.levelPace.*` row of content/source/uiStrings.csv.
 
 import { contentBundle } from '../../content/index.js';
-import { configuredContentBundle } from '../../model/advancedConfig.js';
+import { appliedXpMultiplier, configuredContentBundle } from '../../model/advancedConfig.js';
 import { levelPace } from '../../model/levelup.js';
+import { t } from '../strings.js';
 
-const POOL_WORDS = Object.freeze({ normal: 'A normal fight', elite: 'An elite fight', boss: 'A boss fight' });
-
-const plural = (count, one, many = `${one}s`) => `${count} ${count === 1 ? one : many}`;
+const plural = (count) => (count === 1 ? '' : 's');
+// Four places, so a typed multiplier such as 0.125 reads as the number applied.
+const num = (value) => String(Number(Number(value).toFixed(4)));
 
 /**
  * levelPacePreview(settings, { pointsPerLevel }) → levelPace's result on the
- * configured content, plus the XP multiplier in force and a sentence per fight
- * that states its kill count:
+ * configured content, plus every line the panel draws:
  *
  *   { ...levelPace(registries, { pointsPerLevel }), xpMultiplier,
- *     fights: [{ ...fight, text }], problem }
+ *     title, subtitle, terms, curveTitle,
+ *     fights: [{ ...fight, text, pointsText }],
+ *     curve: [{ ...step, label, totalText }], problem }
  *
- * `pointsPerLevel` is the Level-up value the screen resolved (settings.js
- * `resolveLevelUpValue`); omitted, the configured bundle's, which already
- * reads `settings.levelUpValue`.
+ * `xpMultiplier` is the value configuredContentBundle applied
+ * (`appliedXpMultiplier`), 1 when none is stored. `pointsPerLevel` is the
+ * Level-up value the screen resolved (settings.js `resolveLevelUpValue`);
+ * omitted, the configured bundle's, which already reads `settings.levelUpValue`.
  */
 export function levelPacePreview(settings = {}, { pointsPerLevel = null } = {}) {
   let balance;
   try {
     balance = configuredContentBundle(contentBundle, settings || {}).balance;
   } catch (error) {
-    return { problem: `The preview cannot read these settings: ${error.message}`, curve: [], fights: [] };
+    return { problem: t('settings.levelPace.problem', { error: error.message }), curve: [], fights: [] };
   }
   // levelPace reads only `registries.balance`; the whole registry build is not needed to price a climb.
   const pace = levelPace({ balance }, { pointsPerLevel });
-  const multiplier = Number((settings || {})['gameConfig.progression.xpMultiplier']);
+  const applied = appliedXpMultiplier(settings);
+  const xpMultiplier = applied === null ? 1 : applied;
+  const cap = pace.maxLevelsPerFight;
+  const terms = [
+    t('settings.levelPace.multiplier', { multiplier: num(xpMultiplier) }),
+    t('settings.levelPace.pointsPerLevel', { count: pace.pointsPerLevel, plural: plural(pace.pointsPerLevel) }),
+    cap ? t('settings.levelPace.cap', { count: cap, plural: plural(cap) }) : t('settings.levelPace.noCap'),
+  ].join(' · ');
   const fights = pace.fights.map((fight) => {
-    const worth = fight.from.map((row) => `${plural(row.levelsGained, 'level')} from level ${row.level}${row.capped ? ' (capped)' : ''}`).join(', ');
-    return { ...fight, text: `${POOL_WORDS[fight.pool] || fight.pool} (${plural(fight.kills, 'kill')}) gives ${fight.xp} XP: ${worth}.` };
+    const worth = fight.from.map((row) => t(row.capped ? 'settings.levelPace.worthCapped' : 'settings.levelPace.worth',
+      { count: row.levelsGained, plural: plural(row.levelsGained), level: row.level })).join(', ');
+    return {
+      ...fight,
+      text: t('settings.levelPace.fightLine', {
+        fight: t(`settings.levelPace.fight.${fight.pool}`), kills: fight.kills, killsPlural: plural(fight.kills), xp: fight.xp, worth,
+      }),
+      pointsText: fight.from.map((row) => t('settings.levelPace.points', { count: row.points, plural: plural(row.points), level: row.level })).join(' · '),
+    };
   });
-  return { ...pace, xpMultiplier: Number.isFinite(multiplier) ? multiplier : 1, fights, problem: null };
+  const curve = pace.curve.map((row) => ({
+    ...row,
+    label: t('settings.levelPace.curveLevel', { level: row.level }),
+    totalText: t('settings.levelPace.curveTotal', { total: row.total }),
+  }));
+  return {
+    ...pace,
+    xpMultiplier,
+    title: t('settings.levelPace.title'),
+    subtitle: t('settings.levelPace.subtitle'),
+    terms,
+    curveTitle: t('settings.levelPace.curveTitle'),
+    fights,
+    curve,
+    problem: null,
+  };
 }
