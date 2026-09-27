@@ -491,7 +491,12 @@ audit = {"__name__": "palette_audit", "bpy": bpy, "os": os, "json": json, "math"
 exec(compile(open(audit_path, encoding="utf-8").read(), audit_path, "exec"), audit)
 manifest["audit"] = audit["measure"](OUT, manifest)
 
-with open(os.path.join(OUT, "manifest.json"), "w", encoding="utf-8", newline="\n") as fh:
+# The manifest is not art: for an output folder under assets/ it is tracked at
+# the same path under asset-data/ (tools/asset-data.mjs, docs/ART-REPO-PLAN.md).
+_rel = os.path.relpath(OUT, ROOT).replace(os.sep, "/")
+MANIFEST_DIR = os.path.join(ROOT, "asset-data", _rel[len("assets/"):]) if _rel.startswith("assets/") else OUT
+os.makedirs(MANIFEST_DIR, exist_ok=True)
+with open(os.path.join(MANIFEST_DIR, "manifest.json"), "w", encoding="utf-8", newline="\n") as fh:
     json.dump(manifest, fh, indent=2, sort_keys=True)
 
 print(f"EQUIPMENT OK: {count} armaments + {sets} armour sets -> {OUT}")

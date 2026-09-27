@@ -9,7 +9,7 @@
 # |                                                                                |
 # | body_lab() calls to_srgb() on values that are already sRGB-encoded, so the     |
 # | sRGB transfer function is applied twice before srgb_to_oklab() undoes it once. |
-# | Everything in assets/equipment/manifest.json - every withinClassMin, every     |
+# | Everything in asset-data/equipment/manifest.json - every withinClassMin, every |
 # | dL/dC/dHueDeg, every hue verdict - describes a lighter, desaturated picture    |
 # | that no player has ever seen. Diagnosed 2026-07-27 with re-runnable evidence   |
 # | (`bash tools/palette-check.sh`, checks D1a/D1b/D2b). NOT FIXED, on purpose:    |
@@ -106,7 +106,7 @@
 #      to_srgb() fail differently and a mid-grey test passes either way.
 #
 #   2. A REGENERATE, NOT A RE-READ. Fixing this changes every number in
-#      assets/equipment/manifest.json. The manifest must be rewritten by the same
+#      asset-data/equipment/manifest.json. The manifest must be rewritten by the same
 #      run that renders the images (measure() is called from
 #      tools/equipment-blender.py for exactly this reason). A fixed body_lab()
 #      beside a stale manifest is strictly worse than today: today the numbers
@@ -132,7 +132,7 @@
 # This file is deleted, without a table, when ANY of these holds:
 #
 #   1. Nothing consumes its output. Today exactly one thing does — test 34, via
-#      assets/equipment/manifest.json. If test 34 stops reading withinClassMin,
+#      asset-data/equipment/manifest.json. If test 34 stops reading withinClassMin,
 #      this tool measures something nobody asks about and it goes.
 #   2. A masked, per-pixel instrument replaces it. This file's own method block
 #      says the whole-figure mean is the wrong instrument, and probe D7b measured
@@ -646,5 +646,9 @@ if __name__ == "__main__":
         sys.exit(2)
     argv = sys.argv[sys.argv.index("--") + 1:]
     _out = os.path.abspath(argv[0] if argv else "assets/equipment")
-    with open(os.path.join(_out, "manifest.json"), encoding="utf-8") as fh:
+    # The manifest for an assets/ folder is tracked under asset-data/ (tools/asset-data.mjs).
+    _root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    _rel = os.path.relpath(_out, _root_dir).replace(os.sep, "/")
+    _manifest_dir = os.path.join(_root_dir, "asset-data", _rel[len("assets/"):]) if _rel.startswith("assets/") else _out
+    with open(os.path.join(_manifest_dir, "manifest.json"), encoding="utf-8") as fh:
         measure(_out, json.load(fh))

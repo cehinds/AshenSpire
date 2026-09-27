@@ -10,9 +10,9 @@
 // never a copied constant, so it cannot drift away from the asset it describes.
 //
 // Usage:
-//   node assets/classes/check-look-conformance.mjs                 # score all four
-//   node assets/classes/check-look-conformance.mjs <file> ...      # score candidates
-//   node assets/classes/check-look-conformance.mjs --selftest      # replay known attacks
+//   node asset-data/classes/check-look-conformance.mjs                 # score all four
+//   node asset-data/classes/check-look-conformance.mjs <file> ...      # score candidates
+//   node asset-data/classes/check-look-conformance.mjs --selftest      # replay known attacks
 //
 // Candidates may be PNG or WEBP. WEBP is converted with dwebp/ffmpeg/magick if
 // one is installed — the class renderer emits WEBP, so scoring its output

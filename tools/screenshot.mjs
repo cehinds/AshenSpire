@@ -151,7 +151,7 @@ const ONLY = yi >= 0 && args[yi + 1] && !args[yi + 1].startsWith('--')
 // it is a flag the evidence run passes and the preview run does not.
 const CLASS_MATRIX = args.includes('--class-matrix');
 function classMatrixShots() {
-  const path = resolve(ROOT, 'assets/sprites/class-sprites.manifest.json');
+  const path = resolve(ROOT, 'asset-data/sprites/class-sprites.manifest.json');
   if (!existsSync(path)) {
     console.error(`screenshot: --class-matrix needs ${path}, which is missing.`);
     process.exit(1);

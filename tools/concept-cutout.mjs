@@ -23,7 +23,7 @@
 // FRAMING
 // Concepts are square (1254x1254); the game draws sprites at 150x190 and stores
 // them at 3x (450x570). Cover-cropping a square to 0.789 is inside the safe band
-// measured in assets/classes/LOOK-REFERENCE-ROGUE.md, so nothing is clipped that
+// measured in asset-data/classes/LOOK-REFERENCE-ROGUE.md, so nothing is clipped that
 // matters. The figure is bottom-aligned to match `align-items: flex-end` in
 // classSprite(), and every class shares one baseline so the four line up.
 //
@@ -45,6 +45,7 @@ import { dirname, join, resolve } from 'node:path';
 // readers. classArtAnchors.js is data only and touches no document, which is
 // what makes it importable from a build tool at all.
 import { medallionAnchor, medallionDeclared } from '../src/content/classArtAnchors.js';
+import { dataHome } from './asset-data.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -533,7 +534,7 @@ mkdirSync(outDir, { recursive: true });
 const OWN_COMMAND = 'concept-cutout';
 function foreignlyShipped(dir, classes) {
   let manifest;
-  try { manifest = JSON.parse(readFileSync(join(dir, 'class-sprites.manifest.json'), 'utf8')); } catch { return []; }
+  try { manifest = JSON.parse(readFileSync(join(dataHome(dir), 'class-sprites.manifest.json'), 'utf8')); } catch { return []; }
   if (!Array.isArray(manifest?.assets)) return [];
   const foreign = new Map();
   for (const row of manifest.assets) {
@@ -702,7 +703,9 @@ for (const [cls, { cut, box, bottomIsCrop }] of Object.entries(cuts)) {
   console.log(`${cls.padEnd(9)} framed ${dw}x${dh} at (${ox},${oy}) -> 5 tints`);
 }
 
-const manifestPath = join(outDir, 'class-sprites.manifest.json');
+// The manifest is not art: for a folder under assets/ it lives under asset-data/.
+mkdirSync(dataHome(outDir), { recursive: true });
+const manifestPath = join(dataHome(outDir), 'class-sprites.manifest.json');
 writeFileSync(manifestPath, `${JSON.stringify({
   schema: 'ashenspire.binary-asset-manifest/1',
   ticket: 'AS-HD-040',
