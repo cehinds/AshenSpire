@@ -2452,3 +2452,112 @@ Inscryption, and Slay the Spire's deck-view / "Deck Builder" mods.
 | Unlimited basics, limited rares | Inscryption (squirrels), Monster Train (starter cards) | **Yes** | Matches the owner's copy rule: Strike/Defend ∞, arts and techniques by ownership. |
 | Crafting / dusting inside the editor | Hearthstone, LoR, Arena | **No** | Copies are earned in play and stacked at the blacksmith (§14.3); a second economy in the editor would duplicate it. |
 | Auto-fill "complete my deck" | Hearthstone, Arena | **No (v1)** | The deck starts from the run's real deck; nothing to fill. |
+
+## 15. Reward schedule, levelling pace, crafting drops and legendary sigils (owner brief, 2026-09-26)
+
+**Status: contract, not yet built.** The owner asked for several things:
+- a choice of when card rewards come: after battle, on level-up, both or neither;
+- a percent chance for a card reward to drop;
+- XP settings that show what they do ("I change them and I'm levelling up way too much");
+- more non-card rewards: armaments and equipment, smithing-stone drop chances, and legendary runes with unique properties built on the tag system.
+
+This section is that contract. The rules from §14's preamble apply here too:
+- Every number is a `balance.*` leaf with a `[NOTE]`, so it gets its `gameConfig.*` Settings row generated and is frozen per run (`advancedConfigRows`, `run.advancedConfigSnapshot`).
+- Every shipped default reproduces today's behaviour, so an existing seed rolls exactly what it rolled before.
+- New run state is additive, with a schema bump and a captured corpus save per PR.
+- Every new **percentage chance** (`cardRewards.chancePct.*`, `equipment.drops.chance.normal`, `smithing.rewardChancePct.*`, `sigils.dropChancePct.*`) gets an explicit `BALANCE_DOMAINS` entry of 0–100 in `model/advancedConfig.js`, because `leafRows` otherwise derives the range from the shipped value (a 0 would cap at 20, a 100 would allow 1000). `maxLevelsPerFight` gets 0–20.
+
+"Runes" are named **sigils** here for the reason §14.3 gives: "runes" is the old currency word.
+
+### 15.1 The card reward schedule
+
+These keys go in `balance.rewards.cardRewards`.
+
+| Key | Shipped default | Meaning |
+|---|---|---|
+| `afterCombat.normal` / `.elite` / `.boss` | `true` | Whether a won fight of that pool offers a card row. |
+| `chancePct.normal` / `.elite` / `.boss` | `100` | The chance, 0–100, that an eligible fight offers the card row. 100 rolls nothing. |
+| `onLevelUp` | `false` | When the fight raised the character level (§13.4i), the spoils add a **level card** row. |
+| `onLevelUpMaxPerFight` | `1` | How many level-card rows one fight can add, however many levels it gained. |
+
+- **Offer size.** It stays `rewards.cardChoices`, which already has a row. The Feral Eye relic still adds +1 at elites.
+- **Chance rolls.** They use a new stream, **`rewardRolls`**, appended to the end of `STREAM_NAMES`, so no existing stream moves. A roll that fails leaves no card row, and the menu says so in one line: "No card this time."
+- **Level card row.** Its cards come from the class reward pool at the door's own rarity odds, through `rollCardRewardIds` on `cardRewards`. It is a new `REWARD_KIND_ORDER` kind, `levelCard`, sitting after `card`. Its row key is `levelCard:<ordinal>` (`rowKey` gains the `levelCard` case), and it is taken and skipped like the card offer. Each level-card row's pick persists in `pendingReward.chosenDraftCardIds[<rowKey>]`, the row-keyed map the class drafts already use (not the single `chosenCardId`, which stays the `card` row's), so two or more level-card rows save and restore unambiguously; `validateRunShape` treats an absent map as `{}`, so a Taken level-card row with no pick is refused by name. A save written before this section has no level-card rows and needs no migration.
+- **Drafts.** Skill and class drafts (§13.4e and §13.4g) are unchanged, and when a draft is waiting it still takes the card row's seat. A waiting draft does **not** displace the level card: the level card is the level's own reward, the draft is the track's.
+- **Consumers.** `main.js onCombatEnd`, `tools/session.mjs` (the co-op reward scene) and `tools/runsim.mjs` read the schedule through one model function, `cardRewardPlan(balance, { pool, levelsGained }, rng)` in `model/rewardplan.js`, so solo, co-op and the simulator share one rule. **Scope, stated:** co-op today reads the shipped balance for every `gameConfig.*` row (`tools/lan.mjs` builds its registries from `contentBundle`, with no host snapshot), so a LAN session plays the shipped schedule until the host's `advancedConfigSnapshot` is carried into the session. That carriage is its own follow-up for all `gameConfig` rows, not a §15 change.
+- A saved `pendingReward` written before this section reads as "card row as rolled".
+
+*Falsify:*
+- With `afterCombat.normal: false`, a normal win offers no card row, and an elite win still offers one.
+- With `chancePct.elite: 0`, an elite win never offers a card row. With 100, the `rewardRolls` counter does not move.
+- With `onLevelUp: true`, a fight that levels offers exactly one `levelCard` row, and a fight that doesn't offers none.
+- With `onLevelUpMaxPerFight: 2`, a fight that gains two levels offers `levelCard:0` and `levelCard:1`; taking both and reloading restores both picks.
+- With every key at its default, 50 fixed seeds offer byte-identical rewards to the ones before this section.
+
+### 15.2 Levelling pace you can see
+
+The shipped curve (`balance.level.xp` base 5, growth 1.15, roundTo 10) costs 10 XP per level up to level 9. Awards pay 15 per win plus 5, 75 or 200 per normal, elite or boss kill. So from level 1 a three-kill normal fight (30 XP) is worth 3 levels, a one-kill elite fight (90 XP) 8 levels and a one-kill boss fight (215 XP) 13 levels. `gameConfig.progression.xpMultiplier` scales each award (`configuredContentBundle` already rounds the multiplied awards into the configured registries), and `levelUpValue` **replaces** `pointsPerLevel` as the points each level grants. Nothing on the Settings screen shows the result.
+
+**Owner decision, named.** The likely cause of "levelling up way too much" is that the owner's 2026-09-24 defaults moved the curve to base 5, while the awards were tuned ×2.5 for the older base-100 curve. This section changes no number; the preview shows the owner the pace so either side can be retuned in Settings.
+
+- **Levelling preview.** Settings → Progression gains a **Levelling preview**, `ui/models/LevelPacePreviewModel.js`, drawn live from the configured registries in force (so `xpMultiplier` is counted once, where `configuredContentBundle` applies it) and `levelUpValue`. It shows:
+  - the XP to reach each of levels 2–20;
+  - "a normal fight (3 kills) gives N XP", the same for an elite and a boss, and **how many levels each is worth from level 1 and from level 10**;
+  - the stat points those levels grant.
+
+  The preview's numbers come from the one pure function `levelPace(configuredRegistries, { pointsPerLevel })` in `model/levelup.js`, which `awardLevelXp` also uses, so the preview can never disagree with play.
+- **A levelling cap.** It is `balance.level.maxLevelsPerFight`, shipped `0`, meaning no cap (a number, so it gets its generated Settings row). When above 0, one award never raises the level by more than this, and the XP past the cap is **discarded**: the level's `xp` is left at `xpToNext − 1` at most, so the reward screen's progress bar never shows XP above the step. Discarding is what makes the cap reduce levelling rather than only delay it. `validate.js`'s `balance.level` allowlist gains the key.
+- **Stale comments.** The out-of-date comments in `balance.js` about the old 100/120… curve are corrected to the live numbers.
+- **Numbers.** No balance number changes here. The owner tunes them through the preview.
+
+*Falsify:*
+- The preview's "normal fight" line equals `combatLevelXp` on the configured registries for three normal kills, with `xpMultiplier: 2` included exactly once.
+- Its levels-gained figure equals what `awardLevelXp` actually awards from level 1.
+- With `maxLevelsPerFight: 1`, a boss kill from level 1 gains exactly one level and leaves `xp < xpToNext`. With 0, it gains 13.
+
+### 15.3 Armament, equipment and crafting drops
+
+These are chances per reward pool, and the defaults reproduce today's drops.
+- **Armament drops.** `balance.equipment.drops.chance` gains `normal`, shipped `0`, beside today's treasure 60, elite 30 and boss 100, and `drops.rarityWeights` gains a `normal` row (a copy of `elite`'s), since a chance above 0 with no weights row would draw and return nothing. Drops still roll on the `armaments` stream through `rollArmamentDrop`; the shipped chance of 0 returns before any draw, so today's rewards are unchanged.
+- **Armour is out of scope, stated.** `rollArmamentDrop` draws from `equipment.armaments` (weapons, shields and staves, from weapons.csv). Armour comes from outfits.csv, has no run inventory to land in, and does not drop. An armour drop needs that inventory first and is a follow-up section, not this one.
+- **Smithing stone drop chance.** `balance.smithing.rewardChancePct` holds `{ normal, elite, boss, treasure }`, all shipped at `100`. A stone reward is paid when `rewardByPool[pool] > 0` and the chance passes, rolled on the existing `smith` stream; 100 rolls nothing. The caller passes the RNG into `grantSmithingReward`, so the model rolls nothing on its own. The claim is recorded in `smithingRewardClaims` whether the roll passes or fails, so a retried door never rolls again. Treasure calls `grantSmithingReward` **only when** `rewardByPool.treasure` or `refinedRewardByPool.treasure` is above 0. Both ship at 0, so treasure writes no claim and saves are unchanged until the owner raises one.
+- **Refined stones as a drop.** `balance.smithing.refinedRewardByPool` holds `{ normal: 0, elite: 0, boss: 0, treasure: 0 }` and pays `run.smithingStonesRefined` (the refined stone of §14.4) through the same door and the same chance. This is the crafting-material reward. Spending refined stones arrives with §14.4's blacksmith (`refine.value`); §15 adds no second value key and no spending. Until §14.4 lands they show in the inventory. The `smithingStone` reward row shows when either the stone or the refined amount is above 0, and names both.
+
+*Falsify:*
+- With defaults, a seed's armament and stone drops are unchanged.
+- With `drops.chance.normal: 100`, every normal win drops an armament while one remains unfound.
+- With `rewardChancePct.elite: 0`, an elite pays no stone. With 100, the `smith` counter does not move.
+- A refined stone reward pays and survives a reload.
+
+### 15.4 Legendary sigils — unique properties through the tag system
+
+A **legendary sigil** is the §14.3 sigil at a new rarity, whose effect is a property rule. No engine code is written per sigil.
+- **Rarities.** Sigils have their own closed vocabulary, `SIGIL_RARITIES = ['common', 'uncommon', 'rare', 'legendary']` in `model/schemas.js`. Relic rarities are unchanged, and `balance.js`'s note that the game has no legendary rarity is amended to "no legendary relic or card".
+- **This amends §14.3.** A sigil is authored either as §14.3's `{ id, name, rarity, cost, triggers | modifiers }`, which works only while installed in a slot, or, for `legendary` only, as `{ id, name, rarity, blurb }`, which works only while attuned. A legendary's property is **not authored on the sigil**: `tagging.csv` is the one association table, so its `family = sigil` row is the only home of the tag, and `stampTags` derives the sigil's `propertyTags` from it as it does for every carrier. `validateContent` refuses a legendary with `triggers`/`modifiers`, and a non-legendary with a `family = sigil` property row, by name. A legendary has no `cost` and is **never shop stock**: §14.3's market `sigils` shelf and §14.4's blacksmith sigil stock draw only non-legendary sigils, and the drop below is a legendary's only source.
+- **Content.**
+  - Each sigil's property node is a **leaf** in `content/source/nodes.csv` under a new `sigil` branch of `property`.
+  - Its `family = sigil` tagging row is in `tagging.csv`, with the family registered in `tagFamilies.csv` and `familyNodes.csv` gaining `sigil,property` plus its classification row.
+  - Its rule is in `nodeEffects.json`, with its variables declared in `nodeVariables.csv` and bound through `variableBindings.csv` to `balance.sigils.*`.
+  - `validateContent` refuses, by name, a legendary sigil that does not derive **exactly one** property tag, or whose tag is not a leaf under `sigil` with a `nodeEffects` entry (the `sigil` branch node itself has no rule and is not a valid tag).
+  - The shipped set is at least three legendaries, each an `on`/`if` combination no relic uses, built from the existing `EVENTS`, so no new event or engine code is needed.
+- **Ownership.** It is `run.sigils: string[]`, §14.3's field, added at §14 step 5. An attuned sigil stays in `run.sigils`; `run.attunedSigils` names a subset of it.
+- **Attunement.** A legendary sigil works while it is **attuned**. The run attunes at most `balance.sigils.attuneMax` (shipped 1) at a time, chosen from the inventory out of combat. The player does this in the **Armoury's Sigils panel** (out of combat only, like every Armoury change that is not a mid-fight swap): each owned legendary shows **Attune** or **Unattune**, through the model pair `attuneSigil(registries, run, id)` / `unattuneSigil(run, id)` in `model/sigils.js`, which refuse by name an unowned or non-legendary id and an attune past `attuneMax` (the sentence is shown in place). `MOUNTABLE_KINDS` gains a `sigil` kind, and a new `syncSigilProperties` mounts each attuned sigil's property under `sigil:<id>` the way `syncRelicProperties` mounts relics. `attunedSigils` is carried into `createCombat`, each co-op seat (`tools/session.mjs`) and combat snapshot restore. `run.attunedSigils: string[]` is saved and checked (each id owned, legendary, and within `attuneMax`). §14.4's slots hold non-legendary sigils. A legendary is attuned, never slotted.
+- **The drop.** It is a new reward kind, `sigil`, after `relic`, with chance `balance.sigils.dropChancePct` `{ normal: 0, elite: 0, boss: 0, treasure: 0 }`. It is shipped off; the owner turns it on in Settings. The roll is on a new stream, **`sigils`**, appended to the end of `STREAM_NAMES`. It never drops a sigil the run already owns, where owning covers `run.sigils`, every `run.sigilSlots` entry and `run.attunedSigils`.
+
+*Falsify:*
+- A sigil with a tag that is not a property node is refused by name.
+- An attuned sigil's trigger fires in a fight, and an unattuned owned sigil's trigger does not.
+- Attuning a second sigil while `attuneMax` is 1 is refused by name.
+- A DOM test opens the Armoury's Sigils panel, taps **Attune** on an owned legendary, sees it listed as attuned and in `run.attunedSigils`, taps **Unattune**, and sees it removed; the panel's buttons are absent in combat.
+- Market and blacksmith stock over 200 seeds never offers a legendary sigil.
+- With defaults, no sigil ever drops. With `dropChancePct.boss: 100`, a boss drops one unowned sigil and never a duplicate.
+- A save at §14's last schema loads with `attunedSigils: []`, and its `sigils` untouched.
+
+### 15.5 Build order
+
+Each item is one PR into `dev`, written test-first, carrying a receipt (and no built HTML):
+1. **This SPEC section.**
+2. **The card reward schedule** (§15.1).
+3. **The levelling preview and cap** (§15.2).
+4. **Crafting drops** (§15.3). The refined-stone field is `smithingStonesRefined`, the name §14 migrates, and this PR adds it if §14.4 has not landed yet.
+5. **Legendary sigils** (§15.4). This one is after §14 step 5 (which adds `sigils` and `sigilSlots`), and adds only `attunedSigils`, one schema bump on top of §14's last schema at the time it lands.

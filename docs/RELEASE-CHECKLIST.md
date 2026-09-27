@@ -75,7 +75,7 @@ or not a command for it exists yet.
 
 ## Criterion map
 
-Every release criterion in docs/FINISH.md §1–§14 (each `- [ ]`, `- [~]` or `- [x]`
+Every release criterion in docs/FINISH.md §1–§15 (each `- [ ]`, `- [~]` or `- [x]`
 line) maps to one gate above, or to a waiver that gives its reason. A criterion is
 named by the words its FINISH.md line starts with, not by its line number, because
 FINISH.md is edited after every pull request and its line numbers move.
@@ -171,6 +171,11 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §14 | Market additions | G20 |
 | §14 | Blacksmith screen | G20 |
 | §14 | Wise master | G20 |
+| §15 | SPEC §15 lands before any code | G20 |
+| §15 | Card reward schedule | G20 |
+| §15 | Levelling preview and cap | G20 |
+| §15 | Crafting drops | G20 |
+| §15 | Legendary sigils | G20 |
 
 If a gate is red, the RC is not ready. Fix the cause in a pull request into `dev`,
 pick a new RC SHA, and run **every** gate again on it. Do not re-run only the

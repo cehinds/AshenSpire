@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-26",
     "summary": "Behind the scenes: finished changes reach development builds without waiting",
     "detail": "Nothing you play changes. A change now lands in development as soon as its quick checks pass, and the long checks run when development is promoted to the test build.",
-    "build": "0.7.1.611",
+    "build": "0.7.1.615",
     "pullRequest": 1350,
     "url": "https://github.com/cehinds/AshenSpire/pull/1350"
+  },
+  {
+    "id": "pr-1348",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the rules for card rewards, levelling pace, crafting drops and legendary sigils are written down",
+    "detail": "Docs only; nothing you play changes yet. The design spec now describes settings for when card rewards come (after battle, on level-up) and how often they drop, a levelling preview that shows how fast your current XP settings level you, drop chances for armaments and smithing stones, and legendary sigils with unique effects you attune one at a time.",
+    "build": "0.7.1.614",
+    "pullRequest": 1348,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1348"
+  },
+  {
+    "id": "pr-1353",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the full-resolution art has its first release",
+    "detail": "Nothing you see changes. The full-resolution art now lives in its own private repository, and this build names the exact release of it to use, checked file by file before anything reads it.",
+    "build": "0.7.1.613",
+    "pullRequest": 1353,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1353"
   },
   {
     "id": "pr-1331",

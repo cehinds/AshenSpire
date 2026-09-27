@@ -94,8 +94,8 @@ art. Not yet covered: game code still builds many `assets/…` paths from
 templates, and 14 CSS `url(../assets/…)` backdrops bypass `assetUrl()`.
 
 **The high-res release** (docs/ART-REPO-PLAN.md). `art-release.json` pins one
-release of the private `cehinds/AshenSpire-art` (repo, tag, zip, sha256; it is
-unset until `hd-assets-v1` is published). `node tools/fetch-art.mjs` downloads
+release of the private `cehinds/AshenSpire-art` (repo, tag, zip, sha256; today
+`hd-assets-v1`). `node tools/fetch-art.mjs` downloads
 it with `ART_REPO_TOKEN` (a token with read access to that repo's Contents),
 refuses unless the zip's sha256 is the pinned one and every file matches its
 `high` record in `art-manifest.json`, and unpacks it into `.art-cache/<tag>/`
