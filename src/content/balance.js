@@ -438,6 +438,31 @@ export const balance = {
     // Decaying flask drop (StS potion rule): −step on drop, +step on miss.
     flaskDropBasePct: 35,
     flaskDropStepPct: 10,
+    // THE CARD REWARD SCHEDULE (SPEC §15.1): when a won fight offers a card
+    // row, and whether a level the fight bought adds one. Every default here
+    // reproduces the rewards before the schedule existed: every pool offers,
+    // a chance of 100 rolls nothing on `rewardRolls`, and no level card.
+    // Read by engine/encounters.js `rollCombatCardOffer`.
+    cardRewards: {
+      afterCombat: {
+        normal: true, elite: true, boss: true,
+        [NOTE]: {
+          '{kind}': 'Whether winning {pool} offers a card to choose. Off, that fight lays out no card row.',
+        },
+      },
+      chancePct: {
+        normal: 100, elite: 100, boss: 100,
+        [NOTE]: {
+          '{kind}': 'The percent chance that winning {pool} offers its card row. At 100 nothing is rolled; a miss says "No card this time."',
+        },
+      },
+      onLevelUp: false,
+      onLevelUpMaxPerFight: 1,
+      [NOTE]: {
+        onLevelUp: 'When a fight raises the character level, the spoils add a level card row: one more card to choose, at that fight\'s own rarity odds.',
+        onLevelUpMaxPerFight: 'How many level card rows one fight can add, however many levels it gained.',
+      },
+    },
     [NOTE]: {
       cardChoices: 'How many cards a reward door lays out to choose from.',
       flaskDropBasePct: 'The chance a fight drops a flask charge, before the run\'s running adjustment.',

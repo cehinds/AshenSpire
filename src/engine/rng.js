@@ -32,6 +32,11 @@ export const STREAM_NAMES = Object.freeze([
   // above, and every existing seed's maps and rolls stay byte-identical
   // (§13.6). A save written before the stream existed starts it at 0.
   'seats',
+  // The card reward schedule's chance rolls (SPEC §15.1): appended last so no
+  // stream above moves, and a chance of 100 draws nothing here — so with the
+  // shipped schedule every existing seed rolls exactly what it rolled before.
+  // A save written before the stream existed starts it at 0.
+  'rewardRolls',
 ]);
 
 const MULBERRY_INC = 0x6d2b79f5;
