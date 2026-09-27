@@ -16,7 +16,7 @@ import { RATING_STAT_IDS, resolvedRuleRow } from './derivedStats.js';
 import { STAT_ROWS_MARKER, STAT_ROWS_VERSION, STAT_ROW_NO_MAX, hasLegacyStatSettings, hasRetiredOpeningHand, migrateLegacyStatSettings, withoutRetiredOpeningHand } from './statRows.js';
 import { FORMATION_DEFAULTS, FORMATION_FIELDS, FORMATION_PRESETS, FORMATION_ROWS } from './formationLayout.js';
 import { gateOpen, ownKey, ownOn, withoutUnowned } from './settingOverrides.js';
-import { shopConfigRows, cloneShops, shopSettingsProblems } from './shopKinds.js';
+import { shopConfigRows, cloneShops, shopSettingsProblems, shopOverridesSetAside } from './shopKinds.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
@@ -973,7 +973,12 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   const dormant = (row) => (row.gates || []).some((gate) => !gate.own
     && gate.key.startsWith(ADVANCED_CONFIG_PREFIX) && !gateOpen(gateSettings, gate, rowFor));
   const classesById = Object.fromEntries(configured.classes.map((row) => [row.id, row]));
+  // ONE BAD SHOP KIND COSTS THAT KIND (review, #1371): a kind whose stored
+  // rows break its minimum keeps its authored values, so validateContent
+  // passes and every unrelated Advanced setting still applies.
+  const shopsAside = bundle.shops ? shopOverridesSetAside(bundle, settings) : [];
   for (const [key, raw] of withoutSupersededLegacy(Object.entries(settings))) {
+    if (shopsAside.some((prefix) => key.startsWith(prefix))) continue;
     const row = byKey.get(key);
     // AN INERT ROW IS NEVER APPLIED (review, #1256). It moved nothing, but a
     // stored value still landed in the bundle, where the structural walk could

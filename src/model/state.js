@@ -786,6 +786,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
   problems.push(...shopStockProblems(run.shopStock));
+  for (const [pointId, state] of Object.entries(run.journey?.serviceStates || {})) {
+    if (state && typeof state === 'object') problems.push(...shopStockProblems(state.stock, `journey.serviceStates.${pointId}.stock`));
+  }
   try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;

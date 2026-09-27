@@ -25,6 +25,8 @@ import {
 import { rollShopKind, rollShopOfferings, buildMarketStock, buildMerchantStock } from '../src/engine/shopKinds.js';
 import { t } from '../src/ui/strings.js';
 import { shopCategories } from '../src/ui/models/ShopWorkspaceModel.js';
+import { localServiceModel } from '../src/ui/models/LocalServiceModel.js';
+import { shopStockProblems } from '../src/model/shopKinds.js';
 
 const REG = createRegistries(contentBundle);
 const PREFIX = 'gameConfig.shops.';
@@ -261,7 +263,9 @@ test('FINISH: a non-zero blacksmith or master weight is refused by name while th
   assert.equal(zeroKind.length, 1);
   assert.deepEqual(zeroKind[0].keys, [`${PREFIX}kindWeights.market`]);
   assert.match(t(zeroKind[0].id, zeroKind[0].tokens), /Market/);
-  assert.equal(errorsAt(configured({ [`${PREFIX}kindWeights.market`]: 0 }), 'shops.kindWeights').length, 1, 'the bundle it would build is refused too');
+  // The stored 0 is set aside, so the run's bundle keeps the authored weight and validates.
+  assert.equal(configured({ [`${PREFIX}kindWeights.market`]: 0 }).shops.kindWeights.market, 100);
+  assert.equal(errorsAt(bundleWithShops((table) => { table.kindWeights.market = 0; }), 'shops.kindWeights').length, 1, 'the same table in content is refused');
   assert.deepEqual(shopSettingsProblems(contentBundle, { [`${PREFIX}kindWeights.market`]: 3 }), []);
   // A stored weight for a locked kind has no row, so it never reaches a run.
   const locked = createRegistries(configured({ [`${PREFIX}kindWeights.blacksmith`]: 50 }));
@@ -410,4 +414,53 @@ test('a saved stock naming an offering its kind has not got is refused by name (
   const storage = createMemoryStorage();
   storage.setItem(RUN_KEY, JSON.stringify({ ...JSON.parse(JSON.stringify(run)), schemaVersion: RUN_SCHEMA_VERSION, shopStock: bogus.shopStock }));
   assert.equal(createSaveManager(storage).loadRun(REG), null);
+});
+
+test('one bad shop kind costs that kind, not every Advanced setting (review, #1371)', () => {
+  const market = offeringsOf('market').map((row) => row.id);
+  const settings = {
+    'gameConfig.balance.shop.removeBase': 99,
+    [`${PREFIX}blacksmith.smithStones.price`]: 55,
+    ...Object.fromEntries(market.slice(1).map((id) => [`${PREFIX}market.${id}.enabled`, false])),
+  };
+  const bundle = configured(settings);
+  assert.deepEqual(validateContent(bundle).errors, [], 'the configured bundle still validates, so rebuildRegistries keeps it');
+  assert.equal(bundle.balance.shop.removeBase, 99, 'the unrelated setting survives');
+  assert.equal(bundle.shops.blacksmith.offerings.find((row) => row.id === 'smithStones').price, 55, 'another kind\'s setting survives');
+  assert.ok(bundle.shops.market.offerings.every((row) => row.enabled), 'the broken kind keeps its authored offerings');
+  // The same holds for the merchant-kind weights and a minimum below 2.
+  const weights = configured({ 'gameConfig.balance.shop.removeBase': 99, [`${PREFIX}kindWeights.market`]: 0 });
+  assert.deepEqual(validateContent(weights).errors, []);
+  assert.equal(weights.shops.kindWeights.market, 100);
+  assert.equal(weights.balance.shop.removeBase, 99);
+  const minimum = configured({ [`${PREFIX}master.guaranteedMinimum`]: 1, [`${PREFIX}market.relics.chance`]: 30 });
+  assert.equal(minimum.shops.master.guaranteedMinimum, 2);
+  assert.equal(minimum.shops.market.offerings.find((row) => row.id === 'relics').chance, 30);
+});
+
+test('the atlas shop inspection promises Remove only when the visit offered it (review, #1371)', () => {
+  const run = createRunState({ seed: 6, classId: 'reaver', registries: REG });
+  const withRemove = buildMarketStock(REG, createRng(6), run);
+  const offered = localServiceModel({ handlerId: 'shop', registries: REG, run, state: { stock: withRemove } });
+  assert.match(offered.benefit, /remove a card/);
+  assert.ok(offered.facts.some((fact) => /^Remove a card: \d+ cinders/.test(fact)));
+  const noRemove = registriesWith({ [`${PREFIX}market.remove.enabled`]: false });
+  const without = buildMarketStock(noRemove, createRng(6), run);
+  assert.ok(!without.offerings.includes('remove'));
+  const hidden = localServiceModel({ handlerId: 'shop', registries: noRemove, run, state: { stock: without } });
+  assert.doesNotMatch(hidden.benefit, /remove/i);
+  assert.ok(!hidden.facts.some((fact) => /Remove a card/.test(fact)));
+  // Before the first entry nothing is rolled: removal is only a possibility.
+  const unrolled = localServiceModel({ handlerId: 'shop', registries: REG, run, state: {} });
+  assert.match(unrolled.benefit, /may also offer to remove a card/);
+});
+
+test('an atlas point\'s saved stock is shape-checked like run.shopStock, and Shops rows wear their uiStrings names', async () => {
+  assert.deepEqual(shopStockProblems({ kind: 'market', offerings: ['cards'] }, 'journey.serviceStates.p.stock'), []);
+  assert.ok(shopStockProblems({ kind: 'market', offerings: ['bogus'] }, 'journey.serviceStates.p.stock')
+    .some((problem) => problem.startsWith("journey.serviceStates.p.stock.offerings names 'bogus'")));
+  const { settingsRows } = await import('../src/ui/screens/settings.js');
+  const rows = new Map(settingsRows().filter((row) => row.advancedGroup === 'Shops').map((row) => [row.key, row]));
+  assert.equal(rows.get(`${PREFIX}market.weaponArts.chance`).label, 'Market · Weapon arts: chance');
+  assert.equal(rows.get(`${PREFIX}master.training.training.xp`).label, 'Wise master · Training: Training xp');
 });

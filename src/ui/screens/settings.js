@@ -34,7 +34,7 @@ import {
 import { flasks } from '../../content/flasks.js';
 import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
 import { openModal, button } from '../kit/index.js';
-import { t, tFull } from '../strings.js';
+import { t, tFull, has as hasString } from '../strings.js';
 import { LORE_FACES, LORE_SIZES, LORE_LEADING, LORE_TRACKING, LORE_SLANTS, LORE_TYPE_DEFAULTS } from '../models/LoreTypeModel.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
@@ -114,8 +114,21 @@ const ADVANCED_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => !
   .map((row) => (row.own ? { ...row, resolve: (settings) => ownOn(settings, row.own) } : row))
   // A Shops row (SPEC §14.2) wears its label and its kind's topic from
   // content/source/uiStrings.csv; the model names the row and its tokens.
-  .map((row) => (row.shopLabel ? { ...row, label: t(row.shopLabel.id, row.shopLabel.tokens), shopTopic: t(`settings.shops.topic.${row.shopTopic}`) } : row));
+  .map((row) => (row.shopLabel ? { ...row, label: shopRowLabel(row.shopLabel), shopTopic: t(`settings.shops.topic.${row.shopTopic}`) } : row));
 const INERT_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => row.inert);
+
+/**
+ * A Shops row's label: the kind and the offering by their uiStrings names
+ * (`settings.shops.topic.<kind>`, `settings.shops.offering.<id>`), falling
+ * back to the words of the id, so an offering added to shops.js is labelled
+ * the moment its rows exist and named properly once it gets a string row.
+ */
+function shopRowLabel({ id, tokens, names = {} }) {
+  const filled = { ...tokens };
+  if (names.kind && hasString(`settings.shops.topic.${names.kind}`)) filled.kind = t(`settings.shops.topic.${names.kind}`);
+  if (names.offering && hasString(`settings.shops.offering.${names.offering}`)) filled.offering = t(`settings.shops.offering.${names.offering}`);
+  return t(id, filled);
+}
 // The Draw / turn stat row's editors, which only a fixed draw reads.
 const FIXED_DRAW_ROWS = ADVANCED_CONFIG_ROWS.filter((row) => row.fixedOnly);
 

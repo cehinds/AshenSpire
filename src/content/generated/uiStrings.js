@@ -1123,6 +1123,34 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "atlas.shop.benefit",
+    "extends": "",
+    "short": "Spend cinders on cards, equipment, weapon arts, relics, or flasks from this market’s stock.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.shop.benefit.remove",
+    "extends": "",
+    "short": "You can also remove a card from your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.shop.benefit.removeMaybe",
+    "extends": "",
+    "short": "This visit may also offer to remove a card from your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.shop.fact.remove",
+    "extends": "",
+    "short": "Remove a card: {cost} cinders. You must keep at least one card.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "atlas.status.here",
     "extends": "",
     "short": "You are here.",
@@ -1792,6 +1820,153 @@ export const uiStrings = [
     "extends": "",
     "short": "Wise master",
     "full": "The wise master's offerings and prices. No merchant is a master until its screen ships.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.cards",
+    "extends": "",
+    "short": "Cards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.relics",
+    "extends": "",
+    "short": "Relics",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.flasks",
+    "extends": "",
+    "short": "Flasks",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.armaments",
+    "extends": "",
+    "short": "Armaments",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.weaponArts",
+    "extends": "",
+    "short": "Weapon arts",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.remove",
+    "extends": "",
+    "short": "Card removal",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.upgrade",
+    "extends": "",
+    "short": "Item upgrade",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.smithStones",
+    "extends": "",
+    "short": "Smithing Stones",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.refineStones",
+    "extends": "",
+    "short": "Refined stones",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.sigilSlots",
+    "extends": "",
+    "short": "Sigil slots",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.sigils",
+    "extends": "",
+    "short": "Sigil setting",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.extractArt",
+    "extends": "",
+    "short": "Art extraction",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.installArt",
+    "extends": "",
+    "short": "Art seating",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.upgradeArt",
+    "extends": "",
+    "short": "Art upgrade",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.stackCopy",
+    "extends": "",
+    "short": "Stacked copies",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.skillBooks",
+    "extends": "",
+    "short": "Skill books",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.training",
+    "extends": "",
+    "short": "Training",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.respec",
+    "extends": "",
+    "short": "Respec",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.lesson",
+    "extends": "",
+    "short": "Lessons",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.appraisal",
+    "extends": "",
+    "short": "Appraisal",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.redistribute",
+    "extends": "",
+    "short": "Redistribution",
+    "full": "",
     "tip": ""
   },
   {

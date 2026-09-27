@@ -243,7 +243,7 @@ function numberRows(value, keyPath, configPath, kind, offeringId, rows) {
       rows.push(row({
         key: `${PREFIX}${path}`, type: 'number', def: child, ...shopDomain(path, child),
         label: `${words(kind)} — ${offeringId ? `${words(offeringId)}: ` : ''}${words(leaf)}`,
-        shopLabel: { id: offeringId ? 'settings.shops.row.offeringValue' : 'settings.shops.row.kindValue', tokens: { kind: words(kind), offering: words(offeringId || ''), value: words(leaf) } },
+        shopLabel: { id: offeringId ? 'settings.shops.row.offeringValue' : 'settings.shops.row.kindValue', tokens: { kind: words(kind), offering: words(offeringId || ''), value: words(leaf) }, names: { kind, offering: offeringId } },
         shopTopic: kind,
         note: noted(noteFor(value, key) || ''),
         configPath: [...configPath, key], searchPath: `shops ${path.replace(/\./g, ' ')}`,
@@ -281,7 +281,7 @@ export function shopConfigRows(bundle) {
     rows.push(row({
       key: `${PREFIX}kindWeights.${kind}`, type: 'number', def: weight, integer: true, step: 1, min: weightFloor, max: Math.max(1000, weight * 10),
       label: `Merchant kind weight — ${words(kind)}`,
-      shopLabel: { id: 'settings.shops.row.kindWeight', tokens: { kind: words(kind) } },
+      shopLabel: { id: 'settings.shops.row.kindWeight', tokens: { kind: words(kind) }, names: { kind } },
       shopTopic: 'kindWeights',
       note: noted(noteFor(table.kindWeights, kind) || ''),
       configPath: ['shops', 'kindWeights', kind], searchPath: `shops merchant kind weight ${kind}`,
@@ -294,7 +294,7 @@ export function shopConfigRows(bundle) {
       key: `${PREFIX}${kind}.guaranteedMinimum`, type: 'number', def: def.guaranteedMinimum,
       integer: true, step: 1, min: SHOP_MINIMUM_FLOOR, max: Math.max(SHOP_MINIMUM_FLOOR, def.offerings.length),
       label: `${words(kind)} — guaranteed minimum`,
-      shopLabel: { id: 'settings.shops.row.minimum', tokens: { kind: words(kind) } },
+      shopLabel: { id: 'settings.shops.row.minimum', tokens: { kind: words(kind) }, names: { kind } },
       shopTopic: kind,
       note: noted(noteFor(def, 'guaranteedMinimum') || ''),
       configPath: ['shops', kind, 'guaranteedMinimum'], searchPath: `shops ${kind} guaranteed minimum`,
@@ -304,7 +304,7 @@ export function shopConfigRows(bundle) {
       if (!object(offering) || typeof offering.id !== 'string') return;
       const base = `${PREFIX}${kind}.${offering.id}`;
       const at = ['shops', kind, 'offerings', index];
-      const label = (field) => ({ id: `settings.shops.row.${field}`, tokens: { kind: words(kind), offering: words(offering.id) } });
+      const label = (field) => ({ id: `settings.shops.row.${field}`, tokens: { kind: words(kind), offering: words(offering.id) }, names: { kind, offering: offering.id } });
       rows.push(row({
         key: `${base}.enabled`, def: offering.enabled === true,
         label: `${words(kind)} — ${words(offering.id)}: offered`, shopLabel: label('enabled'), shopTopic: kind,
@@ -360,7 +360,7 @@ export function shopSettingsProblems(bundle, settings = {}) {
   const weightKeys = SHOP_KIND_SCREENS.map((kind) => `${PREFIX}kindWeights.${kind}`);
   const weightOf = (kind) => Number(read(`${PREFIX}kindWeights.${kind}`, table.kindWeights?.[kind]));
   if (object(table.kindWeights) && !SHOP_KIND_SCREENS.some((kind) => weightOf(kind) > 0)) {
-    problems.push({ keys: weightKeys, id: 'settings.shops.refuse.noKind', tokens: { kinds: SHOP_KIND_SCREENS.map(words).join(', ') } });
+    problems.push({ kind: 'kindWeights', keys: weightKeys, id: 'settings.shops.refuse.noKind', tokens: { kinds: SHOP_KIND_SCREENS.map(words).join(', ') } });
   }
   for (const kind of SHOP_KINDS) {
     const def = table[kind];
@@ -368,7 +368,7 @@ export function shopSettingsProblems(bundle, settings = {}) {
     const minimumKey = `${PREFIX}${kind}.guaranteedMinimum`;
     const minimum = Number(read(minimumKey, def.guaranteedMinimum));
     if (!(Number.isInteger(minimum) && minimum >= SHOP_MINIMUM_FLOOR)) {
-      problems.push({ keys: [minimumKey], id: 'settings.shops.refuse.minimum', tokens: { kind: words(kind), value: read(minimumKey, def.guaranteedMinimum), floor: SHOP_MINIMUM_FLOOR } });
+      problems.push({ kind, keys: [minimumKey], id: 'settings.shops.refuse.minimum', tokens: { kind: words(kind), value: read(minimumKey, def.guaranteedMinimum), floor: SHOP_MINIMUM_FLOOR } });
       continue;
     }
     const enabledKey = (offering) => `${PREFIX}${kind}.${offering.id}.enabled`;
@@ -377,6 +377,7 @@ export function shopSettingsProblems(bundle, settings = {}) {
     if (on.length < minimum) {
       const off = def.offerings.filter((offering) => !isOn(offering));
       problems.push({
+        kind,
         keys: [minimumKey, ...off.map(enabledKey)],
         id: 'settings.shops.refuse.disabled',
         tokens: { kind: words(kind), offerings: off.map((offering) => words(offering.id)).join(', '), enabled: on.length, minimum },
@@ -384,6 +385,18 @@ export function shopSettingsProblems(bundle, settings = {}) {
     }
   }
   return problems.map((problem) => ({ ...problem, message: sentence(problem.id, problem.tokens) }));
+}
+
+/**
+ * shopOverridesSetAside(bundle, settings) → the `gameConfig.shops.` key
+ * prefixes whose stored values are NOT applied, because together they break a
+ * rule `shopSettingsProblems` names. ONE BAD KIND COSTS THAT KIND: the kind
+ * (or the merchant-kind weights) keeps its authored values until the rows are
+ * fixed, and every other Advanced setting still applies — the pattern
+ * `configuredContentBundle` already follows for one bad class.
+ */
+export function shopOverridesSetAside(bundle, settings = {}) {
+  return [...new Set(shopSettingsProblems(bundle, settings).map((problem) => `${PREFIX}${problem.kind}.`))];
 }
 
 /** A deep copy of a shops table that keeps each [NOTE] (structuredClone drops a Symbol key). */
