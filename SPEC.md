@@ -323,7 +323,7 @@ owner's budget: a row's attribute weights sum to about 2; Mana's and Stamina's t
 | Stamina (`stamina`) | 1 | 0.25 | 0.25 | 0.5 | — | — | 0.2 | — | Budget 1. |
 | Actions / turn (`energy`) | 3 | 0.1 | 0.2 | — | 0.01 | 0.01 | 0.1 | — | Preserved; engine id stays `energy`. |
 | Opening hand (`openingHand`) | per class | per class | per class | — | per class | per class | — | 4–6 | #1294's class hand: base 3/4/4/5 and 0.5 on the primary (STR/DEX/WIS/INT) for Reaver/Rogue/Herald/Starseer, counted from 1 (§4.1). Shared fallback: 4 + 0.5 INT. |
-| Draw / turn (`draw`) | 2 | — | — | — | — | 0.2 | — | 2–10 | Counted from INT 4 (`attributeBaseline: 4`): exactly the retired hand rules `turn` group at every INT; every fight, co-op included. |
+| Draw / turn (`draw`) | 3 | — | — | — | — | 0.2 | — | 2–10 | Counted from INT 4 (`attributeBaseline: 4`); every fight, co-op included. Base 3 since FINISH D22 (2026-09-27; was 2, the retired hand rules `turn` group): the largest draw a retained hand of 7 is never capped at on creation — 5 was capped on 47–83% of turns in the simulator. A run born earlier keeps its snapshotted base. |
 | Hand size (`handSize`) | 7 | — | — | — | — | 0.2 | — | 1–30 | Counted from INT 1 (`attributeBaseline: 1`): exactly the retired `capacity` group at every INT (it also replaced `balance.handMax`). |
 | AR (`ar`) | 0 | 0.75 | 0.5 | 0.25 | 0.25 | 0.25 | — | — | Read while combat ratings are on. |
 | DR (`dr`) | 0 | 0.5 | 0.75 | 0.25 | 0.35 | 0.15 | — | — | 〃 |
@@ -796,9 +796,13 @@ cards by the run's three hand rows of §3.5 — **Opening hand** (`openingHand`)
 run. Advanced → Stats → Draw & hand edits those rows with the same fields as every other stat,
 beside the hand's behaviour options, which are not stat rows: retain, optional discard prompt,
 discard limit, replacement draws, overflow, reshuffle and draw mode (`content/handRules.js`).
-The opening hand is also bounded by the hand size. Unplayed cards are retained by default.
-Later turns draw a **fixed** number by default — the Draw / turn row, never past the hand size;
-fill mode instead draws up to the hand size. Overflow defaults to **discard**: retained cards past
+The opening hand is also bounded by the hand size. **Solo default (owner's ruling, FINISH D22,
+2026-09-27): retain the hand; draw the Draw stat each turn, up to capacity.** Unplayed cards stay
+in hand at turn end (nothing is discarded), and each later turn draws a **fixed** number — the
+Draw / turn row, never past the hand size (a data row). Both other modes stay selectable: fill
+mode (with retain, the old retain-and-fill) draws up to the hand size, and retain off discards
+unplayed cards at turn end (the numbered sequence below). A run keeps the Draw row it was born
+with (its snapshot), so a saved run draws as it always did. Overflow defaults to **discard**: retained cards past
 the hand size are selected for discard at turn end. Opening counts are evaluated at combat start;
 later draws and the hand size at turn start. **Co-op reads the same rows**: each seat's opening
 hand, turn draw and hand size come from its own run's rows, it keeps unplayed cards under the
