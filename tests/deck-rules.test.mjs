@@ -361,3 +361,11 @@ test('an event-added card never reuses an id a set-aside card still holds', asyn
   const second = run.deck.find((c) => c.cardId === 'guilt');
   assert.notEqual(second.instanceId, 'run1', 'the set-aside Guilt keeps run1; the new one takes the next free id');
 });
+
+test('content validation refuses a malformed deck-rules table by name', async () => {
+  const { validateContent } = await import('../src/model/validate.js');
+  assert.equal(validateContent(contentBundle).ok, true, 'the shipped table is clean');
+  const bad = { ...DECK_RULES, defaults: { ...DECK_RULES.defaults, deckMinSize: 'ten' }, singleCopy: { types: 'power', tags: [] }, unlimitedCardIds: ['strike', 'nosuchcard'] };
+  const paths = validateContent({ ...contentBundle, deckRules: bad }).errors.map((e) => e.path);
+  for (const path of ['deckRules.defaults.deckMinSize', 'deckRules.singleCopy.types', 'deckRules.unlimitedCardIds[1]']) assert.ok(paths.includes(path), path);
+});

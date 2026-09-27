@@ -12,6 +12,7 @@
 // Headless: no document/window/localStorage/timers.
 
 import { handRulesDefaults } from '../content/handRules.js';
+import { deckRules as shippedDeckRules } from '../content/deckRules.js';
 import { resolveFloorPlan } from './floorplan.js';
 import { validateAttack } from './combatRules.js';
 import { assertTableSane } from './secondbeat.js';
@@ -645,6 +646,9 @@ function collectContentProblems(bundle, errors = []) {
       if (handRulesDefaults[group] !== undefined) err(`handRulesDefaults.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${row}`);
       if (b.handRules && b.handRules[group] !== undefined) err(`handRules.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${row}, and a copy here is a second home for one number`);
     }
+    // The deck editor's rules (content/deckRules.js, SPEC §14.1) are data the
+    // editor reads at use; a malformed table is refused here, by name, at boot.
+    deckRulesTableProblems(b.deckRules || shippedDeckRules, b.cards, err);
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
       if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);
@@ -2721,4 +2725,44 @@ function usesScript(node) {
     return Object.values(node).some(usesScript);
   }
   return false;
+}
+
+/**
+ * deckRulesTableProblems(table, cards, err) — the shape the deck editor reads
+ * (SPEC §14.1): whole-number ranges with min ≤ max, defaults inside them, a
+ * `where` list holding the default, string lists for `singleCopy`, and
+ * unlimited ids that name real cards.
+ */
+export function deckRulesTableProblems(table, cards, err) {
+  const at = (path, msg) => err(`deckRules.${path}`, msg);
+  if (!table || typeof table !== 'object') { at('', 'must be an object'); return; }
+  const range = (key) => {
+    const r = table[key];
+    if (!r || !Number.isInteger(r.min) || !Number.isInteger(r.max) || r.min < 0 || r.min > r.max) {
+      at(key, `must be { min, max } whole numbers with 0 ≤ min ≤ max, got ${JSON.stringify(r)}`);
+      return null;
+    }
+    return r;
+  };
+  const sizes = range('sizeRange');
+  const copies = range('copyRange');
+  const d = table.defaults || {};
+  for (const key of ['deckEditing', 'deckMinUnlimited', 'deckMaxUnlimited', 'playInDeckOrder']) {
+    if (typeof d[key] !== 'boolean') at(`defaults.${key}`, `must be true or false, got ${JSON.stringify(d[key])}`);
+  }
+  for (const key of ['deckMinSize', 'deckMaxSize']) {
+    if (!Number.isInteger(d[key]) || (sizes && (d[key] < sizes.min || d[key] > sizes.max))) at(`defaults.${key}`, `must be a whole number within sizeRange, got ${JSON.stringify(d[key])}`);
+  }
+  if (Number.isInteger(d.deckMinSize) && Number.isInteger(d.deckMaxSize) && d.deckMinSize > d.deckMaxSize) at('defaults.deckMinSize', `(${d.deckMinSize}) must not exceed deckMaxSize (${d.deckMaxSize})`);
+  if (!Number.isInteger(d.classSpellPowerCopies) || (copies && (d.classSpellPowerCopies < copies.min || d.classSpellPowerCopies > copies.max))) at('defaults.classSpellPowerCopies', `must be a whole number within copyRange, got ${JSON.stringify(d.classSpellPowerCopies)}`);
+  const where = table.where;
+  if (!Array.isArray(where) || !where.length || !where.every((w) => typeof w === 'string')) at('where', 'must be a non-empty list of strings');
+  else if (!where.includes(d.deckEditingWhere)) at('defaults.deckEditingWhere', `must be one of ${where.join(', ')}, got ${JSON.stringify(d.deckEditingWhere)}`);
+  const single = table.singleCopy || {};
+  for (const key of ['types', 'tags']) {
+    if (!Array.isArray(single[key]) || !single[key].every((v) => typeof v === 'string' && v)) at(`singleCopy.${key}`, 'must be a list of non-empty strings');
+  }
+  const ids = new Set((Array.isArray(cards) ? cards : []).map((c) => c && c.id));
+  if (!Array.isArray(table.unlimitedCardIds)) at('unlimitedCardIds', 'must be a list of card ids');
+  else table.unlimitedCardIds.forEach((id, i) => { if (ids.size && !ids.has(id)) at(`unlimitedCardIds[${i}]`, `names no card: '${id}'`); });
 }
