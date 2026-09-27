@@ -1650,6 +1650,150 @@ export const tags = [
     "blurb": "The subclass nothing quite reaches."
   },
   {
+    "id": "partingBlow",
+    "domain": "property",
+    "label": "Parting Blow",
+    "color": "9FC3E8",
+    "glyph": "⚔",
+    "visibility": "",
+    "blurb": "Every step out of a stance is a cut."
+  },
+  {
+    "id": "ironRebuke",
+    "domain": "property",
+    "label": "Iron Rebuke",
+    "color": "9FC3E8",
+    "glyph": "⛓",
+    "visibility": "",
+    "blurb": "Brace answers every wound it cannot stop."
+  },
+  {
+    "id": "cinderGrip",
+    "domain": "property",
+    "label": "Cinder Grip",
+    "color": "9FC3E8",
+    "glyph": "✊",
+    "visibility": "",
+    "blurb": "The grip leaves ash in every wound."
+  },
+  {
+    "id": "mendingGrip",
+    "domain": "property",
+    "label": "Mending Grip",
+    "color": "9FC3E8",
+    "glyph": "🩹",
+    "visibility": "",
+    "blurb": "The grip closes the wound it opened."
+  },
+  {
+    "id": "spentStars",
+    "domain": "property",
+    "label": "Spent Stars",
+    "color": "9FC3E8",
+    "glyph": "💫",
+    "visibility": "",
+    "blurb": "What burns out, burns once more."
+  },
+  {
+    "id": "fallingStar",
+    "domain": "property",
+    "label": "Falling Star",
+    "color": "9FC3E8",
+    "glyph": "☄",
+    "visibility": "",
+    "blurb": "The mana comes down somewhere."
+  },
+  {
+    "id": "lodestarPull",
+    "domain": "property",
+    "label": "Lodestar Pull",
+    "color": "9FC3E8",
+    "glyph": "🧲",
+    "visibility": "",
+    "blurb": "The shard drags the foe off its footing."
+  },
+  {
+    "id": "shardHunger",
+    "domain": "property",
+    "label": "Shard Hunger",
+    "color": "9FC3E8",
+    "glyph": "💠",
+    "visibility": "",
+    "blurb": "The shard drinks what falls."
+  },
+  {
+    "id": "burningGrace",
+    "domain": "property",
+    "label": "Burning Grace",
+    "color": "9FC3E8",
+    "glyph": "🔥",
+    "visibility": "",
+    "blurb": "The warmth spills over, and scalds."
+  },
+  {
+    "id": "dazzlingLight",
+    "domain": "property",
+    "label": "Dazzling Light",
+    "color": "9FC3E8",
+    "glyph": "✨",
+    "visibility": "",
+    "blurb": "The litany is hard to look at."
+  },
+  {
+    "id": "anointedBlade",
+    "domain": "property",
+    "label": "Anointed Blade",
+    "color": "9FC3E8",
+    "glyph": "🗡",
+    "visibility": "",
+    "blurb": "The seal breaks over the edge."
+  },
+  {
+    "id": "unsealedScroll",
+    "domain": "property",
+    "label": "Unsealed Scroll",
+    "color": "9FC3E8",
+    "glyph": "📜",
+    "visibility": "",
+    "blurb": "Under the wax, the next verse."
+  },
+  {
+    "id": "lowProfile",
+    "domain": "property",
+    "label": "Low Profile",
+    "color": "9FC3E8",
+    "glyph": "🫥",
+    "visibility": "",
+    "blurb": "Ready, and hard to find."
+  },
+  {
+    "id": "feint",
+    "domain": "property",
+    "label": "Feint",
+    "color": "9FC3E8",
+    "glyph": "🎭",
+    "visibility": "",
+    "blurb": "The first move is never the real one."
+  },
+  {
+    "id": "spareWhetstone",
+    "domain": "property",
+    "label": "Spare Whetstone",
+    "color": "9FC3E8",
+    "glyph": "🪨",
+    "visibility": "",
+    "blurb": "A second stone, for the second cut."
+  },
+  {
+    "id": "whettedGuard",
+    "domain": "property",
+    "label": "Whetted Guard",
+    "color": "9FC3E8",
+    "glyph": "🤺",
+    "visibility": "",
+    "blurb": "The edge that cuts also turns a blade."
+  },
+  {
     "id": "classification.attack",
     "domain": "classification",
     "label": "attack",

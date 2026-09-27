@@ -585,5 +585,101 @@ export const propertyRules = [
     "requires": "",
     "excludes": "",
     "textTemplate": "At the start of your turn, gain {block} Block."
+  },
+  {
+    "tag": "partingBlow",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Leaving a stance deals {damage} damage to a random enemy."
+  },
+  {
+    "tag": "ironRebuke",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "While in Brace, losing HP deals {damage} damage to a random enemy."
+  },
+  {
+    "tag": "cinderGrip",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first stance you enter each turn applies {bleed} Bleed to every enemy."
+  },
+  {
+    "tag": "mendingGrip",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first stance you enter each turn heals {heal}."
+  },
+  {
+    "tag": "spentStars",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first card you exhaust each turn restores {restoreMana} Mana."
+  },
+  {
+    "tag": "fallingStar",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first time you restore Mana each turn, deal {damage} damage to a random enemy."
+  },
+  {
+    "tag": "lodestarPull",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Begin each combat with {vulnerable} Vulnerable on every enemy."
+  },
+  {
+    "tag": "shardHunger",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Whenever an enemy dies, restore {restoreMana} Mana."
+  },
+  {
+    "tag": "burningGrace",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Whenever you heal, deal {damage} damage to a random enemy."
+  },
+  {
+    "tag": "dazzlingLight",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first time you heal each turn, apply {weak} Weak to every enemy."
+  },
+  {
+    "tag": "anointedBlade",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first time you heal each combat, gain {strength} Strength."
+  },
+  {
+    "tag": "unsealedScroll",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first time you heal each combat, draw {draw} cards."
+  },
+  {
+    "tag": "lowProfile",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Whenever you become Prepared, gain {block} Block."
+  },
+  {
+    "tag": "feint",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first time you become Prepared each turn, deal {poiseDamage} Poise damage to a random enemy."
+  },
+  {
+    "tag": "spareWhetstone",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first attack while Prepared each combat gains {gainEnergy} Energy."
+  },
+  {
+    "tag": "whettedGuard",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your attacks while Prepared grant {block} Block."
   }
 ];

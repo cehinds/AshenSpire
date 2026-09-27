@@ -1629,6 +1629,54 @@ export const balance = {
     shadow: {
         block: 3
     },
+    partingBlow: {
+        damage: 3
+    },
+    ironRebuke: {
+        damage: 3
+    },
+    cinderGrip: {
+        bleed: 2
+    },
+    mendingGrip: {
+        heal: 2
+    },
+    spentStars: {
+        restoreMana: 1
+    },
+    fallingStar: {
+        damage: 3
+    },
+    lodestarPull: {
+        vulnerable: 1
+    },
+    shardHunger: {
+        restoreMana: 1
+    },
+    burningGrace: {
+        damage: 2
+    },
+    dazzlingLight: {
+        weak: 1
+    },
+    anointedBlade: {
+        strength: 1
+    },
+    unsealedScroll: {
+        draw: 2
+    },
+    lowProfile: {
+        block: 3
+    },
+    feint: {
+        poiseDamage: 4
+    },
+    spareWhetstone: {
+        gainEnergy: 1
+    },
+    whettedGuard: {
+        block: 2
+    },
   [NOTE]: {
     '{node}.{variable}': '{talent}, {talentPlace} — {effect}.{blurbSuffix}',
   },

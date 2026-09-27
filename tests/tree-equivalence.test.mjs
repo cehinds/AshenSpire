@@ -131,7 +131,7 @@ test('every object states exactly one kind, the one its collection and type name
     }
   }
   // 479 before §14.3's two companions (step 5b) stated their kind.
-  assert.equal(counted, 481, 'all 481 shipped objects, including projected shared armor sets and the two companions');
+  assert.equal(counted, 505, 'all 505 shipped objects, including projected shared armor sets and the two companions');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {
