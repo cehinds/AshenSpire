@@ -44,6 +44,7 @@ import {
   rollRelicReward,
 } from '../src/engine/encounters.js';
 import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
+import { cardRewardPlan } from '../src/model/rewardplan.js';
 import { endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from '../src/content/customMods.js';
 
 const argv = process.argv.slice(2);
@@ -278,9 +279,11 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   applySkillXp(REG, run, skillXpReceipt(combat));
   // The character level (plan phase 6), as main.js onCombatEnd pays it: a won
   // fight and every kill by the door's pool; the points wait for a shrine.
-  awardLevelXp(REG, run, combatLevelXp(REG, {
+  // The levels this fight bought are kept for afterVictory's card rows (the
+  // level card of SPEC §15.1), as main.js hands levelAward.levelUps on.
+  run._fightLevelUps = awardLevelXp(REG, run, combatLevelXp(REG, {
     victory: combat.result === 'victory', pool: enc.pool, kills: combat.eventLog.filter((e) => e.type === 'enemyDied').length,
-  }));
+  })).levelUps;
   return outcome;
 }
 
@@ -314,8 +317,19 @@ function afterVictory(run, rng, pool) {
     }
   }
   skillDraftsTaken += drafts;
-  const cards = drafts || classDrafts ? [] : rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics });
+  // The card rows, through the one schedule door main.js and co-op read
+  // (model/rewardplan.js cardRewardPlan, SPEC §15.1): the plain offer unless
+  // a draft holds its seat, the pool is off or the chance misses, then a
+  // level card per level bought when onLevelUp is on. The bot takes the
+  // first card of each.
+  const cardPlan = cardRewardPlan(REG.balance, { pool, levelsGained: run._fightLevelUps || 0, draftWaiting: !!(drafts || classDrafts) }, rng);
+  run._fightLevelUps = 0;
+  const cards = cardPlan.offerCard ? rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics }) : [];
   if (cards.length) run.deck.push({ instanceId: run._id(), cardId: cards[0], upgraded: false });
+  for (let i = 0; i < cardPlan.levelCards; i++) {
+    const levelCard = rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics });
+    if (levelCard.length) run.deck.push({ instanceId: run._id(), cardId: levelCard[0], upgraded: false });
+  }
   const flask = rollFlaskDrop(REG, rng, run);
   if (flask && run.flasks.length < (REG.balance.flaskSlots || 3)) run.flasks.push({ flaskId: flask });
   if (pool === 'elite') {

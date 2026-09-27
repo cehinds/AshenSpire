@@ -102,13 +102,17 @@ test('13.6 claims 1 and 3: every existing seed\'s act map and HP roll are byte-i
     // event id is still the pre-seat tree's: the new events moved no draw.
     const liveRng = createRng(seed);
     const live = buildActMap(REG, liveRng, ORDER[tier - 1], tier);
-    const { seats: _liveSeats, ...liveCounters } = liveRng.getCounters();
+    // `rewardRolls` (SPEC §15.1) is appended after the fixture was taken; a
+    // map draws nothing on it, so it is left out beside `seats` and asserted 0.
+    const { seats: _liveSeats, rewardRolls: _rewardRolls, ...liveCounters } = liveRng.getCounters();
+    assert.equal(_rewardRolls, 0, 'building a map draws nothing on rewardRolls');
     const shape = (nodes) => JSON.parse(JSON.stringify(nodes.map(({ id, floor, col, type, next, resolved, encounterId, destinationLabel }) => ({ id, floor, col, type, next, kind: resolved?.kind, encounterId, destinationLabel }))));
     assert.deepEqual({ counters: liveCounters, nodes: shape(Object.values(live.nodes)), bossIds: live.bossIds, startIds: live.startIds }, { counters: before.counters, nodes: shape(before.nodes), bossIds: before.bossIds, startIds: before.startIds }, `seed ${seed} tier ${tier} (live roster)`);
     const rng = createRng(seed);
     const g = buildActMap(PRE_SEAT_REG, rng, ORDER[tier - 1], tier);
     const after = { counters: rng.getCounters(), nodes: Object.values(g.nodes).map(({ id, floor, col, type, next, resolved, encounterId, destinationLabel }) => ({ id, floor, col, type, next, resolved, encounterId, destinationLabel })), bossIds: g.bossIds, startIds: g.startIds };
-    const { seats, ...counters } = after.counters;
+    const { seats, rewardRolls, ...counters } = after.counters;
+    assert.equal(rewardRolls, 0);
     // JSON round-trip: the fixture dropped `undefined` fields the way any save does.
     assert.deepEqual(JSON.parse(JSON.stringify({ ...after, counters })), before, `seed ${seed} tier ${tier}`);
   }
