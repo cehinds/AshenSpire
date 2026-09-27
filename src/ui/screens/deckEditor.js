@@ -49,7 +49,13 @@ const DRAG_HOLD_MS = 250;
  * key }` or `{ family: 'controller', button }` — and performs exactly what the
  * real key or button does, so a test drives the same path a player does.
  */
+// ONE EDITOR AT A TIME. A second door pressed while one stands (a doubled
+// Enter, a stray tap) gets the live editor back: a second session would take
+// its snapshot mid-edit, and cancelling the stale one would undo a confirm.
+let liveEditor = null;
+
 export function mountDeckEditor(host, { registries, run, settings = {}, onDone = null, onCancel = null, dragHoldMs = DRAG_HOLD_MS }) {
+  if (liveEditor && liveEditor.root.isConnected && !liveEditor.session.closed) return liveEditor;
   const session = openDeckEdit(registries, run, settings);
   let view = deckEditorView({});
   let pane = 'collection';
@@ -551,13 +557,15 @@ export function mountDeckEditor(host, { registries, run, settings = {}, onDone =
     for (const sibling of madeInert.splice(0)) sibling.removeAttribute('inert');
     releaseDismiss({ restoreFocus: true });
     root.remove();
+    if (liveEditor && liveEditor.root === root) liveEditor = null;
   }
 
   draw();
   const first = panel.querySelector('[data-pane="collection"] [data-focus-key]');
   if (first) focusNode(first);
 
-  return { root, dispatch, close: () => { if (!session.closed) session.cancel(); close(); }, session };
+  liveEditor = { root, dispatch, close: () => { if (!session.closed) session.cancel(); close(); }, session };
+  return liveEditor;
 }
 
 function isInside(node, ancestor) {

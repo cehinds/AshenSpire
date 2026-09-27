@@ -20,6 +20,7 @@ import {
   deckEditingOn, deckEditingWhere, isEquippedRun, isSetAsideBasic, isUnlimitedBasic, moveFromSideboard, moveToSideboard, playInDeckOrder,
 } from '../../model/deckRules.js';
 import { isItemOwned } from '../../model/loadout.js';
+import { itemRefIdentity } from '../../model/itemUpgrades.js';
 import { resolveCard } from '../../model/registries.js';
 import { deckRules } from '../../content/deckRules.js';
 import { has, t } from '../strings.js';
@@ -65,11 +66,17 @@ function sourceOf(card, def) {
 }
 
 function pieceName(registries, grantedBy) {
-  const id = String(grantedBy || '');
+  // `grantedBy` is a bare armament id (a weapon's package) or a namespaced
+  // item ref (`armament/<id>`, `armor/<class>/<id>`, from the item's mounts);
+  // itemRefIdentity is the one parser of the second spelling.
+  const ref = itemRefIdentity(String(grantedBy || ''));
+  const id = ref ? ref.itemId : String(grantedBy || '');
   const eq = registries.equipment || {};
-  const pools = [eq.armaments, eq.armour].filter(Array.isArray);
-  for (const pool of pools) {
-    const piece = pool.find((p) => p && p.id === id);
+  const pools = ref
+    ? (ref.itemKind === 'armor' ? [eq.armour] : [eq.armaments])
+    : [eq.armaments, eq.armour];
+  for (const pool of pools.filter(Array.isArray)) {
+    const piece = pool.find((p) => p && p.id === id && (!ref || !ref.classId || p.classId === ref.classId));
     if (piece && piece.name) return piece.name;
   }
   return t('deckEditor.lock.equipment');

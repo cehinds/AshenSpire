@@ -401,7 +401,9 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   if (deckOption) {
     deckOption.addEventListener('click', () => deckDoor.onOpen());
     deckOption.addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
+      // input.js's capture handler may already have pressed the focused card
+      // (a click, which opened the editor); a consumed keydown opens nothing.
+      if (event.defaultPrevented || (event.key !== 'Enter' && event.key !== ' ')) return;
       event.preventDefault();
       deckDoor.onOpen();
     });
