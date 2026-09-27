@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1363",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the build site publishes again after its first run failed",
+    "detail": "One older test build, rebuilt with the phone-sized mobile copy, was mislabelled, so the site refused to publish. It is now labelled by what was actually built, and the site builds cleanly across all four branches.",
+    "build": "0.7.1.630",
+    "pullRequest": 1363,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1363"
+  },
+  {
     "id": "pr-1351",
     "date": "2026-09-27",
     "group": "2026-09-27",
