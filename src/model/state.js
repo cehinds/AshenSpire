@@ -46,7 +46,12 @@ import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 // legacy fields stay authoritative until phase 3b flips the readers and
 // writers; until then a save whose zones disagree with its legacy fields is
 // re-projected at the load door with a ledger note, never refused.
-export const RUN_SCHEMA_VERSION = 11;
+// 12 (SPEC §15.1): a pending reward may carry `levelCards` rows (keyed
+// `levelCard:<n>`, picks in `chosenDraftCardIds`) and `cardMissed`. The bump
+// is what makes an OLDER build refuse-and-keep such a save rather than read
+// it and drop the rows; an 11 save has no level-card rows, so 11 → 12 is a
+// no-op at the migration door.
+export const RUN_SCHEMA_VERSION = 12;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -1250,8 +1255,9 @@ export function migrateRunSchema(run) {
   // v10 and older: no sideboard. Filled HERE with none (SPEC §14.1): a run the
   // deck editor never touched has no owned card out of its deck.
   const preSideboard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, ${RUN_SCHEMA_VERSION})`);
+  // v11: no level-card rows could be written (SPEC §15.1); nothing to fill.
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, ${RUN_SCHEMA_VERSION})`);
   }
   const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard });
   if (preSkills && (run.skills === undefined || run.skills === null)) run.skills = {};
