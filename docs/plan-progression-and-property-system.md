@@ -7,9 +7,10 @@ part (2a); SPEC §13.4a–§13.4n state the built phases as shipped. Still open,
 among others (each phase's *as built* or *not done* note is the full list):
 phase 2b (relic passives and `textTemplate` stay on the relic until a mount
 can carry a per-copy upgraded value; not scheduled), 3b-ii (equipment rows
-joining the deck; the owner's call), the boss-reward door for the class-swap item (phase 5c), and
+joining the deck), the boss-reward door for the class-swap item (phase 5c), and
 phase 10b's quest rewards (quest XP is unpaid, since nothing listens to
-`questCompleted`, and the co-op host has no board). Kept here, not archived,
+`questCompleted`, and the co-op host has no board). The owner placed 3b-ii,
+the class-swap boss-reward door and quest XP **post-1.0** (2026-09-27). Kept here, not archived,
 until those close.
 Each phase is one or more pull requests into `dev`, each with a CHANGELOG
 receipt and rebuild. Paths and symbols below are the seams as they exist at
@@ -227,7 +228,7 @@ the half that changes what an object IS did not, and is 3b-ii below.
   written. "Reconcile against `collection`" is a no-op while `collection` is a
   projection of `deck`, and stays unwritten for the same reason 3a's note gives.
 
-**3b-ii (not built; needs the owner's call):** equipment rows joining the
+**3b-ii (not built; post-1.0 by owner decision, 2026-09-27):** equipment rows joining the
 card registry with `cardType: 'equipment'` and a `zone` field. Under the tag
 tree every object states exactly one kind (`classification.armament`,
 `classification.armour`); making a piece ALSO a card is a classification
@@ -412,7 +413,7 @@ gate is a row the owner may write, and the creation screen lists a gated
 class locked with the row's hint. The swap is the run opcode `swapClass`
 (named or `random`), shipped on ONE door, the Turncoat's Mirror event; the
 boss-reward door is NOT shipped — a reward row is a kind of its own and
-which boss gives it is the owner's call. The swap keeps the deck, relics,
+it is post-1.0 (owner decision, 2026-09-27). The swap keeps the deck, relics,
 loadout, attributes and weapon skills, resets every class track, prunes the
 tree picks the new class has no seat for, and does not deal the new class's
 kit (the run was born once). Progress records `maxClassLevel` and the item

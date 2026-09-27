@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1365",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the owner's scope decisions are written into the design docs",
+    "detail": "Docs only; nothing you play changes. The docs now record seven decisions the owner made on 2026-09-27: this game stays the product, the win-rate target is gone, companions belong to the shop plan, three progression extras wait until after 1.0, the old-names rename is dropped, the high-res art stays private, and an old frozen preview file is deleted.",
+    "build": "0.7.1.633",
+    "pullRequest": 1365,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1365"
+  },
+  {
     "id": "pr-1364",
     "date": "2026-09-27",
     "group": "2026-09-27",

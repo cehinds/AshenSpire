@@ -94,7 +94,7 @@ up. The contradiction is the character.
 
 ## 2. The companions
 
-One at a time (seat plan §5). Each is one voice from LORE §7 and one open
+One at a time. Companions are owned by SPEC §14.3 (D17, owner decision 2026-09-27); the seat plan's §5 table is design input. Each is one voice from LORE §7 and one open
 question from LORE §10.
 
 | Companion | Seat | Voice | Wants | Opposes | Dies if |
