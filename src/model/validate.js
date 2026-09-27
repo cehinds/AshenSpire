@@ -659,7 +659,7 @@ function collectContentProblems(bundle, errors = []) {
     // The shop kinds (content/shops.js, SPEC §14.2): the guaranteed minimum,
     // the offerings, a [NOTE] beside every number, and no weight for a kind
     // whose screen has not shipped.
-    shopsTableProblems(b.shops || shippedShops, err);
+    shopsTableProblems(b.shops || shippedShops, err, b);
     marketAdditionTableProblems(b.shops || shippedShops, err);
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {

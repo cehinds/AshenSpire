@@ -93,13 +93,23 @@ export function buildMarketStock(registries, rng, run, { meta = {}, innInTown = 
   const up = new Set(rollShopOfferings(market, rng));
   const inn = written.find((row) => row.id === 'innRest');
   if (innInTown && inn && inn.enabled === true) up.add('innRest');
-  // AN EMPTY SHELF IS NOT LAID OUT (SPEC §14.3). An addition whose pool holds
-  // nothing to sell on this visit — every sigil already held, no armour set
-  // left to buy — yields its place, and the guarantee refills from the other
-  // enabled offerings by weight, drawing nothing. Decided from the pools
-  // alone, before any stock draw, so the shelves that stay roll as they would.
+  // AN EMPTY SHELF IS NOT LAID OUT (SPEC §14.2). An offering whose shelf
+  // holds nothing on this visit — every relic held, every armament carried,
+  // every sigil owned, no armour set left to buy, a stock of 0 — yields its
+  // place, and the guarantee refills from the other enabled offerings by
+  // weight, drawing nothing. That is expected of a `conditional` offering;
+  // for any other it is the backstop, so an empty rail item never appears.
+  // Today's shelves are judged by what `shop` already rolled for them; the
+  // additions by their pools, before any stock draw, so the shelves that stay
+  // roll as they would.
   const pools = Object.fromEntries(written.filter((row) => ADDITION_POOLS[row.id]).map((row) => [row.id, ADDITION_POOLS[row.id](registries, run, row, meta)]));
-  const empty = (row) => !!pools[row.id] && (pools[row.id].length === 0 || !(row.stock > 0));
+  const shelfEmpty = (row) => {
+    if (pools[row.id]) return pools[row.id].length === 0 || !(row.stock > 0);
+    if (MARKET_SHELVES.includes(row.id)) return !(Array.isArray(stock[row.id]) && stock[row.id].length > 0);
+    if (row.id === 'smithStones') return !(row.perVisit > 0);
+    return false;
+  };
+  const empty = shelfEmpty;
   for (const row of written) if (up.has(row.id) && empty(row)) up.delete(row.id);
   const minimum = Number(market.guaranteedMinimum) || 0;
   if (up.size < minimum) {
@@ -153,15 +163,17 @@ function pickSome(rng, pool, count) {
 // An empty pool means the offering is not laid out (buildMarketStock).
 const ADDITION_POOLS = Object.freeze({
   // Armour sets of the run's own class — a filter of its own, since
-  // ownership() takes no class — that the run does not own, where owning is
-  // the profile's unlock, the creation grant, or a set bought this run
-  // (`loadout.boughtArmour`). `includeLocked` off closes the locked sets,
-  // which are the only ones a run can lack, so the shelf has nothing to sell.
+  // ownership() takes no class — that carry a profile unlock, and that the
+  // run does not own: ownership() excludes a set whose unlock the profile has
+  // met, the creation grant, and a set bought this run (`loadout.boughtArmour`).
+  // These locked sets are sold for this run only; `includeLocked` off closes
+  // them, so the shelf has nothing to sell and is not laid out.
   armour(registries, run, row, meta) {
+    if (row.includeLocked !== true) return [];
     const mine = ownership(registries, { meta, loadout: run.loadout });
     return (registries.equipment.armour || [])
       .filter((piece) => piece.classId === run.class)
-      .filter((piece) => row.includeLocked === true || !piece.unlock)
+      .filter((piece) => piece.unlock !== '' && piece.unlock != null)
       .filter((piece) => !mine.has(piece));
   },
   // Sigils the run does not hold, carried or slotted, never a legendary (§15.4).

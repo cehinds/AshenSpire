@@ -2278,6 +2278,20 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "settings.shops.refuse.conditional",
+    "extends": "",
+    "short": "{kind}: only {enabled} of its enabled offerings can never come up empty, fewer than its guaranteed minimum of {minimum}. The conditional ones ({conditional}) can have nothing to sell on a visit, so they do not count. Turn another offering on or lower the minimum.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.emptyStock",
+    "extends": "",
+    "short": "{kind}: with the stock of {stocks} at 0, only {enabled} of its enabled offerings have anything to lay out, fewer than its guaranteed minimum of {minimum}. Raise that stock above 0, turn another offering on, or lower the minimum.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "settings.shops.refuse.armourCost",
     "extends": "",
     "short": "{kind} · {offering}: a cost from {min} to {max} is refused; the least must not be above the most. The authored shops stay in force until it is fixed.",

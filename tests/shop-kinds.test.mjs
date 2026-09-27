@@ -210,8 +210,10 @@ test('FINISH: a disabled offering never appears, and disabling below the minimum
   assert.equal(errors.length, 1);
   assert.match(errors[0].msg, /relics/);
   assert.match(errors[0].msg, /guaranteedMinimum/);
-  // Four off leaves two: allowed.
-  const fine = Object.fromEntries(market.slice(2).map((id) => [`${PREFIX}market.${id}.enabled`, false]));
+  // All but two off, both of them offerings that can never come up empty
+  // (not `conditional`, SPEC §14.2): allowed.
+  const keep = ['cards', 'flasks'];
+  const fine = Object.fromEntries(market.filter((id) => !keep.includes(id)).map((id) => [`${PREFIX}market.${id}.enabled`, false]));
   assert.deepEqual(shopSettingsProblems(contentBundle, fine), []);
 });
 
@@ -407,11 +409,12 @@ test('a configuration import that leaves a kind below its minimum is refused who
   assert.ok(problems.some((line) => /Market/.test(line) && /guaranteed minimum of 2/.test(line)), problems.join(' | '));
   const file = advancedConfigExport(disabled);
   assert.throws(() => parseAdvancedConfigFile(file, contentBundle, {}), /Nothing was imported\. Market: /);
-  // Four off (two left) imports.
-  const fine = Object.fromEntries(market.slice(2).map((id) => [`${PREFIX}market.${id}.enabled`, false]));
+  // All but two unconditional offerings off (cards and flasks left) imports.
+  const keep = ['cards', 'flasks'];
+  const fine = Object.fromEntries(market.filter((id) => !keep.includes(id)).map((id) => [`${PREFIX}market.${id}.enabled`, false]));
   const changes = parseAdvancedConfigFile(advancedConfigExport(fine), contentBundle, {});
-  assert.equal(changes[`${PREFIX}market.relics.enabled`], undefined);
-  assert.equal(changes[`${PREFIX}market.flasks.enabled`], false);
+  assert.equal(changes[`${PREFIX}market.flasks.enabled`], undefined);
+  assert.equal(changes[`${PREFIX}market.relics.enabled`], false);
 });
 
 test('a saved stock naming an offering its kind has not got is refused by name (Codex, on #1371)', () => {

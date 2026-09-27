@@ -35,10 +35,27 @@ const GENERIC_NOTES = Object.freeze({
   weight: 'When too few offerings came up, the guarantee adds the missing ones with the highest weight first.',
 });
 
-// One offering: its id, the three rolling keys, and whatever it sells. `notes`
-// describes every other number it carries.
-const offering = (id, { chance = 100, weight, ...fields }, notes = {}) => ({
-  id, enabled: true, chance, weight, ...fields,
+// CONDITIONAL OR NOT (SPEC §14.2). An offering is `conditional` when its pool
+// can be empty on a visit — every relic already held, every armament carried,
+// every sigil owned — so the visit does not lay it out and the guarantee fills
+// from the others. A conditional offering never counts toward the enablement
+// minimum: validateContent and Settings keep at least `guaranteedMinimum`
+// enabled offerings that are NOT conditional, so the guarantee can always be
+// met. Authored here, per offering, and never a Settings row. When in doubt,
+// an offering is conditional.
+const ALWAYS = 'It always has something to lay out when it comes up, so it counts toward the guaranteed minimum.';
+// A NON-CONDITIONAL SHELF STILL NEEDS A STOCK (SPEC §14.2). Its per-visit
+// count lives elsewhere (balance.shop, where Advanced → Rewards lists it) and
+// can be set to 0; `stockKey` names it, so validation and Settings count the
+// offering toward the minimum only while that count is at least 1. A service
+// (remove) names none: it is always available.
+const STOCK_KEY = 'Where this shelf\'s per-visit stock lives. While that stock is 0 the shelf lays out nothing, so it does not count toward the guaranteed minimum.';
+const MAYBE = (why) => `It can have nothing to sell on a visit (${why}); then it is not laid out, and it never counts toward the guaranteed minimum.`;
+
+// One offering: its id, the three rolling keys, whether it is conditional, and
+// whatever it sells. `notes` describes every other value it carries.
+const offering = (id, { chance = 100, weight, conditional, ...fields }, notes = {}) => ({
+  id, enabled: true, chance, weight, conditional, ...fields,
   [NOTE]: { ...GENERIC_NOTES, ...notes },
 });
 
@@ -59,18 +76,18 @@ export const shops = {
   market: {
     guaranteedMinimum: 2,
     offerings: [
-      offering('cards', { weight: 60 }),
-      offering('relics', { weight: 30 }),
-      offering('flasks', { weight: 40 }),
-      offering('armaments', { weight: 30 }),
-      offering('weaponArts', { weight: 20 }),
-      offering('remove', { weight: 50 }),
+      offering('cards', { weight: 60, conditional: false, stockKey: 'balance.shop.cardStock' }, { conditional: `${ALWAYS} Its pool is the class's cards and the colourless ones, whatever the run owns.`, stockKey: STOCK_KEY }),
+      offering('relics', { weight: 30, conditional: true }, { conditional: MAYBE('it never offers a relic you already hold') }),
+      offering('flasks', { weight: 40, conditional: false, stockKey: 'balance.shop.flaskStock' }, { conditional: `${ALWAYS} Its pool is every utility flask, whatever the run carries.`, stockKey: STOCK_KEY }),
+      offering('armaments', { weight: 30, conditional: true }, { conditional: MAYBE('it never offers an armament you already carry') }),
+      offering('weaponArts', { weight: 20, conditional: true }, { conditional: MAYBE('its pool is only the mountable weapon arts the armaments carry') }),
+      offering('remove', { weight: 50, conditional: false }, { conditional: `${ALWAYS} It is a service with a price, not a shelf of goods.` }),
       // THE MARKET ADDITIONS (SPEC §14.3, §14.6 step 5). Each ships at a chance
       // below 100 and a weight below the shelves above, so the shelves stay the
       // visit's certainties and the guarantee still fills from them first. Their
       // stock rolls on `shopOffers` after the offering roll, never on `shop`.
       offering('armour', {
-        chance: 35, weight: 20, stock: 2, includeLocked: true,
+        chance: 35, weight: 20, conditional: true, stock: 2, includeLocked: true,
         cost: {
           min: 300, max: 390,
           [NOTE]: {
@@ -80,17 +97,21 @@ export const shops = {
         },
       }, {
         stock: 'How many armour sets the market\'s armour shelf holds each visit. Only sets of your class that you do not already own are offered.',
+        conditional: MAYBE('only locked sets of your class that the run does not own are sold, and with Include locked off there are none'),
         includeLocked: 'Whether the market sells armour sets of your class that your profile has not unlocked yet. A set bought this way is yours for this run only and does not unlock it. Off, the armour shelf has nothing to sell and is not laid out.',
       }),
-      offering('smithStones', { chance: 50, weight: 25, price: 110, perVisit: 2 }, {
+      offering('smithStones', { chance: 50, weight: 25, conditional: true, price: 110, perVisit: 2 }, {
+        conditional: MAYBE('its per-visit stock can be set to 0'),
         price: 'What one Smithing Stone costs at the market, in cinders.',
         perVisit: 'How many Smithing Stones the market sells each visit.',
       }),
-      offering('sigils', { chance: 25, weight: 10, stock: 2, pricePct: 100 }, {
+      offering('sigils', { chance: 25, weight: 10, conditional: true, stock: 2, pricePct: 100 }, {
+        conditional: MAYBE('it never offers a sigil you already own'),
         stock: 'How many sigils the market\'s sigil shelf holds each visit. It never offers one you already own.',
         pricePct: 'The percent of each sigil\'s authored cost the market charges for it. At 100 it sells at the sigil\'s own price.',
       }),
-      offering('innRest', { chance: 30, weight: 15, price: 150 }, {
+      offering('innRest', { chance: 30, weight: 15, conditional: true, price: 150 }, {
+        conditional: MAYBE('it is certain only in a town with an inn'),
         chance: 'The percent chance a market away from any inn offers a full rest. A market in a town with an inn always offers it while it is enabled.',
         price: 'What a full rest bought at the market costs, in cinders. It rests you exactly as the inn\'s bed does, once per visit.',
       }),
@@ -103,16 +124,18 @@ export const shops = {
   blacksmith: {
     guaranteedMinimum: 2,
     offerings: [
-      offering('armaments', { weight: 40, stock: 5 }, {
+      offering('armaments', { weight: 40, conditional: true, stock: 5 }, {
+        conditional: MAYBE('it never offers an armament you already carry'),
         stock: 'How many armaments the blacksmith\'s shelf holds each visit.',
       }),
-      offering('upgrade', { weight: 100 }),
-      offering('smithStones', { weight: 60, price: 90, perVisit: 3 }, {
+      offering('upgrade', { weight: 100, conditional: false }, { conditional: `${ALWAYS} It is a service with a price, not a shelf of goods.` }),
+      offering('smithStones', { weight: 60, conditional: true, price: 90, perVisit: 3 }, {
+        conditional: MAYBE('its per-visit stock can be set to 0'),
         price: 'What one Smithing Stone costs at the blacksmith, in cinders.',
         perVisit: 'How many Smithing Stones the blacksmith sells each visit.',
       }),
       offering('refineStones', {
-        weight: 30,
+        weight: 30, conditional: false,
         refine: {
           from: 3, value: 4, cinders: 100,
           [NOTE]: {
@@ -121,9 +144,9 @@ export const shops = {
             cinders: 'The cinders refining one stone costs, on top of the stones.',
           },
         },
-      }),
+      }, { conditional: `${ALWAYS} It is a service with a price, not a shelf of goods.` }),
       offering('sigilSlots', {
-        weight: 20,
+        weight: 20, conditional: false,
         sigilSlots: {
           max: 3, cinders: 300,
           [NOTE]: {
@@ -131,15 +154,16 @@ export const shops = {
             cinders: 'What cutting one sigil slot costs, in cinders.',
           },
         },
-      }),
-      offering('sigils', { weight: 20 }),
-      offering('extractArt', { weight: 50 }),
-      offering('installArt', { weight: 50 }),
-      offering('upgradeArt', { weight: 30, stones: 2 }, {
+      }, { conditional: `${ALWAYS} It is a service with a price, not a shelf of goods.` }),
+      offering('sigils', { weight: 20, conditional: true }, { conditional: MAYBE('it sets only the sigils you carry, and you may carry none') }),
+      offering('extractArt', { weight: 50, conditional: true }, { conditional: MAYBE('it needs an armament with a weapon art to take out') }),
+      offering('installArt', { weight: 50, conditional: true }, { conditional: MAYBE('it needs a loose weapon-art card to put in') }),
+      offering('upgradeArt', { weight: 30, conditional: true, stones: 2 }, {
+        conditional: MAYBE('it needs a loose weapon-art card to upgrade'),
         stones: 'How many Smithing Stones upgrading one loose weapon-art card costs.',
       }),
       offering('stackCopy', {
-        weight: 20,
+        weight: 20, conditional: true,
         stack: {
           stones: 2, cinders: 150, stepPerOwned: 1,
           [NOTE]: {
@@ -148,7 +172,7 @@ export const shops = {
             stepPerOwned: 'How much each of those two prices rises for every copy of the card already owned.',
           },
         },
-      }),
+      }, { conditional: MAYBE('it needs a card you own more than one copy of') }),
     ],
     [NOTE]: {
       guaranteedMinimum: 'The fewest offerings a blacksmith visit lays out. At least 2.',
@@ -161,11 +185,11 @@ export const shops = {
     // into the training pool (SPEC §14.5); Settings clamps it to 50–75.
     respecRefundPct: 60,
     offerings: [
-      offering('skillBooks', { weight: 40 }),
-      offering('weaponArts', { weight: 40 }),
-      offering('armaments', { weight: 30 }),
+      offering('skillBooks', { weight: 40, conditional: true }, { conditional: MAYBE('its books are not written yet, so it is counted as one that can run out') }),
+      offering('weaponArts', { weight: 40, conditional: true }, { conditional: MAYBE('its pool is only the mountable weapon arts the armaments carry') }),
+      offering('armaments', { weight: 30, conditional: true }, { conditional: MAYBE('it never offers an armament you already carry') }),
       offering('training', {
-        weight: 100,
+        weight: 100, conditional: true,
         training: {
           cinders: 150, xp: 20, perVisit: 3,
           [NOTE]: {
@@ -174,9 +198,9 @@ export const shops = {
             perVisit: 'How many training sessions one master visit sells.',
           },
         },
-      }),
+      }, { conditional: MAYBE('its per-visit sessions can be set to 0') }),
       offering('respec', {
-        weight: 60,
+        weight: 60, conditional: false,
         respec: {
           cost: {
             base: 200, perLevel: 50,
@@ -186,12 +210,13 @@ export const shops = {
             },
           },
         },
-      }),
-      offering('lesson', { weight: 50, cinders: 250 }, {
+      }, { conditional: `${ALWAYS} It is a service with a price, not a shelf of goods.` }),
+      offering('lesson', { weight: 50, conditional: true, cinders: 250 }, {
+        conditional: MAYBE('a track may have no skill left to draft'),
         cinders: 'What one lesson (a skill draft for one of the master\'s tracks) costs, in cinders.',
       }),
-      offering('appraisal', { weight: 30 }),
-      offering('redistribute', { weight: 30 }),
+      offering('appraisal', { weight: 30, conditional: false }, { conditional: `${ALWAYS} It is a service with a price, not a shelf of goods.` }),
+      offering('redistribute', { weight: 30, conditional: false }, { conditional: `${ALWAYS} It is a service with a price, not a shelf of goods.` }),
     ],
     [NOTE]: {
       guaranteedMinimum: 'The fewest offerings a master visit lays out. At least 2.',

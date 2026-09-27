@@ -807,3 +807,208 @@ test('a v15 save carrying bought armour and addition stock loads with every fiel
   for (const key of ADDITIONS_5A) assert.deepEqual(run.shopStock[key], saved.shopStock[key], key);
   assert.deepEqual(run.shopStock.offerings, saved.shopStock.offerings);
 });
+
+test('the armour shelf offers only locked sets of the run\'s own class: never another class\'s, never a shared or starting set, never one the profile has unlocked (Codex, on #1375)', () => {
+  const armour = OUT.equipment.armour;
+  for (const classId of ['reaver', 'starseer', 'herald', 'rogue']) {
+    const locked = armour.filter((piece) => piece.classId === classId && piece.unlock);
+    // The profile has unlocked the first locked set of this class.
+    const meta = { unlocked: [locked[0].unlock] };
+    const bigShelf = registriesWith({ ...ALL_OUT, [`${PREFIX}market.armour.stock`]: 20 });
+    for (let seed = 1; seed <= 12; seed++) {
+      const run = createRunState({ seed, classId, registries: bigShelf });
+      const stock = buildMarketStock(bigShelf, createRng(seed), run, { meta });
+      const offered = stock.armour || [];
+      for (const item of offered) {
+        const piece = armour.find((row) => row.classId === classId && row.id === item.id);
+        assert.ok(piece, `${classId} seed ${seed}: ${item.id} is a set of the run's own class`);
+        assert.ok(piece.unlock, `${classId} seed ${seed}: ${item.id} is a locked set, not a shared or starting one`);
+        assert.ok(!meta.unlocked.includes(piece.unlock), `${classId} seed ${seed}: ${item.id} is not one the profile unlocked`);
+      }
+      // With a shelf larger than the pool, the pool is laid out whole: every
+      // locked set of this class the profile lacks, and nothing else.
+      assert.deepEqual(offered.map((item) => item.id).sort(), locked.filter((piece) => !meta.unlocked.includes(piece.unlock)).map((piece) => piece.id).sort(), `${classId} seed ${seed}`);
+    }
+  }
+});
+
+test('armour.includeLocked, both values: on lays out the locked sets; off omits the shelf and the guarantee fills (coordinator ruling, #1374)', () => {
+  const only = { ...allMarketChancesZero(), [`${PREFIX}market.armour.chance`]: 100 };
+  const on = registriesWith({ ...only, [`${PREFIX}market.armour.includeLocked`]: true });
+  const off = registriesWith({ ...only, [`${PREFIX}market.armour.includeLocked`]: false });
+  const run = createRunState({ seed: 3, classId: 'rogue', registries: on });
+  const withSets = buildMarketStock(on, createRng(3), run, { meta: {} });
+  assert.ok(withSets.offerings.includes('armour'));
+  assert.ok(withSets.armour.length > 0);
+  const without = buildMarketStock(off, createRng(3), run, { meta: {} });
+  assert.ok(!without.offerings.includes('armour'));
+  assert.equal(without.armour, undefined);
+  assert.equal(without.offerings.length, off.shops.market.guaranteedMinimum, 'the guarantee fills from the others');
+});
+
+test('a conditional offering does not count toward the enablement minimum: Settings and the content door refuse it by name (coordinator ruling, #1375)', () => {
+  // Minimum 2, and only armour (conditional) plus cards (unconditional) left on.
+  const off = Object.fromEntries(shippedShops.market.offerings
+    .filter((row) => !['armour', 'cards'].includes(row.id))
+    .map((row) => [`${PREFIX}market.${row.id}.enabled`, false]));
+  const settings = { ...off, [`${PREFIX}market.guaranteedMinimum`]: 2 };
+  const problems = shopSettingsProblems(contentBundle, settings);
+  assert.equal(problems.length, 1, JSON.stringify(problems));
+  assert.equal(problems[0].id, 'settings.shops.refuse.conditional');
+  assert.equal(problems[0].kind, 'market');
+  assert.ok(problems[0].keys.includes(`${PREFIX}market.guaranteedMinimum`));
+  assert.match(problems[0].message, /Armour/);
+  assert.doesNotMatch(problems[0].message, /\{|\}/, 'every token filled');
+  // A config import refuses it the same way (Settings and sync read the same rows).
+  assert.throws(() => parseAdvancedConfigFile(advancedConfigExport(settings), contentBundle, {}));
+  // Two unconditional offerings on beside armour: taken.
+  const two = { ...settings, [`${PREFIX}market.remove.enabled`]: true };
+  assert.deepEqual(shopSettingsProblems(contentBundle, two), []);
+  // Sigils count as conditional too.
+  const sigilsOnly = Object.fromEntries(shippedShops.market.offerings
+    .filter((row) => !['sigils', 'cards'].includes(row.id))
+    .map((row) => [`${PREFIX}market.${row.id}.enabled`, false]));
+  assert.equal(shopSettingsProblems(contentBundle, sigilsOnly)[0]?.id, 'settings.shops.refuse.conditional');
+  // The content door: the same table authored is refused by name.
+  const table = structuredClone(shippedShops);
+  for (const row of table.market.offerings) row.enabled = ['armour', 'cards'].includes(row.id);
+  const errors = validateContent({ ...contentBundle, shops: table }).errors.filter((e) => e.path === 'shops.market');
+  assert.equal(errors.length, 1, JSON.stringify(errors));
+  assert.match(errors[0].msg, /conditional/);
+  assert.match(errors[0].msg, /armour/);
+});
+
+test('every offering authors a boolean `conditional` with its [NOTE]; the market classifies each shelf whose pool can be empty as conditional (coordinator ruling, #1375)', () => {
+  for (const kind of ['market', 'blacksmith', 'master']) {
+    for (const row of shippedShops[kind].offerings) {
+      assert.equal(typeof row.conditional, 'boolean', `${kind}.${row.id} authors conditional`);
+      const note = row[NOTE] && row[NOTE].conditional;
+      assert.ok(typeof note === 'string' && note.length > 20, `${kind}.${row.id}: conditional carries its sentence`);
+    }
+  }
+  const market = Object.fromEntries(shippedShops.market.offerings.map((row) => [row.id, row.conditional]));
+  assert.deepEqual(market, {
+    cards: false, relics: true, flasks: false, armaments: true, weaponArts: true, remove: false,
+    armour: true, smithStones: true, sigils: true, innRest: true,
+  });
+  // Authored data, not a Settings row.
+  assert.equal(advancedConfigRows(contentBundle).some((r) => /\.conditional$/.test(r.key)), false);
+  // A missing or non-boolean flag is refused by name at the content door.
+  for (const bad of [undefined, 'yes', 1]) {
+    const table = structuredClone(shippedShops);
+    const row = table.market.offerings.find((o) => o.id === 'cards');
+    if (bad === undefined) delete row.conditional; else row.conditional = bad;
+    const errors = validateContent({ ...contentBundle, shops: table }).errors.filter((e) => e.path === 'shops.market.cards.conditional');
+    assert.equal(errors.length, 1, `conditional = ${JSON.stringify(bad)} is refused by name`);
+  }
+});
+
+test('validateContent refuses a kind with too few enabled offerings that are not conditional, reading the flag and no list (coordinator ruling, #1375)', () => {
+  // Minimum 2, and cards is the one non-conditional offering left on beside
+  // four conditional ones: five enabled, one that can never come up empty.
+  const table = structuredClone(shippedShops);
+  for (const row of table.market.offerings) row.enabled = ['cards', 'relics', 'armaments', 'weaponArts', 'armour'].includes(row.id);
+  const errors = validateContent({ ...contentBundle, shops: table }).errors.filter((e) => e.path === 'shops.market');
+  assert.equal(errors.length, 1, JSON.stringify(errors));
+  assert.match(errors[0].msg, /conditional/);
+  // The flag decides, not an id: an authored table that calls relics
+  // unconditional passes the same rule.
+  const flipped = structuredClone(table);
+  flipped.market.offerings.find((o) => o.id === 'relics').conditional = false;
+  assert.deepEqual(validateContent({ ...contentBundle, shops: flipped }).errors.filter((e) => e.path === 'shops.market'), []);
+  // And Settings refuses the same combination, naming the conditional ones.
+  const settings = Object.fromEntries(shippedShops.market.offerings
+    .filter((row) => !['cards', 'relics', 'armaments'].includes(row.id))
+    .map((row) => [`${PREFIX}market.${row.id}.enabled`, false]));
+  const problems = shopSettingsProblems(contentBundle, settings);
+  assert.equal(problems.length, 1);
+  assert.equal(problems[0].id, 'settings.shops.refuse.conditional');
+  assert.match(problems[0].message, /Relics/);
+  assert.match(problems[0].message, /Armaments/);
+});
+
+test('PROPERTY: a run that owns every relic and carries every armament still gets its guarantee, and no empty conditional shelf is laid out (coordinator ruling, #1375)', () => {
+  const settingsSets = [
+    {},
+    ALL_OUT,
+    { ...allMarketChancesZero(), [`${PREFIX}market.relics.chance`]: 100, [`${PREFIX}market.armaments.chance`]: 100 },
+    { ...allMarketChancesZero(), [`${PREFIX}market.guaranteedMinimum`]: 3 },
+    { ...allMarketChancesZero(), [`${PREFIX}market.guaranteedMinimum`]: 3, [`${PREFIX}market.relics.weight`]: 100, [`${PREFIX}market.armaments.weight`]: 99, [`${PREFIX}market.weaponArts.weight`]: 98 },
+    // Stock-0 mixes (coordinator ruling, #1375): a shelf whose stock is set
+    // to 0 lays out nothing, so it is omitted and the guarantee refills.
+    { 'gameConfig.balance.shop.cardStock': 0 },
+    { ...allMarketChancesZero(), 'gameConfig.balance.shop.flaskStock': 0 },
+    { ...allMarketChancesZero(), 'gameConfig.balance.shop.cardStock': 0, [`${PREFIX}market.cards.chance`]: 100 },
+    { ...ALL_OUT, 'gameConfig.balance.shop.relicStock': 0, 'gameConfig.balance.shop.armamentStock': 0, 'gameConfig.balance.shop.weaponArtStock': 0, [`${PREFIX}market.smithStones.perVisit`]: 0, [`${PREFIX}market.sigils.stock`]: 0, [`${PREFIX}market.armour.stock`]: 0 },
+  ];
+  for (const settings of settingsSets) {
+    const registries = registriesWith(settings);
+    assert.deepEqual(shopSettingsProblems(contentBundle, settings), [], JSON.stringify(settings));
+    const minimum = registries.shops.market.guaranteedMinimum;
+    for (let seed = 1; seed <= 40; seed++) {
+      const run = createRunState({ seed, classId: ['reaver', 'starseer', 'herald', 'rogue'][seed % 4], registries });
+      run.relics = registries.relics.all().map((r) => r.id);
+      run.loadout.storage = [...new Set([...(run.loadout.storage || []), ...registries.equipment.armaments.map((piece) => piece.id)])];
+      run.sigils = registries.sigils.ids();
+      run.loadout.boughtArmour = registries.equipment.armour.filter((row) => row.classId === run.class).map((row) => ({ classId: row.classId, id: row.id }));
+      const stock = buildMarketStock(registries, createRng(seed), run, { meta: {} });
+      assert.ok(stock.offerings.length >= minimum, `seed ${seed} ${JSON.stringify(settings)}: ${stock.offerings.join(',')} meets ${minimum}`);
+      for (const id of ['relics', 'armaments', 'armour', 'sigils']) {
+        assert.ok(!stock.offerings.includes(id), `seed ${seed}: the empty ${id} shelf is not laid out`);
+      }
+      // No rail item is ever empty: every laid-out shelf holds something.
+      for (const id of stock.offerings) {
+        if (id === 'remove') { assert.ok(Number.isFinite(stock.removeCost)); continue; }
+        const shelf = stock[id];
+        const holds = Array.isArray(shelf) ? shelf.length > 0 : (id === 'smithStones' ? shelf.left > 0 : shelf != null);
+        assert.ok(holds, `seed ${seed} ${JSON.stringify(settings)}: ${id} is laid out only with something on it`);
+      }
+    }
+  }
+});
+
+test('a non-conditional offering counts toward the minimum only while its named stock is at least 1: cardStock 0 plus flaskStock 0 at minimum 2 is refused (coordinator ruling, #1375)', () => {
+  const market = Object.fromEntries(shippedShops.market.offerings.map((row) => [row.id, row]));
+  assert.equal(market.cards.stockKey, 'balance.shop.cardStock');
+  assert.equal(market.flasks.stockKey, 'balance.shop.flaskStock');
+  assert.equal(market.remove.stockKey, undefined, 'remove is a service, always available');
+  // Authored data, never a Settings row.
+  assert.equal(advancedConfigRows(contentBundle).some((r) => /\.stockKey$/.test(r.key)), false);
+  const both = { 'gameConfig.balance.shop.cardStock': 0, 'gameConfig.balance.shop.flaskStock': 0 };
+  const problems = shopSettingsProblems(contentBundle, both);
+  assert.equal(problems.length, 1, JSON.stringify(problems));
+  assert.equal(problems[0].id, 'settings.shops.refuse.emptyStock');
+  assert.ok(problems[0].keys.includes('gameConfig.balance.shop.cardStock'));
+  assert.ok(problems[0].keys.includes('gameConfig.balance.shop.flaskStock'));
+  assert.match(problems[0].message, /Cards/);
+  assert.match(problems[0].message, /Flasks/);
+  assert.doesNotMatch(problems[0].message, /\{|\}/);
+  // An import refuses it whole.
+  assert.throws(() => parseAdvancedConfigFile(advancedConfigExport(both), contentBundle, {}), /Nothing was imported/);
+  // One bad kind costs that kind: the stock rows that break it are set aside
+  // with it, the configured bundle still validates, and an unrelated setting applies.
+  const bundle = configuredContentBundle(contentBundle, { ...both, [`${PREFIX}blacksmith.smithStones.price`]: 77 });
+  assert.equal(validateContent(bundle).ok, true, JSON.stringify(validateContent(bundle).errors));
+  assert.equal(bundle.balance.shop.cardStock, contentBundle.balance.shop.cardStock);
+  assert.equal(bundle.shops.blacksmith.offerings.find((o) => o.id === 'smithStones').price, 77);
+  // cardStock 0 alone leaves flasks and remove: allowed, and at run time the
+  // empty cards shelf is omitted and the guarantee refills.
+  const cardsOnly = { 'gameConfig.balance.shop.cardStock': 0 };
+  assert.deepEqual(shopSettingsProblems(contentBundle, cardsOnly), []);
+  const registries = registriesWith({ ...cardsOnly, ...allMarketChancesZero() });
+  const run = createRunState({ seed: 2, classId: 'reaver', registries });
+  const stock = buildMarketStock(registries, createRng(2), run, { meta: {} });
+  assert.ok(!stock.offerings.includes('cards'));
+  assert.equal(stock.offerings.length, 2);
+  // The content door refuses the same bundle authored.
+  const authored = structuredClone(contentBundle.balance);
+  authored.shop.cardStock = 0;
+  authored.shop.flaskStock = 0;
+  const errors = validateContent({ ...contentBundle, balance: authored }).errors.filter((e) => e.path === 'shops.market');
+  assert.equal(errors.length, 1, JSON.stringify(errors));
+  assert.match(errors[0].msg, /stock/);
+  // A stock key that names no number is refused by name.
+  const table = structuredClone(shippedShops);
+  table.market.offerings.find((o) => o.id === 'cards').stockKey = 'balance.shop.noSuchStock';
+  assert.equal(validateContent({ ...contentBundle, shops: table }).errors.filter((e) => e.path === 'shops.market.cards.stockKey').length, 1);
+});
