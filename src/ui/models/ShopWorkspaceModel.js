@@ -1,5 +1,6 @@
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { cardShelf, cardShelfWidthPx } from './CardSizeModel.js';
+import { MARKET_ADDITIONS } from '../../model/marketStock.js';
 
 // W1d / W1v: THE MERCHANT AS A WORKSPACE. A category rail beside (or above) one
 // active pane; the pane shows the category's offers with a price and an
@@ -34,8 +35,8 @@ export function shopCategories({ sellOn = true, offered = null, services = true 
   return Object.freeze(at < 0 ? [...base, ...additions] : [...base.slice(0, at), ...additions, ...base.slice(at)]);
 }
 
-/** The market additions' rail items, keyed by their offering ids (SPEC §14.3). */
-export const MARKET_ADDITION_CATEGORIES = Object.freeze(['armour', 'smithStones', 'sigils', 'innRest']);
+/** The market additions' rail items, keyed by their offering ids (SPEC §14.3): the one list, model/marketStock.js. */
+export const MARKET_ADDITION_CATEGORIES = MARKET_ADDITIONS;
 
 /**
  * The {Status} line a category carries on its rail item and its pane head.

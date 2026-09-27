@@ -65,10 +65,9 @@ import {
   rollRelicReward,
   rollArmamentDrop,
 } from './engine/encounters.js';
-import { buildMarketStock, buildMerchantStock, commitInnRest } from './engine/shopKinds.js';
+import { buildMarketStock, marketVisitStock, commitInnRest } from './engine/shopKinds.js';
 import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
-import { restLocationAtPoint, questBoardPointAt, innInTown, CAMP_LOCATION } from './model/locations.js';
-import { applyShopPriceMult } from './model/marketStock.js';
+import { restLocationAtPoint, questBoardPointAt, CAMP_LOCATION } from './model/locations.js';
 import { mountTitle, focusTitleDefault } from './ui/screens/title.js';
 import { refreshHudQuickSettings } from './ui/components/hudQuickSettings.js';
 import { mountProfileNotice } from './ui/screens/profileNotice.js';
@@ -2050,8 +2049,10 @@ function worldLocationAction(action) {
   j.activeService = { ownerId: action.ownerId, pointId: action.pointId, handlerId };
   if (handlerId === 'shop') {
     // The atlas `shop` service is a market (SPEC §14.2): today's shelves on
-    // `shop`, and which of them are out on `shopOffers`.
-    state.stock ||= buildMarketStock(registries, rng, run, { meta: saves.loadMeta(), innInTown: innInTown(registries, action.ownerId) });
+    // `shop`, and which of them are out on `shopOffers`. A custom run's price
+    // multiplier reaches it as it reaches a classic merchant (review, #1374;
+    // before that no atlas shelf was scaled).
+    state.stock ||= marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'atlas', ownerId: action.ownerId, priceMult: shopPriceMult() });
     run.shopStock = state.stock;
     persist(); return showShop();
   }
@@ -2154,10 +2155,9 @@ function enterNode(nodeId) {
       // A classic merchant rolls its kind first (SPEC §14.2, `shopOffers`); the
       // shipped weights make every one a market with every shelf out, drawing
       // nothing new, so a seed's shelves are what they always were.
-      const stock = buildMerchantStock(registries, rng, run, { meta: saves.loadMeta() });
-      // Greedy Merchants and Hoarder scale the cards, relics, flasks, the
-      // Remove price and every market addition's price (SPEC §14.3).
-      applyShopPriceMult(stock, shopPriceMult());
+      // Greedy Merchants and Hoarder scale every price it lays out, the
+      // market additions included (SPEC §14.3).
+      const stock = marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'merchant', priceMult: shopPriceMult() });
       // Does a smith travel with him? Rolled once here, on the smith's own
       // stream (balance.smithing.services.offeredAt.merchant), and kept with
       // the stock so leaving and re-entering the screen does not roll again.

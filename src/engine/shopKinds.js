@@ -9,7 +9,8 @@ import { createRng } from './rng.js';
 import { createLocationVisit, arriveAt, restAt, leaveLocation } from './locations.js';
 import { SHOP_KINDS, SHOP_KIND_SCREENS, MARKET_SHELVES } from '../model/shopKinds.js';
 import { ownership } from '../model/loadout.js';
-import { INN_LOCATION } from '../model/locations.js';
+import { INN_LOCATION, innInTown } from '../model/locations.js';
+import { applyShopPriceMult } from '../model/marketStock.js';
 import { innRestPlan, stale } from '../model/marketAdditions.js';
 import { ownedSigilIds } from '../model/sigils.js';
 
@@ -88,19 +89,53 @@ export function rollShopOfferings(kindDef, rng) {
 export function buildMarketStock(registries, rng, run, { meta = {}, innInTown = false } = {}) {
   const stock = buildShopStock(registries, rng, run);
   const market = registries.shops.market;
-  let offerings = rollShopOfferings(market, rng);
-  const inn = (market.offerings || []).find((row) => row && row.id === 'innRest');
-  if (innInTown && inn && inn.enabled === true && !offerings.includes('innRest')) {
-    offerings = market.offerings.filter((row) => row && (offerings.includes(row.id) || row.id === 'innRest')).map((row) => row.id);
+  const written = (market.offerings || []).filter(Boolean);
+  const up = new Set(rollShopOfferings(market, rng));
+  const inn = written.find((row) => row.id === 'innRest');
+  if (innInTown && inn && inn.enabled === true) up.add('innRest');
+  // AN EMPTY SHELF IS NOT LAID OUT (SPEC §14.3). An addition whose pool holds
+  // nothing to sell on this visit — every sigil already held, no armour set
+  // left to buy — yields its place, and the guarantee refills from the other
+  // enabled offerings by weight, drawing nothing. Decided from the pools
+  // alone, before any stock draw, so the shelves that stay roll as they would.
+  const pools = Object.fromEntries(written.filter((row) => ADDITION_POOLS[row.id]).map((row) => [row.id, ADDITION_POOLS[row.id](registries, run, row, meta)]));
+  const empty = (row) => !!pools[row.id] && (pools[row.id].length === 0 || !(row.stock > 0));
+  for (const row of written) if (up.has(row.id) && empty(row)) up.delete(row.id);
+  const minimum = Number(market.guaranteedMinimum) || 0;
+  if (up.size < minimum) {
+    const missing = written
+      .map((row, index) => ({ row, index }))
+      .filter(({ row }) => row.enabled === true && !up.has(row.id) && !empty(row))
+      .sort((a, b) => (Number(b.row.weight) || 0) - (Number(a.row.weight) || 0) || a.index - b.index);
+    for (const { row } of missing) {
+      if (up.size >= minimum) break;
+      up.add(row.id);
+    }
   }
+  const offerings = written.filter((row) => up.has(row.id)).map((row) => row.id);
   for (const shelf of MARKET_SHELVES) if (!offerings.includes(shelf)) stock[shelf] = [];
   stock.kind = 'market';
   stock.offerings = offerings;
-  for (const row of market.offerings || []) {
-    if (!row || !offerings.includes(row.id) || !ADDITION_STOCK[row.id]) continue;
-    stock[row.id] = ADDITION_STOCK[row.id](registries, rng, run, row, meta);
+  for (const row of written) {
+    if (!offerings.includes(row.id) || !ADDITION_STOCK[row.id]) continue;
+    stock[row.id] = ADDITION_STOCK[row.id](registries, rng, run, row, pools[row.id]);
   }
   return stock;
+}
+
+/**
+ * marketVisitStock(registries, rng, run, { meta, door, ownerId, priceMult }) →
+ * the stock a market visit opens with, through either door main.js has: a
+ * classic `merchant` node (its kind rolled first) or an `atlas` shop point
+ * (a market, always offering the rest when its town keeps an inn). Either way
+ * a custom run's price multiplier (Greedy Merchants, Hoarder) is applied to
+ * every price the visit laid out, the additions included.
+ */
+export function marketVisitStock(registries, rng, run, { meta = {}, door = 'merchant', ownerId = null, priceMult = 1 } = {}) {
+  const stock = door === 'atlas'
+    ? buildMarketStock(registries, rng, run, { meta, innInTown: innInTown(registries, ownerId) })
+    : buildMerchantStock(registries, rng, run, { meta });
+  return applyShopPriceMult(stock, priceMult);
 }
 
 // Up to `count` distinct picks from `pool`, on `shopOffers`.
@@ -114,26 +149,42 @@ function pickSome(rng, pool, count) {
   return out;
 }
 
-// Each addition's stock, rolled on `shopOffers` from its own offering's numbers.
-const ADDITION_STOCK = Object.freeze({
-  // Armour sets of the run's class it does not own, each priced in the
-  // offering's cost range (SPEC §14.3: the worn slots, §13.4b).
-  armour(registries, rng, run, row, meta) {
+// What each conditional addition could sell on this visit, before any draw.
+// An empty pool means the offering is not laid out (buildMarketStock).
+const ADDITION_POOLS = Object.freeze({
+  // Armour sets of the run's own class — a filter of its own, since
+  // ownership() takes no class — that the run does not own, where owning is
+  // the profile's unlock, the creation grant, or a set bought this run
+  // (`loadout.boughtArmour`). `includeLocked` off closes the locked sets,
+  // which are the only ones a run can lack, so the shelf has nothing to sell.
+  armour(registries, run, row, meta) {
     const mine = ownership(registries, { meta, loadout: run.loadout });
-    const pool = (registries.equipment.armour || []).filter((piece) => piece.classId === run.class && !mine.has(piece));
-    const lo = Math.min(row.cost.min, row.cost.max);
-    const hi = Math.max(row.cost.min, row.cost.max);
-    return pickSome(rng, pool, row.stock).map((piece) => ({ id: piece.id, cost: Math.max(1, rng.int(STREAM, lo, hi)) }));
+    return (registries.equipment.armour || [])
+      .filter((piece) => piece.classId === run.class)
+      .filter((piece) => row.includeLocked === true || !piece.unlock)
+      .filter((piece) => !mine.has(piece));
+  },
+  // Sigils the run does not hold, carried or slotted, never a legendary (§15.4).
+  sigils(registries, run) {
+    const owned = new Set(ownedSigilIds(run));
+    return registries.sigils.all().filter((def) => def.rarity !== 'legendary' && !owned.has(def.id));
+  },
+});
+
+// Each addition's stock, rolled on `shopOffers` from its own offering's
+// numbers (and its pool, for the conditional ones).
+const ADDITION_STOCK = Object.freeze({
+  // Each set priced in the offering's cost range (validateContent and Settings
+  // keep min ≤ max), and never below 1.
+  armour(registries, rng, run, row, pool) {
+    return pickSome(rng, pool, row.stock).map((piece) => ({ id: piece.id, cost: Math.max(1, rng.int(STREAM, row.cost.min, row.cost.max)) }));
   },
   // Priced per stone, with a per-visit stock; no roll.
   smithStones(registries, rng, run, row) {
     return { price: row.price, left: row.perVisit };
   },
-  // Sigils the run does not carry, never a legendary (SPEC §15.4), each at
-  // `pricePct` percent of its own cost.
-  sigils(registries, rng, run, row) {
-    const owned = new Set(ownedSigilIds(run));
-    const pool = registries.sigils.all().filter((def) => def.rarity !== 'legendary' && !owned.has(def.id));
+  // Each sigil at `pricePct` percent of its own cost.
+  sigils(registries, rng, run, row, pool) {
     return pickSome(rng, pool, row.stock).map((def) => ({ id: def.id, cost: Math.max(1, Math.round((def.cost * row.pricePct) / 100)) }));
   },
   // One full rest, bought once per visit; no roll.

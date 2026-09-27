@@ -148,8 +148,9 @@ function nonNumericLeaves(value, path, err) {
   for (const [key, child] of Object.entries(value)) {
     if (typeof child === 'number') {
       if (!Number.isFinite(child)) err(`${path}.${key}`, `must be a finite number, got ${child}`);
-    } else if (object(child)) nonNumericLeaves(child, `${path}.${key}`, err);
-    else err(`${path}.${key}`, `must be a number (or an object of numbers), got ${JSON.stringify(child)}`);
+    } else if (typeof child === 'boolean') continue; // a switch (SPEC §14.3 armour.includeLocked); it gets a bool row
+    else if (object(child)) nonNumericLeaves(child, `${path}.${key}`, err);
+    else err(`${path}.${key}`, `must be a number, true or false (or an object of those), got ${JSON.stringify(child)}`);
   }
 }
 
@@ -164,7 +165,7 @@ function carriesNotes(value) {
 function unnotedNumbers(value, path, err) {
   if (!object(value)) return;
   for (const [key, child] of Object.entries(value)) {
-    if (typeof child === 'number' && typeof noteFor(value, key) !== 'string') err(`${path}.${key}`, 'is a number with no [NOTE] beside it: write the sentence its Settings row shows');
+    if ((typeof child === 'number' || typeof child === 'boolean') && typeof noteFor(value, key) !== 'string') err(`${path}.${key}`, `is a ${typeof child === 'number' ? 'number' : 'switch'} with no [NOTE] beside it: write the sentence its Settings row shows`);
     else if (object(child)) unnotedNumbers(child, `${path}.${key}`, err);
   }
 }
@@ -252,6 +253,9 @@ const PERCENT = Object.freeze({ integer: true, step: 1, min: 0, max: 100 });
 // to 50–75 by SPEC §14.5.
 const SHOP_DOMAINS = Object.freeze({
   'master.respecRefundPct': Object.freeze({ integer: true, step: 1, min: 50, max: 75 }),
+  // The sigil markup may rise above 100 as well as discount (coordinator
+  // ruling, #1374), bounded at 300.
+  'market.sigils.pricePct': Object.freeze({ integer: true, step: 1, min: 1, max: 300 }),
 });
 // A PAID OFFERING IS NEVER FREE (Codex, on #1374): a price in cinders — a
 // `price`, a `cinders` cost, an armour cost bound — or the percent of its own
@@ -278,6 +282,19 @@ function numberRows(value, keyPath, configPath, kind, offeringId, rows) {
       const leaf = [...keyPath.slice(offeringId ? 2 : 1), key].join('.');
       rows.push(row({
         key: `${PREFIX}${path}`, type: 'number', def: child, ...shopDomain(path, child),
+        label: `${words(kind)} — ${offeringId ? `${words(offeringId)}: ` : ''}${words(leaf)}`,
+        shopLabel: { id: offeringId ? 'settings.shops.row.offeringValue' : 'settings.shops.row.kindValue', tokens: { kind: words(kind), offering: words(offeringId || ''), value: words(leaf) }, names: { kind, offering: offeringId } },
+        shopTopic: kind,
+        note: noted(noteFor(value, key) || ''),
+        configPath: [...configPath, key], searchPath: `shops ${path.replace(/\./g, ' ')}`,
+      }));
+    } else if (typeof child === 'boolean') {
+      // A switch an offering carries (SPEC §14.3 `armour.includeLocked`): a
+      // bool row, generated the same way.
+      const path = [...keyPath, key].join('.');
+      const leaf = [...keyPath.slice(offeringId ? 2 : 1), key].join('.');
+      rows.push(row({
+        key: `${PREFIX}${path}`, def: child,
         label: `${words(kind)} — ${offeringId ? `${words(offeringId)}: ` : ''}${words(leaf)}`,
         shopLabel: { id: offeringId ? 'settings.shops.row.offeringValue' : 'settings.shops.row.kindValue', tokens: { kind: words(kind), offering: words(offeringId || ''), value: words(leaf) }, names: { kind, offering: offeringId } },
         shopTopic: kind,
@@ -419,6 +436,20 @@ export function shopSettingsProblems(bundle, settings = {}) {
         tokens: { kind: words(kind), offerings: off.map((offering) => words(offering.id)).join(', '), enabled: on.length, minimum },
       });
     }
+    // A cost range runs from its min to its max (SPEC §14.3, the market's
+    // armour): refused here by name, so it costs only this kind, not the whole
+    // configuration at validateContent (review, #1374).
+    def.offerings.forEach((offering) => {
+      const cost = offering && offering.cost;
+      if (!object(cost) || !Number.isFinite(cost.min) || !Number.isFinite(cost.max)) return;
+      const minKey = `${PREFIX}${kind}.${offering.id}.cost.min`;
+      const maxKey = `${PREFIX}${kind}.${offering.id}.cost.max`;
+      const lo = Number(read(minKey, cost.min));
+      const hi = Number(read(maxKey, cost.max));
+      if (lo > hi) {
+        problems.push({ kind, keys: [minKey, maxKey], id: 'settings.shops.refuse.armourCost', tokens: { kind: words(kind), offering: words(offering.id), min: lo, max: hi } });
+      }
+    });
   }
   return problems.map((problem) => ({ ...problem, message: shopSentence(problem.id, problem.tokens) }));
 }

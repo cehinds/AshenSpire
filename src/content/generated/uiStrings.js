@@ -2112,6 +2112,13 @@ export const uiStrings = [
   {
     "id": "settings.shops.offering.sigils",
     "extends": "",
+    "short": "Sigil setting",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.market.sigils",
+    "extends": "",
     "short": "Sigils",
     "full": "",
     "tip": ""
@@ -2267,6 +2274,13 @@ export const uiStrings = [
     "id": "settings.shops.refuse.disabled",
     "extends": "",
     "short": "{kind}: turning off {offerings} leaves {enabled} offering(s) enabled, fewer than its guaranteed minimum of {minimum}. Turn one back on or lower the minimum.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.armourCost",
+    "extends": "",
+    "short": "{kind} · {offering}: a cost from {min} to {max} is refused; the least must not be above the most. The authored shops stay in force until it is fixed.",
     "full": "",
     "tip": ""
   },

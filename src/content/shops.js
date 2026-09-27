@@ -70,7 +70,7 @@ export const shops = {
       // visit's certainties and the guarantee still fills from them first. Their
       // stock rolls on `shopOffers` after the offering roll, never on `shop`.
       offering('armour', {
-        chance: 35, weight: 20, stock: 2,
+        chance: 35, weight: 20, stock: 2, includeLocked: true,
         cost: {
           min: 300, max: 390,
           [NOTE]: {
@@ -80,6 +80,7 @@ export const shops = {
         },
       }, {
         stock: 'How many armour sets the market\'s armour shelf holds each visit. Only sets of your class that you do not already own are offered.',
+        includeLocked: 'Whether the market sells armour sets of your class that your profile has not unlocked yet. A set bought this way is yours for this run only and does not unlock it. Off, the armour shelf has nothing to sell and is not laid out.',
       }),
       offering('smithStones', { chance: 50, weight: 25, price: 110, perVisit: 2 }, {
         price: 'What one Smithing Stone costs at the market, in cinders.',

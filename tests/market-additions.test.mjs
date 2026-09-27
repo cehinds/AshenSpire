@@ -540,7 +540,9 @@ test('a paid offering\'s price rows start at 1, so Settings refuses a free one (
     const key = `${PREFIX}${leaf}`;
     assert.equal(rows.get(key).min, 1, `${leaf} starts at 1`);
     assert.throws(() => parseAdvancedConfigFile(advancedConfigExport({ [key]: 0 }), contentBundle, {}), /Invalid value/, `${leaf}: 0 is refused`);
-    assert.doesNotThrow(() => parseAdvancedConfigFile(advancedConfigExport({ [key]: 1 }), contentBundle, {}), `${leaf}: 1 is taken`);
+    // (A max of 1 needs a min of 1 beside it: the range must not invert.)
+    const beside = leaf === 'market.armour.cost.max' ? { [`${PREFIX}market.armour.cost.min`]: 1 } : {};
+    assert.doesNotThrow(() => parseAdvancedConfigFile(advancedConfigExport({ ...beside, [key]: 1 }), contentBundle, {}), `${leaf}: 1 is taken`);
   }
 });
 
@@ -683,7 +685,7 @@ test('an inverted armour cost range is refused by name in Settings, so it costs 
   assert.equal(problems[0].id, 'settings.shops.refuse.armourCost');
   assert.match(problems[0].message, /500/);
   assert.match(problems[0].message, /400/);
-  assert.deepEqual(shopSettingsProblems(contentBundle, { [`${PREFIX}market.armour.cost.min`]: 400 }), []);
+  assert.deepEqual(shopSettingsProblems(contentBundle, { [`${PREFIX}market.armour.cost.min`]: 350 }), []);
   // One bad kind costs that kind: the market keeps its authored table, and
   // an unrelated Advanced setting still applies.
   const bundle = configuredContentBundle(contentBundle, { ...settings, [`${PREFIX}blacksmith.smithStones.price`]: 77 });

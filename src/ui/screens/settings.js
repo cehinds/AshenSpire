@@ -123,10 +123,14 @@ const INERT_CONFIG_ROWS = advancedConfigRows(contentBundle).filter((row) => row.
  * back to the words of the id, so an offering added to shops.js is labelled
  * the moment its rows exist and named properly once it gets a string row.
  */
-function shopRowLabel({ id, tokens, names = {} }) {
+export function shopRowLabel({ id, tokens, names = {} }) {
   const filled = { ...tokens };
   if (names.kind && hasString(`settings.shops.topic.${names.kind}`)) filled.kind = t(`settings.shops.topic.${names.kind}`);
-  if (names.offering && hasString(`settings.shops.offering.${names.offering}`)) filled.offering = t(`settings.shops.offering.${names.offering}`);
+  // A kind may name its offering its own way (`settings.shops.offering.<kind>.<id>`:
+  // the market's Sigils sells them, the blacksmith's Sigil setting installs them).
+  const own = names.kind && names.offering ? `settings.shops.offering.${names.kind}.${names.offering}` : null;
+  if (own && hasString(own)) filled.offering = t(own);
+  else if (names.offering && hasString(`settings.shops.offering.${names.offering}`)) filled.offering = t(`settings.shops.offering.${names.offering}`);
   return t(id, filled);
 }
 // The Draw / turn stat row's editors, which only a fixed draw reads.

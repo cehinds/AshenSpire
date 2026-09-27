@@ -58,7 +58,29 @@ export function boughtArmourProblems(loadout) {
 export function marketAdditionTableProblems(table, err) {
   const offerings = table?.market?.offerings;
   if (!Array.isArray(offerings)) return;
-  const armour = offerings.find((row) => row && row.id === 'armour');
+  const row = (id) => offerings.find((offering) => offering && offering.id === id);
+  // Every count and price an addition writes into a saved stock is a whole
+  // number, so no generated stock can fail its own saved-shape check
+  // (Codex, on #1374): counts from 0, prices from 1.
+  const whole = (id, path, floor) => {
+    const offering = row(id);
+    if (!offering) return;
+    const value = path.split('.').reduce((at, key) => (at == null ? at : at[key]), offering);
+    if (value !== undefined && !(Number.isSafeInteger(value) && value >= floor)) {
+      err(`shops.market.${id}.${path}`, `must be a whole number of at least ${floor}, got ${JSON.stringify(value)}`);
+    }
+  };
+  whole('smithStones', 'perVisit', 0);
+  whole('armour', 'stock', 0);
+  whole('sigils', 'stock', 0);
+  whole('smithStones', 'price', 1);
+  whole('innRest', 'price', 1);
+  whole('armour', 'cost.min', 1);
+  whole('armour', 'cost.max', 1);
+  whole('sigils', 'pricePct', 1);
+  // (A non-boolean `armour.includeLocked` is refused by the generic leaf check,
+  // model/shopKinds.js nonNumericLeaves.)
+  const armour = row('armour');
   const range = armour && armour.cost;
   if (range && Number.isFinite(range.min) && Number.isFinite(range.max) && range.min > range.max) {
     err('shops.market.armour.cost', `min (${range.min}) must not be above max (${range.max})`);
