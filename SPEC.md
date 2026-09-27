@@ -16,13 +16,13 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 
 ### Scope status — what is built, partly built and planned
 
-*Checked 2026-09-27 against `dev` @ `bd4ce38a` (build `0.7.1.617`). One line per section, so the real scope is visible in one place. A section marked **planned** is a contract written before its code (CONTRIBUTING rule 1), not stale text. Per-item verdicts for §12 and §14–§15 are in [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md); the release criteria are in [docs/FINISH.md](docs/FINISH.md). Update a line here in the PR that changes it.*
+*Checked 2026-09-27 against `dev` @ `bd4ce38a` (build `0.7.1.617`). One line per section, so the real scope is visible in one place. A section marked **planned** is a contract written before its code (CONTRIBUTING rule 1), not stale text. **built** means the section's features ship; the "what is left" column names the known gaps and is not exhaustive, so a gap found later is a correction to this table, not a contradiction of it. Per-item verdicts for §12 and §14–§15 are in [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md); the release criteria are in [docs/FINISH.md](docs/FINISH.md). Update a line here in the PR that changes it.*
 
 | § | Area | Status | Evidence, and what is left |
 |---|---|---|---|
 | top | Combat and equipment revision ([COMBAT-EQUIPMENT-RULES](docs/COMBAT-EQUIPMENT-RULES.md)) | **partly built** | Parts serve live play (the Dodge Roll in `src/framework/weight.js`, §12.1). The full framework cutover is not performed ([framework-cutover-report](docs/framework-cutover-report.md)); the three-build prototype gate and the 36→50 class pools are post-1.0 (D3). |
 | 1 | Product overview | **built** | 4 classes, 3 seats climbed as 3 tiers, profile and slots. |
-| 2 | Legal and asset constraints | **built** | `tools/credits-check.mjs`: 40 checks, 33/33 asset directories (FINISH §10). |
+| 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 14 CSS `url(../assets/…)` backdrops (for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
 | 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema 11 (`RUN_SCHEMA_VERSION` in `src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
 | 4 | Combat rules | **built**, one deviation | Warrior's Vow enters Gorefire instead of a chosen stance (DEVELOPER "M1 known deviations"; FINISH §1, open). |
 | 5 | Content | **built**, one card open | Warrior's Vow (§5.2) enters Gorefire instead of a chosen stance (FINISH §1, open). 5.2–5.4 are the historical M1/M2 sets under pre-scrub names. Live counts: 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
