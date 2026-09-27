@@ -4,6 +4,12 @@ Status: **steps 1–3 done, step 4 in progress** (see [Status](#status)). This i
 step 5 of the LFS / art-tier work (2026-09-26). `art/` and `assets/` are still
 tracked here; steps 5–7 each need their own owner go-ahead.
 
+**Extended by [EXTERNAL-ASSETS-PLAN.md](./EXTERNAL-ASSETS-PLAN.md)** (owner, 2026-09-27: "all assets shouldn't be bundled but
+should be like the art"). The light tier, the fonts, the music and the map
+tiles move to the art repository too, and the game loads every asset at
+runtime. The lines below marked *(superseded)* change as that plan says; its
+*Supersedes* list names each one.
+
 ## Why
 
 - The Git LFS budget ran out on built HTML. That part is fixed:
@@ -53,8 +59,8 @@ A new repository, **`cehinds/AshenSpire-art`**, holds:
 
 This repository keeps:
 
-- `assets-mobile/` (the light tier);
-- `map-detail/` and `music/`;
+- `assets-mobile/` (the light tier) — *(superseded: it moves to the art repo and is generated there, [EXTERNAL-ASSETS-PLAN.md](./EXTERNAL-ASSETS-PLAN.md) step 9)*;
+- `map-detail/` and `music/` — *(superseded: they move to the art repo's `common` pack, [EXTERNAL-ASSETS-PLAN.md](./EXTERNAL-ASSETS-PLAN.md) step 9)*;
 - `art-manifest.json` (derived, as today) and **`art-release.json`**, the
   authored pin: the release's repo, tag, zip name and zip sha256. The pin is its
   own file because `--write` regenerates the manifest from the trees. Both
@@ -88,7 +94,11 @@ This repository keeps:
 3. A PR here bumps the pin in `art-release.json`, runs
    `tools/fetch-art.mjs`, and regenerates `assets-mobile/` with
    `tools/mobile-art.mjs` from the fetched cache. `art-manifest.mjs --check`
-   then confirms that the light and high tiers agree.
+   then confirms that the light and high tiers agree. *(Superseded by
+   [EXTERNAL-ASSETS-PLAN.md](./EXTERNAL-ASSETS-PLAN.md): the art repo generates
+   the light tier and releases it with the high and common packs, and the PR
+   here only bumps the pin. Step 2 is the merge in the art repo, because
+   releases are automatic.)*
 
 ## Every reader of `art/` and `assets/`, and what each becomes
 
@@ -98,8 +108,8 @@ This repository keeps:
 |---|---|---|---|
 | `tools/bundle.mjs --light` / `--mobile` | **every dev/test build** (ci.yml, dev-preview.yml, launch.mjs) | walks `assets/` as the reference list the twins must mirror | reads the id list from `art-manifest.json`; no fetch needed |
 | `tools/bundle.mjs --full-art` | release/main builds, including pages-builds' main build | `assets/` | `.art-cache/hd-assets-v<N>/` filled by `tools/fetch-art.mjs`; each of those jobs fetches first |
-| `tools/mobile-art.mjs --check` | **every push** (ci.yml, dev-preview.yml) | sizes `assets/` against its twins | checks the twins against the manifest's high-tier sizes and dimensions; no fetch |
-| `tools/mobile-art.mjs` (regenerate) | when art changes | `assets/` | the fetched cache |
+| `tools/mobile-art.mjs --check` | **every push** (ci.yml, dev-preview.yml) | sizes `assets/` against its twins | *(superseded)* moves to the art repo's CI with the light tier; here `art-manifest.mjs --check` compares the pinned release (EXTERNAL-ASSETS-PLAN steps 9, 11) |
+| `tools/mobile-art.mjs` (regenerate) | when art changes | `assets/` | *(superseded)* runs in the art repo, from `hd/assets/` (EXTERNAL-ASSETS-PLAN step 9) |
 | `tools/credits-check.mjs` | every push (ci.yml) | enumerates `assets/*` folders | enumerates the manifest's id prefixes |
 | `tools/verify-external.mjs` | every push (dev-preview.yml) | takes its file list from `assets/` | takes it from the manifest (full or light tier by the page's edition) |
 | `tools/hand-side-probe.mjs` | every push (ci.yml, dev-preview.yml) | `existsSync` on `assets/equipment/*`; measures pixels served from `assets/` | measures the light tier (baselines re-measured in that PR), or fetches for a full-art run |
@@ -116,9 +126,9 @@ This repository keeps:
 | output-only writers: `tools/concept-cutout.mjs` and `tools/pose-cutout.mjs` (`assets/sprites`), `tools/parchment.mjs` (`assets/map`), `tools/reaver-attack-animation.mjs` (`assets/animations`) | when art changes | nothing; they **write** under `assets/` | move to AshenSpire-art with the ship tools, writing into its `hd/assets/`, so their output enters a release |
 | `src/framework/data/assets.js` | runtime data | names `assets/framework/silence.txt` | names `asset-data/framework/silence.txt` (#1367; set in `content/framework/assets.json`, regenerated) |
 | `tools/screenshot.mjs` | by hand | reads `assets/sprites/class-sprites.manifest.json` | reads it from its new home: `asset-data/sprites/class-sprites.manifest.json` (#1367) |
-| `styles/kit.css` | every build | `../assets/fonts/*` | unchanged: fonts have twins, and the build substitutes them |
+| `styles/kit.css` | every build | `../assets/fonts/*` | *(superseded)* fonts are one `common` record each and load at runtime through `ASSET_CSS` (EXTERNAL-ASSETS-PLAN step 3b) |
 | README (`npx serve .`, `python -m http.server`) and DEVELOPER ("any static server works") | local dev | a plain static server serves `/assets/…` from disk | the docs name `node tools/serve.mjs` as the way to run from source, because a plain server cannot remap `/assets/…`; the built `AshenSpire.html` still needs no server |
-| `tools/serve.mjs` | local dev | serves the repo root, so `/assets/…` is the full art | maps every `/assets/…` URL to `assets-mobile/` by default, and to the kept non-art files for those that have no twin; `--hd` serves the fetched cache |
+| `tools/serve.mjs` | local dev | serves the repo root, so `/assets/…` is the full art | *(superseded)* maps every id to the fetch cache's light and common packs by default, and to the kept non-art files for those that are not assets; `--hd` serves the high pack (EXTERNAL-ASSETS-PLAN step 12) |
 | `pose-studio/package.mjs`, `editor/server.mjs` | by hand | four `assets/*` trees; `editor` walks all of `assets/` | read the fetched cache (and `art/` below) |
 
 ### Readers of `art/` (source art)
@@ -163,7 +173,7 @@ Each step is one reviewed PR, or one owner action.
      fetch in the jobs that build full art.
 5. **PR here — readers stop needing `art/`:** move or repoint every reader in the
    second table. Delete nothing that still has a reader.
-6. **PR here — delete:** remove `art/` and the art under `assets/` from the `dev`
+6. **PR here — delete** (folded into [EXTERNAL-ASSETS-PLAN.md](./EXTERNAL-ASSETS-PLAN.md) step 13, which still needs this step's own go-ahead): remove `art/` and the art under `assets/` from the `dev`
    tree and add them to `.gitignore`.
    - **Precondition:** `git grep -nE "['\"\`/](art|assets)/"` outside `assets-mobile`
      and the manifest finds only fetch-aware code, or ids resolved through
