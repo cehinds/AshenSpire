@@ -1538,6 +1538,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .rp-next { grid-area: next; white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
 .reward-door .rp-gain { grid-area: gain; margin-top: .15rem; color: var(--muted); font-size: .92em; font-variant-numeric: tabular-nums; }
 .reward-door .rp-bar { grid-area: bar; min-width: 0; }
+/* What the per-fight level cap threw away (SPEC §15.2): its own line under the row. */
+.reward-door .rp-discarded { grid-column: 1 / -1; margin-top: .1rem; color: var(--ember, var(--gold)); font-size: .88em; font-variant-numeric: tabular-nums; }
 .reward-door .reward-progress-more { margin: 0; color: var(--muted); font-size: .92em; }
 :root[data-layout='narrow'] .reward-door .reward-progress { grid-template-columns: minmax(0, 1fr) auto; }
 :root[data-layout='narrow'] .reward-door .reward-progress-row {
@@ -3972,7 +3974,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    card-inspection pane's zoom floor, the same in playing-card and equipment
    inspection. */
 /* FONT LICENCES — carried here so the notices travel inside every build,
-   single-file and mobile alike (the same text is assets/fonts/OFL.txt).
+   single-file and mobile alike (the same text is asset-data/fonts/OFL.txt).
 
 Card lore faces bundled in assets/fonts/ (Latin subset WOFF2, from the Fontsource
 packages of the Google Fonts releases). Each is licensed under the SIL Open Font

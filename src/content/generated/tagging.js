@@ -10655,6 +10655,12 @@ export const tagging = [
   {
     "family": "location",
     "scope": "",
+    "objectId": "shrine",
+    "tagId": "deckEdit"
+  },
+  {
+    "family": "location",
+    "scope": "",
     "objectId": "camp",
     "tagId": "restHpSmall"
   },
@@ -10697,6 +10703,12 @@ export const tagging = [
   {
     "family": "location",
     "scope": "",
+    "objectId": "inn",
+    "tagId": "deckEdit"
+  },
+  {
+    "family": "location",
+    "scope": "",
     "objectId": "chapel",
     "tagId": "restHpPartial"
   },
@@ -10717,5 +10729,35 @@ export const tagging = [
     "scope": "",
     "objectId": "chapel",
     "tagId": "levelUp"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "chapel",
+    "tagId": "deckEdit"
+  },
+  {
+    "family": "companion",
+    "scope": "",
+    "objectId": "hollowSquire",
+    "tagId": "hollowSquire"
+  },
+  {
+    "family": "companion",
+    "scope": "",
+    "objectId": "hollowSquire",
+    "tagId": "classification.companion"
+  },
+  {
+    "family": "companion",
+    "scope": "",
+    "objectId": "emberHound",
+    "tagId": "emberHound"
+  },
+  {
+    "family": "companion",
+    "scope": "",
+    "objectId": "emberHound",
+    "tagId": "classification.companion"
   }
 ];

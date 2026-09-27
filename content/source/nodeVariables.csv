@@ -116,3 +116,5 @@ restHpSmall,pct,pct
 restHpPartial,pct,pct
 restManaFlat,restoreMana,amount
 restManaFloor,floorPct,toFloorPct
+hollowSquire,block,amount
+emberHound,damage,amount

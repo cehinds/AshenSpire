@@ -95,6 +95,57 @@ import {
 
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { clearSelection } from '../components/cardSelection.js';
+import { smithingStoneNote } from '../../model/rewardplan.js';
+
+// LEVEL CARDS (SPEC §15.1) in the co-op spoils and the away-seat catch-up.
+// A tap only SELECTS: the pick is written into `picks` (ordinal → card id)
+// and rides along with whichever choice closes the spoils; the host picks
+// any row left unpicked (tools/session.mjs takeLevelCards), as the solo
+// door's auto-collect does. Exported so a test can redraw between the tap
+// and the close.
+
+/**
+ * A pick store that survives redraws AND seat switches: one entry per key
+ * (a seat and the door it is at — `<seat>|reward|…` or `<seat>|catchup|…`),
+ * holding that door's offer and its picks. A different offer under the same
+ * key starts clean; `retain(keep)` drops every entry whose key no longer
+ * names an open door, so a resolved offer's picks do not linger.
+ */
+export function createLevelCardPicks() {
+  const entries = new Map(); // key → { offerId, picks }
+  return {
+    picksFor(key, offer) {
+      const offerId = JSON.stringify((offer && offer.levelCards) || []);
+      const entry = entries.get(key);
+      if (entry && entry.offerId === offerId) return entry.picks;
+      const fresh = { offerId, picks: {} };
+      entries.set(key, fresh);
+      return fresh.picks;
+    },
+    retain(keep) {
+      for (const key of [...entries.keys()]) if (!keep(key)) entries.delete(key);
+    },
+    keys: () => [...entries.keys()],
+  };
+}
+
+/** One titled strip per level-card row; the stored pick is drawn chosen. */
+export function levelCardStrips(registries, offer, picks) {
+  return (Array.isArray(offer.levelCards) ? offer.levelCards : []).flatMap((row) => {
+    const strip = el('div', { class: 'reward-row coop-level-card', dataset: { ordinal: String(row.ordinal) } });
+    row.cardIds.forEach((cid) => {
+      const card = renderCard(registries, { cardId: cid, upgraded: false }, {});
+      card.dataset.cardId = cid;
+      card.classList.toggle('is-chosen', picks[row.ordinal] === cid);
+      card.addEventListener('click', () => {
+        picks[row.ordinal] = cid;
+        for (const other of strip.children) other.classList.toggle('is-chosen', other === card);
+      });
+      strip.appendChild(card);
+    });
+    return [subtitle(t('reward.levelCard.title')), strip];
+  });
+}
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
@@ -197,6 +248,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // co-op board, so nothing has driven a key or a pad at THIS End Turn. What is
   // measured is that it goes through the same `arm()` as combat's.
   let endTurnBeat = null;
+  // The level-card picks OUTLIVE a redraw and a couch-seat switch: every
+  // snapshot (another seat's choice, a resync) and every seat tab rebuilds
+  // the door, so the picks are kept here, one entry per seat and door.
+  const levelPicks = createLevelCardPicks();
 
   conn.setHandlers({
     onMessage: (msg) => {
@@ -476,6 +531,15 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (typeof window !== 'undefined') window.__coopSnapshot = snap; // read-only receipt handle
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
+    // Level-card picks outlive a redraw and a seat switch, and end with their
+    // door: a reward entry lives while its seat's offer is open and unchosen,
+    // a catch-up entry while it is still the seat's queue head.
+    levelPicks.retain((key) => {
+      const [seat, door, at] = key.split('|');
+      if (door === 'reward') return snap.scene.kind === 'reward' && !!snap.scene.offers?.[seat] && !snap.scene.chosen?.[seat] && at === String(snap.floor ?? '');
+      const member = (snap.party || []).find((p) => p.id === seat);
+      return !member || !Array.isArray(member.catchupQueue) || String(member.catchupQueue.length) === at;
+    });
     const mm = myMember();
     if (mm && mm.catchupQueue && mm.catchupQueue.length) return renderCatchup(mm);
     if (snap.scene.kind !== 'combat') prevCombat = null;
@@ -901,6 +965,9 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       : '';
 
     const smithReceipts = snap.party.filter((member) => member.lastSmithingReceipt);
+    // The stones this seat's last treasure paid (SPEC §15.3), shown to a
+    // present player here as the catch-up shows them to one who was away.
+    const treasureStone = smithingStoneNote(myMember()?.treasureStoneReceipt, t);
     app.innerHTML = `
       <div class="mapscreen">
         <header class="topbar map-header">
@@ -919,6 +986,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
           const receipt = member.lastSmithingReceipt;
           return kitItem({ glyph: '⚒', name: `${member.name} smithed ${receipt.armamentName} · tier ${receipt.beforeLevel}→${receipt.afterLevel} · ${receipt.cost} Stone · ${receipt.affectedCards.length} cards` });
         }))) : ''}
+        ${treasureStone ? html(el('div', { class: 'as-kitline coop-treasure-stones', 'aria-live': 'polite' }, [kitItem({ glyph: '⚒', name: t('reward.stone.treasureNote', { note: treasureStone }) })])) : ''}
       </div>`;
     wireHudQuickSettings(app, { settings: meta.settings || {}, onSettingsChange });
 
@@ -1047,8 +1115,10 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (!offer) { sceneDoor({ title: 'Spoils', children: [waiting('Waiting for the others to choose…')] }); return; }
     const stone = offer.smithingStoneReceipt;
     const grid = el('div', { class: 'reward-row' });
-    let pick = { cardId: null, takeRelic: false, flask: false };
+    const levelCardIds = levelPicks.picksFor(`${me}|reward|${snap.floor ?? ''}`, offer);
+    let pick = { cardId: null, takeRelic: false, flask: false, levelCardIds };
     const submit = () => send({ t: 'chooseReward', pick });
+    const levelStrips = levelCardStrips(registries, offer, levelCardIds);
     offer.cardIds.forEach((cid) => {
       const card = renderCard(registries, { cardId: cid, upgraded: false }, {});
       card.addEventListener('click', () => { pick.cardId = cid; submit(); });
@@ -1057,12 +1127,19 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     const takes = [
       offer.relicId ? choice({ glyph: '◆', name: 'Take the relic', description: registries.relics.get(offer.relicId).name, className: 'coop-take', attrs: { dataset: { take: 'relic' } } }) : null,
       offer.flaskId ? choice({ glyph: '⚗', name: 'Take the flask', description: registries.flasks.get(offer.flaskId).name, className: 'coop-take', attrs: { dataset: { take: 'flask' } } }) : null,
-      choice({ glyph: '›', name: 'Skip the card', attrs: { dataset: { take: 'skip' } } }),
+      choice({ glyph: '›', name: offer.cardIds.length ? 'Skip the card' : t('reward.continue'), attrs: { dataset: { take: 'skip' } } }),
     ];
     sceneDoor({
       title: `${String(snap.scene.pool || 'The').replace(/^./, (c) => c.toUpperCase())} spoils`,
-      note: stone?.amount > 0 ? `⚒ ${stone.amount} Smithing Stone secured · ${stone.stoneBalanceAfter} total` : '',
-      children: [subtitle('Choose a card'), grid, options(takes, { class: 'coop-choices' })],
+      // Ordinary and refined stones (SPEC §15.3) on the one line, each when paid.
+      note: smithingStoneNote(stone, t),
+      children: [
+        ...levelStrips,
+        ...(levelStrips.length ? [el('p', { class: 'reward-note', dataset: { note: 'levelCardAuto' }, text: t('reward.note.levelCardAuto') })] : []),
+        ...(offer.cardIds.length ? [subtitle(t('reward.card.eyebrow')), grid] : []),
+        ...(offer.cardMissed ? [el('p', { class: 'reward-note', dataset: { note: 'cardMissed' }, text: t('reward.note.cardMissed') })] : []),
+        options(takes, { class: 'coop-choices' }),
+      ],
     });
     app.querySelectorAll('[data-take]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.take === 'relic') pick.takeRelic = true; else if (b.dataset.take === 'flask') pick.flask = true; submit(); }));
   }
@@ -1223,20 +1300,27 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       }));
       return;
     }
-    const grid = item.type === 'reward' ? el('div', { class: 'reward-row' }) : null;
+    const grid = item.type === 'reward' && item.offer.cardIds.length ? el('div', { class: 'reward-row' }) : null;
     const relic = (item.type === 'reward' && item.offer.relicId) || (item.type === 'treasure' && item.relicId);
+    // The stones were granted when the party earned them; the catch-up says so.
+    const stoneNote = smithingStoneNote(item.type === 'reward' ? item.offer.smithingStoneReceipt : item.smithingStoneReceipt, t);
+    const levelCardIds = item.type === 'reward' ? levelPicks.picksFor(`${me}|catchup|${remaining}`, item.offer) : {};
+    const levelStrips = item.type === 'reward' ? levelCardStrips(registries, item.offer, levelCardIds) : [];
     sceneDoor({
       title, eyebrow: debt,
-      note: 'Claim what you would have earned while away.',
+      note: ['Claim what you would have earned while away.', stoneNote].filter(Boolean).join(' '),
       children: [
+        ...levelStrips,
         grid,
+        item.type === 'reward' && item.offer.cardMissed ? el('p', { class: 'reward-note', dataset: { note: 'cardMissed' }, text: t('reward.note.cardMissed') }) : null,
         options([
           relic ? choice({ glyph: '◆', name: 'Take the relic', className: 'coop-take', attrs: { dataset: { cu: 'relic' } } }) : null,
           choice({ glyph: '›', name: 'Skip', attrs: { dataset: { cu: 'skip' } } }),
         ], { class: 'coop-choices' }),
       ],
     });
-    const resolve = (pick) => send({ t: 'catchupChoice', index: 0, pick });
+    // Every closing choice carries the level-card picks made above.
+    const resolve = (pick) => send({ t: 'catchupChoice', index: 0, pick: levelStrips.length ? { ...pick, levelCardIds } : pick });
     if (grid) {
       item.offer.cardIds.forEach((cid) => { const card = renderCard(registries, { cardId: cid, upgraded: false }, {}); card.addEventListener('click', () => resolve({ cardId: cid })); grid.appendChild(card); });
     }

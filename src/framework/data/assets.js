@@ -38,7 +38,7 @@ export const assets = {
     {
       "id": "asset.fallback.audio",
       "kind": "AUDIO",
-      "sourcePath": "assets/framework/silence.txt",
+      "sourcePath": "asset-data/framework/silence.txt",
       "fallbackAssetId": "asset.system.missing"
     }
   ]

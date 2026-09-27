@@ -8,14 +8,26 @@
 //           the newer-save notice opens and the live run is still standing.
 //           It used to close the menu and call resumeRun, whose loadRun is
 //           null for a newer slot, so the climb in hand was dropped and the
-//           player landed on the title. The confirm press checks again: a
+//           player landed on the title. The confirm press refuses too: a
 //           newer build in another tab can rewrite the slot while the
 //           confirmation is open (NEWER-AT-CONFIRM).
+//   REFUSED A slot the picker can read but loadRun refuses (content
+//           validation, migration, a slot another tab cleared) passes both
+//           newer checks, so the refusal is only known after the confirm.
+//           resumeRun swaps the live run only after a successful load, so
+//           the climb in hand stands and a notice says the slot could not
+//           open (REFUSED-KEEPS-RUN). `?shotRefusedSlot=3` plants it.
 //   RESTART Abandoning a fight mid-combat (no Save Game) and loading the slot
 //           restarts that fight from its entry receipt: turn 1, the same HP,
 //           the same opening hand, an unchanged deck. tests/midcombat-reload
 //           proves the same property against a hand-copied mirror of
 //           enterCombat; this is the production load door itself.
+//   OVERLAY-FOCUS  The same refused load, launched from the in-run
+//           overlay's quick navigation instead of the combat ☰ menu: the
+//           overlay stays open until resumeRun knows the outcome, so "Keep
+//           playing" returns focus to the launcher (#ov-quicknav / #ov-switch)
+//           rather than <body> (#1355). tests/slot-load-focus pins the order
+//           in source; this is the focus a player actually lands on.
 //
 // The boot is `?shot=combat` — newRun and the first monster node entered the
 // way the map enters it, so the entry receipt is written by enterCombat's own
@@ -55,11 +67,27 @@ if (process.argv.includes('--selftest')) {
         expectRed: /RED SLOT-LOAD-NEWER-NOTICE/,
       },
       {
-        name: 'the confirm press stops rechecking for a newer slot',
+        name: 'the confirm press stops naming a newer slot as newer',
         file: 'src/main.js',
-        find: '      if (saves.slotSummary(slot)?.newer) return openNewerSaveNotice({ slot, returnFocusElement });',
-        replace: '      // slot-load-door selftest plant',
+        find: "        onRefused: () => (saves.runStatus().state === 'newer'",
+        replace: "        onRefused: () => (false // slot-load-door selftest plant",
         expectRed: /RED SLOT-LOAD-NEWER-AT-CONFIRM/,
+      },
+      {
+        name: 'resumeRun swaps the live run before the load succeeds',
+        file: 'src/main.js',
+        find: '  let loaded = saves.loadRun(authoredRegistries, slot);',
+        replace: '  let loaded = run = saves.loadRun(authoredRegistries, slot); // slot-load-door selftest plant',
+        expectRed: /RED SLOT-LOAD-REFUSED-KEEPS-RUN/,
+      },
+      {
+        name: 'the load confirmation closes the overlay before the load outcome',
+        file: 'src/main.js',
+        find: '        onLoaded: closeOverlay,',
+        replace: '        onLoaded: closeOverlay, ...(closeOverlay(), {}), // slot-load-door selftest plant',
+        // The #1355 regression: the launcher inside the overlay is gone before
+        // the refusal, so "Keep playing" has nowhere to return focus.
+        expectRed: /RED SLOT-LOAD-OVERLAY-FOCUS/,
       },
       {
         name: 'combat entry stops writing its receipt',
@@ -190,7 +218,7 @@ try {
     }
   };
 
-  await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat&shotNewerSlot=2` }, sessionId);
+  await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat&shotNewerSlot=2&shotRefusedSlot=3` }, sessionId);
   await until(`!!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'combat boot');
   measuring = true;
   const opening = await pose();
@@ -225,6 +253,35 @@ try {
   }
   await ev(`document.querySelector('.confirmation-cancel')?.click()`);
   await until(`!document.querySelector('.confirmation-veil')`, 'the notice to close');
+
+  // ---- REFUSED: a slot the picker can read but loadRun refuses -----------
+  // Not newer, so both up-front checks pass and the player confirms. The
+  // load itself is refused (content validation archives it); the live run
+  // must still be standing, with a notice saying the slot could not open.
+  try {
+    await until(`!document.querySelector('.modal-veil, .quick-nav-veil, .confirmation-veil')`, 'a clear board');
+    await openLoadSlot(3);
+    const asked = await ev(`(() => { const b=document.querySelector('.confirmation-confirm'); return !!b && !b.hidden; })()`);
+    if (!asked) throw new Error('slot 3 opened no load confirmation');
+    await click('.confirmation-confirm');
+    await wait(300);
+    const notice = await ev(`document.querySelector('#confirmation-modal-title')?.textContent || ''`);
+    const after = await ev(`({
+      board: !!document.querySelector('.end-turn'),
+      title: !!document.querySelector('.title-menu, [data-title-action="load"]'),
+      liveDeck: window.__spoils().liveDeck || [],
+    })`);
+    const keptDeck = JSON.stringify(after.liveDeck) === JSON.stringify(opening.liveDeck) && after.liveDeck.length > 0;
+    check(keptDeck && after.board && !after.title && /could not be loaded/i.test(notice), 'SLOT-LOAD-REFUSED-KEEPS-RUN',
+      `a slot loadRun refuses leaves the live run and its fight standing, and says so (${JSON.stringify({ notice, ...after, liveDeck: after.liveDeck.length, keptDeck })})`);
+  } catch (error) {
+    check(false, 'SLOT-LOAD-REFUSED-KEEPS-RUN', error.message);
+  }
+  if (!(await ev(`!!window.__combat && !!document.querySelector('.end-turn')`))) {
+    throw new Error('the fight did not survive the refused-slot load; RESTART cannot run');
+  }
+  await ev(`document.querySelector('.confirmation-cancel')?.click()`);
+  await until(`!document.querySelector('.confirmation-veil')`, 'the refused notice to close');
 
   // ---- RESTART: abandon mid-combat, load slot 1 ---------------------------
   try {
@@ -301,6 +358,61 @@ try {
       `a slot aged behind the open confirmation is refused at the press and the run stands (${JSON.stringify({ notice, ...after, liveDeck: after.liveDeck.length })})`);
   } catch (error) {
     check(false, 'SLOT-LOAD-NEWER-AT-CONFIRM', error.message);
+  }
+
+  // ---- OVERLAY-FOCUS: a refused load from the in-run overlay (#1355) -----
+  // The steps above load through the combat ☰ menu with the overlay closed.
+  // Opened from the overlay's own quick navigation, confirmSlotLoad's
+  // returnFocusElement is the launcher inside the overlay, so the overlay must
+  // stay open until resumeRun knows the outcome: closed first, the launcher is
+  // disconnected and "Keep playing" leaves focus on <body>. A fresh boot, since
+  // the REFUSED step's refusal archived slot 3.
+  try {
+    // This navigate starts from a live combat page, which already passes the
+    // combat-ready check below. Mark the old document and wait for the new
+    // one, or the step can read the old deck and click the old page.
+    await ev('window.__staleDoc = 1');
+    await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat&shotRefusedSlot=3` }, sessionId);
+    await until(`!window.__staleDoc && location.search.includes('shotRefusedSlot=3') && !location.search.includes('shotNewerSlot')`, 'the second document');
+    await until(`!!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'the second combat boot');
+    const openingDeck = await ev('window.__spoils().liveDeck || []');
+    // Combat ☰ → the Settings row opens the in-run overlay.
+    await click('#combat-menu');
+    await until(`!!document.querySelector('.qn-row[data-act="tab"][data-tab="settings"]')`, 'the Quick Menu Settings row');
+    await click('.qn-row[data-act="tab"][data-tab="settings"]');
+    await until(`!!document.querySelector('#ov-quicknav:not([hidden]), #ov-switch:not([hidden])')`, 'the overlay quick-nav launcher');
+    const launcher = await ev(`document.querySelector('#ov-quicknav:not([hidden]), #ov-switch:not([hidden])').id`);
+    await ev(`window.__slotLoadLauncher = document.querySelector('#${launcher}')`);
+    // The overlay's quick navigation → Load → slot 3 (select, then open).
+    await click(`#${launcher}`);
+    await until(`!!document.querySelector('.qn-row[data-act="load"]')`, 'the overlay quick-nav Load row');
+    await click('.qn-row[data-act="load"]');
+    await until(`!!document.querySelector('[data-slot-pick="3"].is-filled')`, 'occupied slot 3');
+    await click('[data-slot-pick="3"]');
+    await click('[data-slot-pick="3"]');
+    await until(`(() => { const b=document.querySelector('.confirmation-confirm'); return !!b && !b.hidden; })()`, 'the load confirmation for slot 3 from the overlay');
+    await click('.confirmation-confirm');
+    await until(`/could not be loaded/i.test(document.querySelector('#confirmation-modal-title')?.textContent || '')`, 'the refused notice');
+    // "Keep playing": the notice's only way on, pressed as a player would.
+    await click('.confirmation-cancel');
+    await until(`!document.querySelector('.confirmation-veil')`, 'the refused notice to close');
+    await wait(200);
+    const after = await ev(`(() => {
+      const a = document.activeElement;
+      return {
+        active: a ? (a.id ? '#' + a.id : a.tagName.toLowerCase()) : null,
+        same: a === window.__slotLoadLauncher,
+        connected: !!window.__slotLoadLauncher?.isConnected,
+        overlay: !!document.querySelector('#ov-close'),
+        board: !!document.querySelector('.end-turn'),
+        liveDeck: window.__spoils().liveDeck || [],
+      };
+    })()`);
+    const keptDeck = JSON.stringify(after.liveDeck) === JSON.stringify(openingDeck) && after.liveDeck.length > 0;
+    check(after.same && after.connected && after.overlay && after.board && keptDeck, 'SLOT-LOAD-OVERLAY-FOCUS',
+      `a refused load from the overlay's quick navigation keeps the overlay and the run, and "Keep playing" returns focus to #${launcher} (${JSON.stringify({ ...after, liveDeck: after.liveDeck.length, keptDeck })})`);
+  } catch (error) {
+    check(false, 'SLOT-LOAD-OVERLAY-FOCUS', error.message);
   }
   await cdp.send('Target.closeTarget', { targetId });
 } catch (error) {

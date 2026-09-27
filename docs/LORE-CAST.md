@@ -2,7 +2,7 @@
 
 Companion to [LORE.md](LORE.md). The bible says what the world is; this says who
 is in it and what the Burning did to everything else. Every name here already
-exists in content (`content/events.js`, `content/enemies/*`, `docs/ENEMY-ROSTER.md`)
+exists in content (`src/content/events.js`, `src/content/enemies/*`, `docs/ENEMY-ROSTER.md`)
 or in the seat plan, so nothing below needs a new id to start being written.
 
 Rule from the bible, restated: none of this is stated in one place in the game.
@@ -94,7 +94,7 @@ up. The contradiction is the character.
 
 ## 2. The companions
 
-One at a time (seat plan §5). Each is one voice from LORE §7 and one open
+One at a time. Companions are owned by SPEC §14.3 (D17, owner decision 2026-09-27); the seat plan's §5 table is design input. Each is one voice from LORE §7 and one open
 question from LORE §10.
 
 | Companion | Seat | Voice | Wants | Opposes | Dies if |

@@ -123,6 +123,24 @@ export const propertyRules = [
     "textTemplate": ""
   },
   {
+    "tag": "companion",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
+    "tag": "hollowSquire",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "At the start of each fight, gain {block} Block."
+  },
+  {
+    "tag": "emberHound",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "At the start of each of your turns, deal {damage} damage to a random enemy."
+  },
+  {
     "tag": "warhorn",
     "requires": "",
     "excludes": "",
@@ -430,6 +448,12 @@ export const propertyRules = [
   },
   {
     "tag": "questBoard",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
+    "tag": "deckEdit",
     "requires": "",
     "excludes": "",
     "textTemplate": ""

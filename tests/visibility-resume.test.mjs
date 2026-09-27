@@ -266,6 +266,67 @@ test('a hidden→visible cycle mid-combat leaves the run and the fight unchanged
   assert.deepStrictEqual(snapshot(combat), before.combat, 'the fight is unchanged: hand, piles, enemies, intents, resources');
 });
 
+// A HOLD THE BLUR CANCELLED OPENS NOTHING (#1298 post-merge review). End
+// Turn is armed by beatArmer as a review-on-tap hold (`tapOnEarlyRelease`,
+// `onTap` = the confirmation review). A key released EARLY is a tap and opens
+// the review; a key press ended by a window blur is no release at all, so it
+// must open nothing. Driven through the real input.js key door and the real
+// armHold, with the options beatArmer hands it.
+test('a blur-cancelled keyboard hold on End Turn opens no review', async () => {
+  const { armHold } = await import('../src/ui/components/holdconfirm.js');
+  const FRAME = ['requestAnimationFrame', 'cancelAnimationFrame'];
+  const frameWas = Object.fromEntries(FRAME.map((k) => [k, globalThis[k]]));
+  globalThis.requestAnimationFrame = () => 1; // the fill never completes here
+  globalThis.cancelAnimationFrame = () => {};
+  const props = new Map();
+  const control = Object.assign(new EventTarget(), {
+    isConnected: true,
+    dataset: {},
+    classList: { add() {}, remove() {}, contains: () => false },
+    style: { setProperty: (k, v) => props.set(k, v), getPropertyValue: (k) => props.get(k) ?? '', removeProperty: (k) => props.delete(k) },
+    querySelector: () => null,
+    matches: () => false,
+    closest: () => null,
+    getBoundingClientRect: () => ({ left: 0, top: 0, width: 80, height: 40 }),
+  });
+  const taps = [];
+  const confirms = [];
+  const disarm = armHold(control, {
+    ms: 600, onConfirm: () => confirms.push('confirm'), onTap: () => taps.push('review'),
+    tapOnEarlyRelease: true, id: 'endTurn', showHint: false,
+  });
+  initInput({ getSettings: () => ({}) });
+  setActionControl('endTurn', control);
+  const key = (type) => {
+    const ev = Object.assign(new Event(type, { cancelable: true }), { key: 'e', repeat: false });
+    win.dispatchEvent(ev);
+    return ev;
+  };
+  try {
+    // Control: an early keyup IS a tap, so the fixture really reaches onTap.
+    assert.ok(key('keydown').defaultPrevented, 'input.js pressed End Turn through the hold door');
+    assert.equal(control.dataset.hold, 'holding', 'the hold is armed and filling');
+    key('keyup');
+    assert.deepEqual(taps, ['review'], 'an early key release opens the review once');
+
+    // The bug: a held key cut short by a blur must open nothing.
+    taps.length = 0;
+    assert.ok(key('keydown').defaultPrevented, 'the second press is armed too');
+    assert.equal(control.dataset.hold, 'holding');
+    win.dispatchEvent(new Event('blur'));
+    assert.equal(control.dataset.hold, 'idle', 'the blur stopped the hold');
+    assert.deepEqual(taps, [], 'a blur-cancelled keyboard hold opens no review');
+    assert.deepEqual(confirms, [], 'and commits nothing');
+  } finally {
+    setActionControl('endTurn', null);
+    disarm();
+    for (const k of FRAME) {
+      if (frameWas[k] === undefined) delete globalThis[k];
+      else globalThis[k] = frameWas[k];
+    }
+  }
+});
+
 test('combat.js ends a card drag through finishCardDrag, so the unit above is the shipped one', () => {
   const text = readFileSync(join(ROOT, 'src/ui/screens/combat.js'), 'utf8');
   assert.match(text, /import \{ finishCardDrag \} from '\.\.\/cardDragEnd\.js';/);
@@ -318,6 +379,7 @@ const KNOWN = {
   'src/ui/screens/combat.js': ["'keydown'", '.__combat', '.__combatRunForShot', '.__renderCombatForShot'],
   'src/ui/screens/coop.js': ["'keydown'", "'keydown'", '.__coopSnapshot', '.__guardCoopTool'],
   'src/ui/screens/customize.js': ["'pointermove'", "'pointerup'", "'keydown'"],
+  'src/ui/screens/deckEditor.js': ["'keydown'"],
   'src/ui/screens/equipment.js': ["'pointermove'", "'pointerup'", "'pointercancel'", "'keydown'"],
   'src/ui/screens/map.js': ["'click'", "'keydown'", "'resize'", ['type', "one of 'fullscreenchange', 'webkitfullscreenchange' (the literal loop): re-centres the map camera only"]],
   'src/ui/screens/profileNotice.js': ["'keydown'"],
@@ -330,10 +392,10 @@ const KNOWN = {
 };
 
 // A call on the page itself: `window.` / `document.` / `globalThis.` / `self.`
-// (also `?.` and `['addEventListener']`), or a bare global call. An element's
-// own listener (`el.addEventListener`, `window.visualViewport?.addEventListener`)
-// is not the page and is not listed.
-const CALL = /(?:\b(window|document|globalThis|self)\s*(?:\??\.\s*|\[\s*['"`])|(?<![.\w$]))addEventListener(?:['"`]\s*\])?\s*(?:\?\.\s*)?\(/g;
+// (also `?.`, `['addEventListener']` and `?.['addEventListener']`), or a bare
+// global call. An element's own listener (`el.addEventListener`,
+// `window.visualViewport?.addEventListener`) is not the page and is not listed.
+const CALL = /(?:\b(window|document|globalThis|self)\s*(?:\??\.\s*|(?:\?\.\s*)?\[\s*['"`])|(?<![.\w$]))addEventListener(?:['"`]\s*\])?\s*(?:\?\.\s*)?\(/g;
 
 // MEMBER WRITES ON THE PAGE, closed at the receiver rather than per spelling:
 // any assignment to a member of window/document/globalThis/self, and any
@@ -621,6 +683,8 @@ test('known-bad: other spellings of a page listener are caught too', () => {
     'self.addEventListener(\'pagehide\', save);',
     'window?.addEventListener(\'pagehide\', save);',
     'window[\'addEventListener\'](\'pagehide\', save);',
+    'window?.[\'addEventListener\'](\'pagehide\', save);',
+    'document?.[\'addEventListener\'](\'visibilitychange\', save);',
     'window.onpagehide = save;',
     'document.onvisibilitychange = save;',
     'window.addEventListener(\'keydown\', save);',
@@ -691,6 +755,11 @@ test('known-bad: a pinned lifecycle listener on a target the cycle does not fire
     ["globalThis.addEventListener('resume', save);", "'resume'", 'window'],
     ["document.addEventListener('pagehide', save);", "'pagehide'", 'document'],
     ["document.addEventListener('blur', save);", "'blur'", 'document'],
+    // Optional-call bracket spelling: the receiver is still `document`, not a
+    // bare global (#1298 post-merge review).
+    ["document?.['addEventListener']('freeze', save);", "'freeze'", null],
+    ["document?.['addEventListener']('pagehide', save);", "'pagehide'", 'document'],
+    ["window?.['addEventListener']('visibilitychange', save);", "'visibilitychange'", 'window'],
     ['addEventListener(`visibilitychange`, save);', '`visibilitychange`', 'window'],
     ['window.onfreeze = save;', '.onfreeze', 'window'],
     ['Object.assign(document, { onpagehide: save });', '.onpagehide', 'document'],

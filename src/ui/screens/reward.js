@@ -61,7 +61,7 @@ import { isEngaged, focusFirst } from '../input.js';
 import { flaskIdentityHtml, flaskDetailLines } from '../components/flask.js';
 import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
-import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds } from '../../model/rewardplan.js';
+import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds, rewardNotes, CARD_CHOICE_KINDS, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
 import { rewardProgress } from '../../model/rewardprogress.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
@@ -72,8 +72,9 @@ import { el, modalHead, modalFooter, button, meter } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t, tFull, tTip } from '../strings.js';
 import { clearSelection } from '../components/cardSelection.js';
+import { unusedInstanceId, ownedCopies } from '../../model/deckRules.js';
 
-const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', flask: '⚗', armament: '⚔', relic: '◆' };
+const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', levelCard: '✧', flask: '⚗', armament: '⚔', relic: '◆' };
 
 // `onCollectArmament` is the armament's whole persistence, handed in by the
 // caller (main.js collectArmament): run storage + meta.found + the discovery
@@ -110,7 +111,7 @@ export function mountRewards(app, {
   const progress = rewards.xpGains ? rewardProgress(registries, run, rewards.xpGains) : null;
   const states = {
     ...(checkpoint?.states || {}),
-    ...(rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {}),
+    ...(smithingStonesPaid(rewards.smithingStoneReceipt) ? { smithingStone: 'taken' } : {}),
   }; // kind → 'taken'|'skipped' (absent = pending / implicitly left in manual mode)
   let chosenCardId = checkpoint?.chosenCardId || null;
   // The skill drafts' picks, keyed by ROW KEY (plan phase 4b): one offer may
@@ -135,7 +136,7 @@ export function mountRewards(app, {
   const meta = (saves && saves.loadMeta && saves.loadMeta()) || {};
   const seenStore = meta.seen || {};
   const marks = unseenIds(rewards, {
-    cards: new Set([...run.deck.map((c) => c.cardId), ...(seenStore.cards || [])]),
+    cards: new Set([...run.deck.map((c) => c.cardId), ...(run.sideboard || []).map((c) => c.cardId), ...(seenStore.cards || [])]),
     relics: new Set([...run.relics, ...(seenStore.relics || [])]),
     flasks: new Set([...run.flasks.map((f) => f.flaskId), ...(seenStore.flasks || [])]),
     armaments: new Set([...(meta.found || [])]),
@@ -165,8 +166,16 @@ export function mountRewards(app, {
     // and begins in Taken state; reaching this function would be a contract bug.
     smithingStone() { return false; },
     card(row) {
-      run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: false });
+      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: false });
       chosenCardId = row.cardId;
+      return true;
+    },
+    // A level card (SPEC §15.1): taken exactly as the card offer is. Its pick
+    // is kept by row key beside the skill drafts' (one offer may carry
+    // several level cards), in the map the pending-reward save already checks.
+    levelCard(row) {
+      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: false });
+      chosenDraftCardIds[row.key] = row.cardId;
       return true;
     },
     // A skill draft (plan phase 4b): the card joins the deck — upgraded when
@@ -183,7 +192,7 @@ export function mountRewards(app, {
     },
     skillDraft(row) {
       if (!spendSkillDraft(run, row.skillId)) return false;
-      run.deck.push({ instanceId: `r${run.deck.length}_${row.cardId}`, cardId: row.cardId, upgraded: skillUpgradesCards(registries, skillLevel(run, row.skillId)) });
+      run.deck.push({ instanceId: unusedInstanceId(run, 'r', row.cardId), cardId: row.cardId, upgraded: skillUpgradesCards(registries, skillLevel(run, row.skillId)) });
       chosenDraftCardIds[row.key] = row.cardId;
       return true;
     },
@@ -206,7 +215,7 @@ export function mountRewards(app, {
     // A row may say Taken only after its persistence door says it landed. The
     // armament collector returns false at the storage/duplicate boundary; a
     // refusal therefore cannot become a claimed-looking row (E11 review P2).
-    const cardBefore = row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' ? {
+    const cardBefore = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' ? {
       deck: [...run.deck], chosenCardId, chosenDraft: { ...chosenDraftCardIds }, chosenNode: { ...chosenDraftNodeIds },
       // A draft's take spends the ledger's queued draft; only a draft's rollback puts it back.
       skills: row.kind === 'skillDraft' || row.kind === 'classDraft' ? structuredClone(run.skills || {}) : null,
@@ -238,7 +247,7 @@ export function mountRewards(app, {
       }
       throw error;
     }
-    if (row.kind === 'card' || row.kind === 'skillDraft') recordSeen('card', [row.cardId]);
+    if (CARD_CHOICE_KINDS.includes(row.kind)) recordSeen('card', [row.cardId]);
     sfx.play(`rewardTake_${row.kind}`); // exact → family 'rewardTake' → default
     renderMenu(viaKind || row.key);
     return true;
@@ -275,10 +284,9 @@ export function mountRewards(app, {
           body: state === 'taken' ? t('reward.cinders.taken', { total: run.cinders }) : tFull('reward.cinders.title'),
         };
       case 'smithingStone':
-        return {
-          title: t('reward.stone.title', { amount: row.amount, plural: row.amount === 1 ? '' : 's' }),
-          body: t('reward.stone.body', { total: row.stoneBalanceAfter }),
-        };
+        // Ordinary stones, refined stones (SPEC §15.3), or both, on one row:
+        // title and body each name only the purse that was paid.
+        return smithingStoneRowCopy(row, t);
       case 'card': {
         if (state === 'taken') {
           const def = registries.cards.get(chosenCardId);
@@ -286,6 +294,16 @@ export function mountRewards(app, {
         }
         return {
           title: t('reward.kind.card'),
+          body: row.choice ? t('reward.card.chooseOne', { count: row.cardIds.length }) : t('reward.card.offered'),
+        };
+      }
+      case 'levelCard': {
+        if (state === 'taken') {
+          const def = registries.cards.get(chosenDraftCardIds[row.key]);
+          return { title: t('reward.levelCard.title'), body: t('reward.card.joins', { name: esc((def && def.name) || chosenDraftCardIds[row.key]) }) };
+        }
+        return {
+          title: t('reward.levelCard.title'),
           body: row.choice ? t('reward.card.chooseOne', { count: row.cardIds.length }) : t('reward.card.offered'),
         };
       }
@@ -335,6 +353,7 @@ export function mountRewards(app, {
   function isNew(row) {
     switch (row.kind) {
       case 'card':
+      case 'levelCard':
       case 'skillDraft': return row.cardIds.some((id) => marks.cards.includes(id));
       case 'relic': return marks.relics.length > 0;
       case 'flask': return marks.flasks.length > 0;
@@ -380,6 +399,9 @@ export function mountRewards(app, {
   function renderMenu(focusKind = null) {
     const mode = collectMode();
     const pending = plan.rows.filter((r) => !states[r.key] && !r.blockedBy);
+    // THE ONE-LINE NOTES (SPEC §15.1): a card chance that missed leaves no
+    // card row, and the menu says so rather than leaving a silent gap.
+    const notesHtml = rewardNotes(rewards).map((token) => `<p class="reward-note" data-note="${esc(token)}">${esc(t(`reward.note.${token}`))}</p>`).join('');
     const rowsHtml = plan.rows.map((row) => {
       const state = states[row.key] || (row.blockedBy ? 'blocked' : 'pending');
       const { title, body } = rowBody(row);
@@ -426,7 +448,7 @@ export function mountRewards(app, {
       status: plan.rows.length ? el('span', { class: 'as-status modal-head-status',
         text: t('reward.status.claimed', { claimed: claim.claimed, total: claim.total }) }) : null,
       body: el('div', { class: 'reward-claim-layout' }, [
-        el('div', { class: 'class-row reward-menu', html: rowsHtml }),
+        el('div', { class: 'class-row reward-menu', html: rowsHtml + notesHtml }),
         sideColumn(claim),
       ]),
       foot,
@@ -444,12 +466,12 @@ export function mountRewards(app, {
           return `<div class="tt-title">${esc(tTip(blocked))}</div>${esc(tFull(blocked))}`;
         }
         if (state === 'taken') return `<div class="tt-title">${esc(tTip('reward.state.taken'))}</div>`;
-        const offer = row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft' ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
+        const offer = CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft' ? (row.choice ? 'reward.card.choose' : 'reward.card.take') : 'reward.take';
         return `<div class="tt-title">${esc(tTip(offer))}</div>${esc(tFull(offer))}`;
       });
       if (state === 'taken' || state === 'blocked' || state === 'skipped') continue;
       el.addEventListener('click', (ev) => {
-        if (row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft') return renderChooser(row);
+        if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft') return renderChooser(row);
         if (row.kind === 'flask' || row.kind === 'armament' || row.kind === 'relic') return renderDetail(row);
         take(row);
       });
@@ -536,6 +558,8 @@ export function mountRewards(app, {
       bar,
       next,
       row.gained ? el('span', { class: 'rp-gain', text: t('reward.progress.gained', { xp: row.gained }) }) : null,
+      // The per-fight level cap threw some of it away (SPEC §15.2): say how much.
+      row.discarded ? el('span', { class: 'rp-discarded', title: tFull('reward.progress.discarded', { xp: row.discarded }), text: t('reward.progress.discarded', { xp: row.discarded }) }) : null,
     ]);
     // The exact XP is the tooltip, not the row: the row carries the shape of
     // the climb and the gain; the numbers are for the player who asks.
@@ -628,7 +652,7 @@ export function mountRewards(app, {
       label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
     });
     door({
-      eyebrow: row.kind === 'skillDraft' || row.kind === 'classDraft' ? rowBody(row).title : t('reward.card.eyebrow'),
+      eyebrow: row.kind === 'skillDraft' || row.kind === 'classDraft' || row.kind === 'levelCard' ? rowBody(row).title : t('reward.card.eyebrow'),
       title: rewards.title || t('reward.title.victory'),
       body: el('div', { class: 'reward-row', role: 'radiogroup', 'aria-label': t('reward.card.aria') }),
       foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
@@ -681,7 +705,7 @@ export function mountRewards(app, {
       // lights the same card behind it and presses the same Confirm, so there
       // is one commit and one place the receipt is written.
       const el = renderCard(registries, { cardId, upgraded: row.kind === 'skillDraft' && skillUpgradesCards(registries, skillLevel(run, row.skillId)) }, {
-        owned: run.deck.filter((c) => c.cardId === cardId).length,
+        owned: ownedCopies(run, cardId),
         actionOwnsTouch: true,
         surface: 'reward',
         availability: { choose: taken() ? t('reward.card.alreadyTaken') : true },

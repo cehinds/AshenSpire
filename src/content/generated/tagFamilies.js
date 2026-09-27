@@ -120,5 +120,12 @@ export const tagFamilies = [
     "scopeField": "",
     "label": "Location",
     "blurb": "Where a run stops: a classic node type (shrine), the Unknown node's camp, an atlas rest service's type (inn, chapel) or one atlas node by id. No collection — the ids are the map's, checked by model/locations.js. Mounted from arrival to departure (engine/locations.js)."
+  },
+  {
+    "family": "companion",
+    "source": "companions",
+    "scopeField": "",
+    "label": "Companion",
+    "blurb": "A temporary ally bought at the market (SPEC §14.3). It travels with the run for a number of fights, and what it does is its property rows here, mounted at combat start (engine/properties.js)."
   }
 ];

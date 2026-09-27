@@ -11,14 +11,16 @@ sign, because editing it makes a new commit that never ran the gates.
 
 **Only the owner cuts a release.** Agents never cut `release`, tag, or publish.
 They may run these gates and report results in a pull request into `dev`. Cutting
-`release` from `dev`, merging `release` into `main`, creating the `vX.Y.Z` tag and
+`release` from the tested RC SHA on `test` (through a branch pinned to that SHA, below), merging `release` into `main`, creating the `vX.Y.Z` tag and
 publishing any build or storefront listing are the owner's steps alone (see
 CONTRIBUTING.md, *Coordination and release boundary*).
 
 ## How to run
 
-Start from a clean checkout of the RC SHA with LFS content pulled
-(`git lfs pull`) and the promotion target fetched
+Start from a clean checkout of the RC SHA (since #1332 `dev` tracks nothing in
+Git LFS, so no `git lfs pull` is needed; the full art is still in `assets/` until
+docs/ART-REPO-PLAN.md step 4 moves its readers to `tools/fetch-art.mjs`) with the
+promotion target fetched
 (`git fetch --no-tags origin test:refs/remotes/origin/test`). Run each command from the repository root exactly as the
 table gives it. A gate wrapped in `node tools/verdict.mjs -- …` runs as CI runs
 it: a silent exit 0 or a zero-count green is then refused (DEVELOPER.md, *The CI
@@ -38,14 +40,14 @@ command yet, and G20 is read from docs/FINISH.md.
 
 | Gate | Command | Expected result | Where CI runs it |
 |------|---------|-----------------|------------------|
-| G1 | `node tools/verdict.mjs -- node tests/run-node.mjs` | Exit 0. The whole suite runs (engine suite, every `*.test.mjs`, tool verdicts and each tool's `--selftest`) and reports 0 failures. | `tests.yml` (as two halves), `ci.yml` |
+| G1 | `node tools/verdict.mjs -- node tests/run-node.mjs` | Exit 0. The whole suite runs (engine suite, every `*.test.mjs`, tool verdicts and each tool's `--selftest`) and reports 0 failures. | `tests.yml` as two halves: `core` (`run-node.mjs --no-selftests`, on every `dev` PR and on pushes to `dev`, `test` and `release`) and `selftests` (`--selftests-only`, on pushes to `test` and `release`, since #1345); `ci.yml` `test` job, all three OSes (the whole command, on a push to `test` or `release`) |
 | G2 | `node tools/verdict.mjs -- node tools/buildversion.mjs --check` | Exit 0, run after G9. The build version is derived and matches the tree, and nobody typed it by hand. Rows D–F read the build, which is not committed (since 2026-09-26), so G9 comes first. | `ci.yml` |
-| G3 | `node tools/verdict.mjs -- node tools/receipts.mjs --check --since origin/test` | Exit 0. Every PR merged in `origin/test..HEAD` has a CHANGELOG.md receipt. The range is pinned: without `--since` a checkout that lacks `origin/test` silently falls back to the last 40 merges. Exit 2 means `origin/test` was not fetched, or CHANGELOG.md yielded no PR references at all. | `receipts.yml` (push to `dev`) |
+| G3 | `node tools/verdict.mjs -- node tools/receipts.mjs --check --since origin/test` | Exit 0. Every PR merged in `origin/test..HEAD` has a CHANGELOG.md receipt. The range is pinned: without `--since` a checkout that lacks `origin/test` silently falls back to the last 40 merges. Exit 2 means `origin/test` was not fetched, or CHANGELOG.md yielded no PR references at all. | `receipts.yml` on a push to `dev` (`--check`, whose default range is the same `origin/test..HEAD`). A PR into `dev` runs `--check --pr auto` instead, which is not this gate |
 | G4 | `node tools/release-series.mjs` | Exit 0. The version series in the tree is the one the owner approved (docs/versioning.md). | `ci.yml` |
 | G5 | `node tools/config-build.mjs --check` | Exit 0. The generated UI config is current with `content/config/`. Run it bare: its "is current with N source file(s)" line is not a form the verdict door accepts, so wrapped it exits 3 on a green tree. | `tests/run-node.mjs` |
 | G6 | `node tools/balance.mjs --check` | Exit 0. docs/BALANCE.md matches a fresh run. | `tests/balance-doc.test.mjs` |
 | G7 | `node tools/verdict.mjs -- node tools/workflow-lint.mjs` | Exit 0. No workflow step is missing `run:`/`uses:` and no key is duplicated. | `ci.yml` |
-| G8 | `node tools/bundle.test.mjs` | Exit 0. The bundler's parse-gate fixtures pass (this takes several minutes). | `tests.yml` `bundler parse gate` job, `ci.yml` |
+| G8 | `node tools/bundle.test.mjs` | Exit 0. The bundler's parse-gate fixtures pass (this takes several minutes). | `tests.yml` `parse-gate` (bundler parse gate) and the `ci.yml` `test` job on ubuntu only, on a push to `test` or `release`. `tests/run-node.mjs` does not run it (`NOT_SPAWNED`), so G1 does not cover it |
 | G9 | `node tools/verdict.mjs -- node tools/launch.mjs --build-only --full-art` | Exit 0. The standalone builds are regenerated from the RC source with the full art and the mobile file, as release/main CI builds them. Without `--full-art` launch builds the light dev/test tier, which is not a release build. | `ci.yml` |
 | G10 | `node tools/verdict.mjs -- node tools/verify-shipped.mjs` | Exit 0, run after G9. The root and `dist/` copies a player is handed carry art and equal the fresh `build/`. | `ci.yml` |
 | G11 | `node tools/contrast-audit.mjs --gate` | Exit 0, **and** the tool's `GATED_PROFILES` includes `cb-safe` beside `default` and `hi-contrast-off`, **and** its `KNOWN_BELOW` ledger has no text rows (FINISH.md §9, *The palettes pass contrast*). Exit 0 alone only means no new or worsened failure at the profiles it gates. **RED:** since #1291 `cb-safe` is gated, but `KNOWN_BELOW` still holds 12 text rows (the reward Continue HOLD cue and the TAKEN chip and title in each gated profile), all from `opacity` rules in `styles/kit.css`. Green also needs a workflow to run `contrast-audit.mjs --gate` (FINISH.md §9 asks for it in CI); today only a `ci.yml` echo names it. | not yet: no workflow runs it |
@@ -67,15 +69,15 @@ or not a command for it exists yet.
 |------|---------|-----------------|------------------|
 | G14 | `node tools/runsim.mjs 5` | **RED: not yet in the suite.** Exit 0, ending "No crashes across all simulated runs": fixed seeds, 5 whole headless runs for every class (FINISH.md §3, *A headless full run in CI*). The criterion asks for `tests/run-node.mjs` to run it, and it does not yet, so a hand run on the RC is not enough. Run it bare: its closing line is not a form the verdict door accepts, so wrapped it exits 3 on a green tree. It exits 1 on any crash. | not yet: `tests/run-node.mjs` does not run it |
 | G15 | none yet | **RED: not yet runnable.** A browser run on a fixed seed goes Title → Class Select → map → at least 1 combat → boss → Victory or Death → Title → a new run starts, with 0 console errors (FINISH.md §3, *A browser full run*). No tool in `tools/` plays a full run in a browser. | none |
-| G16 | `node tools/runsim.mjs 100` | **RED: no verdict yet.** Every class's full-run win rate is inside the accepted band, and best minus worst is 20 points or less (FINISH.md §4, *A2–A4: bring the classes into the target band*). The band is owner decision D1 (FINISH.md, *Owner decisions*), whose proposal is a bot band of 35–65% at 40 or more seeded runs per class. The command prints each class's wins but exits 0 whatever they are, so read the rates. G16 stays red until that FINISH.md line is ticked `[x]`. | none |
+| G16 | `node tools/runsim.mjs 100` | **RED: no verdict yet.** Every class's full run completes with no crash and its report lands in BALANCE.md (FINISH.md §4, *A2–A4: bring the classes into the target band*). Owner ruling D1 (2026-09-26): there is no win-rate band for 1.0, and every balance number stays configurable. G16 stays red until that FINISH.md line is ticked `[x]`. | none |
 | G17 | none yet | **RED: not yet runnable.** The Mana-aware A/B run, `node tools/runsim.mjs 50 --mana-ab`, prints each class's win rate and Mana spent with Mana on and off, and the result lands in docs/BALANCE.md (FINISH.md §4, *The Mana-aware A/B balance run*; SPEC §5.5.1 calls it a release gate). `tools/runsim.mjs` has no `--mana-ab` flag yet. | none |
 | G18 | none yet | **RED: not yet runnable.** Save and resume hold in a browser, as three separate cases (FINISH.md §3, *Save/resume holds in the browser*; SPEC §9 M2, §3.12): (a) a reload on the map gives a run deep-equal to the one before, minus timestamps; (b) **Save Game** or **Save and Quit** mid-combat, then a reload, gives back exactly the hand, the piles, the enemies with their intents and the resources, through the `CombatSnapshotService` record; (c) a plain reload or abandon mid-combat, with no explicit save, restarts that encounter from its entry checkpoint. No tool in `tools/` drives these in a browser. | none |
-| G19 | none yet | **RED: not yet runnable.** docs/BALANCE.md states the seat-tier tolerance, and the 300-seed per-tier runsim results fall within it (FINISH.md §4, *Seat-tier tolerance is stated*; SPEC §13). BALANCE.md states no tolerance yet, and no tool reports win rates per seat tier. G16 checks only each class's overall rate, so one badly tuned tier can hide inside it. | none |
+| G19 | none yet | **RED: not yet runnable.** docs/BALANCE.md records the 300-seed per-tier runsim win rates and the configured tier multipliers (FINISH.md §4, *Seat-tier tolerance is stated*; SPEC §13). A report, not a pass band: owner ruling D1 (2026-09-26) sets no win-rate gate for 1.0, so any recorded rate passes. No tool reports win rates per seat tier yet. | none |
 | G20 | read docs/FINISH.md | **RED** while any criterion the *Criterion map* assigns to G20 is `[ ]` or `[~]` in docs/FINISH.md. Green when every one of them is `[x]` on the RC SHA, each tick checked against the code, a test or a command as FINISH.md requires. A criterion the owner rules out of 1.0 moves to a waiver row in the map, with the reason, in a pull request into `dev`. | none: the map is pinned by `tests/release-checklist.test.mjs` |
 
 ## Criterion map
 
-Every release criterion in docs/FINISH.md §1–§13 (each `- [ ]`, `- [~]` or `- [x]`
+Every release criterion in docs/FINISH.md §1–§15 (each `- [ ]`, `- [~]` or `- [x]`
 line) maps to one gate above, or to a waiver that gives its reason. A criterion is
 named by the words its FINISH.md line starts with, not by its line number, because
 FINISH.md is edited after every pull request and its line numbers move.
@@ -98,10 +100,19 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §1 | The 7 orphan cards get a route in, or an owner-ruled allowlist row | G20 |
 | §1 | SPEC text matches what shipped | G20 |
 | §1 | SPEC P8b: Powers hold a resting stance until the next turn | G20 |
-| §1 | COMBAT-EQUIPMENT-RULES prototype gate, and each class pool from 36 to 50 cards | G20 |
+| §1 | COMBAT-EQUIPMENT-RULES prototype gate, and each class pool from 36 to 50 cards | waived: post-1.0 by owner ruling D3 (2026-09-26). |
+| §1 | Progression leftovers: 3b-ii, the class-swap boss-reward door, quest XP | waived: post-1.0 by owner ruling D18 (2026-09-27). |
 | §2 | Counts meet SPEC | G20 |
 | §2 | Stale content validators are fixed and gated | G20 |
-| §2 | More than one elite per seat | G20 |
+| §2 | 1–5 elites per seat, averaging 3 | G20 |
+| §2 | Deck editor between runs | G20 |
+| §2 | Three shop types: shop, blacksmith, wise master | G20 |
+| §2 | D11 design issues are in 1.0 scope | G20 |
+| §2 | [#845] | G20 |
+| §2 | [#785] | G20 |
+| §2 | [#239] | G20 |
+| §2 | [#1026] | G20 |
+| §2 | [#601] | G20 |
 | §3 | A headless full run in CI | G14 |
 | §3 | A browser full run | G15 |
 | §3 | Save/resume holds in the browser | G18 |
@@ -126,6 +137,8 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §8 | #1289 follow-up: a re-fit keeps the tray's selected-destination framing | G20 |
 | §8 | #1164: the card door stacks between 601 and 703 px | G20 |
 | §8 | Offline and installable web edition | G20 |
+| §8 | Pages serves the external-art edition, and the single-file download stays available | G20 |
+| §8 | One physical iPhone in Safari plays a run before release | G20 |
 | §8 | Background and resume keep the run | G20 |
 | §9 | The palettes pass contrast | G11 |
 | §9 | #1282 follow-up: the contrast audit measures the highlighted Continue | G20 |
@@ -153,7 +166,19 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §13 | #1304 follow-up: an in-run Load on a newer-build slot keeps the live run | G20 |
 | §13 | LICENSE and docs use the current name and version | G20 |
 | §13 | Web and store metadata | G20 |
-| §13 | Release notes, store listing and post-launch roadmap drafted | waived: an owner step. Drafted release notes are a *Before the owner signs* box; the store listing, roadmap, cut, tag and publish come after sign-off. |
+| §13 | Release notes and post-launch roadmap drafted | waived: an owner step. Drafted release notes are a *Before the owner signs* box; the roadmap, cut, tag and publish come after sign-off, and the store listing waits for D8's store pick. |
+| §14 | SPEC §14 lands before any code | G20 |
+| §14 | Deck rules and ordered draw | G20 |
+| §14 | Deck editor UI | G20 |
+| §14 | Shop kinds and the guaranteed minimum | G20 |
+| §14 | Market additions | G20 |
+| §14 | Blacksmith screen | G20 |
+| §14 | Wise master | G20 |
+| §15 | SPEC §15 lands before any code | G20 |
+| §15 | Card reward schedule | G20 |
+| §15 | Levelling preview and cap | G20 |
+| §15 | Crafting drops | G20 |
+| §15 | Legendary sigils | G20 |
 
 If a gate is red, the RC is not ready. Fix the cause in a pull request into `dev`,
 pick a new RC SHA, and run **every** gate again on it. Do not re-run only the
@@ -177,8 +202,11 @@ The sign-off is **not** recorded in this file. Editing a tracked file makes a ne
 commit, so a sign-off written here would sit on a commit that never ran the gates,
 and a commit cannot name its own SHA. This file stays a template.
 
-The owner signs by commenting on the release pull request (`release` ← `dev`), or
-on a release issue. The comment names:
+The owner signs by commenting on the release pull request, or on a release issue.
+Sessions keep promoting `dev` to `test` (CONTRIBUTING.md rule 6), so a
+`release` ← `test` pull request would advance past the RC SHA. Its head is
+instead `rc/<version>`, a branch created at the tested RC SHA and never
+moved. The comment names:
 
 - the version,
 - the tested RC SHA,

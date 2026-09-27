@@ -1,9 +1,8 @@
 # Moving high-res art out of this repository — plan
 
-Status: **PLAN ONLY — nothing has moved.** This is step 5 of the LFS / art-tier
-work (2026-09-26). Every step below that creates a repository, publishes a
-release, or deletes files from the tree waits for the owner's answers to the
-questions at the end.
+Status: **steps 1–3 done, step 4 in progress** (see [Status](#status)). This is
+step 5 of the LFS / art-tier work (2026-09-26). `art/` and `assets/` are still
+tracked here; steps 5–7 each need their own owner go-ahead.
 
 ## Why
 
@@ -68,14 +67,19 @@ This repository keeps:
   `COPY_SET`, `tools/bundle.test.mjs`, `tools/sfx-filename-convention.mjs` and
   the rest a `git grep mkdtempSync` finds, or `sourceDigest` refuses there;
 - `tools/fetch-art.mjs`;
-- **the 23 non-art files now under `assets/`**, moved to a tracked root folder such as `asset-data/` (`content/` accepts only compiled sources)
-  (or kept in a tracked `assets/` that holds only them; decided in step 4).
+- **the 23 non-art files that were under `assets/`**, moved in step 4 (#1367) to the
+  tracked root folder **`asset-data/`**, at the same path below it
+  (`assets/equipment/manifest.json` is now `asset-data/equipment/manifest.json`;
+  `content/` accepts only compiled sources). `asset-data` is one of the
+  `INPUT_ROOTS` in `tools/buildversion.mjs`, so the digest and row B still sweep
+  these files. Ship tools that write a manifest beside art under `assets/` write
+  it to the matching `asset-data/` folder instead (`tools/asset-data.mjs`).
   They are:
   - 12 JSON manifests: `equipment/manifest.json`, `poses/pose-sprites.manifest.json`,
     `sprites/class-sprites.manifest.json` and others;
   - `framework/silence.txt`, named as a source path by `src/framework/data/assets.js`;
   - `fonts/OFL.txt`;
-  - the scripts and notes under `assets/classes/`.
+  - the scripts and notes under `assets/classes/` (now `asset-data/classes/`).
 
 ### How an art change flows after the move
 
@@ -100,7 +104,7 @@ This repository keeps:
 | `tools/verify-external.mjs` | every push (dev-preview.yml) | takes its file list from `assets/` | takes it from the manifest (full or light tier by the page's edition) |
 | `tools/hand-side-probe.mjs` | every push (ci.yml, dev-preview.yml) | `existsSync` on `assets/equipment/*`; measures pixels served from `assets/` | measures the light tier (baselines re-measured in that PR), or fetches for a full-art run |
 | dev-preview "Collect the playable build" | every push | `cp -r assets/environments`, `pose-effects`, `combat-effects`, `painted-outfits` into `preview/` | copies from the built web edition (which already carries the tier's art) |
-| `tests/run-node.mjs` check 33 | every test run | reads `assets/equipment/manifest.json` (it warns and skips without it) | reads it from its new home in this repo; **it must not start skipping** |
+| `tests/run-node.mjs` check 33 | every test run | reads `assets/equipment/manifest.json` (it warns and skips without it) | reads it from its new home in this repo; **it must not start skipping** — **done in #1367**: reads `asset-data/equipment/manifest.json` |
 | `tests/run-node.mjs` check 49 (`assetExists`) | every test run | stats files under `assets/` | checks ids against the manifest |
 | `tests/run-node.mjs` check 79 (pose frames) | every test run | `existsSync` on every generated frame under `POSE_DIR` (`assets/poses/`) | checks the frame ids against the manifest |
 | `tools/bundle.test.mjs` (parse gate, EOL corpus) | every CI run (`ci.yml`, `tests.yml`) | its sandboxes copy `assets/`, run the unflagged (full-art) bundler, and read `assets/bg/bg_act1.webp` | sandboxes copy `assets-mobile/` and build with `--light`; the EOL corpus reads the light twin |
@@ -108,10 +112,10 @@ This repository keeps:
 | `tests/content-expansion-equipment.test.mjs` | every test run | `existsSync` on `assets/equipment/icon_*`, `weapon_*`, `body_*` | checks ids against the manifest |
 | `tools/rogue-parity.mjs` (spawned by `tests/content-validators.test.mjs`) | every test run | `existsSync` on `assets/sprites/rogue_*.webp` and `assets/equipment/body_rogue_*.webp` | checks ids against the manifest |
 | `tests/environment-art.test.mjs`, `tests/relic-art.test.mjs` | every test run | `existsSync` on every environment, world-map and painted-relic path | check ids against the manifest |
-| `tools/buildversion-selftest.mjs` (run by `buildversion --selftest` in `ci.yml`'s reproducible job) | every CI run | copies `assets/` into its corpus; a planted case edits `assets/classes/successor-packet.manifest.json` | copies the kept non-art folder instead of `assets/`, and plants on that file's new path, in the same PR that moves it |
+| `tools/buildversion-selftest.mjs` (run by `buildversion --selftest` in `ci.yml`'s reproducible job) | every CI run | copies `assets/` into its corpus; a planted case edits `assets/classes/successor-packet.manifest.json` | copies the kept non-art folder instead of `assets/`, and plants on that file's new path, in the same PR that moves it — **#1367** plants on `asset-data/classes/successor-packet.manifest.json` and copies `asset-data/`; it still copies `assets/` too, because `assets/` is still an input root until the high-tier readers are switched |
 | output-only writers: `tools/concept-cutout.mjs` and `tools/pose-cutout.mjs` (`assets/sprites`), `tools/parchment.mjs` (`assets/map`), `tools/reaver-attack-animation.mjs` (`assets/animations`) | when art changes | nothing; they **write** under `assets/` | move to AshenSpire-art with the ship tools, writing into its `hd/assets/`, so their output enters a release |
-| `src/framework/data/assets.js` | runtime data | names `assets/framework/silence.txt` | keeps working because that file stays tracked (see above) |
-| `tools/screenshot.mjs` | by hand | reads `assets/sprites/class-sprites.manifest.json` | reads it from its new home |
+| `src/framework/data/assets.js` | runtime data | names `assets/framework/silence.txt` | names `asset-data/framework/silence.txt` (#1367; set in `content/framework/assets.json`, regenerated) |
+| `tools/screenshot.mjs` | by hand | reads `assets/sprites/class-sprites.manifest.json` | reads it from its new home: `asset-data/sprites/class-sprites.manifest.json` (#1367) |
 | `styles/kit.css` | every build | `../assets/fonts/*` | unchanged: fonts have twins, and the build substitutes them |
 | README (`npx serve .`, `python -m http.server`) and DEVELOPER ("any static server works") | local dev | a plain static server serves `/assets/…` from disk | the docs name `node tools/serve.mjs` as the way to run from source, because a plain server cannot remap `/assets/…`; the built `AshenSpire.html` still needs no server |
 | `tools/serve.mjs` | local dev | serves the repo root, so `/assets/…` is the full art | maps every `/assets/…` URL to `assets-mobile/` by default, and to the kept non-art files for those that have no twin; `--hd` serves the fetched cache |
@@ -193,17 +197,17 @@ Each step is one reviewed PR, or one owner action.
 - Q1. **Private.** `cehinds/AshenSpire-art` is a private repository.
   - CI in this repo cannot read its releases with the default `GITHUB_TOKEN`. The jobs that fetch (full-art builds, pages-builds' main build) read a repository secret `ART_REPO_TOKEN`: a fine-grained token with read-only *Contents* access to `AshenSpire-art`. The owner creates it; step 4 names the secret and fails with that name when it is missing.
   - `tools/fetch-art.mjs` reads the same token from `ART_REPO_TOKEN` (or `GITHUB_TOKEN`) for a local fetch.
-  - A private release is downloadable only by people with access to the repo, so it does not by itself reach players who want **Local high-res**; see the open question below.
+  - A private release is downloadable only by people with access to the repo, so it does not by itself reach players who want **Local high-res**; the owner decided on 2026-09-27 that it stays that way (below).
 - Q2. **Zip.** Releases are `hd-assets-v<N>.zip`.
 - Q3. **Yes.** Go ahead with steps 1–4; steps 5–7 each still need their own go-ahead.
 - #1332 is approved for promotion to `release` (the owner merges it there).
 
 ## Status
 
-- Step 1 is waiting on the owner: this session's GitHub integration cannot create repositories (403), so `cehinds/AshenSpire-art` must be created by hand (private, empty or with a README), with the Claude GitHub App given access to it.
-- Step 2's contents (pack script, CI, README) are prepared and pushed as soon as the repository exists.
+- Steps 1–3 are done (2026-09-26). The owner created `cehinds/AshenSpire-art` (private). [AshenSpire-art#1](https://github.com/cehinds/AshenSpire-art/pull/1) imported `hd/assets/` (5,201 files) and `art/`, and its release workflow published `hd-assets-v1`: zip sha256 `c03e4024…88a4`, the same bytes as a local pack of that commit.
+- Step 4 has started. `tools/fetch-art.mjs` landed in #1340, and #1353 pins `hd-assets-v1` in `art-release.json`. #1367 moved the 23 non-art files to `asset-data/` and switched every reader of them (tools, tests, `src/framework/data/assets.js`, the ship tools that write those manifests, the art pages that fetch `enemy-poses/manifest.json`, CREDITS and the docs). Still to do: switch the `assets/` (high-tier) readers, and add both files to `BUILD_IDENTITY_FILES` in the PR that first builds full art from the cache.
+- Releases are automatic: the art repo publishes the next `hd-assets-v<N>` on every merge to `main` that changes the pack ([AshenSpire-art#2](https://github.com/cehinds/AshenSpire-art/pull/2)).
 
-## Open question
+## Owner answer (2026-09-27)
 
-- Should players get the high-res zip from somewhere public, since the art repo is private? (attach to AshenSpire releases / collaborators only)
-  - Why it matters: the Local high-res setting needs the files on the player's device; a private release reaches only people with repo access.
+- **The high-res zip stays private.** It is published only as the `hd-assets-v<N>` releases of the private `cehinds/AshenSpire-art` repository and is **not** attached to public AshenSpire releases. The Local high-res setting therefore reaches only people with access to that repository.

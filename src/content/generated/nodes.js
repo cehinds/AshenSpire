@@ -1443,6 +1443,42 @@ export const nodes = [
     "blurb": "What Blight-Touched Idol does when the fight gives it its moment."
   },
   {
+    "id": "companion",
+    "parentId": "property",
+    "label": "Companion",
+    "color": "B08D57",
+    "glyph": "☥",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "What a companion confers while it travels with you: a branch, not a tag; each companion's own node sits under it."
+  },
+  {
+    "id": "hollowSquire",
+    "parentId": "companion",
+    "label": "Hollow Squire",
+    "color": "B08D57",
+    "glyph": "🛡",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "A squire without a knight raises a shield before you."
+  },
+  {
+    "id": "emberHound",
+    "parentId": "companion",
+    "label": "Ember Hound",
+    "color": "C9502E",
+    "glyph": "🐕",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "A hound of banked coals bites at your foes."
+  },
+  {
     "id": "warhorn",
     "parentId": "property",
     "label": "Warhorn",
@@ -2065,6 +2101,18 @@ export const nodes = [
     "domain": "",
     "aside": "",
     "blurb": "The place keeps a quest board: the quests offered in this town, and a journal of the run's quests."
+  },
+  {
+    "id": "deckEdit",
+    "parentId": "property",
+    "label": "Deck editing",
+    "color": "C9A227",
+    "glyph": "✎",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "Under Rest sites only (Settings → Advanced → Deck), the deck editor opens from this place's Rest screen. A service marker, with no rule."
   },
   {
     "id": "warlord",
@@ -3157,5 +3205,17 @@ export const nodes = [
     "domain": "",
     "aside": "",
     "blurb": "What a unlock is. Every object in the unlock collection carries this, and nothing outside it may."
+  },
+  {
+    "id": "classification.companion",
+    "parentId": "classification",
+    "label": "companion",
+    "color": "",
+    "glyph": "",
+    "visibility": "INTERNAL",
+    "priority": 30,
+    "domain": "",
+    "aside": "",
+    "blurb": "What a companion is. Every object in the companion collection carries this, and nothing outside it may."
   }
 ];

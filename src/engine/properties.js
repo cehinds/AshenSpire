@@ -46,7 +46,10 @@ const LOADOUT_KINDS = new Set(['armament', 'armour']);
 // holders whose window the engine knows (worn, worn, owned, chosen, and a
 // location's arrival-to-departure — engine/locations.js, plan phase 7). A kind
 // gains a mount by gaining a window here, never by a content row.
-const MOUNTABLE_KINDS = Object.freeze(['armament', 'armour', 'relic', 'class', 'location']);
+// A companion (SPEC §14.3) is held from combat start while it travels with
+// the run: it is mounted at createCombat and on restore, and leaves between
+// fights (engine/runCombat.js runCombatEnd counts it down).
+const MOUNTABLE_KINDS = Object.freeze(['armament', 'armour', 'relic', 'class', 'location', 'companion']);
 
 /** The key a carrier's mount lives under, per owner. */
 export function propertySourceKey(carrier) {
@@ -179,6 +182,36 @@ export function syncClassProperties(combat, entity) {
   if (!carrier) return;
   const owned = combat.propertyMounts && combat.propertyMounts[ownerKey];
   if (!owned || !owned[propertySourceKey(carrier)]) mountProperties(combat, carrier);
+}
+
+/**
+ * companionCarrier(registries, companionId, ownerKey) → the carrier a
+ * travelling companion presents (SPEC §14.3), or null when it confers
+ * nothing. Its tags are its tagging.csv property rows, resolved through
+ * carrierRules like a relic's; `instanceId` is the id, since one of each
+ * travels at a time.
+ */
+export function companionCarrier(registries, companionId, ownerKey) {
+  const def = registries.companions && registries.companions.has(companionId) ? registries.companions.get(companionId) : null;
+  const tagIds = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
+  return tagIds.length ? { kind: 'companion', id: companionId, instanceId: companionId, ownerKey, tagIds: [...tagIds] } : null;
+}
+
+/**
+ * syncCompanionProperties(combat) — mount every companion the fight carries
+ * (`combat.companions`) that is not mounted yet, under the solo player. A
+ * companion never joins or leaves mid-fight, so this only ever adds.
+ */
+export function syncCompanionProperties(combat) {
+  const owner = combat && combat.player;
+  if (!owner || !Array.isArray(combat.companions)) return;
+  const ownerKey = triggerOwnerKey(combat, owner);
+  for (const id of combat.companions) {
+    const carrier = companionCarrier(combat.registries, id, ownerKey);
+    if (!carrier) continue;
+    const owned = combat.propertyMounts && combat.propertyMounts[ownerKey];
+    if (!owned || !owned[propertySourceKey(carrier)]) mountProperties(combat, carrier);
+  }
 }
 
 /**

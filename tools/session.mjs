@@ -26,7 +26,7 @@ import { awardLevelXp, combatLevelXp } from '../src/model/levelup.js';
 import { playerWeightClass } from '../src/engine/combat.js';
 import { playerPoiseThresholdReceipt } from '../src/model/statProjection.js';
 import {
-  commitSmithing, grantSmithingReward, initializeRunSmithing, smithingPlan,
+  commitSmithing, grantSmithingReward, initializeRunSmithing, smithingPlan, smithingRewardPays,
 } from '../src/model/smithing.js';
 import { flaskSlotCap, reallocateFlaskCharges } from '../src/model/gracerefill.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from '../src/engine/actmap.js';
@@ -43,6 +43,7 @@ import {
   rollRelicReward,
 } from '../src/engine/encounters.js';
 import { createLocationVisit, arriveAt, restAt, previewRest, leaveLocation } from '../src/engine/locations.js';
+import { cardRewardPlan } from '../src/model/rewardplan.js';
 import {
   createCoopCombat, coopOutcome, playCard, endTurn, useFlask, joinCombat, leaveCombat,
 } from '../src/engine/coopCombat.js';
@@ -217,6 +218,7 @@ export function createSession({ registries, seedString, endless = false, restore
           id: md.id, name: md.name, index: md.index, classId: md.classId, tint: md.tint || 'gold', spriteStyle: md.spriteStyle || DEFAULT_SPRITE_STYLE,
           connected: false, run: md.run, rng: memberRng(seed, md.index, md.rng),
           discoveredArmaments,
+          playInDeckOrder: md.playInDeckOrder === true,
           catchup: md.catchup || [], cardSeq: md.cardSeq || 0, alive: md.alive !== false,
         });
       } catch (e) {
@@ -280,7 +282,7 @@ export function createSession({ registries, seedString, endless = false, restore
     return endless ? Math.floor((session.actNumber - 1) / LAST_ACT) : 0;
   }
 
-  function addMember({ id, name, classId, tint, spriteStyle, attributeMode = undefined, attributes = undefined, startingKitId = undefined, discoveredArmaments = [] }) {
+  function addMember({ id, name, classId, tint, spriteStyle, attributeMode = undefined, attributes = undefined, startingKitId = undefined, discoveredArmaments = [], playInDeckOrder = false }) {
     const index = order++;
     const entitlement = [...new Set(discoveredArmaments || [])];
     const run = createRunState({ seed, classId, registries, attributeMode, attributes, derivedStatOptions, startingKitId, profileMeta: { discoveredArmaments: entitlement } });
@@ -298,6 +300,7 @@ export function createSession({ registries, seedString, endless = false, restore
       run, // per-member build: deck/relics/flasks/hp/maxHp/cinders
       discoveredArmaments: entitlement,
       rng: memberRng(seed, index),
+      playInDeckOrder: playInDeckOrder === true, // the seat owner's Play in deck order (SPEC §14.1)
       catchup: [], // pending missed-node choices (S4 replay)
       cardSeq: 0, // monotonic counter for reward/catch-up card instance ids
       alive: true,
@@ -440,6 +443,8 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   function travelTo(nodeId) {
+    // The last treasure's stone notice is read on the map it left; moving on clears it.
+    for (const m of members.values()) delete m.treasureStoneReceipt;
     const node = session.mapGraph.nodes[nodeId];
     session.cursorId = nodeId;
     session.floor = node.floor;
@@ -480,6 +485,7 @@ export function createSession({ registries, seedString, endless = false, restore
     return {
       id: m.id, name: m.name, classId: m.classId,
       maxHp: m.run.maxHp, hp: m.run.hp, deck: m.run.deck,
+      orderedDraw: !!m.playInDeckOrder, // Play in deck order, per seat (SPEC §14.1)
       maxMana: m.run.maxMana, mana: m.run.mana,
       maxStamina: m.run.maxStamina, stamina: staminaAtCombatStart({ currentStamina: m.run.stamina, maxStamina: m.run.maxStamina }),
       energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,
@@ -714,6 +720,8 @@ export function createSession({ registries, seedString, endless = false, restore
     if (!c.result) { session.scene = combatScene(); return { ok: true }; }
     const pool = live.pool;
     const outcome = coopOutcome(c);
+    // The levels each seat's award bought, for its level card (SPEC §15.1).
+    const levelUpsBy = {};
     for (const m of livingMembers()) {
       const s = outcome.survivors[m.id];
       if (!s) continue;
@@ -731,9 +739,9 @@ export function createSession({ registries, seedString, endless = false, restore
         // The character level (plan phase 6), per seat: the party's kills are
         // every seat's. No settings dial here — the server is authoritative
         // and reads the authored points per level.
-        awardLevelXp(registries, m.run, combatLevelXp(registries, {
+        levelUpsBy[m.id] = awardLevelXp(registries, m.run, combatLevelXp(registries, {
           victory: c.result === 'victory', pool: live && live.pool, kills: c.eventLog.filter((e) => e.type === 'enemyDied').length,
-        }));
+        })).levelUps;
       }
     }
     live = null;
@@ -759,7 +767,7 @@ export function createSession({ registries, seedString, endless = false, restore
     }
     // Victory: revive any downed-but-not-dead members at 1 HP for the next floor.
     for (const m of livingMembers()) if (m.run.hp <= 0) m.run.hp = registries.balance.coop.reviveHp;
-    grantRewards(pool);
+    grantRewards(pool, levelUpsBy);
     if (pool === 'boss') session.scene.afterReward = 'advanceAct';
     return { ok: true, result: c.result };
   }
@@ -789,33 +797,50 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // ---- rewards + catch-up --------------------------------------------------
-  function rollRewardFor(m, pool) {
-    const cardIds = rollCardRewardIds(registries, m.rng, {
+  function rollRewardFor(m, pool, levelsGained = 0) {
+    // THE CARD REWARD SCHEDULE (SPEC §15.1), read through the one door solo
+    // and the simulator read (model/rewardplan.js cardRewardPlan). Co-op has
+    // no skill or class drafts at its door, so nothing takes the card row's
+    // seat here. The shipped schedule offers every fight and rolls nothing
+    // on 'rewardRolls', so an existing co-op seed rolls what it rolled.
+    const plan = cardRewardPlan(registries.balance, { pool, levelsGained }, m.rng);
+    const cardIds = plan.offerCard ? rollCardRewardIds(registries, m.rng, {
       classId: m.classId, pool, relicIds: m.run.relics,
-    });
+    }) : [];
     // Co-op-only cards (StS2): with a real party, every combat reward carries
-    // one team-play option on top of the normal class picks.
-    if (livingMembers().length > 1) {
+    // one team-play option on top of the normal class picks — when there is
+    // a card row to carry it.
+    if (plan.offerCard && livingMembers().length > 1) {
       cardIds.push(m.rng.pick('cardRewards', COOP_CARD_IDS));
+    }
+    const levelCards = [];
+    for (let i = 0; i < plan.levelCards; i++) {
+      const ids = rollCardRewardIds(registries, m.rng, { classId: m.classId, pool, relicIds: m.run.relics });
+      if (ids.length) levelCards.push({ ordinal: levelCards.length, cardIds: ids });
     }
     const cinders = rollRuneReward(registries, m.rng, pool, m.run.relics);
     const flaskId = pool !== 'boss' ? rollFlaskDrop(registries, m.rng, m.run) : null;
     const relicId = pool === 'elite' || pool === 'boss'
       ? rollRelicReward(registries, m.rng, m.run.relics, pool === 'boss' ? { rarities: ['boss'] } : {})
       : null;
-    return { pool, cardIds, cinders, flaskId, relicId };
+    return {
+      pool, cardIds, cinders, flaskId, relicId,
+      ...(plan.cardMissed ? { cardMissed: true } : {}),
+      ...(levelCards.length ? { levelCards } : {}),
+    };
   }
 
-  function grantRewards(pool) {
+  function grantRewards(pool, levelUpsBy = {}) {
     const pending = {}; // memberId → reward offer (for present members to choose)
     for (const m of livingMembers()) {
-      const offer = rollRewardFor(m, pool);
+      const offer = rollRewardFor(m, pool, levelUpsBy[m.id] || 0);
       m.run.cinders += offer.cinders; // gold is auto-granted; card/relic are choices
       offer.smithingStoneReceipt = grantSmithingReward(
         registries,
         m.run,
         pool,
         `coop:${session.actNumber}:${session.floor}:${pool}:${m.id}`,
+        m.rng,
       );
       if (m.connected) {
         pending[m.id] = offer;
@@ -827,15 +852,34 @@ export function createSession({ registries, seedString, endless = false, restore
     session.scene = { kind: 'reward', pool, offers: pending, chosen: {}, afterReward: null };
   }
 
+  // A level card (SPEC §15.1): one pick per row, by ordinal. A row the seat
+  // left unpicked — or picked a card it did not offer — is picked FOR it on
+  // the seat's own 'cardRewards' stream, as the solo door's auto-collect
+  // picks a choice row (model/rewardplan.js resolveContinue): closing the
+  // spoils never silently forfeits a level card.
+  function takeLevelCards(m, offer, levelCardIds) {
+    const picks = levelCardIds && typeof levelCardIds === 'object' ? levelCardIds : {};
+    for (const row of Array.isArray(offer.levelCards) ? offer.levelCards : []) {
+      if (!Array.isArray(row.cardIds) || !row.cardIds.length) continue;
+      const chosen = picks[row.ordinal];
+      const cardId = chosen && row.cardIds.includes(chosen) ? chosen : row.cardIds[m.rng.int('cardRewards', 0, row.cardIds.length - 1)];
+      m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
+    }
+  }
+
   // A present member takes their card/relic pick (or skips with null).
-  function chooseReward(memberId, { cardId = null, takeRelic = false, flask = false } = {}) {
+  function chooseReward(memberId, { cardId = null, takeRelic = false, flask = false, levelCardIds = null } = {}) {
     if (session.scene.kind !== 'reward') return { ok: false, error: 'no reward open' };
     const offer = session.scene.offers[memberId];
     const m = members.get(memberId);
     if (!offer || !m) return { ok: false, error: 'no offer for member' };
+    // A repeat (a double tap, a duplicated message) while others still choose
+    // must grant nothing twice.
+    if (session.scene.chosen[memberId]) return { ok: false, error: 'already chosen' };
     if (cardId && offer.cardIds.includes(cardId)) {
       m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId, upgraded: false });
     }
+    takeLevelCards(m, offer, levelCardIds);
     if (takeRelic && offer.relicId && !m.run.relics.includes(offer.relicId)) {
       m.run.relics.push(offer.relicId);
     }
@@ -951,10 +995,21 @@ export function createSession({ registries, seedString, endless = false, restore
   function enterTreasure() {
     for (const m of livingMembers()) {
       const relicId = rollRelicReward(registries, m.rng, m.run.relics);
+      // The solo treasure door's Smithing Stones (SPEC §15.3), granted to the
+      // seat like a fight's are, present or not, and only when a treasure
+      // table pays: both ship at 0, so no claim is written by default.
+      const smithingStoneReceipt = smithingRewardPays(registries, 'treasure')
+        ? grantSmithingReward(registries, m.run, 'treasure', `coop-treasure:${session.actNumber}:${session.floor}:${m.id}`, m.rng)
+        : null;
       if (m.connected) {
         if (relicId && !m.run.relics.includes(relicId)) m.run.relics.push(relicId);
+        // A present seat has no treasure door to read it on, so the receipt
+        // rides this seat's snapshot until the party travels on. DISPLAY-ONLY:
+        // it is not serialized, so a host restore drops the notice (the stones
+        // themselves are on the seat's run and survive).
+        if (smithingStoneReceipt) m.treasureStoneReceipt = { ...smithingStoneReceipt, act: session.actNumber, floor: session.floor };
       } else {
-        m.catchup.push({ type: 'treasure', relicId, act: session.actNumber, floor: session.floor });
+        m.catchup.push({ type: 'treasure', relicId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), act: session.actNumber, floor: session.floor });
       }
     }
     advanceFromNode();
@@ -1206,6 +1261,7 @@ export function createSession({ registries, seedString, endless = false, restore
       if (pick && pick.cardId && offer.cardIds.includes(pick.cardId)) {
         m.run.deck.push({ instanceId: `m${m.index}c${m.cardSeq++}`, cardId: pick.cardId, upgraded: false });
       }
+      takeLevelCards(m, offer, pick && pick.levelCardIds);
       // THE RELIC MAY BE IN HAND ALREADY: a missed event replayed before this
       // entry can have granted the very relic the offer rolled (rolled against
       // the relics the seat held then). The seat is owed a relic, not this
@@ -1343,6 +1399,7 @@ export function createSession({ registries, seedString, endless = false, restore
       ...(m.run.lastSmithingReceipt
         ? { lastSmithingReceipt: structuredClone(m.run.lastSmithingReceipt) }
         : {}),
+      ...(m.treasureStoneReceipt ? { treasureStoneReceipt: structuredClone(m.treasureStoneReceipt) } : {}),
       mana: m.run.mana, maxMana: m.run.maxMana,
       stamina: m.run.stamina, maxStamina: m.run.maxStamina,
       energyMax: m.run.energyMax, drawPerTurn: m.run.drawPerTurn,
@@ -1392,6 +1449,7 @@ export function createSession({ registries, seedString, endless = false, restore
       members: [...members.values()].map((m) => ({
         id: m.id, name: m.name, index: m.index, classId: m.classId, tint: m.tint, spriteStyle: m.spriteStyle, alive: m.alive,
         run: m.run, discoveredArmaments: [...m.discoveredArmaments], catchup: m.catchup, cardSeq: m.cardSeq, rng: m.rng.getCounters(),
+        ...(m.playInDeckOrder ? { playInDeckOrder: true } : {}),
       })),
       // THE EVIDENCE BYTES, byte-equal to what came in. A refused member's
       // original record rides every save the host writes after a partial

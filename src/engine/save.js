@@ -45,6 +45,9 @@ import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
 import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
+import { unknownSigilId } from '../model/sigils.js';
+import { pruneUnknownAdditionOffers } from '../model/marketStock.js';
+import { unknownConsumableId, unknownCompanionId } from '../model/consumables.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -123,6 +126,11 @@ function pendingRewardReferenceProblems(pending, registries) {
     if (!draft || !registries.classes.has(draft.classId)) problems.push(`class draft class '${draft && draft.classId}' is unknown`);
     for (const nodeId of (draft && draft.nodeIds) || []) {
       if (!tree.has(nodeId)) problems.push(`class draft node '${nodeId}' is not in the '${draft.classId}' tree`);
+    }
+  }
+  for (const row of Array.isArray(rewards.levelCards) ? rewards.levelCards : []) {
+    for (const cardId of (row && row.cardIds) || []) {
+      if (!registries.cards.has(cardId)) problems.push(`level card '${cardId}' is unknown`);
     }
   }
   for (const draft of rewards.skillDrafts || []) {
@@ -649,6 +657,45 @@ export function createSaveManager(storage) {
             why: `the class tree of '${run.class}' no longer holds ${stale.map((id) => `'${id}'`).join(', ')}: the pick was dropped, the rest kept`,
           });
         }
+        // A sigil id this build does not know (SPEC §14.3) is refused by name:
+        // it would be a carried item with no row to show or install.
+        const strangeSigil = unknownSigilId(registries, run);
+        if (strangeSigil) throw new Error(`sigil '${strangeSigil}' is unknown to this build`);
+        // So is a bought armour set (SPEC §14.3, `loadout.boughtArmour`): a set
+        // this build has no row for, for that class, would vanish from the
+        // run's wardrobe without a word (Codex, on #1374).
+        const strangeArmour = (run.loadout?.boughtArmour || []).find((row) => !(registries.equipment.armour || []).some((piece) => piece.classId === row.classId && piece.id === row.id));
+        if (strangeArmour) throw new Error(`bought armour '${strangeArmour.id}' (class '${strangeArmour.classId}') is unknown to this build`);
+        // An UNSOLD offer is not owned: one for a sigil or an armour set this
+        // build no longer has is pruned from the saved shelf, never rerolled,
+        // and the run loads (Codex, on #1374; coordinator ruling).
+        // An OWNED consumable or companion this build does not know (SPEC
+        // §14.3) is refused by name, as an owned sigil is: a count with no row
+        // to read or spend, an ally with no rule to mount.
+        const strangeConsumable = unknownConsumableId(registries, run);
+        if (strangeConsumable) throw new Error(`consumable '${strangeConsumable}' is unknown to this build`);
+        const strangeCompanion = unknownCompanionId(registries, run);
+        if (strangeCompanion) throw new Error(`companion '${strangeCompanion}' is unknown to this build`);
+        const known = {
+          sigilKnown: (id) => registries.sigils.has(id),
+          armourKnown: (classId, id) => (registries.equipment.armour || []).some((piece) => piece.classId === classId && piece.id === id),
+          consumableKnown: (id) => registries.consumables.has(id),
+          companionKnown: (id) => registries.companions.has(id),
+          eventKnown: (id) => registries.events.has(id),
+        };
+        const stocks = [['shopStock', run.shopStock], ...Object.entries(run.journey?.serviceStates || {}).map(([pointId, state]) => [`journey.serviceStates.${pointId}.stock`, state && state.stock])];
+        for (const [field, stock] of stocks) {
+          const removed = pruneUnknownAdditionOffers(stock, known);
+          if (!removed.length) continue;
+          note(run, {
+            kind: 'overwrite',
+            site: 'save.js:loadRun',
+            field,
+            was: removed,
+            now: null,
+            why: `this build no longer has ${removed.map((row) => `${row.shelf} '${row.id}'${row.classId ? ` (class '${row.classId}')` : ''}`).join(', ')}: the unsold offer was pruned, nothing rerolled`,
+          });
+        }
         normalizeRunAttributes(run, registries);
         validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
       } catch (e) {
@@ -659,7 +706,7 @@ export function createSaveManager(storage) {
       }
       if (run.contentVersion !== registries.contentVersion) {
         const dangling =
-          (run.deck || []).find((c) => !registries.cards.has(c.cardId)) ||
+          [...(run.deck || []), ...(run.sideboard || [])].find((c) => !registries.cards.has(c.cardId)) ||
           (run.relics || []).find((id) => !registries.relics.has(id)) ||
           (run.flasks || []).find((f) => !registries.flasks.has(f.flaskId));
         if (dangling) {

@@ -6,7 +6,7 @@
 
 import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
-import { syncLoadoutProperties, syncRelicProperties, syncClassProperties } from './properties.js';
+import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncCompanionProperties } from './properties.js';
 import { stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { attachSkillXp } from './skillXp.js';
@@ -46,6 +46,7 @@ export function serializeCombatSnapshot(combat) {
     version: COMBAT_SNAPSHOT_VERSION,
     ...(combat.ratingsRules ? { ratingsRules: combat.ratingsRules } : {}),
     ...(combat.handRules ? { handRules: combat.handRules, pendingDiscardDraw: combat.pendingDiscardDraw || 0 } : {}),
+    ...(combat.orderedDraw ? { orderedDraw: combat.orderedDraw } : {}),
     ...(combat.foundation ? { foundation: combat.foundation } : {}),
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
@@ -85,6 +86,11 @@ export function serializeCombatSnapshot(combat) {
     skills: combat.skills,
     skillXp: combat.skillXp,
     coreTags: combat.coreTags,
+    // SPEC §14.3: the fight's consumable counts (a spent revive token stays
+    // spent on a reload; the log alone could not keep it so) and the
+    // companions it mounted, which a restore mounts again.
+    ...(combat.consumables && typeof combat.consumables === 'object' ? { consumables: combat.consumables } : {}),
+    companions: combat.companions || [],
   });
   assertCombatSnapshot(snapshot);
   return snapshot;
@@ -116,6 +122,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     // rated by the one calculation, like every other. `combatSnapshotProblems`
     // still tolerates the field on disk, so an older save still loads.
     ...(saved.handRules ? { handRules: saved.handRules, pendingDiscardDraw: saved.pendingDiscardDraw || 0 } : {}),
+    // Absent on a snapshot written before Play in deck order: that fight shuffles.
+    orderedDraw: saved.orderedDraw || null,
     foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
     removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),
@@ -163,6 +171,10 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     skills: saved.skills ?? {},
     skillXp: saved.skillXp ?? {},
     coreTags: Array.isArray(saved.coreTags) ? saved.coreTags : [],
+    // A snapshot from before SPEC §14.3 carries neither: no counts (null, so
+    // its combat end leaves the run's alone) and no companion mounted.
+    consumables: saved.consumables && typeof saved.consumables === 'object' ? saved.consumables : null,
+    companions: Array.isArray(saved.companions) ? saved.companions : [],
   };
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
   combat._emitEvent = emitEvent;
@@ -177,6 +189,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   syncLoadoutProperties(combat);
   syncRelicProperties(combat);
   syncClassProperties(combat);
+  syncCompanionProperties(combat);
   // The player's poise max is RE-DERIVED, never trusted from the save (plan
   // phase 8): a fight saved before the formula changed keeps its accumulated
   // value and takes the receipt's max — Constitution, body armour, relics —
@@ -221,6 +234,9 @@ export function commitCombatSnapshot({ run, combat, nodeId, encounterId }) {
     const maxField = `max${field[0].toUpperCase()}${field.slice(1)}`;
     run[maxField] = combat.player[maxField];
   }
-  run.combatEntered = { nodeId, encounterId, snapshot };
+  // A fight a service event started (the market's quest event, SPEC §14.3)
+  // keeps saying so, or a reload would resume it as the journey node's fight.
+  const serviceEvent = run.combatEntered?.serviceEvent === true && run.combatEntered.encounterId === encounterId;
+  run.combatEntered = { nodeId, encounterId, ...(serviceEvent ? { serviceEvent: true } : {}), snapshot };
   return snapshot;
 }

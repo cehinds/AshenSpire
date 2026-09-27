@@ -15,9 +15,11 @@
 
 import { createCombat } from './combat.js';
 import { runHandRules } from '../model/handRules.js';
+import { playInDeckOrder } from '../model/deckRules.js';
 import { ratingsConfigFor } from '../model/statRows.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
 import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/resources.js';
+import { settleFightConsumables, tickCompanions } from '../model/consumables.js';
 
 /** The run fields a fight consumes, by name — never `...run`. */
 export function runCombatPlayer(run) {
@@ -61,6 +63,10 @@ export function runCombatPlayer(run) {
     flasks: run.flasks,
     flaskCharges: run.flaskCharges,
     loadout: run.loadout,
+    // SPEC §14.3: the fight's copy of the consumable counts (a revive token
+    // spends from it), and the companions whose property mounts at its start.
+    consumables: run.consumables && typeof run.consumables === 'object' ? { ...run.consumables } : {},
+    companionIds: (Array.isArray(run.companions) ? run.companions : []).map((row) => row.id),
   };
 }
 
@@ -86,6 +92,8 @@ export function createRunCombat({
     // fight keeps the hand it was born with.
     ratingsRules: ratingsConfigFor(registries, run) || null,
     handRules: runHandRules(registries, run, settings),
+    // Play in deck order (SPEC §14.1): read here, once, like the other rules.
+    orderedDraw: playInDeckOrder(settings),
     registries,
     rng,
     player: { ...runCombatPlayer(run), ...player },
@@ -115,4 +123,8 @@ export function runCombatEnd(run, combat) {
     run[maxField] = combat.player[maxField];
   }
   run.equipmentPoolDeficits = { ...combat.equipmentPoolDeficits };
+  // SPEC §14.3: a spent revive token stays spent, and every companion is one
+  // fight closer to leaving, win or loss.
+  settleFightConsumables(run, combat);
+  tickCompanions(run);
 }

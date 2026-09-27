@@ -1,7 +1,7 @@
 # Asset component catalog
 
 This catalog is the quick-reference index for named visual components. The
-machine-readable registry is [`assets/components/armoury.json`](../assets/components/armoury.json).
+machine-readable registry is [`asset-data/components/armoury.json`](../asset-data/components/armoury.json).
 IDs are stable references for screenshots, QA notes, and future UI edits; the
 selector identifies the rendered component and the source owner remains the
 single place that constructs it.

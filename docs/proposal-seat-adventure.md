@@ -1,5 +1,15 @@
 # The Seat as an adventure — design and implementation plan
 
+**Status (2026-09-27): partly built.** Phase 0 (seats) shipped as SPEC §13.
+Phases 1–4 and 6 (the tower, the city, road vocabulary, quest light, consequence
+targets, and the later items) are **planned**: none has a SPEC
+section or code yet (no `content/cities.js` or
+`hearthSequences.js`). **Companions are owned by SPEC §14.3, not by this plan's
+phase 5** (owner decision, 2026-09-27): §14.3 plans them as a market
+offering, and phase 5 and Companions B below are kept only as design notes. The
+quest board shipped as plan phase 10b
+([plan-progression-and-property-system.md](plan-progression-and-property-system.md)).
+
 *Design and plan, not a change. Per CONTRIBUTING rule 1, each phase below lands as
 a SPEC PR first, then a feature branch into `dev` as a draft PR. Lore terms are
 from [LORE.md](LORE.md). Owner's brief: 2026-09-11.*
@@ -127,6 +137,9 @@ gate ─ floor 1 ─ … ─ floor n ─ antechamber (camp) ─ BOSS ─ hearth
 
 ### 5. Companions
 
+*Owned by SPEC §14.3, not this plan (owner decision, 2026-09-27). What follows is a
+design note for §14.3 to draw on, not a contract.*
+
 One at a time. **Trust** is the stat: earned by choices, spent by asking them into a
 fight they fear or a choice they oppose; at zero they leave at the next city.
 They die only in fights they were asked into, under a rule shown beforehand.
@@ -235,6 +248,9 @@ River Citadel pair.
 
 ### Phase 5 — Companions A (retinue) · M
 
+*Not scheduled here: companions are owned by SPEC §14.3 (owner decision,
+2026-09-27). This table is a design note only.*
+
 | Change | Where |
 |---|---|
 | `content/companions.js`: `{ id, seat, name, voice, portrait, relicId, cardIds, trustStart, opposes: [{ eventId, choiceId, delta }], fears: [encounterIds], deathRule }` | new; schema + validate |
@@ -248,7 +264,8 @@ River Citadel pair.
 - **Swarm boss forms**: encounter `waves: [[ids], [ids]]` with the boss's field
   mechanic; seeded or forced by a phase 4 requirement.
 - **Companions B**: an AI seat on `engine/coopCombat.js`; single-player wiring;
-  the companion's small deck.
+  the companion's small deck. (Design note only; companions are owned by SPEC
+  §14.3, owner decision 2026-09-27.)
 - **Delves**: small World Journey local maps hung off a road node; loot floors
   and one guardian; `tests/local-map.test.mjs` extends.
 - **The drowned city**: a short fourth movement after the causeway — a handful

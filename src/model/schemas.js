@@ -159,6 +159,9 @@ export const EVENTS = Object.freeze([
   'rested',
   'flaskUsed',
   'relicTriggered',
+  // SPEC §14.3: a revive token burned at the player's death point —
+  // { targetId, consumableId, hp, left } — recorded in the combat log.
+  'reviveSpent',
 ]);
 
 // The events only the run-level door emits (engine/locations.js): a status,
@@ -387,6 +390,10 @@ export const VULN_STACKING = Object.freeze(['additive', 'multiplicative']);
 export const CARD_TYPES = Object.freeze(['attack', 'skill', 'power', 'curse', 'status']);
 export const CARD_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'special']);
 export const RELIC_RARITIES = Object.freeze(['starter', 'common', 'uncommon', 'rare', 'boss']);
+// Sigils have their own closed rarity vocabulary (SPEC §14.3, §15.4); relic
+// rarities are unchanged. `legendary` is §15.4's attuned sigil, which the
+// market never stocks and validateContent refuses until that section lands.
+export const SIGIL_RARITIES = Object.freeze(['common', 'uncommon', 'rare', 'legendary']);
 // Where a relic COMES FROM, as opposed to how rare it is. `reward` (the
 // default when the field is absent) is every generic pool — elite and boss
 // drops, the shop's stock, an event's "random relic". `quest` reserves the

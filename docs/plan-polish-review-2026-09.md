@@ -9,10 +9,14 @@ moved. SPEC.md, CONTRIBUTING.md and DEVELOPER.md govern; nothing here
 overrides them.
 
 Every workstream lands as pull requests into `dev` under CONTRIBUTING.md's
-[one-click rule](../CONTRIBUTING.md#a-pull-request-is-not-done-until-the-owner-can-merge-it-with-one-click):
+[one-click rule](../CONTRIBUTING.md#a-pull-request-is-not-done-until-it-is-merged-and-promoted):
 ready for review, reviewed, green, receipted, mergeable.
 
 Effort: **S** = hours, **M** = a PR of a day or two, **L** = several PRs.
+
+**Status (2026-09-27): active.** [FINISH.md](FINISH.md) tracks which of these
+items are done, citing their IDs; A1 and A2 shipped (#1270, #1284) and part of
+A3 (#1309). Archive this plan when FINISH has no open line that cites it.
 
 ## Order and parallelism
 
@@ -67,8 +71,9 @@ P3  D payload & release model (owner sign-off) · K code structure · L engine p
 **Target after A4:** every class at 35–65% bot win rate at default settings,
 best-to-worst spread ≤ 20 points, no class dying mostly to act-1 normal
 fights. Before/after tables in each PR body. Balance moves are data rows, not
-code literals. The bot win rate is a proxy: SPEC §9 M3's target for an
-experienced player stays ~35–50%.
+code literals. The bot win rate is a proxy. The 35–65% band is advisory
+under D1 (no win-rate gate for 1.0), and SPEC §9 M3 no longer sets a target
+(D16, owner decision 2026-09-27; D1 governs).
 
 Items marked **(owner ruling)** change a number or rule the owner approved or
 SPEC states. They go to the owner with simulator evidence first; SPEC is
@@ -481,7 +486,7 @@ amended before code moves.
   `tools/results/*`; 22 tools launch Chromium themselves. A tools manifest,
   archive the unreferenced, ignore results.
 - [ ] **Repo hygiene (S).** Root preview HTML files and
-  `AshenSpire-LegacyPreview.html` (7.1 MB, not LFS); committed `scratch/`;
+  `AshenSpire-LegacyPreview.html` (7.1 MB, not LFS; deleted 2026-09-27 by owner decision); committed `scratch/`;
   `docs/preview` 160 MB of PNGs; five overlapping architecture docs; a
   duplicated section in DEVELOPER.md; CONTRIBUTING.md titled "EldenSpire".
 - [ ] **Duplicated helpers (S).** `ownObject`/`integer` copied in four files;

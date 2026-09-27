@@ -167,6 +167,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `hotkey-badge` | `componentModel` semantic ID | View-owned | HUD controls | Configurable key hint badge. |
 | `armoury-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens Armoury. |
 | `quick-menu-control` | `actionControlModel` | Quick Access view | Map + Combat | Opens quick menu. |
+| `deck-editor-control` | `actionControlModel` (only when the host hands in `controls.deckId`) | Quick Access view (`runHud.runHudHtml({ deckDoor })` + `wireRunHud({ onEditDeck })`) | Map, under Settings → Advanced → Deck → Where = Free | Opens the deck editor (SPEC §14.1). Absent under Rest sites only, with deck editing off, and in every room and fight, so no slot is reserved. |
 | `hud-quick-settings` | `hudQuickSettingsModel` | `hudQuickSettingsHtml` | Title + Map + Combat | Shared right-anchored Fullscreen/Music utility rail. Phone faces are 32px (20% smaller) inside unchanged 44px touch targets; compact HUD anchors the pair below potions. |
 | `fullscreen-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Live browser-state Fullscreen action mirrored by Quick Menu and Settings; unavailable when the platform exposes no API. |
 | `music-control` | `componentModel` child | `hudQuickSettingsHtml` | HUD Quick Settings | Positive-state Music toggle mirrored by Quick Menu and Settings and persisted through the shared settings owner. |
@@ -311,6 +312,7 @@ custom art does not require a second card implementation.
 | `stat-allocation-row` | one attribute allocation row | `statAllocationCard.renderStatAllocationCard` | Character Creation + Shrine allocation + catalog |
 | `resource-strip` | derived rows + Poise receipt | `creationCards.resourceStrip` | Character stats + catalog |
 | `settings-stat-example` | `StatsPreviewModel.statsTopicPreview` | `settings.statsTopicPreviewHtml` | Settings / Advanced / Stats |
+| `settings-level-pace` | `LevelPacePreviewModel.levelPacePreview` → `levelup.levelPace` | `settings.levelPacePreviewHtml` | Settings / Advanced / Progression / Experience and Level-up |
 | `mode-choice` | creation mode + selected state | `creationCards.modeChoiceButton` | Standard/Assign Points + catalog |
 | `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog; Animated is the default when no explicit style is stored. |
 | `tint-choice` | tint row + selected state | `creationCards.tintChoiceButton` | Appearance + catalog |
@@ -341,10 +343,11 @@ primary-stat-card
 
 | Stable ID | Model | Renderer | Reuse |
 |---|---|---|---|
-| `shrine-option-card` | `balance.ui.shrinePresentation` + option plan | `rest.mountRest` | Rest / Smith / Flask Allocation / Level Up |
+| `shrine-option-card` | `balance.ui.shrinePresentation` + option plan | `rest.mountRest` | Rest / Smith / Flask Allocation / Level Up / Deck editor (Rest sites only) |
 | `smith-upgrade-modal` | `SmithSelectionModel` | `smithUpgradeModal.mountSmithUpgradeModal` | Dedicated Smith choose/review transaction |
 | `smith-candidate-card` | `SmithSelectionModel.properties.candidates[]` | shared `card.renderCard` plus armament-tier banner inside Smith modal | One distinct owned armament below the run tier cap |
 | `smith-upgrade-preview` | `SmithSelectionModel.properties.selected` | grouped delta renderer inside Smith modal | Tier, cost, purse, shortfall, and every sourced basic-card delta |
+| `deck-editor` | `DeckEditorModel.deckEditorModel` + `openDeckEdit` session (`beginDeckEdit`/`cancelDeckEdit`) + `deckEditorDoors` | `deckEditor.mountDeckEditor` | Map Quick Access + Armoury Cards view + atlas header (Free); Rest card of a `deckEdit` place — shrine, inn, chapel (Rest sites only). Two panes (collection / deck), live "N / min–max" counter with the refusal as visible text beside a disabled Done, cost curve, filter and sort chips; tap, ＋/－, drag, keyboard and pad for every move; targets ≥ 48 px on a coarse pointer. |
 
 The default Shrine presentation is one vertical list. Every folded option uses
 the same data-owned viewport footprint: width and height percentages come from
@@ -522,7 +525,7 @@ semantic IDs above rather than replacing them. Select a dotted ID in the
 [interactive catalog](./component-catalog.html?group=armoury-assets), or use the
 full selector/owner cross-reference in
 [`ASSET-COMPONENTS.md`](./ASSET-COMPONENTS.md). The machine-readable authority
-is [`assets/components/armoury.json`](../assets/components/armoury.json).
+is [`asset-data/components/armoury.json`](../asset-data/components/armoury.json).
 
 | Rendered family | Searchable asset IDs |
 |---|---|

@@ -37,6 +37,8 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `receipts.yml` → receipts | yes | — (runs on push to `dev`) |
 | `dev-preview.yml` → preview (build, standalone artifact, fast gates) | yes | yes (also `dev`, `main`) |
 | `tests.yml` → core suite | yes | yes (also on push to `dev`) |
+| `map-camera.yml` → map camera re-fit (`map-camera-persistence.mjs --check`, real browser) | yes | yes (also on push to `dev`) |
+| `map-camera.yml` → the full map-camera persistence drive (same job) | no | yes |
 | `tests.yml` → tool self-tests, bundler parse gate | no | yes |
 | `ci.yml` → Fullscreen first through both Settings doors | no | yes |
 | `ci.yml` → what this green does NOT cover (boundary) | no | yes |
@@ -94,8 +96,8 @@ art. Not yet covered: game code still builds many `assets/…` paths from
 templates, and 14 CSS `url(../assets/…)` backdrops bypass `assetUrl()`.
 
 **The high-res release** (docs/ART-REPO-PLAN.md). `art-release.json` pins one
-release of the private `cehinds/AshenSpire-art` (repo, tag, zip, sha256; it is
-unset until `hd-assets-v1` is published). `node tools/fetch-art.mjs` downloads
+release of the private `cehinds/AshenSpire-art` (repo, tag, zip, sha256; today
+`hd-assets-v1`). `node tools/fetch-art.mjs` downloads
 it with `ART_REPO_TOKEN` (a token with read access to that repo's Contents),
 refuses unless the zip's sha256 is the pinned one and every file matches its
 `high` record in `art-manifest.json`, and unpacks it into `.art-cache/<tag>/`
@@ -169,7 +171,7 @@ the shared `enemySprite()` asset function. The twelve PNGs in
 `assets/enemies-unity/` are unchanged imports from the Unity fork; retain their
 384px square canvas and common foot anchor when replacing them. Keep the
 original sprite files as fallback assets. See CREDITS.md and the extraction
-manifest beside the images for provenance.
+manifest (`asset-data/enemies-unity/provenance.json`) for provenance.
 Combat stature is presentation-only: `CombatSpriteScaleModel.js` uses the
 encounter pool to keep elites at 1.75x and bosses at 2x (Ashheart Dragon at 3x).
 `combatSpriteGeometry.js` caches visible idle bounds, while painted player
@@ -192,7 +194,37 @@ are rechecked at commit. Selling retains upgrades, mount history and permanent
 discovery; it removes only card instances granted by the sold item. Legacy shops
 without the new shelves retain empty shelves instead of rerolling their stock.
 Run `node --test tests/armamentTrading.test.mjs` for purchase, sale, stale quote,
-mounting and save round-trip coverage. How many cards a shelf of resting cards
+mounting and save round-trip coverage.
+Shop kinds (SPEC §14.2) are data in `src/content/shops.js`: each kind is a list
+of offerings (`enabled`, `chance`, `weight`, and any price or stock number, each
+with a `[NOTE]`) plus a `guaranteedMinimum`. `src/model/shopKinds.js` validates
+the table and generates the Advanced → Shops rows (`gameConfig.shops.*`, frozen
+per run); `src/engine/shopKinds.js` rolls the kind and the offerings on the
+`shopOffers` stream, while the market's shelves still roll on `shop` through
+`buildShopStock`. A kind gets a weight row, and may carry a non-zero weight,
+only once its screen is in `SHOP_KIND_SCREENS`. Run
+`node --test tests/shop-kinds.test.mjs`.
+The market additions (SPEC §14.3) are market offerings too: `armour`,
+`smithStones`, `sigils` and `innRest`, each at a chance below 100. Their stock
+rolls on `shopOffers` after the offering roll (`buildMarketStock`), their
+purchases are plan/commit pairs in `src/model/marketAdditions.js` (the inn
+rest's commit, which runs the inn's location visit, is `commitInnRest` in
+`src/engine/shopKinds.js`), sigils are `src/content/sigils.js` (owned in
+`run.sigils`, slots in `run.sigilSlots`, `src/model/sigils.js`), and a bought
+armour set is recorded in `run.loadout.boughtArmour`, which `ownership()`
+reads. Run `node --test tests/market-additions.test.mjs`.
+Step 5b adds `skillBooks`, `reviveTokens`, `questEvent` and `companions`.
+Skill books and revive tokens are `src/content/consumables.js`, carried as
+counts in `run.consumables`; companions are `src/content/companions.js`,
+travelling in `run.companions`. Every number either file authors is a
+`gameConfig.consumables.*` / `gameConfig.companions.*` Settings row. A
+companion's effect is its `family = companion` row in `tagging.csv` (a leaf
+under the `companion` branch of `property`), mounted at combat start as a
+`companion` carrier. Reading a book (the Armoury's Inventory), selling one
+back, settling a fight and the content checks are `src/model/consumables.js`;
+a revive token is spent at the death point in `src/engine/actions.js` from
+the fight's copy of the counts, which rides the combat snapshot. Run
+`node --test tests/market-additions-5b.test.mjs`. How many cards a shelf of resting cards
 holds — the merchant's shelves, a mount's deck list — is authored once at
 `content/config/ui/components/card.json -> sizing.shelf`, laid out by
 `.card-shelf` in styles/kit.css, and checked by
@@ -385,7 +417,8 @@ repository.
 ```
 node tools/receipts.mjs --check              # origin/test..HEAD — the promotion
 node tools/receipts.mjs --check --since dev  # any other range
-node tools/receipts.mjs --check --pr <N>     # a pull request head: #N itself has a receipt
+node tools/receipts.mjs --check --pr <N>     # a pull request head: #N itself has a receipt,
+                                             # stamped with this tree's buildordinal.json
 node tools/receipts.mjs --check --pr auto    # the same, N from GITHUB_EVENT_PATH / GITHUB_REF
 node tools/receipts.mjs --selftest           # the known-bad corpus
 ```
@@ -401,8 +434,11 @@ would be about merges the author did not make, but a pull request with no
 receipt of its own is the author's to fix, before merge.
 
 The tool checks **coverage**, not truth: whether an entry exists naming each
-merged pull request. Whether the prose is accurate is not machine-checkable, and
-whether the ordinal on it is the one committed at that merge belongs to
+merged pull request. Whether the prose is accurate is not machine-checkable.
+The one stamp it does check is the `--pr` pull request's own: its receipt must
+carry exactly the release and ordinal of `buildordinal.json` in the tree being
+checked, the box that pull request ships (#1315 merged with `0.7.1.518` on a
+box of 519, and nothing caught it). Older receipts' ordinals belong to
 `tools/about-changelog.mjs`, which owns the file's shape. If CHANGELOG.md ever
 yields no pull-request references at all, that is this tool's own syntax having
 moved out from under it, and it exits **2 (harness could not run)** rather than
@@ -444,8 +480,9 @@ For migrated slices, keep these responsibilities separate:
   accessibility attributes.
 - `src/ui/screens/` projects game state, owns lifecycle, and translates semantic
   commands into domain actions. It does not duplicate extracted markup.
-- `src/ui/behaviors/` owns reusable interaction binding when a migrated slice
-  needs it; callbacks do not live inside models.
+- Reusable interaction binding goes in `src/ui/behaviors/` when a migrated
+  slice first needs it (the folder does not exist yet); callbacks do not live
+  inside models.
 
 Menu and Armoury are the reference implementations. Keep public entry points
 compatible while migrating a vertical slice; do not bulk-move unrelated code.
@@ -487,7 +524,11 @@ model IDs remain in [`docs/COMPONENT-CATALOG.md`](docs/COMPONENT-CATALOG.md).
   `changeEquipment`. Both are player-turn-only, pay the authored equipment
   action price, and let the engine reconcile cards, resource vessels, Poise,
   events, and the persisted combat snapshot atomically.
-- Armaments, Inventory, Cards, and Stats compose `trayModel` and `renderTray`.
+- Armaments, Inventory, Cards, and Stats follow the Folding Tray contract
+  ([docs/TRAY-COMPONENTS.md](docs/TRAY-COMPONENTS.md)); the Armoury screen
+  (`src/ui/screens/equipment.js`) draws them itself and keeps sizes through
+  `TraySizeService` — `trayModel`/`renderTray` are used today only by the
+  combatant inspector.
   Folding collapses to the standard header without erasing the remembered
   expanded size. Sort controls and resize handles exist only while expanded
   and only when that tray model declares the corresponding capability.
@@ -515,8 +556,9 @@ node tools/startup-gate.mjs --selftest
 
 Changes to the in-run Load door (`confirmSlotLoad`, `resumeRun`) run the real
 Quick Menu → Load path: a newer-build slot must be refused with the run kept,
-and a fight abandoned mid-combat must reload at turn 1 with the same HP, opening
-hand and deck:
+a fight abandoned mid-combat must reload at turn 1 with the same HP, opening
+hand and deck, and a refused load from the in-run overlay's quick navigation
+must return focus to that overlay's launcher:
 
 ```bash
 node tools/slot-load-door.mjs
@@ -703,7 +745,7 @@ validation refusals and the dialogue model.
 | Formula ops | `model/formulas.js` `FORMULA_OPS` | add, mul, percentMaxHp, missingHp, missingMana, stacks, energySpent, blockOf, hpOf, cardsPlayedThisTurn |
 | Trigger events | `TRIGGER_EVENTS` | every bus event (ENGINE-API §7) + ownerTurnStart/ownerTurnEnd + hpBelowPct |
 | Predicates | `PREDICATES` | inStance, hasStatus, hasBlock, hpBelowPct, firstCardThisTurn, firstAttackThisCombat, cardTypeIs, cardTagIs, everyNthCardThisCombat, random, eventIsAttack, hpDamagePositive, healPositive, manaPositive, eventSourceIsOwner, eventTargetIsOwner, eventStatusIs, skillLevelAtLeast, classLevelAtLeast, all, any, not |
-| Relic passives | `PASSIVE_KEYS` | runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, restHealMult, restDenied, powerCostReduction, poiseThresholdAdd, swapCostDelta, exposureBuildupMult, skillXpMult |
+| Relic passives | `PASSIVE_KEYS` | arBonus, drBonus, prBonus, poiseBonus, wardBonus, runeGainMult, eliteExtraCardReward, flaskPowerMult, revealUnknown, restHealMult, restDenied, powerCostReduction, poiseThresholdAdd, swapCostDelta, exposureBuildupMult, skillXpMult |
 | Modifier keys | `MODIFIER_KEYS` | damageDealtMult, damageTakenMult, blockGainedMult, attackDamageAdd, blockAdd, skipTurn, retainBlock, blockCap, meterMaxGrowthDisabled |
 
 Escape hatch: `src/content/scripts.js` (named functions callable as
@@ -730,15 +772,25 @@ URL, making a bad asset diagnosable without delaying combat feedback. Run
 
 Combat feedback is **CSS-driven**: JS only toggles short-lived classes and
 appends floating numbers/banners that self-remove after ≤320 ms (`src/ui/fx.js`),
-staggered `STEP_MS` apart and skippable on click. There are **no per-frame
-render loops** — paced combat playback (`playTimeline`) is `setTimeout`-driven
-beat by beat, and the one timed loop in the codebase is the gamepad poller
-(`src/ui/input.js`, ~60 Hz `setInterval`) which is **input, not render**, and
-runs only while a controller is connected (started on `gamepadconnected`,
-stopped when the last pad disconnects) — no idle cost. So there are **no
-per-frame JS allocations**; frame rate is just the browser compositing a handful
-of transitions, comfortably 60 fps. Ambient title effects (embers, gold glow)
-are pure CSS and honor `prefers-reduced-motion` (`styles/ui.css`).
+staggered `STEP_MS` apart and skippable on click. Paced combat playback
+(`playTimeline`) is `setTimeout`-driven beat by beat. The JS loops and timers
+are:
+
+- `requestAnimationFrame` loops that stop when their motion ends: the
+  hold-to-confirm progress (`src/ui/components/holdconfirm.js`), map camera
+  glides (`mapboard.js`, `localMapCamera.js`), frame sequences
+  (`src/ui/presentationSequence.js`) and combatant effect layers
+  (`playCombatantEffectLayers`, `src/ui/combatantEffectLayers.js`);
+- the opening's `tick` (`src/ui/screens/prologue.js`), a `requestAnimationFrame`
+  loop that runs every frame while the prologue is mounted, paused or not;
+- timers: the gamepad poller (`src/ui/input.js`, only while a controller is
+  connected), the co-op seat gamepad poll (`src/ui/screens/coop.js`, every
+  120 ms for as long as the co-op screen is open), the music scheduler
+  (`src/ui/audio.js`), and 2 s polls for fullscreen state
+  (`hudQuickSettings.js`) and the co-op lobby. Ambient title effects (embers, gold
+glow) are pure CSS and honor `prefers-reduced-motion` (`styles/ui.css`).
+Rendering-quality options and phone measurements are in
+[docs/MOBILE-PERFORMANCE.md](docs/MOBILE-PERFORMANCE.md).
 
 ## Input — keyboard + gamepad (SPEC §7.3)
 
@@ -806,8 +858,6 @@ drives the player flow's stats step at desktop and 390×844 mobile sizes:
 Standard and Assign points for every class, with the Hand and Draw chips
 checked against the hand a solo fight deals. It does not visit the catalog.
 
-## Standalone build (`build/AshenSpire.html`)
-
 ## Shared Load / Quit confirmation
 
 `node tools/confirmation-modal.mjs` drives Load and Quit Without Saving from
@@ -826,8 +876,13 @@ regenerated from frozen source.
 all CSS inlined, every ES module bundled into one classic `<script>` via a tiny
 per-module-closure runtime (so file:// has no module/CORS issue). Double-click
 to play; no server, no Node, no external files. Re-run after any source change.
-The file is a local build output, ignored by git on `dev`; commit only the
-`buildordinal.json` (and generated changelog module) the rebuild writes.
+With no flag it bundles the full art from `assets/`; `--light` reads the
+`assets-mobile/` twins (the dev/test tier), `--mobile` writes the budgeted
+`AshenSpire-mobile.html`, and `--external-art` leaves the art beside the HTML.
+`node tools/launch.mjs --build-only` picks the flags for you (see *Run & test*).
+The file is a local build output, ignored by git on `dev`: of the build's own
+outputs, commit only `buildordinal.json` (and the generated changelog module).
+Generated content and config modules are committed as usual.
 
 ## Balance & telemetry
 
@@ -932,7 +987,7 @@ them. `presets.<id>` are three slots a whole opening parks in
 the change set names the keys to unset as well). Per-scene `music`/`stinger`
 reach the audio engine through the `audio` option `main.js` passes to
 `mountPrologue`; the settings preview passes none and keeps what is playing.
-Deliberate quiet is the `quiet` bed (`content/music.js`), never `stopMusic()` —
+Deliberate quiet is the `quiet` bed (`src/content/music.js`), never `stopMusic()` —
 the engine remembers the context it is in.
 
 The controls are the FRAME's, not the caption's: a band (`.prologue-bar`) that

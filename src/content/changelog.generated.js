@@ -3,6 +3,376 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1350",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: finished changes reach development builds without waiting",
+    "detail": "Nothing you play changes. A change now lands in development as soon as its quick checks pass, and the long checks run when development is promoted to the test build.",
+    "build": "0.7.1.672",
+    "pullRequest": 1350,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1350"
+  },
+  {
+    "id": "pr-1377",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "The market sells skill books, revive tokens, companions and a lead to follow",
+    "detail": "On some visits a market now also lays out skill books, which you read from the Armoury's Inventory outside a fight to add XP to one skill; revive tokens, which burn by themselves when you would fall in a fight and bring you back with part of your health; companions, who travel with you for a few fights and help at their start or on your turns, shown beside you in combat with the fights they have left; and a quest event, an event you have not seen yet, which you pay to follow and which closes the market behind you. Skill books and revive tokens can be sold back from the Sell pane, never for more than they cost to buy. A fight saved after a revive token burned still has it spent when you load it. Each new shelf's chance, weight and stock, the quest event's price, and each item's price, sale value, XP, revive health and fight count are rows in Advanced → Shops. Also: Settings' refusal when a shelf's stock is 0 now names the one fix that works, raising that stock; a sold-out armour shelf stays on the rail like a sold-out sigil shelf; and an unsold offer an update removed no longer leaves an empty shelf behind. An older save loads with no consumables and no companions.",
+    "build": "0.7.1.671",
+    "pullRequest": 1377,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1377"
+  },
+  {
+    "id": "pr-1334",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: a hand-rules test comment catches up",
+    "detail": "Tests only. The fixed-draw test's comment now works its numbers from the one-row hand stats, counting Intelligence from each row's baseline, instead of the retired weights; the values it checks are unchanged.",
+    "build": "0.7.1.669",
+    "pullRequest": 1334,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1334"
+  },
+  {
+    "id": "pr-1376",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the rules for skill books, revive tokens, companions and the market's quest event are written down",
+    "detail": "Docs only; nothing you play changes yet. The design document now says what a skill book, a revive token and a companion are made of, that their prices, sale values, XP, revive health and fight counts will be rows in Advanced → Shops, that a skill book is read from the Armoury's inventory, that selling one back never pays more than buying it costs, how much health a revive token leaves you with, that only one of each companion travels with you at a time, and how the market's one-off event is priced, opened once, and closes the shop behind you. What a companion or a sigil does is now written as a property in the game's tag data, the same way a legendary sigil's is, rather than on the item itself.",
+    "build": "0.7.1.668",
+    "pullRequest": 1376,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1376"
+  },
+  {
+    "id": "pr-1374",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "The market sells more: Smithing Stones, armour, sigils and a bed for the night",
+    "detail": "On some visits a market now also lays out Smithing Stones (a few per visit, priced per stone), armour sets of your class you do not own yet (yours for the rest of the run; wear them from the Armoury), and sigils, which you carry until a blacksmith can set them into a slot. A market in a town with an inn always offers a full rest, once per visit, that rests you exactly as the inn's bed does; a relic that forbids resting refuses it by name. What you bought and what is left on the shelves stay as they were after a reload. The shelves you already know are unchanged, except that a shelf with nothing left to sell you (every relic already yours, say) is now left out and another shelf takes its place (so is card removal when no card could be removed), so a visit still lays out at least as many shelves as it promises. Each new offering's chance, weight, prices and stock are rows in Advanced → Shops, and so is a switch that stops the market selling armour you have not unlocked. An offer on a saved shelf for a sigil or armour set that a later update removed is dropped when the save loads, without rerolling the shelf. An armour set on the shelf stays tied to the class it was stocked for, so a set stocked before your class changed cannot be bought as yours. Settings now refuses a setup that could leave a visit short: with the shipped minimum of two, cards and flasks must stay on with something to sell. An older save loads with no sigils.",
+    "build": "0.7.1.665",
+    "pullRequest": 1374,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1374"
+  },
+  {
+    "id": "pr-1375",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the rules for buying armour at the market are written down",
+    "detail": "Docs only; nothing you play changes yet. The design document now says the market will sell armour sets of your class that you have not unlocked, for the current run only, that a setting can turn this off, how each set's price is rolled between the lowest and highest armour price, that a set on the shelf stays tied to the class it was stocked for, and where a bought set is recorded in a save. It also says that each shop offering is marked in the data as one that can run out of things to sell or not (relics, armaments, weapon arts, card removal, armour, stones, sigils and the inn rest can; only cards and flasks cannot), that such a shelf is left out when it has nothing on it, and that it never counts toward the least number of shelves a shop must keep switched on, so a shop always has enough shelves that can never come up empty. A shelf whose stock is set to 0 does not count either, and any shelf that comes up empty is left out, as is card removal when no card could be removed. The blacksmith and the wise master are held to this once their screens ship, and content with no cards or utility flasks to sell is refused.",
+    "build": "0.7.1.663",
+    "pullRequest": 1375,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1375"
+  },
+  {
+    "id": "pr-1371",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Shops now have kinds, and Settings decides what a merchant lays out",
+    "detail": "With the shipped settings every merchant is the market you know, with the same shelves at the same prices on every seed. New in Advanced → Shops: each shelf (cards, relics, flasks, armaments, weapon arts, card removal) can be turned off or given a chance to appear, and every visit still lays out at least two, adding the heaviest missing ones first. The blacksmith and the wise master are listed with their offerings and prices, but no merchant turns into one until their screens ship. An open shop in an older save loads as a market with its shelves as they were.",
+    "build": "0.7.1.651",
+    "pullRequest": 1371,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1371"
+  },
+  {
+    "id": "pr-1372",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Edit your deck",
+    "detail": "A new deck editor shows the cards you own on one side and your deck on the other. Tap a card, or use its ＋ and － buttons, to move it; a keyboard and a controller can do every move too. The top shows how many cards the deck holds against the smallest and largest deck allowed, and a chart of card costs; chips filter and sort the lists. Done stays off, with a sentence saying why, while the deck is too small or too large, and Cancel puts everything back as it was. By default a Deck button on the map and an Edit deck button in the Armoury's Cards view open it outside combat. With Settings → Advanced → Deck → Where set to Rest sites only, it opens instead from the Rest screen of a shrine, inn or chapel (not a camp); with deck editing off, nothing opens it.",
+    "build": "0.7.1.645",
+    "pullRequest": 1372,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1372"
+  },
+  {
+    "id": "pr-1373",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the 1.0 checklist records three more fixes",
+    "detail": "Docs only. docs/FINISH.md now marks as done: a test that failed only sometimes is fixed, loading a save from the in-game menu is checked in a real browser, and the layout checker's limits are written down.",
+    "build": "0.7.1.640",
+    "pullRequest": 1373,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1373"
+  },
+  {
+    "id": "pr-1368",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the HUD layout check says what it cannot see, and reads the HUD visibility settings too",
+    "detail": "Nothing you play changes. The check that keeps the relic rail inside the HUD now lists what its simple style reader does not model, and a test keeps that list from being dropped. It also reads the style sheet that hides relics and potions when you turn them off, so a later change there that knocks the rail out of place is caught. Hiding the whole rail is allowed only when your settings leave it empty: relics and potions both off, or one off when the rail holds nothing else.",
+    "build": "0.7.1.639",
+    "pullRequest": 1368,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1368"
+  },
+  {
+    "id": "pr-1367",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the non-art files beside the art move to their own folder",
+    "detail": "Nothing a player sees changes. The 23 manifests, notes, checker scripts, font licence text and silent audio stub that sat under assets/ now live under asset-data/, so the high-resolution art can leave this repository without taking them along; every tool, test and document that reads them follows.",
+    "build": "0.7.1.638",
+    "pullRequest": 1367,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1367"
+  },
+  {
+    "id": "pr-1370",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: downloading the high-res art is safe when two copies run at once",
+    "detail": "Nothing you play changes. The tool that fetches the optional high-res art no longer fails when another copy of it replaces the same folder at the same moment.",
+    "build": "0.7.1.637",
+    "pullRequest": 1370,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1370"
+  },
+  {
+    "id": "pr-1366",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: loading a save that can't open from the in-game menu is checked in a real browser",
+    "detail": "Nothing you play changes. When a load from the in-game menu's quick navigation is refused, pressing \"Keep playing\" puts keyboard and controller focus back on the menu button you opened it from. A browser test now proves that, and fails if the menu closes before the load's outcome is known.",
+    "build": "0.7.1.636",
+    "pullRequest": 1366,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1366"
+  },
+  {
+    "id": "pr-1369",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: a code check no longer fails at random while another check runs",
+    "detail": "Nothing you play changes. The check that every fixed list in the game is used by something could crash if another check briefly wrote a scratch file beside it. It now ignores those scratch files. If some other file disappears while it reads, it names that file and reports that it could not finish, instead of crashing or passing on a partial read.",
+    "build": "0.7.1.635",
+    "pullRequest": 1369,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1369"
+  },
+  {
+    "id": "pr-1365",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the owner's scope decisions are written into the design docs",
+    "detail": "Docs only; nothing you play changes. The docs now record seven decisions the owner made on 2026-09-27: this game stays the product, the win-rate target is gone, companions belong to the shop plan, three progression extras wait until after 1.0, the old-names rename is dropped, the high-res art stays private, and an old frozen preview file is deleted.",
+    "build": "0.7.1.633",
+    "pullRequest": 1365,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1365"
+  },
+  {
+    "id": "pr-1364",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the 1.0 checklist records the card reward schedule and crafting drops as done",
+    "detail": "Docs only. docs/FINISH.md ticks §15.1 (#1351) and §15.3 (#1352), each with its test file. Legendary sigils (§15.4) stay open until the market sigils step of §14 is built.",
+    "build": "0.7.1.632",
+    "pullRequest": 1364,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1364"
+  },
+  {
+    "id": "pr-1352",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Drop chances for armaments and Smithing Stones, and refined stones as a reward",
+    "detail": "Nothing drops differently until you change a setting. Advanced → Rewards now has a chance for ordinary fights to drop an armament (0% by default, so they still drop none), a chance for each kind of fight and treasure to pay its Smithing Stones (100% by default), and how many Refined Stones each pays (none by default). Treasure can now pay Smithing Stones too, once you raise its amount. Refined Stones you earn show on the spoils screen and next to your Smithing Stones at the smith, and they are kept for the blacksmith that will spend them.",
+    "build": "0.7.1.631",
+    "pullRequest": 1352,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1352"
+  },
+  {
+    "id": "pr-1363",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the build site publishes again after its first run failed",
+    "detail": "One older test build, rebuilt with the phone-sized mobile copy, was mislabelled, so the site refused to publish. It is now labelled by what was actually built, and the site builds cleanly across all four branches.",
+    "build": "0.7.1.630",
+    "pullRequest": 1363,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1363"
+  },
+  {
+    "id": "pr-1351",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Choose when card rewards come",
+    "detail": "Settings → Rewards has new card reward settings. You can turn the card offer on or off for normal, elite and boss fights, and give each a percent chance to offer a card. When the chance misses, the spoils say \"No card this time.\" A new \"Level card\" option adds one more card to choose whenever a fight raises your level, with a limit on how many one fight can add. Out of the box nothing changes: every fight offers its card as before, level cards are off, and an existing seed gives the same rewards.",
+    "build": "0.7.1.629",
+    "pullRequest": 1351,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1351"
+  },
+  {
+    "id": "pr-1361",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the developer docs are checked against the code",
+    "detail": "Docs only; nothing you play changes. The developer and process guides lose facts that had gone stale (committed builds, a removed rules file, draft pull requests, moved source paths), and dated QA records move to docs/archive/.",
+    "build": "0.7.1.627",
+    "pullRequest": 1361,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1361"
+  },
+  {
+    "id": "pr-1359",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the design and 1.0 plan documents say what is built and what is still planned",
+    "detail": "Docs only; nothing you play changes. The design spec now opens with a table marking each of its sections as built, partly built or planned: the deck editor, the three shops and most of the new reward rules are written down but not built yet (the levelling preview is built). The 1.0 checklist catches up with the last week's merges, and an implemented map-contrast proposal moves to an archive folder.",
+    "build": "0.7.1.626",
+    "pullRequest": 1359,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1359"
+  },
+  {
+    "id": "pr-1362",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the 1.0 checklist records the four fixes that just landed",
+    "detail": "Docs only. docs/FINISH.md now marks as done: a save that cannot be loaded keeps your run, a cancelled End Turn hold opens nothing, each change's changelog build number is checked, and the map camera check runs on every change. It adds one more check: the save-load fix should also be tested in a real browser when loading from the in-game menu screen.",
+    "build": "0.7.1.625",
+    "pullRequest": 1362,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1362"
+  },
+  {
+    "id": "pr-1349",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Settings shows how fast you level",
+    "detail": "Settings → Advanced → Progression now has a Levelling preview that updates as you change the numbers. It shows how much XP a normal fight (3 kills), an elite (1 kill) and a boss (1 kill) gives, how many levels each is worth from level 1 and from level 10, the stat points those levels grant, and the XP to reach each level up to 20. The XP multiplier and Level-up value are counted. A new setting can also cap how many levels one fight can give: XP past the cap is lost, and the spoils screen says how much. It is off by default, so nothing changes until you set it.",
+    "build": "0.7.1.624",
+    "pullRequest": 1349,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1349"
+  },
+  {
+    "id": "pr-1360",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: every new dev build is playable on the build site again",
+    "detail": "The build site had stopped updating after built files stopped being saved with each change. It now rebuilds each recent build from its own source, so the newest dev build is at /dev/latest/ and every recent one has its own page.",
+    "build": "0.7.1.622",
+    "pullRequest": 1360,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1360"
+  },
+  {
+    "id": "pr-1357",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: every change is now checked for the map camera fitting the screen",
+    "detail": "Nothing you see changes. Each proposed change now opens the real map in a browser, resizes its view after it settles, and fails if the camera stops filling the view or loses the destination you picked. The longer map-camera check also makes a new character again, through the Class, Character, Starting equip and Review steps and past the opening, and runs to the end.",
+    "build": "0.7.1.621",
+    "pullRequest": 1357,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1357"
+  },
+  {
+    "id": "pr-1354",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Letting go of the game window mid-hold no longer opens the End Turn check",
+    "detail": "If you were holding the End Turn key and the window lost focus (you alt-tabbed, or the phone went to the background), the game used to treat that as a quick tap and open the End Turn confirmation. Now nothing opens and nothing happens. A quick press and release still opens the check as before. Behind the scenes: the test that lists page listeners now also reads one more way of writing a document listener correctly.",
+    "build": "0.7.1.620",
+    "pullRequest": 1354,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1354"
+  },
+  {
+    "id": "pr-1355",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Loading a save that can't be opened keeps your current climb",
+    "detail": "If you load a slot from the in-run menu and it turns out to be damaged, or another tab cleared it while you were deciding, the game now keeps you in the run you were already playing and tells you the slot could not be loaded. Before, it dropped that run and sent you to the title screen. Saves from a newer version were already handled this way.",
+    "build": "0.7.1.619",
+    "pullRequest": 1355,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1355"
+  },
+  {
+    "id": "pr-1358",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the README says how to play the newest build",
+    "detail": "Docs only; nothing you play changes. The README now explains where to get each build: the stable link, the newest development build from its download page, or running the game from source. Its notes on builds, art quality, recent additions and content counts now match the game.",
+    "build": "0.7.1.618",
+    "pullRequest": 1358,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1358"
+  },
+  {
+    "id": "pr-1343",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Deck rules: set cards aside, draw in your own order",
+    "detail": "The groundwork for the deck editor, which arrives next. A new Settings tab, Advanced → Deck, holds its rules: editing on or off, where you may edit, the smallest and largest deck, and Play in deck order, which draws your cards in the order you arranged them instead of shuffling. A card you take out of your deck is kept, not lost, so you can put it back later; Strike and Defend stay unlimited and still wear your weapon's face.",
+    "build": "0.7.1.617",
+    "pullRequest": 1343,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1343"
+  },
+  {
+    "id": "pr-1356",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: a changelog entry must name the build it ships in",
+    "detail": "Nothing you play changes. Before a change can merge, its own entry here is now checked against the build number it actually ships, so an entry that names the build before or after it is caught instead of going out one number off, as the entry for #1315 did.",
+    "build": "0.7.1.616",
+    "pullRequest": 1356,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1356"
+  },
+  {
+    "id": "pr-1326",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: sessions ask the owner in short bullets",
+    "detail": "Docs only. CLAUDE.md now tells every session to put a question for the owner as one line per bullet, ending in the answer needed, with one sub-bullet saying why it matters, and no paragraphs.",
+    "build": "0.7.1.615",
+    "pullRequest": 1326,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1326"
+  },
+  {
+    "id": "pr-1348",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the rules for card rewards, levelling pace, crafting drops and legendary sigils are written down",
+    "detail": "Docs only; nothing you play changes yet. The design spec now describes settings for when card rewards come (after battle, on level-up) and how often they drop, a levelling preview that shows how fast your current XP settings level you, drop chances for armaments and smithing stones, and legendary sigils with unique effects you attune one at a time.",
+    "build": "0.7.1.614",
+    "pullRequest": 1348,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1348"
+  },
+  {
+    "id": "pr-1353",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the full-resolution art has its first release",
+    "detail": "Nothing you see changes. The full-resolution art now lives in its own private repository, and this build names the exact release of it to use, checked file by file before anything reads it.",
+    "build": "0.7.1.613",
+    "pullRequest": 1353,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1353"
+  },
+  {
+    "id": "pr-1331",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the rules for a deck editor and three kinds of shop are written down",
+    "detail": "Docs only, and nothing you play changes yet. The design spec now describes the deck editor that is planned: you add and remove cards between fights, with Strike and Defend unlimited and every other card limited to the copies you own. Deck size limits and an option to draw in the order you arranged will be settings. It also describes a market, a blacksmith and a wise master: each offers a configurable set of services, and a master can reset one skill back to level 1 for a partial refund of its experience. The 1.0 checklist gains one testable line per step.",
+    "build": "0.7.1.610",
+    "pullRequest": 1331,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1331"
+  },
+  {
+    "id": "pr-1329",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Turning off this device's screen settings no longer reloads your synced profile over local changes",
+    "detail": "Switching \"Include this device's screen settings\" off keeps the record of which profile version was loaded, so the next start leaves edits made here alone; switching it on still reloads, to bring in the screen settings it skipped (settings sync is in development and test builds only).",
+    "build": "0.7.1.609",
+    "pullRequest": 1329,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1329"
+  },
+  {
+    "id": "pr-1330",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "Behind the scenes: the 1.0 checklist records the owner's decisions",
+    "detail": "Docs only. docs/FINISH.md now holds the owner's rulings: no win-rate target for 1.0 (balance stays configurable), 1 to 5 elites in each of the three climbable regions, 3 on average, and a web proof of concept before any store. It adds three things to 1.0: a deck editor between runs, three kinds of shop (shop, blacksmith and wise master), and the design issues that were parked for later.",
+    "build": "0.7.1.607",
+    "pullRequest": 1330,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1330"
+  },
+  {
+    "id": "pr-1328",
+    "date": "2026-09-26",
+    "group": "2026-09-26",
+    "summary": "A full recorded score, written as code",
+    "detail": "Hosted builds now play thirteen recorded tracks. There is one for the title, shop, rest, combat, elite, boss and victory screens, and the map has its own track in each of the five regions. Each track is built on the music the game already plays, with a strong low cello bass under it and a quiet cello phrase from before the Burning that is snuffed out like a flame. Victory is short. Tracks loop without a gap. The two tracks made with an AI music service are gone. The score was composed as code by AI: every note is written in the repository and rendered by an AI-written synthesizer, with no samples, no licensed music and no AI music model.",
+    "build": "0.7.1.605",
+    "pullRequest": 1328,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1328"
+  },
+  {
     "id": "pr-1345",
     "date": "2026-09-26",
     "group": "2026-09-26",

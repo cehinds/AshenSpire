@@ -227,9 +227,72 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.stone.refinedTitle",
+    "extends": "",
+    "short": "{amount} Refined Stone{plural}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.stone.note",
+    "extends": "",
+    "short": "⚒ {amount} Smithing Stone secured · {total} total",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.stone.refinedNote",
+    "extends": "",
+    "short": "{amount} Refined Stone{plural} · {total} refined",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.stone.treasureNote",
+    "extends": "",
+    "short": "Treasure: {note}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "smith.purse.refined",
+    "extends": "",
+    "short": "{amount} Refined Stone{plural}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.stone.refinedBody",
+    "extends": "",
+    "short": "<b>{total} refined</b> · kept for the blacksmith.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.kind.card",
     "extends": "",
     "short": "Card",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.levelCard.title",
+    "extends": "",
+    "short": "Level card",
+    "full": "A level this fight bought: pick one more card.",
+    "tip": ""
+  },
+  {
+    "id": "reward.note.cardMissed",
+    "extends": "",
+    "short": "No card this time.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.note.levelCardAuto",
+    "extends": "",
+    "short": "A level card left unpicked is chosen for you.",
     "full": "",
     "tip": ""
   },
@@ -871,6 +934,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.progress.discarded",
+    "extends": "",
+    "short": "{xp} xp lost to the level cap",
+    "full": "{xp} XP went past the most levels one fight can give, and was lost.",
+    "tip": ""
+  },
+  {
     "id": "reward.progress.xp",
     "extends": "",
     "short": "{xp} / {next} XP",
@@ -1049,6 +1119,41 @@ export const uiStrings = [
     "id": "atlas.context.aria",
     "extends": "",
     "short": "Selected place",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.shop.benefit",
+    "extends": "",
+    "short": "Spend cinders on cards, equipment, weapon arts, relics, or flasks from this market’s stock.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.shop.benefit.rolled",
+    "extends": "",
+    "short": "Spend cinders on this visit’s {shelves}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.shop.benefit.remove",
+    "extends": "",
+    "short": "You can also remove a card from your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.shop.benefit.removeMaybe",
+    "extends": "",
+    "short": "This visit may also offer to remove a card from your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "atlas.shop.fact.remove",
+    "extends": "",
+    "short": "Remove a card: {cost} cinders. You must keep at least one card.",
     "full": "",
     "tip": ""
   },
@@ -1235,6 +1340,104 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "shop.review.buy.stone",
+    "extends": "",
+    "short": "Buy a Smithing Stone?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.stone.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). The stone pays toward a smith's upgrade.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.armour",
+    "extends": "",
+    "short": "Buy this armour?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.armour.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). The set is yours for the rest of the run; wear it from the Armoury.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.sigil",
+    "extends": "",
+    "short": "Buy this sigil?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.sigil.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). You carry the sigil until a blacksmith sets it into a slot.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.rest",
+    "extends": "",
+    "short": "Rest here?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.book",
+    "extends": "",
+    "short": "Buy this skill book?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.book.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). Read it from the Armoury's Inventory.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.token",
+    "extends": "",
+    "short": "Buy this revive token?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.token.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). It burns by itself when you would fall in a fight.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.companion",
+    "extends": "",
+    "short": "Hire this companion?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.companion.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). It travels with you for a few fights.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.buy.rest.message",
+    "extends": "",
+    "short": "Spend {cost} of your {cinders} cinders ({left} left). You rest exactly as the inn's bed rests you.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "shop.review.burn",
     "extends": "",
     "short": "Burn this card?",
@@ -1273,6 +1476,13 @@ export const uiStrings = [
     "id": "shop.review.sell.flask",
     "extends": "",
     "short": "Sell this flask?",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.review.sell.consumable",
+    "extends": "",
+    "short": "Sell this?",
     "full": "",
     "tip": ""
   },
@@ -1522,6 +1732,321 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "shop.bar.armour",
+    "extends": "",
+    "short": "ARMOUR",
+    "full": "Armour sets of your class the merchant has for sale.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.smithStones",
+    "extends": "",
+    "short": "SMITHING STONES",
+    "full": "The stones a smith's upgrades are paid in.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.sigils",
+    "extends": "",
+    "short": "SIGILS",
+    "full": "Sigils to carry until a blacksmith sets them into a slot.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.innRest",
+    "extends": "",
+    "short": "REST",
+    "full": "A full rest at the inn, bought here.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.skillBooks",
+    "extends": "",
+    "short": "SKILL BOOKS",
+    "full": "Books that teach a skill track. Read one from the Armoury's Inventory.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.reviveTokens",
+    "extends": "",
+    "short": "REVIVE TOKENS",
+    "full": "A token that burns to save you when you would fall in a fight.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.questEvent",
+    "extends": "",
+    "short": "QUEST",
+    "full": "One event the market knows of. Taking it closes the market behind you.",
+    "tip": ""
+  },
+  {
+    "id": "shop.bar.companions",
+    "extends": "",
+    "short": "COMPANIONS",
+    "full": "Allies who travel with you for a few fights.",
+    "tip": ""
+  },
+  {
+    "id": "shop.book.desc",
+    "extends": "",
+    "short": "{text} Read it from the Armoury's Inventory.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.token.desc",
+    "extends": "",
+    "short": "{text} It burns by itself when you need it.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.companion.desc",
+    "extends": "",
+    "short": "{blurb} It travels with you for {combats} fights.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.quest.name",
+    "extends": "",
+    "short": "{name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.quest.desc",
+    "extends": "",
+    "short": "Leave the market and follow this lead. The market closes behind you, and the event plays out once.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.quest.taken",
+    "extends": "",
+    "short": "You followed this lead already.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.action.quest",
+    "extends": "",
+    "short": "Follow · {cost} cinders",
+    "full": "Pay {cost} cinders and leave the market for this event.",
+    "tip": ""
+  },
+  {
+    "id": "shop.consumable.sellDesc",
+    "extends": "",
+    "short": "{text} You hold {count}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.companionHas",
+    "extends": "",
+    "short": "{name} already travels with you.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.questTaken",
+    "extends": "",
+    "short": "You have already followed this lead.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.questSeen",
+    "extends": "",
+    "short": "You have already seen this event.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "consumable.refuse.notBook",
+    "extends": "",
+    "short": "Only a skill book can be read.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "consumable.refuse.none",
+    "extends": "",
+    "short": "You hold no {name}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "consumable.refuse.inCombat",
+    "extends": "",
+    "short": "{name} cannot be read during a fight.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.consumable.read",
+    "extends": "",
+    "short": "Read",
+    "full": "Read this skill book: its track gains the XP it teaches.",
+    "tip": ""
+  },
+  {
+    "id": "armoury.consumable.category",
+    "extends": "",
+    "short": "Consumable",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.consumable.token",
+    "extends": "",
+    "short": "It burns by itself when you would fall in a fight.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "combat.companion.left",
+    "extends": "",
+    "short": "{name} · {n} fights left",
+    "full": "{name} travels with you for {n} more fights.",
+    "tip": ""
+  },
+  {
+    "id": "shop.stones.name",
+    "extends": "",
+    "short": "Smithing Stone",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.stones.desc",
+    "extends": "",
+    "short": "One stone toward a smith's upgrade. {left} left this visit.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.armour.desc",
+    "extends": "",
+    "short": "An armour set for your class. Wear it from the Armoury.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.sigil.desc",
+    "extends": "",
+    "short": "{blurb} Carried until a blacksmith sets it into a slot.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.inn.name",
+    "extends": "",
+    "short": "A full rest",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.inn.desc",
+    "extends": "",
+    "short": "Rest exactly as the inn's bed rests you. Once this visit.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.inn.done",
+    "extends": "",
+    "short": "You rested here this visit.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.notOffered",
+    "extends": "",
+    "short": "This market is not offering that.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.gone",
+    "extends": "",
+    "short": "This offer is no longer available.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.unpriced",
+    "extends": "",
+    "short": "This offer has no valid price.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.cinders",
+    "extends": "",
+    "short": "Not enough cinders.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.stale",
+    "extends": "",
+    "short": "The offer changed. Inspect it again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.stones",
+    "extends": "",
+    "short": "The market has {left} Smithing Stone(s) left this visit; you asked for {count}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.noLoadout",
+    "extends": "",
+    "short": "Your equipment is unavailable.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.armourOwned",
+    "extends": "",
+    "short": "You already own {name}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.armourClass",
+    "extends": "",
+    "short": "{name} was stocked for another class; it is not yours to wear.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.sigilOwned",
+    "extends": "",
+    "short": "You already hold {name}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.innBought",
+    "extends": "",
+    "short": "You have already rested here this visit.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.innDenied",
+    "extends": "",
+    "short": "The {relic} will not let you rest here.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "customRun.seat.group",
     "extends": "",
     "short": "First seat",
@@ -1569,6 +2094,461 @@ export const uiStrings = [
     "short": "Settings section: {section}",
     "full": "Show the list of settings sections.",
     "tip": "Choose a section"
+  },
+  {
+    "id": "settings.levelPace.title",
+    "extends": "",
+    "short": "Levelling preview",
+    "full": "What the XP settings in force make of a climb.",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.subtitle",
+    "extends": "",
+    "short": "A new run under these settings",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.multiplier",
+    "extends": "",
+    "short": "XP ×{multiplier}",
+    "full": "The XP multiplier applied to every award.",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.pointsPerLevel",
+    "extends": "",
+    "short": "{count} stat point{plural} a level",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.cap",
+    "extends": "",
+    "short": "at most {count} level{plural} an award",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.noCap",
+    "extends": "",
+    "short": "no cap an award",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.fight.normal",
+    "extends": "",
+    "short": "A normal fight",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.fight.elite",
+    "extends": "",
+    "short": "An elite fight",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.fight.boss",
+    "extends": "",
+    "short": "A boss fight",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.fightLine",
+    "extends": "",
+    "short": "{fight} ({kills} kill{killsPlural}) gives {xp} XP: {worth}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.worth",
+    "extends": "",
+    "short": "{count} level{plural} from level {level}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.worthCapped",
+    "extends": "",
+    "short": "{count} level{plural} from level {level} (capped)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.points",
+    "extends": "",
+    "short": "{count} stat point{plural} from level {level}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.curveTitle",
+    "extends": "",
+    "short": "XP to reach each level",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.curveLevel",
+    "extends": "",
+    "short": "Lv {level}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.curveTotal",
+    "extends": "",
+    "short": "{total} total",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.refused",
+    "extends": "",
+    "short": "These settings are not applied, so this preview shows the authored defaults a new run keeps: {problem}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.group.label",
+    "extends": "",
+    "short": "Shops",
+    "full": "The market, the blacksmith and the wise master: which offerings a visit lays out, the fewest it guarantees, and what each one sells.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.kindWeights",
+    "extends": "",
+    "short": "Merchant kinds",
+    "full": "Which kind of shop a merchant on the map turns out to be. A kind appears here once its screen has shipped.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.market",
+    "extends": "",
+    "short": "Market",
+    "full": "The usual merchant: cards, relics, flasks, armaments, weapon arts and card removal, and on some visits armour, Smithing Stones, sigils, a full rest, skill books, revive tokens, a quest event and companions.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.blacksmith",
+    "extends": "",
+    "short": "Blacksmith",
+    "full": "The blacksmith's offerings and prices. No merchant is a blacksmith until its screen ships.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.consumables",
+    "extends": "",
+    "short": "Consumables",
+    "full": "Skill books and revive tokens: what each costs, what the market pays back, the XP a book teaches and the health a token leaves you with.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.companions",
+    "extends": "",
+    "short": "Companions",
+    "full": "What each companion costs and how many fights it travels with you.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.topic.master",
+    "extends": "",
+    "short": "Wise master",
+    "full": "The wise master's offerings and prices. No merchant is a master until its screen ships.",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.cards",
+    "extends": "",
+    "short": "Cards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.relics",
+    "extends": "",
+    "short": "Relics",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.flasks",
+    "extends": "",
+    "short": "Flasks",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.armaments",
+    "extends": "",
+    "short": "Armaments",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.weaponArts",
+    "extends": "",
+    "short": "Weapon arts",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.remove",
+    "extends": "",
+    "short": "Card removal",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.upgrade",
+    "extends": "",
+    "short": "Item upgrade",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.smithStones",
+    "extends": "",
+    "short": "Smithing Stones",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.refineStones",
+    "extends": "",
+    "short": "Refined stones",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.sigilSlots",
+    "extends": "",
+    "short": "Sigil slots",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.sigils",
+    "extends": "",
+    "short": "Sigil setting",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.market.sigils",
+    "extends": "",
+    "short": "Sigils",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.armour",
+    "extends": "",
+    "short": "Armour",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.innRest",
+    "extends": "",
+    "short": "Inn rest",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.extractArt",
+    "extends": "",
+    "short": "Art extraction",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.installArt",
+    "extends": "",
+    "short": "Art seating",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.upgradeArt",
+    "extends": "",
+    "short": "Art upgrade",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.stackCopy",
+    "extends": "",
+    "short": "Stacked copies",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.skillBooks",
+    "extends": "",
+    "short": "Skill books",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.reviveTokens",
+    "extends": "",
+    "short": "Revive tokens",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.questEvent",
+    "extends": "",
+    "short": "Quest event",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.companions",
+    "extends": "",
+    "short": "Companions",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.training",
+    "extends": "",
+    "short": "Training",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.respec",
+    "extends": "",
+    "short": "Respec",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.lesson",
+    "extends": "",
+    "short": "Lessons",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.appraisal",
+    "extends": "",
+    "short": "Appraisal",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.offering.redistribute",
+    "extends": "",
+    "short": "Redistribution",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.kindWeight",
+    "extends": "",
+    "short": "Merchant is a {kind}: weight",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.minimum",
+    "extends": "",
+    "short": "{kind}: guaranteed minimum",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.enabled",
+    "extends": "",
+    "short": "{kind} · {offering}: offered",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.chance",
+    "extends": "",
+    "short": "{kind} · {offering}: chance",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.weight",
+    "extends": "",
+    "short": "{kind} · {offering}: guarantee weight",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.offeringValue",
+    "extends": "",
+    "short": "{kind} · {offering}: {value}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.row.kindValue",
+    "extends": "",
+    "short": "{kind}: {value}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.minimum",
+    "extends": "",
+    "short": "{kind}: a guaranteed minimum of {value} is refused; it must be at least {floor}. The authored shops stay in force until it is.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.noKind",
+    "extends": "",
+    "short": "Merchant kinds: every kind that can open ({kinds}) has a weight of 0, so no merchant could open. Give one a weight above 0.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.disabled",
+    "extends": "",
+    "short": "{kind}: turning off {offerings} leaves {enabled} offering(s) enabled, fewer than its guaranteed minimum of {minimum}. Turn one back on or lower the minimum.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.conditional",
+    "extends": "",
+    "short": "{kind}: only {enabled} of its enabled offerings can never come up empty, fewer than its guaranteed minimum of {minimum}. The conditional ones ({conditional}) can have nothing to sell on a visit, so they do not count. Turn another offering on or lower the minimum.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.emptyStock",
+    "extends": "",
+    "short": "{kind}: needs at least {minimum} always-stocked offerings with a stock of 1 or more, but only {enabled} have one; raise the stock of {stocks}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.sellValue",
+    "extends": "",
+    "short": "Consumables · {name}: a sale value of {sellValue} is refused; it must not be above its cost of {cost}, or buying one and selling it back would profit. Its authored values stay in force until it is fixed.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.armourCost",
+    "extends": "",
+    "short": "{kind} · {offering}: a cost from {min} to {max} is refused; the least must not be above the most. The authored shops stay in force until it is fixed.",
+    "full": "",
+    "tip": ""
   },
   {
     "id": "nav.categorySelector",
@@ -2495,6 +3475,27 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "save.refused.title",
+    "extends": "",
+    "short": "This save could not be loaded",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.refused.message",
+    "extends": "",
+    "short": "Slot {slot} could not be opened, so your current climb is still in hand and nothing in it changed.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "save.refused.close",
+    "extends": "",
+    "short": "Keep playing",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "save.review.delete",
     "extends": "",
     "short": "Delete slot {slot}?",
@@ -2724,5 +3725,362 @@ export const uiStrings = [
     "short": "Live portrait (W1c head)",
     "full": "The head portrait as the catalogue shows it.",
     "tip": ""
+  },
+  {
+    "id": "deckEditor.title",
+    "extends": "",
+    "short": "Edit deck",
+    "full": "Move cards between your deck and the cards you own.",
+    "tip": "Edit deck"
+  },
+  {
+    "id": "deckEditor.open",
+    "extends": "",
+    "short": "Deck",
+    "full": "Open the deck editor.",
+    "tip": "Edit deck"
+  },
+  {
+    "id": "deckEditor.rest",
+    "extends": "",
+    "short": "Edit deck",
+    "full": "Rearrange your deck with the cards you own. Leaving the editor keeps this visit open.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.armoury",
+    "extends": "",
+    "short": "Edit deck",
+    "full": "Open the deck editor with the cards you own.",
+    "tip": "Edit deck"
+  },
+  {
+    "id": "deckEditor.counter",
+    "extends": "",
+    "short": "{count} / {min}–{max}",
+    "full": "Cards in the deck, then the fewest and the most the editor lets you confirm.",
+    "tip": "Deck size"
+  },
+  {
+    "id": "deckEditor.unlimited",
+    "extends": "",
+    "short": "∞",
+    "full": "No limit.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.pane.deck",
+    "extends": "",
+    "short": "Deck",
+    "full": "The cards you will fight with. Tap one to take it out.",
+    "tip": "Deck"
+  },
+  {
+    "id": "deckEditor.pane.collection",
+    "extends": "",
+    "short": "Collection",
+    "full": "Every card you own. Tap one to add it to the deck.",
+    "tip": "Collection"
+  },
+  {
+    "id": "deckEditor.panes.switch",
+    "extends": "",
+    "short": "Switch pane",
+    "full": "Move between the collection and the deck.",
+    "tip": "Switch pane"
+  },
+  {
+    "id": "deckEditor.curve",
+    "extends": "",
+    "short": "Cost curve",
+    "full": "How many cards in the deck cost each amount.",
+    "tip": "Cost curve"
+  },
+  {
+    "id": "deckEditor.curve.bar",
+    "extends": "",
+    "short": "{bucket}",
+    "full": "{count} cards cost {bucket}.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.filters",
+    "extends": "",
+    "short": "Filter",
+    "full": "Show only the cards that match.",
+    "tip": "Filter"
+  },
+  {
+    "id": "deckEditor.sort",
+    "extends": "",
+    "short": "Sort",
+    "full": "Order the cards.",
+    "tip": "Sort"
+  },
+  {
+    "id": "deckEditor.filter.cost",
+    "extends": "",
+    "short": "Cost {cost}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.filter.upgraded",
+    "extends": "",
+    "short": "Upgraded",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.type.attack",
+    "extends": "",
+    "short": "Attack",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.type.skill",
+    "extends": "",
+    "short": "Skill",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.type.power",
+    "extends": "",
+    "short": "Power",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.type.curse",
+    "extends": "",
+    "short": "Curse",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.type.status",
+    "extends": "",
+    "short": "Status",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.type.other",
+    "extends": "",
+    "short": "Other",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.source.basic",
+    "extends": "",
+    "short": "Basic",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.source.art",
+    "extends": "",
+    "short": "Weapon art",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.source.technique",
+    "extends": "",
+    "short": "Technique",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.source.reward",
+    "extends": "",
+    "short": "Reward",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.source.item",
+    "extends": "",
+    "short": "Item-owned",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.sort.cost",
+    "extends": "",
+    "short": "Cost",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.sort.name",
+    "extends": "",
+    "short": "Name",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.sort.type",
+    "extends": "",
+    "short": "Type",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.sort.source",
+    "extends": "",
+    "short": "Source",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.tile.owned",
+    "extends": "",
+    "short": "{owned} owned · {inDeck} in deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.tile.basic",
+    "extends": "",
+    "short": "∞ · {inDeck} in deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.count",
+    "extends": "",
+    "short": "×{count}",
+    "full": "{count} copies in the deck.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.tile.kept",
+    "extends": "",
+    "short": "{count} set aside",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.tile.keptUpgraded",
+    "extends": "",
+    "short": "{count} set aside · upgraded",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.add",
+    "extends": "",
+    "short": "＋",
+    "full": "Add {name} to the deck.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.remove",
+    "extends": "",
+    "short": "－",
+    "full": "Take {name} out of the deck.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.up",
+    "extends": "",
+    "short": "▲",
+    "full": "Move {name} one place earlier in the deck.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.down",
+    "extends": "",
+    "short": "▼",
+    "full": "Move {name} one place later in the deck.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.pickUp",
+    "extends": "",
+    "short": "Move",
+    "full": "Pick up {name}, then place it with the arrows.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.held",
+    "extends": "",
+    "short": "Moving {name}: ▲ and ▼ place it, and Move or Enter drops it.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.locked",
+    "extends": "",
+    "short": "Locked · {piece}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.locked.sentence",
+    "extends": "",
+    "short": "{name} comes with {piece}; the Armoury decides it.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.lock.equipment",
+    "extends": "",
+    "short": "your equipment",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.refuse.copyLimit",
+    "extends": "",
+    "short": "{name} is limited to {limit} in the deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.refuse.allInDeck",
+    "extends": "",
+    "short": "Every {name} you own is already in the deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.empty.deck",
+    "extends": "",
+    "short": "No card in the deck matches these filters.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.empty.collection",
+    "extends": "",
+    "short": "No card you own matches these filters.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.keys",
+    "extends": "",
+    "short": "Tap, ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Done · {cancel} Cancel",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.done",
+    "extends": "",
+    "short": "Done",
+    "full": "Keep this deck.",
+    "tip": "Done"
+  },
+  {
+    "id": "deckEditor.cancel",
+    "extends": "",
+    "short": "Cancel",
+    "full": "Put the deck back exactly as it was when the editor opened.",
+    "tip": "Cancel"
   }
 ];

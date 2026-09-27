@@ -438,6 +438,31 @@ export const balance = {
     // Decaying flask drop (StS potion rule): −step on drop, +step on miss.
     flaskDropBasePct: 35,
     flaskDropStepPct: 10,
+    // THE CARD REWARD SCHEDULE (SPEC §15.1): when a won fight offers a card
+    // row, and whether a level the fight bought adds one. Every default here
+    // reproduces the rewards before the schedule existed: every pool offers,
+    // a chance of 100 rolls nothing on `rewardRolls`, and no level card.
+    // Read by engine/encounters.js `rollCombatCardOffer`.
+    cardRewards: {
+      afterCombat: {
+        normal: true, elite: true, boss: true,
+        [NOTE]: {
+          '{kind}': 'Whether winning {pool} offers a card to choose. Off, that fight lays out no card row.',
+        },
+      },
+      chancePct: {
+        normal: 100, elite: 100, boss: 100,
+        [NOTE]: {
+          '{kind}': 'The percent chance that winning {pool} offers its card row. At 100 nothing is rolled; a miss says "No card this time."',
+        },
+      },
+      onLevelUp: false,
+      onLevelUpMaxPerFight: 1,
+      [NOTE]: {
+        onLevelUp: 'When a fight raises the character level, the spoils add a level card row: one more card to choose, at that fight\'s own rarity odds.',
+        onLevelUpMaxPerFight: 'How many level card rows one fight can add, however many levels it gained.',
+      },
+    },
     [NOTE]: {
       cardChoices: 'How many cards a reward door lays out to choose from.',
       flaskDropBasePct: 'The chance a fight drops a flask charge, before the run\'s running adjustment.',
@@ -534,6 +559,26 @@ export const balance = {
         '{kind}': 'How many Smithing Stones {pool} pays out.',
       },
     },
+    // THE STONE DOOR'S CHANCE (SPEC §15.3). A stone reward is paid when the
+    // pool pays anything and this percent passes, rolled once per door on the
+    // `smith` stream. 100 is always and rolls nothing, so the shipped table
+    // pays exactly what it always did; 0 is never, and rolls nothing either.
+    rewardChancePct: {
+      normal: 100, elite: 100, boss: 100, treasure: 100,
+      [NOTE]: {
+        '{kind}': 'Percent chance {pool} pays its Smithing Stone reward, ordinary and refined alike. 100 is always and rolls nothing; 0 is never.',
+      },
+    },
+    // Refined stones as a drop — the crafting-material reward. Paid through
+    // the same door and the same chance as the ordinary stones above, into
+    // `run.smithingStonesRefined`. Shipped off everywhere. They are paid and
+    // shown only: spending them is §14.4's blacksmith (`refine.value`).
+    refinedRewardByPool: {
+      normal: 0, elite: 0, boss: 0, treasure: 0,
+      [NOTE]: {
+        '{kind}': 'How many Refined Smithing Stones {pool} pays out, through the same chance as its ordinary stones.',
+      },
+    },
 
     // THE SMITH'S SERVICES, AND WHO OFFERS THEM (owner ruling, 2026-09-03).
     // A smith does three things: upgrade an item (the tier promotion above),
@@ -622,19 +667,26 @@ export const balance = {
   // THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): XP from a
   // won fight and from each kill by the door's pool (and per quest once phase
   // 10a's door pays it), on the one curve shape every track shares —
-  // `xpToNext(n) = round(base × growth^(n − 1), roundTo)`. Curve receipt at
-  // these numbers: the steps from level 1 cost 100, 120, 130, 150, 170, 200,
-  // 230, 270, 310, 350 — 2,030 XP to level 11. The owner's band is 10–20
-  // levels a full run and `tools/runsim.mjs --xp-levels` measures it (a
-  // greedy bot, the ceiling a real climb approaches).
+  // `xpToNext(n) = round(base × growth^(n − 1), roundTo)`, never below one
+  // `roundTo`. Curve receipt at the live numbers (base 5, growth 1.15, roundTo
+  // 10, the owner's 2026-09-24 lowering): the steps from level 1 cost 10, 10,
+  // 10, 10, 10, 10, 10, 10, 20, 20 — 120 XP to level 11, and 460 to level 20.
+  // (The proposal's curve, base 100 — 100, 120, 130, 150 … 2,030 XP to level
+  // 11 — is gone with that lowering.) The owner's band is 10–20 levels a full
+  // run and `tools/runsim.mjs --xp-levels` measures it (a greedy bot, the
+  // ceiling a real climb approaches). Settings → Progression → Experience
+  // draws the Levelling preview (SPEC §15.2, model/levelup.js `levelPace`):
+  // at these numbers a normal fight (3 kills, 30 XP) is worth 3 levels from
+  // level 1, an elite (90 XP) 8 and a boss (215 XP) 13.
   //
   // THE AWARDS, MEASURED (2026-09-19, 4 runs/class). The proposal's table
   // (20 a win; 10 / 30 / 80 a kill; 50 a quest) assumed about 36 normal
   // fights, 6 elites and 3 bosses a run; this map pays fewer, and at those
-  // numbers a full run earned ~1,030 XP — 6.7 levels, under the band. The
-  // curve is the proposal's and stays (its receipt above is quoted in SPEC);
-  // the awards are what a run of THIS length has to pay to land in it, so
-  // they were raised ×2.5 and re-measured — see the fleet line the sim prints.
+  // numbers a full run earned ~1,030 XP — 6.7 levels, under the band, on the
+  // proposal's base-100 curve; the awards were raised ×2.5 and re-measured
+  // for a run of THIS length (see the fleet line the sim prints). The curve
+  // was then lowered to base 5 without re-measuring the awards, which is why
+  // the pace is fast now; the Levelling preview is where the owner tunes it.
   // Cinders buy no level any more: the ladder that sat here (firstCost /
   // costStep, measured twice) is gone with the purse.
   level: {
@@ -645,6 +697,14 @@ export const balance = {
         growth: 'The character level curve: how much dearer each step is than the one before it.',
         roundTo: 'The character level curve: every step cost is rounded to a multiple of this.',
       },
+    },
+    // THE LEVELLING CAP (SPEC §15.2). 0 is no cap, as shipped. Above 0, one
+    // award (a fight's XP, or a quest's) never raises the level by more than
+    // this, and the XP past the cap is DISCARDED: the ledger keeps at most one
+    // XP short of the next step, so the progress bar never reads past full.
+    maxLevelsPerFight: 0,
+    [NOTE]: {
+      maxLevelsPerFight: 'The most character levels one fight or quest can raise you; 0 is no cap. XP past the cap is lost, leaving you just short of the next level.',
     },
     // The maxima bump cadence is authored on the derived-stat rows that carry
     // it (content/derivedStats.js `perLevel`), where the snapshot keeps it.
@@ -1628,6 +1688,10 @@ export const balance = {
     lodestarShard: { restoreMana: 1 },
     waxenSeal: { heal: 3 },
     whetstonePouch: { bleed: 2 },
+    // The two companions (SPEC §14.3): their property rules read these, so a
+    // companion's numbers are tuned beside every relic's.
+    hollowSquire: { block: 5 },
+    emberHound: { damage: 3 },
     [NOTE]: {
       '{relic}.{variable}': '{relicName} — {effect}.',
     },
@@ -2020,13 +2084,17 @@ export const balance = {
       reveal: 'teased',
       // Chance a node of each kind yields an armament, and the rarity odds when
       // it does. Bosses always drop; their table is weighted to the good stuff.
+      // `normal` (SPEC §15.3) ships at 0, which returns before any draw, so an
+      // ordinary fight drops nothing until the owner raises it. The roll draws
+      // from the authored weapons only; armour has no run inventory to drop into.
       chance: {
-        treasure: 60, elite: 30, boss: 100, shop: 0,
+        normal: 0, treasure: 60, elite: 30, boss: 100, shop: 0,
         [NOTE]: {
           '{kind}': 'Percent chance {pool} yields an armament.',
         },
       },
       rarityWeights: {
+        normal: { common: 40, uncommon: 45, rare: 15 },
         treasure: { common: 55, uncommon: 35, rare: 10 },
         elite: { common: 40, uncommon: 45, rare: 15 },
         boss: { common: 15, uncommon: 45, rare: 40 },

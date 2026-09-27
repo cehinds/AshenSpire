@@ -30,12 +30,13 @@ import { computeTokenBindings } from '../model/validate.js';
 import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax, enemyMoveDamage } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { playerWeightClass } from '../model/combatWeight.js';
+import { orderedDrawPile } from '../model/deckRules.js';
 export { playerWeightClass };
 import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool, gripOf, gripTags } from '../model/loadout.js';
 // Deck restamping goes through the framework's adopted composition door.
 import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
-import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, propertyMountsOf } from './properties.js';
+import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncCompanionProperties, propertyMountsOf } from './properties.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -69,6 +70,9 @@ export function createCombat({
   // already had, and `resolveSwapCostRule(registries, meta)` is the one place
   // his Settings choice is read.
   swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, ratingsRules = null,
+  // SPEC §14.1 Play in deck order: read once by the caller (runCombat.js) and
+  // carried on the fight as `orderedDraw`, so a saved fight keeps its rule.
+  orderedDraw = false,
 }) {
   // Run creation owns derived Mana. Older headless fixtures without a Mana
   // pool get a harmless zero pool; class data is never a fallback authority.
@@ -170,9 +174,17 @@ export function createCombat({
     skills: player.skills ? structuredClone(player.skills) : {},
     // The core card's picked tree nodes (plan phase 5b), mounted with the class.
     coreTags: Array.isArray(player.coreTags) ? [...player.coreTags] : [],
+    // SPEC §14.3: the run's consumable counts, copied — a revive token spends
+    // from this copy (engine/actions.js) and the run's owner settles it back
+    // at combat end (runCombatEnd). Null for a fight handed none (a headless
+    // fixture), whose end then leaves a run's counts alone.
+    consumables: player.consumables && typeof player.consumables === 'object' ? { ...player.consumables } : null,
+    // …and the companions travelling with the run, mounted below like relics.
+    companions: Array.isArray(player.companionIds) ? [...player.companionIds] : [],
     swapCostRule: swapCostRule || resolveSwapCostRule(registries, null),
     swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
+    orderedDraw: null, // { order: instanceIds } under Play in deck order (SPEC §14.1)
     queue: [],
     eventLog: [],
     _buffer: null,
@@ -198,6 +210,9 @@ export function createCombat({
   // …and the class card, the core zone's one card (plan phase 5a): its
   // `favored` leaning is a property like any other.
   syncClassProperties(combat);
+  // …and the companions travelling with the run (SPEC §14.3): each mounts as a
+  // `companion` carrier, its rules its tagging.csv property rows.
+  syncCompanionProperties(combat);
 
   // Enemies — HP rolled on stream 'enemyHP' (SPEC §3.11, §4.6). An optional
   // hpMult (Custom Climb difficulty rules) scales the rolled HP after the roll,
@@ -250,14 +265,14 @@ export function createCombat({
     ...(Number.isInteger(c.smithingLevel) ? { smithingLevel: c.smithingLevel } : {}),
     ...(c.sourceEquipmentInstanceId ? { sourceEquipmentInstanceId: c.sourceEquipmentInstanceId } : {}),
   }));
-  const shuffled = rng.shuffle('shuffle', deck);
-  const innate = [];
-  const rest = [];
-  for (const card of shuffled) {
-    const def = resolveCard(registries, card);
-    (registries.framework.isInnate(def) ? innate : rest).push(card);
+  const isInnate = (card) => registries.framework.isInnate(resolveCard(registries, card));
+  if (orderedDraw) {
+    // In deck order, and no `shuffle` value is consumed (SPEC §14.1).
+    combat.orderedDraw = { order: deck.map((card) => card.instanceId) };
+    combat.piles.draw = orderedDrawPile(deck, isInnate);
+  } else {
+    combat.piles.draw = orderedDrawPile(rng.shuffle('shuffle', deck), isInnate);
   }
-  combat.piles.draw = [...innate, ...rest];
 
   combat.emit('combatStart', {});
   // Optional Custom Climb buffs (generic — statuses are content ids, applied via

@@ -18,9 +18,10 @@
 // not a screen redesign.
 //
 // WHAT THIS FILE DOES NOT DO, stated: it never touches `run`, never applies a
-// reward, never rolls its own randomness (the pick function is HANDED IN so a
-// seeded run stays seeded), and never invents a seen-store (possessions are
-// handed in too). Application stays with the caller, one seam.
+// reward, never rolls its own randomness (the pick function — and, for the
+// card reward schedule, the seeded rng — is HANDED IN so a seeded run stays
+// seeded), and never invents a seen-store (possessions are handed in too).
+// Application stays with the caller, one seam.
 
 /**
  * The closed kind order — the menu's one spelling of "card, potion, armament"
@@ -28,7 +29,68 @@
  * Cinders lead because they are the certain, no-decision row; his named three
  * follow in his order (flask IS the potion seat in this game).
  */
-export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'skillDraft', 'card', 'flask', 'armament', 'relic']);
+export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'skillDraft', 'card', 'levelCard', 'flask', 'armament', 'relic']);
+
+// ---- the card reward schedule (SPEC §15.1) ----------------------------------
+
+const SCHEDULE_POOLS = Object.freeze(['normal', 'elite', 'boss']);
+
+/**
+ * cardRewardSchedule(balance) → the schedule in force, every key present.
+ * `balance.rewards.cardRewards` is read key by key over the shipped defaults
+ * (every pool offers, chance 100, no level card, at most one), so a bundle
+ * written before the block existed — a test fixture, an old snapshot — reads
+ * as the rewards before the schedule.
+ */
+export function cardRewardSchedule(balance) {
+  const s = (balance && balance.rewards && balance.rewards.cardRewards) || {};
+  const out = { afterCombat: {}, chancePct: {}, onLevelUp: s.onLevelUp === true, onLevelUpMaxPerFight: 1 };
+  for (const pool of SCHEDULE_POOLS) {
+    out.afterCombat[pool] = !(s.afterCombat && s.afterCombat[pool] === false);
+    const pct = s.chancePct && s.chancePct[pool];
+    out.chancePct[pool] = Number.isFinite(pct) ? Math.max(0, Math.min(100, pct)) : 100;
+  }
+  if (Number.isInteger(s.onLevelUpMaxPerFight) && s.onLevelUpMaxPerFight >= 0) out.onLevelUpMaxPerFight = s.onLevelUpMaxPerFight;
+  return out;
+}
+
+/**
+ * cardRewardPlan(balance, { pool, levelsGained, draftWaiting }, rng)
+ *   → { offerCard, cardMissed, levelCards }
+ *
+ * THE ONE DOOR the card reward schedule is read through (SPEC §15.1): solo
+ * (main.js onCombatEnd, through engine/encounters.js rollCombatCardOffer),
+ * co-op (tools/session.mjs) and the simulator (tools/runsim.mjs) all ask it,
+ * so the three agree on which card rows a won fight earns.
+ *   offerCard  — the plain card row is offered. Not when a skill or class
+ *                draft is waiting (`draftWaiting`: it takes the row's seat,
+ *                §13.4e/g), not when `afterCombat[pool]` is off, and not when
+ *                `chancePct[pool]` misses. A chance of 100 always offers and
+ *                0 never does; neither rolls. Between them ONE roll on
+ *                'rewardRolls'.
+ *   cardMissed — that roll missed: the menu says "No card this time." A
+ *                chance of 0 never offers and never says so.
+ *   levelCards — how many level-card rows: min(levelsGained,
+ *                onLevelUpMaxPerFight) when `onLevelUp` is on, else 0. A
+ *                waiting draft does not displace them.
+ * A pool outside the schedule's three (a treasure room, a test's door) is
+ * always offered and rolls nothing. The caller rolls the cards themselves.
+ */
+export function cardRewardPlan(balance, { pool, levelsGained = 0, draftWaiting = false } = {}, rng = null) {
+  const schedule = cardRewardSchedule(balance);
+  const known = SCHEDULE_POOLS.includes(pool);
+  let offerCard = false;
+  let cardMissed = false;
+  if (!draftWaiting && (!known || schedule.afterCombat[pool])) {
+    const pct = known ? schedule.chancePct[pool] : 100;
+    // Only a REAL roll can miss "this time": 0 means never, and says nothing.
+    if (pct >= 100) offerCard = true;
+    else if (pct > 0) cardMissed = !(offerCard = rng.chance('rewardRolls', pct));
+  }
+  const levelCards = schedule.onLevelUp && Number.isInteger(levelsGained) && levelsGained > 0
+    ? Math.min(levelsGained, schedule.onLevelUpMaxPerFight) : 0;
+  return { offerCard, cardMissed, levelCards };
+}
 
 /**
  * A row's KEY is what its state is kept under (`states[key]`): the kind for
@@ -40,7 +102,18 @@ export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'cla
  * offer (keyed by kind) still read.
  */
 export const rowKey = (kind, row = {}) => (kind === 'skillDraft' ? `skillDraft:${row.skillId}:${row.ordinal || 0}`
-  : kind === 'classDraft' ? `classDraft:${row.classId}:${row.ordinal || 0}` : kind);
+  : kind === 'classDraft' ? `classDraft:${row.classId}:${row.ordinal || 0}`
+  : kind === 'levelCard' ? `levelCard:${row.ordinal || 0}` : kind);
+
+/** The kinds a player picks a CARD from — the card offer, a level card, a skill draft. */
+export const CARD_CHOICE_KINDS = Object.freeze(['card', 'levelCard', 'skillDraft']);
+
+/**
+ * The one-line notes the menu prints beside its rows, as tokens: today only
+ * `cardMissed`, the card reward schedule's missed chance (SPEC §15.1: "No
+ * card this time."). An offer written before the schedule carries none.
+ */
+export const rewardNotes = (rewards = {}) => (rewards && rewards.cardMissed === true ? ['cardMissed'] : []);
 
 /** The ids a choice row picks among: a card draft's cards, a class draft's nodes. */
 export const pickIds = (row) => (Array.isArray(row.nodeIds) ? row.nodeIds : row.cardIds || []);
@@ -58,7 +131,8 @@ const KINDS = {
     blocked: () => null,
   },
   smithingStone: {
-    present: (r) => Number.isInteger(r.smithingStoneReceipt?.amount) && r.smithingStoneReceipt.amount > 0,
+    // Ordinary stones, refined stones (SPEC §15.3), or both: one row, one receipt.
+    present: (r) => smithingStonesPaid(r.smithingStoneReceipt),
     row: (r) => ({ ...r.smithingStoneReceipt }),
     blocked: () => null,
   },
@@ -90,6 +164,15 @@ const KINDS = {
     // One card is a take, several are a CHOICE — the row says which, so the
     // screen knows to open a chooser and auto-collect knows to pick.
     row: (r) => ({ cardIds: r.cardIds.slice(), choice: r.cardIds.length > 1 }),
+    blocked: () => null,
+  },
+  levelCard: {
+    // A level the fight bought adds a card row (SPEC §15.1, `onLevelUp`): one
+    // row per level card the offer carries, keyed by its ordinal, a choice
+    // among cards exactly as the card offer is.
+    present: (r) => Array.isArray(r.levelCards) && r.levelCards.some((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0),
+    rows: (r) => r.levelCards.filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
+      .map((d, i) => ({ ordinal: Number.isInteger(d.ordinal) ? d.ordinal : i, cardIds: d.cardIds.slice(), choice: d.cardIds.length > 1 })),
     blocked: () => null,
   },
   flask: {
@@ -131,6 +214,48 @@ const KINDS = {
  * — an unstated fact reads as no room, so a caller that forgets to state one
  * gets a blocked row it can see, never a silent over-grant.
  */
+/**
+ * smithingStoneNote(receipt, t) → the one-line spoils note a co-op door shows for
+ * a Smithing Stone receipt: ordinary and refined stones (SPEC §15.3), each
+ * named when paid; '' when nothing was. `t` is the UI string lookup, handed in.
+ */
+export function smithingStoneNote(receipt, t) {
+  if (!receipt) return '';
+  return [
+    receipt.amount > 0 ? t('reward.stone.note', { amount: receipt.amount, total: receipt.stoneBalanceAfter }) : '',
+    receipt.refined > 0 ? t('reward.stone.refinedNote', { amount: receipt.refined, plural: receipt.refined === 1 ? '' : 's', total: receipt.refinedBalanceAfter }) : '',
+  ].filter(Boolean).join(' · ');
+}
+
+/**
+ * smithingStoneRowCopy(row, t) → { title, body } for the spoils screen's
+ * Smithing Stone row. The ordinary and refined parts of each are built only
+ * for the purse that was paid, so a refined-only door never reads "0 total".
+ * `t` is the UI string lookup, handed in so this file stays headless.
+ */
+export function smithingStoneRowCopy(row, t) {
+  const ordinary = row.amount > 0 ? row.amount : 0;
+  const refined = row.refined > 0 ? row.refined : 0;
+  const plural = (n) => (n === 1 ? '' : 's');
+  const title = [];
+  const body = [];
+  if (ordinary) {
+    title.push(t('reward.stone.title', { amount: ordinary, plural: plural(ordinary) }));
+    body.push(t('reward.stone.body', { total: row.stoneBalanceAfter }));
+  }
+  if (refined) {
+    title.push(t('reward.stone.refinedTitle', { amount: refined, plural: plural(refined) }));
+    body.push(t('reward.stone.refinedBody', { total: row.refinedBalanceAfter }));
+  }
+  return { title: title.join(' · '), body: body.join(' · ') };
+}
+
+/** Whether a Smithing Stone receipt paid anything, ordinary or refined. */
+export function smithingStonesPaid(receipt) {
+  const paid = (value) => Number.isInteger(value) && value > 0;
+  return !!receipt && (paid(receipt.amount) || paid(receipt.refined));
+}
+
 export function rewardPlan(rewards = {}, facts = { flaskSlotsFree: 0, armamentSlotsFree: 0 }) {
   const rows = [];
   for (const kind of REWARD_KIND_ORDER) {
@@ -166,7 +291,7 @@ export function resolveContinue(plan, states = {}, mode = 'auto', pick = () => 0
     if (state === 'taken') continue; // applied at tap time; nothing left to do
     if (row.blockedBy) { leave.push(row); continue; }
     if (mode === 'auto' && state !== 'skipped') {
-      if (row.kind === 'card' || row.kind === 'skillDraft' || row.kind === 'classDraft') {
+      if (CARD_CHOICE_KINDS.includes(row.kind) || row.kind === 'classDraft') {
         const ids = pickIds(row);
         const id = row.choice ? ids[pick(ids.length) % ids.length] : ids[0];
         take.push({ ...row, ...(row.kind === 'classDraft' ? { nodeId: id } : { cardId: id }) });
@@ -217,7 +342,7 @@ export function rewardClaimStatus(plan, states = {}) {
  */
 export function unseenIds(rewards = {}, possessions = {}) {
   const holds = (set, id) => !!(set && set.has(id));
-  const draftIds = (rewards.skillDrafts || []).flatMap((d) => (d && d.cardIds) || []);
+  const draftIds = [...(rewards.skillDrafts || []), ...(Array.isArray(rewards.levelCards) ? rewards.levelCards : [])].flatMap((d) => (d && d.cardIds) || []);
   return {
     cards: [...new Set([...(rewards.cardIds || []), ...draftIds])].filter((id) => !holds(possessions.cards, id)),
     relics: rewards.relicId && !holds(possessions.relics, rewards.relicId) ? [rewards.relicId] : [],

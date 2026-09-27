@@ -40,6 +40,7 @@ import {
   TINTS, OUT_W, OUT_H,
 } from './concept-cutout.mjs';
 import { medallionAnchor, medallionDeclared } from '../src/content/classArtAnchors.js';
+import { dataHome } from './asset-data.mjs';
 
 const args = process.argv.slice(2);
 const arg = (k, d) => { const i = args.indexOf(k); return i >= 0 && args[i + 1] ? args[i + 1] : d; };
@@ -169,7 +170,9 @@ if (ship) {
   // the manifest is tracked beside the sprites, so its absence means `--out`
   // does not point at the sprite folder — the same typo that would otherwise
   // scatter a set of WebPs somewhere nobody looks. Failing names it.
-  const manifestPath = join(outDir, 'class-sprites.manifest.json');
+  // The manifest is not art: for --out under assets/ it is tracked under
+  // asset-data/ at the same path (tools/asset-data.mjs).
+  const manifestPath = join(dataHome(outDir), 'class-sprites.manifest.json');
   let manifest;
   try {
     manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));

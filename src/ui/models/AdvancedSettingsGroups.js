@@ -155,6 +155,8 @@ function topic(row, section) {
   if (row.debugTopic) return 'Diagnostics';
   if (row.textTopic) return row.textTopic;
   if (row.statTopic) return row.statTopic;
+  // Advanced → Shops: one topic per kind, plus the merchant-kind weights.
+  if (row.shopTopic) return row.shopTopic;
   if (row.prologueTopic) return row.prologueTopic;
   if (row.handTopic) return row.handTopic;
   if (section === 'Progression') {

@@ -56,16 +56,16 @@ Some later tasks require a field-by-field mapping before implementation. This pl
 
 ## 3. Execution rules for every task
 
-1. Read repository `AGENTS.md`, `SPEC.md`, `DEVELOPER.md`, and any narrower instructions at the implementation checkout.
+1. Read repository `CLAUDE.md`, `CONTRIBUTING.md`, `SPEC.md`, `DEVELOPER.md`, and any narrower instructions at the implementation checkout.
 2. Check `git status`, current branch, and active work before edits. Do not reset, clean, stash, overwrite, or copy the dirty working tree without explicit direction. Plan against the actual current `dev`; refresh anchors if it differs from this snapshot.
-3. Work serially. Each numbered implementation task is one GitHub issue, one `codex/` branch off the owner-reviewed `dev`, and one draft PR targeting `dev`. Each later task starts only after its prerequisites have landed through owner review. Do not stack speculative migrations on an unreviewed foundation.
-4. Posting issues/PRs or pushing is an outward-facing action: follow the current authorization and repository rules. This document does not authorize publication or merging. Prepare the concrete changes and results before requesting any still-required approval.
+3. Work serially. Each numbered implementation task is one GitHub issue, one branch off the current `dev`, and one PR targeting `dev`, opened ready for review (CONTRIBUTING.md, *A pull request is not done…*). Each later task starts only after its prerequisites have landed on `dev`. Do not stack speculative migrations on an unreviewed foundation.
+4. Posting issues/PRs or pushing is an outward-facing action: follow the current authorization and repository rules. Merging to `dev` and promoting to `test` follow CONTRIBUTING.md rule 6; merging to `release` or `main` is the owner's alone. Prepare the concrete changes and results before requesting any still-required approval.
 5. Before extraction, search all callers: `rg -n 'SYMBOL' src tools tests`. Record API inputs, return shape, mutation behavior, side effects, cleanup, and caller assumptions.
 6. Run applicable existing tests on the baseline. If red, record the failure and distinguish it from your changes. Never suppress a check to make the migration pass.
 7. Implement only the current task. Preserve public entry points with small explicit compatibility adapters until their callers are migrated. No dual writes or alternative rule implementations.
 8. Add behavioral tests for the moved responsibility. Update source-shape checks to assert the real contract after extraction; do not retain tests that require the obsolete implementation location.
-9. Rebuild generated content with `node tools/content-build.mjs`; rebuild shipped HTML with `node tools/launch.mjs --build-only` when applicable. Never hand-edit generated JS, `AshenSpire.html`, `build/`, `dist/`, or `buildordinal.json`.
-10. Complete applicable CI gates, summarize exact results and limits, and submit a draft PR only when authorized. Never merge it yourself.
+9. Rebuild generated content with `node tools/content-build.mjs`; rebuild with `node tools/launch.mjs --build-only` when applicable. Commit every tracked generated module the tools write (for example `src/content/generated/` and `src/config/generated/`), `buildordinal.json` and the generated changelog module; never commit built HTML (`AshenSpire.html`, `build/`, `dist/`), which is ignored on `dev`. Never hand-edit generated JS or `buildordinal.json`.
+10. Complete applicable CI gates, summarize exact results and limits, and open the PR ready for review. Once it is reviewed and its fast checks are green, merge it into `dev` and promote `dev` to `test` yourself (CONTRIBUTING.md rule 6); never merge to `release` or `main`.
 
 ## 4. Target ownership and dependency contract
 
@@ -307,7 +307,7 @@ Do not let an update steal focus if the selected control still exists. Do not ma
 
 ### Task 00 — Baseline and complete responsibility inventory
 
-Prerequisite: none. Suggested branch: `codex/architecture-baseline`.
+Prerequisite: none. Suggested branch: `feature/architecture-baseline`.
 
 Edit/create:
 
@@ -323,7 +323,7 @@ Acceptance: every tracked implementation/config source has an owner and disposit
 
 ### Task 01 — Architecture, relation, and compatibility specifications
 
-Prerequisite: 00. Suggested branch: `codex/architecture-contract`.
+Prerequisite: 00. Suggested branch: `feature/architecture-contract`.
 
 Edit `docs/COMPONENT-MODEL-ARCHITECTURE.md:1`, `DEVELOPER.md` architecture section, and `SPEC.md` architecture sections in this dedicated spec PR. NEW `docs/refactor/RELATIONS.md` and `docs/refactor/COMPATIBILITY.md`.
 
@@ -335,7 +335,7 @@ Acceptance: a reviewer can identify one owner per fact; 3NF candidate keys/depen
 
 ### Task 02 — Typed normalized source ingestion and adapters
 
-Prerequisite: 01. Suggested branch: `codex/normalized-content-pipeline`.
+Prerequisite: 01. Suggested branch: `feature/normalized-content-pipeline`.
 
 Existing edit anchors:
 
@@ -361,7 +361,7 @@ Pseudocode: Section 6.1. Acceptance: equivalent CSV, JSON, and database-export f
 
 ### Task 03 — Pilot configuration, tag queries, and database schema
 
-Prerequisite: 02. Suggested branch: `codex/service-config`.
+Prerequisite: 02. Suggested branch: `feature/service-config`.
 
 Existing anchors: `src/model/tagService.js:58` `build`, `:88` `tagService`; `src/model/tags.js:88` `tagContentProblems`; `src/model/registries.js:140` `stampTags`; `src/ui/models/UiComponentId.js`; `src/ui/surfaces.js:87` `SURFACES`.
 
@@ -373,7 +373,7 @@ Acceptance: a second configuration using the same supported service/layout behav
 
 ### Task 04 — Break the UI dependency cycle
 
-Prerequisite: 02. Suggested branch: `codex/ui-leaf-primitives`.
+Prerequisite: 02. Suggested branch: `feature/ui-leaf-primitives`.
 
 Existing anchors: `src/ui/components/tooltip.js:367` `esc`; `src/ui/components/modalShell.js:37` tooltip import; `src/ui/kit/index.js:31` cycle workaround; `src/ui/fx.js:8` debug import; `src/ui/debuglog.js`; `src/ui/components/debugChrome.js`.
 
@@ -383,7 +383,7 @@ Acceptance: existing escaping behavior preserved, UI kit/shell can import in eit
 
 ### Task 04A — Frontend wireframe and token foundation
 
-Prerequisite: 03, 04. Suggested branch: `codex/frontend-layout-contract`.
+Prerequisite: 03, 04. Suggested branch: `feature/frontend-layout-contract`.
 
 Implement the shared foundation from FRONTEND-WIREFRAMES.md before Task 05/06 consumers: explicit heading hierarchy, normalized layout/token/presentation records, typed allowed units, registered responsive layout variants, shared status/action slots, and a fixture-based wireframe showcase. Changes to `modalHead` remove redundant context/title stacks only through the presentation model, not screen-specific hide selectors. Preserve accessible names even when visible context is omitted. Extend Task 01's architecture/UI specification first for any conflict with its existing presentation contract.
 
@@ -391,7 +391,7 @@ Acceptance: the four parent wireframe families render from data; equivalent desk
 
 ### Task 05 — One modal lifecycle with compatibility adapters
 
-Prerequisite: 04A. Suggested branch: `codex/modal-lifecycle`.
+Prerequisite: 04A. Suggested branch: `feature/modal-lifecycle`.
 
 Existing anchors:
 
@@ -412,7 +412,7 @@ Acceptance matrix: nested Escape closes top only; repeated key ignored; Shift-Ta
 
 ### Task 06 — Shared layouts and typed service projections
 
-Prerequisite: 05. Suggested branch: `codex/service-layouts`.
+Prerequisite: 05. Suggested branch: `feature/service-layouts`.
 
 Existing anchors: `src/ui/models/ComponentModel.js:24`; `src/ui/models/SmithSelectionModel.js:71`; `src/ui/models/MountServiceModel.js:53`; `src/ui/viewModels/RunHudViewModel.js:11`; `src/ui/kit/index.js` registered primitive builders.
 
@@ -424,7 +424,7 @@ Acceptance: render identical shell/layout from different service models; no rend
 
 ### Task 07 — Complete Smith upgrade/extract/install migration
 
-Prerequisite: 06. Suggested branch: `codex/smith-service-migration`.
+Prerequisite: 06. Suggested branch: `feature/smith-service-migration`.
 
 Existing anchors:
 
@@ -442,7 +442,7 @@ Acceptance: all three services from Shrine and Merchant; empty/ineligible/insuff
 
 ### Task 08 — Shop commands and presentation
 
-Prerequisite: 07. Suggested branch: `codex/shop-commands`.
+Prerequisite: 07. Suggested branch: `feature/shop-commands`.
 
 Existing anchors: `src/ui/screens/shop.js:70` resale calculation, `:81` mount, purchase mutations near `:171`, `:189`, `:203`, remove near `:237`, sell near `:261`; `src/engine/encounters.js:191` stock generation; `src/content/balance.js` shop definition (find in source map/current file).
 
@@ -454,7 +454,7 @@ Acceptance: every current operation, affordability at commit time, capacity, las
 
 ### Task 09 — Rest, reward, and event commands
 
-Prerequisite: 08. Suggested branch: `codex/rest-reward-event-commands` (split into three serial tasks if necessary).
+Prerequisite: 08. Suggested branch: `feature/rest-reward-event-commands` (split into three serial tasks if necessary).
 
 Existing anchors: `src/ui/screens/rest.js:90`, heal writes `:300`; `src/ui/screens/reward.js:65`; `src/ui/screens/event.js:18`; `src/model/rewardplan.js:96` and `:121`; `src/model/quests.js:57`; `src/engine/actions.js:773`; `src/engine/encounters.js:309`/`:320`; `src/main.js:1772`/`:1785` pending rewards and `:1823`/`:1884` screen coordination.
 
@@ -480,7 +480,7 @@ Acceptance: all expanded flow checks in the wireframe document, deterministic qu
 
 ### Task 10 — Settings and menu configuration
 
-Prerequisite: 09A. Suggested branch: `codex/settings-models`.
+Prerequisite: 09A. Suggested branch: `feature/settings-models`.
 
 Existing anchors: `src/ui/screens/settings.js:80` ROWS, `:454` SECTIONS, `:472` CATEGORY_ORDER, `:546` valueOf, `:611` settingOn, `:617` row HTML, `:1200` renderSettings, `:1525` openSettings; `src/ui/components/overlay.js:113`; `src/ui/models/MenuModels.js`; `src/ui/components/menuComponents.js`; `src/main.js:1086` settings persistence.
 
@@ -492,7 +492,7 @@ Acceptance: both entry paths, all control kinds, stored category selection, keyb
 
 ### Task 11 — Armoury and character creation
 
-Prerequisite: 10. Suggested branches, executed serially: `codex/armoury-models`, then `codex/creation-models`.
+Prerequisite: 10. Suggested branches, executed serially: `feature/armoury-models`, then `feature/creation-models`.
 
 Existing anchors: `src/ui/screens/equipment.js:337` buildArmoury, `:621` mountEquipment; `src/ui/models/ArmouryModels.js`; `src/ui/components/armouryComponents.js`; `src/model/armouryLayout.js`; `src/model/equipmentUi.js`; `src/model/inventoryPresentation.js`; `src/model/loadout.js`; `content/source/armouryUi.json:1`; `src/ui/screens/customize.js:63`; `src/model/characterCreation.js`, `creationBrief.js`, `attributes.js`; `src/ui/components/statAllocationCard.js`; `content/source/characterCreation.json`.
 
@@ -504,7 +504,7 @@ Acceptance: all Armoury views/panes, slot handedness, capacity, requirements, gr
 
 ### Task 12 — Application coordination and persistence boundary
 
-Prerequisite: 11. Suggested branch: `codex/application-coordination`.
+Prerequisite: 11. Suggested branch: `feature/application-coordination`.
 
 Existing anchors in `src/main.js`: `:148` storage, `:421` layout, `:579` display settings, `:712` persist, `:754` newRun, `:904` resumeRun, `:1033` title, `:1214` overlay, `:1419` map, `:1444` enterNode, `:1546` combat, `:1772` reward, `:1869` shop. Also `src/engine/save.js:198` save manager and `src/model/state.js:829` serialization, `:906` migration.
 
@@ -516,7 +516,7 @@ Acceptance: new run/load/resume/quit/reward continuation, failed storage writes,
 
 ### Task 13 — Combat, map, and co-op presentation
 
-Prerequisite: 12. Suggested branches, serial: `codex/combat-presentation`, `codex/map-presentation`, `codex/coop-presentation`.
+Prerequisite: 12. Suggested branches, serial: `feature/combat-presentation`, `feature/map-presentation`, `feature/coop-presentation`.
 
 Existing anchors: `src/ui/screens/combat.js:63`; `src/ui/screens/map.js`; `src/ui/screens/coop.js:74`; `src/ui/viewModels/RunHudViewModel.js:11`; `src/ui/components/mapboard.js`, `battlefieldStage.js`, `hand.js`, `card.js`; `src/engine/combat.js`, `coopCombat.js`, `combatSnapshot.js`; `src/net/lan.js:40`; server-side `tools/lan.mjs` consumers must be inventoried before co-op edits.
 
@@ -530,7 +530,7 @@ Acceptance: committed combat save/restore, card/target selection, end turn, deat
 
 ### Task 14 — Finish normalized authoring across all content families
 
-Prerequisite: 13; family schema work may be prepared earlier but must not race feature edits. One serial issue/branch/draft PR per row below. Each uses Task 02 adapters and requires a reviewed field map before conversion.
+Prerequisite: 13; family schema work may be prepared earlier but must not race feature edits. One serial issue/branch/PR per row below. Each uses Task 02 adapters and requires a reviewed field map before conversion.
 
 | Order | Existing source family | Exact transformation responsibility |
 |---|---|---|
@@ -556,7 +556,7 @@ No blanket regex rewrite of content. No universal EAV table. Do not rewrite the 
 
 ### Task 15 — Remaining surfaces, removal, and owner editing guide
 
-Prerequisite: all earlier tasks. Suggested branch: `codex/architecture-completion`; split remaining screen migrations into serial PRs as needed.
+Prerequisite: all earlier tasks. Suggested branch: `feature/architecture-completion`; split remaining screen migrations into serial PRs as needed.
 
 Remaining screens from baseline include title, lobby, draft, customRun, compendium, history, gameover, profileArchive, profileNotice, about, and controls. Remaining components include save-slot selector, startup gate, quick navigation, inspectors, piles, tutorials, and debug surfaces. Use the exhaustive MIGRATION-MAP and source-map to ensure none is silently excluded. Existing well-separated components need validation, not gratuitous rewriting.
 
@@ -611,7 +611,7 @@ Final owner-facing demonstrations:
 
 ## 9. Pasteable executor prompt
 
-> Implement only Task NN from EXECUTION-PLAN.md in the AshenSpire repository. Read AGENTS.md and prerequisite task results first. Refresh file anchors against the current checkout using source-map.json as a historical index. Do not overwrite existing work. Create one branch off reviewed dev; do not merge or publish without the authorization required by repository rules. Preserve existing game mechanics, saved IDs, deterministic ordering, offline build, input behavior, and generated-file ownership. Reuse the existing tag service and domain planners. Follow the task's file list, pseudocode, compatibility steps, and acceptance tests. First produce the task's field/caller mapping if required, then implement it. Do not invent missing business semantics, add a second authoritative data path, or migrate unrelated features. Run baseline and post-change checks, report pre-existing failures separately, and document exact results. Update the migration map and provide a draft PR description stating what changed, why, and how it was verified. If a prerequisite is missing or an unreviewed mechanics change is required, name the exact blocker and stop the dependent part rather than guessing.
+> Implement only Task NN from EXECUTION-PLAN.md in the AshenSpire repository. Read CLAUDE.md, CONTRIBUTING.md and prerequisite task results first. Refresh file anchors against the current checkout using source-map.json as a historical index. Do not overwrite existing work. Create one branch off reviewed dev; do not merge or publish without the authorization required by repository rules. Preserve existing game mechanics, saved IDs, deterministic ordering, offline build, input behavior, and generated-file ownership. Reuse the existing tag service and domain planners. Follow the task's file list, pseudocode, compatibility steps, and acceptance tests. First produce the task's field/caller mapping if required, then implement it. Do not invent missing business semantics, add a second authoritative data path, or migrate unrelated features. Run baseline and post-change checks, report pre-existing failures separately, and document exact results. Update the migration map and provide a PR description stating what changed, why, and how it was verified. If a prerequisite is missing or an unreviewed mechanics change is required, name the exact blocker and stop the dependent part rather than guessing.
 
 > FRONTEND REQUIREMENT: Read FRONTEND-WIREFRAMES.md as well. Implement its applicable wireframe, data-driven presentation schema, and responsive state matrix. Minimize px; preserve the existing distinction between text scale, UI scale, and physical input-target size. Use one meaningful title, optional necessary context, and concise action-oriented copy. Do not stack decorative eyebrows/subtitles/captions or remove necessary game information. The handoff covers architecture, 3NF schemas, and frontend redesign together.
 

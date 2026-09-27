@@ -58,3 +58,12 @@ test('with no map tracks at all, a region plays the procedural bed', async () =>
   engine.stopMusic(0); // the bed schedules notes on a timer; release it so the run ends
   assert.equal(disposition, 'bed');
 });
+
+test('a context with one track loops it natively; several rotate on ended', async () => {
+  manifest = { 'map-pale-marches': ['marches/one.mp3'], map: ['map/a.mp3', 'map/b.mp3'] };
+  await play('map-pale-marches');
+  assert.equal(graph.elements.at(-1).loop, true, 'a single track loops on its own element');
+  await play('map-cinder-reach');
+  assert.equal(graph.elements.at(-1).loop, false, 'a list of tracks does not loop one of them');
+  engine.stopMusic(0);
+});

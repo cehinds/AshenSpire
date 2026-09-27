@@ -69,8 +69,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the toggled-off SELL category comes back greyed instead of absent',
         edits: [{
           file: 'src/ui/screens/shop.js',
-          find: '    const categories = shopCategories({ sellOn: sellOn() });',
-          replace: '    const categories = shopCategories({ sellOn: true }); // planted: discoverable over absent',
+          find: '    const categories = shopCategories({ sellOn: sellOn(), offered, services: removeOffered || smithOffered });',
+          replace: '    const categories = shopCategories({ sellOn: true, offered, services: removeOffered || smithOffered }); // planted: discoverable over absent',
         }],
         expectRed: /BAD\s+S6 .*sell/,
       },
@@ -80,8 +80,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the re-render forgets the selected category',
         edits: [{
           file: 'src/ui/screens/shop.js',
-          find: "    if (!categories.includes(activeCategory)) activeCategory = 'cards';",
-          replace: "    activeCategory = 'cards'; // planted: every purchase snaps the shop back to the first shelf",
+          find: '    if (!categories.includes(activeCategory)) activeCategory = categories[0];',
+          replace: "    activeCategory = categories[0]; // planted: every purchase snaps the shop back to the first shelf",
         }],
         expectRed: /BAD\s+S4 .*category after the purchase/,
       },
@@ -112,10 +112,27 @@ if (process.argv.includes('--selftest')) {
   }));
 }
 
+// The market additions (SPEC §14.3) come up by their own chances, so a visit
+// may or may not draw them; each is named, so one is never a stray, and the
+// roster above is still required whole. THE ONE LIST is model/marketStock.js
+// MARKET_ADDITIONS, read through the same module the game reads, never a copy.
+const { MARKET_ADDITIONS: ADDITIONS } = await import(pathToFileURL(join(ROOT, 'src/model/marketStock.js')).href);
+// The additions shape forces every addition out through the harness's own
+// settings door (?shotSettings, the Advanced → Shops rows), so S1 must find
+// each of them on the rail, laid in after the flasks and before services.
+const ADDITIONS_OUT = Object.fromEntries(ADDITIONS.map((id) => [`gameConfig.shops.market.${id}.chance`, 100]));
+
 const SHAPES = [
   { tag: '390x844', w: 390, h: 844, d: 2, mobile: true },
   { tag: '1200x730', w: 1200, h: 730, d: 1, mobile: false },
+  // Every market addition out (SPEC §14.3): chance 100 for each, through ?shotSettings.
+  { tag: '1200x730+additions', w: 1200, h: 730, d: 1, mobile: false, settings: ADDITIONS_OUT },
+  // …and on a phone, where step 5b's four shelves (skill books, revive
+  // tokens, the quest event, companions) push the rail to twelve items and
+  // the compact selector must still reach every one.
+  { tag: '390x844+additions', w: 390, h: 844, d: 2, mobile: true, settings: ADDITIONS_OUT },
 ];
+const settingsQuery = (settings) => (settings ? `&shotSettings=${encodeURIComponent(JSON.stringify(settings))}` : '');
 
 // The roster, a CONTRACT like creationbrief's: a category that stops being
 // drawn is red by name, a category that appears unnamed is red by name. The
@@ -213,7 +230,7 @@ async function main() {
       while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(150); } throw new Error('timeout ' + w); };
     console.log(`\n  ${shape}`);
 
-    await cdp.send('Page.navigate', { url: `${base}?shot=shop` }, S);
+    await cdp.send('Page.navigate', { url: `${base}?shot=shop${settingsQuery(vp.settings)}` }, S);
     // The first mount of the unbundled module route can pass 20 s on a
     // loaded machine (measured 21.4 s, 2026-09-14), so it gets a minute.
     await until(`!!document.querySelector('.shop-rail [data-shop-category]')`, 'shop rail', 60000);
@@ -231,13 +248,21 @@ async function main() {
     // S1 — the roster, both directions, and every item speaks.
     const drawn = arrival.bars.map((b) => b.key);
     const missing = CATEGORIES.filter((k) => !drawn.includes(k));
-    const stray = drawn.filter((k) => !CATEGORIES.includes(k));
+    const stray = drawn.filter((k) => !CATEGORIES.includes(k) && !ADDITIONS.includes(k));
     const mute = arrival.bars.filter((b) => !b.labelOnGlass || !b.valueOnGlass || b.value === '' || b.label === '');
+    // With every addition forced out, each must be drawn, in the rail's order:
+    // the shelves, then the additions, then services and sell.
+    if (vp.settings) {
+      for (const k of ADDITIONS) if (!drawn.includes(k)) missing.push(k);
+    }
+    const expectedOrder = vp.settings ? [...CATEGORIES.slice(0, 5), ...ADDITIONS, ...CATEGORIES.slice(5)] : null;
+    const misordered = expectedOrder && !missing.length && drawn.join() !== expectedOrder.join();
+    if (misordered) stray.push(`order ${drawn.join('>')} (want ${expectedOrder.join('>')})`);
     if (missing.length || stray.length || mute.length) {
       bad('S1', shape, `the rail is not the roster — missing: [${missing.join(', ')}] stray: [${stray.join(', ')}]`
         + `${mute.length ? ` · item(s) with label or status off the glass: ${mute.map((b) => b.key).join(', ')}` : ''}`);
     } else {
-      ok('S1', shape, `${CATEGORIES.length} categories by key, each label+status on the glass — ${arrival.bars.map((b) => `${b.key} '${b.value}'`).join(' · ')}`);
+      ok('S1', shape, `${drawn.length} categories by key${vp.settings ? ' (every addition out, in rail order)' : ''}, each label+status on the glass — ${arrival.bars.map((b) => `${b.key} '${b.value}'`).join(' · ')}`);
     }
 
     // S2 — arrival: cards selected WITH AREA, every other shelf unpainted.
@@ -305,7 +330,7 @@ async function main() {
     }
 
     // S6 — his toggle: ABSENT, not greyed. The harness settings door.
-    await cdp.send('Page.navigate', { url: `${base}?shot=shop&shotSettings=${encodeURIComponent('{"shopSell":false}')}` }, S);
+    await cdp.send('Page.navigate', { url: `${base}?shot=shop${settingsQuery({ ...(vp.settings || {}), shopSell: false })}` }, S);
     await until(`!!document.querySelector('.shop-rail [data-shop-category]')`, 'shop rail, toggle off', 60000);
     await wait(400);
     const off = await ev(READ);

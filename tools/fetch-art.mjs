@@ -31,8 +31,8 @@
 // ignores HTTPS_PROXY unless NODE_USE_ENV_PROXY=1 is set; behind a proxy, set it.
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readZip } from './zip.mjs';
 
@@ -122,11 +122,46 @@ export function verifyRelease(zipBuf, pin, manifest) {
 /** A name beside `dir` that no other process picks: the staging and discard directories. */
 const beside = (dir, what) => `${dir}.${what}-${process.pid}-${Math.random().toString(36).slice(2, 10)}`;
 
-/** discard(dir) — take a cache out of reach in one rename, then delete it where no reader looks. */
-function discard(dir) {
+/**
+ * markOf(dir) → the verified marker's text, or null. Another run may discard
+ * `dir` between any two calls, so a vanished file is an answer, not an error.
+ */
+function markOf(dir) {
+  try { return readFileSync(join(dir, VERIFIED), 'utf8').trim(); } catch (e) {
+    if (e.code === 'ENOENT' || e.code === 'ENOTDIR') return null;
+    throw e;
+  }
+}
+
+/**
+ * setAside(dir) → the name it was moved to, or null when there was nothing:
+ * takes a cache out of reach in one rename. Deleting it is separate (sweep),
+ * so a delete Windows refuses never reads as a failed rename.
+ */
+function setAside(dir) {
   const gone = beside(dir, 'discard');
-  try { renameSync(dir, gone); } catch (e) { if (e.code === 'ENOENT') return; throw e; }
-  rmSync(gone, { recursive: true, force: true });
+  try { renameSync(dir, gone); return gone; } catch (e) { if (e.code === 'ENOENT') return null; throw e; }
+}
+
+/**
+ * sweep(dir) — delete every directory set aside beside `dir`, this run's and
+ * any an earlier run could not delete (a Windows handle, a killed process).
+ * No reader looks at them, so a failure is reported and left for the next run.
+ */
+function sweep(dir) {
+  const prefix = `${basename(dir)}.discard-`;
+  let names = [];
+  try { names = readdirSync(dirname(dir)).filter((n) => n.startsWith(prefix)); } catch { return; }
+  for (const n of names) {
+    try { rmSync(join(dirname(dir), n), { recursive: true, force: true, maxRetries: 5 }); }
+    catch (e) { console.error(`fetch-art: could not delete ${n} (${e.code}); the next run retries`); }
+  }
+}
+
+/** discard(dir) — take a cache out of reach, then delete it where no reader looks. */
+function discard(dir) {
+  setAside(dir);
+  sweep(dir);
 }
 
 /**
@@ -135,6 +170,8 @@ function discard(dir) {
  * one rename. A reader therefore sees either no cache or a whole one: two runs
  * at once never share a half-written directory, and the one that loses the
  * race keeps the winner's cache when it carries the same marker.
+ * A run that replaces the cache (every --from run does) can remove one another
+ * run has just returned; that run's `dir` is then briefly absent, never partial.
  */
 function unpack(entries, dir, mark) {
   const stage = beside(dir, 'staging');
@@ -147,16 +184,27 @@ function unpack(entries, dir, mark) {
       writeFileSync(target, data);
     }
     writeFileSync(join(stage, VERIFIED), `${mark}\n`);
+    // Always replace what is there (a stale or damaged cache can carry the
+    // right marker; --from relies on this). Only a cache another run
+    // published between our discard and our rename is kept, and only when
+    // its marker matches: it was unpacked from a verified release too.
+    const pause = (attempt) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, Math.min(10 * (attempt + 1), 200));
     for (let attempt = 0; ; attempt += 1) {
-      discard(dir);
+      // EPERM/EBUSY/EACCES: Windows refuses to rename a directory another
+      // process holds a file open in (a sibling's marker read, an indexer).
+      try { setAside(dir); } catch (e) {
+        if (!['EPERM', 'EBUSY', 'EACCES'].includes(e.code) || attempt >= 20) throw e;
+        pause(attempt); continue; // the old cache is still there: never accept its marker
+      }
       try { renameSync(stage, dir); return; } catch (e) {
-        if (!['EEXIST', 'ENOTEMPTY', 'EPERM'].includes(e.code) || attempt >= 3) throw e;
-        const marker = join(dir, VERIFIED);
-        if (existsSync(marker) && readFileSync(marker, 'utf8').trim() === mark) return; // another run published the same release
+        if (!['EEXIST', 'ENOTEMPTY', 'EPERM', 'EBUSY', 'EACCES'].includes(e.code) || attempt >= 20) throw e;
+        if (markOf(dir) === mark) return; // published by another run since our discard
+        pause(attempt);
       }
     }
   } finally {
     rmSync(stage, { recursive: true, force: true });
+    sweep(dir);
   }
 }
 
@@ -206,9 +254,8 @@ export async function fetchArt({ root = ROOT, from = null, recheck: again = fals
   const pin = readPin(root);
   const manifest = JSON.parse(readFileSync(join(root, MANIFEST_PATH), 'utf8'));
   const dir = cacheDirFor(pin, root);
-  const marker = join(dir, VERIFIED);
   const mark = markerFor(pin, manifest);
-  if (!from && existsSync(marker) && readFileSync(marker, 'utf8').trim() === mark) {
+  if (!from && markOf(dir) === mark) {
     if (!again) return { dir, reused: true };
     const problems = recheck(dir, manifest);
     if (!problems.length) return { dir, reused: true };

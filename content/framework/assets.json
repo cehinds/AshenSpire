@@ -6,6 +6,6 @@
     { "id": "asset.fallback.cardArt", "kind": "CARD_ART", "sourcePath": "assets/framework/missing.svg", "fallbackAssetId": "asset.system.missing" },
     { "id": "asset.fallback.icon", "kind": "ICON", "sourcePath": "assets/framework/missing.svg", "fallbackAssetId": "asset.system.missing" },
     { "id": "asset.fallback.background", "kind": "BACKGROUND", "sourcePath": "assets/framework/missing.svg", "fallbackAssetId": "asset.system.missing" },
-    { "id": "asset.fallback.audio", "kind": "AUDIO", "sourcePath": "assets/framework/silence.txt", "fallbackAssetId": "asset.system.missing" }
+    { "id": "asset.fallback.audio", "kind": "AUDIO", "sourcePath": "asset-data/framework/silence.txt", "fallbackAssetId": "asset.system.missing" }
   ]
 }
