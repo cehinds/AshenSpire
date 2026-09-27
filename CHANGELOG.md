@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-27
 
+- **Behind the scenes: the developer docs are checked against the code** ([#1361](https://github.com/cehinds/AshenSpire/pull/1361), `0.7.1.627`). Docs only; nothing you play changes. The developer and process guides lose facts that had gone stale (committed builds, a removed rules file, draft pull requests, moved source paths), and dated QA records move to `docs/archive/`.
 - **Behind the scenes: the design and 1.0 plan documents say what is built and what is still planned** ([#1359](https://github.com/cehinds/AshenSpire/pull/1359), `0.7.1.626`). Docs only; nothing you play changes. The design spec now opens with a table marking each of its sections as built, partly built or planned: the deck editor, the three shops and most of the new reward rules are written down but not built yet (the levelling preview is built). The 1.0 checklist catches up with the last week's merges, and an implemented map-contrast proposal moves to an archive folder.
 - **Behind the scenes: the 1.0 checklist records the four fixes that just landed** ([#1362](https://github.com/cehinds/AshenSpire/pull/1362), `0.7.1.625`). Docs only. `docs/FINISH.md` now marks as done: a save that cannot be loaded keeps your run, a cancelled End Turn hold opens nothing, each change's changelog build number is checked, and the map camera check runs on every change. It adds one more check: the save-load fix should also be tested in a real browser when loading from the in-game menu screen.
 

@@ -3,7 +3,12 @@
 What the "AshenSpire Data-Driven Property Framework — one-shot rebuild"
 contract asked for, what shipped, what did not, why, and what is being done
 about each gap. Companion to `docs/framework-cutover-report.md` (the gate
-evidence) and `docs/versioning.md` (why the stamp reads `0.5.0-rc.<n>` — `rc.4` today).
+evidence) and `docs/versioning.md` (why the stamp read `0.5.0-rc.<n>`).
+
+> Historical record: the statuses below were written during the 0.5.0-rc series
+> (to `rc.4`); check the code before relying on a row. The release triple lives in
+> `src/content/index.js` (`contentBundle.version`); `docs/asks/asks-ledger.md`,
+> cited in section D, is no longer in the tree.
 
 Status words (as of the commit this file ships in — a row that names a branch
 not yet merged into `dev` is dormant here until that branch lands):
