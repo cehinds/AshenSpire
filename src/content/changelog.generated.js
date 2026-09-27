@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1378",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Behind the scenes: the rules for the blacksmith are written down",
+    "detail": "Docs only; nothing you play changes yet. The design document now says what a blacksmith visit keeps on its shelves and how a reload leaves them and their prices as they were; that each purchase or service at the blacksmith goes through once and refuses an offer that changed; that an upgrade can be paid wholly in Smithing Stones or wholly in refined stones, never a mix, at the cost the item's own upgrade table sets; how many sigil slots a weapon has and how many more the blacksmith will cut; that a sigil set into a weapon works only while that weapon is equipped, even after a swap mid-fight; what upgrading a loose weapon art and stacking a copy of a card cost; the least each of the blacksmith's numbers may be set to; and that the blacksmith sells no sigils of its own.",
+    "build": "0.7.1.672",
+    "pullRequest": 1378,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1378"
+  },
+  {
     "id": "pr-1377",
     "date": "2026-09-27",
     "group": "2026-09-27",
