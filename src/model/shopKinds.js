@@ -17,8 +17,9 @@ import { NOTE } from '../content/balance.js';
 import { shops as shippedShops } from '../content/shops.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { NEW_RUN_CLAUSE } from './balanceNotes.js';
-import { marketAdditionStockProblems } from './marketStock.js';
+import { marketAdditionStockProblems, MARKET_ADDITIONS } from './marketStock.js';
 import { utilityFlaskIds } from './gracerefill.js';
+import { consumableSettingsProblems } from './consumables.js';
 
 /** The kinds a shop can be (SPEC §14.2) — a closed set; a new kind is a spec change. */
 export const SHOP_KINDS = Object.freeze(['market', 'blacksmith', 'master']);
@@ -73,11 +74,14 @@ const AUTHORED_POOLS = Object.freeze({
       } catch { return null; } // a missing charge vessel is refused by its own check
       return ids.length ? null : 'no utility flask is authored (every flask is a charge vessel)';
     },
-    // Cards: each class's shop pool, its card pool plus the colourless shop cards.
+    // Cards: each class's shop pool, its card pool plus the colourless shop
+    // cards — never a mountable weapon art, which rollShopCards leaves out for
+    // the art shelf (engine/encounters.js; 5a re-review).
     cards(bundle) {
       const cards = Array.isArray(bundle.cards) ? bundle.cards : [];
       const known = new Set(cards.map((card) => card && card.id));
-      const colourless = cards.filter((card) => card && card.class === 'colorless' && SHOP_RARITIES.includes(card.rarity)).length;
+      const arts = authoredWeaponArtIds(bundle);
+      const colourless = cards.filter((card) => card && card.class === 'colorless' && SHOP_RARITIES.includes(card.rarity) && !arts.has(card.id)).length;
       const empty = (Array.isArray(bundle.classes) ? bundle.classes : [])
         .filter((row) => row && !colourless && !(row.cardPool || []).some((id) => known.has(id)))
         .map((row) => `'${row.id}'`);
@@ -85,6 +89,19 @@ const AUTHORED_POOLS = Object.freeze({
     },
   }),
 });
+
+// The mountable weapon arts, read off the raw bundle the way
+// model/armamentTrading.js eligibleWeaponArts reads the registries: every
+// armament's weaponArtDefaults whose card carries the extractable tag (a
+// card's tags are its tagging.csv rows, or its own `tags` on a stamped copy).
+function authoredWeaponArtIds(bundle) {
+  const tag = bundle.balance?.equipment?.cardMounts?.extractableTag || 'extractable';
+  const armaments = Array.isArray(bundle.equipment?.armaments) ? bundle.equipment.armaments : [];
+  const tagged = new Set((Array.isArray(bundle.tagging) ? bundle.tagging : []).filter((row) => row && row.family === 'card' && row.tagId === tag).map((row) => row.objectId));
+  const cards = new Map((Array.isArray(bundle.cards) ? bundle.cards : []).filter(Boolean).map((card) => [card.id, card]));
+  const ids = new Set(armaments.flatMap((piece) => piece?.weaponCardPackage?.weaponArtDefaults || []));
+  return new Set([...ids].filter((id) => tagged.has(id) || (cards.get(id)?.tags || []).includes(tag)));
+}
 
 function countsTowardMinimum(row, valueAt) {
   if (!row || row.enabled === false || isConditionalOffering(row)) return false;
@@ -112,6 +129,15 @@ const noteFor = (holder, key) => (object(holder?.[NOTE]) && Object.hasOwn(holder
 // ---------------------------------------------------------------------------
 // Reading a persisted stock
 // ---------------------------------------------------------------------------
+
+// The shelves a persisted stock still holds something on: a non-empty
+// shelf list, or any market addition's stock at all.
+function stockedShelves(stock) {
+  return [
+    ...MARKET_SHELVES.filter((key) => Array.isArray(stock[key]) && stock[key].length),
+    ...MARKET_ADDITIONS.filter((key) => stock[key] !== undefined && !(Array.isArray(stock[key]) && !stock[key].length)),
+  ];
+}
 
 /** The kind a persisted stock is. A stock saved before kinds existed is a market. */
 export function shopStockKind(stock) {
@@ -179,8 +205,16 @@ export function shopStockProblems(stock, path = 'shopStock', { required = false 
       : `${path}.kind must be one of ${SHOP_KINDS.join(', ')}, got ${JSON.stringify(stock.kind)}`);
   }
   if (stock.offerings !== undefined) {
-    if (!(Array.isArray(stock.offerings) && stock.offerings.length && stock.offerings.every((id) => typeof id === 'string' && id))) {
-      problems.push(`${path}.offerings must be a non-empty list of offering ids`);
+    // An empty list is a visit whose every shelf the load door pruned (an
+    // unsold offer this build no longer knows, marketStock.js
+    // pruneUnknownAdditionOffers): the screen then shows no shelf and Leave,
+    // rather than an empty rail item. A visit is never BUILT empty.
+    if (!(Array.isArray(stock.offerings) && stock.offerings.every((id) => typeof id === 'string' && id))) {
+      problems.push(`${path}.offerings must be a list of offering ids`);
+    } else if (!stock.offerings.length && stockedShelves(stock).length) {
+      // Empty only as the prune leaves it, with nothing on any shelf (review
+      // of #1377): stock with no offering laying it out is a tampered save.
+      problems.push(`${path}.offerings is empty, but ${stockedShelves(stock).map((key) => `'${key}'`).join(', ')} still hold${stockedShelves(stock).length === 1 ? 's' : ''} stock`);
     } else {
       const kind = shopStockKind(stock);
       const known = new Set([...(shippedShops[kind]?.offerings || []).map((row) => row.id), ...(kind === 'market' ? LEGACY_MARKET_OFFERINGS : [])]);
@@ -561,6 +595,8 @@ export function shopSettingsProblems(bundle, settings = {}) {
       }
     });
   }
+  // The consumables' own rows (SPEC §14.3): a sale above the price.
+  problems.push(...consumableSettingsProblems(bundle, read));
   return problems.map((problem) => ({ ...problem, message: shopSentence(problem.id, problem.tokens) }));
 }
 

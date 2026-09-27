@@ -108,3 +108,7 @@ unlock,property
 # A location (plan phase 7) carries only what it confers: the rest and service
 # tags under property. It has no collection and states no kind.
 location,property
+# A companion (SPEC §14.3) confers only property rules, and as a collection-
+# backed family it states its kind once.
+companion,property
+companion,classification

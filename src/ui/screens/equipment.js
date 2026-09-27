@@ -66,6 +66,7 @@ import { traySizeService } from '../services/TraySizeService.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { t } from '../strings.js';
+import { consumableText, skillBookReadPlan, commitSkillBookRead } from '../../model/consumables.js';
 import {
   armouryPaneSplit, inventoryComparison, inventoryEligibility, inventoryFooterPlan,
 } from '../models/ArmouryWorkspaceModel.js';
@@ -562,7 +563,10 @@ function inventoryReveal(registries, row, {
   }
   const description = row.category === 'Relic'
     ? relicText(item, registries)
-    : (item.blurb || item.textTemplate || 'No additional information.');
+    // A consumable's sentence names its live numbers (SPEC §14.3).
+    : row.category === 'Consumable'
+      ? `${consumableText(registries, item)}${row.read ? '' : ` ${t('armoury.consumable.token')}`}`
+      : (item.blurb || item.textTemplate || 'No additional information.');
   const mods = modSummary(registries, item);
   const detailModel = inventoryDetailCardModel({ row, art, description, mods, instruction, classModel });
   const comparisonPresentation = comparisonConfig?.presentation || 'tooltip';
@@ -1487,6 +1491,19 @@ export function mountEquipment(host, {
         const plan = inventoryFooterPlan({ target, actionLabel, eligibility }).primary;
         // The footer runs the same act, through the same hold, as the card.
         if (plan) footerPlans.set(row.key, { ...plan, act, holdMs: inventoryItemClass.holdAction ? holdDuration : 0 });
+      } else if (row.read && !inCombat) {
+        // SPEC §14.3: a skill book is read here, out of combat only — one
+        // awardSkillXp on its track (model/consumables.js), then one fewer.
+        const label = t('armoury.consumable.read');
+        const act = () => {
+          commitSkillBookRead(registries, run, skillBookReadPlan(registries, run, row.id, { inCombat }), { inCombat });
+          commit();
+        };
+        actionButton = button({ label, weight: 'primary', className: 'ep-equip armoury-read-book' });
+        actionButton.dataset.act = 'read';
+        actionButton.addEventListener('pointerdown', (event) => event.stopPropagation());
+        actionButton.addEventListener('click', (event) => { event.stopPropagation(); act(); });
+        footerPlans.set(row.key, { label, kind: 'read', act, holdMs: 0 });
       }
       return {
         key: row.key,

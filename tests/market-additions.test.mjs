@@ -367,7 +367,8 @@ test('FINISH: a sigil bought goes to run.sigils and survives a reload', () => {
 // ---------------------------------------------------------------------------
 
 test('sigils and sigilSlots ride schema 15: the bump, the corpus entry, and the migration default', () => {
-  assert.equal(RUN_SCHEMA_VERSION, 15);
+  // Schema 15 added them; 16 (5b) came after, so a current build is 15 or later.
+  assert.ok(RUN_SCHEMA_VERSION >= 15);
   const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
   const v15 = JSON.parse(corpus.versions['15'].bytes);
   assert.equal(v15.schemaVersion, 15);
@@ -381,7 +382,7 @@ test('sigils and sigilSlots ride schema 15: the bump, the corpus entry, and the 
   storage.setItem(RUN_KEY, JSON.stringify(v14));
   const run = createSaveManager(storage).loadRun(REG);
   assert.ok(run);
-  assert.equal(run.schemaVersion, 15);
+  assert.equal(run.schemaVersion, RUN_SCHEMA_VERSION);
   assert.deepEqual(run.sigils, []);
   assert.deepEqual(run.sigilSlots, {});
   // A current save must carry both.
@@ -473,7 +474,8 @@ test('DOM: with every shelf on, the rail lays the additions after the flasks, ea
     };
     let app = mount(run);
     // The rail's order: the shelves, then the additions, then services and sell.
-    const rail = app.querySelectorAll('[data-shop-category]').map((item) => item.dataset.shopCategory);
+    // (5b's own shelves may come up by their chances here; tests/market-additions-5b.test.mjs lays them out.)
+    const rail = app.querySelectorAll('[data-shop-category]').map((item) => item.dataset.shopCategory).filter((key) => !['skillBooks', 'reviveTokens', 'questEvent', 'companions'].includes(key));
     assert.deepEqual(rail, ['cards', 'armaments', 'weaponArts', 'relics', 'flasks', 'armour', 'smithStones', 'sigils', 'innRest', 'services', 'sell']);
     // Each addition shelf holds one tile per stock item.
     const tiles = (key) => app.querySelectorAll(`#shop-${key} .shop-offer`).length;
@@ -891,6 +893,8 @@ test('every offering authors a boolean `conditional` with its [NOTE]; the market
   assert.deepEqual(market, {
     cards: false, relics: true, flasks: false, armaments: true, weaponArts: true, remove: true,
     armour: true, smithStones: true, sigils: true, innRest: true,
+    // Step 5b (SPEC §14.3): each can have nothing to lay out.
+    skillBooks: true, reviveTokens: true, questEvent: true, companions: true,
   });
   // Authored data, not a Settings row.
   assert.equal(advancedConfigRows(contentBundle).some((r) => /\.conditional$/.test(r.key)), false);

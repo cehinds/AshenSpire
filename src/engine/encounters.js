@@ -387,6 +387,22 @@ function rollShopCards(registries, rng, classId, count) {
 // ---------------------------------------------------------------------------
 
 /**
+ * eligibleEventIds(registries, { history }) → the events an Unknown node may
+ * offer now, in registry order: every ungated event, and each quest step whose
+ * history requirement is met and which the run has not already answered.
+ * No draw. The market's quest event (SPEC §14.3) reads the same pool, minus
+ * what the run has seen.
+ */
+export function eligibleEventIds(registries, { history = [] } = {}) {
+  const gates = registries.eventHistoryRequirements || {};
+  const completed = new Set((history || [])
+    .filter((row) => row && row.kind === EVENT_CHOICE_HISTORY_KIND)
+    .map((row) => row.eventId));
+  return registries.events.ids()
+    .filter((id) => !gates[id] || (!completed.has(id) && eventChoiceRequirementMet(gates[id], { history })));
+}
+
+/**
  * resolveUnknownNode(registries, rng, { seenEvents, tier, history }) →
  *   { kind: 'event', eventId } | { kind: 'fight'|'shrine'|'treasure' }
  * Odds from mapConfigs[tier].unknownWeights — per TIER, beside the geometry
@@ -423,12 +439,7 @@ export function resolveUnknownNode(registries, rng, { seenEvents = [], tier, act
   // handed over once. Only gated events are consulted — an ungated event that
   // appears in the history keeps its shipped behaviour (repeatable across
   // acts; `seenEvents` de-duplicates within one map).
-  const gates = registries.eventHistoryRequirements || {};
-  const completed = new Set(history
-    .filter((row) => row && row.kind === EVENT_CHOICE_HISTORY_KIND)
-    .map((row) => row.eventId));
-  const earned = registries.events.ids()
-    .filter((id) => !gates[id] || (!completed.has(id) && eventChoiceRequirementMet(gates[id], { history })));
+  const earned = eligibleEventIds(registries, { history });
   let pool = earned.filter((id) => !seenEvents.includes(id));
   if (!pool.length) pool = earned;
   if (!pool.length) return { kind: 'fight' }; // no events shipped: fall back

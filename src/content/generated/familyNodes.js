@@ -361,5 +361,13 @@ export const familyNodes = [
   {
     "family": "location",
     "nodeId": "property"
+  },
+  {
+    "family": "companion",
+    "nodeId": "property"
+  },
+  {
+    "family": "companion",
+    "nodeId": "classification"
   }
 ];

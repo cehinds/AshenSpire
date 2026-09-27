@@ -105,7 +105,9 @@ test('every registered tag, domain and family pairing is derived unchanged; the 
   // Plan phase 10b's quest board: a service the inn offers.
   const PHASE_10B_PROPERTIES = ['questBoard'];
   // SPEC §14.1's deck-editing marker: the Rest-site door under Rest sites only.
-  const SPEC_14_PROPERTIES = ['deckEdit'];
+  // …and §14.3's companions (step 5b): the `companion` branch and one leaf
+  // per shipped companion, whose rule is what it does.
+  const SPEC_14_PROPERTIES = ['deckEdit', 'companion', 'hollowSquire', 'emberHound'];
   const NAMED = [...PHASE_5A_PROPERTIES, ...PHASE_5B_PROPERTIES, ...PHASE_7_PROPERTIES, ...PHASE_8_PROPERTIES, ...PHASE_10B_PROPERTIES, ...SPEC_14_PROPERTIES];
   assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id))),
     'every tag that joined is a framework node — one carrying a visibility, never a chip — or one of phase 5a/5b/7/8/10b\'s or SPEC §14\'s named property nodes');
@@ -128,7 +130,8 @@ test('every object states exactly one kind, the one its collection and type name
       counted += 1;
     }
   }
-  assert.equal(counted, 479, 'all 479 shipped objects, including projected shared armor sets');
+  // 479 before §14.3's two companions (step 5b) stated their kind.
+  assert.equal(counted, 481, 'all 481 shipped objects, including projected shared armor sets and the two companions');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {

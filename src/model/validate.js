@@ -15,6 +15,9 @@ import { handRulesDefaults } from '../content/handRules.js';
 import { deckRules as shippedDeckRules } from '../content/deckRules.js';
 import { shops as shippedShops } from '../content/shops.js';
 import { sigils as shippedSigils } from '../content/sigils.js';
+import { consumables as shippedConsumables } from '../content/consumables.js';
+import { companions as shippedCompanions } from '../content/companions.js';
+import { consumableTableProblems, companionTableProblems } from './consumables.js';
 import { shopsTableProblems } from './shopKinds.js';
 import { marketAdditionTableProblems } from './marketStock.js';
 import { resolveFloorPlan } from './floorplan.js';
@@ -110,6 +113,8 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'balance',
   'shops', // SPEC §14.2: the shop kinds and their offerings (content/shops.js)
   'sigils', // SPEC §14.3: sigils, sold at the market into run.sigils (content/sigils.js)
+  'consumables', // SPEC §14.3: skill books and revive tokens (content/consumables.js)
+  'companions', // SPEC §14.3: temporary companions (content/companions.js)
   'mapConfigs',
   'scripts',
   'equipment',
@@ -1874,6 +1879,13 @@ function collectContentProblems(bundle, errors = []) {
   // nothing to the engine's vocabulary. A legendary sigil is §15.4's (attuned,
   // no triggers, never stock) and is refused until that section lands.
   validateSigils(b.sigils === undefined ? shippedSigils : b.sigils, vctx);
+
+  // ---- consumables and companions (SPEC §14.3, step 5b) ----------------------
+  // Whole numbers with a [NOTE] each, a sale never above the price, a skill
+  // book's track a derived non-class one; a companion writes no triggers — its
+  // property is its tagging.csv row, a leaf under the companion branch.
+  consumableTableProblems(b.consumables === undefined ? shippedConsumables : b.consumables, b, err);
+  companionTableProblems(b.companions === undefined ? shippedCompanions : b.companions, b, err);
 
   // ---- threshold-proc second layer (#61): meaning, not shape ---------------
   // Every red names its row and, for tag errors, lists the legal tags — a

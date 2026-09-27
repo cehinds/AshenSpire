@@ -4,7 +4,7 @@
 // so no existing stream moves. The market's shelves still roll on `shop`
 // exactly as buildShopStock always has; this file only decides which of them
 // are out on the visit, and which kind a classic merchant turns out to be.
-import { buildShopStock } from './encounters.js';
+import { buildShopStock, eligibleEventIds } from './encounters.js';
 import { createRng } from './rng.js';
 import { createLocationVisit, arriveAt, restAt, leaveLocation } from './locations.js';
 import { SHOP_KINDS, SHOP_KIND_SCREENS, MARKET_SHELVES } from '../model/shopKinds.js';
@@ -105,6 +105,8 @@ export function buildMarketStock(registries, rng, run, { meta = {}, innInTown = 
   // roll as they would.
   const pools = Object.fromEntries(written.filter((row) => ADDITION_POOLS[row.id]).map((row) => [row.id, ADDITION_POOLS[row.id](registries, run, row, meta)]));
   const shelfEmpty = (row) => {
+    // The quest event lays out one offer and has no stock count.
+    if (row.id === 'questEvent') return !pools.questEvent || pools.questEvent.length === 0;
     if (pools[row.id]) return pools[row.id].length === 0 || !(row.stock > 0);
     if (MARKET_SHELVES.includes(row.id)) return !(Array.isArray(stock[row.id]) && stock[row.id].length > 0);
     if (row.id === 'smithStones') return !(row.perVisit > 0);
@@ -185,6 +187,28 @@ const ADDITION_POOLS = Object.freeze({
     const owned = new Set(ownedSigilIds(run));
     return registries.sigils.all().filter((def) => def.rarity !== 'legendary' && !owned.has(def.id));
   },
+  // Every skill book, and every revive token (SPEC §14.3): owning one never
+  // takes it off the shelf, so these run dry only at a stock of 0.
+  skillBooks: (registries) => registries.consumables.all().filter((def) => def.kind === 'skillBook'),
+  reviveTokens: (registries) => registries.consumables.all().filter((def) => def.kind === 'revive'),
+  // Companions not already travelling: one of each at a time.
+  companions(registries, run) {
+    const with_ = new Set((run.companions || []).map((row) => row.id));
+    return registries.companions.all().filter((def) => !with_.has(def.id));
+  },
+  // The events an Unknown node could offer now, minus what the run has seen;
+  // never the reset to the full pool resolveUnknownNode falls back on.
+  // Nor an event already waiting on an Unknown node of the current map that
+  // the run has not visited: the quest never pre-empts a node's event (review
+  // of #1377).
+  questEvent(registries, run) {
+    const visited = new Set(run.path || []);
+    const waiting = Object.entries((run.mapGraph && run.mapGraph.nodes) || {})
+      .filter(([id, node]) => node && node.resolved && node.resolved.kind === 'event' && !visited.has(id))
+      .map(([, node]) => node.resolved.eventId);
+    const seen = new Set([...(run.seenEvents || []), ...waiting]);
+    return eligibleEventIds(registries, { history: run.history || [] }).filter((id) => !seen.has(id));
+  },
 });
 
 // Each addition's stock, rolled on `shopOffers` from its own offering's
@@ -208,6 +232,15 @@ const ADDITION_STOCK = Object.freeze({
   // One full rest, bought once per visit; no roll.
   innRest(registries, rng, run, row) {
     return { price: row.price, bought: false };
+  },
+  // Up to `stock` distinct books, tokens or companions, each at its own cost.
+  skillBooks: (registries, rng, run, row, pool) => pickSome(rng, pool, row.stock).map((def) => ({ id: def.id, cost: def.cost })),
+  reviveTokens: (registries, rng, run, row, pool) => pickSome(rng, pool, row.stock).map((def) => ({ id: def.id, cost: def.cost })),
+  companions: (registries, rng, run, row, pool) => pickSome(rng, pool, row.stock).map((def) => ({ id: def.id, cost: def.cost })),
+  // One unseen event, drawn from the pool, at the offering's price.
+  questEvent(registries, rng, run, row, pool) {
+    const [eventId] = pickSome(rng, pool, 1);
+    return { eventId, price: row.price, taken: false };
   },
 });
 

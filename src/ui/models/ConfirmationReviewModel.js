@@ -30,8 +30,12 @@ const BUY = Object.freeze({
   armour: Object.freeze({ question: 'shop.review.buy.armour', message: 'shop.review.buy.armour.message' }),
   sigil: Object.freeze({ question: 'shop.review.buy.sigil', message: 'shop.review.buy.sigil.message' }),
   rest: Object.freeze({ question: 'shop.review.buy.rest', message: 'shop.review.buy.rest.message' }),
+  // Step 5b (SPEC §14.3).
+  book: Object.freeze({ question: 'shop.review.buy.book', message: 'shop.review.buy.book.message' }),
+  token: Object.freeze({ question: 'shop.review.buy.token', message: 'shop.review.buy.token.message' }),
+  companion: Object.freeze({ question: 'shop.review.buy.companion', message: 'shop.review.buy.companion.message' }),
 });
-const SELL = Object.freeze({ relic: 'shop.review.sell.relic', flask: 'shop.review.sell.flask' });
+const SELL = Object.freeze({ relic: 'shop.review.sell.relic', flask: 'shop.review.sell.flask', consumable: 'shop.review.sell.consumable' });
 
 function row(table, kind, what) {
   if (!Object.hasOwn(table, kind)) throw new Error(`${what}: unknown kind '${kind}'`);
