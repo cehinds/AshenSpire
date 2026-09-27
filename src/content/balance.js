@@ -340,7 +340,7 @@ export const balance = {
   // buildup dealt (focus). model/skills.js is the one reader of the curve.
   skill: {
     xp: {
-      base: 5, growth: 1.2, roundTo: 5, perHit: 2, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 3, buildupPerXp: 5,
+      base: 100, growth: 1.75, roundTo: 5, perHit: 2, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 3, buildupPerXp: 5,
       [NOTE]: {
         base: 'Weapon, armour, focus and dual-wield tracks: what the first level step costs. Each step is round(base × growth^n) to the rounding below.',
         growth: 'Those tracks: how much dearer each level step is than the one before it.',
@@ -358,9 +358,9 @@ export const balance = {
     // pool; the combat does not), and per quest once phase 10a's event
     // exists. `tierAt` is the class level each tree tier opens at.
     class: {
-      xp: { base: 5, growth: 1.25, roundTo: 5, perWin: 10, bossKill: 30, perQuest: 20 }, tierAt: [1, 3, 5],
+      xp: { base: 100, growth: 1.75, roundTo: 5, perWin: 10, bossKill: 30, perQuest: 20 }, tierAt: [1, 3, 5],
       [NOTE]: {
-        'xp.base': 'The class track: what its first level step costs. Deliberately slower than the equipment tracks.',
+        'xp.base': 'The class track: what its first level step costs.',
         'xp.growth': 'The class track: how much dearer each of its level steps is than the last.',
         'xp.roundTo': 'The class track: every step cost is rounded to a multiple of this.',
         'xp.perWin': 'Class XP for a won fight.',

@@ -1007,7 +1007,7 @@ player assigns them at a shrine. Curve receipt: the steps from level 1 cost 10, 
 of 10); the old curve's steps were 100, 120, 130, 150, 170, 200, 230, 270, 310, 350 — 2,030 XP.
 The shipped awards are `balance.xp` combatWin 15 and kill normal 5 / elite 75 / boss 200 (50 and
 25 / 75 / 200 before 2026-09-24). The equipment skill tracks (`balance.skill.xp`) and the class
-track (`balance.skill.class.xp`) open at base 5 too (30 and 60 before). The 11–12 levels a full
+track (`balance.skill.class.xp`) share base 100 / growth 1.75 / roundTo 5 (owner, 2026-09-27; 5 / 1.2 and 5 / 1.25 before, 30 and 60 base before 2026-09-24): steps 100, 175, 305, 535, 940 — 2,055 XP to level 5. The 11–12 levels a full
 run earned (measured: 11.5) were measured on the old curve and awards and are due a re-measure;
 `tools/runsim.mjs --xp-levels` measures the owner's 10–20 band. No cinder buys a
 level; the ladder that priced purchases (`firstCost + costStep × n`, measured twice against the

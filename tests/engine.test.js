@@ -8723,15 +8723,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const c = REG.balance.skill.xp;
     eq(xpToNext(REG, 'weapon', 0), Math.round(c.base / c.roundTo) * c.roundTo, 'step 0 costs the base');
     eq(xpToNext(REG, 'weapon', 3), Math.round((c.base * Math.pow(c.growth, 3)) / c.roundTo) * c.roundTo, 'step 3 grows three times');
-    // SLOWER OVER THE CLIMB, NOT AT THE FIRST STEP: the owner's config
-    // (2026-09-24) gives both tracks a base of 5, so the class track is slower
-    // by its growth — never cheaper at any step, and dearer over ten.
+    // NEVER CHEAPER: the owner's config (2026-09-27) gives both tracks base
+    // 100 and growth 1.75, so the class track may equal the equipment tracks
+    // but is never cheaper at any step.
     const steps = (kind) => Array.from({ length: 10 }, (_, n) => xpToNext(REG, kind, n));
     assert(steps('class').every((cost, n) => cost >= steps('weapon')[n]), 'the class curve is never cheaper at any step');
-    assert(steps('class').reduce((a, b) => a + b) > steps('weapon').reduce((a, b) => a + b), 'the class curve is the slower one');
-    // THE CLIMB, READ OVER TEN STEPS: the owner's base of 5 on a roundTo of 5
-    // (2026-09-24; 30 before) rounds the first three steps to the same 5, so
-    // growth shows further up the curve rather than between steps 0 and 1.
+    // THE CLIMB, READ OVER TEN STEPS.
     const armourSteps = Array.from({ length: 10 }, (_, n) => xpToNext(REG, 'armour', n));
     assert(armourSteps.every((cost, n) => n === 0 || cost >= armourSteps[n - 1]) && armourSteps[9] > armourSteps[0],
       `the curve climbs — ${armourSteps.join(',')}`);
