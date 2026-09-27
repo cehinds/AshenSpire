@@ -46,6 +46,7 @@ import { activeMods, endlessActInfo } from '../content/customMods.js';
 import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
 import { unknownSigilId } from '../model/sigils.js';
+import { pruneUnknownAdditionOffers } from '../model/marketStock.js';
 
 export const RUN_KEY = 'sote_run_v1';
 // Legacy name, deliberately NOT renamed: this string is where archives already
@@ -664,6 +665,26 @@ export function createSaveManager(storage) {
         // run's wardrobe without a word (Codex, on #1374).
         const strangeArmour = (run.loadout?.boughtArmour || []).find((row) => !(registries.equipment.armour || []).some((piece) => piece.classId === row.classId && piece.id === row.id));
         if (strangeArmour) throw new Error(`bought armour '${strangeArmour.id}' (class '${strangeArmour.classId}') is unknown to this build`);
+        // An UNSOLD offer is not owned: one for a sigil or an armour set this
+        // build no longer has is pruned from the saved shelf, never rerolled,
+        // and the run loads (Codex, on #1374; coordinator ruling).
+        const known = {
+          sigilKnown: (id) => registries.sigils.has(id),
+          armourKnown: (classId, id) => (registries.equipment.armour || []).some((piece) => piece.classId === classId && piece.id === id),
+        };
+        const stocks = [['shopStock', run.shopStock], ...Object.entries(run.journey?.serviceStates || {}).map(([pointId, state]) => [`journey.serviceStates.${pointId}.stock`, state && state.stock])];
+        for (const [field, stock] of stocks) {
+          const removed = pruneUnknownAdditionOffers(stock, known);
+          if (!removed.length) continue;
+          note(run, {
+            kind: 'overwrite',
+            site: 'save.js:loadRun',
+            field,
+            was: removed,
+            now: null,
+            why: `this build no longer has ${removed.map((row) => `${row.shelf} '${row.id}'${row.classId ? ` (class '${row.classId}')` : ''}`).join(', ')}: the unsold offer was pruned, nothing rerolled`,
+          });
+        }
         normalizeRunAttributes(run, registries);
         validateRunStartingKit(run, registries, this.loadMeta(), { legacy: run.migratedFromRunSchemaVersion === 1 });
       } catch (e) {

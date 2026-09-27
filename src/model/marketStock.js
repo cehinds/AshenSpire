@@ -43,6 +43,34 @@ export function marketAdditionStockProblems(stock, path = 'shopStock') {
   return problems;
 }
 
+/**
+ * pruneUnknownAdditionOffers(stock, { sigilKnown, armourKnown }) → the offers
+ * removed. AN UNSOLD OFFER IS NOT A POSSESSION (Codex, on #1374; coordinator
+ * ruling): when a content update drops a sigil or an armour set, an offer for
+ * it on a saved shelf is pruned at the load door, never rerolled, and the run
+ * is not archived — archiving stays for what the run owns. A shelf the prune
+ * empties is no longer laid out (its id leaves `stock.offerings`, unless it is
+ * the last one), so no empty rail item is left behind.
+ */
+export function pruneUnknownAdditionOffers(stock, { sigilKnown, armourKnown }) {
+  if (!object(stock)) return [];
+  const removed = [];
+  const keep = { sigils: (item) => sigilKnown(item.id), armour: (item) => armourKnown(item.classId, item.id) };
+  for (const shelf of ['sigils', 'armour']) {
+    if (!Array.isArray(stock[shelf])) continue;
+    const before = stock[shelf];
+    const kept = before.filter((item) => object(item) && keep[shelf](item));
+    if (kept.length === before.length) continue;
+    for (const item of before) if (!kept.includes(item)) removed.push({ shelf, ...(shelf === 'armour' ? { classId: item?.classId } : {}), id: item?.id });
+    stock[shelf] = kept;
+    if (!kept.length && Array.isArray(stock.offerings) && stock.offerings.length > 1) {
+      stock.offerings = stock.offerings.filter((id) => id !== shelf);
+      delete stock[shelf];
+    }
+  }
+  return removed;
+}
+
 /** The bought-armour record's shape, refused by name (validateRunShape). Absent means none bought. */
 export function boughtArmourProblems(loadout) {
   if (!loadout || loadout.boughtArmour === undefined) return [];

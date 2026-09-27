@@ -1149,3 +1149,30 @@ test('a non-conditional offering needs a non-empty authored pool: content with o
   const cardErrors = validateContent({ ...contentBundle, classes, cards }).errors.filter((e) => e.path === 'shops.market.cards');
   assert.equal(cardErrors.length, 1, JSON.stringify(cardErrors));
 });
+
+test('an unsold offer this build no longer knows is pruned at the load door, never rerolled, and the run is not archived; owned references are untouched (Codex, on #1374)', () => {
+  const { run, rng } = marketRun(OUT);
+  const validSigil = run.shopStock.sigils[0];
+  const validArmour = run.shopStock.armour[0];
+  run.shopStock.sigils = [{ id: 'retiredSigil', cost: 90 }, validSigil];
+  run.shopStock.armour = [{ classId: 'reaver', id: 'retiredSet', cost: 300 }];
+  run.sigils = [OUT.sigils.ids()[0]];
+  const owned = OUT.equipment.armour.find((row) => row.classId === 'reaver' && row.unlock && row.id !== validArmour.id);
+  run.loadout.boughtArmour = [{ classId: 'reaver', id: owned.id }];
+  const offeringsBefore = [...run.shopStock.offerings];
+  const back = reload(run, rng, OUT);
+  assert.deepEqual(back.shopStock.sigils, [validSigil], 'the unknown sigil offer is gone, the known one kept');
+  // The armour shelf lost its only offer: it is hidden, not rerolled.
+  assert.ok(!(back.shopStock.armour || []).length);
+  assert.ok(!back.shopStock.offerings.includes('armour'), 'an emptied shelf is no longer laid out');
+  assert.deepEqual(back.shopStock.offerings, offeringsBefore.filter((id) => id !== 'armour'));
+  // Owned references are unaffected.
+  assert.deepEqual(back.sigils, run.sigils);
+  assert.deepEqual(back.loadout.boughtArmour, run.loadout.boughtArmour);
+  // A save whose OWNED sigil is unknown is still archived by name.
+  const bad = structuredClone(run);
+  bad.sigils = ['retiredSigil'];
+  const storage = createMemoryStorage();
+  createSaveManager(storage).saveRun(bad, rng);
+  assert.equal(createSaveManager(storage).loadRun(OUT), null);
+});
