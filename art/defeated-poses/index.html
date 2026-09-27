@@ -7,7 +7,7 @@ import {enemySprite,classSprite} from './src/ui/assets.js';
 import {stageFor} from './src/ui/services/PoseAnimator.js';
 import {animateEvents} from './src/ui/fx.js';
 import {DEFEATED_ART} from './src/content/defeatedArt.js';
-const {entries}=await(await fetch('assets/enemy-poses/manifest.json')).json();
+const {entries}=await(await fetch('asset-data/enemy-poses/manifest.json')).json();
 const names=new Map(entries.map(e=>[e.id,e.name]));
 window.reviewStages=new Map();
 for(const [id,art] of Object.entries(DEFEATED_ART)){

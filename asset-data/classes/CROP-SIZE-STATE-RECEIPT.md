@@ -11,7 +11,7 @@ adopts nothing: decision D1 authorises a proof-only successor.
 
 - Evidence pin: `62f6867a` (git objects; the working-tree paths no longer exist
   on `dev` after the Hub rebuild `3e98769e`).
-- Every number below is produced by `node assets/classes/measure-crop-state.mjs`
+- Every number below is produced by `node asset-data/classes/measure-crop-state.mjs`
   decoding the pinned bytes. None is asserted by hand.
 - Mask threshold: alpha ≥ 128, the same threshold the packet verifier uses.
 
@@ -131,7 +131,7 @@ Deterministic context proofs in the packet: 1× desktop `1440×900`, 3× mobile
 ## 9. Reproducing
 
 ```
-node assets/classes/measure-crop-state.mjs           # table above
-node assets/classes/measure-crop-state.mjs --check   # manifest vs pinned bytes
-node assets/classes/verify-successor-packet.mjs      # the packet contract
+node asset-data/classes/measure-crop-state.mjs           # table above
+node asset-data/classes/measure-crop-state.mjs --check   # manifest vs pinned bytes
+node asset-data/classes/verify-successor-packet.mjs      # the packet contract
 ```

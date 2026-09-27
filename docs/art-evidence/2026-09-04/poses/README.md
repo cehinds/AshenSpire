@@ -4,7 +4,7 @@ The combat figure the game ships is a **waist-up crop**. Its source
 (`../../2026-09-03/concepts/<class>-concept-v1.png`) is a bust: it ends at the
 ribs, which is why the packet's own receipt measures the figure at 18.7–26.4 %
 of its canvas with 152 px of empty bottom in all four
-(`assets/classes/CROP-SIZE-STATE-RECEIPT.md`). Owner, 2026-09-04: *"use full
+(`asset-data/classes/CROP-SIZE-STATE-RECEIPT.md`). Owner, 2026-09-04: *"use full
 body sprites"*, *"should be full body"*.
 
 These are the SOURCES for the replacement. Nothing here ships; the shipped

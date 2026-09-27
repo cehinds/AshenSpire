@@ -58,7 +58,7 @@
 # The geometry is derived from the reference crop by eye; the palette is derived
 # from measurement. Whoever lands this must run:
 #     blender --background --factory-startup --python tools/sprites-blender.py -- <out>
-#     node assets/classes/check-look-conformance.mjs <out>/rogue_gold.webp
+#     node asset-data/classes/check-look-conformance.mjs <out>/rogue_gold.webp
 # and iterate the two materials until it passes. Treat the numbers as the gate,
 # not this file.
 

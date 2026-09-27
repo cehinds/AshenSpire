@@ -525,7 +525,7 @@ semantic IDs above rather than replacing them. Select a dotted ID in the
 [interactive catalog](./component-catalog.html?group=armoury-assets), or use the
 full selector/owner cross-reference in
 [`ASSET-COMPONENTS.md`](./ASSET-COMPONENTS.md). The machine-readable authority
-is [`assets/components/armoury.json`](../assets/components/armoury.json).
+is [`asset-data/components/armoury.json`](../asset-data/components/armoury.json).
 
 | Rendered family | Searchable asset IDs |
 |---|---|
