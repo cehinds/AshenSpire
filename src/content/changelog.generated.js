@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-27",
     "summary": "The market sells skill books, revive tokens, companions and a lead to follow",
     "detail": "On some visits a market now also lays out skill books, which you read from the Armoury's Inventory outside a fight to add XP to one skill; revive tokens, which burn by themselves when you would fall in a fight and bring you back with part of your health; companions, who travel with you for a few fights and help at their start or on your turns, shown beside you in combat with the fights they have left; and a quest event, an event you have not seen yet, which you pay to follow and which closes the market behind you. Skill books and revive tokens can be sold back from the Sell pane, never for more than they cost to buy. A fight saved after a revive token burned still has it spent when you load it. Each new shelf's chance, weight and stock, the quest event's price, and each item's price, sale value, XP, revive health and fight count are rows in Advanced → Shops. Also: Settings' refusal when a shelf's stock is 0 now names the one fix that works, raising that stock; a sold-out armour shelf stays on the rail like a sold-out sigil shelf; and an unsold offer an update removed no longer leaves an empty shelf behind. An older save loads with no consumables and no companions.",
-    "build": "0.7.1.670",
+    "build": "0.7.1.672",
     "pullRequest": 1377,
     "url": "https://github.com/cehinds/AshenSpire/pull/1377"
   },
