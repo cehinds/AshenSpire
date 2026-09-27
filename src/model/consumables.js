@@ -25,7 +25,11 @@ import { NEW_RUN_CLAUSE } from './balanceNotes.js';
 
 // The run-shape checks are a leaf's (state.js reads them without this file's
 // imports): model/marketStock.js.
-export { consumablesProblems, companionsProblems } from './marketStock.js';
+// Re-exported as plain consts: tools/bundle.mjs inlines `export const` and
+// does not read `export … from` (the rule model/validate.js follows).
+import { consumablesProblems as consumablesProblems_, companionsProblems as companionsProblems_ } from './marketStock.js';
+export const consumablesProblems = consumablesProblems_;
+export const companionsProblems = companionsProblems_;
 
 export const CONSUMABLE_KINDS = Object.freeze(['skillBook', 'revive']);
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
