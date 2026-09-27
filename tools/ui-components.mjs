@@ -130,10 +130,22 @@ export function catalogDisagreement(md, html) {
 // blocks, and yields each style rule as { selector, decls } where decls lists
 // { prop, value } in source order (a last declaration without `;` counts).
 // Nested rules (CSS nesting) are judged as `:is(parent) child`.
-// BOUNDARY: it does not model the cascade (specificity, !important, @layer
-// order, @scope limits) or custom-property substitution; a var() value is
-// judged as unreadable. A further CSS form is fixed here only if the shipped
-// CSS uses it; otherwise this note is the answer.
+// BOUNDARY: it reads CSS as text, so it does not model
+//   - the cascade: specificity, !important, @layer order and @scope limits
+//     (`to (...)`) are ignored; within a rule the last declaration wins, and
+//     every rule is judged on its own;
+//   - var() substitution: a custom property is never resolved, so a var()
+//     value is judged as unreadable (a failing grid, not a skip);
+//   - per-property value grammar: an invalid later value, which a browser
+//     drops, is read as the effective one.
+// It parses styles/kit.css and styles/hud-visibility.css (the player's HUD
+// preference hides, the one other sheet that writes the rail's display); it
+// does not parse combat.css, ui.css, map.css or any other sheet. A further
+// CSS form is fixed here only if the shipped CSS uses it; otherwise this note
+// is the answer. Checked against the shipped sheets 2026-09-27: no @layer, no
+// @scope, and no var() or invalid value in a property C12 judges. Unseen
+// here: combat.css's co-op formation rule sets the HUD top to display:flex
+// (`.combat.coop[data-layout='formation'] .topbar .hud-top`).
 function splitTop(text, sep) {
   const out = []; let depth = 0; let quote = null; let cur = ''; let escaped = false;
   for (const ch of text) {
@@ -321,6 +333,7 @@ function validAreas(rows) {
 // rule whose subject compound carries `.hud-bottom` (the rail itself, in any
 // state, layout or media override; not its children) hangs it again with an
 // effective absolute or fixed position or moves it out of the `rail` area.
+const HUD_PREFERENCE_OFF = /\[data-hud-show-[\w-]+=(["'])false\1\]/;
 export function railInFlow(css) {
   const rules = cssRules(css)
     .filter((rule) => splitTop(rule.selector, /,/).some((part) => hasClass(subjectOf(part), 'hud-bottom')));
@@ -336,11 +349,13 @@ export function railInFlow(css) {
       || (lastValue(rule.decls, ['grid-area']) ?? 'rail') !== 'rail'
       || rule.decls.some((d) => /^grid-(?:row|column)(?:-start|-end)?$/.test(d.prop))
       // Display too: none or contents takes the rail out of the grid. Only a
-      // rule whose subject is `:empty` may hide it (a rail with no relics).
+      // rule whose subject is `:empty` may hide it (a rail with no relics), or
+      // one gated on a player's HUD preference being off
+      // (`[data-hud-show-…='false']`, styles/hud-visibility.css).
       || (/^(?:none|contents)$/i.test(lastValue(rule.decls, ['display']) ?? '')
         // `:empty` must sit on the rail's own compound alternative: in
         // `:is(.hud-bottom, .x:empty)` it is on `.x`, not on the rail.
-        && !splitTop(rule.selector, /,/).every((part) => subjectAlternatives(part)
+        && !splitTop(rule.selector, /,/).every((part) => HUD_PREFERENCE_OFF.test(part) || subjectAlternatives(part)
           .filter((alt) => hasClass(alt, 'hud-bottom')).every((alt) => /:empty(?![\w-])/i.test(alt)))));
 }
 
@@ -404,6 +419,7 @@ export function receipt() {
     equipment: read('src/ui/screens/equipment.js'),
     css: read('styles/combat.css'),
     kit: read('styles/kit.css'),
+    hudVisibility: read('styles/hud-visibility.css'),
     uiCss: read('styles/ui.css'),
     kitCss: read('styles/kit.css'),
     spec: read('SPEC.md'),
@@ -600,7 +616,7 @@ export function findings(r) {
       // this clause pinned the hang and left C12 red on dev. What it means
       // now: the rail is in flow in the `rail` area, and the shared grid
       // stacks a rail row directly under the meters row.
-      || !railInFlow(r.kit)
+      || !railInFlow(`${r.kit}\n${r.hudVisibility ?? ''}`)
       || !railUnderMeters(r.kit)
       // The relic rail is the shared icon tray (components/iconTray.js), the
       // combatant card's status row its reference: the rail wears the tray's
@@ -885,6 +901,7 @@ function selftest() {
     ['hide an expanded rail with display: none', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { display: none; }\n` })],
     ['hide a rail rule behind a string holding an escaped quote', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.a::before { content: "\\""; }\n.shared-hud .hud-bottom.x { position: absolute; }\n` })],
     ['hide a rail rule between comment markers inside strings', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.a::before { content: "/*"; }\n.shared-hud .hud-bottom.x { position: absolute; }\n.b::before { content: "*/"; }\n` })],
+    ['hang the rail from the HUD preference sheet', 'C12 ', (r) => ({ ...r, hudVisibility: `${r.hudVisibility}\n:root[data-hud-show-relics='false'] .shared-hud .hud-bottom { position: absolute; }\n` })],
     ['reset an expanded rail with all: unset', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { all: unset; }\n` })],
     ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],

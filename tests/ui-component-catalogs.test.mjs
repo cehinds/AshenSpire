@@ -412,3 +412,37 @@ test('only an :empty on the rail itself may hide the rail', () => {
     '.shared-hud .hud-bottom:is(:empty) { display: none; }',
   ]) assert.equal(c12({ ...r, kit: `${r.kit}\n${extra}\n` }).length, 0, extra);
 });
+
+// FINISH "C12 BOUNDARY stays stated": C12 reads CSS as text, and the limits of
+// that reading are written down in tools/ui-components.mjs. Each one is named
+// here so a later edit cannot drop a limit from the note without going red.
+test('the C12 BOUNDARY note names each limit of reading CSS as text', () => {
+  const src = readFileSync(new URL('../tools/ui-components.mjs', import.meta.url), 'utf8');
+  const start = src.indexOf('// BOUNDARY:');
+  assert.ok(start > 0, 'tools/ui-components.mjs lost its C12 BOUNDARY note');
+  const lines = src.slice(start).split('\n');
+  const note = lines.slice(0, lines.findIndex((line) => !line.startsWith('//'))).join('\n');
+  for (const limit of [/cascade/, /specificity/, /!important/, /@layer order/, /@scope limits/, /var\(\) substitution/,
+    /per-property value grammar/, /invalid later value/, /hud-visibility\.css/, /combat\.css/]) {
+    assert.match(note, limit, `the C12 BOUNDARY note no longer names ${limit}`);
+  }
+});
+
+// FINISH "C12 BOUNDARY stays stated": styles/hud-visibility.css is shipped and
+// writes display on the rail (.hud-bottom), a property C12 judges. C12 reads
+// it too: the player-preference hides it ships stay legal, and any other rail
+// override written there fails exactly as it would in kit.css.
+test('C12 judges the rail in styles/hud-visibility.css as well as kit.css', () => {
+  const r = receipt();
+  assert.ok(/\.hud-bottom/.test(r.hudVisibility), 'receipt() does not read styles/hud-visibility.css');
+  assert.equal(c12(r).length, 0, 'the shipped preference hides must stay legal');
+  for (const extra of [
+    ":root[data-hud-show-relics='false'] .shared-hud .hud-bottom { position: absolute; }",
+    '.shared-hud .hud-bottom.expanded { display: none !important; }',
+    ":root[data-hud-show-relics='true'] .hud-bottom { display: none !important; }",
+    '.shared-hud .hud-bottom { grid-area: auto; }',
+  ]) {
+    assert.equal(c12({ ...r, hudVisibility: `${r.hudVisibility}\n${extra}\n` }).length, 1, extra);
+  }
+  assert.equal(c12({ ...r, hudVisibility: `${r.hudVisibility}\n:root[data-hud-show-potions="false"] .hud-bottom { display: none; }\n` }).length, 0);
+});
