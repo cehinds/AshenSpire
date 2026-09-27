@@ -465,11 +465,22 @@ test('a HUD-preference guard hides the rail only when it empties the rail', () =
     ":root[data-hud-show-relics='false'] .hud-bottom:not(:has(.hud-relics)) { display: none; }",
     ":root[data-hud-show-relics='false'] .hud-bottom:not(:not(:has(.hud-potions))) { display: none; }",
     ":root[data-hud-show-relics='false'].hud-bottom { display: none; }",
+    // Review of #1368 (equivalent attribute syntax): the value stays
+    // case-sensitive without the `i` flag, and only `=` means "is exactly".
+    ":root[data-hud-show-relics='False'][data-hud-show-potions='false'] .hud-bottom { display: none; }",
+    ":root[data-hud-show-relics~='false'][data-hud-show-potions='false'] .hud-bottom { display: none; }",
   ];
   const pass = [
     ":root[data-hud-show-relics='false'][data-hud-show-potions='false'] .shared-hud .hud-bottom { display: none; }",
     ':root[data-hud-show-relics="false"] .hud-bottom:not(:has(.hud-potions)) { display: none; }',
     ":root[data-hud-show-potions='false'] .shared-hud .hud-bottom:not( :has(.hud-relics) ) { display: none; }",
+    // The same guards in equivalent CSS attribute syntax: whitespace around
+    // `=`, an unquoted identifier value, an upper-case attribute name, the
+    // `i` flag.
+    ":root[data-hud-show-relics = 'false'][data-hud-show-potions = 'false'] .hud-bottom { display: none; }",
+    ":root[data-hud-show-relics=false][ data-hud-show-potions=false ] .hud-bottom { display: none; }",
+    ":root[DATA-HUD-SHOW-RELICS='false'] .hud-bottom:not(:has(.hud-potions)) { display: none; }",
+    ":root[data-hud-show-potions='FALSE' i] .hud-bottom:not(:has(.hud-relics)) { display: none; }",
   ];
   for (const sheet of ['kit', 'hudVisibility']) {
     for (const extra of fail) assert.equal(c12({ ...r, [sheet]: `${r[sheet]}\n${extra}\n` }).length, 1, `${sheet}: ${extra}`);

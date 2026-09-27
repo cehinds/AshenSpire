@@ -357,10 +357,23 @@ function topLevelCalls(compound) {
   }
   return calls;
 }
+// One attribute selector's body, parsed as CSS writes it: whitespace around
+// the name, the `=` and the value; a quoted or bare identifier value; an HTML
+// attribute name in any case; and an `i` or `s` flag. Only `=` counts (`~=`
+// and `|=` also match values that are not exactly `false`), and the value is
+// compared case-sensitively unless the `i` flag says otherwise. Returns
+// 'relics' or 'potions' when the selector means that preference is off.
+function preferenceOff(body) {
+  const m = /^\s*data-hud-show-(relics|potions)\s*=\s*(?:"([^"]*)"|'([^']*)'|(-?[_a-zA-Z][\w-]*))\s*(?:([is])\s*)?$/i.exec(body);
+  if (!m) return null;
+  const value = m[2] ?? m[3] ?? m[4];
+  const off = m[5]?.toLowerCase() === 'i' ? value.toLowerCase() === 'false' : value === 'false';
+  return off ? m[1].toLowerCase() : null;
+}
 function preferenceEmptiesRail(part) {
   const compounds = splitTop(part.trim(), /[\s>+~]/).filter(Boolean);
   if (compounds.length < 2 || !/^:root(?:\[[^\]]*\])+$/i.test(compounds[0])) return false;
-  const off = new Set([...compounds[0].matchAll(/\[data-hud-show-(relics|potions)=(["'])false\2\]/g)].map((m) => m[1]));
+  const off = new Set([...compounds[0].matchAll(/\[([^\]]*)\]/g)].map((m) => preferenceOff(m[1])).filter(Boolean));
   if (off.has('relics') && off.has('potions')) return true;
   const other = off.has('relics') ? 'potions' : off.has('potions') ? 'relics' : null;
   return other !== null && topLevelCalls(compounds.at(-1)).some((c) => c.name === ':not' && c.arg === `:has(.hud-${other})`);
