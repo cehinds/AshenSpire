@@ -82,9 +82,16 @@ const POPULATION_DIRS = ['src']; // the SHIPPED vocabulary; a tool's own set is 
 // to raise here, not a row to lose.
 const DECL = /^export const ([A-Z][A-Z0-9_]*)\s*=\s*(?:Object\.freeze\(|\[)/;
 
+// DOT-ENTRIES ARE NOT THE TREE. tools/weapon-card-packages.mjs --selftest
+// writes a copy of src/model/loadout.js to src/model/.weapon-card-package-mutant-
+// <pid>.mjs and unlinks it a moment later. Scanned, that transient copy was
+// either an ENOENT crash (listed, then gone: no RESULT line, FAIL 53) or a set of
+// false READERS for loadout.js's sets. No shipped source is a dot-file, and
+// run-node's own test discovery skips dot-directories the same way.
 function walk(dir, out = []) {
   if (!existsSync(dir)) return out;
   for (const e of readdirSync(dir, { withFileTypes: true }).sort((a, b) => (a.name < b.name ? -1 : 1))) {
+    if (e.name.startsWith('.')) continue;
     const p = join(dir, e.name);
     if (e.isDirectory()) walk(p, out);
     else if (/\.(js|mjs)$/.test(e.name)) out.push(p);
@@ -141,9 +148,24 @@ export function collect(root) {
   const popFiles = POPULATION_DIRS.flatMap((d) => walk(join(root, d)));
   const readFiles = READER_DIRS.flatMap((d) => walk(join(root, d)))
     .filter((f) => relative(root, f).split(/[\\/]/).join('/') !== NOT_A_READER);
+  // A FILE LISTED AND THEN GONE is not in the tree any more, so it has no lines
+  // to scan — but it is NAMED in the result (`vanished`, printed by report), so
+  // a scan that raced a writer says so instead of crashing or going quiet.
+  // Anything other than ENOENT is still thrown.
   const blanked = new Map();
+  const vanished = [];
   const linesOf = (f) => {
-    if (!blanked.has(f)) blanked.set(f, blankNonCode(readFileSync(f, 'utf8')).split('\n'));
+    if (!blanked.has(f)) {
+      let text;
+      try {
+        text = readFileSync(f, 'utf8');
+      } catch (e) {
+        if (e.code !== 'ENOENT') throw e;
+        vanished.push(relative(root, f).split(/[\\/]/).join('/'));
+        text = '';
+      }
+      blanked.set(f, blankNonCode(text).split('\n'));
+    }
     return blanked.get(f);
   };
 
@@ -166,13 +188,13 @@ export function collect(root) {
       });
     }
   }
-  return { files: readFiles.length, popFiles: popFiles.length, sets };
+  return { files: readFiles.length, popFiles: popFiles.length, sets, vanished };
 }
 
 const pad = (s, n) => String(s).padEnd(n).slice(0, n);
 
 function report(root, { quiet = false } = {}) {
-  const { files, popFiles, sets } = collect(root);
+  const { files, popFiles, sets, vanished } = collect(root);
 
   // FLOORS — an empty result set is never a pass (Vira's floor, SOP 2's ⚙).
   if (!files || !popFiles) {
@@ -197,6 +219,7 @@ function report(root, { quiet = false } = {}) {
       console.log('');
     }
     console.log(`RESULT: ${sets.length} exported closed set(s) over ${popFiles} source file(s); readers searched across ${files} file(s) in ${READER_DIRS.join('/, ')}/. ${orphans.length} with no reader.`);
+    if (vanished.length) console.log(`VANISHED during the scan (listed, then gone before it was read — another process is writing this tree): ${vanished.join(', ')}`);
     console.log(`EXCLUDED as a reader: ${NOT_A_READER} — its own known-bad corpus names sets, and a check may not cite itself as their consumer.`);
     console.log('BOUNDARY: this asks ONLY whether each set is read. It cannot see a second, hand-typed');
     console.log('copy of a set living elsewhere — green here is never a claim that nothing is duplicated.');
