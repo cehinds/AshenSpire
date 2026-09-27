@@ -83,7 +83,10 @@ function safeStorage() {
  * find (owner, 2026-09-27: "I don't see a button to turn on debug").
  */
 export function debugSwitch(channel = buildChannel(), options = {}) {
-  const on = debugEnabled(channel, options);
+  // With no options this is the page's own answer — the cache setDebugEnabled
+  // writes — so the switch never disagrees with the sections on screen (a
+  // browser with no storage, or a `?debug=1` page switched off).
+  const on = options.search === undefined && options.storage === undefined ? pageDebug() : debugEnabled(channel, options);
   if (DEBUG_CHANNELS.has(channel)) return { on, canToggle: false, note: `Always on in ${channel} builds.` };
   if (LOCKED_CHANNELS.has(channel)) return { on, canToggle: false, note: `Locked off in ${channel} builds. Open a dev or test build (Download & saves) to tune the game.` };
   const storage = options.storage === undefined ? safeStorage() : options.storage;

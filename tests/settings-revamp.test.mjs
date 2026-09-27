@@ -59,6 +59,12 @@ test('the Developer tools switch can always be found, and flips only an unrecogn
     assert.equal(setDebugEnabled(true, { channel: 'release', storage: store }), false, 'release stays locked');
     assert.equal(store.getItem(DEBUG_STORAGE_KEY), null);
   } finally { setPageDebugForTests(null); }
+  try {
+    setPageDebugForTests(true);
+    assert.equal(debugSwitch().on, true, 'with no options the switch reads the page’s own answer');
+    setPageDebugForTests(false);
+    assert.equal(debugSwitch().on, false);
+  } finally { setPageDebugForTests(null); }
   assert.match(developerSwitchHtml({ on: false, canToggle: true, note: 'x' }), /data-developer-switch/);
   assert.doesNotMatch(developerSwitchHtml({ on: false, canToggle: false, note: 'x' }), /data-developer-switch/);
 });

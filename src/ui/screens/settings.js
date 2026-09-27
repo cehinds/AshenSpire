@@ -51,6 +51,7 @@ import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle,
 import { saveAdvancedConfigFile, saveJsonFile } from '../services/saveJsonFile.js';
 import { RECOVERY_POOLS, RECOVERY_UNITS, recoveryRules } from '../../content/recoveryRules.js';
 import { recoveryKey } from '../../model/recoveryRules.js';
+import { mechanics } from '../../framework/data/mechanics.js';
 import {
   prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
   prologueSettingKey, isPrologueSlot, prologueReorderChanges, prologueSceneCopy, prologueSceneClear,
@@ -292,14 +293,17 @@ function recoverySettingRows() {
     const name = names[pool];
     const row = (field, extra) => ({ cat: 'Advanced', advancedGroup: 'Recovery', statTopic: name, key: recoveryKey(pool, field), ...extra });
     const number = (field, label, note) => row(field, { type: 'number', def: D[field], min: range[field].min, max: range[field].max, label, applied: numberAppliedHtml, note });
+    // A fight opens with Stamina full (mechanics.stamina.combatStartRefill),
+    // so Stamina restored between fights would be overwritten: no rows for it.
+    const betweenFights = pool !== 'stamina' || mechanics.stamina.combatStartRefill !== 'full';
     return [
       number('perTurn', `${name} per turn`, `What a qualifying combat turn restores, at the end of your turn. 0: ${name} does not recover in a fight.`),
       row('unit', { type: 'choice', def: D.unit, choices: [...RECOVERY_UNITS], choiceLabels: { flat: 'Points', percent: '% of max' }, label: 'Per-turn amount is',
         note: `Points, or a percent of your maximum ${name} rounded down.` }),
       number('idleTurns', 'Only after unused turns', `A turn restores ${name} only after this many turns in a row in which ${use[pool]} (the enemies’ turn counts). 0: every turn.`),
       number('everyRounds', 'Only every N rounds', `Restore only on every Nth round of the fight. 1: every round.`),
-      number('afterCombat', 'After a won fight', `Percent of your maximum ${name} restored when you win a fight.`),
-      number('atRest', 'At every Rest', `Percent of your maximum ${name} restored when you Rest, on top of what the place restores. The Rest preview includes it.`),
+      ...(!betweenFights ? [] : [number('afterCombat', 'After a won fight', `Percent of your maximum ${name} restored when you win a fight.`),
+      number('atRest', 'At every Rest', `Percent of your maximum ${name} restored when you Rest, on top of what the place restores. The Rest preview includes it.`)]),
     ];
   });
 }
