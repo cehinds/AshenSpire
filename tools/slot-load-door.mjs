@@ -368,7 +368,12 @@ try {
   // disconnected and "Keep playing" leaves focus on <body>. A fresh boot, since
   // the REFUSED step's refusal archived slot 3.
   try {
+    // This navigate starts from a live combat page, which already passes the
+    // combat-ready check below. Mark the old document and wait for the new
+    // one, or the step can read the old deck and click the old page.
+    await ev('window.__staleDoc = 1');
     await cdp.send('Page.navigate', { url: `http://127.0.0.1:${port}/?shot=combat&shotRefusedSlot=3` }, sessionId);
+    await until(`!window.__staleDoc && location.search.includes('shotRefusedSlot=3') && !location.search.includes('shotNewerSlot')`, 'the second document');
     await until(`!!window.__combat && !!document.querySelector('.end-turn') && window.__combat.phase === 'player'`, 'the second combat boot');
     const openingDeck = await ev('window.__spoils().liveDeck || []');
     // Combat ☰ → the Settings row opens the in-run overlay.
@@ -385,13 +390,9 @@ try {
     await until(`!!document.querySelector('[data-slot-pick="3"].is-filled')`, 'occupied slot 3');
     await click('[data-slot-pick="3"]');
     await click('[data-slot-pick="3"]');
-    await wait(750);
-    const asked = await ev(`(() => { const b=document.querySelector('.confirmation-confirm'); return !!b && !b.hidden; })()`);
-    if (!asked) throw new Error('slot 3 opened no load confirmation from the overlay');
+    await until(`(() => { const b=document.querySelector('.confirmation-confirm'); return !!b && !b.hidden; })()`, 'the load confirmation for slot 3 from the overlay');
     await click('.confirmation-confirm');
-    await wait(300);
-    const notice = await ev(`document.querySelector('#confirmation-modal-title')?.textContent || ''`);
-    if (!/could not be loaded/i.test(notice)) throw new Error(`the refused notice did not open (${JSON.stringify(notice)})`);
+    await until(`/could not be loaded/i.test(document.querySelector('#confirmation-modal-title')?.textContent || '')`, 'the refused notice');
     // "Keep playing": the notice's only way on, pressed as a player would.
     await click('.confirmation-cancel');
     await until(`!document.querySelector('.confirmation-veil')`, 'the refused notice to close');
