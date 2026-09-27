@@ -85,10 +85,13 @@ way: into `dev`, then promoted to `test` (rule 6). The owner merges only to
    `test`.
    - Once rules 1–4 hold (reviewed, mergeable, fast checks green), merge
      your PR into `dev` yourself. Use a merge commit.
-   - Wait for the `architecture-sync` run your merge starts to finish: it
-     commits a refreshed `docs/ARCHITECTURE-CURRENT-DEV.md` back to `dev`.
-     Then open a PR from `dev` into `test` and merge it yourself, with a
-     merge commit, checking that its head is the current `dev` tip. That push to `test` runs the heavy suites. If one is
+   - Wait for `architecture-sync` to settle: every push to `dev` starts a
+     run that commits a refreshed `docs/ARCHITECTURE-CURRENT-DEV.md` back to
+     `dev`, and a newer push cancels the older run. Promote only when the
+     latest run on `dev` has succeeded and `dev`'s tip is the commit it
+     covered or its own bot commit. Then open a PR from `dev` into `test` and
+     merge it yourself, with a merge commit, checking that its head is still
+     the current `dev` tip. That push to `test` runs the heavy suites. If one is
      already open, merge that one rather than opening another. Each
      promotion runs the full 3-OS matrix, so when several of your PRs land
      together, promote once after the last.
