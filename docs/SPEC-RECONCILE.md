@@ -357,7 +357,7 @@ Vow behaviour (D2 is to-build and outside a spec PR); the balance of any row.
 
 # Stage 4: scope status after the §14 and §15 spec PRs
 
-*2026-09-27, at `dev` = `7ef3ffc3` (build `0.7.1.614`). The owner asked for the scope docs
+*2026-09-27, at `dev` = `bd4ce38a` (build `0.7.1.617`). The owner asked for the scope docs
 to match the game. This stage adds no new SPEC claims. It re-runs stage 3's open rows, and it
 gives §14 and §15 a verdict per subsection so that planned work reads as planned. SPEC.md's
 new *Scope status* table (under the opening notes) is the one-line-per-section summary, and
@@ -375,11 +375,11 @@ this stage is its evidence.*
 The D2 hooks: Guilt shipped in #1286 (`tests/guilt.test.mjs`). Warrior's Vow is still
 **to-build**: `src/content/cards/reaver.js` `warriorsVow` enters `gorefire`, not a chosen stance.
 
-## §14 and §15: contract landed, code not
+## §14 and §15: contract landed, code only for §14 step 2
 
 | Row | Claim | Verdict | Falsifier |
 |---|---|---|---|
-| S14.1 | Deck rules, sideboard, ordered draw, Deck settings | **to-build**, open as #1343 | `grep -rl sideboard src` → nothing on `dev` |
+| S14.1 | Deck rules, sideboard, ordered draw, Deck settings | **shipped** (#1343) | `node --test tests/deck-rules.test.mjs` |
 | S14.1b | Deck editor UI | **to-build** | no `DeckEditorModel` in `src/` |
 | S14.2 | Shop kinds and the guaranteed minimum | **to-build** | `grep -rl guaranteedMinimum src` → nothing |
 | S14.3 | Market additions | **to-build** | no `consumables` or `sigils` row in `RUN_SHAPE` |
@@ -390,7 +390,7 @@ The D2 hooks: Guilt shipped in #1286 (`tests/guilt.test.mjs`). Warrior's Vow is 
 | S15.3 | Crafting drops | **to-build**, open as #1352 | `grep -rl rewardChancePct src` → nothing |
 | S15.4 | Legendary sigils | **to-build**, after §14 step 5 | `grep -rl attunedSigils src` → nothing |
 
-**Counts, stage 4: §14 and §15 have 10 rows, all to-build; their spec steps landed (#1331, #1348).
+**Counts, stage 4: §14 and §15 have 10 rows: 1 shipped (S14.1, #1343) and 9 to-build; their spec steps landed (#1331, #1348).
 Stage 3's two to-build rows are unchanged.**
 
 ## Boundary of stage 4

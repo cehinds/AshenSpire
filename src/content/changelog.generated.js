@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1359",
+    "id": "pr-1343",
     "date": "2026-09-26",
     "group": "2026-09-26",
-    "summary": "Behind the scenes: the design and 1.0 plan documents say what is built and what is still planned",
-    "detail": "Docs only; nothing you play changes. The design spec now opens with a table marking each of its sections as built, partly built or planned: the deck editor, the three shops and the new reward rules are written down but not built yet. The 1.0 checklist catches up with the last week's merges, and an implemented map-contrast proposal moves to an archive folder.",
-    "build": "0.7.1.618",
-    "pullRequest": 1359,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1359"
+    "summary": "Deck rules: set cards aside, draw in your own order",
+    "detail": "The groundwork for the deck editor, which arrives next. A new Settings tab, Advanced → Deck, holds its rules: editing on or off, where you may edit, the smallest and largest deck, and Play in deck order, which draws your cards in the order you arranged them instead of shuffling. A card you take out of your deck is kept, not lost, so you can put it back later; Strike and Defend stay unlimited and still wear your weapon's face.",
+    "build": "0.7.1.617",
+    "pullRequest": 1343,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1343"
   },
   {
     "id": "pr-1356",

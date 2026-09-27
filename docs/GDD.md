@@ -465,7 +465,7 @@ and refusal states remain equivalent between List and Grid.
 ### 12.2 Merchant
 
 - Cards, Relics, Flasks, Remove a Card, and Sell are progressive-disclosure sections; armaments and weapon arts are sold too (SPEC §12.2, built).
-- A market, a blacksmith and a wise master as three shop kinds, and a deck editor between fights, are specified in SPEC §14 and **planned**, not built.
+- A market, a blacksmith and a wise master as three shop kinds, and a deck editor between fights, are specified in SPEC §14 and **planned**: only its deck rules (the sideboard and ordered draw, #1343) are built; the editor screen and the shops are not.
 - One section is open at a time on compact layouts.
 - Buying preserves the current browsing context.
 - Disabled or absent features use truthful authored policy; they are not decorative dead controls.

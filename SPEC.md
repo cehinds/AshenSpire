@@ -16,14 +16,14 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 
 ### Scope status — what is built, partly built and planned
 
-*Checked 2026-09-27 against `dev` @ `7ef3ffc3` (build `0.7.1.614`). One line per section, so the real scope is visible in one place. A section marked **planned** is a contract written before its code (CONTRIBUTING rule 1), not stale text. Per-item verdicts for §12 and §14–§15 are in [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md); the release criteria are in [docs/FINISH.md](docs/FINISH.md). Update a line here in the PR that changes it.*
+*Checked 2026-09-27 against `dev` @ `bd4ce38a` (build `0.7.1.617`). One line per section, so the real scope is visible in one place. A section marked **planned** is a contract written before its code (CONTRIBUTING rule 1), not stale text. Per-item verdicts for §12 and §14–§15 are in [docs/SPEC-RECONCILE.md](docs/SPEC-RECONCILE.md); the release criteria are in [docs/FINISH.md](docs/FINISH.md). Update a line here in the PR that changes it.*
 
 | § | Area | Status | Evidence, and what is left |
 |---|---|---|---|
 | top | Combat and equipment revision ([COMBAT-EQUIPMENT-RULES](docs/COMBAT-EQUIPMENT-RULES.md)) | **partly built** | Parts serve live play (the Dodge Roll in `src/framework/weight.js`, §12.1). The full framework cutover is not performed ([framework-cutover-report](docs/framework-cutover-report.md)); the three-build prototype gate and the 36→50 class pools are post-1.0 (D3). |
 | 1 | Product overview | **built** | 4 classes, 3 seats climbed as 3 tiers, profile and slots. |
 | 2 | Legal and asset constraints | **built** | `tools/credits-check.mjs`: 40 checks, 33/33 asset directories (FINISH §10). |
-| 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema 10 (`RUN_SCHEMA_VERSION`, `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
+| 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema 11 (`RUN_SCHEMA_VERSION` in `src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
 | 4 | Combat rules | **built**, one deviation | Warrior's Vow enters Gorefire instead of a chosen stance (DEVELOPER "M1 known deviations"; FINISH §1, open). |
 | 5 | Content | **built** | 5.2–5.4 are the historical M1/M2 sets under pre-scrub names. Live counts: 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
 | 6 | Map generation | **built** | `engine/mapgen.js`, `tools/mapplan.mjs`. |
@@ -35,7 +35,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | 12 | Expansion (dodge, trader arts, HUD piles, branching bosses, roster, animation) | **built**, two items open | P6: 1–5 elites per seat averaging 3 (3 ship, one per seat). P8b: the Power resting stance (`resolveCombatPose` returns `idle`). |
 | 13 | Seats, zones, skill tracks, class card and tree, levels, recovery, Mana, attributes, quest board | **built** | Phase 0 of [proposal-seat-adventure](docs/proposal-seat-adventure.md); plan phases 1–10 of [plan-progression-and-property-system](docs/plan-progression-and-property-system.md). The tower, city, companions and later seat phases are **planned** in that proposal, with no SPEC section yet. |
 | — | World Journey, shared armour sets, legacy dungeons, the opening prologue, configurable stat pools | **built** | `ui/screens/worldAtlas.js`, `legacyDungeon.js`, `prologue.js`; `src/content/derivedStats.js`. |
-| 14 | Deck editor and the three shops | **planned** (step 1 of 7 done) | The SPEC section landed in #1331. No code is on `dev` yet (`grep -rl sideboard src` finds nothing); step 2 is open as #1343. |
+| 14 | Deck editor and the three shops | **partly built** (steps 1–2 of 7) | The SPEC section landed in #1331; step 2, deck rules, the sideboard and ordered draw, landed in #1343 (`tests/deck-rules.test.mjs`). Steps 3–7 (editor UI, shop kinds, market, blacksmith, wise master) are planned, with no code on `dev`. |
 | 15 | Reward schedule, levelling pace, crafting drops, legendary sigils | **planned** (step 1 of 5 done) | The SPEC section landed in #1348. No code is on `dev` yet; steps 2–4 are open as #1351, #1349 and #1352. |
 
 ### Combat and equipment revision: implementation contract
@@ -2245,7 +2245,7 @@ The shipped solo combat path adopts these rules. The independent foundation/comb
 
 ## 14. The deck editor and the three shops (owner brief, 2026-09-26)
 
-**Status: contract, not yet built** (2026-09-27: step 1, this section, landed in #1331; no step 2–7 code is on `dev`). This section lands before any of its code, in its own PR (CONTRIBUTING ground rule 1). The feature PRs follow in the order of §14.6, each ticking its `docs/FINISH.md` §14 line. Every number below that a player could want tuned is a **Settings row with a default read from content data**, never a screen or engine literal. The owner tunes balance later, so the defaults here are placeholders that the data files own, and the spec names the key, not a value it would have to keep in step.
+**Status: contract, not yet built** (2026-09-27: step 1, this section, landed in #1331; step 2, deck rules, landed in #1343; no code for steps 3–7 is on `dev`). This section lands before any of its code, in its own PR (CONTRIBUTING ground rule 1). The feature PRs follow in the order of §14.6, each ticking its `docs/FINISH.md` §14 line. Every number below that a player could want tuned is a **Settings row with a default read from content data**, never a screen or engine literal. The owner tunes balance later, so the defaults here are placeholders that the data files own, and the spec names the key, not a value it would have to keep in step.
 
 **The four owner rules this section carries:**
 
