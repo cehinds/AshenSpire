@@ -66,6 +66,7 @@ import {
   rollArmamentDrop,
 } from './engine/encounters.js';
 import { buildMarketStock, marketVisitStock, commitInnRest } from './engine/shopKinds.js';
+import { commitQuestEvent } from './model/marketAdditions.js';
 import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
 import { restLocationAtPoint, questBoardPointAt, CAMP_LOCATION } from './model/locations.js';
 import { mountTitle, focusTitleDefault } from './ui/screens/title.js';
@@ -2801,6 +2802,18 @@ function showShop() {
       const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
       const { counts } = resolveGraceRefill(saves.loadMeta().settings || {});
       return commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts: counts });
+    },
+    // A custom run's price multiplier: what a consumable sells back for is
+    // capped at what one would cost here now (SPEC §14.3).
+    priceMult: shopPriceMult(),
+    // The market's quest event (SPEC §14.3): paid and marked seen, then the
+    // visit closes exactly as Leave closes it, and the event door opens once.
+    enterQuestEvent: (quote) => {
+      const { eventId } = commitQuestEvent(registries, run, quote);
+      finishWorldService();
+      run.shopStock = null;
+      persist();
+      return showEvent(eventId);
     },
     onLeave: () => {
       finishWorldService();

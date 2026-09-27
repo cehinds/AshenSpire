@@ -474,7 +474,8 @@ test('DOM: with every shelf on, the rail lays the additions after the flasks, ea
     };
     let app = mount(run);
     // The rail's order: the shelves, then the additions, then services and sell.
-    const rail = app.querySelectorAll('[data-shop-category]').map((item) => item.dataset.shopCategory);
+    // (5b's own shelves may come up by their chances here; tests/market-additions-5b.test.mjs lays them out.)
+    const rail = app.querySelectorAll('[data-shop-category]').map((item) => item.dataset.shopCategory).filter((key) => !['skillBooks', 'reviveTokens', 'questEvent', 'companions'].includes(key));
     assert.deepEqual(rail, ['cards', 'armaments', 'weaponArts', 'relics', 'flasks', 'armour', 'smithStones', 'sigils', 'innRest', 'services', 'sell']);
     // Each addition shelf holds one tile per stock item.
     const tiles = (key) => app.querySelectorAll(`#shop-${key} .shop-offer`).length;
@@ -892,6 +893,8 @@ test('every offering authors a boolean `conditional` with its [NOTE]; the market
   assert.deepEqual(market, {
     cards: false, relics: true, flasks: false, armaments: true, weaponArts: true, remove: true,
     armour: true, smithStones: true, sigils: true, innRest: true,
+    // Step 5b (SPEC §14.3): each can have nothing to lay out.
+    skillBooks: true, reviveTokens: true, questEvent: true, companions: true,
   });
   // Authored data, not a Settings row.
   assert.equal(advancedConfigRows(contentBundle).some((r) => /\.conditional$/.test(r.key)), false);

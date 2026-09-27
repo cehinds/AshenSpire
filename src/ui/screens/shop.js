@@ -30,7 +30,9 @@ import { shopStockOfferings } from '../../model/shopKinds.js';
 import {
   smithStonePurchasePlan, commitSmithStonePurchase, armourPurchasePlan, commitArmourPurchase,
   sigilPurchasePlan, commitSigilPurchase, innRestPlan,
+  consumablePurchasePlan, commitConsumablePurchase, companionPurchasePlan, commitCompanionPurchase, questEventPlan,
 } from '../../model/marketAdditions.js';
+import { consumableText, consumableSalePlan, commitConsumableSale } from '../../model/consumables.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { settingOn } from './settings.js';
 import { commitSmithing, smithingPlan } from '../../model/smithing.js';
@@ -69,14 +71,19 @@ const RAIL_LABEL = {
   relics: 'shop.bar.relics', flasks: 'shop.bar.flasks', services: 'shop.bar.services', sell: 'shop.bar.sell',
   // The market additions (SPEC §14.3), keyed by their offering ids.
   armour: 'shop.bar.armour', smithStones: 'shop.bar.smithStones', sigils: 'shop.bar.sigils', innRest: 'shop.bar.innRest',
+  skillBooks: 'shop.bar.skillBooks', reviveTokens: 'shop.bar.reviveTokens', questEvent: 'shop.bar.questEvent', companions: 'shop.bar.companions',
 };
 
 /**
  * mountShop(app, opts). `restAtInn(quote)` commits a bought inn rest
  * (engine/shopKinds.js commitInnRest) on the run's own streams and the
  * player's rest settings, which the host holds and this screen does not.
+ * `enterQuestEvent(quote)` follows the market's quest event (SPEC §14.3): the
+ * host commits it, closes the visit as Leave does and opens the event door,
+ * so this screen does not draw again after it. `priceMult` is a custom run's
+ * shop price multiplier, which caps what a consumable sells back for.
  */
-export function mountShop(app, { registries, run, meta, onLeave, onChanged, onArmamentPurchased = () => {}, restAtInn = null, hud = null }) {
+export function mountShop(app, { registries, run, meta, onLeave, onChanged, onArmamentPurchased = () => {}, restAtInn = null, enterQuestEvent = null, priceMult = 1, hud = null }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
   // whose `i` had been read kept its first beat for the life of the page, and
@@ -140,7 +147,10 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
     // §14.2-§14.3): the class changed since it was stocked (the Turncoat's
     // Mirror). Saved stock is never rerolled or backfilled, so the visit may
     // lay out fewer than its minimum: the accepted edge the scope names.
-    if (offered.has('armour') && !(stock.armour || []).some((item) => item && item.classId === run.class)) offered.delete('armour');
+    // A SOLD-OUT armour shelf stays, as a sold-out sigil shelf does (5a
+    // re-review): only stock that exists and fits no offer to this class hides it.
+    const armourStock = Array.isArray(stock.armour) ? stock.armour : [];
+    if (offered.has('armour') && armourStock.length && !armourStock.some((item) => item && item.classId === run.class)) offered.delete('armour');
     const removeOffered = offered.has('remove');
     const smithOffered = !!(stock.smith && stock.smith.offered && stock.smith.services.length);
     const categories = shopCategories({ sellOn: sellOn(), offered, services: removeOffered || smithOffered });
@@ -414,6 +424,47 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
       });
     }
 
+    // ---- STEP 5b (SPEC §14.3): books, tokens, companions and the quest -----
+    for (const shelf of ['skillBooks', 'reviveTokens']) {
+      const refs = offerRefs(shelf, (stock[shelf] || []).map((item) => item.id));
+      (stock[shelf] || []).forEach((item, i) => {
+        const plan = consumablePurchasePlan(registries, run, shelf, item);
+        if (!plan.def) return;
+        additionOffer(shelf, {
+          ref: refs[i], title: plan.def.name, cost: item.cost, plan, kind: shelf === 'skillBooks' ? 'book' : 'token',
+          desc: t(shelf === 'skillBooks' ? 'shop.book.desc' : 'shop.token.desc', { text: consumableText(registries, plan.def) }),
+          commit: () => commitConsumablePurchase(registries, run, shelf, consumablePurchasePlan(registries, run, shelf, item)),
+        });
+      });
+    }
+    const companionRefs = offerRefs('companions', (stock.companions || []).map((item) => item.id));
+    (stock.companions || []).forEach((item, i) => {
+      const plan = companionPurchasePlan(registries, run, item);
+      if (!plan.def) return;
+      additionOffer('companions', {
+        ref: companionRefs[i], title: plan.def.name, cost: item.cost, plan, kind: 'companion',
+        desc: t('shop.companion.desc', { blurb: plan.def.blurb, combats: plan.def.combats }),
+        commit: () => commitCompanionPurchase(registries, run, companionPurchasePlan(registries, run, item)),
+      });
+    });
+    const questRow = app.querySelector('#shop-questEvent');
+    if (stock.questEvent && questRow) {
+      // Not a purchase that stays: following it closes the market, so the host
+      // commits it and moves on, and this screen does not draw again.
+      const offer = stock.questEvent;
+      const planned = questEventPlan(registries, run);
+      const plan = planned.ok && typeof enterQuestEvent !== 'function' ? { ok: false, reason: t('shop.refuse.notOffered') } : planned;
+      const name = registries.events.has(offer.eventId) ? registries.events.get(offer.eventId).name : offer.eventId;
+      const avail = offerAvailability({ reason: plan.ok ? null : plan.reason });
+      const desc = offer.taken ? t('shop.quest.taken') : t('shop.quest.desc');
+      const tile = shopItem(t('shop.quest.name', { name }), desc, offer.price, avail);
+      addOffer('questEvent', {
+        ref: 'questEvent:event#0', tile, name, desc, price: t('shop.price', { cost: offer.price }), avail,
+        action: { kind: 'quest', label: t('shop.action.quest', { cost: offer.price }), enabled: !!plan.ok, run: () => enterQuestEvent(questEventPlan(registries, run)) },
+      });
+      questRow.appendChild(tile);
+    }
+
     // ---- SERVICES: the burn, and the smith the merchant keeps -------------
     let gridOpen = false;
     const removeOpt = app.querySelector('#remove-opt');
@@ -616,6 +667,32 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
           ref: armamentSellRefs[i], tile, name: plan.def.name, desc: '',
           price: t('shop.price.back', { price: plan.price }), avail,
           action: { kind: 'sell', label: t('shop.action.sell', { price: plan.price }), enabled: !!plan.ok, run: () => inspectArmament(plan.id, 'sell') },
+        });
+        sellRow.appendChild(tile);
+      });
+      // SELL CONSUMABLES (SPEC §14.3): beside the armament sale, through the
+      // plan/commit pair in model/consumables.js — the price never above what
+      // one costs now, and a changed quote refused.
+      const consumableGoods = Object.keys(run.consumables || {}).map((id) => consumableSalePlan(registries, run, id, { priceMult })).filter((plan) => plan.def);
+      const consumableRefs = offerRefs('sell-consumable', consumableGoods.map((plan) => plan.id));
+      consumableGoods.forEach((plan, i) => {
+        const avail = offerAvailability({ reason: plan.ok ? null : plan.reason });
+        const desc = t('shop.consumable.sellDesc', { text: consumableText(registries, plan.def), count: run.consumables[plan.id] });
+        const tile = shopItem(plan.def.name, desc, plan.price, avail, { costWord: 'cinders back' });
+        if (avail.available) sellAvailable++;
+        addOffer('sell', {
+          ref: consumableRefs[i], tile, name: plan.def.name, desc,
+          price: t('shop.price.back', { price: plan.price }), avail,
+          action: { kind: 'sell', label: t('shop.action.sell', { price: plan.price }), enabled: !!plan.ok, beat: { id: 'shopSell', opts: {
+            ...sellReview({ kind: 'consumable', name: plan.def.name, price: plan.price }),
+            onConfirm: () => {
+              try { commitConsumableSale(registries, run, consumableSalePlan(registries, run, plan.id, { priceMult }), { priceMult }); }
+              catch (error) { tile.querySelector('.cp-body').append(statusText(error.message, { class: 'shop-offer-avail' })); return; }
+              sfx.play('buy');
+              onChanged();
+              render();
+            },
+          } } },
         });
         sellRow.appendChild(tile);
       });

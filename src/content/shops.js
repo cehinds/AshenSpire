@@ -115,6 +115,25 @@ export const shops = {
         chance: 'The percent chance a market away from any inn offers a full rest. A market in a town with an inn always offers it while it is enabled.',
         price: 'What a full rest bought at the market costs, in cinders. It rests you exactly as the inn\'s bed does, once per visit.',
       }),
+      // STEP 5b (SPEC §14.3): consumables, the quest event and companions. Each
+      // item's price and numbers are its own rows (content/consumables.js,
+      // content/companions.js); the offering adds only how many it lays out.
+      offering('skillBooks', { chance: 30, weight: 12, conditional: true, stock: 2 }, {
+        conditional: MAYBE('its per-visit stock can be set to 0'),
+        stock: 'How many different skill books the market\'s book shelf holds each visit.',
+      }),
+      offering('reviveTokens', { chance: 10, weight: 5, conditional: true, stock: 1 }, {
+        conditional: MAYBE('its per-visit stock can be set to 0'),
+        stock: 'How many different revive tokens the market lays out each visit.',
+      }),
+      offering('questEvent', { chance: 15, weight: 8, conditional: true, price: 60 }, {
+        conditional: MAYBE('it never offers an event you have already seen, and you may have seen them all'),
+        price: 'What following the market\'s quest event costs, in cinders. Taking it closes the market behind you.',
+      }),
+      offering('companions', { chance: 20, weight: 10, conditional: true, stock: 1 }, {
+        conditional: MAYBE('it never offers a companion already travelling with you'),
+        stock: 'How many different companions the market offers each visit. One of each travels with you at a time.',
+      }),
     ],
     [NOTE]: {
       guaranteedMinimum: 'The fewest offerings a market visit lays out. When fewer came up by their chances, the heaviest missing ones are added. At least 2.',

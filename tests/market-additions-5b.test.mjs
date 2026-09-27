@@ -47,6 +47,7 @@ import {
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { mountShop } from '../src/ui/screens/shop.js';
 import { t } from '../src/ui/strings.js';
+import { eligibleWeaponArts } from '../src/model/armamentTrading.js';
 
 const REG = createRegistries(contentBundle);
 const PREFIX = 'gameConfig.shops.';
@@ -480,7 +481,6 @@ test('unsold 5b offers this build no longer knows are pruned at the load door, o
   run.shopStock.reviveTokens = [{ id: 'retiredToken', cost: 90 }];
   run.shopStock.companions = [{ id: 'retiredFriend', cost: 90 }, ...run.shopStock.companions];
   run.shopStock.questEvent = { eventId: 'retiredEvent', price: 50, taken: false };
-  run.journey = run.journey || null;
   const back = reload(run, rng, OUT);
   assert.ok(!back.shopStock.skillBooks.some((row) => row.id === 'retiredBook'));
   assert.ok(!back.shopStock.companions.some((row) => row.id === 'retiredFriend'));
@@ -557,11 +557,12 @@ test('DOM: every 5b shelf lays out its stock, one click buys a book, a token and
     app = mount();
     app.querySelector('#shop-cat-sell').click();
     const sellTiles = app.querySelectorAll('#shop-sell .shop-offer');
-    const names = sellTiles.map((tile) => tile.textContent);
+    const refs = sellTiles.map((tile) => tile.dataset.shopRef);
     const bookId = Object.keys(run.consumables).find((id) => OUT.consumables.get(id).kind === 'skillBook');
     const bookDef = OUT.consumables.get(bookId);
-    const tile = sellTiles.find((each) => each.textContent.includes(bookDef.name));
-    assert.ok(tile, `the book is on the Sell pane (${names.join(' / ')})`);
+    const tile = sellTiles.find((each) => each.dataset.shopRef === `sell-consumable:${bookId}#0`);
+    assert.ok(tile, `the book is on the Sell pane (${refs.join(' / ')})`);
+    assert.ok(refs.includes(`sell-consumable:${Object.keys(run.consumables).find((id) => id !== bookId)}#0`), 'and the token beside it');
     tile.click();
     const cinders = run.cinders;
     const sell = app.querySelector('#shop-primary');
@@ -626,7 +627,8 @@ test('follow-up 3: the load door prunes an atlas point\'s saved stock (journey.s
 });
 
 test('follow-up 4: the authored card pool the content door checks excludes weapon arts, as rollShopCards does', () => {
-  const artIds = new Set((contentBundle.equipment.armaments || []).flatMap((piece) => piece.weaponCardPackage?.weaponArtDefaults || []));
+  // The mountable arts: what eligibleWeaponArts names (defaults carrying the extractable tag).
+  const artIds = new Set(eligibleWeaponArts(REG));
   assert.ok(artIds.size > 0);
   // A class with no pool of its own and only weapon-art colourless cards has
   // an empty shop pool, and is refused by name.

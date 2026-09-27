@@ -159,6 +159,9 @@ export const EVENTS = Object.freeze([
   'rested',
   'flaskUsed',
   'relicTriggered',
+  // SPEC §14.3: a revive token burned at the player's death point —
+  // { targetId, consumableId, hp, left } — recorded in the combat log.
+  'reviveSpent',
 ]);
 
 // The events only the run-level door emits (engine/locations.js): a status,

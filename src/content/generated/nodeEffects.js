@@ -1799,5 +1799,37 @@ export const nodeEffects = {
         ]
       }
     ]
+  },
+  "hollowSquire": {
+    "triggers": [
+      {
+        "on": "combatStart",
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "variable": "block"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "emberHound": {
+    "triggers": [
+      {
+        "on": "playerTurnStart",
+        "do": [
+          {
+            "op": "damage",
+            "target": "randomEnemy",
+            "amount": {
+              "variable": "damage"
+            }
+          }
+        ]
+      }
+    ]
   }
 };

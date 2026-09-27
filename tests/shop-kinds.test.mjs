@@ -426,7 +426,12 @@ test('a saved stock naming an offering its kind has not got is refused by name (
   const bogus = { ...structuredClone(run), shopStock: { ...structuredClone(run.shopStock), offerings: ['bogus'] } };
   assert.ok(validateRunShape(bogus).some((problem) => /shopStock\.offerings names 'bogus'/.test(problem)));
   const empty = { ...structuredClone(run), shopStock: { ...structuredClone(run.shopStock), offerings: [] } };
-  assert.ok(validateRunShape(empty).some((problem) => /shopStock\.offerings must be a non-empty list/.test(problem)));
+  // An empty list is no longer refused (5a re-review, follow-up 2): the load
+  // door's prune drops a shelf it empties even when it was the only one, so no
+  // empty rail item is left. A list that is not a list of ids still is.
+  assert.deepEqual(validateRunShape(empty), []);
+  const notIds = { ...structuredClone(run), shopStock: { ...structuredClone(run.shopStock), offerings: [3] } };
+  assert.ok(validateRunShape(notIds).some((problem) => /shopStock\.offerings must be a list of offering ids/.test(problem)));
   // Through the real load door: archived and refused, never opened.
   const storage = createMemoryStorage();
   storage.setItem(RUN_KEY, JSON.stringify({ ...JSON.parse(JSON.stringify(run)), schemaVersion: RUN_SCHEMA_VERSION, shopStock: bogus.shopStock }));
