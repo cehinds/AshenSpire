@@ -84,3 +84,17 @@ greatswordSunderingHew,physical,0
 spikedReprisal,physical,0
 rimeThrust,physical,0
 kilnCleave,physical,0
+hewingArc,physical,0
+sunderingChop,physical,0
+shieldCrash,physical,0
+pinningShot,physical,0
+arrowVolley,physical,0
+aimedShot,physical,0
+barbedArrow,physical,0
+whirlingGuard,physical,0
+cinderSigil,magic,5
+ashenMote,magic,1
+pyreOfCharts,magic,5
+cinderLance,magic,1
+ashfallRite,magic,5
+pyreLight,magic,5

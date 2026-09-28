@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1393",
+    "date": "2026-09-28",
+    "group": "2026-09-28",
+    "summary": "Developer tools can be switched off in development and test builds",
+    "detail": "Settings → Advanced now has a Developer tools switch in development and test builds. It starts on there, but you can turn it off; your choice is remembered on this device. An unrecognised downloaded file starts with the tools off and lets you turn them on. Release and main builds keep the tools off and no longer show the Developer tools row.",
+    "build": "0.7.1.681",
+    "pullRequest": 1393,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1393"
+  },
+  {
+    "id": "pr-1389",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Levelling a weapon offers real choices, and each class has more abilities",
+    "detail": "Every starting weapon, shield and staff now offers at least four different cards at each rarity when it levels up. The Reaver's sword and shield used to offer commons only, and the Starseer's Ash Focus offered nothing; 24 new cards fill the gaps, among them twelve Starseer ash rites for the Ash Focus, new bow and parrying cards for the Rogue, and new sword and shield cards for the Reaver. Each class's ability tree grows from six to ten choices: two more at each of its first two tiers. The subclass choice is unchanged.",
+    "build": "0.7.1.679",
+    "pullRequest": 1389,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1389"
+  },
+  {
     "id": "pr-1385",
     "date": "2026-09-27",
     "group": "2026-09-27",

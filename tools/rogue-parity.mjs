@@ -49,11 +49,11 @@ check(classGrants.length === 2 && unaccounted.length === 0 && rogueCards.length 
   `got ${rogueCards.length}; grants ${classGrants.join(', ')}; unaccounted ${unaccounted.join(', ')}`);
 check(rogue?.abilityCard === 'prepare' && rogueCards.some((card) => card.id === 'prepare' && card.rarity === 'starter'),
   'Prepare is the Rogue starter ability card (SPEC §13.4f)');
-check(rogue?.cardPool?.length === 36 && rewardCards.length === 36,
-  'Rogue reward pool has exactly 36 reachable cards', `pool ${rogue?.cardPool?.length || 0}, found ${rewardCards.length}`);
+check(rogue?.cardPool?.length === 43 && rewardCards.length === 43,
+  'Rogue reward pool has exactly 43 reachable cards', `pool ${rogue?.cardPool?.length || 0}, found ${rewardCards.length}`);
 check(JSON.stringify(rewardCards.reduce((out, card) => ({ ...out, [card.rarity]: (out[card.rarity] || 0) + 1 }), {}))
-  === JSON.stringify({ common: 13, uncommon: 13, rare: 10 }),
-  'Rogue reward rarities are 13 common / 13 uncommon / 10 rare');
+  === JSON.stringify({ common: 16, uncommon: 15, rare: 12 }),
+  'Rogue reward rarities are 16 common / 15 uncommon / 12 rare');
 check(rogueCards.every((card) => card.textTemplate && card.upgrade && Object.keys(card.upgrade).length),
   'every Rogue card has player text and an authored upgrade');
 check(rogue?.startingSignatureCard === 'ambush' && rogueCards.some((card) => card.id === 'ambush' && card.rarity === 'starter'),

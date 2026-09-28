@@ -25,9 +25,11 @@ export const classes = [
       'stomp', 'rallyingStandard', 'warSurgeon', 'hemorrhage', 'twinbladeFlurry',
       'shieldwall', 'kickOff',
       'wardingLunge', 'impale', 'warcry', 'flameToBlade', 'ironVowCard',
+      'hewingArc', 'sunderingChop', 'setTheShield',
       // Rares
       'executioner', 'goreblood', 'unbreakable', 'stitchedArms', 'lastStand', 'warriorsVow',
       'ruinousBlow', 'bloodhuntersStrike', 'sanguinePactCard', 'bloodTithe', 'poiseBreaker',
+      'aegisOfEmbers', 'shieldCrash',
     ],
     description:
       'Fights up close and switches footing mid-battle — one stance hits harder, the other holds the line. Wounds you land keep bleeding, and heavy blows stagger.',
@@ -48,12 +50,15 @@ export const classes = [
       // Commons
       'cometFragment', 'starbladePhalanx', 'crystalBarrier', 'starShower', 'scholarsInsight', 'frostVeil',
       'starSlicer', 'starstoneWard', 'starlance', 'twinkling', 'frostNova', 'shootingShard', 'wardingStar',
+      'cinderSigil', 'ashenMote', 'emberVigil', 'readTheAsh',
       // Uncommons
       'starstoneArc', 'lucidity', 'stargazerCard', 'astralArmorCard', 'moonrendCut', 'meteorite',
       'meteorSwarm', 'gravityWell', 'azureCoilCard', 'astralCleave', 'radiantSpray', 'starPath', 'moonlitShieldCard',
+      'pyreOfCharts', 'ashCircle', 'kindledOmen', 'cinderLance',
       // Rares
       'supernova', 'timeDilation', 'starstoneKris', 'constellationCard',
       'starfallBeam', 'starcaller', 'umbralWard', 'waxingMoonCard', 'celestialLance', 'astromancerCard',
+      'ashfallRite', 'phoenixChart', 'pyreLight', 'riteOfCinders',
     ],
     description:
       'Casts in sequence — the second spell each turn strikes harder than the first. Fragile early on, so the order you play cards matters more than their power.',
@@ -73,10 +78,13 @@ export const classes = [
     cardPool: [
       'quickCut', 'feint', 'backstep', 'twinPrick', 'pocketSand', 'hamstringRogue', 'serratedShiv',
       'smokeVeil', 'ricochet', 'lowBlow', 'pilfer', 'vanish', 'cheapShot',
+      'pinningShot', 'arrowVolley', 'nockAndWait',
       'bladeDanceRogue', 'garrote', 'fanOfKnives', 'setupRogue', 'acrobaticsRogue', 'disorient',
       'coupDeGrace', 'sap', 'shadowstep', 'afterimageCard', 'bloodletterRogue', 'venomcoat', 'misdirect',
+      'aimedShot', 'barbedArrow',
       'assassinate', 'thousandCutsRogue', 'deadlyTempoCard', 'opportunistCard', 'envenomCard',
       'toxicVolley', 'smokeBomb', 'executionWindow', 'perfectHeist', 'deathblow',
+      'bindingParry', 'whirlingGuard',
     ],
     description: 'Sets up a clean opening, then turns speed, poison, and opportunism into decisive strikes before the enemy can recover.',
   },
