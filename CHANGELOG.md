@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-28
 
+- **Browser checks for Fullscreen and saved-game loading run to completion** ([#1397](https://github.com/cehinds/AshenSpire/pull/1397), `0.7.1.685`). One of the Fullscreen check's deliberate defects no longer matched the current Settings source after an art quality setting was added. It now swaps the current Fullscreen and Accent rows and checks that the wrong order is caught. The saved-game loading check now reports its successful deliberate-defect checks in the format the test runner expects.
 - **Fullscreen stays visible at the top of Display on a phone** ([#1395](https://github.com/cehinds/AshenSpire/pull/1395), `0.7.1.683`). With XL text, the open display preview could push the Fullscreen switch below the visible settings pane during a fight. Fullscreen now comes first, followed by the same live preview and the other Display controls. The browser check for loading a saved fight now reports its completed checks correctly.
 - **Developer tools can be switched off in development and test builds** ([#1393](https://github.com/cehinds/AshenSpire/pull/1393), `0.7.1.681`). Settings → Advanced now has a Developer tools switch in development and test builds. It starts on there, but you can turn it off; your choice is remembered on this device. An unrecognised downloaded file starts with the tools off and lets you turn them on. Release and main builds keep the tools off and no longer show the Developer tools row.
 
