@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1395",
+    "date": "2026-09-28",
+    "group": "2026-09-28",
+    "summary": "Fullscreen stays visible at the top of Display on a phone",
+    "detail": "With XL text, the open display preview could push the Fullscreen switch below the visible settings pane during a fight. Fullscreen now comes first, followed by the same live preview and the other Display controls. The browser check for loading a saved fight now reports its completed checks correctly.",
+    "build": "0.7.1.683",
+    "pullRequest": 1395,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1395"
+  },
+  {
     "id": "pr-1393",
     "date": "2026-09-28",
     "group": "2026-09-28",
