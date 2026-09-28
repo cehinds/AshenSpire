@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1393",
+    "date": "2026-09-28",
+    "group": "2026-09-28",
+    "summary": "Developer tools can be switched off in development and test builds",
+    "detail": "Settings → Advanced now has a Developer tools switch in development and test builds. It starts on there, but you can turn it off; your choice is remembered on this device. An unrecognised downloaded file starts with the tools off and lets you turn them on. Release and main builds keep the tools off and no longer show the Developer tools row.",
+    "build": "0.7.1.681",
+    "pullRequest": 1393,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1393"
+  },
+  {
     "id": "pr-1389",
     "date": "2026-09-27",
     "group": "2026-09-27",
