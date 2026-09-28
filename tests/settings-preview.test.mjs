@@ -43,11 +43,16 @@ test('shown only for General › Display and Accessibility', () => {
   assert.equal(settingsPreviewShown('Advanced', 'Display'), false);
 });
 
-test('categoryHtml puts the strip above the rows of Display and Accessibility only', () => {
+test('categoryHtml keeps Fullscreen ahead of the Display preview and previews Accessibility first', () => {
   for (const [cat, group] of [['General', 'Display'], ['Accessibility', 'Accessibility']]) {
     const html = categoryHtml(cat, { settingsGeneralCategory: group }, null);
     assert.equal(html.match(/data-settings-preview[\s>]/g)?.length, 1, `${cat} carries one strip`);
-    assert.ok(html.indexOf(STRIP) < html.indexOf('set-card-list'), `${cat}: the strip sits above the rows`);
+    if (cat === 'General') {
+      assert.ok(html.indexOf('data-key="fullscreen"') < html.indexOf(STRIP), 'Fullscreen is reachable before the expanded preview');
+      assert.ok(html.indexOf('set-card-list') < html.indexOf(STRIP), 'the Display preview follows the first row inside the list');
+    } else {
+      assert.ok(html.indexOf(STRIP) < html.indexOf('set-card-list'), 'Accessibility keeps its preview above the rows');
+    }
     assert.ok(html.indexOf('set-general-pickers') < html.indexOf(STRIP), `${cat}: the section pickers stay first`);
   }
   for (const group of GENERAL_GROUPS.filter((g) => g !== 'Display')) {
