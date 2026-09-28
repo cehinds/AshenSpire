@@ -1231,21 +1231,13 @@ function selftestPlants() {
       // categoryHandler().rows, which this never touches: GREEN there, wrong
       // here.
       //
-      // RE-AIMED — AND IT WAS DECORATION FOR AS LONG AS THE DOOR WAS BROKEN.
-      // It mutated `categoryHtml`'s LAST line, the fallback branch for a
-      // category rendered as one flat list. Display has not gone through that
-      // branch since it became a group inside General: it is drawn by the
-      // General branch's `topics.get(topic).map(...)` instead. So the plant
-      // still applied cleanly, still ran, and reversed a code path the Display
-      // panel no longer takes — exit 0, UNCAUGHT, "decoration, not evidence" in
-      // this harness's own words. Nothing noticed, because with the door dead
-      // every cell was already red for a different reason. Fixing the door is
-      // what made this visible, and this is the branch that actually draws the
-      // rows a player meets.
+      // Reverses the General group's rendered row list. Display keeps
+      // Fullscreen before its preview, so reversing that list makes a
+      // different control the first visible row while the table stays intact.
       name: 'the renderer reverses what the table hands it (test 61 stays green)',
       file: 'src/ui/screens/settings.js',
-      find: "      + `</div>${settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : ''}<div class=\"set-card-list\">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;",
-      replace: "      + `</div>${settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : ''}<div class=\"set-card-list\">${[...topics.get(topic)].reverse().map(row => settingsRowHtml(settings, row)).join('')}</div>`;",
+      find: '    const rowHtml = rows.map(row => settingsRowHtml(settings, row));',
+      replace: '    const rowHtml = [...rows].reverse().map(row => settingsRowHtml(settings, row));',
       expectRed: /FINDING D1\/order .*want=fullscreen/,
     },
     {
