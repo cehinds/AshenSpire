@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1397",
+    "date": "2026-09-28",
+    "group": "2026-09-28",
+    "summary": "The Fullscreen browser check keeps testing its known defects",
+    "detail": "The Settings layout changed when the preview moved below Fullscreen, so one of the browser check's deliberate defects no longer matched the current source. Its test now swaps the current Fullscreen and Accent rows and verifies the check catches the wrong order.",
+    "build": "0.7.1.684",
+    "pullRequest": 1397,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1397"
+  },
+  {
     "id": "pr-1395",
     "date": "2026-09-28",
     "group": "2026-09-28",
