@@ -908,6 +908,7 @@ export const SCHEMAS = Object.freeze({
     hp: arr(int, 2), // [min, max], rolled on stream 'enemyHP'
     poiseMax: int,
     levelProfile: levelBandSchema,
+    equipmentPower: opt(num), // small additive XP weight for authored enemy gear
     moves: mapOf(enemyMoveSchema),
     firstMove: opt(str), // checked against own moves in validate.js
     phases: opt(arr(enemyPhaseSchema)),

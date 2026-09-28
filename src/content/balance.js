@@ -665,7 +665,8 @@ export const balance = {
   // the tripled faucet) is GONE with plan phase 6: a level is earned, below.
   //
   // THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): a win pays
-  // 25 XP, kills pay 10 XP per enemy level, and each step costs 100 XP.
+  // defeated-enemy combat power × 25 × 0.2, kills pay 10 × 0.2 × enemy level,
+  // and each step costs 100 XP.
   // Settings → Progression → Experience previews the same configured curve
   // and awards the run uses. The existing per-award level cap remains separate.
   // Cinders buy no level any more: the ladder that sat here (firstCost /
@@ -695,12 +696,16 @@ export const balance = {
     kill: {
       normal: 10, elite: 10, boss: 10,
       [NOTE]: {
-        '{kind}': 'Character XP per enemy level for killing an enemy out of the roster {pool} draws from.',
+        '{kind}': 'Base character XP for killing an enemy out of the roster {pool} draws from. Multiply by the enemy-level factor and that enemy\'s level.',
       },
     },
+    killLevelMultiplier: 0.2,
+    combatPowerMultiplier: 0.2,
     quest: 125,
     [NOTE]: {
-      combatWin: 'Character XP for winning a fight, before any kill awards.',
+      combatWin: 'Base XP multiplied by the total combat power of defeated enemies and the combat-power multiplier after a win.',
+      combatPowerMultiplier: 'Multiplier on defeated-enemy combat power for a win. Combat power adds level, health, poise, attack, and a small equipment bonus.',
+      killLevelMultiplier: 'Multiply each kill\'s base XP and enemy level by this factor. At 0.2, two level-5 kills give 20 XP before combat-power XP.',
       quest: 'Character XP for a completed quest.',
     },
   },

@@ -2161,7 +2161,14 @@ export const uiStrings = [
   {
     "id": "settings.levelPace.fightLine",
     "extends": "",
-    "short": "{fight} ({kills} level-1 kill{killsPlural}) gives {xp} XP: {worth}.",
+    "short": "{fight} ({kills} level-1 kill{killsPlural} at power 3 each) gives {xp} XP: {worth}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.killLine",
+    "extends": "",
+    "short": "Fight XP = floor(total enemy power × {powerFactor} × {powerBase} + {base} × {levelFactor} × total enemy levels). Power adds level and combat stats plus a small equipment bonus. Two level-5 enemies at power 3 each give {example} XP.",
     "full": "",
     "tip": ""
   },

@@ -2419,7 +2419,7 @@ function levelPacePreviewMarkup(settings, pointsPerLevel) {
     + `<ol class="set-level-pace-curve">${pace.curve.map((row) => `<li><span>${esc(row.label)}</span> <b>${row.step}</b> <small>${esc(row.totalText)}</small></li>`).join('')}</ol></div>`;
   return `<div class="set-example set-level-pace" data-level-pace aria-live="polite"><div class="set-example-head"><strong>${esc(pace.title)}</strong><span>${esc(pace.subtitle)}</span></div>`
     + (pace.refused ? `<p class="set-example-refused" role="status" data-level-pace-refused>${esc(pace.refused)}</p>` : '')
-    + `<p class="set-example-attrs">${esc(pace.terms)}</p><p class="set-example-attrs">${esc(pace.skillText)}</p>${fights}${curve}</div>`;
+    + `<p class="set-example-attrs">${esc(pace.terms)}</p><p class="set-example-attrs">${esc(pace.killText)}</p><p class="set-example-attrs">${esc(pace.skillText)}</p>${fights}${curve}</div>`;
 }
 
 function visibleAdvancedSubgroups(rows, groupId) {

@@ -18,6 +18,7 @@ import { resolveCard } from '../src/model/registries.js';
 import { playCard, endTurn } from '../src/engine/coopCombat.js';
 import { createSession } from '../tools/session.mjs';
 import { createLevelCardPicks, levelCardStrips } from '../src/ui/screens/coop.js';
+import { xpToNext } from '../src/model/levelup.js';
 import { advancedConfigRows } from '../src/model/advancedConfig.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { t } from '../src/ui/strings.js';
@@ -201,6 +202,9 @@ function coopFirstSpoils(reg, seedString) {
   const host = createSession({ registries: reg, seedString });
   host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
   host.start();
+  // This test is about the reward door. Prime the ledger so one modest fight
+  // crosses the level threshold regardless of the currently tuned XP rate.
+  host.livingMembers()[0].run.level.xp = xpToNext(reg, 1) - 1;
   host.chooseNode('p1', host.session.mapGraph.startIds[0]);
   for (const enemy of host.live.combat.enemies) enemy.hp = 1;
   host.autoResolveCombat(botTurn);
@@ -444,6 +448,7 @@ test('a co-op seat that was away claims its level card through the catch-up', ()
   const host = createSession({ registries: reg, seedString: 'AWAY' });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
   host.start();
+  for (const member of host.livingMembers()) member.run.level.xp = xpToNext(reg, 1) - 1;
   for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
   for (const enemy of host.live.combat.enemies) enemy.hp = 1;
   host.setConnected('p2', false);
@@ -585,6 +590,7 @@ test('co-op: a repeat choice while another seat still chooses grants nothing twi
   host.addMember({ id: 'p2', name: 'p2', classId: 'rogue' });
   host.setConnectedMany(['p1', 'p2'], true);
   host.start();
+  for (const member of host.livingMembers()) member.run.level.xp = xpToNext(REG, 1) - 1;
   host.chooseNode('p1', host.session.mapGraph.startIds[0]);
   if (host.scene.kind !== 'reward') {
     for (const id of ['p2']) { try { host.chooseNode(id, host.session.mapGraph.startIds[0]); } catch {} }

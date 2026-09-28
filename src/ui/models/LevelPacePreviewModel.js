@@ -12,7 +12,7 @@
 
 import { contentBundle } from '../../content/index.js';
 import { appliedXpMultiplier, configuredContentBundle } from '../../model/advancedConfig.js';
-import { levelPace } from '../../model/levelup.js';
+import { combatLevelXp, levelPace } from '../../model/levelup.js';
 import { SKILL_KINDS, xpToNext as skillXpToNext } from '../../model/skills.js';
 import { t } from '../strings.js';
 import { refusalFor } from './StatsPreviewModel.js';
@@ -61,6 +61,18 @@ export function levelPacePreview(settings = {}, { pointsPerLevel = null } = {}) 
     t('settings.levelPace.pointsPerLevel', { count: pace.pointsPerLevel, plural: plural(pace.pointsPerLevel) }),
     cap ? t('settings.levelPace.cap', { count: cap, plural: plural(cap) }) : t('settings.levelPace.noCap'),
   ].join(' · ');
+  const xp = configured.balance.xp;
+  const killText = t('settings.levelPace.killLine', {
+    base: num(xp.kill.normal),
+    levelFactor: num(xp.killLevelMultiplier),
+    powerBase: num(xp.combatWin),
+    powerFactor: num(xp.combatPowerMultiplier),
+    example: combatLevelXp({ balance: configured.balance }, {
+      victory: true,
+      pool: pace.fights[0].pool,
+      enemies: [{ level: 5, combatPower: 3, alive: false }, { level: 5, combatPower: 3, alive: false }],
+    }),
+  });
   const skillText = t('settings.levelPace.skillLine', {
     hit: num(configured.balance.skill.xp.perHit),
     win: num(configured.balance.skill.xp.perWinEquipped),
@@ -89,6 +101,7 @@ export function levelPacePreview(settings = {}, { pointsPerLevel = null } = {}) 
     title: t('settings.levelPace.title'),
     subtitle: t('settings.levelPace.subtitle'),
     terms,
+    killText,
     skillText,
     curveTitle: t('settings.levelPace.curveTitle'),
     fights,

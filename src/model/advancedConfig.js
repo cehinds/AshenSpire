@@ -120,6 +120,8 @@ const BALANCE_DOMAINS = Object.freeze({
   'skill.xp.base': Object.freeze({ min: 1, max: 1000 }),
   'skill.class.xp.base': Object.freeze({ min: 1, max: 1000 }),
   'xp.combatWin': Object.freeze({ max: 1000 }),
+  'xp.killLevelMultiplier': Object.freeze({ integer: false, step: 0.05, min: 0, max: 2 }),
+  'xp.combatPowerMultiplier': Object.freeze({ integer: false, step: 0.05, min: 0, max: 2 }),
   'xp.kill.normal': Object.freeze({ max: 1000 }),
   'xp.kill.elite': Object.freeze({ max: 1000 }),
   'xp.kill.boss': Object.freeze({ max: 2000 }),
@@ -501,6 +503,9 @@ function labelSegment(part, sentence = false) {
 // they say what they do rather than spell their key; "Poise · On Fill · 0 —
 // Stacks" named an array index. Everything else keeps its key-derived label.
 const BALANCE_LABELS = Object.freeze({
+  'xp.combatWin': 'Combat power XP base',
+  'xp.combatPowerMultiplier': 'Combat power XP multiplier',
+  'xp.killLevelMultiplier': 'Enemy level XP multiplier',
   'poise.growthMult': 'Poise meter growth after each fill',
   'poise.onFill.0.stacks': 'Staggered stacks when an enemy meter fills',
   'poise.playerImpactPerHit': 'Poise damage you take per enemy hit',

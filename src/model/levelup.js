@@ -26,6 +26,7 @@ import { deriveStat } from './derivedStats.js';
 import { orderedAttributes } from './attributes.js';
 import { reconcileRunLoadoutHp } from './loadout.js';
 import { note } from './healLedger.js';
+import { enemyCombatPower } from './combatPower.js';
 
 /** The authored tables, or the shape of them, so a bundle without them fails
  *  soft in tools rather than throwing on a missing key. Bad data is caught at
@@ -74,19 +75,22 @@ export function xpToNext(registries, level) {
 
 /**
  * combatLevelXp(registries, { victory, pool, kills, enemies }) → the XP one fight
- * pays: `xp.combatWin` for a won fight, and `xp.kill.<pool>` × level per enemy felled
- * (a kill is a kill, won or lost; an unknown pool pays the normal rate).
+ * pays: floor(sum(defeated combat power) × combatPowerMultiplier × combatWin
+ * + sum(kill base × killLevelMultiplier × defeated level)). The combat-power
+ * portion needs victory; a loss still pays its defeated-enemy level portion.
  */
 export function combatLevelXp(registries, { victory = false, pool = 'normal', kills = 0, enemies = null } = {}) {
   const t = awardTable(registries);
   const kill = t.kill || {};
   const perKill = Number.isFinite(kill[pool]) ? kill[pool] : (Number.isFinite(kill.normal) ? kill.normal : 0);
-  const won = victory && Number.isFinite(t.combatWin) ? t.combatWin : 0;
-  const n = Array.isArray(enemies)
+  const levelMultiplier = Number.isFinite(t.killLevelMultiplier) && t.killLevelMultiplier >= 0 ? t.killLevelMultiplier : 1;
+  const powerMultiplier = Number.isFinite(t.combatPowerMultiplier) && t.combatPowerMultiplier >= 0 ? t.combatPowerMultiplier : 0.2;
+  const defeated = Array.isArray(enemies)
     ? enemies.filter((enemy) => enemy.alive === false || enemy.hp <= 0)
-      .reduce((sum, enemy) => sum + (Number.isSafeInteger(enemy.level) && enemy.level > 0 ? enemy.level : 1), 0)
-    : Number.isInteger(kills) && kills > 0 ? kills : 0;
-  return won + n * perKill;
+    : Array.from({ length: Number.isInteger(kills) && kills > 0 ? kills : 0 }, () => ({ level: 1, combatPower: 3 }));
+  const levelSum = defeated.reduce((sum, enemy) => sum + (Number.isSafeInteger(enemy.level) && enemy.level > 0 ? enemy.level : 1), 0);
+  const powerSum = victory ? defeated.reduce((sum, enemy) => sum + enemyCombatPower(registries, enemy), 0) : 0;
+  return Math.floor(powerSum * powerMultiplier * (t.combatWin || 0) + perKill * levelMultiplier * levelSum + 1e-9);
 }
 
 /** questLevelXp(registries) → the XP a completed quest pays (`xp.quest`); phase 10a's door pays it. */
