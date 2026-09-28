@@ -28,7 +28,7 @@ test('the channel is read from where the page was served or saved', () => {
   assert.equal(buildChannel(null), 'dev', 'no page (Node) is a developer’s seat');
 });
 
-test('debug opens on dev and test, never on main or release, and on unknown only when asked', () => {
+test('debug is on by default on dev and test, never on main or release, and off on unknown until asked', () => {
   const memory = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v), removeItem: (k) => m.delete(k) }; };
   assert.equal(debugEnabled('dev', { search: '', storage: memory() }), true);
   assert.equal(debugEnabled('test', { search: '', storage: memory() }), true);
@@ -39,34 +39,44 @@ test('debug opens on dev and test, never on main or release, and on unknown only
   assert.equal(debugEnabled('unknown', { search: '?debug=1', storage: store }), true);
   assert.equal(store.getItem(DEBUG_STORAGE_KEY), '1', 'remembered on the device');
   assert.equal(debugEnabled('unknown', { search: '', storage: store }), true);
-  assert.equal(debugEnabled('unknown', { search: '?debug=0', storage: store }), false, '?debug=0 forgets it');
+  assert.equal(debugEnabled('unknown', { search: '?debug=0', storage: store }), false, '?debug=0 turns it off');
+  assert.equal(debugEnabled('unknown', { search: '', storage: store }), false);
+  const devStore = memory();
+  assert.equal(debugEnabled('dev', { search: '?debug=0', storage: devStore }), false, 'a dev build can be switched off');
+  assert.equal(debugEnabled('dev', { search: '', storage: devStore }), false, 'and stays off on this device');
+  assert.equal(debugEnabled('test', { search: '?debug=0', storage: null }), false, 'without storage the flag still counts for the page');
 });
 
-test('the Developer tools switch can always be found, and flips only an unrecognised build', () => {
+test('Developer tools is a toggle on dev, test and unknown builds, and hidden on the release builds', () => {
   const memory = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v), removeItem: (k) => m.delete(k) }; };
-  assert.deepEqual({ ...debugSwitch('dev', { search: '', storage: memory() }), note: '' }, { on: true, canToggle: false, note: '' });
-  const locked = debugSwitch('main', { search: '', storage: memory() });
-  assert.equal(locked.canToggle, false); assert.equal(locked.on, false); assert.match(locked.note, /Locked off in main builds/);
+  for (const channel of ['main', 'release']) {
+    const state = debugSwitch(channel, { search: '', storage: memory() });
+    assert.equal(state.hidden, true, `${channel} hides the switch`);
+    assert.equal(state.on, false);
+    assert.equal(developerSwitchHtml(state), '', `${channel} draws no row`);
+  }
+  for (const channel of ['dev', 'test', 'unknown']) {
+    const store = memory();
+    const state = debugSwitch(channel, { search: '', storage: store });
+    assert.equal(state.hidden, false);
+    assert.equal(state.on, channel !== 'unknown', `${channel} default`);
+    assert.match(developerSwitchHtml(state), /data-developer-switch/, `${channel} draws a toggle`);
+    try {
+      assert.equal(setDebugEnabled(!state.on, { channel, storage: store }), !state.on);
+      assert.equal(store.getItem(DEBUG_STORAGE_KEY), state.on ? '0' : '1', 'remembered like ?debug=');
+      assert.equal(debugSwitch(channel, { search: '', storage: store }).on, !state.on);
+    } finally { setPageDebugForTests(null); }
+  }
   const store = memory();
-  assert.equal(debugSwitch('unknown', { search: '', storage: store }).canToggle, true);
   try {
-    assert.equal(setDebugEnabled(true, { channel: 'unknown', storage: store }), true);
-    assert.equal(store.getItem(DEBUG_STORAGE_KEY), '1', 'the switch is remembered like ?debug=1');
-    assert.equal(debugSwitch('unknown', { search: '', storage: store }).on, true);
-    assert.equal(setDebugEnabled(false, { channel: 'unknown', storage: store }), false);
-    assert.equal(store.getItem(DEBUG_STORAGE_KEY), null);
     setPageDebugForTests(false);
-    assert.equal(setDebugEnabled(true, { channel: 'release', storage: store }), false, 'release stays locked');
+    assert.equal(setDebugEnabled(true, { channel: 'release', storage: store }), false, 'release stays off');
     assert.equal(store.getItem(DEBUG_STORAGE_KEY), null);
-  } finally { setPageDebugForTests(null); }
-  try {
     setPageDebugForTests(true);
-    assert.equal(debugSwitch().on, true, 'with no options the switch reads the page’s own answer');
+    assert.equal(debugSwitch('dev').on, true, 'with no options the switch reads the page’s own answer');
     setPageDebugForTests(false);
-    assert.equal(debugSwitch().on, false);
+    assert.equal(debugSwitch('dev').on, false);
   } finally { setPageDebugForTests(null); }
-  assert.match(developerSwitchHtml({ on: false, canToggle: true, note: 'x' }), /data-developer-switch/);
-  assert.doesNotMatch(developerSwitchHtml({ on: false, canToggle: false, note: 'x' }), /data-developer-switch/);
 });
 
 test('a release build shows only the player-facing Advanced sections, and search follows', () => {

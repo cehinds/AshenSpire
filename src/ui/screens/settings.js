@@ -872,17 +872,16 @@ export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Interface', 'T
 const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
 
 /**
- * developerSwitchHtml() → the Developer tools row drawn above every Advanced
- * section, on every build, so the switch that reveals the debug-only sections
- * can always be found; where the build decides for itself the row says why.
+ * developerSwitchHtml() → the Developer tools switch drawn above every
+ * Advanced section: a toggle on dev, test and unrecognised builds, and nothing
+ * at all on the 1.0 release builds, where the tools stay off (owner,
+ * 2026-09-27).
  */
 export function developerSwitchHtml(state = debugSwitch()) {
-  const control = state.canToggle
-    ? `<button type="button" class="as-toggle toggle${state.on ? ' on' : ''}" role="switch" aria-checked="${state.on}" aria-label="Developer tools" data-developer-switch><span class="knob"></span></button>`
-    : `<span class="set-note">${state.on ? 'On' : 'Off'}</span>`;
+  if (state.hidden) return '';
   return '<div class="as-row setting set-row set-developer-switch" data-row-key="developerTools">'
     + `<span class="as-labelstack"><span class="set-label-line"><span class="ls-label">Developer tools</span></span><span class="ls-hint set-note">${esc(state.note)}</span></span>`
-    + `<span class="r-trail">${control}</span></div>`;
+    + `<span class="r-trail"><button type="button" class="as-toggle toggle${state.on ? ' on' : ''}" role="switch" aria-checked="${state.on}" aria-label="Developer tools" data-developer-switch><span class="knob"></span></button></span></div>`;
 }
 
 /** visibleAdvancedGroups(debug) → the Advanced sections this build shows. */
