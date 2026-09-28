@@ -105,6 +105,7 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
+  if (code === 0) console.log('slot-load-door --selftest: OK — 6/6 known-bads observed red');
   process.exit(code);
 }
 
