@@ -2511,10 +2511,19 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
     const topics = generalGroups(selected);
     const storedTopic = settings[`settingsGeneralTopic.${selected}`];
     const topic = topics.has(storedTopic) ? storedTopic : topics.keys().next().value;
+    const rows = topics.get(topic);
+    const preview = settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : '';
+    const firstFullscreen = selected === 'Display' && rows[0]?.key === 'fullscreen';
+    const rowHtml = rows.map(row => settingsRowHtml(settings, row));
+    // On a phone the expanded preview can fill the visible pane. Keep the
+    // first Display control ahead of it so Fullscreen is reachable on entry.
+    const body = firstFullscreen
+      ? `<div class="set-card-list">${rowHtml[0]}${preview}${rowHtml.slice(1).join('')}</div>`
+      : `${preview}<div class="set-card-list">${rowHtml.join('')}</div>`;
     return '<div class="set-general-pickers">'
       + (groups.length > 1 ? `<select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option${group === selected ? ' selected' : ''}>${group}</option>`).join('')}</select>` : '')
       + (topics.size > 1 ? `<select class="set-general-select" data-general-topic aria-label="${cat} option group">${[...topics.keys()].map(label => `<option${label === topic ? ' selected' : ''}>${label}</option>`).join('')}</select>` : '')
-      + `</div>${settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : ''}<div class="set-card-list">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;
+      + `</div>${body}`;
   }
   const h = categoryHandler(cat);
   if (!h) {

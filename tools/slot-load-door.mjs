@@ -429,5 +429,13 @@ try {
   if (server) await new Promise((done) => server.close(done));
 }
 
-console.log(`slot-load-door: ${checks - failures}/${checks} checks passed; ${failures} failed`);
-process.exit(process.exitCode === 2 ? 2 : failures ? 1 : 0);
+if (process.exitCode === 2 || checks === 0) {
+  console.error('slot-load-door: UNKNOWN — no complete verdict was measured');
+  process.exit(2);
+}
+if (failures) {
+  console.error(`slot-load-door: FAIL — ${failures} of ${checks} checks failed`);
+  process.exit(1);
+}
+console.log(`slot-load-door: OK — ${checks} checks passed`);
+process.exit(0);
