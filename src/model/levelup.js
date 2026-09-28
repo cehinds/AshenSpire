@@ -73,16 +73,19 @@ export function xpToNext(registries, level) {
 }
 
 /**
- * combatLevelXp(registries, { victory, pool, kills }) → the XP one fight
- * pays: `xp.combatWin` for a won fight, and `xp.kill.<pool>` per enemy felled
+ * combatLevelXp(registries, { victory, pool, kills, enemies }) → the XP one fight
+ * pays: `xp.combatWin` for a won fight, and `xp.kill.<pool>` × level per enemy felled
  * (a kill is a kill, won or lost; an unknown pool pays the normal rate).
  */
-export function combatLevelXp(registries, { victory = false, pool = 'normal', kills = 0 } = {}) {
+export function combatLevelXp(registries, { victory = false, pool = 'normal', kills = 0, enemies = null } = {}) {
   const t = awardTable(registries);
   const kill = t.kill || {};
   const perKill = Number.isFinite(kill[pool]) ? kill[pool] : (Number.isFinite(kill.normal) ? kill.normal : 0);
   const won = victory && Number.isFinite(t.combatWin) ? t.combatWin : 0;
-  const n = Number.isInteger(kills) && kills > 0 ? kills : 0;
+  const n = Array.isArray(enemies)
+    ? enemies.filter((enemy) => enemy.alive === false || enemy.hp <= 0)
+      .reduce((sum, enemy) => sum + (Number.isSafeInteger(enemy.level) && enemy.level > 0 ? enemy.level : 1), 0)
+    : Number.isInteger(kills) && kills > 0 ? kills : 0;
   return won + n * perKill;
 }
 

@@ -22,7 +22,7 @@ import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armam
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { STAT_ROWS_CHANGED_MEANING, STAT_ROWS_MARKER, STAT_ROWS_VERSION } from './model/statRows.js';
-import { advancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig } from './model/advancedConfig.js';
+import { advancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig, isLiveXpSetting, updatedXpSnapshot, xpSnapshotFromProfile } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
@@ -186,6 +186,7 @@ if (!validation.ok) {
 }
 
 let registries = createRegistries(contentBundle);
+let xpCombat = null;
 configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
@@ -1266,6 +1267,17 @@ function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } 
   // already left it out, so this only says so — on the channel boot uses for
   // a profile — and saves the cleaned run once, after `rng` (see below).
   for (const line of bringRunSnapshotForward(run, () => persist())) console.warn('[advanced-config]', line);
+  const currentXpSnapshot = xpSnapshotFromProfile(run.advancedConfigSnapshot, activeSettings);
+  if (JSON.stringify(currentXpSnapshot.overrides) !== JSON.stringify(run.advancedConfigSnapshot?.overrides || {})) {
+    const configured = configuredContentBundle(contentBundle, currentXpSnapshot);
+    if (validateContent(configured).ok && advancedConfigStructuralProblems(contentBundle, currentXpSnapshot.overrides).length === 0) {
+      run.advancedConfigSnapshot = currentXpSnapshot;
+      rebuildRegistries(currentXpSnapshot);
+      persist();
+    } else {
+      showSettingsNotice('XP settings need valid values before they can affect this run.', 'game-config');
+    }
+  }
   // THE LOAD DOOR IS WHERE AN OLD OPENING STATE IS REWRITTEN. A version-1
   // `scene` indexes the six-scene order; `onScene` below writes the NEW order
   // back into the same field, so a state left marked version 1 would be read
@@ -1514,6 +1526,20 @@ function persistSettingsChange(changed) {
   // A value the player moves off a promoted one is theirs from now on.
   const seed = seedAfterChange(activeSettings, changed);
   Object.assign(activeSettings, changed);
+  if (run && Object.keys(changed || {}).some(isLiveXpSetting)) {
+    const snapshot = updatedXpSnapshot(run.advancedConfigSnapshot, changed);
+    const configured = configuredContentBundle(contentBundle, snapshot);
+    const validation = validateContent(configured);
+    const problems = advancedConfigStructuralProblems(contentBundle, snapshot.overrides);
+    if (validation.ok && problems.length === 0) {
+      run.advancedConfigSnapshot = snapshot;
+      rebuildRegistries(snapshot);
+      if (xpCombat) xpCombat.registries = registries;
+      persist();
+    } else {
+      showSettingsNotice('XP settings need valid values before they can affect this run.', 'game-config');
+    }
+  }
   // A `draw` or `poise` stat row written by this build means what it means
   // now (ruleset 7); the marker keeps a later boot from reading it as the
   // pre-ruleset-7 co-op draw or ratings-off pool (model/statRows.js).
@@ -2348,6 +2374,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     // then derives the threshold from the loadout receipt, the real path).
     player: shotPoiseMaxOverride != null ? { poiseMax: shotPoiseMaxOverride } : {},
     enemyIds: enc.enemies,
+    encounter: enc,
     hpMult: cm.hpMult,
     enemyDamageMult: cm.damageMult,
     enemyStatuses: cm.enemyStatuses,
@@ -2355,6 +2382,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   });
   // A restored combat owns the live loadout copy from its snapshot. Rejoin it
   // to the run so later swaps and the post-combat receipt share one object.
+  xpCombat = combat;
   if (savedSnapshot) run.loadout = combat.loadout;
   // `?shotHand=<n>` — STAND WITH A FULLER HAND.
   //
@@ -2459,6 +2487,7 @@ function victoryTitle(enc) {
 }
 
 async function onCombatEnd(result, combat, enc) {
+  if (xpCombat === combat) xpCombat = null;
   runCombatEnd(run, combat); // pools, flasks and deficits, as every simulator settles them
   // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
   // receipt of every hit, block, evade and buildup by track; the run's ledger
@@ -2473,7 +2502,7 @@ async function onCombatEnd(result, combat, enc) {
   // the moment the level is reached — the points it grants wait on the
   // ledger for the shrine.
   const levelAward = awardLevelXp(registries, run, combatLevelXp(registries, {
-    victory: result === 'victory', pool: enc.pool, kills: combat.eventLog.filter((e) => e.type === 'enemyDied').length,
+    victory: result === 'victory', pool: enc.pool, enemies: combat.enemies,
   }), { pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings) });
   // THE RECEIPT THE SPOILS DOOR SHOWS (model/rewardprogress.js). Every ledger
   // above moved before the door opens, so the screen cannot re-derive what
@@ -3760,4 +3789,3 @@ if (shotState === 'combat-test') {
 } else {
   showTitle();
 }
-

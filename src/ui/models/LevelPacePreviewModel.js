@@ -13,6 +13,7 @@
 import { contentBundle } from '../../content/index.js';
 import { appliedXpMultiplier, configuredContentBundle } from '../../model/advancedConfig.js';
 import { levelPace } from '../../model/levelup.js';
+import { SKILL_KINDS, xpToNext as skillXpToNext } from '../../model/skills.js';
 import { t } from '../strings.js';
 import { refusalFor } from './StatsPreviewModel.js';
 
@@ -60,6 +61,11 @@ export function levelPacePreview(settings = {}, { pointsPerLevel = null } = {}) 
     t('settings.levelPace.pointsPerLevel', { count: pace.pointsPerLevel, plural: plural(pace.pointsPerLevel) }),
     cap ? t('settings.levelPace.cap', { count: cap, plural: plural(cap) }) : t('settings.levelPace.noCap'),
   ].join(' · ');
+  const skillText = t('settings.levelPace.skillLine', {
+    hit: num(configured.balance.skill.xp.perHit),
+    win: num(configured.balance.skill.xp.perWinEquipped),
+    cost: skillXpToNext({ balance: configured.balance }, SKILL_KINDS[0], 0),
+  });
   const fights = pace.fights.map((fight) => {
     const worth = fight.from.map((row) => t(row.capped ? 'settings.levelPace.worthCapped' : 'settings.levelPace.worth',
       { count: row.levelsGained, plural: plural(row.levelsGained), level: row.level })).join(', ');
@@ -83,6 +89,7 @@ export function levelPacePreview(settings = {}, { pointsPerLevel = null } = {}) 
     title: t('settings.levelPace.title'),
     subtitle: t('settings.levelPace.subtitle'),
     terms,
+    skillText,
     curveTitle: t('settings.levelPace.curveTitle'),
     fights,
     curve,

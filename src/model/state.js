@@ -1453,11 +1453,12 @@ export function stampPlayerPoiseMax(entity, max) {
  * the poiseDamage opcode (SPEC §3.7, §4.4); everything else about Stagger is
  * content data.
  */
-export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, damageMult = 1 }) {
+export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, damageMult = 1, level = 1 }) {
   const entity = {
     id: instanceId,
     kind: 'enemy',
     enemyId,
+    level: Number.isSafeInteger(level) && level > 0 ? level : 1,
     hp,
     maxHp: hp,
     block: 0,

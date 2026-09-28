@@ -38,14 +38,14 @@ function playAward(settings, pool, kills, startLevel = 1) {
 }
 
 test('§15.2 falsify: the preview\'s normal-fight XP is combatLevelXp on the configured registries, xpMultiplier counted once', () => {
-  assert.equal(combatLevelXp(REG, { victory: true, pool: 'normal', kills: 3 }), 30, 'the shipped awards: 15 a win and 5 a normal kill');
+  assert.equal(combatLevelXp(REG, { victory: true, pool: 'normal', kills: 3 }), 30, 'the shipped awards: 10 per level-1 kill');
   const reg = configured({ [XP_MULT]: 2 });
   const doubled = combatLevelXp(reg, { victory: true, pool: 'normal', kills: 3 });
   assert.equal(doubled, 60, 'the multiplier is in the configured awards');
   const normal = fight(levelPacePreview({ [XP_MULT]: 2 }), 'normal');
   assert.equal(normal.kills, 3);
   assert.equal(normal.xp, doubled, 'counted once, not twice (120)');
-  assert.match(normal.text, /^A normal fight \(3 kills\) gives 60 XP/);
+  assert.match(normal.text, /^A normal fight \(3 level-1 kills\) gives 60 XP/);
   assert.equal(fight(levelPace(reg), 'normal').xp, doubled);
 });
 
@@ -65,21 +65,22 @@ test('§15.2 falsify: the levels-gained figure is what awardLevelXp actually awa
   // The shipped figures from level 1 (review of #1348).
   const shipped = levelPacePreview({});
   const figures = shipped.fights.map((line) => [line.pool, line.kills, line.xp, from(line, 1).levelsGained]);
-  assert.deepEqual(figures, [['normal', 3, 30, 3], ['elite', 1, 90, 8], ['boss', 1, 215, 13]]);
-  assert.match(fight(shipped, 'elite').text, /^An elite fight \(1 kill\) gives 90 XP: 8 levels from level 1/);
-  assert.match(fight(shipped, 'boss').text, /^A boss fight \(1 kill\) gives 215 XP: 13 levels from level 1/);
+  assert.deepEqual(figures, [['normal', 3, 30, 0], ['elite', 1, 10, 0], ['boss', 1, 10, 0]]);
+  assert.match(fight(shipped, 'elite').text, /^An elite fight \(1 level-1 kill\) gives 10 XP: 0 levels from level 1/);
+  assert.match(fight(shipped, 'boss').text, /^A boss fight \(1 level-1 kill\) gives 10 XP: 0 levels from level 1/);
 });
 
-test('§15.2 falsify: with maxLevelsPerFight 1, a boss kill from level 1 gains exactly one level and leaves xp < xpToNext', () => {
-  const { award, run, reg } = playAward({ [CAP]: 1 }, 'boss', 1);
+test('§15.2 falsify: with maxLevelsPerFight 1, a large boss award gains exactly one level and leaves xp < xpToNext', () => {
+  const settings = { [CAP]: 1, 'gameConfig.balance.xp.kill.boss': 215 };
+  const { award, run, reg } = playAward(settings, 'boss', 1);
   assert.equal(award.levelUps, 1);
   assert.equal(run.level.level, 2);
   assert.ok(run.level.xp < xpToNext(reg, 2), `xp ${run.level.xp} must stay under the step ${xpToNext(reg, 2)}`);
-  // With 0 — the shipped value — no cap: 13 levels.
-  assert.equal(playAward({ [CAP]: 0 }, 'boss', 1).award.levelUps, 13);
-  assert.equal(playAward({}, 'boss', 1).award.levelUps, 13);
+  // With 0 — the shipped cap — a large award can cross two levels.
+  assert.equal(playAward({ ...settings, [CAP]: 0 }, 'boss', 1).award.levelUps, 2);
+  assert.equal(playAward({}, 'boss', 1).award.levelUps, 0);
   // The preview agrees.
-  const line = fight(levelPacePreview({ [CAP]: 1 }), 'boss');
+  const line = fight(levelPacePreview(settings), 'boss');
   assert.equal(from(line, 1).levelsGained, 1);
   assert.equal(from(line, 1).capped, true);
 });
@@ -87,7 +88,7 @@ test('§15.2 falsify: with maxLevelsPerFight 1, a boss kill from level 1 gains e
 test('§15.2: the XP past the cap is discarded, one short of the next step at most', () => {
   const reg = withCap(1);
   const run = { level: emptyLevel() };
-  awardLevelXp(reg, run, combatLevelXp(reg, { victory: true, pool: 'boss', kills: 1 }));
+  awardLevelXp(reg, run, 215);
   assert.equal(run.level.xp, xpToNext(reg, 2) - 1, 'the ledger keeps one XP short of the next level');
   // So the next award climbs on at most that, and the cap still holds.
   const next = awardLevelXp(reg, run, 1);
@@ -96,7 +97,7 @@ test('§15.2: the XP past the cap is discarded, one short of the next step at mo
   // A cap of 2 lets two levels through.
   const two = { level: emptyLevel() };
   const reg2 = withCap(2);
-  assert.equal(awardLevelXp(reg2, two, 215).levelUps, 2);
+  assert.equal(awardLevelXp(reg2, two, 315).levelUps, 2);
   assert.equal(two.level.xp, xpToNext(reg2, 3) - 1);
   // An award that does not reach the cap loses nothing.
   const small = { level: emptyLevel() };
@@ -107,7 +108,7 @@ test('§15.2: the XP past the cap is discarded, one short of the next step at mo
   const banked = { level: emptyLevel() };
   awardLevelXp(ceiling, banked, 215);
   assert.equal(banked.level.level, 2);
-  assert.equal(banked.level.xp, 205);
+  assert.equal(banked.level.xp, 115);
   // Both caps at once (review, #1349): per-fight 2 and a run ceiling of 3 stop
   // a boss award at the same step. The per-award discard still applies, so the
   // capped award leaves xp ≤ xpToNext − 1 rather than banking 195.
@@ -115,10 +116,10 @@ test('§15.2: the XP past the cap is discarded, one short of the next step at mo
     level: { ...contentBundle.balance.level, maxLevelsPerFight: 2 },
     levelUp: { ...contentBundle.balance.levelUp, maxLevels: 3 } } });
   const twice = { level: emptyLevel() };
-  const award = awardLevelXp(both, twice, 215);
+  const award = awardLevelXp(both, twice, 315);
   assert.equal(twice.level.level, 3);
   assert.ok(twice.level.xp <= xpToNext(both, 3) - 1, `xp ${twice.level.xp} must not exceed the step less one`);
-  assert.equal(award.discarded, 215 - xpToNext(both, 1) - xpToNext(both, 2) - twice.level.xp);
+  assert.equal(award.discarded, 315 - xpToNext(both, 1) - xpToNext(both, 2) - twice.level.xp);
   assert.ok(award.discarded > 0);
   // The ceiling alone, short of the per-award allowance, still banks.
   const early = createRegistries({ ...contentBundle, balance: { ...contentBundle.balance,
@@ -126,7 +127,7 @@ test('§15.2: the XP past the cap is discarded, one short of the next step at mo
     levelUp: { ...contentBundle.balance.levelUp, maxLevels: 3 } } });
   const bank = { level: emptyLevel() };
   assert.equal(awardLevelXp(early, bank, 215).discarded, 0);
-  assert.equal(bank.level.xp, 195);
+  assert.equal(bank.level.xp, 15);
 });
 
 test('§15.2: the preview lists the XP to reach each of levels 2–20, from the live curve', () => {
@@ -138,8 +139,8 @@ test('§15.2: the preview lists the XP to reach each of levels 2–20, from the 
     total += row.step;
     assert.equal(row.total, total, `the running total to level ${row.level}`);
   }
-  // The shipped curve: 10 a level until level 9 (SPEC §15.2).
-  assert.deepEqual(pace.curve.slice(0, 8).map((row) => row.step), [10, 10, 10, 10, 10, 10, 10, 10]);
+  // The shipped curve: each step costs 100 XP.
+  assert.deepEqual(pace.curve.slice(0, 8).map((row) => row.step), [100, 100, 100, 100, 100, 100, 100, 100]);
   // A curve setting moves it.
   const steeper = levelPacePreview({ 'gameConfig.balance.level.xp.base': 50 });
   assert.equal(steeper.curve[0].step, 50);
@@ -189,7 +190,7 @@ test('§15.2: Settings → Progression → Experience draws the Levelling previe
   const html = categoryHtml('Advanced', settings, null);
   assert.match(html, /data-level-pace-preview/);
   assert.match(html, /Levelling preview/);
-  assert.match(html, /A normal fight \(3 kills\) gives 60 XP/);
+  assert.match(html, /A normal fight \(3 level-1 kills\) gives 60 XP/);
   assert.match(html, /from level 10/);
   // Not on another Advanced tab.
   assert.doesNotMatch(categoryHtml('Advanced', { settingsAdvancedCategory: 'Rewards' }, null), /data-level-pace-preview/);
@@ -314,10 +315,10 @@ test('§15.2: a refused configuration shows the refusal and prices the authored 
   assert.match(pace.refused, /balance\.level\.xp\.growth/);
   const authored = levelPacePreview({});
   assert.deepEqual(pace.curve.map((row) => row.step), authored.curve.map((row) => row.step), 'the authored curve, not growth 0.5');
-  assert.deepEqual(pace.fights.map((row) => row.xp), [30, 90, 215], 'the fallback applies no multiplier either');
+  assert.deepEqual(pace.fights.map((row) => row.xp), [30, 10, 10], 'the fallback applies no multiplier either');
   assert.equal(pace.xpMultiplier, 1);
   assert.equal(authored.refused, null);
   const html = categoryHtml('Advanced', { settingsAdvancedCategory: 'Progression', 'settingsAdvancedSubgroup.Progression': 'Experience', ...bad }, null);
   assert.match(html, /data-level-pace-refused/);
-  assert.match(html, /A normal fight \(3 kills\) gives 30 XP/);
+  assert.match(html, /A normal fight \(3 level-1 kills\) gives 30 XP/);
 });

@@ -331,7 +331,7 @@ export const balance = {
   // ---- Skill tracks (plan phase 4a, proposal §6.1 and §10) ----------------
   // One curve shape for every track: the step from level n costs
   // round(base × growth^n, roundTo). `xp` is the weapon, armour, focus and
-  // dual-wield curve; `class.xp` the slower class curve. The award rows are
+  // dual-wield curve; `class.xp` the class curve. The award rows are
   // what the engine's hooks pay (engine/skillXp.js): perHit for a hit or a
   // block a group's card resolves on a live target; perWinEquipped per
   // equipped group on a win, × killMult when that group landed the killing
@@ -340,7 +340,7 @@ export const balance = {
   // buildup dealt (focus). model/skills.js is the one reader of the curve.
   skill: {
     xp: {
-      base: 5, growth: 1.2, roundTo: 5, perHit: 2, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 3, buildupPerXp: 5,
+      base: 100, growth: 1, roundTo: 5, perHit: 5, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 5, buildupPerXp: 5,
       [NOTE]: {
         base: 'Weapon, armour, focus and dual-wield tracks: what the first level step costs. Each step is round(base × growth^n) to the rounding below.',
         growth: 'Those tracks: how much dearer each level step is than the one before it.',
@@ -353,14 +353,14 @@ export const balance = {
         buildupPerXp: 'Arcane Exposure buildup a caster must deal per point of focus skill XP.',
       },
     },
-    // The class track (plan phase 5b): a slower curve; paid by the run's
+    // The class track (plan phase 5b): paid by the run's
     // owner for a won fight, more for a boss (the owner knows the door's
     // pool; the combat does not), and per quest once phase 10a's event
     // exists. `tierAt` is the class level each tree tier opens at.
     class: {
-      xp: { base: 5, growth: 1.25, roundTo: 5, perWin: 10, bossKill: 30, perQuest: 20 }, tierAt: [1, 3, 5],
+      xp: { base: 100, growth: 1, roundTo: 5, perWin: 5, bossKill: 10, perQuest: 5 }, tierAt: [1, 3, 5],
       [NOTE]: {
-        'xp.base': 'The class track: what its first level step costs. Deliberately slower than the equipment tracks.',
+        'xp.base': 'The class track: what its first level step costs.',
         'xp.growth': 'The class track: how much dearer each of its level steps is than the last.',
         'xp.roundTo': 'The class track: every step cost is rounded to a multiple of this.',
         'xp.perWin': 'Class XP for a won fight.',
@@ -664,34 +664,15 @@ export const balance = {
   // past a threshold, scalable", measured at 20+4 and again at 50+10 against
   // the tripled faucet) is GONE with plan phase 6: a level is earned, below.
   //
-  // THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): XP from a
-  // won fight and from each kill by the door's pool (and per quest once phase
-  // 10a's door pays it), on the one curve shape every track shares —
-  // `xpToNext(n) = round(base × growth^(n − 1), roundTo)`, never below one
-  // `roundTo`. Curve receipt at the live numbers (base 5, growth 1.15, roundTo
-  // 10, the owner's 2026-09-24 lowering): the steps from level 1 cost 10, 10,
-  // 10, 10, 10, 10, 10, 10, 20, 20 — 120 XP to level 11, and 460 to level 20.
-  // (The proposal's curve, base 100 — 100, 120, 130, 150 … 2,030 XP to level
-  // 11 — is gone with that lowering.) The owner's band is 10–20 levels a full
-  // run and `tools/runsim.mjs --xp-levels` measures it (a greedy bot, the
-  // ceiling a real climb approaches). Settings → Progression → Experience
-  // draws the Levelling preview (SPEC §15.2, model/levelup.js `levelPace`):
-  // at these numbers a normal fight (3 kills, 30 XP) is worth 3 levels from
-  // level 1, an elite (90 XP) 8 and a boss (215 XP) 13.
-  //
-  // THE AWARDS, MEASURED (2026-09-19, 4 runs/class). The proposal's table
-  // (20 a win; 10 / 30 / 80 a kill; 50 a quest) assumed about 36 normal
-  // fights, 6 elites and 3 bosses a run; this map pays fewer, and at those
-  // numbers a full run earned ~1,030 XP — 6.7 levels, under the band, on the
-  // proposal's base-100 curve; the awards were raised ×2.5 and re-measured
-  // for a run of THIS length (see the fleet line the sim prints). The curve
-  // was then lowered to base 5 without re-measuring the awards, which is why
-  // the pace is fast now; the Levelling preview is where the owner tunes it.
+  // THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): kills pay
+  // 10 XP per enemy level, and the default curve costs 100 XP per step.
+  // Settings → Progression → Experience previews the same configured curve
+  // and awards the run uses. The existing per-award level cap remains separate.
   // Cinders buy no level any more: the ladder that sat here (firstCost /
   // costStep, measured twice) is gone with the purse.
   level: {
     xp: {
-      base: 5, growth: 1.15, roundTo: 10,
+      base: 100, growth: 1, roundTo: 10,
       [NOTE]: {
         base: 'The character level curve: what the step from level 1 costs. Each later step is round(base × growth^n) to the rounding below.',
         growth: 'The character level curve: how much dearer each step is than the one before it.',
@@ -710,11 +691,11 @@ export const balance = {
     // it (content/derivedStats.js `perLevel`), where the snapshot keeps it.
   },
   xp: {
-    combatWin: 15,
+    combatWin: 0,
     kill: {
-      normal: 5, elite: 75, boss: 200,
+      normal: 10, elite: 10, boss: 10,
       [NOTE]: {
-        '{kind}': 'Character XP for killing an enemy out of the roster {pool} draws from.',
+        '{kind}': 'Character XP per enemy level for killing an enemy out of the roster {pool} draws from.',
       },
     },
     quest: 125,

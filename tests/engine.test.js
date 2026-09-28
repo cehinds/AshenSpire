@@ -6382,16 +6382,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // now IS that row, and it lands on the old hand-rule turn draw (2 below
     // INT 9) rather than the old derived one.
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '38/3/2', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
-    // THE OWNER'S CURVE SINCE 2026-09-24 (base 5, growth 1.15, roundTo 10 —
-    // 100,120,…,350 before). The rounding holds the first eight steps at its
-    // own floor of 10: 5 × 1.15^n does not reach 15 until n = 8.
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '10,10,10,10,10,10,10,10,20,20', 'the XP curve receipt (plan phase 6, proposal §10): the steps from level 1');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,100,100,100,100,100,100,100,100,100', 'every default stat level costs 100 XP');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.ratingId}`, '3/ar', 'physical Strike is 3 base + AR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.ratingId}`, '2/pr', 'magic Strike is 2 base + PR');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.ratingId}`, '1/dr', 'Defend is 1 base + DR');
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 120, '120 XP reaches level 11 (2,030 before 2026-09-24) — a curve receipt, not a second hard-coded total');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 1000, '1,000 XP reaches level 11 at the default cost');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
     // Rogue: HP 30 + ⌊4 × 2⌋ = 38; Actions 3 + ⌊0.2 × DEX 3⌋ = 3; Draw 2 + ⌊0.1 × INT 1⌋ = 2.
@@ -8728,13 +8725,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // by its growth — never cheaper at any step, and dearer over ten.
     const steps = (kind) => Array.from({ length: 10 }, (_, n) => xpToNext(REG, kind, n));
     assert(steps('class').every((cost, n) => cost >= steps('weapon')[n]), 'the class curve is never cheaper at any step');
-    assert(steps('class').reduce((a, b) => a + b) > steps('weapon').reduce((a, b) => a + b), 'the class curve is the slower one');
+    eq(steps('class').reduce((a, b) => a + b), steps('weapon').reduce((a, b) => a + b), 'class and weapon curves have the same 100 XP default');
     // THE CLIMB, READ OVER TEN STEPS: the owner's base of 5 on a roundTo of 5
     // (2026-09-24; 30 before) rounds the first three steps to the same 5, so
     // growth shows further up the curve rather than between steps 0 and 1.
     const armourSteps = Array.from({ length: 10 }, (_, n) => xpToNext(REG, 'armour', n));
-    assert(armourSteps.every((cost, n) => n === 0 || cost >= armourSteps[n - 1]) && armourSteps[9] > armourSteps[0],
-      `the curve climbs — ${armourSteps.join(',')}`);
+    assert(armourSteps.every((cost) => cost === 100), `the default armour curve stays at 100 — ${armourSteps.join(',')}`);
     // The ledger: a fresh run has none; XP writes it and climbs, queuing a draft per level.
     const run = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
     eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{}', 'a fresh run has an empty ledger');

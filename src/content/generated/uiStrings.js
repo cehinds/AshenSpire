@@ -2105,7 +2105,7 @@ export const uiStrings = [
   {
     "id": "settings.levelPace.subtitle",
     "extends": "",
-    "short": "A new run under these settings",
+    "short": "Current XP settings",
     "full": "",
     "tip": ""
   },
@@ -2161,7 +2161,14 @@ export const uiStrings = [
   {
     "id": "settings.levelPace.fightLine",
     "extends": "",
-    "short": "{fight} ({kills} kill{killsPlural}) gives {xp} XP: {worth}.",
+    "short": "{fight} ({kills} level-1 kill{killsPlural}) gives {xp} XP: {worth}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.skillLine",
+    "extends": "",
+    "short": "A skill hit gives {hit} XP and a win gives {win} equipped-skill XP; the first skill level costs {cost} XP.",
     "full": "",
     "tip": ""
   },

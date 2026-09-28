@@ -2419,7 +2419,7 @@ function levelPacePreviewMarkup(settings, pointsPerLevel) {
     + `<ol class="set-level-pace-curve">${pace.curve.map((row) => `<li><span>${esc(row.label)}</span> <b>${row.step}</b> <small>${esc(row.totalText)}</small></li>`).join('')}</ol></div>`;
   return `<div class="set-example set-level-pace" data-level-pace aria-live="polite"><div class="set-example-head"><strong>${esc(pace.title)}</strong><span>${esc(pace.subtitle)}</span></div>`
     + (pace.refused ? `<p class="set-example-refused" role="status" data-level-pace-refused>${esc(pace.refused)}</p>` : '')
-    + `<p class="set-example-attrs">${esc(pace.terms)}</p>${fights}${curve}</div>`;
+    + `<p class="set-example-attrs">${esc(pace.terms)}</p><p class="set-example-attrs">${esc(pace.skillText)}</p>${fights}${curve}</div>`;
 }
 
 function visibleAdvancedSubgroups(rows, groupId) {
@@ -2561,7 +2561,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
       const subTabs = subgroups.length > 1 ? `<div class="set-topic-tabs" role="tablist" aria-label="${esc(group.label)} groups">`
         + subgroups.map((sub, index) => `<button type="button" class="as-btn${sub === activeSub ? ' on' : ''}" role="tab" aria-selected="${sub === activeSub}" aria-controls="set-topic-${group.id}-${index}" data-topic="${esc(sub.id)}">${esc(sub.label)}</button>`).join('') + '</div>' : '';
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"`
-        + `>${subTabs}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
+        + `>${subTabs}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' XP changes also apply to the current run.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
         + subgroups.map((sub, index) => sub !== activeSub
           ? `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}" data-lazy hidden></div>`
           : `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}">`
