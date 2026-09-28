@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1397",
+    "date": "2026-09-28",
+    "group": "2026-09-28",
+    "summary": "Browser checks for Fullscreen and saved-game loading run to completion",
+    "detail": "One of the Fullscreen check's deliberate defects no longer matched the current Settings source after an art quality setting was added. It now swaps the current Fullscreen and Accent rows and checks that the wrong order is caught. The saved-game loading check now reports its successful deliberate-defect checks in the format the test runner expects.",
+    "build": "0.7.1.685",
+    "pullRequest": 1397,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1397"
+  },
+  {
     "id": "pr-1395",
     "date": "2026-09-28",
     "group": "2026-09-28",
