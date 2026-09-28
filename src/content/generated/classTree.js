@@ -14,12 +14,32 @@ export const classTree = [
   },
   {
     "classId": "reaver",
+    "nodeId": "partingBlow",
+    "tier": 1
+  },
+  {
+    "classId": "reaver",
+    "nodeId": "ironRebuke",
+    "tier": 1
+  },
+  {
+    "classId": "reaver",
     "nodeId": "ashenReserve",
     "tier": 2
   },
   {
     "classId": "reaver",
     "nodeId": "grimHarvest",
+    "tier": 2
+  },
+  {
+    "classId": "reaver",
+    "nodeId": "cinderGrip",
+    "tier": 2
+  },
+  {
+    "classId": "reaver",
+    "nodeId": "mendingGrip",
     "tier": 2
   },
   {
@@ -44,12 +64,32 @@ export const classTree = [
   },
   {
     "classId": "starseer",
+    "nodeId": "spentStars",
+    "tier": 1
+  },
+  {
+    "classId": "starseer",
+    "nodeId": "fallingStar",
+    "tier": 1
+  },
+  {
+    "classId": "starseer",
     "nodeId": "lodestarCap",
     "tier": 2
   },
   {
     "classId": "starseer",
     "nodeId": "arcaneDraw",
+    "tier": 2
+  },
+  {
+    "classId": "starseer",
+    "nodeId": "lodestarPull",
+    "tier": 2
+  },
+  {
+    "classId": "starseer",
+    "nodeId": "shardHunger",
     "tier": 2
   },
   {
@@ -74,12 +114,32 @@ export const classTree = [
   },
   {
     "classId": "herald",
+    "nodeId": "burningGrace",
+    "tier": 1
+  },
+  {
+    "classId": "herald",
+    "nodeId": "dazzlingLight",
+    "tier": 1
+  },
+  {
+    "classId": "herald",
     "nodeId": "sealOfPlenty",
     "tier": 2
   },
   {
     "classId": "herald",
     "nodeId": "wakingRot",
+    "tier": 2
+  },
+  {
+    "classId": "herald",
+    "nodeId": "anointedBlade",
+    "tier": 2
+  },
+  {
+    "classId": "herald",
+    "nodeId": "unsealedScroll",
     "tier": 2
   },
   {
@@ -104,12 +164,32 @@ export const classTree = [
   },
   {
     "classId": "rogue",
+    "nodeId": "lowProfile",
+    "tier": 1
+  },
+  {
+    "classId": "rogue",
+    "nodeId": "feint",
+    "tier": 1
+  },
+  {
+    "classId": "rogue",
     "nodeId": "honedEdge",
     "tier": 2
   },
   {
     "classId": "rogue",
     "nodeId": "poisonedPouch",
+    "tier": 2
+  },
+  {
+    "classId": "rogue",
+    "nodeId": "spareWhetstone",
+    "tier": 2
+  },
+  {
+    "classId": "rogue",
+    "nodeId": "whettedGuard",
     "tier": 2
   },
   {

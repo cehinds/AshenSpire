@@ -8911,7 +8911,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(high.every((id) => ['common', 'uncommon', 'rare'].includes(REG.cards.get(id).rarity)), 'a high level drafts from the opened set');
     const rngEmpty = createRng(7); const beforeCounters = JSON.stringify(rngEmpty.getCounters());
     const starseer = createRunState({ seed: 0x4b4b, classId: 'starseer', registries: REG });
-    eq(rollSkillDraftIds(REG, rngEmpty, { classId: 'starseer', loadout: starseer.loadout, skillId: 'item:magic-focus', level: 1 }).length, 0, 'a pool with no card of the schools rolls nothing');
+    // The Starseer's Ash Focus drafts its ash rites; the Reaver's pool holds no ritual card.
+    eq(rollSkillDraftIds(REG, rngEmpty, { classId: 'reaver', loadout: starseer.loadout, skillId: 'item:magic-focus', level: 1 }).length, 0, 'a pool with no card of the schools rolls nothing');
     eq(JSON.stringify(rngEmpty.getCounters()), beforeCounters, 'and draws nothing');
     eq(rollSkillDraftIds(REG, createRng(7), { classId: 'starseer', loadout: starseer.loadout, skillId: 'item:blade', level: 1 }).length, 0, 'a track whose type no hand holds rolls nothing');
     eq(rollSkillDraftIds(REG, createRng(7), { classId: 'reaver', loadout: reaver.loadout, skillId: 'item:blade', level: 1, pool: 'boss' }).length, c.draftSize, 'a boss door rolls at its own odds');
@@ -9114,14 +9115,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const c = REG.balance.skill.class;
     // THE TABLE IS THE TREE: rows per class, tiers the balance rows open.
     const rows = classTreeRows(REG, 'reaver');
-    eq(rows.length, 6, 'the reaver tree has six nodes'); eq(new Set(rows.map((r) => r.tier)).size, 3, 'in three tiers');
+    eq(rows.length, 10, 'the reaver tree has ten nodes'); eq(new Set(rows.map((r) => r.tier)).size, 3, 'in three tiers');
+    eq([1, 2, 3].map((t) => rows.filter((r) => r.tier === t).length).join(','), '4,4,2', 'four at tier 1, four at tier 2, the subclass pair at tier 3');
     eq(tierOpensAt(REG, 1), c.tierAt[0]); eq(tierOpensAt(REG, 3), c.tierAt[2]); eq(tierOpensAt(REG, 9), Infinity, 'a tier the table has not got never opens');
     for (const cls of REG.classes.all()) assert(classTreeRows(REG, cls.id).some((r) => r.tier === 3), `${cls.id} has a subclass tier`);
     // THE POOL: what a class at a level may draft, given what it picked.
     eq(classDraftPool(REG, 'reaver', [], 0).length, 0, 'level 0 opens nothing');
-    eq(classDraftPool(REG, 'reaver', [], c.tierAt[0]).join(','), 'ironFooting,bloodTempo', 'tier 1 at its level');
-    eq(classDraftPool(REG, 'reaver', ['ironFooting'], c.tierAt[0]).join(','), 'bloodTempo', 'a picked node leaves the pool');
-    eq(classDraftPool(REG, 'reaver', [], c.tierAt[2]).length, 6, 'every tier open at the top level');
+    eq(classDraftPool(REG, 'reaver', [], c.tierAt[0]).join(','), 'ironFooting,bloodTempo,partingBlow,ironRebuke', 'tier 1 at its level');
+    eq(classDraftPool(REG, 'reaver', ['ironFooting'], c.tierAt[0]).join(','), 'bloodTempo,partingBlow,ironRebuke', 'a picked node leaves the pool');
+    eq(classDraftPool(REG, 'reaver', [], c.tierAt[2]).length, 10, 'every tier open at the top level');
     eq(classDraftPool(REG, 'reaver', ['warlord'], c.tierAt[2]).includes('bulwarkKing'), false, 'the other subclass is excluded once one is picked');
     eq(classDraftPool(REG, 'reaver', ['warlord'], c.tierAt[2]).includes('ironFooting'), true, 'the lower tiers stay open');
     // THE ROLL: draftSize distinct nodes on the cardRewards stream; an empty pool draws nothing.
@@ -9130,7 +9132,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(roll.every((id) => rows.some((r) => r.nodeId === id)), 'every pick is a reaver node');
     const rngEmpty = createRng(9); const before = JSON.stringify(rngEmpty.getCounters());
     eq(rollClassDraftIds(REG, rngEmpty, { classId: 'reaver', coreTags: [], level: 0 }).length, 0); eq(JSON.stringify(rngEmpty.getCounters()), before, 'nothing drawn for nothing');
-    eq(rollClassDraftIds(REG, createRng(9), { classId: 'reaver', coreTags: ['ironFooting'], level: c.tierAt[0] }).join(','), 'bloodTempo', 'a pool smaller than the draft is the whole pool');
+    eq(rollClassDraftIds(REG, createRng(9), { classId: 'reaver', coreTags: ['ironFooting', 'bloodTempo', 'partingBlow'], level: c.tierAt[0] }).join(','), 'ironRebuke', 'a pool smaller than the draft is the whole pool');
     // THE PICK writes the core card's own tags, and only what the tree allows.
     const run = createRunState({ seed: 0x5b5b, classId: 'reaver', registries: REG });
     eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.coreTags), '[]', 'a fresh run has picked nothing'); eq(JSON.stringify(run.zones.coreTags), '[]', 'and the core zone projects it');

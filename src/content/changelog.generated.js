@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1389",
+    "date": "2026-09-27",
+    "group": "2026-09-27",
+    "summary": "Levelling a weapon offers real choices, and each class has more abilities",
+    "detail": "Every starting weapon, shield and staff now offers at least four different cards at each rarity when it levels up. The Reaver's sword and shield used to offer commons only, and the Starseer's Ash Focus offered nothing; 24 new cards fill the gaps, among them twelve Starseer ash rites for the Ash Focus, new bow and parrying cards for the Rogue, and new sword and shield cards for the Reaver. Each class's ability tree grows from six to ten choices: two more at each of its first two tiers. The subclass choice is unchanged.",
+    "build": "0.7.1.679",
+    "pullRequest": 1389,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1389"
+  },
+  {
     "id": "pr-1385",
     "date": "2026-09-27",
     "group": "2026-09-27",
