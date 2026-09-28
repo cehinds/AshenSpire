@@ -20,6 +20,7 @@ test('the current build defaults to 100 XP per level and five XP per common skil
   assert.equal(registries.balance.skill.xp.perHit, 5);
   assert.equal(registries.balance.skill.xp.perWinEquipped, 5);
   assert.equal(registries.balance.skill.class.xp.perWin, 5);
+  assert.equal(registries.balance.xp.combatWin, 25);
   assert.equal(registries.balance.xp.kill.normal, 10);
 });
 
@@ -36,7 +37,7 @@ test('kill XP uses each defeated enemy level; a live settings snapshot changes i
   assert.deepEqual(combat.enemies.map((enemy) => enemy.level), levels);
   const dead = levels.map((level) => ({ level, hp: 0, alive: false }));
   assert.equal(createEnemyCombatEntity({ instanceId: 'e1', enemyId: enemyIds[0], hp: 10, level: levels[0] }).level, levels[0]);
-  assert.equal(combatLevelXp(registries, { victory: true, enemies: dead }), 10 * (levels[0] + levels[1]));
+  assert.equal(combatLevelXp(registries, { victory: true, enemies: dead }), 25 + 10 * (levels[0] + levels[1]));
   dead[1].hp = 1;
   dead[1].alive = true;
   assert.equal(combatLevelXp(registries, { enemies: dead }), 10 * levels[0]);
@@ -64,7 +65,7 @@ test('the preview responds to the same settings as character and skill awards', 
   const preview = levelPacePreview(settings);
   assert.equal(preview.curve[0].step, characterXpToNext(updated, 1));
   assert.equal(preview.curve[0].step, 200);
-  assert.equal(preview.fights.find((fight) => fight.pool === 'normal').xp, 90);
+  assert.equal(preview.fights.find((fight) => fight.pool === 'normal').xp, 140);
   assert.equal(preview.skillText.includes('10 XP'), true);
   assert.equal(preview.skillText.includes('150 XP'), true);
   assert.equal(skillXpToNext(updated, 'weapon', 0), 150);

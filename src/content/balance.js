@@ -664,8 +664,8 @@ export const balance = {
   // past a threshold, scalable", measured at 20+4 and again at 50+10 against
   // the tripled faucet) is GONE with plan phase 6: a level is earned, below.
   //
-  // THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): kills pay
-  // 10 XP per enemy level, and the default curve costs 100 XP per step.
+  // THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): a win pays
+  // 25 XP, kills pay 10 XP per enemy level, and each step costs 100 XP.
   // Settings → Progression → Experience previews the same configured curve
   // and awards the run uses. The existing per-award level cap remains separate.
   // Cinders buy no level any more: the ladder that sat here (firstCost /
@@ -691,7 +691,7 @@ export const balance = {
     // it (content/derivedStats.js `perLevel`), where the snapshot keeps it.
   },
   xp: {
-    combatWin: 0,
+    combatWin: 25,
     kill: {
       normal: 10, elite: 10, boss: 10,
       [NOTE]: {

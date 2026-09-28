@@ -38,14 +38,14 @@ function playAward(settings, pool, kills, startLevel = 1) {
 }
 
 test('§15.2 falsify: the preview\'s normal-fight XP is combatLevelXp on the configured registries, xpMultiplier counted once', () => {
-  assert.equal(combatLevelXp(REG, { victory: true, pool: 'normal', kills: 3 }), 30, 'the shipped awards: 10 per level-1 kill');
+  assert.equal(combatLevelXp(REG, { victory: true, pool: 'normal', kills: 3 }), 55, 'the shipped awards: 25 per win plus 10 per level-1 kill');
   const reg = configured({ [XP_MULT]: 2 });
   const doubled = combatLevelXp(reg, { victory: true, pool: 'normal', kills: 3 });
-  assert.equal(doubled, 60, 'the multiplier is in the configured awards');
+  assert.equal(doubled, 110, 'the multiplier is in the configured awards');
   const normal = fight(levelPacePreview({ [XP_MULT]: 2 }), 'normal');
   assert.equal(normal.kills, 3);
-  assert.equal(normal.xp, doubled, 'counted once, not twice (120)');
-  assert.match(normal.text, /^A normal fight \(3 level-1 kills\) gives 60 XP/);
+  assert.equal(normal.xp, doubled, 'counted once, not twice (220)');
+  assert.match(normal.text, /^A normal fight \(3 level-1 kills\) gives 110 XP/);
   assert.equal(fight(levelPace(reg), 'normal').xp, doubled);
 });
 
@@ -65,9 +65,9 @@ test('§15.2 falsify: the levels-gained figure is what awardLevelXp actually awa
   // The shipped figures from level 1 (review of #1348).
   const shipped = levelPacePreview({});
   const figures = shipped.fights.map((line) => [line.pool, line.kills, line.xp, from(line, 1).levelsGained]);
-  assert.deepEqual(figures, [['normal', 3, 30, 0], ['elite', 1, 10, 0], ['boss', 1, 10, 0]]);
-  assert.match(fight(shipped, 'elite').text, /^An elite fight \(1 level-1 kill\) gives 10 XP: 0 levels from level 1/);
-  assert.match(fight(shipped, 'boss').text, /^A boss fight \(1 level-1 kill\) gives 10 XP: 0 levels from level 1/);
+  assert.deepEqual(figures, [['normal', 3, 55, 0], ['elite', 1, 35, 0], ['boss', 1, 35, 0]]);
+  assert.match(fight(shipped, 'elite').text, /^An elite fight \(1 level-1 kill\) gives 35 XP: 0 levels from level 1/);
+  assert.match(fight(shipped, 'boss').text, /^A boss fight \(1 level-1 kill\) gives 35 XP: 0 levels from level 1/);
 });
 
 test('§15.2 falsify: with maxLevelsPerFight 1, a large boss award gains exactly one level and leaves xp < xpToNext', () => {
@@ -190,7 +190,7 @@ test('§15.2: Settings → Progression → Experience draws the Levelling previe
   const html = categoryHtml('Advanced', settings, null);
   assert.match(html, /data-level-pace-preview/);
   assert.match(html, /Levelling preview/);
-  assert.match(html, /A normal fight \(3 level-1 kills\) gives 60 XP/);
+  assert.match(html, /A normal fight \(3 level-1 kills\) gives 110 XP/);
   assert.match(html, /from level 10/);
   // Not on another Advanced tab.
   assert.doesNotMatch(categoryHtml('Advanced', { settingsAdvancedCategory: 'Rewards' }, null), /data-level-pace-preview/);
@@ -315,10 +315,10 @@ test('§15.2: a refused configuration shows the refusal and prices the authored 
   assert.match(pace.refused, /balance\.level\.xp\.growth/);
   const authored = levelPacePreview({});
   assert.deepEqual(pace.curve.map((row) => row.step), authored.curve.map((row) => row.step), 'the authored curve, not growth 0.5');
-  assert.deepEqual(pace.fights.map((row) => row.xp), [30, 10, 10], 'the fallback applies no multiplier either');
+  assert.deepEqual(pace.fights.map((row) => row.xp), [55, 35, 35], 'the fallback applies no multiplier either');
   assert.equal(pace.xpMultiplier, 1);
   assert.equal(authored.refused, null);
   const html = categoryHtml('Advanced', { settingsAdvancedCategory: 'Progression', 'settingsAdvancedSubgroup.Progression': 'Experience', ...bad }, null);
   assert.match(html, /data-level-pace-refused/);
-  assert.match(html, /A normal fight \(3 level-1 kills\) gives 30 XP/);
+  assert.match(html, /A normal fight \(3 level-1 kills\) gives 55 XP/);
 });
