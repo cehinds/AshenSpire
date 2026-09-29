@@ -204,6 +204,7 @@ armament,,dagger,flourish
 armament,,shortbow,item:blade
 armament,,shortbow,pierce
 armament,,shortbow,ranged
+armament,,shortbow,bow
 armament,,shortbow,precision
 armament,,katana,item:blade
 armament,,katana,blade
@@ -337,6 +338,7 @@ basicCardProfile,,daggerPierceAttack,pierce
 basicCardProfile,,daggerPierceAttack,flourish
 basicCardProfile,,bowPierceAttack,pierce
 basicCardProfile,,bowPierceAttack,ranged
+basicCardProfile,,bowPierceAttack,bow
 basicCardProfile,,bowPierceAttack,precision
 basicCardProfile,,staffMagicAttack,starstone
 basicCardProfile,,sceptreArcaneAttack,ritual

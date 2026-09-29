@@ -171,6 +171,18 @@ export const nodes = [
     "blurb": "Steel and edge — direct weapon work."
   },
   {
+    "id": "bow",
+    "parentId": "card",
+    "label": "Bow",
+    "color": "7FA8C9",
+    "glyph": "➶",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "A bow draw and arrow release."
+  },
+  {
     "id": "guard",
     "parentId": "card",
     "label": "Guard",
