@@ -18,7 +18,7 @@ test('bow set covers every armor appearance and either hand', () => {
       assert.ok(component, `${outfit.classId}/${outfit.id}: bow binding`);
       assert.equal(component.motionProfile, 'bow');
       assert.deepEqual(animationClip(component, 'bowAttack').frames, frames);
-      assert.deepEqual(animationClip(component, 'attack').frames, frames);
+      assert.notDeepEqual(animationClip(component, 'attack').frames, frames, 'other attacks keep their physical motion');
       assert.equal(animationClip(component, 'cast').frames.length, 9, 'magic remains a separate sequence');
       for (const name of frames) assert.ok(existsSync(new URL(`../${component.frames[name].file}`, import.meta.url)), component.frames[name].file);
     }
@@ -37,6 +37,9 @@ test('Bow Attack fires the bow clip; other ranged cards and spells keep their ow
   const tags = shot.cardTags;
   assert.ok(tags.includes('bow'), 'the profile has an explicit Bow tag');
   assert.equal(resolveCombatAnimation({ ...shot, cardTags: tags, sourceArmamentId: 'shortbow' }, [bow], { animation: component }).technique, 'bowAttack');
+  const offhand = resolveCombatAnimation({ ...shot, cardTags: tags, sourceArmamentId: 'parryDagger' }, [bow], { animation: component });
+  assert.equal(offhand.technique, 'attack');
+  assert.notDeepEqual(animationClip(component, offhand.technique).frames, frames);
   assert.equal(resolveCombatAnimation({ kindIds: ['classification.attack'], tags: ['ranged'] }, [bow], { animation: component }).technique, 'attack');
   assert.equal(resolveCombatAnimation({ kindIds: ['classification.attack'], tags: ['bow', 'source:spell'] }, [bow], { animation: component }).technique, 'cast');
 });

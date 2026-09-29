@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-29",
     "summary": "Bow attacks draw and release, and cards choose the matching weapon motion",
     "detail": "A Bow Attack now plays a seven-step draw and shot in every armor appearance. Blade attacks use greatsword, sword-and-shield, or twin-sword movement according to what is held. Spell attacks cast; shield attacks share one bash, and guarding with a shield keeps the shield guard movement.",
-    "build": "0.7.1.698",
+    "build": "0.7.1.700",
     "pullRequest": 1407,
     "url": "https://github.com/cehinds/AshenSpire/pull/1407"
   },

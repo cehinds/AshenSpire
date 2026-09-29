@@ -27,7 +27,7 @@
 // source content/config/ui/presentation/combatFormationModel.json 7b45c4e60eafd36a
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
-// source content/config/ui/presentation/equipmentAnimations.json 382c28ed2da53951
+// source content/config/ui/presentation/equipmentAnimations.json 56d01ddfb62a6ab8
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
 // source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
 // source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
@@ -46845,7 +46845,7 @@ export const uiConfig = deepFreeze({
             },
             "references": {
               "idle": "bowReady",
-              "attack": "bowAttack",
+              "attack": "physicalAttack",
               "defend": "physicalDefend",
               "hurt": "physicalHurt",
               "stanceActivate": "physicalEnterStance",

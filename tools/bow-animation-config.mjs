@@ -18,7 +18,7 @@ data.motionProfiles.bow.clips.bowAttack = {
 };
 data.motionProfiles.bow.references = {
   ...data.motionProfiles.bow.references,
-  idle: 'bowReady', attack: 'bowAttack', bowAttack: 'bowAttack', menu: 'bowReady',
+  idle: 'bowReady', bowAttack: 'bowAttack', menu: 'bowReady',
 };
 
 data.bindings = data.bindings.filter(binding => !binding.setId.endsWith('Bow'));

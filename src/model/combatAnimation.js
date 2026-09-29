@@ -9,7 +9,7 @@ export const COMBAT_SEQUENCES = Object.freeze({
   shieldBash: ['shieldBash1', 'shieldBash2', 'shieldBash3'],
 });
 
-export function resolveCombatAnimation(card = {}, equipment = [], { animation, action } = {}) {
+export function resolveCombatAnimation(card = {}, equipment = [], { animation } = {}) {
   // The card's kind tag decides the family of motion, not its `type` field.
   const kind = cardKind(card);
   const tags = new Set((card.cardTags || card.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id));
@@ -23,7 +23,7 @@ export function resolveCombatAnimation(card = {}, equipment = [], { animation, a
     // Spell source is the card's attack identity, regardless of which focus or
     // physical weapon happens to be held. A selected set supplies its cast clip;
     // the painted outfit supplies a safe fallback where no clip was authored.
-    if (tags.has('source:spell') || action?.casting) {
+    if (tags.has('source:spell')) {
       return { group: 'cast', technique: 'cast', rest: null, family: 'spell', motion: 'cast' };
     }
     const bash = shield && card.sourceArmamentId !== 'parryDagger'

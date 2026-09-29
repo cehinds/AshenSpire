@@ -50,6 +50,7 @@ test('card tags select spell casting and Blade choreography across held weapons'
   }
   const sword=equip('straightSword',null);
   assert.equal(route(card('starSpark'),items(['straightSword']),{animation:sword}).technique,'cast');
+  assert.equal(route(card('gorefireSlash'),items(['straightSword']),{animation:sword,action:{casting:true}}).technique,'bladeAttack','weapon-source slash keeps blade motion even when its effect family casts');
   const staffStrike=route(card('strike','staffMagicAttack'),items(['ashStaff']),{animation:sword,action:{family:'slash',motion:'impact'}});
   assert.deepEqual([staffStrike.technique,staffStrike.family,staffStrike.motion],['cast','spell','cast'],'the spell tag wins an ordinary Strike override');
   assert.equal(route(card('shieldBash'),items(['buckler']),{animation:equip('straightSword','buckler')}).technique,'shieldBash');

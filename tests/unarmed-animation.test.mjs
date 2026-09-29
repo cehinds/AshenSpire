@@ -51,10 +51,10 @@ test('missing magic safely uses physical empty-palm fallback; one profile contro
   }
 });
 
-test('spell-tagged attacks cast with any held gear; ordinary attacks punch; powers buff',()=>{
+test('spell-source attacks cast with any held gear; ordinary attacks punch; powers buff',()=>{
   const animation=selected(both);
   const attack={id:'test',kindIds:['classification.attack']};
-  for(const tags of [['starstone'],['ranged','starstone']]){
+  for(const tags of [['source:spell','starstone'],['source:spell','ranged','starstone']]){
     const action=resolveActionAnimation({actionId:'test',tags,type:'attack'});
     const plan=resolveCombatAnimation({...attack,tags},[],{animation,action});
     assert.equal(plan.technique,'cast');
@@ -64,6 +64,7 @@ test('spell-tagged attacks cast with any held gear; ordinary attacks punch; powe
     assert.equal(resolveCombatAnimation({...attack,tags},[],{animation:{...animation,rightGroup:'staff'},action}).technique,'cast');
     assert.equal(resolveCombatAnimation({...attack,tags},[],{animation:{...animation,motionProfile:'greatswordTwoHand'},action}).technique,'cast');
   }
+  assert.equal(resolveCombatAnimation({...attack,tags:['starstone']},[],{animation,action:{casting:true}}).technique,'attack','an effect-family cast flag does not turn a physical Attack into a spell');
   for(const tags of [[],['blade'],['ranged','blade']]){
     const plan=resolveCombatAnimation({...attack,tags},[],{animation,action:resolveActionAnimation({tags,type:'attack'})});
     assert.equal(plan.technique,'attack');
