@@ -140,47 +140,32 @@ if (process.argv.includes('--selftest')) {
     timeoutMs: 900000,
     plants: [
       {
-        // THE ROW GOES ON THE TOPBAR — the state he complained about for the
-        // strip, said of the row. H1 is GREEN under this plant (the cards are
-        // nowhere near the topbar), which is exactly why H1 alone is not enough.
+        // Formation now puts the row in a grid track. Pinning that current
+        // row over the topbar should still be caught by H2.
         name: 'the row is pinned over the topbar',
         edits: [{
-          file: 'styles/combat.css',
-          find: '  position: absolute; inset-inline: 1.6rem; bottom: calc(-1 * var(--action-row-drop)); z-index: 60;',
-          replace: '  position: fixed; inset-inline: 1.6rem; top: 0; bottom: auto; z-index: 60;',
+          file: 'styles/kit.css',
+          append: ":root .combat[data-layout='formation'] > .hand-area > .combat-action-row { position: fixed !important; inset: 0 0 auto !important; z-index: 9999 !important; }",
         }],
         expectRed: /BAD\s+H2 /,
       },
       {
-        // THE ROW RISES INTO THE HAND. `--action-row-drop` is the ONE home for
-        // how far the row hangs BELOW the hand and for the band the column
-        // reserves under it (styles/combat.css, #295) — the base rule's
-        // `bottom` is re-declared later against the safe-area insets, so the
-        // token, not the declaration, is where the plant points. A negative
-        // drop lifts the row into the hand-area and the controls sit under the
-        // fanned cards.
+        // Shift the grid footer into the fitted cards; the old drop token no
+        // longer positions this row under formation.
         name: 'the row rises into the hand-area and the cards lie on it',
         edits: [{
-          file: 'styles/combat.css',
-          find: '.combat { --action-row-drop: 7.6rem; }',
-          replace: '.combat { --action-row-drop: -5rem; }',
+          file: 'styles/kit.css',
+          append: ":root .combat[data-layout='formation'] > .hand-area > .combat-action-row { transform: translateY(-100px) !important; }",
         }],
         expectRed: /BAD\s+H1 /,
       },
       {
-        // THE FAN GOES BACK TO PUSHING ITS OUTER CARDS DOWN. The exact
-        // expression that shipped, restored — the outermost cards reach past
-        // the hand and onto the row's band.
-        // The magnitude is the plant's: the shipped 6 px step, hanging downward,
-        // put 5.65 px of card onto the old full-width strip; against a row whose
-        // controls sit under specific columns the outer cards must drop far
-        // enough to reach the piles, so the step is 40 px — the same defect
-        // class (the fan pushing cards down), sized to be seen.
-        name: 'the fan hangs downward from its centre again and the outer cards reach the piles',
+        // Fitted cards use --hand-card-y, not the old transform fan. Push their
+        // actual top positions down onto the action row.
+        name: 'the fitted cards hang down over the action row',
         edits: [{
-          file: 'src/ui/components/hand.js',
-          find: 'translateY(${(Math.abs(i - mid) - mid) * 6}px)',
-          replace: 'translateY(${Math.abs(i - mid) * 40}px)',
+          file: 'styles/kit.css',
+          append: ":root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card { top: calc(var(--hand-card-y) + 100px) !important; }",
         }],
         expectRed: /BAD\s+H1 /,
       },
@@ -191,8 +176,8 @@ if (process.argv.includes('--selftest')) {
         // label, which is why H4 is not a courtesy.
         name: 'END TURN clips its key label, so a wide rebound label disappears',
         edits: [{
-          file: 'styles/combat.css',
-          append: '.combat-action-row > .end-turn { width: 4rem; max-width: 4rem; justify-self: center; overflow: hidden; white-space: nowrap; }',
+          file: 'styles/kit.css',
+          append: ":root .combat[data-layout='formation'] .combat-action-row > .end-turn { width: 4rem !important; max-width: 4rem !important; justify-self: center !important; overflow: hidden !important; white-space: nowrap !important; }",
         }],
         expectRed: /BAD\s+H3 /,
       },
@@ -241,15 +226,12 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 /,
       },
       {
-        // THE ROW IS CLIPPED BY THE BOX IT HANGS BELOW. On the wide layout the
-        // row is absolutely positioned under .hand-area; overflow:hidden there
-        // cuts it off while every box and style stays intact. Red by name on
-        // H3 at the desk cells (the phone row is in flow and not clipped).
-        name: 'the hand-area clips its overflow and the row hangs invisible below it on the wide layout',
+        // The footer now occupies a grid track. Put that track just below the
+        // hand-area and clip the parent, recreating a vanished action row.
+        name: 'the hand-area clips a footer shifted below its box',
         edits: [{
-          file: 'styles/combat.css',
-          find: '.hand-area {\n  height: 23rem; flex-shrink: 0; position: relative;',
-          replace: '.hand-area {\n  height: 23rem; flex-shrink: 0; position: relative; overflow: hidden;',
+          file: 'styles/kit.css',
+          append: ":root .combat[data-layout='formation'] > .hand-area { overflow: hidden !important; } :root .combat[data-layout='formation'] > .hand-area > .combat-action-row { position: absolute !important; top: 100% !important; left: 0 !important; right: 0 !important; }",
         }],
         expectRed: /BAD\s+H3 1200x730/,
       },

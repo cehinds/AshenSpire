@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1418",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Behind the scenes: the card hand layout check catches misplaced controls again",
+    "detail": "Five deliberate layout defects now use the current fitted hand and footer, so the browser check can catch cards covering controls, a clipped End Turn label, and a hidden action row.",
+    "build": "0.7.1.708",
+    "pullRequest": 1418,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1418"
+  },
+  {
     "id": "pr-1412",
     "date": "2026-09-29",
     "group": "2026-09-29",
