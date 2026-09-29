@@ -56,12 +56,12 @@ test('the shipped schedule is the §15.1 table', () => {
   assert.deepEqual(cardRewardSchedule(REG.balance), {
     afterCombat: { normal: true, elite: true, boss: true },
     chancePct: { normal: 100, elite: 100, boss: 100 },
-    onLevelUp: false,
+    onLevelUp: true,
     onLevelUpMaxPerFight: 1,
   });
-  // A bundle without the block reads as the defaults.
+  // An older bundle without the block keeps its historical card schedule.
   const bare = { ...REG.balance, rewards: { ...REG.balance.rewards, cardRewards: undefined } };
-  assert.deepEqual(cardRewardSchedule(bare), cardRewardSchedule(REG.balance));
+  assert.equal(cardRewardSchedule(bare).onLevelUp, false);
 });
 
 test('Falsify: with afterCombat.normal false, a normal win offers no card row and an elite win still offers one', () => {
@@ -138,9 +138,9 @@ test('Falsify: with onLevelUp true, a fight that levels offers exactly one level
   const two = rollCombatCardOffer(withSchedule({ onLevelUp: true, onLevelUpMaxPerFight: 2 }), createRng(4), args('normal', { levelUps: 5 }));
   assert.deepEqual(two.levelCards.map((d) => d.ordinal), [0, 1]);
   assert.deepEqual(rewardPlan(two.rewards).rows.filter((r) => r.kind === 'levelCard').map((r) => r.key), ['levelCard:0', 'levelCard:1']);
-  // Off (the default): a level gained adds nothing and rolls nothing more.
+  // Off by choice: a level gained adds nothing and rolls nothing more.
   const rng = createRng(4);
-  const off = rollCombatCardOffer(REG, rng, args('normal', { levelUps: 2 }));
+  const off = rollCombatCardOffer(withSchedule({ onLevelUp: false }), rng, args('normal', { levelUps: 2 }));
   assert.equal(off.levelCards.length, 0);
   assert.equal(off.rewards.levelCards, undefined);
 });
@@ -165,9 +165,9 @@ test('cardRewardPlan is the one door: rowKey spells levelCard, and a waiting dra
   const drafted = cardRewardPlan(on, { pool: 'normal', levelsGained: 2, draftWaiting: true }, rng);
   assert.deepEqual(drafted, { offerCard: false, cardMissed: false, levelCards: 1 }, '…but the level card stays');
   assert.equal(rng.getCounters().rewardRolls, 0);
-  // Shipped schedule: always offer, never roll, never a level card.
+  // Shipped schedule: always offer and never roll, including the level card.
   const shipped = createRng(9);
-  assert.deepEqual(cardRewardPlan(REG.balance, { pool: 'boss', levelsGained: 4 }, shipped), { offerCard: true, cardMissed: false, levelCards: 0 });
+  assert.deepEqual(cardRewardPlan(REG.balance, { pool: 'boss', levelsGained: 4 }, shipped), { offerCard: true, cardMissed: false, levelCards: 1 });
   assert.equal(shipped.getCounters().rewardRolls, 0);
   // Through the offer roller too: a drafted, levelling fight has a level card row and no card row.
   const offer = rollCombatCardOffer(withSchedule({ onLevelUp: true }), createRng(5), args('elite', { draftWaiting: true, levelUps: 1 }));
@@ -223,10 +223,10 @@ test('co-op reads the schedule through cardRewardPlan: a pool turned off offers 
   const deck = off.livingMembers()[0].run.deck;
   assert.equal(deck.length, deckBefore + 1);
   assert.equal(deck.at(-1).cardId, picked);
-  // The shipped schedule: the co-op offer is the one it always was.
+  // The shipped schedule offers the ordinary card and a level card.
   const shipped = coopFirstSpoils(REG, 'SCHEDULE');
   assert.equal(shipped.scene.offers.p1.cardIds.length, REG.balance.rewards.cardChoices);
-  assert.equal(shipped.scene.offers.p1.levelCards, undefined);
+  assert.equal(shipped.scene.offers.p1.levelCards.length, 1);
   assert.equal(shipped.scene.offers.p1.cardMissed, undefined);
   assert.equal(shipped.livingMembers()[0].rng.getCounters().rewardRolls, 0);
 });
@@ -241,12 +241,13 @@ test('a waiting draft still takes the card row\'s seat, and rolls no chance', ()
   assert.equal(rng.getCounters().cardRewards, 0);
 });
 
-test('Falsify: with every key at its default, 50 fixed seeds offer byte-identical rewards to the ones before this section', () => {
+test('Falsify: with level cards switched off, 50 fixed seeds retain the old card offer bytes', () => {
   // THE BASELINE is the roll main.js made before the schedule: the draft
   // seat, else rollCardRewardIds straight — no chance, no level card. The
-  // schedule must reproduce its ids AND leave every stream counter where it
+  // switched-off schedule must reproduce its ids AND leave every stream counter where it
   // left them, so every later roll in the seed is unchanged too.
   const before = (rng, a) => (a.draftWaiting ? [] : rollCardRewardIds(REG, rng, { classId: a.classId, pool: a.pool, relicIds: a.relicIds, flatRarity: a.flatRarity }));
+  const withoutLevelCards = withSchedule({ onLevelUp: false });
   const classes = ['reaver', 'rogue', 'starseer', 'herald'].filter((id) => REG.classes.has(id));
   for (let seed = 1; seed <= 50; seed++) {
     for (const pool of ['normal', 'elite', 'boss']) {
@@ -260,7 +261,7 @@ test('Falsify: with every key at its default, 50 fixed seeds offer byte-identica
       const baseRng = createRng(seed * 7919, { cardRewards: seed });
       const baseRewards = { cardIds: before(baseRng, a) };
       const rng = createRng(seed * 7919, { cardRewards: seed });
-      const offer = rollCombatCardOffer(REG, rng, a);
+      const offer = rollCombatCardOffer(withoutLevelCards, rng, a);
       assert.equal(JSON.stringify(offer.rewards), JSON.stringify(baseRewards), `seed ${seed} ${pool}: same offer bytes`);
       assert.deepEqual(rng.getCounters(), baseRng.getCounters(), `seed ${seed} ${pool}: same draws on every stream`);
     }

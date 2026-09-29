@@ -173,6 +173,35 @@ test('the door draws the panel beside the claim status, gains and all', () => {
   }
 });
 
+test('a pending level card lights the XP bar and Level Up! opens its card chooser', () => {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main');
+    document.body.append(app);
+    const run = climber();
+    const before = run.deck.length;
+    mountRewards(app, {
+      registries, run, onDone() {},
+      rewards: { xpGains: { level: 30, tracks: {} }, levelCards: [{ ordinal: 0, cardIds: ['rend', 'stomp'] }] },
+    });
+    assert.ok(app.querySelector('.reward-level-ready .rp-bar-ready'));
+    const claim = app.querySelector('.reward-level-up');
+    assert.equal(claim.textContent, 'Level Up!');
+    assert.equal(app.querySelector('[data-kind="levelCard"]'), null, 'the level choice lives beside the XP bar');
+    claim.click();
+    assert.equal(app.querySelectorAll('.reward-row .card').length, 2);
+    app.querySelectorAll('.reward-row .card')[0].click();
+    app.querySelector('#reward-card-confirm').click();
+    assert.equal(run.deck.length, before + 1);
+    assert.equal(app.querySelector('.reward-level-up'), null, 'the prompt clears after claiming');
+    assert.equal(app.querySelector('.rp-bar-ready'), null, 'the XP bar returns to its normal tone');
+  } finally {
+    Object.assign(globalThis, saved);
+  }
+});
+
 test('a door with no fight behind it draws no progression at all', () => {
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));

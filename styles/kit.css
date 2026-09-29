@@ -1538,6 +1538,11 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .rp-next { grid-area: next; white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
 .reward-door .rp-gain { grid-area: gain; margin-top: .15rem; color: var(--muted); font-size: .92em; font-variant-numeric: tabular-nums; }
 .reward-door .rp-bar { grid-area: bar; min-width: 0; }
+.reward-door .reward-level-ready { --level-ready-blue: #75bfff; }
+.reward-door .rp-bar-ready { --meter-tone: var(--level-ready-blue); }
+.reward-door .rp-bar-ready .m-track { background: color-mix(in srgb, var(--level-ready-blue) 18%, var(--bg)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--level-ready-blue) 48%, var(--line)); }
+.reward-door .reward-level-up { grid-area: next; min-height: var(--tap-floor); padding: .45rem .9rem; white-space: nowrap; border-color: var(--level-ready-blue); background: color-mix(in srgb, var(--level-ready-blue) 28%, var(--panel)); color: #e9f6ff; font-weight: 700; }
+.reward-door .reward-level-up:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--level-ready-blue) 43%, var(--panel)); border-color: #a7d9ff; }
 /* What the per-fight level cap threw away (SPEC §15.2): its own line under the row. */
 .reward-door .rp-discarded { grid-column: 1 / -1; margin-top: .1rem; color: var(--ember, var(--gold)); font-size: .88em; font-variant-numeric: tabular-nums; }
 .reward-door .reward-progress-more { margin: 0; color: var(--muted); font-size: .92em; }
@@ -1546,6 +1551,7 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas: 'name level' 'bar bar' 'gain next';
 }
+:root[data-layout='narrow'] .reward-door .reward-progress-row.reward-level-ready { grid-template-areas: 'name level' 'bar next' 'gain gain'; }
 :root[data-layout='narrow'] .reward-door .rp-next { justify-self: end; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }

@@ -283,6 +283,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.levelUp.action",
+    "extends": "",
+    "short": "Level Up!",
+    "full": "Choose a bonus card for the level gained.",
+    "tip": "Level Up!"
+  },
+  {
     "id": "reward.note.cardMissed",
     "extends": "",
     "short": "No card this time.",

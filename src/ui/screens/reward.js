@@ -402,7 +402,9 @@ export function mountRewards(app, {
     // THE ONE-LINE NOTES (SPEC §15.1): a card chance that missed leaves no
     // card row, and the menu says so rather than leaving a silent gap.
     const notesHtml = rewardNotes(rewards).map((token) => `<p class="reward-note" data-note="${esc(token)}">${esc(t(`reward.note.${token}`))}</p>`).join('');
-    const rowsHtml = plan.rows.map((row) => {
+    // Level cards are claimed from the progression bar when it is present.
+    // Older offers without an XP receipt still keep their normal reward row.
+    const rowsHtml = plan.rows.filter((row) => row.kind !== 'levelCard' || !progress?.character).map((row) => {
       const state = states[row.key] || (row.blockedBy ? 'blocked' : 'pending');
       const { title, body } = rowBody(row);
       return `
@@ -453,6 +455,12 @@ export function mountRewards(app, {
       ]),
       foot,
     });
+
+    const levelButton = app.querySelector('.reward-level-up');
+    if (levelButton) {
+      const levelRow = plan.rows.find((row) => row.key === levelButton.dataset.rewardKey);
+      levelButton.addEventListener('click', () => renderChooser(levelRow));
+    }
 
     for (const el of app.querySelectorAll('.reward-kind')) {
       const row = plan.rows.find((r) => r.key === el.dataset.key);
@@ -533,7 +541,7 @@ export function mountRewards(app, {
   // what this fight paid. The bar is the kit meter (one meter in the tree),
   // and its aria label is the sentence the numbers mean, because a bar with
   // no text is a picture of progress to a screen reader.
-  function progressRow(row, label) {
+  function progressRow(row, label, levelCard = null) {
     // A CAP is the only thing that leaves a row without a next level — the
     // model drops a track whose curve will not read rather than handing one
     // here, so `capped` alone decides this and no re-derivation guesses.
@@ -541,22 +549,23 @@ export function mountRewards(app, {
       class: 'rp-next',
       text: row.capped ? t('reward.progress.capped') : t('reward.progress.next', { level: row.level + 1 }),
     });
+    const ready = !!levelCard && !states[levelCard.key];
     const bar = meter({
       pct: row.fraction * 100,
       skinny: true,
-      attrs: { class: 'rp-bar' },
+      attrs: { class: `rp-bar${ready ? ' rp-bar-ready' : ''}` },
       ariaLabel: row.capped
         ? `${label}: ${tFull('reward.progress.capped')}`
         : `${label}: ${tFull('reward.progress.xp', { xp: row.xp, next: row.xpToNext, level: row.level + 1 })}`,
     });
     const node = el('li', {
-      class: 'reward-progress-row',
+      class: `reward-progress-row${ready ? ' reward-level-ready' : ''}`,
       dataset: { kind: row.kind, track: row.id, gained: String(row.gained) },
     }, [
       el('span', { class: 'rp-name', text: label }),
       el('span', { class: 'rp-level', text: t('reward.progress.level', { level: row.level }) }),
       bar,
-      next,
+      ready ? button({ label: t('reward.levelUp.action'), className: 'reward-level-up', attrs: { 'data-reward-key': levelCard.key } }) : next,
       row.gained ? el('span', { class: 'rp-gain', text: t('reward.progress.gained', { xp: row.gained }) }) : null,
       // The per-fight level cap threw some of it away (SPEC §15.2): say how much.
       row.discarded ? el('span', { class: 'rp-discarded', title: tFull('reward.progress.discarded', { xp: row.discarded }), text: t('reward.progress.discarded', { xp: row.discarded }) }) : null,
@@ -575,10 +584,11 @@ export function mountRewards(app, {
       row,
       row.kind === 'class' ? t('reward.progress.classTrack', { class: row.label }) : row.label,
     ));
+    const levelCard = plan.rows.find((row) => row.kind === 'levelCard' && !states[row.key]);
     return el('section', { class: 'reward-progress', 'aria-label': t('reward.progress.heading') }, [
       el('h3', { class: 'as-eyebrow', text: t('reward.progress.heading') }),
       progress.character
-        ? el('ul', { class: 'reward-progress-list' }, [progressRow(progress.character, progress.character.label || t('reward.progress.character'))])
+        ? el('ul', { class: 'reward-progress-list' }, [progressRow(progress.character, progress.character.label || t('reward.progress.character'), levelCard)])
         : null,
       skills.length ? el('h4', { class: 'as-eyebrow', text: t('reward.progress.skills') }) : null,
       skills.length ? el('ul', { class: 'reward-progress-list' }, skills) : null,

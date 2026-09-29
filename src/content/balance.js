@@ -456,10 +456,10 @@ export const balance = {
           '{kind}': 'The percent chance that winning {pool} offers its card row. At 100 nothing is rolled; a miss says "No card this time."',
         },
       },
-      onLevelUp: false,
+      onLevelUp: true,
       onLevelUpMaxPerFight: 1,
       [NOTE]: {
-        onLevelUp: 'When a fight raises the character level, the spoils add a level card row: one more card to choose, at that fight\'s own rarity odds.',
+        onLevelUp: 'When a fight raises the character level, show a Level Up! button beside the XP bar to choose a bonus card at that fight\'s rarity odds.',
         onLevelUpMaxPerFight: 'How many level card rows one fight can add, however many levels it gained.',
       },
     },
