@@ -130,8 +130,10 @@ export function wireBattlefieldStage(field, model) {
       const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: x - nameWidth / 2, top: slot.ground - paintedHeight, width: nameWidth, height: paintedHeight });
       frame.style.left = `${local.left}px`;
       frame.style.width = `${local.width}px`;
-      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));
-      sprite.style.zIndex = String(slot.row);
+      // Keep depth on the artwork. A z-index on the whole frame traps its
+      // overhead buttons below a neighbouring frame's sprite on short phones.
+      frame.style.zIndex = '';
+      sprite.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));
       frame.dataset.formationRow = slot.formationRow;
       frame.dataset.formationDepth = String(slot.row);
       frame.dataset.formationCell = slot.cell;
@@ -157,6 +159,10 @@ export function wireBattlefieldStage(field, model) {
       // badge can counter-zoom and anchor to the art rather than inheriting
       // the sprite's scale (which left it a few px tall on phones).
       const hostRect = sprite.getBoundingClientRect();
+      // Small figures keep their artwork size but gain a 44 px tap target.
+      // The absolutely positioned target is outside the box the fitter reads.
+      sprite.classList.toggle('small-sprite-hitbox', hostRect.width < 44);
+      sprite.style.setProperty('--sprite-hit-size', `${44 * sprite.offsetWidth / hostRect.width}px`);
       // The drawn frame, not its wrapper: an enemy's pose stage is narrower
       // than the frame it paints, which overhangs the host.
       const artRect = (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect();

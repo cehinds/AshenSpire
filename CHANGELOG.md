@@ -32,6 +32,11 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-09-29
+
+- **Enemy intent badges stay in front of the fighters** ([#1403](https://github.com/cehinds/AshenSpire/pull/1403), `0.7.1.696`). On a short phone screen, a neighboring enemy's sprite could cover the entire intent button. The artwork keeps its depth order while intent buttons, names and resource bars remain above it. Tiny enemies gain a larger tap area without changing their artwork size.
+- **Behind the scenes: the long checks finish within an hour** ([#1401](https://github.com/cehinds/AshenSpire/pull/1401), `0.7.1.695`). The Windows build check divides its known-bad cases among four jobs, and the browser checks run in smaller jobs. All cases still run; each job has a one-hour limit. The phone reachability check now accepts an enemy intent badge when it has a full finger-sized exposed area, while catching badges that cannot be pressed anywhere.
+
 ## 2026-09-28
 
 - **Card details stay tappable in a crowded phone fight** ([#1399](https://github.com/cehinds/AshenSpire/pull/1399), `0.7.1.694`). The More button on a truncated card now sits above the overlapping hand, where the next card cannot cover it. The phone reachability check also recognizes closed map trays and checks the part of each fighter that can actually be tapped.

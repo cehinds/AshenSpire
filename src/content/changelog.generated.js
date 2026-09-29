@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1403",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Enemy intent badges stay in front of the fighters",
+    "detail": "On a short phone screen, a neighboring enemy's sprite could cover the entire intent button. The artwork keeps its depth order while intent buttons, names and resource bars remain above it. Tiny enemies gain a larger tap area without changing their artwork size.",
+    "build": "0.7.1.696",
+    "pullRequest": 1403,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1403"
+  },
+  {
+    "id": "pr-1401",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Behind the scenes: the long checks finish within an hour",
+    "detail": "The Windows build check divides its known-bad cases among four jobs, and the browser checks run in smaller jobs. All cases still run; each job has a one-hour limit. The phone reachability check now accepts an enemy intent badge when it has a full finger-sized exposed area, while catching badges that cannot be pressed anywhere.",
+    "build": "0.7.1.695",
+    "pullRequest": 1401,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1401"
+  },
+  {
     "id": "pr-1399",
     "date": "2026-09-28",
     "group": "2026-09-28",
