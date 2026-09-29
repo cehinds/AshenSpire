@@ -1014,6 +1014,12 @@ export const tagging = [
     "family": "armament",
     "scope": "",
     "objectId": "shortbow",
+    "tagId": "bow"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "shortbow",
     "tagId": "precision"
   },
   {
@@ -1735,6 +1741,12 @@ export const tagging = [
     "scope": "",
     "objectId": "bowPierceAttack",
     "tagId": "ranged"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowPierceAttack",
+    "tagId": "bow"
   },
   {
     "family": "basicCardProfile",

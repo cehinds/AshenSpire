@@ -109,9 +109,9 @@ test('every registered tag, domain and family pairing is derived unchanged; the 
   // per shipped companion, whose rule is what it does.
   const SPEC_14_PROPERTIES = ['deckEdit', 'companion', 'hollowSquire', 'emberHound'];
   const NAMED = [...PHASE_5A_PROPERTIES, ...PHASE_5B_PROPERTIES, ...PHASE_7_PROPERTIES, ...PHASE_8_PROPERTIES, ...PHASE_10B_PROPERTIES, ...SPEC_14_PROPERTIES];
-  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id))),
-    'every tag that joined is a framework node — one carrying a visibility, never a chip — or one of phase 5a/5b/7/8/10b\'s or SPEC §14\'s named property nodes');
-  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED].sort(), 'and the property additions are exactly the named ones');
+  assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (t.id === 'bow' && t.domain === 'card')),
+    'every tag that joined is a framework node, a named property, or the Bow presentation tag');
+  assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow'].sort(), 'and the non-framework additions are exactly the named ones');
   assert.equal(addedTags.length, TAGS.length - pre.tags.length);
 });
 

@@ -4,6 +4,7 @@ import { figureSpec, gripOf } from './loadout.js';
 // A derived presentation component: never persisted alongside authoritative equipment.
 export const EQUIPMENT_ANIMATIONS = uiConfig.presentation.equipmentAnimations.components;
 export const ANIMATION_ROLES = Object.freeze(['idle', 'attack', 'defend', 'buff', 'hurt', 'cast', 'stanceActivate', 'stanceDeactivate', 'aggressiveStance', 'defensiveStance', 'conversation', 'portrait', 'menu', 'detail', 'dodge', 'victory', 'defeat', 'revive']);
+const PAINTED_TECHNIQUES = new Set(['shieldGuard', 'shieldGuard3', 'shieldBash', 'parry']);
 
 // Motion belongs to the weapon family; each outfit supplies its own painted frames.
 function resolvedAnimationSet(data, set) {
@@ -76,11 +77,53 @@ export function selectEquipmentAnimation({ classId, armourId = 'default', rightI
 
 export function equipmentAnimationForLoadout(registries, loadout, classId) {
   const held = gripOf(registries, loadout, classId);
-  return selectEquipmentAnimation({ classId, armourId: figureSpec(registries, loadout, classId).armourId, rightId: held.right, leftId: held.left, grip: held.mode });
+  const armourId = figureSpec(registries, loadout, classId).armourId;
+  const selected = selectEquipmentAnimation({ classId, armourId, rightId: held.right, leftId: held.left, grip: held.mode });
+  const bowHeld = held.right === 'shortbow' || held.left === 'shortbow';
+  if (bowHeld) {
+    const bow = selectEquipmentAnimation({ classId, armourId, rightId: 'shortbow', leftId: null, grip: 'one' });
+    if (bow) {
+      if (!selected) return bow;
+      if (selected.motionProfile === 'bow') return selected;
+      // A bow can share the loadout with a dagger or shield. Preserve that
+      // set's other motions and borrow only the bow attack frames.
+      const frames = Object.fromEntries(Object.entries(bow.frames)
+        .filter(([key]) => key.startsWith('BOW-'))
+        .map(([key, value]) => [`BORROWED-${key}`, value]));
+      const attack = bow.clips[bow.references.bowAttack];
+      return { ...selected, frames: { ...selected.frames, ...frames },
+        clips: { ...selected.clips, bowAttack: { ...attack, frames: attack.frames.map(key => `BORROWED-${key}`) } },
+        references: { ...selected.references, bowAttack: 'bowAttack' } };
+    }
+  }
+  const armaments = registries.equipment?.armaments || [];
+  const piece = id => armaments.find(item => item.id === id);
+  const blade = id => { const item = piece(id); return item?.kind === 'weapon' && item.tags?.includes('blade') && !item.tags?.includes('ranged'); };
+  const shield = id => { const item = piece(id); return item?.kind === 'shield' && ['round', 'kite', 'tower', 'spiked'].includes(item.geom); };
+  const blades = [held.right, held.left].filter(blade).length;
+  let representative = null;
+  if (blades === 2) representative = { rightId: 'straightSword', leftId: 'katana', grip: 'dual' };
+  else if (blades === 1 && (shield(held.right) || shield(held.left))) representative = { rightId: 'straightSword', leftId: 'buckler', grip: 'one' };
+  else if (blades === 1 && (!held.right || !held.left)) representative = { rightId: 'greatsword', leftId: null, grip: 'two' };
+  if (!representative) return selected;
+  const generic = selectEquipmentAnimation({ classId, armourId, ...representative });
+  if (!generic) return selected;
+  // Keep the equipped figure's own idle and specialty clips. A Blade attack
+  // borrows the matching sword choreography, with its frames namespaced so
+  // neither set can replace the other's poses.
+  if (!selected) return { ...generic, references: { ...generic.references, bladeAttack: generic.references.attack } };
+  const frames = Object.fromEntries(Object.entries(generic.frames).map(([key, value]) => [`BLADE-${key}`, value]));
+  const attack = generic.clips[generic.references.attack];
+  return { ...selected, frames: { ...selected.frames, ...frames },
+    clips: { ...selected.clips, bladeAttack: { ...attack, frames: attack.frames.map(key => `BLADE-${key}`) } },
+    references: { ...selected.references, bladeAttack: 'bladeAttack' } };
 }
 
 export function animationClip(component, roleOrPose) {
   if (!component) return null;
+  // These named techniques have shared painted sequences. A weapon profile's
+  // generic attack/defend aliases must not replace the shield or parry art.
+  if (PAINTED_TECHNIQUES.has(roleOrPose) && !Object.hasOwn(component.references, roleOrPose)) return null;
   const role = component.poseRoles?.[roleOrPose] || roleOrPose;
   const ref = component.references[role];
   return ref ? component.clips[ref] || null : null;
@@ -103,6 +146,7 @@ export function animationArt(component, fallback) {
   if (!component || !fallback) return fallback;
   const frames = { ...fallback.frames, ...component.frames };
   for (const [pose, role] of Object.entries(component.poseRoles || {})) {
+    if (PAINTED_TECHNIQUES.has(pose) && !Object.hasOwn(component.references, pose)) continue;
     const clip = animationClip(component, role);
     if (clip) frames[pose] = component.frames[clip.frames.at(-1)];
   }

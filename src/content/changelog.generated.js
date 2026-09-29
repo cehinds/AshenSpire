@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-29",
     "summary": "Overlapping enemy sprites keep a clear tap area",
     "detail": "Enemy intent badges sit a little higher above their artwork while respecting the HUD boundary. This leaves room to select a Grave Wisp on a short phone in extra-large text without covering its resource bars.",
-    "build": "0.7.1.698",
+    "build": "0.7.1.701",
     "pullRequest": 1408,
     "url": "https://github.com/cehinds/AshenSpire/pull/1408"
+  },
+  {
+    "id": "pr-1407",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Bow attacks draw and release, and cards choose the matching weapon motion",
+    "detail": "A Bow Attack now plays a seven-step draw and shot in every armor appearance. Blade attacks use greatsword, sword-and-shield, or twin-sword movement according to what is held. Spell attacks cast; shield attacks share one bash, and guarding with a shield keeps the shield guard movement.",
+    "build": "0.7.1.700",
+    "pullRequest": 1407,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1407"
   },
   {
     "id": "pr-1405",

@@ -9,27 +9,35 @@ export const COMBAT_SEQUENCES = Object.freeze({
   shieldBash: ['shieldBash1', 'shieldBash2', 'shieldBash3'],
 });
 
-export function resolveCombatAnimation(card = {}, equipment = [], { animation, action } = {}) {
+export function resolveCombatAnimation(card = {}, equipment = [], { animation } = {}) {
   // The card's kind tag decides the family of motion, not its `type` field.
   const kind = cardKind(card);
   const tags = new Set((card.cardTags || card.tags || []).map(tag => typeof tag === 'string' ? tag : tag.id));
+  const visuals = new Set((card.animationTags || []).map(tag => typeof tag === 'string' ? tag : tag.id));
   // Lanterns and torches share the equipment kind but are not physical shields.
   const shield = equipment.find(item => item.kind === 'shield' && ['round', 'kite', 'tower', 'spiked'].includes(item.geom));
+  const bow = equipment.find(item => item.id === 'shortbow');
   const parry = equipment.some(item => item.id === 'parryDagger');
-  const shieldIntent = tags.has('shield') || card.equipmentProfileId === 'shieldGuard';
+  const shieldIntent = visuals.has('fx:shield') || tags.has('shield') || card.equipmentProfileId === 'shieldGuard';
   if (kind === 'attack') {
-    // Equipment still selects one empty+empty skin. The resolved action selects
-    // its physical attack or magical cast clip, including attack-kind spells.
-    if (animation?.motionProfile === 'unarmed' && animation.rightGroup === 'empty'
-        && animation.leftGroup === 'empty' && action?.casting) {
-      return { group: 'cast', technique: 'cast', rest: null, family: action.family, motion: action.motion };
+    // Spell source is the card's attack identity, regardless of which focus or
+    // physical weapon happens to be held. A selected set supplies its cast clip;
+    // the painted outfit supplies a safe fallback where no clip was authored.
+    if (tags.has('source:spell')) {
+      return { group: 'cast', technique: 'cast', rest: null, family: 'spell', motion: 'cast' };
     }
-    const bash = shield && card.sourceArmamentId !== 'parryDagger' && (card.id === 'shieldBash' || card.equipmentProfileId === 'shieldAttack' || tags.has('shield'));
-    return { group: 'attack', technique: bash ? 'shieldBash' : 'attack', rest: null, family: 'strike', motion: 'impact' };
+    const bash = shield && card.sourceArmamentId !== 'parryDagger'
+      && (card.sourceArmamentId === shield.id || visuals.has('fx:shield') || card.id === 'shieldBash' || card.equipmentProfileId === 'shieldAttack' || tags.has('shield'));
+    const bowShot = !bash && bow && (!card.sourceArmamentId || card.sourceArmamentId === bow.id)
+      && (tags.has('bow') || (card.sourceArmamentId === bow.id && tags.has('ranged')))
+      && animation?.references?.bowAttack;
+    const blade = !bash && !tags.has('ranged') && tags.has('blade') && animation?.references?.bladeAttack;
+    return { group: 'attack', technique: bash ? 'shieldBash' : bowShot ? 'bowAttack' : blade ? 'bladeAttack' : 'attack', rest: null, family: bowShot ? 'projectile' : 'strike', motion: bowShot ? 'release' : 'impact' };
   }
   if (kind === 'power') return { group: 'cast', technique: 'power', rest: 'cast', family: 'spell', motion: 'cast' };
   if (kind === 'skill' && (tags.has('guard') || tags.has('block'))) {
-    const technique = shieldIntent ? parry ? 'parry' : shield ? 'shieldGuard' : 'guard' : 'guard';
+    const technique = shield && card.sourceArmamentId !== 'parryDagger' ? 'shieldGuard'
+      : parry && shieldIntent ? 'parry' : 'guard';
     return { group: 'defend', technique, rest: technique, family: 'guard', motion: 'brace' };
   }
   return { group: 'cast', technique: 'cast', rest: null, family: 'spell', motion: 'cast' };
