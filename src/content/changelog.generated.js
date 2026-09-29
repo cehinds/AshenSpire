@@ -6,11 +6,21 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1412",
     "date": "2026-09-29",
     "group": "2026-09-29",
-    "summary": "Behind the scenes: phone layout checks catch covered map and enemy controls again",
-    "detail": "The browser check's deliberate defects now fit the current closed map tray and extra-large text combat layout, so future coverage gaps fail the test by the right reason.",
-    "build": "0.7.1.702",
+    "summary": "Behind the scenes: phone layout checks retain the covered map probe",
+    "detail": "The closed map tray test now recreates both its old height and hit interception, so the browser check proves it catches map controls covered by that defect. The fitted card hand now stops reporting an unused fan lift, and its layout check tests whether cards escape their hand box.",
+    "build": "0.7.1.707",
     "pullRequest": 1412,
     "url": "https://github.com/cehinds/AshenSpire/pull/1412"
+  },
+  {
+    "id": "pr-1411",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Behind the scenes: phone reachability checks stay effective",
+    "detail": "The browser check again proves it catches an intent badge trapped beneath neighboring art, including with extra-large text. Its obsolete closed-map-tray test is removed because that tray no longer has visible controls to measure.",
+    "build": "0.7.1.704",
+    "pullRequest": 1411,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1411"
   },
   {
     "id": "pr-1408",

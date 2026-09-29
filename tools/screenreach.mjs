@@ -184,7 +184,7 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
-  if (selftestCode === 0) console.log('screenreach-selftest: OK — 10 checks passed');
+  if (selftestCode === 0) console.log('screenreach-selftest: OK — 12 plants caught');
   process.exit(selftestCode);
 }
 
