@@ -143,9 +143,9 @@ if (process.argv.includes('--selftest')) {
         expectRed: /390x650 combat: [1-9]\d* covered control\(s\) — .*\.intent/,
       },
       {
-        name: 'a tiny silhouette loses its full-size tap area',
+        name: 'a silhouette loses its frame-level tap area',
         file: 'styles/combat.css',
-        append: '.small-sprite-hitbox::after { pointer-events: none !important; }',
+        append: '.enemy-target-hitbox::after { pointer-events: none !important; }',
         expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
@@ -342,19 +342,12 @@ const PROBE = `(() => {
     return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden'
       && !e.closest('details:not([open]), [inert]');
   });
-  const exposedPatch = (target, size) => {
+  const exposedPatch = (target, size, bounds = target?.getBoundingClientRect(), accepts = top => top === target || target.contains(top)) => {
     if (!target) return false;
-    const rect = target.getBoundingClientRect();
-    // The 44 px pseudo-element of a tiny sprite is part of its real hit area,
-    // though its geometry does not enlarge the fitted artwork's DOM rect.
-    const bounds = target.matches('.small-sprite-hitbox')
-      ? { left: rect.left + rect.width / 2 - 22, right: rect.left + rect.width / 2 + 22,
-          top: rect.bottom - 22, bottom: rect.bottom + 22 }
-      : rect;
     const half = size / 2;
     const owns = (px, py) => {
       const top = document.elementFromPoint(px, py);
-      return top && (top === target || target.contains(top));
+      return top && accepts(top);
     };
     for (let py = Math.max(half, bounds.top + half); py <= Math.min(innerHeight - half, bounds.bottom - half); py += 8) {
       for (let px = Math.max(half, bounds.left + half); px <= Math.min(innerWidth - half, bounds.right - half); px += 8) {
@@ -368,11 +361,18 @@ const PROBE = `(() => {
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
     const hit = (x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight) ? document.elementFromPoint(x, y) : null;
     if (hit && (hit === c || c.contains(hit))) continue;
-    // Formation frames span a grid cell and intentionally ignore pointer input.
-    // Their sprite receives the tap. A frame centre may be empty or covered by
-    // a neighbour even while its own artwork is reachable.
-    if (c.matches('.combatant[data-ui-component="combatant-frame"]')
-      && exposedPatch(c.querySelector('.combatant-card > .sprite'), 24)) continue;
+    // Formation frames span a grid cell. Their sprite or 44 px frame target
+    // receives the tap; the frame centre may sit beneath another fighter.
+    if (c.matches('.combatant[data-ui-component="combatant-frame"]')) {
+      const sprite = c.querySelector('.combatant-card > .sprite');
+      const sr = sprite?.getBoundingClientRect();
+      const reach = c.matches('.enemy-target-hitbox') && sr
+        ? exposedPatch(c, 24, { left: sr.left + sr.width / 2 - 22, right: sr.left + sr.width / 2 + 22,
+            top: sr.bottom - 22, bottom: sr.bottom + 22 },
+          top => top === c || top === sprite || sprite.contains(top))
+        : exposedPatch(sprite, 24);
+      if (reach) continue;
+    }
     // A tall neighbouring enemy can paint across an intent badge's centre on
     // short phones. It is still usable if a finger-sized patch of that button
     // wins the hit test. A wholly blocked badge remains a failure.
