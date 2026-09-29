@@ -1154,7 +1154,7 @@
 :root .combat[data-layout='formation'] .combatant [data-tip-attached], .combat .turn-ribbon { pointer-events: auto; }
 .combat-ability-badge { cursor: pointer; }
 .combat-ability-badge:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
-:root .combat[data-layout='formation'] .combatant:is(:focus-within,.hover-target,.context-selected) .combatant-leading { z-index: 30; }
+:root .combat[data-layout='formation'] .combatant:is(:focus-within,.hover-target,.context-selected) .combatant-leading { z-index: 1200; }
 :root .combat[data-layout='formation'] > .hand-area {
   grid-row: 3; height: 100%; min-height: 0; margin: 0; padding: 0;
   display: grid; grid-template-rows: 2fr 1fr; grid-template-areas: 'hand' 'actions'; gap: 0;
@@ -1336,7 +1336,7 @@
    do not create stacking contexts; only sprite art participates in depth. */
 :root .combat[data-layout='formation'] .field .combatant { transform:none; }
 :root .combat[data-layout='formation'] .combatant-stack { left:0; transform:none; }
-:root .combat[data-layout='formation'] .combatant :is(.nm,.meters,.statuses) { position:relative; z-index:40; }
+:root .combat[data-layout='formation'] .combatant :is(.nm,.meters,.statuses) { position:relative; z-index:1000; }
 :root .combat[data-layout='formation'] .combatant .nm { background:#17130fa6; border-radius:3px; }
 :root .combat.coop[data-layout='formation'] .combat-action-row .energy-orb {
  width:var(--combat-control-size); height:var(--combat-control-size); border-radius:50%;
@@ -1465,7 +1465,7 @@
   top: var(--overhead-top, 0); bottom: auto;
   transform: translateY(-100%);
   display: flex; flex-direction: column; align-items: center;
-  gap: calc(4px / var(--ui-zoom, 1)); z-index: 20;
+  gap: calc(4px / var(--ui-zoom, 1)); z-index: 1100;
   pointer-events: none;
 }
 .combatant-leading .overhead-control {

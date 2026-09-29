@@ -136,6 +136,13 @@ if (process.argv.includes('--selftest')) {
         expectRed: /390x650 combat: [1-9]\d* covered control\(s\) — .*\.intent/,
       },
       {
+        name: 'whole fighter frames once again trap intent badges under neighbouring sprites',
+        file: 'src/ui/components/battlefieldStage.js',
+        find: "      frame.style.zIndex = '';",
+        replace: '      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));',
+        expectRed: /390x650 combat: [1-9]\d* covered control\(s\) — .*\.intent/,
+      },
+      {
         name: 'Settings cleanup watches the shared connected panel instead of its own render',
         file: 'src/ui/screens/settings.js',
         find: 'if (lifecycleSentinel.isConnected) return;',

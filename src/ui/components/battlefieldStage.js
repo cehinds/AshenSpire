@@ -130,8 +130,10 @@ export function wireBattlefieldStage(field, model) {
       const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: x - nameWidth / 2, top: slot.ground - paintedHeight, width: nameWidth, height: paintedHeight });
       frame.style.left = `${local.left}px`;
       frame.style.width = `${local.width}px`;
-      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));
-      sprite.style.zIndex = String(slot.row);
+      // Keep depth on the artwork. A z-index on the whole frame traps its
+      // overhead buttons below a neighbouring frame's sprite on short phones.
+      frame.style.zIndex = '';
+      sprite.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));
       frame.dataset.formationRow = slot.formationRow;
       frame.dataset.formationDepth = String(slot.row);
       frame.dataset.formationCell = slot.cell;
