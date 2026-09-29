@@ -562,6 +562,28 @@ async function main() {
       const tail = sc.overlay ? `  (overlay screen: ${sc.overlay})` : '';
       console.log(`    ${sc.name.padEnd(8)} zoom ${String(r.z).padEnd(5)} local ${r.local.padEnd(10)} ${String(r.total).padStart(3)} controls · ${r.scrolledOut} scrolled-out (fine) · ${r.covered.length} COVERED${tail}`);
       for (const c of r.covered) console.log(`               ✗ ${c}`);
+      if (sc.name === 'combat-xl' && r.covered.length) {
+        const detail = await evalIn(`(() => {
+          const f = [...document.querySelectorAll('.enemy-row .combatant')].find(e => e.textContent.includes('Grave Wisp'));
+          if (!f) return 'Grave Wisp frame absent';
+          const s = f.querySelector('.sprite'), r = s.getBoundingClientRect(), fr = f.getBoundingClientRect();
+          const p = getComputedStyle(f, '::after');
+          const rows = [];
+          for (let y = r.bottom - 22; y < r.bottom + 22; y += 4) {
+            let row = '';
+            for (let x = r.left + r.width / 2 - 22; x < r.left + r.width / 2 + 22; x += 4) {
+              const hit = document.elementFromPoint(x, y);
+              row += hit === f ? 'F' : hit === s || s.contains(hit) ? 'S' : hit?.closest('.intent') ? 'I'
+                : hit?.closest('.combatant') ? 'O' : '.';
+            }
+            rows.push(row);
+          }
+          return JSON.stringify({ frame: [fr.left, fr.top, fr.width, fr.height], sprite: [r.left, r.top, r.width, r.height],
+            targetClass: f.classList.contains('enemy-target-hitbox'), x: f.style.getPropertyValue('--enemy-hit-x'),
+            y: f.style.getPropertyValue('--enemy-hit-y'), pseudo: [p.left,p.top,p.width,p.height,p.pointerEvents,p.zIndex], rows });
+        })()`);
+        console.log(`    combat-xl hit detail: ${detail}`);
+      }
       if (r.covered.length && !sc.overlay) fails.push(`${shape} ${sc.name}: ${r.covered.length} covered control(s) — ${r.covered[0]}`);
       for (const finding of r.visual) console.log(`               ✗ ${finding}`);
       if (r.visual.length) fails.push(`${shape} ${sc.name}: ${r.visual[0]}`);
