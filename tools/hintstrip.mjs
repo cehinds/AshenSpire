@@ -197,15 +197,12 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 /,
       },
       {
-        // THE LIFT STOPS BEING RESERVED. hand.js still lifts the fan; the
-        // stylesheet forgets to make room. This is Law 0 clause 5 as a plant —
-        // the fallback is 0px, so the defect is VISIBLE, and this proves the
-        // check can see it rather than trusting the fallback.
-        name: 'the stylesheets stop reserving the fan lift hand.js publishes',
+        // The fitted hand places cards by absolute coordinates. Put them above
+        // its box to prove H6 still catches a clipped fan in the current layout.
+        name: 'the fitted hand places its cards above the hand box',
         edits: [{
-          file: 'styles/combat.css',
-          find: 'padding-bottom: 1rem; padding-top: var(--fan-lift, 0px); }',
-          replace: 'padding-bottom: 1rem; }',
+          file: 'styles/kit.css',
+          append: ":root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card { top: calc(var(--hand-card-y) - 500px) !important; }",
         }],
         expectRed: /BAD\s+H6 /,
       },
@@ -1158,7 +1155,8 @@ function judge(r, cell, wide, pointer) {
     ok('H5', cell, `inside the viewport, ${r.strip.h} px tall, position:${r.stripFlow.pos}, column overflow ${colOver} px`);
   }
 
-  // H6 RESERVED — the lift hand.js publishes is actually reserved by the sheets.
+  // H6 RESERVED — legacy transform fans reserve their published lift; the
+  // fitted hand publishes zero because its card tops are inside its own box.
   const lift = parseFloat(r.lift) || 0;
   const padTop = parseFloat(r.handBox.padTop) || 0;
   const clippedTop = r.cards.some((c) => c.top < r.hand.top - 0.5);
