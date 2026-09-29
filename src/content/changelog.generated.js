@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1420",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Behind the scenes: the Armoury browser check reports its result to CI",
+    "detail": "The checker already passed all 42 tab and figure checks at three screen widths; it now gives the CI wrapper a counted success line so that green result is accepted.",
+    "build": "0.7.1.709",
+    "pullRequest": 1420,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1420"
+  },
+  {
     "id": "pr-1418",
     "date": "2026-09-29",
     "group": "2026-09-29",
