@@ -42,6 +42,9 @@ export const POLICY = Object.freeze({
   // stretched across a ~1170 px phone and blocks visibly; 0.4 at quality 50
   // costs ~0.6 MB raw over the whole set and reads clean. First match wins.
   overrides: Object.freeze([
+    // The seven-step bow sheet adds 224 distinct frames. At 64px the motion
+    // stays readable in the light build without exceeding its 30 MB download.
+    Object.freeze({ prefixes: Object.freeze(['animations/bow/']), scale: 0.1, quality: 5 }),
     Object.freeze({ prefixes: Object.freeze(['environments/', 'bg/', 'map/']), scale: 0.4, quality: 50 }),
   ]),
 });

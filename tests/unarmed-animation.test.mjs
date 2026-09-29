@@ -51,7 +51,7 @@ test('missing magic safely uses physical empty-palm fallback; one profile contro
   }
 });
 
-test('unarmed spell attacks and ranged spells cast; ordinary attacks punch; powers buff; weapons unchanged',()=>{
+test('spell-tagged attacks cast with any held gear; ordinary attacks punch; powers buff',()=>{
   const animation=selected(both);
   const attack={id:'test',kindIds:['classification.attack']};
   for(const tags of [['starstone'],['ranged','starstone']]){
@@ -59,10 +59,10 @@ test('unarmed spell attacks and ranged spells cast; ordinary attacks punch; powe
     const plan=resolveCombatAnimation({...attack,tags},[],{animation,action});
     assert.equal(plan.technique,'cast');
     assert.equal(animationClip(animation,plan.technique),animation.clips.magicChannel);
-    assert.equal(plan.family,action.family);
-    assert.equal(resolveCombatAnimation({...attack,tags},[],{action}).technique,'attack','no selected skin retains backward-compatible routing');
-    assert.equal(resolveCombatAnimation({...attack,tags},[],{animation:{...animation,rightGroup:'staff'},action}).technique,'attack');
-    assert.equal(resolveCombatAnimation({...attack,tags},[],{animation:{...animation,motionProfile:'greatswordTwoHand'},action}).technique,'attack');
+    assert.equal(plan.family,'spell');
+    assert.equal(resolveCombatAnimation({...attack,tags},[],{action}).technique,'cast');
+    assert.equal(resolveCombatAnimation({...attack,tags},[],{animation:{...animation,rightGroup:'staff'},action}).technique,'cast');
+    assert.equal(resolveCombatAnimation({...attack,tags},[],{animation:{...animation,motionProfile:'greatswordTwoHand'},action}).technique,'cast');
   }
   for(const tags of [[],['blade'],['ranged','blade']]){
     const plan=resolveCombatAnimation({...attack,tags},[],{animation,action:resolveActionAnimation({tags,type:'attack'})});
@@ -105,7 +105,7 @@ test('Starblade Phalanx, Star Spark and Blightward Lash use casting across class
       const plan=resolveCombatAnimation({...card,cardTags:tags},[],{animation:selected(both),action});
       assert.equal(plan.technique,'cast',id+'/'+actorId);
       assert.equal(animationClip(selected(both),plan.technique),selected(both).clips.magicChannel);
-      assert.equal(resolveCombatAnimation({...card,cardTags:tags},[],{action}).group,'attack','equipped/default route remains physical');
+      assert.equal(resolveCombatAnimation({...card,cardTags:tags},[],{action}).group,'cast');
     }
   }
 });
