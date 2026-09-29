@@ -4,7 +4,34 @@ import { fitCombatSprites, combatSpriteRatio } from '../src/ui/models/CombatSpri
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { statureFor } from '../src/ui/components/stature.js';
 import { contentBundle } from '../src/content/index.js';
-import { combatSpriteGeometry } from '../src/ui/components/combatSpriteGeometry.js';
+import { combatSpriteGeometry, visibleArtBox } from '../src/ui/components/combatSpriteGeometry.js';
+
+test('light and full enemy art measure the same figure and floor', () => {
+  const previous = globalThis.document;
+  let drawn;
+  globalThis.document = { createElement: () => ({ getContext: () => ({
+    drawImage(img) { drawn = img; },
+    getImageData() {
+      const size = drawn.naturalHeight, data = new Uint8ClampedArray(size * size * 4);
+      for (let y = size / 4; y < size * 3 / 4; y++) for (let x = size / 4; x < size * 3 / 4; x++) data[(y * size + x) * 4 + 3] = 255;
+      return { data };
+    },
+  }) }) };
+  try {
+    const measured = [384, 120].map(size => {
+      const img = { src: `tier-${size}`, complete: true, naturalHeight: size, naturalWidth: size,
+        dataset: { artSource: 'enemy-poses' }, closest: () => null,
+        getBoundingClientRect: () => ({ left: 0, top: 0, width: 200, height: 200 }) };
+      const host = { offsetWidth: 200, offsetHeight: 200,
+        getBoundingClientRect: img.getBoundingClientRect,
+        querySelector: selector => selector === '.painted-stage' ? null : img };
+      return { sprite: combatSpriteGeometry({ firstElementChild: host, offsetWidth: 200, offsetHeight: 200 }, () => {}),
+        portrait: visibleArtBox(host, () => {}) };
+    });
+    assert.deepEqual(measured[1], measured[0]);
+    assert.ok(measured[0].sprite.visibleHeight < 200);
+  } finally { if (previous === undefined) delete globalThis.document; else globalThis.document = previous; }
+});
 test('a cached sprite still waits for the new image element to load', () => {
   const previous = globalThis.document;
   globalThis.document = { createElement: () => ({ getContext: () => ({ drawImage() {}, getImageData: () => ({ data: new Uint8ClampedArray([255, 255, 255, 255]) }) }) }) };
@@ -55,7 +82,7 @@ test('cramped screens shrink the shared player reference, preserving ratio and d
   }
 });
 
-test('transparent padding does not consume overhead clearance or erase the visible size ratio',()=>{
+test('card padding reserves action headroom without erasing the visible size ratio',()=>{
   const actors=[
     {slot:{id:'p',ground:300,x:100,artWidth:190,depth:1},ratio:1,leading:28,boxHeight:190,visibleHeight:160,visibleWidth:120},
     {slot:{id:'b',ground:300,x:950,artWidth:400,depth:1},ratio:3,leading:28,boxHeight:384,visibleHeight:240,visibleWidth:300},
@@ -66,7 +93,8 @@ test('transparent padding does not consume overhead clearance or erase the visib
   assert.ok(b.x + b.scale * actors[1].visibleWidth / 2 <= 994);
   assert.ok(p.visibleHeight<150,'player yields space to the large boss');
   const padded = fitCombatSprites({width:1000,height:405,actors:actors.map(a=>({...a,boxHeight:a.boxHeight*2}))});
-  assert.deepEqual(padded.map(a=>a.visibleHeight),[p.visibleHeight,b.visibleHeight]);
+  assert.equal(padded[1].visibleHeight / padded[0].visibleHeight, 3);
+  assert.ok(padded[1].scale * actors[1].boxHeight * 2 + actors[1].leading + 6 <= actors[1].slot.ground);
 });
 
 test('a presentation multiplier grows figures after the fit, capped per side to the screen', () => {

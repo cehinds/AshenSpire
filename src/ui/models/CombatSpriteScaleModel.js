@@ -23,13 +23,14 @@ export function fitCombatSprites({ width, height, actors }) {
   // The shared reference is the formation's figure ceiling (its one home),
   // not a flat 150: the figures grow with the stage.
   let base = Math.min(figureCeiling({ width, height }), height * .52);
+  const canvasRatio = a => Math.max(1, (a.boxHeight || a.visibleHeight) / a.visibleHeight);
   for (const a of actors) {
     const ratio = a.ratio * a.slot.depth;
     const maxHeight = Math.max(1, (a.slot.fitGround ?? a.slot.ground) - a.leading - 6);
     const maxWidth = Math.max(1, Math.min(a.slot.artWidth * ART_WIDTH_ALLOWANCE, 2 * Math.min(a.slot.x - 6, width - a.slot.x - 6)));
-    // Overhead controls anchor to the visible idle top, so transparent canvas
-    // padding must not consume the clearance a second time.
-    base = Math.min(base, maxHeight / ratio,
+    // Actions sit above the combatant card, including its transparent padding.
+    // Reserve that canvas once while keeping the shared visible-height ratio.
+    base = Math.min(base, maxHeight / ratio / canvasRatio(a),
       maxWidth * a.visibleHeight / a.visibleWidth / ratio);
   }
   // A presentation multiplier (Settings: player / enemy sprite scale, the
@@ -40,7 +41,7 @@ export function fitCombatSprites({ width, height, actors }) {
   const requestedOf = a => Number.isFinite(a.multiplier) && a.multiplier > 0 ? a.multiplier : 1;
   const heightOf = a => base * a.ratio * a.slot.depth;
   const roomOf = a => Math.min(
-    Math.max(1, (a.slot.fitGround ?? a.slot.ground) - a.leading - 6) / heightOf(a),
+    Math.max(1, (a.slot.fitGround ?? a.slot.ground) - a.leading - 6) / heightOf(a) / canvasRatio(a),
     2 * Math.max(1, Math.min(a.slot.x - 6, width - a.slot.x - 6)) / (heightOf(a) * a.visibleWidth / a.visibleHeight));
   const sideRoom = new Map();
   for (const a of actors) {

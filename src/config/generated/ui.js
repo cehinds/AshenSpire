@@ -39,7 +39,7 @@
 // source content/config/ui/presentation/tooltipPlacement.json 2718119752f3c76b
 // source content/config/ui/presentation/uiContent.json 118475388559b5f2
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
-// source content/config/ui/scenes/w4a-combat.json 2938240981e3b612
+// source content/config/ui/scenes/w4a-combat.json c1f9b8d5c1d51fe6
 // source content/config/ui/scenes/w4b-map.json a92277251e883bec
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json b44124e6a29150d9
@@ -99,7 +99,7 @@ export const uiConfig = deepFreeze({
         "hand": {
           "minimumHeightPx": 208,
           "minWidthRem": 5,
-          "maxWidthRem": 9,
+          "maxWidthRem": 11.5,
           "minCapacity": 5,
           "maxCapacity": 15,
           "narrowWidthRem": 22,
