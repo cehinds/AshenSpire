@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1405",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Enemy taps stay reachable in source and packaged play",
+    "detail": "The transparent 44 px target now sits on each enemy's clickable frame, above neighboring artwork. This keeps even an overlapping Grave Wisp selectable on a short phone with extra-large text, regardless of how its art loads.",
+    "build": "0.7.1.697",
+    "pullRequest": 1405,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1405"
+  },
+  {
     "id": "pr-1403",
     "date": "2026-09-29",
     "group": "2026-09-29",
