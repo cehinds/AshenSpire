@@ -1137,6 +1137,11 @@
   width: max-content; min-width: 0; scale: none; flex: none; pointer-events: auto;
   transition: none !important;
 }
+:root .combat[data-layout='formation'] .combatant .sprite.small-sprite-hitbox::after {
+  content: ''; position: absolute; left: 50%; bottom: 0;
+  width: var(--sprite-hit-size); height: var(--sprite-hit-size);
+  transform: translate(-50%, 50%); z-index: 3; pointer-events: auto;
+}
 :root .combat[data-layout='formation'] .combatant .sprite > :first-child { flex-shrink: 0; }
 :root .combat[data-layout='formation'] .combatant :is(.nm,.meters) {
   width: 100%; min-width: 0; max-width: none; pointer-events: auto;
