@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1416",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Behind the scenes: the phone reachability check reports its result correctly",
+    "detail": "The test build's browser check caught every deliberate blocked-control defect, but its success message did not match the check runner's format. It now reports the same result in the expected format, so the test build can finish its mobile layout checks.",
+    "build": "0.7.1.707",
+    "pullRequest": 1416,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1416"
+  },
+  {
     "id": "pr-1414",
     "date": "2026-09-29",
     "group": "2026-09-29",
