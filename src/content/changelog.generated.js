@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1412",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Behind the scenes: phone layout checks retain the covered map probe",
+    "detail": "The closed map tray test now recreates both its old height and hit interception, so the browser check proves it catches map controls covered by that defect. The fitted card hand now stops reporting an unused fan lift, and its layout check tests whether cards escape their hand box.",
+    "build": "0.7.1.707",
+    "pullRequest": 1412,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1412"
+  },
+  {
     "id": "pr-1414",
     "date": "2026-09-29",
     "group": "2026-09-29",

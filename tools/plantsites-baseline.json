@@ -209,8 +209,8 @@
       "digest": "202b7aeba2b2cf9e"
     },
     "tools/hintstrip.mjs": {
-      "count": 16,
-      "digest": "ab5a7c55f444611e"
+      "count": 15,
+      "digest": "85f9bd1c51e68b9f"
     },
     "tools/hudbars.mjs": {
       "count": 1,
@@ -281,8 +281,8 @@
       "digest": "258e4d2c96542f9e"
     },
     "tools/screenreach.mjs": {
-      "count": 8,
-      "digest": "fea980ef5e184d5c"
+      "count": 9,
+      "digest": "8c89c934bfef71af"
     },
     "tools/scroll-cue-bleed.mjs": {
       "count": 2,
