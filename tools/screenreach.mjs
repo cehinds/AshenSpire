@@ -116,10 +116,14 @@ if (process.argv.includes('--selftest')) {
         expectRed: /\b[1-9]\d* COVERED\b|UNREACHABLE/,
       },
       {
-        name: 'the closed map tray is counted as an open control',
-        file: 'tools/screenreach.mjs',
-        find: "!e.closest('details:not([open]), [inert]')",
-        replace: "!e.closest('details:not([open])')",
+        // The closed reveal is now zero-height, so dropping only `inert`
+        // leaves no covered control to find. Restore the actual bad geometry
+        // too: an interactive closed tray floating across the map canvas.
+        name: 'the closed map tray stays tall and interactive over the board',
+        edits: [
+          { file: 'src/ui/screens/map.js', find: 'trayReveal.inert = true;', replace: 'trayReveal.inert = false;', all: true },
+          { file: 'styles/map.css', append: '.map-tray[data-open="false"] { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; height: 50vh !important; pointer-events: auto !important; z-index: 9999 !important; } .map-tray[data-open="false"] > .map-tray-reveal { height: 50vh !important; pointer-events: auto !important; }' },
+        ],
         expectRed: /^\s*map\s.*[1-9]\d* COVERED/m,
       },
       {
@@ -140,7 +144,7 @@ if (process.argv.includes('--selftest')) {
         file: 'src/ui/components/battlefieldStage.js',
         find: "      frame.style.zIndex = '';",
         replace: '      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));',
-        expectRed: /390x650 combat: [1-9]\d* covered control\(s\) — .*\.intent/,
+        expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+.*\.enemy-pose-stage/,
       },
       {
         name: 'a silhouette loses its frame-level tap area',
