@@ -136,6 +136,19 @@ if (process.argv.includes('--selftest')) {
         expectRed: /390x650 combat: [1-9]\d* covered control\(s\) — .*\.intent/,
       },
       {
+        name: 'whole fighter frames once again trap intent badges under neighbouring sprites',
+        file: 'src/ui/components/battlefieldStage.js',
+        find: "      frame.style.zIndex = '';",
+        replace: '      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));',
+        expectRed: /390x650 combat: [1-9]\d* covered control\(s\) — .*\.intent/,
+      },
+      {
+        name: 'a tiny silhouette loses its full-size tap area',
+        file: 'styles/combat.css',
+        append: '.small-sprite-hitbox::after { pointer-events: none !important; }',
+        expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.combatant/,
+      },
+      {
         name: 'Settings cleanup watches the shared connected panel instead of its own render',
         file: 'src/ui/screens/settings.js',
         find: 'if (lifecycleSentinel.isConnected) return;',
@@ -331,7 +344,13 @@ const PROBE = `(() => {
   });
   const exposedPatch = (target, size) => {
     if (!target) return false;
-    const bounds = target.getBoundingClientRect();
+    const rect = target.getBoundingClientRect();
+    // The 44 px pseudo-element of a tiny sprite is part of its real hit area,
+    // though its geometry does not enlarge the fitted artwork's DOM rect.
+    const bounds = target.matches('.small-sprite-hitbox')
+      ? { left: rect.left + rect.width / 2 - 22, right: rect.left + rect.width / 2 + 22,
+          top: rect.bottom - 22, bottom: rect.bottom + 22 }
+      : rect;
     const half = size / 2;
     const owns = (px, py) => {
       const top = document.elementFromPoint(px, py);
@@ -350,8 +369,8 @@ const PROBE = `(() => {
     const hit = (x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight) ? document.elementFromPoint(x, y) : null;
     if (hit && (hit === c || c.contains(hit))) continue;
     // Formation frames span a grid cell and intentionally ignore pointer input.
-    // Their sprite and nameplate receive the tap. A frame centre may be empty
-    // or covered by a neighbour even while its own artwork is reachable.
+    // Their sprite receives the tap. A frame centre may be empty or covered by
+    // a neighbour even while its own artwork is reachable.
     if (c.matches('.combatant[data-ui-component="combatant-frame"]')
       && exposedPatch(c.querySelector('.combatant-card > .sprite'), 24)) continue;
     // A tall neighbouring enemy can paint across an intent badge's centre on
