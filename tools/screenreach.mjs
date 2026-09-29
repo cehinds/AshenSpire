@@ -116,10 +116,14 @@ if (process.argv.includes('--selftest')) {
         expectRed: /\b[1-9]\d* COVERED\b|UNREACHABLE/,
       },
       {
-        name: 'the closed map tray is counted as an open control',
-        file: 'tools/screenreach.mjs',
-        find: "!e.closest('details:not([open]), [inert]')",
-        replace: "!e.closest('details:not([open])')",
+        name: 'an inert map tray with measurable controls is counted as open',
+        // The current closed tray collapses to height 0, so removing the
+        // inert guard alone has no measurable control to expose. Give its
+        // still-inert children geometry while testing that exact guard.
+        edits: [
+          { file: 'tools/screenreach.mjs', find: "!e.closest('details:not([open]), [inert]')", replace: "!e.closest('details:not([open])')" },
+          { file: 'styles/map.css', append: '.map-tray-reveal[inert] { height: 100px !important; overflow: visible !important; }' },
+        ],
         expectRed: /^\s*map\s.*[1-9]\d* COVERED/m,
       },
       {
@@ -140,7 +144,7 @@ if (process.argv.includes('--selftest')) {
         file: 'src/ui/components/battlefieldStage.js',
         find: "      frame.style.zIndex = '';",
         replace: '      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));',
-        expectRed: /390x650 combat: [1-9]\d* covered control\(s\) — .*\.intent/,
+        expectRed: /390x650 combat(?:-xl)?: [1-9]\d* covered control\(s\) — .*\.intent/,
       },
       {
         name: 'a silhouette loses its frame-level tap area',
