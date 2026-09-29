@@ -15,9 +15,8 @@
 // the pending-reward offer, so a reload resumes the same sentence), never a
 // re-derivation from the combat log this file cannot see.
 //
-// WHICH TRACKS. The character level always, then the skill tracks, the ones
-// this fight paid first and the highest-levelled after, `maxSkills` shown and
-// the rest counted — his layout ("up to three shown", "+Y (other skills)").
+// WHICH TRACKS. The character level always, then every active skill track,
+// the ones this fight paid first and the highest-levelled after.
 // A track nothing has ever touched and this fight did not pay is not a row:
 // the door would otherwise list every weapon group in the game.
 //
@@ -34,8 +33,8 @@
 import { characterLevel, levelOf, xpToNext as levelXpToNext } from './levelup.js';
 import { skillTracks, skillLevel, xpToNext as skillXpToNext } from './skills.js';
 
-/** His layout's ceiling: three tracks shown, the rest counted. */
-export const MAX_SKILL_ROWS = 3;
+/** Every active track has a visible bar and can claim its own level. */
+export const MAX_SKILL_ROWS = Infinity;
 
 /**
  * combatXpGains({ receipt, awards, levelGained, levelDiscarded }) → the

@@ -126,6 +126,49 @@ export function awardSkillXp(registries, run, skillId, amount) {
   return { skillId, before, after: row.level, levelUps: row.level - before, upgraded, gained: gain };
 }
 
+/** Count the levels already paid for by a track, without advancing its ledger. */
+export function pendingSkillLevelCount(registries, run, skillId) {
+  const kind = skillKindOf(registries, skillId);
+  const row = run && run.skills && run.skills[skillId];
+  if (!kind || !row) return 0;
+  let xp = row.xp;
+  let level = row.level;
+  let count = 0;
+  while (xp >= xpToNext(registries, kind, level)) {
+    xp -= xpToNext(registries, kind, level);
+    level += 1;
+    count += 1;
+  }
+  return count;
+}
+
+/** Pay XP now; the player's Level Up! action advances the skill later. */
+export function bankSkillXp(registries, run, skillId, amount) {
+  const kind = skillKindOf(registries, skillId);
+  if (!kind) throw new Error(`bankSkillXp: '${skillId}' is not a skill track`);
+  if (!run.skills || typeof run.skills !== 'object') run.skills = emptySkills();
+  const row = run.skills[skillId] || (run.skills[skillId] = { xp: 0, level: 0, pendingDrafts: 0 });
+  const before = row.level;
+  const gain = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
+  row.xp += gain;
+  return { skillId, before, after: before, levelUps: 0, pendingLevelUps: pendingSkillLevelCount(registries, run, skillId), upgraded: [], gained: gain };
+}
+
+/** Claim exactly one paid-for skill level, retaining excess XP and queuing its reward. */
+export function claimBankedSkillLevel(registries, run, skillId) {
+  const kind = skillKindOf(registries, skillId);
+  const row = run && run.skills && run.skills[skillId];
+  if (!kind || !row) return null;
+  const cost = xpToNext(registries, kind, row.level);
+  if (row.xp < cost) return null;
+  const before = row.level;
+  row.xp -= cost;
+  row.level += 1;
+  row.pendingDrafts += 1;
+  const upgraded = skillUpgradesCards(registries, row.level) ? applySkillUpgrades(registries, run, skillId) : [];
+  return { skillId, before, after: row.level, levelUps: 1, upgraded, gained: 0 };
+}
+
 // ---- drafts, rarity and auto-upgrade (plan phase 4b) ------------------------
 
 function draftRows(registries) {

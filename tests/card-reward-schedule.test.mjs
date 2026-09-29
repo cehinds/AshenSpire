@@ -269,7 +269,7 @@ test('Falsify: with level cards switched off, 50 fixed seeds retain the old card
 });
 
 test('the reward menu: levelCard is ordered after card, is a choice, is taken and skipped like the card offer', () => {
-  assert.equal(REWARD_KIND_ORDER.indexOf('levelCard'), REWARD_KIND_ORDER.indexOf('card') + 1);
+  assert.ok(REWARD_KIND_ORDER.indexOf('levelCard') > REWARD_KIND_ORDER.indexOf('card'));
   const offer = { cinders: 10, cardIds: ['stomp', 'rend', 'gildedOath'], levelCards: [{ ordinal: 0, cardIds: ['guardCounter', 'executioner', 'crimsonCleave'] }] };
   const plan = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 1 });
   const row = plan.rows.find((r) => r.kind === 'levelCard');

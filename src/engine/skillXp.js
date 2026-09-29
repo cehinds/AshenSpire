@@ -26,7 +26,7 @@
 import { equippedIn, slotHand, gripOf } from '../model/loadout.js';
 import { ownerItemRef } from '../model/cardMounts.js';
 import { playerWeightClass } from '../model/combatWeight.js';
-import { awardSkillXp, armourSkillId, DUAL_WIELD_SKILL } from '../model/skills.js';
+import { awardSkillXp, bankSkillXp, armourSkillId, DUAL_WIELD_SKILL } from '../model/skills.js';
 
 const FOCUS_ITEM_TYPE = 'item:magic-focus';
 
@@ -232,10 +232,10 @@ export function skillXpReceipt(combat, ownerKey = 'player') {
 }
 
 /** applySkillXp(registries, run, receipt) → the awards, one per track paid. */
-export function applySkillXp(registries, run, receipt) {
+export function applySkillXp(registries, run, receipt, { bank = false } = {}) {
   const awards = [];
   for (const [skillId, amount] of Object.entries(receipt || {})) {
-    awards.push(awardSkillXp(registries, run, skillId, amount));
+    awards.push((bank ? bankSkillXp : awardSkillXp)(registries, run, skillId, amount));
   }
   return awards;
 }
