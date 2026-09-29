@@ -13,6 +13,16 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "url": "https://github.com/cehinds/AshenSpire/pull/1412"
   },
   {
+    "id": "pr-1414",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "XP settings now shape rewards, and levels wait for your choice",
+    "detail": "A fight pays character XP from defeated enemies' level, combat power and equipment, using the values in Advanced settings; the levelling preview follows those values too. After Victory, the XP bars fill in sequence, and a blue Level button appears on each full character or skill bar. Pressing it advances one level, keeps any excess XP, and opens that level's reward. Character levels offer passive feats by default, with separate settings for class upgrades, bonus cards and stat points. You can also let levels advance automatically.",
+    "build": "0.7.1.706",
+    "pullRequest": 1414,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1414"
+  },
+  {
     "id": "pr-1411",
     "date": "2026-09-29",
     "group": "2026-09-29",
