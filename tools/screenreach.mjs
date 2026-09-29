@@ -116,13 +116,6 @@ if (process.argv.includes('--selftest')) {
         expectRed: /\b[1-9]\d* COVERED\b|UNREACHABLE/,
       },
       {
-        name: 'the closed map tray is counted as an open control',
-        file: 'tools/screenreach.mjs',
-        find: "!e.closest('details:not([open]), [inert]')",
-        replace: "!e.closest('details:not([open])')",
-        expectRed: /^\s*map\s.*[1-9]\d* COVERED/m,
-      },
-      {
         name: 'the truncated-card chevron is clipped at the top of the hand',
         file: 'styles/kit.css',
         find: 'top: max(calc(-1 * var(--tap-floor) + 16px / var(--ui-zoom, 1)), calc(4px / var(--ui-zoom, 1) - var(--hand-card-y)));',
@@ -140,7 +133,7 @@ if (process.argv.includes('--selftest')) {
         file: 'src/ui/components/battlefieldStage.js',
         find: "      frame.style.zIndex = '';",
         replace: '      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));',
-        expectRed: /390x650 combat: [1-9]\d* covered control\(s\) — .*\.intent/,
+        expectRed: /390x650 combat(?:-xl)?: [1-9]\d* covered control\(s\) — .*\.intent/,
       },
       {
         name: 'a silhouette loses its frame-level tap area',
@@ -180,7 +173,7 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
-  if (selftestCode === 0) console.log('screenreach-selftest: OK — 10 checks passed');
+  if (selftestCode === 0) console.log('screenreach-selftest: OK — 12 plants caught');
   process.exit(selftestCode);
 }
 

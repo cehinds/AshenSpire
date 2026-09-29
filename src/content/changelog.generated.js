@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1411",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Behind the scenes: phone reachability checks stay effective",
+    "detail": "The browser check again proves it catches an intent badge trapped beneath neighboring art, including with extra-large text. Its obsolete closed-map-tray test is removed because that tray no longer has visible controls to measure.",
+    "build": "0.7.1.704",
+    "pullRequest": 1411,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1411"
+  },
+  {
     "id": "pr-1408",
     "date": "2026-09-29",
     "group": "2026-09-29",
