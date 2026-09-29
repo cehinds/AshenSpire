@@ -569,18 +569,26 @@ async function main() {
           const s = f.querySelector('.sprite'), r = s.getBoundingClientRect(), fr = f.getBoundingClientRect();
           const p = getComputedStyle(f, '::after');
           const rows = [];
-          for (let y = r.bottom - 22; y < r.bottom + 22; y += 4) {
+          for (let y = r.top - 35; y < r.bottom + 40; y += 8) {
             let row = '';
-            for (let x = r.left + r.width / 2 - 22; x < r.left + r.width / 2 + 22; x += 4) {
+            for (let x = r.left - 35; x < r.right + 35; x += 8) {
               const hit = document.elementFromPoint(x, y);
+              const owner = hit?.closest('.combatant');
               row += hit === f ? 'F' : hit === s || s.contains(hit) ? 'S' : hit?.closest('.intent') ? 'I'
-                : hit?.closest('.combatant') ? 'O' : '.';
+                : owner !== f && hit?.closest('.as-meter,.meters') ? 'M' : owner !== f && hit?.closest('.nm') ? 'N'
+                : owner !== f && hit?.closest('.sprite') ? 'A' : owner !== f && owner ? 'O' : '.';
             }
-            rows.push(row);
+            rows.push([Math.round(y),row]);
           }
+          const boxes = [...document.querySelectorAll('.enemy-row .combatant')].map(e => ({
+            name:e.textContent.slice(0,20), z:e.querySelector('.sprite')?.style.zIndex,
+            parts:[...e.querySelectorAll('.intent,.nm,.meters')].map(n => {
+              const b=n.getBoundingClientRect(); return [n.className.toString().slice(0,20),Math.round(b.left),Math.round(b.top),Math.round(b.width),Math.round(b.height),getComputedStyle(n).zIndex];
+            })
+          }));
           return JSON.stringify({ frame: [fr.left, fr.top, fr.width, fr.height], sprite: [r.left, r.top, r.width, r.height],
             targetClass: f.classList.contains('enemy-target-hitbox'), x: f.style.getPropertyValue('--enemy-hit-x'),
-            y: f.style.getPropertyValue('--enemy-hit-y'), pseudo: [p.left,p.top,p.width,p.height,p.pointerEvents,p.zIndex], rows });
+            y: f.style.getPropertyValue('--enemy-hit-y'), pseudo: [p.left,p.top,p.width,p.height,p.pointerEvents,p.zIndex], rows, boxes });
         })()`);
         console.log(`    combat-xl hit detail: ${detail}`);
       }
