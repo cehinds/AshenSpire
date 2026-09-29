@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-29
 
+- **Behind the scenes: phone layout checks catch covered map and enemy controls again** ([#1412](https://github.com/cehinds/AshenSpire/pull/1412), `0.7.1.702`). The browser check's deliberate defects now fit the current closed map tray and extra-large text combat layout, so future coverage gaps fail the test by the right reason.
 - **Overlapping enemy sprites keep a clear tap area** ([#1408](https://github.com/cehinds/AshenSpire/pull/1408), `0.7.1.701`). Enemy intent badges sit a little higher above their artwork while respecting the HUD boundary. This leaves room to select a Grave Wisp on a short phone in extra-large text without covering its resource bars.
 - **Bow attacks draw and release, and cards choose the matching weapon motion** ([#1407](https://github.com/cehinds/AshenSpire/pull/1407), `0.7.1.700`). A Bow Attack now plays a seven-step draw and shot in every armor appearance. Blade attacks use greatsword, sword-and-shield, or twin-sword movement according to what is held. Spell attacks cast; shield attacks share one bash, and guarding with a shield keeps the shield guard movement.
 - **Enemy taps stay reachable in source and packaged play** ([#1405](https://github.com/cehinds/AshenSpire/pull/1405), `0.7.1.697`). The transparent 44 px target now sits on each enemy's clickable frame, above neighboring artwork. This keeps even an overlapping Grave Wisp selectable on a short phone with extra-large text, regardless of how its art loads.

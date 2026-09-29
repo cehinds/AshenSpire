@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1412",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Behind the scenes: phone layout checks catch covered map and enemy controls again",
+    "detail": "The browser check's deliberate defects now fit the current closed map tray and extra-large text combat layout, so future coverage gaps fail the test by the right reason.",
+    "build": "0.7.1.702",
+    "pullRequest": 1412,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1412"
+  },
+  {
     "id": "pr-1408",
     "date": "2026-09-29",
     "group": "2026-09-29",
