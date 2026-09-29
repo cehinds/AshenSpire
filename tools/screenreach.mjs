@@ -111,9 +111,23 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'controls inside collapsed disclosures are counted as visible targets',
         file: 'tools/screenreach.mjs',
-        find: "\n      && !e.closest('details:not([open])')",
+        find: "\n      && !e.closest('details:not([open]), [inert]')",
         replace: '',
         expectRed: /\b[1-9]\d* COVERED\b|UNREACHABLE/,
+      },
+      {
+        name: 'the closed map tray is counted as an open control',
+        file: 'tools/screenreach.mjs',
+        find: "!e.closest('details:not([open]), [inert]')",
+        replace: "!e.closest('details:not([open])')",
+        expectRed: /^\s*map\s.*[1-9]\d* COVERED/m,
+      },
+      {
+        name: 'the truncated-card chevron is clipped at the top of the hand',
+        file: 'styles/kit.css',
+        find: 'top: max(calc(-1 * var(--tap-floor) + 16px / var(--ui-zoom, 1)), calc(4px / var(--ui-zoom, 1) - var(--hand-card-y)));',
+        replace: 'top: calc(-1 * var(--tap-floor));',
+        expectRed: /card More control clipped by the hand/,
       },
       {
         name: 'Settings cleanup watches the shared connected panel instead of its own render',
@@ -147,7 +161,7 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
-  if (selftestCode === 0) console.log('screenreach-selftest: OK — 8 checks passed');
+  if (selftestCode === 0) console.log('screenreach-selftest: OK — 10 checks passed');
   process.exit(selftestCode);
 }
 
@@ -307,13 +321,33 @@ const PROBE = `(() => {
   const all = [...app.querySelectorAll(sel)].filter((e) => {
     const r = e.getBoundingClientRect();
     return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden'
-      && !e.closest('details:not([open])');
+      && !e.closest('details:not([open]), [inert]');
   });
+  const exposedPatch = (target, size) => {
+    if (!target) return false;
+    const bounds = target.getBoundingClientRect();
+    const half = size / 2;
+    const owns = (px, py) => {
+      const top = document.elementFromPoint(px, py);
+      return top && (top === target || target.contains(top));
+    };
+    for (let py = Math.max(half, bounds.top + half); py <= Math.min(innerHeight - half, bounds.bottom - half); py += 8) {
+      for (let px = Math.max(half, bounds.left + half); px <= Math.min(innerWidth - half, bounds.right - half); px += 8) {
+        if ([[0,0],[-half,-half],[half,-half],[-half,half],[half,half]].every(([dx,dy]) => owns(px + dx, py + dy))) return true;
+      }
+    }
+    return false;
+  };
   for (const c of all) {
     const r = c.getBoundingClientRect();
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
     const hit = (x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight) ? document.elementFromPoint(x, y) : null;
     if (hit && (hit === c || c.contains(hit))) continue;
+    // Formation frames span a grid cell and intentionally ignore pointer input.
+    // Their sprite and nameplate receive the tap. A frame centre may be empty
+    // or covered by a neighbour even while its own artwork is reachable.
+    if (c.matches('.combatant[data-ui-component="combatant-frame"]')
+      && exposedPatch(c.querySelector('.combatant-card > .sprite'), 24)) continue;
     // A fan intentionally covers card centers. Require an exposed 24px square
     // on the actual card, and only permit another hand card to cover its center.
     if (c.matches('.hand .card') && hit?.closest('.hand .card')) {
@@ -402,6 +436,15 @@ const PROBE = `(() => {
       const label = frame.querySelector('.nm')?.textContent?.trim() || frame.dataset.eid || 'enemy';
       if (hud && r.top < hud.bottom - 0.5) visual.push(label + ' frame paints under the HUD by ' + (hud.bottom - r.top).toFixed(1) + 'px');
       if (hand && r.bottom > hand.top + 0.5) visual.push(label + ' frame paints under the hand by ' + (r.bottom - hand.top).toFixed(1) + 'px');
+    }
+    // A chevron can win its centre hit-test while the hand clips the top of
+    // its tap-floor box. Keep the whole button inside the hand's visible band.
+    for (const more of document.querySelectorAll('.hand[data-wireframe-hand="true"] .card-more-button')) {
+      if (getComputedStyle(more).display === 'none') continue;
+      const r = more.getBoundingClientRect();
+      const port = more.closest('.hand').getBoundingClientRect();
+      if (r.top < port.top - 0.5 || r.bottom > port.bottom + 0.5)
+        visual.push('card More control clipped by the hand');
     }
   }
   if (window.__settingsListenerBalance) {
