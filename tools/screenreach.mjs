@@ -130,6 +130,12 @@ if (process.argv.includes('--selftest')) {
         expectRed: /card More control clipped by the hand/,
       },
       {
+        name: 'enemy intent cannot be pressed anywhere in its badge',
+        file: 'styles/combat.css',
+        append: '.combatant-leading .intent { pointer-events: none !important; }',
+        expectRed: /390x650 combat: [1-9]\d* covered control\(s\) — .*\.intent/,
+      },
+      {
         name: 'Settings cleanup watches the shared connected panel instead of its own render',
         file: 'src/ui/screens/settings.js',
         find: 'if (lifecycleSentinel.isConnected) return;',
@@ -348,6 +354,10 @@ const PROBE = `(() => {
     // or covered by a neighbour even while its own artwork is reachable.
     if (c.matches('.combatant[data-ui-component="combatant-frame"]')
       && exposedPatch(c.querySelector('.combatant-card > .sprite'), 24)) continue;
+    // A tall neighbouring enemy can paint across an intent badge's centre on
+    // short phones. It is still usable if a finger-sized patch of that button
+    // wins the hit test. A wholly blocked badge remains a failure.
+    if (c.matches('.combatant-leading .overhead-control') && exposedPatch(c, 24)) continue;
     // A fan intentionally covers card centers. Require an exposed 24px square
     // on the actual card, and only permit another hand card to cover its center.
     if (c.matches('.hand .card') && hit?.closest('.hand .card')) {
