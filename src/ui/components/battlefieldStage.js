@@ -159,10 +159,14 @@ export function wireBattlefieldStage(field, model) {
       // badge can counter-zoom and anchor to the art rather than inheriting
       // the sprite's scale (which left it a few px tall on phones).
       const hostRect = sprite.getBoundingClientRect();
-      // Small figures keep their artwork size but gain a 44 px tap target.
-      // The absolutely positioned target is outside the box the fitter reads.
-      sprite.classList.toggle('small-sprite-hitbox', hostRect.width < 44);
-      sprite.style.setProperty('--sprite-hit-size', `${44 * sprite.offsetWidth / hostRect.width}px`);
+      // Keep the 44 px target on the clickable frame, above neighbouring art.
+      // It does not change the dimensions read by the sprite fitter.
+      frame.classList.toggle('enemy-target-hitbox', frame.classList.contains('enemy'));
+      if (frame.classList.contains('enemy-target-hitbox')) {
+        const frameRect = frame.getBoundingClientRect();
+        frame.style.setProperty('--enemy-hit-x', `${(hostRect.left + hostRect.width / 2 - frameRect.left) / zoom}px`);
+        frame.style.setProperty('--enemy-hit-y', `${(hostRect.bottom - frameRect.top) / zoom}px`);
+      }
       // The drawn frame, not its wrapper: an enemy's pose stage is narrower
       // than the frame it paints, which overhangs the host.
       const artRect = (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect();
