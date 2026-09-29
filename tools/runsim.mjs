@@ -208,6 +208,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   const combat = createRunCombat({
     registries: REG, rng, run,
     enemyIds: enc.enemies,
+    encounter: enc,
     hpMult: boss ? (cm.loopMult || 1) * boss.hp : (cm.hpMult || 1),
     enemyDamageMult: boss ? boss.damage : 1,
     enemyStatuses: cm.enemyStatuses || [],
@@ -282,7 +283,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   // The levels this fight bought are kept for afterVictory's card rows (the
   // level card of SPEC §15.1), as main.js hands levelAward.levelUps on.
   run._fightLevelUps = awardLevelXp(REG, run, combatLevelXp(REG, {
-    victory: combat.result === 'victory', pool: enc.pool, kills: combat.eventLog.filter((e) => e.type === 'enemyDied').length,
+    victory: combat.result === 'victory', pool: enc.pool, enemies: combat.enemies,
   })).levelUps;
   return outcome;
 }

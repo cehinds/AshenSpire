@@ -9,6 +9,7 @@
 export const act1Enemies = [
   {
     id: 'wanderingSoldier',
+    equipmentPower: 0.2,
     size: 'medium',
     name: 'Wandering Soldier',
     hp: [22, 26],
@@ -92,6 +93,7 @@ export const act1Enemies = [
   // ---- Elite (SPEC §5.3) ----------------------------------------------------
   {
     id: 'wyrmAspirant',
+    equipmentPower: 0.3,
     size: 'large',
     tint: 'var(--gold)',
     name: 'Wyrm Aspirant',
@@ -120,6 +122,7 @@ export const act1Enemies = [
   // ---- Boss: The Fell Warden (SPEC §5.3 — the Fell Warden-inspired) -----------------
   {
     id: 'fellWarden',
+    equipmentPower: 0.3,
     size: 'large',
     tint: 'var(--blood)',
     name: 'The Fell Warden',

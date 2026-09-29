@@ -14,6 +14,7 @@
 export const act2Enemies = [
   {
     id: 'gildedKnight',
+    equipmentPower: 0.3,
     size: 'medium',
     tint: 'var(--gold)',
     name: 'Gilded Knight',
@@ -32,6 +33,7 @@ export const act2Enemies = [
   },
   {
     id: 'courtSurgeon',
+    equipmentPower: 0.1,
     size: 'medium',
     tint: 'var(--grace)',
     name: 'Court Surgeon',
@@ -78,6 +80,7 @@ export const act2Enemies = [
   },
   {
     id: 'courtMarionette',
+    equipmentPower: 0.1,
     size: 'small',
     tint: 'var(--rot)',
     name: 'Court Marionette',
@@ -95,6 +98,7 @@ export const act2Enemies = [
   },
   {
     id: 'livingArmor',
+    equipmentPower: 0.4,
     size: 'medium',
     tint: 'var(--frost)',
     name: 'Living Armor',
@@ -123,6 +127,7 @@ export const act2Enemies = [
   // ---- Elite ------------------------------------------------------------------
   {
     id: 'courtDuelist',
+    equipmentPower: 0.25,
     size: 'large',
     tint: 'var(--frost)',
     name: 'Duelist of the Court',
@@ -145,6 +150,7 @@ export const act2Enemies = [
   // ---- Boss: The Stitched King (GDD §2 — phase 2 literally adds limbs) ----------
   {
     id: 'stitchedKing',
+    equipmentPower: 0.25,
     size: 'large',
     tint: 'var(--gold)',
     name: 'The Stitched King',
