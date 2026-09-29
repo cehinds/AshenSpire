@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-09-28",
     "summary": "Card details stay tappable in a crowded phone fight",
     "detail": "The More button on a truncated card now sits above the overlapping hand, where the next card cannot cover it. The phone reachability check also recognizes closed map trays and checks the part of each fighter that can actually be tapped.",
-    "build": "0.7.1.689",
+    "build": "0.7.1.694",
     "pullRequest": 1399,
     "url": "https://github.com/cehinds/AshenSpire/pull/1399"
   },
