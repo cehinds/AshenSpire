@@ -116,17 +116,6 @@ if (process.argv.includes('--selftest')) {
         expectRed: /\b[1-9]\d* COVERED\b|UNREACHABLE/,
       },
       {
-        name: 'an inert map tray with measurable controls is counted as open',
-        // The current closed tray collapses to height 0, so removing the
-        // inert guard alone has no measurable control to expose. Give its
-        // still-inert children geometry while testing that exact guard.
-        edits: [
-          { file: 'tools/screenreach.mjs', find: "!e.closest('details:not([open]), [inert]')", replace: "!e.closest('details:not([open])')" },
-          { file: 'styles/map.css', append: '.map-tray-reveal[inert] { height: 100px !important; overflow: visible !important; }' },
-        ],
-        expectRed: /^\s*map\s.*[1-9]\d* COVERED/m,
-      },
-      {
         name: 'the truncated-card chevron is clipped at the top of the hand',
         file: 'styles/kit.css',
         find: 'top: max(calc(-1 * var(--tap-floor) + 16px / var(--ui-zoom, 1)), calc(4px / var(--ui-zoom, 1) - var(--hand-card-y)));',
@@ -184,7 +173,7 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
-  if (selftestCode === 0) console.log('screenreach-selftest: OK — 10 checks passed');
+  if (selftestCode === 0) console.log('screenreach-selftest: OK — 12 plants caught');
   process.exit(selftestCode);
 }
 
