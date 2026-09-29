@@ -43,6 +43,7 @@ technique,,Technique,,,,,,,Conditions for explicit technique bonuses.
 theme,,Theme,,,,,,,Build synergies; tags alone grant no effects.
 property,,Property,,,,,,,"What a holder CONFERS while it is held. Each property node has exactly one entry in nodeEffects.json; the holder grants it, and it leaves when the holder does. EVERY family may carry one — what the mount path can hold (worn, owned, chosen) is the engine's narrower list, engine/properties.js MOUNTABLE_KINDS."
 blade,card,Blade,C9502E,⚔,,,,,Steel and edge — direct weapon work.
+bow,card,Bow,7FA8C9,➶,,,,,A bow draw and arrow release.
 guard,card,Guard,7FA8C9,🛡,,,,,"Bracing, blocking, holding the line."
 blood,card,Blood,8A1A1A,🩸,,,,,"Bleed, and the letting of it."
 gorefire,card,Gorefire,C9502E,🔥,,,,,The blood-and-flame stance.
