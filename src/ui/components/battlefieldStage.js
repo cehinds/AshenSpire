@@ -143,11 +143,11 @@ export function wireBattlefieldStage(field, model) {
       frame.dataset.groundY = String(fieldRect.top + slot.ground);
       frame.dataset.groundRatio = String(slot.ground / fieldRect.height);
       stack.style.top = `${local.top}px`;
-      // WCO1 headroom: the stack rests 6 px above the art's visible top, but its
+      // WCO1 headroom: the stack rests 14 px above the art's visible top, but its
       // top edge never rises above the HUD band's bottom (field-local px,
       // like `local`). On a short field it comes down over the sprite instead.
       const overhead = overheadStackBottom({
-        anchor: local.top + (paintedHeight - visibleHeight - 6) / zoom, height: leadingHeight, ceiling,
+        anchor: local.top + (paintedHeight - visibleHeight - 14) / zoom, height: leadingHeight, ceiling,
       });
       frame.style.setProperty('--overhead-top', `${overhead.bottom - local.top}px`);
       frame.dataset.overheadClamped = String(overhead.clamped);
