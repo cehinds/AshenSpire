@@ -307,13 +307,34 @@ const PROBE = `(() => {
   const all = [...app.querySelectorAll(sel)].filter((e) => {
     const r = e.getBoundingClientRect();
     return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden'
-      && !e.closest('details:not([open])');
+      && !e.closest('details:not([open]), [inert]');
   });
+  const exposedPatch = (target, size) => {
+    if (!target) return false;
+    const bounds = target.getBoundingClientRect();
+    const half = size / 2;
+    const owns = (px, py) => {
+      const top = document.elementFromPoint(px, py);
+      return top && (top === target || target.contains(top));
+    };
+    for (let py = Math.max(half, bounds.top + half); py <= Math.min(innerHeight - half, bounds.bottom - half); py += 8) {
+      for (let px = Math.max(half, bounds.left + half); px <= Math.min(innerWidth - half, bounds.right - half); px += 8) {
+        if ([[0,0],[-half,-half],[half,-half],[-half,half],[half,half]].every(([dx,dy]) => owns(px + dx, py + dy))) return true;
+      }
+    }
+    return false;
+  };
   for (const c of all) {
     const r = c.getBoundingClientRect();
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
     const hit = (x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight) ? document.elementFromPoint(x, y) : null;
     if (hit && (hit === c || c.contains(hit))) continue;
+    // Formation frames span a grid cell and intentionally ignore pointer input.
+    // Their sprite and nameplate receive the tap. A frame centre may be empty
+    // or covered by a neighbour even while its own artwork is reachable.
+    if (c.matches('.combatant[data-ui-component="combatant-frame"]')
+      && (exposedPatch(c.querySelector('.combatant-card > .sprite'), 24)
+        || exposedPatch(c.querySelector('.combatant-card > .nm'), 16))) continue;
     // A fan intentionally covers card centers. Require an exposed 24px square
     // on the actual card, and only permit another hand card to cover its center.
     if (c.matches('.hand .card') && hit?.closest('.hand .card')) {

@@ -4935,6 +4935,15 @@ button[data-button-size] {
   transform-origin: calc(var(--hand-card-width) / 2) calc(var(--hand-card-height) / 2);
   transform: rotate(calc(-1 * var(--hand-card-angle))) translateY(calc(-1 * var(--hand-card-arc)));
 }
+/* The next card's hit lane covers this card's lower corner in a tight fan.
+   Keep the reading chevron above the face, inside the hand's reserved lift. */
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-more-button {
+  pointer-events: auto; z-index: 21;
+  left: 0; right: auto; top: calc(-1 * var(--tap-floor)); bottom: auto;
+  align-items: center; justify-content: center; padding: 0;
+  border: 1px solid var(--line); border-radius: var(--r-2);
+  background: var(--panel);
+}
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) > .hand-hit-lane {
   transform: translateY(calc(var(--hand-selection-lift) - var(--hand-card-arc)));
 }
