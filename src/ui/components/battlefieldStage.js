@@ -130,8 +130,10 @@ export function wireBattlefieldStage(field, model) {
       const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: x - nameWidth / 2, top: slot.ground - paintedHeight, width: nameWidth, height: paintedHeight });
       frame.style.left = `${local.left}px`;
       frame.style.width = `${local.width}px`;
-      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));
-      sprite.style.zIndex = String(slot.row);
+      // Keep depth on the artwork. A z-index on the whole frame traps its
+      // overhead buttons below a neighbouring frame's sprite on short phones.
+      frame.style.zIndex = '';
+      sprite.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));
       frame.dataset.formationRow = slot.formationRow;
       frame.dataset.formationDepth = String(slot.row);
       frame.dataset.formationCell = slot.cell;
@@ -141,11 +143,11 @@ export function wireBattlefieldStage(field, model) {
       frame.dataset.groundY = String(fieldRect.top + slot.ground);
       frame.dataset.groundRatio = String(slot.ground / fieldRect.height);
       stack.style.top = `${local.top}px`;
-      // WCO1 headroom: the stack rests 6 px above the art's visible top, but its
+      // WCO1 headroom: the stack rests 14 px above the art's visible top, but its
       // top edge never rises above the HUD band's bottom (field-local px,
       // like `local`). On a short field it comes down over the sprite instead.
       const overhead = overheadStackBottom({
-        anchor: local.top + (paintedHeight - visibleHeight - 6) / zoom, height: leadingHeight, ceiling,
+        anchor: local.top + (paintedHeight - visibleHeight - 14) / zoom, height: leadingHeight, ceiling,
       });
       frame.style.setProperty('--overhead-top', `${overhead.bottom - local.top}px`);
       frame.dataset.overheadClamped = String(overhead.clamped);
@@ -157,6 +159,14 @@ export function wireBattlefieldStage(field, model) {
       // badge can counter-zoom and anchor to the art rather than inheriting
       // the sprite's scale (which left it a few px tall on phones).
       const hostRect = sprite.getBoundingClientRect();
+      // Keep the 44 px target on the clickable frame, above neighbouring art.
+      // It does not change the dimensions read by the sprite fitter.
+      frame.classList.toggle('enemy-target-hitbox', frame.classList.contains('enemy'));
+      if (frame.classList.contains('enemy-target-hitbox')) {
+        const frameRect = frame.getBoundingClientRect();
+        frame.style.setProperty('--enemy-hit-x', `${(hostRect.left + hostRect.width / 2 - frameRect.left) / zoom}px`);
+        frame.style.setProperty('--enemy-hit-y', `${(hostRect.bottom - frameRect.top) / zoom}px`);
+      }
       // The drawn frame, not its wrapper: an enemy's pose stage is narrower
       // than the frame it paints, which overhangs the host.
       const artRect = (sprite.querySelector('.pose-stage, img, svg') || sprite.firstElementChild || sprite).getBoundingClientRect();

@@ -12,6 +12,15 @@ export const tags = [
     "blurb": "Steel and edge — direct weapon work."
   },
   {
+    "id": "bow",
+    "domain": "card",
+    "label": "Bow",
+    "color": "7FA8C9",
+    "glyph": "➶",
+    "visibility": "",
+    "blurb": "A bow draw and arrow release."
+  },
+  {
     "id": "guard",
     "domain": "card",
     "label": "Guard",

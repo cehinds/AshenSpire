@@ -3,6 +3,66 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1408",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Overlapping enemy sprites keep a clear tap area",
+    "detail": "Enemy intent badges sit a little higher above their artwork while respecting the HUD boundary. This leaves room to select a Grave Wisp on a short phone in extra-large text without covering its resource bars.",
+    "build": "0.7.1.701",
+    "pullRequest": 1408,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1408"
+  },
+  {
+    "id": "pr-1407",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Bow attacks draw and release, and cards choose the matching weapon motion",
+    "detail": "A Bow Attack now plays a seven-step draw and shot in every armor appearance. Blade attacks use greatsword, sword-and-shield, or twin-sword movement according to what is held. Spell attacks cast; shield attacks share one bash, and guarding with a shield keeps the shield guard movement.",
+    "build": "0.7.1.700",
+    "pullRequest": 1407,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1407"
+  },
+  {
+    "id": "pr-1405",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Enemy taps stay reachable in source and packaged play",
+    "detail": "The transparent 44 px target now sits on each enemy's clickable frame, above neighboring artwork. This keeps even an overlapping Grave Wisp selectable on a short phone with extra-large text, regardless of how its art loads.",
+    "build": "0.7.1.697",
+    "pullRequest": 1405,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1405"
+  },
+  {
+    "id": "pr-1403",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Enemy intent badges stay in front of the fighters",
+    "detail": "On a short phone screen, a neighboring enemy's sprite could cover the entire intent button. The artwork keeps its depth order while intent buttons, names and resource bars remain above it. Tiny enemies gain a larger tap area without changing their artwork size.",
+    "build": "0.7.1.696",
+    "pullRequest": 1403,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1403"
+  },
+  {
+    "id": "pr-1401",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Behind the scenes: the long checks finish within an hour",
+    "detail": "The Windows build check divides its known-bad cases among four jobs, and the browser checks run in smaller jobs. All cases still run; each job has a one-hour limit. The phone reachability check now accepts an enemy intent badge when it has a full finger-sized exposed area, while catching badges that cannot be pressed anywhere.",
+    "build": "0.7.1.695",
+    "pullRequest": 1401,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1401"
+  },
+  {
+    "id": "pr-1399",
+    "date": "2026-09-28",
+    "group": "2026-09-28",
+    "summary": "Card details stay tappable in a crowded phone fight",
+    "detail": "The More button on a truncated card now sits above the overlapping hand, where the next card cannot cover it. The phone reachability check also recognizes closed map trays and checks the part of each fighter that can actually be tapped.",
+    "build": "0.7.1.694",
+    "pullRequest": 1399,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1399"
+  },
+  {
     "id": "pr-1397",
     "date": "2026-09-28",
     "group": "2026-09-28",

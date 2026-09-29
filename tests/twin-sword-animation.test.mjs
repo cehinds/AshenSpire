@@ -37,7 +37,9 @@ for (const row of rows) {
   assert.equal(equipmentAnimationForLoadout(registries, loadout, row.classId).setId, animation.setId);
   for (const [rightId, leftId] of [['katana', 'straightSword'], ['straightSword', 'straightSword'], ['katana', 'katana'], ['straightSword', null]]) {
     for (const [slot, id] of [['rightHand', rightId], ['leftHand', leftId]]) loadout.sets[slot][loadout.active[slot] || 0] = id;
-    assert.equal(equipmentAnimationForLoadout(registries, loadout, row.classId), null, `${row.classId}/${row.id}: unauthored order retains fallback`);
+    const borrowed = equipmentAnimationForLoadout(registries, loadout, row.classId);
+    assert.ok(borrowed, `${row.classId}/${row.id}: Blade can borrow a sword motion`);
+    assert.deepEqual(animationClip(borrowed, 'bladeAttack').frames.length, rightId && leftId ? attack.frames.length : 9);
   }
 }
 assert.equal(selectedSets.size, 32, 'only catalog-authorized aliases reuse paintings');
