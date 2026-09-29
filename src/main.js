@@ -48,7 +48,8 @@ import { equippedPieces } from './model/loadout.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
-import { awardLevelXp, combatLevelXp } from './model/levelup.js';
+import { applyLevelUp, awardLevelXp, bankLevelXp, claimBankedLevel, combatLevelXp, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
+import { configuredRewardOffer as rewardOfferForSource } from './model/rewardSourcePolicy.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
@@ -2210,7 +2211,7 @@ function enterNode(nodeId) {
         rng,
         onCollectArmament: (id) => collectArmament(id, 'treasure'),
         onPersist: persist,
-        rewards: { relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), title: 'TREASURE' },
+        rewards: configuredRewardOffer({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), title: 'TREASURE' }, 'treasure'),
         onDone: () => {
           rewardDoneCount++;
           if (run.journey) completeJourneyNode(run.journey);
@@ -2489,6 +2490,11 @@ function victoryTitle(enc) {
 async function onCombatEnd(result, combat, enc) {
   if (xpCombat === combat) xpCombat = null;
   runCombatEnd(run, combat); // pools, flasks and deficits, as every simulator settles them
+  const xpBefore = {
+    character: { ...run.level },
+    tracks: Object.fromEntries(Object.entries(run.skills || {}).map(([id, row]) => [id, { level: row.level || 0, xp: row.xp || 0 }])),
+  };
+  const pendingBefore = pendingLevelCount(registries, run);
   // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.
@@ -2497,15 +2503,21 @@ async function onCombatEnd(result, combat, enc) {
   // The class track (plan phase 5b) is paid by the run's owner, who knows
   // the door's pool: a won fight, more for a boss; a lost one nothing.
   const classAward = awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool });
-  // THE CHARACTER LEVEL (plan phase 6), paid by the run's owner too: a won
-  // fight and every kill by the door's pool. His level-value dial is read at
-  // the moment the level is reached — the points it grants wait on the
-  // ledger for the shrine.
-  const levelAward = awardLevelXp(registries, run, combatLevelXp(registries, {
-    victory: result === 'victory', pool: enc.pool, enemies: combat.enemies,
-  }), { pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings) });
+  // Character XP is paid now; the level and its stat points wait for the blue
+  // Level Up button. Excess XP remains on the ledger after each claim.
+  const levelXp = combatLevelXp(registries, { victory: result === 'victory', pool: enc.pool, enemies: combat.enemies });
+  const manualLevelUp = settingOn(saves.loadMeta().settings, 'manualLevelUp');
+  const levelAward = manualLevelUp
+    ? bankLevelXp(registries, run, levelXp)
+    : awardLevelXp(registries, run, levelXp, {
+      pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings),
+      grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
+    });
+  const levelsEarned = manualLevelUp
+    ? Math.max(0, levelAward.pendingLevelUps - pendingBefore)
+    : levelAward.levelUps;
   // THE RECEIPT THE SPOILS DOOR SHOWS (model/rewardprogress.js). Every ledger
-  // above moved before the door opens, so the screen cannot re-derive what
+  // above were paid before the door opens, so the screen cannot re-derive what
   // this fight paid — it is handed the amounts, on the offer, where the
   // pending-reward checkpoint persists them and a reload resumes the same
   // sentence. Ledger state is read live from the run; only the GAIN is kept,
@@ -2567,18 +2579,19 @@ async function onCombatEnd(result, combat, enc) {
     // could give, in which case it pays out instead of dropping nothing.
     const bossArmament = rollDrop('boss');
     const drops = registries.balance.equipment.drops || {};
-    const bossDrafts = rollSkillDrafts('boss');
-    const bossClassDrafts = rollClassDrafts();
+    const bossDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('boss') : [];
+    const bossClassDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts() : [];
     const bossRewards = {
       title: victoryTitle(enc),
       cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0),
       classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
-      ...rollCardRows('boss', bossDrafts.length || bossClassDrafts.length, levelAward.levelUps),
+      ...rollCardRows('boss', bossDrafts.length || bossClassDrafts.length, levelsEarned),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
       armamentId: bossArmament,
       smithingStoneReceipt,
       xpGains,
+      xpBefore,
     };
     return beginPendingReward(bossRewards, { source: 'boss', after: run.journey || run.legacyDungeon ? 'map' : 'advanceAct' });
   }
@@ -2586,14 +2599,14 @@ async function onCombatEnd(result, combat, enc) {
   // THE SKILL DRAFTS TAKE THE CARD ROW'S SEAT (plan phase 4b, proposal §6.1):
   // a level the fight bought is offered as a pick from the track's own
   // schools, and while one is on the table the class-card offer is not.
-  const drafts = rollSkillDrafts(enc.pool);
-  const classDrafts = rollClassDrafts();
+  const drafts = settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts(enc.pool) : [];
+  const classDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts() : [];
   const rewards = {
     title: victoryTitle(enc),
     cinders: rollRuneReward(registries, rng, enc.pool, run.relics),
     classDrafts,
     skillDrafts: drafts,
-    ...rollCardRows(enc.pool, drafts.length || classDrafts.length, levelAward.levelUps),
+    ...rollCardRows(enc.pool, drafts.length || classDrafts.length, levelsEarned),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
     // Elites are the mid-run source of armaments; ordinary fights are not by
@@ -2602,6 +2615,7 @@ async function onCombatEnd(result, combat, enc) {
     armamentId: rollDrop(enc.pool),
     smithingStoneReceipt,
     xpGains,
+    xpBefore,
   };
   beginPendingReward(rewards, { source: enc.pool, after: 'map' });
 }
@@ -2658,6 +2672,7 @@ function rollClassDrafts() {
 }
 
 function beginPendingReward(rewards, { source, after }) {
+  rewards = configuredRewardOffer(rewards, source);
   run.pendingReward = {
     schemaVersion: 1,
     source,
@@ -2672,6 +2687,11 @@ function beginPendingReward(rewards, { source, after }) {
   return mountPendingReward();
 }
 
+function configuredRewardOffer(rewards, source) {
+  const settings = saves.loadMeta().settings || {};
+  return rewardOfferForSource(rewards, source, (key) => settingOn(settings, key));
+}
+
 function mountPendingReward() {
   const checkpoint = run.pendingReward;
   if (!checkpoint) throw new Error('No pending reward checkpoint to mount');
@@ -2682,6 +2702,11 @@ function mountPendingReward() {
     rng,
     rewards: checkpoint.rewards,
     checkpoint,
+    onClaimLevel: () => claimBankedLevel(registries, run, {
+      pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings),
+      grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
+    }),
+    onAllocateStat: (attributeId) => applyLevelUp(registries, run, attributeId),
     onCollectArmament: (id) => collectArmament(id, checkpoint.source),
     onPersist: persist,
     onDone: () => {
@@ -3559,7 +3584,7 @@ if (shotState === 'combat-test') {
     // the same reason the offer's ids are authored rather than rolled. The
     // draft pose's own ledger write below still wins for its track.
     if (pose !== 'empty') {
-      run.level = { xp: 40, level: 3, unspentPoints: 0 };
+      run.level = { xp: 40, level: 1, unspentPoints: 0 };
       run.skills = {
         'item:blade': { xp: 18, level: 2, pendingDrafts: 0 },
         'armour:heavy': { xp: 6, level: 1, pendingDrafts: 0 },
@@ -3568,6 +3593,7 @@ if (shotState === 'combat-test') {
         ...(run.skills || {}),
       };
     }
+    if (pose === 'level') run.level.xp = levelXpToNext(registries, 1) + 25;
     if (pose === 'draft') {
       run.skills = { ...(run.skills || {}), 'item:blade': { xp: 0, level: 2, pendingDrafts: 1 } };
     }
@@ -3585,8 +3611,13 @@ if (shotState === 'combat-test') {
       smithingStoneReceipt,
       // What the fight paid, authored like the rest of the pose.
       xpGains: { level: 24, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 } },
+      ...(pose === 'level' ? {
+        levelCards: [{ ordinal: 0, cardIds: registries.classes.get(run.class).cardPool.slice(0, 3) }],
+        xpGains: { level: levelXpToNext(registries, 1) - 15, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 } },
+        xpBefore: { character: { level: 1, xp: 40 }, tracks: { 'item:blade': { level: 2, xp: 0 }, [`class:${run.class}`]: { level: 1, xp: 10 } } },
+      } : {}),
     };
-    if (pose === 'pending') {
+    if (pose === 'pending' || pose === 'level') {
       beginPendingReward(shotOffer, { source: 'elite', after: 'map' });
       // Cross the ordinary load door in the same ephemeral shot store. This is
       // the interruption/reload proof: the mounted row below comes from saved

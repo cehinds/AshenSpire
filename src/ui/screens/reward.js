@@ -37,15 +37,11 @@
 // do not write `meta.seen` yet, so a thing first met elsewhere can still read
 // NEW here once — the marker errs toward showing.
 //
-// PROGRESSION, BESIDE THE CLAIM (Constantine, 2026-09-20: "why don't I see
-// level progression, xp gained, skill progression in here either"). The fight
-// pays the character level and every skill track it touched at combat
-// resolution — BEFORE this door opens — so the door used to show only the
-// half you pick up. model/rewardprogress.js derives the other half: the
-// ledgers as they stand now, plus what this fight paid into them, handed in
-// on the offer as `rewards.xpGains` (main.js keeps it on the pending-reward
-// checkpoint, so a reload resumes the same numbers). Derived once at mount:
-// nothing a player does at this door moves a level.
+// PROGRESSION, BESIDE THE CLAIM. Combat banks character XP and pays skill
+// tracks before this door opens. The pending reward stores their XP receipt
+// and starting values; the green underlay moves to the new total, then the
+// yellow overlay catches it. A blue bar means the character can claim one
+// level here, with any excess XP kept for later claims.
 //
 // `saves` and `rng` are optional: co-op stubs and old callers get the dial's
 // default and a deterministic first-card pick, never a crash and never
@@ -63,6 +59,7 @@ import { flaskSlotCap } from '../../model/gracerefill.js';
 import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds, rewardNotes, CARD_CHOICE_KINDS, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
 import { rewardProgress } from '../../model/rewardprogress.js';
+import { levelUpPlan, pendingLevelCount } from '../../model/levelup.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
 import { skillTracks, skillLevel, skillUpgradesCards, spendSkillDraft, classSkillId } from '../../model/skills.js';
@@ -85,6 +82,7 @@ const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', s
 export function mountRewards(app, {
   registries, run, rewards, onDone, saves = null, rng = null,
   onCollectArmament = null, onPersist = null, checkpoint = null,
+  onClaimLevel = null, onAllocateStat = null,
 }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
@@ -103,12 +101,17 @@ export function mountRewards(app, {
       (registries.balance.equipment.storageSlots || 8) - (((run.loadout || {}).storage) || []).length,
     ),
   });
-  // The fight's progression, derived once: the ledgers are already paid and
-  // no choice at this door moves one. ONLY WHERE THERE WAS A FIGHT — the
+  // The fight's progression reads the paid ledgers and is re-derived after a
+  // claimed character level. ONLY WHERE THERE WAS A FIGHT — the
   // panel's whole claim is what this one moved, and a treasure room (or an
   // offer saved before the receipt existed) moved nothing, so it draws the
   // spoils alone rather than a heading with no gains under it.
-  const progress = rewards.xpGains ? rewardProgress(registries, run, rewards.xpGains) : null;
+  let progress = rewards.xpGains ? rewardProgress(registries, run, rewards.xpGains) : null;
+  const settings = (saves && saves.loadMeta && (saves.loadMeta().settings || {})) || {};
+  let xpAnimationDone = !progress || !rewards.xpBefore;
+  let xpAnimationStarted = false;
+  let claimedLevels = checkpoint?.levelClaims || 0;
+  const deferredLevelOffer = () => !!(onClaimLevel && progress?.character && (pendingLevelCount(registries, run) > 0 || claimedLevels > 0));
   const states = {
     ...(checkpoint?.states || {}),
     ...(smithingStonesPaid(rewards.smithingStoneReceipt) ? { smithingStone: 'taken' } : {}),
@@ -128,6 +131,7 @@ export function mountRewards(app, {
       checkpoint.chosenCardId = chosenCardId;
       checkpoint.chosenDraftCardIds = { ...chosenDraftCardIds };
       checkpoint.chosenDraftNodeIds = { ...chosenDraftNodeIds };
+      if (claimedLevels || checkpoint.levelClaims !== undefined) checkpoint.levelClaims = claimedLevels;
     }
     if (onPersist && onPersist() === false) throw new Error('Reward save was refused.');
   }
@@ -368,6 +372,93 @@ export function mountRewards(app, {
     return dial.modes.includes(settings.rewardCollect) ? settings.rewardCollect : dial.def;
   }
 
+  function claimLevel() {
+    if (!xpAnimationDone || pendingLevelCount(registries, run) < 1 || !onClaimLevel) return;
+    const claim = onClaimLevel();
+    if (!claim) return;
+    claimedLevels += 1;
+    persistProgress();
+    progress = rewardProgress(registries, run, rewards.xpGains);
+    const card = plan.rows.find((row) => row.kind === 'levelCard' && row.key === `levelCard:${claimedLevels - 1}` && !states[row.key]);
+    if (card) renderChooser(card);
+    else renderLevelReward(claim);
+  }
+
+  function statAllocationSection() {
+    if (settings.levelUpAllocateStats !== true || !onAllocateStat || !(run.level?.unspentPoints > 0)) return null;
+    const host = el('section', { class: 'reward-stat-allocation', 'aria-label': 'Assign stats' });
+    const draw = () => {
+      const points = run.level?.unspentPoints || 0;
+      const attrs = levelUpPlan(registries, run).attributes;
+      host.replaceChildren(
+        el('h3', { text: `Assign stats · ${points} point${points === 1 ? '' : 's'} available` }),
+        ...attrs.map((attr) => {
+          const id = attr.id;
+          const add = button({ label: '+', className: 'reward-stat-add', disabled: points < 1, attrs: { 'aria-label': `Increase ${attr.label}` } });
+          add.addEventListener('click', () => {
+            if (!run.level?.unspentPoints) return;
+            onAllocateStat(id);
+            persistProgress();
+            draw();
+          });
+          return el('div', { class: 'reward-stat-row' }, [
+            el('span', { text: attr.label }),
+            el('span', { text: String(run.attributes?.[id] ?? 0) }),
+            add,
+          ]);
+        }),
+      );
+    };
+    draw();
+    return host;
+  }
+
+  function renderLevelReward(claim) {
+    const done = button({ label: 'Continue', weight: 'primary', id: 'reward-level-done' });
+    const body = el('div', { class: 'reward-level-claim' }, [
+      el('p', { text: `Level ${claim.after} · ${claim.points} stat point${claim.points === 1 ? '' : 's'} earned` }),
+      statAllocationSection(),
+    ]);
+    door({ eyebrow: 'Level Up', title: `Level ${claim.after}`, body,
+      foot: modalFooter({ primary: done, className: 'reward-foot', size: 'medium' }) });
+    done.addEventListener('click', () => renderMenu());
+  }
+
+  async function playXpAnimation() {
+    const bars = [...app.querySelectorAll('.reward-claim-layout .rp-layered-bar[data-animate="1"]')];
+    const requested = Number(settings.victoryXpSeconds);
+    const total = document.body.classList.contains('reduced-motion') ? 0
+      : Math.max(0, Math.min(12000, (Number.isFinite(requested) ? requested : 3) * 1000));
+    const skillCount = bars.filter((bar) => !['character', 'class'].includes(bar.dataset.kind)).length || 1;
+    const weight = (kind) => {
+      const key = kind === 'character' ? 'victoryXpCharacterWeight' : kind === 'class' ? 'victoryXpClassWeight' : 'victoryXpSkillWeight';
+      const def = kind === 'character' ? 50 : 25;
+      const value = Math.max(0, Number.isFinite(Number(settings[key])) ? Number(settings[key]) : def);
+      return kind === 'character' || kind === 'class' ? value : value / skillCount;
+    };
+    const sum = bars.reduce((n, bar) => n + weight(bar.dataset.kind), 0) || bars.length || 1;
+    for (const bar of bars) {
+      const duration = total * (weight(bar.dataset.kind) || (sum ? 0 : 1)) / sum;
+      const green = bar.querySelector('.rp-under');
+      const yellow = bar.querySelector('.rp-over');
+      if (!green || !yellow) continue;
+      const target = `${bar.dataset.target}%`;
+      if (duration > 0) {
+        green.style.transition = `width ${duration * .45}ms linear`;
+        green.style.width = target;
+        await new Promise((resolve) => setTimeout(resolve, duration * .45));
+        yellow.style.transition = `width ${duration * .55}ms linear`;
+        yellow.style.width = target;
+        await new Promise((resolve) => setTimeout(resolve, duration * .55));
+      } else {
+        green.style.width = target;
+        yellow.style.width = target;
+      }
+    }
+    xpAnimationDone = true;
+    if (app.querySelector('.reward-claim-layout')) renderMenu();
+  }
+
   // ---- THE DOOR: a decision modal OVER whatever stands beneath ---------------
   // Constantine: victory is a modal over the battlefield, and the cinders are
   // granted on arrival. Each view (menu, detail, chooser) is the same md door
@@ -404,7 +495,7 @@ export function mountRewards(app, {
     const notesHtml = rewardNotes(rewards).map((token) => `<p class="reward-note" data-note="${esc(token)}">${esc(t(`reward.note.${token}`))}</p>`).join('');
     // Level cards are claimed from the progression bar when it is present.
     // Older offers without an XP receipt still keep their normal reward row.
-    const rowsHtml = plan.rows.filter((row) => row.kind !== 'levelCard' || !progress?.character).map((row) => {
+    const rowsHtml = plan.rows.filter((row) => row.kind !== 'levelCard' || !deferredLevelOffer() || (row.ordinal < claimedLevels && !states[row.key])).map((row) => {
       const state = states[row.key] || (row.blockedBy ? 'blocked' : 'pending');
       const { title, body } = rowBody(row);
       return `
@@ -432,6 +523,10 @@ export function mountRewards(app, {
         'data-confirm-ready': String(plan.rows.every(row => states[row.key] === 'taken' || states[row.key] === 'skipped')),
       },
     });
+    if (progress?.character && pendingLevelCount(registries, run) > 0) {
+      cont.disabled = true;
+      cont.title = 'Claim your level before continuing';
+    }
     const foot = modalFooter({
       note: cont.dataset.confirmReady === 'true' ? t('reward.hold.complete')
         : mode === 'auto' && pending.length ? t('reward.hold.takesRest') : t('reward.hold.leavesRest'),
@@ -457,10 +552,7 @@ export function mountRewards(app, {
     });
 
     const levelButton = app.querySelector('.reward-level-up');
-    if (levelButton) {
-      const levelRow = plan.rows.find((row) => row.key === levelButton.dataset.rewardKey);
-      levelButton.addEventListener('click', () => renderChooser(levelRow));
-    }
+    if (levelButton) levelButton.addEventListener('click', claimLevel);
 
     for (const el of app.querySelectorAll('.reward-kind')) {
       const row = plan.rows.find((r) => r.key === el.dataset.key);
@@ -502,7 +594,9 @@ export function mountRewards(app, {
       // closed set); the auto pick advances the same stream, so a seeded run
       // resolves the same card every replay.
       const pickFn = rng ? (n) => rng.int('cardRewards', 0, n - 1) : () => 0;
-      const { take: toTake } = resolveContinue(plan, states, mode, pickFn);
+      const { take: offered } = resolveContinue(plan, states, mode, pickFn);
+      // Level cards belong to a level claim, never to auto-collect on Continue.
+      const toTake = offered.filter((row) => row.kind !== 'levelCard' || !deferredLevelOffer() || row.ordinal < claimedLevels);
       for (const row of toTake) {
         if (apply[row.kind](row)) {
           states[row.key] = 'taken';
@@ -521,6 +615,11 @@ export function mountRewards(app, {
       onConfirm: finish,
     });
 
+    if (!xpAnimationStarted && progress && rewards.xpBefore) {
+      xpAnimationStarted = true;
+      setTimeout(playXpAnimation, 0);
+    }
+
     if (isEngaged()) {
       setTimeout(() => (focusKind && focusFirst(`.reward-kind[data-key="${focusKind}"]`))
         || focusFirst('.reward-kind:not(.locked)') || focusFirst('#reward-continue'), 0);
@@ -533,7 +632,8 @@ export function mountRewards(app, {
   // One column so the two read as one ledger; null when it would be empty
   // (a preview scene's stub run with no offer and no ledgers).
   function sideColumn(claim) {
-    const children = [progressPanel(), plan.rows.length ? claimStatusPanel(claim) : null].filter(Boolean);
+    const progression = progressPanel();
+    const children = [progression, !progression && plan.rows.length ? claimStatusPanel(claim) : null].filter(Boolean);
     return children.length ? el('div', { class: 'reward-side' }, children) : null;
   }
 
@@ -541,32 +641,41 @@ export function mountRewards(app, {
   // what this fight paid. The bar is the kit meter (one meter in the tree),
   // and its aria label is the sentence the numbers mean, because a bar with
   // no text is a picture of progress to a screen reader.
-  function progressRow(row, label, levelCard = null) {
+  function progressRow(row, label) {
     // A CAP is the only thing that leaves a row without a next level — the
     // model drops a track whose curve will not read rather than handing one
     // here, so `capped` alone decides this and no re-derivation guesses.
     const next = el('span', {
       class: 'rp-next',
-      text: row.capped ? t('reward.progress.capped') : t('reward.progress.next', { level: row.level + 1 }),
+      text: row.capped ? t('reward.progress.capped') : row.kind === 'character' ? `Level ${row.level + 1}` : t('reward.progress.next', { level: row.level + 1 }),
     });
-    const ready = !!levelCard && !states[levelCard.key];
-    const bar = meter({
-      pct: row.fraction * 100,
-      skinny: true,
-      attrs: { class: `rp-bar${ready ? ' rp-bar-ready' : ''}` },
-      ariaLabel: row.capped
-        ? `${label}: ${tFull('reward.progress.capped')}`
-        : `${label}: ${tFull('reward.progress.xp', { xp: row.xp, next: row.xpToNext, level: row.level + 1 })}`,
-    });
+    const ready = row.kind === 'character' && pendingLevelCount(registries, run) > 0 && xpAnimationDone;
+    const target = row.fraction * 100;
+    const before = row.kind === 'character' ? rewards.xpBefore?.character : rewards.xpBefore?.tracks?.[row.id];
+    const old = before && before.level === row.level && row.xpToNext
+      ? Math.max(0, Math.min(100, before.xp / row.xpToNext * 100)) : 0;
+    const animate = !xpAnimationDone && row.gained > 0 && !!before;
+    const under = el('span', { class: 'rp-under' });
+    const over = el('span', { class: 'rp-over' });
+    under.style.width = `${animate ? old : target}%`;
+    over.style.width = `${animate ? old : target}%`;
+    const bar = el('div', {
+      class: `rp-bar rp-layered-bar${ready ? ' rp-bar-ready' : ''}`,
+      role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(row.xpToNext || 0),
+      'aria-valuenow': String(Math.min(row.xp, row.xpToNext || row.xp)),
+      'aria-label': `${label}: ${Math.min(row.xp, row.xpToNext || row.xp)} / ${row.xpToNext || row.xp} XP`,
+      dataset: { animate: animate ? '1' : '0', target: String(target), old: String(old), track: row.id, kind: row.kind },
+    }, [under, over, el('span', { class: 'rp-bar-text', text: `${Math.min(row.xp, row.xpToNext || row.xp)} / ${row.xpToNext || row.xp}` })]);
     const node = el('li', {
       class: `reward-progress-row${ready ? ' reward-level-ready' : ''}`,
       dataset: { kind: row.kind, track: row.id, gained: String(row.gained) },
     }, [
-      el('span', { class: 'rp-name', text: label }),
-      el('span', { class: 'rp-level', text: t('reward.progress.level', { level: row.level }) }),
+      row.kind === 'character' ? null : el('span', { class: 'rp-name', text: label }),
+      el('span', { class: 'rp-level', text: row.kind === 'character' ? `Level ${row.level}` : t('reward.progress.level', { level: row.level }) }),
       bar,
-      ready ? button({ label: t('reward.levelUp.action'), className: 'reward-level-up', attrs: { 'data-reward-key': levelCard.key } }) : next,
-      row.gained ? el('span', { class: 'rp-gain', text: t('reward.progress.gained', { xp: row.gained }) }) : null,
+      next,
+      ready ? button({ label: t('reward.levelUp.action'), className: 'reward-level-up' }) : null,
+      row.kind !== 'character' && row.gained ? el('span', { class: 'rp-gain', text: t('reward.progress.gained', { xp: row.gained }) }) : null,
       // The per-fight level cap threw some of it away (SPEC §15.2): say how much.
       row.discarded ? el('span', { class: 'rp-discarded', title: tFull('reward.progress.discarded', { xp: row.discarded }), text: t('reward.progress.discarded', { xp: row.discarded }) }) : null,
     ]);
@@ -574,7 +683,7 @@ export function mountRewards(app, {
     // the climb and the gain; the numbers are for the player who asks.
     attachTooltip(node, () => `<div class="tt-title">${esc(label)}</div>${esc(row.capped
       ? tFull('reward.progress.capped')
-      : tFull('reward.progress.xp', { xp: row.xp, next: row.xpToNext, level: row.level + 1 }))}`);
+      : tFull('reward.progress.xp', { xp: Math.min(row.xp, row.xpToNext), next: row.xpToNext, level: row.level + 1 }))}`);
     return node;
   }
 
@@ -584,13 +693,11 @@ export function mountRewards(app, {
       row,
       row.kind === 'class' ? t('reward.progress.classTrack', { class: row.label }) : row.label,
     ));
-    const levelCard = plan.rows.find((row) => row.kind === 'levelCard' && !states[row.key]);
     return el('section', { class: 'reward-progress', 'aria-label': t('reward.progress.heading') }, [
       el('h3', { class: 'as-eyebrow', text: t('reward.progress.heading') }),
       progress.character
-        ? el('ul', { class: 'reward-progress-list' }, [progressRow(progress.character, progress.character.label || t('reward.progress.character'), levelCard)])
+        ? el('ul', { class: 'reward-progress-list' }, [progressRow(progress.character, progress.character.label || t('reward.progress.character'))])
         : null,
-      skills.length ? el('h4', { class: 'as-eyebrow', text: t('reward.progress.skills') }) : null,
       skills.length ? el('ul', { class: 'reward-progress-list' }, skills) : null,
       progress.hidden
         ? el('p', { class: 'reward-progress-more', text: t('reward.progress.more', { count: progress.hidden, plural: progress.hidden === 1 ? '' : 's' }) })
@@ -662,12 +769,16 @@ export function mountRewards(app, {
       label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
     });
     door({
-      eyebrow: row.kind === 'skillDraft' || row.kind === 'classDraft' || row.kind === 'levelCard' ? rowBody(row).title : t('reward.card.eyebrow'),
-      title: rewards.title || t('reward.title.victory'),
+      eyebrow: row.kind === 'levelCard' ? '' : row.kind === 'skillDraft' || row.kind === 'classDraft' ? rowBody(row).title : t('reward.card.eyebrow'),
+      title: row.kind === 'levelCard' ? t('reward.levelUp.action') : rewards.title || t('reward.title.victory'),
       body: el('div', { class: 'reward-row', role: 'radiogroup', 'aria-label': t('reward.card.aria') }),
       foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
     });
     const strip = app.querySelector('.reward-row');
+    if (row.kind === 'levelCard') {
+      const stats = statAllocationSection();
+      if (stats) strip.after(stats);
+    }
     let selectedCardId = pendingByKey[row.key] || null;
     let confirming = false;
     const message = el('p', { role: 'status', class: 'reward-confirm-status', hidden: true });
@@ -775,7 +886,34 @@ export function mountRewards(app, {
     if (isEngaged()) setTimeout(() => focusFirst('.reward-row .reward-pick') || focusFirst('#reward-back'), 0);
   }
 
+  function expandVictory() {
+    if (checkpoint) checkpoint.expanded = true;
+    persistProgress();
+    const waitingCard = plan.rows.find((row) => row.kind === 'levelCard' && row.ordinal < claimedLevels && !states[row.key]);
+    if (waitingCard) renderChooser(waitingCard);
+    else renderMenu();
+  }
+
+  function renderCompactVictory() {
+    const open = button({ label: 'Continue', weight: 'primary', id: 'reward-expand' });
+    door({ eyebrow: '', title: rewards.title || t('reward.title.victory'),
+      attrs: { dataset: { size: 'sm', victoryCompact: 'true' } },
+      body: el('p', { class: 'reward-compact-xp', text: rewards.xpGains?.level ? `+${rewards.xpGains.level} XP` : 'Victory' }),
+      foot: modalFooter({ primary: open, className: 'reward-foot', size: 'medium' }),
+    });
+    open.addEventListener('click', expandVictory);
+    if (settings.victorySummaryMode === 'anywhere') {
+      app.querySelector('.reward-veil')?.addEventListener('click', (event) => {
+        if (event.target !== open) expandVictory();
+      }, { once: true });
+    } else if (settings.victorySummaryMode === 'auto') {
+      setTimeout(() => { if (app.querySelector('[data-victory-compact]')) expandVictory(); }, 450);
+    }
+  }
+
   sfx.play('victory');
   grantCinders();
-  renderMenu();
+  if (checkpoint?.expanded) expandVictory();
+  else if (!checkpoint?.source || !rewards.xpGains) renderMenu();
+  else renderCompactVictory();
 }

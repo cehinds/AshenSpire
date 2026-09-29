@@ -2,15 +2,15 @@
 //
 // Constantine, 2026-09-20, on the victory door: "why don't I see level
 // progression, xp gained, skill progression in here either". He was right to
-// ask: the fight pays the character level (model/levelup.js) and every skill
+// ask: the fight banks character XP (model/levelup.js) and pays every skill
 // track it touched (engine/skillXp.js) at `onCombatEnd`, BEFORE the door
 // opens — so the ledgers the player is being rewarded on had already moved
 // and the screen said nothing about it. The spoils read like the whole payout
 // while being only the half you pick up.
 //
-// This is that missing half, derived ONCE, here, the rewardplan.js precedent:
+// This is that missing half, derived from the current ledgers:
 // the screen draws rows and decides nothing. A row is a track's ledger as it
-// stands NOW (levels are paid before the door) plus the XP this fight paid
+// stands NOW (skill levels are paid; the character level awaits a click) plus the XP this fight paid
 // into it — the gain is a receipt the caller hands in (main.js keeps it on
 // the pending-reward offer, so a reload resumes the same sentence), never a
 // re-derivation from the combat log this file cannot see.

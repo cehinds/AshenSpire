@@ -112,6 +112,51 @@ function pointsFor(registries, pointsPerLevel) {
   return Number.isInteger(pointsPerLevel) && pointsPerLevel > 0 ? pointsPerLevel : authored;
 }
 
+/** How many levels the banked XP can pay for without changing the displayed level. */
+export function pendingLevelCount(registries, run) {
+  const row = levelOf(run);
+  const ceiling = grantTable(registries).maxLevels;
+  let level = characterLevel(run);
+  let xp = Number.isSafeInteger(row.xp) ? Math.max(0, row.xp) : 0;
+  let count = 0;
+  while ((!Number.isInteger(ceiling) || level < ceiling) && xp >= xpToNext(registries, level)) {
+    xp -= xpToNext(registries, level);
+    level += 1;
+    count += 1;
+  }
+  return count;
+}
+
+/** Pay XP now; leave level, stat points, and derived pools unchanged until claimed. */
+export function bankLevelXp(registries, run, amount) {
+  if (!run) throw new Error('bankLevelXp: no run');
+  if (!run.level || typeof run.level !== 'object') run.level = emptyLevel();
+  const before = characterLevel(run);
+  const gain = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
+  const discarded = gain ? climbLevels(registries, { level: before, xp: run.level.xp, gain }).discarded : 0;
+  if (gain) run.level.xp += gain - discarded;
+  return { before, after: before, levelUps: 0, pendingLevelUps: pendingLevelCount(registries, run), points: 0, thresholds: 0, gained: gain, discarded };
+}
+
+/** Commit exactly one earned level, leaving any excess XP banked for the next claim. */
+export function claimBankedLevel(registries, run, { pointsPerLevel = null, grantStats = true } = {}) {
+  if (!run || pendingLevelCount(registries, run) < 1) return null;
+  const before = characterLevel(run);
+  const cost = xpToNext(registries, before);
+  const points = grantStats ? pointsFor(registries, pointsPerLevel) : 0;
+  run.level.xp -= cost;
+  run.level.level = before + 1;
+  run.level.unspentPoints += points;
+  const thresholds = rederivePools(registries, run, `level ${before} → ${run.level.level}`);
+  note(run, {
+    kind: 'write', site: 'levelup.js:claimBankedLevel', field: 'level',
+    was: { level: before, unspentPoints: run.level.unspentPoints - points },
+    now: { level: run.level.level, unspentPoints: run.level.unspentPoints },
+    why: `${cost} banked XP spent; ${points} point(s) granted`,
+  });
+  return { before, after: run.level.level, points, spent: cost, thresholds, remaining: pendingLevelCount(registries, run) };
+}
+
 /**
  * climbLevels(registries, { level, xp, gain }) → { level, xp, levelUps, capped, cappedBy, discarded }
  * — THE CLIMB, pure: `gain` XP added to a ledger at `level` with `xp` banked,
@@ -223,14 +268,14 @@ export function levelPace(registries, { pointsPerLevel = null } = {}) {
  * per-fight cap threw away, so the spoils receipt can say both (Codex, #1349).
  * A non-positive or non-finite amount writes nothing.
  */
-export function awardLevelXp(registries, run, amount, { pointsPerLevel = null } = {}) {
+export function awardLevelXp(registries, run, amount, { pointsPerLevel = null, grantStats = true } = {}) {
   if (!run) throw new Error('awardLevelXp: no run');
   if (!run.level || typeof run.level !== 'object') run.level = emptyLevel();
   const row = run.level;
   const before = row.level;
   const gain = Number.isFinite(amount) ? Math.floor(amount) : 0;
   if (gain <= 0) return { before, after: before, levelUps: 0, points: 0, thresholds: 0, gained: 0, discarded: 0 };
-  const perLevel = pointsFor(registries, pointsPerLevel);
+  const perLevel = grantStats ? pointsFor(registries, pointsPerLevel) : 0;
   const climb = climbLevels(registries, { level: row.level, xp: row.xp, gain });
   const levelUps = climb.levelUps;
   const points = levelUps * perLevel;

@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { rewardProgress, combatXpGains } from '../src/model/rewardprogress.js';
 import { awardSkillXp } from '../src/model/skills.js';
-import { awardLevelXp, xpToNext as levelXpToNext } from '../src/model/levelup.js';
+import { awardLevelXp, claimBankedLevel, xpToNext as levelXpToNext } from '../src/model/levelup.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
@@ -159,21 +159,21 @@ test('the door draws the panel beside the claim status, gains and all', () => {
     assert.equal(rows.length, 4, 'the character level and three tracks');
     assert.equal(rows[0].dataset.kind, 'character');
     const text = (row, cls) => row.children.find((child) => child.className.includes(cls))?.textContent;
-    assert.equal(text(rows[0], 'rp-name'), 'Reaver');
-    assert.equal(text(rows[0], 'rp-level'), 'Lv 3');
-    assert.equal(text(rows[0], 'rp-next'), 'Lv. 4');
-    assert.equal(text(rows[0], 'rp-gain'), 'Gained: 25 xp');
+    assert.equal(text(rows[0], 'rp-name'), undefined, 'the character line has no extra label');
+    assert.equal(text(rows[0], 'rp-level'), 'Level 3');
+    assert.equal(text(rows[0], 'rp-next'), 'Level 4');
+    assert.equal(text(rows[0], 'rp-gain'), undefined, 'the character line stays on one row');
     assert.equal(text(rows[1], 'rp-gain'), 'Gained: 8 xp', 'the track the fight paid leads the skills');
     assert.equal(rows[2].dataset.gained, '0', 'an unpaid track shows its standing level and no gain');
     assert.equal(text(rows[2], 'rp-gain'), undefined);
-    assert.ok(rows.every((row) => row.children.some((child) => child.className.includes('as-meter'))), 'every row carries its bar');
-    assert.ok(app.querySelector('.reward-side .reward-claim-status'), 'the claim status keeps its column');
+    assert.ok(rows.every((row) => row.children.some((child) => child.className.includes('rp-layered-bar'))), 'every row carries its layered bar');
+    assert.equal(app.querySelector('.reward-side .reward-claim-status'), null, 'the compact progression column does not repeat every reward');
   } finally {
     Object.assign(globalThis, saved);
   }
 });
 
-test('a pending level card lights the XP bar and Level Up! opens its card chooser', () => {
+test('banked XP lights the bar; Level Up! advances one level and opens its card chooser', () => {
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
   Object.assign(globalThis, dom);
@@ -181,9 +181,10 @@ test('a pending level card lights the XP bar and Level Up! opens its card choose
     const app = document.createElement('main');
     document.body.append(app);
     const run = climber();
+    run.level.xp = levelXpToNext(registries, 3) + 25;
     const before = run.deck.length;
     mountRewards(app, {
-      registries, run, onDone() {},
+      registries, run, onDone() {}, onClaimLevel: () => claimBankedLevel(registries, run),
       rewards: { xpGains: { level: 30, tracks: {} }, levelCards: [{ ordinal: 0, cardIds: ['rend', 'stomp'] }] },
     });
     assert.ok(app.querySelector('.reward-level-ready .rp-bar-ready'));
@@ -191,6 +192,8 @@ test('a pending level card lights the XP bar and Level Up! opens its card choose
     assert.equal(claim.textContent, 'Level Up!');
     assert.equal(app.querySelector('[data-kind="levelCard"]'), null, 'the level choice lives beside the XP bar');
     claim.click();
+    assert.equal(run.level.level, 4);
+    assert.equal(run.level.xp, 25);
     assert.equal(app.querySelectorAll('.reward-row .card').length, 2);
     app.querySelectorAll('.reward-row .card')[0].click();
     app.querySelector('#reward-card-confirm').click();
@@ -214,6 +217,45 @@ test('a door with no fight behind it draws no progression at all', () => {
     mountRewards(app, { registries, run: climber(), onDone() {}, rewards: { relicId: 'forsakenMedallion' } });
     assert.equal(app.querySelector('.reward-progress'), null);
     assert.ok(app.querySelector('.reward-claim-status'), 'the spoils themselves are untouched');
+  } finally {
+    Object.assign(globalThis, saved);
+  }
+});
+
+test('a saved combat reward opens compactly, then Continue reveals the full summary', () => {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main');
+    document.body.append(app);
+    const run = climber();
+    const checkpoint = { schemaVersion: 1, source: 'normal', after: 'map', states: {}, rewards: { xpGains: { level: 20, tracks: {} } } };
+    mountRewards(app, { registries, run, checkpoint, rewards: checkpoint.rewards, onDone() {}, onPersist() {} });
+    assert.ok(app.querySelector('.reward-compact-xp'));
+    assert.equal(app.querySelector('.reward-progress'), null);
+    app.querySelector('#reward-expand').click();
+    assert.equal(checkpoint.expanded, true);
+    assert.ok(app.querySelector('.reward-progress'));
+  } finally {
+    Object.assign(globalThis, saved);
+  }
+});
+
+test('the click-anywhere Victory preference expands the same summary', () => {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main');
+    document.body.append(app);
+    const run = climber();
+    const checkpoint = { schemaVersion: 1, source: 'normal', after: 'map', states: {}, rewards: { xpGains: { level: 10, tracks: {} } } };
+    const saves = { loadMeta: () => ({ settings: { victorySummaryMode: 'anywhere' } }) };
+    mountRewards(app, { registries, run, checkpoint, rewards: checkpoint.rewards, saves, onDone() {}, onPersist() {} });
+    app.querySelector('.reward-veil').click();
+    assert.equal(checkpoint.expanded, true);
+    assert.ok(app.querySelector('.reward-progress'));
   } finally {
     Object.assign(globalThis, saved);
   }

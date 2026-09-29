@@ -981,6 +981,8 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (pending.schemaVersion !== 1) problems.push('pendingReward.schemaVersion must be 1');
       if (typeof pending.source !== 'string' || !pending.source) problems.push('pendingReward.source must be a non-empty string');
       if (!['map', 'advanceAct'].includes(pending.after)) problems.push('pendingReward.after must be map or advanceAct');
+      if (pending.expanded !== undefined && typeof pending.expanded !== 'boolean') problems.push('pendingReward.expanded must be a boolean');
+      if (pending.levelClaims !== undefined && (!Number.isInteger(pending.levelClaims) || pending.levelClaims < 0)) problems.push('pendingReward.levelClaims must be a non-negative integer');
       if (!pending.rewards || Array.isArray(pending.rewards) || typeof pending.rewards !== 'object') {
         problems.push('pendingReward.rewards must be an object');
       }
