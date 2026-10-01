@@ -739,9 +739,16 @@ function executeMove(C, enemy, move, moveId) {
   for (const eff of move.effects || []) applyEnemyEffect(C, enemy, eff, moveId);
 }
 
-// Player-targeted effects fan out; self/enemy effects apply once.
+// Ops that act on the active seat's card piles (actions.js reads `ctx.piles`,
+// never `eff.target`). An enemy has no piles, so in an enemy effect these are
+// always aimed at the players: they fan out like `target: 'player'` even when
+// the row names no target (Dazed injectors; docs/FINISH.md, Owner decisions).
+const SEAT_PILE_OPS = new Set(['addCard', 'draw', 'discard', 'exhaust', 'shuffleDiscardIntoDraw']);
+
+// Player-targeted effects (and seat-pile ops) fan out to every living seat;
+// self/enemy effects apply once.
 function applyEnemyEffect(C, enemy, eff, moveId) {
-  if (eff.target === 'player') {
+  if (eff.target === 'player' || SEAT_PILE_OPS.has(eff.op)) {
     for (const P of livingPlayers(C)) {
       if (C.result) return;
       setActive(C, P);
