@@ -731,7 +731,9 @@ function collectContentProblems(bundle, errors = []) {
       const xp = lv.xp;
       if (!xp || typeof xp !== 'object' || Array.isArray(xp)) err('balance.level.xp', 'must be an object { base, growth, roundTo }');
       else {
-        for (const key of Object.keys(xp)) if (!['base', 'growth', 'roundTo'].includes(key)) err(`balance.level.xp.${key}`, 'Unknown field');
+        for (const key of Object.keys(xp)) if (!['base', 'growth', 'roundTo', 'linear', 'multScaler'].includes(key)) err(`balance.level.xp.${key}`, 'Unknown field');
+        if (xp.linear !== undefined && typeof xp.linear !== 'boolean') err('balance.level.xp.linear', 'must be a boolean');
+        if ((xp.linear === true || xp.multScaler !== undefined) && !(Number.isFinite(xp.multScaler) && xp.multScaler >= 0)) err('balance.level.xp.multScaler', 'must be a non-negative number');
         if (!(Number.isFinite(xp.base) && xp.base > 0)) err('balance.level.xp.base', `must be a positive number, got ${JSON.stringify(xp.base)}`);
         if (!(Number.isFinite(xp.growth) && xp.growth >= 1)) err('balance.level.xp.growth', `must be a number of at least 1, got ${JSON.stringify(xp.growth)}`);
         if (!(Number.isInteger(xp.roundTo) && xp.roundTo > 0)) err('balance.level.xp.roundTo', `must be a positive integer, got ${JSON.stringify(xp.roundTo)}`);
@@ -783,6 +785,8 @@ function collectContentProblems(bundle, errors = []) {
       if (!posInt(row.base)) err(`${path}.base`, `must be a positive integer, got ${JSON.stringify(row.base)}`);
       if (!Number.isFinite(row.growth) || row.growth < 1) err(`${path}.growth`, `must be a number ≥ 1, got ${JSON.stringify(row.growth)}`);
       if (!posInt(row.roundTo)) err(`${path}.roundTo`, `must be a positive integer, got ${JSON.stringify(row.roundTo)}`);
+      if (row.linear !== undefined && typeof row.linear !== 'boolean') err(`${path}.linear`, 'must be a boolean');
+      if ((row.linear === true || row.multScaler !== undefined) && !nonNeg(row.multScaler)) err(`${path}.multScaler`, 'must be a non-negative number');
     };
     if (!skill || typeof skill !== 'object' || Array.isArray(skill)) err('balance.skill', 'must be an object { xp, class }');
     else {
@@ -807,14 +811,14 @@ function collectContentProblems(bundle, errors = []) {
         for (const key of ['perHit', 'perWinEquipped', 'evadeXp']) if (!nonNeg(skill.xp[key])) err(`balance.skill.xp.${key}`, `must be a non-negative number, got ${JSON.stringify(skill.xp[key])}`);
         for (const key of ['impactPerXp', 'buildupPerXp']) if (!(Number.isFinite(skill.xp[key]) && skill.xp[key] > 0)) err(`balance.skill.xp.${key}`, `must be a positive number, got ${JSON.stringify(skill.xp[key])}`);
         if (!(Number.isFinite(skill.xp.killMult) && skill.xp.killMult >= 1)) err('balance.skill.xp.killMult', `must be a number ≥ 1, got ${JSON.stringify(skill.xp.killMult)}`);
-        for (const key of Object.keys(skill.xp)) if (!['base', 'growth', 'roundTo', 'perHit', 'perWinEquipped', 'killMult', 'impactPerXp', 'evadeXp', 'buildupPerXp'].includes(key)) err(`balance.skill.xp.${key}`, 'Unknown field');
+        for (const key of Object.keys(skill.xp)) if (!['base', 'growth', 'roundTo', 'linear', 'multScaler', 'perHit', 'perWinEquipped', 'killMult', 'impactPerXp', 'evadeXp', 'buildupPerXp'].includes(key)) err(`balance.skill.xp.${key}`, 'Unknown field');
       }
       if (!skill.class || typeof skill.class !== 'object') err('balance.skill.class', 'must be an object { xp }');
       else {
         for (const key of Object.keys(skill.class)) if (!['xp', 'tierAt'].includes(key)) err(`balance.skill.class.${key}`, 'Unknown field');
         curve(skill.class.xp, 'balance.skill.class.xp');
         if (skill.class.xp && typeof skill.class.xp === 'object') {
-          for (const key of Object.keys(skill.class.xp)) if (!['base', 'growth', 'roundTo', 'perWin', 'bossKill', 'perQuest'].includes(key)) err(`balance.skill.class.xp.${key}`, 'Unknown field');
+          for (const key of Object.keys(skill.class.xp)) if (!['base', 'growth', 'roundTo', 'linear', 'multScaler', 'perWin', 'bossKill', 'perQuest'].includes(key)) err(`balance.skill.class.xp.${key}`, 'Unknown field');
           // The class XP sources (plan phase 5b), each present and non-negative.
           for (const key of ['perWin', 'bossKill', 'perQuest']) if (!nonNeg(skill.class.xp[key])) err(`balance.skill.class.xp.${key}`, `must be a non-negative number, got ${JSON.stringify(skill.class.xp[key])}`);
         }

@@ -72,7 +72,7 @@ test('§15.2 falsify: the levels-gained figure is what awardLevelXp actually awa
 });
 
 test('§15.2 falsify: with maxLevelsPerFight 1, a large boss award gains exactly one level and leaves xp < xpToNext', () => {
-  const settings = { [CAP]: 1, 'gameConfig.balance.xp.kill.boss': 1000 };
+  const settings = { [CAP]: 1, 'gameConfig.balance.xp.kill.boss': 1000, 'gameConfig.balance.xp.killLevelMultiplier': 0.4 };
   const { award, run, reg } = playAward(settings, 'boss', 1);
   assert.equal(award.levelUps, 1);
   assert.equal(run.level.level, 2);
@@ -89,7 +89,7 @@ test('§15.2 falsify: with maxLevelsPerFight 1, a large boss award gains exactly
 test('§15.2: the XP past the cap is discarded, one short of the next step at most', () => {
   const reg = withCap(1);
   const run = { level: emptyLevel() };
-  awardLevelXp(reg, run, 215);
+  awardLevelXp(reg, run, 345);
   assert.equal(run.level.xp, xpToNext(reg, 2) - 1, 'the ledger keeps one XP short of the next level');
   // So the next award climbs on at most that, and the cap still holds.
   const next = awardLevelXp(reg, run, 1);
@@ -98,7 +98,7 @@ test('§15.2: the XP past the cap is discarded, one short of the next step at mo
   // A cap of 2 lets two levels through.
   const two = { level: emptyLevel() };
   const reg2 = withCap(2);
-  assert.equal(awardLevelXp(reg2, two, 315).levelUps, 2);
+  assert.equal(awardLevelXp(reg2, two, 705).levelUps, 2);
   assert.equal(two.level.xp, xpToNext(reg2, 3) - 1);
   // An award that does not reach the cap loses nothing.
   const small = { level: emptyLevel() };
@@ -117,17 +117,17 @@ test('§15.2: the XP past the cap is discarded, one short of the next step at mo
     level: { ...contentBundle.balance.level, maxLevelsPerFight: 2 },
     levelUp: { ...contentBundle.balance.levelUp, maxLevels: 3 } } });
   const twice = { level: emptyLevel() };
-  const award = awardLevelXp(both, twice, 315);
+  const award = awardLevelXp(both, twice, 705);
   assert.equal(twice.level.level, 3);
   assert.ok(twice.level.xp <= xpToNext(both, 3) - 1, `xp ${twice.level.xp} must not exceed the step less one`);
-  assert.equal(award.discarded, 315 - xpToNext(both, 1) - xpToNext(both, 2) - twice.level.xp);
+  assert.equal(award.discarded, 705 - xpToNext(both, 1) - xpToNext(both, 2) - twice.level.xp);
   assert.ok(award.discarded > 0);
   // The ceiling alone, short of the per-award allowance, still banks.
   const early = createRegistries({ ...contentBundle, balance: { ...contentBundle.balance,
     level: { ...contentBundle.balance.level, maxLevelsPerFight: 5 },
     levelUp: { ...contentBundle.balance.levelUp, maxLevels: 3 } } });
   const bank = { level: emptyLevel() };
-  assert.equal(awardLevelXp(early, bank, 215).discarded, 0);
+  assert.equal(awardLevelXp(early, bank, 345).discarded, 0);
   assert.equal(bank.level.xp, 15);
 });
 
@@ -140,8 +140,8 @@ test('§15.2: the preview lists the XP to reach each of levels 2–20, from the 
     total += row.step;
     assert.equal(row.total, total, `the running total to level ${row.level}`);
   }
-  // The shipped curve: each step costs 100 XP.
-  assert.deepEqual(pace.curve.slice(0, 8).map((row) => row.step), [100, 100, 100, 100, 100, 100, 100, 100]);
+  // The shipped linear curve adds base × 1.3 each step.
+  assert.deepEqual(pace.curve.slice(0, 8).map((row) => row.step), [100, 230, 360, 490, 620, 750, 880, 1010]);
   // A curve setting moves it.
   const steeper = levelPacePreview({ 'gameConfig.balance.level.xp.base': 50 });
   assert.equal(steeper.curve[0].step, 50);
@@ -233,15 +233,15 @@ test('§15.2: the spoils receipt says how much XP the level cap discarded', asyn
   const { rewardDom } = await import('./helpers/reward-dom.mjs');
   const reg = withCap(1);
   const run = { class: 'reaver', cinders: 0, deck: [], flasks: [], relics: [], coreTags: [], loadout: { storage: [] }, level: emptyLevel(), skills: {} };
-  const award = awardLevelXp(reg, run, 215);
-  assert.equal(award.gained, 215, 'what the fight paid');
-  assert.equal(award.discarded, 215 - xpToNext(reg, 1) - (xpToNext(reg, 2) - 1), 'what the cap threw away');
+  const award = awardLevelXp(reg, run, 345);
+  assert.equal(award.gained, 345, 'what the fight paid');
+  assert.equal(award.discarded, 345 - xpToNext(reg, 1) - (xpToNext(reg, 2) - 1), 'what the cap threw away');
   assert.equal(award.gained - award.discarded, xpToNext(reg, 1) + run.level.xp, 'paid = spent on the level + kept + discarded');
   // Uncapped, nothing is discarded and the receipt keeps its old shape.
-  assert.equal(awardLevelXp(REG, { level: emptyLevel() }, 215).discarded, 0);
-  assert.deepEqual(combatXpGains({ levelGained: 215 }), { level: 215, tracks: {} });
+  assert.equal(awardLevelXp(REG, { level: emptyLevel() }, 345).discarded, 0);
+  assert.deepEqual(combatXpGains({ levelGained: 345 }), { level: 345, tracks: {} });
   const gains = combatXpGains({ levelGained: award.gained, levelDiscarded: award.discarded });
-  assert.deepEqual(gains, { level: 215, levelDiscarded: award.discarded, tracks: {} });
+  assert.deepEqual(gains, { level: 345, levelDiscarded: award.discarded, tracks: {} });
   assert.equal(rewardProgress(reg, run, gains).character.discarded, award.discarded);
   // The door.
   const dom = rewardDom();
@@ -310,7 +310,7 @@ test('§15.2: the preview\'s words are uiStrings rows, and "XP ×N" names the mu
 // says why.
 test('§15.2: a refused configuration shows the refusal and prices the authored defaults play falls back to', async () => {
   const { categoryHtml } = await import('../src/ui/screens/settings.js');
-  const bad = { 'gameConfig.balance.level.xp.growth': 0.5, [XP_MULT]: 2 };
+  const bad = { 'gameConfig.balance.level.xp.linear': false, 'gameConfig.balance.level.xp.growth': 0.5, [XP_MULT]: 2 };
   const verdict = validateContent(configuredContentBundle(contentBundle, bad));
   assert.equal(verdict.ok, false, 'growth 0.5 is refused, so play keeps the authored content');
   const pace = levelPacePreview(bad);

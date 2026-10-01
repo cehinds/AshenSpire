@@ -50,7 +50,7 @@
 import { renderCard } from '../components/card.js';
 import { renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleInspection } from '../components/collectibleCard.js';
-import { esc, attachTooltip } from '../components/tooltip.js';
+import { esc, attachTooltip, showTooltipFor } from '../components/tooltip.js';
 import { relicText } from '../components/card.js';
 import { sfx } from '../sfx.js';
 import { isEngaged, focusFirst } from '../input.js';
@@ -60,6 +60,7 @@ import { syncFlaskGrowth } from '../../model/flaskgrowth.js';
 import { rewardPlan, rewardClaimStatus, resolveContinue, unseenIds, rewardNotes, CARD_CHOICE_KINDS, smithingStonesPaid, smithingStoneRowCopy } from '../../model/rewardplan.js';
 import { rewardProgress } from '../../model/rewardprogress.js';
 import { levelUpPlan, pendingLevelCount } from '../../model/levelup.js';
+import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../../model/victoryXpPresentation.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { modEffectLines } from '../../model/loadout.js';
 import { skillTracks, skillLevel, skillUpgradesCards, spendSkillDraft, classSkillId, pendingSkillLevelCount } from '../../model/skills.js';
@@ -111,6 +112,7 @@ export function mountRewards(app, {
   const settings = (saves && saves.loadMeta && (saves.loadMeta().settings || {})) || {};
   let xpAnimationDone = !progress || !rewards.xpBefore;
   let xpAnimationStarted = false;
+  let refill = null;
   let claimedLevels = checkpoint?.levelClaims || 0;
   const claimedSkills = { ...(checkpoint?.skillClaims || {}) };
   const deferredLevelOffer = () => !!(onClaimLevel && progress?.character && (pendingLevelCount(registries, run) > 0 || claimedLevels > 0));
@@ -395,7 +397,7 @@ export function mountRewards(app, {
   }
 
   function claimLevel() {
-    if (!xpAnimationDone || pendingLevelCount(registries, run) < 1 || !onClaimLevel) return;
+    if (!xpAnimationDone || refill || pendingLevelCount(registries, run) < 1 || !onClaimLevel) return;
     const claim = onClaimLevel();
     if (!claim) return;
     claimedLevels += 1;
@@ -403,8 +405,7 @@ export function mountRewards(app, {
     progress = rewardProgress(registries, run, rewards.xpGains);
     const card = plan.rows.find((row) => ['levelChoice', 'levelCard'].includes(row.kind)
       && row.ordinal === claimedLevels - 1 && !states[row.key]);
-    if (card) renderChooser(card);
-    else renderLevelReward(claim);
+    refillClaim('character', () => card ? renderChooser(card) : renderLevelReward(claim));
   }
 
   const draftTrackId = (row) => row.kind === 'classDraft' ? classSkillId(row.classId) : row.skillId;
@@ -412,7 +413,7 @@ export function mountRewards(app, {
     || !row.claimOrdinal || (claimedSkills[draftTrackId(row)] || 0) >= row.claimOrdinal;
 
   function claimSkill(skillId) {
-    if (!xpAnimationDone || !onClaimSkill || pendingSkillLevelCount(registries, run, skillId) < 1) return;
+    if (!xpAnimationDone || refill || !onClaimSkill || pendingSkillLevelCount(registries, run, skillId) < 1) return;
     const claim = onClaimSkill(skillId);
     if (!claim) return;
     claimedSkills[skillId] = (claimedSkills[skillId] || 0) + 1;
@@ -420,8 +421,18 @@ export function mountRewards(app, {
     progress = rewardProgress(registries, run, rewards.xpGains);
     const draft = plan.rows.find((row) => ['skillDraft', 'classDraft'].includes(row.kind)
       && draftTrackId(row) === skillId && row.claimOrdinal === claimedSkills[skillId] && !states[row.key]);
-    if (draft) renderChooser(draft);
-    else renderSkillReward(skillId, claim);
+    refillClaim(skillId, () => draft ? renderChooser(draft) : renderSkillReward(skillId, claim));
+  }
+
+  function refillClaim(id, after) {
+    const row = id === 'character' ? progress?.character : progress?.skills.find((entry) => entry.id === id);
+    const reduced = document.body.classList.contains('reduced-motion');
+    const seconds = settings.levelUpRefillSeconds == null ? 0.8 : Number(settings.levelUpRefillSeconds);
+    if (!row?.xp || row.capped || reduced || seconds === 0) { after(); return; }
+    refill = { id, after, phase: 'filling' };
+    xpAnimationDone = false;
+    xpAnimationStarted = false;
+    renderMenu();
   }
 
   function renderSkillReward(skillId, claim) {
@@ -473,11 +484,13 @@ export function mountRewards(app, {
     done.addEventListener('click', () => renderMenu());
   }
 
-  async function playXpAnimation() {
+  async function playXpAnimation(host) {
+    const active = () => host?.isConnected && app.querySelector('.reward-claim-layout') === host;
+    const pendingRefill = refill;
     const bars = [...app.querySelectorAll('.reward-claim-layout .rp-layered-bar[data-animate="1"]')];
-    const requested = Number(settings.victoryXpSeconds);
+    const requested = Number(pendingRefill ? settings.levelUpRefillSeconds : settings.victoryXpSeconds);
     const total = document.body.classList.contains('reduced-motion') ? 0
-      : Math.max(0, Math.min(12000, (Number.isFinite(requested) ? requested : 3) * 1000));
+      : Math.max(0, Math.min(12000, (Number.isFinite(requested) ? requested : pendingRefill ? 0.8 : 3) * 1000));
     const skillCount = bars.filter((bar) => !['character', 'class'].includes(bar.dataset.kind)).length || 1;
     const weight = (kind) => {
       const key = kind === 'character' ? 'victoryXpCharacterWeight' : kind === 'class' ? 'victoryXpClassWeight' : 'victoryXpSkillWeight';
@@ -487,25 +500,38 @@ export function mountRewards(app, {
     };
     const sum = bars.reduce((n, bar) => n + weight(bar.dataset.kind), 0) || bars.length || 1;
     for (const bar of bars) {
-      const duration = total * (weight(bar.dataset.kind) || (sum ? 0 : 1)) / sum;
+      const duration = pendingRefill ? total : total * (weight(bar.dataset.kind) || (sum ? 0 : 1)) / sum;
       const green = bar.querySelector('.rp-under');
       const yellow = bar.querySelector('.rp-over');
       if (!green || !yellow) continue;
       const target = `${bar.dataset.target}%`;
       if (duration > 0) {
+        bar.getBoundingClientRect(); // commit the reset before starting the transition
         green.style.transition = `width ${duration * .45}ms linear`;
         green.style.width = target;
         await new Promise((resolve) => setTimeout(resolve, duration * .45));
+        if (!active()) return;
         yellow.style.transition = `width ${duration * .55}ms linear`;
         yellow.style.width = target;
         await new Promise((resolve) => setTimeout(resolve, duration * .55));
+        if (!active()) return;
       } else {
         green.style.width = target;
         yellow.style.width = target;
       }
     }
+    if (!active()) return;
     xpAnimationDone = true;
-    if (app.querySelector('.reward-claim-layout')) renderMenu();
+    if (pendingRefill) {
+      pendingRefill.phase = 'settled';
+      renderMenu();
+      const settled = app.querySelector('.reward-claim-layout');
+      const delay = settings.levelUpRefillPauseMs == null ? 200 : Number(settings.levelUpRefillPauseMs);
+      await new Promise((resolve) => setTimeout(resolve, Math.max(0, Math.min(2000, Number.isFinite(delay) ? delay : 200))));
+      if (!settled?.isConnected || refill !== pendingRefill) return;
+      refill = null;
+      pendingRefill.after();
+    } else renderMenu();
   }
 
   // ---- THE DOOR: a decision modal OVER whatever stands beneath ---------------
@@ -606,6 +632,10 @@ export function mountRewards(app, {
       levelButton.addEventListener('click', () => levelButton.dataset.track === 'character'
         ? claimLevel() : claimSkill(levelButton.dataset.track));
     }
+    if (refill) {
+      app.querySelector('.reward-menu').inert = true;
+      cont.disabled = true;
+    }
 
     for (const el of app.querySelectorAll('.reward-kind')) {
       const row = plan.rows.find((r) => r.key === el.dataset.key);
@@ -669,9 +699,14 @@ export function mountRewards(app, {
       onConfirm: finish,
     });
 
-    if (!xpAnimationStarted && progress && rewards.xpBefore) {
+    if (!xpAnimationStarted && progress && (rewards.xpBefore || refill)) {
       xpAnimationStarted = true;
-      setTimeout(playXpAnimation, 0);
+      // Bind the pending animation to this render, before another mount can
+      // replace it. Looking up the host inside the timer captures a new run.
+      const host = app.querySelector('.reward-claim-layout');
+      setTimeout(() => {
+        if (host?.isConnected && app.querySelector('.reward-claim-layout') === host) playXpAnimation(host);
+      }, 0);
     }
 
     if (isEngaged()) {
@@ -708,9 +743,10 @@ export function mountRewards(app, {
       : !!onClaimSkill && pendingSkillLevelCount(registries, run, row.id) > 0);
     const target = row.fraction * 100;
     const before = row.kind === 'character' ? rewards.xpBefore?.character : rewards.xpBefore?.tracks?.[row.id];
-    const old = before && before.level === row.level && row.xpToNext
+    const old = !refill && before && before.level === row.level && row.xpToNext
       ? Math.max(0, Math.min(100, before.xp / row.xpToNext * 100)) : 0;
-    const animate = !xpAnimationDone && row.gained > 0 && !!before;
+    const animate = refill ? refill.phase === 'filling' && refill.id === row.id
+      : !xpAnimationDone && row.gained > 0 && !!before;
     const under = el('span', { class: 'rp-under' });
     const over = el('span', { class: 'rp-over' });
     under.style.width = `${animate ? old : target}%`;
@@ -730,7 +766,7 @@ export function mountRewards(app, {
       el('span', { class: 'rp-level', text: row.kind === 'character' ? `Level ${row.level}` : t('reward.progress.level', { level: row.level }) }),
       bar,
       next,
-      ready ? button({ label: 'Level', className: 'reward-level-up', attrs: { 'data-track': row.id, 'aria-label': `Level up ${label}` } }) : null,
+      ready ? button({ label: 'Level', className: 'reward-level-up', disabled: !!refill, attrs: { 'data-track': row.id, 'aria-label': `Level up ${label}` } }) : null,
       row.kind !== 'character' && row.gained ? el('span', { class: 'rp-gain', text: t('reward.progress.gained', { xp: row.gained }) }) : null,
       // The per-fight level cap threw some of it away (SPEC §15.2): say how much.
       row.discarded ? el('span', { class: 'rp-discarded', title: tFull('reward.progress.discarded', { xp: row.discarded }), text: t('reward.progress.discarded', { xp: row.discarded }) }) : null,
@@ -974,19 +1010,113 @@ export function mountRewards(app, {
   }
 
   function renderCompactVictory() {
-    const open = button({ label: 'Continue', weight: 'primary', id: 'reward-expand' });
-    door({ eyebrow: '', title: rewards.title || t('reward.title.victory'),
-      attrs: { dataset: { size: 'sm', victoryCompact: 'true' } },
-      body: el('p', { class: 'reward-compact-xp', text: rewards.xpGains?.level ? `+${rewards.xpGains.level} XP` : 'Victory' }),
+    const total = Math.max(0, Math.floor(Number(rewards.xpGains?.level) || 0));
+    const savedRows = rewards.xpReceipt?.rows;
+    // An older saved reward has no itemized receipt. Show its paid total as
+    // one honest row; never reconstruct enemy levels from the resumed run.
+    const rows = Array.isArray(savedRows) && savedRows.every((row) => Number.isSafeInteger(row.amount))
+      && savedRows.reduce((sum, row) => sum + row.amount, 0) === total
+      ? savedRows : [{ kind: 'legacy', amount: total }];
+    const options = victoryXpPresentation(settings, document.body.classList.contains('reduced-motion'));
+    const timing = victoryXpTiming(rows.length, options);
+    const open = button({ label: 'Continue', weight: 'primary', id: 'reward-expand', className: 'reward-compact-continue', disabled: true });
+    const formula = el('span', { class: 'reward-compact-formula' });
+    const more = el('button', { class: 'reward-compact-more', type: 'button', text: '+…', 'aria-label': 'Show full XP calculation' });
+    more.hidden = true;
+    const arithmetic = el('span', { class: 'reward-compact-arithmetic' }, [formula, more]);
+    const value = el('strong', { class: 'reward-compact-value', text: '0 XP', 'aria-live': 'polite' });
+    const summary = el('div', { class: 'reward-compact-summary' }, [
+      el('span', { class: 'reward-compact-heading', text: 'Total XP' }), arithmetic, value,
+    ]);
+    const list = el('ol', { class: 'reward-compact-list', 'aria-label': 'XP earned this fight' });
+    list.style.setProperty('--receipt-rows', String(options.visibleRows));
+    const body = el('div', { class: 'reward-compact-xp' }, [summary, list]);
+    const modal = door({ eyebrow: '', title: rewards.title || t('reward.title.victory'),
+      attrs: { dataset: { size: 'sm', victoryCompact: 'true' } }, body,
       foot: modalFooter({ primary: open, className: 'reward-foot', size: 'medium' }),
     });
-    open.addEventListener('click', expandVictory);
+    const fullCalculation = () => `<div class="tt-title">Full XP calculation</div><div>${esc(victoryXpFormula(rows, rows.length, options.formulaTerms).full)}</div>`;
+    const tooltipPlacement = { intent: 'above', align: 'end', clear: modal, appearance: { maxWidthRem: 30, maxHeightRatio: 0.5 } };
+    attachTooltip(more, fullCalculation, tooltipPlacement);
+    more.addEventListener('click', () => showTooltipFor(more, fullCalculation(), tooltipPlacement));
+    let ready = false;
+    let shown = 0;
+    const active = () => modal.isConnected && app.querySelector('.reward-door') === modal;
+    const updateFormula = () => {
+      const expression = victoryXpFormula(rows, shown, options.formulaTerms);
+      formula.textContent = expression.shown;
+      more.hidden = !expression.collapsed;
+    };
+    const addRow = (row) => {
+      const label = row.kind === 'power' ? 'Combat-power victory bonus'
+        : row.kind === 'enemy' ? `${row.name || 'Enemy'} · Level ${row.level || 1}`
+          : row.kind === 'bonus' ? 'Character XP bonus' : 'Battle XP';
+      const amount = el('strong', { class: 'reward-compact-row-value', text: '+0' });
+      const item = el('li', { class: 'reward-compact-row' }, [
+        el('span', { class: 'reward-compact-row-label', text: label }), amount,
+      ]);
+      list.appendChild(item);
+      list.scrollTop = list.scrollHeight;
+      return amount;
+    };
+    const arm = () => {
+      if (!active()) return;
+      ready = true;
+      open.disabled = false;
+      open.classList.add('is-ready');
+      if (settings.victorySummaryMode === 'auto') expandVictory();
+    };
+    const pause = (ms) => ms > 0 ? new Promise((resolve) => setTimeout(resolve, ms)) : Promise.resolve();
+    const count = (from, to, ms, render) => new Promise((resolve) => {
+      if (ms <= 0) { render(to); resolve(); return; }
+      const start = performance.now();
+      const frame = (now) => {
+        if (!active()) { resolve(); return; }
+        const fraction = Math.min(1, (now - start) / ms);
+        render(from + Math.round((to - from) * fraction));
+        if (fraction >= 1) resolve();
+        else requestAnimationFrame(frame);
+      };
+      requestAnimationFrame(frame);
+    });
+    const show = (row, running) => {
+      const amount = addRow(row);
+      return (next) => {
+        amount.textContent = `${next < 0 ? '−' : '+'}${Math.abs(next)}`;
+        value.textContent = `${running + next} XP`;
+      };
+    };
+    if (options.totalMs === 0) {
+      let running = 0;
+      for (const row of rows) {
+        show(row, running)(row.amount);
+        running += row.amount;
+        shown += 1;
+      }
+      updateFormula();
+      if (options.readyMs === 0) arm();
+      else setTimeout(arm, options.readyMs);
+    } else {
+      (async () => {
+        let running = 0;
+        for (const [index, row] of rows.entries()) {
+          if (!active()) return;
+          await count(0, row.amount, timing.tickMs, show(row, running));
+          if (!active()) return;
+          running += row.amount;
+          shown = index + 1;
+          updateFormula();
+          if (index < rows.length - 1) await pause(timing.pauseMs);
+        }
+        await pause(options.readyMs);
+        arm();
+      })();
+    }
+    open.addEventListener('click', () => { if (ready) expandVictory(); });
     if (settings.victorySummaryMode === 'anywhere') {
       app.querySelector('.reward-veil')?.addEventListener('click', (event) => {
-        if (event.target !== open) expandVictory();
-      }, { once: true });
-    } else if (settings.victorySummaryMode === 'auto') {
-      setTimeout(() => { if (app.querySelector('[data-victory-compact]')) expandVictory(); }, 450);
+        if (ready && event.target !== open && event.target !== more) expandVictory();
+      });
     }
   }
 

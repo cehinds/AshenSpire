@@ -2,8 +2,50 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { advancedConfigSnapshot, configuredContentBundle, updatedXpSnapshot, xpSnapshotFromProfile } from '../src/model/advancedConfig.js';
+import { createRegistries } from '../src/model/registries.js';
+import { xpToNext as skillXpToNext } from '../src/model/skills.js';
+import { xpToNext as characterXpToNext } from '../src/model/levelup.js';
 
 const xpKey = 'gameConfig.balance.level.xp.base';
+const linearKey = 'gameConfig.balance.level.xp.linear';
+
+for (const [growth, expectedSkill, expectedCharacter] of [[1.025, 100, 105], [1.275, 125, 130]]) {
+  test(`legacy skill and class exponential rounding stays exact at growth ${growth}`, () => {
+    const overrides = {};
+    for (const path of ['level.xp', 'skill.xp', 'skill.class.xp']) {
+      Object.assign(overrides, {
+        [`gameConfig.balance.${path}.base`]: 100,
+        [`gameConfig.balance.${path}.growth`]: growth,
+        [`gameConfig.balance.${path}.roundTo`]: 5,
+      });
+    }
+    const registries = createRegistries(configuredContentBundle(contentBundle, { schemaVersion: 1, overrides }));
+    assert.equal(skillXpToNext(registries, 'weapon', 1), expectedSkill, 'the saved weapon threshold retains its original rounding');
+    assert.equal(skillXpToNext(registries, 'class', 1), expectedSkill, 'the saved class threshold retains its original rounding');
+    assert.equal(characterXpToNext(registries, 2), expectedCharacter, 'character exponential curves retain their existing epsilon');
+    const linear = createRegistries(configuredContentBundle(contentBundle, advancedConfigSnapshot({})));
+    assert.equal(skillXpToNext(linear, 'weapon', 1), 230);
+    assert.equal(skillXpToNext(linear, 'class', 1), 230);
+  });
+}
+
+test('new snapshots use linear costs while legacy XP edits preserve their exponential curve', () => {
+  const current = advancedConfigSnapshot({});
+  const old = { schemaVersion: 1, overrides: { [xpKey]: 100, 'gameConfig.balance.level.xp.growth': 1.2 } };
+  const currentBundle = configuredContentBundle(contentBundle, current);
+  assert.equal(current.xpCurveVersion, 1);
+  assert.equal(currentBundle.balance.level.xp.linear, true);
+  const edited = updatedXpSnapshot(old, { [xpKey]: 200 });
+  assert.equal(Object.hasOwn(edited, 'xpCurveVersion'), false);
+  const legacy = configuredContentBundle(contentBundle, edited);
+  assert.equal(legacy.balance.level.xp.linear, false);
+  assert.equal(legacy.balance.level.xp.growth, 1.2);
+  assert.equal(legacy.balance.level.xp.base, 200);
+  const adopted = configuredContentBundle(contentBundle, updatedXpSnapshot(old, { [linearKey]: true }));
+  assert.equal(adopted.balance.level.xp.linear, true);
+  assert.equal(adopted.balance.level.xp.multScaler, 1.3);
+  assert.equal(updatedXpSnapshot(current, { [xpKey]: 200 }).xpCurveVersion, 1);
+});
 const ratingsKey = 'gameConfig.balance.combatRatings.enabled';
 
 test('XP edits and profile synchronization retain the immutable snapshot contract', () => {

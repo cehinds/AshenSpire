@@ -15,6 +15,7 @@
 
 import { mechanics } from '../framework/data/mechanics.js';
 import { activeIn, HAND_SLOT_IDS } from './zones.js';
+import { xpStepCost } from './xpCurve.js';
 
 // The roles of an item-owned card (loadout.js ITEM_OWNED_ROLES; spelled here
 // because loadout.js would close an import cycle through validate.js).
@@ -71,17 +72,17 @@ function curveFor(registries, kind) {
 
 /**
  * xpToNext(registries, kind, level) → the XP the step from `level` to
- * `level + 1` costs: round(base × growth^level, roundTo). One shape for every
+ * `level + 1` costs: linear base + level × base × scaler, or legacy
+ * round(base × growth^level, roundTo). One shape for every
  * track (proposal §10); the class curve reads balance.skill.class.xp, the
  * rest balance.skill.xp.
  */
 export function xpToNext(registries, kind, level) {
   if (!SKILL_KINDS.includes(kind)) throw new Error(`xpToNext: '${kind}' is not a skill kind (${SKILL_KINDS.join(', ')})`);
-  const { base, growth, roundTo } = curveFor(registries, kind);
   const step = Number.isInteger(level) && level > 0 ? level : 0;
-  const raw = base * Math.pow(growth, step);
-  const unit = Number.isInteger(roundTo) && roundTo > 0 ? roundTo : 1;
-  return Math.max(unit, Math.round(raw / unit) * unit);
+  // Legacy skill/class curves rounded without the character curve's epsilon.
+  // Preserve those saved thresholds; new linear curves share the new rounding.
+  return xpStepCost(curveFor(registries, kind), step, { exponentialEpsilon: 0 });
 }
 
 /** A fresh ledger: no track has been touched. */

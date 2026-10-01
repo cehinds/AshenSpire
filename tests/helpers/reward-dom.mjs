@@ -3,7 +3,7 @@ export function rewardDom() {
   class Element {
     constructor(tag) {
       this.tagName = tag.toUpperCase(); this.children = []; this.attributes = new Map();
-      this.dataset = {}; this.style = { setProperty() {}, getPropertyValue() { return ''; }, removeProperty() {} }; this.listeners = new Map();
+      this.dataset = new Proxy({}, { set: (data, key, value) => { data[key] = String(value); this.attributes.set('data-' + key.replace(/[A-Z]/g, c => '-' + c.toLowerCase()), String(value)); return true; } }); this.style = { setProperty() {}, getPropertyValue() { return ''; }, removeProperty() {} }; this.listeners = new Map();
       this.parentNode = null; this.disabled = false; this.hidden = false; this.textContent = '';
       this.classList = {
         contains: name => this.className.split(/\s+/).includes(name),
