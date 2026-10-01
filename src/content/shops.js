@@ -22,11 +22,14 @@
 // shelf ships at chance 100, so a seed's shelves roll exactly what they rolled
 // before shop kinds existed, and the `shop` stream is drawn exactly as before.
 //
-// THE BLACKSMITH AND THE MASTER have no screen yet (steps 6 and 7 of §14.6),
-// so `kindWeights` ships them at 0 and validateContent refuses anything else
-// until their screen is registered (model/shopKinds.js SHOP_KIND_SCREENS). Their
+// THE BLACKSMITH'S SCREEN SHIPPED at §14.6 step 6 (model/shopKinds.js
+// SHOP_KIND_SCREENS), so the non-conditional minimum binds it and its weight
+// has a Settings row; it still ships at weight 0, and the owner raises it to
+// let a classic merchant be a blacksmith. The atlas smith is always one.
+// THE MASTER has no screen yet (step 7), so `kindWeights` ships it at 0 and
+// validateContent refuses anything else until its screen is registered. Its
 // offerings and prices are written now so the Settings rows exist and a run
-// freezes them; nothing reads them until those screens ship.
+// freezes them; nothing reads them until that screen ships.
 import { NOTE } from './balance.js';
 
 const GENERIC_NOTES = Object.freeze({
@@ -51,6 +54,10 @@ const ALWAYS = 'It always has something to lay out when it comes up, so it count
 // offering that names none always counts (a service with nothing to run out).
 const STOCK_KEY = 'Where this shelf\'s per-visit stock lives. While that stock is 0 the shelf lays out nothing, so it does not count toward the guaranteed minimum.';
 const MAYBE = (why) => `It can have nothing to sell on a visit (${why}); then it is not laid out, and it never counts toward the guaranteed minimum.`;
+// A BLACKSMITH SERVICE STAYS ONCE ROLLED (SPEC §14.4, coordinator ruling on
+// #1378): whether it can act is judged when it is shown and quoted, so it is
+// shown unavailable until the run holds something for it.
+const SERVICE = (why) => `It can have nothing to act on (${why}); then it is shown unavailable until you do, and it never counts toward the guaranteed minimum.`;
 
 // One offering: its id, the three rolling keys, whether it is conditional, and
 // whatever it sells. `notes` describes every other value it carries.
@@ -68,7 +75,7 @@ export const shops = {
     master: 0,
     [NOTE]: {
       market: 'How likely a merchant on the map is to be the usual market. It is the only kind open so far, so any weight above 0 makes every merchant a market.',
-      blacksmith: 'How likely a merchant on the map is to be a blacksmith. Locked at 0 until the blacksmith screen ships.',
+      blacksmith: 'How likely a merchant on the map is to be a blacksmith, which offers the blacksmith\'s services instead of market shelves. At 0 no merchant is one; an atlas smith always is.',
       master: 'How likely a merchant on the map is to be a wise master. Locked at 0 until the master screen ships.',
     },
   },
@@ -147,9 +154,10 @@ export const shops = {
         conditional: MAYBE('it never offers an armament you already carry'),
         stock: 'How many armaments the blacksmith\'s shelf holds each visit.',
       }),
-      offering('upgrade', { weight: 100, conditional: false }, { conditional: `${ALWAYS} It is a service with a price, not a shelf of goods.` }),
-      offering('smithStones', { weight: 60, conditional: true, price: 90, perVisit: 3 }, {
-        conditional: MAYBE('its per-visit stock can be set to 0'),
+      offering('upgrade', { weight: 100, conditional: true }, { conditional: SERVICE('every item you own may already be at its top tier') }),
+      offering('smithStones', { weight: 60, conditional: false, stockKey: 'shops.blacksmith.smithStones.perVisit', price: 90, perVisit: 3 }, {
+        conditional: `${ALWAYS} It sells stones, whatever the run owns, while its per-visit stock is at least 1.`,
+        stockKey: STOCK_KEY,
         price: 'What one Smithing Stone costs at the blacksmith, in cinders.',
         perVisit: 'How many Smithing Stones the blacksmith sells each visit.',
       }),
@@ -165,20 +173,21 @@ export const shops = {
         },
       }, { conditional: `${ALWAYS} It is a service with a price, not a shelf of goods.` }),
       offering('sigilSlots', {
-        weight: 20, conditional: false,
+        weight: 20, conditional: true,
         sigilSlots: {
-          max: 3, cinders: 300,
+          base: 0, max: 3, cinders: 300,
           [NOTE]: {
-            max: 'The most sigil slots the blacksmith will cut into one armament.',
+            base: 'How many empty sigil slots every armament has before the blacksmith cuts any. The slots he cuts are added to these.',
+            max: 'The most sigil slots one armament can have, its base slots included. The blacksmith cuts none past it.',
             cinders: 'What cutting one sigil slot costs, in cinders.',
           },
         },
-      }, { conditional: `${ALWAYS} It is a service with a price, not a shelf of goods.` }),
-      offering('sigils', { weight: 20, conditional: true }, { conditional: MAYBE('it sets only the sigils you carry, and you may carry none') }),
-      offering('extractArt', { weight: 50, conditional: true }, { conditional: MAYBE('it needs an armament with a weapon art to take out') }),
-      offering('installArt', { weight: 50, conditional: true }, { conditional: MAYBE('it needs a loose weapon-art card to put in') }),
+      }, { conditional: SERVICE('you may carry no armament, or every one may already have its most slots') }),
+      offering('sigils', { weight: 20, conditional: true }, { conditional: SERVICE('it sets only the sigils you carry into empty slots, and takes out only those set, and you may have neither') }),
+      offering('extractArt', { weight: 50, conditional: true }, { conditional: SERVICE('it needs an armament with a weapon art to take out') }),
+      offering('installArt', { weight: 50, conditional: true }, { conditional: SERVICE('it needs a loose weapon-art card and an open mount to put it in') }),
       offering('upgradeArt', { weight: 30, conditional: true, stones: 2 }, {
-        conditional: MAYBE('it needs a loose weapon-art card to upgrade'),
+        conditional: SERVICE('it needs a loose weapon-art card that is not upgraded yet'),
         stones: 'How many Smithing Stones upgrading one loose weapon-art card costs.',
       }),
       offering('stackCopy', {
@@ -188,10 +197,10 @@ export const shops = {
           [NOTE]: {
             stones: 'The Smithing Stones stacking the first extra copy of a card costs.',
             cinders: 'The cinders stacking the first extra copy of a card costs.',
-            stepPerOwned: 'How much each of those two prices rises for every copy of the card already owned.',
+            stepPerOwned: 'How much each of those two prices rises for every copy of the card you own beyond the first.',
           },
         },
-      }, { conditional: MAYBE('it needs a card you own more than one copy of') }),
+      }, { conditional: SERVICE('it needs a loose weapon art or technique you own') }),
     ],
     [NOTE]: {
       guaranteedMinimum: 'The fewest offerings a blacksmith visit lays out. At least 2.',

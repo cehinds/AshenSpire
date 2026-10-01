@@ -17,7 +17,7 @@ import { NOTE } from '../content/balance.js';
 import { shops as shippedShops } from '../content/shops.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { NEW_RUN_CLAUSE } from './balanceNotes.js';
-import { marketAdditionStockProblems, MARKET_ADDITIONS } from './marketStock.js';
+import { marketAdditionStockProblems, blacksmithStockProblems, MARKET_ADDITIONS } from './marketStock.js';
 import { utilityFlaskIds } from './gracerefill.js';
 import { consumableSettingsProblems } from './consumables.js';
 
@@ -27,9 +27,10 @@ export const SHOP_KINDS = Object.freeze(['market', 'blacksmith', 'master']);
 /**
  * The kinds whose screen has shipped. Only these may carry a non-zero
  * `kindWeights` entry, and only these get a weight row in Settings. §14.6
- * step 6 adds `blacksmith` here with its screen, and step 7 adds `master`.
+ * step 6 added `blacksmith` with its screen (ui/screens/blacksmith.js); step 7
+ * adds `master`.
  */
-export const SHOP_KIND_SCREENS = Object.freeze(['market']);
+export const SHOP_KIND_SCREENS = Object.freeze(['market', 'blacksmith']);
 
 /**
  * The market's shelves as the stock has always held them (engine/encounters.js
@@ -57,7 +58,20 @@ const AUTHORED_KEYS = Object.freeze(['conditional', 'stockKey']);
 // its per-visit count (`balance.shop.cardStock`); a service names none and
 // always counts. `valueAt` resolves the path, through a Settings override
 // when one is given.
-const resolvePath = (root, path) => String(path).split('.').reduce((at, key) => (at == null ? undefined : at[key]), root);
+// A path may also name an offering's own number as
+// `shops.<kind>.<offeringId>.<key>` (SPEC §14.4): the offering is found by its
+// id in that kind's list, so the path reads like its Settings key.
+function resolvePath(root, path) {
+  const parts = String(path).split('.');
+  if (parts[0] === 'shops' && parts.length >= 4 && parts[2] !== 'offerings') {
+    const list = root?.shops?.[parts[1]]?.offerings;
+    if (Array.isArray(list)) {
+      const row = list.find((offering) => offering && offering.id === parts[2]);
+      return parts.slice(3).reduce((at, key) => (at == null ? undefined : at[key]), row);
+    }
+  }
+  return parts.reduce((at, key) => (at == null ? undefined : at[key]), root);
+}
 // A NON-CONDITIONAL OFFERING ALSO NEEDS A NON-EMPTY AUTHORED POOL (SPEC
 // §14.2): content that could never stock it is refused by name. Each reader
 // returns why the pool is empty, or null. Read off the raw bundle, before any
@@ -223,6 +237,8 @@ export function shopStockProblems(stock, path = 'shopStock', { required = false 
   }
   // The market additions' shelves (SPEC §14.3), each shape-checked by name.
   problems.push(...marketAdditionStockProblems(stock, path));
+  // The blacksmith's own shelf and every stock's trade revision (SPEC §14.4).
+  problems.push(...blacksmithStockProblems(stock, path));
   return problems;
 }
 
@@ -368,12 +384,19 @@ const SHOP_DOMAINS = Object.freeze({
   // The sigil markup may rise above 100 as well as discount (coordinator
   // ruling, #1374), bounded at 300.
   'market.sigils.pricePct': Object.freeze({ integer: true, step: 1, min: 1, max: 300 }),
+  // The blacksmith's refining (SPEC §14.4, Codex on #1378): `value` divides an
+  // upgrade's stone cost, and `from` is a count of stones consumed, so neither
+  // may be 0.
+  'blacksmith.refineStones.refine.value': Object.freeze({ integer: true, step: 1, min: 1 }),
+  'blacksmith.refineStones.refine.from': Object.freeze({ integer: true, step: 1, min: 1 }),
 });
 // A PAID OFFERING IS NEVER FREE (Codex, on #1374): a price in cinders — a
 // `price`, a `cinders` cost, an armour cost bound — or the percent of its own
 // cost a sigil sells at starts at 1. A 0 would either silently close the
 // purchase or roll a free item the saved-stock check refuses on the next load.
-const PAID = /(^|\.)(price|cinders|pricePct)$|(^|\.)cost\.(min|max)$/;
+// A price in Smithing Stones (`stones`: an art upgrade, a stacked copy) is a
+// price too (SPEC §14.4).
+const PAID = /(^|\.)(price|cinders|pricePct|stones)$|(^|\.)cost\.(min|max)$/;
 function shopDomain(path, value) {
   if (SHOP_DOMAINS[path]) return { ...numberDomain(value), ...SHOP_DOMAINS[path] };
   if (PAID.test(path)) return { ...numberDomain(value), min: 1 };
@@ -594,6 +617,16 @@ export function shopSettingsProblems(bundle, settings = {}) {
         problems.push({ kind, keys: [minKey, maxKey], id: 'settings.shops.refuse.armourCost', tokens: { kind: words(kind), offering: words(offering.id), min: lo, max: hi } });
       }
     });
+  }
+  // A piece's base sigil slots are counted in its most (SPEC §14.4): a base
+  // above max is refused by name, costing only the blacksmith's rows.
+  const slots = (table.blacksmith?.offerings || []).find((offering) => offering && offering.id === 'sigilSlots')?.sigilSlots;
+  if (object(slots) && Number.isFinite(slots.base) && Number.isFinite(slots.max)) {
+    const baseKey = `${PREFIX}blacksmith.sigilSlots.sigilSlots.base`;
+    const maxKey = `${PREFIX}blacksmith.sigilSlots.sigilSlots.max`;
+    const base = Number(read(baseKey, slots.base));
+    const max = Number(read(maxKey, slots.max));
+    if (base > max) problems.push({ kind: 'blacksmith', keys: [baseKey, maxKey], id: 'settings.shops.refuse.sigilSlotBase', tokens: { base, max } });
   }
   // The consumables' own rows (SPEC §14.3): a sale above the price.
   problems.push(...consumableSettingsProblems(bundle, read));

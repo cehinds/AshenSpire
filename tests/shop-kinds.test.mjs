@@ -247,9 +247,12 @@ test('FINISH: a pre-§14 run.shopStock loads as market unchanged', () => {
   assert.deepEqual(journeyRun.journey.serviceStates.b, { used: true });
 });
 
+// Step 6 (SPEC §14.4) registered the blacksmith: its weight is now a row and
+// may be raised; the master stays locked until step 7.
 test('FINISH: a non-zero blacksmith or master weight is refused by name while that kind\'s screen is unregistered', () => {
-  assert.deepEqual([...SHOP_KIND_SCREENS], ['market']);
-  for (const kind of ['blacksmith', 'master']) {
+  assert.deepEqual([...SHOP_KIND_SCREENS], ['market', 'blacksmith']);
+  assert.deepEqual(errorsAt(bundleWithShops((table) => { table.kindWeights.blacksmith = 10; }), 'shops.kindWeights.blacksmith'), [], 'the blacksmith is registered now');
+  for (const kind of ['master']) {
     const errors = errorsAt(bundleWithShops((table) => { table.kindWeights[kind] = 10; }), `shops.kindWeights.${kind}`);
     assert.equal(errors.length, 1, kind);
     assert.match(errors[0].msg, new RegExp(kind));
@@ -259,22 +262,23 @@ test('FINISH: a non-zero blacksmith or master weight is refused by name while th
   // Settings shows a weight row only for a kind whose screen has shipped.
   const rows = rowsByKey();
   assert.ok(rows.has(`${PREFIX}kindWeights.market`));
-  assert.ok(!rows.has(`${PREFIX}kindWeights.blacksmith`));
+  assert.ok(rows.has(`${PREFIX}kindWeights.blacksmith`));
   assert.ok(!rows.has(`${PREFIX}kindWeights.master`));
-  // The sole open kind cannot be weighted to 0: its row starts at 1, and a
-  // stored 0 (an old profile, an import) is refused by name (Codex, on #1371).
-  assert.equal(rows.get(`${PREFIX}kindWeights.market`).min, 1);
+  // With two open kinds either row may be 0, but not both: every open kind at
+  // 0 (an old profile, an import) is refused by name (Codex, on #1371).
+  assert.equal(rows.get(`${PREFIX}kindWeights.market`).min, 0);
   const zeroKind = shopSettingsProblems(contentBundle, { [`${PREFIX}kindWeights.market`]: 0 });
   assert.equal(zeroKind.length, 1);
-  assert.deepEqual(zeroKind[0].keys, [`${PREFIX}kindWeights.market`]);
+  assert.deepEqual(zeroKind[0].keys, [`${PREFIX}kindWeights.market`, `${PREFIX}kindWeights.blacksmith`]);
   assert.match(t(zeroKind[0].id, zeroKind[0].tokens), /Market/);
+  assert.deepEqual(shopSettingsProblems(contentBundle, { [`${PREFIX}kindWeights.market`]: 0, [`${PREFIX}kindWeights.blacksmith`]: 5 }), [], 'a blacksmith-only merchant is allowed');
   // The stored 0 is set aside, so the run's bundle keeps the authored weight and validates.
   assert.equal(configured({ [`${PREFIX}kindWeights.market`]: 0 }).shops.kindWeights.market, 100);
   assert.equal(errorsAt(bundleWithShops((table) => { table.kindWeights.market = 0; }), 'shops.kindWeights').length, 1, 'the same table in content is refused');
   assert.deepEqual(shopSettingsProblems(contentBundle, { [`${PREFIX}kindWeights.market`]: 3 }), []);
   // A stored weight for a locked kind has no row, so it never reaches a run.
-  const locked = createRegistries(configured({ [`${PREFIX}kindWeights.blacksmith`]: 50 }));
-  assert.equal(locked.shops.kindWeights.blacksmith, 0);
+  const locked = createRegistries(configured({ [`${PREFIX}kindWeights.master`]: 50 }));
+  assert.equal(locked.shops.kindWeights.master, 0);
 });
 
 test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 fixed seeds', () => {
@@ -358,10 +362,12 @@ test('a merchant rolls its kind from kindWeights on shopOffers, and only when mo
   }
   assert.deepEqual([...seen].sort(), ['blacksmith', 'market']);
   // A kind with no screen cannot open: the merchant refuses it by name rather
-  // than laying out a market under the wrong sign.
+  // than laying out a market under the wrong sign. The blacksmith opens its own.
   const run = createRunState({ seed: 5, classId: 'reaver', registries: REG });
-  const forced = { ...REG, shops: { ...REG.shops, kindWeights: { market: 0, blacksmith: 1, master: 0 } } };
-  assert.throws(() => buildMerchantStock(forced, createRng(5), run), /blacksmith/);
+  const forced = { ...REG, shops: { ...REG.shops, kindWeights: { market: 0, blacksmith: 0, master: 1 } } };
+  assert.throws(() => buildMerchantStock(forced, createRng(5), run), /master/);
+  const smithy = { ...REG, shops: { ...REG.shops, kindWeights: { market: 0, blacksmith: 1, master: 0 } } };
+  assert.equal(buildMerchantStock(smithy, createRng(5), run).kind, 'blacksmith');
 });
 
 test('the market keeps rolling every shelf on the shop stream, so a shelf left off moves no other shelf', () => {
@@ -528,12 +534,10 @@ test('a schema-14 stock must name its kind and offerings; only an older save get
 test('a saved stock of a kind whose screen has not shipped is refused by name (Codex, on #1371)', () => {
   const run = createRunState({ seed: 10, classId: 'reaver', registries: REG });
   run.shopStock = buildMarketStock(REG, createRng(10), run);
-  const smithy = { ...structuredClone(run.shopStock), kind: 'blacksmith', offerings: ['upgrade'] };
-  assert.ok(validateRunShape({ ...run, shopStock: smithy }).some((problem) => /shopStock\.kind is 'blacksmith', whose screen is not registered/.test(problem)));
   const master = { ...structuredClone(run.shopStock), kind: 'master', offerings: ['training'] };
   assert.ok(validateRunShape({ ...run, shopStock: master }).some((problem) => /'master', whose screen is not registered/.test(problem)));
   const storage = createMemoryStorage();
-  storage.setItem(RUN_KEY, JSON.stringify({ ...JSON.parse(JSON.stringify(run)), schemaVersion: RUN_SCHEMA_VERSION, shopStock: smithy }));
+  storage.setItem(RUN_KEY, JSON.stringify({ ...JSON.parse(JSON.stringify(run)), schemaVersion: RUN_SCHEMA_VERSION, shopStock: master }));
   assert.equal(createSaveManager(storage).loadRun(REG), null, 'archived and refused, never opened onto an empty market');
 });
 

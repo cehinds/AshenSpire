@@ -607,5 +607,29 @@ export const nodeTerms = [
     "playerTermId": "",
     "tooltipTermId": "",
     "template": "At the start of each of your turns, deal {damage} damage to a random enemy."
+  },
+  {
+    "nodeId": "emberSigil",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "At the start of each fight, gain {block} Block."
+  },
+  {
+    "nodeId": "thornSigil",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first time you hit with an attack each fight, apply {bleed} Bleed."
+  },
+  {
+    "nodeId": "tideSigil",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Every {n}th card you play in a fight draws {draw} card."
+  },
+  {
+    "nodeId": "hearthSigil",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Whenever you heal, gain {block} Block."
   }
 ];

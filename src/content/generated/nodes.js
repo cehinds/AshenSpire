@@ -1491,6 +1491,66 @@ export const nodes = [
     "blurb": "A hound of banked coals bites at your foes."
   },
   {
+    "id": "sigil",
+    "parentId": "property",
+    "label": "Sigil",
+    "color": "7A6FB0",
+    "glyph": "◈",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "What a sigil confers while it sits in a slot of an equipped armament: a branch, not a tag; each sigil's own node sits under it."
+  },
+  {
+    "id": "emberSigil",
+    "parentId": "sigil",
+    "label": "Ember Sigil",
+    "color": "C9502E",
+    "glyph": "🔥",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "An ember set in steel warms a guard before the first blow."
+  },
+  {
+    "id": "thornSigil",
+    "parentId": "sigil",
+    "label": "Thorn Sigil",
+    "color": "8E3B3B",
+    "glyph": "🌿",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "A thorn set in steel opens the first wound of a fight."
+  },
+  {
+    "id": "tideSigil",
+    "parentId": "sigil",
+    "label": "Tide Sigil",
+    "color": "3F6FA0",
+    "glyph": "🌊",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "A tide set in steel brings a card back with every fifth one played."
+  },
+  {
+    "id": "hearthSigil",
+    "parentId": "sigil",
+    "label": "Hearth Sigil",
+    "color": "B08D57",
+    "glyph": "🏠",
+    "visibility": "",
+    "priority": "",
+    "domain": "",
+    "aside": "",
+    "blurb": "A hearth set in steel turns every mending into a guard."
+  },
+  {
     "id": "warhorn",
     "parentId": "property",
     "label": "Warhorn",
@@ -3421,5 +3481,17 @@ export const nodes = [
     "domain": "",
     "aside": "",
     "blurb": "What a companion is. Every object in the companion collection carries this, and nothing outside it may."
+  },
+  {
+    "id": "classification.sigil",
+    "parentId": "classification",
+    "label": "sigil",
+    "color": "",
+    "glyph": "",
+    "visibility": "INTERNAL",
+    "priority": 30,
+    "domain": "",
+    "aside": "",
+    "blurb": "What a sigil is. Every object in the sigil collection carries this, and nothing outside it may."
   }
 ];

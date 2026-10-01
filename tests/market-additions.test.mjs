@@ -317,19 +317,22 @@ test('FINISH: inn rest is refused by name under a restDenied relic, and nothing 
 // FINISH: a sigil bought goes to run.sigils and survives a reload
 // ---------------------------------------------------------------------------
 
-test('sigils are content: each non-legendary with a rarity, a cost and relic-DSL triggers, refused by name when malformed', () => {
+// Step 6 (SPEC §14.4, #1378) moved each sigil's rule onto its tagging row: a
+// sigil now authors no triggers, and one that does is refused by name.
+test('sigils are content: each non-legendary with a rarity, a cost and a property from its tagging row, refused by name when malformed', () => {
   assert.ok(shippedSigils.length >= 3);
   for (const sigil of shippedSigils) {
     assert.ok(REG.sigils.has(sigil.id), `${sigil.id} registered`);
     assert.notEqual(sigil.rarity, 'legendary', 'legendary sigils arrive with SPEC §15.4');
     assert.ok(Number.isInteger(sigil.cost) && sigil.cost > 0);
-    assert.ok(Array.isArray(sigil.triggers) && sigil.triggers.length);
+    assert.equal(sigil.triggers, undefined, 'no inline triggers since step 6');
+    assert.ok(REG.sigils.get(sigil.id).propertyTags.length, `${sigil.id} derives its property`);
   }
   const bad = [{ ...shippedSigils[0], id: 'probeBadSigil', rarity: 'mythic', cost: -1, triggers: [{ on: 'notAnEvent', do: [] }] }];
   const errors = validateContent({ ...contentBundle, sigils: [...shippedSigils, ...bad] }).errors.filter((e) => e.path.startsWith('sigils.probeBadSigil'));
   assert.ok(errors.some((e) => /rarity/.test(e.path) || /rarity/.test(e.msg)), 'bad rarity named');
   assert.ok(errors.some((e) => /cost/.test(e.path)), 'bad cost named');
-  assert.ok(errors.some((e) => /triggers/.test(e.path)), 'bad trigger named');
+  assert.ok(errors.some((e) => /triggers/.test(e.path)), 'inline triggers named');
 });
 
 test('FINISH: a sigil bought goes to run.sigils and survives a reload', () => {
@@ -1064,16 +1067,18 @@ test('only cards plus remove enabled at minimum 2 is refused: cards and flasks a
   assert.deepEqual(validateContent(contentBundle).errors.filter((e) => e.path.startsWith('shops')), []);
 });
 
-test('the non-conditional minimum binds only a kind whose screen is registered: the shipped bundle passes while the blacksmith and master have none (coordinator ruling, #1375)', () => {
-  assert.deepEqual(SHOP_KIND_SCREENS, ['market']);
+// Step 6 (SPEC §14.4) registered the blacksmith, so the rule now binds it
+// (tests/blacksmith.test.mjs); the master is still unregistered until step 7.
+test('the non-conditional minimum binds only a kind whose screen is registered: the shipped bundle passes while the master has none (coordinator ruling, #1375)', () => {
+  assert.deepEqual(SHOP_KIND_SCREENS, ['market', 'blacksmith']);
   assert.deepEqual(validateContent(contentBundle).errors.filter((e) => e.path.startsWith('shops')), []);
   assert.deepEqual(shopSettingsProblems(contentBundle, {}), []);
-  // A blacksmith and a master with only conditional offerings left on are
-  // not refused while they have no screen (steps 6 and 7 classify their own)...
+  // A master with only conditional offerings left on is not refused while it
+  // has no screen (step 7 classifies its own)...
   const table = structuredClone(shippedShops);
-  for (const kind of ['blacksmith', 'master']) for (const row of table[kind].offerings) row.enabled = row.conditional;
+  for (const kind of ['master']) for (const row of table[kind].offerings) row.enabled = row.conditional;
   assert.deepEqual(validateContent({ ...contentBundle, shops: table }).errors.filter((e) => e.path.startsWith('shops')), []);
-  const settings = Object.fromEntries(['blacksmith', 'master'].flatMap((kind) => shippedShops[kind].offerings
+  const settings = Object.fromEntries(['master'].flatMap((kind) => shippedShops[kind].offerings
     .filter((row) => !row.conditional).map((row) => [`${PREFIX}${kind}.${row.id}.enabled`, false])));
   assert.deepEqual(shopSettingsProblems(contentBundle, settings), []);
   // ...but the plain enablement minimum still binds every kind.

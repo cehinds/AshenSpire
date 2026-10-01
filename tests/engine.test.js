@@ -6375,13 +6375,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(fresh.attributeMode, contentBundle.attributeRules.defaultMode, 'new run selects the authored default mode');
     eq(JSON.stringify(fresh.attributes), JSON.stringify(contentBundle.attributeRules.presets[fresh.attributeMode].herald), 'new run copies the authored Herald preset');
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
-    // Herald lean is STR 1 · DEX 1 · CON 2 · WIS 3 · INT 1. HP 30 + ⌊0.35⌋ +
-    // ⌊4 × 2⌋ + ⌊0.1 × 3⌋ = 38; Actions 3 (every weight floors to 0 at 1–3
-    // points); Draw is the ruleset-7 draw row, 2 + ⌊0.1 × INT 1⌋ = 2 (min 2).
-    // It read 3 under ruleset 6, whose draw row had base 3; the hand's draw
-    // now IS that row, and it lands on the old hand-rule turn draw (2 below
-    // INT 9) rather than the old derived one.
-    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '38/3/2', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
+    // Herald lean is STR 1 · DEX 1 · CON 2 · WIS 3 · INT 1. HP 51 + ⌊0.35⌋ +
+    // ⌊4 × 2⌋ + ⌊0.1 × 3⌋ = 59; Actions 3 (every weight floors to 0 at 1–3
+    // points); Draw is the ruleset-7 draw row, base 3 since FINISH D27
+    // (2026-09-27) and nothing from INT 1, below the row's baseline of 4. It
+    // read 3 under ruleset 6 and 2 under ruleset 7 before D27.
+    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '59/3/3', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
     eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,230,360,490,620,750,880,1010,1140,1270', 'default XP steps start at 100 and add 130');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
@@ -6391,8 +6390,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 6850, '6,850 XP reaches level 11 on the default linear curve');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
-    // Rogue: HP 30 + ⌊4 × 2⌋ = 38; Actions 3 + ⌊0.2 × DEX 3⌋ = 3; Draw 2 + ⌊0.1 × INT 1⌋ = 2.
-    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/38/3/2', 'Rogue lean stats reach the HP, action, and hand formulas');
+    // Rogue: HP 51 + ⌊4 × 2⌋ = 59; Actions 3 + ⌊0.25 × DEX 3⌋ = 3; Draw 3 (D27) + nothing from INT 1.
+    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/59/3/3', 'Rogue lean stats reach the HP, action, and hand formulas');
     eq(rogue.startingKitId, 'rogueBaseline', 'Rogue starts through its authored baseline equipment profile');
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
@@ -6630,7 +6629,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(saves.loadRun(REG), null, 'a save carrying both vigour and constitution is refused, never guessed');
   });
 
-  test('50d. lean HP is 30 + 4 × CON-tier + flat bonuses at every legal edge (plan phase 9)', () => {
+  test('50d. lean HP is 51 + 4 × CON-tier + flat bonuses at every legal edge (plan phase 9; base 30 → 51, A3 2026-09-27)', () => {
     // RESTATED AGAIN WHEN THE CONVERSION SCALE WENT (2026-09-21). #1238 read
     // this row through the lean mode's fifth, so one point of the 1–4 span was
     // five tiers and a point bought 20 HP. Nothing divides the attribute now:
@@ -6647,8 +6646,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       const run = createRunState({ seed: 0xf1, classId, registries: REG });
       const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
       eq(run.attributes.constitution, con, `${classId} uses the approved lean CON preset`);
-      eq(`${hp.base}/${hp.weights.constitution}`, `${30 + flat}/4`, `${classId} receipt exposes the configured formula and flat bonus`);
-      eq(run.maxHp, 30 + perPoint * con + otherTerms(run.attributes) + flat, `${classId} max HP is 30 + 4 × CON + the row's other terms + flat bonuses`);
+      eq(`${hp.base}/${hp.weights.constitution}`, `${51 + flat}/4`, `${classId} receipt exposes the configured formula and flat bonus`);
+      eq(run.maxHp, 51 + perPoint * con + otherTerms(run.attributes) + flat, `${classId} max HP is 51 + 4 × CON + the row's other terms + flat bonuses`);
       assert(hp.formula.endsWith(`= ${run.maxHp}`), `${classId} printed receipt lands on the real pool`);
     }
     // Each row spends the mode's whole total (8) so the allocation is legal;
@@ -6665,8 +6664,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       seed: 0xf2, classId: 'reaver', registries: REG,
       attributes: { ...REST[con], constitution: con },
     });
-    eq(at(1).maxHp, 45, 'CON floor 1 gives 30 + 4 + 1 (STR 4 × 0.35) + 10 flat');
-    eq(at(4).maxHp, 56, 'CON ceiling 4 gives 30 + 16 + 10 flat (STR 1 × 0.35 floors to nothing)');
+    eq(at(1).maxHp, 66, 'CON floor 1 gives 51 + 4 + 1 (STR 4 × 0.35) + 10 flat');
+    eq(at(4).maxHp, 77, 'CON ceiling 4 gives 51 + 16 + 10 flat (STR 1 × 0.35 floors to nothing)');
     eq(at(4).maxHp - at(3).maxHp, perPoint, 'one adjacent CON point is exactly four HP — one tier, one point');
     for (const outside of [0, 5]) {
       let refused = false;
@@ -9789,7 +9788,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(derivedStatIdsFor(7).includes('handSize') && derivedStatIdsFor(7).includes('ar'), true, 'ruleset 7 does');
     eq(rules.rules.mana.wisdom, 0.5, 'Wisdom leads Mana at half a point a point (1 before 2026-09-24)');
     eq(rules.rules.stamina.constitution, 0.5, 'Constitution leads Stamina at half a point a point (1 before 2026-09-24)');
-    eq(`${rules.rules.hp.base}/${rules.rules.hp.constitution}`, '30/4', 'HP is 30 + 4 × CON');
+    eq(`${rules.rules.hp.base}/${rules.rules.hp.constitution}`, '51/4', 'HP is 51 + 4 × CON (base 30 before the A3 retune, 2026-09-27)');
     const star = createRunState({ seed: 93, classId: 'starseer', registries: REG });
     // A pool carries its own flat base beside the attribute — a class or relic
     // addend folds into it — so the attribute half is read off the receipt

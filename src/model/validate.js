@@ -19,7 +19,7 @@ import { consumables as shippedConsumables } from '../content/consumables.js';
 import { companions as shippedCompanions } from '../content/companions.js';
 import { consumableTableProblems, companionTableProblems } from './consumables.js';
 import { shopsTableProblems } from './shopKinds.js';
-import { marketAdditionTableProblems } from './marketStock.js';
+import { marketAdditionTableProblems, blacksmithTableProblems } from './marketStock.js';
 import { resolveFloorPlan } from './floorplan.js';
 import { validateAttack } from './combatRules.js';
 import { assertTableSane } from './secondbeat.js';
@@ -666,6 +666,7 @@ function collectContentProblems(bundle, errors = []) {
     // whose screen has not shipped.
     shopsTableProblems(b.shops || shippedShops, err, b);
     marketAdditionTableProblems(b.shops || shippedShops, err);
+    blacksmithTableProblems(b.shops || shippedShops, err);
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
       if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);
@@ -1887,7 +1888,7 @@ function collectContentProblems(bundle, errors = []) {
   // The triggers are the relic DSL, checked by the same walker, so a sigil adds
   // nothing to the engine's vocabulary. A legendary sigil is §15.4's (attuned,
   // no triggers, never stock) and is refused until that section lands.
-  validateSigils(b.sigils === undefined ? shippedSigils : b.sigils, vctx);
+  validateSigils(b.sigils === undefined ? shippedSigils : b.sigils, vctx, b);
 
   // ---- consumables and companions (SPEC §14.3, step 5b) ----------------------
   // Whole numbers with a [NOTE] each, a sale never above the price, a skill
@@ -2401,25 +2402,45 @@ export function validateEffects(effects, path, vctx) {
   });
 }
 
-const SIGIL_FIELDS = new Set(['id', 'name', 'rarity', 'cost', 'blurb', 'triggers']);
+const SIGIL_FIELDS = new Set(['id', 'name', 'rarity', 'cost', 'blurb']);
 
-function validateSigils(rows, vctx) {
+// WHAT A SIGIL DOES IS ITS TAGGING ROW (SPEC §14.3, §14.4; Codex on #1376). A
+// sigil authors no `triggers` or `modifiers`: its `family = sigil` row in
+// tagging.csv names a leaf under the `sigil` branch of `property`, whose rule
+// is in nodeEffects.json, and stampTags derives its `propertyTags`. A tag that
+// is the branch itself, sits elsewhere in the tree, or has no rule is refused.
+function validateSigils(rows, vctx, bundle = {}) {
   const { err } = vctx;
   if (!Array.isArray(rows)) { err('sigils', `must be an array of sigil rows, got ${describe(rows)}`); return; }
+  const tagging = Array.isArray(bundle.tagging) ? bundle.tagging : [];
+  const propertyIds = new Set((Array.isArray(bundle.tags) ? bundle.tags : []).filter((tag) => tag && tag.domain === 'property').map((tag) => tag.id));
+  const nodes = new Map((Array.isArray(bundle.nodes) ? bundle.nodes : []).map((node) => [node.id, node]));
+  const effects = isPlainObject(bundle.nodeEffects) ? bundle.nodeEffects : {};
+  const underSigil = (id) => {
+    for (let at = nodes.get(id); at; at = nodes.get(at.parentId)) if (at.parentId === 'sigil') return true;
+    return false;
+  };
   const seen = new Set();
   rows.forEach((row, index) => {
-    if (!isPlainObject(row) || typeof row.id !== 'string' || !row.id) { err(`sigils[${index}]`, 'must be a sigil { id, name, rarity, cost, blurb, triggers }'); return; }
+    if (!isPlainObject(row) || typeof row.id !== 'string' || !row.id) { err(`sigils[${index}]`, 'must be a sigil { id, name, rarity, cost, blurb }'); return; }
     const at = `sigils.${row.id}`;
     if (seen.has(row.id)) err(at, 'is listed twice');
     seen.add(row.id);
-    for (const key of Object.keys(row)) if (!SIGIL_FIELDS.has(key)) err(`${at}.${key}`, `is not a sigil field (fields: ${[...SIGIL_FIELDS].join(', ')})`);
+    for (const key of ['triggers', 'modifiers']) {
+      if (row[key] !== undefined) err(`${at}.${key}`, 'is not authored on a sigil (Codex on #1376): what a sigil does is its property row in tagging.csv, a leaf under the sigil branch with its rule in nodeEffects.json');
+    }
+    for (const key of Object.keys(row)) if (!SIGIL_FIELDS.has(key) && key !== 'triggers' && key !== 'modifiers') err(`${at}.${key}`, `is not a sigil field (fields: ${[...SIGIL_FIELDS].join(', ')})`);
     if (typeof row.name !== 'string' || !row.name) err(`${at}.name`, 'must be a non-empty string');
     if (typeof row.blurb !== 'string' || !row.blurb) err(`${at}.blurb`, 'must be a non-empty string (the sentence the shelf shows)');
     if (!SIGIL_RARITIES.includes(row.rarity)) err(`${at}.rarity`, `must be one of ${SIGIL_RARITIES.join(', ')}, got ${describe(row.rarity)}`);
-    else if (row.rarity === 'legendary') err(`${at}.rarity`, 'is legendary, which SPEC §15.4 authors as an attuned sigil with no triggers and no cost; it cannot ship before that section lands');
+    else if (row.rarity === 'legendary') err(`${at}.rarity`, 'is legendary, which SPEC §15.4 authors as an attuned sigil with no cost; it cannot ship before that section lands');
     if (!(Number.isSafeInteger(row.cost) && row.cost > 0)) err(`${at}.cost`, `must be a whole number of cinders above 0, got ${describe(row.cost)}`);
-    if (!Array.isArray(row.triggers) || !row.triggers.length) err(`${at}.triggers`, 'must be a non-empty list of triggers ({ on, if?, do }) — what the sigil does once installed');
-    else validateTriggers(row.triggers, `${at}.triggers`, vctx);
+    const props = tagging.filter((tag) => tag && tag.family === 'sigil' && tag.objectId === row.id && propertyIds.has(tag.tagId)).map((tag) => tag.tagId);
+    if (!props.length) err(at, 'derives no property tag: give it a `sigil` row in tagging.csv naming a leaf under the sigil branch of property');
+    for (const tag of props) {
+      if (!underSigil(tag)) err(at, `carries property '${tag}', which is not a leaf under the sigil branch of property`);
+      else if (!Object.hasOwn(effects, tag)) err(at, `carries property '${tag}', which has no rule in nodeEffects.json`);
+    }
   });
 }
 

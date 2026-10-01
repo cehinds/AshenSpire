@@ -484,8 +484,7 @@ export function mountRewards(app, {
     done.addEventListener('click', () => renderMenu());
   }
 
-  async function playXpAnimation() {
-    const host = app.querySelector('.reward-claim-layout');
+  async function playXpAnimation(host) {
     const active = () => host?.isConnected && app.querySelector('.reward-claim-layout') === host;
     const pendingRefill = refill;
     const bars = [...app.querySelectorAll('.reward-claim-layout .rp-layered-bar[data-animate="1"]')];
@@ -702,7 +701,12 @@ export function mountRewards(app, {
 
     if (!xpAnimationStarted && progress && (rewards.xpBefore || refill)) {
       xpAnimationStarted = true;
-      setTimeout(playXpAnimation, 0);
+      // Bind the pending animation to this render, before another mount can
+      // replace it. Looking up the host inside the timer captures a new run.
+      const host = app.querySelector('.reward-claim-layout');
+      setTimeout(() => {
+        if (host?.isConnected && app.querySelector('.reward-claim-layout') === host) playXpAnimation(host);
+      }, 0);
     }
 
     if (isEngaged()) {

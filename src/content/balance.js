@@ -1736,6 +1736,22 @@ export const balance = {
       '{relic}.{variable}': '{relicName} — {effect}.',
     },
   },
+  // THE SIGILS' NUMBERS (SPEC §14.3, §15.4). A sigil's property rule lives in
+  // nodeEffects.json and reads its numbers here, through variableBindings.csv,
+  // so each gets its generated Settings row like every balance number.
+  sigils: {
+    emberSigil: { block: 4 },
+    thornSigil: { bleed: 2 },
+    tideSigil: { n: 5, draw: 1 },
+    hearthSigil: { block: 3 },
+    [NOTE]: {
+      'emberSigil.block': 'Ember Sigil — the Block it gives at the start of each fight, while it sits in a slot of an equipped armament.',
+      'thornSigil.bleed': 'Thorn Sigil — the Bleed your first attack hit of each fight applies, while it sits in a slot of an equipped armament.',
+      'tideSigil.n': 'Tide Sigil — every this-many-th card you play in a fight draws, while it sits in a slot of an equipped armament.',
+      'tideSigil.draw': 'Tide Sigil — how many cards that card draws.',
+      'hearthSigil.block': 'Hearth Sigil — the Block you gain whenever you heal, while it sits in a slot of an equipped armament.',
+    },
+  },
   equipment: {
     startingKitDiscovery: {
       // Undiscovered alternates render no row at all: no name, numbers, cards,
