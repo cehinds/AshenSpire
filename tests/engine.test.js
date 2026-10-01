@@ -6382,13 +6382,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // now IS that row, and it lands on the old hand-rule turn draw (2 below
     // INT 9) rather than the old derived one.
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '38/3/2', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,100,100,100,100,100,100,100,100,100', 'every default stat level costs 100 XP');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,230,360,490,620,750,880,1010,1140,1270', 'default XP steps start at 100 and add 130');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.ratingId}`, '3/ar', 'physical Strike is 3 base + AR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.ratingId}`, '2/pr', 'magic Strike is 2 base + PR');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.ratingId}`, '1/dr', 'Defend is 1 base + DR');
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 1000, '1,000 XP reaches level 11 at the default cost');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 6850, '6,850 XP reaches level 11 on the default linear curve');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
     // Rogue: HP 30 + ⌊4 × 2⌋ = 38; Actions 3 + ⌊0.2 × DEX 3⌋ = 3; Draw 2 + ⌊0.1 × INT 1⌋ = 2.
@@ -8716,21 +8716,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(tracks.find((t) => t.id === 'item:magic-focus').kind, 'focus');
     eq(tracks.find((t) => t.id === 'item:blade').kind, 'weapon');
     assert(tracks.every((t) => SKILL_KINDS.includes(t.kind)), 'every track has a kind');
-    // One curve shape: round(base × growth^n, roundTo).
+    // Every default track uses the same linear step calculation.
     const c = REG.balance.skill.xp;
     eq(xpToNext(REG, 'weapon', 0), Math.round(c.base / c.roundTo) * c.roundTo, 'step 0 costs the base');
-    eq(xpToNext(REG, 'weapon', 3), Math.round((c.base * Math.pow(c.growth, 3)) / c.roundTo) * c.roundTo, 'step 3 grows three times');
-    // SLOWER OVER THE CLIMB, NOT AT THE FIRST STEP: the owner's config
-    // (2026-09-24) gives both tracks a base of 5, so the class track is slower
-    // by its growth — never cheaper at any step, and dearer over ten.
+    eq(xpToNext(REG, 'weapon', 3), Math.round((c.base + 3 * c.base * c.multScaler) / c.roundTo) * c.roundTo, 'step 3 adds three scaled increments');
     const steps = (kind) => Array.from({ length: 10 }, (_, n) => xpToNext(REG, kind, n));
     assert(steps('class').every((cost, n) => cost >= steps('weapon')[n]), 'the class curve is never cheaper at any step');
-    eq(steps('class').reduce((a, b) => a + b), steps('weapon').reduce((a, b) => a + b), 'class and weapon curves have the same 100 XP default');
-    // THE CLIMB, READ OVER TEN STEPS: the owner's base of 5 on a roundTo of 5
-    // (2026-09-24; 30 before) rounds the first three steps to the same 5, so
-    // growth shows further up the curve rather than between steps 0 and 1.
+    eq(steps('class').reduce((a, b) => a + b), steps('weapon').reduce((a, b) => a + b), 'class and weapon curves share the default linear costs');
     const armourSteps = Array.from({ length: 10 }, (_, n) => xpToNext(REG, 'armour', n));
-    assert(armourSteps.every((cost) => cost === 100), `the default armour curve stays at 100 — ${armourSteps.join(',')}`);
+    eq(armourSteps.join(','), '100,230,360,490,620,750,880,1010,1140,1270', 'armour starts at 100 and adds 130 each step');
     // The ledger: a fresh run has none; XP writes it and climbs, queuing a draft per level.
     const run = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
     eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{}', 'a fresh run has an empty ledger');

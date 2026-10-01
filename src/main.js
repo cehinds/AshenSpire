@@ -47,7 +47,7 @@ import { equippedPieces } from './model/loadout.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
-import { applyLevelUp, awardLevelXp, bankLevelXp, claimBankedLevel, combatLevelXp, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
+import { applyLevelUp, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
 import { configuredRewardOffer as rewardOfferForSource } from './model/rewardSourcePolicy.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
@@ -2511,7 +2511,11 @@ async function onCombatEnd(result, combat, enc) {
   const classAward = awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, bank: manualLevelUp, multiplier: featMultiplier(run, 'classXp') });
   // Character XP is paid now; the level and its stat points wait for the blue
   // Level Up button. Excess XP remains on the ledger after each claim.
-  const levelXp = Math.floor(combatLevelXp(registries, { victory: result === 'victory', pool: enc.pool, enemies: combat.enemies }) * featMultiplier(run, 'characterXp'));
+  const xpReceipt = combatXpReceipt(registries, {
+    victory: result === 'victory', pool: enc.pool, enemies: combat.enemies,
+    characterMultiplier: featMultiplier(run, 'characterXp'),
+  });
+  const levelXp = xpReceipt.total;
   const levelAward = manualLevelUp
     ? bankLevelXp(registries, run, levelXp)
     : awardLevelXp(registries, run, levelXp, {
@@ -2598,6 +2602,7 @@ async function onCombatEnd(result, combat, enc) {
       armamentId: bossArmament,
       smithingStoneReceipt,
       xpGains,
+      xpReceipt,
       xpBefore,
       levelChoices,
     };
@@ -2623,6 +2628,7 @@ async function onCombatEnd(result, combat, enc) {
     armamentId: rollDrop(enc.pool),
     smithingStoneReceipt,
     xpGains,
+    xpReceipt,
     xpBefore,
     levelChoices,
   };
@@ -3661,10 +3667,29 @@ if (shotState === 'combat-test') {
       run.level.xp = levelXpToNext(registries, 1) + 25;
       run.skills['item:blade'] = { xp: skillXpToNext(registries, 'weapon', 2) + 18, level: 2, pendingDrafts: 0 };
     }
+    if (pose === 'refill') {
+      run.level.xp = 355;
+      run.skills['item:blade'] = { xp: 355, level: 0, pendingDrafts: 0 };
+    }
     if (pose === 'draft') {
       run.skills = { ...(run.skills || {}), 'item:blade': { xp: 0, level: 2, pendingDrafts: 1 } };
     }
     const draftSchools = pose === 'draft' ? new Set(skillSchools(registries, run.loadout, 'item:blade')) : null;
+    const shotReceipt = pose === 'receipt' ? { total: 65, rows: [
+      { kind: 'power', amount: 25 },
+      { kind: 'enemy', name: 'Blight Hound', level: 2, amount: 12 },
+      { kind: 'enemy', name: 'Ash Warden', level: 3, amount: 18 },
+      { kind: 'enemy', name: 'Blight Hound', level: 1, amount: 4 },
+      { kind: 'enemy', name: 'Ash Warden', level: 2, amount: 3 },
+      { kind: 'enemy', name: 'Blight Hound', level: 1, amount: 2 },
+      { kind: 'enemy', name: 'Ash Warden', level: 1, amount: 1 },
+    ] } : pose === 'level' ? { total: levelXpToNext(registries, 1) - 15, rows: [
+      { kind: 'power', amount: levelXpToNext(registries, 1) - 55 },
+      { kind: 'enemy', name: 'Blight Hound', level: 2, amount: 12 },
+      { kind: 'enemy', name: 'Ash Warden', level: 3, amount: 28 },
+    ] } : { total: 24, rows: [
+      { kind: 'power', amount: 16 }, { kind: 'enemy', name: 'Blight Hound', level: 2, amount: 8 },
+    ] };
     const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
       title: 'VICTORY',
       cinders: 32,
@@ -3677,7 +3702,8 @@ if (shotState === 'combat-test') {
       armamentId: 'greatsword',
       smithingStoneReceipt,
       // What the fight paid, authored like the rest of the pose.
-      xpGains: { level: 24, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 } },
+      xpGains: { level: shotReceipt.total, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 } },
+      xpReceipt: shotReceipt,
       ...(pose === 'level' ? {
         levelChoices: [{ ordinal: 0, options: [
           { kind: 'feat', id: 'fieldStudy' },
@@ -3691,7 +3717,7 @@ if (shotState === 'combat-test') {
         xpBefore: { character: { level: 1, xp: 40 }, tracks: { 'item:blade': { level: 2, xp: 0 }, [`class:${run.class}`]: { level: 1, xp: 10 } } },
       } : {}),
     };
-    if (pose === 'pending' || pose === 'level') {
+    if (pose === 'pending' || pose === 'level' || pose === 'receipt' || pose === 'refill') {
       beginPendingReward(shotOffer, { source: 'elite', after: 'map' });
       // Cross the ordinary load door in the same ephemeral shot store. This is
       // the interruption/reload proof: the mounted row below comes from saved

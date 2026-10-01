@@ -27,6 +27,7 @@ import { orderedAttributes } from './attributes.js';
 import { reconcileRunLoadoutHp } from './loadout.js';
 import { note } from './healLedger.js';
 import { enemyCombatPower } from './combatPower.js';
+import { xpStepCost } from './xpCurve.js';
 
 /** The authored tables, or the shape of them, so a bundle without them fails
  *  soft in tools rather than throwing on a missing key. Bad data is caught at
@@ -58,19 +59,17 @@ export function characterLevel(run) {
 
 /**
  * xpToNext(registries, level) → the XP the step from `level` to `level + 1`
- * costs: `round(base × growth^(level − 1), roundTo)`, the one curve shape
+ * costs: linear base + (level − 1) × base × scaler, or legacy
+ * `round(base × growth^(level − 1), roundTo)`, the one curve shape
  * every track shares (proposal §10; skills.js has the same function for the
  * skill tracks). Level 1's step costs `base`.
  */
 export function xpToNext(registries, level) {
-  const { base, growth, roundTo } = curveTable(registries);
+  const { base, growth, roundTo, linear, multScaler } = curveTable(registries);
   const b = Number.isFinite(base) && base > 0 ? base : 100;
   const g = Number.isFinite(growth) && growth > 0 ? growth : 1.15;
   const step = Number.isInteger(level) && level > 1 ? level - 1 : 0;
-  const unit = Number.isInteger(roundTo) && roundTo > 0 ? roundTo : 1;
-  // The epsilon: 100 × 1.15 is 114.999… in floating point, and a base-100
-  // curve's second step must round to 120 at roundTo 10, not 110.
-  return Math.max(unit, Math.round((b * Math.pow(g, step)) / unit + 1e-9) * unit);
+  return xpStepCost({ base: b, growth: g, roundTo, linear, multScaler }, step);
 }
 
 /**
@@ -79,7 +78,7 @@ export function xpToNext(registries, level) {
  * + sum(kill base × killLevelMultiplier × defeated level)). The combat-power
  * portion needs victory; a loss still pays its defeated-enemy level portion.
  */
-export function combatLevelXp(registries, { victory = false, pool = 'normal', kills = 0, enemies = null } = {}) {
+export function combatXpReceipt(registries, { victory = false, pool = 'normal', kills = 0, enemies = null, characterMultiplier = 1 } = {}) {
   const t = awardTable(registries);
   const kill = t.kill || {};
   const perKill = Number.isFinite(kill[pool]) ? kill[pool] : (Number.isFinite(kill.normal) ? kill.normal : 0);
@@ -88,9 +87,33 @@ export function combatLevelXp(registries, { victory = false, pool = 'normal', ki
   const defeated = Array.isArray(enemies)
     ? enemies.filter((enemy) => enemy.alive === false || enemy.hp <= 0)
     : Array.from({ length: Number.isInteger(kills) && kills > 0 ? kills : 0 }, () => ({ level: 1, combatPower: 3 }));
-  const levelSum = defeated.reduce((sum, enemy) => sum + (Number.isSafeInteger(enemy.level) && enemy.level > 0 ? enemy.level : 1), 0);
   const powerSum = victory ? defeated.reduce((sum, enemy) => sum + enemyCombatPower(registries, enemy), 0) : 0;
-  return Math.floor(powerSum * powerMultiplier * (t.combatWin || 0) + perKill * levelMultiplier * levelSum + 1e-9);
+  // Floor cumulative subtotals, not each enemy independently: every displayed
+  // integer term then adds up to the exact award, even with fractional dials.
+  let raw = powerSum * powerMultiplier * (t.combatWin || 0);
+  let subtotal = 0;
+  const rows = [];
+  if (victory) {
+    subtotal = Math.floor(raw + 1e-9);
+    rows.push({ kind: 'power', amount: subtotal });
+  }
+  defeated.forEach((enemy, index) => {
+    const level = Number.isSafeInteger(enemy.level) && enemy.level > 0 ? enemy.level : 1;
+    raw += perKill * levelMultiplier * level;
+    const next = Math.floor(raw + 1e-9);
+    const definition = enemy.enemyId && registries?.enemies?.has?.(enemy.enemyId)
+      ? registries.enemies.get(enemy.enemyId) : null;
+    rows.push({ kind: 'enemy', enemyId: enemy.enemyId || null, name: definition?.name || `Enemy ${index + 1}`, level, amount: next - subtotal });
+    subtotal = next;
+  });
+  const multiplier = Number.isFinite(characterMultiplier) && characterMultiplier >= 0 ? characterMultiplier : 1;
+  const total = Math.floor(subtotal * multiplier);
+  if (total !== subtotal) rows.push({ kind: 'bonus', amount: total - subtotal });
+  return { total, rows };
+}
+
+export function combatLevelXp(registries, options = {}) {
+  return combatXpReceipt(registries, options).total;
 }
 
 /** questLevelXp(registries) → the XP a completed quest pays (`xp.quest`); phase 10a's door pays it. */

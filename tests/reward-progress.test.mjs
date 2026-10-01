@@ -15,6 +15,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape, serializeRun, deserializeRun } from '../src/model/state.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
+import { victoryXpFormula, victoryXpPresentation, victoryXpTiming } from '../src/model/victoryXpPresentation.js';
 import { rewardDom } from './helpers/reward-dom.mjs';
 
 const registries = createRegistries(contentBundle);
@@ -131,7 +132,8 @@ test('the receipt crosses the save door on a real run and comes back whole', () 
     schemaVersion: 1,
     source: 'elite',
     after: 'map',
-    rewards: { title: 'VICTORY', cinders: 32, xpGains: combatXpGains({ receipt: { 'item:blade': 18 }, levelGained: 24 }) },
+    rewards: { title: 'VICTORY', cinders: 32, xpGains: combatXpGains({ receipt: { 'item:blade': 18 }, levelGained: 24 }),
+      xpReceipt: { total: 24, rows: [{ kind: 'power', amount: 16 }, { kind: 'enemy', name: 'Blight Hound', level: 2, amount: 8 }] } },
     states: {},
     chosenCardId: null,
     chosenDraftCardIds: {},
@@ -141,6 +143,8 @@ test('the receipt crosses the save door on a real run and comes back whole', () 
   const back = deserializeRun(serializeRun(run));
   assert.deepEqual(back.pendingReward.rewards.xpGains, { level: 24, tracks: { 'item:blade': 18 } },
     'a reload resumes the same numbers the door first showed');
+  assert.deepEqual(back.pendingReward.rewards.xpReceipt, run.pendingReward.rewards.xpReceipt,
+    'the compact breakdown survives a reload with the same enemy names and amounts');
 });
 
 test('the door draws the panel beside the claim status, gains and all', () => {
@@ -186,6 +190,7 @@ test('banked XP lights the bar; Level advances one level and opens its card choo
     mountRewards(app, {
       registries, run, onDone() {}, onClaimLevel: () => claimBankedLevel(registries, run),
       rewards: { xpGains: { level: 30, tracks: {} }, levelCards: [{ ordinal: 0, cardIds: ['rend', 'stomp'] }] },
+      saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) },
     });
     assert.ok(app.querySelector('.reward-level-ready .rp-bar-ready'));
     const claim = app.querySelector('.reward-level-up');
@@ -219,6 +224,7 @@ test('each ready skill bar claims one level and opens its own draft', () => {
     mountRewards(app, {
       registries, run, onDone() {},
       onClaimSkill: (id) => claimBankedSkillLevel(registries, run, id),
+      saves: { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0 } }) },
       rewards: { xpGains: { level: 0, tracks: { 'item:blade': xp } },
         skillDrafts: [{ skillId: 'item:blade', level: before + 1, claimOrdinal: 1, cardIds: ['rend', 'stomp'] }] },
     });
@@ -314,9 +320,18 @@ test('a saved combat reward opens compactly, then Continue reveals the full summ
     const app = document.createElement('main');
     document.body.append(app);
     const run = climber();
-    const checkpoint = { schemaVersion: 1, source: 'normal', after: 'map', states: {}, rewards: { xpGains: { level: 20, tracks: {} } } };
-    mountRewards(app, { registries, run, checkpoint, rewards: checkpoint.rewards, onDone() {}, onPersist() {} });
+    const checkpoint = { schemaVersion: 1, source: 'normal', after: 'map', states: {}, rewards: {
+      xpGains: { level: 20, tracks: {} }, xpReceipt: { total: 20, rows: [
+        { kind: 'power', amount: 14 }, { kind: 'enemy', name: 'Blight Hound', level: 3, amount: 6 },
+      ] },
+    } };
+    const saves = { loadMeta: () => ({ settings: { victoryReceiptSeconds: 0, victoryReceiptReadySeconds: 0 } }) };
+    mountRewards(app, { registries, run, checkpoint, rewards: checkpoint.rewards, saves, onDone() {}, onPersist() {} });
     assert.ok(app.querySelector('.reward-compact-xp'));
+    assert.equal(app.querySelector('.reward-compact-formula').textContent, '14 + 6');
+    assert.equal(app.querySelector('.reward-compact-value').textContent, '20 XP');
+    assert.equal(app.querySelectorAll('.reward-compact-row').length, 2);
+    assert.ok(app.querySelector('#reward-expand').classList.contains('is-ready'));
     assert.equal(app.querySelector('.reward-progress'), null);
     app.querySelector('#reward-expand').click();
     assert.equal(checkpoint.expanded, true);
@@ -335,13 +350,95 @@ test('the click-anywhere Victory preference expands the same summary', () => {
     document.body.append(app);
     const run = climber();
     const checkpoint = { schemaVersion: 1, source: 'normal', after: 'map', states: {}, rewards: { xpGains: { level: 10, tracks: {} } } };
-    const saves = { loadMeta: () => ({ settings: { victorySummaryMode: 'anywhere' } }) };
+    const saves = { loadMeta: () => ({ settings: { victorySummaryMode: 'anywhere', victoryReceiptSeconds: 0, victoryReceiptReadySeconds: 0 } }) };
     mountRewards(app, { registries, run, checkpoint, rewards: checkpoint.rewards, saves, onDone() {}, onPersist() {} });
     app.querySelector('.reward-veil').click();
     assert.equal(checkpoint.expanded, true);
     assert.ok(app.querySelector('.reward-progress'));
   } finally {
     Object.assign(globalThis, saved);
+  }
+});
+
+test('long XP arithmetic collapses after the configured term count without losing the full sum', () => {
+  const rows = [25, 12, 18, 4, 3, 2, 1].map((amount) => ({ amount }));
+  const expression = victoryXpFormula(rows, rows.length, 5);
+  assert.deepEqual([expression.shown, expression.collapsed, expression.full],
+    ['25 + 12 + 18 + 4 + 3', true, '25 + 12 + 18 + 4 + 3 + 2 + 1 = 65 XP']);
+  const options = victoryXpPresentation({ victoryReceiptSeconds: 1, victoryReceiptPauseMs: 400 }, false);
+  const timing = victoryXpTiming(rows.length, options);
+  assert.ok(timing.pauseMs < 400, 'long encounters compress pauses');
+  assert.equal(Math.round(timing.tickMs * rows.length + timing.pauseMs * (rows.length - 1)), 1000);
+});
+
+test('Continue stays closed until the configured post-receipt pause ends', async () => {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main');
+    document.body.append(app);
+    const checkpoint = { schemaVersion: 1, source: 'normal', after: 'map', states: {}, rewards: { xpGains: { level: 10, tracks: {} } } };
+    const saves = { loadMeta: () => ({ settings: { victoryReceiptSeconds: 0, victoryReceiptReadySeconds: 0.01 } }) };
+    mountRewards(app, { registries, run: climber(), checkpoint, rewards: checkpoint.rewards, saves, onDone() {}, onPersist() {} });
+    const open = app.querySelector('#reward-expand');
+    assert.equal(open.disabled, true);
+    open.click();
+    assert.equal(checkpoint.expanded, undefined);
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    assert.equal(open.disabled, false);
+    assert.ok(open.classList.contains('is-ready'));
+    open.click();
+    assert.equal(checkpoint.expanded, true);
+  } finally {
+    Object.assign(globalThis, saved);
+  }
+});
+
+test('each manual claim refills from residual XP until the final partial step, for character and skill', async () => {
+  for (const track of ['character', 'item:blade']) {
+    const dom = rewardDom();
+    const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+    Object.assign(globalThis, dom);
+    try {
+      const app = document.createElement('main');
+      document.body.append(app);
+      const run = climber();
+      run.level = { level: 1, xp: track === 'character' ? 355 : 0, unspentPoints: 0 };
+      run.skills = track === 'character' ? {} : { 'item:blade': { level: 0, xp: 355, pendingDrafts: 0 } };
+      mountRewards(app, {
+        registries, run, onDone() {},
+        onClaimLevel: () => claimBankedLevel(registries, run),
+        onClaimSkill: (id) => claimBankedSkillLevel(registries, run, id),
+        rewards: { xpGains: { level: 0, tracks: {} } },
+        saves: { loadMeta: () => ({ settings: {
+          levelUpRefillSeconds: 0.02, levelUpRefillPauseMs: 0,
+          victoryXpCharacterWeight: 0, victoryXpSkillWeight: 0, victoryXpClassWeight: 0,
+        } }) },
+      });
+      const ledger = () => track === 'character' ? run.level : run.skills[track];
+      for (const remaining of [255, 25]) {
+        app.querySelector(`.reward-level-up[data-track="${track}"]`).click();
+        assert.equal(ledger().xp, remaining, 'only the cost is deducted; animation awards nothing');
+        const bar = app.querySelector(`.rp-layered-bar[data-track="${track}"]`);
+        assert.equal(bar.querySelector('.rp-under').style.width, '0%');
+        assert.equal(bar.querySelector('.rp-over').style.width, '0%');
+        assert.equal(app.querySelector('.reward-level-up'), null, 'no second claim during the refill');
+        assert.equal(app.querySelector('#reward-continue').disabled, true);
+        const doneSelector = track === 'character' ? '#reward-level-done' : '#reward-skill-done';
+        const deadline = Date.now() + 2000;
+        while (!app.querySelector(doneSelector) && Date.now() < deadline) {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+        }
+        assert.ok(app.querySelector(doneSelector), 'reward follows the refill');
+        app.querySelector(doneSelector).click();
+      }
+      assert.equal(ledger().xp, 25);
+      assert.equal(app.querySelector('.reward-level-up'), null);
+      const final = app.querySelector(`.rp-layered-bar[data-track="${track}"]`);
+      assert.equal(final.classList.contains('rp-bar-ready'), false);
+      assert.equal(Number(final.dataset.target), 25 / 360 * 100);
+    } finally { Object.assign(globalThis, saved); }
   }
 });
 

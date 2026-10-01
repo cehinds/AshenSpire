@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1390",
+    "id": "pr-1428",
     "date": "2026-10-01",
     "group": "2026-10-01",
-    "summary": "The blacksmith opens his forge",
-    "detail": "A smith on the atlas is now a blacksmith with a screen of his own. On a visit he may sell armaments and Smithing Stones, upgrade your items, fold Smithing Stones and cinders into a refined stone, cut sigil slots into an armament you carry, set your sigils into those slots or take them out for free, lift a weapon art out of an item or seat a loose one, upgrade a loose weapon art, and forge one more copy of a weapon art or technique you own, which goes to your sideboard for the deck editor. An upgrade can now be paid wholly in refined stones instead of ordinary ones at the blacksmith. A sigil set into a slot works only while that armament is equipped, and it follows the armament through a swap in the middle of a fight. A service with nothing to work on yet stays on his list, says why, and opens as soon as you have something for it, even on the same visit. What he stocks and what he charges stay the same after a reload. Every price and count is a row in Advanced → Shops, and a merchant on the map becomes a blacksmith only when you raise his weight there (it ships at 0). An older save loads unchanged.",
-    "build": "0.7.1.720",
-    "pullRequest": 1390,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1390"
+    "summary": "Victory XP adds up before your eyes, and leftover XP refills after each level",
+    "detail": "Victory counts the combat-power bonus and each defeated enemy in a compact scrolling receipt, with a running equation and total. Each manual Level press shows remaining XP refill the character or skill bar before its reward opens. New progression steps start at 100 XP and add 130 XP per level by default; base, scaler, receipt timing and refill timing remain configurable.",
+    "build": "0.7.1.721",
+    "pullRequest": 1428,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1428"
   },
   {
     "id": "pr-1425",
