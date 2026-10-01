@@ -493,6 +493,86 @@ export const nodeVariables = [
     "role": "amount"
   },
   {
+    "nodeId": "partingBlow",
+    "variable": "damage",
+    "role": "amount"
+  },
+  {
+    "nodeId": "ironRebuke",
+    "variable": "damage",
+    "role": "amount"
+  },
+  {
+    "nodeId": "cinderGrip",
+    "variable": "bleed",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "mendingGrip",
+    "variable": "heal",
+    "role": "amount"
+  },
+  {
+    "nodeId": "spentStars",
+    "variable": "restoreMana",
+    "role": "amount"
+  },
+  {
+    "nodeId": "fallingStar",
+    "variable": "damage",
+    "role": "amount"
+  },
+  {
+    "nodeId": "lodestarPull",
+    "variable": "vulnerable",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "shardHunger",
+    "variable": "restoreMana",
+    "role": "amount"
+  },
+  {
+    "nodeId": "burningGrace",
+    "variable": "damage",
+    "role": "amount"
+  },
+  {
+    "nodeId": "dazzlingLight",
+    "variable": "weak",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "anointedBlade",
+    "variable": "strength",
+    "role": "stacks"
+  },
+  {
+    "nodeId": "unsealedScroll",
+    "variable": "draw",
+    "role": "amount"
+  },
+  {
+    "nodeId": "lowProfile",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "feint",
+    "variable": "poiseDamage",
+    "role": "amount"
+  },
+  {
+    "nodeId": "spareWhetstone",
+    "variable": "gainEnergy",
+    "role": "amount"
+  },
+  {
+    "nodeId": "whettedGuard",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
     "nodeId": "restHpSmall",
     "variable": "pct",
     "role": "pct"

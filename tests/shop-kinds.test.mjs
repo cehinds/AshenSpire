@@ -285,13 +285,22 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
   const fixture = JSON.parse(readFileSync(new URL('./fixtures/shop-shelves-pre-kinds.json', import.meta.url), 'utf8'));
   const seeds = Object.keys(fixture.shelves);
   assert.equal(seeds.length, 50);
+  // The fixture holds the card pools of its capture. Cards authored since
+  // (skill-draft depth) join the reward pools and so the card shelf; replaying
+  // at the capture's pools keeps this a test of the shop code, not the content.
+  const addedSinceCapture = new Set(['hewingArc', 'sunderingChop', 'setTheShield', 'aegisOfEmbers', 'shieldCrash',
+    'pinningShot', 'arrowVolley', 'nockAndWait', 'aimedShot', 'barbedArrow', 'bindingParry', 'whirlingGuard',
+    'cinderSigil', 'ashenMote', 'emberVigil', 'readTheAsh', 'pyreOfCharts', 'ashCircle', 'kindledOmen', 'cinderLance',
+    'ashfallRite', 'phoenixChart', 'pyreLight', 'riteOfCinders']);
+  const CAPTURE_REG = createRegistries({ ...contentBundle,
+    classes: contentBundle.classes.map((c) => ({ ...c, cardPool: c.cardPool.filter((id) => !addedSinceCapture.has(id)) })) });
   for (const n of seeds) {
     const before = fixture.shelves[n];
-    const run = createRunState({ seed: before.runSeed, classId: before.classId, registries: REG });
+    const run = createRunState({ seed: before.runSeed, classId: before.classId, registries: CAPTURE_REG });
     const rng = createRng(before.runSeed, { shop: before.shopCounterAtEntry });
     // main.js's merchant case, in its order: the stock, then the smith's roll.
-    const stock = buildMerchantStock(REG, rng, run);
-    stock.smith = smithServicesAt(REG, 'merchant', rng);
+    const stock = buildMerchantStock(CAPTURE_REG, rng, run);
+    stock.smith = smithServicesAt(CAPTURE_REG, 'merchant', rng);
     const { kind, offerings } = stock;
     assert.equal(kind, 'market');
     // Every shelf that existed before shop kinds is out on every visit. The

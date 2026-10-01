@@ -278,7 +278,7 @@ test('every generated balance row carries its own description', () => {
     // A LIVE ROW SAYS WHEN IT TAKES EFFECT; an inert one must not, because
     // "Applies to a new run" under "nothing reads it" is the sentence
     // contradicting itself in its own last clause.
-    const live = row.note.endsWith('Applies to a new run.');
+    const live = row.note.endsWith('Applies to a new run.') || row.note.endsWith('Applies immediately to future XP gains and level costs in the current run.');
     const declaredInert = /not yet read|nothing reads it|retired flag/.test(row.note);
     assert.ok(live !== declaredInert,
       `${row.searchPath} must either say when it takes effect or say nothing reads it, and not both: ${row.note}`);

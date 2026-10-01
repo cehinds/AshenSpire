@@ -27,7 +27,7 @@
 // source content/config/ui/presentation/combatFormationModel.json 7b45c4e60eafd36a
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
-// source content/config/ui/presentation/equipmentAnimations.json 5f145ed3602bc65f
+// source content/config/ui/presentation/equipmentAnimations.json 56d01ddfb62a6ab8
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
 // source content/config/ui/presentation/mapPresentation.json 178560c058699ae1
 // source content/config/ui/presentation/paintedOutfits.json 6b6835e8d61fcfa1
@@ -39,12 +39,12 @@
 // source content/config/ui/presentation/tooltipPlacement.json 2718119752f3c76b
 // source content/config/ui/presentation/uiContent.json 118475388559b5f2
 // source content/config/ui/scenes/w4.json bb195b08ffbf3422
-// source content/config/ui/scenes/w4a-combat.json 2938240981e3b612
+// source content/config/ui/scenes/w4a-combat.json c1f9b8d5c1d51fe6
 // source content/config/ui/scenes/w4b-map.json a92277251e883bec
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json b44124e6a29150d9
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json 0e189386a8548f8f
+// source content/config/ui/screens/prologue.json e42ea228fc081f59
 // source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -99,7 +99,7 @@ export const uiConfig = deepFreeze({
         "hand": {
           "minimumHeightPx": 208,
           "minWidthRem": 5,
-          "maxWidthRem": 9,
+          "maxWidthRem": 11.5,
           "minCapacity": 5,
           "maxCapacity": 15,
           "narrowWidthRem": 22,
@@ -822,7 +822,23 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {}
+              "stage": {},
+              "actor": {
+                "desktop": {
+                  "x": 33,
+                  "y": 81,
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                },
+                "mobile": {
+                  "x": 34,
+                  "y": 79,
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                }
+              }
             },
             {
               "id": "year",
@@ -840,7 +856,23 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {}
+              "stage": {},
+              "actor": {
+                "desktop": {
+                  "x": 33,
+                  "y": 81,
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                },
+                "mobile": {
+                  "x": 34,
+                  "y": 79,
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                }
+              }
             },
             {
               "id": "carry",
@@ -854,12 +886,16 @@ export const uiConfig = deepFreeze({
                 "desktop": {
                   "x": 33,
                   "y": 81,
-                  "height": 58
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
                 },
                 "mobile": {
                   "x": 34,
                   "y": 79,
-                  "height": 42
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
                 }
               },
               "art": "carry",
@@ -890,6 +926,22 @@ export const uiConfig = deepFreeze({
               "stinger": "none",
               "stage": {
                 "wash": 0.06
+              },
+              "actor": {
+                "desktop": {
+                  "x": 33,
+                  "y": 81,
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                },
+                "mobile": {
+                  "x": 34,
+                  "y": 79,
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                }
               }
             },
             {
@@ -905,12 +957,16 @@ export const uiConfig = deepFreeze({
                 "desktop": {
                   "x": 50,
                   "y": 96,
-                  "height": 40
+                  "height": 40,
+                  "rotation": 0,
+                  "layer": "behindWash"
                 },
                 "mobile": {
                   "x": 40,
                   "y": 96,
-                  "height": 40
+                  "height": 40,
+                  "rotation": 0,
+                  "layer": "behindWash"
                 }
               },
               "art": "step",
@@ -941,7 +997,23 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {}
+              "stage": {},
+              "actor": {
+                "desktop": {
+                  "x": 33,
+                  "y": 81,
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                },
+                "mobile": {
+                  "x": 34,
+                  "y": 79,
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                }
+              }
             },
             {
               "id": "extraB",
@@ -959,7 +1031,23 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {}
+              "stage": {},
+              "actor": {
+                "desktop": {
+                  "x": 33,
+                  "y": 81,
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                },
+                "mobile": {
+                  "x": 34,
+                  "y": 79,
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                }
+              }
             },
             {
               "id": "extraC",
@@ -977,7 +1065,23 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {}
+              "stage": {},
+              "actor": {
+                "desktop": {
+                  "x": 33,
+                  "y": 81,
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                },
+                "mobile": {
+                  "x": 34,
+                  "y": 79,
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                }
+              }
             },
             {
               "id": "extraD",
@@ -995,7 +1099,23 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {}
+              "stage": {},
+              "actor": {
+                "desktop": {
+                  "x": 33,
+                  "y": 81,
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                },
+                "mobile": {
+                  "x": 34,
+                  "y": 79,
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                }
+              }
             }
           ],
           "presentation": {
@@ -5177,6 +5297,496 @@ export const uiConfig = deepFreeze({
             "leftGroup": "empty",
             "grip": "one",
             "setId": "rogue-gutterLeathersDaggerSingle"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "default",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "reaverBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "default",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "reaverBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "vigil",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "reaver-vigilBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "vigil",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "reaver-vigilBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "oathsworn",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "reaver-oathswornBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "oathsworn",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "reaver-oathswornBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "warden",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "reaver-wardenBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "warden",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "reaver-wardenBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "default",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "starseerBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "default",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "starseerBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "eclipse",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "starseer-eclipseBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "eclipse",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "starseer-eclipseBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "starlit",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "starseer-starlitBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "starlit",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "starseer-starlitBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "astral",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "starseer-astralBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "astral",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "starseer-astralBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "default",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "heraldBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "default",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "heraldBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "ossuary",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "herald-ossuaryBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "ossuary",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "herald-ossuaryBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "emberhabit",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "herald-emberhabitBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "emberhabit",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "herald-emberhabitBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "pilgrim",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "herald-pilgrimBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "pilgrim",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "herald-pilgrimBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "default",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "rogueBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "default",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "rogueBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightveil",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "rogue-nightveilBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightveil",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "rogue-nightveilBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "duelist",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "rogue-duelistBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "duelist",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "rogue-duelistBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "shadow",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "rogue-shadowBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "shadow",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "rogue-shadowBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "bastion",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "reaver-wardenBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "bastion",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "reaver-wardenBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "rimeweave",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "starseer-starlitBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "rimeweave",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "starseer-starlitBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "waywatcher",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "rogue-nightveilBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "waywatcher",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "rogue-nightveilBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "reaver-wayfarerPlateBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "reaver-wayfarerPlateBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "starseer-wayfarerPlateBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "starseer-wayfarerPlateBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "herald-wayfarerPlateBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "herald-wayfarerPlateBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "rogue-wayfarerPlateBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "wayfarerPlate",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "rogue-wayfarerPlateBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "nightweave",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "reaver-nightweaveBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "nightweave",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "reaver-nightweaveBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "nightweave",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "starseer-nightweaveBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "nightweave",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "starseer-nightweaveBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "nightweave",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "herald-nightweaveBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "nightweave",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "herald-nightweaveBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightweave",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "rogue-nightweaveBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "nightweave",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "rogue-nightweaveBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "riteVestments",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "reaver-riteVestmentsBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "riteVestments",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "reaver-riteVestmentsBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "riteVestments",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "starseer-riteVestmentsBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "riteVestments",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "starseer-riteVestmentsBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "riteVestments",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "herald-riteVestmentsBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "riteVestments",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "herald-riteVestmentsBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "riteVestments",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "rogue-riteVestmentsBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "riteVestments",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "rogue-riteVestmentsBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "gutterLeathers",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "reaver-gutterLeathersBow"
+          },
+          {
+            "classId": "reaver",
+            "armourId": "gutterLeathers",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "reaver-gutterLeathersBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "gutterLeathers",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "starseer-gutterLeathersBow"
+          },
+          {
+            "classId": "starseer",
+            "armourId": "gutterLeathers",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "starseer-gutterLeathersBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "gutterLeathers",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "herald-gutterLeathersBow"
+          },
+          {
+            "classId": "herald",
+            "armourId": "gutterLeathers",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "herald-gutterLeathersBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "gutterLeathers",
+            "rightGroup": "bow",
+            "leftGroup": "empty",
+            "setId": "rogue-gutterLeathersBow"
+          },
+          {
+            "classId": "rogue",
+            "armourId": "gutterLeathers",
+            "rightGroup": "empty",
+            "leftGroup": "bow",
+            "setId": "rogue-gutterLeathersBow"
           }
         ],
         "sets": {
@@ -33723,6 +34333,11526 @@ export const uiConfig = deepFreeze({
                 }
               }
             }
+          },
+          "reaverBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver/STANCE-READY.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 145,
+                  "x1": 523,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver/ATK-01.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 152,
+                  "x1": 531,
+                  "y1": 615
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver/ATK-02.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 150,
+                  "x1": 533,
+                  "y1": 618
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver/ATK-03.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 154,
+                  "x1": 558,
+                  "y1": 610
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver/ATK-04.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 138,
+                  "x1": 511,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver/ATK-05.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 128,
+                  "x1": 575,
+                  "y1": 613
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver/ATK-06.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 128,
+                  "x1": 519,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver/ATK-07.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 138,
+                  "x1": 514,
+                  "y1": 610
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver/DEFEND.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 159,
+                  "x1": 517,
+                  "y1": 619
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver/HURT.webp",
+                "box": {
+                  "x0": 54,
+                  "y0": 150,
+                  "x1": 521,
+                  "y1": 609
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver/CAST.webp",
+                "box": {
+                  "x0": 54,
+                  "y0": 135,
+                  "x1": 577,
+                  "y1": 619
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver/BUFF.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 126,
+                  "x1": 465,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 216,
+                  "x1": 540,
+                  "y1": 605
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 179,
+                  "x1": 525,
+                  "y1": 615
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 96,
+                  "x1": 609,
+                  "y1": 621
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver/CONVERSATION.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 112,
+                  "x1": 441,
+                  "y1": 604
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/reaver/STANCE-READY.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 60,
+                  "x1": 480,
+                  "y1": 608
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/reaver/ATK-01.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 61,
+                  "x1": 481,
+                  "y1": 607
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/reaver/ATK-02.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 61,
+                  "x1": 555,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/reaver/ATK-03.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 61,
+                  "x1": 509,
+                  "y1": 610
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/reaver/ATK-04.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 78,
+                  "x1": 575,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/reaver/ATK-05.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 68,
+                  "x1": 557,
+                  "y1": 607
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/reaver/ATK-06.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 74,
+                  "x1": 553,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/reaver/ATK-07.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 78,
+                  "x1": 508,
+                  "y1": 608
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/reaver/DEFEND.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 89,
+                  "x1": 508,
+                  "y1": 615
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/reaver/HURT.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 90,
+                  "x1": 503,
+                  "y1": 617
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/reaver/CAST.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 70,
+                  "x1": 499,
+                  "y1": 613
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/reaver/BUFF.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 79,
+                  "x1": 484,
+                  "y1": 614
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 80,
+                  "x1": 535,
+                  "y1": 618
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 98,
+                  "x1": 524,
+                  "y1": 618
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/reaver/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 56,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/reaver/CONVERSATION.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 72,
+                  "x1": 508,
+                  "y1": 617
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/reaver/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/reaver/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/reaver/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/reaver/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/reaver/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/reaver/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/reaver/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "reaver-vigilBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver-vigil/STANCE-READY.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 155,
+                  "x1": 510,
+                  "y1": 607
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver-vigil/ATK-01.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 156,
+                  "x1": 514,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver-vigil/ATK-02.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 159,
+                  "x1": 541,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver-vigil/ATK-03.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 158,
+                  "x1": 551,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver-vigil/ATK-04.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 149,
+                  "x1": 513,
+                  "y1": 611
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver-vigil/ATK-05.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 148,
+                  "x1": 561,
+                  "y1": 607
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver-vigil/ATK-06.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 141,
+                  "x1": 523,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver-vigil/ATK-07.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 151,
+                  "x1": 508,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver-vigil/DEFEND.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 165,
+                  "x1": 514,
+                  "y1": 609
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver-vigil/HURT.webp",
+                "box": {
+                  "x0": 55,
+                  "y0": 151,
+                  "x1": 521,
+                  "y1": 611
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver-vigil/CAST.webp",
+                "box": {
+                  "x0": 52,
+                  "y0": 140,
+                  "x1": 573,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver-vigil/BUFF.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 132,
+                  "x1": 469,
+                  "y1": 610
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver-vigil/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 219,
+                  "x1": 530,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver-vigil/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 192,
+                  "x1": 509,
+                  "y1": 609
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver-vigil/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 111,
+                  "x1": 608,
+                  "y1": 617
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver-vigil/CONVERSATION.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 118,
+                  "x1": 453,
+                  "y1": 608
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/STANCE-READY.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 69,
+                  "x1": 478,
+                  "y1": 618
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/ATK-01.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 66,
+                  "x1": 479,
+                  "y1": 610
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/ATK-02.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 79,
+                  "x1": 544,
+                  "y1": 619
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/ATK-03.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 69,
+                  "x1": 493,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/ATK-04.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 75,
+                  "x1": 564,
+                  "y1": 601
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/ATK-05.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 78,
+                  "x1": 555,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/ATK-06.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 78,
+                  "x1": 529,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/ATK-07.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 78,
+                  "x1": 480,
+                  "y1": 607
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/DEFEND.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 79,
+                  "x1": 511,
+                  "y1": 613
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/HURT.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 98,
+                  "x1": 495,
+                  "y1": 609
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/CAST.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 82,
+                  "x1": 495,
+                  "y1": 609
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/BUFF.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 78,
+                  "x1": 480,
+                  "y1": 615
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 95,
+                  "x1": 543,
+                  "y1": 614
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 94,
+                  "x1": 521,
+                  "y1": 614
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 66,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/reaver-vigil/CONVERSATION.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 82,
+                  "x1": 493,
+                  "y1": 613
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/reaver-vigil/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/reaver-vigil/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/reaver-vigil/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/reaver-vigil/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/reaver-vigil/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/reaver-vigil/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/reaver-vigil/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "reaver-oathswornBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/STANCE-READY.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 138,
+                  "x1": 520,
+                  "y1": 619
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/ATK-01.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 145,
+                  "x1": 533,
+                  "y1": 604
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/ATK-02.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 146,
+                  "x1": 543,
+                  "y1": 605
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/ATK-03.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 134,
+                  "x1": 565,
+                  "y1": 609
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/ATK-04.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 135,
+                  "x1": 528,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/ATK-05.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 126,
+                  "x1": 585,
+                  "y1": 608
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/ATK-06.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 141,
+                  "x1": 519,
+                  "y1": 613
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/ATK-07.webp",
+                "box": {
+                  "x0": 69,
+                  "y0": 141,
+                  "x1": 528,
+                  "y1": 613
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/DEFEND.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 148,
+                  "x1": 524,
+                  "y1": 619
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/HURT.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 151,
+                  "x1": 525,
+                  "y1": 613
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/CAST.webp",
+                "box": {
+                  "x0": 58,
+                  "y0": 130,
+                  "x1": 567,
+                  "y1": 613
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/BUFF.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 118,
+                  "x1": 485,
+                  "y1": 619
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 195,
+                  "x1": 547,
+                  "y1": 609
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 180,
+                  "x1": 527,
+                  "y1": 613
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 122,
+                  "x1": 609,
+                  "y1": 617
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver-oathsworn/CONVERSATION.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 115,
+                  "x1": 479,
+                  "y1": 618
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/STANCE-READY.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 61,
+                  "x1": 471,
+                  "y1": 610
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/ATK-01.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 78,
+                  "x1": 475,
+                  "y1": 607
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/ATK-02.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 88,
+                  "x1": 545,
+                  "y1": 608
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/ATK-03.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 89,
+                  "x1": 491,
+                  "y1": 610
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/ATK-04.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 75,
+                  "x1": 543,
+                  "y1": 608
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/ATK-05.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 79,
+                  "x1": 535,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/ATK-06.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 78,
+                  "x1": 540,
+                  "y1": 618
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/ATK-07.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 79,
+                  "x1": 484,
+                  "y1": 619
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/DEFEND.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 69,
+                  "x1": 511,
+                  "y1": 617
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/HURT.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 78,
+                  "x1": 529,
+                  "y1": 613
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/CAST.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 70,
+                  "x1": 497,
+                  "y1": 618
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/BUFF.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 69,
+                  "x1": 477,
+                  "y1": 617
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 98,
+                  "x1": 539,
+                  "y1": 603
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 100,
+                  "x1": 513,
+                  "y1": 601
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 121,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/reaver-oathsworn/CONVERSATION.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 92,
+                  "x1": 479,
+                  "y1": 619
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/reaver-oathsworn/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/reaver-oathsworn/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/reaver-oathsworn/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/reaver-oathsworn/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/reaver-oathsworn/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/reaver-oathsworn/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/reaver-oathsworn/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "reaver-wardenBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver-warden/STANCE-READY.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 159,
+                  "x1": 503,
+                  "y1": 610
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver-warden/ATK-01.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 164,
+                  "x1": 518,
+                  "y1": 615
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver-warden/ATK-02.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 161,
+                  "x1": 530,
+                  "y1": 609
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver-warden/ATK-03.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 162,
+                  "x1": 550,
+                  "y1": 615
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver-warden/ATK-04.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 151,
+                  "x1": 505,
+                  "y1": 603
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver-warden/ATK-05.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 151,
+                  "x1": 567,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver-warden/ATK-06.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 152,
+                  "x1": 513,
+                  "y1": 604
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver-warden/ATK-07.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 151,
+                  "x1": 509,
+                  "y1": 603
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver-warden/DEFEND.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 169,
+                  "x1": 515,
+                  "y1": 608
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver-warden/HURT.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 159,
+                  "x1": 520,
+                  "y1": 610
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver-warden/CAST.webp",
+                "box": {
+                  "x0": 50,
+                  "y0": 150,
+                  "x1": 559,
+                  "y1": 611
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver-warden/BUFF.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 136,
+                  "x1": 470,
+                  "y1": 614
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver-warden/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 221,
+                  "x1": 539,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver-warden/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 189,
+                  "x1": 508,
+                  "y1": 609
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver-warden/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 105,
+                  "x1": 609,
+                  "y1": 620
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver-warden/CONVERSATION.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 124,
+                  "x1": 447,
+                  "y1": 619
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/STANCE-READY.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 74,
+                  "x1": 475,
+                  "y1": 615
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/ATK-01.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 72,
+                  "x1": 473,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/ATK-02.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 74,
+                  "x1": 548,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/ATK-03.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 74,
+                  "x1": 505,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/ATK-04.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 65,
+                  "x1": 564,
+                  "y1": 601
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/ATK-05.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 65,
+                  "x1": 569,
+                  "y1": 607
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/ATK-06.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 65,
+                  "x1": 559,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/ATK-07.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 68,
+                  "x1": 497,
+                  "y1": 603
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/DEFEND.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 71,
+                  "x1": 527,
+                  "y1": 617
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/HURT.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 71,
+                  "x1": 517,
+                  "y1": 613
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/CAST.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 68,
+                  "x1": 507,
+                  "y1": 617
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/BUFF.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 64,
+                  "x1": 488,
+                  "y1": 613
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 78,
+                  "x1": 554,
+                  "y1": 604
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 82,
+                  "x1": 511,
+                  "y1": 601
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 121,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/reaver-warden/CONVERSATION.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 74,
+                  "x1": 510,
+                  "y1": 601
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/reaver-warden/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/reaver-warden/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/reaver-warden/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/reaver-warden/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/reaver-warden/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/reaver-warden/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/reaver-warden/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "starseerBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer/STANCE-READY.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 136,
+                  "x1": 520,
+                  "y1": 603
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer/ATK-01.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 139,
+                  "x1": 521,
+                  "y1": 604
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer/ATK-02.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 139,
+                  "x1": 541,
+                  "y1": 605
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer/ATK-03.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 139,
+                  "x1": 557,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer/ATK-04.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 116,
+                  "x1": 518,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer/ATK-05.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 124,
+                  "x1": 580,
+                  "y1": 610
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer/ATK-06.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 129,
+                  "x1": 520,
+                  "y1": 610
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer/ATK-07.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 131,
+                  "x1": 514,
+                  "y1": 613
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer/DEFEND.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 145,
+                  "x1": 520,
+                  "y1": 619
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer/HURT.webp",
+                "box": {
+                  "x0": 62,
+                  "y0": 142,
+                  "x1": 510,
+                  "y1": 619
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer/CAST.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 128,
+                  "x1": 568,
+                  "y1": 608
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer/BUFF.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 124,
+                  "x1": 475,
+                  "y1": 609
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 192,
+                  "x1": 543,
+                  "y1": 618
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 180,
+                  "x1": 513,
+                  "y1": 610
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer/PORTRAIT.webp",
+                "box": {
+                  "x0": 44,
+                  "y0": 96,
+                  "x1": 595,
+                  "y1": 621
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer/CONVERSATION.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 110,
+                  "x1": 460,
+                  "y1": 614
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/starseer/STANCE-READY.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 70,
+                  "x1": 451,
+                  "y1": 619
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/starseer/ATK-01.webp",
+                "box": {
+                  "x0": 149,
+                  "y0": 70,
+                  "x1": 457,
+                  "y1": 615
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/starseer/ATK-02.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 72,
+                  "x1": 543,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/starseer/ATK-03.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 70,
+                  "x1": 489,
+                  "y1": 615
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/starseer/ATK-04.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 78,
+                  "x1": 551,
+                  "y1": 608
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/starseer/ATK-05.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 75,
+                  "x1": 545,
+                  "y1": 605
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/starseer/ATK-06.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 75,
+                  "x1": 534,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/starseer/ATK-07.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 74,
+                  "x1": 473,
+                  "y1": 605
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/starseer/DEFEND.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 78,
+                  "x1": 508,
+                  "y1": 617
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/starseer/HURT.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 112,
+                  "x1": 493,
+                  "y1": 604
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/starseer/CAST.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 70,
+                  "x1": 475,
+                  "y1": 614
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/starseer/BUFF.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 72,
+                  "x1": 465,
+                  "y1": 617
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 88,
+                  "x1": 529,
+                  "y1": 611
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 84,
+                  "x1": 499,
+                  "y1": 614
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/starseer/PORTRAIT.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 50,
+                  "x1": 575,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/starseer/CONVERSATION.webp",
+                "box": {
+                  "x0": 158,
+                  "y0": 65,
+                  "x1": 470,
+                  "y1": 610
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/starseer/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/starseer/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/starseer/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/starseer/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/starseer/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/starseer/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/starseer/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "starseer-eclipseBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer-eclipse/STANCE-READY.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 124,
+                  "x1": 524,
+                  "y1": 603
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer-eclipse/ATK-01.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 129,
+                  "x1": 531,
+                  "y1": 601
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer-eclipse/ATK-02.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 121,
+                  "x1": 527,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer-eclipse/ATK-03.webp",
+                "box": {
+                  "x0": 68,
+                  "y0": 115,
+                  "x1": 551,
+                  "y1": 615
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer-eclipse/ATK-04.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 111,
+                  "x1": 519,
+                  "y1": 611
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer-eclipse/ATK-05.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 115,
+                  "x1": 575,
+                  "y1": 619
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer-eclipse/ATK-06.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 131,
+                  "x1": 533,
+                  "y1": 609
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer-eclipse/ATK-07.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 116,
+                  "x1": 515,
+                  "y1": 609
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer-eclipse/DEFEND.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 132,
+                  "x1": 521,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer-eclipse/HURT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 132,
+                  "x1": 519,
+                  "y1": 610
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer-eclipse/CAST.webp",
+                "box": {
+                  "x0": 46,
+                  "y0": 111,
+                  "x1": 555,
+                  "y1": 614
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer-eclipse/BUFF.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 120,
+                  "x1": 471,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer-eclipse/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 65,
+                  "y0": 180,
+                  "x1": 535,
+                  "y1": 608
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer-eclipse/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 68,
+                  "y0": 164,
+                  "x1": 521,
+                  "y1": 618
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer-eclipse/PORTRAIT.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 70,
+                  "x1": 609,
+                  "y1": 605
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer-eclipse/CONVERSATION.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 118,
+                  "x1": 450,
+                  "y1": 614
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/STANCE-READY.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 70,
+                  "x1": 474,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/ATK-01.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 70,
+                  "x1": 467,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/ATK-02.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 69,
+                  "x1": 537,
+                  "y1": 617
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/ATK-03.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 69,
+                  "x1": 488,
+                  "y1": 618
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/ATK-04.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 68,
+                  "x1": 561,
+                  "y1": 605
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/ATK-05.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 74,
+                  "x1": 544,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/ATK-06.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 78,
+                  "x1": 530,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/ATK-07.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 72,
+                  "x1": 487,
+                  "y1": 604
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/DEFEND.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 74,
+                  "x1": 508,
+                  "y1": 618
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/HURT.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 94,
+                  "x1": 493,
+                  "y1": 610
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/CAST.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 70,
+                  "x1": 489,
+                  "y1": 618
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/BUFF.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 72,
+                  "x1": 480,
+                  "y1": 620
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 88,
+                  "x1": 547,
+                  "y1": 609
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 82,
+                  "x1": 505,
+                  "y1": 613
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/PORTRAIT.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 50,
+                  "x1": 568,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/starseer-eclipse/CONVERSATION.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 72,
+                  "x1": 489,
+                  "y1": 611
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/starseer-eclipse/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/starseer-eclipse/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/starseer-eclipse/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/starseer-eclipse/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/starseer-eclipse/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/starseer-eclipse/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/starseer-eclipse/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "starseer-starlitBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer-starlit/STANCE-READY.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 142,
+                  "x1": 520,
+                  "y1": 607
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer-starlit/ATK-01.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 148,
+                  "x1": 527,
+                  "y1": 603
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer-starlit/ATK-02.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 151,
+                  "x1": 525,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer-starlit/ATK-03.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 150,
+                  "x1": 537,
+                  "y1": 618
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer-starlit/ATK-04.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 128,
+                  "x1": 520,
+                  "y1": 615
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer-starlit/ATK-05.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 128,
+                  "x1": 558,
+                  "y1": 608
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer-starlit/ATK-06.webp",
+                "box": {
+                  "x0": 61,
+                  "y0": 151,
+                  "x1": 520,
+                  "y1": 617
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer-starlit/ATK-07.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 146,
+                  "x1": 518,
+                  "y1": 607
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer-starlit/DEFEND.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 159,
+                  "x1": 533,
+                  "y1": 618
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer-starlit/HURT.webp",
+                "box": {
+                  "x0": 61,
+                  "y0": 156,
+                  "x1": 514,
+                  "y1": 619
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer-starlit/CAST.webp",
+                "box": {
+                  "x0": 55,
+                  "y0": 145,
+                  "x1": 563,
+                  "y1": 611
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer-starlit/BUFF.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 125,
+                  "x1": 489,
+                  "y1": 617
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer-starlit/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 196,
+                  "x1": 533,
+                  "y1": 611
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer-starlit/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 196,
+                  "x1": 537,
+                  "y1": 613
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer-starlit/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 84,
+                  "x1": 598,
+                  "y1": 621
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer-starlit/CONVERSATION.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 135,
+                  "x1": 471,
+                  "y1": 617
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/STANCE-READY.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 70,
+                  "x1": 477,
+                  "y1": 618
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/ATK-01.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 70,
+                  "x1": 485,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/ATK-02.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 70,
+                  "x1": 540,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/ATK-03.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 70,
+                  "x1": 499,
+                  "y1": 619
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/ATK-04.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 70,
+                  "x1": 568,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/ATK-05.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 75,
+                  "x1": 563,
+                  "y1": 605
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/ATK-06.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 71,
+                  "x1": 543,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/ATK-07.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 78,
+                  "x1": 487,
+                  "y1": 617
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/DEFEND.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 70,
+                  "x1": 515,
+                  "y1": 614
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/HURT.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 99,
+                  "x1": 485,
+                  "y1": 615
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/CAST.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 70,
+                  "x1": 500,
+                  "y1": 614
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/BUFF.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 71,
+                  "x1": 490,
+                  "y1": 619
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 82,
+                  "x1": 538,
+                  "y1": 608
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 85,
+                  "x1": 524,
+                  "y1": 609
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 72,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/starseer-starlit/CONVERSATION.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 84,
+                  "x1": 487,
+                  "y1": 609
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/starseer-starlit/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/starseer-starlit/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/starseer-starlit/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/starseer-starlit/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/starseer-starlit/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/starseer-starlit/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/starseer-starlit/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "starseer-astralBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer-astral/STANCE-READY.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 132,
+                  "x1": 517,
+                  "y1": 615
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer-astral/ATK-01.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 131,
+                  "x1": 530,
+                  "y1": 619
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer-astral/ATK-02.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 132,
+                  "x1": 529,
+                  "y1": 619
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer-astral/ATK-03.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 130,
+                  "x1": 553,
+                  "y1": 608
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer-astral/ATK-04.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 114,
+                  "x1": 524,
+                  "y1": 601
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer-astral/ATK-05.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 129,
+                  "x1": 577,
+                  "y1": 611
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer-astral/ATK-06.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 126,
+                  "x1": 528,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer-astral/ATK-07.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 122,
+                  "x1": 527,
+                  "y1": 605
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer-astral/DEFEND.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 130,
+                  "x1": 519,
+                  "y1": 609
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer-astral/HURT.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 136,
+                  "x1": 521,
+                  "y1": 603
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer-astral/CAST.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 125,
+                  "x1": 577,
+                  "y1": 618
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer-astral/BUFF.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 109,
+                  "x1": 470,
+                  "y1": 617
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer-astral/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 182,
+                  "x1": 535,
+                  "y1": 614
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer-astral/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 160,
+                  "x1": 511,
+                  "y1": 607
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer-astral/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 91,
+                  "x1": 594,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer-astral/CONVERSATION.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 111,
+                  "x1": 469,
+                  "y1": 618
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/STANCE-READY.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 70,
+                  "x1": 470,
+                  "y1": 619
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/ATK-01.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 70,
+                  "x1": 480,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/ATK-02.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 70,
+                  "x1": 554,
+                  "y1": 615
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/ATK-03.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 70,
+                  "x1": 510,
+                  "y1": 619
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/ATK-04.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 59,
+                  "x1": 560,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/ATK-05.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 75,
+                  "x1": 565,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/ATK-06.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 61,
+                  "x1": 540,
+                  "y1": 601
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/ATK-07.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 74,
+                  "x1": 493,
+                  "y1": 603
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/DEFEND.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 75,
+                  "x1": 514,
+                  "y1": 614
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/HURT.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 106,
+                  "x1": 519,
+                  "y1": 608
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/CAST.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 75,
+                  "x1": 500,
+                  "y1": 615
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/BUFF.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 70,
+                  "x1": 488,
+                  "y1": 619
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 80,
+                  "x1": 554,
+                  "y1": 607
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 85,
+                  "x1": 530,
+                  "y1": 611
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/PORTRAIT.webp",
+                "box": {
+                  "x0": 51,
+                  "y0": 50,
+                  "x1": 588,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/starseer-astral/CONVERSATION.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 69,
+                  "x1": 495,
+                  "y1": 613
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/starseer-astral/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/starseer-astral/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/starseer-astral/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/starseer-astral/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/starseer-astral/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/starseer-astral/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/starseer-astral/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "heraldBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald/STANCE-READY.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 155,
+                  "x1": 513,
+                  "y1": 613
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald/ATK-01.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 152,
+                  "x1": 514,
+                  "y1": 610
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald/ATK-02.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 155,
+                  "x1": 543,
+                  "y1": 613
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald/ATK-03.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 155,
+                  "x1": 554,
+                  "y1": 613
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald/ATK-04.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 140,
+                  "x1": 514,
+                  "y1": 604
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald/ATK-05.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 139,
+                  "x1": 575,
+                  "y1": 607
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald/ATK-06.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 139,
+                  "x1": 525,
+                  "y1": 604
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald/ATK-07.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 135,
+                  "x1": 519,
+                  "y1": 603
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald/DEFEND.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 160,
+                  "x1": 519,
+                  "y1": 614
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald/HURT.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 145,
+                  "x1": 514,
+                  "y1": 609
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald/CAST.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 135,
+                  "x1": 585,
+                  "y1": 615
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald/BUFF.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 129,
+                  "x1": 485,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 188,
+                  "x1": 535,
+                  "y1": 605
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 174,
+                  "x1": 514,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald/PORTRAIT.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 64,
+                  "x1": 609,
+                  "y1": 618
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald/CONVERSATION.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 110,
+                  "x1": 445,
+                  "y1": 608
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/herald/STANCE-READY.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 64,
+                  "x1": 460,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/herald/ATK-01.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 64,
+                  "x1": 455,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/herald/ATK-02.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 64,
+                  "x1": 539,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/herald/ATK-03.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 64,
+                  "x1": 473,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/herald/ATK-04.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 74,
+                  "x1": 540,
+                  "y1": 605
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/herald/ATK-05.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 79,
+                  "x1": 529,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/herald/ATK-06.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 72,
+                  "x1": 533,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/herald/ATK-07.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 72,
+                  "x1": 467,
+                  "y1": 603
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/herald/DEFEND.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 74,
+                  "x1": 508,
+                  "y1": 608
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/herald/HURT.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 96,
+                  "x1": 490,
+                  "y1": 604
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/herald/CAST.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 74,
+                  "x1": 475,
+                  "y1": 608
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/herald/BUFF.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 70,
+                  "x1": 473,
+                  "y1": 614
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/herald/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 96,
+                  "x1": 534,
+                  "y1": 603
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/herald/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 82,
+                  "x1": 488,
+                  "y1": 603
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/herald/PORTRAIT.webp",
+                "box": {
+                  "x0": 65,
+                  "y0": 50,
+                  "x1": 573,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/herald/CONVERSATION.webp",
+                "box": {
+                  "x0": 158,
+                  "y0": 81,
+                  "x1": 478,
+                  "y1": 618
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/herald/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/herald/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/herald/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/herald/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/herald/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/herald/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/herald/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "herald-ossuaryBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald-ossuary/STANCE-READY.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 128,
+                  "x1": 519,
+                  "y1": 607
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald-ossuary/ATK-01.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 124,
+                  "x1": 521,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald-ossuary/ATK-02.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 129,
+                  "x1": 533,
+                  "y1": 605
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald-ossuary/ATK-03.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 131,
+                  "x1": 565,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald-ossuary/ATK-04.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 114,
+                  "x1": 517,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald-ossuary/ATK-05.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 126,
+                  "x1": 547,
+                  "y1": 614
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald-ossuary/ATK-06.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 120,
+                  "x1": 534,
+                  "y1": 613
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald-ossuary/ATK-07.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 112,
+                  "x1": 523,
+                  "y1": 613
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald-ossuary/DEFEND.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 132,
+                  "x1": 520,
+                  "y1": 619
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald-ossuary/HURT.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 125,
+                  "x1": 513,
+                  "y1": 608
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald-ossuary/CAST.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 115,
+                  "x1": 578,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald-ossuary/BUFF.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 106,
+                  "x1": 467,
+                  "y1": 609
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald-ossuary/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 185,
+                  "x1": 535,
+                  "y1": 618
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald-ossuary/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 156,
+                  "x1": 517,
+                  "y1": 605
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald-ossuary/PORTRAIT.webp",
+                "box": {
+                  "x0": 31,
+                  "y0": 62,
+                  "x1": 609,
+                  "y1": 607
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald-ossuary/CONVERSATION.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 111,
+                  "x1": 445,
+                  "y1": 611
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/STANCE-READY.webp",
+                "box": {
+                  "x0": 152,
+                  "y0": 74,
+                  "x1": 491,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/ATK-01.webp",
+                "box": {
+                  "x0": 155,
+                  "y0": 74,
+                  "x1": 490,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/ATK-02.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 74,
+                  "x1": 557,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/ATK-03.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 75,
+                  "x1": 489,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/ATK-04.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 70,
+                  "x1": 550,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/ATK-05.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 69,
+                  "x1": 554,
+                  "y1": 607
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/ATK-06.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 69,
+                  "x1": 540,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/ATK-07.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 71,
+                  "x1": 497,
+                  "y1": 604
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/DEFEND.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 80,
+                  "x1": 533,
+                  "y1": 604
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/HURT.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 108,
+                  "x1": 501,
+                  "y1": 608
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/CAST.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 80,
+                  "x1": 503,
+                  "y1": 618
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/BUFF.webp",
+                "box": {
+                  "x0": 152,
+                  "y0": 80,
+                  "x1": 494,
+                  "y1": 608
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 80,
+                  "x1": 549,
+                  "y1": 618
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 79,
+                  "x1": 519,
+                  "y1": 618
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 58,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/herald-ossuary/CONVERSATION.webp",
+                "box": {
+                  "x0": 151,
+                  "y0": 66,
+                  "x1": 487,
+                  "y1": 615
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/herald-ossuary/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/herald-ossuary/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/herald-ossuary/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/herald-ossuary/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/herald-ossuary/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/herald-ossuary/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/herald-ossuary/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "herald-emberhabitBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald-emberhabit/STANCE-READY.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 126,
+                  "x1": 521,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald-emberhabit/ATK-01.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 135,
+                  "x1": 524,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald-emberhabit/ATK-02.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 140,
+                  "x1": 543,
+                  "y1": 608
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald-emberhabit/ATK-03.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 135,
+                  "x1": 547,
+                  "y1": 608
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald-emberhabit/ATK-04.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 131,
+                  "x1": 513,
+                  "y1": 608
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald-emberhabit/ATK-05.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 131,
+                  "x1": 564,
+                  "y1": 615
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald-emberhabit/ATK-06.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 131,
+                  "x1": 513,
+                  "y1": 604
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald-emberhabit/ATK-07.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 116,
+                  "x1": 518,
+                  "y1": 614
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald-emberhabit/DEFEND.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 124,
+                  "x1": 509,
+                  "y1": 619
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald-emberhabit/HURT.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 155,
+                  "x1": 521,
+                  "y1": 609
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald-emberhabit/CAST.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 121,
+                  "x1": 580,
+                  "y1": 613
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald-emberhabit/BUFF.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 101,
+                  "x1": 464,
+                  "y1": 619
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald-emberhabit/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 176,
+                  "x1": 524,
+                  "y1": 618
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald-emberhabit/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 189,
+                  "x1": 510,
+                  "y1": 618
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald-emberhabit/PORTRAIT.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 81,
+                  "x1": 608,
+                  "y1": 605
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald-emberhabit/CONVERSATION.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 120,
+                  "x1": 438,
+                  "y1": 608
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/STANCE-READY.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 68,
+                  "x1": 481,
+                  "y1": 615
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/ATK-01.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 68,
+                  "x1": 487,
+                  "y1": 610
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/ATK-02.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 69,
+                  "x1": 535,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/ATK-03.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 65,
+                  "x1": 487,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/ATK-04.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 61,
+                  "x1": 530,
+                  "y1": 601
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/ATK-05.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 69,
+                  "x1": 544,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/ATK-06.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 54,
+                  "x1": 534,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/ATK-07.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 64,
+                  "x1": 481,
+                  "y1": 603
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/DEFEND.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 72,
+                  "x1": 520,
+                  "y1": 608
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/HURT.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 106,
+                  "x1": 498,
+                  "y1": 604
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/CAST.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 69,
+                  "x1": 493,
+                  "y1": 611
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/BUFF.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 61,
+                  "x1": 481,
+                  "y1": 607
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 70,
+                  "x1": 521,
+                  "y1": 610
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 70,
+                  "x1": 510,
+                  "y1": 610
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 59,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/herald-emberhabit/CONVERSATION.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 65,
+                  "x1": 484,
+                  "y1": 610
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/herald-emberhabit/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/herald-emberhabit/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/herald-emberhabit/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/herald-emberhabit/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/herald-emberhabit/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/herald-emberhabit/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/herald-emberhabit/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "herald-pilgrimBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald-pilgrim/STANCE-READY.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 144,
+                  "x1": 504,
+                  "y1": 614
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald-pilgrim/ATK-01.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 145,
+                  "x1": 513,
+                  "y1": 611
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald-pilgrim/ATK-02.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 142,
+                  "x1": 545,
+                  "y1": 614
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald-pilgrim/ATK-03.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 142,
+                  "x1": 545,
+                  "y1": 617
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald-pilgrim/ATK-04.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 140,
+                  "x1": 511,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald-pilgrim/ATK-05.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 139,
+                  "x1": 561,
+                  "y1": 608
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald-pilgrim/ATK-06.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 138,
+                  "x1": 511,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald-pilgrim/ATK-07.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 139,
+                  "x1": 513,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald-pilgrim/DEFEND.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 159,
+                  "x1": 515,
+                  "y1": 608
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald-pilgrim/HURT.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 135,
+                  "x1": 521,
+                  "y1": 608
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald-pilgrim/CAST.webp",
+                "box": {
+                  "x0": 68,
+                  "y0": 139,
+                  "x1": 565,
+                  "y1": 608
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald-pilgrim/BUFF.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 128,
+                  "x1": 497,
+                  "y1": 610
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald-pilgrim/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 65,
+                  "y0": 201,
+                  "x1": 524,
+                  "y1": 608
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald-pilgrim/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 198,
+                  "x1": 504,
+                  "y1": 607
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald-pilgrim/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 68,
+                  "x1": 604,
+                  "y1": 621
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald-pilgrim/CONVERSATION.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 109,
+                  "x1": 468,
+                  "y1": 609
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/STANCE-READY.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 81,
+                  "x1": 471,
+                  "y1": 615
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/ATK-01.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 81,
+                  "x1": 479,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/ATK-02.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 81,
+                  "x1": 523,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/ATK-03.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 81,
+                  "x1": 483,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/ATK-04.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 65,
+                  "x1": 549,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/ATK-05.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 61,
+                  "x1": 529,
+                  "y1": 605
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/ATK-06.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 65,
+                  "x1": 533,
+                  "y1": 605
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/ATK-07.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 66,
+                  "x1": 497,
+                  "y1": 605
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/DEFEND.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 65,
+                  "x1": 513,
+                  "y1": 613
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/HURT.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 61,
+                  "x1": 507,
+                  "y1": 607
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/CAST.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 66,
+                  "x1": 479,
+                  "y1": 607
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/BUFF.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 66,
+                  "x1": 481,
+                  "y1": 615
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 79,
+                  "x1": 541,
+                  "y1": 614
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 80,
+                  "x1": 523,
+                  "y1": 615
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/PORTRAIT.webp",
+                "box": {
+                  "x0": 56,
+                  "y0": 50,
+                  "x1": 583,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/herald-pilgrim/CONVERSATION.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 66,
+                  "x1": 483,
+                  "y1": 614
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/herald-pilgrim/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/herald-pilgrim/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/herald-pilgrim/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/herald-pilgrim/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/herald-pilgrim/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/herald-pilgrim/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/herald-pilgrim/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "rogueBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue/STANCE-READY.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 138,
+                  "x1": 513,
+                  "y1": 603
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue/ATK-01.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 139,
+                  "x1": 525,
+                  "y1": 604
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue/ATK-02.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 141,
+                  "x1": 541,
+                  "y1": 604
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue/ATK-03.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 144,
+                  "x1": 559,
+                  "y1": 610
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue/ATK-04.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 129,
+                  "x1": 514,
+                  "y1": 610
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue/ATK-05.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 139,
+                  "x1": 555,
+                  "y1": 619
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue/ATK-06.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 135,
+                  "x1": 519,
+                  "y1": 610
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue/ATK-07.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 144,
+                  "x1": 517,
+                  "y1": 610
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue/DEFEND.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 150,
+                  "x1": 515,
+                  "y1": 610
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue/HURT.webp",
+                "box": {
+                  "x0": 54,
+                  "y0": 139,
+                  "x1": 518,
+                  "y1": 613
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue/CAST.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 138,
+                  "x1": 570,
+                  "y1": 609
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue/BUFF.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 125,
+                  "x1": 477,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 199,
+                  "x1": 540,
+                  "y1": 613
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 178,
+                  "x1": 518,
+                  "y1": 605
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue/PORTRAIT.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 100,
+                  "x1": 609,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue/CONVERSATION.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 114,
+                  "x1": 461,
+                  "y1": 614
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/rogue/STANCE-READY.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 59,
+                  "x1": 477,
+                  "y1": 608
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/rogue/ATK-01.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 56,
+                  "x1": 478,
+                  "y1": 601
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/rogue/ATK-02.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 59,
+                  "x1": 560,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/rogue/ATK-03.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 56,
+                  "x1": 500,
+                  "y1": 601
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/rogue/ATK-04.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 69,
+                  "x1": 563,
+                  "y1": 607
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/rogue/ATK-05.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 66,
+                  "x1": 554,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/rogue/ATK-06.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 66,
+                  "x1": 519,
+                  "y1": 610
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/rogue/ATK-07.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 66,
+                  "x1": 479,
+                  "y1": 614
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/rogue/DEFEND.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 70,
+                  "x1": 543,
+                  "y1": 608
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/rogue/HURT.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 94,
+                  "x1": 497,
+                  "y1": 610
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/rogue/CAST.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 80,
+                  "x1": 488,
+                  "y1": 604
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/rogue/BUFF.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 74,
+                  "x1": 485,
+                  "y1": 604
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 126,
+                  "x1": 587,
+                  "y1": 618
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 100,
+                  "x1": 524,
+                  "y1": 615
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/rogue/PORTRAIT.webp",
+                "box": {
+                  "x0": 55,
+                  "y0": 50,
+                  "x1": 584,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/rogue/CONVERSATION.webp",
+                "box": {
+                  "x0": 166,
+                  "y0": 92,
+                  "x1": 483,
+                  "y1": 617
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/rogue/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/rogue/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/rogue/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/rogue/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/rogue/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/rogue/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/rogue/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "rogue-nightveilBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue-nightveil/STANCE-READY.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 141,
+                  "x1": 523,
+                  "y1": 605
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue-nightveil/ATK-01.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 146,
+                  "x1": 527,
+                  "y1": 604
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue-nightveil/ATK-02.webp",
+                "box": {
+                  "x0": 69,
+                  "y0": 148,
+                  "x1": 524,
+                  "y1": 603
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue-nightveil/ATK-03.webp",
+                "box": {
+                  "x0": 69,
+                  "y0": 145,
+                  "x1": 561,
+                  "y1": 603
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue-nightveil/ATK-04.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 128,
+                  "x1": 521,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue-nightveil/ATK-05.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 131,
+                  "x1": 569,
+                  "y1": 611
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue-nightveil/ATK-06.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 142,
+                  "x1": 521,
+                  "y1": 611
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue-nightveil/ATK-07.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 145,
+                  "x1": 519,
+                  "y1": 614
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue-nightveil/DEFEND.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 166,
+                  "x1": 527,
+                  "y1": 615
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue-nightveil/HURT.webp",
+                "box": {
+                  "x0": 50,
+                  "y0": 150,
+                  "x1": 507,
+                  "y1": 605
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue-nightveil/CAST.webp",
+                "box": {
+                  "x0": 51,
+                  "y0": 148,
+                  "x1": 570,
+                  "y1": 603
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue-nightveil/BUFF.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 121,
+                  "x1": 468,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue-nightveil/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 214,
+                  "x1": 538,
+                  "y1": 613
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue-nightveil/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 196,
+                  "x1": 530,
+                  "y1": 614
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue-nightveil/PORTRAIT.webp",
+                "box": {
+                  "x0": 46,
+                  "y0": 112,
+                  "x1": 601,
+                  "y1": 609
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue-nightveil/CONVERSATION.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 128,
+                  "x1": 467,
+                  "y1": 607
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/STANCE-READY.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 59,
+                  "x1": 484,
+                  "y1": 607
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/ATK-01.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 68,
+                  "x1": 481,
+                  "y1": 607
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/ATK-02.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 78,
+                  "x1": 563,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/ATK-03.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 55,
+                  "x1": 491,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/ATK-04.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 72,
+                  "x1": 567,
+                  "y1": 607
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/ATK-05.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 78,
+                  "x1": 551,
+                  "y1": 618
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/ATK-06.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 82,
+                  "x1": 543,
+                  "y1": 617
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/ATK-07.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 84,
+                  "x1": 491,
+                  "y1": 613
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/DEFEND.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 78,
+                  "x1": 514,
+                  "y1": 614
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/HURT.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 92,
+                  "x1": 508,
+                  "y1": 614
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/CAST.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 75,
+                  "x1": 493,
+                  "y1": 614
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/BUFF.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 82,
+                  "x1": 475,
+                  "y1": 611
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 91,
+                  "x1": 557,
+                  "y1": 611
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 80,
+                  "x1": 528,
+                  "y1": 610
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 92,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/rogue-nightveil/CONVERSATION.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 80,
+                  "x1": 481,
+                  "y1": 611
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/rogue-nightveil/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/rogue-nightveil/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/rogue-nightveil/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/rogue-nightveil/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/rogue-nightveil/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/rogue-nightveil/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/rogue-nightveil/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "rogue-duelistBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue-duelist/STANCE-READY.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 139,
+                  "x1": 515,
+                  "y1": 607
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue-duelist/ATK-01.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 148,
+                  "x1": 523,
+                  "y1": 611
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue-duelist/ATK-02.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 152,
+                  "x1": 525,
+                  "y1": 619
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue-duelist/ATK-03.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 149,
+                  "x1": 563,
+                  "y1": 619
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue-duelist/ATK-04.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 122,
+                  "x1": 531,
+                  "y1": 620
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue-duelist/ATK-05.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 134,
+                  "x1": 580,
+                  "y1": 613
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue-duelist/ATK-06.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 138,
+                  "x1": 521,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue-duelist/ATK-07.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 142,
+                  "x1": 515,
+                  "y1": 614
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue-duelist/DEFEND.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 151,
+                  "x1": 523,
+                  "y1": 610
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue-duelist/HURT.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 135,
+                  "x1": 513,
+                  "y1": 609
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue-duelist/CAST.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 124,
+                  "x1": 565,
+                  "y1": 609
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue-duelist/BUFF.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 100,
+                  "x1": 470,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue-duelist/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 195,
+                  "x1": 538,
+                  "y1": 605
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue-duelist/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 166,
+                  "x1": 530,
+                  "y1": 603
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue-duelist/PORTRAIT.webp",
+                "box": {
+                  "x0": 42,
+                  "y0": 90,
+                  "x1": 609,
+                  "y1": 609
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue-duelist/CONVERSATION.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 104,
+                  "x1": 455,
+                  "y1": 610
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/STANCE-READY.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 68,
+                  "x1": 460,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/ATK-01.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 65,
+                  "x1": 467,
+                  "y1": 610
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/ATK-02.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 64,
+                  "x1": 553,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/ATK-03.webp",
+                "box": {
+                  "x0": 145,
+                  "y0": 65,
+                  "x1": 508,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/ATK-04.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 78,
+                  "x1": 560,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/ATK-05.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 80,
+                  "x1": 547,
+                  "y1": 601
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/ATK-06.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 79,
+                  "x1": 548,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/ATK-07.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 80,
+                  "x1": 485,
+                  "y1": 604
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/DEFEND.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 94,
+                  "x1": 509,
+                  "y1": 614
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/HURT.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 94,
+                  "x1": 500,
+                  "y1": 615
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/CAST.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 89,
+                  "x1": 501,
+                  "y1": 610
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/BUFF.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 82,
+                  "x1": 478,
+                  "y1": 613
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 91,
+                  "x1": 537,
+                  "y1": 617
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 99,
+                  "x1": 513,
+                  "y1": 615
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 59,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/rogue-duelist/CONVERSATION.webp",
+                "box": {
+                  "x0": 162,
+                  "y0": 91,
+                  "x1": 494,
+                  "y1": 617
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/rogue-duelist/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/rogue-duelist/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/rogue-duelist/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/rogue-duelist/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/rogue-duelist/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/rogue-duelist/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/rogue-duelist/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "rogue-shadowBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue-shadow/STANCE-READY.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 161,
+                  "x1": 513,
+                  "y1": 608
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue-shadow/ATK-01.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 160,
+                  "x1": 511,
+                  "y1": 607
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue-shadow/ATK-02.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 164,
+                  "x1": 550,
+                  "y1": 615
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue-shadow/ATK-03.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 148,
+                  "x1": 548,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue-shadow/ATK-04.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 142,
+                  "x1": 509,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue-shadow/ATK-05.webp",
+                "box": {
+                  "x0": 65,
+                  "y0": 144,
+                  "x1": 574,
+                  "y1": 613
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue-shadow/ATK-06.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 159,
+                  "x1": 518,
+                  "y1": 609
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue-shadow/ATK-07.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 158,
+                  "x1": 504,
+                  "y1": 610
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue-shadow/DEFEND.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 168,
+                  "x1": 513,
+                  "y1": 618
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue-shadow/HURT.webp",
+                "box": {
+                  "x0": 56,
+                  "y0": 148,
+                  "x1": 514,
+                  "y1": 608
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue-shadow/CAST.webp",
+                "box": {
+                  "x0": 55,
+                  "y0": 154,
+                  "x1": 561,
+                  "y1": 611
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue-shadow/BUFF.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 131,
+                  "x1": 470,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue-shadow/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 216,
+                  "x1": 531,
+                  "y1": 618
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue-shadow/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 208,
+                  "x1": 505,
+                  "y1": 607
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue-shadow/PORTRAIT.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 98,
+                  "x1": 609,
+                  "y1": 605
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue-shadow/CONVERSATION.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 129,
+                  "x1": 444,
+                  "y1": 603
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/STANCE-READY.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 69,
+                  "x1": 484,
+                  "y1": 617
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/ATK-01.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 70,
+                  "x1": 503,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/ATK-02.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 69,
+                  "x1": 557,
+                  "y1": 617
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/ATK-03.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 70,
+                  "x1": 495,
+                  "y1": 619
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/ATK-04.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 60,
+                  "x1": 561,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/ATK-05.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 69,
+                  "x1": 559,
+                  "y1": 607
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/ATK-06.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 65,
+                  "x1": 550,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/ATK-07.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 70,
+                  "x1": 503,
+                  "y1": 604
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/DEFEND.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 75,
+                  "x1": 531,
+                  "y1": 607
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/HURT.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 80,
+                  "x1": 499,
+                  "y1": 611
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/CAST.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 78,
+                  "x1": 513,
+                  "y1": 604
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/BUFF.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 79,
+                  "x1": 504,
+                  "y1": 614
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 85,
+                  "x1": 540,
+                  "y1": 601
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 82,
+                  "x1": 520,
+                  "y1": 607
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 112,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/rogue-shadow/CONVERSATION.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 84,
+                  "x1": 495,
+                  "y1": 605
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/rogue-shadow/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/rogue-shadow/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/rogue-shadow/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/rogue-shadow/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/rogue-shadow/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/rogue-shadow/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/rogue-shadow/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "reaver-wayfarerPlateBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 148,
+                  "x1": 524,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 152,
+                  "x1": 520,
+                  "y1": 608
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 151,
+                  "x1": 534,
+                  "y1": 604
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 152,
+                  "x1": 554,
+                  "y1": 604
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 141,
+                  "x1": 515,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 144,
+                  "x1": 581,
+                  "y1": 614
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 142,
+                  "x1": 517,
+                  "y1": 611
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 142,
+                  "x1": 509,
+                  "y1": 611
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 166,
+                  "x1": 515,
+                  "y1": 619
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 65,
+                  "y0": 155,
+                  "x1": 519,
+                  "y1": 611
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 138,
+                  "x1": 579,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 132,
+                  "x1": 477,
+                  "y1": 611
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 199,
+                  "x1": 537,
+                  "y1": 611
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 179,
+                  "x1": 513,
+                  "y1": 611
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 104,
+                  "x1": 605,
+                  "y1": 617
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 118,
+                  "x1": 457,
+                  "y1": 605
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 61,
+                  "x1": 485,
+                  "y1": 607
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 61,
+                  "x1": 481,
+                  "y1": 605
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 60,
+                  "x1": 544,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 61,
+                  "x1": 484,
+                  "y1": 607
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 75,
+                  "x1": 540,
+                  "y1": 608
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 79,
+                  "x1": 547,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 78,
+                  "x1": 524,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 75,
+                  "x1": 493,
+                  "y1": 604
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 80,
+                  "x1": 509,
+                  "y1": 614
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 94,
+                  "x1": 504,
+                  "y1": 613
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 72,
+                  "x1": 483,
+                  "y1": 613
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 72,
+                  "x1": 485,
+                  "y1": 613
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 95,
+                  "x1": 557,
+                  "y1": 611
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 99,
+                  "x1": 527,
+                  "y1": 613
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 100,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/reaver-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 72,
+                  "x1": 498,
+                  "y1": 613
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/reaver-wayfarerPlate/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/reaver-wayfarerPlate/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/reaver-wayfarerPlate/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/reaver-wayfarerPlate/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/reaver-wayfarerPlate/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/reaver-wayfarerPlate/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/reaver-wayfarerPlate/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "starseer-wayfarerPlateBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 125,
+                  "x1": 521,
+                  "y1": 614
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 126,
+                  "x1": 520,
+                  "y1": 618
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 136,
+                  "x1": 534,
+                  "y1": 614
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 131,
+                  "x1": 551,
+                  "y1": 615
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 115,
+                  "x1": 513,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 119,
+                  "x1": 577,
+                  "y1": 613
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 116,
+                  "x1": 534,
+                  "y1": 609
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 119,
+                  "x1": 511,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 132,
+                  "x1": 520,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 51,
+                  "y0": 138,
+                  "x1": 513,
+                  "y1": 608
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 50,
+                  "y0": 124,
+                  "x1": 569,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 110,
+                  "x1": 480,
+                  "y1": 608
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 179,
+                  "x1": 538,
+                  "y1": 609
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 156,
+                  "x1": 530,
+                  "y1": 609
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 112,
+                  "x1": 597,
+                  "y1": 613
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 112,
+                  "x1": 450,
+                  "y1": 615
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 64,
+                  "x1": 475,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 64,
+                  "x1": 483,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 64,
+                  "x1": 543,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 64,
+                  "x1": 499,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 65,
+                  "x1": 568,
+                  "y1": 601
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 65,
+                  "x1": 559,
+                  "y1": 601
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 69,
+                  "x1": 539,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 69,
+                  "x1": 481,
+                  "y1": 604
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 68,
+                  "x1": 524,
+                  "y1": 613
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 94,
+                  "x1": 508,
+                  "y1": 613
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 69,
+                  "x1": 504,
+                  "y1": 611
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 69,
+                  "x1": 487,
+                  "y1": 613
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 72,
+                  "x1": 529,
+                  "y1": 609
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 79,
+                  "x1": 513,
+                  "y1": 609
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 52,
+                  "y0": 50,
+                  "x1": 587,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/starseer-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 155,
+                  "y0": 65,
+                  "x1": 507,
+                  "y1": 609
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/starseer-wayfarerPlate/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/starseer-wayfarerPlate/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/starseer-wayfarerPlate/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/starseer-wayfarerPlate/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/starseer-wayfarerPlate/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/starseer-wayfarerPlate/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/starseer-wayfarerPlate/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "herald-wayfarerPlateBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 128,
+                  "x1": 518,
+                  "y1": 605
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 126,
+                  "x1": 527,
+                  "y1": 603
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 128,
+                  "x1": 528,
+                  "y1": 603
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 130,
+                  "x1": 548,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 119,
+                  "x1": 520,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 115,
+                  "x1": 553,
+                  "y1": 614
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 129,
+                  "x1": 520,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 125,
+                  "x1": 529,
+                  "y1": 611
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 134,
+                  "x1": 520,
+                  "y1": 605
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 116,
+                  "x1": 531,
+                  "y1": 603
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 112,
+                  "x1": 564,
+                  "y1": 605
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 120,
+                  "x1": 471,
+                  "y1": 604
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 169,
+                  "x1": 529,
+                  "y1": 609
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 144,
+                  "x1": 518,
+                  "y1": 613
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 41,
+                  "y0": 85,
+                  "x1": 601,
+                  "y1": 603
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 166,
+                  "y0": 106,
+                  "x1": 449,
+                  "y1": 604
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 165,
+                  "y0": 69,
+                  "x1": 449,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 69,
+                  "x1": 458,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 69,
+                  "x1": 537,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 165,
+                  "y0": 69,
+                  "x1": 480,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 155,
+                  "y0": 69,
+                  "x1": 561,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 69,
+                  "x1": 544,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 70,
+                  "x1": 537,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 69,
+                  "x1": 474,
+                  "y1": 604
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 64,
+                  "x1": 515,
+                  "y1": 613
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 102,
+                  "x1": 488,
+                  "y1": 614
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 65,
+                  "x1": 483,
+                  "y1": 609
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 64,
+                  "x1": 455,
+                  "y1": 613
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 74,
+                  "x1": 538,
+                  "y1": 618
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 88,
+                  "x1": 494,
+                  "y1": 618
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 55,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/herald-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 155,
+                  "y0": 70,
+                  "x1": 483,
+                  "y1": 618
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/herald-wayfarerPlate/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/herald-wayfarerPlate/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/herald-wayfarerPlate/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/herald-wayfarerPlate/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/herald-wayfarerPlate/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/herald-wayfarerPlate/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/herald-wayfarerPlate/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "rogue-wayfarerPlateBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 150,
+                  "x1": 519,
+                  "y1": 605
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 155,
+                  "x1": 515,
+                  "y1": 603
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 154,
+                  "x1": 524,
+                  "y1": 614
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 151,
+                  "x1": 547,
+                  "y1": 609
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 148,
+                  "x1": 515,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 151,
+                  "x1": 559,
+                  "y1": 608
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 151,
+                  "x1": 527,
+                  "y1": 607
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 145,
+                  "x1": 509,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 164,
+                  "x1": 513,
+                  "y1": 614
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 150,
+                  "x1": 504,
+                  "y1": 613
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 151,
+                  "x1": 577,
+                  "y1": 611
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 126,
+                  "x1": 470,
+                  "y1": 619
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 200,
+                  "x1": 534,
+                  "y1": 615
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 175,
+                  "x1": 508,
+                  "y1": 607
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 31,
+                  "y0": 112,
+                  "x1": 607,
+                  "y1": 621
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 119,
+                  "x1": 450,
+                  "y1": 609
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/STANCE-READY.webp",
+                "box": {
+                  "x0": 155,
+                  "y0": 64,
+                  "x1": 473,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/ATK-01.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 64,
+                  "x1": 479,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/ATK-02.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 64,
+                  "x1": 554,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/ATK-03.webp",
+                "box": {
+                  "x0": 158,
+                  "y0": 65,
+                  "x1": 499,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/ATK-04.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 69,
+                  "x1": 557,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/ATK-05.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 72,
+                  "x1": 568,
+                  "y1": 607
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/ATK-06.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 72,
+                  "x1": 548,
+                  "y1": 607
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/ATK-07.webp",
+                "box": {
+                  "x0": 155,
+                  "y0": 72,
+                  "x1": 485,
+                  "y1": 603
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/DEFEND.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 79,
+                  "x1": 521,
+                  "y1": 610
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/HURT.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 99,
+                  "x1": 508,
+                  "y1": 610
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/CAST.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 70,
+                  "x1": 494,
+                  "y1": 610
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/BUFF.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 72,
+                  "x1": 480,
+                  "y1": 615
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 82,
+                  "x1": 555,
+                  "y1": 614
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 80,
+                  "x1": 509,
+                  "y1": 614
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 88,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/rogue-wayfarerPlate/CONVERSATION.webp",
+                "box": {
+                  "x0": 158,
+                  "y0": 82,
+                  "x1": 493,
+                  "y1": 614
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/rogue-wayfarerPlate/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/rogue-wayfarerPlate/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/rogue-wayfarerPlate/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/rogue-wayfarerPlate/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/rogue-wayfarerPlate/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/rogue-wayfarerPlate/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/rogue-wayfarerPlate/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "reaver-nightweaveBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 160,
+                  "x1": 501,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 164,
+                  "x1": 511,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 165,
+                  "x1": 534,
+                  "y1": 604
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 165,
+                  "x1": 550,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 156,
+                  "x1": 501,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 148,
+                  "x1": 545,
+                  "y1": 611
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 160,
+                  "x1": 510,
+                  "y1": 611
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 160,
+                  "x1": 504,
+                  "y1": 608
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 181,
+                  "x1": 504,
+                  "y1": 614
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver-nightweave/HURT.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 172,
+                  "x1": 501,
+                  "y1": 607
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver-nightweave/CAST.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 170,
+                  "x1": 579,
+                  "y1": 615
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 149,
+                  "x1": 458,
+                  "y1": 611
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 232,
+                  "x1": 529,
+                  "y1": 611
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 202,
+                  "x1": 518,
+                  "y1": 608
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 110,
+                  "x1": 601,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 139,
+                  "x1": 445,
+                  "y1": 604
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 85,
+                  "x1": 473,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 85,
+                  "x1": 483,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 85,
+                  "x1": 565,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 82,
+                  "x1": 495,
+                  "y1": 610
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 76,
+                  "x1": 568,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 65,
+                  "x1": 548,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 76,
+                  "x1": 555,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 70,
+                  "x1": 495,
+                  "y1": 619
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 86,
+                  "x1": 505,
+                  "y1": 608
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/HURT.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 96,
+                  "x1": 501,
+                  "y1": 604
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/CAST.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 85,
+                  "x1": 500,
+                  "y1": 613
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 86,
+                  "x1": 495,
+                  "y1": 610
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 89,
+                  "x1": 551,
+                  "y1": 613
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 91,
+                  "x1": 520,
+                  "y1": 614
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 55,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/reaver-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 85,
+                  "x1": 507,
+                  "y1": 609
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/reaver-nightweave/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/reaver-nightweave/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/reaver-nightweave/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/reaver-nightweave/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/reaver-nightweave/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/reaver-nightweave/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/reaver-nightweave/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "starseer-nightweaveBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 136,
+                  "x1": 510,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 135,
+                  "x1": 530,
+                  "y1": 607
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 139,
+                  "x1": 545,
+                  "y1": 619
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 139,
+                  "x1": 544,
+                  "y1": 611
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 124,
+                  "x1": 528,
+                  "y1": 611
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 125,
+                  "x1": 569,
+                  "y1": 613
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 126,
+                  "x1": 521,
+                  "y1": 609
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 128,
+                  "x1": 521,
+                  "y1": 615
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 132,
+                  "x1": 517,
+                  "y1": 607
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer-nightweave/HURT.webp",
+                "box": {
+                  "x0": 56,
+                  "y0": 134,
+                  "x1": 513,
+                  "y1": 615
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer-nightweave/CAST.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 120,
+                  "x1": 575,
+                  "y1": 607
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 134,
+                  "x1": 479,
+                  "y1": 605
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 192,
+                  "x1": 525,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 180,
+                  "x1": 528,
+                  "y1": 609
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 119,
+                  "x1": 591,
+                  "y1": 608
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 145,
+                  "x1": 447,
+                  "y1": 611
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 70,
+                  "x1": 464,
+                  "y1": 615
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 70,
+                  "x1": 468,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 69,
+                  "x1": 538,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 69,
+                  "x1": 493,
+                  "y1": 618
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 75,
+                  "x1": 541,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 79,
+                  "x1": 565,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 78,
+                  "x1": 534,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 75,
+                  "x1": 480,
+                  "y1": 601
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 75,
+                  "x1": 507,
+                  "y1": 619
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/HURT.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 108,
+                  "x1": 494,
+                  "y1": 619
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/CAST.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 75,
+                  "x1": 481,
+                  "y1": 614
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 78,
+                  "x1": 473,
+                  "y1": 611
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 89,
+                  "x1": 531,
+                  "y1": 610
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 84,
+                  "x1": 509,
+                  "y1": 614
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 50,
+                  "x1": 579,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/starseer-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 155,
+                  "y0": 66,
+                  "x1": 481,
+                  "y1": 611
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/starseer-nightweave/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/starseer-nightweave/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/starseer-nightweave/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/starseer-nightweave/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/starseer-nightweave/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/starseer-nightweave/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/starseer-nightweave/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "herald-nightweaveBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 126,
+                  "x1": 508,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 136,
+                  "x1": 517,
+                  "y1": 607
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 141,
+                  "x1": 540,
+                  "y1": 604
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 142,
+                  "x1": 555,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 136,
+                  "x1": 508,
+                  "y1": 615
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 136,
+                  "x1": 557,
+                  "y1": 613
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 140,
+                  "x1": 513,
+                  "y1": 613
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 139,
+                  "x1": 509,
+                  "y1": 609
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 145,
+                  "x1": 511,
+                  "y1": 613
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald-nightweave/HURT.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 146,
+                  "x1": 507,
+                  "y1": 614
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald-nightweave/CAST.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 136,
+                  "x1": 580,
+                  "y1": 613
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 125,
+                  "x1": 468,
+                  "y1": 615
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 182,
+                  "x1": 529,
+                  "y1": 615
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 179,
+                  "x1": 511,
+                  "y1": 609
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 41,
+                  "y0": 60,
+                  "x1": 609,
+                  "y1": 610
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 105,
+                  "x1": 457,
+                  "y1": 608
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 69,
+                  "x1": 464,
+                  "y1": 618
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 69,
+                  "x1": 454,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 69,
+                  "x1": 533,
+                  "y1": 608
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 69,
+                  "x1": 487,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 56,
+                  "x1": 541,
+                  "y1": 601
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 56,
+                  "x1": 549,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 64,
+                  "x1": 538,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 70,
+                  "x1": 485,
+                  "y1": 604
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 80,
+                  "x1": 511,
+                  "y1": 605
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/HURT.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 104,
+                  "x1": 480,
+                  "y1": 604
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/CAST.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 79,
+                  "x1": 481,
+                  "y1": 605
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 75,
+                  "x1": 481,
+                  "y1": 607
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 79,
+                  "x1": 527,
+                  "y1": 614
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 68,
+                  "x1": 509,
+                  "y1": 615
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 62,
+                  "y0": 50,
+                  "x1": 575,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/herald-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 64,
+                  "x1": 478,
+                  "y1": 608
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/herald-nightweave/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/herald-nightweave/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/herald-nightweave/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/herald-nightweave/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/herald-nightweave/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/herald-nightweave/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/herald-nightweave/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "rogue-nightweaveBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 144,
+                  "x1": 518,
+                  "y1": 605
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 149,
+                  "x1": 518,
+                  "y1": 608
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 151,
+                  "x1": 534,
+                  "y1": 604
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 152,
+                  "x1": 554,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 131,
+                  "x1": 518,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 132,
+                  "x1": 578,
+                  "y1": 611
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 142,
+                  "x1": 525,
+                  "y1": 610
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 145,
+                  "x1": 509,
+                  "y1": 611
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 175,
+                  "x1": 518,
+                  "y1": 617
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue-nightweave/HURT.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 155,
+                  "x1": 515,
+                  "y1": 613
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue-nightweave/CAST.webp",
+                "box": {
+                  "x0": 56,
+                  "y0": 141,
+                  "x1": 575,
+                  "y1": 610
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 124,
+                  "x1": 463,
+                  "y1": 611
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 215,
+                  "x1": 534,
+                  "y1": 615
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 179,
+                  "x1": 525,
+                  "y1": 614
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 101,
+                  "x1": 607,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 116,
+                  "x1": 449,
+                  "y1": 619
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/STANCE-READY.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 68,
+                  "x1": 475,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/ATK-01.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 68,
+                  "x1": 488,
+                  "y1": 617
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/ATK-02.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 68,
+                  "x1": 543,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/ATK-03.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 68,
+                  "x1": 497,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/ATK-04.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 75,
+                  "x1": 533,
+                  "y1": 601
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/ATK-05.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 70,
+                  "x1": 573,
+                  "y1": 601
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/ATK-06.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 75,
+                  "x1": 529,
+                  "y1": 601
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/ATK-07.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 78,
+                  "x1": 498,
+                  "y1": 603
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/DEFEND.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 84,
+                  "x1": 501,
+                  "y1": 614
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/HURT.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 98,
+                  "x1": 489,
+                  "y1": 613
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/CAST.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 84,
+                  "x1": 508,
+                  "y1": 609
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/BUFF.webp",
+                "box": {
+                  "x0": 135,
+                  "y0": 79,
+                  "x1": 489,
+                  "y1": 617
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 94,
+                  "x1": 553,
+                  "y1": 614
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 89,
+                  "x1": 511,
+                  "y1": 614
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/PORTRAIT.webp",
+                "box": {
+                  "x0": 46,
+                  "y0": 50,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/rogue-nightweave/CONVERSATION.webp",
+                "box": {
+                  "x0": 156,
+                  "y0": 80,
+                  "x1": 484,
+                  "y1": 607
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/rogue-nightweave/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/rogue-nightweave/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/rogue-nightweave/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/rogue-nightweave/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/rogue-nightweave/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/rogue-nightweave/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/rogue-nightweave/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "reaver-riteVestmentsBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 152,
+                  "x1": 505,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 154,
+                  "x1": 518,
+                  "y1": 604
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 156,
+                  "x1": 529,
+                  "y1": 604
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 154,
+                  "x1": 545,
+                  "y1": 613
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 148,
+                  "x1": 514,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 150,
+                  "x1": 579,
+                  "y1": 610
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 150,
+                  "x1": 519,
+                  "y1": 608
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 150,
+                  "x1": 510,
+                  "y1": 610
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 168,
+                  "x1": 511,
+                  "y1": 614
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 78,
+                  "y0": 158,
+                  "x1": 504,
+                  "y1": 610
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 66,
+                  "y0": 151,
+                  "x1": 577,
+                  "y1": 614
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 126,
+                  "x1": 461,
+                  "y1": 611
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 221,
+                  "x1": 533,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 192,
+                  "x1": 509,
+                  "y1": 608
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 31,
+                  "y0": 106,
+                  "x1": 609,
+                  "y1": 605
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 121,
+                  "x1": 449,
+                  "y1": 604
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 69,
+                  "x1": 477,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 69,
+                  "x1": 461,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 69,
+                  "x1": 533,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 68,
+                  "x1": 491,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 70,
+                  "x1": 545,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 59,
+                  "x1": 553,
+                  "y1": 608
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 62,
+                  "x1": 547,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 65,
+                  "x1": 487,
+                  "y1": 604
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 78,
+                  "x1": 501,
+                  "y1": 603
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 78,
+                  "x1": 500,
+                  "y1": 603
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 74,
+                  "x1": 497,
+                  "y1": 608
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 78,
+                  "x1": 475,
+                  "y1": 604
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 80,
+                  "x1": 539,
+                  "y1": 601
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 78,
+                  "x1": 524,
+                  "y1": 603
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 85,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/reaver-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 74,
+                  "x1": 490,
+                  "y1": 603
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/reaver-riteVestments/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/reaver-riteVestments/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/reaver-riteVestments/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/reaver-riteVestments/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/reaver-riteVestments/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/reaver-riteVestments/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/reaver-riteVestments/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "starseer-riteVestmentsBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 120,
+                  "x1": 520,
+                  "y1": 603
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 86,
+                  "y0": 126,
+                  "x1": 529,
+                  "y1": 603
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 141,
+                  "x1": 547,
+                  "y1": 605
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 141,
+                  "x1": 559,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 120,
+                  "x1": 518,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 124,
+                  "x1": 577,
+                  "y1": 619
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 141,
+                  "x1": 523,
+                  "y1": 613
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 64,
+                  "y0": 132,
+                  "x1": 523,
+                  "y1": 613
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 134,
+                  "x1": 518,
+                  "y1": 608
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 141,
+                  "x1": 517,
+                  "y1": 605
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 135,
+                  "x1": 567,
+                  "y1": 604
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 126,
+                  "x1": 484,
+                  "y1": 613
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 194,
+                  "x1": 531,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 198,
+                  "x1": 530,
+                  "y1": 608
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 35,
+                  "y0": 72,
+                  "x1": 609,
+                  "y1": 617
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 112,
+                  "x1": 459,
+                  "y1": 613
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 70,
+                  "x1": 460,
+                  "y1": 610
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 134,
+                  "y0": 66,
+                  "x1": 467,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 69,
+                  "x1": 540,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 69,
+                  "x1": 500,
+                  "y1": 618
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 80,
+                  "x1": 544,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 138,
+                  "y0": 82,
+                  "x1": 560,
+                  "y1": 608
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 80,
+                  "x1": 530,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 78,
+                  "x1": 478,
+                  "y1": 604
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 126,
+                  "y0": 84,
+                  "x1": 511,
+                  "y1": 617
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 119,
+                  "x1": 491,
+                  "y1": 607
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 80,
+                  "x1": 480,
+                  "y1": 615
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 79,
+                  "x1": 479,
+                  "y1": 609
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 78,
+                  "x1": 529,
+                  "y1": 611
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 89,
+                  "x1": 521,
+                  "y1": 614
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 61,
+                  "y0": 50,
+                  "x1": 578,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/starseer-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 158,
+                  "y0": 70,
+                  "x1": 480,
+                  "y1": 610
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/starseer-riteVestments/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/starseer-riteVestments/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/starseer-riteVestments/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/starseer-riteVestments/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/starseer-riteVestments/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/starseer-riteVestments/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/starseer-riteVestments/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "herald-riteVestmentsBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 134,
+                  "x1": 505,
+                  "y1": 609
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 141,
+                  "x1": 527,
+                  "y1": 613
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 80,
+                  "y0": 149,
+                  "x1": 531,
+                  "y1": 619
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 154,
+                  "x1": 549,
+                  "y1": 614
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 128,
+                  "x1": 514,
+                  "y1": 603
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 134,
+                  "x1": 564,
+                  "y1": 604
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 136,
+                  "x1": 520,
+                  "y1": 604
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 135,
+                  "x1": 511,
+                  "y1": 604
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 158,
+                  "x1": 520,
+                  "y1": 614
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 129,
+                  "x1": 524,
+                  "y1": 609
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 62,
+                  "y0": 139,
+                  "x1": 560,
+                  "y1": 613
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 106,
+                  "x1": 468,
+                  "y1": 615
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 209,
+                  "x1": 527,
+                  "y1": 619
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 181,
+                  "x1": 510,
+                  "y1": 611
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 38,
+                  "y0": 96,
+                  "x1": 608,
+                  "y1": 605
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 116,
+                  "x1": 448,
+                  "y1": 607
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 162,
+                  "y0": 62,
+                  "x1": 449,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 152,
+                  "y0": 64,
+                  "x1": 450,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 74,
+                  "x1": 534,
+                  "y1": 617
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 64,
+                  "x1": 493,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 72,
+                  "x1": 568,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 74,
+                  "x1": 547,
+                  "y1": 605
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 70,
+                  "x1": 540,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 72,
+                  "x1": 475,
+                  "y1": 607
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 128,
+                  "y0": 74,
+                  "x1": 503,
+                  "y1": 608
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 101,
+                  "x1": 510,
+                  "y1": 618
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 74,
+                  "x1": 481,
+                  "y1": 614
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 70,
+                  "x1": 470,
+                  "y1": 604
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 110,
+                  "y0": 72,
+                  "x1": 534,
+                  "y1": 615
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 89,
+                  "x1": 503,
+                  "y1": 614
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 62,
+                  "y0": 50,
+                  "x1": 578,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/herald-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 159,
+                  "y0": 68,
+                  "x1": 490,
+                  "y1": 613
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/herald-riteVestments/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/herald-riteVestments/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/herald-riteVestments/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/herald-riteVestments/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/herald-riteVestments/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/herald-riteVestments/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/herald-riteVestments/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "rogue-riteVestmentsBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 155,
+                  "x1": 503,
+                  "y1": 604
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 155,
+                  "x1": 517,
+                  "y1": 603
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 165,
+                  "x1": 533,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 159,
+                  "x1": 569,
+                  "y1": 607
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 92,
+                  "y0": 154,
+                  "x1": 509,
+                  "y1": 613
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 139,
+                  "x1": 579,
+                  "y1": 614
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 155,
+                  "x1": 514,
+                  "y1": 610
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 155,
+                  "x1": 510,
+                  "y1": 618
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 172,
+                  "x1": 509,
+                  "y1": 619
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 61,
+                  "y0": 162,
+                  "x1": 519,
+                  "y1": 613
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 52,
+                  "y0": 144,
+                  "x1": 554,
+                  "y1": 614
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 135,
+                  "x1": 463,
+                  "y1": 611
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 88,
+                  "y0": 225,
+                  "x1": 531,
+                  "y1": 607
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 200,
+                  "x1": 509,
+                  "y1": 608
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 110,
+                  "x1": 593,
+                  "y1": 617
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 128,
+                  "x1": 448,
+                  "y1": 604
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/STANCE-READY.webp",
+                "box": {
+                  "x0": 150,
+                  "y0": 64,
+                  "x1": 470,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/ATK-01.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 64,
+                  "x1": 464,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/ATK-02.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 65,
+                  "x1": 547,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/ATK-03.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 65,
+                  "x1": 477,
+                  "y1": 610
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/ATK-04.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 74,
+                  "x1": 528,
+                  "y1": 608
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/ATK-05.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 70,
+                  "x1": 550,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/ATK-06.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 72,
+                  "x1": 533,
+                  "y1": 607
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/ATK-07.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 72,
+                  "x1": 475,
+                  "y1": 607
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/DEFEND.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 72,
+                  "x1": 513,
+                  "y1": 609
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/HURT.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 86,
+                  "x1": 490,
+                  "y1": 617
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/CAST.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 72,
+                  "x1": 480,
+                  "y1": 613
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/BUFF.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 69,
+                  "x1": 477,
+                  "y1": 609
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 89,
+                  "x1": 538,
+                  "y1": 604
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 98,
+                  "x1": 494,
+                  "y1": 604
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 80,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/rogue-riteVestments/CONVERSATION.webp",
+                "box": {
+                  "x0": 158,
+                  "y0": 98,
+                  "x1": 483,
+                  "y1": 603
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/rogue-riteVestments/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/rogue-riteVestments/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/rogue-riteVestments/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/rogue-riteVestments/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/rogue-riteVestments/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/rogue-riteVestments/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/rogue-riteVestments/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "reaver-gutterLeathersBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 136,
+                  "x1": 509,
+                  "y1": 603
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 144,
+                  "x1": 524,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 144,
+                  "x1": 540,
+                  "y1": 610
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 145,
+                  "x1": 559,
+                  "y1": 618
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 132,
+                  "x1": 521,
+                  "y1": 614
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 76,
+                  "y0": 131,
+                  "x1": 580,
+                  "y1": 611
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 72,
+                  "y0": 121,
+                  "x1": 530,
+                  "y1": 605
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 132,
+                  "x1": 511,
+                  "y1": 614
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 79,
+                  "y0": 154,
+                  "x1": 519,
+                  "y1": 615
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 145,
+                  "x1": 520,
+                  "y1": 610
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 74,
+                  "y0": 148,
+                  "x1": 573,
+                  "y1": 618
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 124,
+                  "x1": 465,
+                  "y1": 618
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 75,
+                  "y0": 210,
+                  "x1": 537,
+                  "y1": 614
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 91,
+                  "y0": 189,
+                  "x1": 529,
+                  "y1": 613
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 30,
+                  "y0": 114,
+                  "x1": 609,
+                  "y1": 613
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/reaver-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 112,
+                  "y0": 118,
+                  "x1": 450,
+                  "y1": 605
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 65,
+                  "x1": 473,
+                  "y1": 610
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 118,
+                  "y0": 65,
+                  "x1": 479,
+                  "y1": 610
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 65,
+                  "x1": 547,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 65,
+                  "x1": 511,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 70,
+                  "x1": 554,
+                  "y1": 605
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 68,
+                  "x1": 544,
+                  "y1": 610
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 119,
+                  "y0": 74,
+                  "x1": 557,
+                  "y1": 605
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 69,
+                  "x1": 491,
+                  "y1": 604
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 74,
+                  "x1": 517,
+                  "y1": 603
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 78,
+                  "x1": 490,
+                  "y1": 609
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 69,
+                  "x1": 503,
+                  "y1": 608
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 70,
+                  "x1": 480,
+                  "y1": 618
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 95,
+                  "x1": 540,
+                  "y1": 608
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 86,
+                  "x1": 504,
+                  "y1": 604
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 108,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/reaver-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 151,
+                  "y0": 78,
+                  "x1": 491,
+                  "y1": 603
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/reaver-gutterLeathers/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/reaver-gutterLeathers/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/reaver-gutterLeathers/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/reaver-gutterLeathers/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/reaver-gutterLeathers/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/reaver-gutterLeathers/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/reaver-gutterLeathers/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "starseer-gutterLeathersBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 114,
+                  "x1": 517,
+                  "y1": 615
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 119,
+                  "x1": 534,
+                  "y1": 615
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 115,
+                  "x1": 541,
+                  "y1": 619
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 106,
+                  "y0": 120,
+                  "x1": 554,
+                  "y1": 613
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 112,
+                  "x1": 525,
+                  "y1": 610
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 116,
+                  "x1": 557,
+                  "y1": 611
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 99,
+                  "y0": 102,
+                  "x1": 527,
+                  "y1": 615
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 102,
+                  "y0": 109,
+                  "x1": 517,
+                  "y1": 620
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 120,
+                  "x1": 541,
+                  "y1": 620
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 119,
+                  "x1": 511,
+                  "y1": 615
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 84,
+                  "y0": 115,
+                  "x1": 564,
+                  "y1": 618
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 104,
+                  "y0": 112,
+                  "x1": 493,
+                  "y1": 619
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 101,
+                  "y0": 171,
+                  "x1": 535,
+                  "y1": 603
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 181,
+                  "x1": 517,
+                  "y1": 604
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 36,
+                  "y0": 81,
+                  "x1": 590,
+                  "y1": 615
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/starseer-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 112,
+                  "x1": 461,
+                  "y1": 603
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 68,
+                  "x1": 453,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 65,
+                  "x1": 464,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 65,
+                  "x1": 553,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 141,
+                  "y0": 65,
+                  "x1": 491,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 72,
+                  "x1": 544,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 139,
+                  "y0": 74,
+                  "x1": 549,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 79,
+                  "x1": 543,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 129,
+                  "y0": 74,
+                  "x1": 479,
+                  "y1": 603
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 68,
+                  "x1": 511,
+                  "y1": 615
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 102,
+                  "x1": 489,
+                  "y1": 605
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 68,
+                  "x1": 479,
+                  "y1": 615
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 131,
+                  "y0": 70,
+                  "x1": 477,
+                  "y1": 618
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 80,
+                  "x1": 529,
+                  "y1": 609
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 109,
+                  "y0": 78,
+                  "x1": 495,
+                  "y1": 611
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 50,
+                  "x1": 579,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/starseer-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 161,
+                  "y0": 65,
+                  "x1": 479,
+                  "y1": 608
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/starseer-gutterLeathers/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/starseer-gutterLeathers/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/starseer-gutterLeathers/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/starseer-gutterLeathers/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/starseer-gutterLeathers/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/starseer-gutterLeathers/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/starseer-gutterLeathers/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "herald-gutterLeathersBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 124,
+                  "y0": 132,
+                  "x1": 508,
+                  "y1": 617
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 132,
+                  "x1": 528,
+                  "y1": 613
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 116,
+                  "y0": 140,
+                  "x1": 515,
+                  "y1": 607
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 125,
+                  "y0": 139,
+                  "x1": 574,
+                  "y1": 613
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 132,
+                  "y0": 132,
+                  "x1": 505,
+                  "y1": 607
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 105,
+                  "y0": 135,
+                  "x1": 561,
+                  "y1": 605
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 134,
+                  "x1": 513,
+                  "y1": 603
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 135,
+                  "x1": 511,
+                  "y1": 605
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 154,
+                  "x1": 518,
+                  "y1": 607
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 130,
+                  "y0": 136,
+                  "x1": 504,
+                  "y1": 607
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 121,
+                  "y0": 135,
+                  "x1": 557,
+                  "y1": 615
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 162,
+                  "y0": 115,
+                  "x1": 468,
+                  "y1": 607
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 108,
+                  "y0": 189,
+                  "x1": 527,
+                  "y1": 609
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 114,
+                  "y0": 179,
+                  "x1": 513,
+                  "y1": 608
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 39,
+                  "y0": 75,
+                  "x1": 609,
+                  "y1": 608
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/herald-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 178,
+                  "y0": 108,
+                  "x1": 457,
+                  "y1": 603
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 170,
+                  "y0": 68,
+                  "x1": 454,
+                  "y1": 617
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 169,
+                  "y0": 68,
+                  "x1": 455,
+                  "y1": 610
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 68,
+                  "x1": 549,
+                  "y1": 611
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 158,
+                  "y0": 68,
+                  "x1": 501,
+                  "y1": 615
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 152,
+                  "y0": 72,
+                  "x1": 557,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 148,
+                  "y0": 65,
+                  "x1": 553,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 151,
+                  "y0": 72,
+                  "x1": 564,
+                  "y1": 603
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 151,
+                  "y0": 70,
+                  "x1": 471,
+                  "y1": 601
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 151,
+                  "y0": 74,
+                  "x1": 513,
+                  "y1": 608
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 144,
+                  "y0": 92,
+                  "x1": 494,
+                  "y1": 618
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 152,
+                  "y0": 72,
+                  "x1": 477,
+                  "y1": 609
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 166,
+                  "y0": 70,
+                  "x1": 473,
+                  "y1": 607
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 122,
+                  "y0": 68,
+                  "x1": 560,
+                  "y1": 615
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 140,
+                  "y0": 81,
+                  "x1": 515,
+                  "y1": 615
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 65,
+                  "y0": 50,
+                  "x1": 573,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/herald-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 172,
+                  "y0": 78,
+                  "x1": 483,
+                  "y1": 613
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/herald-gutterLeathers/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/herald-gutterLeathers/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/herald-gutterLeathers/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/herald-gutterLeathers/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/herald-gutterLeathers/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/herald-gutterLeathers/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/herald-gutterLeathers/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
+          },
+          "rogue-gutterLeathersBow": {
+            "motionProfile": "bow",
+            "authoredEquipment": {
+              "rightGroup": "bow",
+              "leftGroup": "empty"
+            },
+            "frames": {
+              "STANCE-READY": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 98,
+                  "y0": 142,
+                  "x1": 528,
+                  "y1": 608
+                }
+              },
+              "ATK-01": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 95,
+                  "y0": 155,
+                  "x1": 530,
+                  "y1": 605
+                }
+              },
+              "ATK-02": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 85,
+                  "y0": 149,
+                  "x1": 539,
+                  "y1": 609
+                }
+              },
+              "ATK-03": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 81,
+                  "y0": 158,
+                  "x1": 545,
+                  "y1": 605
+                }
+              },
+              "ATK-04": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 90,
+                  "y0": 131,
+                  "x1": 523,
+                  "y1": 615
+                }
+              },
+              "ATK-05": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 148,
+                  "x1": 574,
+                  "y1": 609
+                }
+              },
+              "ATK-06": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 96,
+                  "y0": 146,
+                  "x1": 521,
+                  "y1": 615
+                }
+              },
+              "ATK-07": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 82,
+                  "y0": 150,
+                  "x1": 514,
+                  "y1": 619
+                }
+              },
+              "DEFEND": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 94,
+                  "y0": 155,
+                  "x1": 519,
+                  "y1": 613
+                }
+              },
+              "HURT": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 70,
+                  "y0": 152,
+                  "x1": 518,
+                  "y1": 604
+                }
+              },
+              "CAST": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 71,
+                  "y0": 139,
+                  "x1": 575,
+                  "y1": 619
+                }
+              },
+              "BUFF": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 129,
+                  "x1": 478,
+                  "y1": 611
+                }
+              },
+              "STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 89,
+                  "y0": 202,
+                  "x1": 535,
+                  "y1": 615
+                }
+              },
+              "STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 100,
+                  "y0": 189,
+                  "x1": 527,
+                  "y1": 611
+                }
+              },
+              "PORTRAIT": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 41,
+                  "y0": 96,
+                  "x1": 609,
+                  "y1": 604
+                }
+              },
+              "CONVERSATION": {
+                "file": "assets/animations/unarmed/rogue-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 111,
+                  "y0": 126,
+                  "x1": 450,
+                  "y1": 608
+                }
+              },
+              "MAGIC-STANCE-READY": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/STANCE-READY.webp",
+                "box": {
+                  "x0": 170,
+                  "y0": 70,
+                  "x1": 471,
+                  "y1": 614
+                }
+              },
+              "MAGIC-ATK-01": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/ATK-01.webp",
+                "box": {
+                  "x0": 166,
+                  "y0": 78,
+                  "x1": 487,
+                  "y1": 608
+                }
+              },
+              "MAGIC-ATK-02": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/ATK-02.webp",
+                "box": {
+                  "x0": 115,
+                  "y0": 65,
+                  "x1": 553,
+                  "y1": 609
+                }
+              },
+              "MAGIC-ATK-03": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/ATK-03.webp",
+                "box": {
+                  "x0": 161,
+                  "y0": 64,
+                  "x1": 505,
+                  "y1": 613
+                }
+              },
+              "MAGIC-ATK-04": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/ATK-04.webp",
+                "box": {
+                  "x0": 142,
+                  "y0": 72,
+                  "x1": 555,
+                  "y1": 608
+                }
+              },
+              "MAGIC-ATK-05": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/ATK-05.webp",
+                "box": {
+                  "x0": 155,
+                  "y0": 79,
+                  "x1": 540,
+                  "y1": 601
+                }
+              },
+              "MAGIC-ATK-06": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/ATK-06.webp",
+                "box": {
+                  "x0": 152,
+                  "y0": 78,
+                  "x1": 538,
+                  "y1": 604
+                }
+              },
+              "MAGIC-ATK-07": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/ATK-07.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 76,
+                  "x1": 481,
+                  "y1": 607
+                }
+              },
+              "MAGIC-DEFEND": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/DEFEND.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 82,
+                  "x1": 515,
+                  "y1": 604
+                }
+              },
+              "MAGIC-HURT": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/HURT.webp",
+                "box": {
+                  "x0": 154,
+                  "y0": 104,
+                  "x1": 498,
+                  "y1": 603
+                }
+              },
+              "MAGIC-CAST": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/CAST.webp",
+                "box": {
+                  "x0": 146,
+                  "y0": 81,
+                  "x1": 489,
+                  "y1": 604
+                }
+              },
+              "MAGIC-BUFF": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/BUFF.webp",
+                "box": {
+                  "x0": 156,
+                  "y0": 69,
+                  "x1": 481,
+                  "y1": 608
+                }
+              },
+              "MAGIC-STANCE-AGGRESSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/STANCE-AGGRESSIVE.webp",
+                "box": {
+                  "x0": 120,
+                  "y0": 96,
+                  "x1": 509,
+                  "y1": 603
+                }
+              },
+              "MAGIC-STANCE-DEFENSIVE": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/STANCE-DEFENSIVE.webp",
+                "box": {
+                  "x0": 136,
+                  "y0": 98,
+                  "x1": 507,
+                  "y1": 604
+                }
+              },
+              "MAGIC-PORTRAIT": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/PORTRAIT.webp",
+                "box": {
+                  "x0": 45,
+                  "y0": 78,
+                  "x1": 594,
+                  "y1": 599
+                }
+              },
+              "MAGIC-CONVERSATION": {
+                "file": "assets/animations/unarmed-magic/rogue-gutterLeathers/CONVERSATION.webp",
+                "box": {
+                  "x0": 185,
+                  "y0": 88,
+                  "x1": 485,
+                  "y1": 601
+                }
+              },
+              "BOW-01": {
+                "file": "assets/animations/bow/rogue-gutterLeathers/BOW-01.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-02": {
+                "file": "assets/animations/bow/rogue-gutterLeathers/BOW-02.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-03": {
+                "file": "assets/animations/bow/rogue-gutterLeathers/BOW-03.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-04": {
+                "file": "assets/animations/bow/rogue-gutterLeathers/BOW-04.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-05": {
+                "file": "assets/animations/bow/rogue-gutterLeathers/BOW-05.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-06": {
+                "file": "assets/animations/bow/rogue-gutterLeathers/BOW-06.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              },
+              "BOW-07": {
+                "file": "assets/animations/bow/rogue-gutterLeathers/BOW-07.webp",
+                "box": {
+                  "x0": 60,
+                  "y0": 70,
+                  "x1": 580,
+                  "y1": 590
+                }
+              }
+            }
           }
         },
         "motionProfiles": {
@@ -34563,6 +46693,296 @@ export const uiConfig = deepFreeze({
               "prototypeGuardStance": "defensiveStance",
               "prototypeFocusStance": "defensiveStance",
               "defeated": "defeat"
+            }
+          },
+          "bow": {
+            "normalLungeMs": 260,
+            "poseRoles": {
+              "idle": "idle",
+              "stand": "menu",
+              "attack": "attack",
+              "attack1": "attack",
+              "attack2": "attack",
+              "attack3": "attack",
+              "attack4": "attack",
+              "guard": "defend",
+              "shieldGuard": "defend",
+              "shieldGuard3": "defend",
+              "parry": "defend",
+              "shieldBash": "attack",
+              "hit": "hurt",
+              "power": "buff",
+              "cast": "cast",
+              "gorefire": "aggressiveStance",
+              "bulwark": "defensiveStance",
+              "prepared": "defensiveStance",
+              "starstoneCharge": "defensiveStance",
+              "bloodRite": "buff",
+              "prototypeGuardStance": "defensiveStance",
+              "prototypeFocusStance": "defensiveStance",
+              "defeated": "defeat"
+            },
+            "clips": {
+              "physicalReady": {
+                "frames": [
+                  "STANCE-READY"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalAttack": {
+                "frames": [
+                  "STANCE-READY",
+                  "ATK-01",
+                  "ATK-02",
+                  "ATK-03",
+                  "ATK-04",
+                  "ATK-05",
+                  "ATK-06",
+                  "ATK-07",
+                  "STANCE-READY"
+                ],
+                "frameMs": 140,
+                "impactIndex": 5
+              },
+              "physicalDefend": {
+                "frames": [
+                  "DEFEND"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalHurt": {
+                "frames": [
+                  "HURT"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalCast": {
+                "frames": [
+                  "CAST"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalBuff": {
+                "frames": [
+                  "BUFF"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalEnterStance": {
+                "frames": [
+                  "BUFF"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalLeaveStance": {
+                "frames": [
+                  "STANCE-READY"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalAggressive": {
+                "frames": [
+                  "STANCE-AGGRESSIVE"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalDefensive": {
+                "frames": [
+                  "STANCE-DEFENSIVE"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalPortrait": {
+                "frames": [
+                  "PORTRAIT"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "physicalConversation": {
+                "frames": [
+                  "CONVERSATION"
+                ],
+                "frameMs": 260,
+                "impactIndex": 0
+              },
+              "magicChannel": {
+                "frames": [
+                  "MAGIC-STANCE-READY",
+                  "MAGIC-ATK-01",
+                  "MAGIC-ATK-02",
+                  "MAGIC-ATK-03",
+                  "MAGIC-ATK-04",
+                  "MAGIC-ATK-05",
+                  "MAGIC-ATK-06",
+                  "MAGIC-ATK-07",
+                  "MAGIC-STANCE-READY"
+                ],
+                "frameMs": 160,
+                "impactIndex": 5
+              },
+              "magicStanceReady": {
+                "frames": [
+                  "MAGIC-STANCE-READY"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "magicAtk01": {
+                "frames": [
+                  "MAGIC-ATK-01"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "magicAtk02": {
+                "frames": [
+                  "MAGIC-ATK-02"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "magicAtk03": {
+                "frames": [
+                  "MAGIC-ATK-03"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "magicAtk04": {
+                "frames": [
+                  "MAGIC-ATK-04"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "magicAtk05": {
+                "frames": [
+                  "MAGIC-ATK-05"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "magicAtk06": {
+                "frames": [
+                  "MAGIC-ATK-06"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "magicAtk07": {
+                "frames": [
+                  "MAGIC-ATK-07"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "magicDefend": {
+                "frames": [
+                  "MAGIC-DEFEND"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "magicHurt": {
+                "frames": [
+                  "MAGIC-HURT"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "magicCast": {
+                "frames": [
+                  "MAGIC-CAST"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "magicBuff": {
+                "frames": [
+                  "MAGIC-BUFF"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "magicStanceAggressive": {
+                "frames": [
+                  "MAGIC-STANCE-AGGRESSIVE"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "magicStanceDefensive": {
+                "frames": [
+                  "MAGIC-STANCE-DEFENSIVE"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "magicPortrait": {
+                "frames": [
+                  "MAGIC-PORTRAIT"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "magicConversation": {
+                "frames": [
+                  "MAGIC-CONVERSATION"
+                ],
+                "frameMs": 160,
+                "impactIndex": 0
+              },
+              "bowReady": {
+                "frames": [
+                  "BOW-01"
+                ],
+                "frameMs": 150,
+                "impactIndex": 0
+              },
+              "bowAttack": {
+                "frames": [
+                  "BOW-01",
+                  "BOW-02",
+                  "BOW-03",
+                  "BOW-04",
+                  "BOW-05",
+                  "BOW-06",
+                  "BOW-07"
+                ],
+                "frameMs": 150,
+                "impactIndex": 4
+              }
+            },
+            "references": {
+              "idle": "bowReady",
+              "attack": "physicalAttack",
+              "defend": "physicalDefend",
+              "hurt": "physicalHurt",
+              "stanceActivate": "physicalEnterStance",
+              "stanceDeactivate": "physicalLeaveStance",
+              "aggressiveStance": "physicalAggressive",
+              "defensiveStance": "physicalDefensive",
+              "conversation": "physicalConversation",
+              "portrait": "physicalPortrait",
+              "menu": "bowReady",
+              "detail": "physicalPortrait",
+              "dodge": null,
+              "victory": null,
+              "defeat": null,
+              "revive": null,
+              "cast": "magicChannel",
+              "buff": "magicBuff",
+              "bowAttack": "bowAttack"
             }
           }
         }

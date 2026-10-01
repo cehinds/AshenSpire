@@ -3,14 +3,204 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1390",
+    "id": "pr-1425",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "Progression rules for the next XP update",
+    "detail": "The specification records a first step of 100 XP, a configurable linear scaler of 1.3, and a visible refill from remaining XP after each manual level claim. Runtime implementation follows separately.",
+    "build": "0.7.1.719",
+    "pullRequest": 1425,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1425"
+  },
+  {
+    "id": "pr-1378",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "Behind the scenes: the rules for the blacksmith are written down",
+    "detail": "Docs only; nothing you play changes yet. The design document now says what a blacksmith visit keeps on its shelves and how a reload leaves them and their prices as they were; that each purchase or service at the blacksmith goes through once and refuses an offer that changed; that an upgrade can be paid wholly in Smithing Stones or wholly in refined stones, never a mix, at the cost the item's own upgrade table sets; how many sigil slots a weapon has and how many more the blacksmith will cut; that a sigil set into a weapon works only while that weapon is equipped, even after a swap mid-fight; what upgrading a loose weapon art and stacking a copy of a card cost; the least each of the blacksmith's numbers may be set to; that a blacksmith service stays on offer for the whole visit and becomes usable as soon as you have something for it; and that the blacksmith sells no sigils of its own.",
+    "build": "0.7.1.718",
+    "pullRequest": 1378,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1378"
+  },
+  {
+    "id": "pr-1426",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "Behind the scenes: combat size checks report browser failures",
+    "detail": "Combat sizing checks now fail on console errors and failed requests. The overhead check and component reference describe the fixed 14 pixel action gap and larger hand cards.",
+    "build": "0.7.1.717",
+    "pullRequest": 1426,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1426"
+  },
+  {
+    "id": "pr-1422",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "Enemies regain their stature and actions stay with their cards",
+    "detail": "Light artwork now uses the same proportions as full artwork, fixing tiny enemies. Action badges sit 14 pixels above each combatant card, with transparent image padding excluded. Hand cards grow larger when space permits.",
+    "build": "0.7.1.716",
+    "pullRequest": 1422,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1422"
+  },
+  {
+    "id": "pr-1423",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "Opening scenes keep the traveller in your hands, and XP edits preserve your save's rules",
+    "detail": "Each opening scene can show or hide the traveller, turn it, and place it before or behind the colour wash. Desktop and phone poses remain separate, and rotated figures retain accurate size and drag handles. Editing XP settings on an older save keeps that save's combat rating rules and other configuration metadata.",
+    "build": "0.7.1.714",
+    "pullRequest": 1423,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1423"
+  },
+  {
+    "id": "pr-1420",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Behind the scenes: the Armoury browser check reports its result to CI",
+    "detail": "The checker already passed all 42 tab and figure checks at three screen widths; it now gives the CI wrapper a counted success line so that green result is accepted.",
+    "build": "0.7.1.709",
+    "pullRequest": 1420,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1420"
+  },
+  {
+    "id": "pr-1418",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Behind the scenes: the card hand layout check catches misplaced controls again",
+    "detail": "Five deliberate layout defects now use the current fitted hand and footer, so the browser check can catch cards covering controls, a clipped End Turn label, and a hidden action row.",
+    "build": "0.7.1.708",
+    "pullRequest": 1418,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1418"
+  },
+  {
+    "id": "pr-1412",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Behind the scenes: phone layout checks retain the covered map probe",
+    "detail": "The closed map tray test now recreates both its old height and hit interception, so the browser check proves it catches map controls covered by that defect. The fitted card hand now stops reporting an unused fan lift, and its layout check tests whether cards escape their hand box.",
+    "build": "0.7.1.707",
+    "pullRequest": 1412,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1412"
+  },
+  {
+    "id": "pr-1414",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "XP settings now shape rewards, and levels wait for your choice",
+    "detail": "A fight pays character XP from defeated enemies' level, combat power and equipment, using the values in Advanced settings; the levelling preview follows those values too. After Victory, the XP bars fill in sequence, and a blue Level button appears on each full character or skill bar. Pressing it advances one level, keeps any excess XP, and opens that level's reward. Character levels offer passive feats by default, with separate settings for class upgrades, bonus cards and stat points. You can also let levels advance automatically.",
+    "build": "0.7.1.706",
+    "pullRequest": 1414,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1414"
+  },
+  {
+    "id": "pr-1411",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Behind the scenes: phone reachability checks stay effective",
+    "detail": "The browser check again proves it catches an intent badge trapped beneath neighboring art, including with extra-large text. Its obsolete closed-map-tray test is removed because that tray no longer has visible controls to measure.",
+    "build": "0.7.1.704",
+    "pullRequest": 1411,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1411"
+  },
+  {
+    "id": "pr-1408",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Overlapping enemy sprites keep a clear tap area",
+    "detail": "Enemy intent badges sit a little higher above their artwork while respecting the HUD boundary. This leaves room to select a Grave Wisp on a short phone in extra-large text without covering its resource bars.",
+    "build": "0.7.1.701",
+    "pullRequest": 1408,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1408"
+  },
+  {
+    "id": "pr-1407",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Bow attacks draw and release, and cards choose the matching weapon motion",
+    "detail": "A Bow Attack now plays a seven-step draw and shot in every armor appearance. Blade attacks use greatsword, sword-and-shield, or twin-sword movement according to what is held. Spell attacks cast; shield attacks share one bash, and guarding with a shield keeps the shield guard movement.",
+    "build": "0.7.1.700",
+    "pullRequest": 1407,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1407"
+  },
+  {
+    "id": "pr-1405",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Enemy taps stay reachable in source and packaged play",
+    "detail": "The transparent 44 px target now sits on each enemy's clickable frame, above neighboring artwork. This keeps even an overlapping Grave Wisp selectable on a short phone with extra-large text, regardless of how its art loads.",
+    "build": "0.7.1.697",
+    "pullRequest": 1405,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1405"
+  },
+  {
+    "id": "pr-1403",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Enemy intent badges stay in front of the fighters",
+    "detail": "On a short phone screen, a neighboring enemy's sprite could cover the entire intent button. The artwork keeps its depth order while intent buttons, names and resource bars remain above it. Tiny enemies gain a larger tap area without changing their artwork size.",
+    "build": "0.7.1.696",
+    "pullRequest": 1403,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1403"
+  },
+  {
+    "id": "pr-1401",
+    "date": "2026-09-29",
+    "group": "2026-09-29",
+    "summary": "Behind the scenes: the long checks finish within an hour",
+    "detail": "The Windows build check divides its known-bad cases among four jobs, and the browser checks run in smaller jobs. All cases still run; each job has a one-hour limit. The phone reachability check now accepts an enemy intent badge when it has a full finger-sized exposed area, while catching badges that cannot be pressed anywhere.",
+    "build": "0.7.1.695",
+    "pullRequest": 1401,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1401"
+  },
+  {
+    "id": "pr-1399",
+    "date": "2026-09-28",
+    "group": "2026-09-28",
+    "summary": "Card details stay tappable in a crowded phone fight",
+    "detail": "The More button on a truncated card now sits above the overlapping hand, where the next card cannot cover it. The phone reachability check also recognizes closed map trays and checks the part of each fighter that can actually be tapped.",
+    "build": "0.7.1.694",
+    "pullRequest": 1399,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1399"
+  },
+  {
+    "id": "pr-1397",
+    "date": "2026-09-28",
+    "group": "2026-09-28",
+    "summary": "Browser checks for Fullscreen and saved-game loading run to completion",
+    "detail": "One of the Fullscreen check's deliberate defects no longer matched the current Settings source after an art quality setting was added. It now swaps the current Fullscreen and Accent rows and checks that the wrong order is caught. The saved-game loading check now reports its successful deliberate-defect checks in the format the test runner expects.",
+    "build": "0.7.1.685",
+    "pullRequest": 1397,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1397"
+  },
+  {
+    "id": "pr-1395",
+    "date": "2026-09-28",
+    "group": "2026-09-28",
+    "summary": "Fullscreen stays visible at the top of Display on a phone",
+    "detail": "With XL text, the open display preview could push the Fullscreen switch below the visible settings pane during a fight. Fullscreen now comes first, followed by the same live preview and the other Display controls. The browser check for loading a saved fight now reports its completed checks correctly.",
+    "build": "0.7.1.683",
+    "pullRequest": 1395,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1395"
+  },
+  {
+    "id": "pr-1393",
+    "date": "2026-09-28",
+    "group": "2026-09-28",
+    "summary": "Developer tools can be switched off in development and test builds",
+    "detail": "Settings → Advanced now has a Developer tools switch in development and test builds. It starts on there, but you can turn it off; your choice is remembered on this device. An unrecognised downloaded file starts with the tools off and lets you turn them on. Release and main builds keep the tools off and no longer show the Developer tools row.",
+    "build": "0.7.1.681",
+    "pullRequest": 1393,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1393"
+  },
+  {
+    "id": "pr-1389",
     "date": "2026-09-27",
     "group": "2026-09-27",
-    "summary": "The blacksmith opens his forge",
-    "detail": "A smith on the atlas is now a blacksmith with a screen of his own. On a visit he may sell armaments and Smithing Stones, upgrade your items, fold Smithing Stones and cinders into a refined stone, cut sigil slots into an armament you carry, set your sigils into those slots or take them out for free, lift a weapon art out of an item or seat a loose one, upgrade a loose weapon art, and forge one more copy of a weapon art or technique you own, which goes to your sideboard for the deck editor. An upgrade can now be paid wholly in refined stones instead of ordinary ones at the blacksmith. A sigil set into a slot works only while that armament is equipped, and it follows the armament through a swap in the middle of a fight. A service with nothing to work on yet stays on his list, says why, and opens as soon as you have something for it, even on the same visit. What he stocks and what he charges stay the same after a reload. Every price and count is a row in Advanced → Shops, and a merchant on the map becomes a blacksmith only when you raise his weight there (it ships at 0). An older save loads unchanged.",
-    "build": "0.7.1.678",
-    "pullRequest": 1390,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1390"
+    "summary": "Levelling a weapon offers real choices, and each class has more abilities",
+    "detail": "Every starting weapon, shield and staff now offers at least four different cards at each rarity when it levels up. The Reaver's sword and shield used to offer commons only, and the Starseer's Ash Focus offered nothing; 24 new cards fill the gaps, among them twelve Starseer ash rites for the Ash Focus, new bow and parrying cards for the Rogue, and new sword and shield cards for the Reaver. Each class's ability tree grows from six to ten choices: two more at each of its first two tiers. The subclass choice is unchanged.",
+    "build": "0.7.1.679",
+    "pullRequest": 1389,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1389"
   },
   {
     "id": "pr-1385",

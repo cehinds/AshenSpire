@@ -166,7 +166,7 @@
     },
     "tools/displayfirst.mjs": {
       "count": 4,
-      "digest": "a3043f4086aa8d3b"
+      "digest": "f99b73fec00b83cb"
     },
     "tools/equipment-surface-receipts.mjs": {
       "count": 3,
@@ -209,8 +209,8 @@
       "digest": "202b7aeba2b2cf9e"
     },
     "tools/hintstrip.mjs": {
-      "count": 16,
-      "digest": "ab5a7c55f444611e"
+      "count": 11,
+      "digest": "fb2a18e87004ab93"
     },
     "tools/hudbars.mjs": {
       "count": 1,
@@ -281,8 +281,8 @@
       "digest": "258e4d2c96542f9e"
     },
     "tools/screenreach.mjs": {
-      "count": 6,
-      "digest": "ec20fc1646b8020c"
+      "count": 9,
+      "digest": "8c89c934bfef71af"
     },
     "tools/scroll-cue-bleed.mjs": {
       "count": 2,

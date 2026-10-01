@@ -6382,16 +6382,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // now IS that row, and it lands on the old hand-rule turn draw (2 below
     // INT 9) rather than the old derived one.
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '38/3/2', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
-    // THE OWNER'S CURVE SINCE 2026-09-24 (base 5, growth 1.15, roundTo 10 —
-    // 100,120,…,350 before). The rounding holds the first eight steps at its
-    // own floor of 10: 5 × 1.15^n does not reach 15 until n = 8.
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '10,10,10,10,10,10,10,10,20,20', 'the XP curve receipt (plan phase 6, proposal §10): the steps from level 1');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,100,100,100,100,100,100,100,100,100', 'every default stat level costs 100 XP');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.ratingId}`, '3/ar', 'physical Strike is 3 base + AR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.ratingId}`, '2/pr', 'magic Strike is 2 base + PR');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.ratingId}`, '1/dr', 'Defend is 1 base + DR');
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 120, '120 XP reaches level 11 (2,030 before 2026-09-24) — a curve receipt, not a second hard-coded total');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 1000, '1,000 XP reaches level 11 at the default cost');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
     // Rogue: HP 30 + ⌊4 × 2⌋ = 38; Actions 3 + ⌊0.2 × DEX 3⌋ = 3; Draw 2 + ⌊0.1 × INT 1⌋ = 2.
@@ -6924,10 +6921,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // THE AWARDS: a won fight, each kill by the door's pool; a loss keeps its kills.
     const xp = REG.balance.xp;
-    eq(combatLevelXp(REG, { victory: true, pool: 'normal', kills: 2 }), xp.combatWin + 2 * xp.kill.normal);
-    eq(combatLevelXp(REG, { victory: true, pool: 'boss', kills: 1 }), xp.combatWin + xp.kill.boss);
-    eq(combatLevelXp(REG, { victory: false, pool: 'elite', kills: 1 }), xp.kill.elite, 'a lost fight pays its kills and no win');
-    eq(combatLevelXp(REG, { victory: true, pool: 'nowhere', kills: 1 }), xp.combatWin + xp.kill.normal, 'an unknown pool pays the normal rate');
+    eq(combatLevelXp(REG, { victory: true, pool: 'normal', kills: 2 }), 34);
+    eq(combatLevelXp(REG, { victory: true, pool: 'boss', kills: 1 }), 17);
+    eq(combatLevelXp(REG, { victory: false, pool: 'elite', kills: 1 }), 2, 'a lost fight pays its kills and no combat-power award');
+    eq(combatLevelXp(REG, { victory: true, pool: 'nowhere', kills: 1 }), 17, 'an unknown pool pays the normal rate');
     eq(questLevelXp(REG), xp.quest);
 
     // THE CAP holds the level and keeps the XP.
@@ -8728,13 +8725,12 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // by its growth — never cheaper at any step, and dearer over ten.
     const steps = (kind) => Array.from({ length: 10 }, (_, n) => xpToNext(REG, kind, n));
     assert(steps('class').every((cost, n) => cost >= steps('weapon')[n]), 'the class curve is never cheaper at any step');
-    assert(steps('class').reduce((a, b) => a + b) > steps('weapon').reduce((a, b) => a + b), 'the class curve is the slower one');
+    eq(steps('class').reduce((a, b) => a + b), steps('weapon').reduce((a, b) => a + b), 'class and weapon curves have the same 100 XP default');
     // THE CLIMB, READ OVER TEN STEPS: the owner's base of 5 on a roundTo of 5
     // (2026-09-24; 30 before) rounds the first three steps to the same 5, so
     // growth shows further up the curve rather than between steps 0 and 1.
     const armourSteps = Array.from({ length: 10 }, (_, n) => xpToNext(REG, 'armour', n));
-    assert(armourSteps.every((cost, n) => n === 0 || cost >= armourSteps[n - 1]) && armourSteps[9] > armourSteps[0],
-      `the curve climbs — ${armourSteps.join(',')}`);
+    assert(armourSteps.every((cost) => cost === 100), `the default armour curve stays at 100 — ${armourSteps.join(',')}`);
     // The ledger: a fresh run has none; XP writes it and climbs, queuing a draft per level.
     const run = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
     eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{}', 'a fresh run has an empty ledger');
@@ -8911,7 +8907,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(high.every((id) => ['common', 'uncommon', 'rare'].includes(REG.cards.get(id).rarity)), 'a high level drafts from the opened set');
     const rngEmpty = createRng(7); const beforeCounters = JSON.stringify(rngEmpty.getCounters());
     const starseer = createRunState({ seed: 0x4b4b, classId: 'starseer', registries: REG });
-    eq(rollSkillDraftIds(REG, rngEmpty, { classId: 'starseer', loadout: starseer.loadout, skillId: 'item:magic-focus', level: 1 }).length, 0, 'a pool with no card of the schools rolls nothing');
+    // The Starseer's Ash Focus drafts its ash rites; the Reaver's pool holds no ritual card.
+    eq(rollSkillDraftIds(REG, rngEmpty, { classId: 'reaver', loadout: starseer.loadout, skillId: 'item:magic-focus', level: 1 }).length, 0, 'a pool with no card of the schools rolls nothing');
     eq(JSON.stringify(rngEmpty.getCounters()), beforeCounters, 'and draws nothing');
     eq(rollSkillDraftIds(REG, createRng(7), { classId: 'starseer', loadout: starseer.loadout, skillId: 'item:blade', level: 1 }).length, 0, 'a track whose type no hand holds rolls nothing');
     eq(rollSkillDraftIds(REG, createRng(7), { classId: 'reaver', loadout: reaver.loadout, skillId: 'item:blade', level: 1, pool: 'boss' }).length, c.draftSize, 'a boss door rolls at its own odds');
@@ -9114,14 +9111,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const c = REG.balance.skill.class;
     // THE TABLE IS THE TREE: rows per class, tiers the balance rows open.
     const rows = classTreeRows(REG, 'reaver');
-    eq(rows.length, 6, 'the reaver tree has six nodes'); eq(new Set(rows.map((r) => r.tier)).size, 3, 'in three tiers');
+    eq(rows.length, 10, 'the reaver tree has ten nodes'); eq(new Set(rows.map((r) => r.tier)).size, 3, 'in three tiers');
+    eq([1, 2, 3].map((t) => rows.filter((r) => r.tier === t).length).join(','), '4,4,2', 'four at tier 1, four at tier 2, the subclass pair at tier 3');
     eq(tierOpensAt(REG, 1), c.tierAt[0]); eq(tierOpensAt(REG, 3), c.tierAt[2]); eq(tierOpensAt(REG, 9), Infinity, 'a tier the table has not got never opens');
     for (const cls of REG.classes.all()) assert(classTreeRows(REG, cls.id).some((r) => r.tier === 3), `${cls.id} has a subclass tier`);
     // THE POOL: what a class at a level may draft, given what it picked.
     eq(classDraftPool(REG, 'reaver', [], 0).length, 0, 'level 0 opens nothing');
-    eq(classDraftPool(REG, 'reaver', [], c.tierAt[0]).join(','), 'ironFooting,bloodTempo', 'tier 1 at its level');
-    eq(classDraftPool(REG, 'reaver', ['ironFooting'], c.tierAt[0]).join(','), 'bloodTempo', 'a picked node leaves the pool');
-    eq(classDraftPool(REG, 'reaver', [], c.tierAt[2]).length, 6, 'every tier open at the top level');
+    eq(classDraftPool(REG, 'reaver', [], c.tierAt[0]).join(','), 'ironFooting,bloodTempo,partingBlow,ironRebuke', 'tier 1 at its level');
+    eq(classDraftPool(REG, 'reaver', ['ironFooting'], c.tierAt[0]).join(','), 'bloodTempo,partingBlow,ironRebuke', 'a picked node leaves the pool');
+    eq(classDraftPool(REG, 'reaver', [], c.tierAt[2]).length, 10, 'every tier open at the top level');
     eq(classDraftPool(REG, 'reaver', ['warlord'], c.tierAt[2]).includes('bulwarkKing'), false, 'the other subclass is excluded once one is picked');
     eq(classDraftPool(REG, 'reaver', ['warlord'], c.tierAt[2]).includes('ironFooting'), true, 'the lower tiers stay open');
     // THE ROLL: draftSize distinct nodes on the cardRewards stream; an empty pool draws nothing.
@@ -9130,7 +9128,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(roll.every((id) => rows.some((r) => r.nodeId === id)), 'every pick is a reaver node');
     const rngEmpty = createRng(9); const before = JSON.stringify(rngEmpty.getCounters());
     eq(rollClassDraftIds(REG, rngEmpty, { classId: 'reaver', coreTags: [], level: 0 }).length, 0); eq(JSON.stringify(rngEmpty.getCounters()), before, 'nothing drawn for nothing');
-    eq(rollClassDraftIds(REG, createRng(9), { classId: 'reaver', coreTags: ['ironFooting'], level: c.tierAt[0] }).join(','), 'bloodTempo', 'a pool smaller than the draft is the whole pool');
+    eq(rollClassDraftIds(REG, createRng(9), { classId: 'reaver', coreTags: ['ironFooting', 'bloodTempo', 'partingBlow'], level: c.tierAt[0] }).join(','), 'ironRebuke', 'a pool smaller than the draft is the whole pool');
     // THE PICK writes the core card's own tags, and only what the tree allows.
     const run = createRunState({ seed: 0x5b5b, classId: 'reaver', registries: REG });
     eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.coreTags), '[]', 'a fresh run has picked nothing'); eq(JSON.stringify(run.zones.coreTags), '[]', 'and the core zone projects it');

@@ -291,7 +291,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     } else {
       plate.classList.add('prologue-plate-bare');
     }
-    if (scene.character) {
+    if (scene.character && scene.actor?.[layout]) {
       const actor = el('canvas',{class:'prologue-actor'});
       // Art quality may change while the first decode is in flight (every
       // change bumps `repaints`, even before an actor is mounted): load again

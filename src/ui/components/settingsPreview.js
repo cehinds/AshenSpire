@@ -1,6 +1,7 @@
 /**
- * settingsPreview — the LIVE PREVIEW STRIP above Settings → General › Display
- * and Settings → Accessibility (docs/SETTINGS-REVAMP.md §4 item 1).
+ * settingsPreview — the LIVE PREVIEW STRIP after the Fullscreen control in
+ * Settings → General › Display, and above Settings → Accessibility's controls
+ * (docs/SETTINGS-REVAMP.md §4 item 1).
  *
  * A small sample drawn with the game's own CSS: a heading, a line of body text,
  * a line of lore type, a primary and a secondary button, a resource bar and one

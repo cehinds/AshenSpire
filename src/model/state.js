@@ -32,6 +32,7 @@ import { openLedger, closeLedger, note } from './healLedger.js';
 import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
 import { skillsProblems } from './skills.js';
 import { coreTagsProblems } from './classTree.js';
+import { featById } from './feats.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
@@ -179,6 +180,7 @@ export function createRunState({
     skills: {},
     // The class tree's picks (plan phase 5b): the core zone's own tagging rows.
     coreTags: [],
+    feats: [],
     // THE POINTS THOSE LEVELS GRANTED, and not a copy of the count above: the
     // two are one number only while the level value is one number. Constantine
     // made it a dial on 2026-08-17 ("leave the level up value configurable"),
@@ -672,6 +674,7 @@ export const RUN_SHAPE = [
   // Plan phase 5b. Required at schema 9; a preCoreTags save (≤ 8) is filled
   // with no picks at the migration door.
   { key: 'coreTags', type: 'array' },
+  { key: 'feats', type: 'array', optional: true },
   // Plan phase 5c: the item types in hand as each boss fell, for the
   // bossWithGroup unlock; optional, written at the boss door.
   { key: 'bossGroups', type: 'object', optional: true },
@@ -795,7 +798,13 @@ function pendingDraftRows(pending) {
   const level = (Array.isArray(rewards.levelCards) ? rewards.levelCards : [])
     .filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
     .map((d, i) => ({ key: `levelCard:${Number.isInteger(d.ordinal) ? d.ordinal : i}`, cardIds: d.cardIds, ids: d.cardIds }));
-  return [...cls, ...skill, ...level];
+  const choices = (Array.isArray(rewards.levelChoices) ? rewards.levelChoices : [])
+    .filter((d) => d && Array.isArray(d.options) && d.options.length > 0)
+    .map((d, i) => {
+      const ids = d.options.map((option) => `${option.kind}:${option.id}`);
+      return { key: `levelChoice:${Number.isInteger(d.ordinal) ? d.ordinal : i}`, cardIds: ids, ids };
+    });
+  return [...cls, ...skill, ...level, ...choices];
 }
 const pendingDraftKeys = (pending) => pendingDraftRows(pending).map((d) => d.key);
 
@@ -855,6 +864,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
+  if (Array.isArray(run.feats)) run.feats.forEach((id, i) => {
+    if (typeof id !== 'string' || !featById(id)) problems.push(`feats[${i}] must name an authored feat`);
+  });
   problems.push(...sigilInventoryProblems(run), ...boughtArmourProblems(run.loadout), ...consumablesProblems(run), ...companionsProblems(run));
   if (Array.isArray(run.sideboard)) {
     run.sideboard.forEach((card, i) => {
@@ -986,6 +998,14 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (pending.schemaVersion !== 1) problems.push('pendingReward.schemaVersion must be 1');
       if (typeof pending.source !== 'string' || !pending.source) problems.push('pendingReward.source must be a non-empty string');
       if (!['map', 'advanceAct'].includes(pending.after)) problems.push('pendingReward.after must be map or advanceAct');
+      if (pending.expanded !== undefined && typeof pending.expanded !== 'boolean') problems.push('pendingReward.expanded must be a boolean');
+      if (pending.levelClaims !== undefined && (!Number.isInteger(pending.levelClaims) || pending.levelClaims < 0)) problems.push('pendingReward.levelClaims must be a non-negative integer');
+      if (pending.skillClaims !== undefined) {
+        if (!pending.skillClaims || Array.isArray(pending.skillClaims) || typeof pending.skillClaims !== 'object') problems.push('pendingReward.skillClaims must be an object');
+        else for (const [id, count] of Object.entries(pending.skillClaims)) {
+          if (!id || !Number.isInteger(count) || count < 0) problems.push(`pendingReward.skillClaims.${id || '<empty>'} must be a non-negative integer`);
+        }
+      }
       if (!pending.rewards || Array.isArray(pending.rewards) || typeof pending.rewards !== 'object') {
         problems.push('pendingReward.rewards must be an object');
       }
@@ -1026,6 +1046,19 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
             if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
           });
         }
+      }
+      if (pending.rewards?.levelChoices !== undefined) {
+        const rows = pending.rewards.levelChoices;
+        if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelChoices must be an array');
+        else rows.forEach((d, i) => {
+          const p = `pendingReward.rewards.levelChoices[${i}]`;
+          if (!d || !Number.isInteger(d.ordinal) || d.ordinal < 0 || !Array.isArray(d.options) || !d.options.length) {
+            problems.push(`${p} must have an ordinal and choices`); return;
+          }
+          for (const option of d.options) {
+            if (!option || !['feat', 'classNode'].includes(option.kind) || typeof option.id !== 'string' || !option.id) problems.push(`${p}.options must name feats or class nodes`);
+          }
+        });
       }
       if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
         problems.push('pendingReward.rewards.cardMissed must be a boolean');
@@ -1459,11 +1492,12 @@ export function stampPlayerPoiseMax(entity, max) {
  * the poiseDamage opcode (SPEC §3.7, §4.4); everything else about Stagger is
  * content data.
  */
-export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, damageMult = 1 }) {
+export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, damageMult = 1, level = 1 }) {
   const entity = {
     id: instanceId,
     kind: 'enemy',
     enemyId,
+    level: Number.isSafeInteger(level) && level > 0 ? level : 1,
     hp,
     maxHp: hp,
     block: 0,

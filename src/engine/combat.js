@@ -101,7 +101,7 @@ function recoverAtTurnEnd(combat) {
 }
 
 export function createCombat({
-  registries, rng, player, enemyIds, hpMult = 1, enemyStatuses = [], playerStatuses = [],
+  registries, rng, player, enemyIds, enemyLevels = [], hpMult = 1, enemyStatuses = [], playerStatuses = [],
   // Every enemy's move damage × this (SPEC §13.3 balance.bossTiers: a boss
   // met at a later tier hits harder). Stamped on each enemy entity, so a
   // snapshot carries it; 1 stamps nothing.
@@ -274,7 +274,7 @@ export function createCombat({
     if (hpMult !== 1) hp = Math.max(1, Math.round(hp * hpMult));
     combat.enemies.push(
       createEnemyCombatEntity({
-        instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax,
+        instanceId: `e${i + 1}`, enemyId, level: enemyLevels[i], hp, poiseMax: def.poiseMax,
         arcaneExposure: def.arcaneExposure,
         damageResistanceBySchool: def.damageResistanceBySchool,
         damageMult: enemyDamageMult,

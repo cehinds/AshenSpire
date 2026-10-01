@@ -283,6 +283,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.levelUp.action",
+    "extends": "",
+    "short": "Level Up!",
+    "full": "Choose a bonus card for the level gained.",
+    "tip": "Level Up!"
+  },
+  {
     "id": "reward.note.cardMissed",
     "extends": "",
     "short": "No card this time.",
@@ -2105,7 +2112,7 @@ export const uiStrings = [
   {
     "id": "settings.levelPace.subtitle",
     "extends": "",
-    "short": "A new run under these settings",
+    "short": "Current XP settings",
     "full": "",
     "tip": ""
   },
@@ -2161,7 +2168,21 @@ export const uiStrings = [
   {
     "id": "settings.levelPace.fightLine",
     "extends": "",
-    "short": "{fight} ({kills} kill{killsPlural}) gives {xp} XP: {worth}.",
+    "short": "{fight} ({kills} level-1 kill{killsPlural} at power 3 each) gives {xp} XP: {worth}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.killLine",
+    "extends": "",
+    "short": "Fight XP = floor(total enemy power × {powerFactor} × {powerBase} + {base} × {levelFactor} × total enemy levels). Power adds level and combat stats plus a small equipment bonus. Two level-5 enemies at power 3 each give {example} XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.skillLine",
+    "extends": "",
+    "short": "A skill hit gives {hit} XP and a win gives {win} equipped-skill XP; the first skill level costs {cost} XP.",
     "full": "",
     "tip": ""
   },

@@ -432,6 +432,47 @@ const ROWS = [
     note: 'After a valid starting-equipment choice, open the next equipment section. Off: each section waits for you to continue.' },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'useRestorativeFlasksOutsideCombat', def: true, label: 'Use flasks outside combat',
     note: 'Allow Crimson and Azure Flask charges to restore Health or Mana from the map. Their charges still refill only at a Shrine.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victorySummaryMode', type: 'choice', def: 'continue',
+    choices: ['continue', 'anywhere', 'auto'], choiceLabels: { continue: 'Continue', anywhere: 'Click anywhere', auto: 'Expand automatically' },
+    label: 'Open full Victory summary', note: 'First show a compact Victory panel, then open the full rewards and XP summary using this action.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpSeconds', type: 'number', def: 3, min: 0, max: 12, step: 0.25,
+    label: 'Victory XP animation (seconds)', note: 'Total time for all XP bars together. 0 shows the final values immediately.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpCharacterWeight', type: 'number', def: 50, min: 0, max: 100, step: 5,
+    label: 'Character XP time share', note: 'Relative share of the total animation time. Shares for missing tracks are redistributed.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpClassWeight', type: 'number', def: 25, min: 0, max: 100, step: 5,
+    label: 'Class XP time share', note: 'Relative share of the total animation time.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpSkillWeight', type: 'number', def: 25, min: 0, max: 100, step: 5,
+    label: 'Skill XP time share', note: 'Relative share, split between the skills shown.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'levelUpAllocateStats', def: false, label: 'Assign stats in Level Up',
+    note: 'Show shrine-style stat allocation in the level reward panel. Off: earned points wait for a Shrine.' },
+  { cat: 'Advanced', advancedGroup: 'Progression', key: 'manualLevelUp', def: true, label: 'Click to level up',
+    note: 'When XP fills a character or skill bar, wait for its Level button before advancing. Off: earned levels advance automatically.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelStatPoints', def: true, label: 'Level Up · Stat points',
+    note: 'Grant stat points when an earned character level is claimed.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelFeats', def: true, label: 'Level Up · Feats',
+    note: 'Offer permanent passive feats when a character level is claimed.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelClassTree', def: false, label: 'Level Up · Class upgrades',
+    note: 'Include eligible class-tree upgrades alongside feats in the character-level choices.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelCards', def: false, label: 'Level Up · Bonus card',
+    note: 'Offer a card on a claimed level when the card reward schedule also allows it.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleCinders', def: true, label: 'Battle · Cinders',
+    note: 'Include Cinders among battle rewards.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleCards', def: true, label: 'Battle · Card',
+    note: 'Include the normal battle card offer when its chance succeeds.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleSkillDrafts', def: true, label: 'Battle · Skill cards',
+    note: 'Offer earned skill drafts after battle. Unoffered drafts remain queued.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleClassDrafts', def: true, label: 'Battle · Class choices',
+    note: 'Offer earned class choices after battle. Unoffered choices remain queued.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleFlasks', def: true, label: 'Battle · Flasks',
+    note: 'Include flask drops among battle rewards.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleRelics', def: true, label: 'Battle · Relics',
+    note: 'Include relic drops among elite and boss rewards.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleArmaments', def: true, label: 'Battle · Equipment',
+    note: 'Include armament drops among battle rewards.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardTreasureRelics', def: true, label: 'Treasure · Relics',
+    note: 'Include relics found in treasure rooms.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardTreasureArmaments', def: true, label: 'Treasure · Equipment',
+    note: 'Include armaments found in treasure rooms.' },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
     note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
   // How strongly the nodes already walked fade behind you — his clause, with
@@ -872,17 +913,16 @@ export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Interface', 'T
 const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
 
 /**
- * developerSwitchHtml() → the Developer tools row drawn above every Advanced
- * section, on every build, so the switch that reveals the debug-only sections
- * can always be found; where the build decides for itself the row says why.
+ * developerSwitchHtml() → the Developer tools switch drawn above every
+ * Advanced section: a toggle on dev, test and unrecognised builds, and nothing
+ * at all on the 1.0 release builds, where the tools stay off (owner,
+ * 2026-09-27).
  */
 export function developerSwitchHtml(state = debugSwitch()) {
-  const control = state.canToggle
-    ? `<button type="button" class="as-toggle toggle${state.on ? ' on' : ''}" role="switch" aria-checked="${state.on}" aria-label="Developer tools" data-developer-switch><span class="knob"></span></button>`
-    : `<span class="set-note">${state.on ? 'On' : 'Off'}</span>`;
+  if (state.hidden) return '';
   return '<div class="as-row setting set-row set-developer-switch" data-row-key="developerTools">'
     + `<span class="as-labelstack"><span class="set-label-line"><span class="ls-label">Developer tools</span></span><span class="ls-hint set-note">${esc(state.note)}</span></span>`
-    + `<span class="r-trail">${control}</span></div>`;
+    + `<span class="r-trail"><button type="button" class="as-toggle toggle${state.on ? ' on' : ''}" role="switch" aria-checked="${state.on}" aria-label="Developer tools" data-developer-switch><span class="knob"></span></button></span></div>`;
 }
 
 /** visibleAdvancedGroups(debug) → the Advanced sections this build shows. */
@@ -2420,7 +2460,7 @@ function levelPacePreviewMarkup(settings, pointsPerLevel) {
     + `<ol class="set-level-pace-curve">${pace.curve.map((row) => `<li><span>${esc(row.label)}</span> <b>${row.step}</b> <small>${esc(row.totalText)}</small></li>`).join('')}</ol></div>`;
   return `<div class="set-example set-level-pace" data-level-pace aria-live="polite"><div class="set-example-head"><strong>${esc(pace.title)}</strong><span>${esc(pace.subtitle)}</span></div>`
     + (pace.refused ? `<p class="set-example-refused" role="status" data-level-pace-refused>${esc(pace.refused)}</p>` : '')
-    + `<p class="set-example-attrs">${esc(pace.terms)}</p>${fights}${curve}</div>`;
+    + `<p class="set-example-attrs">${esc(pace.terms)}</p><p class="set-example-attrs">${esc(pace.killText)}</p><p class="set-example-attrs">${esc(pace.skillText)}</p>${fights}${curve}</div>`;
 }
 
 function visibleAdvancedSubgroups(rows, groupId) {
@@ -2512,10 +2552,19 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
     const topics = generalGroups(selected);
     const storedTopic = settings[`settingsGeneralTopic.${selected}`];
     const topic = topics.has(storedTopic) ? storedTopic : topics.keys().next().value;
+    const rows = topics.get(topic);
+    const preview = settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : '';
+    const firstFullscreen = selected === 'Display' && rows[0]?.key === 'fullscreen';
+    const rowHtml = rows.map(row => settingsRowHtml(settings, row));
+    // On a phone the expanded preview can fill the visible pane. Keep the
+    // first Display control ahead of it so Fullscreen is reachable on entry.
+    const body = firstFullscreen
+      ? `<div class="set-card-list">${rowHtml[0]}${preview}${rowHtml.slice(1).join('')}</div>`
+      : `${preview}<div class="set-card-list">${rowHtml.join('')}</div>`;
     return '<div class="set-general-pickers">'
       + (groups.length > 1 ? `<select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option${group === selected ? ' selected' : ''}>${group}</option>`).join('')}</select>` : '')
       + (topics.size > 1 ? `<select class="set-general-select" data-general-topic aria-label="${cat} option group">${[...topics.keys()].map(label => `<option${label === topic ? ' selected' : ''}>${label}</option>`).join('')}</select>` : '')
-      + `</div>${settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : ''}<div class="set-card-list">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;
+      + `</div>${body}`;
   }
   const h = categoryHandler(cat);
   if (!h) {
@@ -2553,7 +2602,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
       const subTabs = subgroups.length > 1 ? `<div class="set-topic-tabs" role="tablist" aria-label="${esc(group.label)} groups">`
         + subgroups.map((sub, index) => `<button type="button" class="as-btn${sub === activeSub ? ' on' : ''}" role="tab" aria-selected="${sub === activeSub}" aria-controls="set-topic-${group.id}-${index}" data-topic="${esc(sub.id)}">${esc(sub.label)}</button>`).join('') + '</div>' : '';
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"`
-        + `>${subTabs}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
+        + `>${subTabs}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' XP changes also apply to the current run.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
         + subgroups.map((sub, index) => sub !== activeSub
           ? `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}" data-lazy hidden></div>`
           : `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}">`

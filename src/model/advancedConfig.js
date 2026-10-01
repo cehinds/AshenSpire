@@ -21,6 +21,35 @@ import { consumableConfigRows, cloneItems } from './consumables.js';
 export const ADVANCED_CONFIG_PREFIX = 'gameConfig.';
 export const ADVANCED_CONFIG_SCHEMA_VERSION = 1;
 
+export function isLiveXpSetting(key) {
+  return /^gameConfig\.(?:progression\.xpMultiplier$|balance\.(?:level\.xp\.|xp\.|skill\.(?:xp\.|class\.xp\.)))/.test(key);
+}
+
+export function updatedXpSnapshot(snapshot, changed) {
+  const overrides = { ...(snapshot?.overrides || {}) };
+  for (const [key, value] of Object.entries(changed || {})) {
+    if (!isLiveXpSetting(key)) continue;
+    if (value === undefined) delete overrides[key];
+    else overrides[key] = value;
+  }
+  return xpSnapshotWithOverrides(snapshot, overrides);
+}
+
+export function xpSnapshotFromProfile(snapshot, profileSettings = {}) {
+  const overrides = Object.fromEntries(Object.entries(snapshot?.overrides || {}).filter(([key]) => !isLiveXpSetting(key)));
+  for (const [key, value] of Object.entries(profileSettings)) {
+    if (isLiveXpSetting(key) && value !== undefined) overrides[key] = value;
+  }
+  return xpSnapshotWithOverrides(snapshot, overrides);
+}
+
+// XP changes preserve the run's non-XP compatibility contract. In particular,
+// an absent ratingsVersion must stay absent for pre-ratings saves.
+function xpSnapshotWithOverrides(snapshot, overrides) {
+  return Object.freeze({ ...snapshot, schemaVersion: snapshot?.schemaVersion ?? ADVANCED_CONFIG_SCHEMA_VERSION,
+    overrides: advancedConfigSnapshot(overrides).overrides });
+}
+
 const PRESENTATION_DEFAULTS = Object.freeze({
   ...FORMATION_DEFAULTS,
   playerSpriteScale: 1,
@@ -70,6 +99,9 @@ const PERCENT = Object.freeze({ integer: true, step: 1, min: 0, max: 100 });
 const SIGNED_CARD_BONUS = /^damage\.[A-Za-z]+Cards\.cardBonuses\./;
 const SIGNED_BONUS = Object.freeze({ integer: true, step: 1, min: -999, max: 999 });
 const BALANCE_DOMAINS = Object.freeze({
+  'level.xp.growth': Object.freeze({ integer: false, step: 0.05, min: 1, max: 5 }),
+  'skill.xp.growth': Object.freeze({ integer: false, step: 0.05, min: 1, max: 5 }),
+  'skill.class.xp.growth': Object.freeze({ integer: false, step: 0.05, min: 1, max: 5 }),
   'rest.hpSmallPct': PERCENT,
   'rest.hpPartialPct': PERCENT,
   'rest.mana.floorPct': PERCENT,
@@ -89,14 +121,14 @@ const BALANCE_DOMAINS = Object.freeze({
   'smithing.refinedRewardByPool.elite': Object.freeze({ integer: true, step: 1, min: 0, max: 100 }),
   'smithing.refinedRewardByPool.boss': Object.freeze({ integer: true, step: 1, min: 0, max: 100 }),
   'smithing.refinedRewardByPool.treasure': Object.freeze({ integer: true, step: 1, min: 0, max: 100 }),
-  // XP CURVES THIS BUILD LOWERED (owner, 2026-09-24: every base to 5). A range
-  // read off 5 tops out at 50, which would refuse an exported file written on
-  // the old bases (100, 60, 30) and every larger tuning — and a refused value
-  // aborts the whole import. These are costs and awards with no natural cap.
-  'level.xp.base': Object.freeze({ max: 1000 }),
-  'skill.xp.base': Object.freeze({ max: 1000 }),
-  'skill.class.xp.base': Object.freeze({ max: 1000 }),
+  // XP costs retain a wide editor range so legacy exports and larger tunings
+  // remain importable. A refused value aborts the whole import.
+  'level.xp.base': Object.freeze({ min: 1, max: 1000 }),
+  'skill.xp.base': Object.freeze({ min: 1, max: 1000 }),
+  'skill.class.xp.base': Object.freeze({ min: 1, max: 1000 }),
   'xp.combatWin': Object.freeze({ max: 1000 }),
+  'xp.killLevelMultiplier': Object.freeze({ integer: false, step: 0.05, min: 0, max: 2 }),
+  'xp.combatPowerMultiplier': Object.freeze({ integer: false, step: 0.05, min: 0, max: 2 }),
   'xp.kill.normal': Object.freeze({ max: 1000 }),
   'xp.kill.elite': Object.freeze({ max: 1000 }),
   'xp.kill.boss': Object.freeze({ max: 2000 }),
@@ -478,6 +510,9 @@ function labelSegment(part, sentence = false) {
 // they say what they do rather than spell their key; "Poise · On Fill · 0 —
 // Stacks" named an array index. Everything else keeps its key-derived label.
 const BALANCE_LABELS = Object.freeze({
+  'xp.combatWin': 'Combat power XP base',
+  'xp.combatPowerMultiplier': 'Combat power XP multiplier',
+  'xp.killLevelMultiplier': 'Enemy level XP multiplier',
   'poise.growthMult': 'Poise meter growth after each fill',
   'poise.onFill.0.stacks': 'Staggered stacks when an enemy meter fills',
   'poise.playerImpactPerHit': 'Poise damage you take per enemy hit',
@@ -539,7 +574,9 @@ function leafRows(value, path = [], rows = [], bundle = null, parent = null) {
       // must not end by promising it applies to a new run, so the note beside
       // the number decides that rather than this line appending it to
       // everything.
-      note: described || `Authored balance value: ${joined}. ${NEW_RUN_CLAUSE}`,
+      note: isLiveXpSetting(`${ADVANCED_CONFIG_PREFIX}balance.${joined}`)
+        ? (described || `Authored balance value: ${joined}. ${NEW_RUN_CLAUSE}`).replace(NEW_RUN_CLAUSE, 'Applies immediately to future XP gains and level costs in the current run.')
+        : described || `Authored balance value: ${joined}. ${NEW_RUN_CLAUSE}`,
       configPath: ['balance', ...path],
       searchPath: joined,
       // `inert` as well as `retired`: nothing reads it, so a stored value is
@@ -760,7 +797,7 @@ function progressionRows(bundle) {
       min: 0.05, max: 20, def: 1,
       key: `${ADVANCED_CONFIG_PREFIX}progression.xpMultiplier`,
       label: 'Experience gain multiplier',
-      note: 'Multiply the XP a won fight, a kill and a quest pay toward your character level. 1 keeps authored awards. Applies to a new run.',
+      note: 'Multiply character and skill XP from combat and quests. 1 keeps authored awards. Applies immediately to future XP awards in the current run.',
       specialKey: 'xpMultiplier', searchPath: 'progression experience exp level gain multiplier',
     },
     {
@@ -1006,6 +1043,16 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
     const xp = configured.balance.xp;
     for (const key of ['combatWin', 'quest']) if (Number.isFinite(xp[key])) xp[key] = Math.max(0, Math.round(xp[key] * xpMultiplier));
     for (const key of Object.keys(xp.kill || {})) xp.kill[key] = Math.max(0, Math.round(xp.kill[key] * xpMultiplier));
+    const skill = configured.balance.skill;
+    for (const key of ['perHit', 'perWinEquipped', 'evadeXp']) {
+      if (Number.isFinite(skill?.xp?.[key])) skill.xp[key] *= xpMultiplier;
+    }
+    for (const key of ['impactPerXp', 'buildupPerXp']) {
+      if (Number.isFinite(skill?.xp?.[key]) && xpMultiplier > 0) skill.xp[key] /= xpMultiplier;
+    }
+    for (const key of ['perWin', 'bossKill', 'perQuest']) {
+      if (Number.isFinite(skill?.class?.xp?.[key])) skill.class.xp[key] = Math.max(0, Math.round(skill.class.xp[key] * xpMultiplier));
+    }
   }
   // Read through the legacy filter, so a run snapshot that still carries the
   // retired `rewardMultiplier` pays the authored table, never ×20.

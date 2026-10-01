@@ -144,6 +144,7 @@ try {
 finally {
   cdp?.close(); if (browser) await browser.close(); if (server) await new Promise(resolve => server.server.close(resolve));
   console.log('BOUNDARY: DOM-driven tab clicks and geometry in Chromium at three widths; pointer hit testing is covered by the separate Playwright preview checks.');
-  console.log(`${checks-failures}/${checks} Armoury tab checks passed.`);
+  if (failures) console.log(`${checks - failures}/${checks} Armoury tab checks passed.`);
+  else console.log(`armoury-arrival-figure: OK — ${checks} checks passed`);
   process.exitCode = failures ? 1 : 0;
 }
