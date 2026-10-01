@@ -1743,6 +1743,7 @@ card,,umbralWard,starstone
 card,,waxingMoonCard,starstone
 card,,celestialLance,starstone
 card,,astromancerCard,starstone
+card,,astralInsight,starstone
 card,,flagellation,ritual
 card,,penance,ritual
 card,,litany,ritual
@@ -1776,6 +1777,8 @@ card,,zealotryCard,ritual
 card,,bloodHarvest,ritual
 card,,bloodOfferingRite,ritual
 card,,harbingerOfBlightCard,ritual
+card,,blightwardLash,ritual
+card,,lastMercy,ritual
 
 armour,reaver,wayfarerPlate,item:armor
 armour,reaver,wayfarerPlate,guard

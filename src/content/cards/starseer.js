@@ -630,7 +630,7 @@ export const starseerCards = [
     },
   },
   {
-    id: 'astralInsight', name: 'Astral Insight', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'skill',
+    id: 'astralInsight', name: 'Astral Insight', class: 'starseer', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
     flavor: "Clear sight into the charts.\n\nThe apprentices believed the Starwatch's ledgers were meant to end where the charts of the fourth hearth began. There the Astronomer once underlined a line, and later struck through his own mark.\n\nThe charts of the fourth hearth were not among those carried away.",
     keywords: [], icon: '🌠',
     effects: [

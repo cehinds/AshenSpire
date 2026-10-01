@@ -10055,6 +10055,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "astralInsight",
+    "tagId": "starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "flagellation",
     "tagId": "ritual"
   },
@@ -10248,6 +10254,18 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "harbingerOfBlightCard",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightwardLash",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastMercy",
     "tagId": "ritual"
   },
   {
