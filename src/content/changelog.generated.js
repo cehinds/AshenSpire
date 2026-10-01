@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1428",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "Victory XP adds up before your eyes, and leftover XP refills after each level",
+    "detail": "Victory counts the combat-power bonus and each defeated enemy in a compact scrolling receipt, with a running equation and total. Each manual Level press shows remaining XP refill the character or skill bar before its reward opens. New progression steps start at 100 XP and add 130 XP per level by default; base, scaler, receipt timing and refill timing remain configurable.",
+    "build": "0.7.1.721",
+    "pullRequest": 1428,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1428"
+  },
+  {
     "id": "pr-1425",
     "date": "2026-10-01",
     "group": "2026-10-01",
