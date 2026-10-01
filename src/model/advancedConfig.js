@@ -99,6 +99,9 @@ const PERCENT = Object.freeze({ integer: true, step: 1, min: 0, max: 100 });
 const SIGNED_CARD_BONUS = /^damage\.[A-Za-z]+Cards\.cardBonuses\./;
 const SIGNED_BONUS = Object.freeze({ integer: true, step: 1, min: -999, max: 999 });
 const BALANCE_DOMAINS = Object.freeze({
+  'level.xp.multScaler': Object.freeze({ integer: false, step: 0.1, min: 0, max: 10 }),
+  'skill.xp.multScaler': Object.freeze({ integer: false, step: 0.1, min: 0, max: 10 }),
+  'skill.class.xp.multScaler': Object.freeze({ integer: false, step: 0.1, min: 0, max: 10 }),
   'level.xp.growth': Object.freeze({ integer: false, step: 0.05, min: 1, max: 5 }),
   'skill.xp.growth': Object.freeze({ integer: false, step: 0.05, min: 1, max: 5 }),
   'skill.class.xp.growth': Object.freeze({ integer: false, step: 0.05, min: 1, max: 5 }),
@@ -869,6 +872,8 @@ const DECK_SWITCH = `${ADVANCED_CONFIG_PREFIX}balance.equipment.startingDeck.ena
 // only the roll itself is gated.
 const DROP_ROLL = /^gameConfig\.balance\.equipment\.drops\.(chance|rarityWeights|preferUnfound)(\.|$)/;
 function enableGates(key, swapRuleIds = []) {
+  const curve = key.match(/^(gameConfig\.balance\.(?:level\.xp|skill\.xp|skill\.class\.xp))\.(growth|multScaler)$/);
+  if (curve) return [{ key: `${curve[1]}.linear`, when: curve[2] === 'multScaler' }];
   const balance = `${ADVANCED_CONFIG_PREFIX}balance.`;
   if (key.startsWith(`${ADVANCED_CONFIG_PREFIX}combatRatings.`) && key !== RATINGS_SWITCH) return [{ key: RATINGS_SWITCH }];
   // The older poise meter runs only with ratings off; the AR, DR, PR and Ward
@@ -952,6 +957,7 @@ export function advancedConfigSnapshot(settings = {}) {
   return Object.freeze({
     schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
     ratingsVersion: 1,
+    xpCurveVersion: 1,
     overrides: advancedConfigSettings(settings),
   });
 }
@@ -987,6 +993,16 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   const owns = advancedConfigOwns(bundle);
   const settings = withoutUnowned(raw, owns);
   const configured = cloneConfigurableBundle(bundle);
+  // A saved pre-linear run keeps its curve unless a live XP setting opts in.
+  // Profile settings and newly stamped snapshots use the authored defaults.
+  if (settingsOrSnapshot?.overrides && settingsOrSnapshot.xpCurveVersion !== 1) {
+    for (const path of ['level.xp', 'skill.xp', 'skill.class.xp']) {
+      const key = `${ADVANCED_CONFIG_PREFIX}balance.${path}.linear`;
+      if (settings[key] !== undefined) continue;
+      const curve = path.split('.').reduce((row, part) => row?.[part], configured.balance);
+      if (curve && Object.hasOwn(curve, 'linear')) curve.linear = false;
+    }
+  }
   // EQUIPMENT REQUIREMENTS RESOLVE FIRST, because every floor the starting-stat
   // dials are measured against is read off that table (kitAttributeMinimums).
   // Resolving them second would bound his pool by numbers his own settings had
@@ -1010,7 +1026,11 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   // read that way too — otherwise its poise and stagger tuning, which is in
   // force exactly then, would be set aside (review, #1260).
   const legacyRatings = Boolean(settingsOrSnapshot?.overrides) && settingsOrSnapshot.ratingsVersion !== 1;
-  const gateSettings = legacyRatings ? { ...settings, [RATINGS_SWITCH]: false } : settings;
+  const curveModes = Object.fromEntries(['level.xp', 'skill.xp', 'skill.class.xp'].map((path) => [
+    `${ADVANCED_CONFIG_PREFIX}balance.${path}.linear`,
+    path.split('.').reduce((row, part) => row?.[part], configured.balance)?.linear === true,
+  ]));
+  const gateSettings = { ...curveModes, ...settings, ...(legacyRatings ? { [RATINGS_SWITCH]: false } : {}) };
   const dormant = (row) => (row.gates || []).some((gate) => !gate.own
     && gate.key.startsWith(ADVANCED_CONFIG_PREFIX) && !gateOpen(gateSettings, gate, rowFor));
   const classesById = Object.fromEntries(configured.classes.map((row) => [row.id, row]));
