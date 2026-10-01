@@ -7,7 +7,6 @@ import { fitIconTray } from './iconTray.js';
 import { combatSpriteRatio, fitCombatSprites } from '../models/CombatSpriteScaleModel.js';
 import { combatSpriteGeometry } from './combatSpriteGeometry.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
-import { overheadStackBottom } from '../models/CombatOverlayModel.js';
 import { targetOutline } from '../models/TargetLayerModel.js';
 import { fitSceneBackdrop } from './sceneBackdrop.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
@@ -108,16 +107,23 @@ export function wireBattlefieldStage(field, model) {
         // intent), in local px, for the headroom clamp below.
         leadingHeight,
         // Reading controls do not change the unselected fitting envelope.
-        leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + window.innerHeight * model.tokens.hudClearanceViewportPct / 100) };
+        leading: Math.max(Math.min(66, fieldRect.height * .25), leadingHeight * zoom + ceiling * zoom + 14) };
     });
     const sizes = fitCombatSprites({ width: fieldRect.width, height: fieldRect.height, actors });
+    const smallestEnemyHeight = Math.min(...actors.filter(a => a.side === 'enemy')
+      .map(a => sizes.find(size => size.id === a.slot.id)?.visibleHeight ?? Infinity));
     for (const actor of actors) {
       const { slot, frame, stack, sprite, boxHeight, footOffset, ratio, leadingHost, leadingHeight } = actor;
       // A stack that grows or shrinks (Inspect revealed, a new intent) refits.
       if (leadingHost) resizeObserver.observe(leadingHost);
       const fitted = sizes.find(size => size.id === slot.id);
       if (!fitted) continue;
-      const growth = frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[Math.min(2, slot.row)] : 1;
+      const requestedGrowth = frame.classList.contains('context-selected') ? wireframeUi.formation.selectedGrowth[Math.min(2, slot.row)] : 1;
+      const growth = Math.min(requestedGrowth, Math.max(1,
+        (slot.ground - actor.leading - 6) / fitted.visibleHeight),
+        // Selection must not make the player tower over a foe already capped
+        // by the available headroom on a short screen.
+        actor.side === 'player' ? Math.max(1, smallestEnemyHeight / fitted.visibleHeight) : Infinity);
       // The fit already carries the presentation multiplier, capped to the
       // screen (CombatSpriteScaleModel); only the selection growth is added.
       const multiplier = fitted.multiplier / wireframeUi.formation.displayScale;
@@ -127,7 +133,10 @@ export function wireBattlefieldStage(field, model) {
       sprite.style.zoom = String(scale / zoom);
       sprite.firstElementChild.style.top = `${footOffset}px`;
       const paintedHeight = boxHeight * scale;
-      const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: x - nameWidth / 2, top: slot.ground - paintedHeight, width: nameWidth, height: paintedHeight });
+      // Transparent canvas above the figure is not part of the card's layout.
+      // Keep the image and its feet in place while the card starts at the ink.
+      sprite.style.marginTop = `${(visibleHeight - paintedHeight) / scale}px`;
+      const local = anchorLocalBox(VIEWPORT_ORIGIN, { left: x - nameWidth / 2, top: slot.ground - visibleHeight, width: nameWidth, height: visibleHeight });
       frame.style.left = `${local.left}px`;
       frame.style.width = `${local.width}px`;
       // Keep depth on the artwork. A z-index on the whole frame traps its
@@ -143,14 +152,10 @@ export function wireBattlefieldStage(field, model) {
       frame.dataset.groundY = String(fieldRect.top + slot.ground);
       frame.dataset.groundRatio = String(slot.ground / fieldRect.height);
       stack.style.top = `${local.top}px`;
-      // WCO1 headroom: the stack rests 14 px above the art's visible top, but its
-      // top edge never rises above the HUD band's bottom (field-local px,
-      // like `local`). On a short field it comes down over the sprite instead.
-      const overhead = overheadStackBottom({
-        anchor: local.top + (paintedHeight - visibleHeight - 14) / zoom, height: leadingHeight, ceiling,
-      });
-      frame.style.setProperty('--overhead-top', `${overhead.bottom - local.top}px`);
-      frame.dataset.overheadClamped = String(overhead.clamped);
+      // The fitter reserves the complete card and action stack. Keep this gap
+      // fixed in screen pixels, independent of art resolution or sprite size.
+      frame.style.setProperty('--overhead-top', `${-14 / zoom}px`);
+      frame.dataset.overheadClamped = 'false';
       frame.dataset.combatantScale = '1';
       frame.dataset.spriteRatio = String(ratio);
       frame.dataset.spriteVisibleHeight = String(visibleHeight);
