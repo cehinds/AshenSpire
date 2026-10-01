@@ -25,6 +25,7 @@ import { setTabRing, hasTabRing } from '../input.js';
 import { renderAboutSection, renderChangelogSection } from './about.js';
 import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
 import { balance } from '../../content/balance.js';
+import { VICTORY_XP_DEFAULTS } from '../../model/victoryXpPresentation.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
 import { TITLE_ENTRANCE_TIMING } from '../models/StartupGateModels.js';
 import { ZOOM_STEPS, MAP_ZOOM_DEFAULT, MAP_FREE_PAN_DEFAULT } from '../../model/mapview.js';
@@ -435,8 +436,22 @@ const ROWS = [
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victorySummaryMode', type: 'choice', def: 'continue',
     choices: ['continue', 'anywhere', 'auto'], choiceLabels: { continue: 'Continue', anywhere: 'Click anywhere', auto: 'Expand automatically' },
     label: 'Open full Victory summary', note: 'First show a compact Victory panel, then open the full rewards and XP summary using this action.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptSeconds', type: 'number', def: VICTORY_XP_DEFAULTS.seconds, min: 0, max: 12, step: 0.1,
+    label: 'Victory XP breakdown (seconds)', note: 'Time for the combat-power bonus and defeated enemies to count up together. 0 reveals every line immediately.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptPauseMs', type: 'number', def: VICTORY_XP_DEFAULTS.pauseMs, min: 0, max: 500, step: 10,
+    label: 'Pause between XP lines (ms)', note: 'A short beat after each line. Pauses compress automatically to fit the total breakdown time.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptReadySeconds', type: 'number', def: VICTORY_XP_DEFAULTS.readySeconds, min: 0, max: 5, step: 0.1,
+    label: 'Continue ready delay (seconds)', note: 'After the final XP line, wait this long before Continue turns green.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptFormulaTerms', type: 'number', def: VICTORY_XP_DEFAULTS.formulaTerms, min: 1, max: 20, step: 1,
+    label: 'XP terms before +…', note: 'Show this many additions beside Total XP, then use +… with the full calculation on hover or focus.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptVisibleRows', type: 'number', def: VICTORY_XP_DEFAULTS.visibleRows, min: 2, max: 8, step: 1,
+    label: 'Visible XP breakdown rows', note: 'Set the fixed list height. Longer enemy lists scroll inside the Victory panel.' },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpSeconds', type: 'number', def: 3, min: 0, max: 12, step: 0.25,
     label: 'Victory XP animation (seconds)', note: 'Total time for all XP bars together. 0 shows the final values immediately.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'levelUpRefillSeconds', type: 'number', def: 0.8, min: 0, max: 12, step: 0.1,
+    label: 'Residual XP refill (seconds)', note: 'After each Level press, reset that bar and refill it with remaining XP before its reward opens. 0 settles immediately.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'levelUpRefillPauseMs', type: 'number', def: 200, min: 0, max: 2000, step: 50,
+    label: 'Pause after residual refill (ms)', note: 'Show the settled XP bar briefly before opening its level reward.' },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpCharacterWeight', type: 'number', def: 50, min: 0, max: 100, step: 5,
     label: 'Character XP time share', note: 'Relative share of the total animation time. Shares for missing tracks are redistributed.' },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpClassWeight', type: 'number', def: 25, min: 0, max: 100, step: 5,

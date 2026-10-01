@@ -340,10 +340,12 @@ export const balance = {
   // buildup dealt (focus). model/skills.js is the one reader of the curve.
   skill: {
     xp: {
-      base: 100, growth: 1, roundTo: 5, perHit: 5, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 5, buildupPerXp: 5,
+      base: 100, linear: true, multScaler: 1.3, growth: 1, roundTo: 5, perHit: 5, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 5, buildupPerXp: 5,
       [NOTE]: {
-        base: 'Weapon, armour, focus and dual-wield tracks: what the first level step costs. Each step is round(base × growth^n) to the rounding below.',
-        growth: 'Those tracks: how much dearer each level step is than the one before it.',
+        base: 'Weapon, armour, focus and dual-wield tracks: XP for the first step and the base used for later increases.',
+        linear: 'Use base + skill level × base × scaler. Off: use base × exponential growth^skill level.',
+        multScaler: 'Linear XP increase per step as a multiple of the base. At base 100 and scaler 1.3: 100, 230, 360 XP.',
+        growth: 'Exponential growth per step, used only when the linear curve is off.',
         roundTo: 'Those tracks: every step cost is rounded to a multiple of this.',
         perHit: 'Skill XP for a hit or block a track\'s card lands on a live target.',
         perWinEquipped: 'Skill XP each equipped track earns for a won fight.',
@@ -358,10 +360,12 @@ export const balance = {
     // pool; the combat does not), and per quest once phase 10a's event
     // exists. `tierAt` is the class level each tree tier opens at.
     class: {
-      xp: { base: 100, growth: 1, roundTo: 5, perWin: 5, bossKill: 10, perQuest: 5 }, tierAt: [1, 3, 5],
+      xp: { base: 100, linear: true, multScaler: 1.3, growth: 1, roundTo: 5, perWin: 5, bossKill: 10, perQuest: 5 }, tierAt: [1, 3, 5],
       [NOTE]: {
-        'xp.base': 'The class track: what its first level step costs.',
-        'xp.growth': 'The class track: how much dearer each of its level steps is than the last.',
+          'xp.base': 'The class track: what its first level step costs.',
+          'xp.linear': 'Use base + class skill level × base × scaler. Off: use exponential growth.',
+          'xp.multScaler': 'Linear increase per class skill step as a multiple of the base. Default 1.3.',
+          'xp.growth': 'Exponential class-step growth, used only when the linear curve is off.',
         'xp.roundTo': 'The class track: every step cost is rounded to a multiple of this.',
         'xp.perWin': 'Class XP for a won fight.',
         'xp.bossKill': 'Class XP for killing an act boss, on top of the win.',
@@ -673,10 +677,12 @@ export const balance = {
   // costStep, measured twice) is gone with the purse.
   level: {
     xp: {
-      base: 100, growth: 1, roundTo: 10,
+      base: 100, linear: true, multScaler: 1.3, growth: 1, roundTo: 10,
       [NOTE]: {
-        base: 'The character level curve: what the step from level 1 costs. Each later step is round(base × growth^n) to the rounding below.',
-        growth: 'The character level curve: how much dearer each step is than the one before it.',
+        base: 'Character XP for the first step and the base used for later increases.',
+        linear: 'Use base + (level − 1) × base × scaler. Off: use base × exponential growth^(level − 1).',
+        multScaler: 'Linear increase per character level as a multiple of the base. At base 100 and scaler 1.3: 100, 230, 360 XP.',
+        growth: 'Exponential character-step growth, used only when the linear curve is off.',
         roundTo: 'The character level curve: every step cost is rounded to a multiple of this.',
       },
     },

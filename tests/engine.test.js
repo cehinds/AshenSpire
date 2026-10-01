@@ -6382,7 +6382,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // now IS that row, and it lands on the old hand-rule turn draw (2 below
     // INT 9) rather than the old derived one.
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '38/3/2', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,100,100,100,100,100,100,100,100,100', 'every default stat level costs 100 XP');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,230,360,490,620,750,880,1010,1140,1270', 'default XP steps start at 100 and add 130');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.ratingId}`, '3/ar', 'physical Strike is 3 base + AR');
@@ -8719,7 +8719,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // One curve shape: round(base × growth^n, roundTo).
     const c = REG.balance.skill.xp;
     eq(xpToNext(REG, 'weapon', 0), Math.round(c.base / c.roundTo) * c.roundTo, 'step 0 costs the base');
-    eq(xpToNext(REG, 'weapon', 3), Math.round((c.base * Math.pow(c.growth, 3)) / c.roundTo) * c.roundTo, 'step 3 grows three times');
+    eq(xpToNext(REG, 'weapon', 3), Math.round((c.base + 3 * c.base * c.multScaler) / c.roundTo) * c.roundTo, 'step 3 adds three scaled increments');
     // SLOWER OVER THE CLIMB, NOT AT THE FIRST STEP: the owner's config
     // (2026-09-24) gives both tracks a base of 5, so the class track is slower
     // by its growth — never cheaper at any step, and dearer over ten.
