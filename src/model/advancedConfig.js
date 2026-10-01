@@ -46,8 +46,8 @@ export function xpSnapshotFromProfile(snapshot, profileSettings = {}) {
 // XP changes preserve the run's non-XP compatibility contract. In particular,
 // an absent ratingsVersion must stay absent for pre-ratings saves.
 function xpSnapshotWithOverrides(snapshot, overrides) {
-  return { ...snapshot, schemaVersion: snapshot?.schemaVersion ?? ADVANCED_CONFIG_SCHEMA_VERSION,
-    overrides: advancedConfigSnapshot(overrides).overrides };
+  return Object.freeze({ ...snapshot, schemaVersion: snapshot?.schemaVersion ?? ADVANCED_CONFIG_SCHEMA_VERSION,
+    overrides: advancedConfigSnapshot(overrides).overrides });
 }
 
 const PRESENTATION_DEFAULTS = Object.freeze({

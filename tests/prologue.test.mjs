@@ -12,7 +12,7 @@ import { prologueArtwork } from '../src/ui/assets.js';
 import { BEDS } from '../src/content/music.js';
 import * as prologueModule from '../src/model/prologue.js';
 import { settingsRowHtml } from '../src/ui/screens/settings.js';
-import {placePrologueCharacter, CHARACTER_LAYER_HEIGHT, prologueTravellerGeometry, prologueTravellerHeightForWidth, prologueTravellerResizeScale} from '../src/ui/prologueCharacter.js';
+import {placePrologueCharacter, paintPrologueCharacter, prologueCharacterDimensions, CHARACTER_LAYER_HEIGHT, prologueTravellerGeometry, prologueTravellerHeightForWidth, prologueTravellerResizeScale} from '../src/ui/prologueCharacter.js';
 
 test('rotated traveller bounds enclose the figure while width scaling preserves its intrinsic size', () => {
   const near = (actual, expected) => assert.ok(Math.abs(actual-expected)<1e-8, `${actual} != ${expected}`);
@@ -26,7 +26,7 @@ test('rotated traveller bounds enclose the figure while width scaling preserves 
     const canvasCorners = [[0,0],[width,0],[0,height],[width,height]].map(([x,y])=>point(x,y));
     const figureCorners = [[120*scale,0],[220*scale,0],[120*scale,200*scale],[220*scale,200*scale]].map(([x,y])=>point(x,y));
     const bounds = {left:Math.min(...canvasCorners.map(p=>p.x)),top:Math.min(...canvasCorners.map(p=>p.y))};
-    const geometry = prologueTravellerGeometry({canvasWidth:340,canvasHeight:264,renderedWidth:width,renderedHeight:height,rotation,bounds});
+    const geometry = prologueTravellerGeometry({canvasWidth:340,canvasHeight:264,source:{width:100,height:200,padding:120},renderedWidth:width,renderedHeight:height,rotation,bounds});
     near(geometry.anchor.x,anchor.x); near(geometry.anchor.y,anchor.y);
     near(geometry.left,Math.min(...figureCorners.map(p=>p.x)));
     near(geometry.top,Math.min(...figureCorners.map(p=>p.y)));
@@ -44,6 +44,29 @@ test('rotated traveller bounds enclose the figure while width scaling preserves 
   }
   assert.equal(prologueTravellerHeightForWidth(20,1,100),10);
   assert.equal(prologueTravellerHeightForWidth(60,300,100),100);
+});
+
+test('rounded shadow canvas retains the actual bundled traveller dimensions on paint and repaint', () => {
+  const ctx = new Proxy({}, {get:(_,name)=>name==='createRadialGradient' ? ()=>({addColorStop(){}}) : ()=>{}});
+  const canvas = {getContext:()=>ctx};
+  paintPrologueCharacter(canvas,{naturalWidth:700,naturalHeight:1088});
+  assert.equal(canvas.width,2006);
+  assert.equal(canvas.height,1437);
+  assert.deepEqual(prologueCharacterDimensions(canvas),{width:700,height:1088,padding:653});
+  const near = (actual,expected)=>assert.ok(Math.abs(actual-expected)<1e-8,`${actual} != ${expected}`);
+  for (const scale of [1,.5,1.5]) for (const rotation of [0,45,90]) {
+    const geometry = prologueTravellerGeometry({canvasWidth:canvas.width,canvasHeight:canvas.height,
+      source:prologueCharacterDimensions(canvas),renderedWidth:canvas.width*scale,renderedHeight:canvas.height*scale,
+      rotation,bounds:{left:100,top:200}});
+    near(geometry.intrinsicWidth,700*scale);
+    near(geometry.intrinsicHeight,1088*scale);
+    if (rotation===0) { near(geometry.left,100+653*scale); near(geometry.height,1088*scale); }
+    if (rotation===90) { near(geometry.width,1088*scale); near(geometry.height,700*scale); }
+    assert.equal(prologueTravellerHeightForWidth(40,geometry.intrinsicWidth*1.25,geometry.intrinsicWidth),50);
+  }
+  // Switching art quality repaints the same canvas with a different source.
+  paintPrologueCharacter(canvas,{naturalWidth:350,naturalHeight:544});
+  assert.deepEqual(prologueCharacterDimensions(canvas),{width:350,height:544,padding:327});
 });
 
 test('traveller poses on added scenes round trip and rotate around the ground anchor', () => {

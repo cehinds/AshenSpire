@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-01",
     "summary": "Opening scenes keep the traveller in your hands, and XP edits preserve your save's rules",
     "detail": "Each opening scene can show or hide the traveller, turn it, and place it before or behind the colour wash. Desktop and phone poses remain separate, and rotated figures retain accurate size and drag handles. Editing XP settings on an older save keeps that save's combat rating rules and other configuration metadata.",
-    "build": "0.7.1.712",
+    "build": "0.7.1.714",
     "pullRequest": 1423,
     "url": "https://github.com/cehinds/AshenSpire/pull/1423"
   },

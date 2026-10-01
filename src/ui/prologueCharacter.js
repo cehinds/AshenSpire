@@ -1,11 +1,18 @@
 // The traveller and ground shadow are one transparent layer. The extra canvas
 // area preserves the shadow when the layer is moved, scaled, or exported.
 export const CHARACTER_LAYER_HEIGHT = 1.32;
+const CHARACTER_DIMENSIONS = new WeakMap();
+
+export function prologueCharacterDimensions(canvas) {
+  return CHARACTER_DIMENSIONS.get(canvas);
+}
 
 export function paintPrologueCharacter(canvas, image, strength = .7) {
   const w = image.naturalWidth, h = image.naturalHeight, pad = Math.ceil(h * .6);
   canvas.width = w + pad * 2;
   canvas.height = Math.ceil(h * CHARACTER_LAYER_HEIGHT);
+  // Keep the source geometry: canvas rounding cannot reconstruct it later.
+  CHARACTER_DIMENSIONS.set(canvas, Object.freeze({ width:w, height:h, padding:pad }));
   const ctx = canvas.getContext('2d');
   const footX = pad + w * .6, footY = h * .98;
   ctx.save();
@@ -47,9 +54,8 @@ export function placePrologueCharacter(canvas, position) {
 // DOM bounds include rotation; the traveller's size controls must not. Recover
 // the canvas origin from its rotated bounds, then enclose only the painted
 // figure (not the transparent padding or its ground shadow).
-export function prologueTravellerGeometry({ canvasWidth, canvasHeight, renderedWidth, renderedHeight, rotation = 0, bounds }) {
-  const sourceHeight = canvasHeight / CHARACTER_LAYER_HEIGHT;
-  const pad = Math.ceil(sourceHeight * .6);
+export function prologueTravellerGeometry({ canvasWidth, canvasHeight, source, renderedWidth, renderedHeight, rotation = 0, bounds }) {
+  const { width:sourceWidth, height:sourceHeight, padding:pad } = source;
   const scaleX = renderedWidth / canvasWidth, scaleY = renderedHeight / canvasHeight;
   const origin = { x: renderedWidth / 2, y: renderedHeight / CHARACTER_LAYER_HEIGHT };
   const radians = rotation * Math.PI / 180, cos = Math.cos(radians), sin = Math.sin(radians);
@@ -58,11 +64,11 @@ export function prologueTravellerGeometry({ canvasWidth, canvasHeight, renderedW
   const enclose = points => ({ left: Math.min(...points.map(p=>p.x)), top: Math.min(...points.map(p=>p.y)),
     right: Math.max(...points.map(p=>p.x)), bottom: Math.max(...points.map(p=>p.y)) });
   const canvas = enclose([[0,0],[renderedWidth,0],[0,renderedHeight],[renderedWidth,renderedHeight]].map(([x,y])=>rotate(x,y)));
-  const figure = enclose([[pad*scaleX,0],[(canvasWidth-pad)*scaleX,0],
-    [pad*scaleX,sourceHeight*scaleY],[(canvasWidth-pad)*scaleX,sourceHeight*scaleY]].map(([x,y])=>rotate(x,y)));
+  const figure = enclose([[pad*scaleX,0],[(pad+sourceWidth)*scaleX,0],
+    [pad*scaleX,sourceHeight*scaleY],[(pad+sourceWidth)*scaleX,sourceHeight*scaleY]].map(([x,y])=>rotate(x,y)));
   const left = bounds.left-canvas.left, top = bounds.top-canvas.top;
   return { left:left+figure.left, top:top+figure.top, width:figure.right-figure.left, height:figure.bottom-figure.top,
-    intrinsicWidth:(canvasWidth-pad*2)*scaleX, intrinsicHeight:sourceHeight*scaleY,
+    intrinsicWidth:sourceWidth*scaleX, intrinsicHeight:sourceHeight*scaleY,
     anchor:{ x:left+origin.x, y:top+origin.y } };
 }
 

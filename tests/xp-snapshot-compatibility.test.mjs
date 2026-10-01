@@ -6,6 +6,16 @@ import { advancedConfigSnapshot, configuredContentBundle, updatedXpSnapshot, xpS
 const xpKey = 'gameConfig.balance.level.xp.base';
 const ratingsKey = 'gameConfig.balance.combatRatings.enabled';
 
+test('XP edits and profile synchronization retain the immutable snapshot contract', () => {
+  for (const original of [null, { schemaVersion: 1, sourceRevision: 'saved-rules', overrides: {} }, advancedConfigSnapshot({})]) {
+    for (const next of [updatedXpSnapshot(original, { [xpKey]: 200 }), xpSnapshotFromProfile(original, { [xpKey]: 200 })]) {
+      assert.equal(Object.isFrozen(next), true);
+      assert.throws(() => { next.schemaVersion = 2; }, TypeError);
+      assert.equal(next.schemaVersion, 1);
+    }
+  }
+});
+
 test('a live XP edit preserves legacy ratings behavior and snapshot metadata', () => {
   const original = { schemaVersion: 1, sourceRevision: 'saved-rules', overrides: { [ratingsKey]: true } };
   const before = JSON.stringify(original);

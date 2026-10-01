@@ -1,6 +1,6 @@
 import { openModal } from '../kit/index.js';
 import { mountPrologue } from './prologue.js';
-import { placePrologueCharacter, prologueTravellerGeometry, prologueTravellerHeightForWidth, prologueTravellerResizeScale } from '../prologueCharacter.js';
+import { placePrologueCharacter, prologueCharacterDimensions, prologueTravellerGeometry, prologueTravellerHeightForWidth, prologueTravellerResizeScale } from '../prologueCharacter.js';
 import { anchorLocalBox } from '../fx.js';
 import {
   prologueConfig, prologueRows, prologueSequence, prologueSettingKey,
@@ -160,7 +160,7 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
     const stage = actor.closest('.prologue-stage'), stageBox = stage.getBoundingClientRect();
     const cssHeight = Number.parseFloat(getComputedStyle(actor).height);
     const rotation = Number(/rotate\(([-\d.]+)deg\)/.exec(actor.style.transform)?.[1]) || 0;
-    return prologueTravellerGeometry({ canvasWidth:actor.width, canvasHeight:actor.height,
+    return prologueTravellerGeometry({ canvasWidth:actor.width, canvasHeight:actor.height, source:prologueCharacterDimensions(actor),
       renderedWidth:cssHeight*actor.width/actor.height*stageBox.width/stage.clientWidth,
       renderedHeight:cssHeight*stageBox.height/stage.clientHeight, rotation, bounds:box });
   };
