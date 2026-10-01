@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-01
 
+- **The Fullscreen switch stays on screen in Settings, and three release checks pass again** ([#1346](https://github.com/cehinds/AshenSpire/pull/1346), `0.7.1.720`). The Preview sample at the top of Settings › General › Display and Accessibility now starts folded; open, it pushed the Fullscreen switch below the bottom of a phone screen at the largest text size when Settings was opened mid-fight. Tap Preview to open it, and it stays open next time. Behind the scenes, two automated checks that failed on the release build are fixed: one reported a clean browser run as a failure because of how it worded its result, and the build ran out of memory on macOS.
 - **Behind the scenes: record the agreed external-art and offline-download plan** ([#1392](https://github.com/cehinds/AshenSpire/pull/1392), `0.7.1.720`).
 - **Behind the scenes: builds come from CI instead of repository copies** ([#1333](https://github.com/cehinds/AshenSpire/pull/1333), `0.7.1.720`).
 - **Progression rules for the next XP update** ([#1425](https://github.com/cehinds/AshenSpire/pull/1425), `0.7.1.719`). The specification records a first step of 100 XP, a configurable linear scaler of 1.3, and a visible refill from remaining XP after each manual level claim. Runtime implementation follows separately.

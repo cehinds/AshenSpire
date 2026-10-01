@@ -12,7 +12,7 @@ const STRIP = 'data-settings-preview';
 
 test('the strip carries every sample piece, drawn with the game\'s own classes', () => {
   const html = settingsPreviewHtml({});
-  assert.match(html, /<details class="set-preview" data-settings-preview open>/);
+  assert.match(html, /<details class="set-preview" data-settings-preview>/, 'folded by default');
   assert.match(html, /<summary[^>]*>Preview<\/summary>/);
   assert.match(html, /class="as-title-s[^"]*"/, 'a heading');
   assert.match(html, /class="as-prose[^"]*"/, 'a line of body text');
@@ -30,7 +30,7 @@ test('the sample card is a real card in the content', () => {
   assert.equal(card.rarity, 'starter');
 });
 
-test('the fold is remembered in settingsPreviewOpen (absent = open)', () => {
+test('the fold is remembered in settingsPreviewOpen (absent = folded)', () => {
   assert.equal(SETTINGS_PREVIEW_OPEN_KEY, 'settingsPreviewOpen');
   assert.match(settingsPreviewHtml({ settingsPreviewOpen: true }), /data-settings-preview open>/);
   assert.doesNotMatch(settingsPreviewHtml({ settingsPreviewOpen: false }), /data-settings-preview open>/);
@@ -75,13 +75,13 @@ test('mounting is a no-op on a pane without the strip', () => {
 
 test('the fold saves through the pane\'s onChange', () => {
   const listeners = {};
-  const strip = { open: false, addEventListener: (type, fn) => { listeners[type] = fn; }, querySelector: () => null };
+  const strip = { open: true, addEventListener: (type, fn) => { listeners[type] = fn; }, querySelector: () => null };
   const settings = {};
   const changes = [];
   mountSettingsPreview({ querySelector: () => strip }, settings, (c) => changes.push(c));
   listeners.toggle();
-  assert.deepEqual(changes, [{ settingsPreviewOpen: false }]);
-  assert.equal(settings.settingsPreviewOpen, false);
+  assert.deepEqual(changes, [{ settingsPreviewOpen: true }]);
+  assert.equal(settings.settingsPreviewOpen, true);
   listeners.toggle();
   assert.equal(changes.length, 1, 'an unchanged fold is not saved again');
 });

@@ -370,6 +370,7 @@ jobs:
       - name: Build the standalone and refresh root + dist/
         # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
         env:
+          NODE_OPTIONS: --max-old-space-size=6144
           ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
