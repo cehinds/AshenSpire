@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1432",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "In co-op, Dazed now reaches every living player",
+    "detail": "The Grave Wisp, Mirror Scribe, Eclipse Cantor and Hollow Astronomer used to shuffle their Dazed into the first player's deck only. Now every living player gets one, like the Husk Brute's Slimed and the Court Surgeon's Wound already did. Downed players get none, and solo play is unchanged.",
+    "build": "0.7.1.724",
+    "pullRequest": 1432,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1432"
+  },
+  {
     "id": "pr-1390",
     "date": "2026-10-01",
     "group": "2026-10-01",
