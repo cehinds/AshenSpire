@@ -139,7 +139,7 @@ try {
     }));
     for (const row of rows) {
       assert(row.top >= 0, 'overhead stays onscreen');
-      assert(Math.abs(row.spriteTop-row.bottom-6)<2, 'overhead follows visible idle top');
+      assert(Math.abs(row.spriteTop-row.bottom-14)<2, 'overhead stays 14px above the visible combatant card');
       const peer=rows.find(r=>r.row===row.row);
       assert(Math.abs(peer.feet-row.feet)<1 && Math.abs(peer.hp-row.hp)<1, 'feet and bars stay aligned');
     }

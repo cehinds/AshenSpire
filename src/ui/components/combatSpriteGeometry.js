@@ -1,6 +1,9 @@
 // Read idle artwork once, excluding transparent padding. Cache by asset URL;
 // animation/stance changes must never resize the formation during a turn.
 const boundsCache = new Map();
+// Painted enemy art shares a floor at 364/384 of its canvas height. The light
+// tier resizes that canvas to 120px; pixel 364 is not a floor in that image.
+const paintedGround = img => img.naturalHeight * (364 / 384);
 function imageBounds(img, refresh) {
   const key = img.currentSrc || img.src;
   if (!key) return null;
@@ -67,7 +70,7 @@ export function visibleArtBox(host, refresh) {
   const scale = Math.min(boxWidth / img.naturalWidth, boxHeight / img.naturalHeight);
   const contentLeft = left + (boxWidth - img.naturalWidth * scale) / 2;
   const contentTop = top + (boxHeight - img.naturalHeight * scale) / 2;
-  const ground = img.dataset.artSource ? 364 : bounds.y1 + 1;
+  const ground = img.dataset.artSource ? paintedGround(img) : bounds.y1 + 1;
   const middle = (bounds.x0 + bounds.x1 + 1) / 2;
   const mirrored = img.closest('.facing')?.dataset.facing === 'mirrored';
   return {
@@ -92,7 +95,7 @@ export function combatSpriteGeometry(sprite, refresh) {
   const paintedEnemy = Boolean(img.dataset.artSource);
   const scale = paintedEnemy ? boxHeight / img.naturalHeight
     : Math.min(boxWidth / img.naturalWidth, boxHeight / img.naturalHeight);
-  const ground = paintedEnemy ? 364 : bounds.y1 + 1;
+  const ground = paintedEnemy ? paintedGround(img) : bounds.y1 + 1;
   const visibleHeight = Math.max(1, (ground - bounds.y0) * scale);
   // Reserve both sides of the centered canvas, including asymmetric weapons.
   const width = 2 * Math.max(img.naturalWidth / 2 - bounds.x0, bounds.x1 + 1 - img.naturalWidth / 2) * scale;
