@@ -21,6 +21,15 @@
 //   default order. Off by default so the win-rate corpus keeps comparing the
 //   same climbs it always measured (§13.6); on, it measures every order — the
 //   distribution a real run draws, and the one balance.bossTiers is tuned on.
+//   --selftest: the CI rung's own integrity (FINISH §3, *A headless full run in
+//   CI*). Plants a throw inside a fight, a fight that never advances and a map
+//   whose path never reaches its boss, and requires each to exit 1 with a
+//   CRASH or SOFT-LOCK line; then requires a clean fleet to exit 0 and two
+//   fleets on the same seeds to print the same report.
+//   --plant=<fight-throw|combat-stall|map-cycle>: one of those plants alone.
+//   --step-budget=<n>: map nodes an act may walk before it is a soft-lock
+//   (default: the act map's own node count — a path visits one node a floor,
+//   so a walk longer than the map has nodes is going round in a circle).
 
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -46,6 +55,8 @@ import {
 import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
 import { cardRewardPlan } from '../src/model/rewardplan.js';
 import { endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from '../src/content/customMods.js';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const argv = process.argv.slice(2);
 // THE XP-CURVE A/B (plan phase 6). Constantine's acceptance test for
@@ -184,6 +195,18 @@ function resetFleetCounters() {
 const N = Number(argv.find((a) => /^\d+$/.test(a)) || 30);
 const ENDLESS_ACT_CAP = 15; // sim guard only — the game itself has no cap
 const STALEMATE_TURNS = 150; // a fight still open this long is conceded (botFight)
+// THE CI RUNG (FINISH §3). A crash is an exception out of a run; a SOFT-LOCK is
+// a run that stops making progress — a fight whose actions never resolve it, or
+// a map walk that never reaches its boss. Both exit 1. Neither number below is
+// game balance: they are the simulator's own patience, and both are flags.
+class SoftLock extends Error {}
+const PLANTS = ['fight-throw', 'combat-stall', 'map-cycle'];
+const PLANT = (argv.find((a) => a.startsWith('--plant=')) || '').slice('--plant='.length) || null;
+if (PLANT && !PLANTS.includes(PLANT)) throw new Error(`--plant=${PLANT} is not a plant (${PLANTS.join(', ')})`);
+const STEP_BUDGET_ARG = (argv.find((a) => a.startsWith('--step-budget=')) || '').slice('--step-budget='.length);
+const STEP_BUDGET = STEP_BUDGET_ARG ? Number(STEP_BUDGET_ARG) : null;
+if (STEP_BUDGET_ARG && !(Number.isInteger(STEP_BUDGET) && STEP_BUDGET > 0)) throw new Error(`--step-budget expects a positive integer — got '${STEP_BUDGET_ARG}'`);
+const ACTION_GUARD = 9000; // bot actions one fight may take before it is a soft-lock
 
 // ---- the deep tally (read-only over a finished fight's eventLog) ------------
 function newDeepStats() {
@@ -304,7 +327,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   // outpacing the enemy. A player there can only concede, so a fight still
   // open after STALEMATE_TURNS turns is scored as lost and counted as a
   // stalemate, and the crash below is kept for a bot stuck inside one turn.
-  while (!combat.result && guard++ < 9000 && combat.turn <= STALEMATE_TURNS) {
+  while (!combat.result && guard++ < ACTION_GUARD && combat.turn <= STALEMATE_TURNS) {
     // Drink a flask when hurt (below 55% HP) — humans use them; a bot that
     // hoards flasks under-measures the sustain the game actually provides.
     if (combat.player.hp < combat.player.maxHp * 0.55) {
@@ -338,14 +361,20 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
     const refused = refusalsFor(combat);
     const card = affordableCards(REG, combat, refused)[0];
     const tgt = combat.enemies.find((e) => e.alive);
-    if (!card) { dispatch(combat, { type: 'endTurn' }); continue; }
+    if (!card) {
+      // Plants (--selftest): a throw inside a fight must surface as a CRASH,
+      // and a turn that never ends must surface as a SOFT-LOCK.
+      if (PLANT === 'fight-throw') throw new Error(`planted: endTurn threw inside ${encounterId}`);
+      if (PLANT !== 'combat-stall') dispatch(combat, { type: 'endTurn' });
+      continue;
+    }
     try {
       dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id });
     } catch (e) {
       refused.add(card.instanceId);
     }
   }
-  if (guard >= 9000) throw new Error(`combat stalled: ${encounterId}`);
+  if (guard >= ACTION_GUARD) throw new SoftLock(`combat stalled: ${encounterId} took ${ACTION_GUARD} bot actions on turn ${combat.turn} without resolving`);
   const outcome = combat.result || 'stalemate';
   if (deepStats) tallyFight(deepStats, combat, run.hp);
   if (INCOMING && run._incoming) tallyIncoming(run._incoming, combat, run, enc.pool);
@@ -480,6 +509,11 @@ function simulateRun(classId, seed, ds = null) {
     // The ONE boot path (#54) — same module main.js and session.mjs use, so a
     // signature change lands on the game and the harnesses in the same act.
     const map = buildActMap(REG, rng, seat, contentAct, null, { history: run.history });
+    // Plant (--selftest): every node a skipped merchant whose only exit is
+    // itself — a walk that never fights, never dies and never reaches a boss.
+    if (PLANT === 'map-cycle') for (const node of Object.values(map.nodes)) { node.type = 'merchant'; node.resolved = null; node.next = [node.id]; }
+    const stepBudget = STEP_BUDGET || Object.keys(map.nodes).length;
+    let steps = 0;
 
     let currentId = null;
     let nextIds = map.startIds;
@@ -488,6 +522,9 @@ function simulateRun(classId, seed, ds = null) {
       const options = nextIds.map((id) => map.nodes[id]);
       const hurt = run.hp < run.maxHp * 0.55;
       const pick = (hurt && options.find((n) => n.type === 'shrine')) || options[0];
+      if (++steps > stepBudget) {
+        throw new SoftLock(`act ${act} walked ${steps - 1} map nodes (budget ${stepBudget}) without reaching its boss`);
+      }
       currentId = pick.id;
       result.floor = pick.floor;
 
@@ -592,6 +629,7 @@ function fleet() {
 console.log(`AshenSpire ${ENDLESS ? `ENDLESS simulation (act cap ${ENDLESS_ACT_CAP})` : 'full-run simulation'} — ${N} runs/class, greedy bot`);
 console.log(`grace refill: ${GRACE_ON ? 'ON' : 'OFF'}  |  level-up points into ${LEVEL_STAT}` + (SPEND ? `  |  allocation: shipped preset with every movable point moved into ${SPEND}` : '  |  allocation: shipped class presets') + '\n');
 let crash = null;
+let crashes = 0, softLocks = 0;
 const tally = { wins: 0, runs: 0, acts: 0, eventChoices: 0, questSteps: 0 };
 const skillLevelsByClass = {};
 for (const cls of REG.classes.all()) {
@@ -605,7 +643,15 @@ for (const cls of REG.classes.all()) {
       r = simulateRun(cls.id, (i * 2654435761) >>> 0, ds);
     } catch (e) {
       crash = `${cls.id} seed#${i}: ${e.message}`;
-      console.error(`CRASH ${crash}`);
+      if (e instanceof SoftLock) { softLocks++; console.error(`SOFT-LOCK ${crash}`); }
+      else { crashes++; console.error(`CRASH ${crash}`); }
+      break;
+    }
+    // Every run ends in a win or a death; one that returns neither stopped
+    // without an outcome, which is a soft-lock by another road.
+    if (!r.victory && !r.deaths) {
+      crash = `${cls.id} seed#${i}: the run returned neither a win nor a death`;
+      softLocks++; console.error(`SOFT-LOCK ${crash}`);
       break;
     }
     if (r.victory) wins++;
@@ -656,7 +702,11 @@ for (const cls of REG.classes.all()) {
     }
   }
 }
-if (crash) { console.error('\nFULL-RUN SIM FAILED'); process.exit(1); }
+if (crash) {
+  console.error('\nFULL-RUN SIM FAILED');
+  console.log(`RESULT: FAILED — ${crashes} crash${crashes === 1 ? '' : 'es'}, ${softLocks} soft-lock${softLocks === 1 ? '' : 's'}: ${crash}.`);
+  process.exit(1);
+}
 if (INCOMING && openingAll.length) {
   const sorted = [...openingAll].sort((a, b) => a - b);
   const at = (p) => sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))];
@@ -673,10 +723,14 @@ console.log(`class tree picks: ${classDraftsTaken} over ${tally.runs} runs = ${(
 console.log(`skill drafts taken: ${skillDraftsTaken} over ${tally.runs} runs = ${(skillDraftsTaken / Math.max(1, tally.runs)).toFixed(1)} per run (plan phase 4b: one per track per door, the bot takes the first card)`);
 console.log(`cinder economy: ${cinderLeftAtEnd} left at run end = ${(cinderLeftAtEnd / Math.max(1, tally.runs)).toFixed(0)} cinders per run unspent (the bot buys nothing at merchants; cinders buy no level since plan phase 6)`);
 console.log('No crashes across all simulated runs — full loop (map → combat → rewards → events → acts) is integration-clean.');
+const classCount = REG.classes.all().length;
+console.log(`RESULT: ${tally.runs} runs over ${classCount} classes (${N} fixed seeds each), every one to a win or a death — ${tally.wins} win${tally.wins === 1 ? '' : 's'}, 0 crashes, 0 soft-locks.`);
 return { ...tally, graces, poured };
 }
 
-if (!GRACE_AB) {
+if (argv.includes('--selftest')) {
+  selftest();
+} else if (!GRACE_AB) {
   fleet();
 } else {
   // A/B. Same seeds both sides (simulateRun derives its seed from the class and
@@ -697,4 +751,36 @@ if (!GRACE_AB) {
   console.log(`  ${N} seeds per class, three classes. It measures SUSTAIN, not play. A human curates`);
   console.log('  a deck and saves a flask for a boss; this bot does neither, so read the sign and');
   console.log('  the order of magnitude, not the decimal. It is a number to argue from, not a verdict.');
+}
+
+// ---- --selftest: can the CI rung still go red? -------------------------------
+// Each plant runs in its own process through the same argv door a user types,
+// one seed a class, and must exit 1 naming the kind of failure it planted. A
+// plant that runs past its time limit counts as NOT caught: the rung would
+// have hung CI instead of failing it.
+function selftest() {
+  const self = fileURLToPath(import.meta.url);
+  const runSelf = (args) => spawnSync(process.execPath, [self, ...args], { encoding: 'utf8', timeout: 60000 });
+  const expect = { 'fight-throw': 'CRASH', 'combat-stall': 'SOFT-LOCK', 'map-cycle': 'SOFT-LOCK' };
+  const bad = [];
+  for (const plant of PLANTS) {
+    const r = runSelf([`--plant=${plant}`, '1']);
+    const kind = expect[plant];
+    const said = new RegExp(`^${kind} `, 'm').test(r.stderr || '');
+    if (r.error || r.status !== 1 || !said) {
+      bad.push(`${plant}: wanted exit 1 and a ${kind} line, got ${r.error ? r.error.code || r.error.message : `exit ${r.status}`}${said ? '' : `, no ${kind} line`}`);
+    } else console.log(`  caught  ${plant} → ${kind}`);
+  }
+  const a = runSelf(['2']);
+  const b = runSelf(['2']);
+  if (a.status !== 0) bad.push(`clean control: wanted exit 0, got exit ${a.status}\n${a.stderr}`);
+  else console.log('  green   clean control (2 seeds a class) exits 0');
+  if (a.stdout !== b.stdout) bad.push('determinism: two fleets on the same seeds printed different reports');
+  else console.log('  same    two fleets on the same seeds print the same report');
+  if (bad.length) {
+    for (const line of bad) console.error(`SELFTEST FAIL ${line}`);
+    console.log(`RESULT: FAILED — ${bad.length} of ${PLANTS.length + 2} selftest checks did not hold.`);
+    process.exit(1);
+  }
+  console.log(`RESULT: ${PLANTS.length}/${PLANTS.length} plants caught (a throw inside a fight, a stalled fight, a map walk that never reaches its boss), a clean fleet exits 0 and repeats seed for seed.`);
 }
