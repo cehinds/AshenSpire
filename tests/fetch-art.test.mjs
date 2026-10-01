@@ -201,3 +201,49 @@ test('a cache copy an earlier run set aside but could not delete is swept by the
     assert.deepEqual(readdirSync(join(root, '.art-cache')), ['hd-assets-v1'], 'the abandoned copy is gone');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+// SCHEMA 2 (docs/EXTERNAL-ASSETS-PLAN.md §2): the fonts became `common` records.
+// The pinned hd-assets-v1 zip still carries them under assets/fonts/, listed as
+// high in its own schema-1 manifest. That release must keep verifying, and a
+// font whose bytes differ from the common record must still be refused.
+function schema2Fixture({ fontBytes = Buffer.from('font') } = {}) {
+  const root = tmp();
+  const art = Buffer.from('high-a');
+  const font = Buffer.from('font');
+  const rec = (path, data) => ({ path, bytes: data.length, sha256: sha(data) });
+  const ours = { schema: 2, count: 3, assets: {
+    'assets/bg/a.webp': { high: rec('assets/bg/a.webp', art) },
+    'assets/fonts/f.woff2': { common: rec('assets/fonts/f.woff2', font) },
+    'music/title/title.mp3': { common: rec('music/title/title.mp3', Buffer.from('mp3')) },
+  } };
+  const theirs = { schema: 1, count: 2, assets: {
+    'assets/bg/a.webp': { high: rec('assets/bg/a.webp', art) },
+    'assets/fonts/f.woff2': { high: rec('assets/fonts/f.woff2', fontBytes) },
+  } };
+  writeFileSync(join(root, MANIFEST_PATH), JSON.stringify(ours));
+  const zip = join(root, 'hd-assets-v1.zip');
+  writeZip(zip, [{ name: 'art-manifest.json', data: Buffer.from(JSON.stringify(theirs)) },
+    { name: 'assets/bg/a.webp', data: art }, { name: 'assets/fonts/f.woff2', data: fontBytes }]);
+  const pin = { repo: 'cehinds/AshenSpire-art', tag: 'hd-assets-v1', zip: 'hd-assets-v1.zip', sha256: sha(readFileSync(zip)) };
+  writeFileSync(join(root, PIN_PATH), JSON.stringify(pin));
+  return { root, zip, pin, manifest: ours };
+}
+
+test('schema 2: a high release that still carries the fonts verifies against their common records', async () => {
+  const { root, zip, pin, manifest } = schema2Fixture();
+  try {
+    assert.deepEqual(verifyRelease(readFileSync(zip), pin, manifest).problems, []);
+    const { dir } = await fetchArt({ root, from: zip });
+    assert.equal(readFileSync(join(dir, 'assets/fonts/f.woff2'), 'utf8'), 'font');
+    assert.equal((await fetchArt({ root, recheck: true })).reused, true, 'a common id the high zip lacks (music) is not a recheck failure');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('known-bad: schema 2, a carried font that differs from its common record is refused', () => {
+  const { root, zip, pin, manifest } = schema2Fixture({ fontBytes: Buffer.from('other font') });
+  try {
+    const problems = verifyRelease(readFileSync(zip), pin, manifest).problems.join('\n');
+    assert.match(problems, /assets\/fonts\/f\.woff2: the release's file differs/);
+    assert.match(problems, /assets\/fonts\/f\.woff2: the release's art-manifest\.json disagrees/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});

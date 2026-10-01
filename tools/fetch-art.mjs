@@ -18,6 +18,14 @@
 //      is found by), naming the same ids with the same high records;
 //   4. the zip holds nothing else.
 //
+// SCHEMA 2 (docs/EXTERNAL-ASSETS-PLAN.md §2). Ids whose entry is a `common`
+// record (the fonts, licenses/OFL.txt, music/, map-detail/) are not the high
+// release's to carry: the high zip need not hold them, and when it does (the
+// hd-assets-v1 zip still carries the fonts under assets/fonts/) each such file
+// must match its common record, and the release's own manifest may list it with
+// a high record of the same bytes. The common pack itself is fetched from step
+// 11 on (`--pack`); until then this tool reads the high zip only.
+//
 // Any mismatch exits 1 before anything is unpacked. A cache is marked verified
 // LAST, with the zip's sha256 and a digest of the manifest's high records, and
 // is reused only while both still match; --recheck hashes its files again. A
@@ -43,6 +51,20 @@ export const CACHE_DIR = '.art-cache';
 const VERIFIED = '.verified';
 
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
+const same = (a, b) => Boolean(a && b && a.path === b.path && a.bytes === b.bytes && a.sha256 === b.sha256);
+/** The `common` record of a schema-2 entry, or null for an art id (light/high). */
+const commonOf = (entry) => (entry && entry.common) || null;
+/**
+ * Does a release manifest's entry agree with this tree's common record? A
+ * release may omit the id, list it as common, or (schema 1) list it as high
+ * with the same bytes.
+ */
+function agreesCommon(theirs, rec) {
+  if (!theirs) return true;
+  if (theirs.common) return same(theirs.common, rec);
+  if (theirs.high) return theirs.high.bytes === rec.bytes && theirs.high.sha256 === rec.sha256;
+  return false;
+}
 
 /** The pin, or an error naming what is missing. */
 export function readPin(root = ROOT) {
@@ -72,7 +94,7 @@ export function cacheDirFor(pin, root = ROOT) {
 /** What the verified marker records: the zip, and the manifest it was checked against. */
 export function markerFor(pin, manifest) {
   const highs = Object.keys(manifest.assets || {}).sort().map((id) => {
-    const h = manifest.assets[id].high || {};
+    const h = manifest.assets[id].high || commonOf(manifest.assets[id]) || {};
     return `${id}\t${h.path}\t${h.bytes}\t${h.sha256}`;
   }).join('\n');
   return `${pin.sha256} ${sha256(Buffer.from(highs, 'utf8'))}`;
@@ -99,13 +121,24 @@ export function verifyRelease(zipBuf, pin, manifest) {
     let theirs = null;
     try { theirs = JSON.parse(embedded.toString('utf8')).assets || {}; } catch { problems.push(`the release's ${MANIFEST_PATH} is not JSON`); }
     if (theirs) {
-      const same = (a, b) => a && b && a.path === b.path && a.bytes === b.bytes && a.sha256 === b.sha256;
-      for (const id of Object.keys(want)) if (!same(theirs[id]?.high, want[id]?.high)) problems.push(`${id}: the release's ${MANIFEST_PATH} disagrees with this tree's`);
+      for (const id of Object.keys(want)) {
+        const ok = commonOf(want[id]) ? agreesCommon(theirs[id], commonOf(want[id])) : same(theirs[id]?.high, want[id]?.high);
+        if (!ok) problems.push(`${id}: the release's ${MANIFEST_PATH} disagrees with this tree's`);
+      }
       for (const id of Object.keys(theirs)) if (!want[id]) problems.push(`${id}: in the release's ${MANIFEST_PATH}, not in this tree's`);
     }
   }
   const paths = new Set();
   for (const [id, rec] of Object.entries(want)) {
+    const common = commonOf(rec);
+    if (common) {
+      // Not the high release's to carry; checked when it does carry it.
+      const data = entries.get(common.path);
+      if (!data) continue;
+      paths.add(common.path);
+      if (data.length !== common.bytes || sha256(data) !== common.sha256) problems.push(`${id}: the release's file differs from ${MANIFEST_PATH}`);
+      continue;
+    }
     const high = rec && rec.high;
     if (!high) { problems.push(`${id}: ${MANIFEST_PATH} has no high record`); continue; }
     paths.add(high.path);
@@ -218,16 +251,21 @@ export function recheck(dir, manifest) {
     try { theirs = JSON.parse(readFileSync(cached, 'utf8')).assets || {}; } catch { problems.push(`the cached ${MANIFEST_PATH} is not JSON`); }
     if (theirs) {
       const want = manifest.assets || {};
-      const same = (a, b) => a && b && a.path === b.path && a.bytes === b.bytes && a.sha256 === b.sha256;
-      for (const id of Object.keys(want)) if (!same(theirs[id]?.high, want[id]?.high)) problems.push(`${id}: the cached ${MANIFEST_PATH} disagrees with this tree's`);
+      for (const id of Object.keys(want)) {
+        const ok = commonOf(want[id]) ? agreesCommon(theirs[id], commonOf(want[id])) : same(theirs[id]?.high, want[id]?.high);
+        if (!ok) problems.push(`${id}: the cached ${MANIFEST_PATH} disagrees with this tree's`);
+      }
       for (const id of Object.keys(theirs)) if (!want[id]) problems.push(`${id}: in the cached ${MANIFEST_PATH}, not in this tree's`);
     }
   }
   for (const [id, rec] of Object.entries(manifest.assets || {})) {
-    const file = join(dir, rec.high.path);
-    if (!existsSync(file)) { problems.push(`${id}: missing from the cache`); continue; }
+    const common = commonOf(rec);
+    const want = common || rec.high;
+    const file = join(dir, want.path);
+    // A common id is in the high cache only when the release carried it.
+    if (!existsSync(file)) { if (!common) problems.push(`${id}: missing from the cache`); continue; }
     const buf = readFileSync(file);
-    if (buf.length !== rec.high.bytes || sha256(buf) !== rec.high.sha256) problems.push(`${id}: the cached file changed`);
+    if (buf.length !== want.bytes || sha256(buf) !== want.sha256) problems.push(`${id}: the cached file changed`);
   }
   return problems;
 }

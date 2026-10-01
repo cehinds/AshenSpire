@@ -5,6 +5,24 @@
 //   node tools/art-manifest.mjs --write    regenerate art-manifest.json
 //   node tools/art-manifest.mjs --check    exit 1 when the manifest and the trees disagree
 //
+// SCHEMA 2 (docs/EXTERNAL-ASSETS-PLAN.md §2, step 2). Besides the art ids, which
+// keep a `light` and a `high` record, the manifest lists the files the art
+// repository's `common` pack will carry. Each of those has ONE `common` record,
+// `{path, bytes, sha256}`, and no light or high record:
+//
+//   assets/fonts/*.woff2          the 15 interface faces (their twins under
+//                                 assets-mobile/fonts/ are byte-identical, and
+//                                 --check refuses the day they are not)
+//   music/manifest.json, music/**/*.mp3   the shipped score
+//   map-detail/**/*.webp          the map detail tiles
+//   licenses/OFL.txt              the fonts' licence, from asset-data/fonts/OFL.txt
+//
+// A common record's `path` is where the file sits in the common pack (the id,
+// except the licence), not where it is read from here: COMMON_SOURCES below is
+// that mapping. `licenses/OFL.txt` is listed so the pack carries the licence next
+// to the fonts; it is not something assetUrl() asks for. Readers that walk the
+// light/high twins skip ids whose entry is `common` (isCommonEntry).
+//
 // WHY (LFS / art-tier plan, step 3, 2026-09-26). The game has three art tiers:
 //
 //   placeholder  the style guide's generated recipe (src/ui/assets.js): no file
@@ -37,7 +55,28 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const MANIFEST_PATH = 'art-manifest.json';
 export const HIGH_DIR = 'assets';
 export const LIGHT_DIR = MOBILE_ASSET_DIR;
-export const SCHEMA = 1;
+export const SCHEMA = 2;
+/** The directory under the high tree whose files are `common` ids (the fonts). */
+export const COMMON_ASSET_PREFIX = 'fonts/';
+export const LICENSE_ID = 'licenses/OFL.txt';
+export const LICENSE_SOURCE = 'asset-data/fonts/OFL.txt';
+
+/** True when a manifest entry is a `common` record rather than a light/high pair. */
+export function isCommonEntry(entry) {
+  return Boolean(entry && entry.common);
+}
+
+// Text payloads hash by their LF form, so a CRLF checkout (Windows) records and
+// packs the same bytes as an LF one. bundle.mjs ships SVG this way already.
+const TEXT_EXTS = new Set(['.svg', '.json', '.txt']);
+
+/** The bytes a file is recorded and packed as: text with canonical line endings. */
+export function canonicalBytes(abs) {
+  const buf = readFileSync(abs);
+  return TEXT_EXTS.has(extname(abs).toLowerCase())
+    ? Buffer.from(buf.toString('utf8').replace(/\r\n?/g, '\n'), 'utf8')
+    : buf;
+}
 
 function walk(dir, out = []) {
   if (!existsSync(dir)) return out;
@@ -137,8 +176,7 @@ export function svgRootTag(text) {
 /** One tier's record of one file. SVG line endings are canonical, as bundle.mjs ships them. */
 export function fileRecord(abs, relPath) {
   const ext = extname(abs).toLowerCase();
-  let buf = readFileSync(abs);
-  if (ext === '.svg') buf = Buffer.from(buf.toString('utf8').replace(/\r\n?/g, '\n'), 'utf8');
+  const buf = canonicalBytes(abs);
   const dims = dimensions(buf, ext);
   return {
     path: relPath,
@@ -146,6 +184,45 @@ export function fileRecord(abs, relPath) {
     sha256: createHash('sha256').update(buf).digest('hex'),
     ...(dims ? { width: dims.width, height: dims.height } : {}),
   };
+}
+
+/** A `common` record: path, bytes and sha256 only (no pixel size), per the plan. */
+export function commonRecord(abs, packPath) {
+  const buf = canonicalBytes(abs);
+  return { path: packPath, bytes: buf.length, sha256: createHash('sha256').update(buf).digest('hex') };
+}
+
+/**
+ * COMMON_SOURCES(root) → [{ id, path, source }] sorted by id: every file the
+ * common pack carries, with its pack path and the file it is read from here.
+ * One home, shared with tools/asset-pack.mjs, so the manifest and the packs
+ * can never disagree about what `common` holds.
+ */
+export function commonSources(root = ROOT) {
+  const out = [];
+  const rel = (abs, base) => relative(base, abs).split(/[\\/]/g).join('/');
+  const highRoot = resolve(root, HIGH_DIR);
+  for (const abs of walk(resolve(highRoot, COMMON_ASSET_PREFIX))) {
+    const r = rel(abs, highRoot);
+    if (!runtimeAsset(r) || !MIME[extname(r).toLowerCase()]) continue;
+    out.push({ id: `${HIGH_DIR}/${r}`, path: `${HIGH_DIR}/${r}`, source: abs });
+  }
+  const license = resolve(root, LICENSE_SOURCE);
+  if (existsSync(license)) out.push({ id: LICENSE_ID, path: LICENSE_ID, source: license });
+  const music = resolve(root, 'music');
+  if (existsSync(resolve(music, 'manifest.json'))) out.push({ id: 'music/manifest.json', path: 'music/manifest.json', source: resolve(music, 'manifest.json') });
+  for (const abs of walk(music)) {
+    if (extname(abs).toLowerCase() !== '.mp3') continue;
+    const id = `music/${rel(abs, music)}`;
+    out.push({ id, path: id, source: abs });
+  }
+  const tiles = resolve(root, 'map-detail');
+  for (const abs of walk(tiles)) {
+    if (extname(abs).toLowerCase() !== '.webp') continue;
+    const id = `map-detail/${rel(abs, tiles)}`;
+    out.push({ id, path: id, source: abs });
+  }
+  return out.sort((a, b) => Buffer.compare(Buffer.from(a.id), Buffer.from(b.id)));
 }
 
 /**
@@ -160,6 +237,7 @@ export function buildManifest(root = ROOT) {
   for (const abs of walk(highRoot)) {
     const rel = relative(highRoot, abs).split(/[\\/]/g).join('/');
     if (!runtimeAsset(rel) || !MIME[extname(rel).toLowerCase()]) continue;
+    if (rel.startsWith(COMMON_ASSET_PREFIX)) continue; // a `common` id, below
     const id = `${HIGH_DIR}/${rel}`;
     const twin = resolve(lightRoot, rel);
     assets[id] = {
@@ -167,13 +245,15 @@ export function buildManifest(root = ROOT) {
       high: fileRecord(abs, id),
     };
   }
+  for (const { id, path, source } of commonSources(root)) assets[id] = { common: commonRecord(source, path) };
   return {
-    _: 'DERIVED — written by node tools/art-manifest.mjs --write, never by a hand. One entry per asset id (the runtime `assets/…` path).',
+    _: 'DERIVED — written by node tools/art-manifest.mjs --write, never by a hand. One entry per asset id (the runtime `assets/…` path, or a `common` pack path: fonts, licenses/OFL.txt, music/, map-detail/).',
     schema: SCHEMA,
     tiers: {
       placeholder: 'no file: src/ui/assets.js draws the style guide recipe from the id (SPEC §2.4)',
       light: `${LIGHT_DIR}/ — the dev/test tier and the mobile edition's art`,
       high: `${HIGH_DIR}/ — full resolution; release/main builds and the Local high-res setting`,
+      common: `one file for every tier: ${HIGH_DIR}/${COMMON_ASSET_PREFIX} (the fonts), ${LICENSE_ID} (from ${LICENSE_SOURCE}), music/ and map-detail/`,
     },
     count: Object.keys(assets).length,
     assets,
@@ -203,16 +283,26 @@ export function checkManifest(root = ROOT) {
   if (committed.schema !== SCHEMA) problems.push(`${MANIFEST_PATH} is schema ${committed.schema}, this tool writes ${SCHEMA}`);
   const have = committed.assets || {};
   const want = fresh.assets;
+  const home = (id) => (id.startsWith(`${HIGH_DIR}/`) ? `${HIGH_DIR}/` : 'the common sources');
   for (const id of Object.keys(want)) {
-    if (!have[id]) { problems.push(`${id}: in ${HIGH_DIR}/ but not in the manifest`); continue; }
-    for (const tier of ['light', 'high']) {
+    if (!have[id]) { problems.push(`${id}: in ${home(id)} but not in the manifest`); continue; }
+    for (const tier of isCommonEntry(want[id]) ? ['common'] : ['light', 'high']) {
       const a = have[id][tier];
       const b = want[id][tier];
       if (b === null) { problems.push(`${id}: no ${tier} file (${LIGHT_DIR}/ has no twin — node tools/mobile-art.mjs)`); continue; }
       if (!a || a.sha256 !== b.sha256 || a.bytes !== b.bytes || a.path !== b.path) problems.push(`${id}: the ${tier} file changed since the manifest was written`);
     }
   }
-  for (const id of Object.keys(have)) if (!want[id]) problems.push(`${id}: in the manifest but not in ${HIGH_DIR}/`);
+  for (const id of Object.keys(have)) if (!want[id]) problems.push(`${id}: in the manifest but not in ${home(id)}`);
+  // ONE FILE PER COMMON FONT. The light tree still carries the faces (the light
+  // single file inlines them through CSS), so its copy must be the same bytes
+  // the one `common` record names, or the tiers would ship different fonts.
+  for (const id of Object.keys(want)) {
+    if (!id.startsWith(`${HIGH_DIR}/${COMMON_ASSET_PREFIX}`)) continue;
+    const twin = resolve(root, LIGHT_DIR, id.slice(HIGH_DIR.length + 1));
+    if (!existsSync(twin)) problems.push(`${id}: no twin under ${LIGHT_DIR}/ (a common font is the same file in both trees)`);
+    else if (commonRecord(twin, id).sha256 !== want[id].common.sha256) problems.push(`${id}: the ${LIGHT_DIR}/ copy differs from ${HIGH_DIR}/ (a common font is the same file in both trees)`);
+  }
   if (committed.count !== Object.keys(have).length) problems.push(`${MANIFEST_PATH} says count ${committed.count} but lists ${Object.keys(have).length}`);
   // AND BYTE FOR BYTE. The messages above name what moved; this catches every
   // field they do not compare (pixel sizes, the header, an extra key), so a
