@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-09-29
 
+- **Enemies regain their stature and actions stay with their cards** ([#1422](https://github.com/cehinds/AshenSpire/pull/1422), `0.7.1.710`). Light artwork now uses the same proportions as full artwork, fixing tiny enemies. Action badges sit 14 pixels above each combatant card, with transparent image padding excluded. Hand cards grow larger when space permits.
 - **Behind the scenes: the Armoury browser check reports its result to CI** ([#1420](https://github.com/cehinds/AshenSpire/pull/1420), `0.7.1.709`). The checker already passed all 42 tab and figure checks at three screen widths; it now gives the CI wrapper a counted success line so that green result is accepted.
 - **Behind the scenes: the card hand layout check catches misplaced controls again** ([#1418](https://github.com/cehinds/AshenSpire/pull/1418), `0.7.1.708`). Five deliberate layout defects now use the current fitted hand and footer, so the browser check can catch cards covering controls, a clipped End Turn label, and a hidden action row.
 - **Behind the scenes: phone layout checks retain the covered map probe** ([#1412](https://github.com/cehinds/AshenSpire/pull/1412), `0.7.1.707`). The closed map tray test now recreates both its old height and hit interception, so the browser check proves it catches map controls covered by that defect. The fitted card hand now stops reporting an unused fan lift, and its layout check tests whether cards escape their hand box.

@@ -23,34 +23,29 @@ export function fitCombatSprites({ width, height, actors }) {
   // The shared reference is the formation's figure ceiling (its one home),
   // not a flat 150: the figures grow with the stage.
   let base = Math.min(figureCeiling({ width, height }), height * .52);
-  const canvasRatio = a => Math.max(1, (a.boxHeight || a.visibleHeight) / a.visibleHeight);
   for (const a of actors) {
     const ratio = a.ratio * a.slot.depth;
     const maxHeight = Math.max(1, (a.slot.fitGround ?? a.slot.ground) - a.leading - 6);
     const maxWidth = Math.max(1, Math.min(a.slot.artWidth * ART_WIDTH_ALLOWANCE, 2 * Math.min(a.slot.x - 6, width - a.slot.x - 6)));
-    // Actions sit above the combatant card, including its transparent padding.
-    // Reserve that canvas once while keeping the shared visible-height ratio.
-    base = Math.min(base, maxHeight / ratio / canvasRatio(a),
+    // The card starts at the visible artwork, excluding transparent padding.
+    base = Math.min(base, maxHeight / ratio,
       maxWidth * a.visibleHeight / a.visibleWidth / ratio);
   }
   // A presentation multiplier (Settings: player / enemy sprite scale, the
   // formation's display scale) grows a figure AFTER the shared fit, so the
-  // ratio between figures holds. It is capped where a grown figure would leave
-  // the screen or rise past its headroom — one cap per side, so two of the same
-  // foe stay the same size — and never shrinks a figure below its fit.
+  // size order holds. Apply the same fraction of requested growth to everyone
+  // when any figure runs out of room. Independent side caps let the player
+  // grow while an enemy stayed capped, reversing their intended size order.
   const requestedOf = a => Number.isFinite(a.multiplier) && a.multiplier > 0 ? a.multiplier : 1;
   const heightOf = a => base * a.ratio * a.slot.depth;
   const roomOf = a => Math.min(
-    Math.max(1, (a.slot.fitGround ?? a.slot.ground) - a.leading - 6) / heightOf(a) / canvasRatio(a),
+    Math.max(1, (a.slot.fitGround ?? a.slot.ground) - a.leading - 6) / heightOf(a),
     2 * Math.max(1, Math.min(a.slot.x - 6, width - a.slot.x - 6)) / (heightOf(a) * a.visibleWidth / a.visibleHeight));
-  const sideRoom = new Map();
-  for (const a of actors) {
-    const side = a.side ?? a.slot.id;
-    sideRoom.set(side, Math.min(sideRoom.get(side) ?? Infinity, roomOf(a)));
-  }
+  const growthRoom = Math.min(1, ...actors.filter(a => requestedOf(a) > 1)
+    .map(a => Math.max(0, roomOf(a) - 1) / (requestedOf(a) - 1)));
   return actors.map(a => {
     const requested = requestedOf(a);
-    const multiplier = requested <= 1 ? requested : Math.max(1, Math.min(requested, sideRoom.get(a.side ?? a.slot.id)));
+    const multiplier = requested <= 1 ? requested : 1 + (requested - 1) * growthRoom;
     const visibleHeight = heightOf(a) * multiplier;
     const scale = visibleHeight / a.visibleHeight;
     return { id: a.slot.id, scale, visibleHeight, multiplier,

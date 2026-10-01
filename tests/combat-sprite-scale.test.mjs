@@ -82,7 +82,7 @@ test('cramped screens shrink the shared player reference, preserving ratio and d
   }
 });
 
-test('card padding reserves action headroom without erasing the visible size ratio',()=>{
+test('transparent padding does not consume overhead clearance or erase the visible size ratio',()=>{
   const actors=[
     {slot:{id:'p',ground:300,x:100,artWidth:190,depth:1},ratio:1,leading:28,boxHeight:190,visibleHeight:160,visibleWidth:120},
     {slot:{id:'b',ground:300,x:950,artWidth:400,depth:1},ratio:3,leading:28,boxHeight:384,visibleHeight:240,visibleWidth:300},
@@ -93,17 +93,17 @@ test('card padding reserves action headroom without erasing the visible size rat
   assert.ok(b.x + b.scale * actors[1].visibleWidth / 2 <= 994);
   assert.ok(p.visibleHeight<150,'player yields space to the large boss');
   const padded = fitCombatSprites({width:1000,height:405,actors:actors.map(a=>({...a,boxHeight:a.boxHeight*2}))});
-  assert.equal(padded[1].visibleHeight / padded[0].visibleHeight, 3);
-  assert.ok(padded[1].scale * actors[1].boxHeight * 2 + actors[1].leading + 6 <= actors[1].slot.ground);
+  assert.deepEqual(padded.map(a=>a.visibleHeight),[p.visibleHeight,b.visibleHeight]);
 });
 
-test('a presentation multiplier grows figures after the fit, capped per side to the screen', () => {
+test('presentation growth is shared so a capped enemy never becomes smaller than the player', () => {
   const slot = (id, x) => ({ id, ground: 300, x, artWidth: 60, depth: 1 });
   const actor = (id, side, x, multiplier) => ({ slot: slot(id, x), side, ratio: 1, leading: 30, visibleHeight: 100, visibleWidth: 150, multiplier });
   const sizes = fitCombatSprites({ width: 360, height: 400, actors: [actor('p', 'player', 90, 1.1), actor('e1', 'enemy', 230, 2.2), actor('e2', 'enemy', 300, 2.2)] });
   const [p, e1, e2] = sizes;
   assert.equal(e1.multiplier, e2.multiplier, 'two of the same foe stay the same size');
   assert.ok(e1.multiplier >= 1 && e1.multiplier < 2.2, 'the edge caps the enemy multiplier');
+  assert.ok(e1.visibleHeight >= p.visibleHeight, 'enemy cap cannot invert the requested size order');
   for (const [s, a] of [[p, 90], [e2, 300]]) assert.ok(a + s.scale * 150 / 2 <= 360 - 6 + 1e-8 && a - s.scale * 150 / 2 >= 6 - 1e-8);
   const shrunk = fitCombatSprites({ width: 360, height: 400, actors: [actor('p', 'player', 90, 0.5)] });
   assert.equal(shrunk[0].multiplier, 0.5, 'a multiplier below 1 is never capped');

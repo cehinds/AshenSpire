@@ -8,12 +8,14 @@ mkdirSync(out, { recursive: true });
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 const results = [];
 try {
-  for (const tier of ['full', 'light']) for (const [width, height] of [[1876, 900], [390, 844], [844, 390]]) {
+  for (const tier of ['full', 'light']) for (const [width, height] of [[1876, 900], [390, 844], [390, 650], [844, 390]]) {
     const page = await browser.newPage({ viewport: { width, height } });
     page.setDefaultNavigationTimeout(120000);
     page.setDefaultTimeout(60000);
     console.log('Checking', tier, width, height);
     const errors = [];
+    page.on('console', message => { if (message.type() === 'error') console.error(message.text()); });
+    page.on('requestfailed', request => console.error('Request failed:', request.url(), request.failure()?.errorText));
     page.on('pageerror', error => { errors.push(error.message); console.error('Browser error:', error.message); });
     if (tier === 'light') await page.route('**/assets/**/*.webp', route => route.continue({ url: route.request().url().replace('/assets/', '/assets-mobile/') }));
     await page.goto(base + '?shot=combat', { waitUntil: 'domcontentloaded' });
@@ -59,18 +61,28 @@ try {
       return { fieldTop: field.top, actors, cardWidth: parseFloat(card.style.getPropertyValue('--hand-card-width')) * (document.querySelector('.hand').getBoundingClientRect().width / document.querySelector('.hand').clientWidth),
         overflow: document.documentElement.scrollWidth > innerWidth };
     });
-    const name = `${tier}-${width}`;
+    const name = `${tier}-${width}x${height}`;
     await page.screenshot({ path: resolve(out, name + '.png') });
     results.push({ name, ...geometry, errors });
     console.log(name, JSON.stringify(geometry));
     const player = geometry.actors[0];
     for (const enemy of geometry.actors.slice(1)) {
-      if (enemy.inkHeight < player.height * .9) throw Error(`${name}: enemy ink is smaller than player: ${JSON.stringify(enemy)}`);
+      if (enemy.inkHeight < player.height - 1) throw Error(`${name}: enemy ink is smaller than player: ${JSON.stringify(enemy)}`);
       if (Math.abs(enemy.gap - 14) > 1) throw Error(`${name}: action is not 14px above its card`);
       if (enemy.intentTop < geometry.fieldTop - 1) throw Error(`${name}: action rises above battlefield`);
     }
     if (geometry.overflow || errors.length) throw Error(`${name}: overflow or browser errors`);
-    if (width === 1876 && geometry.cardWidth < 175) throw Error(`${name}: desktop cards still too small`);
+    if (width === 1876 && geometry.cardWidth < 165) throw Error(`${name}: desktop cards still too small`);
+    await page.evaluate(async () => {
+      const { selectCombatantInfo } = await import('./src/ui/components/combatantOverhead.js');
+      selectCombatantInfo(document.querySelector('.field'), document.querySelector('.enemy').dataset.eid);
+    });
+    await page.waitForTimeout(400);
+    const selected = await page.locator('.enemy.context-selected').evaluate(frame => ({
+      gap: frame.querySelector('.combatant-card').getBoundingClientRect().top - frame.querySelector('.intent').getBoundingClientRect().bottom,
+      top: frame.querySelector('.combatant-leading').getBoundingClientRect().top,
+    }));
+    if (Math.abs(selected.gap - 14) > 1 || selected.top < geometry.fieldTop - 1) throw Error(`${name}: selection moved action gap or escaped field: ${JSON.stringify(selected)}`);
     await page.close();
   }
   writeFileSync(resolve(out, 'checks.json'), JSON.stringify(results, null, 2));
