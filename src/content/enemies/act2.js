@@ -45,7 +45,7 @@ export const act2Enemies = [
       scalpel: {
         // A cut that closes wrong (colorless.js wound; SPEC §5.2: "enemies and events inject these").
         intent: 'attack', damage: 7, weight: 40,
-        effects: [{ op: 'addCard', card: 'wound', pile: 'discard' }],
+        effects: [{ op: 'addCard', target: 'player', card: 'wound', pile: 'discard' }],
       },
       sedate: {
         intent: 'debuff', weight: 30, maxConsecutive: 1,

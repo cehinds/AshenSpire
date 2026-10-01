@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // tools/coop-hud-top.mjs — the co-op formation HUD top, measured in Chromium.
 //
-// WHY THIS FILE EXISTS (#1368's open question, decided as D22 in
+// WHY THIS FILE EXISTS (#1368's open question, decided as D29 in
 // docs/FINISH.md). The co-op board (src/ui/screens/coop.js) mounts its own
 // `.topbar > .hud-top` — the active seat's resource bars, the fight label and
 // the Leave button — beside the HUD quick-settings cluster. styles/combat.css

@@ -42,7 +42,7 @@ import {
   blacksmithExtractPlan, commitBlacksmithExtract,
   blacksmithInstallPlan, commitBlacksmithInstall,
   blacksmithUpgradePlan, commitBlacksmithUpgrade,
-  BLACKSMITH_SERVICES, serviceCandidates,
+  BLACKSMITH_SERVICES, serviceCandidates, stackableCardIds,
 } from '../src/model/blacksmith.js';
 import { armamentPurchasePlan, commitArmamentPurchase } from '../src/model/armamentTrading.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -517,3 +517,95 @@ test('the blacksmith screen lays out one rail item per offering and refines thro
     assert.equal(changed, 1);
   });
 });
+
+test('the blacksmith screen refuses a displayed refine quote after another trade', () => {
+  withKitDom((dom) => {
+    const { run } = smithRun(OUT, { stones: 50, cinders: 1000 });
+    const app = dom.document.createElement('main');
+    dom.document.body.replaceChildren(app);
+    let changed = 0;
+    mountBlacksmith(app, { registries: OUT, run, meta: { settings: {} }, onChanged: () => { changed++; }, onLeave: () => {} });
+    app.querySelector('#shop-cat-refineStones').click();
+    const action = app.querySelector('#blacksmith-refine');
+    commitRefine(OUT, run, refinePlan(OUT, run));
+    const before = JSON.stringify(run);
+    action.click();
+    assert.equal(JSON.stringify(run), before, 'the displayed stale quote spends nothing');
+    assert.equal(changed, 0, 'a refused trade is not persisted');
+    assert.ok(app.querySelector('.bs-refusal').textContent.includes(shopSentence('shop.refuse.stale')));
+  });
+});
+
+test('Stack Copy refuses capped Rogue Powers, respects a raised limit and leaves other classes unrestricted', () => {
+  const { run } = smithRun(OUT);
+  run.class = 'rogue';
+  for (const cardId of ['afterimageCard', 'deadlyTempoCard']) {
+    run.deck.push({ instanceId: `limited:${cardId}`, cardId, upgraded: false });
+    const before = JSON.stringify(run);
+    const quote = stackCopyPlan(OUT, run, cardId);
+    assert.equal(quote.ok, false, `${cardId} is capped at one`);
+    assert.equal(stackableCardIds(OUT, run).includes(cardId), false);
+    assert.throws(() => commitStackCopy(OUT, run, quote));
+    assert.equal(JSON.stringify(run), before, 'a refused copy changes nothing');
+    const settings = { classSpellPowerCopies: 2 };
+    const allowed = stackCopyPlan(OUT, run, cardId, { settings });
+    assert.equal(allowed.ok, true, allowed.reason);
+    assert.equal(stackableCardIds(OUT, run, settings).includes(cardId), true);
+    commitStackCopy(OUT, run, allowed, { settings });
+    assert.equal(stackCopyPlan(OUT, run, cardId, { settings }).ok, false, 'owned sideboard copies count toward the cap');
+  }
+  run.class = 'reaver';
+  assert.equal(stackCopyPlan(OUT, run, 'afterimageCard').ok, true, 'a Power kept from a previous class is unrestricted');
+});
+
+test('the blacksmith upgrade modal commits its displayed quote and reports a stale refusal', () => {
+  withKitDom((dom) => {
+    globalThis.HTMLElement = dom.document.body.constructor;
+    const { run } = smithRun(OUT);
+    const app = dom.document.createElement('main');
+    dom.document.body.replaceChildren(app);
+    let changed = 0;
+    mountBlacksmith(app, { registries: OUT, run, meta: { settings: {} }, onChanged: () => { changed++; }, onLeave: () => {} });
+    app.querySelector('#shop-cat-upgrade').click();
+    app.querySelector('#blacksmith-upgrade button').click();
+    const confirm = app.querySelector('.smith-confirm');
+    assert.ok(confirm, 'the upgrade quote is displayed');
+    commitRefine(OUT, run, refinePlan(OUT, run));
+    const before = JSON.stringify(run);
+    confirm.click();
+    assert.equal(JSON.stringify(run), before, 'confirm cannot silently requote');
+    assert.equal(changed, 0);
+    assert.ok(app.querySelector('.bs-refusal').textContent.includes(shopSentence('shop.refuse.stale')));
+  });
+});
+
+for (const service of ['extract', 'install']) {
+  test(`the blacksmith ${service} modal refuses a quote made stale after selection`, () => {
+    withKitDom((dom) => {
+      globalThis.HTMLElement = dom.document.body.constructor;
+      const { run } = service === 'install' ? withLooseArt(OUT) : smithRun(OUT);
+      if (service === 'extract') run.loadout.storage.push('katana');
+      const app = dom.document.createElement('main');
+      dom.document.body.replaceChildren(app);
+      let changed = 0;
+      mountBlacksmith(app, { registries: OUT, run, meta: { settings: {} }, onChanged: () => { changed++; }, onLeave: () => {} });
+      app.querySelector(`#shop-cat-${service}Art`).click();
+      app.querySelector(`#blacksmith-${service}Art button`).click();
+      const item = app.querySelector(`[data-item-ref="${KATANA}"]`);
+      item.dispatchEvent(new dom.Event('click', { bubbles: true, detail: 0, target: item }));
+      item.dispatchEvent(new dom.Event('click', { bubbles: true, detail: 0, target: item }));
+      const mount = app.querySelector('[data-mount-key]');
+      assert.ok(mount, 'selecting the item exposes its mounts');
+      mount.click();
+      if (service === 'install') app.querySelector('.mount-card-list [data-instance-id]').click();
+      const confirm = app.querySelector('.mount-confirm');
+      assert.equal(confirm.getAttribute('aria-disabled'), 'false', 'the selected quote is affordable');
+      commitRefine(OUT, run, refinePlan(OUT, run));
+      const before = JSON.stringify(run);
+      confirm.click();
+      assert.equal(JSON.stringify(run), before, 'the selected card and purse are untouched');
+      assert.equal(changed, 0);
+      assert.ok(app.querySelector('.bs-refusal').textContent.includes(shopSentence('shop.refuse.stale')));
+    });
+  });
+}

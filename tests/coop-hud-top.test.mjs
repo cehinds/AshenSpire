@@ -1,5 +1,5 @@
 // tests/coop-hud-top.test.mjs — the no-browser half of tools/coop-hud-top.mjs
-// (#1368, D22 in docs/FINISH.md). The browser half runs in
+// (#1368, D29 in docs/FINISH.md). The browser half runs in
 // .github/workflows/coop-hud.yml on every pull request into dev.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';

@@ -634,7 +634,7 @@ export const reaverCards = [
     },
   },
   {
-    id: 'sunderplate', name: 'Sunderplate', class: 'reaver', rarity: 'uncommon', cost: 2, type: 'attack',
+    id: 'sunderplate', name: 'Sunderplate', class: 'reaver', rarity: 'uncommon', cost: 2, staminaCost: 1, type: 'attack',
     flavor: "Joint-splitting blow of the Wardens.\n\nDevised in the years of the Mark Trade with the Court's knights in mind, lest the Court forget which flame kept it fed. No occasion of its use is recorded.\n\nBeside the drill, a knight's gorget, its crest scratched out.",
     keywords: [], icon: '⚒',
     effects: [

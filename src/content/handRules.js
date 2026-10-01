@@ -6,7 +6,7 @@
 // like every other stat. What stays is how a hand BEHAVES, which no attribute
 // decides.
 //
-// THE SOLO DEFAULT (FINISH D22, decided 2026-09-27 under the owner's
+// THE SOLO DEFAULT (FINISH D27, decided 2026-09-27 under the owner's
 // delegation; SPEC §4.1):
 // retain the hand; draw the Draw stat each turn, up to capacity. Fill mode
 // (retain-and-fill) and `retain: false` (discard at turn end) stay selectable.

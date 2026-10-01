@@ -1,4 +1,4 @@
-// A4 hand rules (FINISH D22, decided 2026-09-27 under the owner's delegation;
+// A4 hand rules (FINISH D27, decided 2026-09-27 under the owner's delegation;
 // SPEC §4.1): a solo
 // fight RETAINS the hand between turns and draws the derived Draw stat each
 // turn, up to the hand size — it neither fills to capacity nor discards at
@@ -91,9 +91,9 @@ test('discard at end of turn still works when selected', () => {
   assert.equal(c.piles.hand.filter((card) => unplayed.includes(card.instanceId)).length, 0);
 });
 
-test('a run saved before D22 keeps its snapshotted Draw row and its hand behaviour', () => {
+test('a run saved before D27 keeps its snapshotted Draw row and its hand behaviour', () => {
   const run = createRunState({ seed: 7, classId: 'rogue', registries });
-  run.derivedStatRuleSnapshot.rules.rules.draw.base = 2; // what a pre-D22 run was born with
+  run.derivedStatRuleSnapshot.rules.rules.draw.base = 2; // what a pre-D27 run was born with
   run.drawPerTurn = 2;
   const saves = createSaveManager(createMemoryStorage());
   saves.saveRun(run);

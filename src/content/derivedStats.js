@@ -62,7 +62,7 @@ export const derivedStatRules = {
     // Owner defaults, 2026-09-24 (ashen-spire-game-config_4.json): every
     // pool reads a spread of attributes, not one.
     //
-    // A3 LEAN RETUNE (2026-09-27, FINISH D24). Two numbers moved, each sized
+    // A3 LEAN RETUNE (2026-09-27, FINISH D28). Two numbers moved, each sized
     // from `node tools/runsim.mjs 100 --seeded-seats --incoming`:
     //   energy.dexterity 0.2 → 0.25   the first extra Action at DEX 4, not 5:
     //       reachable at creation (Assign points can put all three points
@@ -97,7 +97,7 @@ export const derivedStatRules = {
         starseer: { base: 5, intelligence: 0.5 },
       },
     },
-    // Base 3 since FINISH D22 (2026-09-27, decided under the owner's
+    // Base 3 since FINISH D27 (2026-09-27, decided under the owner's
     // delegation: retain the hand and draw the Draw stat each turn, up to
     // capacity). The target was about 5 unless that floods a retained hand; `node tools/runsim.mjs` and a turn census
     // showed 5 (and 4) clipped by the hand size of 7 on up to 83% (36%) of

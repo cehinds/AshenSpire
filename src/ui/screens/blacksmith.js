@@ -52,12 +52,16 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   let activeCategory = null;
   let layout = null;
 
+  function refuse(host, error) {
+    host.querySelector('.bs-refusal')?.remove();
+    host.append(statusText(error.message, { class: 'shop-offer-avail bs-refusal', role: 'status' }));
+  }
+
   // One action: commit, sound, persist, redraw — or show the refusal in place.
   function act(tile, commit) {
     try { commit(); }
     catch (error) {
-      tile.querySelector('.bs-refusal')?.remove();
-      tile.append(statusText(error.message, { class: 'shop-offer-avail bs-refusal', role: 'status' }));
+      refuse(tile, error);
       return;
     }
     sfx.play('shrine');
@@ -87,7 +91,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
         if (!plan.def) continue;
         const host = tile(GLYPH.armaments, plan.def.name, t('blacksmith.armament.line', { name: plan.def.name, cost: item.cost }));
         actionButton(host, { label: t('blacksmith.action.buy'), plan, commit: () => {
-          const receipt = commitArmamentPurchase(registries, run, armamentPurchasePlan(registries, run, item));
+          const receipt = commitArmamentPurchase(registries, run, plan);
           onArmamentPurchased(receipt.id);
         } });
         shelf.append(host);
@@ -98,7 +102,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       if (!offer) return;
       const plan = smithStonePurchasePlan(registries, run, 1);
       const host = tile(GLYPH.smithStones, t('shop.stones.name'), t('blacksmith.stones.line', { left: offer.left, price: offer.price }));
-      actionButton(host, { id: 'blacksmith-stone', label: t('blacksmith.action.buy'), plan, commit: () => commitSmithStonePurchase(registries, run, smithStonePurchasePlan(registries, run, 1)) });
+      actionButton(host, { id: 'blacksmith-stone', label: t('blacksmith.action.buy'), plan, commit: () => commitSmithStonePurchase(registries, run, plan) });
       shelf.append(host);
     },
     upgrade(shelf) {
@@ -113,7 +117,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
         if (!stonesPlan.ok) host.append(statusText(stonesPlan.reason, { class: 'shop-offer-avail' }));
         if (candidate.refinedCost !== null) {
           const refinedPlan = blacksmithUpgradePlan(registries, run, candidate.itemRef, { purse: 'refined' });
-          actionButton(host, { label: t('blacksmith.action.upgradeRefined', { cost: candidate.refinedCost }), plan: refinedPlan, commit: () => commitBlacksmithUpgrade(registries, run, blacksmithUpgradePlan(registries, run, candidate.itemRef, { purse: 'refined' })) });
+          actionButton(host, { label: t('blacksmith.action.upgradeRefined', { cost: candidate.refinedCost }), plan: refinedPlan, commit: () => commitBlacksmithUpgrade(registries, run, refinedPlan) });
         }
         shelf.append(host);
       }
@@ -121,14 +125,14 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     refineStones(shelf) {
       const plan = refinePlan(registries, run, { priceMult });
       const host = tile(GLYPH.refineStones, t('blacksmith.refine.title'), t('blacksmith.refine.desc', { from: plan.stones, cost: plan.cost, value: plan.value ?? 0 }));
-      actionButton(host, { id: 'blacksmith-refine', label: t('blacksmith.action.refine'), plan, commit: () => commitRefine(registries, run, refinePlan(registries, run, { priceMult }), { priceMult }) });
+      actionButton(host, { id: 'blacksmith-refine', label: t('blacksmith.action.refine'), plan, commit: () => commitRefine(registries, run, plan, { priceMult }) });
       shelf.append(host);
     },
     sigilSlots(shelf) {
       for (const piece of sigilSlotPieces(registries, run)) {
         const plan = sigilSlotPlan(registries, run, piece.itemRef, { priceMult });
         const host = tile(GLYPH.sigilSlots, piece.name, t('blacksmith.slots.line', { name: piece.name, count: piece.slots.length, max: piece.max }));
-        actionButton(host, { label: t('blacksmith.action.cutSlot', { cost: plan.cost }), plan, commit: () => commitSigilSlot(registries, run, sigilSlotPlan(registries, run, piece.itemRef, { priceMult }), { priceMult }) });
+        actionButton(host, { label: t('blacksmith.action.cutSlot', { cost: plan.cost }), plan, commit: () => commitSigilSlot(registries, run, plan, { priceMult }) });
         shelf.append(host);
       }
     },
@@ -142,12 +146,12 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
           const host = tile(GLYPH.sigils, `${name} · ${index + 1}`, sigilName);
           if (typeof slot === 'string') {
             const plan = sigilRemovePlan(registries, run, itemRef, index);
-            actionButton(host, { label: t('blacksmith.action.removeSigil', { name: sigilName }), plan, commit: () => commitSigilRemove(registries, run, sigilRemovePlan(registries, run, itemRef, index)) });
+            actionButton(host, { label: t('blacksmith.action.removeSigil', { name: sigilName }), plan, commit: () => commitSigilRemove(registries, run, plan) });
           } else {
             for (const sigilId of [...new Set(run.sigils || [])]) {
               const plan = sigilInstallPlan(registries, run, itemRef, index, sigilId);
               if (!registries.sigils.has(sigilId)) continue;
-              actionButton(host, { label: t('blacksmith.action.setSigil', { name: registries.sigils.get(sigilId).name }), plan, commit: () => commitSigilInstall(registries, run, sigilInstallPlan(registries, run, itemRef, index, sigilId)) });
+              actionButton(host, { label: t('blacksmith.action.setSigil', { name: registries.sigils.get(sigilId).name }), plan, commit: () => commitSigilInstall(registries, run, plan) });
             }
           }
           shelf.append(host);
@@ -161,15 +165,15 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
         const plan = upgradeArtPlan(registries, run, card.instanceId);
         const name = registries.cards.get(card.cardId)?.name || card.cardId;
         const host = tile(GLYPH.upgradeArt, name, t('blacksmith.art.line', { name }));
-        actionButton(host, { label: t('blacksmith.action.upgradeArt', { cost: plan.stones }), plan, commit: () => commitUpgradeArt(registries, run, upgradeArtPlan(registries, run, card.instanceId)) });
+        actionButton(host, { label: t('blacksmith.action.upgradeArt', { cost: plan.stones }), plan, commit: () => commitUpgradeArt(registries, run, plan) });
         shelf.append(host);
       }
     },
     stackCopy(shelf) {
-      for (const cardId of stackableCardIds(registries, run)) {
-        const plan = stackCopyPlan(registries, run, cardId, { priceMult });
+      for (const cardId of stackableCardIds(registries, run, meta?.settings)) {
+        const plan = stackCopyPlan(registries, run, cardId, { priceMult, settings: meta?.settings });
         const host = tile(GLYPH.stackCopy, plan.name, t('blacksmith.stack.line', { name: plan.name, owned: plan.owned }));
-        actionButton(host, { label: t('blacksmith.action.stack', { stones: plan.stones, cost: plan.cost }), plan, commit: () => commitStackCopy(registries, run, stackCopyPlan(registries, run, cardId, { priceMult }), { priceMult }) });
+        actionButton(host, { label: t('blacksmith.action.stack', { stones: plan.stones, cost: plan.cost }), plan, commit: () => commitStackCopy(registries, run, plan, { priceMult, settings: meta?.settings }) });
         shelf.append(host);
       }
     },
@@ -181,9 +185,13 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
     const control = button({ label: t('blacksmith.action.open'), weight: 'primary' });
     control.addEventListener('click', () => openMountService(app, {
       service, registries, run, meta, returnFocusElement: control, multiUse: true, place: 'merchant',
-      commit: (chosen) => (service === 'extract'
-        ? commitBlacksmithExtract(registries, run, blacksmithExtractPlan(registries, run, chosen.itemRef, chosen.mountKey))
-        : commitBlacksmithInstall(registries, run, blacksmithInstallPlan(registries, run, chosen.itemRef, chosen.mountKey, chosen.instanceId))),
+      quote: (chosen) => (service === 'extract'
+        ? blacksmithExtractPlan(registries, run, chosen.itemRef, chosen.mountKey)
+        : blacksmithInstallPlan(registries, run, chosen.itemRef, chosen.mountKey, chosen.instanceId)),
+      commit: (_chosen, quote) => (service === 'extract'
+        ? commitBlacksmithExtract(registries, run, quote)
+        : commitBlacksmithInstall(registries, run, quote)),
+      onError: (error) => refuse(host, error),
       onCommitted: () => { sfx.play('shrine'); onChanged(); render(); },
     }));
     host.append(control);
@@ -192,17 +200,16 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
 
   function openUpgradeModal(itemRef, returnFocusElement) {
     let selection = itemRef;
-    const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selection, { multiUse: true });
+    let displayedQuote;
+    const model = () => {
+      displayedQuote = blacksmithUpgradePlan(registries, run, selection, { purse: 'stones' });
+      return smithSelectionModel(registries, smithingPlan(registries, run), selection, { multiUse: true });
+    };
     const modal = mountSmithUpgradeModal(app, model(), {
       registries, meta, returnFocusElement,
       onSelect: (ref) => { selection = ref; modal.update(model()); },
       onBack: () => {},
-      onConfirm: (ref) => {
-        commitBlacksmithUpgrade(registries, run, blacksmithUpgradePlan(registries, run, ref, { purse: 'stones' }));
-        sfx.play('shrine');
-        onChanged();
-        render();
-      },
+      onConfirm: () => act(returnFocusElement.parentNode, () => commitBlacksmithUpgrade(registries, run, displayedQuote)),
     });
   }
 
@@ -210,7 +217,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   const readyCount = (key) => {
     if (key === 'armaments') return (stock.armaments || []).length;
     if (key === 'smithStones') return stock.smithStones ? stock.smithStones.left : 0;
-    return BLACKSMITH_SERVICES.includes(key) ? serviceCandidates(registries, run, key).length : 0;
+    return BLACKSMITH_SERVICES.includes(key) ? serviceCandidates(registries, run, key, meta?.settings).length : 0;
   };
 
   function render() {

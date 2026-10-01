@@ -37,6 +37,7 @@ import { carriedIds, isItemOwned } from './loadout.js';
 import { smithingPlan, commitItemUpgrade, SMITHING_PURSES } from './smithing.js';
 import { extractionPlan, installPlan, commitExtraction, commitInstall } from './cardExtraction.js';
 import { deckRules } from '../content/deckRules.js';
+import { deckCopyLimit, ownedCopies } from './deckRules.js';
 
 const say = (id, tokens = {}) => shopSentence(id, tokens);
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -95,11 +96,12 @@ export function upgradeableArts(registries, run) {
 }
 
 /** The card ids a stacked copy could be made of now: a loose weapon art or technique, never a basic. */
-export function stackableCardIds(registries, run) {
+export function stackableCardIds(registries, run, settings = {}) {
   const ids = [];
   for (const card of owned(run)) {
     if (!isLooseCard(card) || ids.includes(card.cardId)) continue;
     if (deckRules.unlimitedCardIds.includes(card.cardId)) continue;
+    if (!isArt(registries, card.cardId) && ownedCopies(run, card.cardId) >= deckCopyLimit(registries, card.cardId, settings, run.class)) continue;
     if (isArt(registries, card.cardId) || isTechnique(registries, card.cardId)) ids.push(card.cardId);
   }
   return ids;
@@ -332,12 +334,13 @@ export function commitUpgradeArt(registries, run, quote) {
 // Stacking a copy
 // ---------------------------------------------------------------------------
 
-export function stackCopyPlan(registries, run, cardId, { priceMult = 1 } = {}) {
+export function stackCopyPlan(registries, run, cardId, { priceMult = 1, settings = {} } = {}) {
   const stack = blacksmithOffering(registries, 'stackCopy')?.stack || null;
   const def = registries.cards.get(cardId);
   const name = def?.name || cardId;
   const copies = owned(run).filter((card) => card.cardId === cardId);
   const extra = Math.max(0, copies.length - 1);
+  const limit = deckCopyLimit(registries, cardId, settings, run.class);
   const stonePrice = stack ? stack.stones + stack.stepPerOwned * extra : 0;
   const cost = stack ? cinders(stack.cinders + stack.stepPerOwned * extra, priceMult) : 0;
   let reason = '';
@@ -347,14 +350,17 @@ export function stackCopyPlan(registries, run, cardId, { priceMult = 1 } = {}) {
   else if (!copies.length) reason = say('blacksmith.refuse.stackUnowned', { name });
   else if (!copies.some(isLooseCard)) reason = say('blacksmith.refuse.stackGranted', { name });
   else if (!isArt(registries, cardId) && !isTechnique(registries, cardId)) reason = say('blacksmith.refuse.stackKind', { name });
+  // Extractable arts can still be seated in an item; a capped technique with
+  // no such use must not sell another permanently unused sideboard copy.
+  else if (!isArt(registries, cardId) && copies.length >= limit) reason = say('deckEditor.refuse.copyLimit', { name, limit });
   else if (stones(run) < stonePrice) reason = say('blacksmith.refuse.stones', { cost: stonePrice, have: stones(run) });
   else if (!affordable(run, cost)) reason = say('shop.refuse.cinders');
   return { ok: !reason, reason, cardId, name, owned: copies.length, stones: stonePrice, cost, revision: blacksmithRevision(run) };
 }
 
 /** The new copy is `{ instanceId: 'stack:<n>:<cardId>', cardId, upgraded: false }`, in the sideboard, with no mods. */
-export function commitStackCopy(registries, run, quote, { priceMult = 1 } = {}) {
-  const plan = stackCopyPlan(registries, run, quote.cardId, { priceMult });
+export function commitStackCopy(registries, run, quote, { priceMult = 1, settings = {} } = {}) {
+  const plan = stackCopyPlan(registries, run, quote.cardId, { priceMult, settings });
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan);
   const taken = new Set(owned(run).map((card) => card.instanceId));
@@ -378,7 +384,7 @@ export function commitStackCopy(registries, run, quote, { priceMult = 1 } = {}) 
  * empty for the guarantee, but stays laid out). Affordability is not asked:
  * a price the purse cannot meet is a refusal, not an empty service.
  */
-export function serviceCandidates(registries, run, id) {
+export function serviceCandidates(registries, run, id, settings = {}) {
   switch (id) {
     case 'upgrade': return smithingPlan(registries, run).candidates;
     case 'refineStones': return blacksmithOffering(registries, 'refineStones') ? ['refine'] : [];
@@ -393,7 +399,7 @@ export function serviceCandidates(registries, run, id) {
     case 'extractArt': return extractionPlan(registries, run).candidates;
     case 'installArt': return installPlan(registries, run).candidates;
     case 'upgradeArt': return upgradeableArts(registries, run);
-    case 'stackCopy': return stackableCardIds(registries, run);
+    case 'stackCopy': return stackableCardIds(registries, run, settings);
     default: return [];
   }
 }

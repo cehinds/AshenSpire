@@ -6377,9 +6377,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
     // Herald lean is STR 1 · DEX 1 · CON 2 · WIS 3 · INT 1. HP 51 + ⌊0.35⌋ +
     // ⌊4 × 2⌋ + ⌊0.1 × 3⌋ = 59; Actions 3 (every weight floors to 0 at 1–3
-    // points); Draw is the ruleset-7 draw row, base 3 since FINISH D22
+    // points); Draw is the ruleset-7 draw row, base 3 since FINISH D27
     // (2026-09-27) and nothing from INT 1, below the row's baseline of 4. It
-    // read 3 under ruleset 6 and 2 under ruleset 7 before D22.
+    // read 3 under ruleset 6 and 2 under ruleset 7 before D27.
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '59/3/3', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
     eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,100,100,100,100,100,100,100,100,100', 'every default stat level costs 100 XP');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
@@ -6390,7 +6390,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 1000, '1,000 XP reaches level 11 at the default cost');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
-    // Rogue: HP 51 + ⌊4 × 2⌋ = 59; Actions 3 + ⌊0.25 × DEX 3⌋ = 3; Draw 3 (D22) + nothing from INT 1.
+    // Rogue: HP 51 + ⌊4 × 2⌋ = 59; Actions 3 + ⌊0.25 × DEX 3⌋ = 3; Draw 3 (D27) + nothing from INT 1.
     eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/59/3/3', 'Rogue lean stats reach the HP, action, and hand formulas');
     eq(rogue.startingKitId, 'rogueBaseline', 'Rogue starts through its authored baseline equipment profile');
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');

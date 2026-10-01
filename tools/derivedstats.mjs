@@ -112,7 +112,7 @@ check('the twelve rows answer to the ruled attributes', () => {
   const got = Object.entries(derivedStatRules.rules)
     .map(([id, row]) => `${id}:${ruleWeights(row).map(([attr, weight]) => `${attr}x${weight}`).join('+')}`).join(',');
   equal(got, [
-    'energy:strengthx0.1+dexterityx0.2+wisdomx0.01+intelligencex0.01',
+    'energy:strengthx0.1+dexterityx0.25+wisdomx0.01+intelligencex0.01',
     // The opening hand's SHARED weight — the fallback for a fight with no
     // class; each class reads its own form (checked below).
     'openingHand:intelligencex0.5',
@@ -167,18 +167,18 @@ check('DEX 10 gives Energy base 3 + floor(10 x 0.2) = 5', () => {
   equal(out.raw, 5, 'raw'); equal(out.value, 5, 'value');
 });
 
-check('INT 10 gives Draw base 2 + floor(10 x 0.1) = 3', () => {
+check('INT 10 gives Draw base 3 + floor((10 - 4) x 0.2) = 4', () => {
   const out = deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 10 }), classDef: CLASS });
-  equal(out.terms.intelligence, 1, 'intelligence term'); equal(out.raw, 3, 'raw'); equal(out.value, 3, 'value');
+  equal(out.terms.intelligence, 1, 'intelligence term'); equal(out.raw, 4, 'raw'); equal(out.value, 4, 'value');
 });
 
 // Draw / turn counts INT above 4 at a fifth of a card a point: exactly the
-// retired turn group, 2 + floor(max(0, INT − 4) ÷ 5).
+// turn group, with A4's base 3: 3 + floor(max(0, INT − 4) ÷ 5).
 check('a fifth of a card per point above 4: INT 8 stays at the base, INT 9 buys one', () => {
-  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 8 }), classDef: CLASS }).value, 2, 'INT 8');
-  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 9 }), classDef: CLASS }).value, 3, 'INT 9');
-  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 13 }), classDef: CLASS }).value, 3, 'INT 13');
-  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 14 }), classDef: CLASS }).value, 4, 'INT 14');
+  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 8 }), classDef: CLASS }).value, 3, 'INT 8');
+  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 9 }), classDef: CLASS }).value, 4, 'INT 9');
+  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 13 }), classDef: CLASS }).value, 4, 'INT 13');
+  equal(deriveStat(resolved(), 'draw', { attributes: at({ intelligence: 14 }), classDef: CLASS }).value, 5, 'INT 14');
 });
 
 // Stamina's budget is 1: STR 0.25 + DEX 0.25 + CON 0.5. Wisdom left the row
@@ -204,9 +204,9 @@ check('Mana comes mostly from Wisdom: WIS 10 yields base 1 + floor(10 x 0.5) = 6
 
 check('CON HP is a flat base plus four per point, and reads no class field', () => {
   const out = deriveStat(resolved(), 'hp', { attributes: at({ constitution: 10 }), classDef: CLASS });
-  equal(out.base, 30, 'HP base is the row, not the class'); equal(out.terms.constitution, 40, 'four per CON point');
+  equal(out.base, 51, 'HP base is the row, not the class'); equal(out.terms.constitution, 40, 'four per CON point');
   equal(out.terms.strength, 0, 'STR 1 x 0.35 floors to 0'); equal(out.terms.wisdom, 0, 'WIS 1 x 0.1 floors to 0');
-  equal(out.value, 70, 'derived HP: 30 + 10 x 4');
+  equal(out.value, 91, 'derived HP: 51 + 10 x 4');
 });
 
 check('the level term is one decimal, floored: HP 2, Mana/Stamina 0.2, Actions 0.1, Draw none', () => {
@@ -271,11 +271,11 @@ check('shipped Energy grows unbounded at high stats; the hand rows hold to their
   for (const [id, row] of Object.entries(rules.rules)) assert(!('cap' in row), `resolved ${id} carries a cap`);
   equal(rules.rules.energy.min, undefined, 'Energy min'); equal(rules.rules.energy.max, undefined, 'Energy max');
   const high = (id, attribute) => deriveStat(rules, id, { attributes: at({ [attribute]: 5000 }), classDef: CLASS });
-  // 3 + floor(5000 x 0.2); STR, WIS and INT at 1 add nothing.
-  equal(high('energy', 'dexterity').value, 1003, 'uncapped high-stat Energy');
-  // 2 + floor(4996 x 0.2) = 1001, 7 + floor(4999 x 0.2) = 1006; the shared
+  // 3 + floor(5000 x 0.25); STR, WIS and INT at 1 add nothing.
+  equal(high('energy', 'dexterity').value, 1253, 'uncapped high-stat Energy');
+  // 3 + floor(4996 x 0.2) = 1002, 7 + floor(4999 x 0.2) = 1006; the shared
   // opening hand (no class) 4 + floor(4999 x 0.5) = 2503.
-  equal(high('draw', 'intelligence').raw, 1001, 'Draw raw'); equal(high('draw', 'intelligence').value, 10, 'Draw max');
+  equal(high('draw', 'intelligence').raw, 1002, 'Draw raw'); equal(high('draw', 'intelligence').value, 10, 'Draw max');
   const opening = deriveStat(rules, 'openingHand', { attributes: at({ intelligence: 5000 }) });
   equal(opening.raw, 2503, 'opening hand raw'); equal(opening.value, 6, 'opening hand max');
   equal(high('handSize', 'intelligence').raw, 1006, 'hand size raw'); equal(high('handSize', 'intelligence').value, 30, 'hand size max');
@@ -287,7 +287,7 @@ check('neither HP nor Mana reads class data, and deriving mutates no input', () 
   const attributes = at({ constitution: 10, wisdom: 10 });
   const classDef = { id: 'newClass', maxHp: 137, maxMana: 23 };
   const before = JSON.stringify({ attributes, classDef });
-  equal(deriveStat(resolved(), 'hp', { attributes, classDef }).base, 30, 'HP ignores class data');
+  equal(deriveStat(resolved(), 'hp', { attributes, classDef }).base, 51, 'HP ignores class data');
   equal(deriveStat(resolved(), 'mana', { attributes, classDef }).base, 1, 'Mana ignores class data');
   equal(JSON.stringify({ attributes, classDef }), before, 'inputs unchanged');
 });

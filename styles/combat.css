@@ -1374,7 +1374,7 @@
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .resbars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:calc(12px / var(--ui-zoom,1)); }
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .resline { min-width:0; }
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .topbar-btn { height:calc(32px / var(--ui-zoom,1)); min-height:0; width:calc(32px / var(--ui-zoom,1)); }
- /* INTENDED, measured in Chromium (#1368; D22 in docs/FINISH.md). The co-op
+ /* INTENDED, measured in Chromium (#1368; D29 in docs/FINISH.md). The co-op
     board's `.hud-top` (src/ui/screens/coop.js) is not the shared run HUD: it
     has no `.shared-hud` ancestor, so kit.css's `.shared-hud > .hud-top` grid
     never applies and this row overrides nothing shared; without it the box is

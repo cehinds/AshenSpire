@@ -1,4 +1,4 @@
-// tests/a3-lean-retune.test.mjs — the A3 lean retune (FINISH D24, 2026-09-27).
+// tests/a3-lean-retune.test.mjs — the A3 lean retune (FINISH D28, 2026-09-27).
 //
 // Two rows of content/derivedStats.js moved, each sized from the simulator
 // (`node tools/runsim.mjs 100 --seeded-seats --incoming`; the numbers are in

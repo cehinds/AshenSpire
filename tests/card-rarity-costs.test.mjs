@@ -16,9 +16,10 @@ test('combat reward costs meet inclusive rounded rarity shares, including upgrad
   // (docs/card-resource-balance.md records the exception). A2 (Herald
   // starvation) also takes Blight Touch off the Mana line only, so the Common
   // dual share sits one further card under.
-  // The five round-4 class cards joined the pools (FINISH D22): two commons
+  // The five round-4 class cards joined the pools (FINISH D30): two commons
   // leave both Common shares where they were, and Astral Insight carries the
-  // one Stamina + Mana line the Uncommon row's 54-card shares add.
+  // added Stamina + Mana line. Sunderplate supplies the second Stamina line
+  // required by the combined 63-card Uncommon census.
   const a2ActionOnly = { common: 4, uncommon: 0, rare: 0 };
   const a2StaminaOnly = { common: 1, uncommon: 0, rare: 0 };
   for (const [rarity, count, staminaShare, dualShare] of [

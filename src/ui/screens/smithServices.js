@@ -34,11 +34,20 @@ export function openMountService(host, {
   multiUse = false, place = 'shrine', onCommitted, onBack = () => {},
   // A door with its own transaction (the blacksmith's quote-checked commit,
   // SPEC §14.4) hands it in; otherwise the smith's own commit runs.
-  commit = null,
+  commit = null, quote = null, onError = null,
 }) {
   const planner = service === 'extract' ? extractionPlan : installPlan;
   let selection = {};
-  const model = () => mountServiceModel(registries, planner(registries, run), selection, { multiUse, place });
+  let displayedQuote = null;
+  const model = () => {
+    const view = mountServiceModel(registries, planner(registries, run), selection, { multiUse, place });
+    const p = view.properties;
+    displayedQuote = quote && p.canConfirm ? quote({
+      itemRef: p.selected.itemRef, mountKey: p.selectedMount.mountKey,
+      instanceId: p.selectedCard?.instanceId,
+    }) : null;
+    return view;
+  };
   const modal = mountMountServiceModal(host, model(), {
     registries,
     meta,
@@ -48,9 +57,16 @@ export function openMountService(host, {
     onSelectCard: (instanceId) => { selection = { ...selection, instanceId }; modal.update(model()); },
     onBack,
     onConfirm: (chosen) => {
-      const receipt = commit ? commit(chosen) : service === 'extract'
-        ? commitExtraction(registries, run, chosen.itemRef, chosen.mountKey)
-        : commitInstall(registries, run, chosen.itemRef, chosen.mountKey, chosen.instanceId);
+      let receipt;
+      try {
+        receipt = commit ? commit(chosen, displayedQuote) : service === 'extract'
+          ? commitExtraction(registries, run, chosen.itemRef, chosen.mountKey)
+          : commitInstall(registries, run, chosen.itemRef, chosen.mountKey, chosen.instanceId);
+      } catch (error) {
+        if (!onError) throw error;
+        onError(error);
+        return;
+      }
       onCommitted(receipt);
     },
   });
