@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-01
+
+- **Opening scenes keep the traveller in your hands, and XP edits preserve your save's rules** ([#1423](https://github.com/cehinds/AshenSpire/pull/1423), `0.7.1.712`). Each opening scene can show or hide the traveller, turn it, and place it before or behind the colour wash. Desktop and phone poses remain separate, and rotated figures retain accurate size and drag handles. Editing XP settings on an older save keeps that save's combat rating rules and other configuration metadata.
+
 ## 2026-09-29
 
 - **Behind the scenes: the Armoury browser check reports its result to CI** ([#1420](https://github.com/cehinds/AshenSpire/pull/1420), `0.7.1.709`). The checker already passed all 42 tab and figure checks at three screen widths; it now gives the CI wrapper a counted success line so that green result is accepted.
