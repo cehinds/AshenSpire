@@ -2069,3 +2069,13 @@ card,,nockAndWait,fx:precision
 card,,bindingParry,fx:flourish
 card,,whirlingGuard,fx:flourish
 card,,hewingArc,fx:blood
+# Sigils (SPEC §14.3, §14.4): what each does is its property row, mounted
+# while its armament is equipped; its kind is stated once.
+sigil,,emberSigil,emberSigil
+sigil,,emberSigil,classification.sigil
+sigil,,thornSigil,thornSigil
+sigil,,thornSigil,classification.sigil
+sigil,,tideSigil,tideSigil
+sigil,,tideSigil,classification.sigil
+sigil,,hearthSigil,hearthSigil
+sigil,,hearthSigil,classification.sigil

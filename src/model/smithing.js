@@ -209,6 +209,22 @@ function refinedBalance(run) {
   return integer(value, 'run.smithingStonesRefined');
 }
 
+/**
+ * refinedStoneValue(registries) → how many ordinary stones one refined stone
+ * pays toward an upgrade (SPEC §14.4): the run's frozen
+ * `gameConfig.shops.blacksmith.refineStones.refine.value`, read at every smith
+ * door. Null when the table has no such number (a stripped fixture), and then
+ * no candidate can be paid from the refined purse.
+ */
+export function refinedStoneValue(registries) {
+  const row = (registries?.shops?.blacksmith?.offerings || []).find((offering) => offering && offering.id === 'refineStones');
+  const value = row?.refine?.value;
+  return Number.isSafeInteger(value) && value >= 1 ? value : null;
+}
+
+/** The PURSES an upgrade can be paid from (SPEC §14.4): never mixed. */
+export const SMITHING_PURSES = Object.freeze(['stones', 'refined']);
+
 function levels(run) {
   const current = run?.itemUpgradeLevels == null
     ? null
@@ -272,8 +288,17 @@ function validateLastReceipt(registries, run) {
     throw new Error('run.lastSmithingReceipt levels do not describe one valid Smithing promotion');
   }
   if (typeof receipt.free !== 'boolean') throw new Error('run.lastSmithingReceipt.free must be boolean');
+  // A receipt written before the refined purse reads as 'stones' (SPEC §14.4).
+  const purse = receipt.purse === undefined ? 'stones' : receipt.purse;
+  if (!SMITHING_PURSES.includes(purse)) throw new Error(`run.lastSmithingReceipt.purse must be one of ${SMITHING_PURSES.join(', ')}`);
+  if (purse === 'refined') {
+    for (const key of ['refinedSpent', 'refinedBalanceBefore', 'refinedBalanceAfter']) integer(receipt[key], `run.lastSmithingReceipt.${key}`);
+    if (receipt.refinedBalanceBefore - receipt.refinedBalanceAfter !== receipt.refinedSpent || receipt.refinedSpent < 1) {
+      throw new Error('run.lastSmithingReceipt refined balance does not describe its Smithing transaction');
+    }
+  }
   const authoredCost = itemUpgradeCost(itemUpgradeRows(registries, receipt.itemRef, receipt.afterLevel));
-  const expectedSpend = receipt.free ? 0 : authoredCost;
+  const expectedSpend = receipt.free || purse === 'refined' ? 0 : authoredCost;
   if (receipt.authoredCost !== authoredCost || receipt.spent !== expectedSpend || receipt.cost !== receipt.spent
       || receipt.stoneBalanceBefore - receipt.stoneBalanceAfter !== receipt.spent) {
     throw new Error('run.lastSmithingReceipt cost/balance does not describe its Smithing transaction');
@@ -348,9 +373,10 @@ export function smithingPlan(registries, run, explicitRules = undefined) {
     if (level > (tiers.at(-1) || 0)) throw new Error(`run.itemUpgradeLevels.${itemRef} exceeds its highest authored tier ${tiers.at(-1) || 0}`);
   }
   const stones = stoneBalance(run);
-  // Refined stones (SPEC §15.3) are shown beside the purse and not yet
-  // spent: spending them is §14.4's blacksmith (`refine.value`).
+  // Refined stones (SPEC §15.3) are the second purse (§14.4): a candidate can
+  // be paid wholly from it, at ceil(cost / refine.value) refined stones.
   const refined = refinedBalance(run);
+  const refineValue = refinedStoneValue(registries);
   const inventory = carriedIds(run.loadout);
   const candidates = [];
   for (const itemRef of ownedItemRefs(registries, run)) {
@@ -381,6 +407,7 @@ export function smithingPlan(registries, run, explicitRules = undefined) {
       : itemUpgradeValueReceipts(registries, itemRef, currentLevel, nextLevel);
     if (!authoredChanges.length || !changes.length || changes.every((row) => row.before === row.after)) continue;
     const shortfall = Math.max(0, cost - stones);
+    const refinedCost = refineValue ? Math.ceil(cost / refineValue) : null;
     const candidate = {
       itemRef,
       itemKind: identity.itemKind,
@@ -394,6 +421,8 @@ export function smithingPlan(registries, run, explicitRules = undefined) {
       stones,
       shortfall,
       affordable: shortfall === 0,
+      refinedCost,
+      refinedAffordable: refinedCost !== null && refined >= refinedCost,
       inventoryCount: identity.itemKind === 'armament' ? inventory.filter((id) => id === identity.itemId).length : 1,
       requirements,
       authoredChanges: Object.freeze(authoredChanges.map((row) => Object.freeze({ ...row }))),
@@ -419,16 +448,23 @@ export function restampSmithingCards(registries, run, cards = run.deck || []) {
 }
 
 /** Host-side, revalidated generic commit. `free` is for event/keepsake grants. */
-export function commitItemUpgrade(registries, run, requestedItemRef, explicitRules = undefined, { free = false, cards = undefined } = {}) {
+export function commitItemUpgrade(registries, run, requestedItemRef, explicitRules = undefined, { free = false, cards = undefined, purse = 'stones' } = {}) {
   const itemRef = typeof requestedItemRef === 'string' && requestedItemRef.includes('/')
     ? requestedItemRef
     : `armament/${requestedItemRef}`;
+  if (!SMITHING_PURSES.includes(purse)) throw new Error(`Unknown Smithing purse '${purse}' (purses: ${SMITHING_PURSES.join(', ')})`);
   const plan = smithingPlan(registries, run, explicitRules);
   const candidate = plan.candidates.find((row) => row.itemRef === itemRef);
   if (!candidate) throw new Error(`Item '${itemRef}' is not an eligible Smithing candidate`);
-  if (!free && !candidate.affordable) throw new Error(`Insufficient Smithing Stones (shortfall ${candidate.shortfall})`);
+  // THE REFINED PURSE (SPEC §14.4): ceil(cost / refine.value) refined stones
+  // and no ordinary stone; the two are never mixed and no change is given.
+  const refinedPurse = !free && purse === 'refined';
+  if (refinedPurse && !candidate.refinedAffordable) throw new Error(`Insufficient refined Smithing Stones (need ${candidate.refinedCost}, have ${plan.refined})`);
+  if (!free && !refinedPurse && !candidate.affordable) throw new Error(`Insufficient Smithing Stones (shortfall ${candidate.shortfall})`);
   const beforeStones = plan.stones;
-  run.smithingStones = free ? beforeStones : beforeStones - candidate.cost;
+  const beforeRefined = plan.refined;
+  run.smithingStones = free || refinedPurse ? beforeStones : beforeStones - candidate.cost;
+  if (refinedPurse) run.smithingStonesRefined = beforeRefined - candidate.refinedCost;
   run.itemUpgradeLevels = { ...levels(run), [itemRef]: candidate.nextLevel };
   delete run.armamentLevels;
   restampSmithingCards(registries, run, cards || run.deck || []);
@@ -442,11 +478,13 @@ export function commitItemUpgrade(registries, run, requestedItemRef, explicitRul
     beforeLevel: candidate.currentLevel,
     afterLevel: candidate.nextLevel,
     authoredCost: candidate.cost,
-    spent: free ? 0 : candidate.cost,
-    cost: free ? 0 : candidate.cost,
+    spent: free || refinedPurse ? 0 : candidate.cost,
+    cost: free || refinedPurse ? 0 : candidate.cost,
     stoneBalanceBefore: beforeStones,
     stoneBalanceAfter: run.smithingStones,
     free,
+    purse: refinedPurse ? 'refined' : 'stones',
+    ...(refinedPurse ? { refinedSpent: candidate.refinedCost, refinedBalanceBefore: beforeRefined, refinedBalanceAfter: run.smithingStonesRefined } : {}),
     changes: candidate.changes,
     affectedCards: candidate.affectedCards,
   });

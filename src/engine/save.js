@@ -682,6 +682,9 @@ export function createSaveManager(storage) {
           consumableKnown: (id) => registries.consumables.has(id),
           companionKnown: (id) => registries.companions.has(id),
           eventKnown: (id) => registries.events.has(id),
+          // The blacksmith's rack (SPEC §14.4): an unsold armament this build
+          // no longer has is pruned, like any unsold market offer.
+          armamentKnown: (id) => (registries.equipment.armaments || []).some((piece) => piece.id === id),
         };
         const stocks = [['shopStock', run.shopStock], ...Object.entries(run.journey?.serviceStates || {}).map(([pointId, state]) => [`journey.serviceStates.${pointId}.stock`, state && state.stock])];
         for (const [field, stock] of stocks) {

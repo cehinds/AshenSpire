@@ -229,6 +229,9 @@ export function createCombat({
     consumables: player.consumables && typeof player.consumables === 'object' ? { ...player.consumables } : null,
     // …and the companions travelling with the run, mounted below like relics.
     companions: Array.isArray(player.companionIds) ? [...player.companionIds] : [],
+    // SPEC §14.4: a copy of the run's sigil slots. A sigil set into a slot of
+    // an equipped armament mounts with it (syncLoadoutProperties).
+    sigilSlots: player.sigilSlots && typeof player.sigilSlots === 'object' ? structuredClone(player.sigilSlots) : {},
     swapCostRule: swapCostRule || resolveSwapCostRule(registries, null),
     swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },

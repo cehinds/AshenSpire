@@ -235,7 +235,9 @@ export function createRegistries(contentBundle) {
   registries.shops = deepFreeze(cloneShops(bundle.shops || shippedShops));
   // Sigils (SPEC §14.3): what the market's sigil shelf sells into `run.sigils`.
   // A bundle without them reads the shipped collection.
-  registries.sigils = makeRegistry('sigil', bundle.sigils || shippedSigils);
+  // A sigil is a tagged collection (SPEC §14.4): its property rows are
+  // tagging.csv's, so it is read stamped, `propertyTags` and all.
+  registries.sigils = makeRegistry('sigil', collection('sigils', bundle.sigils || shippedSigils));
   // Consumables and companions (SPEC §14.3), as configured for this run. A
   // companion is a tagged collection (its property rows are tagging.csv's),
   // so it is read stamped; a bundle without either reads the shipped one.

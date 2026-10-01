@@ -56,6 +56,20 @@ export function marketAdditionStockProblems(stock, path = 'shopStock') {
 }
 
 /**
+ * blacksmithStockProblems(stock, path) → the blacksmith's own shelf and every
+ * stock's trade revision, refused by name (SPEC §14.4). A blacksmith stock is
+ * `{ kind: 'blacksmith', offerings, tradeRevision?, armaments?, smithStones? }`;
+ * `smithStones` is the market's shape (marketAdditionStockProblems), and its
+ * services keep no stock at all.
+ */
+export function blacksmithStockProblems(stock, path = 'shopStock') {
+  const problems = [];
+  if (stock.tradeRevision !== undefined && !count(stock.tradeRevision)) problems.push(`${path}.tradeRevision must be a whole number of at least 0, got ${JSON.stringify(stock.tradeRevision)}`);
+  if (stock.kind === 'blacksmith' && stock.armaments !== undefined) itemList(stock.armaments, `${path}.armaments`, problems);
+  return problems;
+}
+
+/**
  * pruneUnknownAdditionOffers(stock, { sigilKnown, armourKnown }) → the offers
  * removed. AN UNSOLD OFFER IS NOT A POSSESSION (Codex, on #1374; coordinator
  * ruling): when a content update drops a sigil or an armour set, an offer for
@@ -64,10 +78,13 @@ export function marketAdditionStockProblems(stock, path = 'shopStock') {
  * empties is no longer laid out (its id leaves `stock.offerings`, unless it is
  * the last one), so no empty rail item is left behind.
  */
-export function pruneUnknownAdditionOffers(stock, { sigilKnown, armourKnown, consumableKnown = () => true, companionKnown = () => true, eventKnown = () => true }) {
+export function pruneUnknownAdditionOffers(stock, { sigilKnown, armourKnown, consumableKnown = () => true, companionKnown = () => true, eventKnown = () => true, armamentKnown = () => true }) {
   if (!object(stock)) return [];
   const removed = [];
   const keep = {
+    // The blacksmith's armament shelf (SPEC §14.4): an unsold offer for an
+    // armament this build no longer has is pruned like any market offer.
+    ...(stock.kind === 'blacksmith' ? { armaments: (item) => armamentKnown(item.id) } : {}),
     sigils: (item) => sigilKnown(item.id),
     armour: (item) => armourKnown(item.classId, item.id),
     skillBooks: (item) => consumableKnown(item.id),
@@ -183,6 +200,34 @@ export function marketAdditionTableProblems(table, err) {
   if (range && Number.isFinite(range.min) && Number.isFinite(range.max) && range.min > range.max) {
     err('shops.market.armour.cost', `min (${range.min}) must not be above max (${range.max})`);
   }
+}
+
+/**
+ * The blacksmith's numbers (SPEC §14.4, the floors of #1378), refused by name
+ * in validateContent: every one whole; `refine.value` (a divisor), `refine.from`
+ * and every price from 1; every count from 0; and a piece's base sigil slots
+ * never above its most.
+ */
+export function blacksmithTableProblems(table, err) {
+  const offerings = table?.blacksmith?.offerings;
+  if (!Array.isArray(offerings)) return;
+  const row = (id) => offerings.find((offering) => offering && offering.id === id);
+  const valueAt = (id, path) => {
+    const offering = row(id);
+    return offering ? path.split('.').reduce((at, key) => (at == null ? at : at[key]), offering) : undefined;
+  };
+  const whole = (id, path, floor) => {
+    const value = valueAt(id, path);
+    if (value !== undefined && !(Number.isSafeInteger(value) && value >= floor)) {
+      err(`shops.blacksmith.${id}.${path}`, `must be a whole number of at least ${floor}, got ${JSON.stringify(value)}`);
+    }
+  };
+  for (const [id, path] of [['armaments', 'stock'], ['smithStones', 'perVisit'], ['sigilSlots', 'sigilSlots.base'], ['sigilSlots', 'sigilSlots.max'], ['stackCopy', 'stack.stepPerOwned']]) whole(id, path, 0);
+  for (const [id, path] of [['smithStones', 'price'], ['refineStones', 'refine.from'], ['refineStones', 'refine.value'], ['refineStones', 'refine.cinders'],
+    ['sigilSlots', 'sigilSlots.cinders'], ['upgradeArt', 'stones'], ['stackCopy', 'stack.stones'], ['stackCopy', 'stack.cinders']]) whole(id, path, 1);
+  const base = valueAt('sigilSlots', 'sigilSlots.base');
+  const max = valueAt('sigilSlots', 'sigilSlots.max');
+  if (Number.isFinite(base) && Number.isFinite(max) && base > max) err('shops.blacksmith.sigilSlots.sigilSlots', `base (${base}) must not be above max (${max}): max counts the base slots`);
 }
 
 /**

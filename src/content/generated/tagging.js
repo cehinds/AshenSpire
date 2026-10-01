@@ -11839,5 +11839,53 @@ export const tagging = [
     "scope": "",
     "objectId": "hewingArc",
     "tagId": "fx:blood"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "emberSigil",
+    "tagId": "emberSigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "emberSigil",
+    "tagId": "classification.sigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "thornSigil",
+    "tagId": "thornSigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "thornSigil",
+    "tagId": "classification.sigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "tideSigil",
+    "tagId": "tideSigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "tideSigil",
+    "tagId": "classification.sigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "hearthSigil",
+    "tagId": "hearthSigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "hearthSigil",
+    "tagId": "classification.sigil"
   }
 ];

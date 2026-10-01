@@ -503,6 +503,90 @@ export const propertyRuleEffects = {
       }
     ]
   },
+  "emberSigil": {
+    "triggers": [
+      {
+        "on": "combatStart",
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "balance": "sigils.emberSigil.block"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "thornSigil": {
+    "triggers": [
+      {
+        "on": "damageDealt",
+        "once": true,
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventIsAttack"
+            },
+            {
+              "p": "eventSourceIsOwner"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "applyStatus",
+            "status": "bleed",
+            "stacks": {
+              "balance": "sigils.thornSigil.bleed"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "tideSigil": {
+    "triggers": [
+      {
+        "on": "cardPlayed",
+        "if": {
+          "p": "everyNthCardThisCombat",
+          "n": {
+            "balance": "sigils.tideSigil.n"
+          }
+        },
+        "do": [
+          {
+            "op": "draw",
+            "amount": {
+              "balance": "sigils.tideSigil.draw"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "hearthSigil": {
+    "triggers": [
+      {
+        "on": "healed",
+        "if": {
+          "p": "eventTargetIsOwner"
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "balance": "sigils.hearthSigil.block"
+            }
+          }
+        ]
+      }
+    ]
+  },
   "warhorn": {
     "triggers": [
       {

@@ -134,3 +134,8 @@ restManaFlat,restoreMana,amount
 restManaFloor,floorPct,toFloorPct
 hollowSquire,block,amount
 emberHound,damage,amount
+emberSigil,block,amount
+thornSigil,bleed,stacks
+tideSigil,n,n
+tideSigil,draw,amount
+hearthSigil,block,amount

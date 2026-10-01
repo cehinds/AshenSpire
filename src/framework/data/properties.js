@@ -609,6 +609,13 @@ export const properties = {
       "domain": "CLASSIFICATION",
       "visibility": "INTERNAL",
       "priority": 30
+    },
+    {
+      "id": "classification.sigil",
+      "parentId": "classification",
+      "domain": "CLASSIFICATION",
+      "visibility": "INTERNAL",
+      "priority": 30
     }
   ]
 };

@@ -187,6 +187,9 @@ const SCREENS = [
   // The Smith with its upgrade transaction open — a state since 2026-09-11, so
   // the review sheet stops photographing the title for it.
   { name: 'smith', query: '?shot=smith', landmark: '.smith-candidate-region', state: 'smith' },
+  // The blacksmith (SPEC §14.4, §14.6 step 6): the atlas smith's own screen,
+  // its rail drawn from the offerings the visit laid out.
+  { name: 'blacksmith', query: '?shot=blacksmith', landmark: '.blacksmith-workspace .shop-rail [data-shop-category]', state: 'blacksmith' },
   // The event screen. Rune added `?shot=event` in the tap-size work (#104) and
   // did not register it here, so THIS TOOL REFUSED TO RUN at `52e0bc1` —
   // "1 app shot state neither photographed nor excluded: event" — and
