@@ -1,0 +1,53 @@
+# .github/workflows/coop-hud.yml — the co-op formation HUD top, in a real
+# browser, on every pull request into dev.
+#
+# WHY THIS FILE EXISTS (#1368, D22 in docs/FINISH.md). styles/combat.css gives
+# the co-op board's `.hud-top` a flex row in short landscape. The only check
+# that sees what that row does is `tools/coop-hud-top.mjs`: it opens the real
+# co-op board (`?shot=coop`) at 390x844, 844x390 and 1280x800 and fails on
+# overlap, a part clipped by any edge of the screen, a lost part (resource
+# bars, any of the three resource rows, Leave, quick settings, or the fight
+# label off the compact band), horizontal overflow, a part painted over the
+# battlefield, or a compact band that wrapped to two rows.
+# tests/coop-hud-top.test.mjs runs the judge's known-bad corpus with no browser.
+#
+# WHERE IT RUNS, by the owner's ruling of 2026-09-26 (DEVELOPER.md, *Which
+# checks gate a pull request*): a pull request into `dev` is gated by fast
+# checks only. This is three page loads, well under a minute of browser time.
+#
+# A JOB OF ITS OWN, like map-camera.yml: `core` is a no-browser lane. It serves
+# the SOURCE tree, so it needs no build and no LFS. With no browser the tool
+# exits 2 and the door reads it as HARNESS, never as a pass.
+
+name: coop hud
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev, test, release]
+  workflow_dispatch:
+
+concurrency:
+  group: coop-hud-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  hudtop:
+    name: co-op HUD top layout (real browser)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # serves the checked-out source tree; reads no LFS object
+
+      - uses: ./.github/actions/setup-node
+
+      - uses: ./.github/actions/which-browser
+
+      - name: The co-op formation HUD top neither overlaps, clips nor overflows (#1368)
+        run: node tools/verdict.mjs -- node tools/coop-hud-top.mjs
