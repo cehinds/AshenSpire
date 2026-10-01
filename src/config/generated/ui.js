@@ -44,7 +44,7 @@
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json b44124e6a29150d9
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json 0e189386a8548f8f
+// source content/config/ui/screens/prologue.json e42ea228fc081f59
 // source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -822,7 +822,23 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {}
+              "stage": {},
+              "actor": {
+                "desktop": {
+                  "x": 33,
+                  "y": 81,
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                },
+                "mobile": {
+                  "x": 34,
+                  "y": 79,
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                }
+              }
             },
             {
               "id": "year",
@@ -840,7 +856,23 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {}
+              "stage": {},
+              "actor": {
+                "desktop": {
+                  "x": 33,
+                  "y": 81,
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                },
+                "mobile": {
+                  "x": 34,
+                  "y": 79,
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                }
+              }
             },
             {
               "id": "carry",
@@ -854,12 +886,16 @@ export const uiConfig = deepFreeze({
                 "desktop": {
                   "x": 33,
                   "y": 81,
-                  "height": 58
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
                 },
                 "mobile": {
                   "x": 34,
                   "y": 79,
-                  "height": 42
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
                 }
               },
               "art": "carry",
@@ -890,6 +926,22 @@ export const uiConfig = deepFreeze({
               "stinger": "none",
               "stage": {
                 "wash": 0.06
+              },
+              "actor": {
+                "desktop": {
+                  "x": 33,
+                  "y": 81,
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                },
+                "mobile": {
+                  "x": 34,
+                  "y": 79,
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                }
               }
             },
             {
@@ -905,12 +957,16 @@ export const uiConfig = deepFreeze({
                 "desktop": {
                   "x": 50,
                   "y": 96,
-                  "height": 40
+                  "height": 40,
+                  "rotation": 0,
+                  "layer": "behindWash"
                 },
                 "mobile": {
                   "x": 40,
                   "y": 96,
-                  "height": 40
+                  "height": 40,
+                  "rotation": 0,
+                  "layer": "behindWash"
                 }
               },
               "art": "step",
@@ -941,7 +997,23 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {}
+              "stage": {},
+              "actor": {
+                "desktop": {
+                  "x": 33,
+                  "y": 81,
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                },
+                "mobile": {
+                  "x": 34,
+                  "y": 79,
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                }
+              }
             },
             {
               "id": "extraB",
@@ -959,7 +1031,23 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {}
+              "stage": {},
+              "actor": {
+                "desktop": {
+                  "x": 33,
+                  "y": 81,
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                },
+                "mobile": {
+                  "x": 34,
+                  "y": 79,
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                }
+              }
             },
             {
               "id": "extraC",
@@ -977,7 +1065,23 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {}
+              "stage": {},
+              "actor": {
+                "desktop": {
+                  "x": 33,
+                  "y": 81,
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                },
+                "mobile": {
+                  "x": 34,
+                  "y": 79,
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                }
+              }
             },
             {
               "id": "extraD",
@@ -995,7 +1099,23 @@ export const uiConfig = deepFreeze({
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {}
+              "stage": {},
+              "actor": {
+                "desktop": {
+                  "x": 33,
+                  "y": 81,
+                  "height": 58,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                },
+                "mobile": {
+                  "x": 34,
+                  "y": 79,
+                  "height": 42,
+                  "rotation": 0,
+                  "layer": "behindWash"
+                }
+              }
             }
           ],
           "presentation": {

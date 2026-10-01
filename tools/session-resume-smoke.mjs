@@ -46,7 +46,10 @@ function walkToBoundary(S) {
     const sc = S.scene;
     if (sc.kind === 'map' && guard > 1) return;
     if (sc.kind === 'map') route(S, S.session.reachableIds[0]);
-    else if (sc.kind === 'combat') { S.autoResolveCombat(botTurn); for (const m of S.livingMembers()) if (m.run.hp < 12) m.run.hp = m.run.maxHp; }
+    // This fixture needs a surviving party at a map boundary to prove disk
+    // restore. Keep actual card resolution, while making victory independent
+    // of starter-deck balance, as in session-smoke's reconnect fixture.
+    else if (sc.kind === 'combat') { S.autoResolveCombat((combat, id) => { for (const enemy of combat.enemies) if (enemy.alive) enemy.hp = Math.min(enemy.hp, 1); botTurn(combat, id); }); for (const m of S.livingMembers()) if (m.run.hp < 12) m.run.hp = m.run.maxHp; }
     else if (sc.kind === 'reward') { for (const id of Object.keys(sc.offers)) S.chooseReward(id, { cardId: sc.offers[id].cardIds[0] }); }
     else if (sc.kind === 'shrine') S.connectedMembers().forEach((m) => S.shrineChoice(m.id, 'rest'));
     else if (sc.kind === 'event') S.connectedMembers().forEach((m) => S.eventChoice(m.id, 0));
