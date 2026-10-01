@@ -1511,6 +1511,11 @@
   :root .combat[data-layout='formation'] { grid-template-rows: 10% 55% 35%; }
 }
 @media (max-height: 480px) and (min-width: 600px) {
+  /* Keep inspection beside the intent on short screens so selection does
+     not consume another row above the fixed card-to-action gap. */
+  :root .combat[data-layout='formation'] .combatant-leading {
+    flex-direction: row; align-items: flex-end;
+  }
   /* The expanded relic tray can extend beyond its HUD row. Only its actual
      controls should intercept a press on the battlefield below. */
   :root:has(.combat) .hud-relics { pointer-events: none; }
