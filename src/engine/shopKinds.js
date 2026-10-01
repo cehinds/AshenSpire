@@ -300,7 +300,7 @@ export function buildMerchantStock(registries, rng, run, opts = {}) {
   if (!SHOP_KIND_SCREENS.includes(kind)) throw new Error(`buildMerchantStock: the ${kind} shop has no screen registered yet (SPEC §14.6)`);
   // A merchant that rolls `blacksmith` (weight 0 shipped) offers that kind's
   // offerings only, not market shelves (SPEC §14.2).
-  if (kind === 'blacksmith') return buildBlacksmithStock(registries, rng, run);
+  if (kind === 'blacksmith') return buildBlacksmithStock(registries, rng, run, { settings: opts.meta?.settings || {} });
   return buildMarketStock(registries, rng, run, opts);
 }
 
@@ -333,7 +333,7 @@ function blacksmithArmamentPool(registries, run) {
  * rarity's `armamentCost` row, and the stone shelf is `{ price, left }`.
  * Service prices are never stored: model/blacksmith.js reads them when quoted.
  */
-export function buildBlacksmithStock(registries, rng, run) {
+export function buildBlacksmithStock(registries, rng, run, { settings = {} } = {}) {
   const kindDef = registries.shops.blacksmith;
   const written = (kindDef.offerings || []).filter(Boolean);
   const row = (id) => written.find((offering) => offering.id === id);
@@ -344,7 +344,7 @@ export function buildBlacksmithStock(registries, rng, run) {
     if (offering.id === 'smithStones') return !(offering.perVisit > 0);
     return false;
   };
-  const idle = (offering) => BLACKSMITH_SERVICES.includes(offering.id) && serviceCandidates(registries, run, offering.id).length === 0;
+  const idle = (offering) => BLACKSMITH_SERVICES.includes(offering.id) && serviceCandidates(registries, run, offering.id, { settings }).length === 0;
   for (const offering of written) if (up.has(offering.id) && stockEmpty(offering)) up.delete(offering.id);
   const minimum = Number(kindDef.guaranteedMinimum) || 0;
   const usable = () => written.filter((offering) => up.has(offering.id) && !idle(offering)).length;
@@ -368,11 +368,11 @@ export function buildBlacksmithStock(registries, rng, run) {
 }
 
 /**
- * blacksmithVisitStock(registries, rng, run, { priceMult }) → the stock an
+ * blacksmithVisitStock(registries, rng, run, { priceMult, settings }) → the stock an
  * atlas smith point opens with (SPEC §14.2, §14.4), rolled on first entry and
  * kept on the point; a custom run's price multiplier scales its stone price,
  * rounding up, as it scales the market's.
  */
-export function blacksmithVisitStock(registries, rng, run, { priceMult = 1 } = {}) {
-  return applyShopPriceMult(buildBlacksmithStock(registries, rng, run), priceMult);
+export function blacksmithVisitStock(registries, rng, run, { priceMult = 1, settings = {} } = {}) {
+  return applyShopPriceMult(buildBlacksmithStock(registries, rng, run, { settings }), priceMult);
 }

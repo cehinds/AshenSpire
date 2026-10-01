@@ -169,7 +169,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       }
     },
     stackCopy(shelf) {
-      for (const cardId of stackableCardIds(registries, run)) {
+      for (const cardId of stackableCardIds(registries, run, { settings })) {
         const plan = stackCopyPlan(registries, run, cardId, { priceMult, settings });
         const host = tile(GLYPH.stackCopy, plan.name, t('blacksmith.stack.line', { name: plan.name, owned: plan.owned }));
         actionButton(host, { label: t('blacksmith.action.stack', { stones: plan.stones, cost: plan.cost }), plan, commit: () => commitStackCopy(registries, run, stackCopyPlan(registries, run, cardId, { priceMult, settings }), { priceMult, settings }) });
@@ -213,7 +213,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   const readyCount = (key) => {
     if (key === 'armaments') return (stock.armaments || []).length;
     if (key === 'smithStones') return stock.smithStones ? stock.smithStones.left : 0;
-    return BLACKSMITH_SERVICES.includes(key) ? serviceCandidates(registries, run, key).length : 0;
+    return BLACKSMITH_SERVICES.includes(key) ? serviceCandidates(registries, run, key, { settings }).length : 0;
   };
 
   function render() {

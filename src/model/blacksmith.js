@@ -95,13 +95,19 @@ export function upgradeableArts(registries, run) {
   return owned(run).filter((card) => isLooseCard(card) && isArt(registries, card.cardId) && card.upgraded !== true && !!registries.cards.get(card.cardId)?.upgrade);
 }
 
-/** The card ids a stacked copy could be made of now: a loose weapon art or technique, never a basic. */
-export function stackableCardIds(registries, run) {
+// A non-extractable technique at the §14.1 deck copy limit could never be
+// used, so it is refused (SPEC §14.4); `settings` is the profile's, read live.
+const stackCapped = (registries, run, cardId, settings) => !isArt(registries, cardId)
+  && owned(run).filter((card) => card.cardId === cardId).length >= deckCopyLimit(registries, cardId, settings, run.class);
+
+/** The card ids a stacked copy could be made of now: a loose weapon art or technique, never a basic, never one already at its copy limit. */
+export function stackableCardIds(registries, run, { settings = {} } = {}) {
   const ids = [];
   for (const card of owned(run)) {
     if (!isLooseCard(card) || ids.includes(card.cardId)) continue;
     if (deckRules.unlimitedCardIds.includes(card.cardId)) continue;
-    if (isArt(registries, card.cardId) || isTechnique(registries, card.cardId)) ids.push(card.cardId);
+    if (!isArt(registries, card.cardId) && !isTechnique(registries, card.cardId)) continue;
+    if (!stackCapped(registries, run, card.cardId, settings)) ids.push(card.cardId);
   }
   return ids;
 }
@@ -352,7 +358,7 @@ export function stackCopyPlan(registries, run, cardId, { priceMult = 1, settings
   else if (!copies.length) reason = say('blacksmith.refuse.stackUnowned', { name });
   else if (!copies.some(isLooseCard)) reason = say('blacksmith.refuse.stackGranted', { name });
   else if (!isArt(registries, cardId) && !isTechnique(registries, cardId)) reason = say('blacksmith.refuse.stackKind', { name });
-  else if (!isArt(registries, cardId) && copies.length >= deckCopyLimit(registries, cardId, settings, run.class)) {
+  else if (stackCapped(registries, run, cardId, settings)) {
     reason = say('blacksmith.refuse.stackCapped', { name, limit: deckCopyLimit(registries, cardId, settings, run.class) });
   } else if (stones(run) < stonePrice) reason = say('blacksmith.refuse.stones', { cost: stonePrice, have: stones(run) });
   else if (!affordable(run, cost)) reason = say('shop.refuse.cinders');
@@ -384,8 +390,9 @@ export function commitStackCopy(registries, run, quote, { priceMult = 1, setting
  * now, for the screen and for the build-time backstop (a service with none is
  * empty for the guarantee, but stays laid out). Affordability is not asked:
  * a price the purse cannot meet is a refusal, not an empty service.
+ * `settings` is the profile's (the deck copy limit stackCopy reads).
  */
-export function serviceCandidates(registries, run, id) {
+export function serviceCandidates(registries, run, id, { settings = {} } = {}) {
   switch (id) {
     case 'upgrade': return smithingPlan(registries, run).candidates;
     case 'refineStones': return blacksmithOffering(registries, 'refineStones') ? ['refine'] : [];
@@ -400,7 +407,7 @@ export function serviceCandidates(registries, run, id) {
     case 'extractArt': return extractionPlan(registries, run).candidates;
     case 'installArt': return installPlan(registries, run).candidates;
     case 'upgradeArt': return upgradeableArts(registries, run);
-    case 'stackCopy': return stackableCardIds(registries, run);
+    case 'stackCopy': return stackableCardIds(registries, run, { settings });
     default: return [];
   }
 }

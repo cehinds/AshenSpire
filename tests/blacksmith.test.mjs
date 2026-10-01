@@ -42,7 +42,7 @@ import {
   blacksmithExtractPlan, commitBlacksmithExtract,
   blacksmithInstallPlan, commitBlacksmithInstall,
   blacksmithUpgradePlan, commitBlacksmithUpgrade,
-  BLACKSMITH_SERVICES, serviceCandidates,
+  BLACKSMITH_SERVICES, serviceCandidates, stackableCardIds,
 } from '../src/model/blacksmith.js';
 import { armamentPurchasePlan, commitArmamentPurchase } from '../src/model/armamentTrading.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
@@ -475,6 +475,69 @@ test('Codex on #1378: a technique Power at its deck copy limit cannot be stacked
   assert.equal(roomy.ok, true, roomy.reason);
   commitStackCopy(OUT, run, roomy, { settings: { classSpellPowerCopies: 2 } });
   assert.equal(ownedCopies(run, 'afterimageCard'), 2);
+});
+
+test('a capped technique is no stacking candidate, judged live with the profile\'s limit: the screen shows the service unavailable', () => {
+  const run = createRunState({ seed: 21, classId: 'rogue', registries: OUT });
+  run.cinders = 5000;
+  run.smithingStones = 50;
+  run.deck.push({ instanceId: 'probe:afterimage', cardId: 'afterimageCard', upgraded: false });
+  run.shopStock = buildBlacksmithStock(OUT, createRng(21), run);
+  assert.ok(run.shopStock.offerings.includes('stackCopy'));
+  assert.equal(stackableCardIds(OUT, run).includes('afterimageCard'), false, 'at its limit of 1, a Power is nothing to stack');
+  assert.equal(serviceCandidates(OUT, run, 'stackCopy').includes('afterimageCard'), false);
+  const roomy = { classSpellPowerCopies: 2 };
+  assert.ok(stackableCardIds(OUT, run, { settings: roomy }).includes('afterimageCard'), 'with room under the limit it is a candidate');
+  assert.ok(serviceCandidates(OUT, run, 'stackCopy', { settings: roomy }).includes('afterimageCard'));
+  withKitDom((dom) => {
+    const app = dom.document.createElement('main');
+    dom.document.body.replaceChildren(app);
+    mountBlacksmith(app, { registries: OUT, run, meta: { settings: {} }, onChanged() {}, onLeave() {} });
+    app.querySelector('#shop-cat-stackCopy').click();
+    assert.ok(app.querySelector('#blacksmith-stackCopy .bs-idle')?.textContent.includes(shopSentence('blacksmith.idle.stackCopy')), 'no stack tile, the idle reason instead');
+  });
+});
+
+test('#1378 floors: every blacksmith price below 1, and a refine number below 1, is refused by name', () => {
+  const bad = (mutate) => {
+    const table = structuredClone(shippedShops);
+    mutate(table.blacksmith.offerings);
+    return validateContent({ ...contentBundle, shops: table }).errors.map((e) => `${e.path} ${e.msg}`);
+  };
+  const find = (list, id) => list.find((row) => row.id === id);
+  const cases = {
+    'smithStones.price': (o) => { find(o, 'smithStones').price = 0; },
+    'refineStones.refine.cinders': (o) => { find(o, 'refineStones').refine.cinders = 0; },
+    'refineStones.refine.from': (o) => { find(o, 'refineStones').refine.from = 0; },
+    'refineStones.refine.value': (o) => { find(o, 'refineStones').refine.value = 0; },
+    'sigilSlots.sigilSlots.cinders': (o) => { find(o, 'sigilSlots').sigilSlots.cinders = 0; },
+    'upgradeArt.stones': (o) => { find(o, 'upgradeArt').stones = 0; },
+    'stackCopy.stack.stones': (o) => { find(o, 'stackCopy').stack.stones = 0; },
+    'stackCopy.stack.cinders': (o) => { find(o, 'stackCopy').stack.cinders = 0; },
+  };
+  for (const [path, mutate] of Object.entries(cases)) {
+    const pattern = new RegExp(`blacksmith\\.${path.replace(/\./g, '\\.')}`);
+    assert.ok(bad(mutate).some((m) => pattern.test(m)), `${path} below its floor is refused by name`);
+  }
+  // A count may be 0.
+  assert.deepEqual(bad((o) => { find(o, 'stackCopy').stack.stepPerOwned = 0; find(o, 'armaments').stock = 0; }).filter((m) => /stepPerOwned|armaments\.stock/.test(m)), []);
+});
+
+test('#1378: the upgrade price is smithingPlan\'s, in either purse, and the blacksmith adds none of its own', () => {
+  const { run } = smithRun(OUT);
+  const plan = smithingPlan(OUT, run);
+  assert.ok(plan.candidates.length > 0);
+  const value = offeringOf(OUT, 'refineStones').refine.value;
+  run.smithingStonesRefined = 99;
+  for (const candidate of plan.candidates) {
+    const stonesQuote = blacksmithUpgradePlan(OUT, run, candidate.itemRef);
+    assert.equal(stonesQuote.stones, candidate.cost, `${candidate.itemRef}: the stone cost is the item-upgrade row's`);
+    assert.equal(stonesQuote.cost, 0, 'no cinder price on top');
+    const refinedQuote = blacksmithUpgradePlan(OUT, run, candidate.itemRef, { purse: 'refined' });
+    assert.equal(refinedQuote.refined, Math.ceil(candidate.cost / value));
+    assert.equal(refinedQuote.stones, 0);
+  }
+  assert.equal(offeringOf(OUT, 'upgrade').cost, undefined, 'the offering authors no price');
 });
 
 // ---------------------------------------------------------------------------

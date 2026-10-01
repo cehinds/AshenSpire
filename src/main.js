@@ -2072,7 +2072,7 @@ function worldLocationAction(action) {
     // is rolled on `shopOffers` on first entry and kept on the point, so a
     // revisit reopens it as saved; a custom run's price multiplier reaches it
     // as it reaches the market.
-    state.stock ||= blacksmithVisitStock(registries, rng, run, { priceMult: shopPriceMult() });
+    state.stock ||= blacksmithVisitStock(registries, rng, run, { priceMult: shopPriceMult(), settings: saves.loadMeta().settings || {} });
     run.shopStock = state.stock;
     persist(); return showShop();
   }
