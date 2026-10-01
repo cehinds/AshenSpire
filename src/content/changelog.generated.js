@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-01",
     "summary": "Behind the scenes: the rules for the wise master are written down",
     "detail": "This is a docs-only change, and nothing you play changes yet. The design document now says what a master visit keeps on its shelves: books, weapon arts and armaments for the skills that master teaches. A reload leaves them as they were. Training, a lesson and a respec each go through once and refuse an offer that changed. A lesson's three cards are drawn when you first ask for it and stay the same after a reload. Each skill can take one lesson per visit, and the card joins your deck. A respec pays its refund into a training pool, which you can spend on any skill. A master's services stay on offer for the whole visit and become usable once you have something for them. The document also sets the least each of the master's numbers may be set to. No map place has a master yet.",
-    "build": "0.7.1.724",
+    "build": "0.7.1.725",
     "pullRequest": 1431,
     "url": "https://github.com/cehinds/AshenSpire/pull/1431"
+  },
+  {
+    "id": "pr-1432",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "In co-op, Dazed now reaches every living player",
+    "detail": "The Grave Wisp, Mirror Scribe, Eclipse Cantor and Hollow Astronomer used to shuffle their Dazed into the first player's deck only. Now every living player gets one, like the Husk Brute's Slimed and the Court Surgeon's Wound already did. Downed players get none, and solo play is unchanged.",
+    "build": "0.7.1.724",
+    "pullRequest": 1432,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1432"
   },
   {
     "id": "pr-1390",
