@@ -1015,20 +1015,24 @@ allocation the same way; class presets and earlier edits do not consume points b
 player assigns them.
 
 **Level curve.** A fresh run starts at displayed level 1 and the level is EARNED (plan phase 6,
-§13.4i): fights pay XP (`balance.xp` — a won fight, and each kill by the door's pool), and every
-step of the configured curve, `xpToNext(n) = round(base × growth^(n − 1), roundTo)` for legacy exponential tables.
+§13.4i): fights pay XP (`balance.xp` — a won fight, and each kill by the door's pool).
+The configured character curve reads `balance.level.xp`; legacy exponential tables use
+`xpToNext(n) = round(base × growth^(n − 1), roundTo)`.
 The October 1 owner default uses a linear table (`linear: true`):
 `xpToNext(n) = round(base + (n − 1) × base × multScaler, roundTo)`.
 The first character step costs 100 XP and `multScaler` defaults to 1.3;
 at base 100 the steps cost 100, 230, 360, 490 XP. Base, scaler, rounding and
 the linear/exponential toggle are configurable. Tables without `linear: true`
-retain their exponential behavior, including saved snapshots. The historical exponential curve
-on `balance.level.xp` (5 / 1.15 / 10 — owner, 2026-09-24; 100 / 1.15 / 10 before), grants `balance.levelUp.pointsPerLevel` attribute points
+retain their exponential behavior. New runs record `advancedConfigSnapshot.xpCurveVersion: 1`.
+Older snapshots without that marker use exponential defaults unless the player explicitly
+sets a linear-curve override; live XP edits preserve the marker's presence or absence.
+Each claimed level grants `balance.levelUp.pointsPerLevel` attribute points
 (the player's dial, read when the level is reached), which wait on the run's ledger until the
-player assigns them at a shrine. Curve receipt: the steps from level 1 cost 10, 10, 10, 10, 10,
+player assigns them at a shrine. Historical exponential curve receipt (base 5 / growth 1.15 /
+rounding 10 — owner, 2026-09-24): the steps from level 1 cost 10, 10, 10, 10, 10,
 10, 10, 10, 20, 20 — 120 XP to level 11 (the rounding holds the first eight steps at its floor
 of 10); the old curve's steps were 100, 120, 130, 150, 170, 200, 230, 270, 310, 350 — 2,030 XP.
-The shipped awards are `balance.xp` combatWin 15 and kill normal 5 / elite 75 / boss 200 (50 and
+The historical awards were `balance.xp` combatWin 15 and kill normal 5 / elite 75 / boss 200 (50 and
 25 / 75 / 200 before 2026-09-24). The equipment skill tracks (`balance.skill.xp`) and the class
 track (`balance.skill.class.xp`) historically opened at base 5 too (30 and 60 before); the October 1 defaults use base 100. The 11–12 levels a full
 run earned (measured: 11.5) were measured on the old curve and awards and are due a re-measure;

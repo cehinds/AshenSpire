@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-01
 
+- **Progression rules for the next XP update** ([#1425](https://github.com/cehinds/AshenSpire/pull/1425), `0.7.1.715`). The specification records a first step of 100 XP, a configurable linear scaler of 1.3, and a visible refill from remaining XP after each manual level claim. Runtime implementation follows separately.
 - **Opening scenes keep the traveller in your hands, and XP edits preserve your save's rules** ([#1423](https://github.com/cehinds/AshenSpire/pull/1423), `0.7.1.714`). Each opening scene can show or hide the traveller, turn it, and place it before or behind the colour wash. Desktop and phone poses remain separate, and rotated figures retain accurate size and drag handles. Editing XP settings on an older save keeps that save's combat rating rules and other configuration metadata.
 
 ## 2026-09-29
