@@ -14,8 +14,11 @@ try {
     page.setDefaultTimeout(60000);
     console.log('Checking', tier, width, height);
     const errors = [];
-    page.on('console', message => { if (message.type() === 'error') console.error(message.text()); });
-    page.on('requestfailed', request => console.error('Request failed:', request.url(), request.failure()?.errorText));
+    page.on('console', message => { if (message.type() === 'error') { errors.push(message.text()); console.error(message.text()); } });
+    page.on('requestfailed', request => {
+      const error = `Request failed: ${request.url()} ${request.failure()?.errorText}`;
+      errors.push(error); console.error(error);
+    });
     page.on('pageerror', error => { errors.push(error.message); console.error('Browser error:', error.message); });
     if (tier === 'light') await page.route('**/assets/**/*.webp', route => route.continue({ url: route.request().url().replace('/assets/', '/assets-mobile/') }));
     await page.goto(base + '?shot=combat', { waitUntil: 'domcontentloaded' });
