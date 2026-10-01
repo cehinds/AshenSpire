@@ -6,18 +6,21 @@ import { advancedConfigSnapshot, configuredContentBundle, updatedXpSnapshot, xpS
 import { createRunCombat, enemyLevelsForFight } from '../src/engine/runCombat.js';
 import { createRng } from '../src/engine/rng.js';
 import { createEnemyCombatEntity, createRunState } from '../src/model/state.js';
-import { combatLevelXp, xpToNext as characterXpToNext } from '../src/model/levelup.js';
+import { combatLevelXp, combatXpReceipt, xpToNext as characterXpToNext } from '../src/model/levelup.js';
 import { enemyCombatPower } from '../src/model/combatPower.js';
 import { xpToNext as skillXpToNext } from '../src/model/skills.js';
 import { levelPacePreview } from '../src/ui/models/LevelPacePreviewModel.js';
 
 const registries = createRegistries(contentBundle);
 
-test('the current build defaults to 100 XP per level and five XP per common skill event', () => {
+test('the current build starts at 100 XP and adds base × 1.3 for each further step', () => {
   assert.equal(characterXpToNext(registries, 1), 100);
-  assert.equal(characterXpToNext(registries, 10), 100);
+  assert.deepEqual([1, 2, 3, 4].map((level) => characterXpToNext(registries, level)), [100, 230, 360, 490]);
+  assert.equal(characterXpToNext(registries, 10), 1270);
   assert.equal(skillXpToNext(registries, 'weapon', 0), 100);
   assert.equal(skillXpToNext(registries, 'class', 0), 100);
+  assert.equal(skillXpToNext(registries, 'weapon', 3), 490);
+  assert.equal(skillXpToNext(registries, 'class', 1), 230);
   assert.equal(registries.balance.skill.xp.perHit, 5);
   assert.equal(registries.balance.skill.xp.perWinEquipped, 5);
   assert.equal(registries.balance.skill.class.xp.perWin, 5);
@@ -62,6 +65,25 @@ test('kill XP uses each defeated enemy level; a live settings snapshot changes i
   const resumed = xpSnapshotFromProfile(snapshot, { 'gameConfig.balance.xp.kill.normal': 25 });
   assert.equal(resumed.overrides['gameConfig.balance.xp.kill.normal'], 25);
   assert.equal(resumed.overrides['gameConfig.balance.level.xp.base'], undefined, 'a profile reset clears an old run XP override');
+});
+
+test('the saved combat receipt names defeated enemies and its terms equal the actual award', () => {
+  const enemies = [
+    { enemyId: 'blightHound', level: 2, hp: 0, alive: false, maxHp: 13, poiseMeter: { max: 6 } },
+    { enemyId: 'wanderingSoldier', level: 3, hp: 0, alive: false, maxHp: 24, poiseMeter: { max: 10 } },
+    { enemyId: 'blightHound', level: 4, hp: 1, alive: true, maxHp: 13, poiseMeter: { max: 6 } },
+  ];
+  const receipt = combatXpReceipt(registries, { victory: true, enemies, characterMultiplier: 1.1 });
+  assert.deepEqual(receipt.rows.filter((row) => row.kind === 'enemy').map((row) => [row.name, row.level]),
+    [['Blight Hound', 2], ['Wandering Soldier', 3]], 'living enemies have no reward line');
+  assert.equal(receipt.rows[0].kind, 'power');
+  assert.equal(receipt.rows.reduce((sum, row) => sum + row.amount, 0), receipt.total);
+  assert.equal(receipt.total, Math.floor(combatLevelXp(registries, { victory: true, enemies }) * 1.1));
+  const fractional = createRegistries(configuredContentBundle(contentBundle,
+    { 'gameConfig.balance.xp.killLevelMultiplier': 0.27 }));
+  const rounded = combatXpReceipt(fractional, { victory: true, enemies });
+  assert.equal(rounded.rows.reduce((sum, row) => sum + row.amount, 0), combatLevelXp(fractional, { victory: true, enemies }),
+    'cumulative rounding never makes the displayed lines disagree with the payout');
 });
 
 test('enemy equipment gives a small additive combat-power bonus in the real fight reward', () => {

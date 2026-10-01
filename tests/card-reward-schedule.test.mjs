@@ -427,7 +427,7 @@ test('two level cards are taken, and both picks persist in chosenDraftCardIds[<r
     assert.deepEqual(back.pendingReward.chosenDraftCardIds, picks);
     assert.deepEqual(back.pendingReward.states, { 'levelCard:0': 'taken', 'levelCard:1': 'taken' });
     const again = mount(back);
-    assert.deepEqual(again.querySelectorAll('[data-kind="levelCard"]').map((row) => row.dataset.state), ['taken', 'taken'], 'the resumed door shows both rows taken');
+    assert.deepEqual(again.querySelectorAll('.reward-kind[data-kind="levelCard"]').map((row) => row.dataset.state), ['taken', 'taken'], 'the resumed door shows both rows taken');
     again.remove();
   } finally {
     for (const [key, value] of Object.entries(saved)) globalThis[key] = value;

@@ -4,6 +4,25 @@ import { contentBundle } from '../src/content/index.js';
 import { advancedConfigSnapshot, configuredContentBundle, updatedXpSnapshot, xpSnapshotFromProfile } from '../src/model/advancedConfig.js';
 
 const xpKey = 'gameConfig.balance.level.xp.base';
+const linearKey = 'gameConfig.balance.level.xp.linear';
+
+test('new snapshots use linear costs while legacy XP edits preserve their exponential curve', () => {
+  const current = advancedConfigSnapshot({});
+  const old = { schemaVersion: 1, overrides: { [xpKey]: 100, 'gameConfig.balance.level.xp.growth': 1.2 } };
+  const currentBundle = configuredContentBundle(contentBundle, current);
+  assert.equal(current.xpCurveVersion, 1);
+  assert.equal(currentBundle.balance.level.xp.linear, true);
+  const edited = updatedXpSnapshot(old, { [xpKey]: 200 });
+  assert.equal(Object.hasOwn(edited, 'xpCurveVersion'), false);
+  const legacy = configuredContentBundle(contentBundle, edited);
+  assert.equal(legacy.balance.level.xp.linear, false);
+  assert.equal(legacy.balance.level.xp.growth, 1.2);
+  assert.equal(legacy.balance.level.xp.base, 200);
+  const adopted = configuredContentBundle(contentBundle, updatedXpSnapshot(old, { [linearKey]: true }));
+  assert.equal(adopted.balance.level.xp.linear, true);
+  assert.equal(adopted.balance.level.xp.multScaler, 1.3);
+  assert.equal(updatedXpSnapshot(current, { [xpKey]: 200 }).xpCurveVersion, 1);
+});
 const ratingsKey = 'gameConfig.balance.combatRatings.enabled';
 
 test('XP edits and profile synchronization retain the immutable snapshot contract', () => {

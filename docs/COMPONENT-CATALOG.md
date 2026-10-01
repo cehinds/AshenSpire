@@ -313,7 +313,8 @@ custom art does not require a second card implementation.
 | `resource-strip` | derived rows + Poise receipt | `creationCards.resourceStrip` | Character stats + catalog |
 | `settings-stat-example` | `StatsPreviewModel.statsTopicPreview` | `settings.statsTopicPreviewHtml` | Settings / Advanced / Stats |
 | `settings-level-pace` | `LevelPacePreviewModel.levelPacePreview` → `levelup.levelPace` | `settings.levelPacePreviewHtml` | Settings / Advanced / Progression / Experience and Level-up |
-| `victory-progress` | `rewardProgress` and saved combat XP receipt | `reward.mountRewards` progress panel | Victory modal: green XP fills under yellow; a ready track turns blue and exposes its level-up control. |
+| `victory-progress` | `rewardProgress` and saved combat XP receipt | `reward.mountRewards` progress panel | Victory modal: green XP fills under yellow; a ready track turns blue and exposes its Level control. Each manual claim resets and refills that track from leftover XP before opening its reward. |
+| `victory-xp-receipt` | `combatXpReceipt` + `victoryXpPresentation` over the saved fight reward | `reward.mountRewards` compact Victory | Combat-power and enemy XP count in order; the total grows alongside a compact calculation, with `+…` revealing the full formula. A fixed-height list scrolls as rows arrive, then Continue turns green after its configured pause. |
 | `mode-choice` | creation mode + selected state | `creationCards.modeChoiceButton` | Standard/Assign Points + catalog |
 | `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog; Animated is the default when no explicit style is stored. |
 | `tint-choice` | tint row + selected state | `creationCards.tintChoiceButton` | Appearance + catalog |
