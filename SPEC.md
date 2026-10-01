@@ -1015,16 +1015,26 @@ allocation the same way; class presets and earlier edits do not consume points b
 player assigns them.
 
 **Level curve.** A fresh run starts at displayed level 1 and the level is EARNED (plan phase 6,
-§13.4i): fights pay XP (`balance.xp` — a won fight, and each kill by the door's pool), and every
-step of the one curve every track shares, `xpToNext(n) = round(base × growth^(n − 1), roundTo)`
-on `balance.level.xp` (5 / 1.15 / 10 — owner, 2026-09-24; 100 / 1.15 / 10 before), grants `balance.levelUp.pointsPerLevel` attribute points
+§13.4i): fights pay XP (`balance.xp` — a won fight, and each kill by the door's pool).
+The configured character curve reads `balance.level.xp`; legacy exponential tables use
+`xpToNext(n) = round(base × growth^(n − 1), roundTo)`.
+The October 1 owner default uses a linear table (`linear: true`):
+`xpToNext(n) = round(base + (n − 1) × base × multScaler, roundTo)`.
+The first character step costs 100 XP and `multScaler` defaults to 1.3;
+at base 100 the steps cost 100, 230, 360, 490 XP. Base, scaler, rounding and
+the linear/exponential toggle are configurable. Tables without `linear: true`
+retain their exponential behavior. New runs record `advancedConfigSnapshot.xpCurveVersion: 1`.
+Older snapshots without that marker use exponential defaults unless the player explicitly
+sets a linear-curve override; live XP edits preserve the marker's presence or absence.
+Each claimed level grants `balance.levelUp.pointsPerLevel` attribute points
 (the player's dial, read when the level is reached), which wait on the run's ledger until the
-player assigns them at a shrine. Curve receipt: the steps from level 1 cost 10, 10, 10, 10, 10,
+player assigns them at a shrine. Historical exponential curve receipt (base 5 / growth 1.15 /
+rounding 10 — owner, 2026-09-24): the steps from level 1 cost 10, 10, 10, 10, 10,
 10, 10, 10, 20, 20 — 120 XP to level 11 (the rounding holds the first eight steps at its floor
 of 10); the old curve's steps were 100, 120, 130, 150, 170, 200, 230, 270, 310, 350 — 2,030 XP.
-The shipped awards are `balance.xp` combatWin 15 and kill normal 5 / elite 75 / boss 200 (50 and
+The historical awards were `balance.xp` combatWin 15 and kill normal 5 / elite 75 / boss 200 (50 and
 25 / 75 / 200 before 2026-09-24). The equipment skill tracks (`balance.skill.xp`) and the class
-track (`balance.skill.class.xp`) open at base 5 too (30 and 60 before). The 11–12 levels a full
+track (`balance.skill.class.xp`) historically opened at base 5 too (30 and 60 before); the October 1 defaults use base 100. The 11–12 levels a full
 run earned (measured: 11.5) were measured on the old curve and awards and are due a re-measure;
 `tools/runsim.mjs --xp-levels` measures the owner's 10–20 band. No cinder buys a
 level; the ladder that priced purchases (`firstCost + costStep × n`, measured twice against the
@@ -2008,7 +2018,9 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 
 - **Run schemaVersion 8.** `run.skills` — `{ [trackId]: { xp, level, pendingDrafts } }` — rides the save (`RUN_SHAPE` row `{ key: 'skills', type: 'object' }`; `validateRunShape` refuses a non-object ledger, a negative or fractional field and a field that is not `xp`/`level`/`pendingDrafts`, by name). A save at schemaVersion ≤ 7 gains the empty ledger at the migration door. `model/skills.js awardSkillXp` is the one writer.
 - **The tracks are derived** (`skillTracks(registries)`): one per `itemType` node except `item:armor` (`item:blade`, `item:shield`, … as weapon tracks; `item:magic-focus` as the focus track), one per framework weight class (`armour:light|medium|heavy`, `content/framework/mechanics.json`), `dualWield`, and `class:<classId>` per class. No second list exists.
-- **One curve.** `xpToNext(registries, kind, level) = round(base × growth^level, roundTo)` from `balance.skill.xp` (weapon, armour, focus, dual) or `balance.skill.class.xp` (class). Each step climbed queues one draft in `pendingDrafts`, which phase 4b spends.
+- **One curve.** `xpToNext(registries, kind, level)` reads `balance.skill.xp` (weapon, armour, focus, dual) or `balance.skill.class.xp` (class). A skill starts at level 0: a linear table costs `round(base + level × base × multScaler, roundTo)`, with owner defaults base 100 and scaler 1.3. Tables without `linear: true` retain `round(base × growth^level, roundTo)`. Each step climbed queues one draft in `pendingDrafts`, which phase 4b spends.
+
+- **Residual XP presentation.** Each manual character or skill claim spends exactly one step. Its compact row resets to zero at the new displayed level, then green fills to the remaining XP and yellow covers it. A full row turns blue and offers the next Level action; a partial row keeps its progress. Repeat for each claim without paying XP again. The refill duration and short pause before opening the claimed level's reward are configurable; reduced motion settles immediately. Other claims are gated during the refill.
 - **The hooks are one listener on the event bus** (`engine/skillXp.js attachSkillXp`, wired in `createCombat` and `createCoopCombat`), and they read the registry, never an entity: `damageDealt`/`blockGained` by a card a piece lent (`sourceHand` or `grantedBy` on the event, which now carry the card) pays `perHit` to that piece's item type, and to `dualWield` while the grip is `dual`; `combatEnd` with victory pays `perWinEquipped` per held group, × `killMult` for the group whose hit killed; `impactDealt` to the wearer pays `1 / impactPerXp` per impact to `armour:heavy` (half to medium); `attackEvaded` by the wearer pays `evadeXp` to `armour:light` (half to medium); `arcaneExposureChanged` by the caster pays `1 / buildupPerXp` per buildup to the focus track. The receipt lives on the combat, keyed by owner (the seat id in co-op) and floored once (`skillXpReceipt`); the run's ledger is written once, by the run's owner — `main.js onCombatEnd`, `tools/session.mjs`'s write-back, `tools/runsim.mjs` — through `applySkillXp`. Combat never writes a run.
 - **Which piece lent the card** is read from the event alone: `sourceHand` for a weapon's attack and guard cards; otherwise `grantedBy`, in whichever spelling the loadout stamped it — the bare armament id of a kit, package or weapon-art card, or a namespaced `armament/<id>` / `armor/<class>/<id>` ref — normalised once by `cardMounts.ownerItemRef`. A run card, the empty hand's Dodge Roll and a card an armour piece lent have no group. The killing hit is the one that left the target at 0 HP (`damageDealt` fires before the death is marked). In co-op a `blockGained` carries `sourcePlayerId`, the seat that played the card, and the pay goes to that seat: a guard cast on an ally is the caster's shield work.
 - **Dormant sources, named.** `impactDealt` fires for enemies only (the player has no poise until phase 8) and `attackEvaded` only under a foundation ruleset, which no shipped door passes — so all three armour tracks are wired and dormant today; the focus track's buildup is live. The class track has no XP source until phase 5b.
@@ -2016,7 +2028,7 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 - **The progression predicates read the ledger:** `skillLevelAtLeast` and `classLevelAtLeast` read `combat.skills`, the copy of `run.skills` the combat was handed (`player.skills`) — in co-op the OWNER's seat's copy, not the active seat's; a track never touched is level 0. A gate's `skill` must be a derived track id, refused by name otherwise (`validate.js`); the shipped Siphon gates on `item:magic-focus`.
 - **`tools/runsim.mjs --skill-levels`** prints the level each track reached, averaged per class.
 
-*Falsify:* `skillTracks` names `item:blade`, `armour:heavy`, `dualWield` and `class:rogue` and not `item:armor`; `xpToNext(registries, 'weapon', 3)` is `round(base × growth³, roundTo)`; a reaver's seeded fight pays `item:blade` exactly `(hits + blocks by cards the sword lent) × perHit` (+ `perWinEquipped`, × `killMult` when the blade killed — the kill is read from the HP the hit left) and `item:shield` the same for the shield's cards, kit and art cards named by the bare piece id included, never `dualWield`, never a `class:` track, and the run's ledger is empty until `applySkillXp`; a rogue with a knife and a sword pays `dualWield` equal to the blade; a schema-7 save loads with `skills: {}`; a fight saved mid-way restores its receipt and ledger and keeps recording, a pre-ledger snapshot resumes with empty ones; a gate on `skill: focus` is refused by name; a co-op guard cast on an ally pays the caster's seat and a seat's gate reads its own ledger; `balance.skill.xp.growth: 0.5` is refused by name.
+*Falsify:* `skillTracks` names `item:blade`, `armour:heavy`, `dualWield` and `class:rogue` and not `item:armor`; `xpToNext(registries, 'weapon', 3)` costs 490 XP with the linear defaults; a legacy exponential fixture costs `round(base × growth³, roundTo)`; a reaver's seeded fight pays `item:blade` exactly `(hits + blocks by cards the sword lent) × perHit` (+ `perWinEquipped`, × `killMult` when the blade killed — the kill is read from the HP the hit left) and `item:shield` the same for the shield's cards, kit and art cards named by the bare piece id included, never `dualWield`, never a `class:` track, and the run's ledger is empty until `applySkillXp`; a rogue with a knife and a sword pays `dualWield` equal to the blade; a schema-7 save loads with `skills: {}`; a fight saved mid-way restores its receipt and ledger and keeps recording, a pre-ledger snapshot resumes with empty ones; a gate on `skill: focus` is refused by name; a co-op guard cast on an ally pays the caster's seat and a seat's gate reads its own ledger; `balance.skill.xp.growth: 0.5` is refused by name.
 
 ### 13.4e Skill drafts: the level buys a pick from the track's own schools (plan phase 4b)
 
@@ -2575,9 +2587,9 @@ These keys go in `balance.rewards.cardRewards`.
 
 ### 15.2 Levelling pace you can see
 
-The shipped curve (`balance.level.xp` base 5, growth 1.15, roundTo 10) costs 10 XP per level up to level 9. Awards pay 15 per win plus 5, 75 or 200 per normal, elite or boss kill. So from level 1 a three-kill normal fight (30 XP) is worth 3 levels, a one-kill elite fight (90 XP) 8 levels and a one-kill boss fight (215 XP) 13 levels. `gameConfig.progression.xpMultiplier` scales each award (`configuredContentBundle` already rounds the multiplied awards into the configured registries), and `levelUpValue` **replaces** `pointsPerLevel` as the points each level grants. Nothing on the Settings screen shows the result.
+The historical September 24 exponential curve (`balance.level.xp` base 5, growth 1.15, roundTo 10) cost 10 XP per level up to level 9. Its historical awards paid 15 per win plus 5, 75 or 200 per normal, elite or boss kill: a three-kill normal fight (30 XP) was worth 3 levels, a one-kill elite fight (90 XP) 8 levels and a one-kill boss fight (215 XP) 13 levels. These are historical pace examples, not current defaults. The October 1 owner curve is the base-100 linear curve defined under **Level curve** and §13.4d; the preview calculates every pace example from the configured curve and awards. `gameConfig.progression.xpMultiplier` scales each award (`configuredContentBundle` already rounds the multiplied awards into the configured registries), and `levelUpValue` **replaces** `pointsPerLevel` as the points each level grants. Nothing on the Settings screen shows the result.
 
-**Owner decision, named.** The likely cause of "levelling up way too much" is that the owner's 2026-09-24 defaults moved the curve to base 5, while the awards were tuned ×2.5 for the older base-100 curve. This section changes no number; the preview shows the owner the pace so either side can be retuned in Settings.
+**Owner decision, named.** The September 24 base-5 curve explained the historical fast levelling. The October 1 curve contract supersedes those defaults. This preview feature itself changes no curve or award number; it shows the configured pace so either side can be retuned in Settings.
 
 - **Levelling preview.** Settings → Progression gains a **Levelling preview**, `ui/models/LevelPacePreviewModel.js`, drawn live from the configured registries in force (so `xpMultiplier` is counted once, where `configuredContentBundle` applies it) and `levelUpValue`. It shows:
   - the XP to reach each of levels 2–20;

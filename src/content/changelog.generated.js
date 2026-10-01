@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1425",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "Progression rules for the next XP update",
+    "detail": "The specification records a first step of 100 XP, a configurable linear scaler of 1.3, and a visible refill from remaining XP after each manual level claim. Runtime implementation follows separately.",
+    "build": "0.7.1.719",
+    "pullRequest": 1425,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1425"
+  },
+  {
     "id": "pr-1378",
     "date": "2026-10-01",
     "group": "2026-10-01",
