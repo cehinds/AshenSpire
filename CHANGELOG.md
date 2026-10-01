@@ -34,6 +34,9 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-01
 
+- **Behind the scenes: combat size checks report browser failures** ([#1426](https://github.com/cehinds/AshenSpire/pull/1426), `0.7.1.717`). Combat sizing checks now fail on console errors and failed requests. The overhead check and component reference describe the fixed 14 pixel action gap and larger hand cards.
+- **Enemies regain their stature and actions stay with their cards** ([#1422](https://github.com/cehinds/AshenSpire/pull/1422), `0.7.1.716`). Light artwork now uses the same proportions as full artwork, fixing tiny enemies. Action badges sit 14 pixels above each combatant card, with transparent image padding excluded. Hand cards grow larger when space permits.
+
 - **Opening scenes keep the traveller in your hands, and XP edits preserve your save's rules** ([#1423](https://github.com/cehinds/AshenSpire/pull/1423), `0.7.1.714`). Each opening scene can show or hide the traveller, turn it, and place it before or behind the colour wash. Desktop and phone poses remain separate, and rotated figures retain accurate size and drag handles. Editing XP settings on an older save keeps that save's combat rating rules and other configuration metadata.
 
 ## 2026-09-29

@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1426",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "Behind the scenes: combat size checks report browser failures",
+    "detail": "Combat sizing checks now fail on console errors and failed requests. The overhead check and component reference describe the fixed 14 pixel action gap and larger hand cards.",
+    "build": "0.7.1.717",
+    "pullRequest": 1426,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1426"
+  },
+  {
+    "id": "pr-1422",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "Enemies regain their stature and actions stay with their cards",
+    "detail": "Light artwork now uses the same proportions as full artwork, fixing tiny enemies. Action badges sit 14 pixels above each combatant card, with transparent image padding excluded. Hand cards grow larger when space permits.",
+    "build": "0.7.1.716",
+    "pullRequest": 1422,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1422"
+  },
+  {
     "id": "pr-1423",
     "date": "2026-10-01",
     "group": "2026-10-01",

@@ -30,3 +30,8 @@ test('excess cards overflow horizontally with the same face size',()=>{
  assert.equal(five.cardWidth,many.cardWidth); assert.ok(many.span>input.width);
  assert.equal(handLayout({...input,count:0}).span,0);
 });
+test('a roomy desktop hand uses the available height for larger readable cards', () => {
+ const plan = handLayout({width:1876,height:300,count:3,rem:16});
+ assert.ok(plan.cardWidth >= 180);
+ assert.ok(plan.top + plan.cardHeight <= 300);
+});
