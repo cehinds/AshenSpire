@@ -10,10 +10,11 @@
 import { spawn } from 'node:child_process';
 import { launchBrowser } from './browser.mjs';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
+import { readyExpression } from './shotReady.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
@@ -55,7 +56,9 @@ const SHOTS = [
   { name: 'startup', query: '?shot=startup' },
   { name: 'title', query: '?shot=title' },
   { name: 'map', query: '?shot=map' },
-  { name: 'combat', query: '?shot=combat' },
+  // `ready: 'combatants'` — see captureReady below: captured only once every
+  // combatant's shown artwork has loaded and decoded, never on a timer.
+  { name: 'combat', query: '?shot=combat', ready: 'combatants' },
   { name: 'fx', query: '?shot=fx' }, // combat FX posed frozen mid-animation
   { name: 'boss-intro', query: '?shot=boss' }, // boss name splash, held
   // Added 2026-07-28 (Vira, reviewing #10). ?shot=death shipped in src/main.js and
@@ -66,7 +69,7 @@ const SHOTS = [
   // default, which is a visible artifact change and Constantine's to see coming. The
   // list is right now; the folder is still stale, which was already true and recorded.
   { name: 'death', query: '?shot=death' }, // YOU PERISHED — the worst contrast in the game
-  { name: 'coop-combat', query: '?shot=coop' }, // LAN co-op combat board (2 players)
+  { name: 'coop-combat', query: '?shot=coop', ready: 'combatants' }, // LAN co-op combat board (2 players)
   { name: 'coop-map', query: '?shot=coopmap' }, // LAN co-op shared map
   { name: 'coop-reward', query: '?shot=coopreward' }, // per-member reward pick
   { name: 'victory-receipt', query: 'build/AshenSpire.html?shot=reward&shotReward=receipt' }, // itemized character XP in the built game
@@ -190,6 +193,16 @@ const VIEWPORT = (() => {
   return `${m[1]},${m[2]}`;
 })();
 
+// --ready-timeout MS — how long a `ready` shot may wait for its artwork before
+// the run fails by name. Generous by default: the dev tree loads its modules
+// one by one, about 10 s to the combat screen on this box.
+const ri = args.indexOf('--ready-timeout');
+const READY_TIMEOUT_MS = ri >= 0 && Number(args[ri + 1]) > 0 ? Number(args[ri + 1]) : 90000;
+// --settle-ms MS — the gap between a `ready` shot's capture and the retake that
+// must agree with it (captureReady).
+const si = args.indexOf('--settle-ms');
+const SETTLE_MS = si >= 0 && Number(args[si + 1]) >= 0 ? Number(args[si + 1]) : 500;
+
 const browser = BROWSERS.find((p) => existsSync(p)) || playwrightChromium();
 if (!browser) {
   console.error('screenshot: no Chrome/Edge found — install one or add its path to BROWSERS.');
@@ -248,6 +261,107 @@ async function capture(shot) {
       done(false);
     });
   });
+}
+
+// A COMBAT SHOT WAITS FOR ITS FIGURES, NOT FOR A TIMER.
+//
+// Measured 2026-10-01 at 1440x860: three of three one-shot `?shot=combat`
+// captures drew both enemies and the player's ground shadow but no player. In
+// real time the page had the Reaver's frame loaded and visible; the one-shot
+// capture fired when virtual time ran out, while that frame — added last, with
+// `decoding="async"` — had not yet been painted. Waiting longer is the answer
+// this file already found wrong once (see captureStable). So a `ready` shot is
+// driven over DevTools: load, wait until tools/shotReady.mjs says every
+// combatant's shown artwork is loaded and decoded, then capture that frame.
+// If it never gets there the run fails and names the images, and no PNG is
+// written — a combat frame missing a figure is not evidence.
+async function captureReady(shot) {
+  const out = shotPath(shot.name);
+  rmSync(out, { force: true });
+  const [width, height] = VIEWPORT.split(',').map(Number);
+  let session;
+  try {
+    session = await launchBrowser({ prefix: 'shot-', browser, headless: '--headless=new',
+      args: [`--window-size=${VIEWPORT}`], timeoutMs: 20000 });
+    const cdpPort = Number(new URL(session.wsUrl.replace(/^ws:/, 'http:')).port);
+    let tabs = [];
+    for (let i = 0; i < 100 && !tabs.some((t) => t.type === 'page'); i++) {
+      try { tabs = await (await fetch(`http://127.0.0.1:${cdpPort}/json/list`)).json(); } catch { /* not up yet */ }
+      if (!tabs.some((t) => t.type === 'page')) await new Promise((ok) => setTimeout(ok, 100));
+    }
+    const tab = tabs.find((t) => t.type === 'page');
+    if (!tab) throw new Error('no page target');
+    const socket = new WebSocket(tab.webSocketDebuggerUrl);
+    await new Promise((ok, no) => { socket.onopen = ok; socket.onerror = () => no(new Error('DevTools socket failed')); });
+    let id = 0;
+    const waiting = new Map();
+    socket.onmessage = (message) => {
+      const data = JSON.parse(message.data);
+      const pair = data.id != null && waiting.get(data.id);
+      if (!pair) return;
+      waiting.delete(data.id);
+      data.error ? pair.no(new Error(data.error.message)) : pair.ok(data.result);
+    };
+    const send = (method, params = {}) => new Promise((ok, no) => {
+      const next = ++id; waiting.set(next, { ok, no }); socket.send(JSON.stringify({ id: next, method, params }));
+    });
+    try {
+      await send('Page.enable');
+      await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
+      const nav = await send('Page.navigate', { url: `http://localhost:${port}/${shot.query}` });
+      if (nav.errorText) throw new Error(`navigation failed: ${nav.errorText}`);
+      const deadline = Date.now() + READY_TIMEOUT_MS;
+      let state = null;
+      while (Date.now() < deadline) {
+        const r = await send('Runtime.evaluate', { expression: readyExpression(), awaitPromise: true, returnByValue: true });
+        state = r.exceptionDetails ? null : r.result.value;
+        if (state?.ready) break;
+        await new Promise((ok) => setTimeout(ok, 250));
+      }
+      if (!state?.ready) {
+        const why = !state ? 'the page never answered'
+          : !state.combatants.length ? 'no combatants on screen'
+          : `pending [${state.pending.join(', ')}] broken [${state.broken.join(', ')}] `
+            + `undrawn [${state.combatants.filter((c) => !c.drawn).map((c) => c.eid).join(', ')}]`;
+        console.error(`  ✗ ${shot.name}: artwork not ready after ${READY_TIMEOUT_MS} ms — ${why}; NOT captured.`);
+        return false;
+      }
+      // Ready is necessary, not sufficient. One run in about thirty still
+      // photographed the player missing AFTER this check passed — the DOM
+      // identical to a good run, so the frame Chrome's software rasteriser
+      // handed back was behind the page. A settled combat screen holds still
+      // (measured: captures at 0, 0.3, 0.7 and 2 s after ready are
+      // byte-identical, 12 of 12 runs), so keep a frame only when a retake
+      // SETTLE_MS later agrees with it, the same bar captureStable sets.
+      const grab = async () => Buffer.from((await send('Page.captureScreenshot',
+        { format: 'png', fromSurface: true, captureBeyondViewport: false })).data, 'base64');
+      let frame = await grab();
+      let agreed = false;
+      for (let attempt = 1; attempt <= MAX_TRIES && !agreed; attempt++) {
+        await new Promise((ok) => setTimeout(ok, SETTLE_MS));
+        const retake = await grab();
+        agreed = retake.equals(frame);
+        if (!agreed) console.error(`    ${shot.name}: frame still changing (try ${attempt}/${MAX_TRIES})`);
+        frame = retake;
+      }
+      if (!agreed) {
+        console.error(`  ✗ ${shot.name}: no settled frame in ${MAX_TRIES} retakes; NOT captured.`);
+        return false;
+      }
+      writeFileSync(out, frame);
+      const figures = state.combatants.map((c) => `${c.eid} ${c.drawn}/${c.shown}`).join(', ');
+      console.log(`  ✓ ${shot.name} → ${out} (art ready: ${figures})`);
+      return true;
+    } finally {
+      socket.close();
+    }
+  } catch (e) {
+    console.error(`  ✗ ${shot.name}: ${e.message}`);
+    rmSync(out, { force: true });
+    return false;
+  } finally {
+    await session?.close();
+  }
 }
 
 // A CAPTURE THAT IS NOT REPRODUCIBLE IS NOT EVIDENCE, AND THIS RACE IS STILL OPEN.
@@ -324,7 +438,8 @@ if (ONLY && !RUN.length) {
 
 let failed = 0;
 for (const shot of RUN) {
-  const ok = shot.stable ? await captureStable(shot) : await capture(shot);
+  const ok = shot.ready ? await captureReady(shot)
+    : shot.stable ? await captureStable(shot) : await capture(shot);
   if (!ok) failed++;
 }
 
