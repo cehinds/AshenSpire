@@ -1,6 +1,8 @@
 # Every asset outside the game file — plan
 
-Status: **plan only, nothing built** (2026-09-27). It follows
+Status: **plan only, nothing built** (2026-09-27). The owner answered its
+questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
+It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
 **replaces** some of its lines, which are listed under
 [Supersedes](#supersedes). ART-REPO-PLAN is edited in the same PR, so the two
@@ -46,9 +48,14 @@ named.
 - **FINISH.md D5** (owner, 2026-09-26): *"Pages with external art and a service
   worker, installable; **the 254 MB file stays a download**."* This plan keeps
   D5's first half: the Pages web edition, the service worker, installable. It
-  retires the second half at step 8e. FINISH §4's line 107 (*"the single-file
-  download stays available"*) goes with it. Decision (b) probably supersedes
-  this, but the call is the owner's: see question 6.
+  retires the 254 MB file at step 8e (owner answer 6, FINISH D24). FINISH §4's
+  line 107 (*"the single-file download stays available"*) still holds, for the
+  **light** single file the owner kept (answer 3, D24).
+- **ART-REPO-PLAN Q1 ("Private") and its *Owner answer (2026-09-27)*, and
+  FINISH.md D20** ("the high-res zip stays private"): `cehinds/AshenSpire-art`
+  becomes **public**, the high-res zip included (owner answer 1, FINISH D22).
+  No token is needed to fetch a release. Flipping the visibility is a pending
+  owner action, due before step 11.
 
 ## Summary
 
@@ -57,18 +64,20 @@ named.
   their sha256) that the HTML's **pack index** lists. The index is hash-pinned
   inside the HTML.
 - `tools/bundle.mjs --external-art` already builds this shape without the pinning
-  (`build/web/`, dev-preview's `preview/`). The plan makes it the only
-  shape, adds the index and hashes, and retires the three single files.
+  (`build/web/`, dev-preview's `preview/`). The plan makes it the game's
+  shape, adds the index and hashes, and retires two of the three single files
+  (the full-art and the mobile one). **One light single file stays** as a
+  self-contained download (owner answer 3).
 - The art repository's release grows from one zip to three: `high` (today's
   `hd-assets-v<N>.zip`), `light` and `common`. The existing `art-release.json` and
   `tools/fetch-art.mjs` pin and fetch all three. No second system is added.
 - On Pages, every build shares one object store, so a file is stored once
   however many builds use it. Media leaves main's base tree.
-- Offline and on phones, a **service worker** installs the build for offline
-  play (recommended). A **zip the game assembles itself** replaces the
-  single-file download on desktop. The separate mobile file is dropped: one
-  HTML picks the light or high tier at runtime, and falls back to light
-  whenever high is not there.
+- Offline, there are three paths: the **light single file** (about 30 MB,
+  plays by double-click, owner answer 3), a **service worker** install
+  (phones and desktop), and a **zip the game assembles itself** (desktop). The
+  separate mobile file is dropped (answer 2): one HTML picks the light or high
+  tier at runtime, and falls back to light whenever high is not there.
 - Assets that fail to load fall back to what already exists: placeholders
   (SPEC §2.4), the synth score, the offline map and system fonts. The game
   never stops because a file is missing.
@@ -217,7 +226,10 @@ schema-2 pin whose top level disagrees with `packs.high`.
   has: the zip's sha256, then each file against its record, nothing extra in
   the zip, the `.verified` marker written last and the unpack published with
   one rename.
-- The token rules stay the same: `ART_REPO_TOKEN`, else `GITHUB_TOKEN`.
+- **No token is needed** once `cehinds/AshenSpire-art` is public (owner
+  answer 1). A token stays optional: `ART_REPO_TOKEN`, else `GITHUB_TOKEN`, is
+  sent when set, only to raise GitHub's rate limit. Until the owner flips the
+  visibility, today's rule holds (the token is required).
 
 ### Build identity
 
@@ -385,6 +397,7 @@ dev-preview artifact and the zip:
 AshenSpire.html  AshenSpire-<ver>.html (dist)
 packs/light-<d12>.json|.js  packs/common-<d12>.json|.js  [packs/high-<d12>.json|.js]  packs/fonts-<d12>.js
 objects/<xx>/<sha256>.<ext>
+download/AshenSpire.html   the light single file: inline, about 30 MB (owner answer 3)
 ```
 
 - `dist/AshenSpire.html` still opens by double-click (section 5), so the
@@ -412,7 +425,11 @@ root" below means `/AshenSpire/`.
 
 - **`/AshenSpire-mobile.html`** (README's stable mobile link) becomes a
   one-line redirect page to `AshenSpire.html` at step 8e, and README's link is
-  edited in the same PR.
+  edited in the same PR (owner answer 2).
+- **The light single file** is published at
+  `/<branch>/<ordinal>/download/AshenSpire.html` (step 6b) and stays there: the
+  build list's *Download* link and `offlineDownload.js` point at it (owner
+  answer 3).
 - **Byte-proof.** The HTML stays byte-identical to the build, so the byte-proof
   per build (`pages-site.mjs` `check`) is unchanged.
 - **No per-build media copies.** The copies of `map-detail/` and `music/` per
@@ -435,9 +452,12 @@ root" below means `/AshenSpire/`.
   - Current builds: the object tree `launch.mjs` wrote.
   - Rebuilt builds (`--build-missing`): the same, from the pin at that commit.
     The fetch cache is keyed by tag, so one fetch serves every rebuild.
-  - `pages-builds.yml` needs `ART_REPO_TOKEN` from step 11 on.
+  - From step 11 on, `pages-builds.yml` fetches the public release and needs
+    no secret (owner answer 1).
 - The **main** build, whose default tier is `high`, also carries the `light`
   pack. A phone, and the high → light fallback, use it from the same page.
+  Serving the high tier publicly on Pages for main and release is the owner's
+  answer 4.
 
 ### Main's base tree, and the site's size
 
@@ -456,8 +476,7 @@ into the site root, and nothing excludes media. On `origin/main` today that is
 and authoring roots from the base tree: `art/`, `assets/`, `assets-mobile/`,
 `map-detail/`, `music/` and the committed build HTML (the stable links are
 written from the fresh build anyway). Those roots are only ever served as build
-payloads. The owner decides whether `docs/preview` stays: its screenshots are
-kept by an earlier decision.
+payloads. `docs/preview` stays in the base tree (owner answer 7, FINISH D26).
 
 | term | today | steady state after the plan |
 |---|---|---|
@@ -465,8 +484,11 @@ kept by an earlier decision.
 | build HTML (`builds.json`, 2026-09-27 15:15Z, `--keep 10`) | **2,760 MB**: dev 294 (10 light), test 1,196 + 117 mobile, release 798 + 29 mobile, main 328 (8 full) | 38 × 9.5 MB ≈ 360 MB |
 | per-build music and tiles | about 32 MB × 38 ≈ 1,200 MB | 0 |
 | stable links (`/AshenSpire.html`, `/build/`, `/dist/`, `-mobile`) | 4 × up to 255 MB | 3 × 9.5 MB + a redirect ≈ 30 MB |
+| light single files (`download/`, owner answer 3) | (inside the build HTML above) | not in the total below: 4 × 29.5 ≈ 120 MB if only each branch's latest build carries one, 38 × 29.5 ≈ 1,120 MB if every kept build does (step 6b picks) |
 | object store (high 185 + light 14 + common 32, plus the files each release changes) | — | about 240 MB |
-| **total** | **well above 5 GB** | **about 895 MB** (about 735 MB without `docs/preview`) |
+| **total** | **well above 5 GB** | **about 895 MB** before the light single files: about 1.0 GB with one per branch, about 2.0 GB with one per kept build |
+
+If step 6b keeps light single files only for each branch's latest build, every older retained build must hide its per-build Download cell and use the offline zip path inside the game; no link may target an absent `download/AshenSpire.html`. Its check iterates every rendered build-list link and every offered offline-download action and verifies that the destination exists. Keeping a single file for every retained build keeps those links and uses the higher storage estimate.
 
 - **The published site is already far over the documented 1 GB Pages limit**
   (docs/plan-polish-review-2026-09.md:452), mostly because of the inline full
@@ -484,21 +506,23 @@ kept by an earlier decision.
 
 ### Releases
 
-- A public AshenSpire release carries nothing new. The owner's rule that the
-  high-res zip stays private (ART-REPO-PLAN, *Owner answer 2026-09-27*) is
-  kept.
-- The offline zip is assembled by the game (section 5), so no release asset
-  is needed.
+- A public AshenSpire release carries nothing new.
+- The high-res zip is public once the art repository is (owner answer 1,
+  superseding ART-REPO-PLAN's *Owner answer 2026-09-27* and FINISH D20):
+  anyone can download it from that repository's `hd-assets-v<N>` releases for
+  **Local high-res**. It is still not attached to AshenSpire releases.
+- The offline zip is assembled by the game (section 5), and the light single
+  file is published on Pages (section 4), so no release asset is needed.
 
 ---
 
 ## 5. Offline and mobile
 
-What changes: *"download one .html, double-click, play offline"* becomes
-*"one folder"*, or *"install it"*. The in-game **Download & saves** screen
-(`src/content/offlinePlay.js`, `src/model/offlineDownload.js:3-10`, which fetches
-`../<ordinal>/index.html` today) and the separate 29 MB mobile file are the two
-surfaces affected.
+What changes: *"download one .html, double-click, play offline"* stays for the
+light art (owner answer 3), and gains *"one folder"* and *"install it"*. The
+in-game **Download & saves** screen (`src/content/offlinePlay.js`,
+`src/model/offlineDownload.js:3-10`, which fetches `../<ordinal>/index.html`
+today) and the separate 29 MB mobile file are the two surfaces affected.
 
 ### Options
 
@@ -506,10 +530,14 @@ surfaces affected.
 |---|---|---|---|---|
 | **A. Service worker + install** (PWA manifest, "Make available offline" button) | yes: works offline at the same URL | **yes**: the only option that works well on iOS and Android | `sw.js` + `manifest.webmanifest` + a precache list read from the indexes; ~47 MB light + common (or +185 MB high) in Cache Storage | Hosted only (not `file://`). Browsers may evict it unless `navigator.storage.persist()` is granted or the app is installed (iOS evicts after about 7 days unused). Saves stay in the site's `localStorage`, so online and offline share one set of saves, which is better than today's split between a downloaded copy and the site. `<audio>` sends `Range` requests, and Safari needs `206` partial responses, so the worker must answer them from the cached object (below). |
 | **B. Zip the game assembles** (Download game → `AshenSpire-<branch>-<ver>.zip`: HTML + `packs/` + `objects/`, light + common) | yes: unzip, double-click | poor: phones cannot open an unzipped HTML with its folder reliably | a small store-only zip writer in the browser (ported from `tools/zip.mjs` `writeZip`), streaming to `showSaveFilePicker` where it exists, else a Blob; each object is hash-checked as it is written; no hosting cost | Works under `file://`: images and CSS by path, the index and fonts through the `.js` sidecars, and the synth score (section 3.9). The HTML's default may be high (main), and the tier fallback shows the packed light art. About 57 MB, not 29 MB. Saves stay separate from the site's, as they are today. |
-| **C. Keep a light single file for offline** (a `--offline` inline edition) | yes | as today (29 MB) | keeps `ASSET_MAP` inlining, the budget and `verify-shipped` check A alive | Goes against the owner's decision (b). Two shapes to keep working forever. |
+| **C. Keep a light single file for offline** (inline, `download/AshenSpire.html`) | yes | as today (29 MB) | keeps `ASSET_MAP` inlining for the light tier, and `verify-shipped` check A, alive | An exception to decision (b) the owner chose (answer 3). Two shapes to keep working. |
 | **D. Drop offline** | no | no | none | Removes a feature that has a screen, content and a QA tool (`tools/offline-play-qa.mjs`). |
 
-### Recommendation: A + B, and drop C and D
+### Owner's choice: A + B + C, and drop D
+
+The plan recommended A + B only. The owner kept C as well (answer 3): one
+light single file, about 30 MB, self-contained, plays by double-click. The
+254 MB full single file is retired (answer 6).
 
 - **A** is the phone story and the main offline path. The worker:
   - serves HTML network-first;
@@ -521,20 +549,24 @@ surfaces affected.
   light and common, plus high only if the player asks. On main, whose default
   is high, *Auto* offline therefore shows light art through the tier fallback
   (section 3.5), not placeholders.
-- **B** replaces the single-file download for desktop players who want a copy
-  to keep.
-- **The separate mobile file is dropped.** One HTML chooses its tier at
-  runtime:
+- **B** adds a folder copy (the pack shape, light and common) for desktop
+  players who want one to keep.
+- **C** is the *Download* link: the light single file, the same as today's
+  light build.
+- **The separate mobile file is dropped** (answer 2). One HTML chooses its
+  tier at runtime:
   - Settings → Display → Art quality becomes **Auto / Light / High /
     Local high-res**.
   - *Auto* means light on a narrow layout (`data-layout`), with Save-Data on,
     or on a low-memory device, and the build's default otherwise.
   - The choice stays in `LOCAL_ONLY_KEYS` (`src/model/settingsSync.js:86`).
-  - This also retires `--mobile`, the 30 MB budget and the `mobile/` pages.
-- **D5.** The single-file download that D5 kept ends at step 8e, with the
-  owner's answer to question 6. Until then it stays downloadable (step 6).
+  - This also retires `--mobile` and the `mobile/` pages. The 30 MB budget
+    (`mobileart-policy.mjs`) moves to the light single file.
+- **D5.** The 254 MB file that D5 kept ends at step 8e (answer 6, FINISH D24).
+  The light single file stays.
 - The hosted build list keeps a single **Play** link. The *Download* link opens
-  the game's Download screen instead of pointing at a raw HTML.
+  the game's Download screen, which offers the light single file, the zip and
+  the install.
 
 ---
 
@@ -546,18 +578,18 @@ surfaces affected.
 
 | gate / test | where it runs | assumes | becomes | step |
 |---|---|---|---|---|
-| `tools/bundle.mjs` single-file shapes (default, `--light`, `--mobile`) | every build | media inline | one shape (the old `--external-art` plus packs). The flags are removed at the flip; `--external-art` stays as an alias for one release. | 3a, 8e |
+| `tools/bundle.mjs` single-file shapes (default, `--light`, `--mobile`) | every build | media inline | the pack shape (the old `--external-art` plus packs), plus `--light` inline for the light single file only (owner answer 3). The default full-art shape and `--mobile` are removed at the flip; `--external-art` stays as an alias for one release. | 3a, 8e |
 | `tools/bundle.mjs` literal-ref check (`:1000-1045`) | every build | `assets/…` exists on disk | checks the literal ids against `art-manifest.json` | 12 |
-| `tools/launch.mjs` (`:75-76`, `:123-129`, `:143-176`, `:180`) | every build | three single files, then copies of music and tiles | writes one tree (section 4); no mobile file | 3a, 8e |
-| **The `EDITION` stamp.** `src/buildversion.js:248-265` (`EDITION`, `BUILD_IS_MOBILE`, `BUILD_IS_LIGHT`), the "· mobile edition" / "· light art" identity line (`:315`); `bundle.mjs:514`; `tools/buildversion.mjs:105-117`, `BUNDLE_EDITIONS`, the `:772` edition check and rows **E/E2** (`:959-1032`, where E2 checks the mobile single file); `verify-external.mjs:90`; `verify-shipped.mjs:222-246` | every build, CI | one of three single files | the edition becomes **the default tier** (`light`/`high`); `mobile` is removed; E2 checks that the packs the HTML pins are present instead of a mobile file; the identity line says "· light art" / "· high art". | 8e |
-| `src/ui/assetmap.js:59` `assetsAreInlined()` | runtime | an inline build has a filled `ASSET_MAP` | true only for older inline builds; its callers ask `builtInSource()` (pack loaded) instead | 3a |
-| `tools/verify-shipped.mjs` check A (art inline, the count floor) | `ci.yml` reproducible, `dev-preview.yml` | ASSET_MAP entries in the HTML | **removed, by its own removal condition** (`verify-shipped.mjs:41-43`); replaced by: the HTML carries `ASSET_PACKS`, zero `data:` media except the two masks, and each named index is in `packs/` with that hash. Checks B and C (the aliases are this build, nothing tracked) stay. | 8e |
+| `tools/launch.mjs` (`:75-76`, `:123-129`, `:143-176`, `:180`) | every build | three single files, then copies of music and tiles | writes one tree (section 4), with the light single file under `download/`; no mobile or full-art single file | 3a, 8e |
+| **The `EDITION` stamp.** `src/buildversion.js:248-265` (`EDITION`, `BUILD_IS_MOBILE`, `BUILD_IS_LIGHT`), the "· mobile edition" / "· light art" identity line (`:315`); `bundle.mjs:514`; `tools/buildversion.mjs:105-117`, `BUNDLE_EDITIONS`, the `:772` edition check and rows **E/E2** (`:959-1032`, where E2 checks the mobile single file); `verify-external.mjs:90`; `verify-shipped.mjs:222-246` | every build, CI | one of three single files | the edition becomes **the default tier** (`light`/`high`), and the light single file stamps `light`; `mobile` is removed; E2 checks that the packs the HTML pins are present instead of a mobile file; the identity line says "· light art" / "· high art". | 8e |
+| `src/ui/assetmap.js:59` `assetsAreInlined()` | runtime | an inline build has a filled `ASSET_MAP` | true only for the light single file and older inline builds; its callers ask `builtInSource()` (pack loaded) as well | 3a |
+| `tools/verify-shipped.mjs` check A (art inline, the count floor) | `ci.yml` reproducible, `dev-preview.yml` | ASSET_MAP entries in the HTML | **stays, for the light single file** (owner answer 3), with its light count floor. The pack HTML gains its own checks: it carries `ASSET_PACKS`, zero `data:` media except the two masks, and each named index is in `packs/` with that hash. Checks B and C (the aliases are this build, nothing tracked) stay. | 8e |
 | `verify-shipped` mobile-edition check (budget, smaller than full) | same | a mobile file | removed with the edition | 8e |
-| `tests/mobile-art-distinct.test.mjs:20` | core suite | the bundle's `ASSET_MAP[alias] = ASSET_MAP[key]` loop | asserts that the pack index maps aliased ids to one object | 8e |
+| `tests/mobile-art-distinct.test.mjs:20` | core suite | the bundle's `ASSET_MAP[alias] = ASSET_MAP[key]` loop | unchanged for the light single file, which keeps the loop; adds that the pack index maps aliased ids to one object | 8e |
 | `tools/verify-external.mjs` A–D (`--dir preview`, `--selftest`) | dev-preview | `assets/` copied beside the HTML, compared with source `assets/` | A: pins are present; B: no `data:` media except the masks; C: every object in every index is present and hashes to its name; D: every `ASSET_CSS` slot names an id the index has. The selftest plants a missing object, a wrong hash, a stale pin and a twin whose string does not match. | 3a–3c |
 | `tools/external-play.mjs` (reachability job) | `test`, `release`, `main`, dispatch | served build, art over the wire | unchanged over http; adds a `file://` pass (the zip shape, masks and fonts included) and a pass that must stay playable with the index blocked (placeholders), plus one with only light present on a high-default build | 3a, 4, 5 |
-| `tools/bundle.test.mjs` parse gate and EOL corpus (`tests.yml:125`, `ci.yml:287-308`) | `test`/`release` | sandboxes copy `assets/`, run the unflagged full-art build, and read `bg_act1.webp` | sandboxes build the pack shape from a small fixture pack; the EOL corpus reads a fixture object | 8e |
-| `ci.yml` reproducible (3 OSes) and `reproducible-agree` | `test`/`release` | the HTML digest is the build | digests of the HTML **and** each pack index; objects are a function of the pin | 8e |
+| `tools/bundle.test.mjs` parse gate and EOL corpus (`tests.yml:125`, `ci.yml:287-308`) | `test`/`release` | sandboxes copy `assets/`, run the unflagged full-art build, and read `bg_act1.webp` | sandboxes build the pack shape from a small fixture pack and the light single file with `--light`; the EOL corpus reads a fixture object | 8e |
+| `ci.yml` reproducible (3 OSes) and `reproducible-agree` | `test`/`release` | the HTML digest is the build | digests of the HTML, the light single file **and** each pack index; objects are a function of the pin | 8e |
 | `tools/rebuild-matches.mjs`, `buildversion --check` | CI | the HTML carries everything | unchanged for the HTML | — |
 | `tools/buildversion-selftest.mjs` | `ci.yml` reproducible | `COPY` (`:65`) includes `assets` and `assets-mobile`; the mobile-edition plant (`:306-312`) | copies the fixture pack instead; the mobile plant becomes a "pinned pack missing" plant | 8e, 11 |
 | `tools/readiness-preview-build.mjs:15` | every push (dev-preview) | builds its own data-URI asset map for an "offline gallery and standalone game" | moves to AshenSpire-art under ART-REPO-PLAN step 5; until then, it keeps its own inline map (it is a preview page, not the game) | ART-REPO-PLAN 5 |
@@ -565,13 +597,13 @@ surfaces affected.
 | `tools/credits-check.mjs` | every push | enumerates `assets/*` | enumerates manifest id prefixes, including `music/`, `map-detail/` and `assets/fonts/` (ART-REPO-PLAN already plans this) | 12 |
 | `tools/hand-side-probe.mjs`, `shotguard-probe`, `startup-gate`, `map-two-axis-pan` | browser jobs | served source or build with art beside it | source mode is served by `tools/serve.mjs`, which maps ids to the fetch cache | 12 |
 | about 40 browser tools with `--dist` over `file://` (`mapfit`, `screenreach`, `release-shots`, `about-changelog`, `offline-play-qa` and others; `git grep -l "dist/AshenSpire.html" tools`) | browser jobs, by hand | `dist/AshenSpire.html` is complete alone | keep working under `file://` once step 4 lands (objects beside it); where a tool needs `fetch`, one helper in `tools/browser.mjs` serves `dist/` over http. One PR flips them all and lists them. | 8d |
-| `tools/offline-play-qa.mjs` | by hand | downloads one HTML and opens it under `file://` | downloads the zip, unzips it and opens it under `file://`; installs the service worker, goes offline, boots and plays a track (the `206` path) | 6b |
-| `tests/web-meta.test.mjs:57` | core suite | `build/AshenSpire.html` and `-mobile.html` | `build/AshenSpire.html` only | 8e |
+| `tools/offline-play-qa.mjs` | by hand | downloads one HTML and opens it under `file://` | keeps its single-file pass for the light single file; adds: downloads the zip, unzips it and opens it under `file://`; installs the service worker, goes offline, boots and plays a track (the `206` path) | 6b, 7 |
+| `tests/web-meta.test.mjs:57` | core suite | `build/AshenSpire.html` and `-mobile.html` | `build/AshenSpire.html` and the light single file | 8e |
 | `index.html:14` `og:image` (copied into the build by `tools/head-meta.mjs`) | every build | `raw.githubusercontent.com/…/main/assets/bg/title-city-tower.webp` exists | points at the Pages object for that backdrop (a stable path the site writes, `/AshenSpire/og-image.webp`), before `assets/` leaves main | 6a |
 | `tests/settings-revamp.test.mjs:21-25` (`buildChannel` of a `file://` name) | core suite | a single downloaded file's name | unchanged: the name inside the zip keeps the channel (`src/ui/buildChannel.js`) | — |
 | `tools/pages-site.mjs` `--check`, `--selftest`, the mobile editions (`:432-455`, `:700-766`), the base-tree archive (`:623-635`) | `pages-builds.yml` | one HTML (+ mobile) per build, copies of music and tiles, the whole main tree | base-tree exclusions; the object store and `asset-base.json` for every page kind; new checks (section 4); mobile links only on old builds | 6a, 6b |
 | dev-preview "Collect the playable build" (`dev-preview.yml:202-254`) | every push | `cp -r assets/…` into `preview/` | copies the built tree; the extra `assets/` copies for preview pages read the cache | 3a, 12 |
-| `pages-builds.yml` "Build main from source" (`:222-232`) | push to `main`, dispatch | copies two single files | copies the tree; needs `ART_REPO_TOKEN` | 6b, 11 |
+| `pages-builds.yml` "Build main from source" (`:222-232`) | push to `main`, dispatch | copies two single files | copies the tree; fetches the public release with no secret (owner answer 1) | 6b, 11 |
 | `tests/run-node.mjs` checks 33, 49, 79; `content-expansion-equipment`, `rogue-parity`, `environment-art`, `relic-art` tests | core suite | files on disk under `assets/` | ids against the manifest (ART-REPO-PLAN step 4 rows, extended to the light tier, music and tiles) | 12 |
 | `tests/art-manifest.test.mjs`, `tests/fetch-art.test.mjs`, `tests/high-res-art.test.mjs` | core suite | schema 1, one pack | schema 2, three packs, the font migration, `licenses/OFL.txt`, the pin's aliases | 2, 11 |
 | doorplant `COPY_SET`, `sfx-filename-convention`, every `mkdtempSync` sandbox | various | the trees are in the repo | copy the pin and manifest (ART-REPO-PLAN) | 11 |
@@ -580,18 +612,18 @@ surfaces affected.
 
 | rule | text today | becomes | owner sign-off |
 |---|---|---|---|
-| SPEC §3.2, `build/ · dist/` row | "The single-file bundle emitted by `tools/bundle.mjs` and its shipped copy" | "The game file, its pack indexes and its object store …" | **yes** |
+| SPEC §3.2, `build/ · dist/` row | "The single-file bundle emitted by `tools/bundle.mjs` and its shipped copy" | "The game file, its pack indexes and its object store, and the light single file …" | **yes** |
 | SPEC §7.4, the music paragraph | the `music/` beside the page; "a `file://` page cannot fetch it and keeps the synth" | tracks are read through the common pack; `file://` still keeps the synth (unchanged) | **yes** |
 | SPEC §7.5, fonts **TO BUILD** | "Cinzel/Inter … NOT bundled … self-hosting the woff2 under `assets/fonts/` is unfinished" | the interface faces are pack files loaded at runtime; system fallbacks stay. Replaces the bundling question (owner, 2026-09-27). | **yes** |
 | SPEC §11, non-goals | "bundled audio asset files" is a non-goal | still true in letter; reword to "audio ships as pack files; SFX stay synthesized" | **yes** |
 | SPEC §1, *Entry point* | "`index.html` opened directly or via any static server" | "via `node tools/serve.mjs`" once the media leaves the tree (ART-REPO-PLAN already names this) | **yes** |
-| FINISH.md D5 and §4 line 107 | "the 254 MB file stays a download"; "the single-file download stays available" | the zip and the install replace it (question 6) | **yes** |
+| FINISH.md D5 and §4 line 107 | "the 254 MB file stays a download"; "the single-file download stays available" | the 254 MB file is retired; the light single file stays a download, beside the install and the zip (owner answers 3 and 6; FINISH D24) | **yes** |
 | SPEC §2 status row and §2.4 | the CSS backdrops bypass `assetUrl()` (open) | closed by `ASSET_CSS` | no (a status row) |
 | SPEC §8, the `release-shots` row | "the built bundle (`dist/AshenSpire.html`)" | `dist/` (HTML + packs) | no (wording) |
-| DEVELOPER.md, *Standalone build* (`:873-885`) | "single self-contained HTML … no external files" | the build tree; double-click still works when the folder stays together | no |
-| DEVELOPER.md, *Run & test* (the editions, light/full/mobile, the 30 MB mobile file, `npx serve .`) | three single files | one shape; the tiers are packs; `tools/serve.mjs` | no |
-| README.md `:13` (the stable and mobile Play links), `:36` (art tiers, "one ~29 MB file"), `:38` ("any single `.html` above plays by double-click") | single files | one Play link; the tiers; offline = install or the game's zip; `-mobile` redirects | no |
-| `dist/README.md` ("the build shapes"; "the complete HTML plays offline") | three shapes | one tree, and what to keep together | no |
+| DEVELOPER.md, *Standalone build* (`:873-885`) | "single self-contained HTML … no external files" | the build tree, whose light single file is still self-contained; the pack HTML's double-click works when the folder stays together | no |
+| DEVELOPER.md, *Run & test* (the editions, light/full/mobile, the 30 MB mobile file, `npx serve .`) | three single files | the pack shape plus the light single file; the tiers are packs; `tools/serve.mjs` | no |
+| README.md `:13` (the stable and mobile Play links), `:36` (art tiers, "one ~29 MB file"), `:38` ("any single `.html` above plays by double-click") | single files | one Play link; the tiers; offline = the light single file, the install or the game's zip; `-mobile` redirects | no |
+| `dist/README.md` ("the build shapes"; "the complete HTML plays offline") | three shapes | one tree, what to keep together, and the light single file | no |
 | CONTRIBUTING.md rule 2 (where assets live) | `assets/`, `assets/sfx`, `music/`, `assets/fonts/` here | they enter through the art repository and a pin bump | no, but the owner reads it |
 | CREDITS.md:119-120 (fonts "the bundler inlines") | inlined through `kit.css` | loaded from the common pack; `OFL.txt` travels in the pack, and the `kit.css` licence header still ships | no |
 | ARCHITECTURE-MAP.md, *Player door* and *Root allowlist* | "Portable build: `dist/AshenSpire.html`"; `assets-mobile/`, `music/`, `map-detail/` at the root | the door stays (double-click works from `dist/`); the moved roots leave the allowlist | no |
@@ -607,8 +639,9 @@ CONTRIBUTING rule 1).
 
 Every step is one reviewed PR (or one owner action), and the game still works
 after each. Runtime loading (b) comes first, while every file is still in this
-repository; storage (a) follows. The token and the art repository therefore
-only become build dependencies at step 11.
+repository; storage (a) follows. The art repository therefore only becomes a
+build dependency at step 11. No token does: the owner made it public (answer
+1), and a token only raises the rate limit.
 
 | # | step | ships | what still works |
 |---|---|---|---|
@@ -619,21 +652,22 @@ only become build dependencies at step 11.
 | 3c | **Music and tiles through the index.** The `mapDetail.js` `load()` rewrite; `audio.js` reads the common index. | — | all |
 | 4 | **`file://` for the pack shape.** The `.js` twins, the font sidecar, tiles as `Image` loads, the synth under `file://`, and `external-play --file`. | the web edition opens by double-click | all |
 | 5 | **Loading UX and fallbacks.** Progress on the startup gate, the critical set in `content/config`, the Retry notice, placeholders on a failed load, and tests that block the index and that remove the high index. | player-visible boot line | all |
-| 6a | **Pages base tree.** `pages-site` excludes `art/`, `assets/`, `assets-mobile/`, `map-detail/`, `music/` and the committed build HTML from main's base tree (`docs/preview` per question 7); `og:image` moves to a Pages path; `--check` prints the site's size. | a smaller site | every build, as it was |
-| 6b | **Pages store + service worker, and the Download kept whole.** `pages-site` publishes pack-shaped builds with `/objects`, `/packs`, `asset-base.json` for every page kind (section 4) and `/AshenSpire/sw.js` (Range/`206` for audio, kill-switch). The **single file is still built and published at a separate path**, `/<branch>/<ordinal>/download/AshenSpire.html`: the build list's *Download* and `offlineDownload.js` point there until step 7, so no download between 6b and 7 is a 9.5 MB HTML with no art. "Make available offline" arrives on Download & saves. This is the first time hosted players get the pack shape. That is intended, because D5 already accepted a Pages web edition. | hosted offline | older builds as they were; the single-file download |
-| 7 | **In-game zip download.** Replaces the single-HTML download in `offlineDownload.js`, with new `offlinePlay.js` instructions and `offline-play-qa` on the zip. The `download/` single file stays until 8e. | desktop offline copy | both downloads |
-| 8a | **SPEC + FINISH PR** (section 6's sign-off rows, D5). Owner review. | text | — |
+| 6a | **Pages base tree.** `pages-site` excludes `art/`, `assets/`, `assets-mobile/`, `map-detail/`, `music/` and the committed build HTML from main's base tree (`docs/preview` stays, owner answer 7); `og:image` moves to a Pages path; `--check` prints the site's size. | a smaller site | every build, as it was |
+| 6b | **Pages store + service worker, and the Download kept whole.** `pages-site` publishes pack-shaped builds with `/objects`, `/packs`, `asset-base.json` for every page kind (section 4) and `/AshenSpire/sw.js` (Range/`206` for audio, kill-switch). The **light single file is built and published at a separate path**, `/<branch>/<ordinal>/download/AshenSpire.html`, and stays there (owner answer 3): the build list's *Download* and `offlineDownload.js` point there, so no download is a 9.5 MB HTML with no art. This step picks whether every kept build or only each branch's latest carries it (section 4). "Make available offline" arrives on Download & saves. This is the first time hosted players get the pack shape. That is intended, because D5 already accepted a Pages web edition. | hosted offline | older builds as they were; the light single-file download |
+| 7 | **In-game zip download.** Added beside the light single-file download in `offlineDownload.js`, with new `offlinePlay.js` instructions and `offline-play-qa` on the zip. The `download/` light single file stays. | desktop offline copy | both downloads |
+| 8a | **SPEC + FINISH PR** (section 6's sign-off rows, D5). Owner review there (owner answer 5). | text | — |
 | 8c | **Art quality Auto / Light / High** in the web edition, with Auto's tier detection. Does not depend on the flip. | a player-facing setting | all |
 | 8d | **`tools/browser.mjs` serve-`dist/` helper, and the ~40 `--dist` tools** flipped to it where they need `fetch`. | — | all |
-| 8e | **The flip.** `launch.mjs` builds only the pack shape; `--light`/`--full-art` choose the default tier and which packs to carry; `--mobile`, inline mode and the `download/` single file are removed; the `EDITION` stamp becomes the default tier; `verify-shipped` A and the mobile checks are retired; `bundle.test`, `web-meta`, `mobile-art-distinct` and `buildversion-selftest` follow; `/AshenSpire-mobile.html` redirects; README, `dist/README`, DEVELOPER, CREDITS, ARCHITECTURE-MAP and CLAUDE follow. Needs 8a approved and question 6 answered. | one HTML, ~9.5 MB | every door: double-click `dist/`, hosted, installed |
+| 8e | **The flip.** `launch.mjs` builds the pack shape and the light single file; `--light`/`--full-art` choose the default tier and which packs to carry; `--mobile` and the full-art single file are removed, and inline mode stays only for the light single file at `download/` (owner answers 2, 3, 6); the `EDITION` stamp becomes the default tier; `verify-shipped` A stays for the light single file and the mobile checks are retired; `bundle.test`, `web-meta`, `mobile-art-distinct` and `buildversion-selftest` follow; `/AshenSpire-mobile.html` redirects; README, `dist/README`, DEVELOPER, CREDITS, ARCHITECTURE-MAP and CLAUDE follow. Needs 8a approved. | one HTML, ~9.5 MB, and the ~30 MB light single file | every door: the light single file, double-click `dist/`, hosted, installed |
 | 9 | **Art repo PR.** Import the light tier generator (`mobile-art.mjs`, `mobileart-policy.mjs`) and generate `light/assets/` from `hd/assets/`; add `common/` (fonts, `OFL.txt`, music, tiles) with the score and tile tools; the pack script writes three zips and the schema-2 manifest; CI verifies each zip against the manifest. | — | this repo unchanged |
 | 10 | **Owner: merge step 9.** Releases are automatic (AshenSpire-art#2), so the merge publishes `hd-assets-v<N>` with three zips. | — | — |
-| 11 | **Pin and fetch.** `art-release.json` schema 2; `fetch-art --pack`; `asset-pack.mjs` reads the cache; the pin and manifest join `BUILD_IDENTITY_FILES`; `ART_REPO_TOKEN` is added to every building workflow (dev-preview, tests, ci, pages-builds) and named on failure. The trees here are still present, and a check proves the cache and the trees agree byte for byte. | builds from the release | all, with either source |
+| 10a | **Owner: make `cehinds/AshenSpire-art` public** in its GitHub settings (owner answer 1). **Pending: not done yet.** It must happen before step 11. | — | — |
+| 11 | **Pin and fetch.** `art-release.json` schema 2; `fetch-art --pack`; `asset-pack.mjs` reads the cache; the pin and manifest join `BUILD_IDENTITY_FILES`; no secret is needed: every building workflow (dev-preview, tests, ci, pages-builds) fetches the public release, and `fetch-art` sends `ART_REPO_TOKEN` or `GITHUB_TOKEN` only when set, for rate limits (it no longer refuses without one; README.md:37 and DEVELOPER.md:99-101 follow). Needs step 10a. The trees here are still present, and a check proves the cache and the trees agree byte for byte. | builds from the release | all, with either source |
 | 12 | **Switch every reader** of `assets-mobile/`, `music/`, `map-detail/` and `assets/fonts/` to the manifest or the cache (section 6; ART-REPO-PLAN step 4's rows, extended). The PR records `git grep` output for each tree. | — | all |
 | 13 | **Delete** `assets-mobile/`, the MP3s, `map-detail/` and `assets/fonts/` from `dev` and add them to `.gitignore`, together with ART-REPO-PLAN step 6 for `assets/` and `art/`. **Needs its own owner go-ahead** (ART-REPO-PLAN Q3). Precondition: step 12's grep finds only fetch-aware code. History is untouched. | a smaller tree | all |
 
 Steps 2–8e need no token and no art-repo change, so they can start now (step
-8e also needs 8a and question 6). ART-REPO-PLAN step 5 (the `art/` readers) is
+8e also needs 8a). ART-REPO-PLAN step 5 (the `art/` readers) is
 independent of all of them.
 
 ---
@@ -659,12 +693,17 @@ independent of all of them.
 - **Many small requests.** The 3,071 animation frames arrive one per request,
   as they already do in the web edition. HTTP/2 on Pages plus the existing
   warm-ups cover first play. Sprite sheets are out of scope here.
-- **The token becomes a build dependency** (step 11): every CI build, every
-  agent session and every local build needs `ART_REPO_TOKEN`. A missing token
-  fails by name. Source play without a fetch shows placeholders, not an error.
+- **The art release becomes a build dependency** (step 11): every CI build,
+  agent session and local build fetches it. No token is needed once the art
+  repository is public (owner answer 1); a build without one can hit GitHub's
+  unauthenticated rate limit, which `ART_REPO_TOKEN` or `GITHUB_TOKEN` raises.
+  If the visibility has not been flipped (step 10a), the fetch fails by name.
+  Source play without a fetch shows placeholders, not an error.
 - **Pages size.** The site is already over the documented 1 GB. Steps 6a and
   6b bring it to about 0.9 GB (section 4). If GitHub starts enforcing the
-  limit, the rest comes from `docs/preview` (question 7) or a lower `--keep`.
+  limit, the rest comes from a lower `--keep`, or from publishing the light
+  single file for each branch's latest build only; `docs/preview` stays (owner
+  answer 7).
 - **Reproducibility.** Pack JSON must be byte-stable on all three OSes: sorted
   keys and `\n` only, like `tools/dirorder.mjs` requires. `reproducible-agree`
   compares the index digests.
@@ -674,19 +713,31 @@ independent of all of them.
 
 ---
 
-## Questions only the owner can answer
+## Owner answers (2026-09-27)
 
-- Keep the light and common packs in the private art repo, with `ART_REPO_TOKEN` added to every CI build and agent session? **Yes/no** (default **yes**).
-  - A "no" means they are published somewhere public instead (they are already public on Pages), which drops the token from dev builds; decides step 11.
-- Drop the separate mobile download and let one HTML pick light or high art at runtime (Art quality: Auto/Light/High/Local)? **Yes/no** (default **yes**).
-  - Removes `AshenSpire-mobile.html` (it redirects), its 30 MB budget and the `mobile/` pages at step 8e.
-- Offline = service-worker install (phones and desktop) + a zip the game builds (desktop), with no inlined single file kept? **Yes/no** (default **yes**).
-  - A "no" keeps option C, an inlined light file, which is what decision (b) asked to end; decides steps 6b–8e.
-- Main and release hosted builds serve the high tier's files publicly on Pages, as today's 255 MB full file already does? **Yes/no** (default **yes**).
-  - A "no" limits main to the light tier, with high-res only through Local high-res.
-- Approve the SPEC and FINISH wording for §1, §3.2, §7.4, §7.5, §11 and D5 when its PR (step 8a) is opened? **Yes/no in that PR** (default: review there).
-  - The flip (8e) waits on it.
-- Retire FINISH D5's "the 254 MB file stays a download"? **Yes/no** (default **yes, retire it**).
-  - Decision (b) conflicts with it. A "no" keeps a full inline single file as a download beside the pack build, which keeps `verify-shipped` A and the inline bundler alive; decides step 8e.
-- Stop serving `docs/preview` (161 MB of screenshots) from main's base tree on Pages? **Yes/no** (default **no, keep it** unless the limit starts being enforced).
-  - Keeping it leaves the site at about 0.9 GB instead of 0.74 GB; decides step 6a.
+1. **Keep the light and common packs private? No.** The owner then chose to
+   make **`cehinds/AshenSpire-art` public**: everything in it, the high-res
+   zip included. This supersedes FINISH D20 and ART-REPO-PLAN's Q1 and *Owner
+   answer (2026-09-27)* (FINISH D22).
+   - No `ART_REPO_TOKEN` is needed to fetch a release. `fetch-art` keeps the
+     token as optional, for rate limits (section 2).
+   - Step 11 needs no secret: builds fetch the public release.
+   - **Pending owner action:** flipping the visibility in GitHub settings is
+     not done yet. It is step 10a and must happen before step 11.
+2. **Drop the separate mobile download? Yes** (FINISH D23). One HTML picks the
+   light or high tier at runtime; `AshenSpire-mobile.html` redirects and
+   `--mobile` and the `mobile/` pages go at step 8e.
+3. **Offline only through the install and the game's zip, with no single file
+   kept? No.** The owner keeps **one light-art single file** (about 30 MB,
+   self-contained, plays by double-click) as the download; the 254 MB high-res
+   single file is still retired (FINISH D24).
+   - Step 8e keeps inline mode for the light single file only; it retires
+     `--mobile` and the full-art single file.
+   - `verify-shipped` check A stays, for the light single file.
+   - The `download/` path stays, serving the light single file.
+   - The service-worker install and the zip remain as additional offline
+     paths (section 5).
+4. **Serve high-res on Pages for main and release? Yes** (FINISH D25).
+5. **SPEC and FINISH wording in its own PR (8a)? Yes, reviewed there.**
+6. **Retire D5's "the 254 MB file stays a download"? Yes** (FINISH D24).
+7. **Stop serving `docs/preview`? No, keep it** (FINISH D26).
