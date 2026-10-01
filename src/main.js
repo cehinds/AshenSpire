@@ -66,8 +66,9 @@ import {
   rollRelicReward,
   rollArmamentDrop,
 } from './engine/encounters.js';
-import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock } from './engine/shopKinds.js';
+import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock, buildMasterStock, masterVisitStock } from './engine/shopKinds.js';
 import { mountBlacksmith } from './ui/screens/blacksmith.js';
+import { mountMaster } from './ui/screens/master.js';
 import { shopStockKind } from './model/shopKinds.js';
 import { commitQuestEvent } from './model/marketAdditions.js';
 import { combatEncounterFor, victoryCompletesJourneyNode, serviceEventCombatEntry } from './model/serviceCombat.js';
@@ -2076,6 +2077,15 @@ function worldLocationAction(action) {
     run.shopStock = state.stock;
     persist(); return showShop();
   }
+  if (handlerId === 'master') {
+    // The atlas `master` service is a WISE MASTER visit (SPEC §14.5): its
+    // master picked on `shop` and its stock rolled on `shopOffers` on first
+    // entry, kept on the point, so a revisit reopens it as saved. No shipped
+    // point carries the service yet; content places it.
+    state.stock ||= masterVisitStock(registries, rng, run, { priceMult: shopPriceMult() });
+    run.shopStock = state.stock;
+    persist(); return showShop();
+  }
   if (handlerId === 'shop') {
     // The atlas `shop` service is a market (SPEC §14.2): today's shelves on
     // `shop`, and which of them are out on `shopOffers`. A custom run's price
@@ -2192,7 +2202,8 @@ function enterNode(nodeId) {
       // the stock so leaving and re-entering the screen does not roll again.
       // A merchant that turned out to be a blacksmith (SPEC §14.2) is the smith;
       // no add-on is rolled for it.
-      if (stock.kind !== 'blacksmith') stock.smith = smithServicesAt(registries, 'merchant', rng);
+      // Nor for one that turned out to be a wise master (SPEC §14.5).
+      if (stock.kind !== 'blacksmith' && stock.kind !== 'master') stock.smith = smithServicesAt(registries, 'merchant', rng);
       run.shopStock = stock;
       persist();
       return showShop();
@@ -2895,6 +2906,23 @@ function showShop() {
   audio.music('shop');
   // A blacksmith visit is a screen of its own (SPEC §14.4); the same door
   // resumes it after a reload, since the kind rides the stock.
+  // So is a wise master's (SPEC §14.5), by the same door.
+  if (shopStockKind(run.shopStock) === 'master') {
+    return mountMaster(app, {
+      registries, run, meta: saves.loadMeta(), hud: roomHud(showShop), priceMult: shopPriceMult(),
+      // A lesson's cards are rolled on the run's own `shopOffers` stream, at
+      // the reward door's odds (equal under Chaos Rewards).
+      rng, flatRarity: chaosRewardsOn(),
+      onChanged: () => persist(),
+      onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
+      onLeave: () => {
+        finishWorldService();
+        run.shopStock = null;
+        persist();
+        showMap();
+      },
+    });
+  }
   if (shopStockKind(run.shopStock) === 'blacksmith') {
     return mountBlacksmith(app, {
       registries, run, meta: saves.loadMeta(), hud: roomHud(showShop), priceMult: shopPriceMult(),
@@ -3303,7 +3331,7 @@ if (shotState) {
 
 if (shotState === 'combat-test') {
   mountCombatTest(app, { params: shotParams, meta: activeMeta });
-} else if (shotState === 'atlas' || shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'blacksmith' || shotState === 'reward') {
+} else if (shotState === 'atlas' || shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'blacksmith' || shotState === 'master' || shotState === 'reward') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -3620,6 +3648,20 @@ if (shotState === 'combat-test') {
     run.loadout.storage.push('katana');
     run.sigils = [registries.sigils.all()[0].id];
     run.shopStock = buildBlacksmithStock(registries, rng, run);
+    showShop();
+  } else if (shotState === 'master') {
+    // THE WISE MASTER (SPEC §14.5), a reach state beside `?shot=blacksmith`:
+    // a master visit posed so each service has something to act on — a
+    // purse of cinders, a skill book to sell, and the first two tracks of the
+    // master the visit picks at level 2 (a respec to make). Which offerings
+    // are out is the harness's own settings door (?shotSettings, Advanced →
+    // Shops).
+    run.cinders = 2000;
+    run.consumables = { [registries.consumables.all().find((def) => def.kind === 'skillBook').id]: 1 };
+    run.shopStock = buildMasterStock(registries, rng, run);
+    for (const skillId of registries.shops.masters.find((row) => row.id === run.shopStock.masterId).skills.slice(0, 2)) {
+      run.skills = { ...run.skills, [skillId]: { xp: 0, level: 2, pendingDrafts: 0 } };
+    }
     showShop();
   } else if (shotState === 'reward') {
     // A REACH STATE for the reward MENU (E11/#256), the same shape and reason

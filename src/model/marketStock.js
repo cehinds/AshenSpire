@@ -78,13 +78,16 @@ export function blacksmithStockProblems(stock, path = 'shopStock') {
  * empties is no longer laid out (its id leaves `stock.offerings`, unless it is
  * the last one), so no empty rail item is left behind.
  */
-export function pruneUnknownAdditionOffers(stock, { sigilKnown, armourKnown, consumableKnown = () => true, companionKnown = () => true, eventKnown = () => true, armamentKnown = () => true }) {
+export function pruneUnknownAdditionOffers(stock, { sigilKnown, armourKnown, consumableKnown = () => true, companionKnown = () => true, eventKnown = () => true, armamentKnown = () => true, cardKnown = () => true }) {
   if (!object(stock)) return [];
   const removed = [];
   const keep = {
     // The blacksmith's armament shelf (SPEC §14.4): an unsold offer for an
     // armament this build no longer has is pruned like any market offer.
     ...(stock.kind === 'blacksmith' ? { armaments: (item) => armamentKnown(item.id) } : {}),
+    // The master's rack and art shelf (SPEC §14.5), the same way; his skill
+    // books are the `skillBooks` row below.
+    ...(stock.kind === 'master' ? { armaments: (item) => armamentKnown(item.id), weaponArts: (item) => cardKnown(item.id) } : {}),
     sigils: (item) => sigilKnown(item.id),
     armour: (item) => armourKnown(item.classId, item.id),
     skillBooks: (item) => consumableKnown(item.id),
@@ -111,6 +114,19 @@ export function pruneUnknownAdditionOffers(stock, { sigilKnown, armourKnown, con
   if (object(stock.questEvent) && !eventKnown(stock.questEvent.eventId)) {
     removed.push({ shelf: 'questEvent', id: stock.questEvent.eventId });
     retire('questEvent');
+  }
+  // A master's lesson rolls (SPEC §14.5): an unknown card id is dropped from
+  // its entry. An entry left with no card is a roll that found nothing, and it
+  // stays refused; the lesson offering stays laid out (a service stays once
+  // rolled).
+  if (stock.kind === 'master' && object(stock.lessons)) {
+    for (const [skillId, entry] of Object.entries(stock.lessons)) {
+      if (!object(entry) || !Array.isArray(entry.cardIds)) continue;
+      const kept = entry.cardIds.filter((id) => cardKnown(id));
+      if (kept.length === entry.cardIds.length) continue;
+      for (const id of entry.cardIds) if (!kept.includes(id)) removed.push({ shelf: `lessons.${skillId}`, id });
+      stock.lessons[skillId] = { ...entry, cardIds: kept };
+    }
   }
   return removed;
 }

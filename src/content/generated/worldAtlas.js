@@ -9945,6 +9945,9 @@ export const worldAtlas = {
     },
     {
       "handlerId": "lore"
+    },
+    {
+      "handlerId": "master"
     }
   ],
   "service_types": [
@@ -9972,6 +9975,11 @@ export const worldAtlas = {
       "serviceTypeId": "archive",
       "displayName": "Archive",
       "handlerId": "lore"
+    },
+    {
+      "serviceTypeId": "master",
+      "displayName": "Wise master",
+      "handlerId": "master"
     }
   ],
   "services": [
@@ -9999,6 +10007,11 @@ export const worldAtlas = {
       "serviceId": "archive",
       "displayName": "Read the archive",
       "serviceTypeId": "archive"
+    },
+    {
+      "serviceId": "master",
+      "displayName": "Wise master",
+      "serviceTypeId": "master"
     }
   ],
   "node_services": [

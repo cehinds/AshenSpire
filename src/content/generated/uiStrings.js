@@ -2281,7 +2281,7 @@ export const uiStrings = [
     "id": "settings.shops.topic.master",
     "extends": "",
     "short": "Wise master",
-    "full": "The wise master's offerings and prices. No merchant is a master until its screen ships.",
+    "full": "The wise master's offerings and prices. An atlas master is always one; a merchant on the map is one only when its weight is above 0.",
     "tip": ""
   },
   {
@@ -3016,6 +3016,307 @@ export const uiStrings = [
     "id": "blacksmith.refuse.noMount",
     "extends": "",
     "short": "That mount cannot be worked now.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.title",
+    "extends": "",
+    "short": "THE WISE MASTER",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.leave",
+    "extends": "",
+    "short": "Leave",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.rail.aria",
+    "extends": "",
+    "short": "The master's offerings",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.skillBooks",
+    "extends": "",
+    "short": "SKILL BOOKS",
+    "full": "Books for the skills this master teaches.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.weaponArts",
+    "extends": "",
+    "short": "WEAPON ARTS",
+    "full": "Weapon arts of the pieces this master teaches.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.armaments",
+    "extends": "",
+    "short": "ARMAMENTS",
+    "full": "Armaments of the item types this master teaches.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.training",
+    "extends": "",
+    "short": "TRAINING",
+    "full": "Pay for XP on one of the master's skills.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.respec",
+    "extends": "",
+    "short": "RESPEC",
+    "full": "Return one of the master's skills to level 1, and keep part of its XP in your training pool.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.lesson",
+    "extends": "",
+    "short": "LESSON",
+    "full": "Buy one skill draft for one of the master's skills.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.appraisal",
+    "extends": "",
+    "short": "APPRAISAL",
+    "full": "See the master's skills: level, XP, what a lesson could draw and what a respec would pay.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.redistribute",
+    "extends": "",
+    "short": "REDISTRIBUTE",
+    "full": "Spend your training pool on any skill.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.sell",
+    "extends": "",
+    "short": "SELL",
+    "full": "Sell the skill books and revive tokens you carry.",
+    "tip": ""
+  },
+  {
+    "id": "master.purse",
+    "extends": "",
+    "short": "{cinders} cinders · training pool {pool} XP · {left} session(s) left",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.track.line",
+    "extends": "",
+    "short": "Level {level} · {xp} / {next} XP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.offer.line",
+    "extends": "",
+    "short": "{text} {cost} cinders.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.respec.line",
+    "extends": "",
+    "short": "refund {refund} XP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.lesson.unasked",
+    "extends": "",
+    "short": "Ask for a lesson to see its three cards.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.appraisal.draws",
+    "extends": "",
+    "short": "A lesson could draw: {names}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.appraisal.drawsNone",
+    "extends": "",
+    "short": "A lesson could draw nothing now.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.appraisal.respec",
+    "extends": "",
+    "short": "Respec: {refund} XP back for {cost} cinders",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.sell.none",
+    "extends": "",
+    "short": "You carry no skill book or revive token to sell.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.buy",
+    "extends": "",
+    "short": "Buy",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.train",
+    "extends": "",
+    "short": "Train ({cost} cinders, +{xp} XP)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.respec",
+    "extends": "",
+    "short": "Respec ({cost} cinders)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.askLesson",
+    "extends": "",
+    "short": "Ask for a lesson",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.lesson",
+    "extends": "",
+    "short": "Learn {name} ({cost} cinders)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.spend",
+    "extends": "",
+    "short": "Spend {amount} XP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.idle.training",
+    "extends": "",
+    "short": "No training sessions are left this visit.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.idle.respec",
+    "extends": "",
+    "short": "None of the master's skills is at level 2 or higher.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.idle.lesson",
+    "extends": "",
+    "short": "Every one of the master's skills has taken its lesson this visit, or has nothing to draw.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.idle.appraisal",
+    "extends": "",
+    "short": "The master has no skill to appraise.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.idle.redistribute",
+    "extends": "",
+    "short": "Your training pool is empty. A respec fills it.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.notOffered",
+    "extends": "",
+    "short": "This master is not offering that.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.untaught",
+    "extends": "",
+    "short": "{master} does not teach {skill}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.trainingSpent",
+    "extends": "",
+    "short": "No training sessions are left this visit.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.respecLevel",
+    "extends": "",
+    "short": "{skill} is at level {level}; a respec needs level 2 or higher.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.unknownTrack",
+    "extends": "",
+    "short": "'{skill}' is not a skill.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.poolEmpty",
+    "extends": "",
+    "short": "Your training pool is empty.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.amount",
+    "extends": "",
+    "short": "Spend a whole amount from 1 to {pool} XP, not {amount}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.lessonUnrolled",
+    "extends": "",
+    "short": "Ask for a lesson in {skill} first.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.lessonEmpty",
+    "extends": "",
+    "short": "There is nothing a lesson in {skill} could teach you now.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.lessonTaken",
+    "extends": "",
+    "short": "You have already taken this visit's lesson in {skill}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.lessonCard",
+    "extends": "",
+    "short": "That card is not one of this lesson's.",
     "full": "",
     "tip": ""
   },

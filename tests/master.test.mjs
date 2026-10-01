@@ -25,7 +25,7 @@ import { NOTE } from '../src/content/balance.js';
 import { createRegistries } from '../src/model/registries.js';
 import { advancedConfigRows, configuredContentBundle } from '../src/model/advancedConfig.js';
 import { createRng } from '../src/engine/rng.js';
-import { buildMasterStock, buildMerchantStock, masterVisitStock, rollMasterLesson } from '../src/engine/shopKinds.js';
+import { buildMasterStock, buildMerchantStock, masterVisitStock, rollMasterLesson, rollShopOfferings } from '../src/engine/shopKinds.js';
 import { rollSkillDraftIds } from '../src/engine/encounters.js';
 import { createRunState, RUN_SCHEMA_VERSION, validateRunShape } from '../src/model/state.js';
 import { validateContent } from '../src/model/validate.js';
@@ -40,6 +40,8 @@ import {
   redistributePlan, commitRedistribute, lessonPool, lessonPlan, commitLesson,
   masterAppraisal, masterServiceCandidates,
 } from '../src/model/master.js';
+import { createAtlasIndex, generateJourney, journeyProblems } from '../src/model/worldAtlas.js';
+import { worldAtlas } from '../src/content/generated/worldAtlas.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { mountMaster } from '../src/ui/screens/master.js';
 
@@ -218,10 +220,10 @@ test('FINISH: a master teaching dualWield stocks one-handed armaments and their 
   const pieces = masterPieces(registries, 'dualWield');
   assert.ok(pieces.length > 0);
   assert.equal(pieces.some((piece) => piece.id === 'greatsword'), false, 'the two-handed piece is not the dual-wield master\'s');
-  assert.ok(pieces.some((piece) => piece.id === 'dagger'), 'a one-handed blade is');
+  assert.ok(pieces.some((piece) => piece.id === 'katana'), 'a one-handed blade is');
   const arts = masterArtPool(registries, dual);
   assert.equal(arts.includes(twoHandedArt), false, 'no art only a two-handed piece carries');
-  assert.ok(arts.includes('twinFang'), 'the dagger\'s art is stocked');
+  assert.ok(arts.includes('katanaDrawCut'), 'the katana\'s art is stocked');
   const run = createRunState({ seed: 4, classId: 'reaver', registries });
   assert.equal(masterArmamentPool(registries, run, dual).some((piece) => piece.id === 'greatsword'), false);
   // An explicitly taught blade track keeps every piece of its type.
@@ -255,13 +257,18 @@ test('services stay once rolled: a respec on a visit with no pool lays out a rol
     assert.equal(app.querySelector('#master-redistribute .bs-idle'), null, 'usable once the pool holds something');
   });
   assert.ok(masterServiceCandidates(OUT, run, 'redistribute').length > 0);
-  // With every chance 0 the guarantee adds only offerings usable now, and keeps the rolled ids.
+  // With every chance 0 the build-time refill adds only offerings usable now,
+  // past the rolled ones (which stay, idle or not), until 2 are usable.
   const zero = registriesWith(Object.fromEntries(OFFERINGS.map((id) => [`${PREFIX}master.${id}.chance`, 0])));
   for (let seed = 1; seed <= 20; seed++) {
     const { run: r } = masterRun(zero, { seed });
-    const usable = r.shopStock.offerings.filter((id) => !MASTER_SERVICES.includes(id) || masterServiceCandidates(zero, r, id).length > 0);
-    assert.ok(usable.length >= 2, `seed ${seed}: ${r.shopStock.offerings}`);
-    assert.equal(usable.length, r.shopStock.offerings.length, `seed ${seed}: nothing idle was added`);
+    const rng = createRng(seed);
+    rng.int('shop', 0, zero.shops.masters.length - 1);
+    const rolled = rollShopOfferings(zero.shops.master, rng);
+    const usableNow = (id) => !MASTER_SERVICES.includes(id) || masterServiceCandidates(zero, r, id).length > 0;
+    assert.ok(r.shopStock.offerings.filter(usableNow).length >= 2, `seed ${seed}: ${r.shopStock.offerings}`);
+    for (const id of rolled) assert.ok(r.shopStock.offerings.includes(id), `seed ${seed}: rolled ${id} stays`);
+    for (const id of r.shopStock.offerings.filter((id) => !rolled.includes(id))) assert.ok(usableNow(id), `seed ${seed}: the refill added ${id}, which is usable`);
   }
 });
 
@@ -282,6 +289,30 @@ test('a classic merchant that rolls master opens a master visit; the atlas servi
   for (const shelf of ['skillBooks', 'weaponArts', 'armaments']) {
     assert.deepEqual(priced[shelf], plain[shelf]?.map((item) => ({ ...item, cost: Math.ceil(item.cost * 1.5) })), `${shelf} scales, rounding up`);
   }
+});
+
+test('declaring the unplaced master service moves no atlas revision, so no seed reroutes and no journey is stranded', () => {
+  // The revision every World Journey was generated under before this step.
+  assert.equal(createAtlasIndex().revision, 'atlas-1-3e9433d6-d1447e50');
+  // Placing it on a point is a route change and does move the revision.
+  const placed = structuredClone(worldAtlas);
+  placed.node_services.push({ nodeId: 'crownfall/market', serviceId: 'master' });
+  assert.notEqual(createAtlasIndex(placed).revision, createAtlasIndex().revision);
+});
+
+test('a saved journey standing in an atlas smith or master visit validates (the active service names its handler)', () => {
+  const smith = generateJourney('SMITH');
+  assert.equal(smith.currentNodeId, 'crownfall');
+  smith.serviceStates['crownfall/forge'] = {};
+  smith.activeService = { ownerId: 'crownfall', pointId: 'crownfall/forge', handlerId: 'smith' };
+  assert.deepEqual(journeyProblems(smith), []);
+  const data = structuredClone(worldAtlas);
+  data.node_services.push({ nodeId: 'crownfall/market', serviceId: 'master' });
+  const atlas = createAtlasIndex(data);
+  const j = generateJourney('MASTER', 'wanderer', atlas);
+  j.serviceStates['crownfall/market'] = {};
+  j.activeService = { ownerId: j.currentNodeId, pointId: 'crownfall/market', handlerId: 'master' };
+  assert.deepEqual(journeyProblems(j, atlas), []);
 });
 
 // ---------------------------------------------------------------------------

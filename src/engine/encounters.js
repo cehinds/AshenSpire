@@ -168,11 +168,16 @@ export function rollCombatCardOffer(registries, rng, { classId, pool, relicIds =
  * Chaos Rewards, as the card offer), `balance.skill.draftSize` picks on the
  * same 'cardRewards' stream the card offer rolls on. An empty pool rolls
  * nothing and draws nothing.
+ *
+ * Two optional inputs serve the wise master's lesson (SPEC §14.5): `schools`
+ * replaces the held pieces' schools, and `stream` the stream drawn on.
+ * Omitted, it reads skillSchools and draws on 'cardRewards' exactly as the
+ * reward door always has.
  */
-export function rollSkillDraftIds(registries, rng, { classId, loadout, skillId, level, pool = 'normal', flatRarity = false, size }) {
+export function rollSkillDraftIds(registries, rng, { classId, loadout, skillId, level, pool = 'normal', flatRarity = false, size, schools: given, stream = 'cardRewards' }) {
   const skill = registries.balance.skill || {};
   const count = Number.isInteger(size) ? size : skill.draftSize;
-  const schools = new Set(skillSchools(registries, loadout, skillId));
+  const schools = new Set(Array.isArray(given) ? given : skillSchools(registries, loadout, skillId));
   const unlocked = rarityUnlockedAt(registries, level);
   if (!schools.size || !unlocked.length || !(count > 0)) return [];
   const weights = cardRewardRarityWeights(registries, { classId, pool, flatRarity });
@@ -188,7 +193,7 @@ export function rollSkillDraftIds(registries, rng, { classId, loadout, skillId, 
   const picks = [];
   let guard = 0;
   while (picks.length < count && guard++ < 100) {
-    let roll = rng.float('cardRewards') * total;
+    let roll = rng.float(stream) * total;
     let rarity = rarities[rarities.length - 1];
     for (const r of rarities) {
       roll -= weights[r];
@@ -199,7 +204,7 @@ export function rollSkillDraftIds(registries, rng, { classId, loadout, skillId, 
       if (rarities.every((r) => byRarity[r].every((id) => picks.includes(id)))) break;
       continue;
     }
-    picks.push(rng.pick('cardRewards', options));
+    picks.push(rng.pick(stream, options));
   }
   return picks;
 }
