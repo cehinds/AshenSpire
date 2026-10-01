@@ -561,7 +561,7 @@ async function browserDoor() {
           } else {
             await key(guest, reboundKey);
           }
-          await until(guest, `!!document.querySelector('.flask-action-menu')`, `rebound keyboard Flask ${slot} menu`);
+          await until(guest, `!!document.querySelector('.combat-potion-menu')`, `rebound keyboard Flask ${slot} menu`);
           const afterShortcut = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,actorId=s.party.find(p=>p.name==='Fenn')?.id,actor=s.scene.players.find(p=>p.id===actorId);return{hand:actor.hand.map(c=>c.instanceId).join(','),energy:actor.energy,ended:actor.ended,targets:document.querySelectorAll('[data-friendly-target]').length}})()`);
           observed(JSON.stringify(afterShortcut) === JSON.stringify(beforeShortcut), `configured collision binding opens Flask ${slot} only, without card play, targeting, spend, or end turn`, `${JSON.stringify(beforeShortcut)}→${JSON.stringify(afterShortcut)}`);
           if (reboundKey === 'e') {
@@ -570,16 +570,16 @@ async function browserDoor() {
           }
           if (slot === '1') await evidenceCapture('rebound-flask', 'Rebound Flask 1 on key 1 · menu only · no card play');
           await key(guest, 'Escape');
-          await until(guest, `!document.querySelector('.flask-action-menu')`, `rebound keyboard Flask ${slot} menu closes`);
+          await until(guest, `!document.querySelector('.combat-potion-menu')`, `rebound keyboard Flask ${slot} menu closes`);
         }
 
         const beforePadShortcut = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,actorId=s.party.find(p=>p.name==='Fenn')?.id,actor=s.scene.players.find(p=>p.id===actorId);return{hand:actor.hand.map(c=>c.instanceId).join(','),energy:actor.energy,ended:actor.ended,targets:document.querySelectorAll('[data-friendly-target]').length}})()`);
         await padTap(8);
-        await until(guest, `!!document.querySelector('.flask-action-menu')`, 'collision-bound standard-pad Flask 1 menu');
+        await until(guest, `!!document.querySelector('.combat-potion-menu')`, 'collision-bound standard-pad Flask 1 menu');
         const afterPadShortcut = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,actorId=s.party.find(p=>p.name==='Fenn')?.id,actor=s.scene.players.find(p=>p.id===actorId);return{hand:actor.hand.map(c=>c.instanceId).join(','),energy:actor.energy,ended:actor.ended,targets:document.querySelectorAll('[data-friendly-target]').length,key:window.__friendlyPad.lastKey}})()`);
         observed(afterPadShortcut.key === 'Escape' && JSON.stringify({ ...afterPadShortcut, key: undefined }) === JSON.stringify({ ...beforePadShortcut, key: undefined }), 'standard-pad synthesized collision key opens Flask 1 only and is consumed before downstream input observers/gameplay', `${JSON.stringify(beforePadShortcut)}→${JSON.stringify(afterPadShortcut)}`);
         await padTap(1);
-        await until(guest, `!document.querySelector('.flask-action-menu')`, 'collision-bound standard-pad Flask 1 menu closes');
+        await until(guest, `!document.querySelector('.combat-potion-menu')`, 'collision-bound standard-pad Flask 1 menu closes');
 
         // The rest of the matrix exercises product number/q card input. Restore
         // non-colliding flask keys in the running input module after the exact
@@ -661,11 +661,11 @@ async function browserDoor() {
 
         const beforeReboundPad = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,actorId=s.party.find(p=>p.name==='Fenn')?.id,actor=s.scene.players.find(p=>p.id===actorId);return{hand:actor.hand.map(c=>c.instanceId).join(','),energy:actor.energy,ended:actor.ended,targets:document.querySelectorAll('[data-friendly-target]').length}})()`);
         await padTap(8);
-        await until(guest, `!!document.querySelector('.flask-action-menu')`, 'rebound standard-pad Flask 1 menu');
+        await until(guest, `!!document.querySelector('.combat-potion-menu')`, 'rebound standard-pad Flask 1 menu');
         const afterReboundPad = await evaluate(guest, `(()=>{const s=window.__coopSnapshot,actorId=s.party.find(p=>p.name==='Fenn')?.id,actor=s.scene.players.find(p=>p.id===actorId);return{hand:actor.hand.map(c=>c.instanceId).join(','),energy:actor.energy,ended:actor.ended,targets:document.querySelectorAll('[data-friendly-target]').length}})()`);
         observed(JSON.stringify(afterReboundPad) === JSON.stringify(beforeReboundPad), 'configured standard-pad binding synthesizes only the rebound Flask 1 action', `${JSON.stringify(beforeReboundPad)}→${JSON.stringify(afterReboundPad)}`);
         await padTap(1);
-        await until(guest, `!document.querySelector('.flask-action-menu')`, 'rebound standard-pad Flask 1 menu closes');
+        await until(guest, `!document.querySelector('.combat-potion-menu')`, 'rebound standard-pad Flask 1 menu closes');
 
         // Put the unified cursor on a self-only card through its public number
         // key, cancel it, then let the pad own arm + confirmation.
@@ -693,12 +693,10 @@ async function browserDoor() {
         await activate(guest, oathSelector, shape.dpr > 1);
         await wait(250);
         observed((await evaluate(guest, `document.querySelectorAll('[data-friendly-target]').length`)) === 0, `${shape.dpr > 1 ? 'touch' : 'mouse'} refuses the same unaffordable friendly card`);
-        // The three tool-seeded legacy flask buttons exist only for the
-        // configured-binding controls above. Remove those fixture controls
-        // before traversing the ordinary hand graph so this established pad
-        // affordability check keeps measuring card navigation, not a larger
-        // synthetic inventory. Pad Activate remains the product input door.
-        await evaluate(guest, `document.querySelectorAll('[data-coop-flask-slot]').forEach((node)=>node.remove())`);
+        // The three tool-seeded legacy flasks sit behind the action row's
+        // Potions control (2026-10-01), so the ordinary hand graph below holds
+        // no extra flask buttons to strip: pad Activate remains the product
+        // input door.
         // Put the controller cursor on the exact card under test. Directional
         // traversal is covered above; this cell isolates pad Activate's
         // affordability door from the tool-only legacy flask inventory.
