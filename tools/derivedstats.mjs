@@ -158,10 +158,10 @@ check('the shipped table passes the closed schema', () => {
   assert(Array.isArray(problems) && problems.length === 0, problems.map((p) => `${p.path}: ${p.msg}`).join('; '));
 });
 
-// A WEIGHT OF 0.2 IS ONE EVERY FIVE POINTS, FLOORED ON ITS OWN: DEX 10 buys
-// floor(10 x 0.2) = 2 Actions on the base 3. STR 1 x 0.1, WIS 1 x 0.01 and
+// A3's weight of 0.25 is one every four points, floored on its own: DEX 10 buys
+// floor(10 x 0.25) = 2 Actions on the base 3. STR 1 x 0.1, WIS 1 x 0.01 and
 // INT 1 x 0.01 each floor to 0.
-check('DEX 10 gives Energy base 3 + floor(10 x 0.2) = 5', () => {
+check('DEX 10 gives Energy base 3 + floor(10 x 0.25) = 5', () => {
   const out = deriveStat(resolved(), 'energy', { attributes: at({ dexterity: 10 }), classDef: CLASS });
   equal(out.terms.dexterity, 2, 'dexterity term'); equal(out.terms.strength, 0, 'strength term at 1');
   equal(out.raw, 5, 'raw'); equal(out.value, 5, 'value');

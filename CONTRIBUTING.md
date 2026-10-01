@@ -111,7 +111,8 @@ Owner's rule, 2026-09-26. The standalone HTML (`AshenSpire.html`,
 `AshenSpire-mobile.html` and their `build/` and `dist/` copies) is never
 committed: a pull request carries source, `buildordinal.json`, the
 regenerated `src/content/changelog.generated.js` and its CHANGELOG receipt,
-and nothing else generated. CI builds every pull request into `dev` and every
+and regenerated source modules when their authoritative data changes. Built
+HTML remains ignored. CI builds every pull request into `dev` and every
 push to `dev`, `test`, `release` and `main`, runs the gates that read a build,
 and uploads the result as the `<branch>-standalone-<commit>` workflow
 artifact; a push to `test` is the playtest build. Where the ordinal comes
