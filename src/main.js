@@ -27,14 +27,12 @@ import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
 import { stampDeck, addToStorage, carriedIds } from './model/loadout.js';
-import { grantSmithingReward, smithingPlan, commitSmithing, smithingRewardId, smithingRewardPays } from './model/smithing.js';
+import { grantSmithingReward, smithingPlan, smithingRewardId, smithingRewardPays } from './model/smithing.js';
 import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode } from './model/worldAtlas.js';
 import { atlasQuestAction, boardQuestResponse } from './engine/quests.js';
 import { mountQuestBoard, QUEST_EXCHANGE_COPY } from './ui/screens/questBoard.js';
 import { questBoardModel, questExchange } from './ui/models/QuestBoardModel.js';
 import { mountWorldAtlas } from './ui/screens/worldAtlas.js';
-import { mountSmithUpgradeModal } from './ui/components/smithUpgradeModal.js';
-import { smithSelectionModel } from './ui/models/SmithSelectionModel.js';
 import { smithServicesAt } from './model/cardExtraction.js';
 import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
@@ -68,7 +66,9 @@ import {
   rollRelicReward,
   rollArmamentDrop,
 } from './engine/encounters.js';
-import { buildMarketStock, marketVisitStock, commitInnRest } from './engine/shopKinds.js';
+import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock } from './engine/shopKinds.js';
+import { mountBlacksmith } from './ui/screens/blacksmith.js';
+import { shopStockKind } from './model/shopKinds.js';
 import { commitQuestEvent } from './model/marketAdditions.js';
 import { combatEncounterFor, victoryCompletesJourneyNode, serviceEventCombatEntry } from './model/serviceCombat.js';
 import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
@@ -2066,19 +2066,16 @@ function worldLocationAction(action) {
     if (!j.localCompletedIds.includes(action.pointId)) j.localCompletedIds.push(action.pointId);
     persist(); j.inspectNodeId = j.currentNodeId; return showMap();
   }
-  if (handlerId === 'smith') {
-    showMap();
-    let selection = null;
-    const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selection, { multiUse: true });
-    const modal = mountSmithUpgradeModal(app, model(), {
-      registries, meta: saves.loadMeta(),
-      onSelect: ref => { selection = ref; modal.update(model()); },
-      onBack: () => {},
-      onConfirm: ref => { commitSmithing(registries, run, ref); persist(); j.inspectNodeId = j.currentNodeId; showMap(); },
-    });
-    return;
-  }
   j.activeService = { ownerId: action.ownerId, pointId: action.pointId, handlerId };
+  if (handlerId === 'smith') {
+    // The atlas `smith` service is a BLACKSMITH (SPEC §14.2, §14.4): its stock
+    // is rolled on `shopOffers` on first entry and kept on the point, so a
+    // revisit reopens it as saved; a custom run's price multiplier reaches it
+    // as it reaches the market.
+    state.stock ||= blacksmithVisitStock(registries, rng, run, { priceMult: shopPriceMult() });
+    run.shopStock = state.stock;
+    persist(); return showShop();
+  }
   if (handlerId === 'shop') {
     // The atlas `shop` service is a market (SPEC §14.2): today's shelves on
     // `shop`, and which of them are out on `shopOffers`. A custom run's price
@@ -2193,7 +2190,9 @@ function enterNode(nodeId) {
       // Does a smith travel with him? Rolled once here, on the smith's own
       // stream (balance.smithing.services.offeredAt.merchant), and kept with
       // the stock so leaving and re-entering the screen does not roll again.
-      stock.smith = smithServicesAt(registries, 'merchant', rng);
+      // A merchant that turned out to be a blacksmith (SPEC §14.2) is the smith;
+      // no add-on is rolled for it.
+      if (stock.kind !== 'blacksmith') stock.smith = smithServicesAt(registries, 'merchant', rng);
       run.shopStock = stock;
       persist();
       return showShop();
@@ -2894,6 +2893,21 @@ function showShop() {
     run.shopStock = state.stock;
   }
   audio.music('shop');
+  // A blacksmith visit is a screen of its own (SPEC §14.4); the same door
+  // resumes it after a reload, since the kind rides the stock.
+  if (shopStockKind(run.shopStock) === 'blacksmith') {
+    return mountBlacksmith(app, {
+      registries, run, meta: saves.loadMeta(), hud: roomHud(showShop), priceMult: shopPriceMult(),
+      onChanged: () => persist(),
+      onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
+      onLeave: () => {
+        finishWorldService();
+        run.shopStock = null;
+        persist();
+        showMap();
+      },
+    });
+  }
   mountShop(app, {
     registries,
     run,
@@ -3289,7 +3303,7 @@ if (shotState) {
 
 if (shotState === 'combat-test') {
   mountCombatTest(app, { params: shotParams, meta: activeMeta });
-} else if (shotState === 'atlas' || shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
+} else if (shotState === 'atlas' || shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'blacksmith' || shotState === 'reward') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -3594,6 +3608,18 @@ if (shotState === 'combat-test') {
     // "nothing to sell" read identically. One flask, authored id, no rng.
     run.flasks.push({ flaskId: 'crimsonFlask' });
     run.shopStock = buildMarketStock(registries, rng, run, { meta: saves.loadMeta() });
+    showShop();
+  } else if (shotState === 'blacksmith') {
+    // THE BLACKSMITH (SPEC §14.4), a reach state beside `?shot=shop`: the atlas
+    // smith's visit, posed so each service has something to act on — a purse
+    // of stones and cinders, a carried katana (an art to lift out and an
+    // armament to cut a slot into) and a sigil to set. Which offerings are
+    // out is the harness's own settings door (?shotSettings, Advanced → Shops).
+    run.cinders = 2000;
+    run.smithingStones = 12;
+    run.loadout.storage.push('katana');
+    run.sigils = [registries.sigils.all()[0].id];
+    run.shopStock = buildBlacksmithStock(registries, rng, run);
     showShop();
   } else if (shotState === 'reward') {
     // A REACH STATE for the reward MENU (E11/#256), the same shape and reason

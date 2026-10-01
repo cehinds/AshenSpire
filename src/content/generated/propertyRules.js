@@ -141,6 +141,36 @@ export const propertyRules = [
     "textTemplate": "At the start of each of your turns, deal {damage} damage to a random enemy."
   },
   {
+    "tag": "sigil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
+    "tag": "emberSigil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "At the start of each fight, gain {block} Block."
+  },
+  {
+    "tag": "thornSigil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first time you hit with an attack each fight, apply {bleed} Bleed."
+  },
+  {
+    "tag": "tideSigil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Every {n}th card you play in a fight draws {draw} card."
+  },
+  {
+    "tag": "hearthSigil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Whenever you heal, gain {block} Block."
+  },
+  {
     "tag": "warhorn",
     "requires": "",
     "excludes": "",

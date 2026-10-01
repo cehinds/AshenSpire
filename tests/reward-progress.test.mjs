@@ -442,6 +442,39 @@ test('each manual claim refills from residual XP until the final partial step, f
   }
 });
 
+test('a refill scheduled before a reward remount cannot change the replacement screen', async () => {
+  const dom = rewardDom();
+  const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));
+  Object.assign(globalThis, dom);
+  try {
+    const app = document.createElement('main');
+    document.body.append(app);
+    const first = climber();
+    first.level = { level: 1, xp: 355, unspentPoints: 0 };
+    first.skills = {};
+    const saves = { loadMeta: () => ({ settings: { levelUpRefillSeconds: 0.02, levelUpRefillPauseMs: 0 } }) };
+    mountRewards(app, {
+      registries, run: first, rewards: { title: 'First reward', xpGains: { level: 0, tracks: {} } }, saves,
+      onDone() {}, onClaimLevel: () => claimBankedLevel(registries, first),
+    });
+    app.querySelector('.reward-level-up').click();
+    assert.equal(first.level.xp, 255, 'the claim commits before its presentation starts');
+    assert.ok(app.querySelector('.rp-layered-bar[data-animate="1"]'), 'the refill is scheduled');
+    const second = climber();
+    second.level = { level: 1, xp: 0, unspentPoints: 0 };
+    second.skills = {};
+    mountRewards(app, {
+      registries, run: second, rewards: { title: 'Replacement reward', xpGains: { level: 0, tracks: {} } }, saves, onDone() {},
+    });
+    const replacement = app.querySelector('.reward-door');
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    assert.equal(app.querySelector('.reward-door') === replacement, true, 'the old timer cannot capture a newly mounted host');
+    assert.equal(app.querySelector('#reward-level-done'), null, 'the previous claim does not reopen');
+    assert.equal(second.level.level, 1);
+    assert.equal(second.level.xp, 0);
+  } finally { Object.assign(globalThis, saved); }
+});
+
 test('a door with no progression and no offer draws no side column at all', () => {
   const dom = rewardDom();
   const saved = Object.fromEntries(Object.keys(dom).map((key) => [key, globalThis[key]]));

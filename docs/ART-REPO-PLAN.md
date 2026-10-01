@@ -204,7 +204,7 @@ Each step is one reviewed PR, or one owner action.
 
 ## Owner answers (2026-09-26)
 
-- Q1. **Private.** `cehinds/AshenSpire-art` is a private repository.
+- Q1. **Private.** `cehinds/AshenSpire-art` is a private repository. *(Superseded 2026-09-27: the repository becomes public, and the token bullets below stop applying once it is; see [Owner answer: the art repository becomes public](#owner-answer-2026-09-27-the-art-repository-becomes-public).)*
   - CI in this repo cannot read its releases with the default `GITHUB_TOKEN`. The jobs that fetch (full-art builds, pages-builds' main build) read a repository secret `ART_REPO_TOKEN`: a fine-grained token with read-only *Contents* access to `AshenSpire-art`. The owner creates it; step 4 names the secret and fails with that name when it is missing.
   - `tools/fetch-art.mjs` reads the same token from `ART_REPO_TOKEN` (or `GITHUB_TOKEN`) for a local fetch.
   - A private release is downloadable only by people with access to the repo, so it does not by itself reach players who want **Local high-res**; the owner decided on 2026-09-27 that it stays that way (below).
@@ -214,10 +214,30 @@ Each step is one reviewed PR, or one owner action.
 
 ## Status
 
-- Steps 1–3 are done (2026-09-26). The owner created `cehinds/AshenSpire-art` (private). [AshenSpire-art#1](https://github.com/cehinds/AshenSpire-art/pull/1) imported `hd/assets/` (5,201 files) and `art/`, and its release workflow published `hd-assets-v1`: zip sha256 `c03e4024…88a4`, the same bytes as a local pack of that commit.
+- Steps 1–3 are done (2026-09-26). The owner created `cehinds/AshenSpire-art` (private for now; the owner decided on 2026-09-27 to make it public, not yet done). [AshenSpire-art#1](https://github.com/cehinds/AshenSpire-art/pull/1) imported `hd/assets/` (5,201 files) and `art/`, and its release workflow published `hd-assets-v1`: zip sha256 `c03e4024…88a4`, the same bytes as a local pack of that commit.
 - Step 4 has started. `tools/fetch-art.mjs` landed in #1340, and #1353 pins `hd-assets-v1` in `art-release.json`. #1367 moved the 23 non-art files to `asset-data/` and switched every reader of them (tools, tests, `src/framework/data/assets.js`, the ship tools that write those manifests, the art pages that fetch `enemy-poses/manifest.json`, CREDITS and the docs). Still to do: switch the `assets/` (high-tier) readers, and add both files to `BUILD_IDENTITY_FILES` in the PR that first builds full art from the cache.
 - Releases are automatic: the art repo publishes the next `hd-assets-v<N>` on every merge to `main` that changes the pack ([AshenSpire-art#2](https://github.com/cehinds/AshenSpire-art/pull/2)).
 
 ## Owner answer (2026-09-27)
 
+*(Superseded later the same day by the next section: the repository, the
+high-res zip included, becomes public. FINISH D20 is superseded by D22.)*
+
 - **The high-res zip stays private.** It is published only as the `hd-assets-v<N>` releases of the private `cehinds/AshenSpire-art` repository and is **not** attached to public AshenSpire releases. The Local high-res setting therefore reaches only people with access to that repository.
+
+## Owner answer (2026-09-27): the art repository becomes public
+
+Answering [EXTERNAL-ASSETS-PLAN.md](./EXTERNAL-ASSETS-PLAN.md#owner-answers-2026-09-27)
+question 1, the owner chose to make **`cehinds/AshenSpire-art` public**
+(FINISH D22, superseding D20 and the answer above):
+
+- Everything in it becomes public, the `hd-assets-v<N>` releases and their
+  high-res zip included. Players who want **Local high-res** can download the
+  zip from those releases. It is still not attached to AshenSpire releases.
+- No `ART_REPO_TOKEN` is needed to fetch a release. `tools/fetch-art.mjs`
+  keeps the token optional (`ART_REPO_TOKEN`, else `GITHUB_TOKEN`), sent only
+  when set, to raise GitHub's rate limit. CI needs no secret.
+- **Pending owner action:** flipping the visibility in the repository's GitHub
+  settings is not done yet. Until it is, a fetch still needs the token, and
+  `fetch-art`, README.md and DEVELOPER.md still say so. It must happen before
+  EXTERNAL-ASSETS-PLAN step 11 (its step 10a), which drops the requirement.

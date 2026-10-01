@@ -80,7 +80,9 @@ function curveFor(registries, kind) {
 export function xpToNext(registries, kind, level) {
   if (!SKILL_KINDS.includes(kind)) throw new Error(`xpToNext: '${kind}' is not a skill kind (${SKILL_KINDS.join(', ')})`);
   const step = Number.isInteger(level) && level > 0 ? level : 0;
-  return xpStepCost(curveFor(registries, kind), step);
+  // Legacy skill/class curves rounded without the character curve's epsilon.
+  // Preserve those saved thresholds; new linear curves share the new rounding.
+  return xpStepCost(curveFor(registries, kind), step, { exponentialEpsilon: 0 });
 }
 
 /** A fresh ledger: no track has been touched. */

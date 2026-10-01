@@ -83,6 +83,8 @@ export function runCombatPlayer(run) {
     // spends from it), and the companions whose property mounts at its start.
     consumables: run.consumables && typeof run.consumables === 'object' ? { ...run.consumables } : {},
     companionIds: (Array.isArray(run.companions) ? run.companions : []).map((row) => row.id),
+    // SPEC §14.4: the sigils set into slots, mounted while their armament is worn.
+    sigilSlots: run.sigilSlots && typeof run.sigilSlots === 'object' ? run.sigilSlots : {},
   };
 }
 

@@ -39,6 +39,7 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `tests.yml` → core suite | yes | yes (also on push to `dev`) |
 | `map-camera.yml` → map camera re-fit (`map-camera-persistence.mjs --check`, real browser) | yes | yes (also on push to `dev`) |
 | `map-camera.yml` → the full map-camera persistence drive (same job) | no | yes |
+| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | yes | yes (also on push to `dev`) |
 | `tests.yml` → tool self-tests, bundler parse gate | no | yes |
 | `ci.yml` → Fullscreen first through both Settings doors | no | yes |
 | `ci.yml` → what this green does NOT cover (boundary) | no | yes |
@@ -282,6 +283,20 @@ undelivered notifications` is the one a player met, arriving with no filename an
 no line (`at :0`) because there is no throw site. Those are logged as `NOTICE`
 and raise nothing; `isBenignPageNotice()` is the anchored classifier, and
 `tests/debug-banner.test.mjs` holds both edges.
+
+## Where a build comes from (not committed since 2026-09-26)
+
+`node tools/launch.mjs --build-only` still writes `AshenSpire.html`,
+`AshenSpire-mobile.html` and their `build/` and `dist/` copies, but only to
+your working tree: git ignores them. Commit the box it moves
+(`buildordinal.json`) and the regenerated changelog module, never the HTML.
+To play a build you did not make, download the `<branch>-standalone-<commit>`
+artifact from that commit's workflow run: every pull request into `dev` and
+every push to `dev`, `test`, `release` and `main` uploads one. A tool or test
+that reads a build builds it first, or is handed that artifact; it never
+skips because a build is missing. The full contract, including the ordinal
+and Pages, is in
+[docs/versioning.md](docs/versioning.md#builds-are-not-committed-2026-09-26).
 
 ## The CI door: a tool's silence is not its success (#12)
 

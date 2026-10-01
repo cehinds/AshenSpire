@@ -841,5 +841,40 @@ export const variableBindings = [
     "nodeId": "emberHound",
     "variable": "damage",
     "balancePath": "powers.emberHound.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "emberSigil",
+    "variable": "block",
+    "balancePath": "sigils.emberSigil.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "thornSigil",
+    "variable": "bleed",
+    "balancePath": "sigils.thornSigil.bleed"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "tideSigil",
+    "variable": "n",
+    "balancePath": "sigils.tideSigil.n"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "tideSigil",
+    "variable": "draw",
+    "balancePath": "sigils.tideSigil.draw"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "hearthSigil",
+    "variable": "block",
+    "balancePath": "sigils.hearthSigil.block"
   }
 ];

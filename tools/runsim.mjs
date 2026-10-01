@@ -14,7 +14,7 @@
 // This is a completability floor, not a balance target: the bot can't pilot
 // combos or curate a deck. Any full-run crash = a real integration bug.
 //
-// Run: node tools/runsim.mjs [runsPerClass=30] [--endless]
+// Run: node tools/runsim.mjs [runsPerClass=30] [--endless] [--incoming] [--level-stat=<attr>]
 //   --endless: Endless Spire mode — acts loop past 3 with per-cycle scaling
 //   (capped at act 15 here); reports climb depth instead of win rate.
 //   --seeded-seats: draw the seat order per seed (SPEC §13.4) instead of the
@@ -88,6 +88,24 @@ const SEEDED_SEATS = argv.includes('--seeded-seats');
 const DEEP = argv.includes('--deep');
 // Plan phase 4a: report the skill level each track reached, averaged per class.
 const SKILL_LEVELS = argv.includes('--skill-levels');
+// THE INCOMING-DAMAGE BOOK (A3, 2026-09-27). `--incoming` tallies, per class,
+// act and pool, what the enemies swung at the player in each fight (before
+// block) and the HP that got through, plus the maxHp and level each act opened
+// on. Starting pools are retuned from this measurement, not from an older
+// figure. READ-ONLY over the finished fight's eventLog, as `--deep` is.
+const INCOMING = argv.includes('--incoming');
+// `--level-stat=<attributeId>` — which attribute the bot puts its level-up
+// points into (default constitution, as it always has). The Actions breakpoint
+// is judged by comparing fleets that differ only here.
+// A PATH is a comma list of `attribute[:cap]`: each point goes to the first
+// entry still under its cap, so `dexterity:5,constitution` is "DEX to 5, then
+// CON" — the question a player at a shrine actually asks.
+const LEVEL_STAT = (argv.find((a) => a.startsWith('--level-stat=')) || '').slice('--level-stat='.length) || 'constitution';
+const LEVEL_PATH = LEVEL_STAT.split(',').map((entry) => {
+  const [id, cap] = entry.split(':');
+  return { id: id.trim(), cap: cap === undefined ? Infinity : Number(cap) };
+});
+const levelPick = (run) => (LEVEL_PATH.find((step) => ((run.attributes && run.attributes[step.id]) || 0) < step.cap) || LEVEL_PATH[LEVEL_PATH.length - 1]).id;
 // THE CON BAND (Vira, 2026-08-15). D22 put HP back on Constitution while D10
 // already had Stamina there, so one attribute now pays two resources and the
 // creation screen's five bonus points became a question nobody had measured.
@@ -108,6 +126,10 @@ const SKILL_LEVELS = argv.includes('--skill-levels');
 // than silently clamped into a number this tool would then report as a band.
 // Omit the flag and the fleet runs the shipped presets, exactly as before.
 const SPEND = (argv.find((a) => a.startsWith('--spend=')) || '').slice('--spend='.length) || null;
+for (const step of LEVEL_PATH) {
+  if (!REG.attributes.ids().includes(step.id)) throw new Error(`--level-stat: '${step.id}' is not an attribute id (${REG.attributes.ids().join(', ')})`);
+  if (!(step.cap > 0)) throw new Error(`--level-stat: '${step.id}' cap must be a positive number`);
+}
 function spendAllocation(classId) {
   if (!SPEND) return undefined;
   const ids = REG.attributes.ids();
@@ -155,6 +177,7 @@ let levelUpsInWins = 0;
 // counter that survived the first fleet would report the OFF side's level-ups
 // and cinders inside the ON side's lines.
 function resetFleetCounters() {
+  openingAll.length = 0;
   poured = 0; graces = 0;
   levelUps = 0; levelsReached = 0; levelsReachedInWins = 0; xpEarnedInWins = 0; cinderLeftAtEnd = 0; levelUpsInWins = 0; skillDraftsTaken = 0; classDraftsTaken = 0;
 }
@@ -194,6 +217,68 @@ function tallyFight(ds, combat, hpEntering) {
   // energy make this a floor/ceiling blur, so it prints as "≈" — read the
   // utilisation as a ratio between classes, not as an absolute.
   ds.energyBudget += turns * combat.player.energyMax;
+}
+
+// ---- the incoming-damage book (read-only, --incoming) ------------------------
+function newIncomingBook() { return { fights: {}, acts: {} }; }
+// Every class's opening-three total, pooled across the fleet: the one figure
+// a shared pool row (derivedStats hp.base) is sized against.
+const openingAll = [];
+function tallyIncoming(book, combat, run, pool) {
+  let incoming = 0; let hpLost = 0;
+  for (const ev of combat.eventLog) {
+    if (ev.targetId !== 'player') continue;
+    if (ev.type === 'damageDealt') incoming += ev.amount;
+    else if (ev.type === 'hpLost') hpLost += ev.amount;
+  }
+  const key = `${Math.min(run.actNumber || 1, 3)}:${pool}`;
+  (book.fights[key] = book.fights[key] || []).push({ incoming, hpLost, maxHp: combat.player.maxHp });
+  // THE OPENING FIGHTS: the starting pool is what the first fights of a run
+  // are fought on, before a level or a shrine has raised it. Bucketed by the
+  // run's fight ordinal (1, 2, 3), with the HP it walked in on and whether it
+  // walked out.
+  run._fightOrdinal = (run._fightOrdinal || 0) + 1;
+  if (run._fightOrdinal <= 3) {
+    run._openingLost = (run._openingLost || 0) + hpLost;
+    if (run._fightOrdinal === 3 || combat.result !== 'victory') {
+      (book.fights.openingSum = book.fights.openingSum || []).push(run._openingLost);
+      openingAll.push(run._openingLost);
+    }
+    const k = `open:${run._fightOrdinal}`;
+    (book.fights[k] = book.fights[k] || []).push({ incoming, hpLost, maxHp: combat.player.maxHp, hpIn: run.hp, lost: combat.result !== 'victory' });
+  }
+}
+function noteActOpen(book, run, act) {
+  if (!book) return;
+  const row = book.acts[act] = book.acts[act] || { runs: 0, maxHp: 0, level: 0, energyMax: 0 };
+  row.runs++; row.maxHp += run.maxHp; row.level += (run.level && run.level.level) || 1; row.energyMax += run.energyMax || 0;
+}
+function printIncoming(book, runs) {
+  const q = (xs, p) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.min(s.length - 1, Math.floor(p * s.length))] : 0; };
+  const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  for (const n of [1, 2, 3]) {
+    const rows = book.fights[`open:${n}`] || [];
+    if (!rows.length) continue;
+    const lost = rows.map((r) => r.hpLost);
+    console.log(`  incoming run fight #${n}: ${rows.length} fights on mean maxHp ${mean(rows.map((r) => r.maxHp)).toFixed(1)}, walked in on ${mean(rows.map((r) => r.hpIn)).toFixed(1)}` +
+      `  incoming mean ${mean(rows.map((r) => r.incoming)).toFixed(1)}  hp lost mean ${mean(lost).toFixed(1)} median ${q(lost, 0.5)} p90 ${q(lost, 0.9)} max ${Math.max(...lost)}  lost ${rows.filter((r) => r.lost).length}`);
+  }
+  if (book.fights.openingSum) {
+    const sum = book.fights.openingSum;
+    console.log(`  incoming run fights #1-#3 together: hp lost mean ${mean(sum).toFixed(1)} median ${q(sum, 0.5)} p90 ${q(sum, 0.9)} max ${Math.max(...sum)}`);
+  }
+  for (const act of [1, 2, 3]) {
+    const open = book.acts[act];
+    if (open) console.log(`  incoming act ${act}: opened by ${open.runs}/${runs} runs on mean maxHp ${(open.maxHp / open.runs).toFixed(1)} at mean level ${(open.level / open.runs).toFixed(1)}, mean Actions ${(open.energyMax / open.runs).toFixed(2)}`);
+    for (const pool of ['normal', 'elite', 'boss']) {
+      const rows = book.fights[`${act}:${pool}`] || [];
+      if (!rows.length) continue;
+      const inc = rows.map((r) => r.incoming); const lost = rows.map((r) => r.hpLost);
+      console.log(`    ${pool.padEnd(6)} fights ${String(rows.length).padStart(4)} (${(rows.length / runs).toFixed(1)}/run)` +
+        `  incoming mean ${mean(inc).toFixed(1)} p90 ${q(inc, 0.9)}` +
+        `  hp lost mean ${mean(lost).toFixed(1)} median ${q(lost, 0.5)} p90 ${q(lost, 0.9)} max ${Math.max(...lost)}`);
+    }
+  }
 }
 
 // ---- the combat bot (same policy as tests/balance) --------------------------
@@ -263,6 +348,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   if (guard >= 9000) throw new Error(`combat stalled: ${encounterId}`);
   const outcome = combat.result || 'stalemate';
   if (deepStats) tallyFight(deepStats, combat, run.hp);
+  if (INCOMING && run._incoming) tallyIncoming(run._incoming, combat, run, enc.pool);
   // THE WRITE-BACK THE REAL RUN LOOP PERFORMS (engine/runCombat.js runCombatEnd,
   // the first thing main.js onCombatEnd does): HP, Mana and Stamina carry to
   // the next fight, as they do for a player. Only HP used to, so every fight
@@ -343,6 +429,7 @@ function afterVictory(run, rng, pool) {
 function simulateRun(classId, seed, ds = null) {
   const run = createRunState({ seed, classId, registries: REG, attributes: spendAllocation(classId) });
   run._id = createIdGen('sim');
+  if (INCOMING && ds && ds.incoming) run._incoming = ds.incoming;
   run.seenEvents = [];
   const rng = createRng(seed);
   // SPEC §13.4: the seeded order rides its own stream, so drawing it here moves
@@ -378,6 +465,7 @@ function simulateRun(classId, seed, ds = null) {
   for (let act = 1; act <= lastAct; act++) {
     run.actNumber = act;
     result.act = act;
+    noteActOpen(run._incoming, run, act);
     // Endless: acts past 3 reuse act 1-3 content, scaled per completed cycle.
     const { contentAct, loop } = ENDLESS ? endlessActInfo(act) : { contentAct: act, loop: 0 };
     const seat = seatAtTier(run.seatOrder, contentAct);
@@ -478,7 +566,7 @@ function simulateRun(classId, seed, ds = null) {
         // level's points land (plan phase 6). Constitution every time: the
         // greedy pilot measures how many levels the climb pays, not which.
         for (let plan = levelUpPlan(REG, run); plan.offerable; plan = levelUpPlan(REG, run)) {
-          applyLevelUp(REG, run, 'constitution');
+          applyLevelUp(REG, run, levelPick(run));
           result.levelUps = (result.levelUps || 0) + 1;
           levelUps += 1;
         }
@@ -502,14 +590,15 @@ function simulateRun(classId, seed, ds = null) {
 // ---- fleet -------------------------------------------------------------------
 function fleet() {
 console.log(`AshenSpire ${ENDLESS ? `ENDLESS simulation (act cap ${ENDLESS_ACT_CAP})` : 'full-run simulation'} — ${N} runs/class, greedy bot`);
-console.log(`grace refill: ${GRACE_ON ? 'ON' : 'OFF'}` + (SPEND ? `  |  allocation: shipped preset with every movable point moved into ${SPEND}` : '  |  allocation: shipped class presets') + '\n');
+console.log(`grace refill: ${GRACE_ON ? 'ON' : 'OFF'}  |  level-up points into ${LEVEL_STAT}` + (SPEND ? `  |  allocation: shipped preset with every movable point moved into ${SPEND}` : '  |  allocation: shipped class presets') + '\n');
 let crash = null;
 const tally = { wins: 0, runs: 0, acts: 0, eventChoices: 0, questSteps: 0 };
 const skillLevelsByClass = {};
 for (const cls of REG.classes.all()) {
   let wins = 0, acts = 0, floors = 0, maxAct = 0;
   const deaths = {};
-  const ds = DEEP ? newDeepStats() : null;
+  const ds = DEEP || INCOMING ? newDeepStats() : null;
+  if (ds && INCOMING) ds.incoming = newIncomingBook();
   for (let i = 1; i <= N; i++) {
     let r;
     try {
@@ -543,7 +632,8 @@ for (const cls of REG.classes.all()) {
     const line = skillTracks(REG).map((t) => `${t.id} ${((levels[t.id] || 0) / N).toFixed(1)}`).join('  ');
     console.log(`  skill levels/run: ${line}`);
   }
-  if (ds && ds.fights) {
+  if (ds && ds.incoming) printIncoming(ds.incoming, N);
+  if (DEEP && ds && ds.fights) {
     const perTurn = (x) => (x / ds.turns).toFixed(2);
     const perFight = (x) => (x / ds.fights).toFixed(1);
     console.log(
@@ -567,6 +657,11 @@ for (const cls of REG.classes.all()) {
   }
 }
 if (crash) { console.error('\nFULL-RUN SIM FAILED'); process.exit(1); }
+if (INCOMING && openingAll.length) {
+  const sorted = [...openingAll].sort((a, b) => a - b);
+  const at = (p) => sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))];
+  console.log(`\nincoming, every class pooled: HP lost over a run's first three fights — mean ${(sorted.reduce((a, b) => a + b, 0) / sorted.length).toFixed(1)} median ${at(0.5)} p75 ${at(0.75)} p90 ${at(0.9)} over ${sorted.length} runs`);
+}
 console.log(`\ngraces visited ${graces}, flask charges/grants poured ${poured}` + (GRACE_ON && graces && !poured ? '  <-- REFILL RAN DEAD' : ''));
 const levelsPerWin = levelsReachedInWins / Math.max(1, tally.wins);
 const inBand = tally.wins > 0 && levelsPerWin >= 10 && levelsPerWin <= 20;

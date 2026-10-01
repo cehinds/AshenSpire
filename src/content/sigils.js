@@ -2,58 +2,31 @@
 //
 // A sigil is renamed from "rune" because that word is this spec's pre-scrub
 // name for the currency (cinders). Each row is `{ id, name, rarity, cost,
-// blurb, triggers }`, with triggers in the same `{ on, if?, do }` DSL relics
-// and property rules use, so a sigil adds nothing to the engine's vocabulary.
+// blurb }`.
 //
-// OWNED, NOT YET WORKING. §14.6 step 5 sells sigils at the market into the
-// run's inventory (`run.sigils`); a sigil works only while installed in a
-// sigil slot of an equipped armament, and cutting slots and installing sigils
-// is the blacksmith's (step 6). Until then a bought sigil is carried and kept,
-// and its triggers mount nowhere.
+// WHAT IT DOES IS NOT WRITTEN HERE (Codex on #1376; coordinator ruling). A
+// sigil's effect is a property rule, as a relic's and a companion's are: its
+// `family = sigil` row in content/source/tagging.csv names a leaf under the
+// `sigil` branch of `property` in nodes.csv, whose rule lives in
+// nodeEffects.json with its numbers bound to balance.sigils.*. stampTags
+// derives `propertyTags`. Its numbers are Settings rows, so a blurb names
+// none (the rule's own words are nodeTerms.csv's). A sigil set into a slot of
+// an EQUIPPED armament mounts as a `sigil` carrier (engine/properties.js, SPEC §14.4). One carried
+// in `run.sigils`, or slotted in a piece that is not worn, mounts nowhere.
+// validateContent refuses a row that writes `triggers` or `modifiers`, and one
+// with no property tag.
 //
 // PRICES. `cost` is the sigil's own price; the market charges
 // `gameConfig.shops.market.sigils.pricePct` percent of it (content/shops.js),
 // so the owner tunes what the shelf asks in Settings without editing a row.
+// The blacksmith sells no sigils; it cuts slots and sets them (§14.4).
 //
-// LEGENDARY SIGILS are SPEC §15.4's: attuned rather than slotted, authored
-// without triggers, and never shop stock. None ships yet, and validateContent
-// refuses the rarity here until that section lands.
+// LEGENDARY SIGILS are SPEC §15.4's: attuned rather than slotted, with no
+// cost, and never shop stock. None ships yet, and validateContent refuses the
+// rarity here until that section lands.
 export const sigils = [
-  {
-    id: 'emberSigil',
-    name: 'Ember Sigil',
-    rarity: 'common',
-    cost: 180,
-    blurb: 'At the start of each fight, gain 4 Block.',
-    triggers: [{ on: 'combatStart', do: [{ op: 'block', target: 'owner', amount: 4 }] }],
-  },
-  {
-    id: 'thornSigil',
-    name: 'Thorn Sigil',
-    rarity: 'common',
-    cost: 180,
-    blurb: 'The first time you hit with an attack each fight, apply 2 Bleed.',
-    triggers: [{
-      on: 'damageDealt',
-      once: true,
-      if: { p: 'all', preds: [{ p: 'eventIsAttack' }, { p: 'eventSourceIsOwner' }] },
-      do: [{ op: 'applyStatus', status: 'bleed', stacks: 2 }],
-    }],
-  },
-  {
-    id: 'tideSigil',
-    name: 'Tide Sigil',
-    rarity: 'uncommon',
-    cost: 260,
-    blurb: 'Every 5th card you play in a fight draws a card.',
-    triggers: [{ on: 'cardPlayed', if: { p: 'everyNthCardThisCombat', n: 5 }, do: [{ op: 'draw', amount: 1 }] }],
-  },
-  {
-    id: 'hearthSigil',
-    name: 'Hearth Sigil',
-    rarity: 'rare',
-    cost: 360,
-    blurb: 'Whenever you heal, gain 3 Block.',
-    triggers: [{ on: 'healed', if: { p: 'eventTargetIsOwner' }, do: [{ op: 'block', target: 'owner', amount: 3 }] }],
-  },
+  { id: 'emberSigil', name: 'Ember Sigil', rarity: 'common', cost: 180, blurb: 'An ember set in steel: it raises a guard at the start of each fight.' },
+  { id: 'thornSigil', name: 'Thorn Sigil', rarity: 'common', cost: 180, blurb: 'A thorn set in steel: your first attack hit of each fight makes the foe bleed.' },
+  { id: 'tideSigil', name: 'Tide Sigil', rarity: 'uncommon', cost: 260, blurb: 'A tide set in steel: every few cards you play in a fight draw you another.' },
+  { id: 'hearthSigil', name: 'Hearth Sigil', rarity: 'rare', cost: 360, blurb: 'A hearth set in steel: whenever you heal, it raises a guard.' },
 ];
