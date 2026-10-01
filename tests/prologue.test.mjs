@@ -12,6 +12,63 @@ import { prologueArtwork } from '../src/ui/assets.js';
 import { BEDS } from '../src/content/music.js';
 import * as prologueModule from '../src/model/prologue.js';
 import { settingsRowHtml } from '../src/ui/screens/settings.js';
+import {placePrologueCharacter, CHARACTER_LAYER_HEIGHT, prologueTravellerGeometry, prologueTravellerHeightForWidth, prologueTravellerResizeScale} from '../src/ui/prologueCharacter.js';
+
+test('rotated traveller bounds enclose the figure while width scaling preserves its intrinsic size', () => {
+  const near = (actual, expected) => assert.ok(Math.abs(actual-expected)<1e-8, `${actual} != ${expected}`);
+  // A 100x200 figure, 120px side padding and a 64px ground-shadow extension.
+  for (const scale of [1, 1.5]) for (const rotation of [0, 45, 90]) {
+    const width = 340*scale, height = 264*scale;
+    const radians = rotation*Math.PI/180;
+    const anchor = {x:500,y:350};
+    const point = (x,y) => ({x:anchor.x+(x-170*scale)*Math.cos(radians)-(y-200*scale)*Math.sin(radians),
+      y:anchor.y+(x-170*scale)*Math.sin(radians)+(y-200*scale)*Math.cos(radians)});
+    const canvasCorners = [[0,0],[width,0],[0,height],[width,height]].map(([x,y])=>point(x,y));
+    const figureCorners = [[120*scale,0],[220*scale,0],[120*scale,200*scale],[220*scale,200*scale]].map(([x,y])=>point(x,y));
+    const bounds = {left:Math.min(...canvasCorners.map(p=>p.x)),top:Math.min(...canvasCorners.map(p=>p.y))};
+    const geometry = prologueTravellerGeometry({canvasWidth:340,canvasHeight:264,renderedWidth:width,renderedHeight:height,rotation,bounds});
+    near(geometry.anchor.x,anchor.x); near(geometry.anchor.y,anchor.y);
+    near(geometry.left,Math.min(...figureCorners.map(p=>p.x)));
+    near(geometry.top,Math.min(...figureCorners.map(p=>p.y)));
+    near(geometry.width,Math.max(...figureCorners.map(p=>p.x))-geometry.left);
+    near(geometry.height,Math.max(...figureCorners.map(p=>p.y))-geometry.top);
+    near(geometry.intrinsicWidth,100*scale); near(geometry.intrinsicHeight,200*scale);
+    assert.equal(prologueTravellerHeightForWidth(40,geometry.intrinsicWidth*1.25,geometry.intrinsicWidth),50);
+    // Dragging a visible corner 20% of its box width/height scales by 20%,
+    // independent of rotation, while the numeric width above stays intrinsic.
+    near(prologueTravellerResizeScale(geometry,geometry.width*.2,0,'se'),1.2);
+    near(prologueTravellerResizeScale(geometry,0,geometry.height*.2,'se'),1.2);
+    near(prologueTravellerResizeScale(geometry,-geometry.width*.2,-geometry.height*.2,'nw'),1.2);
+    near(prologueTravellerResizeScale(geometry,-geometry.width*.2,0,'se'),.8);
+    if (rotation===0) { near(geometry.left,bounds.left+120*scale); near(geometry.top,bounds.top); }
+  }
+  assert.equal(prologueTravellerHeightForWidth(20,1,100),10);
+  assert.equal(prologueTravellerHeightForWidth(60,300,100),100);
+});
+
+test('traveller poses on added scenes round trip and rotate around the ground anchor', () => {
+  const key = `${PROLOGUE_PREFIX}scenes.extraA.`;
+  const edits = {[key+'character']:true, [key+'actor.desktop.rotation']:17, [key+'actor.desktop.layer']:'front', [key+'actor.mobile.rotation']:-12};
+  const config = prologueConfig(parseAdvancedConfigFile(advancedConfigExport(edits),contentBundle));
+  const scene = config.scenes.find(scene=>scene.id==='extraA');
+  assert.equal(scene.character,true);
+  const desktop = {style:{}}, phone = {style:{}};
+  placePrologueCharacter(desktop,scene.actor.desktop);
+  placePrologueCharacter(phone,scene.actor.mobile);
+  assert.match(desktop.style.transform,/rotate\(17deg\)/);
+  assert.match(phone.style.transform,/rotate\(-12deg\)/);
+  assert.equal(desktop.style.zIndex,'2');
+  assert.equal(phone.style.zIndex,'0');
+  // The expanded shadow canvas must not shift the traveller's ground anchor.
+  const originY = Number.parseFloat(desktop.style.transformOrigin.split(' ')[1])/100;
+  const height = Number.parseFloat(desktop.style.height);
+  const top = 100-Number.parseFloat(desktop.style.bottom)-height;
+  assert.ok(Math.abs(top+height*originY-scene.actor.desktop.y)<1e-9);
+  assert.ok(Math.abs(originY-1/CHARACTER_LAYER_HEIGHT)<1e-9);
+  for (const invalid of [{[key+'actor.desktop.rotation']:181},{[key+'actor.desktop.layer']:'unreachable'}]) {
+    assert.throws(()=>parseAdvancedConfigFile(advancedConfigExport(invalid),contentBundle),/Nothing was imported/);
+  }
+});
 
 test('opening edits round trip through normal game configuration and keep multiline text',()=>{
   const edits = {'gameConfig.prologue.presentation.shadowStrength':.4,'gameConfig.prologue.presentation.transitionSeconds':12.5,'gameConfig.prologue.scenes.night.text':'Ash — 灰\n<still breathing>','gameConfig.prologue.classes.herald.line':'My words.','gameConfig.prologue.labels.setForth':'Go','gameConfig.prologue.scenes.carry.actor.mobile.height':36};
@@ -489,9 +546,16 @@ test('scenes can be added, duplicated, reordered and emptied through named slots
   assert.equal(copy[`${PROLOGUE_PREFIX}scenes.extraA.enabled`], true);
   assert.equal(copy[`${PROLOGUE_PREFIX}scenes.extraA.stage.wash`], .06);
   assert.equal(copy[`${PROLOGUE_PREFIX}scenes.extraA.text`], PROLOGUE_DEFAULTS.scenes.find(s => s.id === 'night').text);
-  // A field the target has no row for is skipped, not invented: the slots have
-  // no traveller, so no actor key is written for one.
-  assert.ok(!Object.keys(prologueSceneCopy({}, 'step', 'extraA')).some(key => key.includes('.actor.')));
+  // A duplicate keeps its traveller too, including the separate phone pose.
+  const traveller = prologueSceneCopy({
+    [`${PROLOGUE_PREFIX}scenes.step.actor.desktop.rotation`]: 17,
+    [`${PROLOGUE_PREFIX}scenes.step.actor.desktop.layer`]: 'front',
+  }, 'step', 'extraA');
+  const imported = parseAdvancedConfigFile(advancedConfigExport(traveller), contentBundle);
+  const duplicate = prologueConfig(imported).scenes.find(scene => scene.id === 'extraA');
+  assert.equal(duplicate.character, true);
+  assert.deepEqual(duplicate.actor.desktop, {...PROLOGUE_DEFAULTS.scenes.find(scene => scene.id === 'step').actor.desktop, rotation:17, layer:'front'});
+  assert.deepEqual(duplicate.actor.mobile, PROLOGUE_DEFAULTS.scenes.find(scene => scene.id === 'step').actor.mobile);
   const withCopy = prologueConfig(copy);
   assert.ok(prologueSequence(withCopy).map(index => withCopy.scenes[index].id).includes('extraA'));
   assert.equal(prologueFreeSlot(withCopy), PROLOGUE_SLOT_IDS[1], 'a filled slot is no longer free');

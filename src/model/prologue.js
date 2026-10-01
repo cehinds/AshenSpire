@@ -344,6 +344,7 @@ export function prologueRows() {
     add([...path,'enabled'], 'Play this scene', scene.name, {note:'Off shortens the opening by one scene. The opening always keeps at least one.'});
     add([...path,'order'], 'Position in the opening', scene.name, {...whole(1,PROLOGUE_DEFAULTS.scenes.length),note:'Scenes play in this order, lowest first. Ties keep their authored order.'});
     add([...path,'art'], 'Scene artwork', scene.name, {...choice(PROLOGUE_ART_CHOICES,PROLOGUE_ART_LABELS),note:'Which painting plays under this scene. Any scene may borrow another scene’s art, or none at all for a text card.'});
+    add([...path,'character'], 'Show traveller sprite', scene.name, {note:'Place the class traveller as a separate sprite over this painting.'});
     add([...path,'banner'], 'Show a title banner', scene.name, {note:'Draws the scene title as a banner across the artwork.'});
     add([...path,'waitForInput'], 'Hold until Continue', scene.name, {note:'This scene never advances on its own, even when scenes advance automatically.'});
     add([...path,'music'], 'Music', scene.name, {...choice(Object.keys(PROLOGUE_MUSIC),PROLOGUE_MUSIC),note:'What plays from this scene onward. Keep leaves whatever the screen before it started.'});
@@ -353,11 +354,17 @@ export function prologueRows() {
     add([...path,'seconds'], 'Scene duration (seconds)', scene.name, {...number(1,180),note:'Total scene time, including its transition. Default: 5 seconds. The final scene waits for Set forth.'});
     add([...path,'effect'], 'Transition effect', scene.name, choice(['fade','dip','push','ash','still'], {fade:'Crossfade',dip:'Fade through black',push:'Slow push',ash:'Ash reveal',still:'Still'}));
     if ('location' in scene) add([...path,'location'], 'Location caption', scene.name, {...text(160),note:'Use {location} to show the actual starting destination.'});
-    if (scene.actor) for (const layout of ['desktop','mobile']) for (const axis of ['x','y','height']) {
-      const note = axis === 'x' ? '0 is the left edge, 50 is center, and 100 is the right edge of the painting.'
-        : axis === 'y' ? 'The point where the traveller’s feet touch the ground: 0 at the top, 100 at the bottom.'
-          : 'Traveller size as a percentage of the artwork height.';
-      add([...path,'actor',layout,axis], `${layout === 'mobile' ? 'Mobile' : 'Desktop'} traveller ${axis === 'height' ? 'height' : axis === 'x' ? 'horizontal position' : 'foot position'} (%)`, scene.name, {...number(axis === 'height' ? 10 : 0,100,1), note});
+    if (scene.actor) for (const layout of ['desktop','mobile']) {
+      const layoutLabel = layout === 'mobile' ? 'Mobile' : 'Desktop';
+      for (const axis of ['x','y','height']) {
+        const note = axis === 'x' ? '0 is the left edge, 50 is center, and 100 is the right edge of the painting.'
+          : axis === 'y' ? 'The point where the traveller’s feet touch the ground: 0 at the top, 100 at the bottom.'
+            : 'Traveller size as a percentage of the artwork height.';
+        add([...path,'actor',layout,axis], `${layout === 'mobile' ? 'Mobile' : 'Desktop'} traveller ${axis === 'height' ? 'height' : axis === 'x' ? 'horizontal position' : 'foot position'} (%)`, scene.name, {...number(axis === 'height' ? 10 : 0,100,1), note});
+      }
+      add([...path,'actor',layout,'rotation'], `${layoutLabel} traveller rotation (degrees)`, scene.name, number(-180,180,1));
+      add([...path,'actor',layout,'layer'], `${layoutLabel} traveller layer`, scene.name,
+        choice(['behindWash','front'], {behindWash:'Behind colour wash',front:'In front of colour wash'}));
     }
     // ONE TOGGLE, THEN THE SCENE'S OWN COPY OF THE WHOLE STAGING.
     add([...path,'ownStaging'], 'Use its own staging', scene.name, {note:'Off follows the opening’s Stage and Text settings. On, the rows below decide this scene alone — one scene may letterbox while the rest fill the frame.'});

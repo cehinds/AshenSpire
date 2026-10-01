@@ -32,7 +32,7 @@ export function updatedXpSnapshot(snapshot, changed) {
     if (value === undefined) delete overrides[key];
     else overrides[key] = value;
   }
-  return advancedConfigSnapshot(overrides);
+  return xpSnapshotWithOverrides(snapshot, overrides);
 }
 
 export function xpSnapshotFromProfile(snapshot, profileSettings = {}) {
@@ -40,7 +40,14 @@ export function xpSnapshotFromProfile(snapshot, profileSettings = {}) {
   for (const [key, value] of Object.entries(profileSettings)) {
     if (isLiveXpSetting(key) && value !== undefined) overrides[key] = value;
   }
-  return advancedConfigSnapshot(overrides);
+  return xpSnapshotWithOverrides(snapshot, overrides);
+}
+
+// XP changes preserve the run's non-XP compatibility contract. In particular,
+// an absent ratingsVersion must stay absent for pre-ratings saves.
+function xpSnapshotWithOverrides(snapshot, overrides) {
+  return { ...snapshot, schemaVersion: snapshot?.schemaVersion ?? ADVANCED_CONFIG_SCHEMA_VERSION,
+    overrides: advancedConfigSnapshot(overrides).overrides };
 }
 
 const PRESENTATION_DEFAULTS = Object.freeze({
