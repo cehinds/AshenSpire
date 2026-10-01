@@ -241,7 +241,7 @@ export function blacksmithTableProblems(table, err) {
 export function applyShopPriceMult(stock, mult) {
   if (!stock || mult === 1) return stock;
   const up = (n) => Math.ceil(n * mult);
-  for (const kind of ['cards', 'relics', 'flasks', 'armour', 'sigils', ...ITEM_LIST_SHELVES]) {
+  for (const kind of ['cards', 'relics', 'flasks', 'armaments', 'armour', 'sigils', ...ITEM_LIST_SHELVES]) {
     if (Array.isArray(stock[kind])) for (const item of stock[kind]) item.cost = up(item.cost);
   }
   if (Number.isFinite(stock.removeCost)) stock.removeCost = up(stock.removeCost);

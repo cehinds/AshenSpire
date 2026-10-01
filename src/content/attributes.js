@@ -89,7 +89,7 @@ export const creationModes = [
     // restatement already (hp 20 → 30, Actions and draw → 3, Mana, Stamina,
     // Poise and Ward → 1), which is why it is not the bare fifth the divisor
     // would have made it.
-    // THAT RETUNE LANDED (A3, 2026-09-27, FINISH D24): hp.base 30 → 51, sized
+    // THAT RETUNE LANDED (A3, 2026-09-27, FINISH D28): hp.base 30 → 51, sized
     // from the simulator's incoming damage over a run's first three fights
     // (`node tools/runsim.mjs 100 --seeded-seats --incoming`), not from the
     // old 70 — a stock Reaver now opens on 70, Starseer 69, Rogue and Herald

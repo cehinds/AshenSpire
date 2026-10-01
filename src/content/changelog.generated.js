@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-01",
     "group": "2026-10-01",
     "summary": "The blacksmith offers equipment, upgrades, sigils, extraction and copy stacking. Trades commit the displayed quote and honor configured deck copy limits",
-    "detail": "Merged as pull request #1390 in development build 0.7.1.722.",
-    "build": "0.7.1.722",
+    "detail": "Custom shop prices apply to weapons too. XP refill callbacks cannot reopen a replaced reward screen, and saved skill curves keep their exact thresholds.",
+    "build": "0.7.1.723",
     "pullRequest": 1390,
     "url": "https://github.com/cehinds/AshenSpire/pull/1390"
   },
@@ -18,7 +18,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-01",
     "summary": "Five class cards can now be drafted, and two enemies leave status cards behind",
     "detail": "Rondel Parry and Sunderplate (Reaver), Astral Insight (Starseer), and Blightward Lash and Last Mercy (Herald) now show up in card rewards and shops for their class; Astral Insight now also costs 1 Stamina and 1 Mana. The Court Surgeon's scalpel now leaves a Wound in your discard pile, and the Husk Brute's bellow leaves a Slimed.",
-    "build": "0.7.1.722",
+    "build": "0.7.1.723",
     "pullRequest": 1388,
     "url": "https://github.com/cehinds/AshenSpire/pull/1388"
   },
@@ -28,7 +28,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-01",
     "summary": "Behind the scenes: the co-op fight's top bar is checked in a real browser",
     "detail": "Nothing you play changes. On a short landscape screen the co-op top bar keeps your health, mana and stamina bars and the Leave button on one line, so the battlefield keeps its height. A new check opens the co-op fight on a phone held upright, a phone held sideways and a laptop screen, and fails if anything in that bar overlaps, gets cut off, goes missing or pushes the page sideways.",
-    "build": "0.7.1.722",
+    "build": "0.7.1.723",
     "pullRequest": 1382,
     "url": "https://github.com/cehinds/AshenSpire/pull/1382"
   },
@@ -38,7 +38,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-01",
     "summary": "More health to start a climb, and a fourth Action at Dexterity 4",
     "detail": "Every new character opens with 21 more HP: a Reaver on 70, a Starseer on 69, a Rogue or Herald on 59, sized so the first three fights of a climb rarely take the whole pool. Dexterity now buys an extra Action from 4 points instead of 5, so you can start with four Actions by putting all three creation points into Dexterity, or reach it within three level-ups. Runs already under way keep the numbers they started with.",
-    "build": "0.7.1.722",
+    "build": "0.7.1.723",
     "pullRequest": 1383,
     "url": "https://github.com/cehinds/AshenSpire/pull/1383"
   },
@@ -48,7 +48,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-01",
     "summary": "You draw more cards each turn",
     "detail": "A new character now draws 3 cards at the start of each turn instead of 2, and still keeps the cards it did not play, up to its hand size. Cards and relics that draw more matter again because the hand is no longer full every turn. Advanced → Stats → Draw & hand still lets you fill the hand to its size each turn or discard unplayed cards at the end of the turn. Runs already under way keep the draw they started with.",
-    "build": "0.7.1.722",
+    "build": "0.7.1.723",
     "pullRequest": 1381,
     "url": "https://github.com/cehinds/AshenSpire/pull/1381"
   },
@@ -58,7 +58,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-01",
     "summary": "The Fullscreen switch stays on screen in Settings, and three release checks pass again",
     "detail": "The Preview sample at the top of Settings › General › Display and Accessibility now starts folded; open, it pushed the Fullscreen switch below the bottom of a phone screen at the largest text size when Settings was opened mid-fight. Tap Preview to open it, and it stays open next time. Behind the scenes, two automated checks that failed on the release build are fixed: one reported a clean browser run as a failure because of how it worded its result, and the build ran out of memory on macOS.",
-    "build": "0.7.1.722",
+    "build": "0.7.1.723",
     "pullRequest": 1346,
     "url": "https://github.com/cehinds/AshenSpire/pull/1346"
   },
@@ -67,8 +67,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-01",
     "group": "2026-10-01",
     "summary": "Behind the scenes: record the agreed external-art and offline-download plan",
-    "detail": "Merged as pull request #1392 in development build 0.7.1.722.",
-    "build": "0.7.1.722",
+    "detail": "Merged as pull request #1392 in development build 0.7.1.723.",
+    "build": "0.7.1.723",
     "pullRequest": 1392,
     "url": "https://github.com/cehinds/AshenSpire/pull/1392"
   },
@@ -77,8 +77,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-01",
     "group": "2026-10-01",
     "summary": "Behind the scenes: builds come from CI instead of repository copies",
-    "detail": "Merged as pull request #1333 in development build 0.7.1.722.",
-    "build": "0.7.1.722",
+    "detail": "Merged as pull request #1333 in development build 0.7.1.723.",
+    "build": "0.7.1.723",
     "pullRequest": 1333,
     "url": "https://github.com/cehinds/AshenSpire/pull/1333"
   },

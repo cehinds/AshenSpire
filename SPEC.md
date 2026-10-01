@@ -318,12 +318,12 @@ owner's budget: a row's attribute weights sum to about 2; Mana's and Stamina's t
 
 | Row (id) | Base | STR | DEX | CON | WIS | INT | Per level | Min–max | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| HP (`hp`) | 51 | 0.35 | — | 4 | 0.1 | — | 2 | — | Base 30 → 51 (A3, FINISH D24, 2026-09-27): the lowest stock pool covers the simulator's 90th-percentile HP lost over a run's first three fights; stock pools Reaver 70, Starseer 69, Rogue and Herald 59. The run clamps max HP to ≥ 1. |
+| HP (`hp`) | 51 | 0.35 | — | 4 | 0.1 | — | 2 | — | Base 30 → 51 (A3, FINISH D28, 2026-09-27): the lowest stock pool covers the simulator's 90th-percentile HP lost over a run's first three fights; stock pools Reaver 70, Starseer 69, Rogue and Herald 59. The run clamps max HP to ≥ 1. |
 | Mana (`mana`) | 1 | 0.125 | — | 0.25 | 0.5 | 0.125 | 0.2 | — | Budget 1; Wisdom leads. |
 | Stamina (`stamina`) | 1 | 0.25 | 0.25 | 0.5 | — | — | 0.2 | — | Budget 1. |
-| Actions / turn (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | DEX 0.2 → 0.25 (A3, FINISH D24, 2026-09-27): the first extra Action at DEX 4, the lean creation ceiling, so it is reachable at creation and three level-ups from DEX 1. Engine id stays `energy`. |
+| Actions / turn (`energy`) | 3 | 0.1 | 0.25 | — | 0.01 | 0.01 | 0.1 | — | DEX 0.2 → 0.25 (A3, FINISH D28, 2026-09-27): the first extra Action at DEX 4, the lean creation ceiling, so it is reachable at creation and three level-ups from DEX 1. Engine id stays `energy`. |
 | Opening hand (`openingHand`) | per class | per class | per class | — | per class | per class | — | 4–6 | #1294's class hand: base 3/4/4/5 and 0.5 on the primary (STR/DEX/WIS/INT) for Reaver/Rogue/Herald/Starseer, counted from 1 (§4.1). Shared fallback: 4 + 0.5 INT. |
-| Draw / turn (`draw`) | 3 | — | — | — | — | 0.2 | — | 2–10 | Counted from INT 4 (`attributeBaseline: 4`); every fight, co-op included. Base 3 since FINISH D22 (2026-09-27; was 2, the retired hand rules `turn` group): the largest draw a retained hand of 7 is never capped at on creation — 5 was capped on 47–83% of turns in the simulator. A run born earlier keeps its snapshotted base. |
+| Draw / turn (`draw`) | 3 | — | — | — | — | 0.2 | — | 2–10 | Counted from INT 4 (`attributeBaseline: 4`); every fight, co-op included. Base 3 since FINISH D27 (2026-09-27; was 2, the retired hand rules `turn` group): the largest draw a retained hand of 7 is never capped at on creation — 5 was capped on 47–83% of turns in the simulator. A run born earlier keeps its snapshotted base. |
 | Hand size (`handSize`) | 7 | — | — | — | — | 0.2 | — | 1–30 | Counted from INT 1 (`attributeBaseline: 1`): exactly the retired `capacity` group at every INT (it also replaced `balance.handMax`). |
 | AR (`ar`) | 0 | 0.75 | 0.5 | 0.25 | 0.25 | 0.25 | — | — | Read while combat ratings are on. |
 | DR (`dr`) | 0 | 0.5 | 0.75 | 0.25 | 0.35 | 0.15 | — | — | 〃 |
@@ -813,7 +813,7 @@ cards by the run's three hand rows of §3.5 — **Opening hand** (`openingHand`)
 run. Advanced → Stats → Draw & hand edits those rows with the same fields as every other stat,
 beside the hand's behaviour options, which are not stat rows: retain, optional discard prompt,
 discard limit, replacement draws, overflow, reshuffle and draw mode (`content/handRules.js`).
-The opening hand is also bounded by the hand size. **Solo default (FINISH D22, decided 2026-09-27 under the
+The opening hand is also bounded by the hand size. **Solo default (FINISH D27, decided 2026-09-27 under the
 owner's delegation): retain the hand; draw the Draw stat each turn, up to capacity.** Unplayed cards stay
 in hand at turn end (nothing is discarded), and each later turn draws a **fixed** number — the
 Draw / turn row, never past the hand size (a data row). Both other modes stay selectable: fill
