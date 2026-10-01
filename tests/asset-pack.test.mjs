@@ -12,7 +12,7 @@ import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, wr
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { buildManifest, serialize, MANIFEST_PATH } from '../tools/art-manifest.mjs';
-import { planPacks, renderPacks, verifyPacks, writePacks, objectPath, PACKS } from '../tools/asset-pack.mjs';
+import { guardOut, planPacks, renderPacks, verifyPacks, writePacks, objectPath, PACKS } from '../tools/asset-pack.mjs';
 
 const sha = (buf) => createHash('sha256').update(buf).digest('hex');
 
@@ -222,4 +222,15 @@ test('the real tree plans cleanly: the common pack holds the 15 faces, the licen
   const { summary } = renderPacks(plan);
   assert.match(summary.packs.common.index, /^packs\/common-[0-9a-f]{12}\.json$/);
   assert.match(summary.fonts.file, /^packs\/fonts-[0-9a-f]{12}\.js$/);
+});
+
+test('--out: a directory inside the checkout named like `..cache` is refused, a real parent is not', () => {
+  const root = join(tmpdir(), 'asset-pack-root');
+  assert.throws(() => guardOut(join(root, '..cache'), root), /write under build\/ or dist\//, '`..cache` is inside the checkout');
+  assert.throws(() => guardOut(join(root, '..cache', 'packs'), root), /write under build\/ or dist\//);
+  assert.throws(() => guardOut(join(root, 'src'), root), /write under build\/ or dist\//);
+  assert.throws(() => guardOut(root, root), /not the repository root/);
+  assert.doesNotThrow(() => guardOut(join(root, 'build', 'asset-pack'), root));
+  assert.doesNotThrow(() => guardOut(join(root, '..', 'elsewhere'), root));
+  assert.doesNotThrow(() => guardOut(join(root, '..'), root));
 });

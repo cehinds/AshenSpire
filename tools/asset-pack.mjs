@@ -52,7 +52,7 @@
 
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, extname, join, relative, resolve } from 'node:path';
+import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MIME } from './assetmime.mjs';
 import { MANIFEST_PATH, canonicalBytes, commonSources, isCommonEntry } from './art-manifest.mjs';
@@ -176,10 +176,13 @@ export function renderPacks(plan) {
 }
 
 /** Refuse an output directory that would put packs/ or objects/ into the tracked tree. */
-function guardOut(out, root) {
-  const r = posix(relative(root, out));
+export function guardOut(out, root) {
+  const rel = relative(root, out);
+  const r = posix(rel);
   if (!r || r === '.') throw new Error('--out must be a directory of its own, not the repository root');
-  if (r.startsWith('..') || /^[A-Za-z]:/.test(r)) return; // outside the checkout: the caller's business
+  // Outside the checkout only when the first segment IS `..` (or the path is
+  // on another drive): `..cache` is a directory inside the checkout.
+  if (r === '..' || r.startsWith('../') || rel.startsWith(`..${sep}`) || isAbsolute(rel)) return; // the caller's business
   if (!/^(build|dist)\//.test(`${r}/`)) {
     throw new Error(`--out ${r}: write under build/ or dist/ (ignored by .gitignore), or outside the checkout`);
   }
