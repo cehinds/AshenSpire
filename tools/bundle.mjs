@@ -17,6 +17,7 @@ import { MIME, runtimeAsset } from './assetmime.mjs';
 import { MOBILE_ASSET_DIR, MOBILE_BUNDLE_BUDGET_BYTES, distinctAssetId } from './mobileart-policy.mjs';
 import { headMetaTags } from './head-meta.mjs';
 import { writePacks, guardOut, realOut, objectPath } from './asset-pack.mjs';
+import { externalizeCss, newTemplate, templateValue, slotIds } from './asset-css.mjs';
 import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_FULL, EDITION_MOBILE, EDITION_LIGHT } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -128,9 +129,10 @@ function idOf(absPath) {
 // memory, with each index's sha256 and the default tier, and writes
 // `asset-base.json` ({"base":"./"}) beside the HTML. At boot the loader checks
 // each index against that pin and resolves ids to objects through
-// setBuiltInSource(). CSS url()s name the default tier's objects directly (the
-// ASSET_CSS template is step 3b). map-detail/ and music/ are still copied
-// beside the HTML until step 3c reads them through the common index.
+// setBuiltInSource(). The CSS assets (the fonts and backdrops) are ASSET_CSS
+// slots the loader fills from the index it used, and the two SVG masks are
+// inlined (step 3b, tools/asset-css.mjs). map-detail/ and music/ are still
+// copied beside the HTML until step 3c reads them through the common index.
 //
 // `--mobile`: a THIRD shape, and the second single file. The same bundle, the
 // same `assets/…` keys, but every art payload is read from assets-mobile/ — the
@@ -478,13 +480,23 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
 // ---------------------------------------------------------------------------
 const ASSET_PACKS_ID = 'src/ui/assetPacks.js';
 const ASSET_PACKS_MARKERS = /\/\* ASSET_PACKS_START \*\/[\s\S]*?\/\* ASSET_PACKS_END \*\//;
+const ASSET_CSS_MARKERS = /\/\* ASSET_CSS_START \*\/[\s\S]*?\/\* ASSET_CSS_END \*\//;
 const DEFAULT_TIER = LIGHT ? 'light' : 'high';
 const WEB_PACKS = LIGHT ? ['light', 'common'] : ['high', 'light', 'common'];
 let packSummary = null;
-const cssObjects = new Map(); // `assets/…` id → objects/… path, for the CSS url() pass
+const cssObjects = new Map(); // `assets/…` id → objects/… path: the default tier's and common's, for the inlined masks
 if (sources.has(ASSET_PACKS_ID) && !ASSET_PACKS_MARKERS.test(sources.get(ASSET_PACKS_ID))) {
   fail(`${ASSET_PACKS_ID} has lost its ASSET_PACKS markers — the bundler anchors on them`);
 }
+if (sources.has(ASSET_PACKS_ID) && !ASSET_CSS_MARKERS.test(sources.get(ASSET_PACKS_ID))) {
+  fail(`${ASSET_PACKS_ID} has lost its ASSET_CSS markers — the bundler anchors on them`);
+}
+// The web edition's stylesheets, href → CSS to inline, written in 2b (step 3b);
+// the single files never fill it and inline through inlineCssUrls below.
+const externalStyles = new Map();
+let assetCss = null;
+let cssSlotUrls = 0;
+let cssMasksInlined = 0;
 if (EXTERNAL_ART) {
   if (!sources.has(ASSET_PACKS_ID)) fail(`${ASSET_PACKS_ID} is not in the import graph — the web edition would pin packs nothing loads`);
   try {
@@ -494,7 +506,7 @@ if (EXTERNAL_ART) {
       (e.problems || []).slice(0, 8).map((message) => ({ message })));
   }
   if (packSummary) {
-    // CSS names the default tier's objects, and the common pack's for fonts.
+    // The masks are inlined from the default tier's objects (2b's CSS pass below).
     for (const pack of ['common', DEFAULT_TIER]) {
       const entries = JSON.parse(readFileSync(resolve(OUT_DIR, packSummary.packs[pack].index), 'utf8'));
       for (const [id, [sha]] of Object.entries(entries)) cssObjects.set(id, objectPath(sha, id));
@@ -509,6 +521,51 @@ if (EXTERNAL_ART) {
     // A replacer FUNCTION, for the reason the ASSET_MAP one gives.
     sources.set(ASSET_PACKS_ID, sources.get(ASSET_PACKS_ID).replace(ASSET_PACKS_MARKERS,
       () => `/* ASSET_PACKS_START */\nexport const ASSET_PACKS = ${JSON.stringify(pin)};\n/* ASSET_PACKS_END */`));
+
+    // THE CSS ASSETS (step 3b; tools/asset-css.mjs says the shape). Here, not
+    // in section 4, because the template is stamped into a MODULE, and the
+    // modules are transformed before the HTML is assembled. The fonts' and
+    // backdrops' url()s become ASSET_CSS slots, which the loader fills from
+    // the index it actually used; the two SVG masks are inlined from their
+    // objects. Every slot must name an id the loader can find whichever tier
+    // it ends on: the common pack (the fonts), or EVERY art tier this build
+    // carries (high and light on a high-default build), so the high → light
+    // fallback has a light backdrop to show.
+    const template = newTemplate();
+    const lists = Object.fromEntries(WEB_PACKS.map((pack) => [pack,
+      new Set(Object.keys(JSON.parse(readFileSync(resolve(OUT_DIR, packSummary.packs[pack].index), 'utf8'))))]));
+    const idFor = (cssAbs) => (ref) => {
+      const fromAssets = relative(ASSET_DIR, resolve(dirname(cssAbs), ref.split('?')[0].split('#')[0]));
+      // The packs carry assets/ ids only. A url naming anything else is not
+      // shipped by this mode at all, so it would be a guaranteed 404.
+      if (fromAssets.startsWith('..')) fail(`CSS url outside assets/ cannot ship with --external-art: ${ref}`);
+      return posix.join('assets', fromAssets.split(/[\\/]/g).join('/'));
+    };
+    const inlineData = (id) => {
+      const rel = cssObjects.get(id);
+      if (!rel) fail(`CSS url names ${id}, which no ${DEFAULT_TIER} or common pack index lists`);
+      return `data:${MIME[extname(id).toLowerCase()]};base64,${readAssetBytes(resolve(OUT_DIR, rel)).toString('base64')}`;
+    };
+    for (const href of cssHrefs) {
+      const cssAbs = resolve(ROOT, href);
+      if (!existsSync(cssAbs)) fail('stylesheet not found: ' + href);
+      try {
+        externalStyles.set(href, externalizeCss(readText(cssAbs), { idFor: idFor(cssAbs), inlineData, template }));
+      } catch (e) {
+        fail(`${href}: ${e.message}`);
+      }
+    }
+    assetCss = templateValue(template);
+    const artTiers = WEB_PACKS.filter((pack) => pack !== 'common');
+    for (const id of slotIds(assetCss)) {
+      if (lists.common.has(id)) continue;
+      const missing = artTiers.filter((pack) => !lists[pack].has(id));
+      if (missing.length) fail(`CSS url names ${id}, which the ${missing.join(' and ')} pack index${missing.length > 1 ? 'es do' : ' does'} not list — the loader could not fill its ASSET_CSS slot on that tier`);
+    }
+    cssSlotUrls = template.urls - template.inlined;
+    cssMasksInlined = template.inlined;
+    sources.set(ASSET_PACKS_ID, sources.get(ASSET_PACKS_ID).replace(ASSET_CSS_MARKERS,
+      () => `/* ASSET_CSS_START */\nexport const ASSET_CSS = ${JSON.stringify(assetCss)};\n/* ASSET_CSS_END */`));
   }
 }
 
@@ -714,9 +771,16 @@ for (const id of order) {
 // added later). Rewrite each url() to a base64 data: URI, resolved relative to
 // the stylesheet. Absolute/remote/data: urls are left alone; a missing file is
 // a hard fail rather than a silently blank background.
+//
+// The web edition (--external-art) does not come through here: its url()s
+// became ASSET_CSS slots and inlined masks in section 2b (tools/asset-css.mjs).
+// Left alone they would be wrong twice over: authored relative to the
+// STYLESHEET (`../assets/bg/bg_act1.webp` from styles/), they resolve against
+// the DOCUMENT once inlined into a <style> and climb out of the output folder;
+// and a url() that names one tier's object directly bypasses the loader, so a
+// high-default build whose high index failed would still ask for high objects.
 let inlinedAssets = 0;
 let inlinedAssetBytes = 0;
-let externalCssUrls = 0;
 
 function inlineCssUrls(css, cssAbs) {
   return css.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (whole, _q, ref) => {
@@ -739,39 +803,6 @@ function inlineCssUrls(css, cssAbs) {
       inlinedAssetBytes += buf.length;
       return `url("data:${mime};base64,${buf.toString('base64')}")`;
     }
-    if (EXTERNAL_ART) {
-      // REWRITTEN, NOT LEFT ALONE, AND THAT DISTINCTION IS THE WHOLE BUG.
-      //
-      // These urls are authored relative to the STYLESHEET (`../assets/bg/
-      // bg_act1.webp` from styles/). Inlining the CSS into the HTML moves the
-      // base: a relative url in a <style> block resolves against the DOCUMENT.
-      // Left untouched, `../assets/…` would climb out of the output directory
-      // and 404 — silently, as a blank act backdrop, which is exactly the
-      // failure mode the paragraph above this function was written about.
-      //
-      // So resolve against the stylesheet as before, then re-express relative
-      // to the output HTML. Same file, correct base.
-      // Point at the OBJECT, not the source. The first cut of this rebased onto
-      // `assetAbs` — the file in the source tree — and emitted
-      // `../../assets/bg/bg_act1.webp`, which climbs out of the output
-      // directory into the repo. It happens to resolve when the output sits
-      // two levels under the root and 404s everywhere else, including on the
-      // published site. The art beside the HTML is the pack store now, so a
-      // url names the default tier's object for that id (the common pack's
-      // for a font), relative to the HTML.
-      const fromAssets = relative(ASSET_DIR, assetAbs);
-      if (fromAssets.startsWith('..')) {
-        // The packs carry assets/ ids only. Anything outside it is not shipped
-        // by this mode at all, so a url naming it would be a guaranteed 404 —
-        // refuse rather than emit a path to a file that will not be there.
-        fail(`CSS url outside assets/ cannot ship with --external-art: ${ref}`);
-      }
-      const id = posix.join('assets', fromAssets.split(/[\\/]/g).join('/'));
-      const rel = cssObjects.get(id);
-      if (!rel) fail(`CSS url names ${id}, which no ${DEFAULT_TIER} or common pack index lists`);
-      externalCssUrls += 1;
-      return `url("${rel}")`;
-    }
     const buf = readAssetBytes(assetAbs);
     inlinedAssets += 1;
     inlinedAssetBytes += buf.length;
@@ -783,7 +814,7 @@ function inlineCssUrls(css, cssAbs) {
 const styleBlocks = cssHrefs.map((href) => {
   const cssAbs = resolve(ROOT, href);
   if (!existsSync(cssAbs)) fail('stylesheet not found: ' + href);
-  const css = inlineCssUrls(readText(cssAbs), cssAbs);
+  const css = EXTERNAL_ART ? externalStyles.get(href) : inlineCssUrls(readText(cssAbs), cssAbs);
   return `  <style data-src="${href}">\n${css}\n  </style>`;
 });
 
@@ -1182,7 +1213,7 @@ if (EXTERNAL_ART) {
   }
   if (packSummary.fonts) console.log(`  font sidecar     : ${packSummary.fonts.faces} faces → ${packSummary.fonts.file}`);
   console.log('  default tier     : ' + DEFAULT_TIER + (DEFAULT_TIER === 'high' ? ' (falls back to light)' : ''));
-  console.log('  css assets linked: ' + externalCssUrls + ' (to ' + DEFAULT_TIER + '/common objects beside the output HTML)');
+  console.log('  css assets       : ' + cssSlotUrls + ' url()s → ' + (assetCss ? assetCss.rules.length : 0) + ' ASSET_CSS rules, filled from the index the loader uses; ' + cssMasksInlined + ' SVG mask url()s inlined');
   if (staleTree) console.log('  retired          : ' + staleTree + '/ (the pre-pack copy of the art)');
   console.log('  map detail       : ' + copiedDetail + ' tiles → ' + idOf(resolve(OUT_DIR, 'map-detail'))
     + (copiedDetail ? '' : ' (none found — the map falls back to low detail)'));
