@@ -386,6 +386,7 @@ test('FINISH: a level-4 track respecs to level 1 with xp 0, and the pool gains f
   // A flat curve (every step 100 XP) makes a level-4 track with 200 row XP one that spent 500 above level 1.
   const balance = structuredClone(contentBundle.balance);
   balance.skill.xp.multScaler = 0;
+  balance.skill.xp.growth = 1;
   const registries = createRegistries({ ...contentBundle, balance, shops: registriesWith(ALL_OUT).shops });
   assert.equal(respecRefundPct(registries), 60);
   const { run } = masterRun(registries);

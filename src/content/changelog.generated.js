@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: a flask check that had stopped working runs again",
     "detail": "Nothing you play changes. A check makes sure flasks on the map offer the same choices as flasks in a fight. It had stopped looking at the Potions button you use on the map, and nothing ran it, so it failed without anyone noticing. It now follows that Potions button to the choices each flask offers, and the test suite runs it on every change.",
-    "build": "0.7.1.751",
+    "build": "0.7.1.753",
     "pullRequest": 1447,
     "url": "https://github.com/cehinds/AshenSpire/pull/1447"
+  },
+  {
+    "id": "pr-1386",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Skills and your class get dearer with every level",
+    "detail": "Every weapon, armour, focus, dual-wield and class skill still needs 100 XP for its first level, but each level after now costs 1.75 times the one before (100, 175, 305, 535, 940) instead of 130 more. Like any XP setting, this reaches a run you already started the next time you load it. Your character level is unchanged.",
+    "build": "0.7.1.752",
+    "pullRequest": 1386,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1386"
   },
   {
     "id": "pr-1444",
