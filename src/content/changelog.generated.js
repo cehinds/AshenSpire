@@ -8,9 +8,49 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Escape and the controller's B button take you back",
     "detail": "Run history, the Compendium, Custom Climb, character creation, the LAN lobby, a conversation, a reward's detail view, the quest board and the \"safe to close\" screen now go back when you press Escape or B, the same as pressing their Back button. On a controller, B now also closes Settings, About, Profile and the Armoury, as Escape already did. On the map, Escape or B puts away the selected room's tray. Each press goes back one step: an open tooltip closes first, then a menu or the dialog on top, and only then the screen. Where going back would give something up, Escape and B do nothing, so you have to choose to leave: a shop, the Shrine, your rewards, a fight (they never end your turn), the map, or a finished run.",
-    "build": "0.7.1.756",
+    "build": "0.7.1.760",
     "pullRequest": 1463,
     "url": "https://github.com/cehinds/AshenSpire/pull/1463"
+  },
+  {
+    "id": "pr-1448",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: co-op enemy effects on your cards are tested for every player",
+    "detail": "Nothing you play changes. New tests check that an enemy move which makes players draw, discard, exhaust, or shuffle their discard pile back into their deck does it to every living player in a co-op fight, and not to a player who is down or disconnected.",
+    "build": "0.7.1.759",
+    "pullRequest": 1448,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1448"
+  },
+  {
+    "id": "pr-1445",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The opening's words sit in the middle of the caption band",
+    "detail": "The narration is now centred top to bottom in the fixed caption band, not pinned to its top. On a phone turned on its side, where the words sit in a panel beside the painting, the panel now fills its whole column instead of a thin strip at the top.",
+    "build": "0.7.1.758",
+    "pullRequest": 1445,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1445"
+  },
+  {
+    "id": "pr-1461",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition opens by double-click",
+    "detail": "Behind the scenes: the web edition's game file, kept together with its folder of art, now plays when opened straight from disk, with its art, fonts and map close-ups, and the music played by the game's own synthesizer; nothing you play changes.",
+    "build": "0.7.1.757",
+    "pullRequest": 1461,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1461"
+  },
+  {
+    "id": "pr-1449",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Warrior's Vow lets you choose your stance",
+    "detail": "Playing Warrior's Vow used to put you in Gorefire Stance every time, though the card promised a stance of your choice. Now it asks: you pick Gorefire, Bulwark or Brace, each with what it does, and that is the stance you enter. Cancel keeps the card in your hand. It works the same in co-op, and on a shared couch screen the chooser keeps the keyboard while it is open: Tab moves between the stances instead of switching player, and the card and End Turn keys wait until you choose.",
+    "build": "0.7.1.756",
+    "pullRequest": 1449,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1449"
   },
   {
     "id": "pr-1465",

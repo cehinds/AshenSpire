@@ -129,7 +129,12 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   // too short for that (a phone on its side) keeps that size and scrolls.
   const MIN_DIALOGUE_PX = 12;
   let currentStage = null, fit = 1, fitKey = '';
-  const fixedCaption = stage => stage.captionFixedHeight === true && (stage.layout === 'caption' || stage.layout === 'letterbox');
+  // On a short landscape screen the caption layout is a side panel (the
+  // stylesheet's max-height:500px fallback): it fills its column, so there is
+  // no band to fit. The editor's phone preview stays one column in any window.
+  const shortLandscape = matchMedia('(max-height:500px) and (orientation:landscape)');
+  const fixedCaption = stage => stage.captionFixedHeight === true
+    && (stage.layout === 'letterbox' || (stage.layout === 'caption' && !(shortLandscape.matches && !root.closest('.pse-phone'))));
   function measureFit() {
     const scenes = order.map(index => config.scenes[index])
       .map((scene, at) => ({at, stage: prologueStaging(config,scene), copy: prologueCopy(scene,config,{classId,name:run.customization?.name || 'Forsaken',location:destination.name})}))
@@ -204,7 +209,17 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     return fit;
   }
   const refit = () => { fitKey = ''; if (currentStage && !stopped) applyStaging(currentStage); };
-  const changed = () => { if (currentStage && fixedCaption(currentStage) && fitMetrics() !== fitKey) refit(); };
+  // Fixed height, not fixedCaption(): turning a phone onto its side swaps the
+  // band for a panel, and the words must leave the fitted size behind.
+  // It compares against what it last saw, not against fitKey: a panel stage is
+  // never measured, so fitKey would never catch up and every callback would
+  // re-stage the scene.
+  let seen = '';
+  const changed = () => {
+    if (currentStage?.captionFixedHeight !== true) return;
+    const key = fitMetrics();
+    if (key !== seen) { seen = key; refit(); }
+  };
   const resized = typeof ResizeObserver === 'function' ? new ResizeObserver(changed) : null;
   resized?.observe(root);
   // Text size is written on <html> (UI size and readable headings on <body>)
