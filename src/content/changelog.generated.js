@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: a flask check that had stopped working runs again",
     "detail": "Nothing you play changes. A check makes sure flasks on the map offer the same choices as flasks in a fight. It had stopped looking at the Potions button you use on the map, and nothing ran it, so it failed without anyone noticing. It now follows that Potions button to the choices each flask offers, and the test suite runs it on every change.",
-    "build": "0.7.1.740",
+    "build": "0.7.1.741",
     "pullRequest": 1447,
     "url": "https://github.com/cehinds/AshenSpire/pull/1447"
+  },
+  {
+    "id": "pr-1439",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the rules for legendary sigils are written down",
+    "detail": "This is a docs-only change, and nothing you play changes yet. The design document now says how a legendary sigil works. You attune it in the Armoury, out of a fight, up to a set number at a time, and it works in every fight while attuned, with no slot or weapon needed. Only a fight or a treasure room can drop one, never a shop, and none drops until you raise its chance in Settings. A save from before keeps its sigils and starts with none attuned.",
+    "build": "0.7.1.740",
+    "pullRequest": 1439,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1439"
   },
   {
     "id": "pr-1446",
