@@ -39,6 +39,7 @@
 // index page proven to link every build it lists.
 import { readGitArtifact } from './git-artifact.mjs';
 import { OG_IMAGE } from './og-image.mjs';
+import { folderZipBytes, zipFolderName } from '../src/model/offlineDownload.js';
 import { ASSET_BASE_FILE, packPinOf, packPages, publishPack, serviceWorkerFindings, storeFindings, writeServiceWorker } from './pages-store.mjs';
 import { SW_FILE, SW_KILL, SW_VERSION, serviceWorkerSource } from './pages-sw.mjs';
 import { objectPath } from './asset-pack.mjs';
@@ -446,6 +447,18 @@ function rebuiltEdition(fullArt, hasMobile) {
   return fullArt || hasMobile ? 'full' : 'light';
 }
 const sha256 = (buf) => createHash('sha256').update(buf).digest('hex');
+
+/**
+ * The exact size of the in-game folder copy (step 7) of a pack build whose
+ * page is `html`, from the store under `outDir` (src/model/offlineDownload.js
+ * folderZipBytes: the same layout assembleZip writes), or null when a pinned
+ * file is missing (that build is already red by its own row).
+ */
+function zipBytesFor(outDir, b, html) {
+  try {
+    return folderZipBytes({ html, folder: zipFolderName(b.branch, `${b.version}.${b.ordinal}`), read: (rel) => readFileSync(join(outDir, rel)) });
+  } catch { return null; }
+}
 let mainHeadSha = null;
 
 /** Throws when a branch that must serve its head lost the head's own build. */
@@ -885,8 +898,14 @@ function publishBuild(outDir, b, a) {
   // pack build that page is a 9.5 MB HTML with no art. null is a size it
   // refuses ("Download information is not ready yet"), so an old copy says it
   // cannot download rather than saving a game with no art. The page's own size
-  // is `pageBytes`.
-  const top = b.shape === 'pack' ? { bytes: null, pageBytes: html.length } : { bytes: html.length };
+  // is `pageBytes`. For the in-game folder copy (step 7) a pack build also
+  // records the page's sha256, which the zip checks the page against, and
+  // `zipBytes`, the exact size of the zip the game assembles from it (read
+  // from the store just published), which the screen shows before anything
+  // is fetched.
+  const top = b.shape === 'pack'
+    ? { bytes: null, pageBytes: html.length, pageSha256: sha256(html), zipBytes: zipBytesFor(outDir, b, html) }
+    : { bytes: html.length };
   writeFileSync(join(dir, 'build.json'), JSON.stringify({ branch: b.branch, ordinal: b.ordinal, version: b.version, ...top, mobileBytes: b.mobileBytes ?? null, edition: b.edition, shape: b.shape, tier: b.tier ?? null, download: b.download ?? null, digest: b.digest, built: b.built, commit: b.sha, source: b.source, changelog: changelogUrl(b), stamp: stampOf(b) }, null, 2) + '\n');
   // The proof: what was written is the blob (or the rebuild), byte for byte.
   if (Buffer.compare(readFileSync(join(dir, 'index.html')), html) !== 0) throw new Error(`${rel}: written build differs from its source`);
@@ -1083,7 +1102,11 @@ function check(outDir) {
     const onDisk = readFileSync(join(bdir, 'index.html'));
     const download = JSON.parse(readFileSync(join(bdir, 'build.json'), 'utf8'));
     const pageBytes = b.shape === 'pack' ? download.pageBytes : download.bytes;
-    if (pageBytes !== onDisk.length || download.ordinal !== b.ordinal || download.version !== b.version) {
+    // zipBytes is judged only when the store lets it be measured: a missing
+    // pinned file is red by its own row (MISSING INDEX), not twice.
+    const zipNow = b.shape === 'pack' ? zipBytesFor(outDir, b, onDisk) : null;
+    if (pageBytes !== onDisk.length || download.ordinal !== b.ordinal || download.version !== b.version
+      || (b.shape === 'pack' && (download.pageSha256 !== sha256(onDisk) || (zipNow !== null && download.zipBytes !== zipNow)))) {
       red(`DOWNLOAD DRIFT ${d.branch}/${b.ordinal}: metadata differs from the downloadable file`);
     } else checks++;
     if (Buffer.compare(blob, onDisk) !== 0) red(`DRIFT ${d.branch}/${b.ordinal}: site file differs from ${rebuiltBuild ? 'the recorded rebuild of' : 'git blob'} ${b.sha.slice(0, 10)}`);
@@ -1354,6 +1377,12 @@ const PACK_PLANTS = Object.freeze([
   ['a stale sw.js', 'STALE sw.js', (dir) => [join(dir, SW_FILE)], (file) => writeFileSync(file, serviceWorkerSource({ kill: false }).replace(/const VERSION = \d+;/, 'const VERSION = 0;'))],
   ['a missing download/ file', /^MISSING dev\/\d+\/download\/AshenSpire\.html:/, (dir, b) => [join(dir, b.branch, String(b.ordinal), DOWNLOAD_PATH)], 'remove'],
   ['a missing asset-base.json', /^MISSING dev\/\d+\/asset-base\.json:/, (dir, b) => [join(dir, b.branch, String(b.ordinal), ASSET_BASE_FILE)], 'remove'],
+  // The in-game folder copy reads these two (step 7): a page hash or zip size
+  // build.json records that the page and store do not give is red by name.
+  ['a build.json pageSha256 that is not the page\'s', /^DOWNLOAD DRIFT dev\/\d+: /, (dir, b) => [join(dir, b.branch, String(b.ordinal), 'build.json')],
+    (file) => { const j = JSON.parse(readFileSync(file, 'utf8')); j.pageSha256 = '0'.repeat(64); writeFileSync(file, JSON.stringify(j)); }],
+  ['a build.json zipBytes that is not the zip\'s', /^DOWNLOAD DRIFT dev\/\d+: /, (dir, b) => [join(dir, b.branch, String(b.ordinal), 'build.json')],
+    (file) => { const j = JSON.parse(readFileSync(file, 'utf8')); j.zipBytes += 1; writeFileSync(file, JSON.stringify(j)); }],
   ['an unreferenced object', 'UNREFERENCED', (dir) => [join(dir, 'objects', '00', `${'0'.repeat(64)}.webp`)], (file) => { mkdirSync(dirname(file), { recursive: true }); writeFileSync(file, 'stray'); }],
 ]);
 function packStorePlants(probe, box, good) {
