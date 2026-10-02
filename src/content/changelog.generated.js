@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Warrior's Vow lets you choose your stance",
     "detail": "Playing Warrior's Vow used to put you in Gorefire Stance every time, though the card promised a stance of your choice. Now it asks: you pick Gorefire, Bulwark or Brace, each with what it does, and that is the stance you enter. Cancel keeps the card in your hand. It works the same in co-op, and on a shared couch screen the chooser keeps the keyboard while it is open: Tab moves between the stances instead of switching player, and the card and End Turn keys wait until you choose.",
-    "build": "0.7.1.746",
+    "build": "0.7.1.748",
     "pullRequest": 1449,
     "url": "https://github.com/cehinds/AshenSpire/pull/1449"
+  },
+  {
+    "id": "pr-1457",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Turning Developer tools off no longer changes how the game plays",
+    "detail": "On development and test builds, switching Settings → Advanced → Developer tools off and reloading used to drop the developer's chosen starting values for the hidden tuning settings, and switching it back on brought them back. Those values now follow the kind of build you are playing, so the switch only decides which settings sections you see. A downloaded build the game cannot place no longer takes those developer-only values even with the tools switched on; every setting it shows keeps its usual starting value.",
+    "build": "0.7.1.747",
+    "pullRequest": 1457,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1457"
   },
   {
     "id": "pr-1456",
