@@ -7,7 +7,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-02",
     "group": "2026-10-02",
     "summary": "The opening is restaged",
-    "detail": "The first scene shifts its view slightly right. The Burning now pushes in rather than fading, and its camera rises slowly up the burning towers. The last two scenes pull the camera back, and the final step eases in. The caption band holds one fixed height on every scene, slightly lower than before, so the words no longer jump between scenes.",
+    "detail": "The first scene shifts its view slightly right. The Burning's camera now rises slowly up the burning towers. The last two scenes pull the camera back, and the final step eases in. The caption band holds one fixed height on every scene, slightly lower than before, so the words no longer jump between scenes.",
     "build": "0.7.1.734",
     "pullRequest": 1444,
     "url": "https://github.com/cehinds/AshenSpire/pull/1444"
