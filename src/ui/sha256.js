@@ -64,3 +64,56 @@ export async function sha256Hex(bytes, subtle = globalThis.crypto?.subtle) {
   }
   return sha256Bytes(bytes);
 }
+
+/**
+ * createSha256() → { update(Uint8Array), digest() → hex }: the same digest,
+ * fed in pieces, so a download can be checked as it streams without holding
+ * the whole file (src/model/offlineDownload.js receiveDownload).
+ */
+export function createSha256() {
+  const h = new Uint32Array([0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19]);
+  const w = new Uint32Array(64);
+  const block = new Uint8Array(64);
+  const view = new DataView(block.buffer);
+  const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+  let filled = 0;
+  let length = 0;
+  const compress = () => {
+    for (let i = 0; i < 16; i++) w[i] = view.getUint32(i * 4, false);
+    for (let i = 16; i < 64; i++) {
+      const a = w[i - 15], b = w[i - 2];
+      w[i] = (w[i - 16] + (rotr(a, 7) ^ rotr(a, 18) ^ (a >>> 3)) + w[i - 7] + (rotr(b, 17) ^ rotr(b, 19) ^ (b >>> 10))) >>> 0;
+    }
+    let [a, b, c, d, e, f, g, k] = h;
+    for (let i = 0; i < 64; i++) {
+      const t1 = (k + (rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + w[i]) >>> 0;
+      const t2 = ((rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) >>> 0;
+      k = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+    }
+    h[0] += a; h[1] += b; h[2] += c; h[3] += d; h[4] += e; h[5] += f; h[6] += g; h[7] += k;
+  };
+  return {
+    update(bytes) {
+      length += bytes.length;
+      let i = 0;
+      while (i < bytes.length) {
+        const n = Math.min(64 - filled, bytes.length - i);
+        block.set(bytes.subarray(i, i + n), filled);
+        filled += n; i += n;
+        if (filled === 64) { compress(); filled = 0; }
+      }
+    },
+    digest() {
+      const bits = length;
+      block[filled++] = 0x80;
+      if (filled > 56) { block.fill(0, filled); compress(); filled = 0; }
+      block.fill(0, filled);
+      view.setUint32(56, Math.floor(bits / 0x20000000), false);
+      view.setUint32(60, (bits << 3) >>> 0, false);
+      compress();
+      let hex = '';
+      for (const word of h) hex += word.toString(16).padStart(8, '0');
+      return hex;
+    },
+  };
+}
