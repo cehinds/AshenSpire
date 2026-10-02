@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1508",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the slowest automated checks no longer wait on a 20-minute download",
+    "detail": "Nothing you play changes. Three checks ran out of time before they started, while still downloading the project; the heavy checks now skip the source paintings and old file history they never open, so every check still runs and none takes longer than 20 minutes.",
+    "build": "0.7.1.800",
+    "pullRequest": 1508,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1508"
+  },
+  {
     "id": "pr-1495",
     "date": "2026-10-02",
     "group": "2026-10-02",
