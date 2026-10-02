@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Sealed and Draft climbs can be continued after a reload",
     "detail": "A Custom Climb with a Sealed or Draft starting deck could not be loaded again: Continue set the save aside as broken, and the climb also stopped working at the end of its first fight. Both now carry on. A save made before this change loads too, with the fix noted in its load report. Your dealt deck stays the deck you were dealt. Reloading, a mid-fight save, the end of a fight, changing weapons in the Armoury and swapping weapons mid-fight no longer add your equipment's own cards (its Strike and Defend, weapon arts or Dodge Roll) to it. Your first fight now plays your cards with the same weapon bonuses a reloaded climb gives them.",
-    "build": "0.7.1.776",
+    "build": "0.7.1.780",
     "pullRequest": 1479,
     "url": "https://github.com/cehinds/AshenSpire/pull/1479"
+  },
+  {
+    "id": "pr-1463",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Escape and the controller's B button take you back",
+    "detail": "Run history, the Compendium, Custom Climb, character creation, the LAN lobby, a conversation, a reward's detail view, the quest board and the \"safe to close\" screen now go back when you press Escape or B, the same as pressing their Back button. On a controller, B now also closes Settings, About, Profile and the Armoury, as Escape already did. On the map, Escape or B puts away the selected room's tray. Each press goes back one step: an open tooltip closes first, then a menu or the dialog on top, and only then the screen. Where going back would give something up, Escape and B do nothing, so you have to choose to leave: a shop, the Shrine, your rewards, a fight (they never end your turn), the map, or a finished run.",
+    "build": "0.7.1.767",
+    "pullRequest": 1463,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1463"
   },
   {
     "id": "pr-1481",
