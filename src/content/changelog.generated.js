@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the balance report now measures Mana and each act's difficulty",
     "detail": "Nothing you play changes. The run simulator can now compare whole climbs with and without Mana limits, and report how often each act's boss falls in each region. Both results are written into the balance notes for the owner to tune from later.",
-    "build": "0.7.1.771",
+    "build": "0.7.1.772",
     "pullRequest": 1473,
     "url": "https://github.com/cehinds/AshenSpire/pull/1473"
+  },
+  {
+    "id": "pr-1472",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Hits sound bigger the harder they land",
+    "detail": "A small hit, a solid hit and a heavy hit now each have their own sound, chosen by the damage it does. Being hit yourself has a sound of its own, your turn starts with a short two-note sting, and drawing, shuffling and discarding cards each make a quiet sound. The first turn of a fight has them too, and so does LAN co-op. Your sound volume and mute settings apply to all of them.",
+    "build": "0.7.1.771",
+    "pullRequest": 1472,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1472"
   },
   {
     "id": "pr-1458",

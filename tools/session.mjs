@@ -93,6 +93,11 @@ export { coopHpMult } from '../src/engine/coopCombat.js';
 // replay at its frozen counters are never the rolls a later node makes live
 // (see settleEvent). No choice draws anything like this many.
 const CATCHUP_RNG_RESERVE = 256;
+
+// THE OPENING'S SOUND CUES (FINISH §5 hit sound tiers). A fight's setup events
+// are not replayed to clients, but these ones carry the opening draw, shuffle
+// and first-turn stinger, so the first scene of a fight keeps them.
+const OPENING_CUE_EVENTS = Object.freeze(['cardDrawn', 'deckShuffled', 'playerTurnStart']);
 /** A deterministic per-member RNG stream, independent of the shared map RNG. */
 function memberRng(seed, index, counters) {
   return createRng((seed ^ ((index + 1) * 0x9e3779b1)) >>> 0, counters || {});
@@ -611,7 +616,10 @@ export function createSession({ registries, seedString, endless = false, restore
         }
       }
     }
-    live = { combat, pool, evCursor: combat.eventLog.length }; // skip setup events
+    // Setup events are skipped, except the opening's sound cues (the first
+    // draw, any shuffle, the first turn start), which ride the fight's first
+    // scene once so a co-op client hears the opening as solo does.
+    live = { combat, pool, evCursor: combat.eventLog.length, opening: combat.eventLog.filter((e) => OPENING_CUE_EVENTS.includes(e.type)) };
     session.scene = combatScene();
     return { ok: true, combat: session.scene };
   }
@@ -621,8 +629,8 @@ export function createSession({ registries, seedString, endless = false, restore
     // Compact digest of display-worthy events since the LAST snapshot, so the
     // client can pace the enemy phase (banner + per-enemy lunges) without a
     // full timeline protocol. The cursor advances with each snapshot build.
-    const events = c.eventLog.slice(live.evCursor || 0)
-      .filter((e) => ['blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
+    const events = [...(live.opening || []), ...c.eventLog.slice(live.evCursor || 0)]
+      .filter((e) => ['cardDrawn', 'deckShuffled', 'cardDiscarded', 'blockGained', 'dodgeRolled', 'procResisted', 'procBurst', 'statusApplied', 'statusExpired', 'enemyStaggered', 'stanceEntered', 'cardPlayed', 'playerTurnStart', 'enemyMoveStarted', 'damageDealt', 'healed', 'enemyDied', 'playerDowned', 'arcaneExposureChanged', 'arcaneExposureRefused', 'arcaneBreak'].includes(e.type)
         || (e.type === 'hpLost' && e.cause !== 'attack'))
       .map((e) => ({
         type: e.type, sourceId: e.sourceId, enemyId: e.enemyId, moveId: e.moveId,
@@ -637,6 +645,7 @@ export function createSession({ registries, seedString, endless = false, restore
         threshold: e.threshold, status: e.status, stacks: e.stacks, total: e.total, duration: e.duration,
       }));
     live.evCursor = c.eventLog.length;
+    live.opening = null;
     return {
       kind: 'combat',
       receiptSeq: ++combatReceiptSeq,
