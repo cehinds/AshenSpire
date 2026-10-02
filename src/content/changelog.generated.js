@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: a flask check that had stopped working runs again",
     "detail": "Nothing you play changes. A check makes sure flasks on the map offer the same choices as flasks in a fight. It had stopped looking at the Potions button you use on the map, and nothing ran it, so it failed without anyone noticing. It now follows that Potions button to the choices each flask offers, and the test suite runs it on every change.",
-    "build": "0.7.1.742",
+    "build": "0.7.1.743",
     "pullRequest": 1447,
     "url": "https://github.com/cehinds/AshenSpire/pull/1447"
+  },
+  {
+    "id": "pr-1452",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Art quality: Auto, Light or High",
+    "detail": "In the web edition, Settings → Display → Art quality now offers Auto, Light, High and Local high-res. Auto loads lighter art on a narrow or phone-sized screen, with Data Saver on or on a device with little memory, and the best art the game carries otherwise; Light and High pick one, and the change takes effect at once and is remembered on this device. A single-file copy carries its art inside it, so there Light and High are greyed out and the setting says why.",
+    "build": "0.7.1.742",
+    "pullRequest": 1452,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1452"
   },
   {
     "id": "pr-1453",

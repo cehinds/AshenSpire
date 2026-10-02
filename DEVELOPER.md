@@ -136,8 +136,19 @@ refuses unless the zip's sha256 is the pinned one and every file matches its
 re-hashes a cache. `tools/zip.mjs` is the same file the art repository packs
 with; `tests/fetch-art.test.mjs` pins their shared vector.
 
-**Settings → Display → Art quality** (`src/ui/highResArt.js`): *Built-in* uses
-the art the build carries; *Local high-res* lays full-resolution files over it
+**Settings → Display → Art quality** (`src/ui/artTier.js`, `src/ui/highResArt.js`):
+*Auto*, *Light* and *High* choose which pack the web edition loads (step 8c of
+docs/EXTERNAL-ASSETS-PLAN.md). *Auto* is light on a narrow layout
+(`data-layout="narrow"`), on a screen whose short side is at most 600 CSS px
+(a phone in either orientation), with Save-Data on or with
+`navigator.deviceMemory` at or under 2 GB, and the build's default tier otherwise; *Light* and *High* force
+one. The boot load asks for that tier, a change in play reloads the indexes and
+re-points the images on screen (a switch that cannot load keeps the art already
+shown), and the loader's fallback still applies (High on a build without the
+high pack, or whose high index fails, shows light). A single file and the
+source tree pin no packs, so there *Light* and *High* are disabled and the row
+says why. A stored *Built-in* (the old default) reads as *Auto*.
+*Local high-res* lays full-resolution files over Auto's tier
 from a folder served beside the game (`hd/art-manifest.json` plus `hd/assets/…`,
 found over http) or a folder the player picks (any build, `file://` included;
 the browser hands the files over for this page only, so a reload asks again).
