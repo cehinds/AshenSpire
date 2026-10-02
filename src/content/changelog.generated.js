@@ -3,16 +3,6 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1500",
-    "date": "2026-10-02",
-    "group": "2026-10-02",
-    "summary": "Behind the scenes: builds and checks read the game's light art, fonts, music and map tiles from the art release",
-    "detail": "Nothing you play changes. Every build, test and preview page now takes the light art, the lore fonts, the shipped score and the map detail tiles from the verified art release instead of the copies still kept in this repository, so those copies can be removed in a later step.",
-    "build": "0.7.1.803",
-    "pullRequest": 1500,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1500"
-  },
-  {
     "id": "pr-1509",
     "date": "2026-10-02",
     "group": "2026-10-02",
