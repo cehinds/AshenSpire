@@ -101,7 +101,7 @@ import { mountCompendium } from './ui/screens/compendium.js';
 import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
 import { seedSettingsDefaults, seedAfterChange, SEED_KEY } from './model/settingsDefaults.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
-import { pageDebug } from './ui/buildChannel.js';
+import { pageDebug, promotionDebug } from './ui/buildChannel.js';
 import { openSettings, dropUndoOffer, settingsRows, promotionFor, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
@@ -342,7 +342,7 @@ let activeSettings = bringStoredProfileForward(activeMeta);
 // player chose is theirs. Applied before anything reads the profile.
 // The same step runs again when a restored profile replaces this one.
 function seedPromotedDefaults(meta, settings) {
-  const seeded = seedSettingsDefaults(settings, promotionFor(SETTINGS_DEFAULTS, pageDebug()));
+  const seeded = seedSettingsDefaults(settings, promotionFor(SETTINGS_DEFAULTS, promotionDebug()));
   if (!Object.keys(seeded).length) return;
   for (const [key, value] of Object.entries(seeded)) {
     if (value === undefined) delete settings[key]; else settings[key] = value;
@@ -3971,7 +3971,8 @@ if (shotState === 'combat-test') {
   // left for the next start rather than applied mid-session.
   const PROFILE_WAIT_MS = 3000;
   let waiting = true;
-  const loaded = autoLoadProfile({ settings: activeSettings, onChange: persistSettingsChange, rows: settingsRows(), stillWanted: () => waiting })
+  const loaded = autoLoadProfile({ settings: activeSettings, onChange: persistSettingsChange, rows: settingsRows(), stillWanted: () => waiting,
+    promoted: promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values })
     .then((result) => { if (result.applied) console.info(`settings profile: ${result.applied} setting(s) loaded from GitHub.`); })
     .catch((error) => console.warn(`settings profile: not loaded — ${error.message}`));
   Promise.race([loaded, new Promise((settle) => setTimeout(settle, PROFILE_WAIT_MS))])
