@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Warrior's Vow lets you choose your stance",
     "detail": "Playing Warrior's Vow used to put you in Gorefire Stance every time, though the card promised a stance of your choice. Now it asks: you pick Gorefire, Bulwark or Brace, each with what it does, and that is the stance you enter. Cancel keeps the card in your hand. It works the same in co-op, and on a shared couch screen the chooser keeps the keyboard while it is open: Tab moves between the stances instead of switching player, and the card and End Turn keys wait until you choose.",
-    "build": "0.7.1.743",
+    "build": "0.7.1.745",
     "pullRequest": 1449,
     "url": "https://github.com/cehinds/AshenSpire/pull/1449"
+  },
+  {
+    "id": "pr-1455",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Legendary sigils: attune one in the Armoury and it works in every fight",
+    "detail": "Three legendary sigils join the game: the Sigil of the Last Vigil raises a guard when you start a fight wounded, the Pyre Sigil raises a guard whenever a card is exhausted, and the Gravelight Sigil heals you when a foe falls while you are wounded. A new Sigils panel in the Armoury's Inventory view lets you attune and unattune them out of a fight, one at a time by default; an attuned sigil needs no slot and no weapon, and a refusal is shown in the panel. No shop sells one. A won fight, a boss before the last, or a treasure room can drop one you do not own, but every drop chance starts at 0, so none drops until you raise it in Settings. A treasure room's spoils now survive a reload before you take them. Older saves load with nothing attuned.",
+    "build": "0.7.1.744",
+    "pullRequest": 1455,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1455"
   },
   {
     "id": "pr-1452",

@@ -17,6 +17,7 @@
 
 import { createRng, seedFromString, seedToString } from '../src/engine/rng.js';
 import { createRunState, initializeRunDerivedStats, initializeRunFlaskCharges, migrateRunSchema, syncZones } from '../src/model/state.js';
+import { unknownSigilId, sigilRarityProblems } from '../src/model/sigils.js';
 import { normalizeRunAttributes } from '../src/model/attributes.js';
 import { validateRunStartingKit } from '../src/model/startingKits.js';
 import { stampDeck, healMissingSlotCells } from '../src/model/loadout.js';
@@ -200,6 +201,12 @@ export function createSession({ registries, seedString, endless = false, restore
         }
         const legacyKit = md.run.schemaVersion === 1;
         migrateRunSchema(md.run);
+        // SPEC §15.4, rarity at every door: this door restores a run without
+        // loadRun, so it asks the same sigil questions engine/save.js does.
+        const strangeSigil = unknownSigilId(registries, md.run);
+        if (strangeSigil) throw new Error(`sigil '${strangeSigil}' is unknown to this build`);
+        const sigilProblems = sigilRarityProblems(registries, md.run);
+        if (sigilProblems.length) throw new Error(`Malformed sigils: ${sigilProblems.join('; ')}`);
         // The PARTY's seat order is the member's (SPEC §13.4): a pre-seat
         // member run has none, and a member that joined mid-climb carries
         // whatever it was born with; the session is the one authority.
@@ -498,6 +505,7 @@ export function createSession({ registries, seedString, endless = false, restore
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
       skills: m.run.skills, // the seat's ledger, for the progression predicates (plan phase 4a)
       coreTags: m.run.coreTags, // the seat's class tree picks (plan phase 5b)
+      attunedSigils: m.run.attunedSigils || [], // the seat's attuned legendary sigils (SPEC §15.4)
       // The seat's loadout rides into the co-op engine so the framework Weight
       // Class (dodge check and pricing) is this player's, not a Light default.
       loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
