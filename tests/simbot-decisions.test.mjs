@@ -76,6 +76,12 @@ test('measure-classes --check compares fight decisions with runsim on fixed seed
     const m = new RegExp(`^  ${cls.id}: decisions MATCH — (\\d+) fights opened on the same state, 0 decided differently`, 'm').exec(r.stdout);
     assert.ok(m, `no decisions MATCH line for ${cls.id}\n${r.stdout}`);
     assert.ok(Number(m[1]) > 0, `${cls.id}: no fight was compared`);
+    // The shared run loop (tools/simrun.mjs): every fight opened on runsim's
+    // state, and both fleets fought the same fights.
+    const loop = new RegExp(`^  ${cls.id}: run loop MATCH — 0 fights opened on different state; (\\d+) fights here, (\\d+) in runsim$`, 'm').exec(r.stdout);
+    assert.ok(loop, `no run loop MATCH line for ${cls.id}\n${r.stdout}`);
+    assert.equal(loop[1], loop[2]);
+    assert.equal(loop[1], m[1], `${cls.id}: every fight was compared`);
   }
 });
 
