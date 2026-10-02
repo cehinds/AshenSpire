@@ -262,6 +262,13 @@ export function checkPackShape(name, bytes, readPacked) {
   }
   if (!['light', 'high'].includes(pin.tier) || !pin.packs[pin.tier]) problems.push(`its default tier ${JSON.stringify(pin.tier)} is not a pack it pins`);
   if (!pin.packs.common) problems.push('it pins no common pack');
+  // The EDITION stamp IS the default tier since step 8e (Copilot, #1506): a
+  // file that stamps one tier and pins another says the wrong thing in About.
+  const editions = [...text.matchAll(/const EDITION = '([^']*)'/g)].map((e) => e[1]);
+  if (editions.length === 1 && editions[0] !== pin.tier) problems.push(`its EDITION '${editions[0]}' is not the default tier its pin names (${JSON.stringify(pin.tier)})`);
+  // A pinned common pack carries the faces, so the file:// door needs the
+  // font sidecar's pin too, as verify-external requires (Copilot, #1506).
+  if (pin.packs.common && !pin.fonts) problems.push('it pins the common pack but no font sidecar');
   const inlined = (text.match(REAL_PAYLOAD) || []).length;
   if (inlined) problems.push(`it inlines ${inlined} media payload(s) besides the SVG masks — art travels in the packs, not in this file`);
   const sha = (buf) => createHash('sha256').update(buf).digest('hex');
@@ -271,7 +278,17 @@ export function checkPackShape(name, bytes, readPacked) {
     const buf = readPacked(index);
     if (!buf) { problems.push(`${pack}: ${index} is not beside it`); continue; }
     if (sha(buf) !== p.sha256) { problems.push(`${pack}: ${index} does not hash to its pin (${String(p.sha256).slice(0, 12)})`); continue; }
-    if (!readPacked(index.replace(/\.json$/, '.js'))) { problems.push(`${pack}: the .js twin of ${index} is not beside it (the file:// door reads it)`); continue; }
+    // The twin is what the file:// door reads: it must hand the loader exactly
+    // this index's text under this index's name, as verify-external checks
+    // (Copilot, #1506), or a double-click loads a stale or wrong index.
+    const twinPath = index.replace(/\.json$/, '.js');
+    const twin = readPacked(twinPath);
+    if (!twin) { problems.push(`${pack}: the .js twin of ${index} is not beside it (the file:// door reads it)`); continue; }
+    const tm = /^window\.__ashenPack\((".*?"), (".*")\);\n$/s.exec(twin.toString('utf8'));
+    let twinName = null; let twinText = null;
+    try { if (tm) { twinName = JSON.parse(tm[1]); twinText = JSON.parse(tm[2]); } } catch { twinName = null; twinText = null; }
+    const wantName = index.replace(/^.*\//, '').replace(/\.json$/, '');
+    if (twinName !== wantName || twinText !== buf.toString('utf8')) { problems.push(`${pack}: ${twinPath} does not hand the loader ${index}'s text under the name ${wantName}`); continue; }
     present += 1;
   }
   if (pin.fonts) {
@@ -482,6 +499,14 @@ if (SELFTEST) {
   expect('pack: a stale index under the pinned name', checkPackShape('pack.html', packHtml(pinOf()), reader(staleIdx)), false, 'PACKS');
   expect('pack: a default tier it does not pin', checkPackShape('pack.html', packHtml(pinOf({ tier: 'high' })), reader(files)), false, 'PACKS');
   expect('pack: inlined art beside the pin', checkPackShape('pack.html', packHtml(pinOf(), `"assets/a.webp":"data:image/webp;base64,${'A'.repeat(80)}"`), reader(files)), false, 'PACKS');
+  // Copilot's three findings on #1506, each planted.
+  expect('pack: EDITION says high while the pin\'s tier is light', checkPackShape('pack.html', Buffer.from(packHtml(pinOf()).toString().replace('</script>', "export const EDITION = 'high';</script>")), reader(files)), false, 'PACKS');
+  expect('control: EDITION agrees with the pin\'s tier', checkPackShape('pack.html', Buffer.from(packHtml(pinOf()).toString().replace('</script>', "export const EDITION = 'light';</script>")), reader(files)), true, 'PACKS');
+  const badTwin = new Map(files); badTwin.set('packs/light-000000000001.js', Buffer.from(`window.__ashenPack("light-000000000001", ${JSON.stringify('{}\n')});\n`));
+  expect('pack: a .js twin whose text is not its index', checkPackShape('pack.html', packHtml(pinOf()), reader(badTwin)), false, 'PACKS');
+  const misnamedTwin = new Map(files); misnamedTwin.set('packs/light-000000000001.js', Buffer.from(`window.__ashenPack("light-999999999999", ${JSON.stringify(lightIdx)});\n`));
+  expect('pack: a .js twin under another index\'s name', checkPackShape('pack.html', packHtml(pinOf()), reader(misnamedTwin)), false, 'PACKS');
+  expect('pack: the common pack pinned with no font sidecar pin', checkPackShape('pack.html', packHtml(pinOf({ fonts: null })), reader(files)), false, 'PACKS');
   expect('control: an inline SVG mask is not inlined art', checkPackShape('pack.html', packHtml(pinOf(), `url("data:image/svg+xml;base64,${'A'.repeat(80)}")`), reader(files)), true, 'PACKS');
 
   boundary([
