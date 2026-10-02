@@ -1,15 +1,17 @@
 // tools/measure-classes.mjs — instrumented per-class win-rate measurement
 // (EldenSpire issue #55: Reaver 1/30 — sim skill floor or class defect?).
 //
-// This is runsim.mjs's exact bot and run loop (copied, not imported — runsim
-// exports nothing) plus passive instrumentation: after each combat it reads
+// This is runsim.mjs's fight bot (copied, so the policies can swap its card
+// picker) and runsim's run loop between fights (NOT copied: both tools call
+// tools/simrun.mjs) plus passive instrumentation: after each combat it reads
 // combat.eventLog, which consumes no RNG and touches no state, so the default
 // policy reproduces runsim's runs seed-for-seed. `--check` asserts exactly
-// that, and nothing more: per class, the same wins AND the same fight
-// decisions — runsim's `--digest` line (every action its bot dispatched, counted
-// and hashed in order) against this copy's. The turn-end decision (drink an
-// Azure charge when only Mana blocks a card) is not copied at all: both bots
-// call tools/simbot.mjs outOfPlaysAction.
+// that, and nothing more: per class, the same wins, the same fight decisions —
+// runsim's `--digest` line (every action its bot dispatched, counted and
+// hashed in order) against this copy's — and the same fights, every one opened
+// on runsim's state. The turn-end decision (drink an Azure charge when only
+// Mana blocks a card) is not copied either: both bots call tools/simbot.mjs
+// outOfPlaysAction.
 //
 // WHAT `--check` IS, said plainly: a CONSISTENCY check, never a correctness
 // one. It proves this file's copied bot still agrees with runsim's. It says
@@ -74,16 +76,10 @@ import { createCombat, dispatch, previewCard, previewIntent, cardChoicePlan } fr
 import { emitEvent } from '../src/engine/triggers.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { affordableCards, refusalsFor, outOfPlaysAction, createDecisionDigest, fightFingerprint, digestLine, DIGEST_LINE } from './simbot.mjs';
-import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
-import { seatAtTier, bossTierScale } from '../src/model/seats.js';
+import { createRunLoop, payFightXp, fleetSeed } from './simrun.mjs';
+import { bossTierScale } from '../src/model/seats.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
 import { hasStatus } from '../src/engine/statuses.js';
-import { executeRunEffects } from '../src/engine/actions.js';
-import {
-  rollEncounter, rollRuneReward, rollCardRewardIds, rollFlaskDrop,
-  rollRelicReward,
-} from '../src/engine/encounters.js';
-import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
 
 const REG = createRegistries(contentBundle);
 const argv = process.argv.slice(2);
@@ -108,8 +104,8 @@ if (!['greedy', 'skillfirst', 'random', 'reaverkit', 'starseerkit'].includes(POL
 const MUTATIONS = {
   rng: 'instrumentation stops being passive — burns one misc draw per combat',
   flask: 'flask threshold 0.55 → 0.75 (runsim drinks at 0.55)',
-  path: 'shrine-preference gate 0.55 → 0.95 (map pathing diverges)',
-  shrine: 'shrine rest gate 0.60 → 0.20 (rest/smith decision diverges)',
+  path: 'shrine-preference gate 0.55 → 0.95 in the shared run loop, this tool only (map pathing diverges)',
+  shrine: 'shrine rest gate 0.60 → 0.20 in the shared run loop, this tool only (rest/smith decision diverges)',
   manaFlask: 'the out-of-plays Azure charge is never drunk (runsim drinks it; same wins can hide it)',
 };
 const STAR_MUTATIONS = {
@@ -302,13 +298,19 @@ function resolvedLiveHpLoss(combat, hand, def, target) {
 function cloneCombatForOrderedProbe(combat) {
   if (combat.queue.length || combat._buffer) throw new Error('ordered lethal probe requires a settled dispatch boundary');
   const state = {};
+  // Every function on the combat is a door bound to it (emit, enqueue, the id
+  // counter) or a module helper (createCombat's `_emitEvent`): none is state,
+  // and structuredClone refuses functions outright (DataCloneError). Skip them
+  // all, by kind rather than by a list of names a new door would outgrow, and
+  // rebind each door to the probe below.
   for (const [key, value] of Object.entries(combat)) {
-    if (['registries', 'rng', 'emit', 'enqueue', 'nextInstanceId'].includes(key)) continue;
+    if (key === 'registries' || key === 'rng' || typeof value === 'function') continue;
     state[key] = key === 'eventLog' ? [] : value;
   }
   const probe = structuredClone(state);
   probe.registries = combat.registries;
   probe.rng = createRng(combat.rng.seed, combat.rng.getCounters());
+  probe._emitEvent = emitEvent;
   probe.emit = (type, payload) => emitEvent(probe, type, payload);
   probe.enqueue = (action) => probe.queue.push(action);
   probe.nextInstanceId = () => `gen${++probe._idCounter}`;
@@ -554,14 +556,23 @@ function botDispatch(combat, action) {
   dispatch(combat, action);
   decisionDigest.record(action);
 }
-function botFight(run, rng, encounterId, stats, pickRandom, policy) {
+function botFight(run, rng, encounterId, cm, stats, pickRandom, policy) {
   const enc = REG.encounters.get(encounterId);
   // The live door (engine/runCombat.js), as runsim.mjs builds its fights:
   // the hand rules, rating rules, swap price and equipment start statuses a
   // player's fight carries, which this copy's own option list never had.
   // A boss scales by the tier it is met at (balance.bossTiers), as runsim does.
   const boss = bossTierScale(REG, { encounter: enc, tier: run.actNumber });
-  const combat = createRunCombat({ registries: REG, rng, run, enemyIds: enc.enemies, hpMult: boss ? boss.hp : 1, enemyDamageMult: boss ? boss.damage : 1 });
+  // `cm` is the act's scaling from the shared run loop (tools/simrun.mjs): the
+  // seat's tier ratio, exactly 1 at the authored baseline.
+  const combat = createRunCombat({
+    registries: REG, rng, run,
+    enemyIds: enc.enemies,
+    encounter: enc,
+    hpMult: boss ? (cm.loopMult || 1) * boss.hp : (cm.hpMult || 1),
+    enemyDamageMult: boss ? boss.damage : 1,
+    enemyStatuses: cm.enemyStatuses || [],
+  });
   const opportunityTurns = new Set();
   const energyAtEndTurn = [];
   if (MUTATE === 'rng') rng.float('misc'); // planted: the instrumentation is no longer passive
@@ -720,22 +731,17 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
   // The write-back main.js onCombatEnd performs (engine/runCombat.js): HP,
   // Mana, Stamina, flasks and their charges carry to the next fight. Mirrors runsim.mjs.
   runCombatEnd(run, combat);
+  // The XP the fight pays, through the same function runsim calls.
+  payFightXp(REG, run, combat, REG.encounters.get(encounterId));
   return combat.result || 'stalemate';
 }
 
-function afterVictory(run, rng, pool) {
-  run.cinders += rollRuneReward(REG, rng, pool, run.relics);
-  const cards = rollCardRewardIds(REG, rng, { classId: run.class, pool, relicIds: run.relics });
-  if (cards.length) run.deck.push({ instanceId: run._id(), cardId: cards[0], upgraded: false });
-  const flask = rollFlaskDrop(REG, rng, run);
-  if (flask && run.flasks.length < (REG.balance.flaskSlots || 3)) run.flasks.push({ flaskId: flask });
-  if (pool === 'elite') {
-    const r = rollRelicReward(REG, rng, run.relics);
-    if (r) run.relics.push(r);
-  }
-}
-
-// ---- one full run (runsim.mjs verbatim, non-endless path) -------------------
+// ---- one full run: runsim's own loop (tools/simrun.mjs) ----------------------
+// Between fights this tool runs EXACTLY runsim's loop — the same module, not a
+// copy: map path, events and their recorded history, shrines (grace refill,
+// rest or smith, level-up points), treasure, rewards, drafts and the XP a fight
+// pays. Only the fight bot is this file's. The `path` and `shrine` plants move
+// the pilot's two thresholds here, so --check proves it sees a run-loop drift.
 function emptyStats() {
   return { combats: 0, statusOut: {}, statusSelf: {}, stanceEnters: 0, staggers: 0, dmgDealt: 0, dmgTaken: 0,
     bleedApplied: 0, bleedFills: 0, bleedStranded: 0, burstDmg: 0,
@@ -747,100 +753,23 @@ function emptyStats() {
     unspentEnergy: 0, cardsPlayed: 0, playerTurns: 0, endTurns: 0 };
 }
 
+const runLoop = createRunLoop(REG, {
+  fight: (run, rng, encId, cm, ctx) => botFight(run, rng, encId, cm, ctx.stats, ctx.pickRandom, ctx.policy),
+  get pilot() {
+    return {
+      ...(MUTATE === 'path' ? { pathHurtBelow: 0.95 } : {}),
+      ...(MUTATE === 'shrine' ? { restBelow: 0.2 } : {}),
+    };
+  },
+  hooks: {
+    onFightWon: (run, { act, floor }, ctx) => { if (act === 1) ctx.stats.act1Curve.push([floor, run.hp / run.maxHp]); },
+  },
+});
+
 function simulateRun(classId, seed, policy = POLICY) {
-  const run = createRunState({ seed, classId, registries: REG });
-  run._id = createIdGen('sim');
-  run.seenEvents = [];
-  const rng = createRng(seed);
-  const pickRandom = makeLcg(seed ^ 0x9e3779b9);
-  const stats = emptyStats();
-  const result = { classId, seed, victory: false, act: 1, floor: 0, deaths: null, stats };
-
-  for (let act = 1; act <= 3; act++) {
-    run.actNumber = act;
-    result.act = act;
-    // The ONE boot path (#54) — this tool was the fourth playable-act caller
-    // the actmap.js header warns about; it imports the module like the
-    // harnesses do. --check below proves the datum still nests seed-for-seed.
-    const seat = seatAtTier(run.seatOrder, act);
-    const map = buildActMap(REG, rng, seat, act);
-
-    let currentId = null;
-    let nextIds = map.startIds;
-    while (true) {
-      const options = nextIds.map((id) => map.nodes[id]);
-      const hurt = run.hp < run.maxHp * (MUTATE === 'path' ? 0.95 : 0.55);
-      const pick = (hurt && options.find((n) => n.type === 'shrine')) || options[0];
-      currentId = pick.id;
-      result.floor = pick.floor;
-
-      let kind = pick.type;
-      if (kind === 'event') {
-        const res = pick.resolved || { kind: 'fight' };
-        if (res.kind === 'event') {
-          run.seenEvents.push(res.eventId);
-          const ev = REG.events.get(res.eventId);
-          const choice = ev.choices.find((c) => !c.requires || (c.requires.cinders || 0) <= run.cinders) || ev.choices[ev.choices.length - 1];
-          executeRunEffects({ run, registries: REG, rng }, choice.effects);
-          if (run.hp <= 0) { result.deaths = `event:${res.eventId}`; return result; }
-          if (run.combatEntered) {
-            const encId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
-            run.combatEntered = null;
-            const hpIn = run.hp;
-            if (botFight(run, rng, encId, stats, pickRandom, policy) !== 'victory') {
-              result.deaths = `ambush:${encId}`;
-              result.deathInfo = { act, floor: pick.floor, enc: encId, hpIn, maxHp: run.maxHp };
-              return result;
-            }
-            afterVictory(run, rng, 'normal');
-            if (act === 1) stats.act1Curve.push([pick.floor, run.hp / run.maxHp]);
-          }
-          kind = null;
-        } else kind = res.kind;
-      }
-
-      if (kind === 'monster' || kind === 'fight' || kind === 'elite' || kind === 'boss') {
-        const pool = kind === 'monster' || kind === 'fight' ? 'normal' : kind;
-        const encId = pool === 'boss' ? bossEncounterForNode(REG, map, pick.id, { seat, tier: act })
-          : rollEncounter(REG, rng, { pool, seat });
-        const hpIn = run.hp;
-        if (botFight(run, rng, encId, stats, pickRandom, policy) !== 'victory') {
-          result.deaths = `${pool}:${encId}`;
-          result.deathInfo = { act, floor: pick.floor, enc: encId, hpIn, maxHp: run.maxHp };
-          return result;
-        }
-        afterVictory(run, rng, pool);
-        if (act === 1) stats.act1Curve.push([pick.floor, run.hp / run.maxHp]);
-        if (pool === 'boss') {
-          const boss = rollRelicReward(REG, rng, run.relics, { rarities: ['boss'] });
-          if (boss) run.relics.push(boss);
-          break;
-        }
-      } else if (kind === 'shrine') {
-        // THE GRACE REFILL, automatic and BEFORE the rest/smith decision —
-        // exactly as src/main.js showRest and runsim.mjs do. This file never
-        // had it (runsim gained it 2026-08-08), and --check could not see the
-        // divergence: with the bots never spending a charge, a refill was a
-        // no-op on both sides. Two sims disagreed about the game's sustain loop
-        // and agreed on the answer, because the subsystem was dead in both.
-        // Since plan phase 7 the shrine is a location visit: `arrived` runs
-        // the refill rule, `rested` the heal and Mana rules (engine/locations.js).
-        const visit = createLocationVisit({ run, registries: REG, rng }, 'shrine');
-        arriveAt(visit);
-        if (run.hp < run.maxHp * (MUTATE === 'shrine' ? 0.2 : 0.6) && !visit.restDenied) restAt(visit);
-        else { const c = run.deck.find((d) => !d.upgraded); if (c) c.upgraded = true; }
-        leaveLocation(visit);
-      } else if (kind === 'treasure') {
-        const r = rollRelicReward(REG, rng, run.relics);
-        if (r) run.relics.push(r);
-      } // merchant: skip
-
-      nextIds = map.nodes[currentId].next;
-      if (!nextIds || !nextIds.length) nextIds = map.bossIds || [map.bossId];
-    }
-    run.hp = run.maxHp;
-  }
-  result.victory = true;
+  const ctx = { stats: emptyStats(), pickRandom: makeLcg(seed ^ 0x9e3779b9), policy };
+  const result = runLoop.simulateRun(classId, seed, ctx);
+  result.stats = ctx.stats;
   return result;
 }
 
@@ -913,7 +842,7 @@ function runFleet(n, policy = POLICY, classIds = REG.classes.all().map((c) => c.
   decisionDigest.reset();
   for (const cls of REG.classes.all().filter((c) => classIds.includes(c.id))) {
     const rows = [];
-    for (let i = 1; i <= n; i++) rows.push(simulateRun(cls.id, (i * 2654435761) >>> 0, policy));
+    for (let i = 1; i <= n; i++) rows.push(simulateRun(cls.id, fleetSeed(i), policy));
     out[cls.id] = { name: cls.name, rows, fights: decisionDigest.fightsOf(cls.id) };
   }
   return out;
@@ -998,9 +927,17 @@ function runCheck(n, baseline, { quiet = false } = {}) {
     // No compared fight is no evidence: it blocks, as a missing baseline does.
     const same = compared > 0 && differed === 0;
     if (!same) ok = false;
+    // THE RUN LOOP. Both tools walk runsim's own loop between fights
+    // (tools/simrun.mjs), so every fight must open on the state runsim's did
+    // and the two fleets must fight the same number of fights. A fight that
+    // opened apart, or one only one side fought, is a run-loop drift (the
+    // `path` and `shrine` plants), even when the wins happen to agree.
+    const sameLoop = apart === 0 && fleet[cls.id].fights.length === theirs.size;
+    if (!sameLoop) ok = false;
     if (!quiet) {
       console.log(`  ${cls.id}: decisions ${same ? 'MATCH' : 'DRIFT'} — ${compared} fights opened on the same state, ${differed} decided differently` +
-        `${firstDiff.length ? ` (first: seed#fight ${firstDiff.join(', ')})` : ''}; ${apart} opened on different state (run loops differ between fights), not compared`);
+        `${firstDiff.length ? ` (first: seed#fight ${firstDiff.join(', ')})` : ''}`);
+      console.log(`  ${cls.id}: run loop ${sameLoop ? 'MATCH' : 'DRIFT'} — ${apart} fights opened on different state; ${fleet[cls.id].fights.length} fights here, ${theirs.size} in runsim`);
     }
   }
   return ok;
@@ -1152,9 +1089,18 @@ function orderedLethalFixture(kind, mutation = null) {
   const cards = kind === 'noAmplification'
     ? ['shootingShard', 'crystalBarrier']
     : [radiant, 'crystalBarrier'];
+  // The target's HP is the card's own ordered loss against an unblocked,
+  // healthy target (read through the same probe), so the fixture follows the
+  // card rows instead of freezing their numbers: the hit is exactly lethal
+  // unblocked and one short behind 1 Block. A fixed 12 HP went stale when the
+  // shipped pools grew (the probe also threw DataCloneError, so nobody saw).
+  const calibration = fixtureCombat(cards);
+  const calTarget = calibration.enemies[0];
+  calTarget.hp = 120; calTarget.block = 0;
+  const lethalHp = orderedDispatchHpLoss(calibration, calibration.piles.hand[0], calTarget);
   const combat = fixtureCombat(cards);
   const enemy = combat.enemies[0];
-  enemy.hp = kind === 'noAmplification' ? 7 : 12;
+  enemy.hp = lethalHp;
   enemy.block = kind === 'blocked' ? 1 : 0;
   const ordered = cards.map((spec) => combat.piles.hand.find((card) => card.cardId === (typeof spec === 'string' ? spec : spec.cardId)));
   const before = JSON.stringify({
@@ -1179,9 +1125,8 @@ function checkBoundary(n) {
   console.log(`  · the greedy policy at n=${n} only — nothing about skillfirst, random, reaverkit or starseerkit,`);
   console.log('    and nothing about any seed outside i=1..' + n + '.');
   console.log('  · not the game: no balance claim, no spec band, no statement about a human pilot.');
-  console.log('  · decisions only on fights both bots opened on the same state — this file\'s run loop');
-  console.log('    between fights (XP, drafts, level-ups, event history) is older than runsim\'s, so');
-  console.log('    most fights after the first few of a run open apart and are counted, not compared.');
+  console.log('  · the run loop between fights is runsim\'s own module (tools/simrun.mjs), so its');
+  console.log('    agreement here proves the call sites, not that loop: a bug inside it is in both.');
   console.log('  · not the counters — the per-class kit/bleed/stagger tallies this tool adds over');
   console.log('    runsim have no runsim counterpart, so agreement here leaves them unverified.');
 }
@@ -1315,7 +1260,7 @@ if (SELFTEST) {
       && noAmplification.chosen === 'shootingShard' && noAmplificationPlant.chosen === 'shootingShard'
       && blocked.chosen === 'crystalBarrier' && blockedPlant.chosen === 'crystalBarrier'
       && [orderedClean, orderedPlant, noAmplification, noAmplificationPlant, blocked, blockedPlant].every((row) => row.unchanged)) {
-    console.log('  starOrderedDispatch caught ✔ — Radiant Spray kills 12 HP only after its Vulnerable step; plain damage agrees and 1 Block prevents lethal; every probe leaves source state/RNG untouched');
+    console.log(`  starOrderedDispatch caught ✔ — Radiant Spray kills ${orderedClean.targetHp} HP only after its Vulnerable step; plain damage agrees and 1 Block prevents lethal; every probe leaves source state/RNG untouched`);
   } else {
     console.log(`  starOrderedDispatch NOT CAUGHT ✘ — radiant ${orderedClean.chosen}/${orderedPlant.chosen}, plain ${noAmplification.chosen}/${noAmplificationPlant.chosen}, blocked ${blocked.chosen}/${blockedPlant.chosen}`);
     failures++;
