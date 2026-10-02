@@ -843,4 +843,11 @@ test('the fixed caption is one share of every screen, centred, and its words shr
   assert.match(screen, /function fitCaption\(\)/);
   assert.match(screen, /new ResizeObserver\(\(\) => fitCaption\(\)\)/, 'a resize re-fits the words');
   assert.match(screen, /resized\?\.disconnect\(\)/, 'cleanup lets the observer go');
+  assert.match(screen, /removeEventListener\?\.\('loadingdone', fitCaption\)/, 'cleanup lets the font listener go');
+  for (const part of ['title', 'speaker', 'dialogue', 'location']) {
+    assert.match(css, new RegExp(`\\.pse-viewport \\.prologue-${part}\\{font-size:calc\\([^}]*var\\(--prologue-caption-fit,1\\)\\)\\}`), `the scene editor's ${part} ignores the fit`);
+  }
+  // Controls inside the caption keep their safe-area padding: the fitted band's
+  // spacing rules stand aside for them.
+  assert.match(css, /\.prologue-fixed-caption:not\(\.prologue-controls-text\):is\([^)]*\) \.prologue-caption\{padding-block:/);
 });

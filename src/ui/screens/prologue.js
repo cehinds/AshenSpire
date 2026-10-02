@@ -195,21 +195,29 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   // same share of every screen, so a long line on a short screen shrinks to
   // fit rather than hiding its last line behind a scrollbar while the scene
   // auto-advances. The reveal clips finished text, so the whole line is
-  // measured once, not re-fitted as it types.
+  // measured once, not re-fitted as it types. Only the caption and letterbox
+  // bands are fixed (the stylesheet says so too); a panel column scrolls, and
+  // with the controls inside the caption the buttons cannot shrink, so fitting
+  // there would only make the words tiny and still scroll.
   function fitCaption() {
     caption.style.removeProperty('--prologue-caption-fit');
-    if (!root.classList.contains('prologue-fixed-caption') || root.classList.contains('prologue-layout-overlay')) return;
+    const banded = root.classList.contains('prologue-layout-caption') || root.classList.contains('prologue-layout-letterbox');
+    if (!root.classList.contains('prologue-fixed-caption') || !banded || root.classList.contains('prologue-controls-text')) return;
     if (!caption.clientHeight) return;
-    for (let fit = 0.95; fit >= 0.35 && caption.scrollHeight > caption.clientHeight + 1; fit -= 0.05) {
-      caption.style.setProperty('--prologue-caption-fit', fit.toFixed(2));
+    for (let step = 19; step >= 7 && caption.scrollHeight > caption.clientHeight + 1; step--) {
+      caption.style.setProperty('--prologue-caption-fit', (step / 20).toFixed(2));
     }
   }
   const resized = typeof ResizeObserver === 'function' ? new ResizeObserver(() => fitCaption()) : null;
   resized?.observe(root);
+  // A display font that arrives after the scene is drawn changes the words'
+  // size without resizing anything.
+  document.fonts?.addEventListener?.('loadingdone', fitCaption);
   function cleanup() {
     if (stopped) return;
     stopped = true; serial++; cancelAnimationFrame(raf);
     resized?.disconnect();
+    document.fonts?.removeEventListener?.('loadingdone', fitCaption);
     animations.forEach(a=>a.cancel());
     portrait.removeEventListener('change',rotate);
     document.removeEventListener('visibilitychange',visibility);

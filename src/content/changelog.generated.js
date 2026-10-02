@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The opening's first scenes are restaged",
     "detail": "Remembered warmth reframes its painting; The Burning's camera rises slowly toward the towers; Last night and The first step ease the camera back out. The words now sit centred in a caption band that is the same share of every screen, and a long line shrinks to fit the band instead of hiding its last words behind a scrollbar.",
-    "build": "0.7.1.743",
+    "build": "0.7.1.744",
     "pullRequest": 1445,
     "url": "https://github.com/cehinds/AshenSpire/pull/1445"
   },
