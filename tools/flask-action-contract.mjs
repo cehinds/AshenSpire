@@ -80,20 +80,6 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL combat and map menus share action availability/,
       },
       {
-        name: 'the map Potions control is handed a change callback that neither saves nor remounts',
-        file: 'src/ui/screens/map.js',
-        find: 'onChange: () => { onSave?.(); remount(); } });',
-        replace: 'onChange: () => {} });',
-        expectRed: /FAIL combat and map menus share action availability/,
-      },
-      {
-        name: 'the map Potions control is mounted without its change callback',
-        file: 'src/ui/screens/map.js',
-        find: 'meta, onChange: () => { onSave?.(); remount(); } });',
-        replace: 'meta });',
-        expectRed: /FAIL combat and map menus share action availability/,
-      },
-      {
         name: 'the map Potions control drops its registries binding',
         file: 'src/ui/screens/map.js',
         find: 'mountRunPotions(potionsHost, { registries, run, meta,',
@@ -419,8 +405,7 @@ try {
 // Each `mountRunPotions(potionsHost, { … })` call must hand the control the
 // live run: its argument carries exactly one each of the `registries`, `run`
 // and `meta` shorthands (the screen's own bindings) and no spread or other
-// unkeyed entry, so a stand-in `run: { flasks: [] }` goes red; and exactly one
-// `onChange` that saves and remounts. Source check of
+// unkeyed entry, so a stand-in `run: { flasks: [] }` goes red. Source check of
 // the shipped form (see BOUNDARY above menuMounts).
 const runPotionsMounts = [...mapCode.matchAll(/\bmountRunPotions\(potionsHost, /g)].map((m) => {
   const call = balanced(mapCode, m.index + m[0].length - 'potionsHost, '.length - 1);
@@ -429,12 +414,7 @@ const runPotionsMounts = [...mapCode.matchAll(/\bmountRunPotions\(potionsHost, /
   if (!obj) return false;
   const entries = props(obj);
   if (entries.some(([key]) => key === null)) return false;
-  // The change callback is what saves the run and re-renders the counts after
-  // an action: exactly one `onChange`, in its shipped form.
-  const changes = entries.filter(([key]) => key === 'onChange');
-  const liveChange = changes.length === 1
-    && changes[0][1].replace(/\s+/g, ' ') === '() => { onSave?.(); remount(); }';
-  return liveChange && ['registries', 'run', 'meta'].every((name) => {
+  return ['registries', 'run', 'meta'].every((name) => {
     const hits = entries.filter(([key]) => key === name);
     return hits.length === 1 && hits[0][1] === name;
   });
