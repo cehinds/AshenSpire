@@ -44,10 +44,24 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL LAN routes only the explicit flaskIntent action through the host/,
       },
       {
-        name: 'the map stops mounting the shared run HUD that owns its flask menu',
+        name: 'the map stops mounting its live Potions control (the map tray between fights)',
         file: 'src/ui/screens/map.js',
-        find: 'wireRunHud(app, {',
-        replace: 'plantedRunHud(app, {',
+        find: 'mountRunPotions(potionsHost, {',
+        replace: 'plantedRunPotions(potionsHost, {',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'the map Potions control hands its flask menu a plan that is not the shared one',
+        file: 'src/ui/components/runPotions.js',
+        find: 'def, plan: planFor(entry), charges:',
+        replace: 'def, plan: { actions: [] }, charges:',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'the map Potions model stops building its plan with the shared flaskActionPlan',
+        file: 'src/ui/models/RunPotionModel.js',
+        find: "  return flaskActionPlan({ context: 'run', canUse: false, useReason: t('potions.run.combatOnly'), canDrop: true });",
+        replace: "  return { actions: [], commitOnSelect: false };",
         expectRed: /FAIL combat and map menus share action availability/,
       },
       {
@@ -56,7 +70,14 @@ if (process.argv.includes('--selftest')) {
         find: 'const plan = flaskActionPlan({',
         replace: 'const plan = plantedActionPlan({',
         all: false,
-        expectRed: /FAIL combat and map menus share action availability/,
+        expectRed: /FAIL every run-HUD flask menu is fed by the shared action plan/,
+      },
+      {
+        name: 'one run-HUD flask menu is handed an empty plan in place of the shared one',
+        file: 'src/ui/components/runHud.js',
+        find: '          def,\n          plan,\n',
+        replace: '          def,\n          plan: {},\n',
+        expectRed: /FAIL every run-HUD flask menu is fed by the shared action plan/,
       },
     ],
   }));
@@ -79,13 +100,77 @@ const combat = text('src/ui/screens/combat.js');
 const potions = text('src/ui/components/combatActionRow.js');
 const coop = text('src/ui/screens/coop.js');
 const map = text('src/ui/screens/map.js');
-// The map's flask menus (charge and carried) moved, unchanged, into the one run
-// HUD every room mounts (aaab6234d, components/runHud.js); map.js reaches them
-// through wireRunHud. Read both so the map half of the check follows the menu.
+// THE MAP'S LIVE FLASK MENU (e1ff8c9f4). Between fights the map's flasks are
+// the Potions control in the map tray: map.js mounts components/runPotions.js,
+// whose minis open the shared flask menu with a plan from
+// models/RunPotionModel.js `runPotionPlan`. That is the path the map half
+// follows. The run HUD's room-rail icons (components/runHud.js) also open the
+// menu, but `wireframeUi.hud.potions.roomRail` is off, so they are checked on
+// their own and never stand in for the map.
+const runPotions = text('src/ui/components/runPotions.js');
+const runPotionModel = text('src/ui/models/RunPotionModel.js');
 const runHud = text('src/ui/components/runHud.js');
-const count = (src, re) => (src.match(re) || []).length;
 const session = text('tools/session.mjs');
 const lan = text('tools/lan.mjs');
+
+// Comments out, so a call that only survives in prose does not count.
+const code = (src) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`])\/\/[^\n]*/g, '$1');
+// The balanced text from the bracket at `open` to its partner (strings skipped).
+function balanced(src, open) {
+  const pairs = { '(': ')', '{': '}', '[': ']' };
+  const stack = [];
+  for (let i = open; i < src.length; i++) {
+    const c = src[i];
+    if (c === "'" || c === '"' || c === '`') {
+      for (i++; i < src.length && src[i] !== c; i++) if (src[i] === '\\') i++;
+      continue;
+    }
+    if (pairs[c]) stack.push(pairs[c]);
+    else if (c === stack[stack.length - 1]) { stack.pop(); if (!stack.length) return src.slice(open, i + 1); }
+  }
+  return null;
+}
+// The top-level properties of an object literal's text, as [key, value] pairs.
+function props(obj) {
+  const out = [];
+  let depth = 0;
+  let start = 1;
+  const push = (end) => {
+    const part = obj.slice(start, end).trim();
+    if (!part) return;
+    const m = part.match(/^([A-Za-z_$][\w$]*)\s*(?::\s*([\s\S]*))?$/);
+    out.push(m ? [m[1], m[2] === undefined ? m[1] : m[2].trim()] : [null, part]);
+  };
+  for (let i = 1; i < obj.length - 1; i++) {
+    const c = obj[i];
+    if (c === "'" || c === '"' || c === '`') {
+      for (i++; i < obj.length && obj[i] !== c; i++) if (obj[i] === '\\') i++;
+      continue;
+    }
+    if ('({['.includes(c)) depth++;
+    else if (')}]'.includes(c)) depth--;
+    else if (c === ',' && depth === 0) { push(i); start = i + 1; }
+  }
+  push(obj.length - 1);
+  return out;
+}
+// Each `mountFlaskActionMenu(node, { … })` call: where it is, and its `plan` value.
+function menuMounts(src) {
+  const out = [];
+  for (const m of src.matchAll(/\bmountFlaskActionMenu\(/g)) {
+    const call = balanced(src, m.index + m[0].length - 1);
+    const brace = call ? call.indexOf('{') : -1;
+    const obj = brace >= 0 ? balanced(call, brace) : null;
+    const plan = obj ? props(obj).find(([key]) => key === 'plan') : null;
+    out.push({ at: m.index, plan: plan ? plan[1] : null });
+  }
+  return out;
+}
+// The body of `export function name(…) { … }`.
+function fnBody(src, name) {
+  const m = src.match(new RegExp(`export function ${name}\\([^)]*\\)\\s*\\{`));
+  return m ? balanced(src, m.index + m[0].length - 1) : null;
+}
 
 check('one pure flaskActionPlan owns action availability', typeof actions?.flaskActionPlan === 'function');
 if (actions?.flaskActionPlan) {
@@ -104,14 +189,39 @@ if (actions?.flaskActionPlan) {
   check('selection itself is inert', false);
 }
 
-const hudMenus = count(runHud, /\bmountFlaskActionMenu\(/g);
+// MAP HALF, on the live path: map.js mounts the Potions control; every flask
+// menu that control opens is handed `planFor(entry)`; planFor is
+// runPotionPlan; and every plan runPotionPlan returns is a flaskActionPlan.
+const mapCode = code(map);
+const runPotionsCode = code(runPotions);
+const potionMounts = menuMounts(runPotionsCode);
+const potionPlanBody = fnBody(code(runPotionModel), 'runPotionPlan');
+const potionReturns = potionPlanBody ? [...potionPlanBody.matchAll(/\breturn\b\s*([^;]*)/g)].map((m) => m[1]) : [];
+const mapShares = /import \{[^}]*\bmountRunPotions\b[^}]*\} from '\.\.\/components\/runPotions\.js'/.test(mapCode)
+  && /\bmountRunPotions\(potionsHost, \{/.test(mapCode)
+  && /import \{[^}]*\brunPotionPlan\b[^}]*\} from '\.\.\/models\/RunPotionModel\.js'/.test(runPotionsCode)
+  && /const planFor = \(entry\) => runPotionPlan\(entry\b/.test(runPotionsCode)
+  && potionMounts.length > 0 && potionMounts.every((mount) => mount.plan === 'planFor(entry)')
+  && /import \{ flaskActionPlan \} from '\.\.\/\.\.\/model\/flaskActions\.js'/.test(runPotionModel)
+  && potionReturns.length > 0 && potionReturns.every((ret) => /^flaskActionPlan\(\{/.test(ret));
 check('combat and map menus share action availability',
   /mountFlaskActionMenu/.test(component)
     && /const action = flaskActionPlan\(\{ context: 'combat', canUse, useReason: reason \}\)/.test(potions) && /openCombatPotions\(/.test(combat)
-    // map side: map.js mounts the run HUD, and every flask menu the HUD opens is fed by the shared plan
-    && /import \{[^}]*\bwireRunHud\b[^}]*\} from '\.\.\/components\/runHud\.js'/.test(map) && /\bwireRunHud\(app, \{/.test(map)
-    && /import \{ flaskActionPlan \} from '\.\.\/\.\.\/model\/flaskActions\.js'/.test(runHud)
-    && hudMenus > 0 && count(runHud, /\bflaskActionPlan\(\{/g) >= hudMenus);
+    && mapShares);
+// The run HUD's room-rail flask icons (switched off by config today, so this
+// never stands in for the map): each menu it mounts takes the `plan` shorthand
+// bound by `const plan = flaskActionPlan({` in that same activate block.
+const runHudCode = code(runHud);
+const hudMounts = menuMounts(runHudCode);
+check('every run-HUD flask menu is fed by the shared action plan',
+  /import \{ flaskActionPlan \} from '\.\.\/\.\.\/model\/flaskActions\.js'/.test(runHud)
+    && hudMounts.length > 0 && hudMounts.every((mount) => {
+      if (mount.plan !== 'plan') return false;
+      const block = runHudCode.slice(runHudCode.lastIndexOf('activate: (node) => {', mount.at), mount.at);
+      return /activate: \(node\) => \{/.test(block)
+        && (block.match(/\bconst plan = flaskActionPlan\(\{/g) || []).length === 1
+        && (block.match(/\bplan\s*=[^=]/g) || []).length === 1;
+    }));
 check('menu supports focus navigation, cancel, and back without dispatch',
   /focusFirst|\.focus\(/.test(component) && /Escape|cancel/i.test(component)
     && /onCancel/.test(component) && /remove\(\)/.test(component));
