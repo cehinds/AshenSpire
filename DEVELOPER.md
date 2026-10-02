@@ -96,7 +96,8 @@ fails the core suite while it is stale, or when any field differs from what
 `src/ui/assetmap.js` resolves; `assetUrl()` checks an optional high-res source
 first (built from a manifest by the Art quality setting), then the built-in
 art. Not yet covered: game code still builds many `assets/…` paths from
-templates, and 14 CSS `url(../assets/…)` backdrops bypass `assetUrl()`.
+templates, and the CSS `url(../assets/…)` backdrops bypass `assetUrl()` in the
+source tree and the single file (the web edition reads them through `ASSET_CSS`).
 Schema 2 (docs/EXTERNAL-ASSETS-PLAN.md, step 2) adds `common` ids with one
 `{path, bytes, sha256}` record each: the 15 fonts under `assets/fonts/`,
 `licenses/OFL.txt` (read from `asset-data/fonts/OFL.txt`), `music/manifest.json`
@@ -113,8 +114,16 @@ index's sha256 and the default tier into `ASSET_PACKS` (`src/ui/assetPacks.js`),
 and the loader checks the indexes at boot and resolves ids to objects through
 `setBuiltInSource()` in `src/ui/assetmap.js` (high → light → placeholders when
 an index is missing or fails its pin; `tests/asset-packs.test.mjs`).
-`node tools/verify-external.mjs` checks the tree on disk and
-`node tools/external-play.mjs` loads it in Chromium. The single files are
+The CSS assets follow the same index (step 3b): `tools/asset-css.mjs` moves the
+"AS Lore" `@font-face` rules into an `ASSET_CSS` template with `{{id}}` slots,
+turns each backdrop `url()` into `var(--as-css-<id>, none)` defined there, and
+inlines the two SVG masks as `data:`; the loader fills the slots from the index it
+used (light when high failed) and injects one `<style data-asset-css>`, and a
+failed load injects nothing (no backdrop, system faces; `tests/asset-css.test.mjs`).
+`node tools/verify-external.mjs` checks the tree on disk (D: every `ASSET_CSS`
+slot names an id the common index or every art tier lists) and
+`node tools/external-play.mjs` loads it in Chromium (`--expect-tier light` for a
+high-default build whose high index was removed). The single files are
 unchanged: their `ASSET_PACKS` stays null and the loader does nothing.
 
 **The high-res release** (docs/ART-REPO-PLAN.md). `art-release.json` pins one
