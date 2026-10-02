@@ -763,8 +763,42 @@ function nudgeRange(el, delta) {
   el.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
+// A pad press (or a hint chip) arrives as the bound key, dispatched at the
+// DOCUMENT and bubbling to the window. It used to be dispatched at the window,
+// where no `document` listener ever hears it: the modal shell, the tooltip,
+// the Armoury and the save-slot selector all answer Escape on the document, so
+// pad B closed none of them while the keyboard's Escape closed every one
+// (docs/FINISH.md §9, measured by tools/escape-back.mjs). The window still
+// hears it, in capture and in bubble, exactly as before.
 function synthKey(key) {
-  dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+  document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+}
+
+// ---- Back: Escape and pad B on a screen without an Escape of its own --------
+//
+// docs/FINISH.md §9: "Escape or pad B backs out of every screen." A screen
+// whose Back is a plain button (History, Compendium, Custom Climb, character
+// creation, the LAN lobby, a dialogue, a reward's detail pane, the quest
+// board) marks that button `data-back`, and this ONE listener presses it — a
+// click on the screen's existing Back, so the key and the pad run the same
+// handler the mouse runs, once. It is the LAST word on Escape: it sits on the
+// window in the bubble phase and steps aside for any press already taken
+// (`defaultPrevented`) by a dialog, the tooltip, an overlay or a screen that
+// answers Escape itself. A screen that answers Escape itself must therefore
+// not mark a `data-back` too; tools/escape-back.mjs counts the presses.
+// Only the topmost focus scope is searched (a Back under an open veil is not
+// the Back the player is looking at), and a text field keeps its Escape.
+export const BACK_SELECTOR = '[data-back]';
+function onBackKey(ev) {
+  if (ev.key !== 'Escape' || ev.repeat || ev.defaultPrevented) return;
+  const tag = (ev.target && ev.target.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  const root = scopeRoot();
+  const back = [...root.querySelectorAll(BACK_SELECTOR)]
+    .find((el) => !el.disabled && !el.closest('[inert]') && visible(el));
+  if (!back) return;
+  ev.preventDefault();
+  back.click();
 }
 
 function doAction(id, source = 'key') {
@@ -1103,6 +1137,7 @@ export function initInput({ getSettings } = {}) {
   setKeyBindings(s.keyBindings || {});
   addEventListener('keydown', onKeydown, true);
   addEventListener('keyup', onKeyup, true);
+  addEventListener('keydown', onBackKey);
   // Alt-tab away mid-hold and the keyup lands in another window. Same verdict
   // trackGesture gives a pointer the browser takes: cancelled, nothing commits.
   addEventListener('blur', () => {

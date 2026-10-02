@@ -341,6 +341,13 @@ or is above 2147483647, is ignored). A browser that exits or fails to start
 still fails at once; only a slow one is waited for.
 `node --test tests/browser-launch-floor.test.mjs` covers the floor.
 
+Escape and pad B are one input: `src/ui/input.js` dispatches a pad press as
+its bound key at the document, and a screen whose Back is a plain button marks
+it `data-back`, which input.js presses on an Escape nothing else took (D41 in
+docs/FINISH.md). `node --test tests/escape-back.test.mjs` covers the rule in the
+suite; `node tools/escape-back.mjs --check` (hand-run, real Chromium) drives
+every screen in its table with one Escape and one pad B.
+
 ```
 # what raises the red failure banner, and what must not
 node --test tests/debug-banner.test.mjs
