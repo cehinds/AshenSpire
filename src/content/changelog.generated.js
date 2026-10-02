@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Fight sounds land at the right moment",
     "detail": "A boss fight's first draw and turn sting now play when its name card lifts, not hidden behind it. In LAN co-op your turn stings once per round however many players are in the fight, and joining or reloading a fight after someone has already acted no longer replays that action's sounds.",
-    "build": "0.7.1.787",
+    "build": "0.7.1.788",
     "pullRequest": 1485,
     "url": "https://github.com/cehinds/AshenSpire/pull/1485"
+  },
+  {
+    "id": "pr-1473",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the balance report now measures Mana and each act's difficulty",
+    "detail": "Nothing you play changes. The run simulator can now compare whole climbs with and without Mana limits, and report how often each act's boss falls in each region. Both results are written into the balance notes for the owner to tune from later.",
+    "build": "0.7.1.787",
+    "pullRequest": 1473,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1473"
   },
   {
     "id": "pr-1459",
