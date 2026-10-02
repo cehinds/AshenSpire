@@ -90,7 +90,8 @@ async function serveGameFile(request) {
   try { data = await fs.promises.readFile(file); } catch { return new Response('not found', { status: 404 }); }
   const headers = {
     'content-type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream',
-    'cache-control': 'no-cache',
+    // objects/ and packs/ are named by their content's digest, so never stale.
+    'cache-control': /^(objects|packs)\//.test(rel) ? 'max-age=31536000, immutable' : 'no-cache',
     'accept-ranges': 'bytes',
   };
   // Byte ranges: <audio> needs them to seek, and a looping track seeks to 0 at

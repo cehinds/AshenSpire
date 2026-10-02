@@ -43,7 +43,13 @@ const ROOT = resolve(HERE, '..', '..');
 const ELECTRON = resolve(ROOT, 'desktop', 'electron');
 
 const args = process.argv.slice(2);
-const opt = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : null; };
+const opt = (name) => {
+  const i = args.indexOf(name);
+  if (i < 0) return null;
+  const v = args[i + 1];
+  if (!v || v.startsWith('--')) { console.error(`build-installer: ${name} needs a value`); process.exit(2); }
+  return v;
+};
 const OUT = resolve(opt('--out') || join(ROOT, 'build', 'windows-installer'));
 const STAGE_ONLY = args.includes('--stage-only');
 
@@ -154,10 +160,24 @@ cpSync(packaged, APP, { recursive: true });
 // is in English, and the other 54 locales are ~45 MB.
 for (const f of readdirSync(join(APP, 'locales'))) if (f !== 'en-US.pak') rmSync(join(APP, 'locales', f));
 
-// The uninstaller removes exactly what was installed, never the whole folder.
-const top = readdirSync(APP).sort();
-const uninstall = top.map((name) => statSync(join(APP, name)).isDirectory()
-  ? `  RMDir /r "$INSTDIR\\${name}"` : `  Delete "$INSTDIR\\${name}"`).join('\n') + '\n';
+// The uninstaller deletes exactly the files the installer can have written —
+// every staged file, plus the high-res objects and index the download adds —
+// then each folder only once it is empty (RMDir without /r), deepest first.
+// Anything else the player put in the folder stays.
+const files = [];
+const dirs = new Set();
+(function walk(dir) {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const rel = relative(APP, join(dir, e.name)).split(/[\\/]/).join('/');
+    if (e.isDirectory()) { dirs.add(rel); walk(join(dir, e.name)); } else files.push(rel);
+  }
+})(APP);
+for (const r of highRows) { files.push(`game/${r.path}`); dirs.add(`game/${dirname(r.path)}`); }
+for (const f of packFiles.filter((f) => f.startsWith(`${high.name}.`))) files.push(`game/packs/${f}`);
+const win = (rel) => rel.split('/').join('\\');
+const uninstall = [...new Set(files)].sort().map((f) => `  Delete "$INSTDIR\\${win(f)}"`)
+  .concat([...dirs].sort((a, b) => b.split('/').length - a.split('/').length || (a < b ? 1 : -1))
+    .map((d) => `  RMDir "$INSTDIR\\${win(d)}"`)).join('\n') + '\n';
 writeFileSync(join(STAGE, 'uninstall-files.nsh'), uninstall);
 const sizeKb = (dir) => {
   let n = 0;

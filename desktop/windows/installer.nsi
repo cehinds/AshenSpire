@@ -98,16 +98,17 @@ Section "Ashen Spire (required)" SecGame
   SectionIn RO
   !insertmacro CloseRunningGame ""
 
-  ; An upgrade: everything of the old version goes except game\objects\, whose
-  ; files are named by their content (an unchanged high-res file is kept, so a
-  ; reinstall does not download the art again). The prune step at the end
-  ; removes the objects nothing uses any more.
+  ; An upgrade: the old version's pack indexes and install data go (so the high
+  ; index is back only if the art is installed again); every other file is
+  ; overwritten. game\objects\ is kept: its files are named by their content, so
+  ; an unchanged high-res file is not downloaded again, and the prune step at the
+  ; end removes the objects nothing uses any more. Only files the installer
+  ; writes are named here.
   SetOutPath "$INSTDIR"
-  RMDir /r "$INSTDIR\game\packs"
-  Delete "$INSTDIR\game\*.*"
-  RMDir /r "$INSTDIR\install-data"
-  RMDir /r "$INSTDIR\resources"
-  RMDir /r "$INSTDIR\locales"
+  Delete "$INSTDIR\game\packs\*.json"
+  Delete "$INSTDIR\game\packs\*.js"
+  Delete "$INSTDIR\install-data\hd-index\*.*"
+  Delete "$INSTDIR\install-data\*.*"
 
   File /r "${APP_DIR}/*.*"
 

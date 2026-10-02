@@ -144,6 +144,7 @@ function Install-HighArt {
         $memory = New-Object IO.MemoryStream
         try { $stream.CopyTo($memory) } finally { $stream.Dispose() }
         $bytes = $memory.ToArray()
+        $memory.Dispose()
         $got = Get-Hex ($hasher.ComputeHash($bytes))
         if ($got -ne $e.Sha) { Fail 4 "$($e.Id) does not match the game's index (sha256 $got, expected $($e.Sha))." }
         $file = Get-ObjectFile $e.Path
