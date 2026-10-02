@@ -8,9 +8,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: no CI job runs longer than 20 minutes",
     "detail": "Nothing you play changes. The slowest automated checks now run in parallel pieces, so every check still runs but no single job takes more than 20 minutes.",
-    "build": "0.7.1.758",
+    "build": "0.7.1.761",
     "pullRequest": 1458,
     "url": "https://github.com/cehinds/AshenSpire/pull/1458"
+  },
+  {
+    "id": "pr-1476",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: two browser-tool checks pass on Mac and Windows again",
+    "detail": "Nothing you play changes. On Windows, the helper that serves the art-pack build to the test tools refused every file it should have served, because it spelled its own folder one way and each file another; it now spells both the same way. On Mac, the check that a browser which dies on start fails at once looked for a program where Macs do not keep it; it now uses one every computer has, and runs on Windows too instead of being skipped.",
+    "build": "0.7.1.760",
+    "pullRequest": 1476,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1476"
+  },
+  {
+    "id": "pr-1448",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: co-op enemy effects on your cards are tested for every player",
+    "detail": "Nothing you play changes. New tests check that an enemy move which makes players draw, discard, exhaust, or shuffle their discard pile back into their deck does it to every living player in a co-op fight, and not to a player who is down or disconnected.",
+    "build": "0.7.1.759",
+    "pullRequest": 1448,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1448"
+  },
+  {
+    "id": "pr-1445",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The opening's words sit in the middle of the caption band",
+    "detail": "The narration is now centred top to bottom in the fixed caption band, not pinned to its top. On a phone turned on its side, where the words sit in a panel beside the painting, the panel now fills its whole column instead of a thin strip at the top.",
+    "build": "0.7.1.758",
+    "pullRequest": 1445,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1445"
   },
   {
     "id": "pr-1461",
