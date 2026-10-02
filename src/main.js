@@ -902,6 +902,10 @@ function applyDisplaySettings(settings) {
   // shipped score (content/music.js SHIPPED_MUSIC_FOLDER: the common pack's
   // objects in the web edition, the music/ folder beside a single file) when
   // served over http(s); a file:// page cannot fetch it and keeps the synth.
+  // That holds for a double-clicked web edition too (docs/EXTERNAL-ASSETS-PLAN.md
+  // §3.9, step 4): its art, tiles and fonts load from the objects beside it,
+  // but Web Audio cannot play a file: track (a CORS-mode load Chrome refuses,
+  // or silence without one), so the score stays synthesized there.
   const served = /^https?:$/.test(globalThis.location?.protocol || '');
   const folder = settings.musicFolder || (served ? SHIPPED_MUSIC_FOLDER : '');
   // Only the shipped score is read through the asset index; a folder the

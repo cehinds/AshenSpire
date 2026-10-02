@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: co-op enemy effects on your cards are tested for every player",
     "detail": "Nothing you play changes. New tests check that an enemy move which makes players draw, discard, exhaust, or shuffle their discard pile back into their deck does it to every living player in a co-op fight, and not to a player who is down or disconnected.",
-    "build": "0.7.1.757",
+    "build": "0.7.1.758",
     "pullRequest": 1448,
     "url": "https://github.com/cehinds/AshenSpire/pull/1448"
+  },
+  {
+    "id": "pr-1461",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition opens by double-click",
+    "detail": "Behind the scenes: the web edition's game file, kept together with its folder of art, now plays when opened straight from disk, with its art, fonts and map close-ups, and the music played by the game's own synthesizer; nothing you play changes.",
+    "build": "0.7.1.757",
+    "pullRequest": 1461,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1461"
   },
   {
     "id": "pr-1449",

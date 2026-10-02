@@ -8,11 +8,12 @@ import { createHash, randomBytes } from 'node:crypto';
 import {
   loadBuiltInPacks, whenBuiltInArtReady, resetBuiltInArt, packsPinned, tierOrder, objectUrl, cleanBase,
   builtInArtStatus, ASSET_PACKS, musicHold, bootLine, ASSET_CSS, fillAssetCss, applyAssetCss,
+  fontFaceRules, twinOf, unmappedFaceDescriptors,
 } from '../src/ui/assetPacks.js';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { assetUrl, builtInSource, setBuiltInSource, setHighResSource } from '../src/ui/assetmap.js';
 import { sha256Bytes, sha256Hex } from '../src/ui/sha256.js';
-import { objectPath, indexText } from '../tools/asset-pack.mjs';
+import { objectPath, indexText, twinText } from '../tools/asset-pack.mjs';
 
 const sha = (text) => createHash('sha256').update(text).digest('hex');
 const A = 'a'.repeat(64);
@@ -44,9 +45,61 @@ function packTree({ tier = 'light', drop = [], corrupt = [], base = null } = {})
     const bytes = new TextEncoder().encode(body);
     return { ok: true, status: 200, arrayBuffer: async () => bytes.buffer.slice(0), json: async () => JSON.parse(body) };
   };
-  return { pin: { schema: 1, tier, packs, fonts: null }, fetchImpl, asked };
+  return { pin: { schema: 1, tier, packs, fonts: null }, fetchImpl, asked, files: new Map([...files, ...Object.entries(indexes).map(([pack, text]) => [packs[pack]?.index, text]).filter(([k]) => k)]) };
 }
 const opts = (tree, extra = {}) => ({ pin: tree.pin, inlineMap: {}, fetchImpl: tree.fetchImpl, protocol: 'http:', ...extra });
+
+const FONT_BYTES = Uint8Array.from([0x77, 0x4f, 0x46, 0x32, 1, 2, 3, 4, 5]);
+const FONT_SHA = sha(FONT_BYTES);
+const FACE_CSS = { schema: 1, rules: [
+  ':root{--as-css-bg-bg_act1-webp:url("{{assets/bg/bg_act1.webp}}")}',
+  "@font-face { font-family:'AS Lore Fell'; font-style:italic; font-weight:400; font-display:swap; src:url(\"{{assets/fonts/x.woff2}}\") format('woff2'); }",
+] };
+
+/**
+ * The same pack tree as file:// sees it: each index's .js twin (and, with
+ * `fonts`, the font sidecar), loaded by a script loader that runs the twin's
+ * text, and a fetch that must never be called.
+ */
+function twinTree({ tier = 'light', drop = [], corruptTwin = [], silent = [], fonts = false, corruptFonts = null } = {}) {
+  const tree = packTree({ tier });
+  const common = indexText({ 'assets/fonts/x.woff2': [FONT_SHA, FONT_BYTES.length, 'font/woff2'] });
+  if (fonts) tree.pin.packs.common = { index: `packs/common-${sha(common).slice(0, 12)}.json`, sha256: sha(common), ids: 1, objects: 1, bytes: 9 };
+  const files = new Map();
+  for (const [pack, p] of Object.entries(tree.pin.packs)) {
+    if (drop.includes(pack)) continue;
+    const name = p.index.replace(/^packs\/|\.json$/g, '');
+    let text = pack === 'common' && fonts ? common : tree.files.get(p.index);
+    if (corruptTwin.includes(pack)) text = text.replace('{\n', '{\n"x":1,\n');
+    files.set(p.index.replace(/\.json$/, '.js'), silent.includes(pack) ? '/* calls nothing */\n' : twinText('window.__ashenPack', name, text));
+  }
+  if (fonts) {
+    const faceBytes = corruptFonts === 'face' ? Uint8Array.from([9, 9, 9]) : FONT_BYTES;
+    let text = `{\n${JSON.stringify('assets/fonts/x.woff2')}:${JSON.stringify(Buffer.from(faceBytes).toString('base64'))}\n}\n`;
+    const pinned = sha(text);
+    if (corruptFonts === 'text') text = text.replace('}', ',"y":"AA=="}');
+    const name = `fonts-${pinned.slice(0, 12)}`;
+    tree.pin.fonts = { file: `packs/${name}.js`, sha256: pinned, faces: 1 };
+    files.set(`packs/${name}.js`, twinText('__ashenFonts', name, text));
+  }
+  const scripts = [];
+  const scriptImpl = async (src) => {
+    scripts.push(src);
+    const body = files.get(src.replace(/^\.\//, ''));
+    if (body === undefined) throw new Error(`${src} could not be loaded`);
+    new Function('window', body)(globalThis);
+  };
+  return { ...tree, scripts, scriptImpl };
+}
+/** A FontFace stand-in: what it was given, and a load() that resolves. */
+class FakeFontFace {
+  constructor(family, source, descriptors) { Object.assign(this, { family, source, descriptors }); }
+  async load() { return this; }
+}
+const fileOpts = (tree, extra = {}) => {
+  const doc = extra.doc || fakeDoc('file:///p/AshenSpire.html');
+  return { pin: tree.pin, inlineMap: {}, fetchImpl: tree.fetchImpl, protocol: 'file:', scriptImpl: tree.scriptImpl, FontFaceImpl: FakeFontFace, css: null, ...extra, doc };
+};
 
 test('the bundled SHA-256 agrees with node:crypto, and SubtleCrypto is used where it exists', async () => {
   for (const n of [0, 1, 55, 56, 63, 64, 65, 1000, 70000]) {
@@ -150,13 +203,190 @@ test('with no art index the game keeps its placeholders: no source, ids pass thr
   resetBuiltInArt();
 });
 
-test('file:// fetches nothing yet (the .js twins are step 4) and says so', async () => {
+test('file:// fetches nothing: the indexes come from their .js twins (step 4)', async () => {
   resetBuiltInArt();
-  const tree = packTree();
-  const r = await loadBuiltInPacks(opts(tree, { protocol: 'file:' }));
-  assert.equal(r.state, 'failed');
-  assert.deepEqual(tree.asked, []);
+  const tree = twinTree();
+  const r = await loadBuiltInPacks(fileOpts(tree));
+  assert.equal(r.state, 'loaded');
+  assert.equal(r.tier, 'light');
+  assert.equal(r.via, 'file');
+  assert.deepEqual(tree.asked, [], 'no fetch at all, asset-base.json included');
+  assert.ok(tree.scripts.some((u) => /^\.\/packs\/light-[0-9a-f]{12}\.js$/.test(u)), 'the light twin');
+  assert.ok(tree.scripts.some((u) => /^\.\/packs\/common-[0-9a-f]{12}\.js$/.test(u)), 'the common twin');
+  assert.ok(!tree.scripts.some((u) => /\.json$/.test(u)), 'never a .json index through a script');
+  assert.equal(assetUrl('assets/bg/bg_act1.webp'), `./objects/aa/${A}.webp`);
+  assert.equal(assetUrl('assets/fonts/x.woff2'), `./objects/aa/${A}.woff2`);
   resetBuiltInArt();
+  // Without a document (or a script loader) nothing can be loaded, and it says so.
+  const none = await loadBuiltInPacks({ ...fileOpts(twinTree()), scriptImpl: null, doc: null });
+  assert.equal(none.state, 'failed');
+  assert.match(none.failed[0], /file:\/\/: no document/);
+  resetBuiltInArt();
+});
+
+test('file:// drops a twin whose string does not hash to the pin, unparsed, and the tier falls back', async () => {
+  resetBuiltInArt();
+  const tree = twinTree({ tier: 'high', corruptTwin: ['high'] });
+  const r = await loadBuiltInPacks(fileOpts(tree));
+  assert.equal(r.tier, 'light', 'high → light');
+  assert.ok(r.failed.some((f) => /^high: packs\/high-[0-9a-f]{12}\.js hashes to [0-9a-f]{12}, the pin says/.test(f)), r.failed.join('; '));
+  assert.equal(assetUrl('assets/bg/bg_act1.webp'), `./objects/aa/${A}.webp`, 'the light object, never the corrupt twin\'s');
+  resetBuiltInArt();
+  // A twin that is missing, or that never calls its hook, is a failed index.
+  const gone = await loadBuiltInPacks(fileOpts(twinTree({ tier: 'high', drop: ['high'], silent: ['light'] })));
+  assert.equal(gone.state, 'failed');
+  assert.ok(gone.failed.some((f) => /^high: .*could not be loaded/.test(f)), gone.failed.join('; '));
+  assert.ok(gone.failed.some((f) => /^light: packs\/light-[0-9a-f]{12}\.js did not call __ashenPack/.test(f)), gone.failed.join('; '));
+  assert.equal(builtInSource(), null, 'placeholders');
+  resetBuiltInArt();
+});
+
+test('file:// adds the faces from the font sidecar, each checked, and leaves the @font-face rules out of the CSS', async () => {
+  resetBuiltInArt();
+  const tree = twinTree({ fonts: true });
+  const doc = fakeDoc('file:///home/p/AshenSpire/AshenSpire.html');
+  const r = await loadBuiltInPacks(fileOpts(tree, { css: FACE_CSS, doc }));
+  assert.equal(r.state, 'loaded');
+  assert.equal(r.faces, 1);
+  assert.deepEqual(r.failed, []);
+  assert.equal(doc.fontList.length, 1);
+  const [face] = doc.fontList;
+  assert.equal(face.family, 'AS Lore Fell');
+  assert.deepEqual(face.descriptors, { style: 'italic', weight: '400', display: 'swap' });
+  assert.deepEqual([...new Uint8Array(face.source)], [...FONT_BYTES], 'the face is the sidecar\'s decoded bytes');
+  assert.ok(tree.scripts.some((u) => /^\.\/packs\/fonts-[0-9a-f]{12}\.js$/.test(u)), 'the sidecar');
+  assert.equal(r.css, 1, 'only the backdrop rule');
+  assert.doesNotMatch(doc.styles[0].textContent, /font-face/, 'no url() font load Chrome would refuse');
+  assert.ok(doc.styles[0].textContent.includes('url("file:///home/p/AshenSpire/objects/aa/'), 'the backdrop, absolute against the file');
+  assert.ok(doc.styles[0].textContent.includes(`objects/aa/${A}.webp`), 'the light backdrop object');
+  // A tier switch reloads the indexes, but never adds the same faces again.
+  const again = await loadBuiltInPacks(fileOpts(tree, { css: FACE_CSS, doc }));
+  assert.equal(again.faces, 1);
+  assert.equal(doc.fontList.length, 1);
+  resetBuiltInArt();
+});
+
+test('file:// refuses a sidecar off its pin, and a face whose bytes are not its common record; the art still loads', async () => {
+  resetBuiltInArt();
+  let doc = fakeDoc('file:///p/AshenSpire.html');
+  const off = await loadBuiltInPacks(fileOpts(twinTree({ fonts: true, corruptFonts: 'text' }), { css: FACE_CSS, doc }));
+  assert.equal(off.state, 'loaded');
+  assert.equal(off.faces, 0);
+  assert.ok(off.failed.some((f) => /^fonts: packs\/fonts-[0-9a-f]{12}\.js hashes to/.test(f)), off.failed.join('; '));
+  assert.equal(doc.fontList.length, 0);
+  resetBuiltInArt();
+  doc = fakeDoc('file:///p/AshenSpire.html');
+  const face = await loadBuiltInPacks(fileOpts(twinTree({ fonts: true, corruptFonts: 'face' }), { css: FACE_CSS, doc }));
+  assert.equal(face.faces, 0);
+  assert.ok(face.failed.some((f) => /^fonts: assets\/fonts\/x\.woff2 hashes to [0-9a-f]{12}, its common record says/.test(f)), face.failed.join('; '));
+  assert.equal(doc.fontList.length, 0);
+  resetBuiltInArt();
+  // No common index: nothing to check a face against, so none is added.
+  doc = fakeDoc('file:///p/AshenSpire.html');
+  const noCommon = await loadBuiltInPacks(fileOpts(twinTree({ fonts: true, drop: ['common'] }), { css: FACE_CSS, doc }));
+  assert.equal(noCommon.state, 'loaded');
+  assert.equal(doc.fontList.length, 0);
+  resetBuiltInArt();
+});
+
+test('file://: a face still loading at the deadline is never added after the load settles', async () => {
+  resetBuiltInArt();
+  const tree = twinTree({ fonts: true });
+  const doc = fakeDoc('file:///p/AshenSpire.html');
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  class SlowFace extends FakeFontFace { async load() { await gate; return this; } }
+  const r = await loadBuiltInPacks(fileOpts(tree, { css: FACE_CSS, doc, FontFaceImpl: SlowFace, deadlineMs: 60 }));
+  assert.equal(r.state, 'loaded', 'the art is kept');
+  assert.equal(r.faces, 0);
+  assert.ok(r.failed.some((f) => /^fonts: the sidecar did not load within 60 ms/.test(f)), r.failed.join('; '));
+  release();
+  for (let i = 0; i < 20; i++) await new Promise((done) => setImmediate(done));
+  assert.equal(doc.fontList.length, 0, 'no face added after the load settled');
+  // And the cache was not written: a later load reads the sidecar again and adds the face.
+  const again = await loadBuiltInPacks(fileOpts(tree, { css: FACE_CSS, doc }));
+  assert.equal(again.faces, 1);
+  assert.equal(doc.fontList.length, 1);
+  resetBuiltInArt();
+});
+
+test('file://: a tier switch replaced while a face is loading publishes nothing', async () => {
+  resetBuiltInArt();
+  const tree = twinTree({ fonts: true });
+  const doc = fakeDoc('file:///p/AshenSpire.html');
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  let started;
+  const loading = new Promise((r) => { started = r; });
+  class SlowFace extends FakeFontFace { async load() { started(); await gate; return this; } }
+  let wanted = true;
+  let published = 0;
+  const pending = loadBuiltInPacks(fileOpts(tree, { css: FACE_CSS, doc, FontFaceImpl: SlowFace, stillWanted: () => wanted, onSource: () => { published++; } }));
+  await loading;
+  wanted = false; // the player switched again while the face was loading
+  release();
+  const r = await pending;
+  assert.equal(r.superseded, true);
+  assert.equal(published, 0, 'onSource never ran');
+  assert.equal(builtInSource(), null, 'setBuiltInSource never ran');
+  assert.equal(doc.styles.length, 0, 'no CSS injected');
+  assert.equal(doc.fontList.length, 0, 'document.fonts unchanged: the superseded switch added no face');
+  // Nor was the faces cache written: the next wanted load adds the face.
+  const next = await loadBuiltInPacks(fileOpts(tree, { css: FACE_CSS, doc }));
+  assert.equal(next.faces, 1);
+  assert.equal(doc.fontList.length, 1);
+  resetBuiltInArt();
+});
+
+test('file://: a twin call nobody is waiting for is dropped, and so is a late one', async () => {
+  resetBuiltInArt();
+  const tree = twinTree();
+  await loadBuiltInPacks(fileOpts(tree)); // installs the hooks
+  resetBuiltInArt();
+  const name = tree.pin.packs.light.index.replace(/^packs\/|\.json$/g, '');
+  const text = tree.files.get(tree.pin.packs.light.index);
+  globalThis.__ashenPack(name, text); // unsolicited, even with the right text
+  const silent = twinTree({ silent: ['light'] });
+  const r = await loadBuiltInPacks(fileOpts(silent));
+  assert.equal(r.state, 'failed', 'the unsolicited call was not kept for the next reader');
+  assert.ok(r.failed.some((f) => /did not call __ashenPack/.test(f)), r.failed.join('; '));
+  globalThis.__ashenPack(name, text); // late: the reader has given up
+  const again = await loadBuiltInPacks(fileOpts(silent));
+  assert.equal(again.state, 'failed', 'nor a late one');
+  resetBuiltInArt();
+});
+
+test('fontFaceRules reads a FontFace from each ASSET_CSS @font-face rule', () => {
+  const rules = fontFaceRules({ schema: 1, rules: [
+    ':root{--as-css-bg-x-webp:url("{{assets/bg/x.webp}}")}',
+    "@font-face { font-family:'AS Lore Inter'; font-style:normal; font-weight:400; font-display:swap; src:url(\"{{assets/fonts/inter-400-normal.woff2}}\") format('woff2'); }",
+  ] });
+  assert.deepEqual([...rules.keys()], ['assets/fonts/inter-400-normal.woff2']);
+  assert.deepEqual(rules.get('assets/fonts/inter-400-normal.woff2'), { family: 'AS Lore Inter', descriptors: { style: 'normal', weight: '400', display: 'swap' } });
+  assert.equal(fontFaceRules(null).size, 0);
+  // Comments are stripped, and every standard descriptor is carried.
+  const full = fontFaceRules({ schema: 1, rules: [
+    "@font-face { /* the lore face; size: 1 */ font-family:'AS Lore X'; size-adjust:90%; ascent-override:80%; descent-override:20%; line-gap-override:0%; font-variation-settings:'wght' 400; /* end */ src:url(\"{{assets/fonts/x.woff2}}\"); }",
+  ] });
+  assert.deepEqual(full.get('assets/fonts/x.woff2'), { family: 'AS Lore X', descriptors: {
+    sizeAdjust: '90%', ascentOverride: '80%', descentOverride: '20%', lineGapOverride: '0%', variationSettings: "'wght' 400" } });
+});
+
+test('a @font-face descriptor a FontFace would lose is found, and the shipped stylesheets carry none', () => {
+  const css = { schema: 1, rules: ["@font-face { font-family:'AS Lore X'; font-palette:light; src:url(\"{{assets/fonts/x.woff2}}\"); }"] };
+  assert.deepEqual(unmappedFaceDescriptors(css).map((d) => d.split(' ')[0]), ['font-palette']);
+  assert.deepEqual(unmappedFaceDescriptors(FACE_CSS), []);
+  for (const name of readdirSync(new URL('../styles/', import.meta.url)).filter((f) => f.endsWith('.css'))) {
+    const text = readFileSync(new URL(`../styles/${name}`, import.meta.url), 'utf8');
+    const rules = [...text.matchAll(/@font-face\s*\{[^{}]*\}/g)].map((m) => m[0]);
+    assert.deepEqual(unmappedFaceDescriptors({ rules }), [], `styles/${name}: a face the file:// door would declare differently`);
+  }
+});
+
+test('twinOf names the .js twin of a pinned index', () => {
+  assert.deepEqual(twinOf('packs/light-0123456789ab.json'), { name: 'light-0123456789ab', file: 'packs/light-0123456789ab.js' });
+  assert.deepEqual(twinOf('packs/fonts-0123456789ab.js'), { name: 'fonts-0123456789ab', file: 'packs/fonts-0123456789ab.js' });
+  for (const bad of ['../x.json', 'https://e.com/x.json', 'packs/x.txt', '', null]) assert.equal(twinOf(bad), null, String(bad));
 });
 
 test('the high-res overlay still wins over the built-in pack, which wins over ASSET_MAP', async () => {
@@ -460,6 +690,7 @@ const CSS = {
 /** A document just big enough for applyAssetCss: a head, styles, a base URL. */
 function fakeDoc(baseURI = 'https://example.com/AshenSpire/dev/0001/index.html') {
   const head = [];
+  const fontList = [];
   const make = () => {
     const el = { attrs: {}, textContent: '', setAttribute(k, v) { el.attrs[k] = v; }, replaceWith(next) { head.splice(head.indexOf(el), 1, next); } };
     return el;
@@ -470,6 +701,8 @@ function fakeDoc(baseURI = 'https://example.com/AshenSpire/dev/0001/index.html')
     createElement: make,
     querySelector: (sel) => (sel === 'style[data-asset-css]' ? head.find((el) => 'data-asset-css' in el.attrs) || null : null),
     styles: head,
+    fonts: { add: (face) => fontList.push(face) },
+    fontList,
   };
 }
 
