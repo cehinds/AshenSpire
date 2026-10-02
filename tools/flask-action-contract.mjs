@@ -43,6 +43,21 @@ if (process.argv.includes('--selftest')) {
         replace: "case 'plantedFlask': g.useFlask(id, msg.slot); break;",
         expectRed: /FAIL LAN routes only the explicit flaskIntent action through the host/,
       },
+      {
+        name: 'the map stops mounting the shared run HUD that owns its flask menu',
+        file: 'src/ui/screens/map.js',
+        find: 'wireRunHud(app, {',
+        replace: 'plantedRunHud(app, {',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'one run-HUD flask menu opens without the shared action plan',
+        file: 'src/ui/components/runHud.js',
+        find: 'const plan = flaskActionPlan({',
+        replace: 'const plan = plantedActionPlan({',
+        all: false,
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
     ],
   }));
 }
@@ -64,6 +79,11 @@ const combat = text('src/ui/screens/combat.js');
 const potions = text('src/ui/components/combatActionRow.js');
 const coop = text('src/ui/screens/coop.js');
 const map = text('src/ui/screens/map.js');
+// The map's flask menus (charge and carried) moved, unchanged, into the one run
+// HUD every room mounts (aaab6234d, components/runHud.js); map.js reaches them
+// through wireRunHud. Read both so the map half of the check follows the menu.
+const runHud = text('src/ui/components/runHud.js');
+const count = (src, re) => (src.match(re) || []).length;
 const session = text('tools/session.mjs');
 const lan = text('tools/lan.mjs');
 
@@ -84,8 +104,14 @@ if (actions?.flaskActionPlan) {
   check('selection itself is inert', false);
 }
 
+const hudMenus = count(runHud, /\bmountFlaskActionMenu\(/g);
 check('combat and map menus share action availability',
-  /mountFlaskActionMenu/.test(component) && /flaskActionPlan/.test(map) && /const action = flaskActionPlan\(\{ context: 'combat', canUse, useReason: reason \}\)/.test(potions) && /openCombatPotions\(/.test(combat) && /mountFlaskActionMenu/.test(map));
+  /mountFlaskActionMenu/.test(component)
+    && /const action = flaskActionPlan\(\{ context: 'combat', canUse, useReason: reason \}\)/.test(potions) && /openCombatPotions\(/.test(combat)
+    // map side: map.js mounts the run HUD, and every flask menu the HUD opens is fed by the shared plan
+    && /import \{[^}]*\bwireRunHud\b[^}]*\} from '\.\.\/components\/runHud\.js'/.test(map) && /\bwireRunHud\(app, \{/.test(map)
+    && /import \{ flaskActionPlan \} from '\.\.\/\.\.\/model\/flaskActions\.js'/.test(runHud)
+    && hudMenus > 0 && count(runHud, /\bflaskActionPlan\(\{/g) >= hudMenus);
 check('menu supports focus navigation, cancel, and back without dispatch',
   /focusFirst|\.focus\(/.test(component) && /Escape|cancel/i.test(component)
     && /onCancel/.test(component) && /remove\(\)/.test(component));

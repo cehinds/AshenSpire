@@ -974,6 +974,44 @@ if (CORE) {
     if (uiTree.code !== 0 || !uiTreeV.text) zoomExtra++;
     else zoomPassed++;
   }
+
+  // 96/97 — the flask action contract (tools/flask-action-contract.mjs).
+  // It sat red on dev from aaab6234d (the map's flask menu moved into
+  // components/runHud.js) because nothing ran it. 96 is its planted corpus;
+  // 97 is the tree. Its verdict is its own "N passed, M failed" line.
+  const runFlaskActions = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/flask-action-contract.mjs', ...args], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), code: 0 };
+    } catch (error) {
+      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
+    }
+  };
+  if (SELFTESTS) {
+    const flaskSelf = runFlaskActions(['--selftest']);
+    const flaskSelfV = flaskSelf.out.match(/^SELFTEST (?:GREEN|RED)[^\n]*/m)?.[0] || '';
+    const flaskSelfOk = flaskSelf.code === 0 && /^SELFTEST GREEN/.test(flaskSelfV);
+    console.log(
+      `${flaskSelfOk ? 'PASS' : 'FAIL'}  96. the flask action contract still catches its own known-bad corpus` +
+        ` — ${flaskSelfV || `flask-action-contract --selftest (exit ${flaskSelf.code}) printed no SELFTEST verdict`}`
+    );
+    if (flaskSelfOk) zoomPassed++;
+    else zoomExtra++;
+  }
+
+  if (CORE) {
+    const flaskTree = runFlaskActions([]);
+    const flaskTreeV = flaskTree.out.match(/^flask-action-contract: (\d+) passed, (\d+) failed$/m);
+    const flaskTreeOk = flaskTree.code === 0 && !!flaskTreeV && flaskTreeV[2] === '0' && Number(flaskTreeV[1]) > 0;
+    const flaskFails = [...flaskTree.out.matchAll(/^FAIL (.*)$/gm)].map((m) => m[1]).join('; ');
+    console.log(
+      `${flaskTreeOk ? 'PASS' : 'FAIL'}  97. combat and the run HUD share one flask action contract` +
+        ` — ${flaskTreeV ? flaskTreeV[0] : `flask-action-contract (exit ${flaskTree.code}) printed no verdict`}` +
+        `${flaskFails ? ` (${flaskFails})` : ''}` +
+        ` (\`node tools/flask-action-contract.mjs\` names each check)`
+    );
+    if (flaskTreeOk) zoomPassed++;
+    else zoomExtra++;
+  }
 }
 
 // 76 — destructive quit/load confirmation without a native browser prompt.
