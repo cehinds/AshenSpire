@@ -122,3 +122,24 @@ test('doorSelftest shards only when its caller passes a shard, never from a stra
     assert.match(readFileSync(`${ROOT}tools/${tool}`, 'utf8'), /doorSelftest\(\{\s*\.\.\.SELFTEST,\s*shard\s*\}\)/, `${tool} no longer passes its shard to doorSelftest`);
   }
 });
+
+// THE CHECKOUT HALF (D38). Run 37055409943 cancelled three jobs at 20 minutes
+// that never left actions/checkout: 35 jobs each fetching a 2.28 GB tree (and,
+// with fetch-depth 0, every historical blob) at once. The heavy jobs check out
+// history without blobs and leave out the source PNGs no step of theirs reads;
+// a job that drops either goes back to the fetch that timed out.
+test('the heavy ci.yml jobs check out lean: no history blobs, no source PNGs', () => {
+  const text = readFileSync(`${ROOT}.github/workflows/ci.yml`, 'utf8').replace(/\r\n/g, '\n');
+  const all = jobs(text);
+  for (const name of ['test', 'test-selftests', 'parse-gate', 'reproducible']) {
+    const job = all.get(name);
+    assert.ok(job, `ci.yml has no ${name} job`);
+    const step = /- uses: actions\/checkout@\S+\n {8}with:\n((?: {10}.*\n)+)/.exec(job);
+    assert.ok(step, `${name} has no actions/checkout step with options`);
+    const opts = step[1];
+    assert.match(opts, /^ {10}filter: blob:none$/m, `${name} fetches every historical blob`);
+    assert.match(opts, /^ {10}sparse-checkout-cone-mode: false$/m, `${name}'s sparse patterns would be read as cone directories`);
+    const patterns = /^ {10}sparse-checkout: \|\n((?: {12}.*\n)+)/m.exec(opts)?.[1].trim().split(/\n\s*/);
+    assert.deepEqual(patterns, ['/*', '!/art/**/*.png', '!/docs/**/*.png'], `${name} checks out a different tree`);
+  }
+});

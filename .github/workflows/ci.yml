@@ -183,6 +183,23 @@ permissions:
 
 jobs:
   # ---------------------------------------------------------------------------
+  # LEAN CHECKOUTS (owner rule D38: a job over 20 minutes is refactored, never
+  # given more time). Run 37055409943 (`test`, f15a2250b) cancelled three jobs
+  # at 20 minutes, and all three spent the 20 minutes INSIDE actions/checkout:
+  # the parse gate's depth-1 `git fetch` took 19m45s, and Windows reproducible
+  # 0/12 and 2/12 never left it. No job's own work took more than 12.2 minutes.
+  # The tree at a dev tip is 2.28 GB, 1.56 GB of it source PNGs under art/ and
+  # docs/ that no step of these four jobs opens (an strace of every step,
+  # in the PR that added this block), and the D38 splits took a run from 15 jobs to 35, each fetching
+  # it at once — checkout grew from 0.6-7.8 min to 0.6-20. So `test`,
+  # `test-selftests`, `parse-gate` and `reproducible` check out with
+  # `filter: blob:none` (full history is ~10 MB of commits and trees; a blob a
+  # step reads from history is fetched on demand) and a sparse tree that leaves
+  # out art/**/*.png and docs/**/*.png (~0.72 GB left). Every step still runs,
+  # on the same runners. tests/doorplant-shard.test.mjs pins the pattern, so a
+  # new heavy job cannot quietly go back to the full fetch.
+  # ---------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
   # The engine suite and the guards' own self-tests, on all three platforms.
   # These assert nothing about byte-identity, so they are the legs least likely
   # to be red for a reason that is really about the runner.
@@ -214,6 +231,14 @@ jobs:
           # that read a build moved to `reproducible`, which builds first.
           lfs: false
           fetch-depth: 0 # verify-shipped --selftest reads a known-bad blob from history
+          # LEAN CHECKOUT (D38; see the note above `test`): history without its
+          # blobs, and the tree without the source PNGs nothing in this job reads.
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
 
@@ -333,6 +358,14 @@ jobs:
         with:
           lfs: false
           fetch-depth: 0 # the same history the `test` job's checkout has
+          # LEAN CHECKOUT (D38; see the note above `test`): history without its
+          # blobs, and the tree without the source PNGs nothing in this job reads.
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
 
@@ -357,6 +390,14 @@ jobs:
         with:
           lfs: false # default depth, as tests.yml's parse-gate: the corpus reads no history,
           # and a full-history fetch cost this job 3 of its 16 minutes (run 36981774214)
+          # LEAN CHECKOUT (D38; see the note above `test`): history without its
+          # blobs, and the tree without the source PNGs nothing in this job reads.
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
 
@@ -438,6 +479,14 @@ jobs:
         with:
           lfs: false # the build is made here from source; nothing reads LFS
           fetch-depth: 0
+          # LEAN CHECKOUT (D38; see the note above `test`): history without its
+          # blobs, and the tree without the source PNGs nothing in this job reads.
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /*
+            !/art/**/*.png
+            !/docs/**/*.png
 
       - uses: ./.github/actions/setup-node
 
