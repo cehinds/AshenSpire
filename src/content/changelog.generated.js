@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1509",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the co-op layout check runs when a build goes to testing",
+    "detail": "Nothing you play changes. The automatic check that the co-op screen's top bar fits on phones and desktops now runs each time a build is promoted to testing, instead of on every proposed change, where it kept stalling and holding other changes up.",
+    "build": "0.7.1.802",
+    "pullRequest": 1509,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1509"
+  },
+  {
     "id": "pr-1492",
     "date": "2026-10-02",
     "group": "2026-10-02",
