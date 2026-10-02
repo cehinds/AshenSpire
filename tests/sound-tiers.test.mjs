@@ -247,12 +247,16 @@ test('co-op: the turn stinger plays once per shared turn, however many seats sta
   const stings = (cues) => cues.filter((id) => id === 'turnStinger').length;
   const opening = host.snapshot().scene;
   assert.ok(opening.events.filter((e) => e.type === 'playerTurnStart').length > 1, 'each seat starts its own turn in the receipts');
+  // The dedup is keyed on the shared turn the digest carries; a digest that
+  // dropped it would collapse every turn into one.
+  assert.ok(opening.events.filter((e) => e.type === 'playerTurnStart').every((e) => e.turn === 1), 'each opening turn start carries turn 1');
   let heard = 0;
   assert.equal(stings(played(() => { heard = coopReceiptSounds(opening, heard); })), 1, 'the opening stings once');
   for (const id of ['p1', 'p2']) { host.combatEndTurn(id); heard = coopReceiptSounds(host.snapshot().scene, heard); }
   host.combatEndTurn('p3');
   const round = host.snapshot().scene;
   assert.ok(round.events.filter((e) => e.type === 'playerTurnStart').length > 1, 'the next round starts every living seat');
+  assert.ok(round.events.filter((e) => e.type === 'playerTurnStart').every((e) => e.turn === 2), 'each next-round turn start carries turn 2');
   assert.equal(stings(played(() => { heard = coopReceiptSounds(round, heard); })), 1, 'the next shared turn stings once');
   // Solo's one-turn-start dispatch is unchanged, and a later turn in the same
   // list still stings (coalescing is by turn, not by list).
@@ -265,4 +269,34 @@ test('a fresh boss fight holds its opening cues until the name splash closes', (
   assert.match(main, /onClose: !savedSnapshot \? \(\) => playEventCues\(openingLog\) : null/, 'the splash sounds the opening when it closes');
   const intro = src('src/ui/components/intro.js');
   assert.match(intro, /onClose = null/, 'showBossIntro takes an onClose');
+});
+
+test('the boss splash runs onClose exactly once, whichever way it closes', async (t) => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { showBossIntro } = await import('../src/ui/components/intro.js');
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const ways = {
+    timer: () => t.mock.timers.tick(2300),
+    click: (veil) => veil.dispatchEvent(new globalThis.Event('pointerdown')),
+    key: (veil, win) => win.press('Escape'),
+  };
+  for (const [name, closeIt] of Object.entries(ways)) {
+    withKitDom((dom, win) => {
+      let ran = 0;
+      const veil = showBossIntro({ name: 'Rot Valkyrie', act: 3 }, { onClose: () => { ran += 1; } });
+      closeIt(veil, win);
+      assert.equal(ran, 1, `${name}: onClose ran once`);
+      // Every other way, after the first, is a no-op.
+      for (const other of Object.values(ways)) other(veil, win);
+      t.mock.timers.tick(2300);
+      assert.equal(ran, 1, `${name}: a later timer, click or key does not run onClose again`);
+    });
+  }
+  // Screenshot mode freezes the card and never closes it, so onClose never runs.
+  withKitDom(() => {
+    let ran = 0;
+    showBossIntro({ name: 'Rot Valkyrie', act: 3 }, { hold: true, onClose: () => { ran += 1; } });
+    t.mock.timers.tick(5000);
+    assert.equal(ran, 0, 'hold mode does not run onClose');
+  });
 });

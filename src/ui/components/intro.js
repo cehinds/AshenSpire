@@ -4,7 +4,8 @@
 // in the display serif with a gold glow, a thin rule. Auto-dismisses after a
 // beat; any click or key skips it. Reduced-motion collapses the animation (the
 // global kill) but the card still reads. `hold` freezes it mid-animation for
-// screenshots (?shot=boss). `onClose` runs once, as the card starts to lift.
+// screenshots (?shot=boss) and never closes, so `onClose` never runs there.
+// Otherwise `onClose` runs once, as the card starts to lift.
 
 import { el, eyebrow, titleL, ornament } from '../kit/index.js';
 

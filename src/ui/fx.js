@@ -804,7 +804,9 @@ export function playEventCues(events) {
   // ONE STINGER PER SHARED TURN. Co-op's startPlayerPhase emits a
   // playerTurnStart per living seat while the shared turn moves once, and
   // groupBeats gives each its own beat; a turn already stung in this list
-  // does not sting again.
+  // does not sting again. The key is each receipt's `turn`, so the co-op
+  // digest (tools/session.mjs) must keep that field: without it every start
+  // reads as the same turn and a list with two turns stings once.
   const stung = new Set();
   for (const beat of groupBeats(events || [])) {
     const starts = beat.events.filter((e) => e && e.type === 'playerTurnStart');
