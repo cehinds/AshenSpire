@@ -6381,13 +6381,13 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // (2026-09-27) and nothing from INT 1, below the row's baseline of 4. It
     // read 3 under ruleset 6 and 2 under ruleset 7 before D27.
     eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '59/3/3', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,230,360,490,620,750,880,1010,1140,1270', 'default XP steps start at 100 and add 130');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,180,310,540,940,1640,2870,5030,8800,15390', 'default XP steps start at 100 and grow ×1.75');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.ratingId}`, '3/ar', 'physical Strike is 3 base + AR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.ratingId}`, '2/pr', 'magic Strike is 2 base + PR');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.ratingId}`, '1/dr', 'Defend is 1 base + DR');
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 6850, '6,850 XP reaches level 11 on the default linear curve');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 35800, '35,800 XP reaches level 11 on the default ×1.75 curve');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
     // Rogue: HP 51 + ⌊4 × 2⌋ = 59; Actions 3 + ⌊0.25 × DEX 3⌋ = 3; Draw 3 (D27) + nothing from INT 1.
