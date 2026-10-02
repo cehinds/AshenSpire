@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The web edition loads its art from hash-pinned packs",
     "detail": "Behind the scenes: the served web edition now keeps its art as files named by their contents, checks the list of them against a fingerprint inside the game file before using it, and falls back from high to light art (or to placeholders) when a list is missing; the single-file download is unchanged and nothing you play changes.",
-    "build": "0.7.1.733",
+    "build": "0.7.1.734",
     "pullRequest": 1443,
     "url": "https://github.com/cehinds/AshenSpire/pull/1443"
+  },
+  {
+    "id": "pr-1435",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: combat screenshots no longer leave out your character",
+    "detail": "Nothing you play changes: your character was always drawn in the game itself. The tool that takes the preview pictures sometimes took the combat picture before your character was painted, which left only a shadow where they stand. It now waits until every fighter's artwork has loaded and the picture holds still, and if that never happens it reports the problem instead of saving the picture. The larger enemies in recent pictures are intended, from the recent changes that made enemies larger on the battlefield.",
+    "build": "0.7.1.733",
+    "pullRequest": 1435,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1435"
   },
   {
     "id": "pr-1436",

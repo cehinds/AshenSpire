@@ -40,7 +40,14 @@ export const ASSET_PACKS = null;
 /** The file beside the page that says where packs/ and objects/ live. */
 export const ASSET_BASE_FILE = 'asset-base.json';
 export const ART_TIERS = Object.freeze(['high', 'light']);
-/** How long the first screen waits for the index before it draws without it. */
+/**
+ * The load's deadline. The first screen is drawn only once the load has
+ * SETTLED, and it settles by this time at the latest: a load still running then
+ * is aborted and counts as failed (placeholders), and nothing it fetches later
+ * is used. There is no late arrival, because a screen drawn on placeholders
+ * cannot be re-pointed: the images' error handlers clear or replace the nodes
+ * that named the asset id (enemySprite, pieceArt). A Retry is step 5.
+ */
 export const BOOT_WAIT_MS = 8000;
 
 let status = { state: 'idle', tier: null, requested: null, ids: 0, failed: [] };
@@ -84,9 +91,9 @@ function isHttp(protocol) {
 }
 
 /** Where packs/ and objects/ are: asset-base.json's base, else `./`. Never throws. */
-export async function readAssetBase({ fetchImpl = globalThis.fetch } = {}) {
+export async function readAssetBase({ fetchImpl = globalThis.fetch, signal } = {}) {
   try {
-    const res = await fetchImpl(ASSET_BASE_FILE, { cache: 'no-cache' });
+    const res = await fetchImpl(ASSET_BASE_FILE, { cache: 'no-cache', signal });
     if (!res || !res.ok) return './';
     return cleanBase((await res.json())?.base) || './';
   } catch {
@@ -99,10 +106,10 @@ export async function readAssetBase({ fetchImpl = globalThis.fetch } = {}) {
  * a reason when the index is unpinned, unreachable, fails its hash or is not
  * an index.
  */
-export async function loadIndex(pack, pin, { base = './', fetchImpl = globalThis.fetch, subtle } = {}) {
+export async function loadIndex(pack, pin, { base = './', fetchImpl = globalThis.fetch, subtle, signal } = {}) {
   const want = pin?.packs?.[pack];
   if (!want || typeof want.index !== 'string' || !/^[0-9a-f]{64}$/.test(String(want.sha256))) throw new Error(`${pack}: not pinned`);
-  const res = await fetchImpl(`${base}${want.index}`);
+  const res = await fetchImpl(`${base}${want.index}`, { signal });
   if (!res || !res.ok) throw new Error(`${pack}: ${want.index} ${res ? res.status : 'unreachable'}`);
   const bytes = new Uint8Array(await res.arrayBuffer());
   const sha = await sha256Hex(bytes, subtle);
@@ -118,41 +125,45 @@ export async function loadIndex(pack, pin, { base = './', fetchImpl = globalThis
 /**
  * loadBuiltInPacks(opts) → the status above, once the built-in source is set
  * (or left unset). Loads the requested tier, falling back down tierOrder, plus
- * the common pack. Never throws.
+ * the common pack, and settles by `deadlineMs` at the latest (BOOT_WAIT_MS):
+ * past it the fetches are aborted, the state is `failed`, and a response that
+ * still arrives is dropped. Never throws.
  */
 export async function loadBuiltInPacks({
   pin = ASSET_PACKS, inlineMap = ASSET_MAP, fetchImpl = globalThis.fetch,
-  protocol = globalThis.location?.protocol, subtle, onSource = null,
+  protocol = globalThis.location?.protocol, subtle, onSource = null, deadlineMs = BOOT_WAIT_MS,
 } = {}) {
   if (!packsPinned(pin, inlineMap)) {
     status = { state: Object.keys(inlineMap || {}).length ? 'inline' : 'none', tier: null, requested: null, ids: 0, failed: [] };
     return builtInArtStatus();
   }
   const requested = ART_TIERS.includes(pin.tier) ? pin.tier : 'light';
-  const failed = [];
   if (typeof fetchImpl !== 'function' || !isHttp(protocol)) {
     // file:// reads the .js twins, which is step 4; until then a double-clicked
     // web edition shows its placeholders.
     status = { state: 'failed', tier: null, requested, ids: 0, failed: ['the page is not served over http(s)'] };
     return builtInArtStatus();
   }
-  status = { state: 'loading', tier: null, requested, ids: 0, failed };
-  const base = await readAssetBase({ fetchImpl });
-  let tier = null;
-  let art = null;
-  for (const candidate of tierOrder(requested)) {
-    try {
-      art = await loadIndex(candidate, pin, { base, fetchImpl, subtle });
-      tier = candidate;
-      break;
-    } catch (e) {
-      failed.push(e.message);
-    }
+  status = { state: 'loading', tier: null, requested, ids: 0, failed: [] };
+  const controller = typeof AbortController === 'function' ? new AbortController() : null;
+  let timer = null;
+  const deadline = new Promise((settle) => {
+    timer = setTimeout(() => settle({ timedOut: true }), deadlineMs);
+  });
+  const outcome = await Promise.race([
+    readPacks(pin, requested, { fetchImpl, subtle, signal: controller?.signal }),
+    deadline,
+  ]);
+  clearTimeout(timer);
+  if (outcome.timedOut) {
+    // Settled as failed, for good: whatever the aborted load would still
+    // return never reaches assetmap.js (readPacks sets nothing).
+    try { controller?.abort(); } catch { /* already settled */ }
+    status = { state: 'failed', tier: null, requested, ids: 0, failed: [`the pack index did not load within ${deadlineMs} ms`] };
+    setBuiltInSource(null);
+    return builtInArtStatus();
   }
-  let common = null;
-  if (pin.packs.common) {
-    try { common = await loadIndex('common', pin, { base, fetchImpl, subtle }); } catch (e) { failed.push(e.message); }
-  }
+  const { art, tier, common, failed } = outcome;
   if (!art) {
     // Placeholders: no art index, so no source. The common pack alone does not
     // make a source either; its files (fonts, music, tiles) reach the page by
@@ -167,6 +178,28 @@ export async function loadBuiltInPacks({
   status = { state: 'loaded', tier, requested, ids, failed };
   if (typeof onSource === 'function') try { onSource(map); } catch { /* a listener must not fail the load */ }
   return builtInArtStatus();
+}
+
+/** The fetches and checks of one load; sets nothing. */
+async function readPacks(pin, requested, { fetchImpl, subtle, signal }) {
+  const failed = [];
+  const base = await readAssetBase({ fetchImpl, signal });
+  let tier = null;
+  let art = null;
+  for (const candidate of tierOrder(requested)) {
+    try {
+      art = await loadIndex(candidate, pin, { base, fetchImpl, subtle, signal });
+      tier = candidate;
+      break;
+    } catch (e) {
+      failed.push(e.message);
+    }
+  }
+  let common = null;
+  if (pin.packs.common) {
+    try { common = await loadIndex('common', pin, { base, fetchImpl, subtle, signal }); } catch (e) { failed.push(e.message); }
+  }
+  return { art, tier, common, failed };
 }
 
 /**
@@ -189,22 +222,19 @@ export function startBuiltInArt(opts = {}) {
 }
 
 /**
- * whenBuiltInArtReady(fn, opts) — call `fn` once the built-in art is in place:
+ * whenBuiltInArtReady(fn, opts) — call `fn` once the built-in art has settled:
  * at once when nothing is pinned (a single file, the source tree), else when
- * the load settles or after BOOT_WAIT_MS, whichever is first. A load that
- * settles later still sets the source, and opts.onSource re-points what is on
- * screen.
+ * the load has loaded or failed, which is by BOOT_WAIT_MS at the latest. The
+ * first screen therefore never draws before the source it will use is final.
  */
-export function whenBuiltInArtReady(fn, { waitMs = BOOT_WAIT_MS, ...opts } = {}) {
+export function whenBuiltInArtReady(fn, opts = {}) {
   if (!packsPinned(opts.pin ?? ASSET_PACKS, opts.inlineMap ?? ASSET_MAP)) {
     startBuiltInArt(opts);
     fn();
     return;
   }
   let done = false;
-  let timer = null;
-  const go = () => { if (timer !== null) clearTimeout(timer); if (!done) { done = true; fn(); } };
-  timer = setTimeout(go, waitMs);
+  const go = () => { if (!done) { done = true; fn(); } };
   startBuiltInArt(opts).then(go, go);
 }
 

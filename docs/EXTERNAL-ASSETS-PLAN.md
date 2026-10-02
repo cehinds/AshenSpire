@@ -695,12 +695,15 @@ Where the build differs from, or settles, the text above (2026-10-02):
   bytes twice (as copies and as common objects, about 32 MB).
 - **The first screen waits for the index.** `src/main.js` draws its first
   screen through `whenBuiltInArtReady()`: at once when nothing is pinned (the
-  single files, the source tree), else when the indexes settle or after
-  `BOOT_WAIT_MS` (8 s). A screen drawn before the index would ask for bare
-  `assets/…` paths, and the images' own error handlers would keep their
-  placeholders. The shipped music folder is applied after that first screen,
-  so a `?shot=` boot that walks through two screens does not start and abort a
-  track. A late index still re-points what is on screen
+  single files, the source tree), else once the load has settled. It settles
+  by `BOOT_WAIT_MS` (8 s) at the latest: a load still running then is aborted
+  and counts as failed, and an index that arrives later is dropped. A screen
+  drawn on placeholders cannot be re-pointed, because the images' error
+  handlers clear or replace the nodes that named the asset id (`enemySprite`,
+  `pieceArt`), so the source is final before anything draws (review of #1443).
+  Retry is step 5. The shipped music folder is applied after that first
+  screen, so a `?shot=` boot that walks through two screens does not start and
+  abort a track. Screens drawn later re-point on a source change as before
   (`builtInArtArrived` in `highResArt.js`).
 - **Over http(s) only.** Under `file://` the loader loads nothing and the web
   edition shows placeholders (the `.js` twins are step 4). The single files are

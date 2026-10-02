@@ -173,7 +173,7 @@ test('the first screen waits for the load, and is drawn once', async () => {
   const tree = packTree();
   let calls = 0;
   let sourced = null;
-  await new Promise((done) => whenBuiltInArtReady(() => { calls += 1; done(); }, { ...opts(tree), onSource: (m) => { sourced = m; }, waitMs: 5000 }));
+  await new Promise((done) => whenBuiltInArtReady(() => { calls += 1; done(); }, { ...opts(tree), onSource: (m) => { sourced = m; } }));
   assert.equal(calls, 1);
   assert.ok(sourced && sourced.size === 3, 'the source listener sees the merged map');
   assert.equal(builtInArtStatus().state, 'loaded');
@@ -205,4 +205,33 @@ test('a screen drawn before the index arrived is re-pointed at the objects, and 
     resetHighResArt();
     resetBuiltInArt();
   }
+});
+
+test('a load past its deadline settles as failed before the first screen, and the late index is dropped', async () => {
+  resetBuiltInArt();
+  const tree = packTree();
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  let aborted = false;
+  const slow = async (url, init = {}) => {
+    init.signal?.addEventListener?.('abort', () => { aborted = true; });
+    if (url.includes('packs/light-')) await gate; // the index hangs past the deadline
+    return tree.fetchImpl(url, init);
+  };
+  let drawnWith = null;
+  let sourced = 0;
+  await new Promise((done) => whenBuiltInArtReady(() => {
+    drawnWith = { state: builtInArtStatus().state, url: assetUrl('assets/bg/bg_act1.webp') };
+    done();
+  }, { ...opts(tree), fetchImpl: slow, deadlineMs: 30, onSource: () => { sourced += 1; } }));
+  assert.equal(drawnWith.state, 'failed', 'the first screen draws only after the load has settled');
+  assert.equal(drawnWith.url, 'assets/bg/bg_act1.webp', 'placeholders: no source');
+  assert.match(builtInArtStatus().failed[0], /did not load within 30 ms/);
+  assert.ok(aborted, 'the fetches are aborted');
+  release();
+  await new Promise((r) => setTimeout(r, 30));
+  assert.equal(builtInSource(), null, 'the index that arrives late is never laid over the drawn screen');
+  assert.equal(sourced, 0);
+  assert.equal(builtInArtStatus().state, 'failed');
+  resetBuiltInArt();
 });

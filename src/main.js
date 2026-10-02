@@ -3342,8 +3342,10 @@ if (shotState) {
 // loads the pack index the HTML pins, and a screen drawn before that would ask
 // for `assets/…` paths that are not beside the page, and the images' own error
 // handlers would swap in placeholders for good. So the first screen is drawn
-// once the index has loaded (or failed, or after BOOT_WAIT_MS). A single file
-// and the source tree pin nothing, and this calls showFirstScreen() at once.
+// once the load has SETTLED — loaded, or failed (placeholders), which it is by
+// BOOT_WAIT_MS at the latest; a late index is dropped, never laid over a screen
+// already drawn on placeholders. A single file and the source tree pin
+// nothing, and this calls showFirstScreen() at once.
 function showFirstScreen() {
 if (shotState === 'combat-test') {
   mountCombatTest(app, { params: shotParams, meta: activeMeta });
