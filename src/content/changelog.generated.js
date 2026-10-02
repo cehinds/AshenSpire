@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1505",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the startup-gate checks run again",
+    "detail": "Nothing you play changes. The checks that plant known bugs in a scratch copy of the game did not copy the two files that name the pinned art release. So the copy could not stamp a build, and the checks failed before testing anything.",
+    "build": "0.7.1.797",
+    "pullRequest": 1505,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1505"
+  },
+  {
     "id": "pr-1440",
     "date": "2026-10-02",
     "group": "2026-10-02",
