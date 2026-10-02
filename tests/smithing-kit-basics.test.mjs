@@ -11,7 +11,7 @@ import assert from 'node:assert/strict';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
-import { smithingPlan, commitSmithing } from '../src/model/smithing.js';
+import { smithingPlan, commitSmithing, sourceArmamentId } from '../src/model/smithing.js';
 
 const registries = createRegistries(contentBundle);
 const amount = (card, op) => {
@@ -44,4 +44,16 @@ test('a kit Strike and Guard are in the plan, the receipt and the role previews'
   assert.deepEqual(receipt.affectedCards.map((row) => row.instanceId).sort(), improved,
     'the receipt names exactly the cards the promotion improved');
   for (const id of kitIds) assert.ok(improved.includes(id), `${id} improved`);
+});
+
+test('a kit basic without a stamped source is owned by the armament that lends it', () => {
+  // Sword and shield both lend an attack and a guard, so the role alone cannot
+  // name the owner; the kit card's grantedBy does (as restampSmithingCards does).
+  const run = createRunState({ seed: 211, classId: 'reaver', registries });
+  for (const id of ['kit:straightSword:attack', 'kit:straightSword:guard', 'kit:roundShield:attack', 'kit:roundShield:guard']) {
+    const card = run.deck.find((row) => row.instanceId === id);
+    assert.ok(card, `${id} is dealt`);
+    const { sourceArmamentId: _stamped, ...carrierless } = card;
+    assert.equal(sourceArmamentId(registries, run, carrierless), card.grantedBy, `${id} belongs to ${card.grantedBy}`);
+  }
 });

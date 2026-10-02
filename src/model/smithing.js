@@ -66,6 +66,14 @@ function instanceSourceId(registries, run, instance) {
       return id;
     }
   }
+  // A complete-kit basic is owned by the armament that lends it, exactly as
+  // restampSmithingCards stamps it (owner = grantedBy). Both hands can lend the
+  // same kitRole, so the role-based fallback below would name the wrong piece.
+  if (instance?.kitRole && instance.grantedBy != null) {
+    const id = String(instance.grantedBy);
+    if (!armamentById(registries, id)) throw new Error(`Unknown source armament '${id}'`);
+    return id;
+  }
   const role = smithingRole(instance);
   if (!role) return null;
   const row = equipmentRoleSource(registries, run.loadout, run.class, role);

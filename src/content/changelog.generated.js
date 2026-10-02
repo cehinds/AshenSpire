@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The Smith counts every card an upgrade improves",
     "detail": "Upgrading a weapon or shield at the Smith already improved the Strike and Guard it lends you, but the preview and the receipt left those two cards out, so it said fewer cards improved than really did and showed a lent Guard as unused. Both now list every card the upgrade changes. Behind the scenes, four checking tools that had fallen behind the game's rules pass again.",
-    "build": "0.7.1.797",
+    "build": "0.7.1.798",
     "pullRequest": 1497,
     "url": "https://github.com/cehinds/AshenSpire/pull/1497"
   },

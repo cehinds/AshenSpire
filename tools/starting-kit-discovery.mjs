@@ -62,10 +62,15 @@ for (const classId of R.classes.ids()) {
     const fresh = startingKitViews(R, classId, { discoveredArmaments: [] });
     check(fresh.length === 1 && fresh[0].baseline === true,
       `${classId} fresh profile sees baseline only`, JSON.stringify(fresh));
-    if (alternatePieces(classId).length > 1) {
-      const partial = startingKitViews(R, classId, { discoveredArmaments: alternatePieces(classId).slice(0, 1) });
-      check(!partial.some((row) => row.id === alternates[classId].id && row.available === true),
-        `${classId} alternate stays hidden while one of its pieces is undiscovered`, JSON.stringify(partial));
+    // Omit each piece in turn: a multi-piece alternate must stay hidden while
+    // ANY one of its authored armaments is undiscovered, not only the last.
+    const pieces = alternatePieces(classId);
+    if (pieces.length > 1) {
+      for (const missing of pieces) {
+        const partial = startingKitViews(R, classId, { discoveredArmaments: pieces.filter((id) => id !== missing) });
+        check(!partial.some((row) => row.id === alternates[classId].id && row.available === true),
+          `${classId} alternate stays hidden while ${missing} is undiscovered`, JSON.stringify(partial));
+      }
     }
     const discovered = startingKitViews(R, classId, { discoveredArmaments: alternatePieces(classId) });
     check(discovered.some((row) => row.id === alternates[classId].id && row.available === true),
