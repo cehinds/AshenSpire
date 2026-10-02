@@ -1,6 +1,6 @@
 // tests/coop-hud-top.test.mjs — the no-browser half of tools/coop-hud-top.mjs
 // (#1368, D29 in docs/FINISH.md). The browser half runs in
-// .github/workflows/coop-hud.yml on every pull request into dev.
+// .github/workflows/coop-hud.yml on every push to test and release.
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
