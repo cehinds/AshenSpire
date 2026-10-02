@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: every owner decision has its own number",
     "detail": "Nothing you play changes. Two decisions in the project's finish list were both numbered D38, so a note citing D38 could mean either; the hit sound tiers decision is now D47, and a test fails if two decisions ever share a number again.",
-    "build": "0.7.1.796",
+    "build": "0.7.1.797",
     "pullRequest": 1493,
     "url": "https://github.com/cehinds/AshenSpire/pull/1493"
+  },
+  {
+    "id": "pr-1440",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the spec wording for loading assets as separate files is approved",
+    "detail": "This is a docs-only change, and nothing you play changes. The spec now says the game will load its art, fonts and music as separate files, keep one light-art single file you can download and open by double-click, and retire the 254 MB file.",
+    "build": "0.7.1.796",
+    "pullRequest": 1440,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1440"
   },
   {
     "id": "pr-1496",
