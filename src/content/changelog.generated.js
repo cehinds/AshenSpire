@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the slowest automated checks no longer wait on a 20-minute download",
     "detail": "Nothing you play changes. Three checks ran out of time before they started, while still downloading the project; the heavy checks now skip the source paintings and old file history they never open, cutting each one's download from about 2.3 GB to about 0.7 GB. Every check still runs; whether all of them now finish inside 20 minutes is confirmed only by the next full run.",
-    "build": "0.7.1.801",
+    "build": "0.7.1.802",
     "pullRequest": 1508,
     "url": "https://github.com/cehinds/AshenSpire/pull/1508"
+  },
+  {
+    "id": "pr-1492",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the class balance checker plays the same climbs as the run simulator",
+    "detail": "Nothing you play changes. The tool that counts each class's wins used its own older copy of what happens between fights (levels, drafts, rewards, events). Over 500 climbs it reached different fights and got a different result. It now uses the simulator's own steps between fights, agrees with it fight for fight, and its own self-check runs to the end again instead of crashing.",
+    "build": "0.7.1.801",
+    "pullRequest": 1492,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1492"
   },
   {
     "id": "pr-1495",
