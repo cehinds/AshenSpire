@@ -46,6 +46,7 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `ci.yml` → tests (ubuntu, windows, macOS) | no | yes |
 | `ci.yml` → shipped artifact is this source (3 OSes), the three runners built the same bytes | no | yes |
 | `ci.yml` → the checks that need a real browser | no | yes |
+| `ci.yml` → idle animation and reduced motion in a real browser (`motion-probe.mjs` and its `--selftest`) | no | yes |
 | `dev-preview.yml` → the reachability gates a phone would fail | no | yes (also `main`) |
 
 The workflows' own `on:` blocks and job `if:` conditions are the source of this
@@ -233,6 +234,14 @@ moves, phases, seeded encounter reachability and ten named boss locations.
 `node tests/branchingBosses.test.mjs` covers map and save compatibility.
 `node tools/card-feedback.mjs --standalone` checks arrival/play/outcome feedback
 using trusted desktop and phone inputs, including OS and in-game Reduced motion.
+`node tools/motion-probe.mjs` boots `?shot=combat&shotSeed=MOTION1` in Chromium
+and checks that every combatant's visible figure image runs the idle bob
+(`animationName !== 'none'`), then plays one full turn under the Reduced motion
+setting with the OS preference emulated, the setting alone and the OS alone:
+no animation `document.getAnimations()` or `Element.animate()` reports may run
+longer than 0.01 s, and no script flipbook or tween (3+ changes to one element
+inside 1 s) may run. A motion-on turn is the control that proves the sampler
+sees both kinds. `--selftest` plants five known-bads through `doorplant.mjs`.
 Enemy inspectors use `enemyMoveCards()` as a read-only presentation of the
 existing weighted move selector; rendering never chooses or rerolls an intent.
 Attack motion uses the actor/action, tag, intent and neutral precedence in
