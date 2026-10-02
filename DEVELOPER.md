@@ -883,6 +883,15 @@ so every cue keeps the immediate synth. Decode failure logs the exact resolved
 URL, making a bad asset diagnosable without delaying combat feedback. Run
 `node tools/sfx-filename-convention.mjs` after changing this contract.
 
+Combat cues (hit tiers, `playerHurt`, the turn stinger, draw/shuffle/discard;
+D38 in docs/FINISH.md) reach `sfx.play` through `src/ui/fx.js`: the paced
+timeline per beat, `playEventCues` for instant playback and a fresh fight's
+opening, and `playReceiptSounds` for co-op receipts (`coopReceiptSounds` in
+`src/ui/screens/coop.js`, gated by `receiptSeq`). `node --test
+tests/sound-tiers.test.mjs` covers them, including the opening turn and the
+real co-op session digest; `node tools/sound-opening.mjs` (hand-run, real
+Chromium) mounts a fresh fight and a remounted one.
+
 ## Performance (SPEC §9 M4)
 
 Combat feedback is **CSS-driven**: JS only toggles short-lived classes and

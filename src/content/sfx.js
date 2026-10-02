@@ -49,7 +49,35 @@ export const SFX_MANIFEST = {
 // the content-build reachability check both consume this list; neither guesses
 // that every row before an underscore is intended as a composed-id family.
 export const SFX_FAMILY_IDS = Object.freeze([
-  'procBurst', 'beat', 'holdTick', 'holdCommit', 'rewardTake',
+  'procBurst', 'beat', 'holdTick', 'holdCommit', 'rewardTake', 'hit',
+]);
+
+// HIT TIERS (FINISH §5, D38). An attack that takes HP plays `hit_<tier>`, and
+// the tier is the highest row whose `min` the HP damage reaches (guard
+// consumed does not count — the guard half already plays `block`). The
+// thresholds are data (owner ruling D1) and match the damage-number sizes in
+// ui/fx.js dmgClass: under 6 is a chip, 15 and over is heavy (the hit that
+// also shakes the screen, SPEC §7.4). Retuning is an edit to this table; a
+// fourth tier is one more row here plus its `hit_<tier>` recipe below.
+export const SFX_HIT_TIERS = Object.freeze([
+  Object.freeze({ tier: 'light', min: 1 }),
+  Object.freeze({ tier: 'medium', min: 6 }),
+  Object.freeze({ tier: 'heavy', min: 15 }),
+]);
+
+/** hitTierFor(amount, tiers?) → the tier name for `amount` HP of damage. */
+export function hitTierFor(amount, tiers = SFX_HIT_TIERS) {
+  const n = Number(amount) || 0;
+  let pick = tiers[0]?.tier;
+  for (const row of tiers) if (n >= row.min) pick = row.tier;
+  return pick;
+}
+
+// The medium hit is also the `hit` family row: a tier some future table names
+// before its recipe is authored still sounds like a hit, not the blip.
+const HIT_MEDIUM_RECIPE = Object.freeze([
+  { kind: 'noise', dur: 0.16, peak: 0.5, hp: 300, lp: 4200 },
+  { kind: 'tone', type: 'square', freq: 150, to: 60, dur: 0.14, peak: 0.35 },
 ]);
 
 // Confirm arrivals share one generic fallback gesture. `beat_<phase>` and
@@ -65,9 +93,48 @@ export const SFX_RECIPES = {
   cardPlay: [
     { kind: 'tone', type: 'triangle', freq: 520, to: 380, dur: 0.12, peak: 0.35 },
   ],
-  hit: [
-    { kind: 'noise', dur: 0.16, peak: 0.5, hp: 300, lp: 4200 },
-    { kind: 'tone', type: 'square', freq: 150, to: 60, dur: 0.14, peak: 0.35 },
+  // ---- hits, by tier (SFX_HIT_TIERS above) -------------------------------
+  // Same gesture — a noise smack over a falling square — scaled in weight:
+  // the light hit is shorter, brighter and quieter; the heavy one drops lower,
+  // lasts longer and adds a sub thump. `hit_medium` is the old single `hit`.
+  hit: HIT_MEDIUM_RECIPE,
+  hit_light: [
+    { kind: 'noise', dur: 0.09, peak: 0.34, hp: 900, lp: 5200 },
+    { kind: 'tone', type: 'square', freq: 220, to: 120, dur: 0.08, peak: 0.22 },
+  ],
+  hit_medium: HIT_MEDIUM_RECIPE,
+  hit_heavy: [
+    { kind: 'noise', dur: 0.26, peak: 0.6, hp: 160, lp: 3200 },
+    { kind: 'tone', type: 'square', freq: 120, to: 42, dur: 0.24, peak: 0.42 },
+    { kind: 'tone', type: 'sine', freq: 70, to: 38, dur: 0.3, peak: 0.3, t0: 0.01 },
+  ],
+  // The player taking HP: a dull, low, wet thud with a sawtooth groan under
+  // it, so being hurt never sounds like landing a hit.
+  playerHurt: [
+    { kind: 'noise', dur: 0.2, peak: 0.45, hp: 120, lp: 1400 },
+    { kind: 'tone', type: 'sawtooth', freq: 180, to: 70, dur: 0.28, peak: 0.32 },
+  ],
+  // Your turn: a short two-note rising stinger (D4 -> A4), quieter than
+  // `victory` and played once per turn.
+  turnStinger: [
+    { kind: 'tone', type: 'triangle', freq: 294, dur: 0.16, peak: 0.26 },
+    { kind: 'tone', type: 'triangle', freq: 440, dur: 0.22, peak: 0.24, t0: 0.09 },
+  ],
+  // Pile sounds play once per beat, however many cards moved, so they are
+  // kept quiet and short: a paper flick, a riffle, a soft drop.
+  cardDraw: [
+    { kind: 'noise', dur: 0.06, peak: 0.18, hp: 2500, lp: 8000 },
+    { kind: 'tone', type: 'triangle', freq: 660, to: 880, dur: 0.05, peak: 0.08 },
+  ],
+  deckShuffle: [
+    { kind: 'noise', dur: 0.05, peak: 0.16, hp: 1800, lp: 7000 },
+    { kind: 'noise', dur: 0.05, peak: 0.16, hp: 1800, lp: 7000, t0: 0.07 },
+    { kind: 'noise', dur: 0.05, peak: 0.16, hp: 1800, lp: 7000, t0: 0.14 },
+    { kind: 'noise', dur: 0.08, peak: 0.2, hp: 1200, lp: 6000, t0: 0.21 },
+  ],
+  cardDiscard: [
+    { kind: 'noise', dur: 0.08, peak: 0.16, hp: 600, lp: 3000 },
+    { kind: 'tone', type: 'triangle', freq: 330, to: 220, dur: 0.07, peak: 0.08 },
   ],
   block: [
     { kind: 'tone', type: 'sine', freq: 320, to: 520, dur: 0.14, peak: 0.4 },

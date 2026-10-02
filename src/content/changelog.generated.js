@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: every change now checks the game's art against the art repository's release",
     "detail": "Nothing you play changes. The game pins one release of its art, light art, fonts, music and map tiles in a separate repository; each check downloads the parts it needs, verifies every file against its fingerprint, and proves the release and the copies still kept here are identical, byte for byte (pull requests from forks and Dependabot skip this while that repository is private).",
-    "build": "0.7.1.771",
+    "build": "0.7.1.772",
     "pullRequest": 1450,
     "url": "https://github.com/cehinds/AshenSpire/pull/1450"
+  },
+  {
+    "id": "pr-1472",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Hits sound bigger the harder they land",
+    "detail": "A small hit, a solid hit and a heavy hit now each have their own sound, chosen by the damage it does. Being hit yourself has a sound of its own, your turn starts with a short two-note sting, and drawing, shuffling and discarding cards each make a quiet sound. The first turn of a fight has them too, and so does LAN co-op. Your sound volume and mute settings apply to all of them.",
+    "build": "0.7.1.771",
+    "pullRequest": 1472,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1472"
   },
   {
     "id": "pr-1458",
