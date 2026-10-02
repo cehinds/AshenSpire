@@ -23,7 +23,7 @@ import { contentBundle } from './content/index.js';
 import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
-import { isPoolDeckRun, dealtAttackSlotCount } from './model/cardRemoval.js';
+import { isPoolDeckRun, dealtAttackSlotCount, POOL_DECK_RULE } from './model/cardRemoval.js';
 import { STAT_ROWS_CHANGED_MEANING, STAT_ROWS_MARKER, STAT_ROWS_VERSION } from './model/statRows.js';
 import { advancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig, isLiveXpSetting, updatedXpSnapshot, xpSnapshotFromProfile } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
@@ -1149,7 +1149,10 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   // The dealt deck replaced the composed one, attack slots and all, so its
   // birth attack quota is what it holds (none), not the composed deck's; else
   // the first full restamp (an Armoury swap, a reload) refuses the run.
-  if (isPoolDeckRun(run)) run.equipmentAttackSlotCount = dealtAttackSlotCount(run.deck);
+  if (isPoolDeckRun(run)) {
+    run.equipmentAttackSlotCount = dealtAttackSlotCount(run.deck);
+    run.poolDeckRule = POOL_DECK_RULE;
+  }
   if (mods.cursedStart) run.deck.push(...createDeck(['guilt'], createIdGen('cx')));
   if (mods.hoarder) run.cinders += registries.balance.customMods.hoarderCinders;
 
@@ -1161,9 +1164,9 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
 function startClimb() {
   // A dealt deck (Sealed, Draft, with any picks) was never stamped: give its
   // cards their equipment faces now, as the load door and every later restamp
-  // do, so the first fight plays the same cards a reload would. A subset stamp:
-  // it deals no lent card the deal took out (model/cardRemoval.js).
-  if (isPoolDeckRun(run)) stampDeck(registries, run, run.deck, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
+  // do, so the first fight plays the same cards a reload would. A pool deck is
+  // dealt no lent card by it (model/cardRemoval.js isPoolDeckRun).
+  if (isPoolDeckRun(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
   run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
   if (run.journey) syncWorldPosition();
   if ((!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {

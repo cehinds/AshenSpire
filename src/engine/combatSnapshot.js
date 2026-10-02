@@ -52,6 +52,7 @@ export function serializeCombatSnapshot(combat) {
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     removedAttackSlotIds: combat.removedAttackSlotIds,
+    ...(combat.poolDeck ? { poolDeck: true } : {}),
     itemUpgradeLevels: combat.itemUpgradeLevels,
     itemMounts: combat.itemMounts,
     equipmentPoolDeficits: combat.equipmentPoolDeficits,
@@ -135,6 +136,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
     removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),
+    ...(saved.poolDeck === true ? { poolDeck: true } : {}),
     equipmentAttackSlotCount: Number.isFinite(saved.equipmentAttackSlotCount)
       ? saved.equipmentAttackSlotCount
       : (Number.isFinite(fallbackAttackSlotCount) ? fallbackAttackSlotCount : undefined),

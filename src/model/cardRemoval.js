@@ -18,9 +18,23 @@ export function retiredAttackSlots(count, ids = []) {
 // and holds every slot of its quota.
 export const POOL_DECK_MODES = Object.freeze(['sealed', 'draft']);
 
+// THE DEALT DECK'S OWN RULE, in two parts, both keyed on this predicate:
+//   · its birth attack quota is the slots it was dealt (dealtAttackSlotCount);
+//   · it is never dealt the equipment's lent cards (kit basics, weapon arts,
+//     Dodge Roll): reconcileGrantedCards and reconcileGrantedCardsInCombat
+//     leave a pool deck as it is at every restamp door — the load door, the
+//     end of a fight, an Armoury change, a mid-fight swap.
+// Combat works on a synthetic run with no `custom`, so a fight carries the
+// flag itself (`poolDeck: true`, runCombat.js → combat → its snapshot).
 export function isPoolDeckRun(run) {
-  return POOL_DECK_MODES.includes(run && run.custom && run.custom.deckMode);
+  return !!run && (POOL_DECK_MODES.includes(run.custom && run.custom.deckMode) || run.poolDeck === true);
 }
+
+// Written on a pool run by the build that holds it to its own rule (main.js
+// newRun, or the load door's one-time heal). A pool save WITHOUT it was written
+// before the fix and may carry the composed deck's quota; one WITH it is held
+// to its quota like any run, so a lost attack card is corruption, not a heal.
+export const POOL_DECK_RULE = 1;
 
 /**
  * dealtAttackSlotCount(cards) → the birth attack quota a dealt deck was born

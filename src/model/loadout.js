@@ -1,4 +1,4 @@
-import { retiredAttackSlots } from './cardRemoval.js';
+import { retiredAttackSlots, isPoolDeckRun } from './cardRemoval.js';
 import { tokenRe } from './validate.js';
 import {
   applyMountOverrides, extraMountInstances, mountKey, ownerItemRef,
@@ -2091,6 +2091,9 @@ function adoptWanted(inst, wanted) {
 
 export function reconcileGrantedCards(registries, run) {
   if (!run.deck) run.deck = [];
+  // A dealt deck (Sealed, Draft) is never dealt the equipment's lent cards
+  // (model/cardRemoval.js isPoolDeckRun): every full restamp leaves it as is.
+  if (isPoolDeckRun(run)) return run.deck;
   const desired = desiredGrantInstances(registries, run);
   const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();
@@ -2313,6 +2316,8 @@ export function itemMountInstances(registries, run, piece, { authored = false } 
  * Deterministic instance ids keep the sweep idempotent and combat-save-stable.
  */
 export function reconcileGrantedCardsInCombat(registries, run, piles) {
+  // A dealt deck's fight is left as dealt, too (model/cardRemoval.js).
+  if (isPoolDeckRun(run)) return;
   // Combat's swap hands in a synthetic run with an empty deck; the piles are
   // the deck here, and the Dodge Roll rule reads the deck for a legacy copy.
   const deck = run.deck && run.deck.length ? run.deck : [...piles.hand, ...piles.draw, ...piles.discard, ...piles.exhaust];
