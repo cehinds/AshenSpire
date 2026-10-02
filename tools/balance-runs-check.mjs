@@ -21,7 +21,9 @@
 //   - every such table covers its whole tier × seat set: the line before it
 //     names the order ("Seeded seat order" → every configured tier × every
 //     seat; "Fixed seat order" → defaultSeatOrder, one seat per tier), and a
-//     missing or extra (tier, seat) is named, so a deleted row cannot pass;
+//     missing or extra (tier, seat) is named, so a deleted row cannot pass,
+//     and a duplicated row (same tier and seat, and boss for a boss table) is
+//     named too;
 //   - no multiplier is stated outside a table (`2.200 / 1.500`, `hp × 2.2`,
 //     `damage × 1.5`): prose cannot be checked, so the report carries every
 //     multiplier in a checked table.
@@ -105,9 +107,20 @@ export function recordedMultiplierProblems(REG, text) {
       if (seat < 0) problems.push(`a ${kind} table has no Seat column`);
       else if (!want) problems.push(`a ${kind} table does not follow a "Seeded seat order" or "Fixed seat order" line, so its rows cannot be checked for completeness (after "${lead.slice(0, 60)}")`);
       else {
+        const name = lead.split(',')[0];
         const got = new Set(rows.map((r) => `${r[tier]} ${r[seat]}`));
-        for (const pair of want) if (!got.has(pair)) problems.push(`${lead.split(',')[0]} ${kind} table: no row for tier ${pair}`);
-        for (const pair of got) if (!want.includes(pair)) problems.push(`${lead.split(',')[0]} ${kind} table: tier ${pair} is not in that order`);
+        for (const pair of want) if (!got.has(pair)) problems.push(`${name} ${kind} table: no row for tier ${pair}`);
+        for (const pair of got) if (!want.includes(pair)) problems.push(`${name} ${kind} table: tier ${pair} is not in that order`);
+        // Exactly one row per key: a duplicate with the right multipliers but
+        // other counts would otherwise pass beside the real one. A seat table
+        // keys on (tier, seat); a boss table on (tier, seat, boss), since the
+        // final tier may send a seat either its own boss or the null-seat one.
+        const seen = new Map();
+        for (const r of rows) {
+          const key = enemy >= 0 ? `${r[tier]} ${r[seat]}` : `${r[tier]} ${r[seat]} ${String(r[boss]).replace(/`/g, '')}`;
+          seen.set(key, (seen.get(key) || 0) + 1);
+        }
+        for (const [key, n] of seen) if (n > 1) problems.push(`${name} ${kind} table: ${n} rows for tier ${key}, expected exactly one`);
       }
     }
     for (const row of rows) {
