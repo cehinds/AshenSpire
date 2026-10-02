@@ -2675,12 +2675,15 @@ A **legendary sigil** is the §14.3 sigil at a new rarity, whose effect is a pro
 
 **The shapes step 5 builds to** (2026-10-02, SPEC-only, before the feature PR per CONTRIBUTING ground rule 1).
 
-- **Rarity at every door.** This one rule governs every position that holds a sigil id.
-  - An id in a legendary-only position must name a known legendary sigil. Those positions are `run.attunedSigils`, `combat.attunedSigils` (a fight in progress) and `rewards.sigilId` (a pending reward).
-  - An id in `run.sigilSlots` must not name a legendary.
+- **Rarity at every door.** This one rule governs every persisted position that holds a sigil id. Each position belongs to exactly one of three classes, and the lists below are exhaustive.
+  - **Legendary only.** An id here must name a known legendary sigil. The positions are `run.attunedSigils`, a fight in progress's `combatEntered.snapshot.attunedSigils`, and a pending reward's `pendingReward.rewards.sigilId`.
+  - **Never legendary.** An id here must not name a legendary sigil. The positions are `run.sigilSlots`, a fight in progress's `combatEntered.snapshot.sigilSlots`, the market sigil shelf on `run.shopStock.sigils`, and the same shelf on an atlas point's `journey.serviceStates[pointId].stock.sigils`.
+  - **Either.** `run.sigils` is the inventory, so it holds both kinds: a legendary is carried there, attuned or not, and the non-legendaries wait there for a slot.
   - `run.attunedSigils` holds no more than the run's `attuneMax`.
-  - The rule is checked at every door that restores a run: the `engine/save.js` load, and the co-op member restore in `tools/session.mjs`, which calls `migrateRunSchema` directly. Both doors read one model check, `sigilRarityProblems(registries, run)` in `model/sigils.js`.
+  - The rule is checked at every door that restores a run: the `engine/save.js` load, and the co-op member restore in `tools/session.mjs`, which calls `migrateRunSchema` directly. Both doors read one model check, `sigilRarityProblems(registries, run)` in `model/sigils.js`, which checks both restricted classes.
   - Each violation is refused by name. The load door archives the save as it does every other malformed reference, and the co-op door refuses that member and keeps the record, as it refuses any member that fails its restore.
+  - As defence in depth, `sigilPurchasePlan` also refuses a legendary by name, so no shelf a hand edit filled can sell one.
+  - A persisted sigil-id position added later must be assigned to one of these classes in the same PR that adds it.
   - The bullets below cite this rule where they apply it.
 - **The field.** `run.attunedSigils: string[]` holds distinct ids, each also in `run.sigils`. `validateRunShape` is registry-free and refuses, by name: a value that is not a list, an id that is not a non-empty string, an id named twice, and an id that is not in `run.sigils`. Under **rarity at every door** (above), both restore doors refuse, by name, an attuned id that is not a legendary sigil, and a list longer than the run's `attuneMax`. They read that number from the run's frozen `advancedConfigSnapshot` override (`gameConfig.balance.sigils.attuneMax`), else from the bundle default, so the first load pass, which uses the authored registries, does not refuse a run whose Settings row was raised. An unknown attuned id is already refused through `unknownSigilId`, because the list is a subset of `run.sigils`. A legendary in `run.sigilSlots` is refused at the same doors (**rarity at every door**): §14.4's install already refuses one, so only a hand edit can put it there.
 - **Schema.** One bump, 18 → 19. `attunedSigils` is a required `RUN_SHAPE` row at 19. `migrateRunSchema` fills `[]` for a v18-or-older save and leaves `run.sigils` untouched. The step appends one captured schema-19 save to the corpus and edits no existing entry.
