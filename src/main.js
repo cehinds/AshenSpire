@@ -1794,7 +1794,7 @@ function quitGame() {
     <div class="screen farewell">
       <h1 class="title-big">THE EMBER GUTTERS</h1>
       <p class="subtitle" style="text-align:center">Your climb is saved. You may close this window.</p>
-      <button class="subtle" id="farewell-back">Return to title</button>
+      <button class="subtle" id="farewell-back" data-back>Return to title</button>
     </div>`;
   const closeTimer = setTimeout(() => {
     try {
