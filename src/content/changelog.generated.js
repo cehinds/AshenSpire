@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The first-fight tutorial no longer sits on your cards",
     "detail": "The coach marks' speech bubble used to land on the first card in your hand, so you couldn't play that card while the tutorial was showing. The bubble now finds a spot clear of your hand. After a window resize, the spotlight now follows its target until the board stops moving. Pressing Escape on an armed attack card now also drops the card's highlight, not just its targeting. Behind the scenes, the check that every tutorial button can be reached runs at eight screen sizes on every change, and it confirms that the tutorial stays dismissed after a reload.",
-    "build": "0.7.1.761",
+    "build": "0.7.1.765",
     "pullRequest": 1468,
     "url": "https://github.com/cehinds/AshenSpire/pull/1468"
+  },
+  {
+    "id": "pr-1478",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Your character level gets dearer with every level too",
+    "detail": "Your first character level still needs 100 XP, but each level after now costs 1.75 times the one before (100, 180, 310, 540, 940) instead of 130 more, the same growth skills and your class already use. Like any XP setting, this reaches a run you already started the next time you load it.",
+    "build": "0.7.1.764",
+    "pullRequest": 1478,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1478"
   },
   {
     "id": "pr-1476",
