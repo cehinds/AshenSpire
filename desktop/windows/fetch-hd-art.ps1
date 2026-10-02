@@ -57,6 +57,15 @@ function Fail([int]$Code, [string]$Message) { Say "ERROR: $Message"; exit $Code 
 
 function Get-Hex([byte[]]$Hash) { ([BitConverter]::ToString($Hash) -replace '-', '').ToLowerInvariant() }
 
+# The sha256 of a file, through .NET. Not Get-FileHash: in Windows PowerShell 5.1
+# that is a script function in a module, and an installer started from a shell
+# whose PSModulePath points elsewhere (PowerShell 7, as CI does) cannot load it.
+function Get-FileSha256([string]$Path) {
+  $sha = [Security.Cryptography.SHA256]::Create()
+  $stream = [IO.File]::OpenRead($Path)
+  try { return Get-Hex ($sha.ComputeHash($stream)) } finally { $stream.Dispose(); $sha.Dispose() }
+}
+
 # Lines of <sha256> TAB <bytes> TAB <object path> TAB <asset id>, written by
 # build-installer.mjs from the pack indexes.
 function Read-ObjectList([string]$File) {
@@ -77,7 +86,7 @@ function Test-Object($Entry) {
   $file = Get-ObjectFile $Entry.Path
   if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { return $false }
   if ((Get-Item -LiteralPath $file).Length -ne $Entry.Bytes) { return $false }
-  return (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant() -eq $Entry.Sha
+  return (Get-FileSha256 $file) -eq $Entry.Sha
 }
 
 function Save-Download([string]$From, [string]$To) {
@@ -126,7 +135,7 @@ function Install-HighArt {
     $zip = Join-Path ([IO.Path]::GetTempPath()) ("AshenSpire-hd-{0}.zip" -f $Sha256.Substring(0, 12))
     $sha = $Sha256.ToLowerInvariant()
     # A zip left by an interrupted install is reused only when it is the pinned one.
-    if ((Test-Path -LiteralPath $zip) -and ((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $sha)) {
+    if ((Test-Path -LiteralPath $zip) -and ((Get-FileSha256 $zip) -ne $sha)) {
       Remove-Item -LiteralPath $zip -Force
     }
     if (-not (Test-Path -LiteralPath $zip)) {
@@ -136,7 +145,7 @@ function Install-HighArt {
         Fail 2 "Download failed: $($_.Exception.Message)"
       }
       Say 'Checking the download...'
-      $got = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+      $got = (Get-FileSha256 $zip)
       if ($got -ne $sha) {
         Remove-Item -LiteralPath $zip -Force
         Fail 3 "The download does not match the pinned release (sha256 $got, expected $sha)."
