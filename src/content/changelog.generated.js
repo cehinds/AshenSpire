@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1442",
+    "id": "pr-1437",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "The Pages site no longer copies the art review folder",
-    "detail": "Behind the scenes: the project site stops carrying the art review pages and old build-file copies from main, the stable links get their map tiles beside every copy, and link previews use a picture the site itself serves; nothing you play changes.",
+    "summary": "Behind the scenes: every class now plays five whole runs on every change",
+    "detail": "Nothing you play changes. The test suite now plays five full runs for each class without a screen, on fixed seeds. Each run goes from the map through fights, rewards and events to a win or a death. The suite fails if a run crashes or gets stuck, whether in a fight that never ends or on a map path that never reaches the boss.",
     "build": "0.7.1.734",
-    "pullRequest": 1442,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1442"
+    "pullRequest": 1437,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1437"
   },
   {
     "id": "pr-1435",
