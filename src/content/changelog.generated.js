@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the balance report now measures Mana and each act's difficulty",
     "detail": "Nothing you play changes. The run simulator can now compare whole climbs with and without Mana limits, and report how often each act's boss falls in each region. Both results are written into the balance notes for the owner to tune from later.",
-    "build": "0.7.1.760",
+    "build": "0.7.1.761",
     "pullRequest": 1473,
     "url": "https://github.com/cehinds/AshenSpire/pull/1473"
+  },
+  {
+    "id": "pr-1476",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: two browser-tool checks pass on Mac and Windows again",
+    "detail": "Nothing you play changes. On Windows, the helper that serves the art-pack build to the test tools refused every file it should have served, because it spelled its own folder one way and each file another; it now spells both the same way. On Mac, the check that a browser which dies on start fails at once looked for a program where Macs do not keep it; it now uses one every computer has, and runs on Windows too instead of being skipped.",
+    "build": "0.7.1.760",
+    "pullRequest": 1476,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1476"
   },
   {
     "id": "pr-1448",
