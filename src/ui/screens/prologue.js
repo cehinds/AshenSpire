@@ -208,15 +208,23 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
       caption.style.setProperty('--prologue-caption-fit', (step / 20).toFixed(2));
     }
   }
-  const resized = typeof ResizeObserver === 'function' ? new ResizeObserver(() => fitCaption()) : null;
+  // The frame does not resize when the player changes Text size mid-opening,
+  // but the words do — so the dialogue is watched too. Re-fitting changes the
+  // words' size, so it runs on the next frame, not inside the observer.
+  let refit = 0;
+  const resized = typeof ResizeObserver === 'function' ? new ResizeObserver(() => {
+    if (refit) return;
+    refit = requestAnimationFrame(() => { refit = 0; if (!stopped) fitCaption(); });
+  }) : null;
   resized?.observe(root);
+  resized?.observe(dialogue);
   // A display font that arrives after the scene is drawn changes the words'
   // size without resizing anything.
   document.fonts?.addEventListener?.('loadingdone', fitCaption);
   function cleanup() {
     if (stopped) return;
     stopped = true; serial++; cancelAnimationFrame(raf);
-    resized?.disconnect();
+    resized?.disconnect(); cancelAnimationFrame(refit);
     document.fonts?.removeEventListener?.('loadingdone', fitCaption);
     animations.forEach(a=>a.cancel());
     portrait.removeEventListener('change',rotate);

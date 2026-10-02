@@ -845,7 +845,8 @@ test('the fixed caption is one share of every screen, centred, and its words shr
   }
   const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
   assert.match(screen, /function fitCaption\(\)/);
-  assert.match(screen, /new ResizeObserver\(\(\) => fitCaption\(\)\)/, 'a resize re-fits the words');
+  assert.match(screen, /resized\?\.observe\(root\)/, 'a resize re-fits the words');
+  assert.match(screen, /resized\?\.observe\(dialogue\)/, 'a Text size change mid-opening re-fits the words');
   assert.match(screen, /resized\?\.disconnect\(\)/, 'cleanup lets the observer go');
   assert.match(screen, /removeEventListener\?\.\('loadingdone', fitCaption\)/, 'cleanup lets the font listener go');
   for (const part of ['title', 'speaker', 'dialogue', 'location']) {
