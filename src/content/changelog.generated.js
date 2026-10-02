@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Escape and the controller's B button take you back",
     "detail": "Run history, the Compendium, Custom Climb, character creation, the LAN lobby, a conversation, a reward's detail view and the quest board now go back when you press Escape or B, the same as pressing their Back button. On a controller, B now also closes Settings, About, Profile and the Armoury, as Escape already did. Each press goes back one step: an open tooltip closes first, then the dialog on top. Where going back would give something up, Escape and B do nothing, so you have to choose to leave: a shop, the Shrine, your rewards, a fight (they never end your turn), the map, or a finished run.",
-    "build": "0.7.1.754",
+    "build": "0.7.1.755",
     "pullRequest": 1463,
     "url": "https://github.com/cehinds/AshenSpire/pull/1463"
+  },
+  {
+    "id": "pr-1465",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the build checker's self-test catches up with the art-pack change",
+    "detail": "Nothing you play changes. One of the build tool's self-tests plants a deliberate fault in a line the asset loading work rewrote, so it could no longer find that line and the test build's checks went red. It now plants the fault in the line as it reads today.",
+    "build": "0.7.1.754",
+    "pullRequest": 1465,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1465"
   },
   {
     "id": "pr-1447",
