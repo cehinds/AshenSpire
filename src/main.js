@@ -1998,10 +1998,14 @@ function remountMapIfShowing(changed) {
   if (!screen) return;
   const mapKey = MAP_REMOUNT_KEYS.some((k) => k in changed);
   const flaskKey = FLASK_REMOUNT_KEYS.some((k) => k in changed) && !!screen.querySelector('.map-potions, .hud-potions');
-  if (mapKey || flaskKey) showMap();
+  // The flask key only changes what the Potions control offers, so the redraw
+  // keeps the destination the player had selected (#1474 review).
+  const selectedId = !mapKey && flaskKey ? screen.querySelector('.map-node.selected')?.dataset.node || null : null;
+  if (mapKey || flaskKey) showMap({ selectedId });
 }
 
-function showMap() {
+function showMap(opts) {
+  const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : null;
   // The map's music follows the region it stands in (content/music.js).
   audio.music(mapMusicContext(run.environmentRegionId || regionForRun(run)?.id));
   if (run.legacyDungeon) return showLegacyDungeon();
@@ -2025,6 +2029,7 @@ function showMap() {
     registries,
     run,
     meta: activeMeta,
+    selectedId,
     onPick: enterNode,
     onSettings: showSettings,
     onSettingsChange: persistSettingsChange,

@@ -14,7 +14,8 @@
 //                Potions list refuses Drink with the setting's reason; the
 //                player turns the setting ON through the real Settings door
 //                (Menu → Settings → search → the toggle) and closes it; the
-//                list now offers Drink. Drinking calls the map's onChange: the
+//                list now offers Drink, and a destination selected before
+//                the change is still selected with its tray open. Drinking calls the map's onChange: the
 //                run is SAVED (the slot's flask ledger drops by one, the stored
 //                setting is on) and the map REMOUNTS (a new Potions control,
 //                the mini's count one lower). After that remount the setting
@@ -99,6 +100,14 @@ if (process.argv.includes('--selftest')) {
         replace: 'const FLASK_REMOUNT_KEYS = [];',
         args: ['--only', 'persistence'],
         expectRed: /FAIL persistence: the setting turned on in Settings reaches the map Potions list/,
+      },
+      {
+        name: 'the act map drops the selected destination when "Use flasks outside combat" changes',
+        file: 'src/main.js',
+        find: '  if (mapKey || flaskKey) showMap({ selectedId });',
+        replace: '  if (mapKey || flaskKey) showMap();',
+        args: ['--only', 'persistence'],
+        expectRed: /FAIL persistence: the map keeps the selected destination, its tray open, across the setting's redraw/,
       },
       {
         name: 'the world atlas remounts when "Use flasks outside combat" changes, losing its selected destination',
@@ -420,8 +429,26 @@ async function persistenceProbe(cdp, base, check) {
     check('persistence: with the setting off, the map Potions list refuses Drink with its reason',
       before && before['charge:hp'] && !before['charge:hp'].enabled && before['charge:hp'].text.includes(refusal),
       JSON.stringify(before?.['charge:hp']));
+    // A destination selected before the change (the tray open on it) must
+    // survive the flask-only redraw (#1474 review).
+    const picked = await ev(`(async () => {
+      await __fm.closeModal('run-potion-menu');
+      const node = document.querySelector('.mapscreen .map-node.reachable');
+      if (!node) return { why: 'no reachable node' };
+      node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      const open = await __fm.until(() => document.querySelector('.map-tray')?.dataset.shown === 'true');
+      return { id: node.dataset.node, open: !!open, selected: document.querySelector('.map-node.selected')?.dataset.node };
+    })()`);
+    check('persistence: a reachable node is selected and its tray opens',
+      !picked.why && picked.open && picked.selected === picked.id, JSON.stringify(picked));
     const toggled = await ev(TOGGLE_SETTING('#open-menu'));
     check('persistence: the setting turns on through Menu → Settings', toggled === '', toggled);
+    const keptPick = await ev(`(async () => {
+      const open = await __fm.until(() => document.querySelector('.map-tray')?.dataset.shown === 'true');
+      return { open: !!open, selected: document.querySelector('.map-node.selected')?.dataset.node || null };
+    })()`);
+    check('persistence: the map keeps the selected destination, its tray open, across the setting\'s redraw',
+      keptPick.open && keptPick.selected === picked.id, JSON.stringify({ ...keptPick, want: picked.id }));
     const after = await ev(`__fm.mapList()`);
     check('persistence: the setting turned on in Settings reaches the map Potions list (Drink offered)',
       after && after['charge:hp']?.enabled === true, JSON.stringify(after?.['charge:hp']));
