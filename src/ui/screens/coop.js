@@ -61,7 +61,7 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { iconTray, trayIcon } from '../components/iconTray.js';
 import { t } from '../strings.js';
-import { anchorLocalBox, clampBox, guardHitFloatParts } from '../fx.js';
+import { anchorLocalBox, clampBox, guardHitFloatParts, playReceiptSounds } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -148,6 +148,26 @@ export function levelCardStrips(registries, offer, picks) {
     });
     return [subtitle(t('reward.levelCard.title')), strip];
   });
+}
+
+/**
+ * coopReceiptSounds(scene, lastSeq) → the receiptSeq now heard.
+ *
+ * Plays a combat scene's receipts (tools/session.mjs combatScene digest)
+ * through the same sound seams solo uses (fx.js playReceiptSounds: tiered
+ * hits, playerHurt, the turn stinger, draw/shuffle/discard). The host's
+ * receiptSeq, not object identity, says whether the receipts are new, so a
+ * resync or a re-render of the same scene never replays them. A client that
+ * has heard nothing yet (lastSeq 0: it just joined or reloaded) hears only a
+ * turn-1 scene, i.e. the fight's opening; joining mid-fight replays no
+ * history.
+ */
+export function coopReceiptSounds(scene, lastSeq = 0) {
+  if (!scene || scene.kind !== 'combat') return lastSeq;
+  const seq = Number(scene.receiptSeq) || 0;
+  if (seq <= lastSeq) return lastSeq;
+  if (lastSeq > 0 || Number(scene.turn) === 1) playReceiptSounds(scene.events || []);
+  return seq;
 }
 
 export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettingsChange, onLeave }) {
@@ -241,6 +261,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   let latestWireSnap = null; // newest wire state, even while the old board paces
   let receivedSnapshots = 0;
   let lastReceiptSeq = 0; // rendered authoritative combat receipt identity
+  let lastSoundSeq = 0; // receipts already heard (session-wide; never reset between fights)
   let guardCoopTool = null; // query-gated real-wire browser control
   let mapBoard = null; // the live act-map board, so a re-render can stop the old one
   let combatLayout = null; // the layout adapter (components/combatLayout.js) for the mounted board
@@ -1047,6 +1068,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if(layer&&anchor)playCombatEffectPlan(layer,anchorLocalBox(layer,anchor),plan.spriteEffect,{targets:effectTargets.map(el=>anchorLocalBox(layer,el)),authoredTargets:authoredTargets.map(el=>anchorLocalBox(layer,el)),duration,actor:anchor,localBox:anchorLocalBox});
       stage?.play(pose, duration, plan.aura);
     }
+    lastSoundSeq = coopReceiptSounds(sc, lastSoundSeq);
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;
     wireLeave();
