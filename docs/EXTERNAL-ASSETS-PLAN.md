@@ -1128,6 +1128,14 @@ the step 3a boot wait (2026-10-02):
   image error handler that swaps or removes art without marking it.
   `external-play --block-index` checks combat and a dialogue. Screens that
   only flag a missing image (the map's plate) are re-pointed as before.
+  Combat's own redraw waits until no animation or resolving card owns the
+  board (`busy`), and puts the focus back on the same combatant; a hidden
+  image that re-pointing already loaded is shown at once by its restore; a
+  swap made before the image was attached is still marked; and the notice's
+  state counts as announced only once its words land (review 5394761200).
+  `tests/art-restore.test.mjs` restores `relicIcon`, `classSprite` and
+  `enemySprite` in a small fake DOM, and `--block-index` checks that combat's
+  frames are rebuilt with the focus kept and that the relic icon returns.
   **A Retry has its own deadline**, `behavior.artLoading.retryWaitMs` (60 s,
   `RETRY_WAIT_MS`), not the boot's 8 s: nothing waits on a Retry, and a link
   too slow to bring the ~790 KB light index in 8 s failed every Retry the same

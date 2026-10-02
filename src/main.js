@@ -1,6 +1,6 @@
 import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
 import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
-import { applyArtTier, onTierArrived, requestedTier, retryBuiltInArt } from './ui/artTier.js';
+import { applyArtTier, onTierArrived, requestedTier, retryBuiltInArt, onRetryProgress } from './ui/artTier.js';
 import { startBootArt, bootArtLine, bootArtRetried } from './ui/bootArt.js';
 import { builtInSource } from './ui/assetmap.js';
 import { mountArtLoadNotice } from './ui/components/artLoadNotice.js';
@@ -1528,20 +1528,28 @@ function refreshArtNotice() {
   const root = app.querySelector('.title-screen');
   if (root) drawArtNotice(root);
 }
-async function retryArtFromTitle() {
+function retryArtFromTitle() {
   if (artNoticeState === 'retrying' || !artNoticeState) return;
-  const before = artNoticeState;
-  artNoticeState = 'retrying';
-  refreshArtNotice();
-  const result = await retryBuiltInArt(activeSettings);
-  if (result?.state === 'loaded' || builtInArtStatus().state === 'loaded') return; // onTierArrived has cleared the notice
-  if (artNoticeState !== 'retrying') return;
-  // null is a Retry the player replaced (a tier switch): not a failure, so the
-  // notice goes back to what it said; the switch's own outcome decides.
-  artNoticeState = result ? 'again' : before;
+  retryBuiltInArt(activeSettings);
+}
+// The notice follows every Retry, from the title or from Settings: busy while
+// it runs; then gone (onTierArrived), "still could not be loaded", or, for a
+// Retry the player replaced with a tier switch (null), what it said before.
+let artNoticeBefore = null;
+onRetryProgress(({ phase, result }) => {
+  if (phase === 'start') {
+    if (!artNoticeState || artNoticeState === 'retrying') return;
+    artNoticeBefore = artNoticeState;
+    artNoticeState = 'retrying';
+    refreshArtNotice();
+    return;
+  }
+  if (artNoticeState !== 'retrying') return; // loaded: artArrivedAfterFailure cleared it
+  if (result?.state === 'loaded' || builtInArtStatus().state === 'loaded') return;
+  artNoticeState = result ? 'again' : (artNoticeBefore || 'failed');
   if (result) bootArtRetried(result);
   refreshArtNotice();
-}
+});
 // A load arrived after the boot load failed (a Retry from the title or from
 // Settings → Art quality, or a tier switch): the notice goes, and the title,
 // when it is on screen, is drawn again on the new art — once nothing is open

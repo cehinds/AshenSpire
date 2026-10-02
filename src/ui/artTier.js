@@ -119,6 +119,13 @@ function supersedeInFlight() {
  * draws its button busy, and a press meanwhile is refused.
  */
 export function retryRunning() { return !!retryInFlight; }
+
+// Told when a Retry starts and how it ends, from whichever control pressed it:
+// the title's notice follows a Retry pressed in Settings too.
+let onRetry = null;
+/** onRetryProgress(fn) — fn({ phase: 'start' }) when a Retry begins, fn({ phase: 'end', result }) when it settles. */
+export function onRetryProgress(fn) { onRetry = typeof fn === 'function' ? fn : null; }
+function tellRetry(event) { if (onRetry) try { onRetry(event); } catch { /* a listener must not fail the Retry */ } }
 let queue = Promise.resolve();
 let round = 0;
 let onArrived = null;
@@ -271,6 +278,7 @@ export function retryBuiltInArt(settings = lastSettings, opts = {}) {
   // outcome, rather than queuing a second load behind it.
   if (retryInFlight) return retryInFlight;
   retrying = true;
+  tellRetry({ phase: 'start' });
   if (settings) lastSettings = settings;
   lastChoice = artQualityChoice(lastSettings);
   const mine = ++round;
@@ -303,6 +311,7 @@ export function retryBuiltInArt(settings = lastSettings, opts = {}) {
   });
   // A Retry superseded before it ran (the job returns at once) settles here too.
   const tracked = queue.finally(() => { if (retryInFlight === tracked) { retryInFlight = null; retrying = false; } });
+  tracked.then((result) => tellRetry({ phase: 'end', result }), () => tellRetry({ phase: 'end', result: null }));
   retryInFlight = tracked;
   return tracked;
 }
@@ -318,4 +327,5 @@ export function resetArtTier() {
   queue = Promise.resolve();
   round = 0;
   onArrived = null;
+  onRetry = null;
 }

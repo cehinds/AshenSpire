@@ -412,6 +412,25 @@ async function blockedIndexPass() {
     check(redrawnAt >= 0, `in-run Retry (${name}): after Settings closed the art is still placeholders (${redrawn.drawn} of ${redrawn.n} drawn from objects/)`);
     check(await ev(`document.querySelector(${JSON.stringify(rootSel)}) === window.__retryRoot`) && redrawn.hand === placeheld.hand, `in-run Retry (${name}): the screen was remounted (or the hand changed), not redrawn in place`);
     shots.push(`in-run Retry redrew ${redrawn.drawn} ${name} sprite(s)`);
+    if (name !== 'combat') continue;
+    // The relic rail's icon (relicIcon's own placeholder) came back too.
+    const relics = await ev(`[...document.querySelectorAll('.relic-art')].map((r) => { const i = r.querySelector('img'); return !!(i && (i.getAttribute('src') || '').includes('objects/')); })`);
+    check(relics.length > 0 && relics.every(Boolean), `in-run Retry (combat): a relic icon is still its glyph (${relics.filter(Boolean).length} of ${relics.length} drawn from objects/)`);
+    // COMBAT'S OWN REDRAW (ART_REDRAW_EVENT): it rebuilds the enemy frames from
+    // the combat's state, so the frames are new nodes, and the focus a keyboard
+    // or controller player had on an enemy (its frame, as keyboard targeting
+    // focuses it) is on the same enemy afterwards. Removing combat's listener
+    // leaves the old frames: red.
+    await wait(800); // Settings' close hands focus back to its opener first
+    const before = await ev(`(() => { const frame = [...document.querySelectorAll('.combat .combatant.enemy[data-eid]')].find((f) => f.getClientRects().length);
+      if (!frame) return null; window.__oldFrame = frame; frame.focus(); return { eid: frame.dataset.eid, focused: document.activeElement === frame }; })()`);
+    check(!!before?.focused, `in-run Retry (combat): no enemy frame took the focus for the redraw check (${JSON.stringify(before)})`);
+    await ev(`document.dispatchEvent(new CustomEvent('ashen:art-redraw'))`);
+    const eidSel = JSON.stringify(`.combat .combatant.enemy[data-eid="${before?.eid || ''}"]`);
+    const rebuiltAt = await poll(`(() => { const f = document.querySelector(${eidSel}); return !!f && f !== window.__oldFrame; })()`, 4000);
+    check(rebuiltAt >= 0, 'in-run Retry (combat): ART_REDRAW_EVENT did not rebuild the enemy frames');
+    check(await ev(`document.activeElement === document.querySelector(${eidSel})`), 'in-run Retry (combat): the redraw dropped the focus from the enemy');
+    check(await ev(`document.querySelector('.combat') === window.__retryRoot`), 'in-run Retry (combat): the redraw remounted the combat');
   }
   check(!thrown.length, `${thrown.length} uncaught exception(s): ${thrown.slice(0, 2).join(' | ')}`);
   await close(); server?.server.close();

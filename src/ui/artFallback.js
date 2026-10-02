@@ -26,7 +26,10 @@ export function markArtPlaceholder(node, restore) {
 /** The failed <img>, asked for again at the URL its id resolves to now. */
 function reload(img) {
   const src = img.getAttribute('src');
-  if (src) img.setAttribute('src', currentArtUrl(src));
+  const now = src ? currentArtUrl(src) : src;
+  // Only when the url changes: setting the same src again on a loaded image
+  // need not fire another load.
+  if (now && now !== src) img.setAttribute('src', now);
 }
 
 /**
@@ -36,8 +39,9 @@ function reload(img) {
  */
 export function swapOnError(img, makePlaceholder) {
   if (!img || typeof img.addEventListener !== 'function') return img;
+  // Marked whether or not the image is in the page yet: a well built ahead
+  // and inserted later gets its glyph, and its art back, all the same.
   img.addEventListener('error', () => {
-    if (!img.isConnected) return;
     const stand = makePlaceholder();
     markArtPlaceholder(stand, () => { stand.replaceWith(img); reload(img); });
     img.replaceWith(stand);
@@ -54,8 +58,12 @@ export function hideOnError(img) {
   img.addEventListener('error', () => {
     img.hidden = true;
     markArtPlaceholder(img, () => {
-      img.addEventListener('load', () => { img.hidden = false; }, { once: true });
+      // Re-pointing (refreshMountedArt) may already have loaded it on its new
+      // url before this restore runs, with nobody listening: shown at once
+      // then; otherwise shown when it loads (review of #1471).
       reload(img);
+      if (img.complete && img.naturalWidth > 0) img.hidden = false;
+      else img.addEventListener('load', () => { img.hidden = false; }, { once: true });
     });
   });
   return img;

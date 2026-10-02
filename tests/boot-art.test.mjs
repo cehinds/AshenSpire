@@ -391,12 +391,14 @@ test('a redraw waits until no dialog or title door is open over the screen', asy
 
 test('main.js: a superseded Retry is not a failure, and the title redraw waits for dialogs and keeps focus', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  assert.match(main, /artNoticeState = result \? 'again' : before;/, 'null (superseded) restores what the notice said');
+  assert.match(main, /artNoticeState = result \? 'again' : \(artNoticeBefore \|\| 'failed'\);/, 'null (superseded) restores what the notice said');
+  // The notice follows a Retry from Settings too (onRetryProgress), not only its own button.
+  assert.match(main, /onRetryProgress\(\(\{ phase, result \}\) => \{/);
   assert.match(main, /cancelTitleRedraw = whenNoOverlay\(\(\) => \{/);
   assert.match(main, /if \(action\) app\.querySelector\(`\.title-screen \[data-title-action="\$\{action\}"\]`\)\?\.focus/);
   const notice = readFileSync(new URL('../src/ui/components/artLoadNotice.js', import.meta.url), 'utf8');
   assert.match(notice, /insertAdjacentHTML\('afterbegin'/, 'first in the title’s reading and tab order');
-  assert.match(notice, /else text\.textContent = message;/, 'a state change rewrites the one live node in place');
+  assert.match(notice, /\} else \{ text\.textContent = message; announced = model\.variant; \}/, 'a state change rewrites the one live node in place');
 });
 
 test('a Settings slot rebuilt mid-retry draws Retry busy, and a second press is refused (Codex on #1471)', async () => {
@@ -480,7 +482,9 @@ test('a Retry that loads mid-run redraws the active screen’s art in place (Cod
   assert.match(main, /if \(!root\) \{ try \{ document\.dispatchEvent\(new CustomEvent\(ART_REDRAW_EVENT\)\); \}/);
   const combat = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
   // Combat forgets its cached figures (the placeholders) and renders from its own state; no remount.
-  assert.match(combat, /function redrawArt\(\) \{[\s\S]*?for \(const record of enemyFrames\.values\(\)\) \{ stageFor\(record\.box\)\?\.dispose\?\.\(\); record\.box\.remove\(\); \}\n    enemyFrames\.clear\(\);\n    playerArtKey = null;\n    render\(\);\n  \}/);
+  // Never mid-animation, and the focus kept: the browser pass (external-play
+  // --block-index) checks the rebuild itself and the kept focus.
+  assert.match(combat, /function redrawArt\(\) \{[\s\S]*?if \(busy\) \{ setTimeout\(redrawArt, ART_REDRAW_RETRY_MS\); return; \}[\s\S]*?enemyFrames\.clear\(\);\n    playerArtKey = null;\n    render\(\);[\s\S]*?target\?\.focus\?\.\(/);
   assert.match(combat, /document\.addEventListener\(ART_REDRAW_EVENT, redrawArt\);/);
   assert.match(combat, /document\.removeEventListener\(ART_REDRAW_EVENT, redrawArt\);/, 'released with the combat');
 });
@@ -553,20 +557,108 @@ test('no image error handler in src/ui swaps or removes art without marking it (
     if (e.isDirectory()) walk(`${dir}${e.name}/`); else if (e.name.endsWith('.js')) files.push(`${dir}${e.name}`);
   } };
   walk('../src/ui/');
+  // The handler's body, however many lines it spans: from the registration to
+  // its closing bracket (a named handler is looked up by name in the file).
+  const bodyAt = (text, from) => {
+    let depth = 0;
+    for (let k = from; k < text.length; k++) {
+      const c = text[k];
+      if (c === '(' || c === '{') depth += 1;
+      else if (c === ')' || c === '}') { depth -= 1; if (depth < 0) return text.slice(from, k); }
+      else if (c === ';' && depth === 0) return text.slice(from, k);
+    }
+    return text.slice(from);
+  };
+  const SWAPS = /\.remove\(\)|replaceWith\(|textContent\s*=|innerHTML\s*=|placeholder\(\)|fallbackToSvg\(\)/;
+  const MARKS = /markArtPlaceholder|swapOnError|hideOnError/;
+  // Handlers that swap nothing a restore must bring back, by file and why.
+  const ALLOWED = new Map([
+    ['assets.js:enemySprite', 'its placeholder() marks the node itself (markArtPlaceholder inside placeholder)'],
+  ]);
   const bad = [];
+  let seen = 0;
   for (const f of files) {
+    if (f.endsWith('/artFallback.js') || f.endsWith('/debuglog.js') || f.endsWith('/audio.js') || f.endsWith('/highResArt.js')) continue;
     const text = readFileSync(new URL(f, import.meta.url), 'utf8');
-    // An error listener whose handler removes the image or swaps it for a glyph,
-    // by hand, instead of through src/ui/artFallback.js (or marking its node).
-    for (const m of text.matchAll(/addEventListener\('error',[^\n]*(?:\.remove\(\)|replaceWith\(|textContent\s*=)[^\n]*/g)) {
-      if (!/markArtPlaceholder/.test(text.slice(m.index, m.index + 400))) bad.push(`${f}: ${m[0].slice(0, 100)}`);
+    for (const m of text.matchAll(/addEventListener\(\s*'error'\s*,|\.onerror\s*=/g)) {
+      seen += 1;
+      let body = bodyAt(text, m.index + m[0].length);
+      const named = /^\s*([A-Za-z_$][\w$]*)\s*(?:,|$)/.exec(body);
+      if (named) {
+        const def = new RegExp(`(?:const|let|function)\\s+${named[1]}\\b[^\\n]*`).exec(text);
+        if (def) body += bodyAt(text, def.index + def[0].length - 1);
+      }
+      if (!SWAPS.test(body) || MARKS.test(body)) continue;
+      const site = `${f.split('/').pop()}:${/enemySprite/.test(text.slice(Math.max(0, m.index - 4000), m.index)) && /placeholder\(\)/.test(body) ? 'enemySprite' : m.index}`;
+      if (!ALLOWED.has(site)) bad.push(`${f}: ${body.replace(/\s+/g, ' ').slice(0, 100)}`);
     }
   }
+  assert.ok(seen >= 10, `the census found the handlers (${seen})`);
   assert.deepEqual(bad, []);
-  // enemySprite's and classSprite's own placeholders mark their node.
+  // The census reads multi-line handlers and onerror assignments too.
+  const probe = "img.addEventListener('error', () => {\n  icon.textContent = 'x';\n});\nother.onerror = () => { other.remove(); };";
+  const hits = [...probe.matchAll(/addEventListener\(\s*'error'\s*,|\.onerror\s*=/g)].map((m) => bodyAt(probe, m.index + m[0].length)).filter((b) => SWAPS.test(b) && !MARKS.test(b));
+  assert.equal(hits.length, 2, 'a multi-line handler and an onerror assignment are both caught');
+  // enemySprite's placeholder() marks its node; classSprite and relicIcon mark theirs.
   const assets = readFileSync(new URL('../src/ui/assets.js', import.meta.url), 'utf8');
   assert.match(assets, /markArtPlaceholder\(el, \(\) => el\.replaceWith\(enemySprite\(enemyDef, entity\)\)\);/);
   assert.match(assets, /markArtPlaceholder\(el, \(\) => \{ const again = classSprite\(/);
+  assert.match(assets, /markArtPlaceholder\(icon, \(\) => \{ const again = relicIcon\(relic\);/);
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(main, /whenNoOverlay\(\(\) => \{[\s\S]{0,400}restoreArtPlaceholders\(document\);/, 'main runs the pass once nothing is open');
+});
+
+test('restore shows a hidden image that re-pointing already loaded, and marks a swap made before the image was attached (review 5394761200)', async () => {
+  const { swapOnError, hideOnError, restoreArtPlaceholders } = await import('../src/ui/artFallback.js');
+  const node = (tag) => ({ tag, a: {}, l: {}, isConnected: false, hidden: false, complete: false, naturalWidth: 0,
+    setAttribute(k, v) { this.a[k] = String(v); }, getAttribute(k) { return this.a[k] ?? null; },
+    hasAttribute(k) { return k in this.a; }, removeAttribute(k) { delete this.a[k]; },
+    addEventListener(t, fn) { (this.l[t] ||= []).push(fn); }, fire(t) { const fns = this.l[t] || []; this.l[t] = fns.filter((f) => !f.once); for (const fn of fns) fn(); },
+    replaceWith(other) { if (this.parent) { this.parent.child = other; other.parent = this.parent; } } });
+  // hideOnError: the art failed, then re-pointing loaded it (its load fired with nobody listening).
+  const img = node('img');
+  img.setAttribute('src', 'objects/aa/' + 'a'.repeat(64) + '.webp');
+  hideOnError(img);
+  img.fire('error');
+  assert.equal(img.hidden, true);
+  img.complete = true; img.naturalWidth = 64; // loaded already, on the url it has now
+  restoreArtPlaceholders({ querySelectorAll: () => [img] });
+  assert.equal(img.hidden, false, 'shown at once: no second load is needed');
+  // swapOnError: an image inside a well that is not in the page yet.
+  const well = { child: null };
+  const piece = node('img'); piece.parent = well; well.child = piece; piece.setAttribute('src', 'assets/x.webp');
+  swapOnError(piece, () => node('span'));
+  piece.fire('error');
+  assert.equal(well.child.tag, 'span', 'the glyph stands in although the well is detached');
+  assert.ok(well.child.hasAttribute('data-art-placeholder'), 'and it is marked, so a restore brings the art back');
+});
+
+test('the notice’s state counts as announced only once its words land (review 5394761200)', async () => {
+  const { mountArtLoadNotice, resetArtLoadNotice } = await import('../src/ui/components/artLoadNotice.js');
+  resetArtLoadNotice();
+  const button = { a: {}, setAttribute(k, v) { this.a[k] = String(v); }, removeAttribute(k) { delete this.a[k]; }, getAttribute(k) { return this.a[k] ?? null; }, addEventListener() {} };
+  const makeRoot = () => ({
+    notice: null,
+    insertAdjacentHTML(where, html) {
+      const text = { isConnected: true, textContent: /role="status" aria-live="polite">([^<]*)<\/p>/.exec(html)[1] };
+      this.notice = { dataset: {}, querySelector: (sel) => (sel === '.art-load-notice-text' ? text : sel === '[data-art-notice-retry]' ? button : null), text };
+    },
+    querySelector(sel) { return sel === ':scope > .art-load-notice' ? this.notice : null; },
+  });
+  const later = [];
+  const schedule = (fn) => later.push(fn);
+  const first = makeRoot();
+  mountArtLoadNotice(first, { model: artLoadNoticeModel({ state: 'failed' }), schedule });
+  // The title redraws inside the delay: the first node leaves the page before its write.
+  first.notice.text.isConnected = false;
+  const second = makeRoot();
+  mountArtLoadNotice(second, { model: artLoadNoticeModel({ state: 'failed' }), schedule });
+  assert.equal(second.notice.text.textContent, '', 'not drawn as already said: the delay is armed again');
+  for (const fn of later.splice(0)) fn();
+  assert.equal(second.notice.text.textContent, tFull('art.failed.notice'), 'and the words land on the node in the page');
+  // Now it was announced: a further redraw draws the words in place.
+  const third = makeRoot();
+  mountArtLoadNotice(third, { model: artLoadNoticeModel({ state: 'failed' }), schedule });
+  assert.equal(third.notice.text.textContent, tFull('art.failed.notice'));
+  resetArtLoadNotice();
 });

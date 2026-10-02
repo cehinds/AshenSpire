@@ -71,10 +71,18 @@ export function mountArtLoadNotice(root, { model, onRetry, announceDelayMs = 80,
   el.ashenWriteTicket = ticket;
   if (text && unannounced) {
     // Written after the node is in the page, so the change is announced.
-    if (fresh) schedule(() => { if (text.isConnected && el.ashenWriteTicket === ticket) text.textContent = message; }, announceDelayMs);
-    else text.textContent = message;
+    // A state counts as announced only once its words have landed in a node
+    // in the page: a title redrawn inside the delay draws a fresh node, which
+    // arms the delay again (review of #1471).
+    if (fresh) {
+      const variant = model.variant;
+      schedule(() => {
+        if (!text.isConnected || el.ashenWriteTicket !== ticket) return;
+        text.textContent = message;
+        announced = variant;
+      }, announceDelayMs);
+    } else { text.textContent = message; announced = model.variant; }
   } else if (text && text.textContent !== message) text.textContent = message;
-  announced = model.variant;
   return el;
 }
 
