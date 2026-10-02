@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1480",
+    "id": "pr-1481",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "Save the game as a folder you can unzip",
-    "detail": "Download & saves now offers a folder copy of a newer build as one zip, beside the single-file download: unzip it, keep the folder together and double-click the game file inside to play offline with the light art. The game checks every file against the published build as it adds it, and saves nothing if one does not match.",
+    "summary": "Behind the scenes: desktop and mobile polish inspiration is saved with the project",
+    "detail": "Twelve illustrated boards explore the player-facing screens, from character creation and combat to towns, equipment, rewards, co-op and settings. The searchable gallery opens each board at full size; exact prompts, art credits and notes distinguish the generated examples from the game's real rules. These are design references, not changes to gameplay.",
     "build": "0.7.1.765",
-    "pullRequest": 1480,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1480"
+    "pullRequest": 1481,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1481"
   },
   {
     "id": "pr-1478",
