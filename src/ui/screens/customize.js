@@ -1033,7 +1033,7 @@ export function mountCustomize(app, {
           // DISTINCT CARDS, NOT BROAD TYPES. This counted `type` — attack, skill,
           // power — and the summary exists so a player can compare two armaments
           // WITHOUT opening the fold, which that number cannot do: measured on a
-          // Reaver, the straight sword and the greatsword both resolve to exactly
+          // Reaver, the straight sword and its two-handed alternate both resolve to exactly
           // {attack, skill}, so both read "2 kinds" and the line said the same
           // thing about two different weapons. Counting distinct cardIds says 3
           // for each, and what actually differs — Guard Counter against Sundering

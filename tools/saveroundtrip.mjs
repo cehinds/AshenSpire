@@ -105,6 +105,7 @@ import { executeRunEffects } from '../src/engine/actions.js';
 import { equipPiece, stampDeck } from '../src/model/loadout.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { retiredAttributeNames } from '../src/content/retiredNames.js';
+import { defaultSeatOrder } from '../src/model/seats.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -166,6 +167,35 @@ function cycle(saves, storage, registries, slot = 1) {
   return { run, bytes: storage.getItem(slot === 1 ? RUN_KEY : `${RUN_KEY}_s${slot}`) };
 }
 
+// Fields a save stamps on EVERY landed write, so no two writes can share them.
+// Each is held to its own rule (stampProblems) instead of to identity, and is
+// stripped before the byte comparison; every other byte must still match.
+const WRITE_STAMPS = {
+  savedAt: 'saveRun stamps the ISO time of the landed write (#1188, the save-slot list reads it); a later write carries a later or equal time',
+};
+
+/** What is wrong with the write stamps of a payload written after `before`. */
+function stampProblems(before, after) {
+  const problems = [];
+  for (const k of Object.keys(WRITE_STAMPS)) {
+    fieldsCompared++;
+    const t = after?.[k];
+    if (typeof t !== 'string' || !Number.isFinite(Date.parse(t)) || new Date(t).toISOString() !== t) {
+      problems.push(`${k}: ${short(t, 60)} is not an ISO time`);
+    } else if (before && Object.hasOwn(before, k) && !(Date.parse(t) >= Date.parse(before[k]))) {
+      problems.push(`${k}: ${before[k]} -> ${t} went BACKWARD`);
+    }
+  }
+  return problems;
+}
+
+/** The save bytes without their write stamps, key order kept. */
+function unstamped(bytes) {
+  const value = JSON.parse(bytes);
+  for (const k of Object.keys(WRITE_STAMPS)) delete value[k];
+  return JSON.stringify(value);
+}
+
 /** Compare two save payloads field by field, counting every field compared. */
 function diffFields(before, after) {
   const a = JSON.parse(before);
@@ -173,6 +203,7 @@ function diffFields(before, after) {
   const keys = [...new Set([...Object.keys(a), ...Object.keys(b)])].sort();
   const diffs = [];
   for (const k of keys) {
+    if (Object.hasOwn(WRITE_STAMPS, k)) continue;
     fieldsCompared++;
     const av = j(a[k]);
     const bv = j(b[k]);
@@ -270,22 +301,24 @@ function groupA(registries) {
       assert(first.run, `the save this build just wrote was REFUSED by its own load door and archived`);
       const B = first.bytes;
 
-      const { keys, diffs } = diffFields(A, B);
+      const { a, b, keys, diffs } = diffFields(A, B);
+      const stamps = [...stampProblems(null, a), ...stampProblems(a, b)];
+      assert(stamps.length === 0, `the write stamp is wrong: ${stamps.join(' · ')}`);
       assert(keys.length >= 20,
         `only ${keys.length} fields in the payload — a save this thin is not the artifact under test`);
       if (diffs.length) {
         const named = diffs.map((d) => `${d.key}: ${short(d.before, 90)} -> ${short(d.after, 90)}${d.lost ? ' (FIELD LOST)' : ''}${d.gained ? ' (FIELD INVENTED)' : ''}`);
         throw new Error(`the door changed ${diffs.length} field(s) on a save it had just written — ${named.join(' · ')}`);
       }
-      assert(A === B, `fields all match but the bytes differ (${A.length} -> ${B.length}) — key ORDER moved, which a diff of values cannot see`);
+      assert(unstamped(A) === unstamped(B), `fields all match but the bytes differ (${A.length} -> ${B.length}) — key ORDER moved, which a diff of values cannot see`);
 
       // A second lap. A door that settles on its second write rather than its
       // first is still not a fixed point, and one lap cannot tell the
       // difference: A -> B proves nothing if B -> C moves again.
       const second = cycle(saves, storage, registries);
       assert(second.run, 'the re-written save was refused on its second read');
-      assert(second.bytes === B, `the SECOND lap moved (${B.length} -> ${second.bytes.length} bytes) — the door settles late, it does not hold still`);
-      return `${keys.length} fields, byte-identical over two laps, ${A.length} bytes`;
+      assert(stampProblems(b, JSON.parse(second.bytes)).length === 0 && unstamped(second.bytes) === unstamped(B), `the SECOND lap moved (${B.length} -> ${second.bytes.length} bytes) — the door settles late, it does not hold still`);
+      return `${keys.length} fields, byte-identical over two laps apart from the write stamp, ${A.length} bytes`;
     });
   }
 }
@@ -331,6 +364,36 @@ const EXPLAINED_CHANGES = {
   maxStamina: 'pools are re-derived under the current rules',
   energyMax: 'pools are re-derived under the current rules',
   drawPerTurn: 'pools are re-derived under the current rules',
+  // Fields later schemas added, each filled ONCE at the migration door with the
+  // value a run that predates it must have had. EXPECTED_FILLS pins each value.
+  seatOrder: 'a save from before seats (schema ≤ 5) gains the default seat order at the load door (SPEC §13)',
+  level: 'a save from before XP levels gains the level ledger at the migration door, its level carried from levelUps (SPEC §13.4)',
+  smithingStones: 'initializeRunSmithing gives a save from before Smithing an empty purse and never grants Stones (SPEC §5, Smithing)',
+  itemUpgradeLevels: 'initializeRunSmithing migrates legacy per-card equipment upgrades to their source item tiers (SPEC §5, Smithing)',
+  smithingRewardClaims: 'initializeRunSmithing gives a save from before Smithing no reward claims (SPEC §5, Smithing)',
+  sigils: 'a save from before sigils (schema ≤ 14) owns none (SPEC §14.3)',
+  sigilSlots: 'a save from before sigils (schema ≤ 14) has cut no slot (SPEC §14.3)',
+  consumables: 'a save from before consumables (schema ≤ 15) holds none (SPEC §14.3)',
+  companions: 'a save from before companions (schema ≤ 15) holds none (SPEC §14.3)',
+  trainingPool: 'a save from before the wise master (schema ≤ 17) has refunded nothing (SPEC §14.5)',
+  attunedSigils: 'a save from before the Sigils panel (schema ≤ 18) attuned nothing (SPEC §15.4)',
+  savedAt: WRITE_STAMPS.savedAt,
+};
+
+// The exact value each field INVENTED by the migration must arrive with, read
+// off the old bytes where it depends on them. A fill not listed here is held
+// only to its registered reason above.
+const EXPECTED_FILLS = {
+  seatOrder: (old, registries) => defaultSeatOrder(registries),
+  level: (old) => ({ xp: 0, level: 1 + (Number.isInteger(old.levelUps) && old.levelUps > 0 ? old.levelUps : 0), unspentPoints: 0 }),
+  smithingStones: () => 0,
+  smithingRewardClaims: () => [],
+  sigils: () => [],
+  sigilSlots: () => ({}),
+  consumables: () => ({}),
+  companions: () => [],
+  trainingPool: () => 0,
+  attunedSigils: () => [],
 };
 
 // `entry` names a key inside the Vigour-window corpus; its absence selects the
@@ -411,18 +474,38 @@ function assertPlayerValuesSurvive(old, run, retired) {
   }
 
   // The deck: identity of every card instance. Carrier fields may be re-stamped
-  // (stampDeck); which cards the player owns may not change.
+  // (stampDeck); which cards the player owns may not change. Every card the old
+  // save held survives, in order, unchanged. The only cards the load may ADD
+  // are item-owned ones the equipment lends: SPEC, Complete armament kits —
+  // "normal equipment reconciliation adopts missing item-owned kits without
+  // re-minting permanently removed filler" — and the Dodge Roll every composed
+  // deck carries. Each must name its owner in `grantedBy` and carry that
+  // owner's deterministic id, so a run-owned card can never slip in this way.
   const oldDeck = Array.isArray(old.deck) ? old.deck : [];
   const newDeck = Array.isArray(run.deck) ? run.deck : [];
+  const oldIds = new Set(oldDeck.map((card) => card.instanceId));
+  const kept = newDeck.filter((card) => oldIds.has(card.instanceId));
+  const adopted = newDeck.filter((card) => !oldIds.has(card.instanceId));
   fieldsCompared++;
-  if (oldDeck.length !== newDeck.length) problems.push(`deck length ${oldDeck.length} -> ${newDeck.length}`);
+  if (kept.length !== oldDeck.length) problems.push(`deck: ${oldDeck.length} card(s) in the old save, ${kept.length} of them still in the deck`);
   else {
     for (let i = 0; i < oldDeck.length; i++) {
       fieldsCompared++;
-      const o = oldDeck[i]; const n = newDeck[i];
+      const o = oldDeck[i]; const n = kept[i];
       if (o.instanceId !== n.instanceId || o.cardId !== n.cardId || !!o.upgraded !== !!n.upgraded) {
         problems.push(`deck[${i}]: ${o.instanceId}/${o.cardId}/${!!o.upgraded} -> ${n.instanceId}/${n.cardId}/${!!n.upgraded}`);
       }
+    }
+  }
+  for (const card of adopted) {
+    fieldsCompared++;
+    const owner = typeof card.grantedBy === 'string' ? card.grantedBy : '';
+    const kitOk = card.equipmentRole === 'granted' && ['attack', 'guard'].includes(card.kitRole)
+      && card.instanceId === `kit:${owner}:${card.kitRole}`;
+    const artOk = card.equipmentRole === 'weaponArt'
+      && card.instanceId === `weaponArt:${owner.startsWith('unarmed:') ? 'unarmed' : owner}:${card.cardId}`;
+    if (!owner || !(kitOk || artOk)) {
+      problems.push(`deck: ${card.instanceId}/${card.cardId} was ADDED and is not an item-owned card (grantedBy ${short(card.grantedBy, 40)}, role ${card.equipmentRole})`);
     }
   }
 
@@ -495,7 +578,12 @@ function groupB(registries) {
         if (k in old) continue;
         fieldsCompared++;
         if (!Object.hasOwn(EXPLAINED_CHANGES, k)) unexplained.push(`${k}: (absent) -> ${short(forward[k], 80)} — a field INVENTED with no registered reason`);
+        else if (Object.hasOwn(EXPECTED_FILLS, k) && j(forward[k]) !== j(EXPECTED_FILLS[k](old, registries))) {
+          unexplained.push(`${k}: (absent) -> ${short(forward[k], 80)} — filled with something other than ${short(EXPECTED_FILLS[k](old, registries), 80)}`);
+        }
       }
+      const stamps = stampProblems(null, forward);
+      assert(stamps.length === 0, `the write stamp is wrong: ${stamps.join(' · ')}`);
       assert(unexplained.length === 0,
         `the migration changed ${unexplained.length} field(s) with no registered explanation: ${unexplained.join(' · ')}`);
 
@@ -512,7 +600,7 @@ function groupB(registries) {
       // 5. And the migrated save is itself a fixed point.
       const second = cycle(saves, storage, registries);
       assert(second.run, 'the migrated save was refused on its own next read');
-      assert(second.bytes === A,
+      assert(stampProblems(forward, JSON.parse(second.bytes)).length === 0 && unstamped(second.bytes) === unstamped(A),
         `a migrated save is not stable: the lap after the migration moved ${A.length} -> ${second.bytes.length} bytes`);
 
       const changed = Object.keys(old).filter((k) => j(old[k]) !== j(forward[k]));
