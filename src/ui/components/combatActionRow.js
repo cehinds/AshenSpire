@@ -69,7 +69,10 @@ export const actionsTipHtml = (left, max) => `<div class="tt-title">Actions</div
 export const drawTipHtml = (count, { browse = true } = {}) => `<div class="tt-title">Draw pile</div>`
   + `${count} card${count === 1 ? '' : 's'} left to draw.`
   + `<div class="ti-detail">${browse ? 'Tap to look through it. ' : ''}When it empties, the discard pile is shuffled back in.</div>`;
-export const SPENT_TIP_HTML = '<div class="tt-title">Discard and Exhaust</div>Separate views and counts. Discard can reshuffle; exhausted cards remain out for this fight.';
+// `browse: false` where the board has no pile viewer (co-op: the host sends
+// counts, not cards), the same switch drawTipHtml takes.
+export const spentTipHtml = ({ browse = true } = {}) => `<div class="tt-title">Discard and Exhaust</div>${browse ? 'Separate views and counts' : 'Separate counts'}. Discard can reshuffle; exhausted cards remain out for this fight.`;
+export const SPENT_TIP_HTML = spentTipHtml();
 export const POTIONS_TIP_HTML = '<div class="tt-title">Potions</div>Choose a healing, mana or carried potion. Only Use spends it.';
 
 /** Fill the Actions, Draw and Discard/Exhaust cells from plain counts. */
@@ -177,12 +180,23 @@ function placePotionTray(tray) {
 // A tap explains a potion; a second tap (or Enter) opens the Potions list with
 // that potion folded out. The render key lives on the tray, so a screen that
 // repaints every frame redraws the minis only when a count changes.
+// One placement observer per tray, kept here so a board that throws its tray
+// away on every render (co-op, per snapshot) can stop the old one.
+const trayObservers = new WeakMap();
+
+/** Stop a tray's placement observer (a board replacing or tearing down its row). */
+export function disposeCombatPotionTray(tray) {
+  trayObservers.get(tray)?.disconnect();
+  trayObservers.delete(tray);
+}
+
 export function renderCombatPotionTray(tray, rows, open) {
   if (!tray) return;
   placePotionTray(tray);
-  if (!tray.dataset.placed && typeof ResizeObserver !== 'undefined') {
-    tray.dataset.placed = 'true';
-    new ResizeObserver(() => placePotionTray(tray)).observe(tray.parentElement);
+  if (!trayObservers.has(tray) && typeof ResizeObserver !== 'undefined') {
+    const observer = new ResizeObserver(() => placePotionTray(tray));
+    observer.observe(tray.parentElement);
+    trayObservers.set(tray, observer);
   }
   const shown = rows.filter((row) => row.def);
   const key = JSON.stringify(shown.map(({ entry }) => [entry.key, entry.count]));

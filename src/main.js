@@ -3060,12 +3060,12 @@ function poseFxShowcase() {
 // Co-op screenshot states (?shot=coop|coopmap): mount the LAN thin client with
 // a canned server snapshot through a stub socket — no server/second player
 // needed — so the co-op board/map can be photographed like the solo shots.
-function coopStubMount(snapshot, myId) {
+function coopStubMount(snapshot, myId, myIds = null) {
   const sent = [];
   window.__coopSentForShot = sent;
   const stub = { _h: null, setHandlers(h) { this._h = h; }, send(message) { sent.push(message); }, close() {}, get open() { return false; } };
   mountCoop(app, {
-    registries, conn: stub, myId, meta: saves.loadMeta(),
+    registries, conn: stub, myId, ...(myIds ? { myIds } : {}), meta: saves.loadMeta(),
     onSettingsChange: persistSettingsChange,
     onLeave() {},
   });
@@ -3765,7 +3765,9 @@ if (shotState === 'combat-test') {
     if (shotState === 'fx') setTimeout(poseFxShowcase, 1600);
   }
 } else if (shotState === 'coop') {
-  coopStubMount(coopCombatShot(), 'p1');
+  // `&shotSeats=2`: couch co-op, both canned seats on this one screen (Tab
+  // switches the active seat), so a probe can drive a seat switch.
+  coopStubMount(coopCombatShot(), 'p1', shotParams.get('shotSeats') === '2' ? ['p1', 'p2'] : null);
 } else if (shotState === 'coopmap') {
   const w = shotParams.get('shotWalk');
   if (w != null && !(Number.isInteger(Number(w)) && Number(w) >= 1)) {

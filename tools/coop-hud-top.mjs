@@ -39,6 +39,15 @@
 //   * every control clears the page's own tap floor, and Actions, End Turn
 //     and Potions clear PRIMARY_TARGET_PX (D32, docs/FINISH.md).
 //
+// AND THE POTIONS LIST FOLLOWS ITS SEAT (#1436 review, Codex P1). Couch co-op
+// puts two seats on one screen and Tab switches the active one. The Potions
+// list is a body-level dialog, so a Tab pressed while it is open used to
+// leave it up for the NEW seat, and a confirmed Use spent that seat's charge.
+// Once, at the first viewport, through `?shot=coop&shotSeats=2`
+// (seatSwitchProbe): a confirmed Use from seat 1 sends a flaskIntent as seat
+// 1 (the road works), and a Tab between opening the list and confirming sends
+// no flaskIntent at all.
+//
 //   node tools/coop-hud-top.mjs                 judge, exit 0 green / 1 red / 2 harness
 //   node tools/coop-hud-top.mjs --shots <dir>   also write coop-hud-top-<w>x<h>.png
 //                                               and solo-combat-<w>x<h>.png
@@ -372,6 +381,57 @@ export function selftest() {
   return failed ? 1 : 0;
 }
 
+// Runs in the page, a step at a time (seatSwitchProbe drives the keys).
+const SEAT_STEP = {
+  // Seat 2 has not ended its turn, so it COULD drink: the bug's precondition.
+  ready: `(() => { const s = structuredClone(window.__coopSnapshotForShot); s.scene.players.forEach((p) => { p.ended = false; });
+    window.__receiveCoopSnapshotForShot(s); window.__coopSentForShot.length = 0; return true; })()`,
+  open: `(async () => { const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    document.querySelector('.combat.coop .combat-potions').click();
+    let use = null; for (let t = 0; t < 40 && !use; t++) { await sleep(100); use = document.querySelector('.combat-potion-menu .potion-fold[data-charge-kind] .potion-use'); }
+    if (!use || use.disabled) return 'no usable charge in the Potions list';
+    use.click();
+    let yes = null; for (let t = 0; t < 40 && !yes; t++) { await sleep(100); yes = document.querySelector('.confirmation-modal .confirmation-confirm'); }
+    return yes ? '' : 'Use opened no confirmation'; })()`,
+  confirm: `(async () => { const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const yes = document.querySelector('.confirmation-modal .confirmation-confirm'); if (yes) yes.click(); await sleep(400);
+    return window.__coopSentForShot.filter((m) => m.t === 'flaskIntent').map((m) => m.as); })()`,
+  activeSeat: `document.querySelector('.coop-seat-tabs [aria-selected="true"]')?.textContent || ''`,
+};
+
+async function seatSwitchProbe(cdp, sessionId, base) {
+  const ev = async (expression) => (await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId)).result?.value;
+  const key = async (k, code, vk) => {
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: vk }, sessionId);
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code, windowsVirtualKeyCode: vk }, sessionId);
+  };
+  const bad = [];
+  const fresh = async () => {
+    await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSeats=2` }, sessionId);
+    for (let t = 0; t < 90 && !(await ev(`!!document.querySelector('.combat.coop .combat-potions')`)); t++) await wait(500);
+    await wait(800);
+    await ev(SEAT_STEP.ready);
+    await wait(300);
+  };
+  await fresh();
+  let why = await ev(SEAT_STEP.open);
+  if (why) return [`seat switch: ${why}`];
+  const straight = await ev(SEAT_STEP.confirm);
+  if (!(straight.length === 1 && straight[0] === 'p1')) bad.push(`seat switch: a confirmed Use from seat 1 sent ${JSON.stringify(straight)}, want one flaskIntent as p1`);
+  await fresh();
+  const before = await ev(SEAT_STEP.activeSeat);
+  why = await ev(SEAT_STEP.open);
+  if (why) return [...bad, `seat switch: ${why}`];
+  await key('Tab', 'Tab', 9);
+  await wait(400);
+  const after = await ev(SEAT_STEP.activeSeat);
+  if (before === after) bad.push(`seat switch: Tab did not switch the active seat (${before})`);
+  const switched = await ev(SEAT_STEP.confirm);
+  if (switched.length) bad.push(`seat switch: Tab after opening Potions, then Use, sent ${JSON.stringify(switched)}; want nothing (the list belonged to seat 1)`);
+  console.log(`  ${bad.length ? '✗' : '✓'} seat switch: Use as seat 1 sends ${JSON.stringify(straight)}; after Tab (${before} -> ${after}) sends ${JSON.stringify(switched)}`);
+  return bad;
+}
+
 async function main(args) {
   if (args.includes('--selftest')) return selftest();
   const shotsAt = args.indexOf('--shots');
@@ -423,6 +483,11 @@ async function main(args) {
       console.log(`  ${bad.length ? '✗' : '✓'} ${label}: hud-top ${g?.hudTop?.display ?? '?'}, ${g?.parts?.length ?? 0} parts, ${g?.bars?.length ?? 0} bars; `
         + `bottom bar ${(coopBar?.controls || []).map((c) => c.role).join('/') || 'none'} (${coopBar?.arrangement ?? '?'})${bad.length ? '' : ', matches solo, no overlap/clip/overflow'}`);
       if (process.env.COOP_HUD_DEBUG) console.log(JSON.stringify({ g, coopBar, soloBar }, null, 1));
+      if (vp === VIEWPORTS[0]) {
+        const seatBad = await seatSwitchProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`);
+        failures.push(...seatBad);
+        if (seatBad.length && !bad.length) clean--;
+      }
       await cdp.send('Target.closeTarget', { targetId });
     }
   } finally {

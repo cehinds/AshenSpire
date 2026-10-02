@@ -70,7 +70,7 @@ import { combatBackdropHtml } from '../components/environmentArt.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { wireBattlefieldStage } from '../components/battlefieldStage.js';
 import { wireCombatLayout } from '../components/combatLayout.js';
-import { actionsTipHtml, drawTipHtml, SPENT_TIP_HTML, POTIONS_TIP_HTML, combatActionRowHtml, combatPotionRows, openCombatPotions, paintCombatActionCounts, renderCombatPotionTray, setPotionRevealTiming } from '../components/combatActionRow.js';
+import { actionsTipHtml, drawTipHtml, spentTipHtml, POTIONS_TIP_HTML, combatActionRowHtml, combatPotionRows, disposeCombatPotionTray, openCombatPotions, paintCombatActionCounts, renderCombatPotionTray, setPotionRevealTiming } from '../components/combatActionRow.js';
 import { resolveTooltipSettings } from '../../model/tooltipSettings.js';
 import { battlefieldStageModel } from '../models/BattlefieldStageModel.js';
 import { adoptCombatantFrame } from '../components/combatantFrame.js';
@@ -290,18 +290,32 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // charge flasks and carried potions come from the host snapshot; Use is a
   // network intent: a targeted potion goes at the selected enemy, an
   // untargeted carried one arms a throw at a hero seat, a charge flask drinks.
+  // THE LIST BELONGS TO THE SEAT THAT OPENED IT (#1436 review, Codex P1).
+  // It is a body-level dialog, and Tab (couch seat switch) reaches keyHandler
+  // with it open, so `me` can change under it. The seat is pinned at open; a
+  // seat switch closes the list, and a Use confirmed after one is refused
+  // (tools/coop-hud-top.mjs seatSwitchProbe).
+  let potionsShell = null;
+  let potionTray = null; // the mounted row's minis, whose placement observer a new row stops
+  function closeCoopPotions() {
+    const shell = potionsShell;
+    potionsShell = null;
+    if (shell && shell.close) shell.close();
+  }
   function openCoopPotions(shortcut = null) {
-    const meP = snap && snap.scene && snap.scene.kind === 'combat' ? snap.scene.players.find((p) => p.id === me) : null;
+    const seat = me;
+    const seatPlayer = () => (snap && snap.scene && snap.scene.kind === 'combat' ? snap.scene.players.find((p) => p.id === seat) : null);
+    const meP = seatPlayer();
     if (!meP) return;
     const seatReason = (current) => !current ? 'Wait for your turn'
       : !current.connected ? 'This player is disconnected'
         : !current.alive ? 'This player is down' : current.ended ? 'This turn has ended' : pacing ? 'Wait for your turn' : '';
-    const liveSeat = () => (snap && snap.scene && snap.scene.kind === 'combat' ? snap.scene.players.find((p) => p.id === me) : null);
-    openCombatPotions({
+    potionsShell = openCombatPotions({
       rows: combatPotionRows(registries, meP), opener: app.querySelector('.combat-potions'), shortcut, arm,
       useReason: ({ options }) => options.remaining <= 0 ? 'No charges remaining' : seatReason(meP),
-      stillUsable: () => !seatReason(liveSeat()),
+      stillUsable: () => me === seat && !seatReason(seatPlayer()),
       onUse: ({ def, options: { slot = null, chargeKind = null } }) => {
+        if (me !== seat) return;
         if (chargeKind) sendFlaskUse({ chargeKind });
         else if (def.targeted) sendFlaskUse({ slot, targetId: selectedEnemy });
         else { armedFlask = slot; armedFriendlyCard = null; render(); }
@@ -313,6 +327,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (i === seatIdx || !seats[i]) return;
     seatIdx = i;
     me = seats[i];
+    closeCoopPotions();
     armedFlask = null;
     armedFriendlyCard = null;
     render();
@@ -486,6 +501,8 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     if (endTurnBeat) endTurnBeat();
     endTurnBeat = null;
     removeSeatTabs();
+    closeCoopPotions();
+    if (potionTray) { disposeCombatPotionTray(potionTray); potionTray = null; }
     if (mapBoard) { mapBoard.teardown(); mapBoard = null; }
     if (handStrip) { handStrip.teardown(); handStrip = null; }
     if (combatLayout) { combatLayout.release(); combatLayout = null; }
@@ -673,13 +690,17 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       node.addEventListener('click', () => showTooltipFor(node, tip()));
     };
     countTip(drawNode, () => drawTipHtml(meP?.drawCount ?? 0, { browse: false }));
-    countTip(spent, () => SPENT_TIP_HTML);
+    countTip(spent, () => spentTipHtml({ browse: false }));
     attachTooltip(potions, () => POTIONS_TIP_HTML);
-    const canHold = !!meP && meP.alive && meP.connected;
-    potions.disabled = !canHold;
-    if (canHold) {
+    // A down or disconnected seat can still LOOK at its potions; the list
+    // gates Use with the spelled-out reason (openCoopPotions seatReason).
+    potions.disabled = !meP;
+    const tray = row.querySelector('.combat-potion-tray');
+    if (potionTray && potionTray !== tray) disposeCombatPotionTray(potionTray);
+    potionTray = tray;
+    if (meP) {
       potions.addEventListener('click', () => openCoopPotions());
-      renderCombatPotionTray(row.querySelector('.combat-potion-tray'), combatPotionRows(registries, meP), (key) => openCoopPotions(key ?? null));
+      renderCombatPotionTray(tray, combatPotionRows(registries, meP), (key) => openCoopPotions(key ?? null));
     }
   }
 
