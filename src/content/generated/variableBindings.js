@@ -876,5 +876,40 @@ export const variableBindings = [
     "nodeId": "hearthSigil",
     "variable": "block",
     "balancePath": "sigils.hearthSigil.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "vigilSigil",
+    "variable": "pct",
+    "balancePath": "sigils.vigilSigil.pct"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "vigilSigil",
+    "variable": "block",
+    "balancePath": "sigils.vigilSigil.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "pyreSigil",
+    "variable": "block",
+    "balancePath": "sigils.pyreSigil.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "gravelightSigil",
+    "variable": "pct",
+    "balancePath": "sigils.gravelightSigil.pct"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "gravelightSigil",
+    "variable": "heal",
+    "balancePath": "sigils.gravelightSigil.heal"
   }
 ];

@@ -29,7 +29,7 @@
 // C.playerKey and triggers.js scopes player-owned trigger state by it.
 
 import { chargeFlaskId } from '../model/gracerefill.js';
-import { syncRelicProperties, syncClassProperties, syncLoadoutProperties } from './properties.js';
+import { syncRelicProperties, syncClassProperties, syncLoadoutProperties, syncSigilProperties } from './properties.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
 
 import * as A from './actions.js';
@@ -147,6 +147,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, enemyLeve
     syncLoadoutProperties(C, P.entity, P.loadout, P.itemUpgradeLevels);
     syncRelicProperties(C, P.entity);
     syncClassProperties(C, P.entity);
+    syncSigilProperties(C, P.entity, P.attunedSigils); // SPEC §15.4: the seat's own attuned legendaries
     if (C.ratingsRules) refreshCombatRatings(C);
     C.emit('combatStart', {});
   }
@@ -227,6 +228,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
     itemUpgradeLevels: p.itemUpgradeLevels || {},
     skills: p.skills ? structuredClone(p.skills) : {},
     coreTags: Array.isArray(p.coreTags) ? [...p.coreTags] : [],
+    // SPEC §15.4: the seat's attuned legendary sigils, mounted under its own key.
+    attunedSigils: Array.isArray(p.attunedSigils) ? [...p.attunedSigils] : [],
     entity,
     orderedDraw,
     piles: { draw: drawPile, hand: [], discard: [], exhaust: [] },
@@ -247,6 +250,7 @@ function addPlayerState(C, p, { initial = false } = {}) {
     syncLoadoutProperties(C, P.entity, P.loadout, P.itemUpgradeLevels);
     syncRelicProperties(C, P.entity);
     syncClassProperties(C, P.entity);
+    syncSigilProperties(C, P.entity, P.attunedSigils); // SPEC §15.4: the seat's own attuned legendaries
     if (C.ratingsRules) refreshCombatRatings(C);
     setActive(C, wasActive || null);
     // …and the fresh hand, which is the player phase's business only.
