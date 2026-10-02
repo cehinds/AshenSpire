@@ -123,4 +123,3 @@ References actually attached to generation include the existing title and combat
 Generated item names, effects, numbers, invented map labels, slogans and some controls are concept placeholders. In particular: no persistent post-creation deck cap; no bypass of equipment-card ownership; no timed-in-seconds skill rules for turn-based combat; no recovery above max HP; no fabricated crafting/material system; no assurance that authored smith packages already ship; no ready signal for a co-op party that cannot start. There are no runtime changes, commits or publication in this task.
 
 The broad design direction is consistent, but a production pass should reduce some decorative repetition, use canonical class portraits, and verify real screen geometry, contrast, focus, touch targets and the short-wide landscape layout in the actual game. These concepts illustrate portrait mobile; they do not validate landscape phone layouts.
-

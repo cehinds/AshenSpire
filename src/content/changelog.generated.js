@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1481",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: desktop and mobile polish inspiration is saved with the project",
+    "detail": "Twelve illustrated boards explore the player-facing screens, from character creation and combat to towns, equipment, rewards, co-op and settings. The searchable gallery opens each board at full size; exact prompts, art credits and notes distinguish the generated examples from the game's real rules. These are design references, not changes to gameplay.",
+    "build": "0.7.1.761",
+    "pullRequest": 1481,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1481"
+  },
+  {
     "id": "pr-1476",
     "date": "2026-10-02",
     "group": "2026-10-02",
