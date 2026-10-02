@@ -286,6 +286,12 @@ test('known-bad: an unmarked --out with its own packs/ or objects/ is refused, n
     assert.throws(() => writePacks({ root, out }), /objects is not empty and \.asset-pack is not beside it/);
     assert.equal(readFileSync(join(out, 'objects', 'theirs.bin'), 'utf8'), 'not ours\n');
     assert.ok(!readdirSync(out).includes('.asset-pack'), 'a refused run writes no marker');
+    // A same-named file that asset-pack did not write proves nothing.
+    writeFileSync(join(out, '.asset-pack'), '');
+    assert.throws(() => writePacks({ root, out }), /was not written by asset-pack/);
+    assert.equal(readFileSync(join(out, 'objects', 'theirs.bin'), 'utf8'), 'not ours\n');
+    assert.equal(readFileSync(join(out, '.asset-pack'), 'utf8'), '', 'a foreign marker is left as it was');
+    rmSync(join(out, '.asset-pack'));
     // Empty directories are fine; the write then marks the tree as its own.
     rmSync(join(out, 'objects', 'theirs.bin'));
     mkdirSync(join(out, 'packs'), { recursive: true });

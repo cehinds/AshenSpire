@@ -242,6 +242,8 @@ export function writePacks({ root = ROOT, out: asked = resolve(ROOT, DEFAULT_OUT
     const st = lstatSync(marker);
     // A symlinked or non-file marker could make the write below land anywhere.
     if (!st.isFile()) throw new Error(`${marker} exists and is not a regular file (a symlink or directory); asset-pack will not write through it`);
+    // Only this tool's own marker proves ownership; a same-named file is not.
+    if (readFileSync(marker, 'utf8') !== MARKER_TEXT) throw new Error(`${marker} exists but was not written by asset-pack; it will not clear or overwrite anything beside it`);
     marked = true;
   } catch (e) { if (e.code !== 'ENOENT') throw e; }
   const clear = [clearable(resolve(out, PACKS_DIR), marked), clearable(resolve(out, OBJECTS_DIR), marked)];
