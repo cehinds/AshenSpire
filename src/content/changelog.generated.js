@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1478",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Your character level gets dearer with every level too",
+    "detail": "Your first character level still needs 100 XP, but each level after now costs 1.75 times the one before (100, 180, 310, 540, 940) instead of 130 more, the same growth skills and your class already use. Like any XP setting, this reaches a run you already started the next time you load it.",
+    "build": "0.7.1.764",
+    "pullRequest": 1478,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1478"
+  },
+  {
     "id": "pr-1476",
     "date": "2026-10-02",
     "group": "2026-10-02",
