@@ -67,6 +67,7 @@ VIAddVersionKey "LegalCopyright" "MIT License"
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE "${LICENSE_FILE}"
 !insertmacro MUI_PAGE_COMPONENTS
+!define MUI_PAGE_CUSTOMFUNCTION_LEAVE DirectoryLeave
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 !insertmacro MUI_PAGE_FINISH
@@ -84,6 +85,36 @@ VIAddVersionKey "LegalCopyright" "MIT License"
 ; installer registered), so its files may be cleaned up; 0 on a first install,
 ; where nothing already in the folder is touched.
 Var Upgrade
+
+; $R0 = "ok" when $INSTDIR may be installed into: it does not exist, is empty,
+; or is the folder this installer registered (an upgrade). Anything else is a
+; folder with someone else's files in it, which File would overwrite.
+Function CheckInstallFolder
+  StrCpy $R0 "ok"
+  ReadRegStr $R1 HKCU "${UNINST_KEY}" "InstallLocation"
+  ${If} $R1 == $INSTDIR
+  ${AndIf} ${FileExists} "$INSTDIR\${APP_EXE}"
+    Return
+  ${EndIf}
+  FindFirst $R2 $R3 "$INSTDIR\*.*"
+  ${DoWhile} $R3 != ""
+    ${If} $R3 != "."
+    ${AndIf} $R3 != ".."
+      StrCpy $R0 "occupied"
+      ${Break}
+    ${EndIf}
+    FindNext $R2 $R3
+  ${Loop}
+  FindClose $R2
+FunctionEnd
+
+Function DirectoryLeave
+  Call CheckInstallFolder
+  ${If} $R0 != "ok"
+    MessageBox MB_OK|MB_ICONEXCLAMATION "$INSTDIR already has files in it. Choose an empty folder (or a new one) for ${APP_NAME}." /SD IDOK
+    Abort
+  ${EndIf}
+FunctionEnd
 
 !macro CloseRunningGame UN
   nsExec::ExecToStack '"$SYSDIR\cmd.exe" /c tasklist /FI "IMAGENAME eq ${APP_EXE}" /NH | find /I "${APP_EXE}"'
@@ -109,6 +140,12 @@ Section "Ashen Spire (required)" SecGame
   ; an unchanged high-res file is not downloaded again, and the prune step at the
   ; end removes the objects nothing uses any more. Only files the installer
   ; writes are named here.
+  ; The folder page checks this; a silent install (/S /D=…) skips that page.
+  Call CheckInstallFolder
+  ${If} $R0 != "ok"
+    MessageBox MB_OK|MB_ICONSTOP "$INSTDIR already has files in it, and ${APP_NAME} only installs into an empty folder or over its own earlier install. Nothing was changed." /SD IDOK
+    Abort
+  ${EndIf}
   SetOutPath "$INSTDIR"
   StrCpy $Upgrade 0
   ReadRegStr $0 HKCU "${UNINST_KEY}" "InstallLocation"
