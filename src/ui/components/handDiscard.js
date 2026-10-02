@@ -1,6 +1,8 @@
 import { openModal, button, cardGrid, el } from '../kit/index.js';
 import { renderCard } from './card.js';
 import { resolveCard } from '../../model/registries.js';
+import { reasonWhenDisabled } from './refusal.js';
+import { t } from '../strings.js';
 
 // Selection is local until Confirm; closing the shared modal cancels the turn.
 export function openHandDiscard(registries, plan, onConfirm, opener) {
@@ -9,10 +11,13 @@ export function openHandDiscard(registries, plan, onConfirm, opener) {
   const keep = button({ label: 'Keep all', className: 'hand-discard-keep', disabled: plan.minimum > 0 });
   const count = el('p', { 'aria-live': 'polite' });
   const controls = [];
+  // Too few chosen: the reason stands under the foot as text (FINISH §6).
+  const confirmReason = reasonWhenDisabled(confirm, () => t('handDiscard.confirm.reason', { minimum: plan.minimum }));
   const refresh = () => {
     count.textContent = `${selected.size} selected · ${plan.minimum ? `Choose at least ${plan.minimum}, up to ${plan.maximum}.` : `Choose up to ${plan.maximum}, or keep all.`} Cards resolve before the next draw.`;
     confirm.textContent = selected.size ? `Discard ${selected.size} & end turn` : 'Keep all & end turn';
     confirm.disabled = selected.size < plan.minimum;
+    confirmReason();
     controls.forEach(([input, id]) => { input.disabled = !selected.has(id) && selected.size >= plan.maximum; });
   };
   const shell = openModal({ title: 'Choose cards to discard', size: 'xl', className: 'hand-discard-modal', opener,

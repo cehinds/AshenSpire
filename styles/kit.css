@@ -606,6 +606,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
 }
 .as-titlemenu .tm-entry:hover, .as-titlemenu .tm-entry:focus-visible { color: var(--gold); background: transparent; box-shadow: none; }
 .as-titlemenu .tm-entry:disabled { color: var(--muted); background: transparent; }
+.as-titlemenu .tm-reason { margin: -0.4rem 0 0.6rem; padding: 0; border: 0; color: var(--muted); text-align: center; }
 .as-titlemenu > .as-ornament { margin-top: 1.35rem; margin-inline: auto; }
 .as-titlemenu .tm-foot { --track: 0.2em; margin-top: 1.5rem; color: var(--muted); font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; }
 
@@ -1732,6 +1733,17 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* ═══ FIELD NOTE — the sentence under a field that refuses ═════════════════ */
 .as-fieldnote { flex: 1 1 100%; margin: 0; padding-left: 0.8rem; border-left: 2px solid var(--danger); color: var(--parchment); font-size: 1.2rem; line-height: 1.4; }
 .as-row.setting input[aria-invalid="true"] { border-color: var(--danger); }
+/* The same note under a forward control that refuses (refusal.js reasonNote):
+   the reason a Next / Continue / Confirm is off, as text, never only a tooltip.
+   Its own floor keeps it readable wherever a screen shrinks its type. */
+.as-reasonnote { display: block; flex: 1 1 100%; width: 100%; box-sizing: border-box; margin: 0.4rem 0 0; font-size: max(11px, 1.2rem); text-align: start; }
+.as-reasonnote[hidden] { display: none; }
+/* A hidden row takes its reason line with it (the line is the row's next sibling). */
+[hidden] + .as-reasonnote, [style*="display: none"] + .as-reasonnote { display: none; }
+/* In a foot (a flex row), the shown line takes its own row under the buttons,
+   on the primary's side. */
+.modal-foot:has(> .as-reasonnote:not([hidden])), .as-foot:has(> .as-reasonnote:not([hidden])) { flex-wrap: wrap; }
+.modal-foot > .as-reasonnote, .as-foot > .as-reasonnote { order: 2; margin: 0; padding: 0 0.8rem 0 0; border-left: 0; border-right: 2px solid var(--danger); text-align: end; }
 
 /* ═══ STACK — a column of kit pieces with one gap ══════════════════════════ */
 .as-stack { display: flex; flex-direction: column; gap: 1.2rem; min-width: 0; width: 100%; }
@@ -2116,6 +2128,34 @@ details.disc-fold-row > .disc-reveal { border-radius: 0 0 var(--r-3) var(--r-3);
 @keyframes startupMarkIn { from { opacity: 0; transform: translateY(0.65rem); } to { opacity: 1; transform: none; } }
 @keyframes startupPromptPulse { from { opacity: 0.5; } to { opacity: 0.95; } }
 .reduced-motion .startup-gate > .as-titlemenu, .reduced-motion .startup-gate .tm-foot { animation: none; }
+/* The built-in art's status line (docs/EXTERNAL-ASSETS-PLAN.md step 5): its
+   own component beside the startup gate in #app, not one of the gate's parts
+   (SPEC §7.1), laid over the top edge of the gate, clear of its centred lockup
+   and its build stamp, and taking no input. Only in a build that pins packs. It stays through the reveal while a
+   late load settles; it pulses while loading, plain text with Reduced motion. */
+#app > .boot-art-status {
+  position: fixed; z-index: 2; left: 50%; translate: -50% 0;
+  top: max(1rem, env(safe-area-inset-top));
+  width: min(36rem, calc(100% - 2rem)); margin: 0; min-height: 1.4em;
+  color: var(--parchment); text-align: center; font-size: 0.95rem; letter-spacing: 0.06em; opacity: 0.86;
+  pointer-events: none;
+}
+#app > .boot-art-status[data-state="loading"] { animation: bootArtPulse 1.6s ease-in-out infinite alternate; }
+#app > .boot-art-status[data-state="failed"] { color: var(--gold); opacity: 1; }
+@keyframes bootArtPulse { from { opacity: 0.55; } to { opacity: 0.9; } }
+.reduced-motion #app > .boot-art-status { animation: none; }
+@media (prefers-reduced-motion: reduce) { #app > .boot-art-status { animation: none; } }
+/* The title's notice when the art could not be loaded (step 5): a small panel
+   at the top of the title, never a dialog; Retry is a plain control. */
+.title-screen > .art-load-notice {
+  position: absolute; z-index: 3; top: max(0.8rem, env(safe-area-inset-top)); left: 50%; translate: -50% 0;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.6rem 1rem;
+  width: min(36rem, calc(100% - 2 * (44px + 1.2rem))); padding: 0.7rem 1rem;
+  border: 1px solid var(--line-soft); border-radius: var(--r-3);
+  background: color-mix(in srgb, var(--panel) 90%, transparent); color: var(--parchment);
+}
+.title-screen > .art-load-notice > .art-load-notice-text { margin: 0; flex: 1 1 16rem; text-align: center; }
+.title-screen > .art-load-notice > .art-load-notice-retry { min-height: 44px; min-width: 44px; }
 .startup-ash-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .startup-ash {
   position: absolute; left: var(--ash-left); bottom: -1rem;

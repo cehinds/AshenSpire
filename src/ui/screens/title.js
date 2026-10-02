@@ -43,6 +43,10 @@ export function mountTitle(app, {
   onLan,
   onCompendium,
   reopen = null, // 'new' | 'load' — re-open that door after a remount (a delete returns to where it was)
+  // Draws the built-in art's notice into the title root after every render
+  // (step 5, src/ui/components/artLoadNotice.js); the composition root decides
+  // whether there is one. The title's own redraws would otherwise drop it.
+  artNotice = null,
 }) {
   const occupied = slots.filter(({ summary }) => !!summary);
   let modal = null;
@@ -81,17 +85,18 @@ export function mountTitle(app, {
   // the page keep reading it.
   const menuHtml = () => {
     const continueSlot = occupied[0]?.slot ?? null;
-    const entry = (label, action, { id = '', className = '', disabled = false } = {}) => ({
+    const entry = (label, action, { id = '', className = '', disabled = false, reason = '' } = {}) => ({
       label,
       className: `title-menu-item ${className}`.trim(),
       disabled,
+      reason,
       attrs: { id: id || null, dataset: { titleAction: action, component: UI.titleMenuItem } },
     });
     const menu = titleMenu({
       name: 'ASHEN SPIRE',
       subtitle: 'A roguelike deckbuilder',
       entries: [
-        entry('Continue', 'continue', { className: 'slot-continue', disabled: continueSlot == null }),
+        entry('Continue', 'continue', { className: 'slot-continue', disabled: continueSlot == null, reason: t('title.continue.reason') }),
         entry('Load', 'load', { id: 'load-game' }),
         entry('New', 'new', { id: 'new-game', className: 'slot-new' }),
         // #armaments remains the compatibility anchor for the existing watched probe.
@@ -294,6 +299,7 @@ export function mountTitle(app, {
       });
     });
     wireDelete(root);
+    artNotice?.(root);
     if (onHistory) void onHistory;
     if (onProfile) void onProfile;
     if (onCustom) void onCustom;
@@ -309,8 +315,8 @@ export function mountTitle(app, {
   window.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
 
-    // Controller Cancel is synthesized at window rather than at the focused
-    // element. Give the title's own modal and the shared Load selector the same
+    // Controller Cancel is synthesized at the document rather than at the
+    // focused element. Give the title's own modal and the shared Load selector the same
     // priority they receive from a physical keyboard press.
     if (modal) {
       event.preventDefault();

@@ -1,3 +1,4 @@
+import { swapOnError } from '../artFallback.js';
 import { bindCardInspection, cardInspectionLayout, openCardInspection } from './cardInspection.js';
 import { equipmentCardModel, equipmentCardTokens } from '../../model/equipmentCard.js';
 import { cardFields, resolveCardLevel } from '../../model/cardFields.js';
@@ -201,7 +202,7 @@ export function renderEquipmentCard(registries, piece, { interactive = true, pre
     applyCardTokens(card, tokensFor(at));
     card.dataset.cardLevel = at;
     card.style.setProperty('--epc-level-w', cardLevelWidthCss(at));
-    card.querySelector('img')?.addEventListener('error', event => event.target.replaceWith(document.createTextNode(piece.icon || '◆')));
+    swapOnError(card.querySelector('img'), () => Object.assign(document.createElement('span'), { textContent: piece.icon || '◆' }));
     card.querySelectorAll('[data-card-tip]').forEach(target => {
       const { label, explanation } = explanations[Number(target.dataset.cardTip)];
       const html = () => label === explanation ? `<p>${esc(label)}</p>` : `<div class="tt-title">${esc(label)}</div><p>${esc(explanation)}</p>`;

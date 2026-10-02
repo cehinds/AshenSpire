@@ -44,6 +44,7 @@ import { reducedMotionRequested } from '../motion.js';
 import { esc } from '../components/tooltip.js';
 import { isEngaged, focusFirst } from '../input.js';
 import { t } from '../strings.js';
+import { reasonWhenDisabled } from '../components/refusal.js';
 
 const layerAttr = (name) => `layer${name[0].toUpperCase()}${name.slice(1)}`;
 
@@ -158,7 +159,7 @@ export function mountDialogue(app, options) {
   const context = el('section', { class: 'dialogue-context', dataset: { wireframe: 'WGQ4', layer: 'context' }, hidden: !layers.context }, [region]);
 
   // L6 footer (WGQ5): the three-action variant, WCB0 equal shares.
-  const back = button({ label: t('dialogue.back'), id: 'dialogue-back', attrs: { dataset: { wireframe: 'WGQ6' } } });
+  const back = button({ label: t('dialogue.back'), id: 'dialogue-back', attrs: { 'data-back': '', dataset: { wireframe: 'WGQ6' } } });
   const skip = button({ label: t('dialogue.skip'), id: 'dialogue-skip', attrs: { dataset: { wireframe: 'WGQ7' } } });
   const cont = button({ label: t('dialogue.continue'), weight: 'primary', id: 'dialogue-continue', attrs: { dataset: { wireframe: 'WGQ8' } } });
   // The layout names the footer's actions in order; Continue is the way on.
@@ -169,6 +170,9 @@ export function mountDialogue(app, options) {
     primary: actions.includes('continue') ? cont : null,
     size: 'fill', className: 'dialogue-foot',
   });
+  // A Continue that waits for a reply says so under the footer (FINISH §6);
+  // one that waits only for the entrance to finish stays quiet.
+  const contReason = reasonWhenDisabled(cont, () => (entered ? t('dialogue.continue.reason') : null));
   foot.dataset.wireframe = 'WGQ5';
   foot.dataset.layer = 'footer';
   foot.hidden = !layers.footer;
@@ -271,6 +275,7 @@ export function mountDialogue(app, options) {
     back.disabled = !entered || !v.controls.back.enabled;
     skip.disabled = !entered || !v.controls.skipSpeech.enabled;
     cont.disabled = !entered || !v.controls.continue.enabled;
+    contReason();
     cont.textContent = !v.resolved ? t('dialogue.continue')
       : run.combatEntered ? t('dialogue.continue.combat') : t('dialogue.continue.done');
     if (entered && isEngaged()) {

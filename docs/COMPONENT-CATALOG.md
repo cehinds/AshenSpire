@@ -40,7 +40,11 @@ Title and Settings (including in-run Settings). Release metadata supplies its
 version, size, and numbered download; `src/content/offlinePlay.js` owns the feed,
 instructions, and transfer limits. The save-transfer engine validates all slots
 before replacing storage and preserves a recovery copy. Import is available from
-Title, with a preview and confirmation. See [offline play](offline-play.md).
+Title, with a preview and confirmation. For a pack-shaped build the modal also
+offers **Download a folder copy (zip)** (`offline-folder-copy`, step 7 of
+docs/EXTERNAL-ASSETS-PLAN.md): the game assembles the page, its light and common
+packs and their objects into one zip, checking each file as it is written. See
+[offline play](offline-play.md).
 
 All run maps share the vector face in `mapNodeInk.js`: opaque dark discs, readable
 glyphs, a pale current-node marker and reachable halos. `mapview.js` owns the
@@ -129,12 +133,16 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `startup-subtitle` | `startupGateModel.properties.subtitle` | `startupGate.mountStartupGate` | Startup Mark | Replaceable genre subtitle. |
 | `startup-divider` | semantic child | `startupGate.mountStartupGate` | Startup Mark | Decorative gold rule separating title copy from the prompt. |
 | `startup-prompt` | input-family prompt record | `startupGate.mountStartupGate` | Startup Mark | Polite live-region invitation updated for pointer, touch, keyboard, or controller. |
+| `boot-art-status` | `bootArtStatusModel` (`bootArt.bootArtLine`) | `bootArtStatus.mountBootArtStatus` (beside the gate, by `main.js showStartupGate`), rewritten by `bootArt.paintBootArt` | Cold boot, beside Startup Gate | Web edition only (a build that pins packs). Not one of the gate's parts: a sibling in `#app`, outside the gate's `role="button"`, laid over its top edge, clear of the lockup and the build stamp, and taking no input. One polite, aria-busy status line — "Loading art…", then "Loading art · n of N" over the critical set `content/config` lists, then nothing; the failure sentence when the load failed. Stays through the reveal; pulses unless Reduced motion. |
+| `art-load-notice` | `artLoadNoticeModel` | `artLoadNotice.mountArtLoadNotice` (drawn by `main.js` through `mountTitle`'s `artNotice`) | Title screen | Web edition only, when the built-in art could not be loaded: a non-blocking panel at the top of the title, its FIRST child, so reading, Tab and cursor order meet it before the menu. Its message is one polite live node rewritten in place; failed, retrying and failed-again states. |
+| `art-load-notice-retry` | `artLoadNoticeModel` child | `artLoadNotice.mountArtLoadNotice` | Art Load Notice | Retry: reloads the indexes through the Art quality queue (`artTier.retryBuiltInArt`, its own 60 s deadline); `aria-disabled` while it runs, keeping focus; a load that succeeds redraws the title on the new art. |
 | `title-brand-lockup` | title content records | `title.mountTitle` | Title screen | Centered wordmark, subtitle, and divider composition. |
 | `title-wordmark` | title content record | `title.mountTitle` | Title Brand Lockup | Main Ashen Spire title text. |
 | `title-subtitle` | title content record | `title.mountTitle` | Title Brand Lockup | Main title genre subtitle. |
 | `title-divider` | semantic child | `title.mountTitle` | Title Brand Lockup | Gold rule and diamond under the title. |
 | `title-menu` | title content records | `title.mountTitle` | Title screen | Centered unfurled Continue / Load / New / Collection / Settings / Quit menu. |
-| `title-menu-item` | action content record + availability | `title.mountTitle` | Title Menu | One keyboard, pointer, touch, and controller-ready menu action. |
+| `title-menu-item` | action content record + availability | `title.mountTitle` | Title Menu | One keyboard, pointer, touch, and controller-ready menu action. A disabled entry with a `reason` (Continue with no save) wears it as a `disabled-reason-note` under it. |
+| `disabled-reason-note` | `refusal.reasonNote` / `reasonWhenDisabled` / `refusesWhen`; kit `titleMenu` entry `reason` | `.as-fieldnote.as-reasonnote` line under the control's button row | Every forward control that can refuse: character creation Next / Continue / Begin, custom run and lobby Begin, event and dialogue Continue, reward Confirm, title Continue, save-slot Continue, hand-discard Confirm, atlas Enter (the act map has none: its tray only opens where Enter is live), Smith and mount-service Confirm | The reason a Next / Continue / Confirm is off, as visible text (FINISH §6): hidden while the control works or is itself hidden, named in its `aria-describedby`, an 11 px floor. Measured by `tools/disabled-reason.mjs`. |
 | `title-menu-gem` | semantic child | `title.mountTitle` | Title Menu Item | Decorative diamond separator shown beneath a menu label. |
 | `title-tagline` | title content record | `title.mountTitle` | Title screen | Replaceable centered closing line beneath the main menu. |
 | `title-menu-modal` | `saveSlotSelectionModel` + save-slot records | `title.mountTitle` | Title screen | Reusable LOAD GAME / NEW GAME modal; selected card, accessibility state, and primary action target share one immutable projection, while `load-review` confirms a twice-activated save before loading. |
@@ -149,6 +157,8 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `title-modal-actions` | `saveSlotSelectionModel` action projection + modal kind | `title.mountTitle` | Title Menu Modal | Responsive Back/Continue group; Continue remains enabled for and targets the selected slot, while the `load-review` variant becomes Back to Saves / Load Save. |
 | `title-modal-back-control` | modal action record | `title.mountTitle` | Title Modal Actions | Returns to the title menu, or from `load-review` to the Load Game slot list with selection preserved. |
 | `title-modal-continue-control` | `saveSlotSelectionModel` action child | `title.mountTitle` | Title Modal Actions | Carries the selected slot as its semantic load/create command payload; the review variant exposes a positive Load Save action. |
+| `offline-play-modal` | `offlinePlay` content record + build.json feed (`releasedDownload`, `releasedZip`) | `offlinePlay.openOfflinePlay` | Title and Settings → Download & saves | Shared Download & saves dialog: branch feed, the light single-file download and its direct link, the folder copy, Make available offline, and save export/import. |
+| `offline-folder-copy` | `releasedZip` plan + `assembleZip` progress (`offline.zip.*` uiStrings) | `offlinePlay.openOfflinePlay` | Download & saves | Folder copy (zip) of a pack-shaped build: four instruction rows, a Download game folder (zip) button that becomes Save zip file after a Blob save, a progress bar and a polite status line; for a single-file build one line says the Download is already the whole game. |
 | `shared-run-hud` | `runHudViewModel` | `hudmeta.sharedRunHudHtml` | Map + Combat | One shared run HUD composition of header, resources, controls, and belt. |
 | `run-header-strip` | `runHeaderModel` | `runHeaderStripHtml` | Map + Combat | Identity, cinders, and prioritized metadata. |
 | `identity-cluster` | `identityClusterModel` | `identityClusterHtml` | Map + Combat | Character identity cluster. |
@@ -271,6 +281,8 @@ startup-gate
    ├─ startup-divider
    └─ startup-prompt
 
+boot-art-status (web edition only; a sibling of startup-gate, not its child)
+
 title screen
 ├─ title-brand-lockup
 │  ├─ title-wordmark
@@ -280,6 +292,8 @@ title screen
 │  └─ title-menu-item × 6
 │     └─ title-menu-gem
 ├─ title-tagline
+├─ art-load-notice (web edition, art failed to load)
+│  └─ art-load-notice-retry
 └─ title-menu-modal
    ├─ title-modal-close-control
    ├─ title-modal-heading + title-modal-divider

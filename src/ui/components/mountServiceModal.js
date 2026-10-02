@@ -20,11 +20,13 @@
 // dependent slot only appears when the choice it depends on is made
 // (SmithWorkspaceModel.js); smithServices.js clears the dependent choices when
 // a parent changes.
+import { hideOnError } from '../artFallback.js';
 import { assetUrl } from '../assetmap.js';
 import { esc, attachTooltip } from './tooltip.js';
 import { renderCard } from './card.js';
 import { armOptionDecision } from '../../framework/optionDecision.js';
 import { t } from '../strings.js';
+import { reasonWhenDisabled } from './refusal.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { openModal } from './modalShell.js';
 import { wireCardShelf } from './cardShelf.js';
@@ -57,6 +59,10 @@ export function mountMountServiceModal(host, initialModel, {
   const confirm = document.createElement('button');
   confirm.type = 'button';
   confirm.className = 'smith-confirm mount-confirm';
+  // What a chosen item still lacks says why under the foot (FINISH §6); with
+  // nothing chosen the button's own label says "Select an item".
+  let confirmBlocked = '';
+  const confirmReason = reasonWhenDisabled(confirm, () => confirmBlocked || null);
 
   let currentModel = initialModel;
   let closed = false;
@@ -77,7 +83,7 @@ export function mountMountServiceModal(host, initialModel, {
     card.dataset.itemRef = item.itemRef;
     const well = artWell({ src: assetUrl(item.artAsset), alt: '', small: true, attrs: { class: 'smith-weapon-art' } });
     const art = well.querySelector('img');
-    art?.addEventListener('error', () => art.remove());
+    hideOnError(art);
     card.replaceChildren(
       well,
       el('span', { class: 'smith-row-text' }, [
@@ -200,7 +206,7 @@ export function mountMountServiceModal(host, initialModel, {
       : [el('em', { class: 'as-tag', text: selected.kindLabel })];
     const well = artWell({ src: assetUrl(selected.artAsset), alt: '', attrs: { class: 'smith-weapon-art' } });
     const art = well.querySelector('img');
-    art?.addEventListener('error', () => art.remove());
+    hideOnError(art);
     const slot = {
       selected: [el('div', { class: 'smith-summary-grid' }, el('div', { class: 'smith-summary-cell smith-selected-head' }, [
         well,
@@ -323,6 +329,8 @@ export function mountMountServiceModal(host, initialModel, {
     confirm.disabled = !selected;
     confirm.textContent = p.confirmLabel;
     confirm.setAttribute('aria-disabled', String(!p.canConfirm));
+    confirmBlocked = selected ? p.blockedReasons.join(' ') : '';
+    confirmReason();
     confirm.dataset.smithActionState = !selected ? 'unselected' : (p.canConfirm ? 'actionable' : 'blocked');
     if (selected) {
       confirm.setAttribute('aria-label', `${p.verb} for ${selected.cost} Smithing Stone${selected.cost === 1 ? '' : 's'}`);

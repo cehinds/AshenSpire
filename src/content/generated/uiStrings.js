@@ -1004,6 +1004,55 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "art.loading",
+    "extends": "",
+    "short": "Loading art…",
+    "full": "The game is loading its art.",
+    "tip": ""
+  },
+  {
+    "id": "art.progress",
+    "extends": "",
+    "short": "Loading art · {done} of {total}",
+    "full": "The game has loaded {done} of the {total} files the title screen needs first.",
+    "tip": ""
+  },
+  {
+    "id": "art.failed.gate",
+    "extends": "",
+    "short": "The art could not be loaded",
+    "full": "The art could not be loaded, so the game will show placeholders. You can retry from the title screen.",
+    "tip": ""
+  },
+  {
+    "id": "art.failed.notice",
+    "extends": "",
+    "short": "The art could not be loaded",
+    "full": "The art could not be loaded, so the game is showing placeholders.",
+    "tip": ""
+  },
+  {
+    "id": "art.failed.settings",
+    "extends": "",
+    "short": "The art could not be loaded",
+    "full": "The art could not be loaded, so the game is showing placeholders. Choose Retry to load it again.",
+    "tip": ""
+  },
+  {
+    "id": "art.failed.again",
+    "extends": "",
+    "short": "The art still could not be loaded",
+    "full": "The art still could not be loaded. Check your connection, then try again.",
+    "tip": ""
+  },
+  {
+    "id": "art.retry",
+    "extends": "",
+    "short": "Retry",
+    "full": "Load the art again.",
+    "tip": "Retry"
+  },
+  {
     "id": "map.enter",
     "extends": "",
     "short": "Enter",
@@ -4964,5 +5013,285 @@ export const uiStrings = [
     "short": "Cancel",
     "full": "Put the deck back exactly as it was when the editor opened.",
     "tip": "Cancel"
+  },
+  {
+    "id": "event.continue.reason",
+    "extends": "",
+    "short": "Choose a response first.",
+    "full": "Continue opens once you take one of the responses.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.continue.reason",
+    "extends": "",
+    "short": "Choose a reply first.",
+    "full": "Continue opens once you answer.",
+    "tip": ""
+  },
+  {
+    "id": "reward.confirm.reason",
+    "extends": "",
+    "short": "Choose one first.",
+    "full": "Confirm opens once you pick an option.",
+    "tip": ""
+  },
+  {
+    "id": "reward.continue.reason.levels",
+    "extends": "",
+    "short": "Claim your levels first.",
+    "full": "Continue opens once every level waiting here is claimed.",
+    "tip": ""
+  },
+  {
+    "id": "title.continue.reason",
+    "extends": "",
+    "short": "No saved climb yet.",
+    "full": "Continue resumes a saved climb; start one with New.",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.continue.reason",
+    "extends": "",
+    "short": "Choose a slot first.",
+    "full": "The forward button opens once you pick a save slot.",
+    "tip": ""
+  },
+  {
+    "id": "handDiscard.confirm.reason",
+    "extends": "",
+    "short": "Choose at least {minimum}.",
+    "full": "This turn needs at least {minimum} cards discarded.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.class",
+    "extends": "",
+    "short": "Choose a class.",
+    "full": "Continue opens once you pick a class.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.statMode",
+    "extends": "",
+    "short": "Choose how to assign your stats.",
+    "full": "Continue opens once you pick how your stats are set.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.keepsake",
+    "extends": "",
+    "short": "Choose a keepsake.",
+    "full": "Continue opens once you pick a keepsake.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.armour",
+    "extends": "",
+    "short": "Choose starting armour.",
+    "full": "Continue opens once you pick your starting armour.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsLeft.one",
+    "extends": "",
+    "short": "{count} stat point still to assign.",
+    "full": "Assign every stat point before going on.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsLeft",
+    "extends": "",
+    "short": "{count} stat points still to assign.",
+    "full": "Assign every stat point before going on.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsOver.one",
+    "extends": "",
+    "short": "{count} stat point over the pool.",
+    "full": "Take back points until you are within the pool.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsOver",
+    "extends": "",
+    "short": "{count} stat points over the pool.",
+    "full": "Take back points until you are within the pool.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.handNeeds",
+    "extends": "",
+    "short": "{name} needs {stat} {required} — you have {actual}.",
+    "full": "Raise that stat or hold something you can wield.",
+    "tip": ""
+  },
+  {
+    "id": "atlas.enter.reason.none",
+    "extends": "",
+    "short": "Choose a place first.",
+    "full": "Enter opens once you pick a place.",
+    "tip": ""
+  },
+  {
+    "id": "atlas.enter.reason.closed",
+    "extends": "",
+    "short": "No open road to here yet.",
+    "full": "Pick a place on an open road or where you stand.",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.heading",
+    "extends": "",
+    "short": "Download a folder copy (zip)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.button",
+    "extends": "",
+    "short": "Download game folder (zip)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.save",
+    "extends": "",
+    "short": "Save zip file",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.step.save",
+    "extends": "",
+    "short": "On a computer, choose Download game folder (zip). It is about {mb} MB and saves as {filename}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.step.saveUnsized",
+    "extends": "",
+    "short": "On a computer, choose Download game folder (zip). It saves as {filename}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.step.unzip",
+    "extends": "",
+    "short": "Unzip it, and keep the folder together: the game file reads its art from the packs and objects folders beside it.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.step.open",
+    "extends": "",
+    "short": "Double-click the .html file inside the folder to play in your browser. It needs no internet.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.step.limits",
+    "extends": "",
+    "short": "The folder copy shows the light art; recorded music plays only when the folder is served by a web server, so a double-clicked copy uses the synthesized score. Its saves are its own, as with the single file.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.unavailable",
+    "extends": "",
+    "short": "This build is one self-contained file; Download game above is the whole game.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.choose",
+    "extends": "",
+    "short": "Choose where to save the folder copy…",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.working",
+    "extends": "",
+    "short": "Building the folder copy… {done} of {total} files · {mb} of {totalMb} MB. Keep this panel open.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.finishing",
+    "extends": "",
+    "short": "Finishing the zip file…",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.saved",
+    "extends": "",
+    "short": "Folder copy saved: {files} files, {mb} MB. Unzip it and double-click the .html file inside to play.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.sent",
+    "extends": "",
+    "short": "Folder copy sent to your browser ({mb} MB). If it did not save, choose Save zip file to retry.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.canceled",
+    "extends": "",
+    "short": "Folder copy canceled. No completed zip file was saved.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.unreachable",
+    "extends": "",
+    "short": "A file of this build could not be fetched, so no zip was saved. Check your connection and try again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.page",
+    "extends": "",
+    "short": "The game page did not match the published build, so no zip was saved. Choose Check for updates and try again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.pack",
+    "extends": "",
+    "short": "This build's art packs are not published in full, so no zip was saved. Try another branch, or the single-file download.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.hash",
+    "extends": "",
+    "short": "A file of this build did not match its published checksum, so no zip was saved. Try again later.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.disk",
+    "extends": "",
+    "short": "There is not enough space where you chose to save, so no zip was saved. Free some space or choose another place, and try again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.picker",
+    "extends": "",
+    "short": "The browser did not allow saving there, so no zip was saved. Try again and choose another place.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.generic",
+    "extends": "",
+    "short": "The folder copy could not be saved. Try again, or use the single-file download above.",
+    "full": "",
+    "tip": ""
   }
 ];

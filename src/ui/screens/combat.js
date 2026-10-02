@@ -28,6 +28,7 @@ import { openPileModal, openSpentPileModal } from '../components/piles.js';
 import { resolveActionAnimation } from '../../model/actionAnimation.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
 import { enemyMoveDamage } from '../../model/state.js';
+import { ART_REDRAW_EVENT } from '../highResArt.js';
 import { tagService } from '../../model/tagService.js';
 import { reducedMotionRequested } from '../motion.js';
 import { stageFor } from '../services/PoseAnimator.js';
@@ -39,7 +40,7 @@ import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
-import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { animateEvents, playEventCues, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { figureSpec, equippedPieces } from '../../model/loadout.js';
 import { resourceAura } from '../combatAura.js';
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
@@ -114,7 +115,7 @@ export function cardHotkeyAction(key, { targeting = false, handSize = 0, livingE
   return index < handSize ? { kind: 'select', index } : { kind: 'none' };
 }
 
-export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {} }) {
+export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {}, opening = false }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
   // whose `i` had been read kept its first beat for the life of the page, and
@@ -1941,6 +1942,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         selfArm = null;
         hideTooltip();
         render();
+        // render() repaints the hand only when its key moves, and a selection
+        // is not in that key — so the card kept `.selected` (and aria-pressed)
+        // after its targeting was cancelled. The one writer of selection
+        // presentation clears it, the same way every other disarm does.
+        syncCardSelection();
         const cancelledCard = cancelledSelf
           ? combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(cancelledSelf)}"]`)
           : null;
@@ -2504,6 +2510,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         releaseSelectionWatch();
         clearCardFeedback();
         pagerVeilObserver.disconnect();
+        document.removeEventListener(ART_REDRAW_EVENT, redrawArt);
         delete combatEl.dataset.handPagerOwner;
         return;
       }
@@ -2512,6 +2519,37 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     combatEl.dataset.handPagerOwner = 'active';
     pagerVeilObserver.observe(document.body, { childList: true, subtree: true });
   }
+
+  // THE ART ARRIVED AFTER A FAILED LOAD (step 5, ART_REDRAW_EVENT): a sprite
+  // whose image failed was replaced by its placeholder (enemySprite), which
+  // nothing can re-point. Forget the cached figures and draw the board again
+  // from this combat's own state: no roll, no turn change, only the art.
+  const ART_REDRAW_RETRY_MS = 250;
+  function redrawArt() {
+    if (!combatEl.isConnected || app.querySelector('.combat') !== combatEl) {
+      document.removeEventListener(ART_REDRAW_EVENT, redrawArt);
+      return;
+    }
+    // Never mid-animation: an enemy turn or a resolving card owns the boxes
+    // until it ends (review of #1471).
+    if (busy) { setTimeout(redrawArt, ART_REDRAW_RETRY_MS); return; }
+    // The focus a keyboard or controller player had on a combatant (its frame,
+    // or an enemy's name) is put back on the same combatant once it is redrawn.
+    const active = document.activeElement;
+    const holder = combatEl.contains(active) ? active.closest?.('[data-eid]') : null;
+    const kept = holder ? { eid: holder.dataset.eid, name: !!active.closest('.nm-inspect') } : null;
+    for (const record of enemyFrames.values()) { stageFor(record.box)?.dispose?.(); record.box.remove(); }
+    enemyFrames.clear();
+    playerArtKey = null;
+    render();
+    if (kept) {
+      const frame = combatEl.querySelector(`[data-eid="${CSS.escape(kept.eid)}"]`);
+      const target = (kept.name && frame?.querySelector('.nm-inspect')) || frame;
+      target?.focus?.({ preventScroll: true });
+    }
+    combatEl.dataset.artRedrawn = String(Number(combatEl.dataset.artRedrawn || 0) + 1);
+  }
+  document.addEventListener(ART_REDRAW_EVENT, redrawArt);
 
   // Keep the target glow in sync with focus/hover: the field's class attributes
   // change as the cursor (gp-focus) or pointer (hover-target) moves; a full
@@ -2534,6 +2572,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   focusHandDefault();
 
   // Combat-start events (relic triggers, opening draw) get a quick pass too.
+  // The visual pass is relic triggers only. A FRESH fight (`opening`, set by
+  // the caller that created it) also sounds its setup — the opening draw,
+  // any shuffle and the first turn's stinger — once, beat by beat. A restored
+  // fight carries its whole saved history in eventLog, so it plays none of it.
+  if (opening) playEventCues(combat.eventLog);
   animateEvents(combat.eventLog.filter((e) => e.type === 'relicTriggered'), fxCtx, () => {});
 
   // First-run guided callouts (SPEC §9 M4) — once per player, over a live board.

@@ -40,6 +40,7 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `map-camera.yml` → map camera re-fit (`map-camera-persistence.mjs --check`, real browser) | yes | yes (also on push to `dev`) |
 | `map-camera.yml` → the full map-camera persistence drive (same job) | no | yes |
 | `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | yes | yes (also on push to `dev`) |
+| `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`, real browser) | yes | yes (also on push to `dev`) |
 | `tests.yml` → tool self-tests, bundler parse gate | no | yes |
 | `ci.yml` → Fullscreen first through both Settings doors | no | yes |
 | `ci.yml` → what this green does NOT cover (boundary) | no | yes |
@@ -132,7 +133,15 @@ slot names an id the common index or every art tier lists; E: the common index
 lists every tile and track, and no `map-detail/` or `music/` copy is beside the
 HTML) and
 `node tools/external-play.mjs` loads it in Chromium (`--expect-tier light` for a
-high-default build whose high index was removed). The single files are
+high-default build whose high index was removed; `--block-index` holds and then
+refuses every index: the startup gate must be drawn at once with its "Loading
+art…" line, the title must wait for the load and then offer Retry, and Retry
+must load the art). The cold boot of the web edition draws the startup gate
+while it loads (step 5): its status line and the critical set it counts
+(`content/config`, `presentation.startupGate`) are `src/ui/bootArt.js`, the
+words are `art.*` rows of `uiStrings.csv`, and a failed load shows a notice
+with Retry on the title and in Settings → Art quality
+(`retryBuiltInArt`, `tests/boot-art.test.mjs`). The single files are
 unchanged: their `ASSET_PACKS` stays null and the loader does nothing.
 
 **On Pages** (step 6b): `tools/pages-site.mjs` serves each build whose rebuild
@@ -349,6 +358,13 @@ change the floor in ms (`0` turns it off; a value that is not a whole number,
 or is above 2147483647, is ignored). A browser that exits or fails to start
 still fails at once; only a slow one is waited for.
 `node --test tests/browser-launch-floor.test.mjs` covers the floor.
+
+Escape and pad B are one input: `src/ui/input.js` dispatches a pad press as
+its bound key at the document, and a screen whose Back is a plain button marks
+it `data-back`, which input.js presses on an Escape nothing else took (D41 in
+docs/FINISH.md). `node --test tests/escape-back.test.mjs` covers the rule in the
+suite; `node tools/escape-back.mjs --check` (hand-run, real Chromium) drives
+every screen in its table with one Escape and one pad B.
 
 ```
 # what raises the red failure banner, and what must not
@@ -864,6 +880,19 @@ so every cue keeps the immediate synth. Decode failure logs the exact resolved
 URL, making a bad asset diagnosable without delaying combat feedback. Run
 `node tools/sfx-filename-convention.mjs` after changing this contract.
 
+Combat cues (hit tiers, `playerHurt`, the turn stinger, draw/shuffle/discard;
+D38 in docs/FINISH.md) reach `sfx.play` through `src/ui/fx.js`: the paced
+timeline per beat, `playEventCues` for instant playback and a fresh fight's
+opening (a boss fight's waits for its name splash to close), and
+`playReceiptSounds` for co-op receipts (`coopReceiptSounds` in
+`src/ui/screens/coop.js`, gated by `receiptSeq`; a late joiner hears only the
+scene the host marks `opening`). `playEventCues` stings once per shared turn,
+however many co-op seats start it. `node --test tests/sound-tiers.test.mjs`
+covers them, including the opening turn and the real co-op session digest;
+`node tools/sound-opening.mjs` (hand-run, real Chromium) mounts a fresh fight,
+a remounted one, and a fresh boss fight behind its splash
+(`?shot=boss&shotBossHold=0` lets the splash close).
+
 ## Performance (SPEC §9 M4)
 
 Combat feedback is **CSS-driven**: JS only toggles short-lived classes and
@@ -912,9 +941,12 @@ is the only writer of `seenTutorial`, the veil came back on every reload.
 viewports (zoom 0.62 → 1.70), advancing each step with **real mouse clicks at
 real screen coordinates**, plus the two exits that need no geometry — Escape,
 and a veil that lets board clicks through (`pointer-events: none`). It also
-walks the real first-run path and asserts the flag persists. Run it after any
-change to the tutorial, to `--ui-zoom`, or to the combat board's layout; it
-prints the boundary of what it did not cover.
+walks the real first-run path (startup gate, slot picker, character creation)
+and, after a reload, reads `seenTutorial` back from durable storage. Run it
+after any change to the tutorial, to `--ui-zoom`, or to the combat board's
+layout; it prints the boundary of what it did not cover. `--only` takes a comma
+list of cases (viewport names, `resize`, `first-run`); `tutorial-reach.yml`
+runs the whole sweep as three such shards on every pull request into `dev`.
 
 ## Character creation — the short form (D26)
 
@@ -1022,7 +1054,10 @@ by the engine's own `cardPlayCosts`), set a refused card aside and play on, and
 concede a fight still open after 150 turns as a stalemate.
 `node tools/balance.mjs --check` fails when docs/BALANCE.md is stale
 (`tests/balance-doc.test.mjs` runs it); regenerate with
-`node tools/balance.mjs > docs/BALANCE.md`.
+`node tools/balance.mjs > docs/BALANCE.md`. Both also fail when the hand-recorded
+runsim reports in docs/balance-runs.md state a seat or boss multiplier that is
+not the live `balance.seatTiers` / `balance.bossTiers` (`tools/balance-runs-check.mjs`,
+`node --test tests/balance-runs-check.test.mjs`): re-run those reports after a retune.
 
 `node tools/runsim.mjs [N]` goes further: it plays **whole seeded runs** (map
 path → encounters → combats → rewards → shrines/events/ambushes → act bosses,

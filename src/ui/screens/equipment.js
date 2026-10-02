@@ -1,3 +1,4 @@
+import { swapOnError } from '../artFallback.js';
 import { characterLevel } from '../../model/levelup.js';
 import { levelProgress, skillProgressRows, skillProgressSummary, staleSkillTracks } from '../../model/progression.js';
 import { armamentIconAsset } from '../../model/equipmentArt.js';
@@ -456,7 +457,7 @@ function modSummary(registries, piece) {
 function pieceArt(piece, fallback = '⚔') {
   const well = artWell({ src: thumbSrc(piece), alt: '', small: true });
   const image = well.querySelector('img');
-  image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: piece.icon || fallback })));
+  swapOnError(image, () => Object.assign(document.createElement('span'), { textContent: piece.icon || fallback }));
   return well;
 }
 
@@ -2381,8 +2382,13 @@ export function mountEquipment(host, {
 
   // The removal moved INTO `close()` — see the block there. Leaving a copy here
   // would be two homes for one teardown, disagreeing on every path but this one.
+  // The press is the Armoury's: say so, or the screen under it (the quest
+  // board's Leave, input.js's [data-back] rule) hears the same Escape.
   const onKey = (e) => {
-    if (e.key === 'Escape' && !e.defaultPrevented && [...document.querySelectorAll('.modal-veil')].at(-1) === wrap) leave();
+    if (e.key === 'Escape' && !e.defaultPrevented && [...document.querySelectorAll('.modal-veil')].at(-1) === wrap) {
+      e.preventDefault();
+      leave();
+    }
   };
   document.addEventListener('keydown', onKey);
 

@@ -167,8 +167,11 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   let selection = { selectedId: null };
   const readings = new Map();
   const context = el('section', { class: 'map-context', 'aria-label': t('map.context.aria') });
-  const backButton = button({ label: t('map.back'), id: 'map-back', className: 'map-back' });
+  const backButton = button({ label: t('map.back'), id: 'map-back', className: 'map-back', attrs: { 'data-back': '' } });
   const enterButton = button({ label: t('map.enter'), weight: 'primary', id: 'map-enter', className: 'map-enter', disabled: true });
+  // Enter shows no reason line (D43): the tray opens only on a reachable node,
+  // where Enter is live, and with nothing chosen the tray is closed and inert,
+  // so a disabled Enter is never on screen to explain.
   const trayReveal = el('div', { class: 'map-tray-reveal' }, [context, el('div', { class: 'map-tray-pair' }, [backButton, enterButton])]);
   trayReveal.inert = true;
   const potionsHost = el('div', { class: 'map-potions' });
@@ -298,18 +301,19 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // rather than growing a second copy of it.
   const legendBtn = app.querySelector('#map-legend');
   const legendPop = app.querySelector('.map-legend-pop');
+  let legendOff = null;
+  function closeLegend() {
+    legendPop.hidden = true;
+    if (legendOff) document.removeEventListener('click', legendOff, true);
+    legendOff = null;
+  }
   function toggleLegend() {
-    const opening = legendPop.hidden;
-    legendPop.hidden = !opening;
-    if (opening) {
-      const off = (ev) => {
-        if (ev.target !== legendBtn && !legendPop.contains(ev.target)) {
-          legendPop.hidden = true;
-          document.removeEventListener('click', off, true);
-        }
-      };
-      document.addEventListener('click', off, true);
-    }
+    if (!legendPop.hidden) { closeLegend(); return; }
+    legendPop.hidden = false;
+    legendOff = (ev) => {
+      if (ev.target !== legendBtn && !legendPop.contains(ev.target)) closeLegend();
+    };
+    document.addEventListener('click', legendOff, true);
   }
   legendBtn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -341,6 +345,15 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     if (veilIsOpen()) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    // An open legend is the top layer: Escape (and pad B, which arrives as
+    // Escape) closes it and nothing else — the press is taken, so input.js's
+    // Back rule does not close the node tray under it as well (review of
+    // #1463, Codex; tests/escape-back.test.mjs, tools/escape-back.mjs).
+    if (ev.key === 'Escape' && !legendPop.hidden) {
+      closeLegend();
+      ev.preventDefault();
+      return;
+    }
     const armouryAction = actionDestinationForEvent(ev);
     if (matchAction(ev, 'menu')) {
       if (onMenu) onMenu('settings');

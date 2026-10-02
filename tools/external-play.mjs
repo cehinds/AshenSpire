@@ -47,6 +47,22 @@
 // path is asked for (SPEC §7.4; Web Audio cannot play a file: track).
 //   node tools/external-play.mjs --file [--dir build/web] [--expect-tier light]
 //
+// THE INDEX BLOCKED (step 5, --block-index, http only): every packs/ request
+// is held (the cold boot) or refused (the ?shot= screens). The cold boot must
+// draw the startup gate at once with its "Loading art…" line, before the load
+// has settled; a press during the load must not draw the title until the load
+// has failed (BOOT_WAIT_MS); then the title must carry the notice with Retry,
+// and no debug failure banner. The block is lifted and Retry is pressed: the
+// pinned tier must load, the title be drawn again on it (ASSET_CSS in the page,
+// no notice). The combat and map screens must mount on placeholders with the
+// index refused, asking for no object; and a Retry from the in-run Settings
+// must redraw the combat's placeholder enemies as images, in the same combat,
+// once Settings closes. The cold boot runs with the debug
+// profile auto-load on (Settings → Advanced → Defaults & sync) and its GitHub
+// request held too: the gate must still be drawn at once, not after the
+// profile's 3 s wait (Codex on #1471).
+//   node tools/external-play.mjs --block-index [--dir build/web]
+//
 // VERDICT: "external-play: OK — N checks passed".
 //
 // WHAT IT DOES NOT CHECK: gameplay. It mounts seven screens and watches the
@@ -93,6 +109,11 @@ const EXPECT_TIER = tierFlag >= 0 ? ARGV[tierFlag + 1] : PINNED_TIER;
 // so Auto loads light where the gate expects the build's tier; on a high build
 // the run must go RED, the object rule included ("not their screen's tier").
 const PLANT = ARGV.includes('--plant') ? ARGV[ARGV.indexOf('--plant') + 1] : null;
+const BLOCK_INDEX = ARGV.includes('--block-index');
+if (BLOCK_INDEX && (FILE_MODE || tierFlag >= 0 || PLANT)) {
+  console.error('external-play: --block-index runs alone, over http');
+  process.exit(2);
+}
 if (PLANT !== null && PLANT !== 'desktop-light') {
   console.error('external-play: --plant takes desktop-light');
   process.exit(2);
@@ -247,6 +268,182 @@ const ev = async (e) => {
   if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'page threw');
   return r.result.value;
 };
+
+if (BLOCK_INDEX) await blockedIndexPass();
+
+/** The --block-index pass (step 5). Exits the process with its verdict. */
+async function blockedIndexPass() {
+  const found = [];
+  let n = 0;
+  const check = (ok, why) => { n++; if (!ok) found.push(why); };
+  if (!PINNED_TIER) { console.error('external-play --block-index: the build pins no packs'); process.exit(2); }
+  // 'hold' leaves each packs/ request paused (it never answers, as a stalled
+  // network); 'fail' refuses it at once; 'pass' lets it through.
+  let mode = 'hold';
+  const held = [];
+  let profileAskedAt = 0;
+  cdp.on((m) => {
+    if (m.method !== 'Fetch.requestPaused') return;
+    const { requestId } = m.params;
+    // The settings profile's GitHub request: held for good, so the profile
+    // waits out its whole timeout.
+    if (/^https:\/\/api\.github\.com\//.test(m.params.request.url)) { profileAskedAt ||= Date.now(); return; }
+    if (mode === 'pass') cdp.send('Fetch.continueRequest', { requestId }, S).catch(() => {});
+    else if (mode === 'fail') cdp.send('Fetch.failRequest', { requestId, errorReason: 'Failed' }, S).catch(() => {});
+    else held.push(requestId);
+  });
+  await cdp.send('Fetch.enable', { patterns: [{ urlPattern: '*/packs/*', requestStage: 'Request' }, { urlPattern: 'https://api.github.com/*', requestStage: 'Request' }] }, S);
+  const poll = async (expr, ms) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await ev(expr).catch(() => false)) return Date.now() - t0; await wait(100); } return -1; };
+  // The banner (src/ui/debuglog.js failureBanner) names what died; '' when there is none.
+  const bannerText = `(() => { const n = [...document.body.querySelectorAll('*')].find((e) => e.children.length === 0 && !/^(?:SCRIPT|STYLE|TEMPLATE)$/.test(e.tagName) && /STOPPED WORKING/.test(e.textContent || '')); return n ? (n.parentElement?.textContent || n.textContent).slice(0, 200) : ''; })()`;
+  const banner = async () => { const text = await ev(bannerText); return text ? ` — ${text}` : ''; };
+  const click = async (selector) => {
+    const box = await ev(`(() => { const r = document.querySelector(${JSON.stringify(selector)})?.getBoundingClientRect(); return r && r.width ? { x: r.x + r.width / 2, y: r.y + r.height / 2 } : null; })()`);
+    if (!box) return false;
+    for (const type of ['mousePressed', 'mouseReleased']) await cdp.send('Input.dispatchMouseEvent', { type, x: box.x, y: box.y, button: 'left', clickCount: 1 }, S);
+    return true;
+  };
+  thrown.length = 0;
+
+  // 1. The cold boot, the indexes held and the profile auto-load on: the gate
+  // at once, its line loading. localhost is a dev page, so the debug-only
+  // auto-load runs; the flag is set on the page's own origin first.
+  await cdp.send('Emulation.setDeviceMetricsOverride', DESKTOP, S);
+  await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/asset-base.json` }, S);
+  await wait(500);
+  await ev(`localStorage.setItem('ashenspire.sync.auto', '1')`);
+  const t0 = Date.now();
+  await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/AshenSpire.html` }, S);
+  const gateAt = await poll(`!!document.querySelector('.startup-gate')`, 6000);
+  check(gateAt >= 0, 'the cold boot did not draw the startup gate within 6 s while the indexes were held');
+  const gateSeen = Date.now();
+  check(profileAskedAt > 0, 'the profile auto-load never asked GitHub (the pass did not exercise it)');
+  const afterProfile = profileAskedAt ? gateSeen - profileAskedAt : -1;
+  check(profileAskedAt > 0 && afterProfile < 2500, `the gate was drawn ${afterProfile} ms after the profile request, i.e. after the profile's 3 s wait, not at once`);
+  const early = await ev(`({ line: document.querySelector('[data-component="boot-art-status"]')?.textContent || '', state: document.documentElement.dataset.builtInArt || '',
+    busy: document.querySelector('[data-component="boot-art-status"]')?.getAttribute('aria-busy') || '', live: document.querySelector('[data-component="boot-art-status"]')?.getAttribute('aria-live') || '' })`);
+  check(early.state === '', `the gate was drawn after the load settled (data-built-in-art "${early.state}"), not behind it`);
+  check(/^Loading art/.test(early.line), `the gate's status line says "${early.line}", not "Loading art…"`);
+  check(early.busy === 'true' && early.live === 'polite', `the status line is not a polite, busy live region (aria-busy ${early.busy}, aria-live ${early.live})`);
+  // A press during the load: the reveal runs, but the title waits for the load.
+  await click('.startup-gate');
+  await wait(4500);
+  const waiting = await ev(`({ title: !!document.querySelector('.title-screen'), line: document.querySelector('[data-component="boot-art-status"]')?.textContent || '', state: document.documentElement.dataset.builtInArt || '' })`);
+  check(!waiting.title && waiting.state === '', `the title was drawn before the load settled (title ${waiting.title}, data-built-in-art "${waiting.state}")`);
+  check(/^Loading art/.test(waiting.line), `after the press the line says "${waiting.line}", not "Loading art…"`);
+  const failedAt = await poll(`document.documentElement.dataset.builtInArt === 'failed'`, 12000);
+  check(failedAt >= 0, 'the held load did not fail by the boot deadline');
+  // The message is written into the live node just after it appears (so it is announced).
+  const titleAt = await poll(`!!document.querySelector('.title-screen [data-component="art-load-notice"] [data-component="art-load-notice-retry"]') && !!document.querySelector('.art-load-notice-text')?.textContent`, 6000);
+  check(titleAt >= 0, 'after the load failed the title did not show the notice with Retry');
+  const notice = await ev(`({ text: document.querySelector('.art-load-notice-text')?.textContent || '', live: document.querySelector('.art-load-notice-text')?.getAttribute('aria-live') || '',
+    css: !!document.querySelector('style[data-asset-css]'), objects: [...document.images].filter((i) => (i.getAttribute('src') || '').includes('objects/')).length })`);
+  check(/could not be loaded/.test(notice.text) && notice.live === 'polite', `the notice says "${notice.text}" (aria-live ${notice.live})`);
+  check(!notice.css && notice.objects === 0, `the failed load still put pack art in the page (ASSET_CSS ${notice.css}, ${notice.objects} object image(s))`);
+  let raised = await banner();
+  check(!raised, `the debug failure banner was raised for a failed art load${raised}`);
+  const bootMs = Date.now() - t0;
+
+  // 2. The block lifted, Retry pressed: the pinned tier loads and the title is redrawn.
+  mode = 'pass';
+  for (const requestId of held.splice(0)) await cdp.send('Fetch.failRequest', { requestId, errorReason: 'Aborted' }, S).catch(() => {});
+  check(await click('[data-component="art-load-notice-retry"]'), 'the Retry button could not be pressed');
+  const loadedAt = await poll(`document.documentElement.dataset.builtInArt === ${JSON.stringify(PINNED_TIER)}`, 12000);
+  check(loadedAt >= 0, `Retry did not load the pinned tier (${PINNED_TIER}); data-built-in-art is "${await ev('document.documentElement.dataset.builtInArt || ""')}"`);
+  const after = await poll(`!!document.querySelector('.title-screen') && !document.querySelector('[data-component="art-load-notice"]') && !!document.querySelector('style[data-asset-css]')`, 6000);
+  check(after >= 0, 'after Retry the title was not drawn again on the new art (notice gone, ASSET_CSS in the page)');
+  raised = await banner();
+  check(!raised, `the debug failure banner was raised after Retry${raised}`);
+
+  // 3. The index refused on a phone: combat and the map mount on placeholders.
+  await ev(`localStorage.removeItem('ashenspire.sync.auto')`);
+  mode = 'fail';
+  const shots = [];
+  for (const [name, query, ready] of [['combat', '?shot=combat', `!!document.querySelector('.combat .hand .card')`], ['map', '?shot=map', `!!document.querySelector('.map-node')`]]) {
+    await cdp.send('Emulation.setDeviceMetricsOverride', PHONE, S);
+    await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/AshenSpire.html${query}` }, S);
+    const up = await poll(ready, 20000);
+    check(up >= 0, `${name} did not mount with the index refused`);
+    const art = await ev(`({ state: document.documentElement.dataset.builtInArt || '', objects: [...document.images].filter((i) => (i.getAttribute('src') || '').includes('objects/')).length })`);
+    check(art.state === 'failed', `${name}: data-built-in-art is "${art.state}", not failed`);
+    check(art.objects === 0, `${name}: ${art.objects} image(s) from objects/ with no index loaded`);
+    raised = await banner();
+    check(!raised, `${name}: the debug failure banner was raised${raised}`);
+    shots.push(`${name} in ${up} ms`);
+  }
+  // 4. Retry from the in-run Settings (Codex on #1471), on combat and on a
+  // dialogue: the screen drawn on placeholders (the index refused; each one
+  // marked data-art-placeholder, src/ui/artFallback.js), the block lifted,
+  // Quick menu → Settings → Art quality → Retry, Settings closed: the same
+  // screen (no remount; combat keeps its hand) must draw that art as images
+  // from objects/.
+  for (const [name, query, ready, artSel, rootSel] of [
+    ['combat', '?shot=combat', `!!document.querySelector('.combat .hand .card')`, '.enemy-row [data-enemy-id]', '.combat'],
+    ['dialogue', '?shot=event', `!!document.querySelector('.dialogue-portrait-art [data-enemy-id]')`, '.dialogue-portrait-art [data-enemy-id]', '#app > *'],
+  ]) {
+    mode = 'fail';
+    await cdp.send('Emulation.setDeviceMetricsOverride', DESKTOP, S);
+    await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/AshenSpire.html${query}` }, S);
+    check(await poll(`${ready} && document.documentElement.dataset.builtInArt === 'failed'`, 20000) >= 0, `in-run Retry (${name}): the screen did not mount on a failed load`);
+    const sel = JSON.stringify(artSel);
+    const artState = `(() => { const sprites = [...document.querySelectorAll(${sel})];
+      return { n: sprites.length, placeholders: sprites.filter((e) => !e.querySelector('img') && e.hasAttribute('data-art-placeholder')).length,
+        drawn: sprites.filter((e) => [...e.querySelectorAll('img')].some((i) => i.complete && i.naturalWidth > 0 && (i.getAttribute('src') || '').includes('objects/'))).length,
+        hand: document.querySelectorAll('.combat .hand .card').length }; })()`;
+    await ev(`window.__retryRoot = document.querySelector(${JSON.stringify(rootSel)})`);
+    // The images' own error handlers swap the placeholders in as each request fails.
+    await poll(`(${artState}).placeholders === (${artState}).n && (${artState}).n > 0`, 6000);
+    const placeheld = await ev(artState);
+    check(placeheld.n > 0 && placeheld.placeholders === placeheld.n, `in-run Retry (${name}): the failed load did not leave marked placeholders (${placeheld.placeholders} of ${placeheld.n})`);
+    mode = 'pass';
+    await click('[aria-label="Quick menu"]');
+    await poll(`!!document.querySelector('.qn-row')`, 4000);
+    await ev(`[...document.querySelectorAll('.qn-row')].find((r) => /settings/i.test(r.textContent))?.click()`);
+    check(await poll(`!!document.querySelector('[data-art-retry]:not([hidden])')`, 6000) >= 0, `in-run Retry (${name}): Settings offered no Retry`);
+    // The row may sit below the fold of the Settings panel: scrolled into view, then pressed.
+    await ev(`document.querySelector('[data-art-retry]:not([hidden])')?.scrollIntoView({ block: 'center' })`);
+    await wait(300);
+    await click('[data-art-retry]:not([hidden])');
+    const inRunAt = await poll(`document.documentElement.dataset.builtInArt === ${JSON.stringify(PINNED_TIER)}`, 15000);
+    check(inRunAt >= 0, `in-run Retry (${name}): Settings' Retry did not load ${PINNED_TIER} (data-built-in-art "${await ev('document.documentElement.dataset.builtInArt || ""')}")`);
+    await ev(`document.querySelector('[aria-modal="true"] .modal-close')?.click()`);
+    const redrawnAt = await poll(`(${artState}).drawn === (${artState}).n && (${artState}).n > 0`, 10000);
+    const redrawn = await ev(artState);
+    check(redrawnAt >= 0, `in-run Retry (${name}): after Settings closed the art is still placeholders (${redrawn.drawn} of ${redrawn.n} drawn from objects/)`);
+    check(await ev(`document.querySelector(${JSON.stringify(rootSel)}) === window.__retryRoot`) && redrawn.hand === placeheld.hand, `in-run Retry (${name}): the screen was remounted (or the hand changed), not redrawn in place`);
+    shots.push(`in-run Retry redrew ${redrawn.drawn} ${name} sprite(s)`);
+    if (name !== 'combat') continue;
+    // The relic rail's icon (relicIcon's own placeholder) came back too.
+    const relics = await ev(`[...document.querySelectorAll('.relic-art')].map((r) => { const i = r.querySelector('img'); return !!(i && (i.getAttribute('src') || '').includes('objects/')); })`);
+    check(relics.length > 0 && relics.every(Boolean), `in-run Retry (combat): a relic icon is still its glyph (${relics.filter(Boolean).length} of ${relics.length} drawn from objects/)`);
+    // COMBAT'S OWN REDRAW (ART_REDRAW_EVENT): it rebuilds the enemy frames from
+    // the combat's state, so the frames are new nodes, and the focus a keyboard
+    // or controller player had on an enemy (its frame, as keyboard targeting
+    // focuses it) is on the same enemy afterwards. Removing combat's listener
+    // leaves the old frames: red.
+    await wait(800); // Settings' close hands focus back to its opener first
+    const before = await ev(`(() => { const frame = [...document.querySelectorAll('.combat .combatant.enemy[data-eid]')].find((f) => f.getClientRects().length);
+      if (!frame) return null; window.__oldFrame = frame; frame.focus(); return { eid: frame.dataset.eid, focused: document.activeElement === frame }; })()`);
+    check(!!before?.focused, `in-run Retry (combat): no enemy frame took the focus for the redraw check (${JSON.stringify(before)})`);
+    await ev(`document.dispatchEvent(new CustomEvent('ashen:art-redraw'))`);
+    const eidSel = JSON.stringify(`.combat .combatant.enemy[data-eid="${before?.eid || ''}"]`);
+    const rebuiltAt = await poll(`(() => { const f = document.querySelector(${eidSel}); return !!f && f !== window.__oldFrame; })()`, 4000);
+    check(rebuiltAt >= 0, 'in-run Retry (combat): ART_REDRAW_EVENT did not rebuild the enemy frames');
+    check(await ev(`document.activeElement === document.querySelector(${eidSel})`), 'in-run Retry (combat): the redraw dropped the focus from the enemy');
+    check(await ev(`document.querySelector('.combat') === window.__retryRoot`), 'in-run Retry (combat): the redraw remounted the combat');
+  }
+  check(!thrown.length, `${thrown.length} uncaught exception(s): ${thrown.slice(0, 2).join(' | ')}`);
+  await close(); server?.server.close();
+  console.log(`  gate drawn ${gateAt} ms after navigation (${afterProfile} ms after the held profile request) with the indexes held; the load failed at ${failedAt} ms past the press wait; boot to notice ${bootMs} ms`);
+  console.log(`  Retry loaded ${PINNED_TIER} in ${loadedAt} ms and redrew the title; ${shots.join(', ')} on placeholders with the index refused`);
+  for (const f of found) console.log('  RED ' + f);
+  if (found.length) { console.log(`external-play: RED — ${found.length} finding(s) over ${n} checks`); process.exit(1); }
+  console.log(`external-play: OK — ${n} checks passed`);
+  console.log('BOUNDARY: http only (file:// cannot intercept a twin script), one desktop window for');
+  console.log('          the gate and the Retry, and the placeholders are proven by the absence of');
+  console.log('          object images, not by looking at each one.');
+  process.exit(0);
+}
 
 let checks = 0; const findings = []; let seenObjects = 0; let cssBackdrops = 0; let cssMasks = 0; let fontsAsked = 0;
 let tilesDrawn = 0; let tracksDecoded = 0;

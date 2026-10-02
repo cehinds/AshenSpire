@@ -121,7 +121,7 @@ if (CORE) {
     ['tests/confirmation-modal.test.mjs', 'exports runConfirmationModalContract(); check 76 below calls it'],
     ['tests/reward-confirm.test.mjs', 'exports runRewardConfirmTests(); called below'],
     ['tests/card-removal-flick.test.mjs', 'exports runCardRemovalFlickTests(); called below'],
-    ['tools/bundle.test.mjs', 'runs the real bundler against temporary checkouts for several minutes; CI runs it as its own step'],
+    ['tools/bundle.test.mjs', 'runs the real bundler against temporary checkouts for several minutes; ci.yml runs it as its own job, `parse-gate`'],
   ]);
   const found = [];
   const walk = (dir) => {
