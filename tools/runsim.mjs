@@ -30,11 +30,18 @@
 //   --step-budget=<n>: map nodes an act may walk before it is a soft-lock
 //   (default: the act map's own node count — a path visits one node a floor,
 //   so a walk longer than the map has nodes is going round in a circle).
+//   --mana-ab: the Mana-aware A/B (SPEC §5.5.1, a release gate). The fleet runs
+//   twice on the same seeds, Mana OFF then ON, and prints each class's win rate
+//   and mean Mana spent per run for both arms. OFF waives the Mana line at the
+//   bot's door (see MANA_ON below); ON is the shipped game.
+//   --seat-tiers: per tier (SPEC §13.3), how many runs reached it and how many
+//   cleared it, per class and per seat, beside the configured balance.seatTiers
+//   and balance.bossTiers rows (read from content, never restated here).
 
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
-import { dispatch, cardChoicePlan } from '../src/engine/combat.js';
+import { dispatch, cardChoicePlan, cardPlayCosts } from '../src/engine/combat.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { affordableCards, refusalsFor } from './simbot.mjs';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
@@ -89,6 +96,20 @@ const ENDLESS = argv.includes('--endless');
 const GRACE_AB = argv.includes('--grace-ab');
 let GRACE_ON = !argv.includes('--no-grace-refill');
 const SEEDED_SEATS = argv.includes('--seeded-seats');
+// THE MANA-AWARE A/B (SPEC §5.5.1: "the old no-Mana simulation is stale … a
+// Mana-aware A/B balance run remains a release gate"). OFF is that old
+// simulation's reading: the Mana pool never refuses a card. Before each bot
+// decision the player's Mana is raised to the dearest Mana price in hand, so
+// the Mana line is paid but never binds; nothing else moves — card damage,
+// which content derives from all three cost lines at registry build, is the
+// same card on both arms, and the seeds are the same. ON is the shipped game.
+// Mana spent is the fight's own `manaSpent` events, so OFF reports the Mana a
+// fleet would spend if Mana were free and ON the Mana it could afford.
+const MANA_AB = argv.includes('--mana-ab');
+let MANA_ON = true;
+// THE SEAT-TIER REPORT (SPEC §13.3, FINISH §4 *Seat-tier tolerance is stated*).
+// READ-ONLY: it records which seat each act climbed and whether its boss fell.
+const SEAT_TIERS = argv.includes('--seat-tiers');
 // THE CLASS-SPREAD DEEPENING (Vira, 2026-08-15). `--deep` tallies each fight's
 // own eventLog — playerTurnStart / cardPlayed / blockGained / healed / hpLost /
 // damageDealt / energySpent / flaskUsed — into per-class counters, plus the
@@ -184,6 +205,8 @@ let cinderLeftAtEnd = 0;
 let skillDraftsTaken = 0;
 let classDraftsTaken = 0;
 let levelUpsInWins = 0;
+// Per-class Mana book for --mana-ab, zeroed at each class's first seed.
+let manaBook = { spent: 0, waived: 0, fights: 0 };
 // Every per-fleet counter, zeroed together: the A/B runs fleet() twice and a
 // counter that survived the first fleet would report the OFF side's level-ups
 // and cinders inside the ON side's lines.
@@ -383,6 +406,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
     // engine still refuses at its door (ENGINE_REFUSALS) is set aside for the
     // turn, and the bot plays on. Any other throw is a CRASH.
     const refused = refusalsFor(combat);
+    if (!MANA_ON) waiveMana(combat, refused);
     const card = affordableCards(REG, combat, refused)[0];
     const tgt = combat.enemies.find((e) => e.alive);
     if (!card) {
@@ -407,6 +431,10 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   // exactly the last allowed action is not a soft-lock.
   if (!combat.result && combat.turn <= STALEMATE_TURNS && guard >= ACTION_GUARD) throw new SoftLock(`combat stalled: ${encounterId} took ${ACTION_GUARD} bot actions on turn ${combat.turn} without resolving`);
   const outcome = combat.result || 'stalemate';
+  if (MANA_AB) {
+    manaBook.fights++;
+    for (const ev of combat.eventLog) if (ev.type === 'manaSpent') manaBook.spent += ev.amount;
+  }
   if (deepStats) tallyFight(deepStats, combat, run.hp);
   if (INCOMING && run._incoming) tallyIncoming(run._incoming, combat, run, enc.pool);
   // THE WRITE-BACK THE REAL RUN LOOP PERFORMS (engine/runCombat.js runCombatEnd,
@@ -422,6 +450,9 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   // unlimited flasks, which is not this game. Charges are spent here, refilled
   // at a grace, and scarce in between: that is the loop being measured.
   runCombatEnd(run, combat);
+  // A waived arm may have lifted the pool past its maximum; the run keeps no
+  // more than it could hold.
+  if (!MANA_ON && run.mana > run.maxMana) run.mana = run.maxMana;
   // The skill receipt, as main.js onCombatEnd pays it (plan phase 4a).
   applySkillXp(REG, run, skillXpReceipt(combat));
   // The character level (plan phase 6), as main.js onCombatEnd pays it: a won
@@ -432,6 +463,19 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
     victory: combat.result === 'victory', pool: enc.pool, enemies: combat.enemies,
   })).levelUps;
   return outcome;
+}
+
+// The Mana-OFF arm's one intervention: raise the pool to the dearest Mana price
+// among the hand's playable cards, so the Mana line never refuses one. The
+// lift is counted (manaBook.waived) so the OFF arm says how much it gave away.
+function waiveMana(combat, refused) {
+  const p = combat.player;
+  let need = 0;
+  for (const h of combat.piles.hand) {
+    if (refused.has(h.instanceId)) continue;
+    need = Math.max(need, cardPlayCosts(combat, h.instanceId).mana || 0);
+  }
+  if (need > p.mana) { manaBook.waived += need - p.mana; p.mana = need; }
 }
 
 function afterVictory(run, rng, pool) {
@@ -495,7 +539,7 @@ function simulateRun(classId, seed, ds = null) {
   // SPEC §13.4: the seeded order rides its own stream, so drawing it here moves
   // no map, event or reward roll below.
   if (SEEDED_SEATS) run.seatOrder = drawSeatOrder(REG, rng);
-  const result = { classId, seed, victory: false, act: 1, floor: 0, deaths: null };
+  const result = { classId, seed, victory: false, act: 1, floor: 0, deaths: null, tiers: [] };
   // ONE exit for every path out of a run, win or death: the purse a run ends
   // with is part of the cinder economy whichever way it ended, and the report
   // divides by every run — a death that skipped this line underreported it.
@@ -529,6 +573,7 @@ function simulateRun(classId, seed, ds = null) {
     // Endless: acts past 3 reuse act 1-3 content, scaled per completed cycle.
     const { contentAct, loop } = ENDLESS ? endlessActInfo(act) : { contentAct: act, loop: 0 };
     const seat = seatAtTier(run.seatOrder, contentAct);
+    result.tiers.push({ tier: contentAct, seat, cleared: false });
     // Endless cycle scaling × the seat's tier ratio (SPEC §13.3; exactly 1
     // when the seat is climbed at its authored baseline, i.e. every default-
     // order run this tool ever measured).
@@ -598,6 +643,7 @@ function simulateRun(classId, seed, ds = null) {
         if (fought !== 'victory') { result.deaths = `${pool}${fought === 'stalemate' ? '·stalemate' : ''}:${encId}`; recordDeath(ds, act, hpIn); return finish(); }
         afterVictory(run, rng, pool);
         if (pool === 'boss') {
+          result.tiers[result.tiers.length - 1].cleared = true;
           const boss = rollRelicReward(REG, rng, run.relics, { rarities: ['boss'] });
           if (boss) run.relics.push(boss);
           break; // act cleared
@@ -663,8 +709,13 @@ let crash = null;
 let crashes = 0, softLocks = 0;
 const tally = { wins: 0, runs: 0, acts: 0, eventChoices: 0, questSteps: 0 };
 const skillLevelsByClass = {};
+const classRows = [];
+// tierBook[`${classId}|${tier}`] and [`*|${tier}|${seat}`]: { reached, cleared }
+const tierBook = {};
+const tierRow = (key) => (tierBook[key] = tierBook[key] || { reached: 0, cleared: 0 });
 for (const cls of REG.classes.all()) {
   let wins = 0, acts = 0, floors = 0, maxAct = 0;
+  manaBook = { spent: 0, waived: 0, fights: 0 };
   const deaths = {};
   const ds = DEEP || INCOMING ? newDeepStats() : null;
   if (ds && INCOMING) ds.incoming = newIncomingBook();
@@ -686,6 +737,13 @@ for (const cls of REG.classes.all()) {
       break;
     }
     if (r.victory) wins++;
+    if (SEAT_TIERS) {
+      for (const t of r.tiers) {
+        for (const key of [`${cls.id}|${t.tier}`, `*|${t.tier}|${t.seat}`, `*|${t.tier}`]) {
+          const row = tierRow(key); row.reached++; if (t.cleared) row.cleared++;
+        }
+      }
+    }
     if (SKILL_LEVELS) {
       skillLevelsByClass[cls.id] = skillLevelsByClass[cls.id] || {};
       for (const [id, row] of Object.entries(r.skills || {})) skillLevelsByClass[cls.id][id] = (skillLevelsByClass[cls.id][id] || 0) + (row.level || 0);
@@ -704,6 +762,11 @@ for (const cls of REG.classes.all()) {
         `  avg act ${(acts / N).toFixed(2)}  avg floor ${(floors / N).toFixed(1)}` +
         `  deaths: ${Object.entries(deaths).map(([k, v]) => `${k}×${v}`).join(' ') || '—'}`
   );
+  classRows.push({ id: cls.id, name: cls.name, wins, runs: N, manaSpent: manaBook.spent, manaWaived: manaBook.waived, fights: manaBook.fights });
+  if (MANA_AB) {
+    console.log(`  mana: spent ${(manaBook.spent / N).toFixed(1)} per run (${(manaBook.spent / Math.max(1, manaBook.fights)).toFixed(2)} per fight over ${manaBook.fights} fights)` +
+      (MANA_ON ? '' : `, ${(manaBook.waived / N).toFixed(1)} per run waived by the OFF arm`));
+  }
   if (SKILL_LEVELS) {
     const levels = skillLevelsByClass[cls.id] || {};
     const line = skillTracks(REG).map((t) => `${t.id} ${((levels[t.id] || 0) / N).toFixed(1)}`).join('  ');
@@ -754,13 +817,56 @@ console.log(`class tree picks: ${classDraftsTaken} over ${tally.runs} runs = ${(
 console.log(`skill drafts taken: ${skillDraftsTaken} over ${tally.runs} runs = ${(skillDraftsTaken / Math.max(1, tally.runs)).toFixed(1)} per run (plan phase 4b: one per track per door, the bot takes the first card)`);
 console.log(`cinder economy: ${cinderLeftAtEnd} left at run end = ${(cinderLeftAtEnd / Math.max(1, tally.runs)).toFixed(0)} cinders per run unspent (the bot buys nothing at merchants; cinders buy no level since plan phase 6)`);
 console.log('No crashes across all simulated runs — full loop (map → combat → rewards → events → acts) is integration-clean.');
+if (SEAT_TIERS) printSeatTiers(tierBook);
 const classCount = REG.classes.all().length;
 console.log(`RESULT: ${tally.runs} runs over ${classCount} classes (${N} fixed seeds each), every one to a win or a death — ${tally.wins} win${tally.wins === 1 ? '' : 's'}, 0 crashes, 0 soft-locks.`);
-return { ...tally, graces, poured };
+return { ...tally, graces, poured, classes: classRows };
+}
+
+// ---- --seat-tiers: per-tier clear rates beside the configured multipliers ----
+// A tier's clear rate is the runs that beat its boss over the runs that reached
+// it. Reported, never judged: owner ruling D1 sets no win-rate band for 1.0.
+function printSeatTiers(book) {
+  const pct = (row) => (row && row.reached ? `${((100 * row.cleared) / row.reached).toFixed(1)}%` : '—');
+  const cell = (row) => (row ? `${row.cleared}/${row.reached} (${pct(row)})` : '—');
+  const tiers = Object.keys(REG.balance.seatTiers).map(Number).filter(Number.isInteger).sort((a, b) => a - b);
+  const seats = REG.seats.all();
+  console.log(`\nSEAT TIERS — seat order: ${SEEDED_SEATS ? 'seeded per run (SPEC §13.4)' : `fixed ${seats.map((s) => s.id).join(' → ')}`}`);
+  console.log('  configured balance.seatTiers: ' + tiers.map((t) => `${t}: ${REG.balance.seatTiers[t]}`).join(', '));
+  console.log('  configured balance.bossTiers: ' + tiers.map((t) => `${t}: hp ${REG.balance.bossTiers[t].hp} damage ${REG.balance.bossTiers[t].damage}`).join(', '));
+  console.log('  per tier, every class: ' + tiers.map((t) => `tier ${t} ${cell(book[`*|${t}`])}`).join('  '));
+  for (const cls of REG.classes.all()) {
+    console.log(`  ${cls.name.padEnd(11)} ` + tiers.map((t) => `tier ${t} ${cell(book[`${cls.id}|${t}`])}`).join('  '));
+  }
+  for (const t of tiers) {
+    for (const seat of seats) {
+      const row = book[`*|${t}|${seat.id}`];
+      if (!row) continue;
+      const boss = bossTierScale(REG, { encounter: { pool: 'boss', seat: seat.id }, tier: t });
+      console.log(`  tier ${t} in ${seat.id.padEnd(8)} enemy HP x${seatTierHpMult(REG, seat.id, t).toFixed(3)}  boss hp x${boss.hp.toFixed(3)} damage x${boss.damage.toFixed(3)}  cleared ${cell(row)}`);
+    }
+  }
 }
 
 if (argv.includes('--selftest')) {
   selftest();
+} else if (MANA_AB) {
+  // Same seeds both arms (simulateRun's seed is the class index's), so the
+  // delta is the Mana line and nothing else. Reported, not judged (D1).
+  MANA_ON = false; resetFleetCounters();
+  const off = fleet();
+  console.log('\n' + '-'.repeat(72) + '\n');
+  MANA_ON = true; resetFleetCounters();
+  const on = fleet();
+  const pct = (w, n) => `${((100 * w) / Math.max(1, n)).toFixed(1)}%`;
+  console.log('\nMANA A/B — same seeds, the Mana line the only difference (OFF: never refuses a card; ON: the shipped game)');
+  console.log('  class        OFF wins          OFF mana/run   ON wins           ON mana/run   delta');
+  for (const a of off.classes) {
+    const b = on.classes.find((row) => row.id === a.id);
+    console.log(`  ${a.name.padEnd(11)}  ${`${a.wins}/${a.runs} (${pct(a.wins, a.runs)})`.padEnd(16)}  ${(a.manaSpent / a.runs).toFixed(1).padStart(12)}   ${`${b.wins}/${b.runs} (${pct(b.wins, b.runs)})`.padEnd(16)}  ${(b.manaSpent / b.runs).toFixed(1).padStart(11)}   ${(((b.wins / b.runs) - (a.wins / a.runs)) * 100).toFixed(1)} pts`);
+  }
+  console.log(`  all          ${`${off.wins}/${off.runs} (${pct(off.wins, off.runs)})`.padEnd(16)}  ${(off.classes.reduce((s, r) => s + r.manaSpent, 0) / off.runs).toFixed(1).padStart(12)}   ${`${on.wins}/${on.runs} (${pct(on.wins, on.runs)})`.padEnd(16)}  ${(on.classes.reduce((s, r) => s + r.manaSpent, 0) / on.runs).toFixed(1).padStart(11)}   ${(((on.wins / on.runs) - (off.wins / off.runs)) * 100).toFixed(1)} pts`);
+  console.log(`MANA-AB: ${off.classes.length} classes x ${N} seeds, two arms — a report, not a pass band (owner ruling D1).`);
 } else if (!GRACE_AB) {
   fleet();
 } else {
