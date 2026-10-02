@@ -116,6 +116,27 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL combat and map menus share action availability/,
       },
       {
+        name: 'the Potions list reads each row verb from a plan that is not the shared one',
+        file: 'src/ui/components/runPotions.js',
+        find: 'const verb = runPotionVerb(entry, planFor(entry));',
+        replace: 'const verb = runPotionVerb(entry, { actions: [] });',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'the Potions action handler authorizes against a plan that is not the shared one',
+        file: 'src/ui/components/runPotions.js',
+        find: 'applyRunPotion({ registries, run, entry, actionId, plan: planFor(entry) })',
+        replace: 'applyRunPotion({ registries, run, entry, actionId, plan: { actions: [] } })',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'the Potions model reads the row verb from somewhere other than the plan it is handed',
+        file: 'src/ui/models/RunPotionModel.js',
+        find: "return plan.actions.find((action) => action.id === (entry.category === 'charge' ? 'use' : 'drop'));",
+        replace: "return { id: entry.category === 'charge' ? 'use' : 'drop', enabled: true, reason: '' };",
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
         name: 'one run-HUD flask menu opens without the shared action plan',
         file: 'src/ui/components/runHud.js',
         find: 'const plan = flaskActionPlan({',
@@ -288,9 +309,13 @@ try {
   }
   modelShares = cases.every(([entry, opts, inputs]) => {
     const got = model.runPotionPlan(entry, opts);
+    const verb = typeof model.runPotionVerb === 'function' ? model.runPotionVerb(entry, got) : null;
     return !!got && Array.isArray(got.actions)
       && JSON.stringify(ids(got)) === JSON.stringify(sharedIds)
-      && isDeepStrictEqual(got, shared(inputs));
+      && isDeepStrictEqual(got, shared(inputs))
+      // The Potions list's row verb is read from that same plan.
+      && !!verb && verb.id === (entry.category === 'charge' ? 'use' : 'drop')
+      && got.actions.includes(verb);
   });
 } catch { modelShares = false; /* observed red */ }
 const mapShares = /import \{[^}]*\bmountRunPotions\b[^}]*\} from '\.\.\/components\/runPotions\.js'/.test(mapCode)
@@ -298,6 +323,16 @@ const mapShares = /import \{[^}]*\bmountRunPotions\b[^}]*\} from '\.\.\/componen
   && /import \{[^}]*\brunPotionPlan\b[^}]*\} from '\.\.\/models\/RunPotionModel\.js'/.test(runPotionsCode)
   && /const planFor = \(entry\) => runPotionPlan\(entry(?:, \{[^{}]*\})?\);/.test(runPotionsCode)
   && potionMounts.length > 0 && potionMounts.every((mount) => mount.plan === 'planFor(entry)')
+  // The Potions LIST (openRunPotions) and the action handler use the same
+  // planFor: each row's verb is `runPotionVerb(entry, planFor(entry))`, the
+  // list is opened with the `planFor` shorthand, and every action is applied
+  // through `applyRunPotion({ …, plan: planFor(entry) })`. Source checks of
+  // the shipped form (see BOUNDARY above menuMounts).
+  && /\bopenRunPotions\(\{ registries, run, opener: control, planFor, onAction: act \}\)/.test(runPotionsCode)
+  && (runPotionsCode.match(/\brunPotionVerb\(/g) || []).length === 1
+  && /\bconst verb = runPotionVerb\(entry, planFor\(entry\)\);/.test(runPotionsCode)
+  && (runPotionsCode.match(/\bapplyRunPotion\(/g) || []).length === 1
+  && /\bapplyRunPotion\(\{ registries, run, entry, actionId, plan: planFor\(entry\) \}\)/.test(runPotionsCode)
   && /import \{ flaskActionPlan \} from '\.\.\/\.\.\/model\/flaskActions\.js'/.test(runPotionModel)
   && modelShares;
 check('combat and map menus share action availability',
