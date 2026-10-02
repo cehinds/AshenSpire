@@ -102,7 +102,7 @@ import { createRunState, RUN_SCHEMA_VERSION, RUN_SHAPE } from '../src/model/stat
 import { createMemoryStorage, createSaveManager, RUN_KEY } from '../src/engine/save.js';
 import { createRng } from '../src/engine/rng.js';
 import { executeRunEffects } from '../src/engine/actions.js';
-import { equipPiece, stampDeck } from '../src/model/loadout.js';
+import { equipPiece, stampDeck, reconcileGrantedCards, isItemOwned } from '../src/model/loadout.js';
 import { buildActMap } from '../src/engine/actmap.js';
 import { retiredAttributeNames } from '../src/content/retiredNames.js';
 import { defaultSeatOrder } from '../src/model/seats.js';
@@ -441,7 +441,7 @@ function fixtureBytes(fx) {
 // The player-owned values a migration may never move. Each is read off the OLD
 // bytes and demanded of the loaded run — no expected literals, so the check
 // cannot drift away from the fixture it is reading.
-function assertPlayerValuesSurvive(old, run, retired) {
+function assertPlayerValuesSurvive(old, run, retired, registries) {
   const problems = [];
   const same = (key, oldValue, newValue) => {
     fieldsCompared++;
@@ -476,11 +476,13 @@ function assertPlayerValuesSurvive(old, run, retired) {
   // The deck: identity of every card instance. Carrier fields may be re-stamped
   // (stampDeck); which cards the player owns may not change. Every card the old
   // save held survives, in order, unchanged. The only cards the load may ADD
-  // are item-owned ones the equipment lends: SPEC, Complete armament kits —
+  // are item-owned ones the loaded loadout lends: SPEC, Complete armament kits —
   // "normal equipment reconciliation adopts missing item-owned kits without
   // re-minting permanently removed filler" — and the Dodge Roll every composed
-  // deck carries. Each must name its owner in `grantedBy` and carry that
-  // owner's deterministic id, so a run-owned card can never slip in this way.
+  // deck carries. What that loadout lends is asked of the game's own composer
+  // (reconcileGrantedCards over a copy of the run with its item-owned cards
+  // removed), and the adopted cards must be exactly that set — a card whose id
+  // merely agrees with its own grantedBy is not enough.
   const oldDeck = Array.isArray(old.deck) ? old.deck : [];
   const newDeck = Array.isArray(run.deck) ? run.deck : [];
   const oldIds = new Set(oldDeck.map((card) => card.instanceId));
@@ -497,17 +499,21 @@ function assertPlayerValuesSurvive(old, run, retired) {
       }
     }
   }
+  const lent = structuredClone(run);
+  lent.deck = lent.deck.filter((card) => !isItemOwned(card));
+  const runOwnedIds = new Set(lent.deck.map((card) => card.instanceId));
+  reconcileGrantedCards(registries, lent);
+  const ownerKey = (card) => [card.instanceId, card.cardId, card.equipmentRole, card.kitRole || '', card.grantedBy || ''].join('/');
+  const expected = new Map(lent.deck.filter((card) => !runOwnedIds.has(card.instanceId)).map((card) => [card.instanceId, ownerKey(card)]));
   for (const card of adopted) {
     fieldsCompared++;
-    const owner = typeof card.grantedBy === 'string' ? card.grantedBy : '';
-    const kitOk = card.equipmentRole === 'granted' && ['attack', 'guard'].includes(card.kitRole)
-      && card.instanceId === `kit:${owner}:${card.kitRole}`;
-    const artOk = card.equipmentRole === 'weaponArt'
-      && card.instanceId === `weaponArt:${owner.startsWith('unarmed:') ? 'unarmed' : owner}:${card.cardId}`;
-    if (!owner || !(kitOk || artOk)) {
-      problems.push(`deck: ${card.instanceId}/${card.cardId} was ADDED and is not an item-owned card (grantedBy ${short(card.grantedBy, 40)}, role ${card.equipmentRole})`);
+    if (!isItemOwned(card) || expected.get(card.instanceId) !== ownerKey(card)) {
+      problems.push(`deck: ${ownerKey(card)} was ADDED and is not a card the loaded loadout lends (expected ${expected.get(card.instanceId) || 'nothing under that id'})`);
     }
   }
+  fieldsCompared++;
+  const missing = [...expected.keys()].filter((id) => !newDeck.some((card) => card.instanceId === id));
+  if (missing.length) problems.push(`deck: the loadout lends ${missing.join(', ')} and the load did not adopt it`);
 
   // Flask charges the player has SPENT. The capacity ledger is allowed to be
   // attributed on the way in (base/granted); what is left in the vessel is not.
@@ -588,7 +594,7 @@ function groupB(registries) {
         `the migration changed ${unexplained.length} field(s) with no registered explanation: ${unexplained.join(' · ')}`);
 
       // 3. Every player-owned value survives.
-      const problems = assertPlayerValuesSurvive(old, run, retired);
+      const problems = assertPlayerValuesSurvive(old, run, retired, registries);
       assert(problems.length === 0, `${problems.length} player-owned value(s) moved: ${problems.join(' · ')}`);
 
       // 4. Zero dead bytes forward. The heir must be spelled, the dead name
