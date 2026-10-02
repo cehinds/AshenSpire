@@ -201,8 +201,21 @@ export function mountTutorial(root, { onDone }) {
   // SETTLE_STILL_MS or SETTLE_MAX_MS has passed — whichever comes first. Both
   // are wall-clock times, not frame counts: a count of frames is ~250 ms at
   // 120 Hz, which gives up before the ~600 ms move above.
+  //
+  // BUT A GAP BETWEEN FRAMES IS NOT TIME SPENT HOLDING STILL. Time in which no
+  // frame was rendered is time nobody looked. On a loaded machine the re-flex
+  // arrives as long tasks — measured on a busy 4-core box: the resize delivered
+  // 3.6 s after it was sent, then frames 400-900 ms apart while the action row
+  // re-laid itself (orb 200,745 -> 363,766 -> 200,745, the last move ~1.4 s
+  // after the first re-place). One long gap read as "held still for 500 ms",
+  // the loop stopped, and the orb's next move left the spotlight lit on where
+  // it had been (tutorial-reach on CI: "0% of null", "13% of .energy-orb").
+  // So both clocks here count RENDERED time: each frame adds at most
+  // FRAME_CREDIT_MS, however long the gap before it. At 60 or 120 Hz that is
+  // the wall clock; on a starved page it takes more frames, never fewer.
   const SETTLE_STILL_MS = 500;
   const SETTLE_MAX_MS = 3000;
+  const FRAME_CREDIT_MS = 50;
   let resizeTimer = null;
   let settleRun = 0;
   const targetKey = () => {
@@ -213,15 +226,19 @@ export function mountTutorial(root, { onDone }) {
   };
   function settle() {
     const run = ++settleRun;
-    const t0 = performance.now();
+    let prev = performance.now();
     let last = targetKey();
-    let stillSince = t0;
+    let elapsed = 0; // rendered ms since settle began
+    let still = 0;   // rendered ms the target has held its box
     const tick = () => {
       const now = performance.now();
-      if (done || run !== settleRun || now - t0 > SETTLE_MAX_MS) return;
+      const dt = Math.min(now - prev, FRAME_CREDIT_MS);
+      prev = now;
+      elapsed += dt;
+      if (done || run !== settleRun || elapsed > SETTLE_MAX_MS) return;
       const key = targetKey();
-      if (key !== last) { last = key; stillSince = now; place(); }
-      if (now - stillSince < SETTLE_STILL_MS) requestAnimationFrame(tick);
+      if (key !== last) { last = key; still = 0; place(); } else still += dt;
+      if (still < SETTLE_STILL_MS) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
   }

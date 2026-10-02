@@ -278,6 +278,39 @@ const SPOT_ON_TARGET = `(() => {
   return { cover: best, sel: bestSel };
 })()`;
 
+// Page-side: resolves once the board and the spotlight are AT REST — the lit
+// box, every step's target, the viewport and --ui-zoom all unchanged for
+// SETTLED_MS of time AND SETTLED_FRAMES rendered frames — and says how long
+// that took. The spotlight checks read after this, never after a fixed sleep.
+// Measured on a loaded 4-core machine: the page delivered a resize 3.6 s after
+// CDP sent it and then rendered in 400-900 ms gaps while the action row
+// re-laid itself, so "1200 ms after the resize" was sometimes before the
+// resize and sometimes mid-move — a reading of the race, not of the game. At
+// rest is the state a player sees, and nothing is loosened by waiting for it:
+// a spotlight that never followed its target is at rest in the wrong place,
+// and the coverage check below still fails it. Never resolving within
+// SETTLED_TIMEOUT_MS is reported as such (`settled: false`) and the caller
+// fails on it — a board that never stops moving is not a pass.
+const SETTLED_MS = 700;
+const SETTLED_FRAMES = 30;
+const SETTLED_TIMEOUT_MS = 15000;
+const SETTLED = `new Promise((resolve) => {
+  const sels = ['.energy-orb', '.enemy-row .intent', '.hand .card', '.end-turn'];
+  const rect = (el) => { if (!el) return '-'; const r = el.getBoundingClientRect(); return [r.left, r.top, r.width, r.height].map(Math.round).join(','); };
+  const key = () => [innerWidth, innerHeight, getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom'),
+    rect(document.querySelector('.tut-spot')), ...sels.map((s) => rect(document.querySelector(s)))].join('|');
+  const t0 = performance.now();
+  let last = key(), since = t0, frames = 0;
+  const tick = () => {
+    const now = performance.now(), k = key();
+    if (k !== last) { last = k; since = now; frames = 0; } else frames += 1;
+    if (now - since >= ${SETTLED_MS} && frames >= ${SETTLED_FRAMES}) return resolve({ settled: true, ms: Math.round(now - t0) });
+    if (now - t0 > ${SETTLED_TIMEOUT_MS}) return resolve({ settled: false, ms: Math.round(now - t0) });
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+})`;
+
 async function main() {
   if (!browserPath) throw new Error('no Chrome/Edge found — pass --browser PATH or set $CHROME');
   const { server, port } = await serve({ root: ROOT, port: 8240, open: false });
@@ -612,8 +645,10 @@ async function main() {
     let guard = 0;
     let walked = true;
     while (guard++ < 8) {
+      const rest = await evalIn(SETTLED);
       const p = await evalIn(PROBE);
       if (!p.veil) break;
+      ok(rest.settled, `${name}: step "${p.label}" — board and spotlight come to rest (${rest.ms} ms)`);
       const spotOn = await evalIn(SPOT_ON_TARGET);
       const fmt = (b) => (b ? `${b.left},${b.top}..${b.right},${b.bottom} inside=${b.inside} hit=${b.hit}` : 'MISSING');
       console.log(`    step "${p.label}" next[${fmt(p.next)}] skip[${fmt(p.skip)}] spot covers ${(spotOn.cover * 100).toFixed(0)}% of ${spotOn.sel}`);
@@ -640,11 +675,19 @@ async function main() {
     console.log('\n  resize mid-tutorial: 2560x1440 → 1280x800');
     await boardWithTutorial({ w: 2560, h: 1440 });
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false }, S);
-    await wait(1200); // main.js re-flexes zoom at 150ms, tutorial re-places at 220ms, spot slides 200ms
+    // main.js re-flexes zoom 150 ms after the resize, the tutorial re-places at
+    // 220 ms and follows the board until it holds still, the spot slides 200 ms.
+    // Those are page-clock times from when the page RECEIVES the resize, which a
+    // loaded runner can deliver seconds after CDP sends it — so wait for the
+    // re-flex to happen at all, then for rest, and read only then.
+    let reflexed = false;
+    try { reflexed = await until(`parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) !== 1.7`, 'the zoom re-flex'); } catch { /* reported by the zoom check below */ }
+    const rest = reflexed ? await evalIn(SETTLED) : { settled: false, ms: 0 };
     const p = await evalIn(PROBE);
     const spotOn = await evalIn(SPOT_ON_TARGET);
     console.log(`    ui-zoom now ${p.zoom} · next[${p.next.left},${p.next.top}..${p.next.right},${p.next.bottom}]`);
     ok(p.zoom === 1.07, `resize: --ui-zoom re-flexed 1.7 → 1.07 (else this case tests nothing)`);
+    ok(rest.settled, `resize: board and spotlight come to rest after the re-flex (${rest.ms} ms)`);
     ok(p.next.inside && p.next.hit && p.skip.inside && p.skip.hit, 'resize: both buttons still on-screen and hit-testable');
     ok(spotOn.cover > 0.5, `resize: spotlight still lands on its target (${(spotOn.cover * 100).toFixed(0)}% of ${spotOn.sel})`);
   }
