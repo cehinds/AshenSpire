@@ -1,10 +1,13 @@
 # Every asset outside the game file — plan
 
-Status: **step 2 built** (2026-10-01: `tools/asset-pack.mjs`, `art-manifest.json`
-schema 2); **step 11 built** (2026-10-02: `art-release.json` schema 2 pins
-`hd-assets-v2`'s three zips, `fetch-art --pack` and `--agree`, `asset-pack
---source cache`, the pin and manifest in `BUILD_IDENTITY_FILES`, and a fetch in
-every building workflow); the rest is plan (2026-09-27). The owner answered its
+Status: **steps 2, 3a and 11 built** (2026-10-01: `tools/asset-pack.mjs`,
+`art-manifest.json` schema 2; 2026-10-02: the loader `src/ui/assetPacks.js`,
+`setBuiltInSource`, the `ASSET_PACKS` stamp and the tier fallback, with
+`bundle.mjs --external-art` writing packs and `verify-external` rewritten; see
+[Step 3a as built](#step-3a-as-built); 2026-10-02, step 11: `art-release.json`
+schema 2 pins `hd-assets-v2`'s three zips, `fetch-art --pack` and `--agree`,
+`asset-pack --source cache`, the pin and manifest in `BUILD_IDENTITY_FILES`, and
+a fetch in every building workflow); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -429,10 +432,11 @@ download/AshenSpire.html   the light single file: inline, about 30 MB (owner ans
 
 - `dist/AshenSpire.html` still opens by double-click (section 5), so the
   player door in ARCHITECTURE-MAP.md stays open.
-- **`.gitignore`.** Today `build/` and `dist/` ignore only `*.html` and named
-  subfolders (`.gitignore:452-493`), so `packs/` and `objects/` are **not**
-  ignored yet. Step 3a adds `build/**/packs/`, `build/**/objects/`,
-  `dist/packs/` and `dist/objects/`, before any tool writes them there.
+- **`.gitignore`.** `build/` and `dist/` used to ignore only `*.html` and named
+  subfolders, so `packs/` and `objects/` were not ignored. Step 2 added
+  `build/**/packs/`, `build/**/objects/`, `dist/**/packs/` and
+  `dist/**/objects/` (and the `.asset-pack` markers) when `asset-pack` first
+  wrote there; the plan had put this in step 3a.
 
 ### GitHub Pages (`tools/pages-site.mjs`, `pages-builds.yml`)
 
@@ -681,7 +685,7 @@ and afterwards a token only raises the rate limit.
 | 3b | **`ASSET_CSS`.** Fonts, backdrops, and the masks inline. | the web edition's CSS through the index | all |
 | 3c | **Music and tiles through the index.** The `mapDetail.js` `load()` rewrite; `audio.js` reads the common index. | — | all |
 | 4 | **`file://` for the pack shape.** The `.js` twins, the font sidecar, tiles as `Image` loads, the synth under `file://`, and `external-play --file`. | the web edition opens by double-click | all |
-| 5 | **Loading UX and fallbacks.** Progress on the startup gate, the critical set in `content/config`, the Retry notice, placeholders on a failed load, and tests that block the index and that remove the high index. | player-visible boot line | all |
+| 5 | **Loading UX and fallbacks.** Progress on the startup gate, the critical set in `content/config`, the Retry notice, placeholders on a failed load, and tests that block the index and that remove the high index. Also **the window before the load settles** (step 3a): a pack build draws nothing but a static "Loading art…" line until its indexes load or fail (up to `BOOT_WAIT_MS`, 8 s), so step 5 moves that wait behind the startup gate, takes the line's wording from `content/config`, and adds the Retry that reloads the indexes and redraws. | player-visible boot line | all |
 | 6a | **Pages base tree.** `pages-site` excludes `art/`, `assets/`, `assets-mobile/`, `map-detail/`, `music/` and the committed build HTML from main's base tree (`docs/preview` stays, owner answer 7); `og:image` moves to a Pages path; `--check` prints the site's size. | a smaller site | every build, as it was |
 | 6b | **Pages store + service worker, and the Download kept whole.** `pages-site` publishes pack-shaped builds with `/objects`, `/packs`, `asset-base.json` for every page kind (section 4) and `/AshenSpire/sw.js` (Range/`206` for audio, kill-switch). The **light single file is built and published at a separate path**, `/<branch>/<ordinal>/download/AshenSpire.html`, and stays there (owner answer 3): the build list's *Download* and `offlineDownload.js` point there, so no download is a 9.5 MB HTML with no art. This step picks whether every kept build or only each branch's latest carries it (section 4). "Make available offline" arrives on Download & saves. This is the first time hosted players get the pack shape. That is intended, because D5 already accepted a Pages web edition. | hosted offline | older builds as they were; the light single-file download |
 | 7 | **In-game zip download.** Added beside the light single-file download in `offlineDownload.js`, with new `offlinePlay.js` instructions and `offline-play-qa` on the zip. The `download/` light single file stays. | desktop offline copy | both downloads |
@@ -699,6 +703,71 @@ and afterwards a token only raises the rate limit.
 Steps 2–8e need no token and no art-repo change, so they can start now (step
 8e also needs 8a). ART-REPO-PLAN step 5 (the `art/` readers) is
 independent of all of them.
+
+### Step 3a as built
+
+Where the build differs from, or settles, the text above (2026-10-02):
+
+- **CSS `url()`s name objects directly** until step 3b. `bundle.mjs
+  --external-art` rewrites each one to the default tier's object (the common
+  pack's for a font), relative to the HTML, instead of to a copied `assets/`
+  tree. The rules stay in the inlined `<style>`; `verify-external` D checks
+  that each `url()` names an object a pinned index lists. **This bypasses the
+  loader** (review of #1443), and two later steps must close it:
+  - **3b:** the CSS-named ids move into the `ASSET_CSS` template, filled from
+    the index the loader actually used, so a high-default build whose high
+    index failed shows light backdrops and fonts instead of 404ing high
+    objects, and a failed load leaves the CSS on its fallbacks.
+  - **6b:** CSS urls are relative to the HTML, not to `asset-base.json`'s
+    base. On a Pages page at depth 1 or 2 they would miss the shared store, so
+    pack-shaped builds must not be published there before 3b fills the
+    template from the base.
+- **`map-detail/` and `music/` are still copied** beside the HTML until step
+  3c reads them through the common index, so a 3a web edition carries those
+  bytes twice (as copies and as common objects, about 32 MB).
+- **The first screen waits for the index**, behind a static "Loading art…"
+  line (pack builds only). `src/main.js` draws its first
+  screen through `whenBuiltInArtReady()`: at once when nothing is pinned (the
+  single files, the source tree), else once the load has settled. It settles
+  by `BOOT_WAIT_MS` (8 s) at the latest: a load still running then is aborted
+  and counts as failed, and an index that arrives later is dropped. A screen
+  drawn on placeholders cannot be re-pointed, because the images' error
+  handlers clear or replace the nodes that named the asset id (`enemySprite`,
+  `pieceArt`), so the source is final before anything draws (review of #1443).
+  Retry is step 5. The shipped music folder is applied after that first
+  screen, so a `?shot=` boot that walks through two screens does not start and
+  abort a track. Screens drawn later re-point on a source change as before
+  (`builtInArtArrived` in `highResArt.js`).
+- **Over http(s) only.** Under `file://` the loader loads nothing and the web
+  edition shows placeholders (the `.js` twins are step 4). The single files are
+  unaffected.
+- **`asset-base.json` is written by the bundler** beside every web-edition
+  HTML (`{"base":"./"}`), so the loader's first request is never a 404; the
+  loader accepts only a plain relative folder from it.
+- **The build stops on a stale manifest.** The packs are written from
+  `art-manifest.json`, and `asset-pack` refuses when a tree's file does not
+  match its record; before, the web edition copied whatever the tree held.
+- **dev-preview copies `build/web` (which `launch.mjs` already built) into
+  `preview/`**, because `asset-pack` writes `packs/` and `objects/` only under
+  `build/` or `dist/`. The pages that read `assets/` by path (the source-module
+  previews, the pose studio, the art inspection pages, `docs/preview`) moved
+  into `preview/workbench/` with the tier's art tree, until step 12, so the
+  game in `preview/` has no `assets/` beside it to fall back on.
+- **No stalled request defeats the fallback** (review of #1443). The common
+  index is fetched in parallel with the art tiers and only ever adds to a
+  verified art map; high gets half the deadline before light is tried;
+  `asset-base.json` gets a quarter, then `./` is assumed.
+- **The music hold applies to pack builds only**; a single file applies the
+  music folder before its first screen, as before.
+- **`.gitignore`** already carried `build/**/packs/`, `build/**/objects/`,
+  `dist/**/packs/` and `dist/**/objects/` from step 2, so 3a adds nothing there.
+- **`assetsAreInlined()` has no callers** on dev, so nothing switched to
+  `builtInSource()`; both are exported.
+- A pre-pack `assets/` tree left in `build/web` (or any output under `build/`
+  or `dist/`) by an earlier build is removed, so it cannot serve an id the index
+  lacks.
+- `external-play` now also requires every screen to have loaded the pinned
+  tier (`<html data-built-in-art>`) and its images to come from `objects/`.
 
 ---
 
