@@ -1,3 +1,4 @@
+import { swapOnError } from '../artFallback.js';
 import { assetUrl } from '../assetmap.js';
 // src/ui/components/armouryComponents.js — the Armoury's renderers, on the kit.
 //
@@ -133,7 +134,7 @@ export function renderArmouryPanel(model, wrap, { back = null, primary = null } 
 /** The image dies quietly if the file is missing — the single-file dist and file:// play depend on this. */
 function fallbackOnError(well, glyphText) {
   const image = well.querySelector('img');
-  if (image) image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: glyphText })));
+  if (image) swapOnError(image, () => Object.assign(document.createElement('span'), { textContent: glyphText }));
   return well;
 }
 
