@@ -6,9 +6,8 @@
 .prologue-wash{position:absolute;inset:0;z-index:1;mix-blend-mode:color;pointer-events:none}
 .prologue-caption{position:relative;z-index:2;padding:var(--prologue-box-padding,1rem) max(1.25rem,env(safe-area-inset-right)) var(--prologue-box-padding,1rem) max(1.25rem,env(safe-area-inset-left));text-align:center;background:linear-gradient(#19150f,#100e0c)}
 .prologue-fixed-caption:is(.prologue-layout-caption,.prologue-layout-letterbox) .prologue-caption{box-sizing:border-box;height:calc(var(--prologue-caption-vh,18) * 1cqh);min-height:0;overflow:auto;display:grid;align-content:start}
+/* Middle centres the words in a fixed band, as it does over the art. */
 .prologue-fixed-caption:is(.prologue-layout-caption,.prologue-layout-letterbox) .prologue-caption[data-position^=middle]{align-content:center}
-.prologue-fixed-caption:not(.prologue-controls-text):is(.prologue-layout-caption,.prologue-layout-letterbox) .prologue-caption{padding-block:calc(var(--prologue-box-padding,1rem)*var(--prologue-caption-fit,1))}
-.prologue-fixed-caption:not(.prologue-controls-text):is(.prologue-layout-caption,.prologue-layout-letterbox) .prologue-caption>*{margin-block:.15em}
 .prologue-title{font-size:1.6rem;color:var(--gold);margin:0 0 .4rem;font-weight:normal}
 .prologue-speaker{font-size:1.2rem;letter-spacing:.12em;text-transform:uppercase;color:#c0b39d;margin:.25rem 0}
 .prologue-dialogue{font-size:1.8rem;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-width:65ch;margin:.4rem auto}
@@ -40,10 +39,10 @@
 .pse-viewport{position:relative;width:100%;aspect-ratio:16/9;min-height:0;max-height:100%;overflow:hidden;box-shadow:0 12px 34px #0009;border:1px solid #796244;background:#100e0c}
 .pse-viewport.pse-phone{width:auto;height:min(100%,780px);max-width:100%;aspect-ratio:9/19.5;flex:none}
 .pse-viewport .prologue-screen{height:100%;min-height:0;font-size:clamp(.7rem,.9vw,1rem);overflow:hidden}
-.pse-viewport .prologue-title{font-size:calc(1.6em*var(--prologue-text-scale,1)*var(--prologue-title-scale,1)*var(--prologue-caption-fit,1))}
-.pse-viewport .prologue-speaker{font-size:calc(1.2em*var(--prologue-text-scale,1)*var(--prologue-speaker-scale,1)*var(--prologue-caption-fit,1))}
-.pse-viewport .prologue-dialogue{font-size:calc(1.8em*var(--prologue-text-scale,1)*var(--prologue-caption-fit,1))}
-.pse-viewport .prologue-location{font-size:calc(2em*var(--prologue-text-scale,1)*var(--prologue-caption-fit,1))}
+.pse-viewport .prologue-title{font-size:calc(1.6em*var(--prologue-text-scale,1)*var(--prologue-title-scale,1))}
+.pse-viewport .prologue-speaker{font-size:calc(1.2em*var(--prologue-text-scale,1)*var(--prologue-speaker-scale,1))}
+.pse-viewport .prologue-dialogue{font-size:calc(1.8em*var(--prologue-text-scale,1))}
+.pse-viewport .prologue-location{font-size:calc(2em*var(--prologue-text-scale,1))}
 .pse-viewport .prologue-caption{padding:clamp(.35rem,1.2vw,1rem)}
 .pse-inspector{min-height:0;display:flex;flex-direction:column;border-left:1px solid #554330;background:#211a14}
 .pse-mode{padding:.8rem 1rem;border-bottom:1px solid #554330;display:flex;align-items:center;justify-content:space-between;gap:.5rem}
@@ -112,10 +111,10 @@
 .prologue-screen{--prologue-text-scale:1;--prologue-text-align:center;--prologue-box:rgba(16,14,12,.72);--prologue-outline-color:#100e0c;--prologue-outline-width:0px;--prologue-fit:cover;--prologue-focus:50% 50%;--prologue-scale:1}
 .prologue-background{object-fit:var(--prologue-fit);object-position:var(--prologue-focus);transform:scale(var(--prologue-scale))}
 .prologue-caption{text-align:var(--prologue-text-align)}
-.prologue-title{font-size:calc(1.6rem*var(--prologue-text-scale)*var(--prologue-caption-fit,1))}
-.prologue-speaker{font-size:calc(1.2rem*var(--prologue-text-scale)*var(--prologue-caption-fit,1))}
-.prologue-dialogue{font-size:calc(1.8rem*var(--prologue-text-scale)*var(--prologue-caption-fit,1))}
-.prologue-location{font-size:calc(2rem*var(--prologue-text-scale)*var(--prologue-caption-fit,1))}
+.prologue-title{font-size:calc(1.6rem*var(--prologue-text-scale))}
+.prologue-speaker{font-size:calc(1.2rem*var(--prologue-text-scale))}
+.prologue-dialogue{font-size:calc(1.8rem*var(--prologue-text-scale))}
+.prologue-location{font-size:calc(2rem*var(--prologue-text-scale))}
 .prologue-progress{font-size:calc(1.2rem*var(--prologue-text-scale))}
 /* The container: present or absent, and when present, visible or not. An
    invisible container still holds its spacing — that is the difference between
@@ -231,8 +230,8 @@
 .prologue-plate::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:var(--prologue-vignette,0);background:radial-gradient(ellipse at center,transparent 45%,#000 120%)}
 .prologue-layout-letterbox .prologue-stage{background:var(--prologue-letterbox,#000)}
 /* The words, part by part. */
-.prologue-title{color:var(--prologue-title-color,var(--gold));font-size:calc(1.6rem*var(--prologue-text-scale,1)*var(--prologue-title-scale,1)*var(--prologue-caption-fit,1))}
-.prologue-speaker{color:var(--prologue-speaker-color,#c0b39d);font-size:calc(1.2rem*var(--prologue-text-scale,1)*var(--prologue-speaker-scale,1)*var(--prologue-caption-fit,1))}
+.prologue-title{color:var(--prologue-title-color,var(--gold));font-size:calc(1.6rem*var(--prologue-text-scale,1)*var(--prologue-title-scale,1))}
+.prologue-speaker{color:var(--prologue-speaker-color,#c0b39d);font-size:calc(1.2rem*var(--prologue-text-scale,1)*var(--prologue-speaker-scale,1))}
 .prologue-dialogue{color:var(--prologue-dialogue-color,#eee6d5);line-height:var(--prologue-line-height,1.5);letter-spacing:var(--prologue-letter-spacing,0);max-width:var(--prologue-measure,65ch);font-family:var(--prologue-font,var(--font-body))}
 .prologue-location{color:var(--prologue-location-color,var(--gold))}
 .prologue-text-waiting .prologue-title,.prologue-text-waiting .prologue-speaker,.prologue-text-waiting .prologue-dialogue,.prologue-text-waiting .prologue-location{visibility:hidden}

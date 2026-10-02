@@ -6,11 +6,21 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1445",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "The opening's first scenes are restaged",
-    "detail": "Remembered warmth reframes its painting; The Burning's camera rises slowly toward the towers; Last night and The first step ease the camera back out. The words now sit centred in a caption band that is the same share of every screen, and a long line shrinks to fit the band instead of hiding its last words behind a scrollbar.",
-    "build": "0.7.1.749",
+    "summary": "The opening's words sit in the middle of the caption band",
+    "detail": "The narration is now centred top to bottom in the fixed caption band, not pinned to its top. On a phone turned on its side, where the words sit in a panel beside the painting, the panel now fills its whole column instead of a thin strip at the top.",
+    "build": "0.7.1.751",
     "pullRequest": 1445,
     "url": "https://github.com/cehinds/AshenSpire/pull/1445"
+  },
+  {
+    "id": "pr-1444",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The opening is restaged",
+    "detail": "The first scene shifts its view slightly right. The Burning's camera now rises slowly up the burning towers. The last two scenes pull the camera back, and the final step eases in. The caption band holds one fixed height on every scene, slightly lower than before, and the words take one size across the whole opening: the largest at which the longest line still fits your screen, so nothing spills or needs scrolling. On a phone held sideways the words stop shrinking before they become too small to read, and the longest caption may scroll there.",
+    "build": "0.7.1.750",
+    "pullRequest": 1444,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1444"
   },
   {
     "id": "pr-1454",

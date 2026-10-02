@@ -55,8 +55,7 @@
           "stinger": "none",
           "stage": {
             "imageFocusX": 57,
-            "textPosition": "middle-center",
-            "textScale": 1
+            "textPosition": "middle-center"
           },
           "actor": {
             "desktop": {

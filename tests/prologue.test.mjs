@@ -535,13 +535,13 @@ test('a scene may keep its own staging, and inherits the house style until it do
     [`${PROLOGUE_PREFIX}scenes.step.stage.layout`]: 'letterbox',
   });
   const staged = id => prologueStaging(config, config.scenes.find(scene => scene.id === id));
-  assert.equal(staged('carry').layout, 'overlay', 'the house style');
+  assert.equal(staged('warmth').layout, 'overlay', 'the house style');
   assert.equal(staged('step').layout, 'letterbox', 'one scene may letterbox while the rest do not');
   // A SCENE'S BLOCK IS ONLY WHAT IT ANSWERS FOR ITSELF. `step` set its frame and
   // nothing else, so it still follows the opening's text size. Shipping a full
   // copy of the house style inside every scene is what made `night` — the one
   // scene with its own wash — silently ignore every other setting changed here.
-  assert.equal(staged('carry').textScale, 1.4);
+  assert.equal(staged('warmth').textScale, 1.4);
   assert.equal(staged('step').textScale, 1.4, 'what a scene has not set still follows the house style');
   assert.deepEqual(PROLOGUE_DEFAULTS.scenes.find(scene => scene.id === 'night').stage, {wash: .06, camera: 'out'}, 'night answers for its wash and camera alone');
   const housed = prologueConfig({[`${PROLOGUE_PREFIX}presentation.layout`]: 'letterbox'});
@@ -827,36 +827,29 @@ test('the opening renderer imports every opening symbol it names', () => {
   assert.ok(named.has('PROLOGUE_DEFAULTS'), 'the symbol that taught this lesson is still one of them');
 });
 
-test('the fixed caption is one share of every screen, centred, and its words shrink to fit it', () => {
-  const p = PROLOGUE_DEFAULTS.presentation;
-  assert.equal(p.captionFixedHeight, true);
-  assert.equal(p.captionHeightVh, 15);
-  assert.equal(p.textPosition, 'middle-center', 'the owner centres the words in the band');
-  const css = readFileSync(new URL('../styles/prologue.css', import.meta.url), 'utf8');
-  // The band is measured in container units, so it is the same share of any screen.
-  assert.match(css, /\.prologue-fixed-caption:is\(\.prologue-layout-caption,\.prologue-layout-letterbox\) \.prologue-caption\{[^}]*height:calc\(var\(--prologue-caption-vh,18\) \* 1cqh\)/);
-  assert.match(css, /\.prologue-caption\[data-position\^=middle\]\{align-content:center\}/, 'Middle centres the words in a fixed band');
-  // THE LAST WORD WINS: a later rule for the same part that sets its size
-  // without the fit would quietly undo it, so every game-side size is checked.
-  for (const part of ['title', 'speaker', 'dialogue', 'location']) {
-    const sizes = [...css.matchAll(new RegExp(`(?:^|\\})\\.prologue-${part}\\{[^}]*font-size:(calc\\([^;}]*\\))`, 'gm'))].map(m => m[1]);
-    assert.ok(sizes.length, `${part} has no size`);
-    assert.match(sizes.at(-1), /var\(--prologue-caption-fit,1\)/, `${part} does not shrink with the band`);
-  }
+test('a fixed-height caption sets every scene at one size, the largest at which the longest fits', () => {
   const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
-  assert.match(screen, /function fitCaption\(\)/);
-  assert.match(screen, /resized\?\.observe\(root\)/, 'a resize re-fits the words');
-  assert.match(screen, /resized\?\.observe\(dialogue\)/, 'a Text size change mid-opening re-fits the words');
-  // A short landscape screen turns the caption layout into a side panel; the
-  // band height and the fit both stand aside there.
+  // Measured over every scene in the opening, not the one on screen, so the
+  // size does not jump between scenes; never above the chosen size.
+  assert.match(screen, /order\.map\(index => config\.scenes\[index\]\)/);
+  assert.match(screen, /\(stage\.textScale \?\? 1\) \* \(fixedCaption\(stage\) \? captionFit\(\) : 1\)/);
+  assert.match(screen, /probe\.scrollHeight <= probe\.clientHeight/);
+  // Re-measured when the frame changes size, and the observer goes with the screen.
+  assert.match(screen, /new ResizeObserver/);
+  assert.match(screen, /resized\?\.disconnect\(\); restyled\?\.disconnect\(\)/);
+  // The player's text size moves every rem without resizing the frame.
+  assert.match(screen, /getComputedStyle\(document\.documentElement\)\.fontSize/);
+  // A floor in on-screen pixels: a frame too short for readable words scrolls.
+  assert.match(screen, /const MIN_DIALOGUE_PX = 12;/);
+});
+
+test('the words sit centred in the fixed band, and a short landscape screen gives them the whole panel', () => {
+  assert.equal(PROLOGUE_DEFAULTS.presentation.textPosition, 'middle-center', 'the owner centres the words in the band');
+  const css = readFileSync(new URL('../styles/prologue.css', import.meta.url), 'utf8');
+  assert.match(css, /\.prologue-fixed-caption:is\(\.prologue-layout-caption,\.prologue-layout-letterbox\) \.prologue-caption\[data-position\^=middle\]\{align-content:center\}/);
+  // On a short landscape screen the caption layout is a side panel: no band height, no fit.
   assert.match(css, /@media\(max-height:500px\) and \(orientation:landscape\)\{[^@]*\.prologue-fixed-caption\.prologue-layout-caption \.prologue-caption\{height:auto\}/);
-  assert.match(screen, /matchMedia\('\(max-height:500px\) and \(orientation:landscape\)'\)/);
-  assert.match(screen, /resized\?\.disconnect\(\)/, 'cleanup lets the observer go');
-  assert.match(screen, /removeEventListener\?\.\('loadingdone', fitCaption\)/, 'cleanup lets the font listener go');
-  for (const part of ['title', 'speaker', 'dialogue', 'location']) {
-    assert.match(css, new RegExp(`\\.pse-viewport \\.prologue-${part}\\{font-size:calc\\([^}]*var\\(--prologue-caption-fit,1\\)\\)\\}`), `the scene editor's ${part} ignores the fit`);
-  }
-  // Controls inside the caption keep their safe-area padding: the fitted band's
-  // spacing rules stand aside for them.
-  assert.match(css, /\.prologue-fixed-caption:not\(\.prologue-controls-text\):is\([^)]*\) \.prologue-caption\{padding-block:/);
+  const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
+  assert.match(screen, /stage\.layout === 'caption' && !shortLandscape\.matches/);
+  assert.match(screen, /currentStage\?\.captionFixedHeight === true && fitMetrics\(\) !== fitKey/, 'a rotation into the panel lets go of the fitted size');
 });
