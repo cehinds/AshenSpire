@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1487",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the balance report's checks are stricter",
+    "detail": "Nothing you play changes. The run simulator now refuses to print per-act difficulty for an endless climb, where later loops would have been counted as the first three acts, and the balance notes' check now catches a boss listed for a region that cannot meet it, or the same row recorded twice.",
+    "build": "0.7.1.788",
+    "pullRequest": 1487,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1487"
+  },
+  {
     "id": "pr-1473",
     "date": "2026-10-02",
     "group": "2026-10-02",
