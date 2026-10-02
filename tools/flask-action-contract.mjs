@@ -115,6 +115,27 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL every run-HUD flask menu is fed by the shared action plan/,
       },
       {
+        name: 'the map Potions model gives the Azure (mana) flask an empty plan',
+        file: 'src/ui/models/RunPotionModel.js',
+        find: "  if (entry.category === 'charge') {\n",
+        replace: "  if (entry.category === 'charge' && entry.kind === 'mana') return { actions: [], commitOnSelect: false };\n  if (entry.category === 'charge') {\n",
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'the Potions control aliases the shared runPotionPlan and plans with a local stand-in',
+        file: 'src/ui/components/runPotions.js',
+        find: "import { applyRunPotion, runPotionPlan, runPotionRows, runPotionVerb } from '../models/RunPotionModel.js';",
+        replace: "import { applyRunPotion, runPotionPlan as sharedRunPotionPlan, runPotionRows, runPotionVerb } from '../models/RunPotionModel.js';\nconst runPotionPlan = () => ({ actions: [] });",
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'the map aliases the shared mountRunPotions and mounts a local stand-in',
+        file: 'src/ui/screens/map.js',
+        find: "import { mountRunPotions } from '../components/runPotions.js';",
+        replace: "import { mountRunPotions as sharedMountRunPotions } from '../components/runPotions.js';\nconst mountRunPotions = () => {};",
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
         name: 'the map Potions control drops its registries binding',
         file: 'src/ui/screens/map.js',
         find: 'mountRunPotions(potionsHost, { registries, run, meta,',
@@ -373,12 +394,16 @@ try {
   const shared = actions.flaskActionPlan;
   const ids = (plan) => plan.actions.map((row) => row.id);
   const sharedIds = ids(shared({ context: 'run' }));
+  // Every shipped charge-flask kind (Crimson and Azure), from the one list
+  // the game uses, so a kind-specific branch cannot slip past.
+  const { CHARGE_FLASK_KINDS } = await import('../src/model/gracerefill.js');
+  if (!CHARGE_FLASK_KINDS.length) throw new Error('no charge-flask kinds');
   const cases = [];
   for (const drinkOutsideCombat of [false, true]) {
     cases.push([{ category: 'carried', flaskId: 'fixture-potion', count: 1 }, { drinkOutsideCombat },
       { context: 'run', canUse: false, useReason: t('potions.run.combatOnly'), canDrop: true }]);
-    for (const count of [2, 0]) {
-      cases.push([{ category: 'charge', kind: 'hp', count }, { drinkOutsideCombat },
+    for (const kind of CHARGE_FLASK_KINDS) for (const count of [2, 0]) {
+      cases.push([{ category: 'charge', kind, count }, { drinkOutsideCombat },
         { context: 'run', canUse: drinkOutsideCombat && count > 0,
           useReason: count <= 0 ? t('potions.run.empty') : t('potions.run.setting'),
           canDrop: false, dropReason: t('potions.run.keep') }]);
@@ -416,26 +441,28 @@ try {
   const { createRegistries } = await import('../src/model/registries.js');
   const { createRunState } = await import('../src/model/state.js');
   const registries = createRegistries(contentBundle);
-  const charge = { category: 'charge', kind: 'hp', count: 1 };
-  const drink = (plan) => {
+  const drink = (kind, plan) => {
     const run = createRunState({ seed: 0x5eed, classId: 'reaver', registries });
-    run.flaskCharges.hpCurrent = Math.max(1, run.flaskCharges.hpCurrent || 0);
-    const before = run.flaskCharges.hpCurrent;
+    const key = `${kind}Current`;
+    run.flaskCharges[key] = Math.max(1, run.flaskCharges[key] || 0);
+    const before = run.flaskCharges[key];
     let changed;
-    try { changed = model.applyRunPotion({ registries, run, entry: charge, actionId: 'use', plan }); }
+    try { changed = model.applyRunPotion({ registries, run, entry: { category: 'charge', kind, count: before }, actionId: 'use', plan }); }
     catch { changed = 'threw'; }
-    return { changed, spent: before - run.flaskCharges.hpCurrent };
+    return { changed, spent: before - run.flaskCharges[key] };
   };
-  const drinkAllowed = drink(shared({ context: 'run', canUse: true, canDrop: false, dropReason: 'x' }));
-  const drinkRefused = drink(shared({ context: 'run', canUse: false, useReason: 'x', canDrop: false, dropReason: 'x' }));
-  const drinkMissing = drink({ actions: [] });
+  const drinks = CHARGE_FLASK_KINDS.map((kind) => [
+    drink(kind, shared({ context: 'run', canUse: true, canDrop: false, dropReason: 'x' })),
+    drink(kind, shared({ context: 'run', canUse: false, useReason: 'x', canDrop: false, dropReason: 'x' })),
+    drink(kind, { actions: [] }),
+  ]);
   modelShares = modelShares
     && allowed.changed === true && allowed.left === 0
     && refused.changed === false && refused.left === 1
     && missing.changed === false && missing.left === 1
-    && drinkAllowed.changed === true && drinkAllowed.spent === 1
-    && drinkRefused.changed === false && drinkRefused.spent === 0
-    && drinkMissing.changed === false && drinkMissing.spent === 0;
+    && drinks.every(([ok, refusedUse, missingUse]) => ok.changed === true && ok.spent === 1
+      && refusedUse.changed === false && refusedUse.spent === 0
+      && missingUse.changed === false && missingUse.spent === 0);
 } catch { modelShares = false; /* observed red */ }
 // Each `mountRunPotions(potionsHost, { … })` call must hand the control the
 // live run: its argument carries exactly one each of the `registries`, `run`
@@ -460,9 +487,17 @@ try {
   const key = 'useRestorativeFlasksOutsideCombat';
   settingReadsLive = settingOn({ [key]: true }, key) === true && settingOn({ [key]: false }, key) === false;
 } catch { settingReadsLive = false; /* observed red */ }
-const mapShares = /import \{[^}]*\bmountRunPotions\b[^}]*\} from '\.\.\/components\/runPotions\.js'/.test(mapCode)
+// A named import must be the binding itself (no `as` alias), and the file
+// must not declare a local of the same name, so a same-named stand-in cannot
+// take the shared helper's place. Comment-stripped source.
+const importsShared = (src, name, from) => {
+  const m = src.match(new RegExp(`import \\{([^}]*)\\} from '${from.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')}'`));
+  return !!m && m[1].split(',').map((part) => part.trim()).includes(name)
+    && !new RegExp(`(?:\\b(?:const|let|var|function|class)\\s+${name}\\b|\\b${name}\\s*=[^=])`).test(src);
+};
+const mapShares = importsShared(mapCode, 'mountRunPotions', '../components/runPotions.js')
+  && ['runPotionPlan', 'runPotionVerb', 'applyRunPotion'].every((name) => importsShared(runPotionsCode, name, '../models/RunPotionModel.js'))
   && runPotionsMounts.length > 0 && runPotionsMounts.every((ok) => ok)
-  && /import \{[^}]*\brunPotionPlan\b[^}]*\} from '\.\.\/models\/RunPotionModel\.js'/.test(runPotionsCode)
   && /const planFor = \(entry\) => runPotionPlan\(entry(?:, \{[^{}]*\})?\);/.test(runPotionsCode)
   // The live setting reaches the plan: `drinkOutsideCombat` is bound once,
   // from the player's "Use flasks outside combat" setting via settingOn, and
