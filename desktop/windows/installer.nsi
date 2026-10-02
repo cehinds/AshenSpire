@@ -124,6 +124,12 @@ Section "Ashen Spire (required)" SecGame
     File "/oname=$PLUGINSDIR\fetch-hd-art.ps1" "${APP_DIR}\install-data\fetch-hd-art.ps1"
     nsExec::ExecToLog '"${PS_EXE}" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\fetch-hd-art.ps1" -Mode Drop -InstallDir "$INSTDIR" -OldFiles "$PLUGINSDIR\old-files.txt" -NewFiles "$PLUGINSDIR\new-files.txt"'
     Pop $0
+    ; Nothing is copied over a version whose old files could not be removed (a
+    ; locked file, or a file where a folder now goes): stop before the copy.
+    ${If} $0 != 0
+      MessageBox MB_OK|MB_ICONSTOP "The previous version's files could not be cleaned up (code $0; the details are in the list behind this message). Close anything using the ${APP_NAME} folder and run the installer again; it stopped before copying the new version." /SD IDOK
+      Abort
+    ${EndIf}
   ${EndIf}
 
   File /r "${APP_DIR}\*.*"
