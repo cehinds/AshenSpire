@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: every owner decision has its own number",
     "detail": "Nothing you play changes. Two decisions in the project's finish list were both numbered D38, so a note citing D38 could mean either; the hit sound tiers decision is now D47, and a test fails if two decisions ever share a number again.",
-    "build": "0.7.1.795",
+    "build": "0.7.1.796",
     "pullRequest": 1493,
     "url": "https://github.com/cehinds/AshenSpire/pull/1493"
+  },
+  {
+    "id": "pr-1496",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: reusable desktop and mobile polish artwork is saved with the project",
+    "detail": "The illustrated design direction now has individual paintings, portraits, icons, frames and controls, with recipes for 24 player feature views and copies of the existing game art and fonts they need. Credits, provenance and portable preview helpers are included for the next visual polish pass. These are design assets; the playable screens and game rules stay as they are.",
+    "build": "0.7.1.795",
+    "pullRequest": 1496,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1496"
   },
   {
     "id": "pr-1450",
