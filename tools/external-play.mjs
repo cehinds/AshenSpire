@@ -25,7 +25,7 @@
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 import { resolve, dirname, relative } from 'node:path';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -37,6 +37,13 @@ if (!existsSync(resolve(DIR, 'AshenSpire.html'))) {
   console.error(`external-play: no build at ${relative(ROOT, DIR)} — node tools/bundle.mjs --external-art --out ${relative(ROOT, DIR)}`);
   process.exit(2);
 }
+
+// THE PACK SHAPE (docs/EXTERNAL-ASSETS-PLAN.md step 3a): the build pins its
+// default tier in ASSET_PACKS, and the page stamps <html data-built-in-art> with
+// the tier it loaded. Each screen must have loaded that tier, and every image
+// that asked for art must have come from the object store, not a bare
+// `assets/…` path (which would mean an id the index does not list).
+const PINNED_TIER = (readFileSync(resolve(DIR, 'AshenSpire.html'), 'utf8').match(/const ASSET_PACKS = \{"schema":1,"tier":"(high|light)"/) || [])[1] || null;
 
 function connect(wsUrl) {
   const ws = new WebSocket(wsUrl); let id = 1; const pending = new Map(); const subs = [];
@@ -66,7 +73,7 @@ const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' 
 const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
 await cdp.send('Page.enable', {}, S); await cdp.send('Runtime.enable', {}, S); await cdp.send('Network.enable', {}, S);
 
-const failures = []; const thrown = [];
+const failures = []; const thrown = []; const urls = new Map();
 cdp.on((m) => {
   // /api/lan/* is the LAUNCHER's endpoint (src/net/lan.js), not an asset: a
   // plain static server does not implement it and the source tree 404s on it
@@ -80,7 +87,8 @@ cdp.on((m) => {
       && !/\/api\/lan\//.test(m.params.response.url) && !/favicon\.ico/i.test(m.params.response.url)) {
     failures.push(`${m.params.response.status} ${m.params.response.url.replace(/^https?:\/\/[^/]+\//, '')}`);
   }
-  if (m.method === 'Network.loadingFailed' && !/favicon/i.test(m.params.errorText || '')) failures.push(m.params.errorText);
+  if (m.method === 'Network.requestWillBeSent') urls.set(m.params.requestId, m.params.request.url.replace(/^https?:\/\/[^/]+\//, ''));
+  if (m.method === 'Network.loadingFailed' && !/favicon/i.test(m.params.errorText || '')) failures.push(`${m.params.errorText} ${urls.get(m.params.requestId) || ''}`.trim());
   if (m.method === 'Runtime.exceptionThrown') thrown.push(m.params.exceptionDetails.text || 'exception');
 });
 const ev = async (e) => {
@@ -90,7 +98,7 @@ const ev = async (e) => {
 };
 
 await cdp.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true }, S);
-let checks = 0; const findings = [];
+let checks = 0; const findings = []; let seenObjects = 0;
 for (const [name, query, ready] of SCREENS) {
   await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/AshenSpire.html${query}` }, S);
   const t0 = Date.now(); let up = false;
@@ -98,16 +106,35 @@ for (const [name, query, ready] of SCREENS) {
   await wait(1200);
   checks++;
   if (!up) { findings.push(`${name} did not mount`); continue; }
+  // The loader settles before the first screen is drawn, or after its boot
+  // wait; give a late one the same time the screen gets.
+  await ev(`new Promise((done) => { const t0 = Date.now(); (function poll() { if (document.documentElement.dataset.builtInArt || Date.now() - t0 > 10000) done(); else setTimeout(poll, 100); })(); })`).catch(() => {});
   // An <img> with NO src reports complete=true/naturalWidth=0 and is not a
   // missing asset — PoseAnimator builds its frames before assigning one, and
   // the source tree shows the same element. Only images that asked for
   // something and got nothing count.
   const art = await ev(`(() => { const imgs=[...document.images];
     const broken=imgs.filter(i=>i.complete&&i.naturalWidth===0&&(i.currentSrc||i.getAttribute('src')));
-    return { imgs: imgs.length, broken: broken.map(i=>(i.currentSrc||i.src).slice(-70)) }; })()`);
+    const asked=imgs.map(i=>i.getAttribute('src')||'').filter(s=>s&&!s.startsWith('data:')&&!s.startsWith('blob:'));
+    return { imgs: imgs.length, broken: broken.map(i=>(i.currentSrc||i.src).slice(-70)),
+      objects: asked.filter(s=>/(^|\\/)objects\\/[0-9a-f]{2}\\/[0-9a-f]{64}\\./.test(s)).length,
+      bare: asked.filter(s=>/^assets\\//.test(s)).slice(0, 3), tier: document.documentElement.dataset.builtInArt || '' }; })()`);
   checks++;
   if (art.broken.length) findings.push(`${name}: ${art.broken.length} broken image(s) — ${art.broken.slice(0, 3).join(', ')}`);
-  console.log(`  ${name.padEnd(7)} mounted, ${art.imgs} image(s), ${art.broken.length} broken`);
+  if (PINNED_TIER) {
+    checks++;
+    if (art.tier !== PINNED_TIER) findings.push(`${name}: the page loaded built-in art "${art.tier || 'nothing'}", the build pins ${PINNED_TIER}`);
+    checks++;
+    if (art.bare.length) findings.push(`${name}: image(s) asked for a bare path, not an object — ${art.bare.join(', ')}`);
+  }
+  seenObjects += art.objects;
+  console.log(`  ${name.padEnd(7)} mounted, ${art.imgs} image(s), ${art.objects} from objects/, ${art.broken.length} broken${PINNED_TIER ? `, built-in art ${art.tier || 'none'}` : ''}`);
+}
+if (PINNED_TIER) {
+  // At least one screen drew pack art: a build whose screens all happened to
+  // show no images would otherwise pass the per-image checks vacuously.
+  checks++;
+  if (!seenObjects) findings.push('no screen drew an image from objects/ — the pack art never reached the page');
 }
 checks++;
 if (failures.length) findings.push(`${failures.length} failed request(s): ${[...new Set(failures)].slice(0, 5).join(' | ')}`);
@@ -119,7 +146,7 @@ for (const f of findings) console.log('  RED ' + f);
 if (findings.length) { console.log(`external-play: RED — ${findings.length} finding(s) over ${checks} checks`); process.exit(1); }
 // Same grammar rule as verify-external: the verdict line ends at the count, or
 // tools/verdict.mjs reads the whole thing as prose and calls the run silent.
-console.log(`  3 screens mounted from ${relative(ROOT, DIR)}; 0 broken images; 0 failed requests.`);
+console.log(`  3 screens mounted from ${relative(ROOT, DIR)}; 0 broken images; 0 failed requests${PINNED_TIER ? `; ${seenObjects} images from the ${PINNED_TIER} pack's objects` : ''}.`);
 console.log(`external-play: OK — ${checks} checks passed`);
 console.log('BOUNDARY: three screens and the network. No run was played, and a screen that');
 console.log('          mounts with the WRONG art passes this.');
