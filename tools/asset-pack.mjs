@@ -51,7 +51,7 @@
 // twin that does not match, each of which --check must catch.
 
 import { createHash } from 'node:crypto';
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MIME } from './assetmime.mjs';
@@ -63,6 +63,9 @@ export const DEFAULT_OUT = 'build/asset-pack';
 export const FONTS_SIDECAR = 'fonts';
 export const PACKS_DIR = 'packs';
 export const OBJECTS_DIR = 'objects';
+/** The marker a written tree carries: packs/ and objects/ beside it are this tool's to clear. */
+export const MARKER = '.asset-pack';
+const MARKER_TEXT = 'Written by tools/asset-pack.mjs. packs/ and objects/ beside this file are cleared and rewritten on every run.\n';
 
 // What the packs carry beyond shippable art: the score's manifest and the font
 // licence. Kept here, not in tools/assetmime.mjs, because that table decides
@@ -211,11 +214,19 @@ export function guardOut(out, root) {
   return real;
 }
 
-/** The packs/ or objects/ directory to clear, refused when it is a symlink (it could name a tracked tree). */
-function clearable(dir) {
+/**
+ * The packs/ or objects/ directory to clear. Refused when it is a symlink (it
+ * could name a tracked tree), and when it holds anything while `out` carries
+ * no MARKER: an --out outside the checkout may be someone else's directory,
+ * and its packs/ or objects/ are not this tool's to delete.
+ */
+function clearable(dir, marked) {
   let st = null;
   try { st = lstatSync(dir); } catch (e) { if (e.code === 'ENOENT') return dir; throw e; }
   if (st.isSymbolicLink()) throw new Error(`${dir} is a symlink; asset-pack clears this directory and will not follow one`);
+  if (!marked && (!st.isDirectory() || readdirSync(dir).length)) {
+    throw new Error(`${dir} is not empty and ${MARKER} is not beside it: asset-pack did not write it, so it will not delete it`);
+  }
   return dir;
 }
 
@@ -225,7 +236,12 @@ export function writePacks({ root = ROOT, out: asked = resolve(ROOT, DEFAULT_OUT
   const plan = planPacks(root, packs);
   if (plan.problems.length) throw Object.assign(new Error('the sources do not match the manifest; nothing was written'), { problems: plan.problems });
   const { files, summary } = renderPacks(plan);
-  const clear = [clearable(resolve(out, PACKS_DIR)), clearable(resolve(out, OBJECTS_DIR))];
+  const marker = resolve(out, MARKER);
+  let marked = false;
+  try { marked = lstatSync(marker).isFile(); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+  const clear = [clearable(resolve(out, PACKS_DIR), marked), clearable(resolve(out, OBJECTS_DIR), marked)];
+  mkdirSync(out, { recursive: true });
+  writeFileSync(marker, MARKER_TEXT);
   for (const dir of clear) rmSync(dir, { recursive: true, force: true });
   for (const path of [...files.keys()].sort(byteOrder)) {
     const abs = resolve(out, path);
@@ -235,11 +251,19 @@ export function writePacks({ root = ROOT, out: asked = resolve(ROOT, DEFAULT_OUT
   return summary;
 }
 
-function walk(dir, base = dir, out = []) {
-  if (!existsSync(dir)) return out;
+/**
+ * walk(dir) → files under dir, relative, byte order. Never follows a symlink:
+ * each one is pushed to `links` (the check reports them) and not entered.
+ */
+function walk(dir, base = dir, out = [], links = []) {
+  let st;
+  try { st = lstatSync(dir); } catch { return out; }
+  if (st.isSymbolicLink()) { links.push(dir); return out; }
   for (const name of readdirSync(dir).sort(byteOrder)) {
     const abs = join(dir, name);
-    if (statSync(abs).isDirectory()) walk(abs, base, out);
+    const s = lstatSync(abs);
+    if (s.isSymbolicLink()) links.push(abs);
+    else if (s.isDirectory()) walk(abs, base, out, links);
     else out.push(posix(relative(base, abs)));
   }
   return out;
@@ -269,7 +293,8 @@ export function verifyPacks(out, { manifest = null, packs = PACKS } = {}) {
   const listed = new Set();
   const seen = new Map(); // pack → index name
   const indexes = {};
-  const packFiles = walk(resolve(out, PACKS_DIR));
+  const links = [];
+  const packFiles = walk(resolve(out, PACKS_DIR), resolve(out, PACKS_DIR), [], links);
   if (!packFiles.length) problems.push(`no ${PACKS_DIR}/ under ${out}`);
   for (const file of packFiles) {
     const m = /^([a-z]+)-([0-9a-f]{12})\.(json|js)$/.exec(file);
@@ -333,7 +358,11 @@ export function verifyPacks(out, { manifest = null, packs = PACKS } = {}) {
   }
   for (const [pack, file] of seen) if (!packs.includes(pack)) problems.push(`${PACKS_DIR}/${file}: a ${pack} index, which was not asked for (--pack ${packs.join(',')})`);
   // Every object in the store is listed by some index, and named by its bytes.
-  for (const path of walk(resolve(out, OBJECTS_DIR)).map((p) => `${OBJECTS_DIR}/${p}`)) {
+  const objectFiles = walk(resolve(out, OBJECTS_DIR), resolve(out, OBJECTS_DIR), [], links);
+  // A symlink is never a pack file or an object: it could point anywhere,
+  // and a check that followed it would vouch for bytes outside the tree.
+  for (const link of links) problems.push(`${posix(relative(out, link))}: a symlink (the store holds files only)`);
+  for (const path of objectFiles.map((p) => `${OBJECTS_DIR}/${p}`)) {
     if (listed.has(path)) continue;
     const m = /^objects\/([0-9a-f]{2})\/([0-9a-f]{64})\.[a-z0-9]+$/.exec(path);
     if (!m || m[1] !== m[2].slice(0, 2)) problems.push(`${path}: stray (not an object name)`);
@@ -367,10 +396,20 @@ export function verifyPacks(out, { manifest = null, packs = PACKS } = {}) {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
-  const at = args.indexOf('--out');
-  const out = resolve(process.cwd(), at >= 0 && args[at + 1] ? args[at + 1] : resolve(ROOT, DEFAULT_OUT));
-  const pk = args.indexOf('--pack');
-  const packs = pk >= 0 && args[pk + 1] ? args[pk + 1].split(',').filter(Boolean) : PACKS;
+  const value = (flag) => {
+    const at = args.indexOf(flag);
+    if (at < 0) return null;
+    const v = args[at + 1];
+    if (!v || v.startsWith('--')) {
+      console.error(`asset-pack: FAIL — ${flag} needs a value (${flag === '--out' ? 'a directory' : 'light,high,common'})`);
+      process.exit(2);
+    }
+    return v;
+  };
+  const outArg = value('--out');
+  const packArg = value('--pack');
+  const out = resolve(process.cwd(), outArg || resolve(ROOT, DEFAULT_OUT));
+  const packs = packArg ? packArg.split(',').filter(Boolean) : PACKS;
   try {
     if (args.includes('--check')) {
       const manifest = JSON.parse(readFileSync(resolve(ROOT, MANIFEST_PATH), 'utf8'));

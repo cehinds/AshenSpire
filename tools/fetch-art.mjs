@@ -93,7 +93,13 @@ export function cacheDirFor(pin, root = ROOT) {
 
 /** What the verified marker records: the zip, and the manifest it was checked against. */
 export function markerFor(pin, manifest) {
-  const highs = Object.keys(manifest.assets || {}).sort().map((id) => {
+  // The high records, and of the common ids only the ones a high release can
+  // carry (the fonts under assets/, as hd-assets-v1 does). Music and tiles
+  // never ride in the high zip, so a new track must not invalidate its cache.
+  // Which common ids a release lists is only known after the download, so the
+  // `assets/` prefix stands in for it.
+  const ids = Object.keys(manifest.assets || {}).filter((id) => manifest.assets[id].high || (commonOf(manifest.assets[id]) && id.startsWith('assets/')));
+  const highs = ids.sort().map((id) => {
     const h = manifest.assets[id].high || commonOf(manifest.assets[id]) || {};
     return `${id}\t${h.path}\t${h.bytes}\t${h.sha256}`;
   }).join('\n');

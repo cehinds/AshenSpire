@@ -8,6 +8,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
@@ -273,4 +275,57 @@ test('known-bad: a symlinked --out, or a symlinked packs/ inside it, never clear
     assert.equal(readFileSync(join(tracked, 'keep.js'), 'utf8'), 'tracked\n');
     assert.equal(readFileSync(join(tracked, 'packs', 'keep.txt'), 'utf8'), 'tracked\n');
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('known-bad: an unmarked --out with its own packs/ or objects/ is refused, never cleared', () => {
+  const root = tree(FILES);
+  const out = mkdtempSync(join(tmpdir(), 'asset-pack-out-'));
+  try {
+    mkdirSync(join(out, 'objects'), { recursive: true });
+    writeFileSync(join(out, 'objects', 'theirs.bin'), 'not ours\n');
+    assert.throws(() => writePacks({ root, out }), /objects is not empty and \.asset-pack is not beside it/);
+    assert.equal(readFileSync(join(out, 'objects', 'theirs.bin'), 'utf8'), 'not ours\n');
+    assert.ok(!readdirSync(out).includes('.asset-pack'), 'a refused run writes no marker');
+    // Empty directories are fine; the write then marks the tree as its own.
+    rmSync(join(out, 'objects', 'theirs.bin'));
+    mkdirSync(join(out, 'packs'), { recursive: true });
+    writePacks({ root, out });
+    assert.ok(readdirSync(out).includes('.asset-pack'));
+    // A marked tree is cleared and rewritten, strays included.
+    writeFileSync(join(out, 'objects', 'stray.bin'), 'x');
+    writePacks({ root, out });
+    const manifest = JSON.parse(readFileSync(join(root, MANIFEST_PATH), 'utf8'));
+    assert.deepEqual(verifyPacks(out, { manifest }), []);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+    rmSync(out, { recursive: true, force: true });
+  }
+});
+
+test('known-bad: --check reports a symlink under packs/ or objects/ instead of following it', (t) => {
+  withPacks(({ out, manifest }) => {
+    const elsewhere = mkdtempSync(join(tmpdir(), 'asset-pack-elsewhere-'));
+    try {
+      const common = JSON.parse(readFileSync(join(out, 'packs', packFile(out, /^common-.*\.json$/)), 'utf8'));
+      const [s] = common['music/title/title.mp3'];
+      const obj = join(out, objectPath(s, 'music/title/title.mp3'));
+      // The same bytes, reached through a link: following it would read green.
+      writeFileSync(join(elsewhere, 'title.mp3'), readFileSync(obj));
+      rmSync(obj);
+      try { symlinkSync(join(elsewhere, 'title.mp3'), obj); } catch (e) { t.skip(`symlinks unavailable here (${e.code})`); return; }
+      symlinkSync(elsewhere, join(out, 'packs', 'linked'), 'dir');
+      const problems = verifyPacks(out, { manifest }).join('\n');
+      assert.match(problems, new RegExp(`objects/${s.slice(0, 2)}/${s}\\.mp3: a symlink`));
+      assert.match(problems, /packs\/linked: a symlink/);
+    } finally { rmSync(elsewhere, { recursive: true, force: true }); }
+  });
+});
+
+test('known-bad: --out or --pack without a value is refused before anything is written', () => {
+  const tool = fileURLToPath(new URL('../tools/asset-pack.mjs', import.meta.url));
+  for (const argv of [['--out'], ['--out', '--check'], ['--pack'], ['--pack', '--json'], ['--check', '--out']]) {
+    const r = spawnSync(process.execPath, [tool, ...argv], { encoding: 'utf8' });
+    assert.equal(r.status, 2, `${argv.join(' ')}: ${r.stderr}`);
+    assert.match(r.stderr, /needs a value/);
+  }
 });

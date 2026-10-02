@@ -11,7 +11,7 @@ import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { crc32, readZip, writeZip } from '../tools/zip.mjs';
-import { fetchArt, readPin, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
+import { fetchArt, markerFor, readPin, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
 
 const sha = (buf) => createHash('sha256').update(buf).digest('hex');
 const tmp = () => mkdtempSync(join(tmpdir(), 'fetch-art-'));
@@ -273,4 +273,15 @@ test('known-bad: schema 2, a release whose manifest lists a font its zip lacks i
     assert.match(problems, /assets\/fonts\/f\.woff2: not in the release/);
     assert.doesNotMatch(problems, /music\/title/);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('the cache marker folds in the fonts a high release can carry, not music or tiles', () => {
+  const rec = (n) => ({ path: `p${n}`, bytes: n, sha256: String(n).repeat(64).slice(0, 64) });
+  const pin = { sha256: 'a'.repeat(64) };
+  const base = { assets: { 'assets/bg/a.webp': { high: rec(1) }, 'assets/fonts/f.woff2': { common: rec(2) }, 'music/title/title.mp3': { common: rec(3) } } };
+  const mark = markerFor(pin, base);
+  const withTrack = { assets: { ...base.assets, 'music/boss/boss.mp3': { common: rec(4) }, 'map-detail/x/256/0-0.webp': { common: rec(5) } } };
+  assert.equal(markerFor(pin, withTrack), mark, 'a new track or tile leaves the high cache valid');
+  const newFont = { assets: { ...base.assets, 'assets/fonts/f.woff2': { common: rec(6) } } };
+  assert.notEqual(markerFor(pin, newFont), mark, 'a changed font re-verifies the cache');
 });
