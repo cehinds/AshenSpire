@@ -22,7 +22,7 @@
 //   same climbs it always measured (§13.6); on, it measures every order — the
 //   distribution a real run draws, and the one balance.bossTiers is tuned on.
 //   --selftest: the CI rung's own integrity (FINISH §3, *A headless full run in
-//   CI*). Plants a throw inside a fight, a fight that never advances and a map
+//   CI*). Plants a throw inside a card's resolution, a fight that never advances and a map
 //   whose path never reaches its boss, and requires each to exit 1 with a
 //   CRASH or SOFT-LOCK line; then requires a clean fleet to exit 0 and two
 //   fleets on the same seeds to print the same report.
@@ -207,6 +207,29 @@ const STEP_BUDGET_ARG = (argv.find((a) => a.startsWith('--step-budget=')) || '')
 const STEP_BUDGET = STEP_BUDGET_ARG ? Number(STEP_BUDGET_ARG) : null;
 if (STEP_BUDGET_ARG && !(Number.isInteger(STEP_BUDGET) && STEP_BUDGET > 0)) throw new Error(`--step-budget expects a positive integer — got '${STEP_BUDGET_ARG}'`);
 const ACTION_GUARD = 9000; // bot actions one fight may take before it is a soft-lock
+// THE ENGINE'S DOOR REFUSALS (src/engine/combat.js doPlayCard / doUseFlask and
+// combatRules.js assertFoundationPlayable): the checks that turn an intent away
+// before anything resolves. The bot may set a card or flask aside for one of
+// these and play on. ANY OTHER error out of a dispatch is an engine bug in the
+// middle of resolution and escapes as a CRASH — a catch-all here once let a
+// throw in card resolution pass the rung green (#1437 review).
+const ENGINE_REFUSALS = [
+  /^Cards can only be played on the player turn$/,
+  /^Flasks can only be used on the player turn$/,
+  /^Card '.*' is not in hand$/,
+  /^'.*' is unplayable$/,
+  /^Not enough (energy|mana|stamina) \(need -?\d+, have -?\d+\)$/,
+  /^Invalid target '.*'$/,
+  /^No living enemy to target$/,
+  /^Evade is already active$/,
+  /^Dodge Roll already used this turn$/,
+  /^That stance is already active$/,
+  /^No \w+ flask charges$/,
+  /^No flask in slot .*$/,
+];
+function setAsideOrCrash(e) {
+  if (!ENGINE_REFUSALS.some((re) => re.test(String(e && e.message)))) throw e;
+}
 
 // ---- the deep tally (read-only over a finished fight's eventLog) ------------
 function newDeepStats() {
@@ -343,7 +366,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
       // read zero: the refill was topping up a pool nothing ever spent.
       const ch = combat.player.flaskCharges;
       if (ch && (ch.hpCurrent || 0) > 0) {
-        try { dispatch(combat, { type: 'useFlask', chargeKind: 'hp' }); continue; } catch (e) { /* fall through */ }
+        try { dispatch(combat, { type: 'useFlask', chargeKind: 'hp' }); continue; } catch (e) { setAsideOrCrash(e); /* refused: fall through */ }
       }
       if (combat.player.flasks.length) {
         const fdef = REG.flasks.get(combat.player.flasks[0].flaskId);
@@ -352,29 +375,36 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
           dispatch(combat, { type: 'useFlask', slot: 0, targetId: fdef.targeted ? ftgt && ftgt.id : undefined });
           continue;
         } catch (e) {
-          /* flask rejected — fall through to cards */
+          setAsideOrCrash(e); /* flask refused — fall through to cards */
         }
       }
     }
     // Leftmost card affordable in every pool (tools/simbot.mjs); a card the
-    // engine still refuses is set aside for the turn, and the bot plays on.
+    // engine still refuses at its door (ENGINE_REFUSALS) is set aside for the
+    // turn, and the bot plays on. Any other throw is a CRASH.
     const refused = refusalsFor(combat);
     const card = affordableCards(REG, combat, refused)[0];
     const tgt = combat.enemies.find((e) => e.alive);
     if (!card) {
       // Plants (--selftest): a throw inside a fight must surface as a CRASH,
       // and a turn that never ends must surface as a SOFT-LOCK.
-      if (PLANT === 'fight-throw') throw new Error(`planted: endTurn threw inside ${encounterId}`);
       if (PLANT !== 'combat-stall') dispatch(combat, { type: 'endTurn' });
       continue;
     }
     try {
+      // The fight-throw plant throws from INSIDE this dispatch, the way an
+      // engine bug in card resolution would, so the selftest proves the catch
+      // below lets it escape as a CRASH rather than set the card aside.
+      if (PLANT === 'fight-throw') throw new Error(`planted: card resolution threw inside ${encounterId}`);
       dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id });
     } catch (e) {
+      setAsideOrCrash(e);
       refused.add(card.instanceId);
     }
   }
-  if (guard >= ACTION_GUARD) throw new SoftLock(`combat stalled: ${encounterId} took ${ACTION_GUARD} bot actions on turn ${combat.turn} without resolving`);
+  // Still open, not conceded, and out of actions: a fight that resolves on
+  // exactly the last allowed action is not a soft-lock.
+  if (!combat.result && combat.turn <= STALEMATE_TURNS && guard >= ACTION_GUARD) throw new SoftLock(`combat stalled: ${encounterId} took ${ACTION_GUARD} bot actions on turn ${combat.turn} without resolving`);
   const outcome = combat.result || 'stalemate';
   if (deepStats) tallyFight(deepStats, combat, run.hp);
   if (INCOMING && run._incoming) tallyIncoming(run._incoming, combat, run, enc.pool);
