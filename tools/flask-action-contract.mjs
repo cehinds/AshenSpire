@@ -136,6 +136,27 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL combat and map menus share action availability/,
       },
       {
+        name: 'the Potions control hard-codes outside-combat drinking on instead of forwarding the setting',
+        file: 'src/ui/components/runPotions.js',
+        find: 'const planFor = (entry) => runPotionPlan(entry, { drinkOutsideCombat });',
+        replace: 'const planFor = (entry) => runPotionPlan(entry, { drinkOutsideCombat: true });',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'the Potions control drops the options, so the setting never reaches the plan',
+        file: 'src/ui/components/runPotions.js',
+        find: 'const planFor = (entry) => runPotionPlan(entry, { drinkOutsideCombat });',
+        replace: 'const planFor = (entry) => runPotionPlan(entry);',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'combat offers Use whatever useReason(row) says',
+        file: 'src/ui/components/combatActionRow.js',
+        find: 'const canUse = !reason;',
+        replace: 'const canUse = true;',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
         name: 'the map Potions control drops its registries binding',
         file: 'src/ui/screens/map.js',
         find: 'mountRunPotions(potionsHost, { registries, run, meta,',
@@ -374,9 +395,11 @@ if (actions?.flaskActionPlan) {
 // runPotionPlan; and runPotionPlan, driven for real, returns the shared plan.
 // planFor is matched as the WHOLE statement, through its closing `);`, so a
 // transform of the helper's result (`runPotionPlan(...).actions`) goes red.
-// BOUNDARY: the options argument must be a flat `{ ... }` with no nested
-// braces (the shipped `{ drinkOutsideCombat }` is). A nested-object options
-// argument fails closed here; widen the match only when the code needs it.
+// BOUNDARY: the options argument must be exactly the shipped
+// `{ drinkOutsideCombat }` shorthand, which forwards the derived setting. Any
+// other options argument (a constant, a nested object, none) fails closed.
+// Scope cap (D36): a derivation a source check cannot prove is left to the
+// real-browser flask-menu test recorded in FINISH §11, not chased here.
 const mapCode = code(map);
 const runPotionsCode = code(runPotions);
 const potionMounts = menuMounts(runPotionsCode);
@@ -498,7 +521,11 @@ const importsShared = (src, name, from) => {
 const mapShares = importsShared(mapCode, 'mountRunPotions', '../components/runPotions.js')
   && ['runPotionPlan', 'runPotionVerb', 'applyRunPotion'].every((name) => importsShared(runPotionsCode, name, '../models/RunPotionModel.js'))
   && runPotionsMounts.length > 0 && runPotionsMounts.every((ok) => ok)
-  && /const planFor = \(entry\) => runPotionPlan\(entry(?:, \{[^{}]*\})?\);/.test(runPotionsCode)
+  // planFor forwards the derived setting itself: exactly one planFor, and it
+  // is the shipped `{ drinkOutsideCombat }` shorthand (no constant, no
+  // omitted options).
+  && (runPotionsCode.match(/\bplanFor\s*=[^=>]/g) || []).length === 1
+  && /const planFor = \(entry\) => runPotionPlan\(entry, \{ drinkOutsideCombat \}\);/.test(runPotionsCode)
   // The live setting reaches the plan: `drinkOutsideCombat` is bound once,
   // from the player's "Use flasks outside combat" setting via settingOn, and
   // settingOn (imported and driven) reads that setting on and off. A constant
@@ -524,6 +551,12 @@ check('combat and map menus share action availability',
   /mountFlaskActionMenu/.test(component)
     && (code(potions).match(/\bflaskActionPlan\(/g) || []).length === 1
     && /const action = flaskActionPlan\(\{ context: 'combat', canUse, useReason: reason \}\)\.actions\.find\(r => r\.id === 'use'\);/.test(code(potions))
+    // combat's canUse is derived from the refusal reason: `!reason`, where
+    // `reason = useReason(row)`, each bound exactly once.
+    && (code(potions).match(/\bcanUse\s*=[^=>]/g) || []).length === 1
+    && /\bconst canUse = !reason;/.test(code(potions))
+    && (code(potions).match(/\breason\s*=[^=>]/g) || []).length === 1
+    && /\bconst reason = useReason\(row\);/.test(code(potions))
     && /import \{ flaskActionPlan \} from '\.\.\/\.\.\/model\/flaskActions\.js'/.test(code(potions))
     && !/\bflaskActionPlan\s*=[^=]|function\s+flaskActionPlan\b/.test(code(potions))
     && /openCombatPotions\(/.test(code(combat))
