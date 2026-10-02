@@ -32,7 +32,7 @@ import { commitCombatSnapshot, restoreCombatSnapshot, serializeCombatSnapshot } 
 import { dispatch } from '../src/engine/combat.js';
 import { isPoolDeckRun, dealtAttackSlotCount, POOL_DECK_RULE } from '../src/model/cardRemoval.js';
 import { stampDeck } from '../src/model/loadout.js';
-import { extractionPlan, commitExtraction, commitInstall } from '../src/model/cardExtraction.js';
+import { commitExtraction, commitInstall, mountRows, ownedMountItems } from '../src/model/cardExtraction.js';
 
 const registries = createRegistries(contentBundle);
 const SEED = 5;
@@ -256,10 +256,12 @@ function installedKatanaArt() {
   const { run } = fx;
   run.loadout.sets.rightHand[1] = 'katana';
   run.deck.push({ instanceId: 'bought:1', cardId: 'katanaDrawCut', upgraded: false });
-  const item = extractionPlan(registries, run).candidates.find((c) => c.itemRef === 'armament/katana');
-  const mount = item.mounts.find((m) => m.cardId === 'katanaDrawCut');
-  commitExtraction(registries, run, item.itemRef, mount.mountKey, undefined, { free: true });
-  commitInstall(registries, run, item.itemRef, mount.mountKey, 'bought:1', undefined, { free: true });
+  const mount = mountRows(registries, run, ownedMountItems(registries, run).find((i) => i.itemRef === 'armament/katana')).find((m) => m.cardId === 'katanaDrawCut');
+  // A pool run cannot extract (owner ruling, 2026-10-02; pool-deck-extraction.test.mjs),
+  // so the emptied mount is one a save from before that rule carries.
+  assert.throws(() => commitExtraction(registries, run, 'armament/katana', mount.mountKey, undefined, { free: true }), /Sealed or Draft/);
+  run.itemMounts = { 'armament/katana': { [mount.mountKey]: { card: null, extractions: 1 } } };
+  commitInstall(registries, run, 'armament/katana', mount.mountKey, 'bought:1', undefined, { free: true });
   return { ...fx, mountKey: mount.mountKey };
 }
 const kitOf = (deck) => deck.filter((c) => c && c.kitRole).map((c) => c.instanceId);
