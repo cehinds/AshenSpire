@@ -18,6 +18,7 @@ import { openConfirmationModal } from './confirmationModal.js';
 import { deleteSaveReview, replaceSaveReview, reviewEyebrow } from '../models/ConfirmationReviewModel.js';
 import { saveStatusReview, savedAtLabel } from '../models/SaveStatusModel.js';
 import { t } from '../strings.js';
+import { reasonWhenDisabled } from './refusal.js';
 import {
   el, html, modalHead, modalFooter, button, iconButton, optionCard, optionRow, options, decide, detailCard, ornament,
 } from '../kit/index.js';
@@ -150,6 +151,8 @@ export function slotDoor({ eyebrow, title, closeLabel, rows, backLabel = 'Back',
   const forward = button({ label: continueLabel, weight: 'primary', className: 'title-modal-continue', disabled: !canContinue, attrs: { dataset: { titleAction: 'modal-continue', actionSlot: actionSlot ?? '', component: UI.titleModalContinueControl } } });
   const foot = modalFooter({ secondary: [back], primary: forward, size: 'medium' });
   foot.querySelector('.modal-foot-actions').dataset.component = UI.titleModalActions;
+  // No slot chosen yet: the reason stands under the foot as text (FINISH §6).
+  reasonWhenDisabled(forward, () => t('title.slots.continue.reason'))();
 
   const body = el('div', { class: 'modal-body' }, decide({
     children: [
