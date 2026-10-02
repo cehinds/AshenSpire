@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The first-fight tutorial no longer sits on your cards",
     "detail": "The coach marks' speech bubble used to land on the first card in your hand, so you couldn't play that card while the tutorial was showing. The bubble now finds a spot clear of your hand. After a window resize, the spotlight now follows its target until the board stops moving. Pressing Escape on an armed attack card now also drops the card's highlight, not just its targeting. Behind the scenes, the check that every tutorial button can be reached runs at eight screen sizes on every change, and it confirms that the tutorial stays dismissed after a reload.",
-    "build": "0.7.1.768",
+    "build": "0.7.1.769",
     "pullRequest": 1468,
     "url": "https://github.com/cehinds/AshenSpire/pull/1468"
+  },
+  {
+    "id": "pr-1480",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Save the game as a folder you can unzip",
+    "detail": "Download & saves now offers a folder copy of a newer build as one zip, beside the single-file download: unzip it, keep the folder together and double-click the game file inside to play offline with the light art. The game checks every file against the published build as it adds it, and saves nothing if one does not match.",
+    "build": "0.7.1.768",
+    "pullRequest": 1480,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1480"
   },
   {
     "id": "pr-1463",
