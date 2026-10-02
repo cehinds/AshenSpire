@@ -211,7 +211,15 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   const refit = () => { fitKey = ''; if (currentStage && !stopped) applyStaging(currentStage); };
   // Fixed height, not fixedCaption(): turning a phone onto its side swaps the
   // band for a panel, and the words must leave the fitted size behind.
-  const changed = () => { if (currentStage?.captionFixedHeight === true && fitMetrics() !== fitKey) refit(); };
+  // It compares against what it last saw, not against fitKey: a panel stage is
+  // never measured, so fitKey would never catch up and every callback would
+  // re-stage the scene.
+  let seen = '';
+  const changed = () => {
+    if (currentStage?.captionFixedHeight !== true) return;
+    const key = fitMetrics();
+    if (key !== seen) { seen = key; refit(); }
+  };
   const resized = typeof ResizeObserver === 'function' ? new ResizeObserver(changed) : null;
   resized?.observe(root);
   // Text size is written on <html> (UI size and readable headings on <body>)
