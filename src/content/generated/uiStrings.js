@@ -5034,5 +5034,159 @@ export const uiStrings = [
     "short": "No open road to here yet.",
     "full": "Pick a place on an open road or where you stand.",
     "tip": ""
+  },
+  {
+    "id": "offline.zip.heading",
+    "extends": "",
+    "short": "Download a folder copy (zip)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.button",
+    "extends": "",
+    "short": "Download game folder (zip)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.save",
+    "extends": "",
+    "short": "Save zip file",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.step.save",
+    "extends": "",
+    "short": "On a computer, choose Download game folder (zip). It is about {mb} MB and saves as {filename}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.step.saveUnsized",
+    "extends": "",
+    "short": "On a computer, choose Download game folder (zip). It saves as {filename}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.step.unzip",
+    "extends": "",
+    "short": "Unzip it, and keep the folder together: the game file reads its art from the packs and objects folders beside it.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.step.open",
+    "extends": "",
+    "short": "Double-click the .html file inside the folder to play in your browser. It needs no internet.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.step.limits",
+    "extends": "",
+    "short": "The folder copy shows the light art; recorded music plays only when the folder is served by a web server, so a double-clicked copy uses the synthesized score. Its saves are its own, as with the single file.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.unavailable",
+    "extends": "",
+    "short": "This build is one self-contained file; Download game above is the whole game.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.choose",
+    "extends": "",
+    "short": "Choose where to save the folder copy…",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.working",
+    "extends": "",
+    "short": "Building the folder copy… {done} of {total} files · {mb} of {totalMb} MB. Keep this panel open.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.finishing",
+    "extends": "",
+    "short": "Finishing the zip file…",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.saved",
+    "extends": "",
+    "short": "Folder copy saved: {files} files, {mb} MB. Unzip it and double-click the .html file inside to play.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.sent",
+    "extends": "",
+    "short": "Folder copy sent to your browser ({mb} MB). If it did not save, choose Save zip file to retry.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.canceled",
+    "extends": "",
+    "short": "Folder copy canceled. No completed zip file was saved.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.unreachable",
+    "extends": "",
+    "short": "A file of this build could not be fetched, so no zip was saved. Check your connection and try again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.page",
+    "extends": "",
+    "short": "The game page did not match the published build, so no zip was saved. Choose Check for updates and try again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.pack",
+    "extends": "",
+    "short": "This build's art packs are not published in full, so no zip was saved. Try another branch, or the single-file download.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.hash",
+    "extends": "",
+    "short": "A file of this build did not match its published checksum, so no zip was saved. Try again later.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.disk",
+    "extends": "",
+    "short": "There is not enough space where you chose to save, so no zip was saved. Free some space or choose another place, and try again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.picker",
+    "extends": "",
+    "short": "The browser did not allow saving there, so no zip was saved. Try again and choose another place.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.generic",
+    "extends": "",
+    "short": "The folder copy could not be saved. Try again, or use the single-file download above.",
+    "full": "",
+    "tip": ""
   }
 ];
