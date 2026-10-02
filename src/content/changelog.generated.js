@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1485",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Fight sounds land at the right moment",
+    "detail": "A boss fight's first draw and turn sting now play when its name card lifts, not hidden behind it. In LAN co-op your turn stings once per round however many players are in the fight, and joining or reloading a fight after someone has already acted no longer replays that action's sounds.",
+    "build": "0.7.1.772",
+    "pullRequest": 1485,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1485"
+  },
+  {
     "id": "pr-1472",
     "date": "2026-10-02",
     "group": "2026-10-02",
