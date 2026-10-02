@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1442",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The Pages site no longer copies the art and asset folders",
+    "detail": "Behind the scenes: the project site stops carrying the art, asset and old build-file copies from main, and link previews use a picture the site itself serves; nothing you play changes.",
+    "build": "0.7.1.733",
+    "pullRequest": 1442,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1442"
+  },
+  {
     "id": "pr-1436",
     "date": "2026-10-02",
     "group": "2026-10-02",
