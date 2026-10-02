@@ -490,7 +490,8 @@ test('the map treasure checkpoints its offer, completing a journey point first: 
 // ---------------------------------------------------------------------------
 
 test('schema 19: the bump, the appended corpus entry, and a schema-18 save loads with attunedSigils [] and its sigils untouched', () => {
-  assert.equal(RUN_SCHEMA_VERSION, 19);
+  // #1479 (the dealt-deck rule) bumped once more; this entry and its migration stay.
+  assert.ok(RUN_SCHEMA_VERSION >= 19);
   const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
   const v19 = JSON.parse(corpus.versions['19'].bytes);
   assert.equal(v19.schemaVersion, 19);
@@ -505,7 +506,7 @@ test('schema 19: the bump, the appended corpus entry, and a schema-18 save loads
   storage.setItem(RUN_KEY, JSON.stringify(v18));
   const run = createSaveManager(storage).loadRun(REG);
   assert.ok(run, 'the v18 save loads');
-  assert.equal(run.schemaVersion, 19);
+  assert.equal(run.schemaVersion, RUN_SCHEMA_VERSION);
   assert.deepEqual(run.attunedSigils, []);
   assert.deepEqual(run.sigils, [LEGENDARIES[0], COMMON], 'its sigils untouched');
   // A missing field at 19 is refused by name.

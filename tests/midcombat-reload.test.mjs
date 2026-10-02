@@ -26,6 +26,7 @@ import { createRng, seedToString } from '../src/engine/rng.js';
 import { dispatch } from '../src/engine/combat.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { isPoolDeckMode } from '../src/model/cardRemoval.js';
 import { buildActMap, drawSeatOrder } from '../src/engine/actmap.js';
 import { rollEncounter } from '../src/engine/encounters.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
@@ -59,7 +60,7 @@ function enterCombat(saves, run, rng, nodeId, encounterId, { resuming = false } 
   run.combatEntered = { nodeId, encounterId, ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
   if (!resuming) saves.saveRun(run, rng);
   const enc = registries.encounters.get(encounterId);
-  if (savedSnapshot) return restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot });
+  if (savedSnapshot) return restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackPoolDeck: isPoolDeckMode(run) });
   const seat = seatAtTier(run.seatOrder, run.actNumber);
   return createRunCombat({
     registries,
