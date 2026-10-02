@@ -1,13 +1,15 @@
 # Every asset outside the game file — plan
 
-Status: **steps 2, 3a and 11 built** (2026-10-01: `tools/asset-pack.mjs`,
+Status: **steps 2, 3a, 6a and 11 built** (2026-10-01: `tools/asset-pack.mjs`,
 `art-manifest.json` schema 2; 2026-10-02: the loader `src/ui/assetPacks.js`,
 `setBuiltInSource`, the `ASSET_PACKS` stamp and the tier fallback, with
 `bundle.mjs --external-art` writing packs and `verify-external` rewritten; see
-[Step 3a as built](#step-3a-as-built); 2026-10-02, step 11: `art-release.json`
-schema 2 pins `hd-assets-v2`'s three zips, `fetch-art --pack` and `--agree`,
-`asset-pack --source cache`, the pin and manifest in `BUILD_IDENTITY_FILES`, and
-a fetch in every building workflow); the rest is plan (2026-09-27). The owner answered its
+[Step 3a as built](#step-3a-as-built); and the Pages base tree without `art/`,
+the `og:image` Pages path and the site size in `pages-site --check`, see section 4;
+step 11: `art-release.json` schema 2 pins `hd-assets-v2`'s three zips,
+`fetch-art --pack` and `--agree`, `asset-pack --source cache`, the pin and
+manifest in `BUILD_IDENTITY_FILES`, and a fetch in every building workflow);
+the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -512,20 +514,52 @@ into the site root, and nothing excludes media. On `origin/main` today that is
 - `map-detail/` 11 MB.
 
 **Step 6a**, a precondition of the store, makes `pages-site` exclude the media
-and authoring roots from the base tree: `art/`, `assets/`, `assets-mobile/`,
-`map-detail/`, `music/` and the committed build HTML (the stable links are
-written from the fresh build anyway). Those roots are only ever served as build
-payloads. `docs/preview` stays in the base tree (owner answer 7, FINISH D26).
+and authoring roots from the base tree: `art/`, `assets-mobile/`,
+`map-detail/`, `music/` and the committed build HTML. **`assets/` stays** (owner,
+2026-10-02), and so does `docs/preview` (owner answer 7, FINISH D26).
+
+As built (corrected against the code; the first draft said these roots "are
+only ever served as build payloads", and listed `assets/` among them):
+
+- **No build page reads them from the root.** Each `/<branch>/<ordinal>/`
+  build is one inline file that reads only the `map-detail/` and `music/`
+  written beside it. The stable links are the same kind of file: every image
+  under `assets/` is in their `ASSET_MAP`, and they fetch only `map-detail/`
+  and `music/` beside themselves.
+- **The stable links keep their payload.** `pages-site` writes
+  `/AshenSpire.html`, `/build/`, `/dist/` and `-mobile` from main's committed
+  build (or from `--main-build` once main no longer commits one), as before. It
+  writes main's `map-detail/` and `music/` back beside **every** stable
+  location (the root, `/build/` and `/dist/`), so each one finds its tiles and
+  score through its own base URL. Those two folders cost what they did until
+  step 6b serves the stable links from the store.
+- **`assets/` stays because pages other than builds load images from it:**
+  main's source page at `/index-game.html`, `docs/component-catalog.html`,
+  `items-preview.html`, `docs/low-poly-fighters/` and `pose-studio/`. It
+  leaves the base tree with step 13, when `assets/` leaves main.
+- **`art/` goes.** Its seven review sections leave the site, and the build
+  index stops listing them, because page discovery reads the assembled tree.
+  The plain links into `art/` from `docs/component-catalog.html`,
+  `pose-studio/` and `docs/low-poly-fighters/index.html:38` (`../../art/poses/`)
+  now 404; nothing loads an image from `art/`.
+- **The share image.** `og:image` is now
+  `https://cehinds.github.io/AshenSpire/og-image.webp`. `pages-site` writes it
+  at the site root from `assets/bg/title-city-tower.webp` in main's tree, or
+  from the first other branch that has it. `OG_IMAGE` in `tools/og-image.mjs`
+  (a Pages-only module, so it is not a build-identity input)
+  names all three, and `--check` is red without it. **Before step 13 removes
+  `assets/` from main, step 6b or 13 must take this file from the object store
+  instead**, or every branch loses its source and `--check` goes red.
 
 | term | today | steady state after the plan |
 |---|---|---|
-| main's base tree | 1,089 MB | about 265 MB (about 105 MB without `docs/preview`) |
+| main's base tree | 1,089 MB (about 485 MB after step 6a: `art/` out, `assets/` 43 MB kept) | about 470 MB while `assets/` is kept (dev's `assets/` is 206 MB); about 265 MB after step 13 (about 105 MB without `docs/preview`) |
 | build HTML (`builds.json`, 2026-09-27 15:15Z, `--keep 10`) | **2,760 MB**: dev 294 (10 light), test 1,196 + 117 mobile, release 798 + 29 mobile, main 328 (8 full) | 38 × 9.5 MB ≈ 360 MB |
 | per-build music and tiles | about 32 MB × 38 ≈ 1,200 MB | 0 |
 | stable links (`/AshenSpire.html`, `/build/`, `/dist/`, `-mobile`) | 4 × up to 255 MB | 3 × 9.5 MB + a redirect ≈ 30 MB |
 | light single files (`download/`, owner answer 3) | (inside the build HTML above) | not in the total below: 4 × 29.5 ≈ 120 MB if only each branch's latest build carries one, 38 × 29.5 ≈ 1,120 MB if every kept build does (step 6b picks) |
 | object store (high 185 + light 14 + common 32, plus the files each release changes) | — | about 240 MB |
-| **total** | **well above 5 GB** | **about 895 MB** before the light single files: about 1.0 GB with one per branch, about 2.0 GB with one per kept build |
+| **total** | **well above 5 GB** | **about 1.1 GB** before the light single files while `assets/` is kept (about 895 MB after step 13): about 1.2 GB with one per branch, about 2.2 GB with one per kept build |
 
 If step 6b keeps light single files only for each branch's latest build, every older retained build must hide its per-build Download cell and use the offline zip path inside the game; no link may target an absent `download/AshenSpire.html`. Its check iterates every rendered build-list link and every offered offline-download action and verifies that the destination exists. Keeping a single file for every retained build keeps those links and uses the higher storage estimate.
 
@@ -536,8 +570,9 @@ If step 6b keeps light single files only for each branch's latest build, every o
 - **Transition peak.** While old inline builds and the new store are both
   published, the site is today's size plus the store, about 240 MB more. It
   then falls by one old build per new build until the old ones age out of
-  `--keep` (for dev, about 10 dev merges). Step 6a removes about 820 MB of the
-  base tree before the store is added, so the peak stays below today's size.
+  `--keep` (for dev, about 10 dev merges). Step 6a removes about 600 MB of the
+  base tree (`art/`; measured 1,089 → about 485 MB on `origin/main`) before
+  the store is added, so the peak stays below today's size.
   To shorten the peak, the owner can dispatch `pages-builds` once with a lower
   `keep` after step 6.
 - `pages-site --check` prints the assembled site's total size, so growth is
@@ -692,7 +727,7 @@ and afterwards a token only raises the rate limit.
 | 3c | **Music and tiles through the index.** The `mapDetail.js` `load()` rewrite; `audio.js` reads the common index. | — | all |
 | 4 | **`file://` for the pack shape.** The `.js` twins, the font sidecar, tiles as `Image` loads, the synth under `file://`, and `external-play --file`. | the web edition opens by double-click | all |
 | 5 | **Loading UX and fallbacks.** Progress on the startup gate, the critical set in `content/config`, the Retry notice, placeholders on a failed load, and tests that block the index and that remove the high index. Also **the window before the load settles** (step 3a): a pack build draws nothing but a static "Loading art…" line until its indexes load or fail (up to `BOOT_WAIT_MS`, 8 s), so step 5 moves that wait behind the startup gate, takes the line's wording from `content/config`, and adds the Retry that reloads the indexes and redraws. | player-visible boot line | all |
-| 6a | **Pages base tree.** `pages-site` excludes `art/`, `assets/`, `assets-mobile/`, `map-detail/`, `music/` and the committed build HTML from main's base tree (`docs/preview` stays, owner answer 7); `og:image` moves to a Pages path; `--check` prints the site's size. | a smaller site | every build, as it was |
+| 6a | **Pages base tree.** `pages-site` excludes `art/`, `assets-mobile/`, `map-detail/`, `music/` and the committed build HTML from main's base tree; `assets/` stays (owner, 2026-10-02) and so does `docs/preview` (owner answer 7); the stable links get `map-detail/` and `music/` beside each location; `og:image` moves to a Pages path; `--check` prints the site's size. | a smaller site | every build, as it was |
 | 6b | **Pages store + service worker, and the Download kept whole.** `pages-site` publishes pack-shaped builds with `/objects`, `/packs`, `asset-base.json` for every page kind (section 4) and `/AshenSpire/sw.js` (Range/`206` for audio, kill-switch). The **light single file is built and published at a separate path**, `/<branch>/<ordinal>/download/AshenSpire.html`, and stays there (owner answer 3): the build list's *Download* and `offlineDownload.js` point there, so no download is a 9.5 MB HTML with no art. This step picks whether every kept build or only each branch's latest carries it (section 4). "Make available offline" arrives on Download & saves. This is the first time hosted players get the pack shape. That is intended, because D5 already accepted a Pages web edition. | hosted offline | older builds as they were; the light single-file download |
 | 7 | **In-game zip download.** Added beside the light single-file download in `offlineDownload.js`, with new `offlinePlay.js` instructions and `offline-play-qa` on the zip. The `download/` light single file stays. | desktop offline copy | both downloads |
 | 8a | **SPEC + FINISH PR** (section 6's sign-off rows, D5). Owner review there (owner answer 5). | text | — |
@@ -806,7 +841,8 @@ Where the build differs from, or settles, the text above (2026-10-02):
   `ART_REPO_TOKEN` fails by name, saying the repository is private.
   Source play without a fetch shows placeholders, not an error.
 - **Pages size.** The site is already over the documented 1 GB. Steps 6a and
-  6b bring it to about 0.9 GB (section 4). If GitHub starts enforcing the
+  6b bring it to about 1.1 GB while `assets/` stays on Pages, and about 0.9 GB
+  after step 13 (section 4). If GitHub starts enforcing the
   limit, the rest comes from a lower `--keep`, or from publishing the light
   single file for each branch's latest build only; `docs/preview` stays (owner
   answer 7).

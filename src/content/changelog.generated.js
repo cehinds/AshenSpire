@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the build now fetches its art from the art repository's release",
     "detail": "Nothing you play changes. The game pins one release of its art, light art and fonts, music and map tiles in a separate repository, downloads each part, checks every file against its fingerprint, and proves on every change that the release and the copies still kept here are identical, byte for byte.",
-    "build": "0.7.1.736",
+    "build": "0.7.1.737",
     "pullRequest": 1450,
     "url": "https://github.com/cehinds/AshenSpire/pull/1450"
+  },
+  {
+    "id": "pr-1442",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The Pages site no longer copies the art review folder",
+    "detail": "Behind the scenes: the project site stops carrying the art review pages and old build-file copies from main, the stable links get their map tiles beside every copy, and link previews use a picture the site itself serves; nothing you play changes.",
+    "build": "0.7.1.736",
+    "pullRequest": 1442,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1442"
   },
   {
     "id": "pr-1443",
