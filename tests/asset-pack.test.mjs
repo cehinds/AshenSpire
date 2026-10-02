@@ -357,7 +357,10 @@ test('known-bad: a .asset-pack marker that is a symlink or a directory is refuse
 test('.gitignore keeps the store and its marker out of git at any depth under build/ and dist/', (t) => {
   const repo = fileURLToPath(new URL('..', import.meta.url));
   const paths = ['build/asset-pack/.asset-pack', 'build/web/packs/light-000000000000.json', 'build/a/b/objects/aa/x.webp', 'build/a/.asset-pack',
-    'dist/packs/light-000000000000.json', 'dist/objects/aa/x.webp', 'dist/.asset-pack', 'dist/staging/packs/x.json', 'dist/staging/objects/aa/x.webp', 'dist/staging/.asset-pack'];
+    'dist/packs/light-000000000000.json', 'dist/objects/aa/x.webp', 'dist/.asset-pack', 'dist/staging/packs/x.json', 'dist/staging/objects/aa/x.webp', 'dist/staging/.asset-pack',
+    // The step-8e tree: the light single file under download/, the base file
+    // beside the game file, and the version-stamped copy.
+    'build/download/AshenSpire.html', 'dist/download/AshenSpire.html', 'build/asset-base.json', 'dist/asset-base.json', 'dist/AshenSpire-0.7.1.1.html', 'AshenSpire.html'];
   const r = spawnSync('git', ['check-ignore', '--no-index', ...paths], { cwd: repo, encoding: 'utf8' });
   if (r.error || r.status === 128) { t.skip(`git unavailable here (${r.error?.code || r.stderr.trim()})`); return; }
   assert.deepEqual(r.stdout.split('\n').filter(Boolean).sort(), [...paths].sort(), 'every path is ignored');

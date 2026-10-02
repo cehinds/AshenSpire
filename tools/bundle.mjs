@@ -1,6 +1,8 @@
 #!/usr/bin/env node
-// tools/bundle.mjs — produce a standalone, single-file, double-click-to-play
-// build of AshenSpire at build/AshenSpire.html.
+// tools/bundle.mjs — produce the built game: the pack-shaped HTML at
+// build/AshenSpire.html (its packs/ and objects/ beside it), or with
+// --single-file the self-contained light single file at
+// build/download/AshenSpire.html (docs/EXTERNAL-ASSETS-PLAN.md step 8e).
 //
 // Zero dependencies (Node core only). Reads index.html, inlines every
 // stylesheet, statically walks the ES-module import graph from src/main.js,
@@ -8,17 +10,17 @@
 // whole game runs from one classic <script> under file:// with no bundler,
 // no server, and no module/CORS constraints.
 //
-// Usage: node tools/bundle.mjs
+// Usage: node tools/bundle.mjs [--light] [--single-file] [--out <dir>]
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, rmSync } from 'node:fs';
 import vm from 'node:vm';
 import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
-import { MOBILE_ASSET_DIR, MOBILE_BUNDLE_BUDGET_BYTES, distinctAssetId } from './mobileart-policy.mjs';
+import { MOBILE_ASSET_DIR, distinctAssetId } from './mobileart-policy.mjs';
 import { headMetaTags } from './head-meta.mjs';
-import { writePacks, strictlyUnderBuild, objectPath } from './asset-pack.mjs';
+import { writePacks, inBuildOrDist, objectPath } from './asset-pack.mjs';
 import { externalizeCss, newTemplate, templateValue, slotIds } from './asset-css.mjs';
-import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_FULL, EDITION_MOBILE, EDITION_LIGHT } from './buildversion.mjs';
+import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_HIGH, EDITION_LIGHT } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -93,71 +95,61 @@ function idOf(absPath) {
 // ---------------------------------------------------------------------------
 // TWO SHAPES OF THE SAME BUILD, AND WHY BOTH EXIST.
 //
-// Default (no flags): the consolidated single file. Every module, stylesheet
-// and image travels inside one HTML, so it runs from file:// with no server —
-// which is the whole reason this bundler rewrites ES modules into closures.
-// That artifact is unchanged by the flag below and remains what build/,
-// dist/AshenSpire.html and the root alias carry.
+// THE FLIP (docs/EXTERNAL-ASSETS-PLAN.md step 8e, owner answers 2, 3 and 6).
+// Two shapes, and the pack shape is the default:
 //
-// `--external-art`: the same bundle with the art left OUTSIDE, referenced as
-// ordinary `assets/…` URLs beside the HTML. 91.6% of the single file is 1,929
-// base64 art URIs, so this is 57.6 MB → 4.8 MB, and the art then arrives per
-// screen and stays in the browser cache instead of being re-read whole on
-// every load. It needs a server, so it does NOT replace the standalone; it is
-// what a phone should be handed.
+// Default (no flags): THE PACK SHAPE — the game file with no media inside it.
+// tools/asset-pack.mjs writes a content-addressed store
+// (`objects/<xx>/<sha256>.<ext>`) and one index per pack
+// (`packs/<pack>-<digest12>.json`, each with its `.js` twin for file://, plus
+// the `packs/fonts-<digest12>.js` sidecar) beside the HTML: `high`, `light`
+// and `common` without --light (the light pack is the high tier's fallback),
+// `light` and `common` with it. This file stamps ASSET_PACKS in
+// src/ui/assetPacks.js, in memory, with each index's sha256 and the default
+// tier, and writes `asset-base.json` ({"base":"./"}) beside the HTML. At boot
+// the loader checks each index against that pin and resolves ids to objects
+// through setBuiltInSource(). The CSS assets (the fonts and backdrops) are
+// ASSET_CSS slots the loader fills from the index it used, and the two SVG
+// masks are inlined (step 3b, tools/asset-css.mjs). The map-detail tiles and
+// the shipped score are common ids too (step 3c), so no map-detail/ or music/
+// folder is copied beside the HTML. It opens by double-click too while its
+// folder stays together (step 4: the `.js` twins and the font sidecar). The
+// HTML is about 9.5 MB. `--external-art`, the flag that used to choose this
+// shape, is still accepted (and changes nothing) for one release.
 //
-// This is not a new mechanism. src/ui/assetmap.js has always had two modes and
-// says so: with ASSET_MAP empty, assetUrl() returns the plain path and the
-// browser fetches normally. `--external-art` is that mode, chosen deliberately
-// rather than by being served from a directory.
+// `--light`: the default tier is light, and only the light and common packs
+// are carried (owner, 2026-09-26: "light only on dev/test"). Without it the
+// default tier is high and all three packs are carried (release/main).
 //
-// THE PACK SHAPE (docs/EXTERNAL-ASSETS-PLAN.md §3–4, step 3a). The art beside
-// the HTML is no longer a copy of the assets/ tree. tools/asset-pack.mjs writes
-// a content-addressed store (`objects/<xx>/<sha256>.<ext>`) and one index per
-// pack (`packs/<pack>-<digest12>.json`): `light` and `common` with --light,
-// and `high`, `light` and `common` without it (the light pack is the high
-// tier's fallback). This file stamps ASSET_PACKS in src/ui/assetPacks.js, in
-// memory, with each index's sha256 and the default tier, and writes
-// `asset-base.json` ({"base":"./"}) beside the HTML. At boot the loader checks
-// each index against that pin and resolves ids to objects through
-// setBuiltInSource(). The CSS assets (the fonts and backdrops) are ASSET_CSS
-// slots the loader fills from the index it used, and the two SVG masks are
-// inlined (step 3b, tools/asset-css.mjs). The map-detail tiles and the
-// shipped score are common ids too (step 3c): mapDetail.js and audio.js
-// resolve them through assetUrl(), so no map-detail/ or music/ folder is
-// copied beside the HTML any more.
+// `--single-file`: THE LIGHT SINGLE FILE, the one shape that still inlines.
+// Every module, stylesheet and image travels inside one HTML, so it runs from
+// file:// with no folder beside it — the reason this bundler rewrites ES
+// modules into closures. Its art payloads are the light tier's, read from
+// assets-mobile/ under the same `assets/…` keys. It is held to no byte budget
+// (see the note before the write below). It is written to build/download/ by
+// default, the path the Pages site and the in-game Download name (owner
+// answer 3: one light-art single file is kept as the download). It is always
+// light; --light beside it changes nothing.
 //
-// `--mobile`: a THIRD shape, and the second single file. The same bundle, the
-// same `assets/…` keys, but every art payload is read from assets-mobile/ — the
-// committed twin tree tools/mobile-art.mjs shrinks from assets/ under the
-// policy in tools/mobileart-policy.mjs. It runs from file:// like the default
-// and is held under MOBILE_BUNDLE_BUDGET_BYTES (30 MB): a build over that is
-// refused, not written. Owner's ask, 2026-09-20: the full file had grown to
-// 253 MB, which on a phone is the whole cost of starting; two downloads now,
-// the full one and this one, and the site offers both.
-//
-// `--light`: the LIGHT ART TIER, and the default for dev/test builds since
-// 2026-09-26 (owner: "light only on dev/test"). The same art payloads as
-// --mobile — read from assets-mobile/ — but written as the ordinary
-// AshenSpire.html and stamped edition `light`. It is NOT held to the mobile
-// budget (owner: the single file is exempt from the 50 MB build cap), and it
-// combines with --external-art so the served web edition carries the same tier.
-// tools/launch.mjs builds it unless told --full-art.
+// RETIRED AT 8e: the full-art single file (~255 MB; owner answer 6, FINISH
+// D24) and `--mobile`, the separate mobile single file (owner answer 2, FINISH
+// D23). One HTML picks the light or high tier at runtime (Settings → Display →
+// Art quality), and the light single file is the phone-sized download. A
+// `--mobile` run is refused by name rather than quietly building something else.
 const ARGV = process.argv.slice(2);
-const EXTERNAL_ART = ARGV.includes('--external-art');
-const MOBILE = ARGV.includes('--mobile');
-const LIGHT = ARGV.includes('--light');
-if (EXTERNAL_ART && MOBILE) {
-  console.error('bundle.mjs: --external-art and --mobile are two different shapes; pick one');
+if (ARGV.includes('--mobile')) {
+  console.error('bundle.mjs: --mobile is retired (docs/EXTERNAL-ASSETS-PLAN.md step 8e, owner answer 2): the mobile edition is dropped.');
+  console.error('  The pack-shaped build picks its tier at runtime; the light single file is `--single-file`.');
   process.exit(2);
 }
-if (LIGHT && MOBILE) {
-  console.error('bundle.mjs: --light and --mobile both name an edition; pick one');
-  process.exit(2);
-}
-// Both read their art payloads from the twin tree; only the name, the stamp and
-// the budget tell them apart.
-const TWIN_ART = MOBILE || LIGHT;
+const SINGLE_FILE = ARGV.includes('--single-file');
+// Every build that is not the light single file is the pack shape.
+const EXTERNAL_ART = !SINGLE_FILE;
+// The light single file is light by definition.
+const LIGHT = SINGLE_FILE || ARGV.includes('--light');
+// The light tier's payloads come from the twin tree; only the shape tells the
+// light single file and the light pack build apart.
+const TWIN_ART = LIGHT;
 const OUT_FLAG = ARGV.indexOf('--out');
 if (OUT_FLAG >= 0 && !ARGV[OUT_FLAG + 1]) {
   console.error('bundle.mjs: --out needs a directory');
@@ -166,8 +158,8 @@ if (OUT_FLAG >= 0 && !ARGV[OUT_FLAG + 1]) {
 // ONE HOME still, and the invariant below depends on it: the success write and
 // the refusal write must resolve to the same file. Both read OUT_PATH, so a
 // flag that moves the output moves both or neither.
-const OUT_DIR = resolve(ROOT, OUT_FLAG >= 0 ? ARGV[OUT_FLAG + 1] : 'build');
-const OUT_NAME = MOBILE ? 'AshenSpire-mobile.html' : 'AshenSpire.html';
+const OUT_DIR = resolve(ROOT, OUT_FLAG >= 0 ? ARGV[OUT_FLAG + 1] : (SINGLE_FILE ? 'build/download' : 'build'));
+const OUT_NAME = 'AshenSpire.html';
 const OUT_PATH = resolve(OUT_DIR, OUT_NAME);
 // Where an `assets/…` URL resolves from, for the copy pass and the CSS rewrite.
 const EXTERNAL_ASSET_DIR = resolve(OUT_DIR, 'assets');
@@ -461,7 +453,7 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
 }
 
 // ---------------------------------------------------------------------------
-// 2b. THE PACKS (--external-art only) — docs/EXTERNAL-ASSETS-PLAN.md §3, step 3a.
+// 2b. THE PACKS (the pack shape: every build but --single-file) — docs/EXTERNAL-ASSETS-PLAN.md §3, step 3a.
 //
 // Written BEFORE the HTML, because the HTML pins what was written: each index's
 // sha256 goes into ASSET_PACKS. tools/asset-pack.mjs reads every file from the
@@ -531,7 +523,7 @@ if (EXTERNAL_ART) {
       const fromAssets = relative(ASSET_DIR, resolve(dirname(cssAbs), ref.split('?')[0].split('#')[0]));
       // The packs carry assets/ ids only. A url naming anything else is not
       // shipped by this mode at all, so it would be a guaranteed 404.
-      if (fromAssets.startsWith('..')) fail(`CSS url outside assets/ cannot ship with --external-art: ${ref}`);
+      if (fromAssets.startsWith('..')) fail(`CSS url outside assets/ cannot ship in the pack shape: ${ref}`);
       return posix.join('assets', fromAssets.split(/[\\/]/g).join('/'));
     };
     const inlineData = (id) => {
@@ -609,9 +601,10 @@ try {
     ordinal: padOrdinal(ord.ordinal),
     built: ord.built,
     runPath: RUN_PATH_BUNDLE,
-    // The edition is the one fact that tells the two single files apart from
-    // inside: same digest, same ordinal, different art. Settings → About says it.
-    edition: MOBILE ? EDITION_MOBILE : LIGHT ? EDITION_LIGHT : EDITION_FULL,
+    // The edition is the build's DEFAULT TIER (step 8e): `light` or `high` for
+    // the pack shape, always `light` for the light single file. Same digest,
+    // same ordinal, different art, so Settings → About says which.
+    edition: LIGHT ? EDITION_LIGHT : EDITION_HIGH,
   }));
 } catch (err) {
   fail(`could not derive the build version: ${err.message}`);
@@ -765,7 +758,7 @@ for (const id of order) {
 // the stylesheet. Absolute/remote/data: urls are left alone; a missing file is
 // a hard fail rather than a silently blank background.
 //
-// The web edition (--external-art) does not come through here: its url()s
+// The pack shape (every build but --single-file) does not come through here: its url()s
 // became ASSET_CSS slots and inlined masks in section 2b (tools/asset-css.mjs).
 // Left alone they would be wrong twice over: authored relative to the
 // STYLESHEET (`../assets/bg/bg_act1.webp` from styles/), they resolve against
@@ -786,7 +779,7 @@ function inlineCssUrls(css, cssAbs) {
     if (TWIN_ART && !EXTERNAL_ART) {
       // Same rule as the sweep: the stylesheet names the source, the payload
       // comes from the twin. A url() that points outside assets/ has no twin
-      // and is refused, exactly as --external-art refuses it.
+      // and is refused, exactly as the pack shape refuses it.
       const fromAssets = relative(ASSET_DIR, assetAbs);
       if (fromAssets.startsWith('..')) fail(`CSS url outside assets/ has no mobile twin: ${ref}`);
       const twin = resolve(ART_DIR, fromAssets);
@@ -1121,13 +1114,14 @@ const probeEntries = `${JSON.stringify(SIGNATURE_PROBE_ID)}: ${MODULE_FN}
   }
 }
 
-// THE MOBILE BUDGET IS A REFUSAL, NOT A WARNING. A mobile file over the number
-// is not a mobile file; writing it and printing a line would hand a phone the
-// exact download this edition exists to avoid. Refused here, before the write,
-// so the exit handler stands a build-failed page where the game would be.
-if (MOBILE && Buffer.byteLength(html, 'utf8') > MOBILE_BUNDLE_BUDGET_BYTES) {
-  fail(`the mobile build is ${Buffer.byteLength(html, 'utf8')} bytes, over its ${MOBILE_BUNDLE_BUDGET_BYTES}-byte budget — tighten tools/mobileart-policy.mjs, regenerate ${MOBILE_ASSET_DIR}/, or cut art`);
-}
+// NO BYTE BUDGET HERE, AND THAT IS STATED RATHER THAN FORGOTTEN. The 30 MB
+// refusal belonged to the retired mobile file (`--mobile`). The plan moves that
+// budget to the light single file (docs/EXTERNAL-ASSETS-PLAN.md §5), but at
+// step 8e the light single file measured 31.1 MB on dev, already over it, and
+// it has never been held to it (owner, 2026-09-26: the single file is exempt
+// from the build cap). Refusing here would stop every build; the number is an
+// open owner question (plan, *Step 8e as built*), and verify-shipped prints the
+// file's size against it so the drift is seen.
 
 // The success write and the refusal write must aim at the same file or the
 // whole property is a second copy of a path. OUT_DIR / OUT_PATH, one home.
@@ -1137,8 +1131,9 @@ writeFileSync(OUT_PATH, html, 'utf8');
 // THE SIBLING DIRECTORIES THE WEB EDITION NO LONGER CARRIES (step 3c).
 //
 // src/ui/components/mapDetail.js: "Detail files are never bundled into the
-// single HTML." The single file ships without them and, served over http(s),
-// reads the map-detail/ and music/ folders tools/launch.mjs writes beside it.
+// single HTML." The light single file ships without them: under file:// it
+// keeps the low-detail map and the synth score, and since step 8e nothing
+// writes those folders beside it (tools/launch.mjs stopped copying them).
 // The web edition used to carry copies of both too; since step 3c its tiles
 // and its score are common-pack ids (`map-detail/<hash>/<edge>/<x>-<y>.webp`,
 // `music/manifest.json`, `music/<context>/<track>.mp3`) that the page
@@ -1157,9 +1152,10 @@ if (EXTERNAL_ART) {
   // build/ or dist/ (the asset-pack guard above already refused anything else
   // inside it), so a mistyped --out can never name the source tree, and a
   // folder outside the checkout keeps whatever its owner put there.
-  // A folder INSIDE build/ or dist/ only: build/ and dist/ themselves carry the
-  // map-detail/ and music/ the single files read (strictlyUnderBuild).
-  const underBuild = strictlyUnderBuild(OUT_DIR, ROOT);
+  // Since step 8e build/ and dist/ themselves hold the pack shape, so they are
+  // cleared too (inBuildOrDist); before it they carried the map-detail/ and
+  // music/ the single files read beside them (review of #1454).
+  const underBuild = inBuildOrDist(OUT_DIR, ROOT);
   const retired = [];
   for (const dir of [EXTERNAL_ASSET_DIR, resolve(OUT_DIR, 'map-detail'), resolve(OUT_DIR, 'music')]) {
     if (underBuild && existsSync(dir)) {
@@ -1187,10 +1183,8 @@ console.log('  build version    : ' + buildDigest + ' (derived from this source;
 console.log('  modules bundled  : ' + order.length);
 console.log('  stylesheets      : ' + cssHrefs.length + ' (' + cssHrefs.join(', ') + ')');
 console.log('  authoring omitted: ' + Math.round(authoringBytes / 1024) + ' KiB (equipment component experiments)');
-console.log('  shape            : ' + (EXTERNAL_ART ? `external art (needs a server; packs/ and objects/ beside the HTML; default tier ${DEFAULT_TIER})`
-  : MOBILE ? `consolidated single file, MOBILE edition (art from ${MOBILE_ASSET_DIR}/; runs from file://; budget ${MOBILE_BUNDLE_BUDGET_BYTES} bytes)`
-    : LIGHT ? `consolidated single file, LIGHT art tier (art from ${MOBILE_ASSET_DIR}/; runs from file://; no budget)`
-      : 'consolidated single file (runs from file://)'));
+console.log('  shape            : ' + (EXTERNAL_ART ? `pack shape (packs/ and objects/ beside the HTML; served, or by double-click while the folder stays together; default tier ${DEFAULT_TIER})`
+  : `the light single file (art from ${MOBILE_ASSET_DIR}/, inline; runs from file://; no byte budget)`));
 if (EXTERNAL_ART) {
   console.log('  art swept        : ' + copiedAssets + ' files (' + Math.round(mapBytes / 1024) + ' KiB) — carried as packs, not copied');
   for (const [pack, p] of Object.entries(packSummary.packs)) {

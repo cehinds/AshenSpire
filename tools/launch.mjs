@@ -1,15 +1,18 @@
 // tools/launch.mjs — the one-click launcher.
 //
-// 1. Builds the standalone single-file HTML (tools/bundle.mjs → build/).
-// 2. Copies it to the root and into dist/ (stable current-build aliases plus a
-//    version-stamped dist copy).
+// 1. Builds the game (tools/bundle.mjs → build/): since
+//    docs/EXTERNAL-ASSETS-PLAN.md step 8e that is ONE TREE — the pack-shaped
+//    AshenSpire.html with its packs/ and objects/ beside it, and the light
+//    single file at download/AshenSpire.html (inline, self-contained).
+// 2. Copies that tree into dist/ (plus a version-stamped copy of the HTML),
+//    and the light single file to the root as the easy-to-find alias.
 // 3. Serves the live app on http://localhost and opens it in the browser.
 //
 // Invoked by run.bat (Windows) and run.sh (macOS/Linux), or: node tools/launch.mjs
 
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, copyFileSync, existsSync, cpSync, readdirSync, rmSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 // THE RELEASE STRING IS READ FROM ITS ONE HOME, NOT RE-DERIVED HERE. This file
@@ -68,12 +71,20 @@ function version() {
 }
 
 const args = process.argv.slice(2);
-// THE ART TIER. Light by default (owner, 2026-09-26: "light only on dev/test"):
-// one single file, AshenSpire.html, carrying the assets-mobile/ payloads, and a
-// web edition with the same art. `--full-art` is the release/main shape it
-// replaced: the full-art AshenSpire.html (~255 MB) plus the mobile file.
+// THE ART TIER, AND WHICH PACKS THE BUILD CARRIES. Light by default (owner,
+// 2026-09-26: "light only on dev/test"): the light and common packs, default
+// tier light. `--full-art` is the release/main shape: all three packs, default
+// tier high, light kept as its fallback. `--light` says the default out loud.
+// The light single file is built either way: it is the one inline download
+// (owner answer 3), and it is always light. The full-art single file and the
+// separate mobile file are retired (owner answers 6 and 2, step 8e).
 const FULL_ART = args.includes('--full-art');
+if (FULL_ART && args.includes('--light')) {
+  console.error('launch: --light and --full-art name two tiers; pick one.');
+  process.exit(2);
+}
 const TIER_FLAG = FULL_ART ? [] : ['--light'];
+const TIER = FULL_ART ? 'high' : 'light';
 
 // 0a. Compile presentation config (content/config/**.json → src/config/generated/ui.js).
 // Runs before the content build, whose stray-source sweep refuses a config file
@@ -95,97 +106,87 @@ if (content.status !== 0) {
   process.exit(content.status || 1);
 }
 
-// 1. Build the standalone bundle.
-console.log(`launch: building the standalone bundle (${FULL_ART ? 'full art' : 'light art'})…`);
+const buildDir = resolve(ROOT, 'build');
+const distDir = resolve(ROOT, 'dist');
+
+// 1. The game file, pack-shaped, into build/ (its packs/ and objects/ beside it).
+// This run bumps the ordinal when the tree moved; the single file below reads
+// the same number.
+console.log(`launch: building the game (pack shape, ${TIER} art by default)…`);
 const build = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs'), ...TIER_FLAG], { stdio: 'inherit' });
 if (build.status !== 0) {
   console.error('launch: build failed — aborting.');
   process.exit(build.status || 1);
 }
 
-// 2. Refresh the player-facing current-build aliases from the fresh build.
-const src = resolve(ROOT, 'build', 'AshenSpire.html');
-const distDir = resolve(ROOT, 'dist');
-mkdirSync(distDir, { recursive: true });
-const ver = version();
-// #12 NAMES THIS TOOL IN SCOPE, AND A BUILDER IS NOT EXEMPT. CI ran this
-// unwrapped, so a run that copied nothing — a stranded main(), a swallowed
-// throw — exited 0 and read green like any other step. The aliases are counted
-// and VERIFIED to exist after the copy, so the number is a measurement of what
-// landed rather than a constant typed beside three copy calls.
-const aliases = [
-  resolve(ROOT, 'AshenSpire.html'),
-  resolve(distDir, 'AshenSpire.html'),
-  resolve(distDir, `AshenSpire-${ver}.html`),
-];
-for (const dest of aliases) copyFileSync(src, dest);
-// Optional hosted detail is separate from the offline-safe HTML fallback.
-if (existsSync(resolve(ROOT, 'map-detail'))) cpSync(resolve(ROOT, 'map-detail'), resolve(distDir, 'map-detail'), {recursive:true});
-// The shipped score, the same way: a served alias with the music-folder setting
-// blank fetches music/ from beside itself (content/music.js SHIPPED_MUSIC_FOLDER),
-// so build/ and dist/ each carry a copy. Git-ignored, like dist/map-detail/.
-if (existsSync(resolve(ROOT, 'music'))) {
-  for (const dir of [distDir, resolve(ROOT, 'build')]) cpSync(resolve(ROOT, 'music'), resolve(dir, 'music'), {recursive:true});
+// 1b. The light single file into build/download/ — the same source and stamp,
+// every byte inside it, held under its 30 MB budget by the bundler.
+console.log('launch: building the light single file (download/)…');
+const single = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs'), '--single-file'], { stdio: 'inherit' });
+if (single.status !== 0) {
+  console.error('launch: light single-file build failed — aborting.');
+  process.exit(single.status || 1);
 }
-const landed = aliases.filter((f) => existsSync(f)).length;
-console.log(`launch: current build refreshed → AshenSpire.html + dist/AshenSpire.html + dist/AshenSpire-${ver}.html`);
+
+// 1c. What an earlier launcher left that this build no longer makes. Each one,
+// left in place, is an older build under a current-looking name, or a folder
+// that would quietly serve a tile, a track or an image the pinned index lacks.
+// Only launcher output (all of it git-ignored) is touched.
+const ver = version();
+const stale = [
+  resolve(ROOT, 'AshenSpire-mobile.html'),
+  resolve(buildDir, 'AshenSpire-mobile.html'),
+  resolve(buildDir, 'web'),          // the pack shape's old home (steps 3a–7)
+  resolve(buildDir, 'music'),
+  resolve(buildDir, 'map-detail'),
+  resolve(distDir, 'music'),
+  resolve(distDir, 'map-detail'),
+  resolve(distDir, 'packs'),         // replaced whole below
+  resolve(distDir, 'objects'),
+];
+if (existsSync(distDir)) {
+  for (const name of readdirSync(distDir)) {
+    // The retired mobile files, and version-stamped HTML from another build:
+    // a pack-shaped copy pins packs this dist/ no longer carries.
+    if (/^AshenSpire-mobile(-.*)?\.html$/.test(name)) stale.push(resolve(distDir, name));
+    else if (/^AshenSpire-.+\.html$/.test(name) && name !== `AshenSpire-${ver}.html`) stale.push(resolve(distDir, name));
+  }
+}
+const removed = stale.filter((f) => existsSync(f));
+for (const f of removed) rmSync(f, { recursive: true, force: true });
+if (removed.length) console.log(`launch: removed ${removed.length} stale launcher output(s): ${removed.map((f) => relative(ROOT, f).split(sep).join('/')).join(', ')}`);
+
+// 2. Refresh dist/ from build/ (the same tree, so dist/AshenSpire.html opens by
+// double-click with its folder), and the root alias from the light single file
+// (the root carries no packs/ or objects/, so its alias is the self-contained
+// file). #12 NAMES THIS TOOL IN SCOPE, AND A BUILDER IS NOT EXEMPT: the aliases
+// are counted and VERIFIED to exist after the copy, so the number is a
+// measurement of what landed rather than a constant typed beside the copy calls.
+const html = resolve(buildDir, 'AshenSpire.html');
+const singleFile = resolve(buildDir, 'download', 'AshenSpire.html');
+mkdirSync(resolve(distDir, 'download'), { recursive: true });
+for (const part of ['packs', 'objects']) cpSync(resolve(buildDir, part), resolve(distDir, part), { recursive: true });
+for (const part of ['asset-base.json', '.asset-pack']) copyFileSync(resolve(buildDir, part), resolve(distDir, part));
+const aliases = [
+  [html, resolve(distDir, 'AshenSpire.html')],
+  [html, resolve(distDir, `AshenSpire-${ver}.html`)],
+  [singleFile, resolve(distDir, 'download', 'AshenSpire.html')],
+  [singleFile, resolve(ROOT, 'AshenSpire.html')],
+];
+for (const [from, to] of aliases) copyFileSync(from, to);
+const landed = aliases.filter(([, to]) => existsSync(to)).length;
+console.log(`launch: current build refreshed → dist/AshenSpire.html + dist/AshenSpire-${ver}.html (+ packs/, objects/) + dist/download/AshenSpire.html + AshenSpire.html (the light single file)`);
 if (landed !== aliases.length) {
   console.error(`launch: REFUSED — ${landed} of ${aliases.length} current-build aliases exist after the copy.`);
   process.exit(1);
 }
 
-// 2b. The MOBILE single file — the second download. Same source, same stamp
-// (the full build above already bumped the ordinal if the tree moved, so this
-// one reads the same number), art from assets-mobile/. It gets the same three
-// aliases the full file has, under its own name, and the same count-and-verify.
-let mobileLanded = 0;
-let mobileWanted = 0;
-if (FULL_ART) {
-console.log('launch: building the mobile single file…');
-const mobile = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs'), '--mobile'], { stdio: 'inherit' });
-if (mobile.status !== 0) {
-  console.error('launch: mobile build failed — aborting.');
-  process.exit(mobile.status || 1);
-}
-const mobileSrc = resolve(ROOT, 'build', 'AshenSpire-mobile.html');
-const mobileAliases = [
-  resolve(ROOT, 'AshenSpire-mobile.html'),
-  resolve(distDir, 'AshenSpire-mobile.html'),
-  resolve(distDir, `AshenSpire-mobile-${ver}.html`),
-];
-for (const dest of mobileAliases) copyFileSync(mobileSrc, dest);
-const landedMobile = mobileAliases.filter((f) => existsSync(f)).length;
-console.log(`launch: mobile build refreshed → AshenSpire-mobile.html + dist/AshenSpire-mobile.html + dist/AshenSpire-mobile-${ver}.html`);
-if (landedMobile !== mobileAliases.length) {
-  console.error(`launch: REFUSED — ${landedMobile} of ${mobileAliases.length} mobile aliases exist after the copy.`);
-  process.exit(1);
-}
-mobileLanded = landedMobile;
-mobileWanted = mobileAliases.length;
-} else {
-  // A light build has no mobile file, so one left by an earlier --full-art run
-  // is stale: it would carry an older build under a current-looking name, and
-  // verify-shipped would compare it against nothing. Remove every copy.
-  const stale = [resolve(ROOT, 'AshenSpire-mobile.html'), resolve(ROOT, 'build', 'AshenSpire-mobile.html')];
-  if (existsSync(distDir)) {
-    for (const name of readdirSync(distDir)) if (/^AshenSpire-mobile(-.*)?\.html$/.test(name)) stale.push(resolve(distDir, name));
-  }
-  const removed = stale.filter((f) => existsSync(f));
-  for (const f of removed) rmSync(f, { force: true });
-  console.log(`launch: light art — no separate mobile file (AshenSpire.html already carries the phone-sized art)${removed.length ? `; removed ${removed.length} stale mobile file(s)` : ''}`);
-}
-
-// Produce the hosted/web edition with the same source stamp and external art.
-console.log('launch: building the external-art web edition…');
-const web = spawnSync(process.execPath, [resolve(ROOT, 'tools/bundle.mjs'), '--external-art', ...TIER_FLAG, '--out', 'build/web'], { stdio: 'inherit' });
-if (web.status !== 0) process.exit(web.status || 1);
-
 if (args.includes('--build-only')) {
   // The terminated verdict line #12's contract requires: one line, one count.
-  // Both editions counted in one ratio; the noun and the full stop are what
-  // tools/verdict.mjs admits, so the edition note goes on the line before.
-  console.log(`launch: ${FULL_ART ? 'full' : 'light'} ${landed}/${aliases.length}${FULL_ART ? `, mobile ${mobileLanded}/${mobileWanted}` : ''}`);
-  console.log(`launch: OK — ${landed + mobileLanded}/${aliases.length + mobileWanted} current-build aliases refreshed.`);
+  // The tier note goes on the line before, because tools/verdict.mjs admits
+  // only the noun and the full stop on the verdict line itself.
+  console.log(`launch: ${TIER} art by default; the pack HTML, its dist/ copies and the light single file`);
+  console.log(`launch: OK — ${landed}/${aliases.length} current-build aliases refreshed.`);
   process.exit(0);
 }
 

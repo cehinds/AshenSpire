@@ -1,5 +1,5 @@
-# The built standalone HTML (AshenSpire.html, AshenSpire-mobile.html and their
-# build/ and dist/ twins) is no longer tracked on dev: CI builds it on every push
+# The built HTML (AshenSpire.html, the retired AshenSpire-mobile.html, and every
+# HTML under build/ and dist/) is no longer tracked on dev: CI builds it on every push
 # and publishes it as a workflow artifact (.github/workflows/dev-preview.yml), and
 # .gitignore keeps it out of commits. The Git LFS rules that used to live here
 # uploaded ~284 MB of new LFS objects per rebuild and exhausted the repository's

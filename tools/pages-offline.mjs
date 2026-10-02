@@ -2,7 +2,7 @@
 // tools/pages-offline.mjs — the Pages service worker in a real Chromium
 // (docs/EXTERNAL-ASSETS-PLAN.md §4 "Service worker", §5 option A, §8; step 6b).
 //
-// It publishes a pack-shaped web edition (build/web, from `node tools/launch.mjs
+// It publishes a pack-shaped web edition (build/, from `node tools/launch.mjs
 // --build-only`) into a local copy of the Pages shape — /AshenSpire/dev/1/ with
 // its asset-base.json, the shared /AshenSpire/objects/ and /packs/ store, and
 // /AshenSpire/sw.js — through the same tools/pages-store.mjs functions
@@ -24,7 +24,7 @@
 //      unregisters the worker and deletes every ashen- cache.
 //
 // USAGE
-//   node tools/pages-offline.mjs [--web build/web]
+//   node tools/pages-offline.mjs [--web build]
 //   node tools/pages-offline.mjs --site _site --page dev/latest    a site pages-site assembled
 //   node tools/pages-offline.mjs --shot keep.png                   also photograph the kept panel
 //   node tools/pages-offline.mjs --selftest     each known-bad worker below must turn the run red by name
@@ -81,7 +81,7 @@ if (PLANT && !PLANTS[PLANT]) { console.error(`pages-offline: no plant ${PLANT}`)
 // assembled instead of building one (its sw.js is restored afterwards).
 const GIVEN_SITE = flag('--site', null) ? resolve(flag('--site')) : null;
 const REL = flag('--page', 'dev/1').replace(/^\/+|\/+$/g, '');
-const WEB = resolve(ROOT, flag('--web', 'build/web'));
+const WEB = resolve(ROOT, flag('--web', 'build'));
 const HTML_FILE = GIVEN_SITE ? join(GIVEN_SITE, REL, 'index.html') : join(WEB, 'AshenSpire.html');
 if (!existsSync(HTML_FILE)) { console.error(`pages-offline: ${HTML_FILE} is missing — run node tools/launch.mjs --build-only first`); process.exit(2); }
 const HTML = readFileSync(HTML_FILE);

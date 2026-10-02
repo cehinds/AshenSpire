@@ -109,14 +109,18 @@ test('a Custom music folder spelled music/ is the player\'s own: fetched by its 
   }
 });
 
-test('bundle.mjs clears old map-detail/ and music/ copies only strictly inside build/ or dist/', async () => {
-  const { strictlyUnderBuild } = await import('../tools/asset-pack.mjs');
+test('bundle.mjs clears old map-detail/ and music/ copies in build/, dist/ or inside them, never elsewhere', async () => {
+  // Since step 8e build/ and dist/ themselves are pack-shaped (the single
+  // files that read those folders beside them are gone), so they count too.
+  const { strictlyUnderBuild, inBuildOrDist } = await import('../tools/asset-pack.mjs');
   const { resolve } = await import('node:path');
   const root = fileURLToPath(new URL('..', import.meta.url));
+  for (const out of ['src', 'music', 'buildx', 'distant']) assert.equal(inBuildOrDist(resolve(root, out), root), false, out);
+  for (const out of ['build', 'dist', 'build/', 'build/web', 'dist/web', 'build/a/b']) assert.equal(inBuildOrDist(resolve(root, out), root), true, out);
   for (const out of ['build', 'dist', 'build/', 'src', 'music']) assert.equal(strictlyUnderBuild(resolve(root, out), root), false, out);
   for (const out of ['build/web', 'dist/web', 'build/a/b']) assert.equal(strictlyUnderBuild(resolve(root, out), root), true, out);
   const bundle = readFileSync(new URL('../tools/bundle.mjs', import.meta.url), 'utf8');
-  assert.match(bundle, /const underBuild = strictlyUnderBuild\(OUT_DIR, ROOT\);/);
+  assert.match(bundle, /const underBuild = inBuildOrDist\(OUT_DIR, ROOT\);/);
 });
 
 test('a map-detail tile id is the path the tree and the pack both use', () => {

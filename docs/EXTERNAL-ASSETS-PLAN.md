@@ -32,7 +32,11 @@ see [Step 7 as built](#step-7-as-built));
 manifest in `BUILD_IDENTITY_FILES`, and a fetch in every building workflow;
 the art repository is public since step 10a);
  **step 8a done (#1440)** (2026-10-02: the SPEC and FINISH wording,
-approved by the owner 2026-10-02); the rest is plan (2026-09-27). The owner answered its
+approved by the owner 2026-10-02); **step 8e built** (2026-10-02: the flip —
+`launch.mjs` writes one tree, the pack-shaped game file and the light single
+file at `download/`; `--mobile` and the full-art single file retired; the
+`EDITION` stamp is the default tier; `/AshenSpire-mobile.html` redirects; see
+[Step 8e as built](#step-8e-as-built)); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -678,7 +682,10 @@ light single file, about 30 MB, self-contained, plays by double-click. The
     or on a low-memory device, and the build's default otherwise.
   - The choice stays in `LOCAL_ONLY_KEYS` (`src/model/settingsSync.js:86`).
   - This also retires `--mobile` and the `mobile/` pages. The 30 MB budget
-    (`mobileart-policy.mjs`) moves to the light single file.
+    (`mobileart-policy.mjs`) moves to the light single file. *(As built at 8e
+    it does not gate: the light single file measured 31.1 MB on dev, already
+    over it, and was never held to it. It is an owner question; see
+    [Step 8e as built](#step-8e-as-built).)*
 - **D5.** The 254 MB file that D5 kept ends at step 8e (answer 6, FINISH D24).
   The light single file stays.
 - The hosted build list keeps a single **Play** link. The *Download* link opens
@@ -1477,6 +1484,92 @@ Where the build settles §5 B (2026-10-02):
   faces, a title backdrop from its objects, then the shared import → map →
   combat → blocked-storage pass. Not exercised: a real OS save dialog, a
   phone, and Safari or Firefox.
+
+### Step 8e as built
+
+Where the build differs from, or settles, the 8e row, §4 and §5 (2026-10-02):
+
+- **One tree.** `tools/launch.mjs` runs `bundle.mjs [--light]` into `build/`
+  (the pack-shaped `AshenSpire.html`, `asset-base.json`, `packs/`, `objects/`)
+  and `bundle.mjs --single-file` into `build/download/AshenSpire.html`, then
+  copies that tree into `dist/` (plus `AshenSpire-<version>.html`). `--light`
+  (the default) carries light and common with default tier light; `--full-art`
+  carries high, light and common with default tier high. The light single file
+  is built on every branch. `build/web/` is gone: launch removes a left-over
+  one, the `music/` and `map-detail/` copies beside `build/` and `dist/`, the
+  mobile files, and version-stamped HTML of another build (a pack-shaped copy
+  would pin packs `dist/` no longer carries).
+- **The root alias is the light single file.** §4's tree names no root alias.
+  The root cannot carry `packs/` and `objects/` (they would sit in the tracked
+  tree), and about twenty tools serve the repository root and open
+  `/AshenSpire.html` or read its text (`combat-save`, `rebind-capture`,
+  `guard-float-parity`, `offline-play-qa`, …), so the root alias stays
+  self-contained: the conservative choice, recorded here. `dist/AshenSpire.html`
+  is the pack-shaped file, the double-click door ARCHITECTURE-MAP names.
+- **`bundle.mjs` flags.** No flag: the pack shape (default tier high).
+  `--light`: default tier light. `--single-file`: the light single file, the one
+  inline shape left (always light; default `--out build/download`).
+  `--external-art` is accepted and changes nothing, for one release. `--mobile`
+  exits 2 and names its retirement. `bundle.mjs` clears the `assets/`,
+  `map-detail/` and `music/` copies an earlier build left in `build/` or `dist/`
+  themselves too now (`inBuildOrDist` in `asset-pack.mjs`), since nothing reads
+  them beside those folders any more.
+- **No byte budget on the light single file.** §5 moves the mobile file's
+  30 MB budget to it, but it measured **31,123,831 B** on dev at this step
+  (the pack HTML **10,629,707 B**; the plan's "about 30 MB" and "about 9.5 MB"
+  are from ordinal 668), and it was never held to one (owner, 2026-09-26: the
+  single file is exempt). A refusal would stop every build, so `bundle.mjs`
+  writes it and `verify-shipped` prints its size against the 30 MB number as a
+  note. **Owner question:** hold the light single file to a budget (30 MB
+  needs the light art cut by ~1.2 MB; or a new number), or leave it unbudgeted?
+- **The `EDITION` stamp is the default tier**: `light` or `high` for the pack
+  file, `light` for the single file; `src/buildversion.js` rests at `high` (the
+  source tree serves `assets/`, the high tier), and About says "· light art" or
+  "· high art". `full` and `mobile` are refused by `stampSource`.
+- **`verify-shipped`**: check A (the art is inline) holds the light single file
+  and its two copies (`dist/download/`, the root alias); new check **P** holds
+  `build/AshenSpire.html` and `dist/AshenSpire.html` to the pack shape (an
+  `ASSET_PACKS` pin with a default tier it carries and the common pack; no
+  inlined media but the SVG masks; each pinned index, its `.js` twin and the
+  font sidecar beside it at their pins); E checks the edition of each; B holds
+  every copy to its build; C and C2 unchanged; the mobile budget check D is
+  retired. 12 checks; the selftest plants nine pack defects.
+- **`buildversion --check`**: row A rests at `high`; row E accepts `light` or
+  `high`; row **E2** now holds the light single file to this tree's digest, run
+  path and edition `light`, and every file `build/AshenSpire.html` pins to its
+  hash in `build/packs/`. `buildversion-selftest`'s mobile plant became a
+  "pinned pack missing" plant, plus a retired-`full`-edition plant and a
+  "single file says high" plant.
+- **Tests**: `bundle.test` builds the light single file in its parse-gate and
+  EOL sandboxes (`assets-mobile/` copied, the binary compared with its light
+  twin) and adds one pack-shape case on the real light and common trees (not a
+  small fixture pack: the packs are written from `art-manifest.json`, which a
+  fixture would have to replace, and the manifest is build identity), which
+  also checks `--mobile` is refused; `web-meta` reads `build/AshenSpire.html`
+  and `build/download/AshenSpire.html`; `mobile-art-distinct` adds that
+  byte-identical light ids name one object; `sfx-filename-convention` builds
+  its artifact with `--single-file`.
+- **CI**: `ci.yml`'s reproducible digests are the pack HTML, the light single
+  file and every file in `build/packs/`; `dev-preview.yml` copies the pack tree
+  from `build/` into `preview/` (not `download/`), and the standalone artifact
+  is the root alias, the light single file, on every branch (no mobile file);
+  its browser gates still build their own `build/web` by `--out`.
+  `pages-builds.yml` hands the generator main's pack tree from `build/` (or
+  `build/web/` for a main before this step) and the mobile file only if main
+  still builds one.
+- **Pages** (`pages-site.mjs`): a rebuild finds the pack-shaped HTML in
+  `build/web/` (before 8e) or `build/` (from 8e); a full-art rebuild's download
+  is its light single file (`AshenSpire.html`, whose `EDITION` is `light`)
+  where no mobile file exists. Once main's build is pack-shaped,
+  `/AshenSpire-mobile.html`, `/build/AshenSpire-mobile.html` and
+  `/dist/AshenSpire-mobile.html` are a one-line redirect page to the
+  `AshenSpire.html` beside each, and `--check` holds them to it byte for byte.
+- **Not done here:** `CLAUDE.md`'s *Never commit built HTML* line (the plan
+  asks for `packs/` and `objects/` to be named there) is left for the owner: an
+  agent does not edit `CLAUDE.md`; the `.gitignore` rules already cover them.
+  SPEC §3.2's `build/ · dist/` row still says "Today `build/`/`dist/` default to
+  single-file bundles … From step 8e that pack shape becomes the default"; it
+  is now history, and rewording SPEC is the owner's (CONTRIBUTING rule 1).
 
 ---
 
