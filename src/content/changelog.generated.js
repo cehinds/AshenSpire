@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1454",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Legendary sigils: attune one in the Armoury and it works in every fight",
+    "detail": "Three legendary sigils join the game: the Sigil of the Last Vigil raises a guard when you start a fight wounded, the Pyre Sigil raises a guard whenever a card is exhausted, and the Gravelight Sigil heals you when a foe falls while you are wounded. A new Sigils panel in the Armoury's Inventory view lets you attune and unattune them out of a fight, one at a time by default; an attuned sigil needs no slot and no weapon, and a refusal is shown in the panel. No shop sells one. A won fight, a boss before the last, or a treasure room can drop one you do not own, but every drop chance starts at 0, so none drops until you raise it in Settings. A treasure room's spoils now survive a reload before you take them. Older saves load with nothing attuned.",
+    "build": "0.7.1.742",
+    "pullRequest": 1454,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1454"
+  },
+  {
     "id": "pr-1453",
     "date": "2026-10-02",
     "group": "2026-10-02",
