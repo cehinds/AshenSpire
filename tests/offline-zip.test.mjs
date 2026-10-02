@@ -90,6 +90,8 @@ test('the pin and twin readers take exactly the shapes the bundler writes', () =
   assert.equal(twinString(twinText('window.__ashenPack', 'light-x', '{"a":1}\n'), 'window.__ashenPack'), '{"a":1}\n');
   assert.equal(twinString(twinText('__ashenFonts', 'fonts-x', 'q"\\'), '__ashenFonts'), 'q"\\');
   assert.equal(twinString('evil();window.__ashenPack("a", "b");\n', 'window.__ashenPack'), null);
+  assert.equal(twinString(twinText('window.__ashenPack', 'light-x', 't'), 'window.__ashenPack', 'light-x'), 't', 'the id the file name gives');
+  assert.equal(twinString(twinText('window.__ashenPack', 'light-y', 't'), 'window.__ashenPack', 'light-x'), null, 'another id is a twin the loader drops (Codex, #1480)');
   assert.equal(twinString('window.__ashenPack("a", "b", "c");\n', 'window.__ashenPack'), null);
 });
 
@@ -194,6 +196,11 @@ test('every plant is refused by its code, and nothing reports success', async ()
     fx.site.set(`https://example.org/AshenSpire/${obj}`, Buffer.from('<svg>tampered</svg>')); await refusedWith(fx, 'hash'); }
   { const fx = fixtureSite(); const twin = fx.pin.packs.common.index.replace('.json', '.js');
     fx.site.set(`https://example.org/AshenSpire/${twin}`, Buffer.from(twinText('window.__ashenPack', 'x', '{}\n'))); await refusedWith(fx, 'hash'); }
+  // The right text under the wrong id: under file:// the loader waits for the basename's id and drops it (Codex, #1480).
+  { const fx = fixtureSite(); const index = fx.pin.packs.light.index; const text = fx.files.get(index).toString();
+    fx.site.set(`https://example.org/AshenSpire/${index.replace('.json', '.js')}`, Buffer.from(twinText('window.__ashenPack', 'light-000000000000', text))); await refusedWith(fx, 'hash'); }
+  { const fx = fixtureSite(); const faces = JSON.stringify({ 'assets/fonts/x.woff2': Buffer.from('font-bytes').toString('base64') });
+    fx.site.set(`https://example.org/AshenSpire/${fx.pin.fonts.file}`, Buffer.from(twinText('__ashenFonts', 'fonts-000000000000', faces))); await refusedWith(fx, 'hash'); }
   { const fx = fixtureSite(); fx.site.set(`https://example.org/AshenSpire/${fx.pin.fonts.file}`, Buffer.from(twinText('__ashenFonts', 'x', '{}'))); await refusedWith(fx, 'hash'); }
   { const fx = fixtureSite(); fx.site.set(`https://example.org/AshenSpire/${fx.pin.packs.light.index}`, Buffer.from('{}\n')); await refusedWith(fx, 'hash'); }
   { const fx = fixtureSite(); fx.site.delete(`https://example.org/AshenSpire/${[...fx.files.keys()].find((p) => p.endsWith('.woff2'))}`); await refusedWith(fx, 'unreachable'); }

@@ -116,15 +116,23 @@ export function zipPinOf(htmlText) {
   } catch { return null; }
 }
 
-/** The string a .js twin (`<fn>("<id>", "<text>");`) hands the loader, or null. */
-export function twinString(text, fn) {
+/**
+ * The string a .js twin (`<fn>("<id>", "<text>");`) hands the loader, or null.
+ * With `name`, the id must be it: under file:// the loader waits for the id its
+ * file's basename gives (src/ui/assetPacks.js readTwin), and drops any other
+ * call, so a twin naming another id would be a twin the folder cannot use.
+ */
+export function twinString(text, fn, name = null) {
   const head = `${fn}(`;
   if (!text.startsWith(head) || !text.endsWith(');\n')) return null;
   try {
     const args = JSON.parse(`[${text.slice(head.length, -3)}]`);
-    return args.length === 2 && typeof args[0] === 'string' && typeof args[1] === 'string' ? args[1] : null;
+    return args.length === 2 && typeof args[0] === 'string' && typeof args[1] === 'string' && (name === null || args[0] === name) ? args[1] : null;
   } catch { return null; }
 }
+
+/** The id a twin at `file` must call its hook with: its basename (src/ui/assetPacks.js twinOf). */
+const twinId = (file) => String(file).split('/').pop().replace(/\.(?:json|js)$/, '');
 
 /** objects/<xx>/<sha256>.<ext>: the name tools/asset-pack.mjs objectPath gives an id's bytes. */
 function zipObjectPath(sha, id) {
@@ -207,7 +215,7 @@ export async function assembleZip(plan, { sink, fetchImpl = globalThis.fetch, pa
       if (await sha256Hex(bytes, subtle) !== want.sha256) throw zipError('hash', `${want.index} does not match the build's pin.`);
       const twinName = want.index.replace(/\.json$/, '.js');
       const twin = await get(new URL(twinName, root).href, twinName);
-      const carried = twinString(decoder.decode(twin), 'window.__ashenPack');
+      const carried = twinString(decoder.decode(twin), 'window.__ashenPack', twinId(want.index));
       if (carried === null || await textSha(carried) !== want.sha256) throw zipError('hash', `${twinName} does not match the build's pin.`);
       files.set(want.index, bytes); files.set(twinName, twin);
       for (const [id, row] of Object.entries(JSON.parse(decoder.decode(bytes)) || {})) {
@@ -219,7 +227,7 @@ export async function assembleZip(plan, { sink, fetchImpl = globalThis.fetch, pa
     if (pin.fonts?.file) {
       if (!PIN_FILE.test(String(pin.fonts.file)) || !SHA.test(String(pin.fonts.sha256))) throw zipError('pack', 'The build does not pin its font sidecar.');
       const sidecar = await get(new URL(pin.fonts.file, root).href, pin.fonts.file);
-      const carried = twinString(decoder.decode(sidecar), '__ashenFonts');
+      const carried = twinString(decoder.decode(sidecar), '__ashenFonts', twinId(pin.fonts.file));
       if (carried === null || await textSha(carried) !== pin.fonts.sha256) throw zipError('hash', `${pin.fonts.file} does not match the build's pin.`);
       files.set(pin.fonts.file, sidecar);
     }
