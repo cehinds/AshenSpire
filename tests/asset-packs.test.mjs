@@ -633,8 +633,10 @@ test('main.js routes the boot music and the first screen through musicHold', () 
   assert.match(main, /const bootMusic = musicHold\(\{ configureMusic:/);
   assert.match(main, /bootMusic\.apply\(folder, \{ indexed \}\)/);
   assert.match(main, /const indexed = !settings\.musicFolder && served;/, 'only the shipped score is indexed');
-  assert.match(main, /onTierArrived\(\(map\) => \{ builtInArtArrived\(map\); bootMusic\.sourceArrived\(\); \}\)/, 'a tier switch can bring the score back');
-  assert.match(main, /whenBuiltInArtReady\(\(\) => bootMusic\.firstScreen\(\(\) => \{ dropBootLine\(\); showFirstScreen\(\); \}\)/);
+  assert.match(main, /onTierArrived\(\(map\) => \{ builtInArtArrived\(map\); bootMusic\.sourceArrived\(\); artArrivedAfterFailure\(\); \}\)/, 'a tier switch or a Retry can bring the score back');
+  // Step 5: the music hold is released once the load has settled, whichever
+  // way the first screen was drawn (the gate at once, or a ?shot= screen after).
+  assert.match(main, /bootMusic\.firstScreen\(\(\) => \{ dropBootLine\(\); if \(!gateFirst\) showFirstScreen\(\); \}\)/);
   assert.doesNotMatch(main, /audio\.configureMusic\(\{ folder \}\)/, 'no second, unheld call');
 });
 

@@ -1,3 +1,4 @@
+import { hideOnError } from '../artFallback.js';
 import { bindCardInspection, openCardInspection } from './cardInspection.js';
 import { renderEquipmentCard, equipmentDetails } from './equipmentCard.js';
 import { renderCollectibleCard } from './collectibleCard.js';
@@ -52,7 +53,7 @@ const itemArt = (item, { small = false } = {}) => {
     ? artWell({ src: assetUrl(item.artAsset), alt: '', small, attrs: { class: 'smith-weapon-art' } })
     : artWell({ glyph: item.artGlyph, small, attrs: { class: 'smith-weapon-art' } });
   const img = well.querySelector('img');
-  img?.addEventListener('error', () => img.remove());
+  hideOnError(img);
   return well;
 };
 

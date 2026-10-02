@@ -176,6 +176,16 @@ reward.progress.more,,+{count} other skill{plural},Tracks the panel does not lis
 title.save.eyebrow,,Your climb,The saved run Continue resumes.,
 title.save.identity,,Slot {slot} · Seed {seed},Which save Continue loads.,
 title.save.aria,,Saved climb in slot {slot},,
+# ---- the built-in art loading (docs/EXTERNAL-ASSETS-PLAN.md step 5) ---------
+# The startup gate's one line while the web edition loads its art, the title's
+# notice when it could not, and the Retry both it and Settings → Art quality offer.
+art.loading,,Loading art…,The game is loading its art.,
+art.progress,,Loading art · {done} of {total},"The game has loaded {done} of the {total} files the title screen needs first.",
+art.failed.gate,,The art could not be loaded,"The art could not be loaded, so the game will show placeholders. You can retry from the title screen.",
+art.failed.notice,,The art could not be loaded,"The art could not be loaded, so the game is showing placeholders.",
+art.failed.settings,,The art could not be loaded,"The art could not be loaded, so the game is showing placeholders. Choose Retry to load it again.",
+art.failed.again,,The art still could not be loaded,"The art still could not be loaded. Check your connection, then try again.",
+art.retry,,Retry,Load the art again.,Retry
 # ---- the act map (W4b) ---------------------------------------------------
 map.enter,,Enter,Travel to the selected node.,Enter
 map.enterNamed,,Enter {name},Travel to the selected node.,
