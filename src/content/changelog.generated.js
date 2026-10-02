@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "A Windows installer, with the high-resolution art as a choice on the install screen",
     "detail": "Nothing in the game itself changes. AshenSpire-Setup.exe installs the game for you (no administrator prompt) with Start menu and desktop shortcuts; tick High-resolution art and it downloads the full-resolution art during the install and checks every file, or leave it unticked to play with the standard art and add it later by running the installer again. Uninstalling asks before it deletes your saves.",
-    "build": "0.7.1.797",
+    "build": "0.7.1.799",
     "pullRequest": 1501,
     "url": "https://github.com/cehinds/AshenSpire/pull/1501"
+  },
+  {
+    "id": "pr-1498",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The game's starting settings follow the owner's latest configuration",
+    "detail": "Character-level XP growth starts at 1.5, reward card choices at zero and the normal-fight card reward chance at 24%. Enemy sprites start at 1.5 scale, the player starts in column 1, row B uses double scale, and the opening's first-step traveller uses the supplied desktop placement. All 38 supplied settings become defaults; settings you already chose keep their values.",
+    "build": "0.7.1.798",
+    "pullRequest": 1498,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1498"
   },
   {
     "id": "pr-1440",
