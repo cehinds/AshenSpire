@@ -70,7 +70,9 @@ test('serveDir serves a folder named by an alias the JS realpathSync keeps (Wind
   const short = join(td, 'alias');
   mkdirSync(long);
   writeFileSync(join(long, 'AshenSpire.html'), 'served');
-  symlinkSync(long, short, 'dir');
+  // A junction on Windows needs no admin rights or developer mode, as a 'dir'
+  // symlink does; elsewhere the type is ignored.
+  symlinkSync(long, short, process.platform === 'win32' ? 'junction' : 'dir');
   const jsRealpathSync = fs.realpathSync;
   const shortName = (p) => (p === short || p.startsWith(short + sep) ? p : jsRealpathSync(p));
   shortName.native = jsRealpathSync.native;
