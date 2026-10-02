@@ -27,8 +27,9 @@ Run `node tools/launch.mjs --build-only --full-art` to generate all three editio
   Regenerate the twins after any change under `assets/` with
   `node tools/mobile-art.mjs` (needs `cwebp`); `--check` proves the tree without
   an encoder and is the CI gate. Settings → About names the edition.
-- `build/web/AshenSpire.html` with its sibling `assets/` and `map-detail/` trees
-  is the web edition. Serve/copy that entire directory. Images are requested
+- `build/web/AshenSpire.html` with its sibling `packs/`, `objects/`,
+  `map-detail/` and `music/` trees (and `asset-base.json`) is the web edition;
+  its art loads from the pinned pack index (docs/EXTERNAL-ASSETS-PLAN.md, step 3a). Serve/copy that entire directory. Images are requested
   separately when used. Copying just its HTML will not work offline.
 
 The external-art bundler already existed; this change makes the normal launcher

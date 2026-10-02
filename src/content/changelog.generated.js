@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1442",
+    "id": "pr-1443",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "The Pages site no longer copies the art review folder",
-    "detail": "Behind the scenes: the project site stops carrying the art review pages and old build-file copies from main, the stable links get their map tiles beside every copy, and link previews use a picture the site itself serves; nothing you play changes.",
+    "summary": "The web edition loads its art from hash-pinned packs",
+    "detail": "Behind the scenes: the served web edition now keeps its art as files named by their contents, checks the list of them against a fingerprint inside the game file before using it, and falls back from high to light art (or to placeholders) when a list is missing; the single-file download is unchanged and nothing you play changes.",
     "build": "0.7.1.735",
-    "pullRequest": 1442,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1442"
+    "pullRequest": 1443,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1443"
   },
   {
     "id": "pr-1437",

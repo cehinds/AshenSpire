@@ -219,39 +219,52 @@ jobs:
           #              OWN artifact, dev-standalone; see the upload steps.
           #
           # The root used to be the single file, so opening the preview on a
-          # phone meant 57.6 MB before the first frame. --external-art writes
-          # AshenSpire.html plus assets/ and map-detail/ into preview/ in one
-          # pass (and the shipped score, music/), so the copies that used to place
-          # those by hand are gone with it.
-          # The same tier as the standalone: light on dev/test, full on release/main.
-          node tools/bundle.mjs --external-art $WEB_TIER --out preview
+          # phone meant 57.6 MB before the first frame. The `build` step's
+          # launch.mjs already wrote the web edition to build/web with this
+          # job's tier (light on dev/test, full on release/main): AshenSpire.html
+          # plus the pack shape (asset-base.json, packs/, objects/ —
+          # docs/EXTERNAL-ASSETS-PLAN.md step 3a) and the map-detail/ and music/
+          # copies. It is copied here as built, not rebuilt.
+          cp -r build/web/. preview/
           cp preview/AshenSpire.html preview/index.html
+          # THE WORKBENCH IS A SUB-FOLDER, SO THE GAME HAS NO assets/ BESIDE IT.
+          # The source-module preview pages (world-atlas-, equipment-selection-,
+          # armament-kits-preview.html), the pose studio, the art inspection
+          # pages and docs/preview read `assets/…` BY PATH (assetUrl() in source
+          # mode, `../../assets/…` from art/). They get this tier's art tree in
+          # preview/workbench/assets/ until step 12 points them at the fetched
+          # cache. preview/AshenSpire.html must not: an id its pack index misses
+          # has to 404 visibly, not load quietly from a tree left beside it.
+          W=preview/workbench
+          if [ "$(echo $WEB_TIER)" = "--light" ]; then ART_TREE=assets-mobile; else ART_TREE=assets; fi
+          mkdir -p "$W/assets" "$W/art/combat-effects-2026-09-07"
+          cp -r "$ART_TREE"/. "$W/assets/"
           # The standalone is collected and uploaded by its own steps, right
           # after the build, so nothing here can cost a commit its download.
-          mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
-          cp -r src preview/src
-          cp world-atlas-preview.html preview/
-          cp equipment-selection-preview.html preview/
-          cp armament-kits-preview.html preview/
-          cp tools/serve-preview.mjs preview/serve-preview.mjs
-          cp -r styles preview/styles
-          # --update=none: the build above already placed this tier's art under
-          # preview/assets/ (the light twins on dev/test); these copies only add
-          # the files it does not ship, and never overwrite its art.
-          cp -r --update=none assets/environments preview/assets/
-          mkdir -p preview/docs/preview
-          cp -r docs/preview/world-atlas preview/docs/preview/
-          cp -r docs/preview/combat-ground preview/docs/preview/
-          cp -r docs/preview/combat-formation preview/docs/preview/
-          cp -r docs/preview/starting-equipment preview/docs/preview/
-          cp -r docs/preview/armament-kits preview/docs/preview/
-          cp -r pose-studio preview/pose-studio
-          cp -r --update=none assets/pose-effects preview/assets/
-          cp -r art/pose-studio preview/art/
-          cp -r art/card-effect-refresh-2026-09-09 preview/art/
-          cp -r --update=none assets/combat-effects assets/painted-outfits preview/assets/
-          cp art/combat-effects-2026-09-07/index.html art/combat-effects-2026-09-07/sprite-catalog.html art/combat-effects-2026-09-07/integrated-tag-mappings.html preview/art/combat-effects-2026-09-07/
-          cp -r art/combat-effects-2026-09-07/inspection preview/art/combat-effects-2026-09-07/inspection
+          cp -r src "$W/src"
+          cp world-atlas-preview.html equipment-selection-preview.html armament-kits-preview.html "$W/"
+          cp tools/serve-preview.mjs "$W/serve-preview.mjs"
+          cp -r styles "$W/styles"
+          # --update=none: the copy above already placed this tier's art under
+          # workbench/assets/ (the light twins on dev/test); these copies only
+          # add the files it does not ship, and never overwrite its art.
+          cp -r --update=none assets/environments "$W/assets/"
+          mkdir -p "$W/docs/preview"
+          cp -r docs/preview/world-atlas "$W/docs/preview/"
+          cp -r docs/preview/combat-ground "$W/docs/preview/"
+          cp -r docs/preview/combat-formation "$W/docs/preview/"
+          cp -r docs/preview/starting-equipment "$W/docs/preview/"
+          cp -r docs/preview/armament-kits "$W/docs/preview/"
+          cp -r pose-studio "$W/pose-studio"
+          cp -r --update=none assets/pose-effects "$W/assets/"
+          cp -r art/pose-studio "$W/art/"
+          cp -r art/card-effect-refresh-2026-09-09 "$W/art/"
+          cp -r --update=none assets/combat-effects assets/painted-outfits "$W/assets/"
+          cp art/combat-effects-2026-09-07/index.html art/combat-effects-2026-09-07/sprite-catalog.html art/combat-effects-2026-09-07/integrated-tag-mappings.html "$W/art/combat-effects-2026-09-07/"
+          cp -r art/combat-effects-2026-09-07/inspection "$W/art/combat-effects-2026-09-07/inspection"
+          # The game's own folder carries no art tree; verify-external reads
+          # the pack, and this keeps that honest.
+          test ! -e preview/assets
           {
             echo "AshenSpire ${CHANNEL} preview"
             echo "commit:   ${GITHUB_SHA}"
@@ -259,13 +272,14 @@ jobs:
             echo "built:    $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             echo
             echo "Open AshenSpire.html locally to play this exact commit."
-            echo "For the equipment review, run node serve-preview.mjs in this folder."
+            echo "The review pages live in workbench/. For the equipment review, run"
+            echo "node serve-preview.mjs in workbench/ (paths below are relative to it)."
             echo "Then open http://127.0.0.1:8318/equipment-selection-preview.html."
             echo "For all 25 armament kits and disposable combat, open http://127.0.0.1:8318/armament-kits-preview.html."
             echo "Use its class and screen-size controls to test hand choices and Continue."
             echo "Equipment screenshots and QA: docs/preview/starting-equipment/index.html."
             echo "Run node pose-studio/server.mjs for the standalone editor at http://127.0.0.1:4318."
-            echo "Open Combat-pose-preview.html for the offline readiness outfit gallery."
+            echo "Open Combat-pose-preview.html (in this folder) for the offline readiness outfit gallery."
             echo "Open docs/preview/combat-formation/index.html for turn and formation comparisons."
             echo "Open docs/preview/combat-ground/index.html for all 20 combat fields and phone screenshots."
             echo "Open art/combat-effects-2026-09-07/sprite-catalog.html for all 56 six-frame sets."
@@ -274,7 +288,8 @@ jobs:
             echo "Card/tag assignments and screenshots are in the same art folder."
             echo
             echo "This folder is the DE-INLINED build: serve it and open AshenSpire.html"
-            echo "(or run serve-preview.mjs). It needs a server. For the double-clickable"
+            echo "(any static server). Its art is in packs/ and objects/, loaded and"
+            echo "hash-checked at runtime. It needs a server. For the double-clickable"
             echo "single file that needs none, download the ${CHANNEL}-standalone artifact"
             echo "from this same run: AshenSpire-${CHANNEL}-preview.html. On dev and test it"
             echo "carries the light art tier (~29 MB); on release and main it is the full"
