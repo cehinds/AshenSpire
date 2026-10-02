@@ -1,4 +1,5 @@
 import { offlinePlay } from '../content/offlinePlay.js';
+import { FONT_TWIN_CALL, PACK_TWIN_CALL } from '../content/packTwins.js';
 import { createSha256, sha256Hex } from '../ui/sha256.js';
 import { createZipWriter } from './zipStream.js';
 
@@ -352,7 +353,7 @@ export async function assembleZip(plan, { sink, fetchImpl = globalThis.fetch, pa
     for (const f of packFiles) {
       if (f.kind === 'index') continue;
       const bytes = await get(new URL(f.file, root).href, f.file);
-      const carried = twinString(decoder.decode(bytes), f.kind === 'sidecar' ? '__ashenFonts' : 'window.__ashenPack', f.id);
+      const carried = twinString(decoder.decode(bytes), f.kind === 'sidecar' ? FONT_TWIN_CALL : PACK_TWIN_CALL, f.id);
       if (carried === null || await textSha(carried) !== f.sha256) throw zipError('hash', `${f.file} does not match the build's pin.`);
       files.set(f.file, bytes);
     }
