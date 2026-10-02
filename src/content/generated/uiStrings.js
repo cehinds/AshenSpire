@@ -815,6 +815,20 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.kind.sigil",
+    "extends": "",
+    "short": "Legendary sigil",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "reward.sigil.note",
+    "extends": "",
+    "short": "Attune it in the Armoury to make it work.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "reward.close",
     "extends": "",
     "short": "Rewards",
@@ -1914,6 +1928,90 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "armoury.sigils.title",
+    "extends": "",
+    "short": "Sigils",
+    "full": "Your legendary sigils. An attuned sigil works in every fight; attune them here, out of combat.",
+    "tip": ""
+  },
+  {
+    "id": "armoury.sigils.count",
+    "extends": "",
+    "short": "{n} / {max} attuned",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.sigils.attune",
+    "extends": "",
+    "short": "Attune {name}",
+    "full": "Attune this legendary sigil: it works in every fight while attuned.",
+    "tip": ""
+  },
+  {
+    "id": "armoury.sigils.unattune",
+    "extends": "",
+    "short": "Unattune {name}",
+    "full": "Unattune this legendary sigil: it stays in your inventory and works in no fight until attuned again.",
+    "tip": ""
+  },
+  {
+    "id": "armoury.sigils.attuned",
+    "extends": "",
+    "short": "Attuned",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "armoury.sigils.idle",
+    "extends": "",
+    "short": "Not attuned",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "sigils.refuse.unknown",
+    "extends": "",
+    "short": "There is no sigil '{id}'.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "sigils.refuse.notCarried",
+    "extends": "",
+    "short": "You do not carry {name}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "sigils.refuse.notLegendary",
+    "extends": "",
+    "short": "{name} is not legendary: it works from a slot, not by attunement.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "sigils.refuse.already",
+    "extends": "",
+    "short": "{name} is already attuned.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "sigils.refuse.full",
+    "extends": "",
+    "short": "You cannot attune {name}: at most {max} sigils can be attuned at once. Unattune one first.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "sigils.refuse.notAttuned",
+    "extends": "",
+    "short": "'{id}' is not attuned.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "combat.companion.left",
     "extends": "",
     "short": "{name} · {n} fights left",
@@ -2036,6 +2134,13 @@ export const uiStrings = [
     "id": "shop.refuse.sigilOwned",
     "extends": "",
     "short": "You already hold {name}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "shop.refuse.sigilLegendary",
+    "extends": "",
+    "short": "{name} is legendary: it is never sold, only found.",
     "full": "",
     "tip": ""
   },

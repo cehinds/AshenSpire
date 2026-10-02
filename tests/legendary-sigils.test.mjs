@@ -43,6 +43,8 @@ const COMMON = shippedSigils.find((row) => row.rarity !== 'legendary').id;
 const POOLS = ['normal', 'elite', 'boss', 'treasure'];
 const DROP_KEY = (pool) => `gameConfig.balance.sigils.dropChancePct.${pool}`;
 const ATTUNE_KEY = 'gameConfig.balance.sigils.attuneMax';
+// validateContent's refusals as `<path> <message>` lines.
+const problemsOf = (bundle) => validateContent(bundle).errors.map((e) => `${e.path} ${e.msg}`);
 
 function freshRun(registries = REG, seed = 7) {
   const run = createRunState({ seed, classId: 'reaver', registries });
@@ -90,7 +92,7 @@ test('content: at least three legendaries ship, with no cost, each deriving exac
     assert.equal(node.parentId, 'sigil', `${id}'s tag is a leaf under the sigil branch`);
     assert.ok(contentBundle.nodeEffects[def.propertyTags[0]], `${id}'s tag has a rule`);
   }
-  assert.deepEqual(validateContent(contentBundle), [], 'the shipped content validates');
+  assert.deepEqual(problemsOf(contentBundle), [], 'the shipped content validates');
 });
 
 test('content: each legendary is an on/if combination no relic uses, from the existing EVENTS', () => {
@@ -112,19 +114,19 @@ test('FINISH: a legendary that does not derive exactly one sigil property tag fr
   const withTagging = (tagging) => ({ ...contentBundle, tagging });
   // Two property tags: a second sigil leaf added to the Last Vigil.
   const two = withTagging([...contentBundle.tagging, tagRow(VIGIL, 'emberSigil')]);
-  assert.ok(validateContent(two).some((p) => p.includes(`sigils.${VIGIL}`) && /exactly one/.test(p)), validateContent(two).join(' | '));
+  assert.ok(problemsOf(two).some((p) => p.includes(`sigils.${VIGIL}`) && /exactly one/.test(p)), problemsOf(two).join(' | '));
   // None: its property row removed.
   const none = withTagging(contentBundle.tagging.filter((row) => !(row.family === 'sigil' && row.objectId === VIGIL && row.tagId === VIGIL)));
-  assert.ok(validateContent(none).some((p) => p.includes(`sigils.${VIGIL}`) && /derives no property tag/.test(p)));
+  assert.ok(problemsOf(none).some((p) => p.includes(`sigils.${VIGIL}`) && /derives no property tag/.test(p)));
   // A property tag that is not a leaf under the sigil branch (a relic's).
   const elsewhere = withTagging([...contentBundle.tagging.filter((row) => !(row.family === 'sigil' && row.objectId === VIGIL && row.tagId === VIGIL)), tagRow(VIGIL, 'azureSigil')]);
-  assert.ok(validateContent(elsewhere).some((p) => p.includes(`sigils.${VIGIL}`) && /not a leaf under the sigil branch/.test(p)));
+  assert.ok(problemsOf(elsewhere).some((p) => p.includes(`sigils.${VIGIL}`) && /not a leaf under the sigil branch/.test(p)));
   // A legendary authored with a cost.
   const priced = { ...contentBundle, sigils: shippedSigils.map((row) => (row.id === VIGIL ? { ...row, cost: 100 } : row)) };
-  assert.ok(validateContent(priced).some((p) => p.includes(`sigils.${VIGIL}.cost`)));
+  assert.ok(problemsOf(priced).some((p) => p.includes(`sigils.${VIGIL}.cost`)));
   // A non-legendary with no cost is still refused.
   const free = { ...contentBundle, sigils: shippedSigils.map((row) => (row.id === COMMON ? { ...row, cost: undefined } : row)) };
-  assert.ok(validateContent(free).some((p) => p.includes(`sigils.${COMMON}.cost`)));
+  assert.ok(problemsOf(free).some((p) => p.includes(`sigils.${COMMON}.cost`)));
 });
 
 // ---------------------------------------------------------------------------
@@ -151,7 +153,7 @@ test('the numbers: attuneMax and every drop chance are noted Settings rows; the 
   const bad = structuredClone(contentBundle.balance);
   bad.sigils.attuneMax = -1;
   bad.sigils.dropChancePct.boss = 101;
-  const problems = validateContent({ ...contentBundle, balance: bad });
+  const problems = problemsOf({ ...contentBundle, balance: bad });
   assert.ok(problems.some((p) => /balance\.sigils\.attuneMax/.test(p)), problems.join(' | '));
   assert.ok(problems.some((p) => /balance\.sigils\.dropChancePct\.boss/.test(p)));
 });
