@@ -510,3 +510,52 @@ test('every refusal a download can meet names its cause and what to do', () => {
   assert.match(netCause(Object.assign(new TypeError('fetch failed'), { cause: { code: 'ENOTFOUND' } }), 'https://github.com/x'), /could not reach github\.com: ENOTFOUND/);
   assert.match(netCause(Object.assign(new Error('timed out'), { name: 'TimeoutError' }), 'https://github.com/x'), /no answer from github\.com in time/);
 });
+
+// Review of #1450 (Copilot): four holes, each now a known-bad.
+const rewriteManifest = (fn) => (e) => e.map((x) => (x.name === MANIFEST_PATH ? { ...x, data: Buffer.from(fn(x.data.toString())) } : x));
+
+test('known-bad: under a schema-2 pin the high zip must name its pack; only a schema-1 pin may omit it', async () => {
+  const { root, zips } = threePacks({ tamper: { high: rewriteManifest((t) => t.replace('  "pack": "high",\n', '')) } });
+  try {
+    assert.doesNotMatch(readZip(readFileSync(zips.high)).find((e) => e.name === MANIFEST_PATH).data.toString(), /"pack"/, 'the plant removed the field');
+    await assert.rejects(fetchArt({ root, pack: 'high', from: zips.high }), (e) => { assert.match(e.problems.join('\n'), /is for pack null, not high/); return true; });
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('known-bad: --recheck under a schema-2 pin refuses a cached high manifest that lost its pack', async () => {
+  const { root, zips } = threePacks();
+  try {
+    const { dir } = await fetchArt({ root, pack: 'high', from: zips.high });
+    const file = join(dir, MANIFEST_PATH);
+    writeFileSync(file, readFileSync(file, 'utf8').replace('  "pack": "high",\n', ''));
+    await assert.rejects(fetchArt({ root, pack: 'high', recheck: true }), (e) => { assert.match(e.problems.join('\n'), /the cached art-manifest\.json is for pack null, not high/); return true; });
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('known-bad: an embedded or cached manifest that parses to something other than an object is refused', async () => {
+  for (const text of ['null', '[]', '42', '"x"', '{"assets":[]}', '{"assets":null}']) {
+    const { root, zips } = threePacks({ tamper: { light: rewriteManifest(() => text) } });
+    try {
+      await assert.rejects(fetchArt({ root, pack: 'light', from: zips.light }), (e) => { assert.match(e.problems.join('\n'), /the release's art-manifest\.json (is not a JSON object|has an "assets" that is not an object)/, text); return true; });
+    } finally { rmSync(root, { recursive: true, force: true }); }
+    const ok = threePacks();
+    try {
+      const { dir } = await fetchArt({ root: ok.root, pack: 'common', from: ok.zips.common });
+      writeFileSync(join(dir, MANIFEST_PATH), text);
+      await assert.rejects(fetchArt({ root: ok.root, pack: 'common', recheck: true }), (e) => { assert.match(e.problems.join('\n'), /the cached art-manifest\.json (is not a JSON object|has an "assets" that is not an object)/, text); return true; });
+    } finally { rmSync(ok.root, { recursive: true, force: true }); }
+  }
+});
+
+test('known-bad: the light pack\'s manifest may not list a common id, even with the right bytes', async () => {
+  const { root, zips } = threePacks({ tamper: { light: (e, m) => rewriteManifest((t) => t.replace('"assets": {', `"assets": {\n    "assets/fonts/f-400-normal.woff2": ${JSON.stringify(m.assets['assets/fonts/f-400-normal.woff2'])},`))(e) } });
+  try {
+    await assert.rejects(fetchArt({ root, pack: 'light', from: zips.light }), (e) => { assert.match(e.problems.join('\n'), /assets\/fonts\/f-400-normal\.woff2: the release's art-manifest\.json disagrees/); return true; });
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('an anonymous 403 that is not the rate limit says to set a token or check the repository is public', () => {
+  const msg = httpCause({ status: 403, statusText: '', headers: new Headers() }, { pin: { repo: 'cehinds/AshenSpire-art', tag: 'hd-assets-v2' }, zip: 'hd-assets-v2.zip', url: 'https://github.com/x', tokenName: null });
+  assert.doesNotMatch(msg, /null/);
+  assert.match(msg, /no token.*Set ART_REPO_TOKEN.*or check that the repository is public/);
+});

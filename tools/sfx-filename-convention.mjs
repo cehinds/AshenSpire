@@ -558,7 +558,10 @@ function selftest() {
     const gitSteps = [
       ['init', '-q'],
       ['add', 'index.html', 'buildordinal.json', 'art-release.json', 'art-manifest.json', 'src', 'styles', 'assets', 'tools'],
-      ['-c', 'user.name=SFX Fixture', '-c', 'user.email=sfx-fixture@example.invalid',
+      // gc.auto=0: the fixture holds about 6,700 objects, git's default auto-gc
+      // threshold, so a commit could start a detached `git gc` that is still
+      // writing .git/objects when the sandbox is removed (ENOTEMPTY).
+      ['-c', 'gc.auto=0', '-c', 'user.name=SFX Fixture', '-c', 'user.email=sfx-fixture@example.invalid',
         'commit', '-qm', 'fixture'],
     ];
     for (const step of gitSteps) {

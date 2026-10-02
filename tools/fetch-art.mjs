@@ -207,17 +207,43 @@ export function markerFor(pin, manifest, pack = 'high') {
   return `${zipSha} ${sha256(Buffer.from(rows, 'utf8'))}`;
 }
 
-/** The pack a zip's own manifest must name: high zips older than the packs name none. */
-function packProblem(doc, pack) {
-  const named = doc.pack === undefined && pack === 'high' ? 'high' : doc.pack;
+/** Is the pin schema 1 (the high zip alone, from before the packs)? A raw pin with no schema is. */
+const legacyPin = (pin) => (pin && pin.schema !== undefined ? pin.schema : 1) === 1;
+
+/**
+ * The pack a zip's own manifest must name. Only the high zip of a schema-1 pin
+ * (hd-assets-v1, packed before the packs) may name none; every zip a schema-2
+ * pin names must carry `"pack"`.
+ */
+function packProblem(doc, pack, legacy) {
+  const named = doc.pack === undefined && pack === 'high' && legacy ? 'high' : doc.pack;
   return named === pack ? null : `the release's ${MANIFEST_PATH} is for pack ${JSON.stringify(doc.pack === undefined ? null : doc.pack)}, not ${pack}`;
+}
+
+const plainObject = (v) => Boolean(v) && typeof v === 'object' && !Array.isArray(v);
+
+/**
+ * parseManifestDoc(text, whose, problems) → the embedded manifest when it is a
+ * JSON object whose `assets` (if present) is an object too; otherwise null,
+ * with the reason pushed. `null`, `[]`, `42` or `"x"` parse, and must not skip
+ * the checks that follow.
+ */
+function parseManifestDoc(text, whose, problems) {
+  let doc;
+  try { doc = JSON.parse(text); } catch { problems.push(`${whose} ${MANIFEST_PATH} is not JSON`); return null; }
+  if (!plainObject(doc)) { problems.push(`${whose} ${MANIFEST_PATH} is not a JSON object`); return null; }
+  if (doc.assets !== undefined && !plainObject(doc.assets)) { problems.push(`${whose} ${MANIFEST_PATH} has an "assets" that is not an object`); return null; }
+  return doc;
 }
 
 /** Do this tree's entry for `id` and the release manifest's agree, for `pack`? */
 function rowAgrees(id, ours, theirs, pack) {
   const common = commonOf(ours[id]);
   if (pack === 'common') return common ? same(theirs[id]?.common, common) : !has(theirs, id);
-  return common ? agreesCommon(theirs[id], common) : same(theirs[id]?.[pack], ours[id]?.[pack]);
+  // A common id never belongs in the light pack's manifest; only a high zip
+  // may list one (hd-assets-v1 carried the fonts), and then with the same bytes.
+  if (common) return pack === 'high' ? agreesCommon(theirs[id], common) : !has(theirs, id);
+  return same(theirs[id]?.[pack], ours[id]?.[pack]);
 }
 
 /**
@@ -242,11 +268,10 @@ export function verifyRelease(zipBuf, pin, manifest, pack = 'high') {
   let theirs = null;
   if (!embedded) problems.push(`the release has no ${MANIFEST_PATH}`);
   else {
-    let doc = null;
-    try { doc = JSON.parse(embedded.toString('utf8')); } catch { problems.push(`the release's ${MANIFEST_PATH} is not JSON`); }
+    const doc = parseManifestDoc(embedded.toString('utf8'), "the release's", problems);
     if (doc) {
       theirs = doc.assets || {};
-      const wrong = packProblem(doc, pack);
+      const wrong = packProblem(doc, pack, legacyPin(pin));
       if (wrong) problems.push(wrong);
       for (const id of Object.keys(want)) {
         if (!rowAgrees(id, want, theirs, pack)) problems.push(`${id}: the release's ${MANIFEST_PATH} disagrees with this tree's`);
@@ -377,18 +402,21 @@ function unpack(entries, dir, mark) {
 }
 
 
-/** recheck(dir, manifest, pack = 'high') → problems: the cached manifest and every listed file still match. */
-export function recheck(dir, manifest, pack = 'high') {
+/**
+ * recheck(dir, manifest, pack = 'high', pin = null) → problems: the cached
+ * manifest and every listed file still match. `pin` decides whether a cached
+ * high manifest may omit `"pack"` (schema 1 only); none means schema 1.
+ */
+export function recheck(dir, manifest, pack = 'high', pin = null) {
   const problems = [];
   const cached = join(dir, MANIFEST_PATH);
   let theirs = null;
   if (!existsSync(cached)) problems.push(`the cache has no ${MANIFEST_PATH}`);
   else {
-    let doc = null;
-    try { doc = JSON.parse(readFileSync(cached, 'utf8')); } catch { problems.push(`the cached ${MANIFEST_PATH} is not JSON`); }
+    const doc = parseManifestDoc(readFileSync(cached, 'utf8'), 'the cached', problems);
     if (doc) {
       theirs = doc.assets || {};
-      const wrong = packProblem(doc, pack);
+      const wrong = packProblem(doc, pack, legacyPin(pin));
       if (wrong) problems.push(wrong.replace("the release's", 'the cached'));
       const want = manifest.assets || {};
       for (const id of Object.keys(want)) {
@@ -440,7 +468,10 @@ export function httpCause(res, { pin, zip, url, tokenName }) {
     return `${where}: HTTP ${status} — GitHub's rate limit is spent${when}. ${tokenName ? `${tokenName} is set; wait for the reset` : 'Set ART_REPO_TOKEN or GITHUB_TOKEN to raise it'}.`;
   }
   if (status === 401) return `${where}: HTTP 401 — GitHub refused the token in ${tokenName || 'the request'} (expired, revoked or mistyped). Replace it.`;
-  if (status === 403) return `${where}: HTTP 403 — the token in ${tokenName} may not read ${pin.repo}. It needs read access to that repository's Contents.`;
+  if (status === 403) {
+    if (tokenName) return `${where}: HTTP 403 — the token in ${tokenName} may not read ${pin.repo}. It needs read access to that repository's Contents.`;
+    return `${where}: HTTP 403 — GitHub refused a request sent with no token. Set ART_REPO_TOKEN to a token with read access to ${pin.repo}'s Contents (in CI, pass the secret of that name in the step's env), or check that the repository is public.`;
+  }
   if (status === 404) {
     if (tokenName) return `${where}: HTTP 404 — either ${pin.repo} has no release ${pin.tag} with ${zip}, or the token in ${tokenName} cannot read the repository (a private repository answers 404 to a token without access). Check the pin, then the token's repository access.`;
     return `${where}: HTTP 404 at ${url} — no token was set, and ${pin.repo} answers 404 to anyone without one while it is private. Set ART_REPO_TOKEN to a token with read access to its Contents (in CI, pass the secret of that name in the step's env). If the repository is already public, the pin names a tag or zip that release does not have.`;
@@ -508,7 +539,7 @@ export async function fetchArt({ root = ROOT, from = null, recheck: again = fals
   const mark = markerFor(pin, manifest, pack);
   if (!from && markOf(dir) === mark) {
     if (!again) return { dir, pack, reused: true };
-    const problems = recheck(dir, manifest, pack);
+    const problems = recheck(dir, manifest, pack, pin);
     if (!problems.length) return { dir, pack, reused: true };
     discard(dir);
     throw Object.assign(new Error(`the ${pack} cache no longer matches the manifest; it was removed — run again to re-download`), { problems });
