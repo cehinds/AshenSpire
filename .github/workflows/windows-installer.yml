@@ -66,6 +66,16 @@ jobs:
           }
           $packs = Get-ChildItem (Join-Path $dir 'game\packs') -Name
           $packs
+          $log = Join-Path $dir 'install-data\hd-art.log'
+          if (Test-Path $log) { '--- hd-art.log ---'; Get-Content $log; '---' } else { 'no hd-art.log: the art step never ran' }
+          if (-not ($packs | Where-Object { $_ -like 'high-*.json' })) {
+            # Diagnose: the same step the installer runs, in the same Windows PowerShell 5.1, with its output here.
+            $pin = Get-Content art-release.json -Raw | ConvertFrom-Json
+            & "$env:SystemRoot\SysWOW64\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+              -File (Join-Path $dir 'install-data\fetch-hd-art.ps1') -Mode Install -InstallDir $dir `
+              -Url "https://github.com/$($pin.repo)/releases/download/$($pin.tag)/$($pin.packs.high.zip)" -Sha256 $pin.packs.high.sha256
+            "direct run exited $LASTEXITCODE"
+          }
           foreach ($p in 'light-', 'common-', 'high-') {
             if (-not ($packs | Where-Object { $_ -like "$p*.json" })) { throw "no $p index in game\packs — the high-resolution art did not install" }
           }

@@ -46,7 +46,13 @@ $Game = Join-Path $InstallDir 'game'
 $Data = Join-Path $InstallDir 'install-data'
 $Packs = Join-Path $Game 'packs'
 
-function Say([string]$Message) { [Console]::Out.WriteLine($Message); [Console]::Out.Flush() }
+# Every line also goes to install-data\hd-art.log: a silent install shows none of
+# them, and a player who reports a failed download can send the file.
+$Log = Join-Path $Data 'hd-art.log'
+function Say([string]$Message) {
+  [Console]::Out.WriteLine($Message); [Console]::Out.Flush()
+  try { [IO.File]::AppendAllText($Log, ("{0:u} {1}`r`n" -f (Get-Date), $Message)) } catch { }
+}
 function Fail([int]$Code, [string]$Message) { Say "ERROR: $Message"; exit $Code }
 
 function Get-Hex([byte[]]$Hash) { ([BitConverter]::ToString($Hash) -replace '-', '').ToLowerInvariant() }
@@ -225,6 +231,7 @@ function Invoke-Prune {
 }
 
 try {
+  Say "fetch-hd-art $Mode (PowerShell $($PSVersionTable.PSVersion))"
   switch ($Mode) {
     'Install' { Install-HighArt }
     'Prune' { Invoke-Prune }
