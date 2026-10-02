@@ -799,7 +799,10 @@ Where the build differs from, or settles, §3.7 (2026-10-02):
   that every object requested belongs to the loaded tier or common and every
   font came from common. `--expect-tier light` runs it on a high-default build
   whose high index was removed (the removed index's 404 is the plant, not a
-  finding).
+  finding). `dev-preview.yml`'s browser-gates job runs that pass on every push
+  to `test`, `release` and `main`: it builds a high-default web edition when
+  the job's own build is light, hard-link copies it, deletes the pinned high
+  index and its twin, and runs `external-play --expect-tier light`.
 - **The act backdrops** (`.backdrop.act-N`, `bg_act1`–`3`) are slotted like the
   rest, but nothing on dev draws them (`backdropClass()` has no caller), so no
   browser check sees them load.
