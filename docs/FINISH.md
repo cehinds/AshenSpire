@@ -87,7 +87,7 @@ status* table lists each spec section as built, partly built or planned.
 
 - [ ] **A quick start gives the first card play in 6 inputs or fewer** (baseline 26). Test: a scripted input count.
 - [ ] **The tutorial reachability probe runs in CI**. Test: `node tools/tutorial-reach.mjs` passes at all 8 zooms, and `seenTutorial` persists across a reload.
-- [ ] **A disabled Next button shows its reason as visible text**. Test: a DOM assertion.
+- [x] **A disabled Next button shows its reason as visible text**. Test: a DOM assertion. — [#1459](https://github.com/cehinds/AshenSpire/pull/1459): every lasting refusal of a Next / Continue / Confirm / Begin / Enter writes its reason as a line under its row (`refusal.js` `reasonNote`, `.as-reasonnote`, 11 px floor; scope in D36); `node tools/disabled-reason.mjs` measures 10 screens × 2 viewports in Chromium (40/40: non-empty, laid out, not display:none / visibility:hidden, ≥ 11 px) and `tests/disabled-reason.test.mjs` pins the writer, title menu, event screen and CSS floor.
 
 ## 7. Performance
 
