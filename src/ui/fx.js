@@ -468,7 +468,16 @@ function flare(layer, anchor, color) {
  */
 export function animateEvents(events, ctx, done) {
   flushRequested = false;
-  playBeatCues(events);
+  // Beat by beat, as the paced timeline cues them, so instant or
+  // reduced-motion playback makes the same sounds as Normal pacing, in the
+  // same order: a beat's cues sound just before its first visual step (an
+  // enemy's hits land before "your turn" stings), and beats with no visual
+  // of their own sound when the walk passes them, or at the end.
+  const beats = groupBeats(events);
+  const beatOf = new Map();
+  beats.forEach((beat, b) => { for (const e of beat.events) if (!beatOf.has(e)) beatOf.set(e, b); });
+  let cued = 0;
+  const cueThrough = (b) => { while (cued <= b && cued < beats.length) playBeatCues(beats[cued++].events); };
   pending = events.filter((e) => visualFor(e) !== null);
   const skip = () => {
     flushRequested = true;
@@ -482,10 +491,12 @@ export function animateEvents(events, ctx, done) {
       i++;
     }
     if (i >= pending.length) {
+      cueThrough(beats.length - 1);
       removeEventListener('pointerdown', skip, { capture: true });
       if (done) done();
       return;
     }
+    cueThrough(beatOf.has(pending[i]) ? beatOf.get(pending[i]) : -1);
     const fn = visualFor(pending[i]);
     if (fn) fn(ctx);
     i++;
@@ -781,6 +792,26 @@ export function playBeatCues(events) {
   if (has('deckShuffled')) sfx.play('deckShuffle');
   if (has('cardDrawn')) sfx.play('cardDraw');
   if (has('cardDiscarded')) sfx.play('cardDiscard');
+}
+
+/**
+ * The cues of a whole event list, one playBeatCues per beat exactly as the
+ * paced timeline groups them (groupBeats). Used where the events are not
+ * paced: instant/reduced-motion playback, a fresh fight's setup (the opening
+ * draw and turn start), and co-op receipts.
+ */
+export function playEventCues(events) {
+  for (const beat of groupBeats(events || [])) playBeatCues(beat.events);
+}
+
+/**
+ * Every sound a batch of authoritative receipts carries: the HP half of each
+ * attack (playHitSound) and the per-beat cues. Co-op plays its receipts
+ * through this, since its floats are drawn by coop.js, not by visualFor.
+ */
+export function playReceiptSounds(events) {
+  for (const e of events || []) if (e && e.type === 'damageDealt') playHitSound(e);
+  playEventCues(events);
 }
 
 function visualFor(e, beatKind) {

@@ -2465,6 +2465,9 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     registries,
     run,
     combat,
+    // A fight created here sounds its opening draw and turn stinger; one
+    // restored from a save does not replay its history (fx playEventCues).
+    opening: !savedSnapshot,
     readSettings: () => activeSettings,
     // The second-beat dial lives in meta.settings, and combat has two actions
     // in the table (End Turn, drinking a flask). Same read as the event screen.

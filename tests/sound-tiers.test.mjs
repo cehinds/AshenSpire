@@ -105,3 +105,113 @@ test('every one of those fx events maps to a distinct recipe that is not the def
   }
   assert.equal(bodies.size, ids.size, 'no two of these events share one sound');
 });
+
+// ---- the opening turn and the real co-op path (review of #1472) ----------
+
+import { readFileSync } from 'node:fs';
+import { playEventCues, animateEvents } from '../src/ui/fx.js';
+import { contentBundle } from '../src/content/index.js';
+import { createRegistries } from '../src/model/registries.js';
+import { createSession } from '../tools/session.mjs';
+import { coopReceiptSounds } from '../src/ui/screens/coop.js';
+
+const src = (path) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+
+test('instant playback cues beat by beat, as paced playback does', () => {
+  // An enemy turn that refills the hand, then the player's turn starts and a
+  // later draw lands in its own beat: two draw beats, two draw sounds.
+  const events = [
+    { type: 'cardDiscarded', reason: 'turnEnd' },
+    { type: 'enemyTurnStart' },
+    { type: 'enemyMoveStarted', sourceId: 'e1', kind: 'attack' },
+    { type: 'cardDrawn' }, { type: 'cardDrawn' },
+    { type: 'playerTurnStart' },
+    { type: 'cardPlayed', cardType: 'skill' },
+    { type: 'cardDrawn' },
+  ];
+  const cues = played(() => playEventCues(events));
+  assert.deepEqual(cues, ['cardDiscard', 'cardDraw', 'turnStinger', 'cardDraw']);
+  assert.match(src('src/ui/fx.js'), /export function animateEvents[\s\S]{0,700}const beats = groupBeats\(events\);[\s\S]{0,400}playBeatCues\(beats\[cued\+\+\]\.events\)/,
+    'animateEvents (instant / reduced motion) cues the same beats the paced timeline does');
+});
+
+test('a fresh fight sounds its opening draw and turn stinger; a restored one replays nothing', () => {
+  const combatSrc = src('src/ui/screens/combat.js');
+  assert.match(combatSrc, /if \(opening\) playEventCues\(combat\.eventLog\);/, 'mountCombat sounds the setup only when told the fight is fresh');
+  assert.match(combatSrc, /opening = false \}\) \{/, 'a caller that says nothing (a restore, a preview) replays no history');
+  assert.match(src('src/main.js'), /opening: !savedSnapshot,/, 'enterCombat marks only a newly created fight as an opening');
+  // What that call hears for a real fresh solo fight's setup log.
+  const reg = createRegistries(contentBundle);
+  const host = createSession({ registries: reg, seedString: 'SOUND1' });
+  host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
+  host.start(); host.chooseNode('p1', host.session.mapGraph.startIds[0]);
+  const setup = host.live.combat.eventLog;
+  const cues = played(() => playEventCues(setup));
+  assert.ok(cues.includes('cardDraw'), `the opening draw sounds (${cues})`);
+  assert.ok(cues.includes('turnStinger'), `the first turn stings (${cues})`);
+  assert.equal(cues.filter((id) => id === 'turnStinger').length, 1, 'once');
+});
+
+test('co-op: the session digest, through coop.js, plays the opening, hits, hurt and pile cues once', () => {
+  assert.match(src('src/ui/screens/coop.js'), /lastSoundSeq = coopReceiptSounds\(sc, lastSoundSeq\);\n\s*spawnCombatFx\(sc, prevCombat\);/,
+    'renderCombat hears each scene through coopReceiptSounds');
+  const reg = createRegistries(contentBundle);
+  const host = createSession({ registries: reg, seedString: 'GUARD2' });
+  for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
+  host.start();
+  for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
+  let heard = 0;
+  // 1) The fight's first scene carries the opening's cues.
+  const opening = host.snapshot().scene;
+  let cues = played(() => { heard = coopReceiptSounds(opening, heard); });
+  assert.ok(cues.includes('cardDraw') && cues.includes('turnStinger'), `the co-op opening sounds (${cues})`);
+  // A resync (same receiptSeq, a fresh JSON object) replays nothing.
+  assert.deepEqual(played(() => { heard = coopReceiptSounds(JSON.parse(JSON.stringify(opening)), heard); }), []);
+  // 2) A player's attack lands a tiered hit.
+  const p = host.live.combat.players.get('p2'); p.entity.energy = 99;
+  p.piles.hand.push({ instanceId: 'snd-hit', cardId: 'gorefireSlash', upgraded: false });
+  assert.ok(host.combatPlay('p2', 'snd-hit', 'e1').ok);
+  const attack = host.snapshot().scene;
+  const dealt = attack.events.find((e) => e.type === 'damageDealt');
+  cues = played(() => { heard = coopReceiptSounds(attack, heard); });
+  assert.ok(cues.includes(`hit_${hitTierFor(dealt.amount - (dealt.blocked || 0))}`), `the hit sounds its tier (${cues})`);
+  // 3) Both seats end the turn. p1 holds more than its hand limit, so its
+  // end of turn discards the overflow; then the enemy hits players, hands
+  // refill and the next player turn stings. Each action is its own scene.
+  const full = host.live.combat.players.get('p1');
+  assert.ok(Number.isInteger(full.handMax) && full.handMax > 0, 'the seat has a hand limit');
+  for (let i = 0; full.piles.hand.length < full.handMax + 2; i++) full.piles.hand.push({ instanceId: `snd-full-${i}`, cardId: 'gorefireSlash', upgraded: false });
+  host.combatEndTurn('p1');
+  const ended = host.snapshot().scene;
+  assert.ok(ended.events.some((e) => e.type === 'cardDiscarded'), 'the digest carries cardDiscarded');
+  assert.deepEqual(played(() => { heard = coopReceiptSounds(ended, heard); }), ['cardDiscard']);
+  host.combatEndTurn('p2');
+  const round = host.snapshot().scene;
+  assert.ok(round.events.some((e) => e.type === 'cardDrawn'), 'the digest carries cardDrawn');
+  cues = played(() => { heard = coopReceiptSounds(round, heard); });
+  for (const id of ['playerHurt', 'cardDraw', 'turnStinger']) assert.ok(cues.includes(id), `${id} in ${cues}`);
+  assert.deepEqual(played(() => { heard = coopReceiptSounds(round, heard); }), [], 'a re-render of the same scene is silent');
+  // A client that just joined mid-fight replays no history.
+  assert.deepEqual(played(() => coopReceiptSounds(round, 0)), [], 'joining on a later turn hears nothing old');
+});
+
+test('instant playback keeps cue order: the enemy hit lands before "your turn" stings', async () => {
+  const restore = {};
+  for (const k of ['addEventListener', 'removeEventListener']) { restore[k] = globalThis[k]; globalThis[k] ??= () => {}; }
+  try {
+    const events = [
+      { type: 'cardDiscarded', reason: 'turnEnd' },
+      { type: 'enemyTurnStart' },
+      { type: 'enemyMoveStarted', sourceId: 'e1', kind: 'attack' },
+      { type: 'damageDealt', sourceId: 'e1', targetId: 'player', amount: 7, blocked: 0 },
+      { type: 'cardDrawn' }, { type: 'cardDrawn' },
+      { type: 'playerTurnStart' },
+    ];
+    sfx.sink = null; sfx.recent.length = 0;
+    await new Promise((resolve) => animateEvents(events, { layer: null, combatEl: null, anchorFor: () => null }, resolve));
+    const order = sfx.recent.filter((id) => ['cardDiscard', 'playerHurt', 'cardDraw', 'turnStinger'].includes(id));
+    assert.deepEqual(order, ['cardDiscard', 'playerHurt', 'cardDraw', 'turnStinger']);
+  } finally {
+    for (const k of Object.keys(restore)) if (restore[k] === undefined) delete globalThis[k];
+  }
+});
