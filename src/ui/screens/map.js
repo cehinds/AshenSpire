@@ -170,6 +170,9 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const context = el('section', { class: 'map-context', 'aria-label': t('map.context.aria') });
   const backButton = button({ label: t('map.back'), id: 'map-back', className: 'map-back', attrs: { 'data-back': '' } });
   const enterButton = button({ label: t('map.enter'), weight: 'primary', id: 'map-enter', className: 'map-enter', disabled: true });
+  // Enter shows no reason line (D43): the tray opens only on a reachable node,
+  // where Enter is live, and with nothing chosen the tray is closed and inert,
+  // so a disabled Enter is never on screen to explain.
   const trayReveal = el('div', { class: 'map-tray-reveal' }, [context, el('div', { class: 'map-tray-pair' }, [backButton, enterButton])]);
   trayReveal.inert = true;
   const potionsHost = el('div', { class: 'map-potions' });
