@@ -121,9 +121,11 @@ row in the table below — no game-code changes.
 
 > When real art lands: download from a **Planned source** above, place it under
 > `assets/`, reference it from `src/ui/assets.js`, and add a row here (source URL,
-> author, license). Self-host the Cinzel/Inter `woff2` under `assets/fonts/` with
-> an `@font-face` block and a row here — the fallbacks keep the game readable
-> until then.
+> author, license). The Cinzel/Inter interface faces, when they ship, load at
+> runtime as pack files through the pack loader like every other asset
+> (SPEC §7, *Fonts*; docs/EXTERNAL-ASSETS-PLAN.md) — not from a self-hosted
+> `assets/fonts/` folder, which step 13 retires — with a row here. The system
+> fallbacks keep the game readable until then.
 
 ## Remaining asset directories (2026-09-24)
 
