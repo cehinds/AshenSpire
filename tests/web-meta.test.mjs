@@ -12,7 +12,8 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { REQUIRED_HEAD_META, headMetaTags, OG_IMAGE } from '../tools/head-meta.mjs';
+import { REQUIRED_HEAD_META, headMetaTags } from '../tools/head-meta.mjs';
+import { OG_IMAGE } from '../tools/og-image.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(resolve(ROOT, p), 'utf8');
@@ -32,7 +33,7 @@ test('index.html carries every required web meta tag, each with a value', () => 
   assert.match(image, /^https:\/\//, 'og:image must be an absolute https URL (crawlers do not resolve relative ones)');
   // The Pages path tools/pages-site.mjs writes (EXTERNAL-ASSETS-PLAN step 6a),
   // never a repository path that stops resolving when assets/ leaves main.
-  assert.equal(image, OG_IMAGE.url, 'og:image must be the Pages path tools/pages-site.mjs writes (OG_IMAGE in tools/head-meta.mjs)');
+  assert.equal(image, OG_IMAGE.url, 'og:image must be the Pages path tools/pages-site.mjs writes (OG_IMAGE in tools/og-image.mjs)');
   assert.equal(new URL(image).pathname, `/AshenSpire/${OG_IMAGE.sitePath}`, 'OG_IMAGE.url must name OG_IMAGE.sitePath at the site root');
   assert.ok(existsSync(resolve(ROOT, OG_IMAGE.source)), `the share image is cut from ${OG_IMAGE.source}, which is not in the tree`);
   assert.match(valueOf(tagFor(head, 'theme-color')), /^#[0-9a-f]{6}$/i, 'theme-color is a hex colour');

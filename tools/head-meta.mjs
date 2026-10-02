@@ -28,15 +28,3 @@ export function headMetaTags(html) {
   const re = /<meta\b[^>]*\b(?:name=["'](?:description|theme-color)["']|property=["']og:[^"']+["'])[^>]*>|<link\b[^>]*\brel=["'](?:icon|apple-touch-icon)["'][^>]*>/gi;
   return html.match(re) || [];
 }
-
-// THE SHARE IMAGE IS A PAGES PATH, NOT A REPOSITORY PATH (docs/EXTERNAL-ASSETS-PLAN.md,
-// step 6a). It used to name raw.githubusercontent.com/…/main/assets/…, which stops
-// resolving once assets/ leaves main. tools/pages-site.mjs writes `sitePath` at the
-// site root from `source` in main's tree, so index.html's og:image (`url`), the
-// file the site serves and the art it is cut from are named in this one place;
-// tests/web-meta.test.mjs holds index.html to `url`.
-export const OG_IMAGE = Object.freeze({
-  url: 'https://cehinds.github.io/AshenSpire/og-image.webp',
-  sitePath: 'og-image.webp',
-  source: 'assets/bg/title-city-tower.webp',
-});

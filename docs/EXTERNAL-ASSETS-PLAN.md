@@ -505,12 +505,14 @@ only ever served as build payloads", and listed `assets/` among them):
   leaves the base tree with step 13, when `assets/` leaves main.
 - **`art/` goes.** Its seven review sections leave the site, and the build
   index stops listing them, because page discovery reads the assembled tree.
-  The plain links into `art/` from `docs/component-catalog.html` and
-  `pose-studio/` now 404; nothing loads an image from `art/`.
+  The plain links into `art/` from `docs/component-catalog.html`,
+  `pose-studio/` and `docs/low-poly-fighters/index.html:38` (`../../art/poses/`)
+  now 404; nothing loads an image from `art/`.
 - **The share image.** `og:image` is now
   `https://cehinds.github.io/AshenSpire/og-image.webp`. `pages-site` writes it
   at the site root from `assets/bg/title-city-tower.webp` in main's tree, or
-  from the first other branch that has it. `OG_IMAGE` in `tools/head-meta.mjs`
+  from the first other branch that has it. `OG_IMAGE` in `tools/og-image.mjs`
+  (a Pages-only module, so it is not a build-identity input)
   names all three, and `--check` is red without it. **Before step 13 removes
   `assets/` from main, step 6b or 13 must take this file from the object store
   instead**, or every branch loses its source and `--check` goes red.

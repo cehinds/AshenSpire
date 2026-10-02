@@ -18,9 +18,9 @@
 // edit. The changelog link points at CHANGELOG.md AT THAT COMMIT, not at a
 // moving branch head, so a build's changelog stays the one it shipped with.
 //
-// WHAT ELSE IS SERVED. `main`'s tree is copied first, so every URL the site
-// serves today (/AshenSpire.html, /hud/, /review-approval-hub/, /docs/…) keeps
-// working — less the media and authoring roots and the committed build HTML
+// WHAT ELSE IS SERVED. `main`'s tree is copied first, so every page the site
+// serves from it (/index-game.html, /docs/component-catalog.html,
+// /docs/preview/…, /pose-studio/, /items-preview.html) keeps working — less the media and authoring roots and the committed build HTML
 // (BASE_TREE_PATHSPECS, docs/EXTERNAL-ASSETS-PLAN.md step 6a). The stable Play
 // links and the score and tiles they read beside themselves are written back
 // explicitly as that build's payload. The one deliberate replacement is the
@@ -38,7 +38,7 @@
 // no longer committed, to the rebuild made from its commit), plus one per
 // index page proven to link every build it lists.
 import { readGitArtifact } from './git-artifact.mjs';
-import { OG_IMAGE } from './head-meta.mjs';
+import { OG_IMAGE } from './og-image.mjs';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, cpSync, readdirSync, statSync, mkdtempSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
@@ -152,7 +152,8 @@ const HARNESS_DIRS = new Set(['tools', 'tests']);
 // docs/component-catalog.html, items-preview.html, docs/low-poly-fighters/ and
 // pose-studio/ load their images from it. art/ GOES: its seven review sections
 // leave the site and, because discovery reads the assembled tree, the index
-// with them; the catalog's and pose-studio's plain links into art/ now 404.
+// with them. Plain links into art/ now 404: docs/component-catalog.html,
+// pose-studio/, and docs/low-poly-fighters/index.html:38 (`../../art/poses/`).
 // docs/preview stays (owner answer 7).
 // Pathspecs are from the repository root: `map-detail` is the top-level folder.
 const BASE_TREE_EXCLUDED_DIRS = Object.freeze(['art', 'assets-mobile', 'map-detail', 'music']);
@@ -669,7 +670,7 @@ function inTree(ref, path) {
   try { git(['cat-file', '-e', `${ref}:${path}`], { stdio: ['ignore', 'pipe', 'ignore'] }); return true; } catch { return false; }
 }
 /**
- * THE SHARE IMAGE every build's og:image names (OG_IMAGE in tools/head-meta.mjs),
+ * THE SHARE IMAGE every build's og:image names (OG_IMAGE in tools/og-image.mjs),
  * written at the site root from the art in main's tree, or from the first other
  * published branch that has it while main predates it. Absent everywhere, the
  * run says so and --check goes red: a link preview with no picture is a defect,
@@ -1062,6 +1063,9 @@ function baseTreeFindings(dir) {
     }
   }
   out.push([`no committed build HTML but the stable links${strayHtml.length ? ` (found: ${strayHtml.join(', ')})` : ''}`, strayHtml.length === 0]);
+  // The share image is main's own art, byte for byte (main carries it today).
+  const og = join(dir, OG_IMAGE.sitePath);
+  out.push([`/${OG_IMAGE.sitePath} is main's ${OG_IMAGE.source}, byte for byte`, existsSync(og) && Buffer.compare(readFileSync(og), readGitArtifact(ROOT, mainRef, OG_IMAGE.source)) === 0]);
   for (const d of BASE_TREE_KEPT_DIRS) if (inTree(mainRef, d)) out.push([`${d}/ is kept (${d === 'assets' ? 'owner, 2026-10-02' : 'owner answer 7'})`, existsSync(join(dir, d))]);
   // The index links nothing under an excluded root (the art review sections).
   const index = existsSync(join(dir, 'index.html')) ? readFileSync(join(dir, 'index.html'), 'utf8') : '';
@@ -1140,8 +1144,9 @@ try {
     // takes the victim's two FULL checks and leaves its mobile pair standing.
     const pages = branchData.reduce((n, d) => n + d.builds.reduce((m, b) => m + 2 + (b.mobileBytes ? 2 : 0), 0), 0) + (synthetic ? 2 : 0);
     const discovered = JSON.parse(readFileSync(join(dir, 'builds.json'), 'utf8')).otherPages || [];
-    // The og:image row: one check when the share image was written.
-    const ogRow = existsSync(join(dir, OG_IMAGE.sitePath)) ? 1 : 0;
+    // The og:image row: always one check. A missing image is not discounted
+    // here; baseTreeFindings names it and check() turns red.
+    const ogRow = 1;
     const baseTree = baseTreeFindings(dir);
     const before = process.exitCode;
     const ok = check(dir);
