@@ -1,5 +1,24 @@
 # Credits & Asset Licenses
 
+## Player polish asset kit (2026-10-02)
+
+Sixteen original raster paintings, transparent role portraits and panel material
+were generated with OpenAI's built-in Image Generation tool for the owner's
+requested desktop/mobile polish kit. Source prompts and reference provenance:
+[generation records](docs/design/player-polish-asset-kit-2026-10-02/generation.json).
+The [asset manifest](docs/design/player-polish-asset-kit-2026-10-02/manifest.json)
+identifies each original PNG and its checksum. The kit also contains 129 original
+SVG icons, frames and controls, authored directly; their deterministic source is
+[generate-ui-kit.py](docs/design/player-polish-asset-kit-2026-10-02/ui/generate-ui-kit.py).
+No third-party icon pack or artwork was used for these new assets; no third-party
+asset license is claimed for first-party AI-created art or original SVG geometry.
+
+The 49 canonical artwork copies retain their existing source credits and licenses;
+[canonical-map.json](docs/design/player-polish-asset-kit-2026-10-02/canonical-map.json)
+records their original paths and hashes. The three existing font copies retain
+[their OFL license](docs/design/player-polish-asset-kit-2026-10-02/fonts/OFL.txt).
+This kit is a design resource and does not register or replace runtime artwork.
+
 ## Player interface polish concepts (2026-10-01)
 
 Twelve original concept boards covering 24 player-facing feature views on

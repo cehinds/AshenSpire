@@ -550,3 +550,7 @@ ui-studio/workspace/settings.json
 
 # High-res art fetched by tools/fetch-art.mjs (docs/ART-REPO-PLAN.md)
 /.art-cache/
+
+# Regenerable exports of the versioned player polish source kit.
+/docs/design/player-polish-asset-kit-2026-10-02.zip
+/docs/design/player-polish-asset-kit-2026-10-02.zip.sha256
