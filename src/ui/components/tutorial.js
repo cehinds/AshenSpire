@@ -198,8 +198,10 @@ export function mountTutorial(root, { onDone }) {
   // at ~600 ms, after the 220 ms re-place), and the spotlight was left lit on
   // empty floor. So after the first re-place this follows the target frame by
   // frame and re-places whenever its box moves, until it has held still for
-  // SETTLE_FRAMES frames or SETTLE_MAX_MS has passed — whichever comes first.
-  const SETTLE_FRAMES = 30;
+  // SETTLE_STILL_MS or SETTLE_MAX_MS has passed — whichever comes first. Both
+  // are wall-clock times, not frame counts: a count of frames is ~250 ms at
+  // 120 Hz, which gives up before the ~600 ms move above.
+  const SETTLE_STILL_MS = 500;
   const SETTLE_MAX_MS = 3000;
   let resizeTimer = null;
   let settleRun = 0;
@@ -213,12 +215,13 @@ export function mountTutorial(root, { onDone }) {
     const run = ++settleRun;
     const t0 = performance.now();
     let last = targetKey();
-    let still = 0;
+    let stillSince = t0;
     const tick = () => {
-      if (done || run !== settleRun || performance.now() - t0 > SETTLE_MAX_MS) return;
-      const now = targetKey();
-      if (now !== last) { last = now; still = 0; place(); } else still += 1;
-      if (still < SETTLE_FRAMES) requestAnimationFrame(tick);
+      const now = performance.now();
+      if (done || run !== settleRun || now - t0 > SETTLE_MAX_MS) return;
+      const key = targetKey();
+      if (key !== last) { last = key; stillSince = now; place(); }
+      if (now - stillSince < SETTLE_STILL_MS) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
   }

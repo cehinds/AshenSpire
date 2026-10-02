@@ -174,7 +174,8 @@ const only = argOf('--only');
 // (.github/workflows/tutorial-reach.yml). An unknown name is refused rather than
 // silently matching nothing — an empty sweep is not a pass.
 const CASES = [...VIEWPORTS.map((v) => `${v.w}x${v.h}`), 'resize', 'first-run'];
-const onlySet = only ? new Set(only.split(',').map((n) => n.trim()).filter(Boolean)) : null;
+// A bare `--only` or `--only ""` is an error (exit 2), not the full sweep.
+const onlySet = args.includes('--only') ? new Set((only || '').split(',').map((n) => n.trim()).filter(Boolean)) : null;
 if (onlySet) {
   const unknown = [...onlySet].filter((n) => !CASES.includes(n));
   if (unknown.length || !onlySet.size) {
