@@ -191,6 +191,7 @@ jobs:
     name: tests (${{ matrix.os }})
     if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false # a Windows-only failure is a FINDING; do not hide it
       matrix:
@@ -238,8 +239,13 @@ jobs:
       - name: Prompt-library CLI safety plants
         run: node tools/verdict.mjs -- node tools/prompt-library-selftest.mjs
 
-      - name: Engine suite
-        run: node tools/verdict.mjs -- node tests/run-node.mjs
+      # THE SUITE'S TWO LANES, ON TWO CHECKOUTS (owner, 2026-10-02: every CI job
+      # finishes in 20 minutes or less). `node tests/run-node.mjs` with no flag
+      # is exactly `--no-selftests` plus `--selftests-only`; the second half runs
+      # in `test-selftests` below, on its own checkout, as run-node's header
+      # requires (weapon-card-packages writes a mutant into src/ while it runs).
+      - name: Engine suite, every discovered test file, and each tool's verdict on the tree
+        run: node tools/verdict.mjs -- node tests/run-node.mjs --no-selftests
 
       - name: Historical standalone artifacts resolve verified LFS bytes
         run: node tools/git-artifact.test.mjs
@@ -284,29 +290,6 @@ jobs:
         # which is exactly what bundle.mjs:435's WARNING was.
         run: node tools/verdict.mjs -- node tools/verify-shipped.mjs --selftest
 
-      - name: Parse gate — the bundler's own known-bad corpus
-        # NOTHING RAN THIS FILE, and that is the defect it was written to prevent
-        # happening to something else. `tools/bundle.test.mjs` was in no workflow
-        # at all, so when the ordinal rule changed under case 1a and the bundle
-        # outgrew case 6v's fixed 600 KB cut, three assertions went red and stayed
-        # red — a corpus nobody watches rots exactly the way §8's required-coverage
-        # list rotted, which is the sentence at the top of case 7.
-        #
-        # UBUNTU ONLY, and it is a budget, not an oversight: this suite runs the
-        # REAL bundler against ~20 disposable checkouts and each one writes a
-        # 57 MB artifact, so it is about five minutes on one runner and a quarter
-        # of an hour across the matrix. Its claims are about the gate's REFUSALS,
-        # which are platform-independent; the platform claim is dirorder's and
-        # `reproducible`'s, and both already run on all three.
-        #
-        # UNWRAPPED, like the world-atlas step above: the file prints per-case
-        # PASS/FAIL lines and exits 1 on any FAIL, but no counted verdict, so the
-        # door would read it as SILENCE. Giving it one is a change to this tool's
-        # output contract and belongs with whoever wants the wrapper, not with
-        # the fix that made the corpus green again.
-        if: matrix.os == 'ubuntu-latest'
-        run: node tools/bundle.test.mjs
-
       - name: Directory order — the corpus history already wrote
         # HERE, in the matrix job, and not in `reproducible`: the claim under test is
         # that the comparator produces the SAME order on every runner, so it belongs
@@ -328,6 +311,78 @@ jobs:
         run: node tools/release-series.mjs --selftest
 
   # ---------------------------------------------------------------------------
+  # The `--selftests-only` half of the engine suite, on all three platforms, on
+  # its own checkout (see run-node.mjs's header). Split from `test` by the
+  # owner's 20-minute rule (2026-10-02); together the two jobs run exactly what
+  # `node tests/run-node.mjs` ran in one step before.
+  # ---------------------------------------------------------------------------
+  test-selftests:
+    name: tool self-tests (${{ matrix.os }})
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false # a Windows-only failure is a FINDING; do not hide it
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Keep checked-out bytes identical to stored bytes
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+          fetch-depth: 0 # the same history the `test` job's checkout has
+
+      - uses: ./.github/actions/setup-node
+
+      - name: Every tool check still catches its own known-bad corpus
+        run: node tools/verdict.mjs -- node tests/run-node.mjs --selftests-only
+
+  # ---------------------------------------------------------------------------
+  # The bundler's parse gate, moved out of `test (ubuntu-latest)` into its own
+  # parallel job by the owner's 20-minute rule (2026-10-02). Same command, same
+  # runner; tests.yml's `parse-gate` runs it too, and neither copy was dropped.
+  # ---------------------------------------------------------------------------
+  parse-gate:
+    name: bundler parse gate
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Keep checked-out bytes identical to stored bytes
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # default depth, as tests.yml's parse-gate: the corpus reads no history,
+          # and a full-history fetch cost this job 3 of its 16 minutes (run 36981774214)
+
+      - uses: ./.github/actions/setup-node
+
+      - name: Parse gate — the bundler's own known-bad corpus
+        # NOTHING RAN THIS FILE, and that is the defect it was written to prevent
+        # happening to something else. `tools/bundle.test.mjs` was in no workflow
+        # at all, so when the ordinal rule changed under case 1a and the bundle
+        # outgrew case 6v's fixed 600 KB cut, three assertions went red and stayed
+        # red — a corpus nobody watches rots exactly the way §8's required-coverage
+        # list rotted, which is the sentence at the top of case 7.
+        #
+        # UBUNTU ONLY, and it is a budget, not an oversight: this suite runs the
+        # REAL bundler against ~20 disposable checkouts and each one writes a
+        # 57 MB artifact — 13-14 minutes on a hosted runner (2026-10-02), which
+        # is why it is its own job now rather than a step in `test (ubuntu)`. Its claims are about the gate's REFUSALS,
+        # which are platform-independent; the platform claim is dirorder's and
+        # `reproducible`'s, and both already run on all three.
+        #
+        # UNWRAPPED, like the world-atlas step above: the file prints per-case
+        # PASS/FAIL lines and exits 1 on any FAIL, but no counted verdict, so the
+        # door would read it as SILENCE. Giving it one is a change to this tool's
+        # output contract and belongs with whoever wants the wrapper, not with
+        # the fix that made the corpus green again.
+        run: node tools/bundle.test.mjs
+
+  # ---------------------------------------------------------------------------
   # Is the artifact we ship the artifact this source builds — on every platform?
   #
   # READ THIS BEFORE LOOSENING ANYTHING HERE. If this job is red on
@@ -345,17 +400,36 @@ jobs:
     name: shipped artifact is this source (${{ matrix.os }}, ${{ matrix.shard }})
     if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
+        # SHARD COUNTS (owner rule D38, 2026-10-02: every CI job finishes in 20
+        # minutes or less). The buildversion corpus is planned by measured cost
+        # (tools/buildversion-selftest.mjs, SHARD_COST and planShards), not by
+        # index. Windows ran it in 4 shards of 13-36 minutes; Windows is 2.4-5.2x
+        # slower than Linux on this corpus, so it takes 12 shards (~2 min of
+        # Linux work each), and macOS and Ubuntu take 2. Each runner's digest is
+        # recorded by its shard 0 only, so reproducible-agree still compares
+        # exactly three. tests/doorplant-shard.test.mjs requires every shard of
+        # each runner's count.
         include:
-          - { os: ubuntu-latest, shard: all, digest: true }
-          - { os: macos-latest, shard: all, digest: true }
-          - { os: windows-latest, shard: '0/4', digest: true }
-          - { os: windows-latest, shard: '1/4', digest: false }
-          - { os: windows-latest, shard: '2/4', digest: false }
-          - { os: windows-latest, shard: '3/4', digest: false }
+          - { os: ubuntu-latest, shard: '0/2', digest: true }
+          - { os: ubuntu-latest, shard: '1/2', digest: false }
+          - { os: macos-latest, shard: '0/2', digest: true }
+          - { os: macos-latest, shard: '1/2', digest: false }
+          - { os: windows-latest, shard: '0/12', digest: true }
+          - { os: windows-latest, shard: '1/12', digest: false }
+          - { os: windows-latest, shard: '2/12', digest: false }
+          - { os: windows-latest, shard: '3/12', digest: false }
+          - { os: windows-latest, shard: '4/12', digest: false }
+          - { os: windows-latest, shard: '5/12', digest: false }
+          - { os: windows-latest, shard: '6/12', digest: false }
+          - { os: windows-latest, shard: '7/12', digest: false }
+          - { os: windows-latest, shard: '8/12', digest: false }
+          - { os: windows-latest, shard: '9/12', digest: false }
+          - { os: windows-latest, shard: '10/12', digest: false }
+          - { os: windows-latest, shard: '11/12', digest: false }
     steps:
       - name: Keep checked-out bytes identical to stored bytes
         run: git config --global core.autocrlf false
@@ -408,8 +482,9 @@ jobs:
       - name: …and it can fail — known-bads, each caught by the row that owns it
         # Inverted expectation, the idiom already in this job twice. Includes the
         # fixture SOP 5 asks for by name: a tree that RE-TYPES the version.
-        # Windows previously spent 68 minutes here. Four shards keep every
-        # fixture and its real-tree entry while bounding each runner's work.
+        # Windows previously spent 68 minutes here. The shards (matrix above)
+        # keep every fixture and its real-tree entry while bounding each
+        # runner's work; the plan is by measured cost, so no shard is the heavy one.
         run: node tools/verdict.mjs -- node tools/buildversion-selftest.mjs --shard ${{ matrix.shard }}
 
 
@@ -469,7 +544,7 @@ jobs:
   display-first:
     name: Fullscreen first through both Settings doors
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
         with:
@@ -490,7 +565,7 @@ jobs:
     name: the checks that need a real browser
     if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
         with:
@@ -537,6 +612,49 @@ jobs:
         # inversion and exits 1; it is for a human at a terminal, not for here.)
         run: node tools/verdict.mjs -- node tools/shotguard-probe.mjs --mutate
 
+      - name: About changelog projects CHANGELOG.md through the real Settings route
+        # #310: about-changelog validated the ordinal column and the About
+        # projection but was in no workflow, so nothing ran it. Default mode parses
+        # CHANGELOG.md, proves the generated projection has not drifted, and drives
+        # the real Settings -> Changelog route in a browser. Lives here, not in the
+        # headless `test` job, because the projection check needs a real browser.
+        run: node tools/verdict.mjs -- node tools/about-changelog.mjs
+
+      - name: The in-run Load door keeps the run on a newer slot and restarts an abandoned fight
+        # Quick Menu -> Load through main.js's own confirmSlotLoad/resumeRun:
+        # a newer-build slot is refused with the run still standing, and a
+        # fight abandoned mid-combat reloads at turn 1 with the same HP,
+        # opening hand and deck (SPEC 3.12, 9 M2).
+        run: node tools/verdict.mjs -- node tools/slot-load-door.mjs
+
+      - name: ...and that gate can fail (3 plants)
+        run: node tools/verdict.mjs -- node tools/slot-load-door.mjs --selftest
+
+  # ---------------------------------------------------------------------------
+  # browser-guard's build-stamp and cold-boot checks, split off by the owner's
+  # 20-minute rule (2026-10-02). Same steps, same commands; its own checkout,
+  # build and browser.
+  # ---------------------------------------------------------------------------
+  browser-guard-stamp:
+    name: the build stamp and the cold boot in a real browser
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # the standalone is built below
+      - uses: ./.github/actions/setup-node
+
+      - name: Build the standalone (the same build browser-guard makes)
+        # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
+        env:
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
+        shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
+        run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
+
+      - uses: ./.github/actions/which-browser
+
       - name: The build version is INK on the three screens he named
         # Constantine asked for the build version on the main menu, the map and in
         # combat. `buildversion --check` in the `test` job proves the STRING is
@@ -555,13 +673,37 @@ jobs:
         # will be slower and that number is not a promise about one.
         run: node tools/verdict.mjs -- node tools/buildstamp-shot.mjs --selftest
 
-      - name: About changelog projects CHANGELOG.md through the real Settings route
-        # #310: about-changelog validated the ordinal column and the About
-        # projection but was in no workflow, so nothing ran it. Default mode parses
-        # CHANGELOG.md, proves the generated projection has not drifted, and drives
-        # the real Settings -> Changelog route in a browser. Lives here, not in the
-        # headless `test` job, because the projection check needs a real browser.
-        run: node tools/verdict.mjs -- node tools/about-changelog.mjs
+      - name: Cold boot owns and consumes the first input before Title exists
+        run: node tools/verdict.mjs -- node tools/startup-gate.mjs
+
+  # ---------------------------------------------------------------------------
+  # about-changelog's known-bad corpus, sharded two ways by the owner's 20-minute
+  # rule (2026-10-02). Its own checkout, build and browser per leg.
+  # ---------------------------------------------------------------------------
+  browser-guard-changelog:
+    name: about-changelog known-bads in a real browser (${{ matrix.shard }})
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # tests/doorplant-shard.test.mjs requires every shard of the count here.
+        shard: ['0/2', '1/2']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # the standalone is built below
+      - uses: ./.github/actions/setup-node
+
+      - name: Build the standalone (the same build browser-guard makes)
+        # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
+        env:
+          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
+        shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
+        run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
+
+      - uses: ./.github/actions/which-browser
 
       - name: ...and that gate can fail — parser, model, and #310 ordinal plants
         # Inverted expectation. The #310 half plants four ordinal-column defects,
@@ -569,26 +711,17 @@ jobs:
         # running backward across date groups, out-of-order date groups, and a
         # receipt citing a build that does not exist yet — plus an inverted control
         # proving the legitimate shapes the shipped file already uses still parse.
-        run: node tools/verdict.mjs -- node tools/about-changelog.mjs --selftest
-
-      - name: The in-run Load door keeps the run on a newer slot and restarts an abandoned fight
-        # Quick Menu -> Load through main.js's own confirmSlotLoad/resumeRun:
-        # a newer-build slot is refused with the run still standing, and a
-        # fight abandoned mid-combat reloads at turn 1 with the same HP,
-        # opening hand and deck (SPEC 3.12, 9 M2).
-        run: node tools/verdict.mjs -- node tools/slot-load-door.mjs
-
-      - name: ...and that gate can fail (3 plants)
-        run: node tools/verdict.mjs -- node tools/slot-load-door.mjs --selftest
-
-      - name: Cold boot owns and consumes the first input before Title exists
-        run: node tools/verdict.mjs -- node tools/startup-gate.mjs
+        # SHARDED, NOT CUT (owner, 2026-10-02): this step took 9-17 minutes. Each
+        # leg runs the copied-tree plants at index i mod 2 (a whole-repo copy and
+        # a browser child each) plus every in-process corpus; together the legs
+        # run every plant, each once.
+        run: node tools/verdict.mjs -- node tools/about-changelog.mjs --selftest --shard ${{ matrix.shard }}
 
   browser-layout-guard:
     name: mobile and combat layout in a real browser
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
         with:
@@ -601,6 +734,23 @@ jobs:
 
       - name: The mobile visual reach gate can fail (13 plants)
         run: node tools/verdict.mjs -- node tools/screenreach.mjs --selftest
+
+  # ---------------------------------------------------------------------------
+  # browser-layout-guard's other half, split off by the owner's 20-minute rule
+  # (2026-10-02): the menus' scrollbars, the combat action row and the Armoury.
+  # Same steps, same commands, in the same order they ran in that job.
+  # ---------------------------------------------------------------------------
+  browser-layout-hintstrip:
+    name: menu scrollbars, combat action row and Armoury in a real browser
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/which-browser
 
       # No menu paints two scrollbars on one axis. Kept to the shape
       # the pairs actually live at — a door that fits has no bars to nest.
@@ -710,26 +860,6 @@ jobs:
         # `unknown` blocks (exit 2) rather than counting toward nothing. (#527)
         run: node tools/verdict.mjs -- node tools/hintstrip.mjs
 
-      - name: …and that gate can fail — its known-bads, each through the real door
-        # Inverted expectation, the idiom this job already uses three times.
-        # One whole-program run per plant plus the unplanted clean edge (the
-        # tool declares its own corpus and prints the count — a number typed
-        # here would be the second home this block has been trimmed for), each
-        # copying the real tree, editing it as FILE BYTES, and booting its own
-        # browser: ~15 minutes for eleven plants on the Linux box it was re-aimed
-        # on (#527; ~9 for the original six). Stated rather
-        # than guessed — this workflow bills by the minute and a runner will be
-        # slower. This is the most expensive step in the file; if the budget
-        # ever has to give, CUT IT ON PURPOSE WITH A NOTE, do not let it rot.
-        # NO WAIVER HERE EITHER, AND THE REASON IT USED TO NEED ONE IS GONE.
-        # doorplant's corpus ends on an UNPLANTED copy that must come back GREEN.
-        # While the tree carried #295's two findings, that clean edge was red for
-        # the TREE's state, so the waiver was what kept this step reporting a
-        # plant result rather than a baseline complaint. The tree is green now, so
-        # the clean edge is green on its own merits — the stronger state, and it
-        # needs no excuse. Every plant is still red by its own named finding.
-        run: node tools/verdict.mjs -- node tools/hintstrip.mjs --selftest
-
       # ---- #316's probe, wired because a probe nobody runs is the same defect
       # as a probe that prints without asserting, and this file just carried
       # BOTH within one hour. `gatelist --raw` classed it `linked-but-never-run`
@@ -767,25 +897,76 @@ jobs:
       # Vira's finding above says a list cannot assume.
 
   # ---------------------------------------------------------------------------
-  browser-startup-plants:
-    name: startup gate known-bads in a real browser
+  # The hint strip's known-bad corpus, sharded two ways (owner, 2026-10-02:
+  # every CI job finishes in 20 minutes or less). tests/doorplant-shard.test.mjs
+  # requires this matrix to list every shard of its count.
+  # ---------------------------------------------------------------------------
+  browser-hintstrip-plants:
+    name: hint strip known-bads in a real browser (${{ matrix.shard }})
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['0/2', '1/2']
     steps:
       - uses: actions/checkout@v5
         with:
           lfs: false
       - uses: ./.github/actions/setup-node
       - uses: ./.github/actions/which-browser
-      - name: The startup gate can fail by the same rendered door (26 plants)
-        # This took about 41 minutes after 31 minutes of earlier browser checks.
-        # Its own runner keeps the complete same-door corpus under one hour.
-        run: node tools/verdict.mjs -- node tools/startup-gate.mjs --selftest
+
+      - name: …and that gate can fail — its known-bads, each through the real door
+        # Inverted expectation, the idiom this job already uses three times.
+        # One whole-program run per plant plus the unplanted clean edge (the
+        # tool declares its own corpus and prints the count — a number typed
+        # here would be the second home this block has been trimmed for), each
+        # copying the real tree, editing it as FILE BYTES, and booting its own
+        # browser: ~15 minutes for eleven plants on the Linux box it was re-aimed
+        # on (#527; ~9 for the original six), 12.5-15.2 on a hosted runner. Stated
+        # rather than guessed — this workflow bills by the minute and a runner
+        # will be slower. SHARDED, NOT CUT (owner, 2026-10-02: every CI job
+        # finishes in 20 minutes or less): each matrix leg runs the plants at
+        # index i mod 2 plus its own clean edge (tools/doorplant.mjs SHARDS), so
+        # the two legs together run every plant, each once.
+        # NO WAIVER HERE EITHER, AND THE REASON IT USED TO NEED ONE IS GONE.
+        # doorplant's corpus ends on an UNPLANTED copy that must come back GREEN.
+        # While the tree carried #295's two findings, that clean edge was red for
+        # the TREE's state, so the waiver was what kept this step reporting a
+        # plant result rather than a baseline complaint. The tree is green now, so
+        # the clean edge is green on its own merits — the stronger state, and it
+        # needs no excuse. Every plant is still red by its own named finding.
+        run: node tools/verdict.mjs -- node tools/hintstrip.mjs --selftest --shard ${{ matrix.shard }}
+
+  # ---------------------------------------------------------------------------
+  browser-startup-plants:
+    name: startup gate known-bads in a real browser (${{ matrix.shard }})
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # tests/doorplant-shard.test.mjs requires every shard of the count here.
+        shard: ['0/4', '1/4', '2/4', '3/4']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/which-browser
+      - name: The startup gate can fail by the same rendered door (its plants at index i mod 4)
+        # This took 41-46 minutes as one step, one browser boot per plant, run
+        # serially. SHARDED, NOT CUT (owner, 2026-10-02: every CI job finishes in
+        # 20 minutes or less): each leg runs the plants at index i mod 4 plus its
+        # own clean edge (tools/doorplant.mjs SHARDS); the four legs together run
+        # every plant, each once.
+        run: node tools/verdict.mjs -- node tools/startup-gate.mjs --selftest --shard ${{ matrix.shard }}
 
   # FINISH §5 "The idle animation plays" and §9 "Reduced motion is proven in a
   # browser". Its own job so its bound is its own: one probe run is about a
-  # minute and the six-plant selftest about five (measured locally), well inside
+  # minute and the seven-plant selftest about ten (measured locally), inside
   # the 20 below.
   browser-motion:
     name: idle animation and reduced motion in a real browser
@@ -795,12 +976,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          lfs: false # the probe reads computed styles and animations, not art
+          lfs: false # the art is plain git (not LFS), so the probe's figures load
       - uses: ./.github/actions/setup-node
       - uses: ./.github/actions/which-browser
       - name: Every combatant idles, and reduced motion leaves nothing over 0.01 s in one turn
         run: node tools/verdict.mjs -- node tools/motion-probe.mjs
-      - name: …and that gate can fail (6 plants)
+      - name: …and that gate can fail (7 plants)
         run: node tools/verdict.mjs -- node tools/motion-probe.mjs --selftest
 
   # SOP 3 requirement 4. Always runs, including when everything above is red, so
@@ -809,12 +990,15 @@ jobs:
   boundary:
     name: what this green does NOT cover
     runs-on: ubuntu-latest
-    needs: [test, reproducible, reproducible-agree, browser-guard, browser-layout-guard, browser-startup-plants, browser-motion, display-first]
+    needs: [test, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-guard-stamp, browser-guard-changelog, browser-layout-guard, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, browser-motion, display-first]
     if: always()
     steps:
       - name: Named boundary
         run: |
-          echo "upstream results: test=${{ needs.test.result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }} browser-guard=${{ needs.browser-guard.result }} browser-layout-guard=${{ needs['browser-layout-guard'].result }} browser-startup-plants=${{ needs['browser-startup-plants'].result }} browser-motion=${{ needs['browser-motion'].result }} display-first=${{ needs['display-first'].result }}"
+          echo "upstream results: test=${{ needs.test.result }} test-selftests=${{ needs['test-selftests'].result }} parse-gate=${{ needs['parse-gate'].result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }}"
+          echo "  browser-guard=${{ needs['browser-guard'].result }} browser-guard-stamp=${{ needs['browser-guard-stamp'].result }} browser-guard-changelog=${{ needs['browser-guard-changelog'].result }}"
+          echo "  browser-layout-guard=${{ needs['browser-layout-guard'].result }} browser-layout-hintstrip=${{ needs['browser-layout-hintstrip'].result }} browser-hintstrip-plants=${{ needs['browser-hintstrip-plants'].result }}"
+          echo "  browser-startup-plants=${{ needs['browser-startup-plants'].result }} browser-motion=${{ needs['browser-motion'].result }} display-first=${{ needs['display-first'].result }}"
           echo ""
           echo "A GREEN RUN OF THIS WORKFLOW MEANS:"
           # Was "34 engine tests". #10 adds test 35, so the number was wrong the moment
@@ -857,7 +1041,7 @@ jobs:
           echo "  · on seed MOTION1 every living combatant's visible figure is moved by a running"
           echo "    idle animation, at boot and after one turn; and one full turn under Reduced"
           echo "    motion (setting+OS, setting, OS) shows no animation over 0.01 s and no script"
-          echo "    flipbook, with six same-door known-bads caught (browser-motion)"
+          echo "    flipbook, with seven same-door known-bads caught (browser-motion)"
           # WAS: "...and it is the only rendered claim in this file that is about the
           # GAME's layout." TRUE when Bjorn wrote it, FALSE the moment I added the
           # Armoury step below — a second browser-driven rendered-layout claim in this
@@ -906,12 +1090,14 @@ jobs:
           # PASS over this rather than let it stand, on her own test: a MISSING boundary
           # leaves a reader uninformed; a FALSE one leaves them confidently wrong.
           # — Sunna.
-          echo "  · that the game is playable. NOTHING HERE PLAYS IT. Four jobs open a browser."
-          echo "    browser-guard owns focused checks like hand-side placement; browser-layout-guard"
-          echo "    owns phone reach, the hint strip and Armoury. display-first owns Settings through BOTH the"
-          echo "    cold Startup -> Title door and the in-run door. It sends a complete CDP"
-          echo "    Enter down/up through Startup, then the Settings controls are DOM clicks."
-          echo "    browser-startup-plants runs the cold-boot known-bad corpus."
+          echo "  · that the game is playable. NOTHING HERE PLAYS IT. Eight jobs open a browser."
+          echo "    browser-guard owns focused checks like hand-side placement, browser-guard-stamp"
+          echo "    the build stamp and cold boot, browser-guard-changelog the changelog's known-bads;"
+          echo "    browser-layout-guard owns phone reach, browser-layout-hintstrip the hint strip and"
+          echo "    Armoury, browser-hintstrip-plants the hint strip's known-bads. display-first owns"
+          echo "    Settings through BOTH the cold Startup -> Title door and the in-run door. It sends"
+          echo "    a complete CDP Enter down/up through Startup, then the Settings controls are DOM"
+          echo "    clicks. browser-startup-plants runs the cold-boot known-bad corpus, in shards."
           echo "    These gates inspect focused rectangles or alpha-weighted rendered pixels;"
           echo "    none fights, wins, loses, or finishes a run, or proves general playability."
           # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
