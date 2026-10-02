@@ -182,8 +182,13 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
   function mountServiceTile(shelf, service) {
     const id = service === 'extract' ? 'extractArt' : 'installArt';
     const host = tile(GLYPH[id], t(`blacksmith.bar.${id}`), t(`settings.shops.offering.${id}`));
-    const control = button({ label: t('blacksmith.action.open'), weight: 'primary' });
-    control.addEventListener('click', () => openMountService(app, {
+    // Nothing to act on (or the run's rules refuse it, as extraction in a
+    // Sealed or Draft run): the control is disabled, as the Shrine and the
+    // merchant's smith lock theirs on `offer.available`, so the shelf's idle
+    // line is the whole answer and no dead-end modal opens.
+    const ready = readyCount(id) > 0;
+    const control = button({ label: t('blacksmith.action.open'), weight: 'primary', disabled: !ready, attrs: { dataset: { smithService: id } } });
+    if (ready) control.addEventListener('click', () => openMountService(app, {
       service, registries, run, meta, returnFocusElement: control, multiUse: true, place: 'merchant',
       quote: (chosen) => (service === 'extract'
         ? blacksmithExtractPlan(registries, run, chosen.itemRef, chosen.mountKey)

@@ -7,7 +7,8 @@
 // The rule, held at every door (model/cardExtraction.js extractionRefusal):
 //   · the plan offers no candidate and names the refusal (`poolDeck`);
 //   · commitExtraction refuses, free grants included, and touches nothing;
-//   · the blacksmith quotes the refusal, its idle line says why, and the
+//   · the blacksmith quotes the refusal, its idle line says why, its Open
+//     control is disabled, and the
 //     Shrine/merchant smith card is shown unavailable with the same sentence;
 //   · the answer is read from the run's own Custom Climb rules every time,
 //     so no save can carry extraction into a pool run;
@@ -31,6 +32,8 @@ import {
   serviceCandidates, serviceIdleReason,
 } from '../src/model/blacksmith.js';
 import { mountServiceOffer } from '../src/ui/screens/smithServices.js';
+import { mountBlacksmith } from '../src/ui/screens/blacksmith.js';
+import { withKitDom } from './helpers/kit-dom.mjs';
 
 const PREFIX = 'gameConfig.shops.';
 const ALL_OUT = Object.fromEntries(shippedShops.blacksmith.offerings.map((row) => [`${PREFIX}blacksmith.${row.id}.chance`, 100]));
@@ -124,6 +127,46 @@ for (const deckMode of ['sealed', 'draft']) {
     assert.equal(mountServiceOffer(REG, run, 'install').available, true);
     commitInstall(REG, run, KATANA, ART_MOUNT, 'bought:1');
     assert.equal(run.itemMounts[KATANA][ART_MOUNT].card, 'katanaDrawCut');
+  });
+}
+
+// The blacksmith screen's Extract control: enabled with something to lift
+// out, disabled in a pool run so no dead-end modal opens (the Shrine and the
+// merchant's smith lock theirs on `offer.available` the same way).
+function extractControl(run) {
+  let found = null;
+  withKitDom((dom) => {
+    const app = dom.document.createElement('main');
+    dom.document.body.replaceChildren(app);
+    mountBlacksmith(app, { registries: REG, run, meta: { settings: {} }, onChanged() {}, onLeave() {} });
+    app.querySelector('#shop-cat-extractArt').click();
+    const control = [...app.querySelectorAll('button')].find((b) => b.dataset.smithService === 'extractArt');
+    const shelf = app.querySelector('#blacksmith-extractArt');
+    const before = dom.document.body.children.length;
+    if (control) control.click();
+    found = {
+      control, disabled: control?.disabled === true,
+      idle: shelf.querySelector('.bs-idle')?.textContent || '',
+      opened: dom.document.body.children.length !== before || !!dom.document.body.querySelector('.mount-service-modal, [role="dialog"]'),
+    };
+  });
+  return found;
+}
+
+test('the blacksmith screen\'s Extract control opens in a Standard run', () => {
+  const { control, disabled, idle } = extractControl(smithRun().run);
+  assert.ok(control, 'the Extract service tile is drawn');
+  assert.equal(disabled, false);
+  assert.equal(idle, '');
+});
+
+for (const deckMode of ['sealed', 'draft']) {
+  test(`${deckMode}: the blacksmith screen's Extract control is disabled and opens nothing`, () => {
+    const { control, disabled, idle, opened } = extractControl(smithRun(deckMode).run);
+    assert.ok(control, 'the rolled Extract service stays laid out');
+    assert.equal(disabled, true, 'the Open control is disabled');
+    assert.ok(idle.includes(REFUSAL), 'the shelf says why');
+    assert.equal(opened, false, 'clicking it opens no modal');
   });
 }
 
