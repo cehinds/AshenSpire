@@ -43,7 +43,7 @@
 //
 // Usage
 //   node tools/uprightsetting.mjs               source tree via tools/serve.mjs
-//   node tools/uprightsetting.mjs --dist        dist/AshenSpire.html over file://
+//   node tools/uprightsetting.mjs --dist        dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
 //   node tools/uprightsetting.mjs --selftest    two source plants, watched red
 //   node tools/uprightsetting.mjs --root DIR    serve a different tree
 //
@@ -55,11 +55,11 @@
 // fit, without resurrecting that refusal inside the supported landscape band.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, cpSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 import { printArtifactProvenance } from './artifact-provenance.mjs';
 
@@ -124,7 +124,7 @@ async function main() {
   if (args.includes('--selftest')) return selftest();
 
   let base; let stop = () => {};
-  if (useDist) base = pathToFileURL(resolve(ROOT, 'dist/AshenSpire.html')).href;
+  if (useDist) base = await buildPageUrl(resolve(ROOT, 'dist/AshenSpire.html'));
   else { const s = await serve({ root: SERVE_ROOT, port: Number(argOf('--port') || 8295), open: false }); base = `http://127.0.0.1:${s.port}/index.html`; stop = () => s.server.close(); }
 
   const { wsUrl, close: dropBrowser } = await launchBrowser({

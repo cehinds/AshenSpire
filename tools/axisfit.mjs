@@ -206,7 +206,7 @@
 //
 // Usage
 //   node tools/axisfit.mjs                 source tree via tools/serve.mjs
-//   node tools/axisfit.mjs --dist          dist/AshenSpire.html over file://
+//   node tools/axisfit.mjs --dist          dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
 //   node tools/axisfit.mjs --text XL       one other cell of the text axis
 //   node tools/axisfit.mjs --only map      one surface (still `unknown` on a typo)
 //   node tools/axisfit.mjs --selftest      plant every mechanism, watch it fail
@@ -229,11 +229,11 @@
 // counts containers, and a container count is a proxy for coverage, not coverage.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -679,7 +679,7 @@ async function main() {
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
     if (!existsSync(f)) { console.error(`axisfit: ${f} does not exist — run \`node tools/launch.mjs --build-only\` first`); process.exit(2); }
-    base = pathToFileURL(f).href;
+    base = await buildPageUrl(f);
   } else {
     const s = await serve({ root: ROOT, port: 8263, open: false });
     server = s.server; base = `http://localhost:${s.port}/`;

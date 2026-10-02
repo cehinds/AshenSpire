@@ -50,7 +50,7 @@
 //
 // Usage
 //   node tools/menufit.mjs                  source tree via tools/serve.mjs
-//   node tools/menufit.mjs --dist           dist/AshenSpire.html over file://
+//   node tools/menufit.mjs --dist           dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
 //   node tools/menufit.mjs --only 390x844
 //
 // Exit codes
@@ -67,11 +67,11 @@
 // press (then clauses 1 and 4 are its job), or the day neither surface exists.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
 // DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
@@ -249,7 +249,7 @@ async function main() {
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
     if (!existsSync(f)) { console.error(`menufit: ${f} does not exist — run \`node tools/launch.mjs --build-only\` first`); process.exit(2); }
-    base = pathToFileURL(f).href + '?shot=map';
+    base = (await buildPageUrl(f)) + '?shot=map';
   } else {
     const s = await serve({ root: ROOT, port: 8268, open: false });
     server = s.server; base = `http://localhost:${s.port}/?shot=map`;

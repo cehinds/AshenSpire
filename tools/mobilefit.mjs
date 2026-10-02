@@ -53,7 +53,7 @@
 //
 // Usage
 //   node tools/mobilefit.mjs                 source tree via tools/serve.mjs
-//   node tools/mobilefit.mjs --dist          dist/AshenSpire.html over file://
+//   node tools/mobilefit.mjs --dist          dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
 //   node tools/mobilefit.mjs --only 390x844
 //   node tools/mobilefit.mjs --shots DIR     also write a PNG per shape
 //   CHROME=/path/to/chrome node tools/mobilefit.mjs
@@ -73,11 +73,11 @@
 //   It hit-tests reachability only; it never judges legibility.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -408,7 +408,7 @@ async function main() {
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
     if (!existsSync(f)) { console.error(`mobilefit: ${f} does not exist — run \`node tools/launch.mjs --build-only\` first`); process.exit(2); }
-    base = pathToFileURL(f).href;
+    base = await buildPageUrl(f);
   } else {
     const s = await serve({ root: ROOT, port: 8262, open: false });
     server = s.server; base = `http://localhost:${s.port}/`;

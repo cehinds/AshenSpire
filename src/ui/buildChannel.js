@@ -15,6 +15,8 @@
 //   file:///…/AshenSpire-dev-0.7.1.449.html        a download from that site
 //   file:///…/AshenSpire-mobile-test-0.7.1.1.html  the mobile download
 //   http://localhost:8080/                 tools/serve.mjs (the source tree)
+//   http://127.0.0.1:N/unknown/latest/     tools/browser.mjs serving a build
+//                                          with the channel its file reads
 //
 // Anything else — the site root (main's tree) — is treated as `main`; an
 // unrecognised file is `unknown` and never opens debug on its own.
@@ -47,7 +49,12 @@ export function buildChannel(loc = globalThis.location, runPath = RUN_PATH) {
   if (served) return served[1];
   const saved = path.match(/AshenSpire-(?:mobile-)?(dev|test|release|main)-[^/]*\.html$/i);
   if (saved) return saved[1].toLowerCase();
-  if (/^(localhost|127\.\d+\.\d+\.\d+|0\.0\.0\.0|\[::1\])$/.test(host)) return 'dev';
+  const loopback = /^(localhost|127\.\d+\.\d+\.\d+|0\.0\.0\.0|\[::1\])$/.test(host);
+  // `/unknown/<n|latest>/` on THIS machine only: how a local tool
+  // (tools/browser.mjs buildPageUrl) serves a build over http while keeping the
+  // channel the same file reads by double-click. Never a Pages path.
+  if (loopback && /\/unknown\/(?:\d+|latest)(?:\/|$)/.test(path)) return 'unknown';
+  if (loopback) return 'dev';
   // A private-network host is a workstation serving the dev preview to a
   // phone on the same Wi-Fi (tools/serve-preview.mjs): released builds are
   // only ever served from the Pages site or opened as files.

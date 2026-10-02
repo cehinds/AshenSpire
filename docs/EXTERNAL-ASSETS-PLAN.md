@@ -1,12 +1,17 @@
 # Every asset outside the game file — plan
 
-Status: **steps 2, 3a and 6a built** (2026-10-01: `tools/asset-pack.mjs`,
+Status: **steps 2, 3a, 3b, 6a and 8c built** (2026-10-01: `tools/asset-pack.mjs`,
 `art-manifest.json` schema 2; 2026-10-02: the loader `src/ui/assetPacks.js`,
 `setBuiltInSource`, the `ASSET_PACKS` stamp and the tier fallback, with
 `bundle.mjs --external-art` writing packs and `verify-external` rewritten; see
-[Step 3a as built](#step-3a-as-built); and the Pages base tree without `art/`,
-the `og:image` Pages path and the site size in `pages-site --check`, see section 4);
-the rest is plan (2026-09-27). The owner answered its
+[Step 3a as built](#step-3a-as-built); the `ASSET_CSS` template for the fonts
+and backdrops, the masks inline, see [Step 3b as built](#step-3b-as-built);
+the Pages base tree without `art/`, the `og:image` Pages path and the site
+size in `pages-site --check`, see section 4; Settings → Art quality
+Auto / Light / High, see [Step 8c as built](#step-8c-as-built)); **step 8d
+built** (2026-10-02: `buildPageUrl`/`serveDir` in `tools/browser.mjs`, and the
+30 tools that opened a built page by `file://` ask it); the rest is plan
+(2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -288,7 +293,9 @@ schema-2 pin whose top level disagrees with `packs.high`.
    4. It hands `assetmap.js` a Map of id → **relative object path**
       (`<base>objects/xx/<sha>.webp`, not a `blob:` URL).
 5. **Tier selection, with fallback.** The requested tier is Settings → Art
-   quality (Auto/Light/High, section 5), and *Auto* means the build's default.
+   quality (Auto/Light/High, section 5). *Auto* means the build's default,
+   except light on a narrow layout or phone-sized screen, with Save-Data on or
+   on a low-memory device (see [Step 8c as built](#step-8c-as-built)).
    If the requested tier's index cannot be loaded or fails its hash, the loader
    uses the light index. The fallback order is **high → light → placeholders**.
    So a main build whose default is high still shows the light art:
@@ -641,7 +648,7 @@ light single file, about 30 MB, self-contained, plays by double-click. The
 | `tools/mobile-art.mjs --check` / `--selftest` (`ci.yml:270-274`, `dev-preview.yml:178`) | every push | twins are in this repo | move to the art repo's CI, where the light tier is generated; here `art-manifest.mjs --check` compares the pinned release | 11 |
 | `tools/credits-check.mjs` | every push | enumerates `assets/*` | enumerates manifest id prefixes, including `music/`, `map-detail/` and `assets/fonts/` (ART-REPO-PLAN already plans this) | 12 |
 | `tools/hand-side-probe.mjs`, `shotguard-probe`, `startup-gate`, `map-two-axis-pan` | browser jobs | served source or build with art beside it | source mode is served by `tools/serve.mjs`, which maps ids to the fetch cache | 12 |
-| about 40 browser tools with `--dist` over `file://` (`mapfit`, `screenreach`, `release-shots`, `about-changelog`, `offline-play-qa` and others; `git grep -l "dist/AshenSpire.html" tools`) | browser jobs, by hand | `dist/AshenSpire.html` is complete alone | keep working under `file://` once step 4 lands (objects beside it); where a tool needs `fetch`, one helper in `tools/browser.mjs` serves `dist/` over http. One PR flips them all and lists them. | 8d |
+| about 40 browser tools with `--dist` over `file://` (`mapfit`, `screenreach`, `release-shots`, `about-changelog`, `offline-play-qa` and others; `git grep -l "dist/AshenSpire.html" tools`) | browser jobs, by hand | `dist/AshenSpire.html` is complete alone | keep working under `file://` once step 4 lands (objects beside it); where a tool needs `fetch`, one helper in `tools/browser.mjs` serves `dist/` over http. One PR flips them all and lists them. **Built (8d), against the real tree:** 30 tools built a `file://` URL for a built page and now ask `buildPageUrl()`, which returns that same `file://` URL for a self-contained file and serves the HTML's folder over local http when the HTML carries a non-empty `ASSET_PACKS` pin (the pack shape), under `/<channel>/latest/` so the page keeps the channel and debug state its file reads (`unknown` for `dist/AshenSpire.html`; `buildChannel()` reads that path) (`ASHEN_BUILD_OVER=file|http` forces either): `actends`, `actionreach`, `advanced-config-preview`, `arcane-exposure-visual`, `axisfit`, `card-drag-targeting`, `combat-action-row`, `combatant-stage`, `controlstrip`, `gesture-cancel`, `hand-pager-threshold`, `holdbeat`, `holdconfirm`, `hudbars`, `mapfit`, `mapfog`, `mapreach`, `mapspacing`, `menufit`, `mobilefit`, `presentation-matrix`, `screenreach`, `scroll-cue-bleed`, `short-landscape-support`, `tapsize`, `text-geometry`, `uprightgate`, `uprightsetting`, `veil-owns-input`, `zoomplace`. The rest of the grep already served the repository over http through `tools/serve.mjs` (`release-shots`, `about-changelog`, `settingsreach`, `watched`, `doublescroll`, `profile-first-run`, `armoury-inventory-disclosure`, `current-build-ui-repair`, `hud-quick-compact`, `screenshot`, `card-feedback`, `external-play`), or reads the file without a browser; `offline-play-qa` stays on `file://` by design (its row below). | 8d |
 | `tools/offline-play-qa.mjs` | by hand | downloads one HTML and opens it under `file://` | keeps its single-file pass for the light single file; adds: downloads the zip, unzips it and opens it under `file://`; installs the service worker, goes offline, boots and plays a track (the `206` path) | 6b, 7 |
 | `tests/web-meta.test.mjs:57` | core suite | `build/AshenSpire.html` and `-mobile.html` | `build/AshenSpire.html` and the light single file | 8e |
 | `index.html:14` `og:image` (copied into the build by `tools/head-meta.mjs`) | every build | `raw.githubusercontent.com/…/main/assets/bg/title-city-tower.webp` exists | points at the Pages object for that backdrop (a stable path the site writes, `/AshenSpire/og-image.webp`), before `assets/` leaves main | 6a |
@@ -702,7 +709,7 @@ build dependency at step 11. No token does: the owner made it public (answer
 | 7 | **In-game zip download.** Added beside the light single-file download in `offlineDownload.js`, with new `offlinePlay.js` instructions and `offline-play-qa` on the zip. The `download/` light single file stays. | desktop offline copy | both downloads |
 | 8a | **SPEC + FINISH PR** (section 6's sign-off rows, D5). Owner review there (owner answer 5). | text | — |
 | 8c | **Art quality Auto / Light / High** in the web edition, with Auto's tier detection. Does not depend on the flip. | a player-facing setting | all |
-| 8d | **`tools/browser.mjs` serve-`dist/` helper, and the ~40 `--dist` tools** flipped to it where they need `fetch`. | — | all |
+| 8d | **`tools/browser.mjs` serve-`dist/` helper, and the ~40 `--dist` tools** flipped to it where they need `fetch`. **Built:** 30 tools flipped; the others already served over http (section 6). | — | all |
 | 8e | **The flip.** `launch.mjs` builds the pack shape and the light single file; `--light`/`--full-art` choose the default tier and which packs to carry; `--mobile` and the full-art single file are removed, and inline mode stays only for the light single file at `download/` (owner answers 2, 3, 6); the `EDITION` stamp becomes the default tier; `verify-shipped` A stays for the light single file and the mobile checks are retired; `bundle.test`, `web-meta`, `mobile-art-distinct` and `buildversion-selftest` follow; `/AshenSpire-mobile.html` redirects; README, `dist/README`, DEVELOPER, CREDITS, ARCHITECTURE-MAP and CLAUDE follow. Needs 8a approved. | one HTML, ~9.5 MB, and the ~30 MB light single file | every door: the light single file, double-click `dist/`, hosted, installed |
 | 9 | **Art repo PR.** Import the light tier generator (`mobile-art.mjs`, `mobileart-policy.mjs`) and generate `light/assets/` from `hd/assets/`; add `common/` (fonts, `OFL.txt`, music, tiles) with the score and tile tools; the pack script writes three zips and the schema-2 manifest; CI verifies each zip against the manifest. | — | this repo unchanged |
 | 10 | **Owner: merge step 9.** Releases are automatic (AshenSpire-art#2), so the merge publishes `hd-assets-v<N>` with three zips. | — | — |
@@ -728,11 +735,13 @@ Where the build differs from, or settles, the text above (2026-10-02):
   - **3b:** the CSS-named ids move into the `ASSET_CSS` template, filled from
     the index the loader actually used, so a high-default build whose high
     index failed shows light backdrops and fonts instead of 404ing high
-    objects, and a failed load leaves the CSS on its fallbacks.
+    objects, and a failed load leaves the CSS on its fallbacks. Done: see
+    [Step 3b as built](#step-3b-as-built).
   - **6b:** CSS urls are relative to the HTML, not to `asset-base.json`'s
     base. On a Pages page at depth 1 or 2 they would miss the shared store, so
     pack-shaped builds must not be published there before 3b fills the
-    template from the base.
+    template from the base. Met by 3b: the slots are filled from the loader's
+    map, whose object paths are built on `asset-base.json`'s base.
 - **`map-detail/` and `music/` are still copied** beside the HTML until step
   3c reads them through the common index, so a 3a web edition carries those
   bytes twice (as copies and as common objects, about 32 MB).
@@ -779,6 +788,127 @@ Where the build differs from, or settles, the text above (2026-10-02):
   lacks.
 - `external-play` now also requires every screen to have loaded the pinned
   tier (`<html data-built-in-art>`) and its images to come from `objects/`.
+
+### Step 3b as built
+
+Where the build differs from, or settles, §3.7 (2026-10-02):
+
+- **The backdrop rules stay where they are; only their `url()` moves.**
+  §3.7 says every rule that names an asset moves into the template. Moved into
+  a later `<style>`, a rule would win where it lost before: `.startup-gate`
+  names `title-city-tower` and is restated as `background: #100e0b` further
+  down `kit.css`, so the moved rule would bring that backdrop back. Instead
+  `tools/asset-css.mjs` rewrites each backdrop `url()` in place to
+  `var(--as-css-<id>, none)`, and the template carries one rule per id,
+  `:root{--as-css-<id>:url("{{id}}")}`. Every selector keeps its place in the
+  cascade; an unset variable falls back to `none`, which is what a backdrop
+  that never loaded showed anyway, and a gradient layer beside it stays. Only
+  `background` and `background-image` may carry such a `url()`; anywhere
+  else, where `none` would change the declaration's meaning, the build stops.
+- **The 15 "AS Lore" `@font-face` rules move whole** into the template (no two
+  name the same face, so their order is free), with `{{assets/fonts/…}}` slots
+  the common index fills.
+- **The two SVG masks stay inline as `data:` in the inlined `<style>`**, not
+  in the template: inlined from the default tier's object, as the single file
+  inlines them. They then never depend on the load (a mask loads in CORS mode,
+  §3.7), and nothing about them changes when the load fails.
+- **`ASSET_CSS` is stamped into `src/ui/assetPacks.js`** beside `ASSET_PACKS`
+  (`{"schema":1,"rules":[…]}`, one line of JSON; `null` in the single files
+  and the source tree), so the bundler computes the CSS in section 2b, before
+  the modules are transformed.
+- **The loader fills the slots from the map it handed `setBuiltInSource`**:
+  the tier that loaded plus common. A high-default build whose high index
+  failed gets light backdrops; a rule whose id that map lacks (a face, when
+  the common index failed) is left out on its own and reported in the load's
+  `failed` list; a failed load injects nothing. Object paths are made absolute
+  against the page before injection, so a `url()` read through a custom
+  property cannot resolve against anything else. The rules go into one
+  `<style data-asset-css>` at the end of `<head>`.
+- **The bundler refuses a slot that a tier could not fill**: each id must be
+  in the common index or in every art tier the build carries.
+- **`verify-external` D** now checks that no inlined stylesheet names a file by
+  `url()` (only the SVG masks, as `data:`), that `ASSET_CSS` is present, that
+  every slot names an id the common index or every pinned art tier lists, and
+  that the `--as-css-…` variables read and defined agree. Its selftest plants
+  a direct object `url()`, an unlisted slot, an undefined variable and a missing
+  template (16 plants).
+- **`external-play`** also mounts the cold-boot startup gate (four screens),
+  and checks on each that every CSS background is an object of the loaded tier
+  (or common) that decodes, every mask is an inline SVG, the template is in the
+  page with no unfilled slot, and the 15 lore faces load; across the screens,
+  that every object requested belongs to the loaded tier or common and every
+  font came from common. `--expect-tier light` runs it on a high-default build
+  whose high index was removed (the removed index's 404 is the plant, not a
+  finding). `dev-preview.yml`'s browser-gates job runs that pass on every push
+  to `test`, `release` and `main`: it builds a high-default web edition when
+  the job's own build is light, hard-link copies it, deletes the pinned high
+  index and its twin, and runs `external-play --expect-tier light`.
+- **The act backdrops** (`.backdrop.act-N`, `bg_act1`–`3`) are slotted like the
+  rest, but nothing on dev draws them (`backdropClass()` has no caller), so no
+  browser check sees them load.
+- The source tree and the light single file are unchanged: the single file's
+  `ASSET_MAP` and inlined `<style>`s hash the same as dev's, and its
+  `ASSET_CSS` is `null`. SPEC §2's status row (the CSS bypass) still holds for
+  them and is left to step 8a.
+
+### Step 8c as built
+
+Where the build settles the text above (2026-10-02):
+
+- **The choices** are *Auto*, *Light*, *High* and *Local high-res*
+  (`src/ui/highResArt.js` `ART_QUALITY_CHOICES`); the default is *Auto*. The
+  one choice before, *Built-in*, is read as *Auto* (`legacyChoices` on the row,
+  and `artQualityChoice()`), so a stored value keeps working and imports.
+- **Auto** (`src/ui/artTier.js` `autoTier`) asks for light when the build's
+  default is high and any of these holds: `navigator.connection.saveData`, the
+  layout is narrow (`<html data-layout="narrow">`, written by `applyUiScale`
+  before the boot load starts), the screen's short side is at most
+  `SMALL_SCREEN_PX` (600 CSS px, so a phone booted in landscape counts: Safari
+  and Firefox report no `deviceMemory`), or `navigator.deviceMemory` is at or
+  under `LOW_MEMORY_GB` (2). A coarse pointer alone was not used, because it
+  would also send tablets and touch laptops to light. Otherwise it asks for the default. A light-default build
+  always asks for light. *Local high-res* lays its folder over Auto's tier,
+  unchanged otherwise.
+- **When it applies.** The boot load asks for the setting's tier
+  (`loadBuiltInPacks({ tier })`; with no tier it is still the build's
+  default). A change in play **reloads the indexes at once** (`applyArtTier`,
+  called from `applyDisplaySettings`): the new map goes through
+  `builtInArtArrived`, which re-points the images on screen. A switch that
+  cannot load anything keeps the art already shown (`keepOnFail`) and records
+  the tier it asked for, so the row says that one failed. Quick switches run
+  one at a time, only the latest, and a load the player has replaced while it
+  was in flight publishes nothing (`stillWanted`). Auto is decided at boot and
+  when it is chosen, in the queued job, so a batch that sets Auto and a new
+  layout together reads the new layout; a window resized later does not swap
+  the art.
+- **The fallback is the loader's**: High on a build that pins no high pack, or
+  whose high index fails, shows light; the row's live line says which tier is
+  on screen and why (`tierStatus`, `aria-live="polite"`).
+- **A single file and the source tree** pin no packs, so *Light* and *High* are
+  shown **disabled** (the row's new `choiceDisabled`, honoured by the choice
+  renderer for `<option>`s and segment buttons; `settings-choice-row` in the
+  component catalogs) and the live line says the file
+  carries its art inside it. A stored *Light* or *High* is kept, not
+  rewritten, so the same choice still applies in the web edition on the same
+  origin.
+- **`external-play`** now expects Auto's tier for each window: its
+  phone screens must load light (Auto on a narrow layout), and three more
+  passes, the startup gate, combat and the map on a 1280×800 desktop window, must load the tier the build
+  pins, so a high build is checked at both tiers. Each pass also sets the
+  emulated screen size: a headless browser's own screen is 800×600, whose
+  short side would read as a small screen.
+- **The CSS follows a switch** (step 3b): a switch in play goes through
+  `loadBuiltInPacks`, which fills `ASSET_CSS` from the map it publishes and
+  replaces the one `<style data-asset-css>`, so *Light* on a high-default
+  build swaps the backdrops too, and fonts stay on common. A switch that fails
+  or is superseded publishes nothing and leaves the CSS as it was.
+- **`external-play` with 3b**: the phone screens (the startup gate among them)
+  check light objects and CSS, the desktop screens the build's tier, or the
+  one `--expect-tier` names; each screen's requested objects (its own
+  requests, by the navigation's `loaderId`, with the cache off) are checked
+  against that screen's tier. `--plant desktop-light` gives the desktop
+  screens a phone-sized screen, so Auto loads light there, and the run must
+  go RED.
 
 ---
 

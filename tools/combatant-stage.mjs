@@ -7,8 +7,8 @@
 
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { launchBrowser, resolveBrowser } from './browser.mjs';
+import { fileURLToPath } from 'node:url';
+import { buildPageUrl, launchBrowser, resolveBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -70,7 +70,7 @@ async function main() {
 
   const served = standalone ? null : await serve({ root: ROOT, port: 8581, open: false });
   const base = standalone
-    ? pathToFileURL(resolve(ROOT, 'dist/AshenSpire.html')).href
+    ? await buildPageUrl(resolve(ROOT, 'dist/AshenSpire.html'))
     : `${served.url}/`;
   if (standalone && !existsSync(resolve(ROOT, 'dist/AshenSpire.html'))) {
     console.error('combatant-stage: UNKNOWN — dist/AshenSpire.html is missing');
