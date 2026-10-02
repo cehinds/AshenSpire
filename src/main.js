@@ -8,6 +8,7 @@ import { artLoadNoticeModel } from './ui/models/ArtLoadNoticeModel.js';
 import { mountBootArtStatus } from './ui/components/bootArtStatus.js';
 import { bootArtStatusModel } from './ui/models/BootArtStatusModel.js';
 import { whenNoOverlay } from './ui/whenNoOverlay.js';
+import { restoreArtPlaceholders } from './ui/artFallback.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
@@ -1543,6 +1544,10 @@ function artArrivedAfterFailure() {
   refreshArtNotice();
   cancelTitleRedraw();
   cancelTitleRedraw = whenNoOverlay(() => {
+    // Every art placeholder on the page (an enemy's, a portrait's, a glyph
+    // that stood in for an item) is put back, whatever screen it is on
+    // (src/ui/artFallback.js; review of #1471).
+    restoreArtPlaceholders(document);
     const root = app.querySelector('.title-screen');
     // Any other screen (a Retry from the in-run Settings): it redraws its own
     // art from its own state (combat's enemy placeholders), keeping the rest.

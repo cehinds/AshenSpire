@@ -20,6 +20,7 @@ import { createEnemyPoseStage } from './enemyPoseStage.js';
 import { createPoseStage, hasPoses, registerStage } from './services/PoseAnimator.js';
 import { hintImage } from './imageHints.js';
 import { relicArtAsset } from '../model/relicArt.js';
+import { markArtPlaceholder, hideOnError } from './artFallback.js';
 
 export function relicArtUrl(relic) {
   const path = relicArtAsset(relic);
@@ -38,7 +39,11 @@ export function relicIcon(relic) {
   img.src = src;
   img.alt = '';
   img.style.cssText = 'width:100%;height:100%;object-fit:contain;';
-  img.addEventListener('error', () => { icon.textContent = relic.icon || '◆'; }, { once: true });
+  img.addEventListener('error', () => {
+    icon.textContent = relic.icon || '◆';
+    // The art comes back with the built-in art (a Retry): the icon is drawn again.
+    markArtPlaceholder(icon, () => { const again = relicIcon(relic); if (again) icon.replaceWith(again); });
+  }, { once: true });
   icon.append(img);
   return icon;
 }
@@ -141,6 +146,8 @@ export function enemySprite(enemyDef, entity = {}) {
       `justify-content:center;font-size:${px(tier.font)};position:relative;` +
       `box-shadow:0 ${Math.round(tier.h * 0.08)}px 10px rgba(0,0,0,.5);`;
     el.textContent = enemyDef.art || '☠';
+    // The art comes back with the built-in art (a Retry): the sprite is built again.
+    markArtPlaceholder(el, () => el.replaceWith(enemySprite(enemyDef, entity)));
   };
   // THE MIRROR GETS ITS OWN LAYER, because every other element here is
   // something's animation target and a CSS animation on `transform` sits in a
@@ -572,7 +579,10 @@ export function classSprite(classId, tint, sigil, tintId, style, figureId, armou
   img.src = url;
   img.alt = classId;
   img.style.cssText = 'width:100%;height:100%;object-fit:contain;image-rendering:auto;';
-  img.addEventListener('error', fallbackToSvg); // dist / file:// → SVG
+  img.addEventListener('error', () => { // dist / file:// → SVG
+    fallbackToSvg();
+    markArtPlaceholder(el, () => { const again = classSprite(classId, tint, sigil, tintId, style, figureId, armourId, presentation); if (again) el.replaceWith(again); });
+  });
   facing.appendChild(img);
   applyMedallion(el);
   return el;
@@ -638,7 +648,7 @@ export function equippedFigure({ classId, armourId, rightId, leftId, rightMirror
     img.style.cssText =
       `position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:${z};` +
       (mirror ? 'transform:scaleX(-1);' : '');
-    img.addEventListener('error', () => img.remove());
+    hideOnError(img);
     el.appendChild(img);
   };
   layer(assetUrl(`assets/equipment/body_${classId}_${armourArtKey(classId, armourId)}.webp`), 1);

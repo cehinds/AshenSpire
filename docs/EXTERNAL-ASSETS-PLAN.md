@@ -1116,8 +1116,18 @@ the step 3a boot wait (2026-10-02):
   error handler already swapped for its placeholder, so combat forgets its
   cached figures and draws the board again from its own state, keeping the
   combat, the hand and the turn (review of #1471; `external-play
-  --block-index` checks the enemies become images). Screens that only flag a
-  missing image (the map's plate) are re-pointed as before.
+  --block-index` checks the enemies become images). **Every placeholder
+  comes back, whatever screen it is on:** each place that swaps a failed
+  image for a glyph or a placeholder, or hides it, marks the node standing in
+  for the art (`data-art-placeholder`, `src/ui/artFallback.js`:
+  `swapOnError`, `hideOnError`, or `markArtPlaceholder` with the site's own
+  builder for `enemySprite`, `classSprite` and `relicIcon`), and main.js runs
+  `restoreArtPlaceholders()` once at that moment, before the screen redraw.
+  That covers the dialogue portraits, co-op enemies, the Armoury, the smith
+  and the compendium with no per-screen listener; a census test refuses an
+  image error handler that swaps or removes art without marking it.
+  `external-play --block-index` checks combat and a dialogue. Screens that
+  only flag a missing image (the map's plate) are re-pointed as before.
   **A Retry has its own deadline**, `behavior.artLoading.retryWaitMs` (60 s,
   `RETRY_WAIT_MS`), not the boot's 8 s: nothing waits on a Retry, and a link
   too slow to bring the ~790 KB light index in 8 s failed every Retry the same

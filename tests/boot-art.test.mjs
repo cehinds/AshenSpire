@@ -513,3 +513,60 @@ test('a tier change during a stalled Retry aborts it and starts at once (Codex o
   assert.ok(aborted.length >= 1, 'the stalled requests were aborted');
   assert.equal(tierOf(), 'light');
 });
+
+test('every art placeholder is marked, and one pass puts them all back (Codex on #1471)', async () => {
+  const { markArtPlaceholder, swapOnError, hideOnError, restoreArtPlaceholders, ART_PLACEHOLDER_ATTR } = await import('../src/ui/artFallback.js');
+  assert.equal(ART_PLACEHOLDER_ATTR, 'data-art-placeholder');
+  // A minimal DOM: nodes with attributes, listeners and a parent slot.
+  const node = (tag) => {
+    const n = { tag, a: {}, l: {}, isConnected: true, hidden: false, parent: null,
+      setAttribute(k, v) { this.a[k] = String(v); }, getAttribute(k) { return this.a[k] ?? null; },
+      hasAttribute(k) { return k in this.a; }, removeAttribute(k) { delete this.a[k]; },
+      addEventListener(t, fn) { (this.l[t] ||= []).push(fn); }, fire(t) { for (const fn of this.l[t] || []) fn(); },
+      replaceWith(other) { other.parent = this.parent; this.parent.child = other; this.isConnected = false; other.isConnected = true; } };
+    return n;
+  };
+  const slot = { child: null };
+  const img = node('img'); img.parent = slot; slot.child = img; img.setAttribute('src', 'assets/ui/x.webp');
+  swapOnError(img, () => node('span'));
+  img.fire('error');
+  assert.equal(slot.child.tag, 'span', 'the glyph stands in');
+  assert.ok(slot.child.hasAttribute('data-art-placeholder'), 'marked');
+  const hid = node('img'); hid.setAttribute('src', 'assets/ui/y.webp');
+  hideOnError(hid);
+  hid.fire('error');
+  assert.equal(hid.hidden, true);
+  let rebuilt = 0;
+  const own = markArtPlaceholder(node('div'), () => { rebuilt += 1; });
+  const root = { querySelectorAll: () => [slot.child, hid, own].filter((n) => n.hasAttribute('data-art-placeholder')) };
+  assert.equal(restoreArtPlaceholders(root), 3, 'one pass, every screen');
+  assert.equal(slot.child, img, 'the same <img> is back');
+  assert.equal(rebuilt, 1, 'a site with its own builder rebuilds');
+  hid.fire('load');
+  assert.equal(hid.hidden, false, 'shown once it loads');
+  assert.equal(restoreArtPlaceholders(root), 0, 'each placeholder is restored once');
+});
+
+test('no image error handler in src/ui swaps or removes art without marking it (the census)', () => {
+  const files = [];
+  const walk = (dir) => { for (const e of readdirSync(new URL(dir, import.meta.url), { withFileTypes: true })) {
+    if (e.isDirectory()) walk(`${dir}${e.name}/`); else if (e.name.endsWith('.js')) files.push(`${dir}${e.name}`);
+  } };
+  walk('../src/ui/');
+  const bad = [];
+  for (const f of files) {
+    const text = readFileSync(new URL(f, import.meta.url), 'utf8');
+    // An error listener whose handler removes the image or swaps it for a glyph,
+    // by hand, instead of through src/ui/artFallback.js (or marking its node).
+    for (const m of text.matchAll(/addEventListener\('error',[^\n]*(?:\.remove\(\)|replaceWith\(|textContent\s*=)[^\n]*/g)) {
+      if (!/markArtPlaceholder/.test(text.slice(m.index, m.index + 400))) bad.push(`${f}: ${m[0].slice(0, 100)}`);
+    }
+  }
+  assert.deepEqual(bad, []);
+  // enemySprite's and classSprite's own placeholders mark their node.
+  const assets = readFileSync(new URL('../src/ui/assets.js', import.meta.url), 'utf8');
+  assert.match(assets, /markArtPlaceholder\(el, \(\) => el\.replaceWith\(enemySprite\(enemyDef, entity\)\)\);/);
+  assert.match(assets, /markArtPlaceholder\(el, \(\) => \{ const again = classSprite\(/);
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /whenNoOverlay\(\(\) => \{[\s\S]{0,400}restoreArtPlaceholders\(document\);/, 'main runs the pass once nothing is open');
+});
