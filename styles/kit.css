@@ -1738,6 +1738,8 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
    Its own floor keeps it readable wherever a screen shrinks its type. */
 .as-reasonnote { display: block; flex: 1 1 100%; width: 100%; box-sizing: border-box; margin: 0.4rem 0 0; font-size: max(11px, 1.2rem); text-align: start; }
 .as-reasonnote[hidden] { display: none; }
+/* A hidden row takes its reason line with it (the line is the row's next sibling). */
+[hidden] + .as-reasonnote, [style*="display: none"] + .as-reasonnote { display: none; }
 /* In a foot (a flex row), the shown line takes its own row under the buttons,
    on the primary's side. */
 .modal-foot:has(> .as-reasonnote:not([hidden])), .as-foot:has(> .as-reasonnote:not([hidden])) { flex-wrap: wrap; }

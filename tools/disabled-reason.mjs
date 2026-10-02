@@ -6,7 +6,9 @@
 //   DR_VIEWPORTS='[[390,844]]' node …      only those viewports
 //   DR_SHOTS=/some/dir node …               also save a PNG of each screen
 //
-// For each forward control the game can render refusing — character
+// For a representative set of the forward controls the game can render
+// refusing (not every one: the atlas, the Smith, mount service and the reward
+// menu's level hold are not mounted here) — character
 // creation's Next, the event's Continue, the reward chooser's Confirm, the
 // dialogue's Continue, the title's Continue, the slot door's Continue, the
 // hand-discard Confirm, the custom run's and character creation's Begin (bad

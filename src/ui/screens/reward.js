@@ -614,10 +614,14 @@ export function mountRewards(app, {
         'data-confirm-ready': String(plan.rows.every(row => states[row.key] === 'taken' || states[row.key] === 'skipped')),
       },
     });
-    if ((progress?.character && pendingLevelCount(registries, run) > 0)
-      || progress?.skills.some((row) => pendingSkillLevelCount(registries, run, row.id) > 0)) {
+    // A level waiting to be claimed holds Continue until the player claims it:
+    // a lasting refusal, so its reason is a visible line under the footer
+    // (D43), not only the title.
+    const levelsPending = Boolean((progress?.character && pendingLevelCount(registries, run) > 0)
+      || progress?.skills.some((row) => pendingSkillLevelCount(registries, run, row.id) > 0));
+    if (levelsPending) {
       cont.disabled = true;
-      cont.title = 'Claim your levels before continuing';
+      cont.title = t('reward.continue.reason.levels');
     }
     const foot = modalFooter({
       note: cont.dataset.confirmReady === 'true' ? t('reward.hold.complete')
@@ -651,6 +655,8 @@ export function mountRewards(app, {
       app.querySelector('.reward-menu').inert = true;
       cont.disabled = true;
     }
+    // A refill's hold clears by itself within a beat, so it shows no line.
+    reasonWhenDisabled(cont, () => (levelsPending && !refill ? t('reward.continue.reason.levels') : null))();
 
     for (const el of app.querySelectorAll('.reward-kind')) {
       const row = plan.rows.find((r) => r.key === el.dataset.key);

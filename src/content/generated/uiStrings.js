@@ -4987,6 +4987,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.continue.reason.levels",
+    "extends": "",
+    "short": "Claim your levels first.",
+    "full": "Continue opens once every level waiting here is claimed.",
+    "tip": ""
+  },
+  {
     "id": "title.continue.reason",
     "extends": "",
     "short": "No saved climb yet.",
@@ -5008,17 +5015,66 @@ export const uiStrings = [
     "tip": ""
   },
   {
-    "id": "map.enter.reason.none",
+    "id": "creation.reason.class",
     "extends": "",
-    "short": "Choose a place on the map.",
-    "full": "Enter opens once you pick a reachable place.",
+    "short": "Choose a class.",
+    "full": "Continue opens once you pick a class.",
     "tip": ""
   },
   {
-    "id": "map.enter.reason.unreachable",
+    "id": "creation.reason.statMode",
     "extends": "",
-    "short": "You cannot reach this from here.",
-    "full": "Pick a place connected to where you stand.",
+    "short": "Choose how to assign your stats.",
+    "full": "Continue opens once you pick how your stats are set.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.keepsake",
+    "extends": "",
+    "short": "Choose a keepsake.",
+    "full": "Continue opens once you pick a keepsake.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.armour",
+    "extends": "",
+    "short": "Choose starting armour.",
+    "full": "Continue opens once you pick your starting armour.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsLeft.one",
+    "extends": "",
+    "short": "{count} stat point still to assign.",
+    "full": "Assign every stat point before going on.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsLeft",
+    "extends": "",
+    "short": "{count} stat points still to assign.",
+    "full": "Assign every stat point before going on.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsOver.one",
+    "extends": "",
+    "short": "{count} stat point over the pool.",
+    "full": "Take back points until you are within the pool.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsOver",
+    "extends": "",
+    "short": "{count} stat points over the pool.",
+    "full": "Take back points until you are within the pool.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.handNeeds",
+    "extends": "",
+    "short": "{name} needs {stat} {required} — you have {actual}.",
+    "full": "Raise that stat or hold something you can wield.",
     "tip": ""
   },
   {

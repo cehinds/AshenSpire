@@ -525,10 +525,10 @@ export function mountCustomize(app, {
   // ---- what each step still needs ------------------------------------------
   // One reason per step, read by that step's Continue AND by Begin, so the
   // foot and the section can never disagree about what is missing.
-  function classProblem() { return state.classChosen ? null : 'Choose a class.'; }
-  function modeProblem() { return state.attributeMode ? null : 'Choose how to assign your stats.'; }
-  function keepsakeProblem() { return state.keepsakeId ? null : 'Choose a keepsake.'; }
-  function armourProblem() { return state.startingArmourId ? null : 'Choose starting armour.'; }
+  function classProblem() { return state.classChosen ? null : t('creation.reason.class'); }
+  function modeProblem() { return state.attributeMode ? null : t('creation.reason.statMode'); }
+  function keepsakeProblem() { return state.keepsakeId ? null : t('creation.reason.keepsake'); }
+  function armourProblem() { return state.startingArmourId ? null : t('creation.reason.armour'); }
   /** The stats step: the mode, then a complete and legal allocation. */
   function statsStepProblem() { return modeProblem() || allocationProblem(); }
   function characterProblem() { return statsStepProblem() || keepsakeProblem(); }
@@ -545,8 +545,8 @@ export function mountCustomize(app, {
     if (!hasPoints(state.attributeMode) || !state.attributes) return null;
     const remaining = remainingPoints();
     if (remaining !== 0) return remaining > 0
-      ? `${remaining} stat point${remaining === 1 ? '' : 's'} still to assign.`
-      : `${-remaining} stat point${remaining === -1 ? '' : 's'} over the pool.`;
+      ? t(remaining === 1 ? 'creation.reason.pointsLeft.one' : 'creation.reason.pointsLeft', { count: remaining })
+      : t(remaining === -1 ? 'creation.reason.pointsOver.one' : 'creation.reason.pointsOver', { count: -remaining });
     const problems = attributeAllocationProblems(registries, state.classId, state.attributeMode, state.attributes);
     return problems.length ? problems[0].msg : null;
   }
@@ -562,7 +562,7 @@ export function mountCustomize(app, {
    *  player had not yet been shown and could not act on from that door. */
   function handsProblem(hands = state.startingHands) {
     const rejected = startingHandsRequirementFailure(registries, hands, effectiveAttributes());
-    if (rejected) return `${rejected.piece.name} needs ${rejected.failure.attributeId} ${rejected.failure.required} — you have ${rejected.failure.actual}.`;
+    if (rejected) return t('creation.reason.handNeeds', { name: rejected.piece.name, stat: rejected.failure.attributeId, required: rejected.failure.required, actual: rejected.failure.actual });
     return null;
   }
   function handProblem(slot) { return handsProblem({ [slot]: state.startingHands[slot] }); }

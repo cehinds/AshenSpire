@@ -34,7 +34,8 @@ import { attachTooltip, showTooltipAt, hideTooltip, esc } from './tooltip.js';
 // line of text under it — the kit's FieldNote (kit.css `.as-fieldnote`), worn
 // with `.as-reasonnote`. The line sits under the control's button row when it
 // stands in one (a footer's buttons stay one row), else right after the
-// control, and it is hidden whenever the control is usable or itself hidden.
+// control, and it is hidden whenever the control is usable, or it or its row is
+// hidden.
 const ROW = '.modal-btnrow, .as-choicerow';
 let noteSerial = 0;
 
@@ -60,15 +61,28 @@ export function reasonNote(el, { after = null } = {}) {
   const described = (el.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
   if (!described.includes(id)) el.setAttribute('aria-describedby', [...described, id].join(' '));
   let text = '';
+  let seatedAfter = null;
   const seat = () => {
     if (note.isConnected) return;
     const anchor = after || (el.closest ? el.closest(ROW) : null) || el;
-    if (anchor.parentNode) anchor.after(note);
+    if (anchor.parentNode) { anchor.after(note); seatedAfter = anchor; }
+  };
+  // The line sits OUTSIDE its row, so hiding the row (character creation's
+  // `.cc-primary-continue-row` before a stat mode is chosen) does not hide it.
+  // It is down whenever the control, or any node from the control up to the
+  // node it follows, is hidden; kit.css's `[hidden] + .as-reasonnote` rule
+  // keeps that true when the row is hidden after this paint.
+  const off = (n) => !!n && (!!n.hidden || (!!n.style && n.style.display === 'none'));
+  const stowed = () => {
+    if (off(el)) return true;
+    if (!seatedAfter) return false;
+    for (let n = el.parentNode; n && n !== seatedAfter.parentNode; n = n.parentNode) if (off(n)) return true;
+    return off(seatedAfter);
   };
   const paint = () => {
     seat();
     note.textContent = text;
-    note.hidden = !text || !!el.hidden;
+    note.hidden = !text || stowed();
   };
   queueMicrotask(paint);
   return function show(next) {
