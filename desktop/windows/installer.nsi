@@ -205,7 +205,9 @@ Section "Uninstall"
   RMDir "$INSTDIR"
 
   Delete "$DESKTOP\${APP_NAME}.lnk"
-  RMDir /r "$SMPROGRAMS\${APP_NAME}"
+  Delete "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk"
+  Delete "$SMPROGRAMS\${APP_NAME}\Uninstall ${APP_NAME}.lnk"
+  RMDir "$SMPROGRAMS\${APP_NAME}"
   DeleteRegKey HKCU "${UNINST_KEY}"
 
   ; Saves and settings live in %APPDATA%\AshenSpire (the Electron profile); they
