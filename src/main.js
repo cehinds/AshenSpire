@@ -893,7 +893,8 @@ function applyDisplaySettings(settings) {
   scheduleCardFits(document.querySelectorAll('.card'));
   // Re-point external music only when the folder actually changed (avoids
   // re-fetching the manifest on every unrelated settings tweak). Blank means the
-  // score shipped beside the page (content/music.js SHIPPED_MUSIC_FOLDER) when
+  // shipped score (content/music.js SHIPPED_MUSIC_FOLDER: the common pack's
+  // objects in the web edition, the music/ folder beside a single file) when
   // served over http(s); a file:// page cannot fetch it and keeps the synth.
   const served = /^https?:$/.test(globalThis.location?.protocol || '');
   const folder = settings.musicFolder || (served ? SHIPPED_MUSIC_FOLDER : '');

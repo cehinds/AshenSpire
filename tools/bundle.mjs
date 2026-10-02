@@ -10,7 +10,7 @@
 //
 // Usage: node tools/bundle.mjs
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync, cpSync, readdirSync, statSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, rmSync } from 'node:fs';
 import vm from 'node:vm';
 import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
@@ -38,15 +38,6 @@ const ROOT = resolve(__dirname, '..');
 // that used to sit here — including why audio is listed before any audio
 // exists — moved with it.
 
-function walkCount(dir) {
-  if (!existsSync(dir)) return 0;
-  let n = 0;
-  for (const name of readdirSync(dir)) {
-    const abs = resolve(dir, name);
-    n += statSync(abs).isDirectory() ? walkCount(abs) : 1;
-  }
-  return n;
-}
 
 function canonicalText(text) {
   return text.replace(/\r\n?/g, '\n');
@@ -131,8 +122,10 @@ function idOf(absPath) {
 // each index against that pin and resolves ids to objects through
 // setBuiltInSource(). The CSS assets (the fonts and backdrops) are ASSET_CSS
 // slots the loader fills from the index it used, and the two SVG masks are
-// inlined (step 3b, tools/asset-css.mjs). map-detail/ and music/ are still
-// copied beside the HTML until step 3c reads them through the common index.
+// inlined (step 3b, tools/asset-css.mjs). The map-detail tiles and the
+// shipped score are common ids too (step 3c): mapDetail.js and audio.js
+// resolve them through assetUrl(), so no map-detail/ or music/ folder is
+// copied beside the HTML any more.
 //
 // `--mobile`: a THIRD shape, and the second single file. The same bundle, the
 // same `assets/…` keys, but every art payload is read from assets-mobile/ — the
@@ -364,8 +357,8 @@ function walkAssets(dir) {
 let mapEntries = 0;
 let mapBytes = 0;
 let copiedAssets = 0;
-let copiedDetail = 0;
-let copiedMusic = 0;
+let packedDetail = 0;
+let packedMusic = 0;
 const skipped = []; // files under assets/ with no MIME mapping — reported, not silent
 let authoringBytes = 0;
 if (TWIN_ART) {
@@ -1141,23 +1134,17 @@ if (MOBILE && Buffer.byteLength(html, 'utf8') > MOBILE_BUNDLE_BUDGET_BYTES) {
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(OUT_PATH, html, 'utf8');
 
-// THE SIBLING DIRECTORY THE SINGLE FILE DELIBERATELY DOES NOT CARRY.
+// THE SIBLING DIRECTORIES THE WEB EDITION NO LONGER CARRIES (step 3c).
 //
-// src/ui/components/mapDetail.js states the contract in its own header: "Detail
-// files are never bundled into the single HTML: hosted builds carry a sibling
-// map-detail directory." The standalone therefore ships WITHOUT them and falls
-// back — `detailState = 'offline-fallback'` under file:// — which is why the
-// assets/ sweep above has never known about this tree.
-//
-// A de-inlined build IS a hosted build, so it is on the other side of that
-// sentence and has to carry them. tools/launch.mjs:107 already does exactly
-// this for dist/, and pages-site.mjs does it per build; this is the third site
-// of the same copy and it is deliberate rather than accidental, because each
-// one places the tree beside a different output.
-//
-// Found by loading the build in a browser and watching the network: static
-// checks all passed while two map tiles 404'd. The fallback is graceful, so
-// nothing threw — it just quietly showed the low-detail map.
+// src/ui/components/mapDetail.js: "Detail files are never bundled into the
+// single HTML." The single file ships without them and, served over http(s),
+// reads the map-detail/ and music/ folders tools/launch.mjs writes beside it.
+// The web edition used to carry copies of both too; since step 3c its tiles
+// and its score are common-pack ids (`map-detail/<hash>/<edge>/<x>-<y>.webp`,
+// `music/manifest.json`, `music/<context>/<track>.mp3`) that the page
+// resolves through assetUrl() to objects/. A copy left beside it by an
+// earlier build is removed below with the old assets/ tree, for the same
+// reason: it would quietly serve a tile or a track the index misses.
 let staleTree = '';
 if (EXTERNAL_ART) {
   // Where packs/ and objects/ are, for src/ui/assetPacks.js: beside the HTML.
@@ -1171,24 +1158,20 @@ if (EXTERNAL_ART) {
   // inside it), so a mistyped --out can never name the source tree, and a
   // folder outside the checkout keeps whatever its owner put there.
   const underBuild = /^(build|dist)\//.test(`${relative(realOut(ROOT), guardOut(OUT_DIR, ROOT)).split(/[\\/]/g).join('/')}/`);
-  if (underBuild && existsSync(EXTERNAL_ASSET_DIR)) {
-    rmSync(EXTERNAL_ASSET_DIR, { recursive: true, force: true });
-    staleTree = idOf(EXTERNAL_ASSET_DIR);
+  const retired = [];
+  for (const dir of [EXTERNAL_ASSET_DIR, resolve(OUT_DIR, 'map-detail'), resolve(OUT_DIR, 'music')]) {
+    if (underBuild && existsSync(dir)) {
+      rmSync(dir, { recursive: true, force: true });
+      retired.push(idOf(dir) + '/');
+    }
   }
-  const detailSrc = resolve(ROOT, 'map-detail');
-  if (existsSync(detailSrc)) {
-    cpSync(detailSrc, resolve(OUT_DIR, 'map-detail'), { recursive: true });
-    copiedDetail = walkCount(resolve(OUT_DIR, 'map-detail'));
-  }
-  // The shipped score, same contract: a served page with the music-folder
-  // setting blank fetches music/manifest.json from beside itself
-  // (content/music.js SHIPPED_MUSIC_FOLDER), so a hosted build without it
-  // 404s on boot and falls back to the synth.
-  const musicSrc = resolve(ROOT, 'music');
-  if (existsSync(musicSrc)) {
-    cpSync(musicSrc, resolve(OUT_DIR, 'music'), { recursive: true });
-    copiedMusic = walkCount(resolve(OUT_DIR, 'music'));
-  }
+  staleTree = retired.join(', ');
+  // What the common index carries of the two, for the summary.
+  try {
+    const commonIds = Object.keys(JSON.parse(readFileSync(resolve(OUT_DIR, packSummary.packs.common.index), 'utf8')));
+    packedDetail = commonIds.filter((id) => id.startsWith('map-detail/')).length;
+    packedMusic = commonIds.filter((id) => id.startsWith('music/')).length;
+  } catch { /* no common pack: reported as 0 below */ }
 }
 
 // ---------------------------------------------------------------------------
@@ -1214,10 +1197,10 @@ if (EXTERNAL_ART) {
   if (packSummary.fonts) console.log(`  font sidecar     : ${packSummary.fonts.faces} faces → ${packSummary.fonts.file}`);
   console.log('  default tier     : ' + DEFAULT_TIER + (DEFAULT_TIER === 'high' ? ' (falls back to light)' : ''));
   console.log('  css assets       : ' + cssSlotUrls + ' url()s → ' + (assetCss ? assetCss.rules.length : 0) + ' ASSET_CSS rules, filled from the index the loader uses; ' + cssMasksInlined + ' SVG mask url()s inlined');
-  if (staleTree) console.log('  retired          : ' + staleTree + '/ (the pre-pack copy of the art)');
-  console.log('  map detail       : ' + copiedDetail + ' tiles → ' + idOf(resolve(OUT_DIR, 'map-detail'))
-    + (copiedDetail ? '' : ' (none found — the map falls back to low detail)'));
-  console.log('  shipped score    : ' + copiedMusic + ' files → ' + idOf(resolve(OUT_DIR, 'music')));
+  if (staleTree) console.log('  retired          : ' + staleTree + ' (copies an earlier build left beside the HTML)');
+  console.log('  map detail       : ' + packedDetail + ' tiles in the common pack'
+    + (packedDetail ? '' : ' (none — the map falls back to low detail)'));
+  console.log('  shipped score    : ' + packedMusic + ' files in the common pack (music/manifest.json and its tracks)');
 } else {
   console.log('  css assets inlined: ' + inlinedAssets + ' (' + Math.round(inlinedAssetBytes / 1024) + ' KiB raw)');
   console.log('  art inlined      : ' + mapEntries + ' files (' + Math.round(mapBytes / 1024) + ' KiB raw)');

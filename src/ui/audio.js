@@ -596,13 +596,20 @@ export function initAudio(settings = {}) {
     if (folder) {
       try {
         const base = String(folder).replace(/\/+$/, '');
-        const res = await fetch(`${base}/manifest.json`);
+        // THROUGH THE INDEX (docs/EXTERNAL-ASSETS-PLAN.md §3.9, step 3c). A
+        // relative path under the folder is also an asset id: the shipped
+        // score is `music/manifest.json` and `music/<context>/<track>.mp3`
+        // (content/music.js SHIPPED_MUSIC_FOLDER is the id prefix), which the
+        // web edition resolves to the common pack's objects. Anything the
+        // index does not list (a player's own folder, a single file, the
+        // source tree) passes through assetUrl() as the same path as before.
+        const res = await fetch(assetUrl(`${base}/manifest.json`));
         if (res.ok) {
           const m = await res.json();
           for (const key of MUSIC_CONTEXTS) {
             const list = m[key];
             if (Array.isArray(list) && list.length) {
-              tracks[key] = list.map((f) => (/^(https?:)?\/\//.test(f) || f.startsWith('/') ? f : `${base}/${f}`));
+              tracks[key] = list.map((f) => (/^(https?:)?\/\//.test(f) || f.startsWith('/') ? f : assetUrl(`${base}/${f}`)));
             }
           }
         }

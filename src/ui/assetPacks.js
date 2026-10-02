@@ -27,8 +27,15 @@
 // "AS Lore" faces and the backdrops) are filled from that same map and
 // injected, so they follow the tier fallback too.
 //
+// MUSIC AND MAP TILES (step 3c) are common ids too: src/ui/audio.js resolves
+// `music/manifest.json` and each track, and src/ui/components/mapDetail.js
+// each `map-detail/…` tile, through assetUrl(), so they come from the common
+// pack's objects once this map is set. When it is not (no art index loaded),
+// they pass through as paths, miss, and the synth score and the low-detail map
+// stay, as they always have for a missing file.
+//
 // WHAT THIS DOES NOT DO YET. Over http(s) only: file:// (the .js twins and the
-// font sidecar) is step 4. Music and map tiles are step 3c. The loading line on the startup gate, the Retry notice and per-file
+// font sidecar) is step 4. The loading line on the startup gate, the Retry notice and per-file
 // high → light fallback are step 5; Settings → Art quality Auto/Light/High is
 // step 8c. A single file (ASSET_MAP filled) and the source tree (nothing
 // stamped) never load anything here.
@@ -148,8 +155,9 @@ export async function loadIndex(pack, pin, { base = './', fetchImpl = globalThis
  * the latest, and no single stalled request can take the whole budget:
  *   · the common index is fetched IN PARALLEL with the art tiers, and only
  *     ever adds to a verified art map: a common index that fails, or has not
- *     arrived by the deadline, is left out (in 3a nothing reads common through
- *     assetUrl; fonts, music and tiles reach the page by their own routes);
+ *     arrived by the deadline, is left out (the fonts' ASSET_CSS rules are
+ *     then dropped, the score stays synthesized and the map stays low
+ *     detail);
  *   · each art tier but the last gets a sub-budget (HIGH_SHARE of the
  *     deadline), so a high index that hangs is aborted and light still has
  *     time to load;
