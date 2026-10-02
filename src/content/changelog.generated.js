@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the action-bar layout check runs again",
     "detail": "Nothing you play changes. When co-op got the solo action bar, the bar's markup moved into a shared component, and the tool that checks the bar never lands on your cards, the top bar or the battlefield was still looking for it in the old place. It stopped before it measured anything. It now reads the shared component and checks all 44 cells again.",
-    "build": "0.7.1.736",
+    "build": "0.7.1.737",
     "pullRequest": 1441,
     "url": "https://github.com/cehinds/AshenSpire/pull/1441"
+  },
+  {
+    "id": "pr-1442",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The Pages site no longer copies the art review folder",
+    "detail": "Behind the scenes: the project site stops carrying the art review pages and old build-file copies from main, the stable links get their map tiles beside every copy, and link previews use a picture the site itself serves; nothing you play changes.",
+    "build": "0.7.1.736",
+    "pullRequest": 1442,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1442"
   },
   {
     "id": "pr-1443",
