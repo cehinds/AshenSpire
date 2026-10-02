@@ -43,7 +43,7 @@ import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { dispatch, cardChoicePlan, cardPlayCosts } from '../src/engine/combat.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
-import { affordableCards, refusalsFor } from './simbot.mjs';
+import { affordableCards, refusalsFor, outOfPlaysAction, createDecisionDigest, fightFingerprint, digestLine } from './simbot.mjs';
 import { chargeFlaskId } from '../src/model/gracerefill.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
 import { skillTracks, spendSkillDraft, skillUpgradesCards, classSkillId } from '../src/model/skills.js';
@@ -127,6 +127,17 @@ const SKILL_LEVELS = argv.includes('--skill-levels');
 // on. Starting pools are retuned from this measurement, not from an older
 // figure. READ-ONLY over the finished fight's eventLog, as `--deep` is.
 const INCOMING = argv.includes('--incoming');
+// THE DECISION DIGEST (PR #1473 review). `--digest` prints, per class, how many
+// actions the fight bot dispatched and a hash of them in order. measure-classes
+// --check reads it, so its copied bot must make runsim's decisions seed for
+// seed, not merely reach the same win count. READ-ONLY: recorded after each
+// successful dispatch, no RNG, no state.
+const DIGEST = argv.includes('--digest');
+const decisionDigest = createDecisionDigest();
+function botDispatch(combat, action) {
+  dispatch(combat, action);
+  decisionDigest.record(action);
+}
 // `--level-stat=<attributeId>` — which attribute the bot puts its level-up
 // points into (default constitution, as it always has). The Actions breakpoint
 // is judged by comparing fleets that differ only here.
@@ -368,6 +379,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
     enemyDamageMult: boss ? boss.damage : 1,
     enemyStatuses: cm.enemyStatuses || [],
   });
+  if (DIGEST) decisionDigest.beginFight(run.class, run.seed, fightFingerprint(combat, rng));
   let guard = 0;
   // A STALEMATE IS A LOSS, NOT A CRASH. Neither side can finish the other: a
   // retained hand full of cards the pools cannot pay for, block and healing
@@ -390,13 +402,13 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
       // read zero: the refill was topping up a pool nothing ever spent.
       const ch = combat.player.flaskCharges;
       if (ch && (ch.hpCurrent || 0) > 0) {
-        try { dispatch(combat, { type: 'useFlask', chargeKind: 'hp' }); continue; } catch (e) { setAsideOrCrash(e); /* refused: fall through */ }
+        try { botDispatch(combat, { type: 'useFlask', chargeKind: 'hp' }); continue; } catch (e) { setAsideOrCrash(e); /* refused: fall through */ }
       }
       if (combat.player.flasks.length) {
         const fdef = REG.flasks.get(combat.player.flasks[0].flaskId);
         const ftgt = combat.enemies.find((e) => e.alive);
         try {
-          dispatch(combat, { type: 'useFlask', slot: 0, targetId: fdef.targeted ? ftgt && ftgt.id : undefined });
+          botDispatch(combat, { type: 'useFlask', slot: 0, targetId: fdef.targeted ? ftgt && ftgt.id : undefined });
           continue;
         } catch (e) {
           setAsideOrCrash(e); /* flask refused — fall through to cards */
@@ -417,12 +429,15 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
       // carried its Azure charges unspent and scored the plays they would have
       // paid for against the Mana line. The OFF arm never reaches here short
       // of Mana, so its charges stay where they are.
-      if (MANA_ON && manaChargeWouldPay(combat, refused)) {
-        try { dispatch(combat, { type: 'useFlask', chargeKind: 'mana' }); continue; } catch (e) { setAsideOrCrash(e); /* refused: end the turn */ }
+      // The decision itself is tools/simbot.mjs outOfPlaysAction, which
+      // measure-classes' copied bot calls too.
+      const drink = MANA_ON ? outOfPlaysAction(REG, combat, refused) : null;
+      if (drink) {
+        try { botDispatch(combat, drink); continue; } catch (e) { setAsideOrCrash(e); /* refused: end the turn */ }
       }
       // Plants (--selftest): a throw inside a fight must surface as a CRASH,
       // and a turn that never ends must surface as a SOFT-LOCK.
-      if (PLANT !== 'combat-stall') dispatch(combat, { type: 'endTurn' });
+      if (PLANT !== 'combat-stall') botDispatch(combat, { type: 'endTurn' });
       continue;
     }
     try {
@@ -431,7 +446,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
       // below lets it escape as a CRASH rather than set the card aside.
       if (PLANT === 'fight-throw') throw new Error(`planted: card resolution threw inside ${encounterId}`);
       // A card that offers a choice (Warrior's Vow) takes its first option.
-      dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id });
+      botDispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id });
     } catch (e) {
       setAsideOrCrash(e);
       refused.add(card.instanceId);
@@ -486,22 +501,6 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
 // every play and prices each card with the engine's own cardPlayCosts, so in
 // this arm a card is never set aside for "Not enough mana" — anything in the
 // set was refused for another reason and is not played this turn anyway.
-// Whether drinking the run's Mana charges would pay for a card in hand that
-// is short ONLY on Mana: playable, Actions and Stamina in hand, its Mana price
-// within the pool's maximum and within what the charges left can restore.
-function manaChargeWouldPay(combat, refused) {
-  const p = combat.player;
-  const charges = (p.flaskCharges && p.flaskCharges.manaCurrent) || 0;
-  if (charges <= 0) return false;
-  const def = REG.flasks.get(chargeFlaskId(REG, 'mana'));
-  const per = (def.effects || []).filter((e) => e.op === 'restoreMana').reduce((n, e) => n + (Number(e.amount) || 0), 0);
-  if (per <= 0) return false;
-  return affordableCards(REG, { ...combat, player: { ...p, mana: Infinity } }, refused).some((h) => {
-    const need = cardPlayCosts(combat, h.instanceId).mana || 0;
-    return need > p.mana && need <= (p.maxMana ?? need) && need <= p.mana + charges * per;
-  });
-}
-
 function waiveMana(combat, refused) {
   const p = combat.player;
   let need = 0;
@@ -799,6 +798,9 @@ for (const cls of REG.classes.all()) {
         `  avg act ${(acts / N).toFixed(2)}  avg floor ${(floors / N).toFixed(1)}` +
         `  deaths: ${Object.entries(deaths).map(([k, v]) => `${k}×${v}`).join(' ') || '—'}`
   );
+  if (DIGEST) {
+    for (const f of decisionDigest.fightsOf(cls.id)) console.log(digestLine(cls.name, f));
+  }
   classRows.push({ id: cls.id, name: cls.name, wins, runs: N, manaSpent: manaBook.spent, manaWaived: manaBook.waived, fights: manaBook.fights });
   if (MANA_AB) {
     console.log(`  mana: spent ${(manaBook.spent / N).toFixed(1)} per run (${(manaBook.spent / Math.max(1, manaBook.fights)).toFixed(2)} per fight over ${manaBook.fights} fights)` +

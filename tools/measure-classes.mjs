@@ -5,7 +5,11 @@
 // exports nothing) plus passive instrumentation: after each combat it reads
 // combat.eventLog, which consumes no RNG and touches no state, so the default
 // policy reproduces runsim's runs seed-for-seed. `--check` asserts exactly
-// that, and nothing more.
+// that, and nothing more: per class, the same wins AND the same fight
+// decisions — runsim's `--digest` line (every action its bot dispatched, counted
+// and hashed in order) against this copy's. The turn-end decision (drink an
+// Azure charge when only Mana blocks a card) is not copied at all: both bots
+// call tools/simbot.mjs outOfPlaysAction.
 //
 // WHAT `--check` IS, said plainly: a CONSISTENCY check, never a correctness
 // one. It proves this file's copied bot still agrees with runsim's. It says
@@ -69,7 +73,7 @@ import { createRng } from '../src/engine/rng.js';
 import { createCombat, dispatch, previewCard, previewIntent, cardChoicePlan } from '../src/engine/combat.js';
 import { emitEvent } from '../src/engine/triggers.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
-import { affordableCards, refusalsFor } from './simbot.mjs';
+import { affordableCards, refusalsFor, outOfPlaysAction, createDecisionDigest, fightFingerprint, digestLine, DIGEST_LINE } from './simbot.mjs';
 import { buildActMap, bossEncounterForNode } from '../src/engine/actmap.js';
 import { seatAtTier, bossTierScale } from '../src/model/seats.js';
 import { createRunState, createIdGen } from '../src/model/state.js';
@@ -106,6 +110,7 @@ const MUTATIONS = {
   flask: 'flask threshold 0.55 → 0.75 (runsim drinks at 0.55)',
   path: 'shrine-preference gate 0.55 → 0.95 (map pathing diverges)',
   shrine: 'shrine rest gate 0.60 → 0.20 (rest/smith decision diverges)',
+  manaFlask: 'the out-of-plays Azure charge is never drunk (runsim drinks it; same wins can hide it)',
 };
 const STAR_MUTATIONS = {
   starseerFollowup: 'charged follow-up prioritization is removed while the policy name remains',
@@ -542,6 +547,13 @@ function makeLcg(seed) {
 }
 
 // ---- the combat bot (runsim.mjs verbatim, except the card picker) -----------
+// Every action the fight loop dispatches is folded into the decision digest,
+// which --check compares with runsim's `--digest` line per class.
+const decisionDigest = createDecisionDigest();
+function botDispatch(combat, action) {
+  dispatch(combat, action);
+  decisionDigest.record(action);
+}
 function botFight(run, rng, encounterId, stats, pickRandom, policy) {
   const enc = REG.encounters.get(encounterId);
   // The live door (engine/runCombat.js), as runsim.mjs builds its fights:
@@ -553,6 +565,7 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
   const opportunityTurns = new Set();
   const energyAtEndTurn = [];
   if (MUTATE === 'rng') rng.float('misc'); // planted: the instrumentation is no longer passive
+  decisionDigest.beginFight(run.class, run.seed, fightFingerprint(combat, rng));
   let guard = 0;
   // A fight still open after STALEMATE_TURNS turns is conceded (runsim.mjs).
   while (!combat.result && guard++ < 9000 && combat.turn <= STALEMATE_TURNS) {
@@ -563,13 +576,13 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
       // header: copied, not imported), so --check keeps the two honest.
       const ch = combat.player.flaskCharges;
       if (ch && (ch.hpCurrent || 0) > 0) {
-        try { dispatch(combat, { type: 'useFlask', chargeKind: 'hp' }); continue; } catch (e) { /* fall through */ }
+        try { botDispatch(combat, { type: 'useFlask', chargeKind: 'hp' }); continue; } catch (e) { /* fall through */ }
       }
       if (combat.player.flasks.length) {
         const fdef = REG.flasks.get(combat.player.flasks[0].flaskId);
         const ftgt = combat.enemies.find((e) => e.alive);
         try {
-          dispatch(combat, { type: 'useFlask', slot: 0, targetId: fdef.targeted ? ftgt && ftgt.id : undefined });
+          botDispatch(combat, { type: 'useFlask', slot: 0, targetId: fdef.targeted ? ftgt && ftgt.id : undefined });
           continue;
         } catch (e) { /* flask rejected — fall through to cards */ }
       }
@@ -594,6 +607,15 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
     } else { // random
       card = affordable.length ? affordable[Math.floor(pickRandom() * affordable.length)] : undefined;
     }
+    if (!card && MUTATE !== 'manaFlask') {
+      // The turn-end decision runsim makes, from the same function
+      // (tools/simbot.mjs outOfPlaysAction): an Azure charge that would pay for
+      // a card short only on Mana is drunk before the turn ends.
+      const drink = outOfPlaysAction(REG, combat, refused);
+      if (drink) {
+        try { botDispatch(combat, drink); continue; } catch (e) { /* refused: end the turn */ }
+      }
+    }
     const selectedDef = card ? resolvedHandDef(card) : null;
     if (policy === 'starseerkit' && chargedAtDecision && card && affordable[0]
         && card.instanceId !== affordable[0].instanceId) stats.starChargedPriorityChanges++;
@@ -603,9 +625,9 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
     try {
       if (card && chargedAtDecision) {
         decisionTrace = traceCardDispatch(combat, selectedDef, card.instanceId,
-          () => dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id }));
-      } else if (card) dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id });
-      else dispatch(combat, { type: 'endTurn' });
+          () => botDispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id }));
+      } else if (card) botDispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id });
+      else botDispatch(combat, { type: 'endTurn' });
     } catch (e) {
       // Refused: set it aside for the turn and choose again (runsim.mjs). The
       // refusal is not a decision, so it is not recorded; the re-pick is.
@@ -888,10 +910,11 @@ function policyControlReceipt(kitFleet, greedyFleet, n) {
 // ---- fleet ------------------------------------------------------------------
 function runFleet(n, policy = POLICY, classIds = REG.classes.all().map((c) => c.id)) {
   const out = {};
+  decisionDigest.reset();
   for (const cls of REG.classes.all().filter((c) => classIds.includes(c.id))) {
     const rows = [];
     for (let i = 1; i <= n; i++) rows.push(simulateRun(cls.id, (i * 2654435761) >>> 0, policy));
-    out[cls.id] = { name: cls.name, rows };
+    out[cls.id] = { name: cls.name, rows, fights: decisionDigest.fightsOf(cls.id) };
   }
   return out;
 }
@@ -904,7 +927,7 @@ const winsOf = (fleet, id) => fleet[id].rows.filter((r) => r.victory).length;
 const RUNSIM = fileURLToPath(new URL('runsim.mjs', import.meta.url));
 
 function deriveRunsimWins(n) {
-  const r = spawnSync(process.execPath, [RUNSIM, String(n)], { encoding: 'utf8' });
+  const r = spawnSync(process.execPath, [RUNSIM, String(n), '--digest'], { encoding: 'utf8' });
   if (r.error) throw new Error(`could not run runsim.mjs: ${r.error.message}`);
   if (r.status !== 0) {
     throw new Error(`runsim.mjs exited ${r.status} — the baseline could not be derived.\n${(r.stderr || '').trim()}`);
@@ -921,11 +944,28 @@ function deriveRunsimWins(n) {
     if (Number(m[3]) !== n) throw new Error(`runsim.mjs ran n=${m[3]}, this tool ran n=${n} — not comparable`);
     wins[id] = Number(m[2]);
   }
+  // The decision digest (runsim --digest): per fight, the state it opened on
+  // and every action runsim's bot dispatched, counted and hashed in order.
+  // Wins alone let the two bots make different decisions and land on the
+  // same count.
+  const digests = {};
+  for (const line of String(r.stdout).split('\n')) {
+    const m = DIGEST_LINE.exec(line);
+    if (!m) continue;
+    const id = byName.get(m[1].trim());
+    if (!id) throw new Error(`runsim.mjs reported class '${m[1].trim()}', which is not in the registry`);
+    (digests[id] || (digests[id] = new Map())).set(m[2], { start: m[3], actions: Number(m[4]), hash: m[5] });
+  }
   // "An empty result is not a zero" — prove the parse had a referent.
   const missing = REG.classes.all().map((c) => c.id).filter((id) => !(id in wins));
   if (missing.length) {
     throw new Error(`parsed no wins line for ${missing.join(', ')} from runsim.mjs output — the baseline is unknown, not zero`);
   }
+  const noDigest = REG.classes.all().map((c) => c.id).filter((id) => !(id in digests));
+  if (noDigest.length) {
+    throw new Error(`parsed no digest line for ${noDigest.join(', ')} from runsim.mjs --digest output — the decision baseline is unknown`);
+  }
+  Object.defineProperty(wins, 'digests', { value: digests, enumerable: false });
   return wins;
 }
 
@@ -938,6 +978,24 @@ function runCheck(n, baseline, { quiet = false } = {}) {
     const want = baseline[cls.id];
     if (got !== want) ok = false;
     if (!quiet) console.log(`  ${cls.id}: ${got}/${n} (runsim, derived just now: ${want}/${n}) ${got === want ? 'MATCH' : 'DRIFT'}`);
+    // Same decisions, not only the same wins. Every fight both bots opened on
+    // the same state (fightFingerprint) must hold the same actions in order;
+    // a fight that opened on different state is counted, not compared.
+    const theirs = (baseline.digests && baseline.digests[cls.id]) || new Map();
+    let compared = 0; let differed = 0; let apart = 0; const firstDiff = [];
+    for (const f of fleet[cls.id].fights) {
+      const t = theirs.get(f.key);
+      if (!t || t.start !== f.start) { apart++; continue; }
+      compared++;
+      if (t.actions !== f.actions || t.hash !== f.hash) { differed++; if (firstDiff.length < 3) firstDiff.push(f.key); }
+    }
+    // No compared fight is no evidence: it blocks, as a missing baseline does.
+    const same = compared > 0 && differed === 0;
+    if (!same) ok = false;
+    if (!quiet) {
+      console.log(`  ${cls.id}: decisions ${same ? 'MATCH' : 'DRIFT'} — ${compared} fights opened on the same state, ${differed} decided differently` +
+        `${firstDiff.length ? ` (first: seed#fight ${firstDiff.join(', ')})` : ''}; ${apart} opened on different state (run loops differ between fights), not compared`);
+    }
   }
   return ok;
 }
@@ -1115,6 +1173,9 @@ function checkBoundary(n) {
   console.log(`  · the greedy policy at n=${n} only — nothing about skillfirst, random, reaverkit or starseerkit,`);
   console.log('    and nothing about any seed outside i=1..' + n + '.');
   console.log('  · not the game: no balance claim, no spec band, no statement about a human pilot.');
+  console.log('  · decisions only on fights both bots opened on the same state — this file\'s run loop');
+  console.log('    between fights (XP, drafts, level-ups, event history) is older than runsim\'s, so');
+  console.log('    most fights after the first few of a run open apart and are counted, not compared.');
   console.log('  · not the counters — the per-class kit/bleed/stagger tallies this tool adds over');
   console.log('    runsim have no runsim counterpart, so agreement here leaves them unverified.');
 }
