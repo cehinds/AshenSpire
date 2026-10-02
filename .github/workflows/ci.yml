@@ -196,8 +196,8 @@ jobs:
   # `filter: blob:none` (full history is ~10 MB of commits and trees; a blob a
   # step reads from history is fetched on demand) and a sparse tree that leaves
   # out art/**/*.png and docs/**/*.png (~0.72 GB left). Every step still runs,
-  # on the same runners. tests/doorplant-shard.test.mjs pins the pattern, so a
-  # new heavy job cannot quietly go back to the full fetch.
+  # on the same runners. tests/doorplant-shard.test.mjs pins these four jobs'
+  # checkout options; a job added later is not covered until it is named there.
   # ---------------------------------------------------------------------------
   # ---------------------------------------------------------------------------
   # The engine suite and the guards' own self-tests, on all three platforms.
