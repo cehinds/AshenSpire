@@ -1,0 +1,14 @@
+/* Suggested concept styling. Map these aliases to the game's authoritative theme at integration. */
+:root{--as-soot:#0d0b08;--as-raised:#171310;--as-panel:#241d15;--as-brass:#c9a227;--as-worn-brass:#a58a52;--as-edge:#7a6b54;--as-ivory:#e8dcc0;--as-muted:#8e826a;--as-positive:#7fd97f;--as-danger:#e08585;--as-tap:44px;}
+.as-icon{width:24px;height:24px;flex:none;color:var(--as-brass)}
+.as-icon-control{min-width:var(--as-tap);min-height:var(--as-tap);display:grid;place-items:center}
+.as-folio{border:24px solid transparent;border-image:url(components/panel-backed.svg) 24 fill stretch;padding:0;color:var(--as-ivory)}
+.as-action{box-sizing:border-box;border:solid transparent;border-width:16px 24px;min-height:56px;color:var(--as-ivory);border-image:url(components/button-neutral.svg) 16 24 fill stretch;}
+.as-action[data-role=primary][data-ready=true]:not(:disabled):not([aria-disabled=true]){border-image-source:url(components/button-primary-ready.svg)}
+.as-action[data-role=primary][data-ready=true]:not(:disabled):not([aria-disabled=true]):is(:hover,:focus-visible){border-image-source:url(components/button-primary-focus.svg)}
+.as-action[data-role=destructive][data-ready=true]:not(:disabled):not([aria-disabled=true]){border-image-source:url(components/button-danger-ready.svg)}
+.as-action[data-role=exit]:not(:disabled):not([aria-disabled=true]):is(:hover,:focus-visible),.as-action[data-role=destructive][data-ready=true]:not(:disabled):not([aria-disabled=true]):focus-visible{border-image-source:url(components/button-exit-focus.svg)}
+.as-action:is(:disabled,[aria-disabled=true]){border-image-source:url(components/button-disabled.svg)}
+.as-action:focus-visible{outline:2px solid var(--as-ivory);outline-offset:3px}
+@media(max-width:720px){.as-footer-action{width:100%;min-height:56px}.as-folio{max-width:100%;box-sizing:border-box}}
+@media(prefers-reduced-motion:reduce){.as-action{transition:none}}
