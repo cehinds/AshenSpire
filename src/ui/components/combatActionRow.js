@@ -75,11 +75,19 @@ export const spentTipHtml = ({ browse = true } = {}) => `<div class="tt-title">D
 export const SPENT_TIP_HTML = spentTipHtml();
 export const POTIONS_TIP_HTML = '<div class="tt-title">Potions</div>Choose a healing, mana or carried potion. Only Use spends it.';
 
-/** Fill the Actions, Draw and Discard/Exhaust cells from plain counts. */
-export function paintCombatActionCounts(row, { energy, energyMax, draw, discard, exhaust }) {
+/**
+ * Fill the Actions, Draw and Discard/Exhaust cells from plain counts. The
+ * accessible labels follow the values (#1436 review): Actions reads "Actions
+ * 2 of 3" as solo's renderControls writes it, and `browse: false` (co-op, no
+ * pile viewer) drops the "Open piles" promise from Discard/Exhaust.
+ */
+export function paintCombatActionCounts(row, { energy, energyMax, draw, discard, exhaust, browse = true }) {
   if (!row) return;
-  const orb = row.querySelector('.energy-orb .sp-v');
-  if (orb && energy != null) orb.textContent = `${energy}/${energyMax}`;
+  const orb = row.querySelector('.energy-orb');
+  if (orb && energy != null) {
+    orb.querySelector('.sp-v').textContent = `${energy}/${energyMax}`;
+    orb.setAttribute('aria-label', `Actions ${energy} of ${energyMax}`);
+  }
   const drawNode = row.querySelector('.pile.draw');
   if (drawNode) {
     drawNode.querySelector('.sp-v').textContent = draw;
@@ -89,7 +97,7 @@ export function paintCombatActionCounts(row, { energy, energyMax, draw, discard,
   if (spent) {
     const spentHtml = '<span>Discard ' + discard + '</span><small>Exhaust ' + exhaust + '</small>';
     if (spent.innerHTML !== spentHtml) spent.innerHTML = spentHtml;
-    spent.setAttribute('aria-label', `Discard ${discard}; Exhaust ${exhaust}. Open piles`);
+    spent.setAttribute('aria-label', `Discard ${discard}; Exhaust ${exhaust}${browse ? '. Open piles' : ''}`);
   }
 }
 

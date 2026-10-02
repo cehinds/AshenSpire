@@ -302,7 +302,12 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     potionsShell = null;
     if (shell && shell.close) shell.close();
   }
+  // ONE LIST AT A TIME (#1436 review, Codex P2). A flask key pressed again,
+  // or held into keydown repeats, reopens the list: the open one closes
+  // first, so Escape, a seat switch or teardown never leaves an orphaned
+  // veil over the board (tools/coop-hud-top.mjs repeatOpenProbe).
   function openCoopPotions(shortcut = null) {
+    closeCoopPotions();
     const seat = me;
     const seatPlayer = () => (snap && snap.scene && snap.scene.kind === 'combat' ? snap.scene.players.find((p) => p.id === seat) : null);
     const meP = seatPlayer();
@@ -682,7 +687,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     setPotionRevealTiming(row, resolveTooltipSettings(meta.settings));
     paintCombatActionCounts(row, {
       energy: meP ? meP.energy : null, energyMax: meP ? meP.energyMax : null,
-      draw: meP?.drawCount ?? 0, discard: meP?.discardCount ?? 0, exhaust: meP?.exhaustCount ?? 0,
+      draw: meP?.drawCount ?? 0, discard: meP?.discardCount ?? 0, exhaust: meP?.exhaustCount ?? 0, browse: false,
     });
     const orb = row.querySelector('.energy-orb');
     const drawNode = row.querySelector('.pile.draw');

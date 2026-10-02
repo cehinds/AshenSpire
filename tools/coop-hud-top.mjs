@@ -432,6 +432,44 @@ async function seatSwitchProbe(cdp, sessionId, base) {
   return bad;
 }
 
+// A flask key pressed twice (or held into keydown repeats) leaves ONE
+// Potions list, and Escape clears the board (#1436 review, Codex P2). Before
+// the fix each press stacked another modal and Escape closed only the newest.
+const REPEAT_STEP = {
+  press: `(() => { for (let i = 0; i < 3; i++) window.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', code: 'KeyF', bubbles: true, repeat: i > 0 }));
+    return document.querySelectorAll('.combat-potion-menu').length; })()`,
+  lists: `document.querySelectorAll('.combat-potion-menu').length`,
+  // The Actions and Discard/Exhaust labels follow the painted values (#1436 review).
+  labels: `(() => { const orb = document.querySelector('.combat.coop .energy-orb'); const spent = document.querySelector('.combat.coop .pile.spent');
+    return { orb: orb?.getAttribute('aria-label') || '', value: orb?.querySelector('.sp-v')?.textContent || '', spent: spent?.getAttribute('aria-label') || '' }; })()`,
+};
+
+async function repeatOpenProbe(cdp, sessionId, base) {
+  const ev = async (expression) => (await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId)).result?.value;
+  await cdp.send('Page.navigate', { url: `${base}?shot=coop` }, sessionId);
+  for (let t = 0; t < 90 && !(await ev(`!!document.querySelector('.combat.coop .combat-potions')`)); t++) await wait(500);
+  await wait(800);
+  await ev(SEAT_STEP.ready);
+  await wait(300);
+  const labels = await ev(REPEAT_STEP.labels);
+  const [have, max] = String(labels?.value || '').split('/');
+  const labelBad = [];
+  if (!have || labels.orb !== `Actions ${have} of ${max}`) labelBad.push(`labels: Actions reads "${labels?.orb}" while it shows ${labels?.value}; want "Actions ${have} of ${max}"`);
+  if (/Open piles/.test(labels?.spent || '')) labelBad.push(`labels: co-op Discard/Exhaust promises "Open piles" (${labels.spent}); co-op has no pile viewer`);
+  await ev(REPEAT_STEP.press);
+  await wait(400);
+  const open = await ev(REPEAT_STEP.lists);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }, sessionId);
+  await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }, sessionId);
+  await wait(500);
+  const left = await ev(REPEAT_STEP.lists);
+  const bad = [...labelBad];
+  if (open !== 1) bad.push(`repeat open: three flask-key presses left ${open} Potions lists; want 1`);
+  if (left !== 0) bad.push(`repeat open: Escape left ${left} Potions lists over the board; want 0`);
+  console.log(`  ${bad.length ? '✗' : '✓'} repeat open: three flask presses -> ${open} list(s); Escape -> ${left}; labels "${labels?.orb}" / "${labels?.spent}"`);
+  return bad;
+}
+
 async function main(args) {
   if (args.includes('--selftest')) return selftest();
   const shotsAt = args.indexOf('--shots');
@@ -484,7 +522,8 @@ async function main(args) {
         + `bottom bar ${(coopBar?.controls || []).map((c) => c.role).join('/') || 'none'} (${coopBar?.arrangement ?? '?'})${bad.length ? '' : ', matches solo, no overlap/clip/overflow'}`);
       if (process.env.COOP_HUD_DEBUG) console.log(JSON.stringify({ g, coopBar, soloBar }, null, 1));
       if (vp === VIEWPORTS[0]) {
-        const seatBad = await seatSwitchProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`);
+        const seatBad = [...await seatSwitchProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`),
+          ...await repeatOpenProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`)];
         failures.push(...seatBad);
         if (seatBad.length && !bad.length) clean--;
       }
