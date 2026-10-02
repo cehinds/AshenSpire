@@ -46,8 +46,11 @@
 //                Crimson (hp) and Azure (mana) flasks and the carried potions
 //                (the combat pose carries two; the map pages carry a Crimson
 //                Flask and two Blight Coatings through `?shotCarried`):
-//                  · combat (`?shot=combat`): the Potions list's Use, before and
-//                    after the Azure flask is drunk to empty;
+//                  · combat (`?shot=combat`): every fold of the Potions list,
+//                    every action the combat plan names (Use, and Inspect: the
+//                    fold opening the potion's card) read AND exercised (Inspect
+//                    inert, Use asking first and cancelled), before and after
+//                    the Azure flask is drunk to empty;
 //                  · the map Potions list and minis, setting OFF and ON, and ON
 //                    after the Azure flask is drunk to empty;
 //                  · the run HUD's room-rail icons, setting OFF and ON and after
@@ -71,7 +74,8 @@
 // BOUNDARY. It proves what the three surfaces OFFER and what a choice on the
 // map DOES. It does not drive co-op's flask intent or the host's refusal (the
 // contract's co-op half and tools/coop-hud-top.mjs do), nor combat's confirm
-// beyond the one Azure drink it needs to reach an empty flask.
+// beyond the one Azure drink it needs to reach an empty flask (every other Use
+// it taps there is cancelled at the question).
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -196,6 +200,22 @@ if (process.argv.includes('--selftest')) {
         replace: 'const canUse = !reason && chargeKind != null;',
         args: ['--only', 'plan'],
         expectRed: /FAIL plan: combat, opening hand, carried potions/,
+      },
+      {
+        name: 'combat\'s Potions list loses Inspect (a fold opens no detail card)',
+        file: 'src/ui/components/combatActionRow.js',
+        find: '      fold.append(summary, detail);',
+        replace: '      fold.append(summary);',
+        args: ['--only', 'plan'],
+        expectRed: /FAIL plan: combat, opening hand, hp flask: every action \(Use, Inspect\) matches the shared plan/,
+      },
+      {
+        name: 'combat\'s Potions list breaks Inspect (a fold that does not open)',
+        file: 'src/ui/components/combatActionRow.js',
+        find: "      const fold = el('details', { class: 'armoury-card-row potion-fold' });",
+        replace: "      const fold = el('div', { class: 'armoury-card-row potion-fold' });",
+        args: ['--only', 'plan'],
+        expectRed: /FAIL plan: combat, opening hand, carried potions: each one's every action matches the shared plan/,
       },
       {
         name: 'one run-HUD charge flask is always usable, ignoring the setting',
@@ -727,25 +747,94 @@ const HUD_SURFACES = `(async () => {
   return out;
 })()`;
 
+// Combat's Potions list, every fold, with EVERY action it offers read and then
+// exercised (#1474 review: judging Use alone let a lost Inspect pass). The
+// combat plan is Use and Inspect (flaskActionPlan's combat context; SPEC: the
+// combat potion menu's "selection and inspection are inert"). In this list Use
+// is the fold's `.potion-use`, and Inspect is the fold itself: a <details>
+// whose summary opens the potion's detail card. Any other control in a fold is
+// read as a row of its own, so an action the plan lacks fails the comparison
+// too. Each is exercised on a fresh list: Inspect must show the card named for
+// the potion, ask nothing and spend nothing; an offered Use must ask before it
+// spends and, cancelled, spend nothing; a refused Use must ask nothing. Every
+// wait is for the screen to settle (until), not a fixed delay.
+// Combat at rest: a drink's timeline has finished and the turn is the
+// player's again (combat.js enables End Turn only then), so a Use refused here
+// is refused by the plan, not by an animation still running.
+const COMBAT_AT_REST = `(() => { const e = document.querySelector('.end-turn'); return !!e && !e.disabled && document.querySelector('.hand')?.getAttribute('aria-disabled') === 'false'; })`;
 const COMBAT_SURFACE = `(async () => {
-  await __fm.closeModal('combat-potion-menu');
-  document.querySelector('.combat-potions').click();
-  const menu = await __fm.until(() => document.querySelector('.combat-potion-menu'));
-  const out = {};
-  for (const kind of ['hp', 'mana']) {
-    const fold = menu?.querySelector('.potion-fold[data-charge-kind="' + kind + '"]');
-    const use = fold?.querySelector('.potion-use');
-    out[kind] = fold ? { count: Number(fold.dataset.charges), enabled: !!use && !use.disabled, text: fold.textContent } : null;
-  }
-  // The carried potions' folds (#1474 review): keyed by slot, named by Use's label.
-  out.carried = [...(menu?.querySelectorAll('.potion-fold[data-potion-slot]') || [])].map((fold) => {
+  if (!(await __fm.until(${COMBAT_AT_REST}, 200))) throw new Error('combat never came to rest (End Turn stayed disabled)');
+  const asks = () => !!document.querySelector('.confirmation-modal');
+  const openList = async () => {
+    await __fm.closeModal('combat-potion-menu');
+    await __fm.until(() => !asks());
+    document.querySelector('.combat-potions').click();
+    return __fm.until(() => document.querySelector('.combat-potion-menu'));
+  };
+  const keyOf = (fold) => fold.dataset.chargeKind ? 'charge:' + fold.dataset.chargeKind : 'slot:' + fold.dataset.potionSlot;
+  const folds = () => [...document.querySelectorAll('.combat-potion-menu .potion-fold')];
+  const foldBy = (key) => folds().find((f) => keyOf(f) === key);
+  const counts = () => Object.fromEntries(folds().map((f) => [keyOf(f), Number(f.dataset.chargeKind ? f.dataset.charges : f.dataset.potionCount)]));
+  const shown = (node) => !!node && node.isConnected && node.getClientRects().length > 0;
+  await openList();
+  const start = counts();
+  const read = [];
+  for (const key of Object.keys(start)) {
+    // What the fold offers, as rows in the plan's vocabulary.
+    let fold = foldBy(key);
     const use = fold.querySelector('.potion-use');
-    return { slot: fold.dataset.potionSlot, count: Number(fold.dataset.potionCount), name: (use?.getAttribute('aria-label') || '').replace(/^Use /, ''),
-      enabled: !!use && !use.disabled, text: fold.textContent };
-  });
+    const name = (use?.getAttribute('aria-label') || '').replace(/^Use /, '');
+    const summary = fold.tagName === 'DETAILS' ? fold.querySelector(':scope > summary') : null;
+    const card = fold.querySelector(':scope > .as-detailcard');
+    // The card's lines: the count, then the refusal when Use is refused.
+    const reason = [...(card?.querySelectorAll('.as-flavor') || [])].slice(1).map((n) => n.textContent.trim()).join(' ');
+    // A label as the player reads it: holdconfirm's HOLD badge is not part of it.
+    const labelOf = (node) => { const c = node.cloneNode(true); c.querySelectorAll('.hold-hint').forEach((h) => h.remove()); return c.textContent.trim(); };
+    const rows = [];
+    if (use) rows.push({ id: 'use', label: labelOf(use), enabled: !use.disabled, reason: use.disabled ? reason : '' });
+    if (summary && card) rows.push({ id: 'inspect', label: 'Inspect', enabled: true, reason: '' });
+    for (const b of fold.querySelectorAll('button')) if (b !== use) rows.push({ id: 'unplanned', label: labelOf(b), enabled: !b.disabled, reason: '' });
+    // Inspect: open the fold the way a tap on its summary does.
+    let inspect = null;
+    if (summary) {
+      summary.click();
+      const detail = await __fm.until(() => fold.open && shown(fold.querySelector('.as-detailcard')) && fold.querySelector('.as-detailcard'));
+      inspect = { opened: !!fold.open, card: !!detail, named: detail?.querySelector('.dc-name')?.textContent.trim() || '',
+        asked: asks(), listOpen: !!document.querySelector('.combat-potion-menu') };
+    }
+    // Use, on a fresh list: offered, it asks and a cancel spends nothing;
+    // refused, it asks nothing (a disabled control has no click to wait on).
+    let tried = null;
+    await openList();
+    const b = foldBy(key)?.querySelector('.potion-use');
+    if (b) {
+      const refused = b.disabled;
+      b.click();
+      const asked = !!(await __fm.until(asks, refused ? 6 : 40));
+      document.querySelector('.confirmation-modal .confirmation-cancel')?.click();
+      tried = { refused, asked, settled: !!(await __fm.until(() => !asks())) };
+    }
+    await openList();
+    read.push({ key, name, count: start[key], rows, inspect, use: tried, after: counts()[key] ?? null });
+  }
   await __fm.closeModal('combat-potion-menu');
+  const out = { carried: [] };
+  for (const r of read) if (r.key.startsWith('charge:')) out[r.key.slice(7)] = r; else out.carried.push(r);
   return out;
 })()`;
+
+// One combat fold against the shared plan: its rows are the plan's actions,
+// and each was exercised as the plan says (Inspect inert, Use asks first).
+const combatFoldWrong = (row, want) => {
+  if (!row) return 'not drawn';
+  if (!sameRows(row.rows, want, { reasons: false })) return 'its actions are not the plan\'s';
+  const i = row.inspect;
+  if (!i || !i.opened || !i.card || i.named !== row.name + ' details' || i.asked || !i.listOpen) return 'Inspect did not open the potion\'s card inertly';
+  const use = want.find((a) => a.id === 'use');
+  if (!row.use || row.use.refused === use.enabled || row.use.asked !== use.enabled || !row.use.settled) return 'Use did not ask exactly when offered';
+  if (row.after !== row.count) return 'exercising its actions spent a charge';
+  return '';
+};
 
 const sameRows = (got, want, { reasons = true } = {}) => Array.isArray(got) && got.length === want.length
   && got.every((row, i) => row.id === want[i].id && row.label === want[i].label && row.enabled === want[i].enabled
@@ -761,21 +850,22 @@ async function planProbe(cdp, base, check) {
         const got = await page.ev(COMBAT_SURFACE);
         for (const kind of ['hp', 'mana']) {
           const row = got[kind];
-          const want = row ? (await page.ev(`__fmPlan.combat(${row.count})`)).find((a) => a.id === 'use') : null;
-          check(`plan: combat, ${label}, ${kind} flask: Use matches the shared plan`,
-            !!row && row.enabled === want.enabled && (want.enabled || row.text.includes(want.enabled ? '' : 'No charges')),
-            JSON.stringify({ row: row && { count: row.count, enabled: row.enabled }, want }));
+          const want = await page.ev(`__fmPlan.combat(${row?.count ?? 0})`);
+          const why = combatFoldWrong(row, want);
+          check(`plan: combat, ${label}, ${kind} flask: every action (${want.map((a) => a.label).join(', ')}) matches the shared plan`,
+            !why, `${why} — ${JSON.stringify({ got: row, want })}`);
         }
         // The pose carries a Crimson Flask and a Blight Coating (main.js, shot=combat).
         const carried = got.carried || [];
         const wrong = [];
         for (const row of carried) {
-          const want = (await page.ev(`__fmPlan.combat(${row.count})`)).find((a) => a.id === 'use');
-          if (row.enabled !== want.enabled) wrong.push({ ...row, text: undefined, want });
+          const want = await page.ev(`__fmPlan.combat(${row.count})`);
+          const why = combatFoldWrong(row, want);
+          if (why) wrong.push({ why, got: row, want });
         }
-        check(`plan: combat, ${label}, carried potions: each one's Use matches the shared plan`,
+        check(`plan: combat, ${label}, carried potions: each one's every action matches the shared plan`,
           carried.length === 2 && wrong.length === 0,
-          JSON.stringify({ carried: carried.map(({ name, count, enabled }) => ({ name, count, enabled })), wrong }));
+          JSON.stringify({ carried: carried.map(({ name, count, rows }) => ({ name, count, rows: rows.map((r) => `${r.id}:${r.enabled}`) })), wrong }));
         return got;
       };
       await judge('opening hand');
@@ -793,15 +883,16 @@ async function planProbe(cdp, base, check) {
           if (!yes) return 'Use opened no confirmation';
           yes.click();
           await __fm.until(() => !document.querySelector('.combat-potion-menu'));
-          await __fm.sleep(600);
+          if (!(await __fm.until(${COMBAT_AT_REST}, 200))) return 'the drink never came to rest (End Turn stayed disabled)';
         }
         return '';
       })()`);
       check('plan: combat, the Azure flask drinks to empty', drank === '', drank);
-      const empty = await page.ev(COMBAT_SURFACE);
-      check('plan: combat, Azure drunk to empty: Use is refused, as the shared plan says',
-        empty.mana && empty.mana.count === 0 && empty.mana.enabled === false && /No charges/.test(empty.mana.text),
-        JSON.stringify(empty.mana && { count: empty.mana.count, enabled: empty.mana.enabled }));
+      const empty = await judge('Azure drunk to empty');
+      const emptyUse = empty.mana?.rows?.find((r) => r.id === 'use');
+      check('plan: combat, Azure drunk to empty: Use is refused with its reason, as the shared plan says',
+        empty.mana && empty.mana.count === 0 && emptyUse?.enabled === false && /No charges/.test(emptyUse.reason),
+        JSON.stringify(empty.mana && { count: empty.mana.count, use: emptyUse }));
       check('plan: combat, no page error', page.errors.length === 0, page.errors.join(' | '));
     } finally { await page.close(); }
   }
