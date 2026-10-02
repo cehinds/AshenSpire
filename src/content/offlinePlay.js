@@ -19,6 +19,28 @@ export const offlinePlay = {
     'On a phone or tablet, use the link below the button — it saves the file through the browser instead of holding it in the page. From a downloaded copy it opens the build page on the site, where the download saves.',
     'Online and downloaded copies keep separate saves. Use Export and Import to move your progress. Phone file-opening support varies.',
   ],
+  // "Make available offline" (docs/EXTERNAL-ASSETS-PLAN.md §5 A, step 6b):
+  // shown on the hosted web edition only. `{done}`, `{total}`, `{failed}` and
+  // `{mb}` are filled by the component.
+  keep: {
+    heading: 'Play offline in this browser',
+    note: 'Keeps this build and its art in this browser, so it opens at this same address without internet. Saves are the site’s own, online or offline. Detailed map tiles and recorded music still need a connection; offline the map uses simpler artwork and the music is synthesized.',
+    button: 'Make available offline',
+    again: 'Update offline copy',
+    remove: 'Remove offline copy',
+    includeHigh: 'Include high-resolution art (much larger)',
+    working: 'Keeping the game for offline play… {done} of {total} files',
+    done: 'Ready offline: {total} files kept. Open this page again without internet to play.',
+    partial: 'Kept {done} of {total} files; {failed} could not be fetched. Check your connection and choose Update offline copy.',
+    notPersisted: 'Your browser may clear this copy if it runs low on space or the site goes unused for a long time; keep a downloaded file as well if you rely on it.',
+    removed: 'Offline copy removed.',
+    kept: 'This build is kept for offline play in this browser.',
+    unavailable: {
+      protocol: 'Offline play in the browser is available on the hosted site; a downloaded file already plays offline.',
+      unsupported: 'This browser cannot keep the game offline. Use the download above instead.',
+      art: 'The game’s art did not load, so it cannot be kept offline. Reload the page and try again.',
+    },
+  },
   saveFormat: 'ashenspire-save-transfer',
   saveVersion: 1,
   maxSaveBytes: 20 * 1024 * 1024,

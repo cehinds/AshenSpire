@@ -10,8 +10,11 @@ the Pages base tree without `art/`, the `og:image` Pages path and the site
 size in `pages-site --check`, see section 4; Settings → Art quality
 Auto / Light / High, see [Step 8c as built](#step-8c-as-built)); **step 8d
 built** (2026-10-02: `buildPageUrl`/`serveDir` in `tools/browser.mjs`, and the
-30 tools that opened a built page by `file://` ask it); the rest is plan
-(2026-09-27). The owner answered its
+30 tools that opened a built page by `file://` ask it); **step 6b built**
+(2026-10-02: the Pages store, `asset-base.json` for every page kind,
+`/AshenSpire/sw.js` with Range/206 and a kill-switch, "Make available
+offline", and the light single file at `download/` for every kept build; see
+[Step 6b as built](#step-6b-as-built)); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -539,6 +542,10 @@ only ever served as build payloads", and listed `assets/` among them):
 | object store (high 185 + light 14 + common 32, plus the files each release changes) | — | about 240 MB |
 | **total** | **well above 5 GB** | **about 1.1 GB** before the light single files while `assets/` is kept (about 895 MB after step 13): about 1.2 GB with one per branch, about 2.2 GB with one per kept build |
 
+**Step 6b keeps one for every retained pack-shaped build** (see
+[Step 6b as built](#step-6b-as-built)): every Download link stays valid
+without the zip of step 7, and the higher estimate applies.
+
 If step 6b keeps light single files only for each branch's latest build, every older retained build must hide its per-build Download cell and use the offline zip path inside the game; no link may target an absent `download/AshenSpire.html`. Its check iterates every rendered build-list link and every offered offline-download action and verifies that the destination exists. Keeping a single file for every retained build keeps those links and uses the higher storage estimate.
 
 - **The published site is already far over the documented 1 GB Pages limit**
@@ -909,6 +916,87 @@ Where the build settles the text above (2026-10-02):
   against that screen's tier. `--plant desktop-light` gives the desktop
   screens a phone-sized screen, so Auto loads light there, and the run must
   go RED.
+
+### Step 6b as built
+
+Where the build differs from, or settles, §4 and §5 A (2026-10-02):
+
+- **Which builds are pack-shaped.** `pages-site` serves a build as the web
+  edition when its commit's rebuild writes a pack-shaped `build/web/`
+  (`ASSET_PACKS` pinned, so every dev build from step 3a on). That HTML is the
+  page at `/<branch>/<ordinal>/`, byte-proven against the rebuild and its
+  source digest like the single file was; its indexes, twins, font sidecar and
+  objects are merged into the one store at the site root (`/packs/`,
+  `/objects/`), only what its pin names, so a stale object beside a build is
+  never published. Two builds that disagree about one index name stop the run.
+  Committed (older) builds, and rebuilds of commits before step 3a, keep their
+  inline shape and their `mobile/` folder (`tools/pages-store.mjs`).
+- **`asset-base.json` for every page kind**: `{"base":"../../"}` beside each
+  `/<branch>/<ordinal>/` and `/latest/`, `{"base":"../"}` at `/build/` and
+  `/dist/`, `{"base":"./"}` at the root, written by the same function
+  (`assetBaseFor`). The stable links become the web edition only when the main
+  build handed in (`--main-build`) carries one: `pages-builds.yml` now copies
+  `build/web` there as `web/`. While main still commits its inline build,
+  nothing about the stable links changes.
+- **The download, kept whole, for every retained pack-shaped build** (the
+  choice §4 left to this step): `download/AshenSpire.html` is the build's light
+  single file (`AshenSpire.html` of a light rebuild; the light-art
+  `AshenSpire-mobile.html` of a `--full-art` one, until step 8e names the light
+  single file). The build lists' Download links name it. `build.json` records
+  it as `download: {path, bytes, sha256}`, and its top-level `bytes` is
+  **null** for a pack-shaped build (the page's size is `pageBytes`): a copy of
+  the game from before 6b reads only `bytes` and `../<ordinal>/index.html`,
+  and null is a size it refuses, so it says the download is not ready instead
+  of saving a 9.5 MB page with no art. `src/model/offlineDownload.js` reads
+  `download` and refuses a path that is not a plain relative `.html` file.
+- **Map tiles and the score are still copied beside each page** until step 3c
+  reads them through the common index (their objects are already in the
+  store). So the "no per-build media copies" saving of §4 waits for 3c.
+- **The service worker** (`tools/pages-sw.mjs`, written as `/sw.js`):
+  objects cache-first, each checked against its own name before it is cached
+  (a mismatch answers 502 and is never cached); a Range on a cached object is
+  a `206` slice, a Range on a miss goes to the network and the whole object is
+  cached beside it; pages (navigations, `asset-base.json`, `build.json`,
+  `packs/`) network-first, written to the cache **only** when "Make available
+  offline" asks (an `X-Ashen-Offline` request header), read only when the
+  network fails. Browsing never writes a page, so an offline copy is the HTML,
+  indexes and objects of one moment, and online the network always wins.
+  Everything else in scope passes through untouched.
+- **The kill-switch is the committed constant `SW_KILL`** in
+  `tools/pages-sw.mjs`, not a dispatch input: every push to dev republishes
+  the site, so a switch thrown by one run would be undone by the next. Its
+  worker registers no fetch handler, deletes every `ashen-` cache, unregisters
+  and reloads the pages it controlled; the page registers with
+  `updateViaCache: 'none'`, so the browser re-checks `sw.js` on each
+  navigation. `builds.json` records the worker's version, kill state and
+  sha256 instead of the worker reading `builds.json` (§8's wording): the
+  browser's own update check is what delivers a new worker.
+- **The worker is registered only when the player asks** (Download & saves →
+  "Make available offline", `src/ui/offlineInstall.js`), relative to the base
+  the loader read (`builtInArtStatus().base`), with the default scope, which is
+  the site root `/AshenSpire/`. It keeps light and common, plus high only when
+  the player ticks it; "Remove offline copy" unregisters and deletes the
+  caches. The section shows only on a pack-shaped build; on `file://` or
+  without service workers it says why in one line. The PWA manifest and the
+  install prompt of §5 A are not in this step.
+- **`--check` rows**: per pack-shaped build, the download's bytes and hash;
+  for every pack-shaped page found in the tree (each build, each `/latest/`,
+  the stable links), an `asset-base.json` that resolves to the site root and
+  each pinned index (and the font sidecar, by its text) hashing to the pin;
+  every object a served index lists present with its hash; no store file
+  unreferenced; `sw.js` byte-identical to `tools/pages-sw.mjs`'s text for the
+  recorded kill state; every Download link on the build lists a file on the
+  site. `--selftest` publishes a real rebuild of dev's head into a fixture
+  store and plants a missing object, a missing index, a stale `sw.js`, a
+  missing `download/` file, a missing `asset-base.json` and a stray object,
+  each red by its own name.
+- **`tools/pages-offline.mjs`** drives it in Chromium over
+  `tools/browser.mjs serveDir` under `/AshenSpire/`: the keep, the scope, the
+  kept files, network-first online, an offline boot, offline `206` answers for
+  a music object and an `<audio>` load, and the kill-switch unregistering.
+  `dev-preview.yml`'s browser-gates job runs it (about a minute);
+  `--selftest` (several minutes, by hand) plants a Range answered with `200`, a kill-switch
+  that keeps its registration, and a kept page served before the network.
 
 ---
 

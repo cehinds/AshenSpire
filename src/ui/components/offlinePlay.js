@@ -1,6 +1,7 @@
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { BUILD_VERSION } from '../../buildversion.js';
 import { releasedDownload, receiveDownload } from '../../model/offlineDownload.js';
+import { makeAvailableOffline, offlineState, offlineSupport, removeOfflineCopy } from '../offlineInstall.js';
 import { button, el, openModal } from '../kit/index.js';
 import { openConfirmationModal } from './confirmationModal.js';
 
@@ -9,6 +10,56 @@ function saveFile(blob, name) {
   const link = document.createElement('a'); link.href = url; link.download = name;
   document.body.append(link); link.click(); link.remove();
   setTimeout(() => URL.revokeObjectURL(url), offlinePlay.revokeDelayMs);
+}
+
+const fill = (text, values) => String(text).replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? ''));
+
+// "MAKE AVAILABLE OFFLINE" (docs/EXTERNAL-ASSETS-PLAN.md §5 A, step 6b). Only a
+// pack-shaped build says anything here: a single file already plays offline
+// by itself. On the hosted site the buttons keep or remove this build in the
+// browser through the site's service worker (src/ui/offlineInstall.js);
+// anywhere else one line says why it cannot.
+function keepOffline(signal) {
+  const words = offlinePlay.keep;
+  const support = offlineSupport();
+  if (!support.ok && support.reason === 'single') return null;
+  const heading = el('h3', { text: words.heading });
+  if (!support.ok) return el('div', { class: 'offline-keep' }, [heading, el('p', { class: 'set-note', text: words.unavailable[support.reason] || words.unavailable.unsupported })]);
+  const status = el('p', { role: 'status', 'aria-live': 'polite', class: 'set-note', id: 'offline-keep-status' });
+  const progress = el('progress', { id: 'offline-keep-progress', max: 100, hidden: true, 'aria-label': words.button });
+  const keepButton = button({ label: words.button, id: 'offline-keep' });
+  const removeButton = button({ label: words.remove, id: 'offline-keep-remove' }); removeButton.hidden = true;
+  const high = el('input', { type: 'checkbox', id: 'offline-keep-high' });
+  const highRow = support.high ? [el('label', { for: 'offline-keep-high', class: 'set-note' }, [high, ` ${words.includeHigh}`])] : [];
+  const kept = () => { keepButton.textContent = words.again; removeButton.hidden = false; };
+  void offlineState().then((state) => { if (state.registered) { kept(); if (!status.textContent) status.textContent = words.kept; } });
+  keepButton.addEventListener('click', async () => {
+    keepButton.disabled = true; removeButton.disabled = true; progress.hidden = false; progress.removeAttribute('value');
+    try {
+      const result = await makeAvailableOffline({ includeHigh: support.high && high.checked, signal,
+        onProgress: (done, total) => {
+          progress.value = total ? Math.floor(done / total * 100) : 100;
+          status.textContent = fill(words.working, { done, total });
+        } });
+      kept();
+      progress.value = 100;
+      status.textContent = fill(result.failed ? words.partial : words.done, { done: result.objects - result.failed, total: result.objects, failed: result.failed })
+        + (result.persisted ? '' : ` ${words.notPersisted}`);
+    } catch (error) {
+      if (error?.name !== 'AbortError') status.textContent = error.message;
+    } finally { keepButton.disabled = false; removeButton.disabled = false; }
+  });
+  removeButton.addEventListener('click', async () => {
+    keepButton.disabled = true; removeButton.disabled = true;
+    try {
+      await removeOfflineCopy();
+      keepButton.textContent = words.button; removeButton.hidden = true; progress.hidden = true;
+      status.textContent = words.removed;
+    } catch (error) { status.textContent = error.message; }
+    finally { keepButton.disabled = false; removeButton.disabled = false; }
+  });
+  return el('div', { class: 'offline-keep' }, [heading, el('p', { class: 'set-note', text: words.note }), ...highRow,
+    el('div', { class: 'offline-actions' }, [keepButton, removeButton]), progress, status]);
 }
 
 export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onImported = () => location.reload() }) {
@@ -58,6 +109,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
     if (!response.ok) throw new Error('This branch download is unavailable. Try another branch or check again when online.');
     return response;
   };
+  const keep = keepOffline(controller.signal);
   const door = openModal({ title: offlinePlay.title, size: 'md', className: 'offline-play-modal',
     onClose: () => { controller.abort(); prepared = null; }, body: host => {
       host.append(el('p', { text: `Your game: ${BUILD_VERSION}` }),
@@ -67,6 +119,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
         el('p', { class: 'set-note', text: typeof window.showSaveFilePicker === 'function'
           ? 'Download opens a save-location dialog, then saves the game there.'
           : 'Your browser controls the save location. Enable “Ask where to save” in its download settings to choose a folder.' }),
+        ...(keep ? [keep] : []),
         el('h3', { text: 'Move your saves' }),
         el('p', { class: 'set-note', text: `A backup includes your profile and all ${transfer.slotCount} save slots. Import replaces them in this browser. Existing archives stay here. Import from the title screen.` }),
         el('div', { class: 'offline-actions' }, [exportSave, importSave, recovery, reload]), file, status);

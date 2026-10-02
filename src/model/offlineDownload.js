@@ -1,12 +1,24 @@
 import { offlinePlay } from '../content/offlinePlay.js';
 
+// THE FILE A BUILD'S DOWNLOAD SAVES. An older (inline) build is its own page,
+// `../<ordinal>/index.html`, sized by `bytes`. A pack-shaped build (Pages, step
+// 6b of docs/EXTERNAL-ASSETS-PLAN.md) names its light single file in
+// `download` ({ path: 'download/AshenSpire.html', bytes, sha256 }); its page is
+// a 9.5 MB HTML whose art lives on the site, and its top-level `bytes` is null
+// so a copy from before step 6b refuses it rather than saving a game with no
+// art. A `download` whose path is not a plain relative file is refused.
+const DOWNLOAD_PATH = /^(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.html$/;
+const size = value => Number.isSafeInteger(value) && value > 0;
+
 export function releasedDownload(data, manifestUrl = offlinePlay.manifestUrl, branch = offlinePlay.releaseBranch) {
+  const file = data?.download;
   if (!offlinePlay.branches.some(item => item.id === branch) || data?.branch !== branch || !/^\d+(\.\d+){2}$/.test(data.version)
     || !Number.isSafeInteger(data.ordinal) || data.ordinal < 0
-    || (data.bytes !== undefined && (!Number.isSafeInteger(data.bytes) || data.bytes <= 0))) throw new Error('Download information is not ready yet. Try again later.');
+    || (file != null && (typeof file.path !== 'string' || !DOWNLOAD_PATH.test(file.path) || file.path.split('/').includes('..') || !size(file.bytes)))
+    || (file == null && data.bytes !== undefined && !size(data.bytes))) throw new Error('Download information is not ready yet. Try again later.');
   const version = `${data.version}.${data.ordinal}`;
-  return { version, bytes: data.bytes ?? null, filename: `AshenSpire-${branch}-${version}.html`,
-    url: new URL(`../${data.ordinal}/index.html`, manifestUrl).href };
+  return { version, bytes: file ? file.bytes : data.bytes ?? null, filename: `AshenSpire-${branch}-${version}.html`,
+    url: new URL(`../${data.ordinal}/${file ? file.path : 'index.html'}`, manifestUrl).href };
 }
 
 // Read actual bytes so progress also works with older feeds that omit size.
