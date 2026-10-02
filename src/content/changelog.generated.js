@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "A greyed-out Next now says why",
     "detail": "When a Next, Continue, Confirm, Begin or Enter button is greyed out because you still have something to do, a short line under it now tells you what, for example \"Choose a class.\", \"Choose a response first.\" or \"No saved climb yet.\" Before, the reason only showed in a tooltip, which you never see on a phone. This covers character creation, events, conversations, card rewards, the title screen and save slots, the discard choice, the atlas, the Smith, and the rewards screen while a level is waiting to be claimed.",
-    "build": "0.7.1.770",
+    "build": "0.7.1.771",
     "pullRequest": 1459,
     "url": "https://github.com/cehinds/AshenSpire/pull/1459"
+  },
+  {
+    "id": "pr-1458",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: no CI job runs longer than 20 minutes",
+    "detail": "Nothing you play changes. The slowest automated checks now run in parallel pieces, so every check still runs but no single job takes more than 20 minutes.",
+    "build": "0.7.1.770",
+    "pullRequest": 1458,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1458"
   },
   {
     "id": "pr-1470",
