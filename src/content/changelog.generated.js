@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the game's wording lives in one table again",
     "detail": "Nothing you see changes. About 230 labels and sentences that had crept back into the code since mid-September (most of the Settings rows, the combat action bar, level-up and Victory, the lore fonts, layout and HUD options) now come from the game's one wording table, and an automatic check stops new ones creeping in.",
-    "build": "0.7.1.799",
+    "build": "0.7.1.800",
     "pullRequest": 1489,
     "url": "https://github.com/cehinds/AshenSpire/pull/1489"
+  },
+  {
+    "id": "pr-1495",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Sealed and Draft climbs can no longer extract cards at the smith",
+    "detail": "A Sealed or Draft deck is never given the cards your equipment lends, but extracting one at the Blacksmith, the Shrine or a merchant's smith used to hand you a free copy anyway. In those climbs Extract now shows as unavailable, saying why, and cannot be done; reloading the climb does not bring it back. Seating a card you already own in an item works as before, and Standard climbs are unchanged.",
+    "build": "0.7.1.799",
+    "pullRequest": 1495,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1495"
   },
   {
     "id": "pr-1498",

@@ -3174,6 +3174,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "blacksmith.refuse.extract.poolDeck",
+    "extends": "",
+    "short": "A Sealed or Draft deck takes no card the equipment lends, so nothing can be extracted.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "master.title",
     "extends": "",
     "short": "THE WISE MASTER",
