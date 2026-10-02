@@ -40,6 +40,7 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `map-camera.yml` → map camera re-fit (`map-camera-persistence.mjs --check`, real browser) | yes | yes (also on push to `dev`) |
 | `map-camera.yml` → the full map-camera persistence drive (same job) | no | yes |
 | `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | yes | yes (also on push to `dev`) |
+| `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`, real browser) | yes | yes (also on push to `dev`) |
 | `tests.yml` → tool self-tests, bundler parse gate | no | yes |
 | `ci.yml` → Fullscreen first through both Settings doors | no | yes |
 | `ci.yml` → what this green does NOT cover (boundary) | no | yes |
@@ -912,9 +913,12 @@ is the only writer of `seenTutorial`, the veil came back on every reload.
 viewports (zoom 0.62 → 1.70), advancing each step with **real mouse clicks at
 real screen coordinates**, plus the two exits that need no geometry — Escape,
 and a veil that lets board clicks through (`pointer-events: none`). It also
-walks the real first-run path and asserts the flag persists. Run it after any
-change to the tutorial, to `--ui-zoom`, or to the combat board's layout; it
-prints the boundary of what it did not cover.
+walks the real first-run path (startup gate, slot picker, character creation)
+and, after a reload, reads `seenTutorial` back from durable storage. Run it
+after any change to the tutorial, to `--ui-zoom`, or to the combat board's
+layout; it prints the boundary of what it did not cover. `--only` takes a comma
+list of cases (viewport names, `resize`, `first-run`); `tutorial-reach.yml`
+runs the whole sweep as three such shards on every pull request into `dev`.
 
 ## Character creation — the short form (D26)
 

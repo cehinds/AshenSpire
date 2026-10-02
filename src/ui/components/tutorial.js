@@ -39,6 +39,10 @@ const STEPS = [
     text: () => `Done? End Turn (or press ${actionLabel('endTurn')}). Unspent energy and most Block are lost at your next turn.` },
 ];
 
+// What the bubble keeps off (place() below): the cards the player is being
+// taught to play. A selector, so it follows the hand wherever the layout puts it.
+const KEEP_CLEAR = '.hand .card';
+
 export function mountTutorial(root, { onDone }) {
   const steps = STEPS.filter((s) => root.querySelector(s.sel));
   if (!steps.length) return onDone();
@@ -72,7 +76,10 @@ export function mountTutorial(root, { onDone }) {
   // The veil really is the layer here — .tut-spot / .tut-bubble are absolute
   // inside it (ui.css), so it is their containing block, not just their parent.
   const MARGIN = 12;
+  const GAP = 20;
   const clamp = (v, max) => Math.max(MARGIN, Math.min(v, max));
+  const overlaps = (a, k) => a.left < k.left + k.width && k.left < a.left + a.width
+    && a.top < k.top + k.height && k.top < a.top + a.height;
 
   function place() {
     const target = root.querySelector(steps[i].sel);
@@ -90,11 +97,40 @@ export function mountTutorial(root, { onDone }) {
     // axes — the buttons live at its bottom edge, so an unclamped Y is exactly
     // how "Got it" ended up below the fold.
     const b = anchorLocalBox(veil, bubble);
-    const below = box.top + box.height + 20;
+    const below = box.top + box.height + GAP;
     const above = box.top - b.height - MARGIN;
     const wantY = below + b.height + MARGIN <= view.height ? below : above;
-    bubble.style.left = `${clamp(box.left, view.width - b.width - MARGIN)}px`;
-    bubble.style.top = `${clamp(wantY, view.height - b.height - MARGIN)}px`;
+    const at = (x, y) => ({
+      left: clamp(x, view.width - b.width - MARGIN),
+      top: clamp(y, view.height - b.height - MARGIN),
+      width: b.width, height: b.height,
+    });
+    // THE BUBBLE MUST NOT SIT ON THE HAND. The veil lets the board answer
+    // through it, but the bubble itself takes clicks — so a bubble parked on a
+    // card is a card the player cannot play while the coach marks stand. When
+    // the action row moved Energy to the bottom-left, "above, left-aligned"
+    // landed on the first card at every shipped viewport. Try the same
+    // above/below choice at the other alignments, then beside the target, and
+    // take the first that clears the hand and the lit target; if none does,
+    // keep the original placement (the buttons stay reachable either way).
+    const clear = Array.from(root.querySelectorAll(KEEP_CLEAR), (n) => anchorLocalBox(veil, n));
+    clear.push(box);
+    const midY = box.top + box.height / 2 - b.height / 2;
+    // On the shortest screens the hand fills the width beside a bottom-row
+    // target, so the last resort is the band above the whole hand.
+    const overHand = Math.min(...clear.map((k) => k.top)) - b.height - MARGIN;
+    const candidates = [
+      at(box.left, wantY),
+      at(box.left + box.width - b.width, wantY),
+      at(box.left + box.width / 2 - b.width / 2, wantY),
+      at(box.left + box.width + GAP, midY),
+      at(box.left - b.width - GAP, midY),
+      at(box.left, overHand),
+      at(box.left + box.width - b.width, overHand),
+    ];
+    const pick = candidates.find((c) => !clear.some((k) => overlaps(c, k))) || candidates[0];
+    bubble.style.left = `${pick.left}px`;
+    bubble.style.top = `${pick.top}px`;
     return true;
   }
 
@@ -155,10 +191,40 @@ export function mountTutorial(root, { onDone }) {
 
   // Resizing changes --ui-zoom (Auto), which changes the local space every
   // placement above was computed in — re-place instead of going stale.
+  //
+  // ONE RE-PLACE IS NOT ENOUGH, because the board finishes moving after it. The
+  // combat action row re-lays itself out a few hundred ms after the zoom
+  // re-flex (measured 2560x1440 -> 1280x800: the Energy orb moved 163 px left
+  // at ~600 ms, after the 220 ms re-place), and the spotlight was left lit on
+  // empty floor. So after the first re-place this follows the target frame by
+  // frame and re-places whenever its box moves, until it has held still for
+  // SETTLE_FRAMES frames or SETTLE_MAX_MS has passed — whichever comes first.
+  const SETTLE_FRAMES = 30;
+  const SETTLE_MAX_MS = 3000;
   let resizeTimer = null;
+  let settleRun = 0;
+  const targetKey = () => {
+    const t = root.querySelector(steps[i]?.sel);
+    if (!t) return '';
+    const r = t.getBoundingClientRect();
+    return `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)},${Math.round(r.height)}`;
+  };
+  function settle() {
+    const run = ++settleRun;
+    const t0 = performance.now();
+    let last = targetKey();
+    let still = 0;
+    const tick = () => {
+      if (done || run !== settleRun || performance.now() - t0 > SETTLE_MAX_MS) return;
+      const now = targetKey();
+      if (now !== last) { last = now; still = 0; place(); } else still += 1;
+      if (still < SETTLE_FRAMES) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
   function onResize() {
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => { if (!done) place(); }, 220); // after main.js's 150ms zoom re-flex
+    resizeTimer = setTimeout(() => { if (!done) { place(); settle(); } }, 220); // after main.js's 150ms zoom re-flex
   }
   addEventListener('resize', onResize);
 
