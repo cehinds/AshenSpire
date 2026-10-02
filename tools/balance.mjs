@@ -22,7 +22,7 @@
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
-import { dispatch } from '../src/engine/combat.js';
+import { dispatch, cardChoicePlan } from '../src/engine/combat.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
 import { affordableCards, refusalsFor } from './simbot.mjs';
 import { createRunState } from '../src/model/state.js';
@@ -59,7 +59,7 @@ function botStep(c) {
   const card = affordableCards(REG, c, refused)[0];
   if (!card) { dispatch(c, { type: 'endTurn' }); return; }
   const tgt = firstLiving(c);
-  try { dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id }); }
+  try { dispatch(c, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(c, card.instanceId)?.options[0]?.id }); }
   catch { refused.add(card.instanceId); }
 }
 

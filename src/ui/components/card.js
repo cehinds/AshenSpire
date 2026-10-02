@@ -22,6 +22,7 @@ import { tagService } from '../../model/tagService.js';
 import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
 import { t } from '../strings.js';
 import { loreLine } from './loreLine.js';
+import { cardChoice } from '../../model/cardChoices.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
 // when the surface can state it. No domain action ever belongs in this band.
@@ -620,8 +621,12 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
       if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
     }
     if (eff.op === 'enterStance') {
-      const s = glossaryEntry(registries, 'stance', eff.stance);
-      if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
+      // A chosen stance (Warrior's Vow) explains every stance it can offer.
+      const ids = eff.choose ? (cardChoice(registries, def, def.class)?.options || []).map((o) => o.id) : [eff.stance];
+      for (const id of ids) {
+        const s = glossaryEntry(registries, 'stance', id);
+        if (s && !def.textTemplate.includes(s.name)) lines.push(`<span class="inspection-tag" role="button" tabindex="0" data-tip="${esc(s.tooltip)}">${esc(s.name)}</span>`);
+      }
     }
   }
   const service = tagService(registries);

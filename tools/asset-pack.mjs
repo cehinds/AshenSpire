@@ -238,6 +238,21 @@ export function guardOut(out, root) {
 }
 
 /**
+ * strictlyUnderBuild(out, root) → true when `out` is a folder INSIDE this
+ * checkout's build/ or dist/, never build/ or dist/ itself. tools/bundle.mjs
+ * removes copies an earlier web edition left beside its HTML (assets/,
+ * map-detail/, music/) only there: build/ and dist/ themselves hold the
+ * map-detail/ and music/ folders tools/launch.mjs writes for the single
+ * files, which still read them (review of #1454).
+ */
+export function strictlyUnderBuild(out, root) {
+  let real;
+  try { real = guardOut(out, root); } catch { return false; }
+  const rel = posix(relative(realOut(root), real));
+  return /^(build|dist)\/[^/]/.test(rel);
+}
+
+/**
  * The packs/ or objects/ directory to clear. Refused when it is a symlink (it
  * could name a tracked tree), and when it holds anything while `out` carries
  * no MARKER: an --out outside the checkout may be someone else's directory,

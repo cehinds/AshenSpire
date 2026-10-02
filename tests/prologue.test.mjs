@@ -543,7 +543,7 @@ test('a scene may keep its own staging, and inherits the house style until it do
   // scene with its own wash — silently ignore every other setting changed here.
   assert.equal(staged('warmth').textScale, 1.4);
   assert.equal(staged('step').textScale, 1.4, 'what a scene has not set still follows the house style');
-  assert.deepEqual(PROLOGUE_DEFAULTS.scenes.find(scene => scene.id === 'night').stage, {wash: .06}, 'night answers for its wash alone');
+  assert.deepEqual(PROLOGUE_DEFAULTS.scenes.find(scene => scene.id === 'night').stage, {wash: .06, camera: 'out'}, 'night answers for its wash and camera alone');
   const housed = prologueConfig({[`${PROLOGUE_PREFIX}presentation.layout`]: 'letterbox'});
   for (const scene of housed.scenes) assert.equal(prologueStaging(housed, scene).layout, 'letterbox', `${scene.id} ignored the house style`);
   assert.equal(prologueStaging(housed, housed.scenes.find(scene => scene.id === 'night')).wash, .06, 'while night keeps the one thing it answers for');
@@ -825,4 +825,33 @@ test('the opening renderer imports every opening symbol it names', () => {
     assert.ok(imported.has(name), `${name} is used in the renderer but never imported`);
   }
   assert.ok(named.has('PROLOGUE_DEFAULTS'), 'the symbol that taught this lesson is still one of them');
+});
+
+test('a fixed-height caption sets every scene at one size, the largest at which the longest fits', () => {
+  const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
+  // Measured over every scene in the opening, not the one on screen, so the
+  // size does not jump between scenes; never above the chosen size.
+  assert.match(screen, /order\.map\(index => config\.scenes\[index\]\)/);
+  assert.match(screen, /\(stage\.textScale \?\? 1\) \* \(fixedCaption\(stage\) \? captionFit\(\) : 1\)/);
+  assert.match(screen, /probe\.scrollHeight <= probe\.clientHeight/);
+  // Re-measured when the frame changes size, and the observer goes with the screen.
+  assert.match(screen, /new ResizeObserver/);
+  assert.match(screen, /resized\?\.disconnect\(\); restyled\?\.disconnect\(\)/);
+  // The player's text size moves every rem without resizing the frame.
+  assert.match(screen, /getComputedStyle\(document\.documentElement\)\.fontSize/);
+  // A floor in on-screen pixels: a frame too short for readable words scrolls.
+  assert.match(screen, /const MIN_DIALOGUE_PX = 12;/);
+});
+
+test('the words sit centred in the fixed band, and a short landscape screen gives them the whole panel', () => {
+  assert.equal(PROLOGUE_DEFAULTS.presentation.textPosition, 'middle-center', 'the owner centres the words in the band');
+  const css = readFileSync(new URL('../styles/prologue.css', import.meta.url), 'utf8');
+  assert.match(css, /\.prologue-fixed-caption:is\(\.prologue-layout-caption,\.prologue-layout-letterbox\) \.prologue-caption\[data-position\^=middle\]\{align-content:center;align-content:safe center\}/, 'an overflowing band keeps its first line reachable');
+  // On a short landscape screen the caption layout is a side panel: no band height, no fit.
+  assert.match(css, /@media\(max-height:500px\) and \(orientation:landscape\)\{[^@]*\.prologue-fixed-caption\.prologue-layout-caption \.prologue-caption\{height:auto\}/);
+  const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
+  assert.match(screen, /stage\.layout === 'caption' && !\(shortLandscape\.matches && !root\.closest\('\.pse-phone'\)\)/, 'the editor phone preview keeps its fitted band');
+  assert.match(css, /\.pse-phone \.prologue-fixed-caption\.prologue-layout-caption \.prologue-caption\{height:calc\(var\(--prologue-caption-vh,18\) \* 1cqh\)\}/);
+  assert.match(screen, /if \(currentStage\?\.captionFixedHeight !== true\) return;/, 'a rotation into the panel lets go of the fitted size');
+  assert.match(screen, /if \(key !== seen\) \{ seen = key; refit\(\); \}/, 'an unmeasured panel is not re-staged on every callback');
 });

@@ -158,6 +158,9 @@ emberSigil,sigil,Ember Sigil,C9502E,🔥,,,,,An ember set in steel warms a guard
 thornSigil,sigil,Thorn Sigil,8E3B3B,🌿,,,,,A thorn set in steel opens the first wound of a fight.
 tideSigil,sigil,Tide Sigil,3F6FA0,🌊,,,,,A tide set in steel brings a card back with every fifth one played.
 hearthSigil,sigil,Hearth Sigil,B08D57,🏠,,,,,A hearth set in steel turns every mending into a guard.
+vigilSigil,sigil,Sigil of the Last Vigil,8A7A3C,🕯,,,,,A legendary vigil: a guard rises at the start of a fight you enter already wounded.
+pyreSigil,sigil,Pyre Sigil,B5522A,🔥,,,,,A legendary pyre: every card you burn away raises a guard.
+gravelightSigil,sigil,Gravelight Sigil,6F7FA8,💀,,,,,A legendary gravelight: a fallen foe mends you while you stand wounded.
 warhorn,property,Warhorn,6E9C6E,📣,,,,,What Warhorn does when the fight gives it its moment.
 vowOfVengeance,property,Vow of Vengeance,6E9C6E,⚔,,,,,What Vow of Vengeance does when the fight gives it its moment.
 pearlOfSagacity,property,Pearl of Sagacity,6E9C6E,🔮,,,,,What Pearl of Sagacity does when the fight gives it its moment.

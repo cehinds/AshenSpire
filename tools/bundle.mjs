@@ -10,13 +10,14 @@
 //
 // Usage: node tools/bundle.mjs
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync, cpSync, readdirSync, statSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, rmSync } from 'node:fs';
 import vm from 'node:vm';
 import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
 import { MOBILE_ASSET_DIR, MOBILE_BUNDLE_BUDGET_BYTES, distinctAssetId } from './mobileart-policy.mjs';
 import { headMetaTags } from './head-meta.mjs';
-import { writePacks, guardOut, realOut, objectPath } from './asset-pack.mjs';
+import { writePacks, strictlyUnderBuild, objectPath } from './asset-pack.mjs';
+import { externalizeCss, newTemplate, templateValue, slotIds } from './asset-css.mjs';
 import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_FULL, EDITION_MOBILE, EDITION_LIGHT } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -37,15 +38,6 @@ const ROOT = resolve(__dirname, '..');
 // that used to sit here — including why audio is listed before any audio
 // exists — moved with it.
 
-function walkCount(dir) {
-  if (!existsSync(dir)) return 0;
-  let n = 0;
-  for (const name of readdirSync(dir)) {
-    const abs = resolve(dir, name);
-    n += statSync(abs).isDirectory() ? walkCount(abs) : 1;
-  }
-  return n;
-}
 
 function canonicalText(text) {
   return text.replace(/\r\n?/g, '\n');
@@ -128,9 +120,12 @@ function idOf(absPath) {
 // memory, with each index's sha256 and the default tier, and writes
 // `asset-base.json` ({"base":"./"}) beside the HTML. At boot the loader checks
 // each index against that pin and resolves ids to objects through
-// setBuiltInSource(). CSS url()s name the default tier's objects directly (the
-// ASSET_CSS template is step 3b). map-detail/ and music/ are still copied
-// beside the HTML until step 3c reads them through the common index.
+// setBuiltInSource(). The CSS assets (the fonts and backdrops) are ASSET_CSS
+// slots the loader fills from the index it used, and the two SVG masks are
+// inlined (step 3b, tools/asset-css.mjs). The map-detail tiles and the
+// shipped score are common ids too (step 3c): mapDetail.js and audio.js
+// resolve them through assetUrl(), so no map-detail/ or music/ folder is
+// copied beside the HTML any more.
 //
 // `--mobile`: a THIRD shape, and the second single file. The same bundle, the
 // same `assets/…` keys, but every art payload is read from assets-mobile/ — the
@@ -362,8 +357,8 @@ function walkAssets(dir) {
 let mapEntries = 0;
 let mapBytes = 0;
 let copiedAssets = 0;
-let copiedDetail = 0;
-let copiedMusic = 0;
+let packedDetail = 0;
+let packedMusic = 0;
 const skipped = []; // files under assets/ with no MIME mapping — reported, not silent
 let authoringBytes = 0;
 if (TWIN_ART) {
@@ -478,13 +473,23 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
 // ---------------------------------------------------------------------------
 const ASSET_PACKS_ID = 'src/ui/assetPacks.js';
 const ASSET_PACKS_MARKERS = /\/\* ASSET_PACKS_START \*\/[\s\S]*?\/\* ASSET_PACKS_END \*\//;
+const ASSET_CSS_MARKERS = /\/\* ASSET_CSS_START \*\/[\s\S]*?\/\* ASSET_CSS_END \*\//;
 const DEFAULT_TIER = LIGHT ? 'light' : 'high';
 const WEB_PACKS = LIGHT ? ['light', 'common'] : ['high', 'light', 'common'];
 let packSummary = null;
-const cssObjects = new Map(); // `assets/…` id → objects/… path, for the CSS url() pass
+const cssObjects = new Map(); // `assets/…` id → objects/… path: the default tier's and common's, for the inlined masks
 if (sources.has(ASSET_PACKS_ID) && !ASSET_PACKS_MARKERS.test(sources.get(ASSET_PACKS_ID))) {
   fail(`${ASSET_PACKS_ID} has lost its ASSET_PACKS markers — the bundler anchors on them`);
 }
+if (sources.has(ASSET_PACKS_ID) && !ASSET_CSS_MARKERS.test(sources.get(ASSET_PACKS_ID))) {
+  fail(`${ASSET_PACKS_ID} has lost its ASSET_CSS markers — the bundler anchors on them`);
+}
+// The web edition's stylesheets, href → CSS to inline, written in 2b (step 3b);
+// the single files never fill it and inline through inlineCssUrls below.
+const externalStyles = new Map();
+let assetCss = null;
+let cssSlotUrls = 0;
+let cssMasksInlined = 0;
 if (EXTERNAL_ART) {
   if (!sources.has(ASSET_PACKS_ID)) fail(`${ASSET_PACKS_ID} is not in the import graph — the web edition would pin packs nothing loads`);
   try {
@@ -494,7 +499,7 @@ if (EXTERNAL_ART) {
       (e.problems || []).slice(0, 8).map((message) => ({ message })));
   }
   if (packSummary) {
-    // CSS names the default tier's objects, and the common pack's for fonts.
+    // The masks are inlined from the default tier's objects (2b's CSS pass below).
     for (const pack of ['common', DEFAULT_TIER]) {
       const entries = JSON.parse(readFileSync(resolve(OUT_DIR, packSummary.packs[pack].index), 'utf8'));
       for (const [id, [sha]] of Object.entries(entries)) cssObjects.set(id, objectPath(sha, id));
@@ -509,6 +514,51 @@ if (EXTERNAL_ART) {
     // A replacer FUNCTION, for the reason the ASSET_MAP one gives.
     sources.set(ASSET_PACKS_ID, sources.get(ASSET_PACKS_ID).replace(ASSET_PACKS_MARKERS,
       () => `/* ASSET_PACKS_START */\nexport const ASSET_PACKS = ${JSON.stringify(pin)};\n/* ASSET_PACKS_END */`));
+
+    // THE CSS ASSETS (step 3b; tools/asset-css.mjs says the shape). Here, not
+    // in section 4, because the template is stamped into a MODULE, and the
+    // modules are transformed before the HTML is assembled. The fonts' and
+    // backdrops' url()s become ASSET_CSS slots, which the loader fills from
+    // the index it actually used; the two SVG masks are inlined from their
+    // objects. Every slot must name an id the loader can find whichever tier
+    // it ends on: the common pack (the fonts), or EVERY art tier this build
+    // carries (high and light on a high-default build), so the high → light
+    // fallback has a light backdrop to show.
+    const template = newTemplate();
+    const lists = Object.fromEntries(WEB_PACKS.map((pack) => [pack,
+      new Set(Object.keys(JSON.parse(readFileSync(resolve(OUT_DIR, packSummary.packs[pack].index), 'utf8'))))]));
+    const idFor = (cssAbs) => (ref) => {
+      const fromAssets = relative(ASSET_DIR, resolve(dirname(cssAbs), ref.split('?')[0].split('#')[0]));
+      // The packs carry assets/ ids only. A url naming anything else is not
+      // shipped by this mode at all, so it would be a guaranteed 404.
+      if (fromAssets.startsWith('..')) fail(`CSS url outside assets/ cannot ship with --external-art: ${ref}`);
+      return posix.join('assets', fromAssets.split(/[\\/]/g).join('/'));
+    };
+    const inlineData = (id) => {
+      const rel = cssObjects.get(id);
+      if (!rel) fail(`CSS url names ${id}, which no ${DEFAULT_TIER} or common pack index lists`);
+      return `data:${MIME[extname(id).toLowerCase()]};base64,${readAssetBytes(resolve(OUT_DIR, rel)).toString('base64')}`;
+    };
+    for (const href of cssHrefs) {
+      const cssAbs = resolve(ROOT, href);
+      if (!existsSync(cssAbs)) fail('stylesheet not found: ' + href);
+      try {
+        externalStyles.set(href, externalizeCss(readText(cssAbs), { idFor: idFor(cssAbs), inlineData, template }));
+      } catch (e) {
+        fail(`${href}: ${e.message}`);
+      }
+    }
+    assetCss = templateValue(template);
+    const artTiers = WEB_PACKS.filter((pack) => pack !== 'common');
+    for (const id of slotIds(assetCss)) {
+      if (lists.common.has(id)) continue;
+      const missing = artTiers.filter((pack) => !lists[pack].has(id));
+      if (missing.length) fail(`CSS url names ${id}, which the ${missing.join(' and ')} pack index${missing.length > 1 ? 'es do' : ' does'} not list — the loader could not fill its ASSET_CSS slot on that tier`);
+    }
+    cssSlotUrls = template.urls - template.inlined;
+    cssMasksInlined = template.inlined;
+    sources.set(ASSET_PACKS_ID, sources.get(ASSET_PACKS_ID).replace(ASSET_CSS_MARKERS,
+      () => `/* ASSET_CSS_START */\nexport const ASSET_CSS = ${JSON.stringify(assetCss)};\n/* ASSET_CSS_END */`));
   }
 }
 
@@ -714,9 +764,16 @@ for (const id of order) {
 // added later). Rewrite each url() to a base64 data: URI, resolved relative to
 // the stylesheet. Absolute/remote/data: urls are left alone; a missing file is
 // a hard fail rather than a silently blank background.
+//
+// The web edition (--external-art) does not come through here: its url()s
+// became ASSET_CSS slots and inlined masks in section 2b (tools/asset-css.mjs).
+// Left alone they would be wrong twice over: authored relative to the
+// STYLESHEET (`../assets/bg/bg_act1.webp` from styles/), they resolve against
+// the DOCUMENT once inlined into a <style> and climb out of the output folder;
+// and a url() that names one tier's object directly bypasses the loader, so a
+// high-default build whose high index failed would still ask for high objects.
 let inlinedAssets = 0;
 let inlinedAssetBytes = 0;
-let externalCssUrls = 0;
 
 function inlineCssUrls(css, cssAbs) {
   return css.replace(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g, (whole, _q, ref) => {
@@ -739,39 +796,6 @@ function inlineCssUrls(css, cssAbs) {
       inlinedAssetBytes += buf.length;
       return `url("data:${mime};base64,${buf.toString('base64')}")`;
     }
-    if (EXTERNAL_ART) {
-      // REWRITTEN, NOT LEFT ALONE, AND THAT DISTINCTION IS THE WHOLE BUG.
-      //
-      // These urls are authored relative to the STYLESHEET (`../assets/bg/
-      // bg_act1.webp` from styles/). Inlining the CSS into the HTML moves the
-      // base: a relative url in a <style> block resolves against the DOCUMENT.
-      // Left untouched, `../assets/…` would climb out of the output directory
-      // and 404 — silently, as a blank act backdrop, which is exactly the
-      // failure mode the paragraph above this function was written about.
-      //
-      // So resolve against the stylesheet as before, then re-express relative
-      // to the output HTML. Same file, correct base.
-      // Point at the OBJECT, not the source. The first cut of this rebased onto
-      // `assetAbs` — the file in the source tree — and emitted
-      // `../../assets/bg/bg_act1.webp`, which climbs out of the output
-      // directory into the repo. It happens to resolve when the output sits
-      // two levels under the root and 404s everywhere else, including on the
-      // published site. The art beside the HTML is the pack store now, so a
-      // url names the default tier's object for that id (the common pack's
-      // for a font), relative to the HTML.
-      const fromAssets = relative(ASSET_DIR, assetAbs);
-      if (fromAssets.startsWith('..')) {
-        // The packs carry assets/ ids only. Anything outside it is not shipped
-        // by this mode at all, so a url naming it would be a guaranteed 404 —
-        // refuse rather than emit a path to a file that will not be there.
-        fail(`CSS url outside assets/ cannot ship with --external-art: ${ref}`);
-      }
-      const id = posix.join('assets', fromAssets.split(/[\\/]/g).join('/'));
-      const rel = cssObjects.get(id);
-      if (!rel) fail(`CSS url names ${id}, which no ${DEFAULT_TIER} or common pack index lists`);
-      externalCssUrls += 1;
-      return `url("${rel}")`;
-    }
     const buf = readAssetBytes(assetAbs);
     inlinedAssets += 1;
     inlinedAssetBytes += buf.length;
@@ -783,7 +807,7 @@ function inlineCssUrls(css, cssAbs) {
 const styleBlocks = cssHrefs.map((href) => {
   const cssAbs = resolve(ROOT, href);
   if (!existsSync(cssAbs)) fail('stylesheet not found: ' + href);
-  const css = inlineCssUrls(readText(cssAbs), cssAbs);
+  const css = EXTERNAL_ART ? externalStyles.get(href) : inlineCssUrls(readText(cssAbs), cssAbs);
   return `  <style data-src="${href}">\n${css}\n  </style>`;
 });
 
@@ -1110,23 +1134,17 @@ if (MOBILE && Buffer.byteLength(html, 'utf8') > MOBILE_BUNDLE_BUDGET_BYTES) {
 mkdirSync(OUT_DIR, { recursive: true });
 writeFileSync(OUT_PATH, html, 'utf8');
 
-// THE SIBLING DIRECTORY THE SINGLE FILE DELIBERATELY DOES NOT CARRY.
+// THE SIBLING DIRECTORIES THE WEB EDITION NO LONGER CARRIES (step 3c).
 //
-// src/ui/components/mapDetail.js states the contract in its own header: "Detail
-// files are never bundled into the single HTML: hosted builds carry a sibling
-// map-detail directory." The standalone therefore ships WITHOUT them and falls
-// back — `detailState = 'offline-fallback'` under file:// — which is why the
-// assets/ sweep above has never known about this tree.
-//
-// A de-inlined build IS a hosted build, so it is on the other side of that
-// sentence and has to carry them. tools/launch.mjs:107 already does exactly
-// this for dist/, and pages-site.mjs does it per build; this is the third site
-// of the same copy and it is deliberate rather than accidental, because each
-// one places the tree beside a different output.
-//
-// Found by loading the build in a browser and watching the network: static
-// checks all passed while two map tiles 404'd. The fallback is graceful, so
-// nothing threw — it just quietly showed the low-detail map.
+// src/ui/components/mapDetail.js: "Detail files are never bundled into the
+// single HTML." The single file ships without them and, served over http(s),
+// reads the map-detail/ and music/ folders tools/launch.mjs writes beside it.
+// The web edition used to carry copies of both too; since step 3c its tiles
+// and its score are common-pack ids (`map-detail/<hash>/<edge>/<x>-<y>.webp`,
+// `music/manifest.json`, `music/<context>/<track>.mp3`) that the page
+// resolves through assetUrl() to objects/. A copy left beside it by an
+// earlier build is removed below with the old assets/ tree, for the same
+// reason: it would quietly serve a tile or a track the index misses.
 let staleTree = '';
 if (EXTERNAL_ART) {
   // Where packs/ and objects/ are, for src/ui/assetPacks.js: beside the HTML.
@@ -1139,25 +1157,23 @@ if (EXTERNAL_ART) {
   // build/ or dist/ (the asset-pack guard above already refused anything else
   // inside it), so a mistyped --out can never name the source tree, and a
   // folder outside the checkout keeps whatever its owner put there.
-  const underBuild = /^(build|dist)\//.test(`${relative(realOut(ROOT), guardOut(OUT_DIR, ROOT)).split(/[\\/]/g).join('/')}/`);
-  if (underBuild && existsSync(EXTERNAL_ASSET_DIR)) {
-    rmSync(EXTERNAL_ASSET_DIR, { recursive: true, force: true });
-    staleTree = idOf(EXTERNAL_ASSET_DIR);
+  // A folder INSIDE build/ or dist/ only: build/ and dist/ themselves carry the
+  // map-detail/ and music/ the single files read (strictlyUnderBuild).
+  const underBuild = strictlyUnderBuild(OUT_DIR, ROOT);
+  const retired = [];
+  for (const dir of [EXTERNAL_ASSET_DIR, resolve(OUT_DIR, 'map-detail'), resolve(OUT_DIR, 'music')]) {
+    if (underBuild && existsSync(dir)) {
+      rmSync(dir, { recursive: true, force: true });
+      retired.push(idOf(dir) + '/');
+    }
   }
-  const detailSrc = resolve(ROOT, 'map-detail');
-  if (existsSync(detailSrc)) {
-    cpSync(detailSrc, resolve(OUT_DIR, 'map-detail'), { recursive: true });
-    copiedDetail = walkCount(resolve(OUT_DIR, 'map-detail'));
-  }
-  // The shipped score, same contract: a served page with the music-folder
-  // setting blank fetches music/manifest.json from beside itself
-  // (content/music.js SHIPPED_MUSIC_FOLDER), so a hosted build without it
-  // 404s on boot and falls back to the synth.
-  const musicSrc = resolve(ROOT, 'music');
-  if (existsSync(musicSrc)) {
-    cpSync(musicSrc, resolve(OUT_DIR, 'music'), { recursive: true });
-    copiedMusic = walkCount(resolve(OUT_DIR, 'music'));
-  }
+  staleTree = retired.join(', ');
+  // What the common index carries of the two, for the summary.
+  try {
+    const commonIds = Object.keys(JSON.parse(readFileSync(resolve(OUT_DIR, packSummary.packs.common.index), 'utf8')));
+    packedDetail = commonIds.filter((id) => id.startsWith('map-detail/')).length;
+    packedMusic = commonIds.filter((id) => id.startsWith('music/')).length;
+  } catch { /* no common pack: reported as 0 below */ }
 }
 
 // ---------------------------------------------------------------------------
@@ -1182,11 +1198,11 @@ if (EXTERNAL_ART) {
   }
   if (packSummary.fonts) console.log(`  font sidecar     : ${packSummary.fonts.faces} faces → ${packSummary.fonts.file}`);
   console.log('  default tier     : ' + DEFAULT_TIER + (DEFAULT_TIER === 'high' ? ' (falls back to light)' : ''));
-  console.log('  css assets linked: ' + externalCssUrls + ' (to ' + DEFAULT_TIER + '/common objects beside the output HTML)');
-  if (staleTree) console.log('  retired          : ' + staleTree + '/ (the pre-pack copy of the art)');
-  console.log('  map detail       : ' + copiedDetail + ' tiles → ' + idOf(resolve(OUT_DIR, 'map-detail'))
-    + (copiedDetail ? '' : ' (none found — the map falls back to low detail)'));
-  console.log('  shipped score    : ' + copiedMusic + ' files → ' + idOf(resolve(OUT_DIR, 'music')));
+  console.log('  css assets       : ' + cssSlotUrls + ' url()s → ' + (assetCss ? assetCss.rules.length : 0) + ' ASSET_CSS rules, filled from the index the loader uses; ' + cssMasksInlined + ' SVG mask url()s inlined');
+  if (staleTree) console.log('  retired          : ' + staleTree + ' (copies an earlier build left beside the HTML)');
+  console.log('  map detail       : ' + packedDetail + ' tiles in the common pack'
+    + (packedDetail ? '' : ' (none — the map falls back to low detail)'));
+  console.log('  shipped score    : ' + packedMusic + ' files in the common pack (music/manifest.json and its tracks)');
 } else {
   console.log('  css assets inlined: ' + inlinedAssets + ' (' + Math.round(inlinedAssetBytes / 1024) + ' KiB raw)');
   console.log('  art inlined      : ' + mapEntries + ' files (' + Math.round(mapBytes / 1024) + ' KiB raw)');

@@ -45,7 +45,10 @@ for (const [name, [registries, build]] of Object.entries(CASES)) {
       const { stock, counters } = take(registries, key, build);
       assert.equal(JSON.stringify(stock), JSON.stringify(FIXTURE[name][key]), `${name} ${key}`);
       const kept = FIXTURE.counters[`${name}:${key}`];
-      if (kept) assert.deepEqual(counters, kept, `${name} ${key}: the streams drawn`);
+      // `sigils` (SPEC §15.4) was appended after the fixture; a shop draws nothing there.
+      const { sigils: drawnOnSigils = 0, ...existing } = counters;
+      if (kept) assert.equal(drawnOnSigils, 0, `${name} ${key}: nothing drawn on sigils`);
+      if (kept) assert.deepEqual(existing, kept, `${name} ${key}: the streams drawn`);
     }
   });
 }

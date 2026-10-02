@@ -19,8 +19,9 @@ test('the current build starts at 100 XP and adds base × 1.3 for each further s
   assert.equal(characterXpToNext(registries, 10), 1270);
   assert.equal(skillXpToNext(registries, 'weapon', 0), 100);
   assert.equal(skillXpToNext(registries, 'class', 0), 100);
-  assert.equal(skillXpToNext(registries, 'weapon', 3), 490);
-  assert.equal(skillXpToNext(registries, 'class', 1), 230);
+  // Skill and class tracks use the owner's ×1.75 curve (2026-10-02).
+  assert.equal(skillXpToNext(registries, 'weapon', 3), 535);
+  assert.equal(skillXpToNext(registries, 'class', 1), 175);
   assert.equal(registries.balance.skill.xp.perHit, 5);
   assert.equal(registries.balance.skill.xp.perWinEquipped, 5);
   assert.equal(registries.balance.skill.class.xp.perWin, 5);

@@ -107,7 +107,7 @@
 //
 // Usage
 //   node tools/holdconfirm.mjs                 source tree via tools/serve.mjs
-//   node tools/holdconfirm.mjs --dist          dist/AshenSpire.html over file://
+//   node tools/holdconfirm.mjs --dist          dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
 //   node tools/holdconfirm.mjs --mutate        must catch the falsified wiring
 //   node tools/holdconfirm.mjs --new-entry     Law 0 falsifier, content only
 //   node tools/holdconfirm.mjs --fail-closed   Viki's gate: unknown op must hold
@@ -136,7 +136,7 @@
 // duration is reasoned from Android's long-press threshold, not observed.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -378,7 +378,7 @@ async function main() {
   if (args.includes('--selftest')) return selftest();
 
   let base; let stop = () => {};
-  if (useDist) base = pathToFileURL(resolve(ROOT, 'dist/AshenSpire.html')).href;
+  if (useDist) base = await buildPageUrl(resolve(ROOT, 'dist/AshenSpire.html'));
   // `--root` SERVES A DIFFERENT TREE and changes nothing else — the table
   // imports, the provenance line and this file's own home stay at ROOT. It
   // exists for --selftest, which plants a source defect into a disposable copy

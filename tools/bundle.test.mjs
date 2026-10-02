@@ -171,8 +171,8 @@ function runEolSelftest() {
   const cssPlantedDir = sandbox();
   forceTreeEol(cssPlantedDir, 'crlf');
   const cssPlanted = patchTool(cssPlantedDir,
-    "  const css = inlineCssUrls(readText(cssAbs), cssAbs);",
-    "  const css = inlineCssUrls(readFileSync(cssAbs, 'utf8'), cssAbs);");
+    "  const css = EXTERNAL_ART ? externalStyles.get(href) : inlineCssUrls(readText(cssAbs), cssAbs);",
+    "  const css = EXTERNAL_ART ? externalStyles.get(href) : inlineCssUrls(readFileSync(cssAbs, 'utf8'), cssAbs);");
   const cssPlantedRun = build(cssPlantedDir);
   const cssPlantedOut = buildDigest(cssPlantedDir, cssPlantedRun, binaryRel);
   check('text-source EOL known-bad: raw CSS read was planted', cssPlanted);
