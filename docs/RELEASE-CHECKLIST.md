@@ -156,6 +156,7 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §11 | Map Potions onChange persistence/remount is covered by a test | G20 |
 | §11 | Map Potions list and mini-menu selections dispatch the chosen action is covered by a test | G20 |
 | §11 | A real-browser flask-menu behaviour test replaces flask-action-contract's source half | G20 |
+| §11 | `tools/uistrings.mjs --check` (the copy ratchet) is green on `dev` and runs in the suite | G20 |
 | §11 | DEVELOPER.md has no stale counts | G20 |
 | §12 | The receipts gate is green on `dev` | G3 |
 | §12 | `codex/` and squash merges land with a receipt | G20 |
