@@ -73,6 +73,7 @@ import {
 } from './itemUpgrades.js';
 import { normalizeSmithingRules } from './smithingRules.js';
 import { normalizeCardMountRules } from './cardMounts.js';
+import { STANCE_CHOICE_SELECTORS } from './cardChoices.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -1885,10 +1886,10 @@ function collectContentProblems(bundle, errors = []) {
     }
   }
 
-  // ---- sigils (SPEC §14.3): { id, name, rarity, cost, blurb, triggers } ------
-  // The triggers are the relic DSL, checked by the same walker, so a sigil adds
-  // nothing to the engine's vocabulary. A legendary sigil is §15.4's (attuned,
-  // no triggers, never stock) and is refused until that section lands.
+  // ---- sigils (SPEC §14.3, §15.4): { id, name, rarity, cost?, blurb } --------
+  // What a sigil does is its tagging row and that leaf's rule, so a sigil adds
+  // nothing to the engine's vocabulary. A legendary sigil is §15.4's: attuned,
+  // no cost, never stock, and exactly one property tag.
   validateSigils(b.sigils === undefined ? shippedSigils : b.sigils, vctx, b);
 
   // ---- consumables and companions (SPEC §14.3, step 5b) ----------------------
@@ -2351,6 +2352,20 @@ export function validateEffects(effects, path, vctx) {
       const to = eff.toFloorPct !== undefined;
       if (by === to) err(p, `Opcode 'restoreMana' takes exactly one of 'amount' or 'toFloorPct'`);
     }
+    // enterStance enters a named stance OR offers a choice (Warrior's Vow,
+    // model/cardChoices.js) — one selector, never neither nor both.
+    // BOUNDARY: this check does not know which context the effect list is
+    // in, so it also accepts `choose` in a stance onEnter, a status hook or an
+    // enemy move, where no play intent supplies a pick. No shipped row does
+    // that (only a card's own effects carry `choose`); such a row throws
+    // when it resolves (engine/actions.js enterStance;
+    // tests/warriors-vow.test.mjs pins the throw).
+    if (eff.op === 'enterStance') {
+      const named = eff.stance !== undefined;
+      const chosen = eff.choose !== undefined;
+      if (named === chosen) err(p, `Opcode 'enterStance' takes exactly one of 'stance' or 'choose'`);
+      else if (chosen && !STANCE_CHOICE_SELECTORS.includes(eff.choose)) err(`${p}.choose`, `Opcode 'enterStance' choose must be one of: ${STANCE_CHOICE_SELECTORS.join(', ')}`);
+    }
     // arcaneBuildup pours BY an amount or a percent OF the target's threshold
     // (plan phase 8) — one selector, never neither nor both.
     if (eff.op === 'arcaneBuildup') {
@@ -2412,6 +2427,18 @@ const SIGIL_FIELDS = new Set(['id', 'name', 'rarity', 'cost', 'blurb']);
 // is the branch itself, sits elsewhere in the tree, or has no rule is refused.
 function validateSigils(rows, vctx, bundle = {}) {
   const { err } = vctx;
+  // SPEC §15.4's numbers: how many legendaries a run may attune (a whole
+  // number from 0) and each pool's drop chance (a whole percent, 0-100).
+  const numbers = isPlainObject(bundle.balance) && isPlainObject(bundle.balance.sigils) ? bundle.balance.sigils : null;
+  if (numbers) {
+    if (!(Number.isSafeInteger(numbers.attuneMax) && numbers.attuneMax >= 0)) err('balance.sigils.attuneMax', `must be a whole number from 0, got ${describe(numbers.attuneMax)}`);
+    const chances = numbers.dropChancePct;
+    if (!isPlainObject(chances)) err('balance.sigils.dropChancePct', `must be { normal, elite, boss, treasure }, got ${describe(chances)}`);
+    else for (const pool of ['normal', 'elite', 'boss', 'treasure']) {
+      const pct = chances[pool];
+      if (!(Number.isSafeInteger(pct) && pct >= 0 && pct <= 100)) err(`balance.sigils.dropChancePct.${pool}`, `must be a whole percent from 0 to 100, got ${describe(pct)}`);
+    }
+  }
   if (!Array.isArray(rows)) { err('sigils', `must be an array of sigil rows, got ${describe(rows)}`); return; }
   const tagging = Array.isArray(bundle.tagging) ? bundle.tagging : [];
   const propertyIds = new Set((Array.isArray(bundle.tags) ? bundle.tags : []).filter((tag) => tag && tag.domain === 'property').map((tag) => tag.id));
@@ -2434,10 +2461,14 @@ function validateSigils(rows, vctx, bundle = {}) {
     if (typeof row.name !== 'string' || !row.name) err(`${at}.name`, 'must be a non-empty string');
     if (typeof row.blurb !== 'string' || !row.blurb) err(`${at}.blurb`, 'must be a non-empty string (the sentence the shelf shows)');
     if (!SIGIL_RARITIES.includes(row.rarity)) err(`${at}.rarity`, `must be one of ${SIGIL_RARITIES.join(', ')}, got ${describe(row.rarity)}`);
-    else if (row.rarity === 'legendary') err(`${at}.rarity`, 'is legendary, which SPEC §15.4 authors as an attuned sigil with no cost; it cannot ship before that section lands');
-    if (!(Number.isSafeInteger(row.cost) && row.cost > 0)) err(`${at}.cost`, `must be a whole number of cinders above 0, got ${describe(row.cost)}`);
+    // A legendary (SPEC §15.4) is `{ id, name, rarity, blurb }`: attuned, never
+    // sold, so it has no price. Every other sigil is sold and has one.
+    if (row.rarity === 'legendary') {
+      if (row.cost !== undefined) err(`${at}.cost`, 'is not authored on a legendary sigil (SPEC §15.4): a legendary is never shop stock, and a drop is its only source');
+    } else if (!(Number.isSafeInteger(row.cost) && row.cost > 0)) err(`${at}.cost`, `must be a whole number of cinders above 0, got ${describe(row.cost)}`);
     const props = tagging.filter((tag) => tag && tag.family === 'sigil' && tag.objectId === row.id && propertyIds.has(tag.tagId)).map((tag) => tag.tagId);
     if (!props.length) err(at, 'derives no property tag: give it a `sigil` row in tagging.csv naming a leaf under the sigil branch of property');
+    else if (row.rarity === 'legendary' && props.length !== 1) err(at, `is legendary and must derive exactly one property tag from tagging.csv, got ${props.length} (${props.join(', ')})`);
     for (const tag of props) {
       if (!underSigil(tag)) err(at, `carries property '${tag}', which is not a leaf under the sigil branch of property`);
       else if (!Object.hasOwn(effects, tag)) err(at, `carries property '${tag}', which has no rule in nodeEffects.json`);

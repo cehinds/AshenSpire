@@ -45,7 +45,7 @@ import { journeyGraph, journeyEncounter } from '../model/worldAtlas.js';
 import { activeMods, endlessActInfo } from '../content/customMods.js';
 import { skillKindOf, reconcileSkillUpgrades } from '../model/skills.js';
 import { classTreeRows, coreTagsTreeProblems, staleCoreTags } from '../model/classTree.js';
-import { unknownSigilId } from '../model/sigils.js';
+import { unknownSigilId, sigilRarityProblems } from '../model/sigils.js';
 import { pruneUnknownAdditionOffers } from '../model/marketStock.js';
 import { unknownConsumableId, unknownCompanionId } from '../model/consumables.js';
 
@@ -140,6 +140,8 @@ function pendingRewardReferenceProblems(pending, registries) {
     }
   }
   if (rewards.relicId && !registries.relics.has(rewards.relicId)) problems.push(`relic '${rewards.relicId}' is unknown`);
+  // SPEC §15.4: a dropped legendary sigil (its rarity is sigilRarityProblems').
+  if (rewards.sigilId && !registries.sigils.has(rewards.sigilId)) problems.push(`sigil '${rewards.sigilId}' is unknown`);
   if (rewards.flaskId && !registries.flasks.has(rewards.flaskId)) problems.push(`flask '${rewards.flaskId}' is unknown`);
   if (rewards.armamentId
       && !(registries.equipment.armaments || []).some((piece) => piece.id === rewards.armamentId)) {
@@ -661,6 +663,11 @@ export function createSaveManager(storage) {
         // it would be a carried item with no row to show or install.
         const strangeSigil = unknownSigilId(registries, run);
         if (strangeSigil) throw new Error(`sigil '${strangeSigil}' is unknown to this build`);
+        // SPEC §15.4, rarity at every door: every legendary-only position names
+        // a legendary, no other position holds one, and the attuned list fits
+        // the run's own frozen attuneMax and is what a fight in progress carries.
+        const rarityProblems = sigilRarityProblems(registries, run);
+        if (rarityProblems.length) throw new Error(`Malformed sigils: ${rarityProblems.join('; ')}`);
         // So is a bought armour set (SPEC §14.3, `loadout.boughtArmour`): a set
         // this build has no row for, for that class, would vanish from the
         // run's wardrobe without a word (Codex, on #1374).

@@ -129,7 +129,7 @@
 //
 // Usage
 //   node tools/mapreach.mjs                       source tree via tools/serve.mjs
-//   node tools/mapreach.mjs --dist                dist/AshenSpire.html over file://
+//   node tools/mapreach.mjs --dist                dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
 //   node tools/mapreach.mjs --only 320x640
 //   node tools/mapreach.mjs --texts S,XL          default S,M,L,XL
 //   node tools/mapreach.mjs --seeds SHOWCASE,FOO  --steps 4  --quick
@@ -144,11 +144,11 @@
 //      tripped / --mutate not caught  — never a pass
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -523,7 +523,7 @@ async function main() {
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
     if (!existsSync(f)) { console.error(`mapreach: ${f} does not exist — run \`node tools/launch.mjs --build-only\` first`); process.exit(2); }
-    base = pathToFileURL(f).href;
+    base = await buildPageUrl(f);
   } else {
     const s = await serve({ root: ROOT, port: Number(argOf('--port') || 8266), open: false });
     server = s.server; base = `http://localhost:${s.port}/`;

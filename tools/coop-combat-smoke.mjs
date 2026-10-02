@@ -11,7 +11,7 @@ import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
 import { createRunState } from '../src/model/state.js';
 import {
-  createCoopCombat, coopHpMult, playCard, endTurn, useFlask, leaveCombat, joinCombat, coopOutcome,
+  createCoopCombat, coopHpMult, playCard, endTurn, useFlask, leaveCombat, joinCombat, coopOutcome, cardChoicePlan,
 } from '../src/engine/coopCombat.js';
 
 const REG = createRegistries(contentBundle);
@@ -45,7 +45,7 @@ function botTurn(C, playerId) {
     });
     const tgt = C.enemies.find((e) => e.alive);
     try {
-      if (card) playCard(C, playerId, card.instanceId, tgt && tgt.id);
+      if (card) playCard(C, playerId, card.instanceId, tgt && tgt.id, cardChoicePlan(C, playerId, card.instanceId)?.options[0]?.id);
       else { endTurn(C, playerId); break; }
     } catch { endTurn(C, playerId); break; }
   }

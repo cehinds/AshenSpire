@@ -6,6 +6,9 @@
 .prologue-wash{position:absolute;inset:0;z-index:1;mix-blend-mode:color;pointer-events:none}
 .prologue-caption{position:relative;z-index:2;padding:var(--prologue-box-padding,1rem) max(1.25rem,env(safe-area-inset-right)) var(--prologue-box-padding,1rem) max(1.25rem,env(safe-area-inset-left));text-align:center;background:linear-gradient(#19150f,#100e0c)}
 .prologue-fixed-caption:is(.prologue-layout-caption,.prologue-layout-letterbox) .prologue-caption{box-sizing:border-box;height:calc(var(--prologue-caption-vh,18) * 1cqh);min-height:0;overflow:auto;display:grid;align-content:start}
+/* Middle centres the words in a fixed band, as it does over the art. */
+/* `safe`: a band that still overflows at the readable floor scrolls from its first line, not from a top cut off out of reach. */
+.prologue-fixed-caption:is(.prologue-layout-caption,.prologue-layout-letterbox) .prologue-caption[data-position^=middle]{align-content:center;align-content:safe center}
 .prologue-title{font-size:1.6rem;color:var(--gold);margin:0 0 .4rem;font-weight:normal}
 .prologue-speaker{font-size:1.2rem;letter-spacing:.12em;text-transform:uppercase;color:#c0b39d;margin:.25rem 0}
 .prologue-dialogue{font-size:1.8rem;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-width:65ch;margin:.4rem auto}
@@ -177,6 +180,11 @@
   .prologue-layout-overlay{grid-template-columns:1fr;grid-template-rows:1fr auto}
   .prologue-layout-letterbox{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto auto}
   .prologue-layout-letterbox .prologue-bar{grid-row:3}
+  /* Here the caption is a side panel, not a band: a fixed band height would
+     leave it a strip at the top of an empty column. It fills the panel. */
+  .prologue-fixed-caption.prologue-layout-caption .prologue-caption{height:auto}
+  /* The editor's phone preview stays one column in any window, so it keeps the band. */
+  .pse-phone .prologue-fixed-caption.prologue-layout-caption .prologue-caption{height:calc(var(--prologue-caption-vh,18) * 1cqh)}
 }
 /* A scene with no painting is a text card: the backdrop, and the words. */
 .prologue-plate-bare{background:#100e0c}

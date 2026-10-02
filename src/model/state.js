@@ -37,7 +37,7 @@ import { combatSnapshotProblems } from './combatSnapshot.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
 import { boughtArmourProblems, consumablesProblems, companionsProblems } from './marketStock.js';
-import { sigilInventoryProblems } from './sigils.js';
+import { sigilInventoryProblems, attunedSigilProblems } from './sigils.js';
 
 // v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
 // granted — and capacity must derive from the three (validateRunShape). v2
@@ -80,7 +80,10 @@ import { sigilInventoryProblems } from './sigils.js';
 // stock can sit on `shopStock` and on an atlas master point's
 // `serviceStates[pointId].stock`, which an older build must refuse and keep.
 // A v17-or-older save is filled with a pool of 0 at migrateRunSchema.
-export const RUN_SCHEMA_VERSION = 18;
+// 19 (SPEC §15.4, §15.5 step 5): `attunedSigils`, the legendary sigils the run
+// holds attuned (a subset of `sigils`), rides the save. A v18-or-older save is
+// filled with [] at migrateRunSchema and its `sigils` are left untouched.
+export const RUN_SCHEMA_VERSION = 19;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -221,6 +224,8 @@ export function createRunState({
     // SPEC §14.5: the XP a wise master's respec refunded, spent on any track
     // through his redistribute.
     trainingPool: 0,
+    // SPEC §15.4 (schema 19): the legendary sigils attuned, a subset of `sigils`.
+    attunedSigils: [],
     // SPEC §14.3 (schema 16): skill books and revive tokens carried, and the
     // companions travelling with the run.
     consumables: {},
@@ -709,6 +714,10 @@ export const RUN_SHAPE = [
   // redistribute spends, a whole number of at least 0. A preTrainingPool save
   // (≤ 17) is filled with 0 at the migration door.
   { key: 'trainingPool', type: 'number' },
+  // SPEC §15.4. Required at schema 19: the attuned legendaries, a subset of
+  // `sigils` (attunedSigilProblems). A preAttunedSigils save (≤ 18) is filled
+  // with [] at the migration door.
+  { key: 'attunedSigils', type: 'array' },
   // SPEC §14.2. The open shop visit's stock, null between visits. Since
   // schema 14 it carries `kind` and `offerings` (shopStockProblems); a
   // preShopKinds save (≤ 13) is read as a market at the migration door.
@@ -835,7 +844,7 @@ export function levelProblems(level) {
   return problems;
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables } = {}) {
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables, preAttunedSigils = preTrainingPool } = {}) {
   const problems = [];
   problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
@@ -858,6 +867,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (preSigils && (f.key === 'sigils' || f.key === 'sigilSlots')) continue;
     if (preConsumables && (f.key === 'consumables' || f.key === 'companions')) continue;
     if (preTrainingPool && f.key === 'trainingPool') continue;
+    if (preAttunedSigils && f.key === 'attunedSigils') continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -880,7 +890,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (Array.isArray(run.feats)) run.feats.forEach((id, i) => {
     if (typeof id !== 'string' || !featById(id)) problems.push(`feats[${i}] must name an authored feat`);
   });
-  problems.push(...sigilInventoryProblems(run), ...boughtArmourProblems(run.loadout), ...consumablesProblems(run), ...companionsProblems(run));
+  problems.push(...sigilInventoryProblems(run), ...attunedSigilProblems(run), ...boughtArmourProblems(run.loadout), ...consumablesProblems(run), ...companionsProblems(run));
   if (Array.isArray(run.sideboard)) {
     run.sideboard.forEach((card, i) => {
       if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
@@ -1028,7 +1038,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (!pending.states || Array.isArray(pending.states) || typeof pending.states !== 'object') {
         problems.push('pendingReward.states must be an object');
       } else {
-        const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic'];
+        const rewardKinds = ['cinders', 'smithingStone', 'card', 'flask', 'armament', 'relic', 'sigil'];
         const draftKeys = new Set(pendingDraftKeys(pending));
         for (const [key, state] of Object.entries(pending.states)) {
           // A key is a kind, or `skillDraft:<skillId>:<ordinal>` for a draft the offer carries (plan phase 4b).
@@ -1078,6 +1088,10 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       }
       if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
         problems.push('pendingReward.rewards.cardMissed must be a boolean');
+      }
+      // SPEC §15.4: a dropped legendary sigil, a sigil id or absent (null is none).
+      if (pending.rewards?.sigilId !== undefined && pending.rewards.sigilId !== null && (typeof pending.rewards.sigilId !== 'string' || !pending.rewards.sigilId)) {
+        problems.push('pendingReward.rewards.sigilId must be a sigil id or absent');
       }
       {
         // The map may be absent (a save written before it existed); the rule
@@ -1385,12 +1399,16 @@ export function migrateRunSchema(run) {
   // v17 and older: no training pool. Filled HERE with 0 (SPEC §14.5): no
   // respec could have refunded anything before the wise master existed.
   const preTrainingPool = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, ${RUN_SCHEMA_VERSION})`);
+  // v18 and older: no attuned sigils. Filled HERE with [] (SPEC §15.4): no
+  // legendary could be attuned before the Sigils panel existed.
+  const preAttunedSigils = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].includes(run.schemaVersion);
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, ${RUN_SCHEMA_VERSION})`);
   }
   if (preShopKinds) bringShopStockForward(run);
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables, preTrainingPool });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables, preTrainingPool, preAttunedSigils });
   if (preTrainingPool && (run.trainingPool === undefined || run.trainingPool === null)) run.trainingPool = 0;
+  if (preAttunedSigils && (run.attunedSigils === undefined || run.attunedSigils === null)) run.attunedSigils = [];
   if (preSigils && (run.sigils === undefined || run.sigils === null)) run.sigils = [];
   if (preConsumables && (run.consumables === undefined || run.consumables === null)) run.consumables = {};
   if (preConsumables && (run.companions === undefined || run.companions === null)) run.companions = [];

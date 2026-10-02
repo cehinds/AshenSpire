@@ -626,5 +626,30 @@ export const nodeVariables = [
     "nodeId": "hearthSigil",
     "variable": "block",
     "role": "amount"
+  },
+  {
+    "nodeId": "vigilSigil",
+    "variable": "pct",
+    "role": "pct"
+  },
+  {
+    "nodeId": "vigilSigil",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "pyreSigil",
+    "variable": "block",
+    "role": "amount"
+  },
+  {
+    "nodeId": "gravelightSigil",
+    "variable": "pct",
+    "role": "pct"
+  },
+  {
+    "nodeId": "gravelightSigil",
+    "variable": "heal",
+    "role": "amount"
   }
 ];

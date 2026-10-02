@@ -974,6 +974,46 @@ if (CORE) {
     if (uiTree.code !== 0 || !uiTreeV.text) zoomExtra++;
     else zoomPassed++;
   }
+
+  // 96/97 — the flask action contract (tools/flask-action-contract.mjs).
+  // It sat red on dev because nothing ran it, and it had stopped following
+  // the map's live flask menu (components/runPotions.js, e1ff8c9f4). 96 is
+  // its planted corpus; 97 is the tree. Its verdict is its own "N passed, M failed" line.
+  const runFlaskActions = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/flask-action-contract.mjs', ...args], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), code: 0 };
+    } catch (error) {
+      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
+    }
+  };
+  if (SELFTESTS) {
+    const flaskSelf = runFlaskActions(['--selftest']);
+    const flaskSelfV = flaskSelf.out.match(/^SELFTEST (?:GREEN|RED)[^\n]*/m)?.[0] || '';
+    const flaskSelfOk = flaskSelf.code === 0 && /^SELFTEST GREEN/.test(flaskSelfV);
+    console.log(
+      `${flaskSelfOk ? 'PASS' : 'FAIL'}  96. the flask action contract still catches its own known-bad corpus` +
+        ` — ${flaskSelfV || `flask-action-contract --selftest (exit ${flaskSelf.code}) printed no SELFTEST verdict`}`
+    );
+    if (flaskSelfOk) zoomPassed++;
+    else zoomExtra++;
+  }
+
+  // The enclosing block is unconditional, so the tree verdict carries its own
+  // CORE gate like rung 95: the --selftests-only lane must not run it.
+  if (CORE) {
+    const flaskTree = runFlaskActions([]);
+    const flaskTreeV = flaskTree.out.match(/^flask-action-contract: (\d+) passed, (\d+) failed$/m);
+    const flaskTreeOk = flaskTree.code === 0 && !!flaskTreeV && flaskTreeV[2] === '0' && Number(flaskTreeV[1]) > 0;
+    const flaskFails = [...flaskTree.out.matchAll(/^FAIL (.*)$/gm)].map((m) => m[1]).join('; ');
+    console.log(
+      `${flaskTreeOk ? 'PASS' : 'FAIL'}  97. combat and the map's Potions control share one flask action contract` +
+        ` — ${flaskTreeV ? flaskTreeV[0] : `flask-action-contract (exit ${flaskTree.code}) printed no verdict`}` +
+        `${flaskFails ? ` (${flaskFails})` : ''}` +
+        ` (\`node tools/flask-action-contract.mjs\` names each check)`
+    );
+    if (flaskTreeOk) zoomPassed++;
+    else zoomExtra++;
+  }
 }
 
 // 76 — destructive quit/load confirmation without a native browser prompt.
@@ -1063,6 +1103,34 @@ if (CORE) {
       console.log(`FAIL  ${lane.label} — ${String(error.stdout || error.message).slice(0, 800)}`);
       zoomExtra++;
     }
+  }
+}
+// FINISH §3, *A headless full run in CI*: five whole seeded runs for every
+// class (map → fights → rewards → events → acts → boss), each to a win or a
+// death. Red on a crash, and red on a SOFT-LOCK — a fight the bot's actions
+// never resolve, or a map walk longer than the map without reaching its boss.
+// Seeds are runsim's fixed formula, so the run is the same every time; it takes
+// a few seconds. The selftest plants a throw inside a fight, a stalled fight and
+// a boss-less map cycle, and requires a clean fleet to repeat seed for seed.
+{
+  const { execFileSync } = await import('node:child_process');
+  const runSim = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/runsim.mjs', ...args], { cwd: new URL('..', import.meta.url), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 120000 }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+  const lanes = [];
+  if (CORE) lanes.push({ args: ['5'], label: 'runsim 5: a headless full run for every class on fixed seeds, 0 crashes, 0 soft-locks' });
+  if (SELFTESTS) lanes.push({ args: ['--selftest'], label: 'runsim --selftest: a crash, a stalled fight and a boss-less map each still go red' });
+  for (const lane of lanes) {
+    const r = runSim(lane.args);
+    const result = (r.out.match(/^RESULT: (.*)$/m) || [])[1];
+    const ok = r.code === 0 && result && !/^FAILED/.test(result);
+    console.log(`${ok ? 'PASS' : 'FAIL'}  ${lane.label} — ${result || `runsim ${lane.args.join(' ')} (exit ${r.code}): no RESULT line\n${r.out.slice(-800)}`}`);
+    if (ok) zoomPassed++;
+    else zoomExtra++;
   }
 }
 // The third authored tree: content/config/**.json compiles to

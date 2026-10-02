@@ -15,7 +15,8 @@ import { playCardEffectLayers } from '../cardEffectLayers.js';
 // Renders strictly from combat state; animates from dispatch events. Every
 // number displayed comes from previewCard / previewIntent — no math here.
 
-import { dispatch, previewCard, previewIntent, getEntity } from '../../engine/combat.js';
+import { dispatch, previewCard, previewIntent, getEntity, cardChoicePlan } from '../../engine/combat.js';
+import { openCardChoiceModal } from '../components/cardChoiceModal.js';
 import { assertFoundationPlayable } from '../../engine/combatRules.js';
 import { resolveCard } from '../../model/registries.js';
 import { runHandRules } from '../../model/handRules.js';
@@ -2212,13 +2213,24 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     animation.oncancel = remove;
   }
 
-  function playCard(instanceId, targetId) {
+  function playCard(instanceId, targetId, choice) {
     if (targetId && !getEntity(combat, targetId)?.alive) return;
     if (busy || combat.result) {
       const why = { busy, result: combat.result, phase: combat.phase };
       console.debug('[combat] playCard ignored:', JSON.stringify(why));
       dlog('ignored', `playCard ${instanceId}`, why);
       return;
+    }
+    // A card that offers a choice (Warrior's Vow's stance, SPEC §5.2) asks it
+    // first; the pick rides the same intent, and Cancel plays nothing.
+    if (choice == null) {
+      const plan = combat.piles.hand.some((c) => c.instanceId === instanceId) ? cardChoicePlan(combat, instanceId) : null;
+      if (plan) {
+        const inst = combat.piles.hand.find((c) => c.instanceId === instanceId);
+        hideTooltip();
+        openCardChoiceModal({ plan, cardName: resolveCard(registries, inst).name, onChoose: (id) => playCard(instanceId, targetId, id) });
+        return;
+      }
     }
     if (targetId) lastTargetId = targetId; // remembered for the next card's aim
     selected = null;
@@ -2229,7 +2241,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     disp = takeSnapshot();
     let out;
     try {
-      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined });
+      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined, ...(choice != null ? { choice } : {}) });
     } catch (err) {
       console.warn("[combat] dispatch rejected:", err && err.message);
       dlog('rejected', `playCard ${instanceId}`, err && err.message);
