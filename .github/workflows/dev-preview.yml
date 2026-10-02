@@ -48,6 +48,10 @@ env:
   # The web (external-art) edition's tier flag for bundle.mjs: light on
   # dev/test (owner, 2026-09-26), full on release/main.
   WEB_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && ' ' || '--light' }}
+  # The art packs that tier is made from (docs/EXTERNAL-ASSETS-PLAN.md §2,
+  # tools/fetch-art.mjs --pack): light and common on dev/test, all three on
+  # release/main.
+  ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
 
 jobs:
   preview:
@@ -347,6 +351,34 @@ jobs:
           name: ${{ env.CHANNEL }}-preview-${{ github.sha }}
           path: preview/
           retention-days: 14
+
+      # THE ART RELEASE IS A BUILD INPUT (docs/EXTERNAL-ASSETS-PLAN.md step 11).
+      # art-release.json pins one tag of cehinds/AshenSpire-art with three zips;
+      # tools/fetch-art.mjs downloads the ones named, checks each against the pin
+      # and art-manifest.json, and unpacks them into .art-cache/ (ignored). The art
+      # repository is public (step 10a), so every run fetches, with or without a
+      # token, and runs the agreement check. A failure names its cause (token
+      # refused, repository unreadable, rate limit, network) on the step and as an
+      # annotation.
+      # LAST, AND WHATEVER RAN BEFORE: a failed fetch never costs this commit
+      # its build, its preview package or another gate's verdict.
+      - name: Fetch the art packs this build's tier uses
+        if: ${{ !cancelled() }}
+        env:
+          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
+          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
+          # Only a push or dispatch of a protected branch (dev, test, release, main)
+          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
+          # it; but anyone who can push a branch can edit this workflow to read any
+          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
+          # move it into a GitHub Environment limited to dev, test, release and main
+          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+        run: node tools/fetch-art.mjs --pack "$ART_PACKS"
+
+      - name: The fetched packs and the trees here agree byte for byte
+        if: ${{ !cancelled() }}
+        run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
 
   # THE BROWSER GATES THAT NOTHING RAN ON `dev`, AND WHAT THAT COST.
   #

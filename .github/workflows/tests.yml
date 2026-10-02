@@ -32,7 +32,10 @@
 # no job reads a tree another is mutating:
 #   core       — the engine suite, every discovered *.test.mjs, each tool's
 #                verdict on the tree as it stands (tests/run-node.mjs), and the
-#                no-browser CHANGELOG ordering check with its own known-bads
+#                no-browser CHANGELOG ordering check with its own known-bads,
+#                then the art release fetch and `fetch-art --agree`
+#                (light + common on PRs and dev, all three on test/release;
+#                its time is not yet measured in CI — record it here)
 #   selftests  — every tool's `--selftest` known-bad corpus (tests/run-node.mjs)
 #   parse-gate — the bundler's parse-gate fixtures (tools/bundle.test.mjs). It
 #                ran as a second step of `selftests` and, at about twelve
@@ -88,6 +91,41 @@ jobs:
       - name: The ordering check still catches its own known-bads
         if: always()
         run: node tools/verdict.mjs -- node tools/about-changelog.mjs --check-order --selftest
+
+      # THE ART RELEASE IS A BUILD INPUT (docs/EXTERNAL-ASSETS-PLAN.md step 11).
+      # art-release.json pins one tag of cehinds/AshenSpire-art with three zips;
+      # tools/fetch-art.mjs downloads the ones named, checks each against the pin
+      # and art-manifest.json, and unpacks them into .art-cache/ (ignored). The art
+      # repository is public (step 10a), so every run fetches, with or without a
+      # token, and runs the agreement check. A failure names its cause (token
+      # refused, repository unreadable, rate limit, network) on the step and as an
+      # annotation.
+      # The trees are still in this repository (until step 13), so this job, which
+      # gates every pull request, also proves the release and the trees agree.
+      # THE PACKS: light and common on a pull request and on a push to dev, the
+      # same as dev-preview's dev/test build; all three (the 203 MB high zip
+      # too) on test and release, where the long suites already run. Timing
+      # per pack is recorded in the header table once a CI run measures it.
+      - name: Fetch the art packs this run's branch uses
+        if: always()
+        env:
+          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
+          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
+          # Only a push or dispatch of a protected branch (dev, test, release, main)
+          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
+          # it; but anyone who can push a branch can edit this workflow to read any
+          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
+          # move it into a GitHub Environment limited to dev, test, release and main
+          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+          ART_PACKS: ${{ (github.event_name == 'pull_request' || github.ref_name == 'dev') && 'light,common' || 'all' }}
+        run: node tools/fetch-art.mjs --pack "$ART_PACKS"
+
+      - name: The fetched art release and the trees here agree byte for byte
+        if: always()
+        env:
+          ART_PACKS: ${{ (github.event_name == 'pull_request' || github.ref_name == 'dev') && 'light,common' || 'all' }}
+        run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
 
   selftests:
     name: tool self-tests

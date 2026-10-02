@@ -1090,6 +1090,12 @@ function liveLethalFixture(kind, mutation = null) {
   };
 }
 
+// The ordered-dispatch fixture's calibrated target HP with the card rows as
+// they were when it was last reviewed. It is not asserted (the fixture follows
+// the rows), but the selftest prints a note when the calibration moves, so a
+// content change to Radiant Spray is seen rather than absorbed silently.
+const ORDERED_LETHAL_REVIEWED_HP = 15;
+
 function orderedLethalFixture(kind, mutation = null) {
   MUTATE = mutation;
   const radiant = { cardId: 'radiantSpray', damageSchool: 'magic', exposureBuildupPerHit: 1 };
@@ -1267,7 +1273,10 @@ if (SELFTEST) {
       && noAmplification.chosen === 'shootingShard' && noAmplificationPlant.chosen === 'shootingShard'
       && blocked.chosen === 'crystalBarrier' && blockedPlant.chosen === 'crystalBarrier'
       && [orderedClean, orderedPlant, noAmplification, noAmplificationPlant, blocked, blockedPlant].every((row) => row.unchanged)) {
-    console.log(`  starOrderedDispatch caught ✔ — Radiant Spray kills ${orderedClean.targetHp} HP only after its Vulnerable step; plain damage agrees and 1 Block prevents lethal; every probe leaves source state/RNG untouched`);
+    console.log(`  starOrderedDispatch caught ✔ — Radiant Spray kills ${orderedClean.targetHp} HP (reviewed at ${ORDERED_LETHAL_REVIEWED_HP}) only after its Vulnerable step; plain damage agrees and 1 Block prevents lethal; every probe leaves source state/RNG untouched`);
+    if (orderedClean.targetHp !== ORDERED_LETHAL_REVIEWED_HP) {
+      console.log(`  note: the ordered-dispatch target HP moved from ${ORDERED_LETHAL_REVIEWED_HP} to ${orderedClean.targetHp}; the card rows changed, so review ORDERED_LETHAL_REVIEWED_HP`);
+    }
   } else {
     console.log(`  starOrderedDispatch NOT CAUGHT ✘ — radiant ${orderedClean.chosen}/${orderedPlant.chosen}, plain ${noAmplification.chosen}/${noAmplificationPlant.chosen}, blocked ${blocked.chosen}/${blockedPlant.chosen}`);
     failures++;
