@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "A greyed-out Next now says why",
     "detail": "When a Next, Continue, Confirm, Begin or Enter button is greyed out because you still have something to do, a short line under it now tells you what, for example \"Choose a class.\", \"Choose a response first.\" or \"No saved climb yet.\" Before, the reason only showed in a tooltip, which you never see on a phone. This covers character creation, events, conversations, card rewards, the title screen and save slots, the discard choice, the atlas, the Smith, and the rewards screen while a level is waiting to be claimed.",
-    "build": "0.7.1.772",
+    "build": "0.7.1.773",
     "pullRequest": 1459,
     "url": "https://github.com/cehinds/AshenSpire/pull/1459"
+  },
+  {
+    "id": "pr-1472",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Hits sound bigger the harder they land",
+    "detail": "A small hit, a solid hit and a heavy hit now each have their own sound, chosen by the damage it does. Being hit yourself has a sound of its own, your turn starts with a short two-note sting, and drawing, shuffling and discarding cards each make a quiet sound. The first turn of a fight has them too, and so does LAN co-op. Your sound volume and mute settings apply to all of them.",
+    "build": "0.7.1.771",
+    "pullRequest": 1472,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1472"
   },
   {
     "id": "pr-1458",
