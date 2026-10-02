@@ -494,34 +494,69 @@ export function netCause(e, url) {
 async function request(url, init, ctx) {
   let res;
   try { res = await fetch(url, init); } catch (e) { throw Object.assign(new Error(netCause(e, url)), { cause: e }); }
-  if (!res.ok) throw new Error(httpCause(res, { ...ctx, url }));
+  if (!res.ok && !(init.redirect === 'manual' && res.status >= 300 && res.status < 400)) {
+    throw Object.assign(new Error(httpCause(res, { ...ctx, url })), { status: res.status });
+  }
   return res;
 }
 
+/** Where the downloads go. Only the tests point these elsewhere (a stub server). */
+export const GITHUB = Object.freeze({ api: 'https://api.github.com', web: 'https://github.com' });
+
 /**
- * download(pin, pack) → the zip's bytes. With a token: the releases API, which
- * reads a private repository. Without one: the release's public download URL,
- * which needs no API call (and so spends no API rate limit).
+ * download(pin, pack, { api, web, env }) → the zip's bytes.
+ *
+ * WITH A TOKEN (the art repository is private until the owner flips it): the
+ * releases API, the only door a private release has. GET the release by its
+ * tag, find the asset's id, GET /releases/assets/<id> with
+ * `accept: application/octet-stream`; GitHub answers 302 to a signed storage
+ * URL, which is fetched in a second request carrying NO Authorization header,
+ * so the token never leaves the API host. (A private release's
+ * github.com/<repo>/releases/download/… URL answers 404 even with a token.)
+ * A 404 on the release is told apart by asking for the repository itself: a
+ * 404 there means the token cannot see the repository at all.
+ *
+ * WITHOUT ONE: the release's public download URL, which needs no API call (and
+ * spends no API rate limit). It works once the repository is public.
  */
-async function download(pin, pack) {
+export async function download(pin, pack, { api = GITHUB.api, web = GITHUB.web, env = process.env } = {}) {
   const zip = pin.packs[pack].zip;
-  const { name: tokenName, token } = tokenFromEnv();
+  const { name: tokenName, token } = tokenFromEnv(env);
   const ctx = { pin, zip, tokenName };
   const timed = (ms) => ({ signal: AbortSignal.timeout(ms) });
   const ua = { 'user-agent': 'ashenspire-fetch-art' };
   let res;
   if (!token) {
-    const url = `https://github.com/${pin.repo}/releases/download/${encodeURIComponent(pin.tag)}/${encodeURIComponent(zip)}`;
+    const url = `${web}/${pin.repo}/releases/download/${encodeURIComponent(pin.tag)}/${encodeURIComponent(zip)}`;
     res = await request(url, { headers: ua, redirect: 'follow', ...timed(15 * 60_000) }, ctx);
   } else {
-    const api = `https://api.github.com/repos/${pin.repo}`;
+    const repo = `${api}/repos/${pin.repo}`;
     const headers = { ...ua, authorization: `Bearer ${token}`, 'x-github-api-version': '2022-11-28' };
-    const rel = await request(`${api}/releases/tags/${encodeURIComponent(pin.tag)}`, { headers: { ...headers, accept: 'application/vnd.github+json' }, ...timed(30_000) }, ctx);
+    let rel;
+    try {
+      rel = await request(`${repo}/releases/tags/${encodeURIComponent(pin.tag)}`, { headers: { ...headers, accept: 'application/vnd.github+json' }, ...timed(30_000) }, ctx);
+    } catch (e) {
+      if (e.status !== 404) throw e;
+      // Which 404? Ask for the repository: a token that cannot see it gets 404 there too.
+      let probe = null;
+      try { probe = await fetch(repo, { headers: { ...headers, accept: 'application/vnd.github+json' }, ...timed(30_000) }); } catch { /* the first answer stands */ }
+      if (probe && probe.status === 404) {
+        throw new Error(`${pin.repo} ${pin.tag} ${zip}: HTTP 404 — the token in ${tokenName} cannot see ${pin.repo} at all (GitHub answers 404 for a private repository the token has no access to). Give the token read access to that repository's Contents (a fine-grained token must list ${pin.repo} under its repository access), then update the ${tokenName} secret.`);
+      }
+      if (probe && probe.ok) {
+        throw new Error(`${pin.repo} ${pin.tag} ${zip}: HTTP 404 — the token can read ${pin.repo}, but it has no published release tagged ${pin.tag} (a draft is not found by its tag). Check the pin's tag.`);
+      }
+      throw e;
+    }
     const asset = (await rel.json()).assets?.find((a) => a.name === zip);
     if (!asset) throw new Error(`${pin.repo} ${pin.tag}: the release has no asset named ${zip} (the pin names a zip that release does not carry)`);
-    // The asset URL redirects to storage; fetch drops Authorization on that
-    // cross-origin hop, so the token never leaves api.github.com.
-    res = await request(`${api}/releases/assets/${asset.id}`, { headers: { ...headers, accept: 'application/octet-stream' }, ...timed(15 * 60_000) }, ctx);
+    res = await request(`${repo}/releases/assets/${asset.id}`, { headers: { ...headers, accept: 'application/octet-stream' }, redirect: 'manual', ...timed(15 * 60_000) }, ctx);
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get('location');
+      if (!location) throw new Error(`${pin.repo} ${pin.tag} ${zip}: HTTP ${res.status} with no Location to follow`);
+      // The storage hop: a signed URL, and no Authorization on it.
+      res = await request(new URL(location, `${repo}/`).href, { headers: ua, redirect: 'follow', ...timed(15 * 60_000) }, ctx);
+    }
   }
   try { return Buffer.from(await res.arrayBuffer()); }
   catch (e) { throw new Error(`${zip}: the download broke off (${netCause(e, res.url || 'github.com')})`); }

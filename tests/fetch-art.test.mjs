@@ -11,7 +11,8 @@ import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { crc32, readZip, writeZip } from '../tools/zip.mjs';
-import { agree, fetchArt, httpCause, markerFor, netCause, packOfZip, packsOf, readPin, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
+import { createServer } from 'node:http';
+import { agree, download, fetchArt, httpCause, markerFor, netCause, packOfZip, packsOf, readPin, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
 import { buildManifest, canonicalBytes, commonSources, serialize } from '../tools/art-manifest.mjs';
 import { planPacks, verifyPacks, writePacks } from '../tools/asset-pack.mjs';
 
@@ -558,4 +559,65 @@ test('an anonymous 403 that is not the rate limit says to set a token or check t
   const msg = httpCause({ status: 403, statusText: '', headers: new Headers() }, { pin: { repo: 'cehinds/AshenSpire-art', tag: 'hd-assets-v2' }, zip: 'hd-assets-v2.zip', url: 'https://github.com/x', tokenName: null });
   assert.doesNotMatch(msg, /null/);
   assert.match(msg, /no token.*Set ART_REPO_TOKEN.*or check that the repository is public/);
+});
+
+// THE DOWNLOAD ITSELF, against a stub of GitHub (a local http server). A
+// private release is reachable only through the API: the release by its tag,
+// the asset by its id with `accept: application/octet-stream`, then a 302 to
+// storage that must be fetched WITHOUT the token. With no token, the public
+// release URL. And a 404 is told apart: token blind to the repo, or no release.
+async function withGitHub(fn, { repoVisible = true, release = true } = {}) {
+  const zip = Buffer.from('the zip bytes');
+  const seen = [];
+  const server = createServer((req, res) => {
+    seen.push({ url: req.url, auth: req.headers.authorization || null, accept: req.headers.accept || null });
+    const send = (status, body, headers = {}) => { res.writeHead(status, headers); res.end(body); };
+    const authed = req.headers.authorization === 'Bearer t0ken';
+    if (req.url === '/repos/cehinds/AshenSpire-art') return send(authed && repoVisible ? 200 : 404, '{}');
+    if (req.url === '/repos/cehinds/AshenSpire-art/releases/tags/hd-assets-v2') {
+      if (!authed || !repoVisible || !release) return send(404, '{"message":"Not Found"}');
+      return send(200, JSON.stringify({ assets: [{ id: 7, name: 'light-assets-v2.zip' }] }), { 'content-type': 'application/json' });
+    }
+    if (req.url === '/repos/cehinds/AshenSpire-art/releases/assets/7') {
+      if (!authed || req.headers.accept !== 'application/octet-stream') return send(404, '');
+      return send(302, '', { location: `http://127.0.0.1:${server.address().port}/storage/signed?x=1` });
+    }
+    if (req.url === '/storage/signed?x=1') return req.headers.authorization ? send(400, 'auth sent to storage') : send(200, zip);
+    if (req.url === '/web/cehinds/AshenSpire-art/releases/download/hd-assets-v2/light-assets-v2.zip') return send(200, zip);
+    return send(404, '');
+  });
+  await new Promise((done) => server.listen(0, '127.0.0.1', done));
+  const base = `http://127.0.0.1:${server.address().port}`;
+  try { return await fn({ api: base, web: `${base}/web`, seen, zip }); } finally { server.close(); }
+}
+const PIN2 = { repo: 'cehinds/AshenSpire-art', tag: 'hd-assets-v2', packs: { light: { zip: 'light-assets-v2.zip' } } };
+
+test('with a token, a private release comes through the API and the storage hop carries no token', async () => {
+  await withGitHub(async ({ api, web, seen, zip }) => {
+    const got = await download(PIN2, 'light', { api, web, env: { ART_REPO_TOKEN: 't0ken' } });
+    assert.deepEqual(got, zip);
+    assert.deepEqual(seen.map((r) => r.url), ['/repos/cehinds/AshenSpire-art/releases/tags/hd-assets-v2', '/repos/cehinds/AshenSpire-art/releases/assets/7', '/storage/signed?x=1']);
+    assert.equal(seen[1].accept, 'application/octet-stream');
+    assert.equal(seen[1].auth, 'Bearer t0ken');
+    assert.equal(seen[2].auth, null, 'the token never reaches storage');
+  });
+});
+
+test('with no token, the public release URL is used and nothing is sent to the API', async () => {
+  await withGitHub(async ({ api, web, seen, zip }) => {
+    assert.deepEqual(await download(PIN2, 'light', { api, web, env: {} }), zip);
+    assert.deepEqual(seen.map((r) => [r.url, r.auth]), [['/web/cehinds/AshenSpire-art/releases/download/hd-assets-v2/light-assets-v2.zip', null]]);
+  });
+});
+
+test('known-bad: a 404 says whether the token cannot see the repository or the release is missing', async () => {
+  await withGitHub(async ({ api, web }) => {
+    await assert.rejects(download(PIN2, 'light', { api, web, env: { ART_REPO_TOKEN: 't0ken' } }), /token in ART_REPO_TOKEN cannot see cehinds\/AshenSpire-art at all.*read access/);
+  }, { repoVisible: false });
+  await withGitHub(async ({ api, web }) => {
+    await assert.rejects(download(PIN2, 'light', { api, web, env: { ART_REPO_TOKEN: 't0ken' } }), /can read cehinds\/AshenSpire-art, but it has no published release tagged hd-assets-v2/);
+  }, { release: false });
+  await withGitHub(async ({ api, web }) => {
+    await assert.rejects(download({ ...PIN2, tag: 'hd-assets-v9' }, 'light', { api, web, env: {} }), /HTTP 404 at .*no token was set/);
+  });
 });
