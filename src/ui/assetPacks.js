@@ -46,15 +46,24 @@
 // a file:// page is the build's own folder, so the base is `./`. The score stays
 // synthesized under file:// (src/main.js, SPEC §7.4).
 //
-// WHAT THIS DOES NOT DO YET. The loading line
-// on the startup gate, the Retry notice and per-file high → light fallback are
-// step 5. Settings → Art quality Auto/Light/High (step 8c, src/ui/artTier.js)
-// passes the tier to ask for; a switch in play refills the CSS from the new
-// map too. A single file (ASSET_MAP filled) and the source tree (nothing
-// stamped) never load anything here.
+// THE LOADING UX (step 5). A cold boot draws the startup gate at once and
+// loads behind it (src/main.js); the gate's status line and the critical set it
+// counts are src/ui/bootArt.js; a failed load is offered a Retry on the title
+// and in Settings → Art quality (src/ui/artTier.js retryBuiltInArt), which
+// reloads the indexes through the same queue as a tier switch. Settings → Art
+// quality Auto/Light/High (step 8c, src/ui/artTier.js) passes the tier to ask
+// for; a switch in play refills the CSS from the new map too. A single file
+// (ASSET_MAP filled) and the source tree (nothing stamped) never load anything
+// here.
+//
+// NOT HERE: a per-file high → light fallback. The light index is not loaded
+// beside a high one (a second ~700 KB index on every high boot), so one high
+// object that fails falls to its element's own placeholder recipe
+// (src/ui/assets.js), as any missing file does (§3, *Failure and fallback*).
 
 import { ASSET_MAP, setBuiltInSource, builtInSource } from './assetmap.js';
 import { sha256Hex } from './sha256.js';
+import { t } from './strings.js';
 
 /* ASSET_PACKS_START */
 export const ASSET_PACKS = null;
@@ -85,7 +94,8 @@ export const ART_TIERS = Object.freeze(['high', 'light']);
  * is aborted and counts as failed (placeholders), and nothing it fetches later
  * is used. There is no late arrival, because a screen drawn on placeholders
  * cannot be re-pointed: the images' error handlers clear or replace the nodes
- * that named the asset id (enemySprite, pieceArt). A Retry is step 5.
+ * that named the asset id (enemySprite, pieceArt). A Retry (step 5,
+ * src/ui/artTier.js retryBuiltInArt) loads again later and the title is redrawn.
  */
 export const BOOT_WAIT_MS = 8000;
 /** The share of the deadline a tier that has a fallback (high) may use before it is abandoned for light. */
@@ -591,6 +601,12 @@ export function startBuiltInArt(opts = {}) {
 }
 
 /**
+ * builtInArtSettled() → the boot load's promise (its status once it has
+ * settled), or null before startBuiltInArt has been called.
+ */
+export function builtInArtSettled() { return pending; }
+
+/**
  * whenBuiltInArtReady(fn, opts) — call `fn` once the built-in art has settled:
  * at once when nothing is pinned (a single file, the source tree), else when
  * the load has loaded or failed, which is by BOOT_WAIT_MS at the latest. The
@@ -667,18 +683,20 @@ export function musicHold({ pinned = packsPinned(), configureMusic, hasSource = 
 }
 
 /**
- * bootLine(app, { pinned }) — while a pack build waits for its load to settle
- * (up to BOOT_WAIT_MS), the page is otherwise blank. A static line says what it
- * is doing; it is removed before the first screen is drawn. Nothing is shown
- * when nothing is pinned. The real progress line on the startup gate, its
- * wording in content/config and Reduced motion are step 5. Returns the remover.
+ * bootLine(app, { pinned }) — a `?shot=` boot (any first screen but the
+ * startup gate) still waits for the load to settle (up to BOOT_WAIT_MS), with
+ * the page otherwise blank. A static line says what it is doing; it is removed
+ * before the first screen is drawn. Nothing is shown when nothing is pinned.
+ * The cold boot draws the gate at once instead, with its own line
+ * (src/ui/bootArt.js, step 5). The words are uiStrings' `art.loading`.
+ * Returns the remover.
  */
 export function bootLine(app, { pinned = packsPinned(), doc = globalThis.document } = {}) {
   if (!pinned || !app || !doc || typeof doc.createElement !== 'function') return () => {};
   const line = doc.createElement('p');
   line.setAttribute('role', 'status');
   line.dataset.bootLine = '';
-  line.textContent = 'Loading art…';
+  line.textContent = t('art.loading');
   line.style.cssText = 'margin:0;padding:24px;text-align:center;opacity:.7;font:16px/1.4 serif;color:inherit';
   app.append(line);
   return () => line.remove();

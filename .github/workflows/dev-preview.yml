@@ -424,6 +424,15 @@ jobs:
       - name: The de-inlined build plays by double-click (file://)
         run: node tools/verdict.mjs -- node tools/external-play.mjs --file --dir build/web
 
+      # THE INDEX BLOCKED (docs/EXTERNAL-ASSETS-PLAN.md step 5). Every packs/
+      # request held, then refused: the cold boot must draw the startup gate at
+      # once with its "Loading art…" line, hold the title until the load has
+      # failed, then show the title's notice with Retry and no failure banner;
+      # with the block lifted, Retry must load the pinned tier and redraw the
+      # title; combat and the map must mount on placeholders. About 40 s.
+      - name: With its index blocked the de-inlined build boots on placeholders, and Retry loads the art
+        run: node tools/verdict.mjs -- node tools/external-play.mjs --block-index --dir build/web
+
       # THE PAGES SERVICE WORKER (docs/EXTERNAL-ASSETS-PLAN.md step 6b). The web
       # edition above, published into a local copy of the Pages shape (the shared
       # store, asset-base.json, /AshenSpire/sw.js) and served under /AshenSpire/:

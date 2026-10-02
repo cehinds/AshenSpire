@@ -1,6 +1,10 @@
 import { applyArtQuality, onArtSourceChange, builtInArtArrived } from './ui/highResArt.js';
-import { whenBuiltInArtReady, musicHold, bootLine } from './ui/assetPacks.js';
-import { applyArtTier, onTierArrived, requestedTier } from './ui/artTier.js';
+import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
+import { applyArtTier, onTierArrived, requestedTier, retryBuiltInArt } from './ui/artTier.js';
+import { startBootArt, bootArtLine, bootArtRetried } from './ui/bootArt.js';
+import { builtInSource } from './ui/assetmap.js';
+import { mountArtLoadNotice } from './ui/components/artLoadNotice.js';
+import { artLoadNoticeModel } from './ui/models/ArtLoadNoticeModel.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
@@ -1456,18 +1460,71 @@ function showStartupGate({ forcedFamily = '' } = {}) {
   audio.music('title');
   const family = startupInputFamily(forcedFamily);
   unmountStartupGate = mountStartupGate(app, {
-    model: startupGateModel({ inputFamily: family, settings: activeSettings }),
+    // The built-in art's status line (step 5): null when nothing is pinned.
+    model: startupGateModel({ inputFamily: family, settings: activeSettings, artStatus: bootArtLine() }),
     registerInputGate: setInputGate,
     onReveal: ({ family }) => {
       startupGatePending = false;
       unmountStartupGate = null;
-      showTitle({
+      // The title draws only once the built-in art has settled (loaded, or
+      // failed by BOOT_WAIT_MS): a press during the load finishes the reveal,
+      // and the gate's line says "Loading art…" until then (step 5).
+      afterBootArt(() => showTitle({
         skipStartup: true,
         focusDefault: true,
         focusCursor: family === 'keyboard' || family === 'controller',
-      });
+      }));
     },
   });
+}
+
+// ---- THE BUILT-IN ART, AS THE PLAYER SEES IT (docs/EXTERNAL-ASSETS-PLAN.md
+// step 5). A pack build (the web edition) loads its art behind the startup
+// gate. Until the load has SETTLED no screen but the gate is drawn, because a
+// screen drawn on placeholders cannot be re-pointed (step 3a); once it has,
+// afterBootArt runs what waited (the title, after a press). When the load
+// failed, the title carries a non-blocking notice with Retry; a Retry that
+// loads redraws the title on the new art. A single file and the source tree
+// settle at once and never show either.
+let bootArtSettledNow = false;
+const bootArtWaiters = [];
+function afterBootArt(fn) {
+  if (bootArtSettledNow) fn();
+  else bootArtWaiters.push(fn);
+}
+// null (no notice), 'failed', 'retrying' or 'again' (a Retry failed too).
+let artNoticeState = null;
+function drawArtNotice(root) {
+  if (!artNoticeState) { root.querySelector('.art-load-notice')?.remove(); return; }
+  mountArtLoadNotice(root, { model: artLoadNoticeModel({ state: artNoticeState }), onRetry: retryArtFromTitle });
+}
+function refreshArtNotice() {
+  const root = app.querySelector('.title-screen');
+  if (root) drawArtNotice(root);
+}
+async function retryArtFromTitle() {
+  if (artNoticeState === 'retrying') return;
+  artNoticeState = 'retrying';
+  refreshArtNotice();
+  const result = await retryBuiltInArt(activeSettings);
+  if (result?.state === 'loaded') return; // onTierArrived has cleared the notice and redrawn
+  // Failed again, or replaced by a switch the player made meanwhile.
+  if (builtInArtStatus().state === 'loaded') return;
+  artNoticeState = 'again';
+  bootArtRetried(result);
+  refreshArtNotice();
+}
+// A load arrived after the boot load failed (a Retry from the title or from
+// Settings → Art quality, or a tier switch): the notice goes, and the title,
+// when it is on screen, is drawn again on the new art.
+function artArrivedAfterFailure() {
+  if (!artNoticeState) return;
+  artNoticeState = null;
+  bootArtRetried(builtInArtStatus());
+  const root = app.querySelector('.title-screen');
+  if (!root) return;
+  const focusedNotice = !!root.querySelector('.art-load-notice')?.contains(document.activeElement);
+  showTitle({ skipStartup: true, focusDefault: focusedNotice, focusCursor: focusedNotice });
 }
 
 // Returning from a climb is a new arrival at the main menu, so it lands on the
@@ -1516,6 +1573,7 @@ function showTitle({ skipStartup = false, focusDefault = false, focusCursor = tr
       showCustomRun(empty ? empty.slot : 1);
     },
     onLan: showLobby,
+    artNotice: drawArtNotice,
   });
   if (focusDefault) focusTitleDefault(app, { showCursor: focusCursor });
   // Forsaken Together needs the launcher's server behind the page.
@@ -3990,11 +4048,29 @@ if (shotState === 'combat-test') {
   showTitle();
 }
 }
-const dropBootLine = bootLine(app);
+// THE COLD BOOT DRAWS THE GATE AT ONCE (step 5). The startup gate shows no
+// pack art through an <img> (its backdrops are ASSET_CSS, which arrive with the
+// load), so in a pack build the gate is drawn before the load settles, with its
+// status line; every other first screen (a ?shot= state) still waits for the
+// load, behind the static boot line, as step 3a made it.
+const gateFirst = packsPinned() && (!shotState || shotState === 'startup');
+const dropBootLine = gateFirst ? () => {} : bootLine(app);
 // The boot load asks for the tier Art quality names (Auto decides from the
 // layout applyUiScale has already written); a switch later re-points the
 // images on screen the same way the first load does.
-// A tier switch re-points the images on screen and, when the boot load had
-// failed, lets the shipped score be read through the new source.
-onTierArrived((map) => { builtInArtArrived(map); bootMusic.sourceArrived(); });
-whenBuiltInArtReady(() => bootMusic.firstScreen(() => { dropBootLine(); showFirstScreen(); }), { onSource: builtInArtArrived, tier: requestedTier(activeSettings) });
+// A tier switch (or a Retry) re-points the images on screen and, when the boot
+// load had failed, lets the shipped score be read through the new source and
+// takes the title's notice away.
+onTierArrived((map) => { builtInArtArrived(map); bootMusic.sourceArrived(); artArrivedAfterFailure(); });
+whenBuiltInArtReady(() => {
+  bootArtSettledNow = true;
+  if (builtInArtStatus().state === 'failed') artNoticeState = 'failed';
+  // The music folder is applied once the load has settled (the shipped score
+  // resolves through the index); the gate-first boot drew its screen already.
+  bootMusic.firstScreen(() => { dropBootLine(); if (!gateFirst) showFirstScreen(); });
+  for (const fn of bootArtWaiters.splice(0)) fn();
+}, { onSource: builtInArtArrived, tier: requestedTier(activeSettings) });
+if (gateFirst) {
+  startBootArt({ settled: builtInArtSettled(), source: builtInSource });
+  showFirstScreen();
+}

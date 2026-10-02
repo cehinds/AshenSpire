@@ -43,6 +43,10 @@ export function mountTitle(app, {
   onLan,
   onCompendium,
   reopen = null, // 'new' | 'load' — re-open that door after a remount (a delete returns to where it was)
+  // Draws the built-in art's notice into the title root after every render
+  // (step 5, src/ui/components/artLoadNotice.js); the composition root decides
+  // whether there is one. The title's own redraws would otherwise drop it.
+  artNotice = null,
 }) {
   const occupied = slots.filter(({ summary }) => !!summary);
   let modal = null;
@@ -294,6 +298,7 @@ export function mountTitle(app, {
       });
     });
     wireDelete(root);
+    artNotice?.(root);
     if (onHistory) void onHistory;
     if (onProfile) void onProfile;
     if (onCustom) void onCustom;

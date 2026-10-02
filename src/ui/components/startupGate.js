@@ -39,6 +39,19 @@ function lockupHtml(properties, accessibility) {
   ]));
 }
 
+/**
+ * The built-in art's one status line (step 5): a polite live region outside
+ * the lockup, so it stays on screen through the reveal while a late load
+ * settles. Not drawn at all when the model carries no status (nothing pinned).
+ * src/ui/bootArt.js paintBootArt rewrites it as the load moves on.
+ */
+function artStatusHtml(properties, accessibility) {
+  const status = properties.artStatus;
+  if (!status) return '';
+  return `<p class="startup-art-status" data-component="startup-art-status" data-boot-art-status data-state="${esc(status.state)}"
+    role="status" aria-live="${esc(accessibility.artStatusLive || 'polite')}" aria-busy="${status.state === 'loading' ? 'true' : 'false'}">${esc(status.text)}</p>`;
+}
+
 export function mountStartupGate(app, {
   model,
   registerInputGate,
@@ -65,6 +78,7 @@ export function mountStartupGate(app, {
       </div>
       <div class="startup-ash-field" data-component="startup-ash-field" aria-hidden="true">${particleHtml}</div>
       ${lockupHtml(properties, accessibility)}
+      ${artStatusHtml(properties, accessibility)}
       ${buildStampHtml('startup')}
     </section>`;
 

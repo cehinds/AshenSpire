@@ -21,6 +21,9 @@
 // on screen stays. Auto is decided when the game loads and when it is chosen;
 // a window resized later does not swap the art under the player.
 //
+// When the load has failed (placeholders), the row offers Retry
+// (retryBuiltInArt, step 5), the same reload the title's notice runs.
+//
 // A single file (ASSET_MAP filled) and the source tree pin no packs: Light and
 // High are disabled there and the row says why (tierRowNote). The setting is
 // per-device (LOCAL_ONLY_KEYS in src/model/settingsSync.js), never synced.
@@ -87,6 +90,7 @@ export function tierChoiceDisabled(choice, pin = ASSET_PACKS, inlineMap = ASSET_
 let lastSettings = null;
 let lastChoice = null; // the choice the art on screen was loaded for
 let switching = false;
+let retrying = false; // a Retry (step 5) is running
 let queue = Promise.resolve();
 let round = 0;
 let onArrived = null;
@@ -106,7 +110,7 @@ export function tierStatus(settings, { pin = ASSET_PACKS, inlineMap = ASSET_MAP,
   const choice = artQualityChoice(settings);
   const s = builtInArtStatus();
   if (switching || s.state === 'loading' || s.state === 'idle') return `Loading ${TIER_WORD[requestedTier(settings, { defaultTier: pin?.tier, ...env })]} art…`;
-  if (s.state !== 'loaded') return 'The art could not be loaded, so the game is showing placeholders. Reload the page to try again.';
+  if (s.state !== 'loaded') return 'The art could not be loaded, so the game is showing placeholders. Choose Retry to load it again.';
   const showing = `Showing ${TIER_WORD[s.tier]} art`;
   if (s.requested && s.requested !== s.tier) {
     return pin?.packs?.[s.requested] ? `${showing}: the ${TIER_WORD[s.requested]} art could not be loaded.` : `${showing}: this build carries no ${TIER_WORD[s.requested]} art.`;
@@ -118,17 +122,33 @@ export function tierStatus(settings, { pin = ASSET_PACKS, inlineMap = ASSET_MAP,
   return `${showing}.`;
 }
 
+/**
+ * True when the row offers Retry (step 5): the build pins packs and its load
+ * has failed, or a Retry is running (the button stays, disabled, so the focus
+ * the player put on it is not lost).
+ */
+export function retryOffered({ pin = ASSET_PACKS, inlineMap = ASSET_MAP } = {}) {
+  return tiersAvailable(pin, inlineMap) && (retrying || (!switching && builtInArtStatus().state === 'failed'));
+}
+
 function showTierStatus(settings) {
   const doc = globalThis.document;
   if (!doc || typeof doc.querySelectorAll !== 'function') return;
   const text = tierStatus(settings);
   for (const el of doc.querySelectorAll('[data-art-tier-status]')) el.textContent = text;
+  const offered = retryOffered();
+  for (const el of doc.querySelectorAll('[data-art-retry]')) {
+    el.hidden = !offered;
+    el.disabled = retrying;
+    if (retrying) el.setAttribute('aria-busy', 'true'); else el.removeAttribute('aria-busy');
+  }
 }
 
-function stamp(result) {
+function stamp(result, { failed = false } = {}) {
   try {
     const root = globalThis.document?.documentElement;
     if (root?.dataset && result.state === 'loaded') root.dataset.builtInArt = result.tier;
+    else if (root?.dataset && failed && result.state === 'failed') root.dataset.builtInArt = 'failed';
   } catch { /* no document: tests */ }
 }
 
@@ -194,11 +214,55 @@ export function applyArtTier(settings, opts = {}) {
   return queue;
 }
 
+/**
+ * retryBuiltInArt(settings, opts) — Retry (step 5): load the indexes again for
+ * the tier the setting asks for, whatever the last load asked. It goes through
+ * the same queue as a tier switch and supersedes one still waiting (the
+ * stillWanted guard), keeps the art on screen when it fails (keepOnFail), and
+ * hands a map that loads to onTierArrived, which re-points the images, lets
+ * the shipped score be read again (step 3c's musicHold) and sends
+ * ART_SOURCE_EVENT (the map tiles ask again). Under file:// the loader reads
+ * the .js twins (step 4). Resolves to the loader's status, or null when this
+ * build pins no packs or the retry was superseded. Never throws.
+ */
+export function retryBuiltInArt(settings = lastSettings, opts = {}) {
+  const pin = opts.pin ?? ASSET_PACKS;
+  if (!packsPinned(pin, opts.inlineMap ?? ASSET_MAP)) return Promise.resolve(null);
+  if (settings) lastSettings = settings;
+  lastChoice = artQualityChoice(lastSettings);
+  const mine = ++round;
+  queue = queue.then(async () => {
+    if (mine !== round) return null;
+    const want = requestedTier(lastSettings, { defaultTier: pin.tier, ...(opts.env || {}) });
+    switching = true;
+    retrying = true;
+    showTierStatus(lastSettings);
+    try {
+      const result = await loadBuiltInPacks({
+        ...opts.load, pin, tier: want, keepOnFail: true, stillWanted: () => mine === round,
+        onSource: (map) => { if (onArrived) try { onArrived(map); } catch { /* a listener must not fail the retry */ } },
+      });
+      if (result.superseded) return null;
+      stamp(result, { failed: true });
+      if (result.failed.length) console.warn(`built-in art: ${result.failed.join('; ')}`);
+      return result;
+    } catch {
+      return null;
+    } finally {
+      switching = false;
+      retrying = false;
+      showTierStatus(lastSettings);
+    }
+  });
+  return queue;
+}
+
 /** For tests: forget the switches. */
 export function resetArtTier() {
   lastSettings = null;
   lastChoice = null;
   switching = false;
+  retrying = false;
   queue = Promise.resolve();
   round = 0;
   onArrived = null;

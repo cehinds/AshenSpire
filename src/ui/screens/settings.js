@@ -21,7 +21,7 @@ import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
 import { ART_QUALITY_KEY, ART_AUTO, ART_QUALITY_CHOICES, LEGACY_ART_QUALITY, wantsHighRes, artQualityStatus, pickHighResFolder, canPickFolder } from '../highResArt.js';
-import { tierStatus, tierChoiceDisabled } from '../artTier.js';
+import { tierStatus, tierChoiceDisabled, retryOffered, retryBuiltInArt } from '../artTier.js';
 import { setTabRing, hasTabRing } from '../input.js';
 import { renderAboutSection, renderChangelogSection } from './about.js';
 import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
@@ -2150,7 +2150,10 @@ function tapCostHtml(settings) {
  * high-res art came from and the folder button.
  */
 function artQualityHtml(settings) {
-  const tier = `<span class="ls-hint set-note" id="set-artQuality-tier" data-art-tier-status aria-live="polite">${esc(tierStatus(settings))}</span>`;
+  // Retry (step 5) is drawn hidden and shown while the load has failed; the
+  // live line and the button are rewritten together (artTier.js showTierStatus).
+  const retry = `<button type="button" class="as-btn" data-art-retry aria-describedby="set-artQuality-tier"${retryOffered() ? '' : ' hidden'}>${esc(t('art.retry'))}</button>`;
+  const tier = `<span class="ls-hint set-note" id="set-artQuality-tier" data-art-tier-status aria-live="polite">${esc(tierStatus(settings))}</span> ${retry}`;
   if (!wantsHighRes(settings)) return tier;
   return `${tier} ${artFolderHtml(settings)}`;
 }
@@ -3798,6 +3801,9 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   if (!container._artQualityWired) {
     container._artQualityWired = true;
     container.addEventListener('click', (event) => {
+      // Retry (step 5): load the built-in art again, through the same queue as
+      // a tier switch; the row's line says how it went.
+      if (event.target.closest?.('[data-art-retry]')) { retryBuiltInArt(container._artQualitySettings); return; }
       if (!event.target.closest?.('[data-art-folder]')) return;
       pickHighResFolder(container._artQualitySettings);
     });
