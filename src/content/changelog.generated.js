@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Skills and your class get dearer with every level",
     "detail": "Every weapon, armour, focus, dual-wield and class skill still needs 100 XP for its first level, but each level after now costs 1.75 times the one before (100, 175, 305, 535, 940) instead of 130 more. Like any XP setting, this reaches a run you already started the next time you load it. Your character level is unchanged.",
-    "build": "0.7.1.751",
+    "build": "0.7.1.750",
     "pullRequest": 1386,
     "url": "https://github.com/cehinds/AshenSpire/pull/1386"
+  },
+  {
+    "id": "pr-1454",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition's music and map detail follow its art packs",
+    "detail": "Behind the scenes: the served web edition now finds its recorded score and the sharp map close-ups through the same checked list as its art, instead of from folders copied beside it. When that list does not load, the game plays its built-in generated score and shows the softer map, as it does for any missing file. The downloadable single file is unchanged. Nothing you play changes.",
+    "build": "0.7.1.748",
+    "pullRequest": 1454,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1454"
   },
   {
     "id": "pr-1457",
