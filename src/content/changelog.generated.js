@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The tutorial bubble moves off your cards when the hand rearranges itself",
     "detail": "After a window resize, your hand can spread itself out again a moment after the tutorial has found a spot for its speech bubble. If that put a card under the bubble, the bubble stayed there and you couldn't click that card. The bubble now moves whenever your cards move, not only when the thing it points at moves.",
-    "build": "0.7.1.800",
+    "build": "0.7.1.802",
     "pullRequest": 1490,
     "url": "https://github.com/cehinds/AshenSpire/pull/1490"
+  },
+  {
+    "id": "pr-1492",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the class balance checker plays the same climbs as the run simulator",
+    "detail": "Nothing you play changes. The tool that counts each class's wins used its own older copy of what happens between fights (levels, drafts, rewards, events). Over 500 climbs it reached different fights and got a different result. It now uses the simulator's own steps between fights, agrees with it fight for fight, and its own self-check runs to the end again instead of crashing.",
+    "build": "0.7.1.801",
+    "pullRequest": 1492,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1492"
   },
   {
     "id": "pr-1495",
