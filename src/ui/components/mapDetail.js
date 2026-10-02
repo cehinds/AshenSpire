@@ -21,6 +21,7 @@ export function mountMapDetail(port, surface, source) {
   const tiles = document.createElementNS(ns, 'g'); tiles.classList.add('map-detail-tiles'); surface.append(tiles);
   const cache = new Map(), failed = new Set(), pending = new Set();
   const loading = new Set(); // the Image of each tile in flight, dropped on dispose
+  let generation = 0; // bumped when the art source changes
   let disposed = false, frame = 0, level = null, desired = [], active = 0;
   port.style.setProperty('--map-route-width', policy.routeWidth + 'px');
   port.style.setProperty('--map-route-outline-width', policy.routeOutlineWidth + 'px');
@@ -48,6 +49,10 @@ export function mountMapDetail(port, surface, source) {
     port.dataset.detailTiles = String(nodes.length); evict();
   }
   async function load(tile) {
+    // The source this load resolved against (see sourceChanged below): a
+    // failure under an older source is not recorded, so the tile is asked for
+    // again through the new one once this load has finished.
+    const gen = generation;
     active++; pending.add(tile.key);
     const image = new Image();
     loading.add(image);
@@ -56,7 +61,7 @@ export function mountMapDetail(port, surface, source) {
       image.src = url; await image.decode();
       if (!disposed) cache.set(tile.key, url);
     } catch (error) {
-      if (!disposed) failed.add(tile.key);
+      if (!disposed && gen === generation) failed.add(tile.key);
     } finally {
       loading.delete(image);
       active--; pending.delete(tile.key);
@@ -94,8 +99,10 @@ export function mountMapDetail(port, surface, source) {
   // THE SOURCE CHANGED (a tier switch, highResArt.js builtInArtArrived): a tile
   // that failed because the earlier source did not list it (the common index
   // missed at boot) may resolve now, so the failures are forgotten and the
-  // visible set is requested again. Tiles already drawn stay until replaced.
-  const sourceChanged = () => { if (disposed) return; failed.clear(); schedule(); };
+  // visible set is requested again. A load still in flight resolved against
+  // the old source: the generation bump keeps its failure out of `failed`, and
+  // its end re-pumps the tile. Tiles already drawn stay until replaced.
+  const sourceChanged = () => { if (disposed) return; generation++; failed.clear(); schedule(); };
   document.addEventListener(ART_SOURCE_EVENT, sourceChanged);
   const removal = new MutationObserver(() => { if (!port.isConnected) dispose(); });
   removal.observe(document.body,{childList:true,subtree:true});

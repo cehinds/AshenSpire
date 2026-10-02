@@ -880,7 +880,10 @@ Where the build differs from, or settles, §3.8 and §3.9 (2026-10-02):
 - **Tiles retry on a source change.** A mounted detail layer listens for
   `ART_SOURCE_EVENT` (`highResArt.js`, sent after `builtInArtArrived`); it
   forgets its failed tiles and requests the visible set again, so a switch
-  that brings the common index draws the tiles a failed one could not.
+  that brings the common index draws the tiles a failed one could not. A load
+  still in flight when the source changes belongs to the old source (a
+  generation counter): its failure is not recorded, and the tile is asked for
+  again once it ends.
 - **SPEC §7.4** still describes "the `music/` beside the page"; that wording is
   left to step 8a (section 6, *Written rules*), as 3b left SPEC §2's status
   row. The web edition reaches players only at step 6b.

@@ -205,3 +205,65 @@ test('a tile that failed before common was listed is retried when the art source
     for (const [k, d] of Object.entries(saved)) { if (d) Object.defineProperty(globalThis, k, d); else delete globalThis[k]; }
   }
 });
+
+test('a source change while a tile is still loading: the old failure is not recorded, and the tile is asked for again', async () => {
+  const listeners = new Map();
+  const frames = [];
+  const held = []; // decodes of bare paths, settled by the test
+  const el = (extra = {}) => ({
+    attrs: {}, dataset: {}, style: { setProperty() {} }, classList: { add() {} }, children: [], isConnected: true,
+    setAttribute(k, v) { this.attrs[k] = String(v); }, getAttribute(k) { return this.attrs[k] ?? null; },
+    append() {}, remove() {}, replaceChildren(...n) { this.children = n; },
+    addEventListener() {}, removeEventListener() {},
+    getBoundingClientRect: () => ({ left: 0, top: 0, right: 300, bottom: 300, width: 300, height: 300 }),
+    ...extra,
+  });
+  const saved = {};
+  for (const k of ['document', 'MutationObserver', 'ResizeObserver', 'requestAnimationFrame', 'cancelAnimationFrame', 'Image', 'location', 'devicePixelRatio']) saved[k] = Object.getOwnPropertyDescriptor(globalThis, k);
+  const set = (k, v) => Object.defineProperty(globalThis, k, { value: v, configurable: true, writable: true });
+  set('document', { body: el(), createElementNS: () => el(), addEventListener: (t, f) => listeners.set(t, f), removeEventListener: (t) => listeners.delete(t) });
+  set('MutationObserver', class { observe() {} disconnect() {} });
+  set('ResizeObserver', class { observe() {} disconnect() {} });
+  set('requestAnimationFrame', (f) => { frames.push(f); return frames.length; });
+  set('cancelAnimationFrame', () => {});
+  set('location', { protocol: 'http:' });
+  set('devicePixelRatio', 1);
+  set('Image', class {
+    decode() {
+      if (/^\.\/objects\//.test(this.src || '')) return Promise.resolve();
+      return new Promise((_, reject) => held.push(() => reject(new Error('404'))));
+    }
+    removeAttribute() { this.src = ''; }
+  });
+  const settle = async () => { for (let i = 0; i < 20; i++) { while (frames.length) frames.shift()(); await new Promise((r) => setImmediate(r)); } };
+  try {
+    const { mountMapDetail } = await import('../src/ui/components/mapDetail.js');
+    const { ART_SOURCE_EVENT } = await import('../src/ui/highResArt.js');
+    const [source, art] = Object.entries(MAP_ART)[0];
+    const svg = el({ querySelectorAll: () => [], parentElement: null });
+    const base = el({ ownerSVGElement: svg, getScreenCTM: () => null });
+    base.attrs = { width: '1000', height: '1000' };
+    const port = el();
+    setBuiltInSource(null);
+    const dispose = mountMapDetail(port, el({ querySelector: () => base }), source);
+    await settle();
+    assert.ok(held.length > 0, 'bare-path loads are in flight');
+    assert.notEqual(port.dataset.detailState, 'ready');
+    // The switch lands while those loads are still pending.
+    const ids = new Map();
+    for (const level of art.levels) for (const t of visibleTiles(level, { x0: 0, y0: 0, x1: 1, y1: 1 })) ids.set(tileId(art.assetHash, t.key), `${OBJ('e')}.webp`);
+    setBuiltInSource(ids);
+    listeners.get(ART_SOURCE_EVENT)();
+    await settle();
+    // Now the old loads fail: their failures belong to the old source.
+    for (const reject of held.splice(0)) reject();
+    await settle();
+    for (const reject of held.splice(0)) reject();
+    await settle();
+    assert.equal(port.dataset.detailState, 'ready', 'the tiles were asked for again through the new source and drawn');
+    dispose();
+  } finally {
+    setBuiltInSource(null);
+    for (const [k, d] of Object.entries(saved)) { if (d) Object.defineProperty(globalThis, k, d); else delete globalThis[k]; }
+  }
+});
