@@ -20,11 +20,13 @@ file at `download/` for every kept build; see
 edition plays by double-click: the indexes through their `.js` twins, the
 faces through the font sidecar, tiles from the objects under `file://`, the
 score synthesized, and `external-play --file`; see
-[Step 4 as built](#step-4-as-built)); **step 5 built** (2026-10-02: the
+[Step 4 as built](#step-4-as-built)); **step 7 built** (2026-10-02: the
+in-game folder copy, a zip the game assembles beside the light single-file
+download, and `offline-play-qa --zip`; see [Step 7 as built](#step-7-as-built));
+**step 5 built** (2026-10-02: the
 startup gate drawn at once with its "Loading art" line and the critical set
 from `content/config`, the title's notice with Retry and Settings' Retry,
-`external-play --block-index`; see [Step 5 as built](#step-5-as-built)); the
-rest is plan (2026-09-27). The owner answered its
+`external-play --block-index`; see [Step 5 as built](#step-5-as-built)); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -666,7 +668,7 @@ light single file, about 30 MB, self-contained, plays by double-click. The
 | `tools/credits-check.mjs` | every push | enumerates `assets/*` | enumerates manifest id prefixes, including `music/`, `map-detail/` and `assets/fonts/` (ART-REPO-PLAN already plans this) | 12 |
 | `tools/hand-side-probe.mjs`, `shotguard-probe`, `startup-gate`, `map-two-axis-pan` | browser jobs | served source or build with art beside it | source mode is served by `tools/serve.mjs`, which maps ids to the fetch cache | 12 |
 | about 40 browser tools with `--dist` over `file://` (`mapfit`, `screenreach`, `release-shots`, `about-changelog`, `offline-play-qa` and others; `git grep -l "dist/AshenSpire.html" tools`) | browser jobs, by hand | `dist/AshenSpire.html` is complete alone | keep working under `file://` once step 4 lands (objects beside it); where a tool needs `fetch`, one helper in `tools/browser.mjs` serves `dist/` over http. One PR flips them all and lists them. **Built (8d), against the real tree:** 30 tools built a `file://` URL for a built page and now ask `buildPageUrl()`, which returns that same `file://` URL for a self-contained file and serves the HTML's folder over local http when the HTML carries a non-empty `ASSET_PACKS` pin (the pack shape), under `/<channel>/latest/` so the page keeps the channel and debug state its file reads (`unknown` for `dist/AshenSpire.html`; `buildChannel()` reads that path) (`ASHEN_BUILD_OVER=file|http` forces either): `actends`, `actionreach`, `advanced-config-preview`, `arcane-exposure-visual`, `axisfit`, `card-drag-targeting`, `combat-action-row`, `combatant-stage`, `controlstrip`, `gesture-cancel`, `hand-pager-threshold`, `holdbeat`, `holdconfirm`, `hudbars`, `mapfit`, `mapfog`, `mapreach`, `mapspacing`, `menufit`, `mobilefit`, `presentation-matrix`, `screenreach`, `scroll-cue-bleed`, `short-landscape-support`, `tapsize`, `text-geometry`, `uprightgate`, `uprightsetting`, `veil-owns-input`, `zoomplace`. The rest of the grep already served the repository over http through `tools/serve.mjs` (`release-shots`, `about-changelog`, `settingsreach`, `watched`, `doublescroll`, `profile-first-run`, `armoury-inventory-disclosure`, `current-build-ui-repair`, `hud-quick-compact`, `screenshot`, `card-feedback`, `external-play`), or reads the file without a browser; `offline-play-qa` stays on `file://` by design (its row below). | 8d |
-| `tools/offline-play-qa.mjs` | by hand | downloads one HTML and opens it under `file://` | keeps its single-file pass for the light single file; adds: downloads the zip, unzips it and opens it under `file://`; installs the service worker, goes offline, boots and plays a track (the `206` path) | 6b, 7 |
+| `tools/offline-play-qa.mjs` | by hand | downloads one HTML and opens it under `file://` | keeps its single-file pass for the light single file; adds: downloads the zip, unzips it and opens it under `file://` (**built, step 7: `--zip`**); installs the service worker, goes offline, boots and plays a track (the `206` path; built in `tools/pages-offline.mjs`, step 6b) | 6b, 7 |
 | `tests/web-meta.test.mjs:57` | core suite | `build/AshenSpire.html` and `-mobile.html` | `build/AshenSpire.html` and the light single file | 8e |
 | `index.html:14` `og:image` (copied into the build by `tools/head-meta.mjs`) | every build | `raw.githubusercontent.com/…/main/assets/bg/title-city-tower.webp` exists | points at the Pages object for that backdrop (a stable path the site writes, `/AshenSpire/og-image.webp`), before `assets/` leaves main | 6a |
 | `tests/settings-revamp.test.mjs:21-25` (`buildChannel` of a `file://` name) | core suite | a single downloaded file's name | unchanged: the name inside the zip keeps the channel (`src/ui/buildChannel.js`) | — |
@@ -1324,6 +1326,76 @@ Where the build differs from, or settles, §4 and §5 A (2026-10-02):
   `dev-preview.yml`'s browser-gates job runs it (about a minute);
   `--selftest` (several minutes, by hand) plants a Range answered with `200`, a kill-switch
   that keeps its registration, and a kept page served before the network.
+
+### Step 7 as built
+
+Where the build settles §5 B (2026-10-02):
+
+- **Where it is offered.** Download & saves keeps the light single file as
+  *Download game* (step 6b) and adds **Download a folder copy (zip)** below
+  it. The zip is offered only when the selected branch's `build.json` says
+  `shape: "pack"`; for an older inline build one line says its Download is
+  already the whole game, and no zip control is drawn, so nothing offered
+  names a file the site lacks. Step 6b keeps a `download/` light single file
+  for **every** retained pack-shaped build, so §4's alternative (older builds
+  hiding their Download cell) does not arise, and the build lists are unchanged.
+- **What it holds.** `AshenSpire-<branch>-<version>.zip` holds one folder of
+  the same name: the build's page as `AshenSpire-<branch>-<version>.html` (the
+  name a download has, so `buildChannel` reads the same channel from it),
+  `asset-base.json` (`{"base":"./"}`), the **light and common** indexes with
+  their `.js` twins, the font sidecar's `.js` twin (the file a double-clicked
+  page reads, whatever suffix the pin names; Codex, #1480), and every object those two indexes
+  list (about 5,500 entries, 58 MB for a dev build). **High is never packed**
+  (`offlinePlay.zip.packs`): a build whose default is high shows the packed
+  light art through the tier fallback. The score is packed with common, and a
+  double-clicked folder keeps the synth (§3.9); served over http it plays.
+- **Where it comes from.** `src/model/offlineDownload.js` `releasedZip` reads
+  the branch's `build.json`; `assembleZip` fetches the page
+  (`../<ordinal>/index.html`), reads the pin **from that page**, finds the store
+  through the page's `asset-base.json`, and streams the archive. From a
+  downloaded copy these are cross-origin reads of the Pages site, like the
+  single-file download's.
+- **Integrity** (§3's table): the page against `build.json`'s `pageBytes` and
+  `pageSha256`; each index against the pin; each twin and the font sidecar by
+  the string they hand the loader, against the same pin, and by the id they
+  call it with (their file's basename); every object against its name and its
+  listed size before it is written, and two indexes listing one object at two
+  sizes are refused. A failure is refused by code (`ZipDownloadError`:
+  `unreachable`, `page`, `pack`, `hash`); the screen maps it, a cancel, a full
+  disk and a refused save location to uiStrings rows, anything else to a
+  generic row (its raw text to the console only), and nothing is called saved.
+  Each request waits `headerTimeoutMs` (60 s) for its headers and then fails
+  when no body chunk arrives for `idleTimeoutMs` (30 s), an idle deadline so a
+  slow but moving connection finishes the 10 MB page; it is tried twice, except
+  after a definitive 4xx. Objects are fetched six at a time and written in order.
+- **The screen** (`src/ui/offlineZipFlow.js`, no DOM, so CI drives it): which
+  box shows for a feed, the failure words, and one save from click to final
+  status. The polite status line is rewritten at most every 2 s while the zip
+  is built (the progress bar takes every step), and the final state is always
+  announced. A branch change forgets a prepared Blob.
+- **The writer** is `src/model/zipStream.js`: store-only, the same bytes as
+  `tools/zip.mjs` `writeZip` for the same entries (the test holds them equal),
+  entries in byte order. It streams to `showSaveFilePicker` where it exists
+  (writes coalesced to about 1 MiB), else gathers a Blob and saves it, with a
+  *Save zip file* retry, as the single-file download does.
+- **`pages-site`** now records `pageSha256` and `zipBytes` (the zip's exact
+  size, from `folderZipBytes`, the same layout `assembleZip` writes, read from
+  the store just published) in a pack build's `build.json`; `--check`'s
+  DOWNLOAD DRIFT row compares both, and `--selftest` plants each. A
+  `build.json` without `pageSha256` (a site from before this step) still zips,
+  checked by size and the pin; without `zipBytes` the size is not shown.
+- **The words** are `offline.zip.*` rows in `content/source/uiStrings.csv`;
+  `src/content/offlinePlay.js` `zip.instructions` names the four shown, in order.
+- **`offline-play-qa --zip`** publishes `build/web` into a local Pages shape
+  (`publishPack`, a `download/` light single file, a `build.json` as
+  `pages-site` writes it), boots the hosted page, has the game build the zip by
+  both save paths (a Blob download, and a stubbed save-picker handle whose
+  writes must equal it byte for byte), checks its size is `zipBytes`, unzips it, checks every entry against
+  the pin and the indexes, stops the server, and plays the folder under
+  `file://` with the network off: light art from its own packs, the 15 lore
+  faces, a title backdrop from its objects, then the shared import → map →
+  combat → blocked-storage pass. Not exercised: a real OS save dialog, a
+  phone, and Safari or Firefox.
 
 ---
 

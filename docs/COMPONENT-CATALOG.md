@@ -40,7 +40,11 @@ Title and Settings (including in-run Settings). Release metadata supplies its
 version, size, and numbered download; `src/content/offlinePlay.js` owns the feed,
 instructions, and transfer limits. The save-transfer engine validates all slots
 before replacing storage and preserves a recovery copy. Import is available from
-Title, with a preview and confirmation. See [offline play](offline-play.md).
+Title, with a preview and confirmation. For a pack-shaped build the modal also
+offers **Download a folder copy (zip)** (`offline-folder-copy`, step 7 of
+docs/EXTERNAL-ASSETS-PLAN.md): the game assembles the page, its light and common
+packs and their objects into one zip, checking each file as it is written. See
+[offline play](offline-play.md).
 
 All run maps share the vector face in `mapNodeInk.js`: opaque dark discs, readable
 glyphs, a pale current-node marker and reachable halos. `mapview.js` owns the
@@ -152,6 +156,8 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `title-modal-actions` | `saveSlotSelectionModel` action projection + modal kind | `title.mountTitle` | Title Menu Modal | Responsive Back/Continue group; Continue remains enabled for and targets the selected slot, while the `load-review` variant becomes Back to Saves / Load Save. |
 | `title-modal-back-control` | modal action record | `title.mountTitle` | Title Modal Actions | Returns to the title menu, or from `load-review` to the Load Game slot list with selection preserved. |
 | `title-modal-continue-control` | `saveSlotSelectionModel` action child | `title.mountTitle` | Title Modal Actions | Carries the selected slot as its semantic load/create command payload; the review variant exposes a positive Load Save action. |
+| `offline-play-modal` | `offlinePlay` content record + build.json feed (`releasedDownload`, `releasedZip`) | `offlinePlay.openOfflinePlay` | Title and Settings → Download & saves | Shared Download & saves dialog: branch feed, the light single-file download and its direct link, the folder copy, Make available offline, and save export/import. |
+| `offline-folder-copy` | `releasedZip` plan + `assembleZip` progress (`offline.zip.*` uiStrings) | `offlinePlay.openOfflinePlay` | Download & saves | Folder copy (zip) of a pack-shaped build: four instruction rows, a Download game folder (zip) button that becomes Save zip file after a Blob save, a progress bar and a polite status line; for a single-file build one line says the Download is already the whole game. |
 | `shared-run-hud` | `runHudViewModel` | `hudmeta.sharedRunHudHtml` | Map + Combat | One shared run HUD composition of header, resources, controls, and belt. |
 | `run-header-strip` | `runHeaderModel` | `runHeaderStripHtml` | Map + Combat | Identity, cinders, and prioritized metadata. |
 | `identity-cluster` | `identityClusterModel` | `identityClusterHtml` | Map + Combat | Character identity cluster. |
