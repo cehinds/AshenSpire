@@ -1,8 +1,29 @@
+// tools/offline-play-qa.mjs — the Download & saves screen and the game it saves,
+// played offline under file:// in a real Chromium.
+//
+//   node tools/offline-play-qa.mjs                       download the single file, then play it offline
+//   node tools/offline-play-qa.mjs --offline-only        play the local AshenSpire.html offline
+//   node tools/offline-play-qa.mjs --download-controls-check   picker timing, progress, cancel, disk errors
+//   node tools/offline-play-qa.mjs --live-release-check  the real published feed
+//   node tools/offline-play-qa.mjs --zip [--web build/web]
+//       THE FOLDER COPY (docs/EXTERNAL-ASSETS-PLAN.md §5 B, step 7): publishes
+//       build/web (node tools/launch.mjs --build-only) into a local copy of the
+//       Pages shape (tools/pages-store.mjs publishPack, the light single file at
+//       download/, a build.json as tools/pages-site.mjs writes it), boots the
+//       hosted page, has the game assemble its zip, unzips it, checks every
+//       entry against the pin and the indexes, stops the server, and plays the
+//       unzipped folder offline under file:// (light art and the lore faces
+//       loaded from the folder, then the shared import → map → combat pass).
 import { createServer } from 'node:http';
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, mkdtempSync, readdirSync, rmSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { launchBrowser, resolveBrowser } from './browser.mjs';
+import { launchBrowser, resolveBrowser, serveDir } from './browser.mjs';
+import { packPinOf, publishPack } from './pages-store.mjs';
+import { objectPath } from './asset-pack.mjs';
+import { extractZip } from './zip.mjs';
 import { createRegistries } from '../src/model/registries.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRunState } from '../src/model/state.js';
@@ -14,6 +35,9 @@ const out = resolve('artifacts/offline-play'); mkdirSync(out, { recursive: true 
 const offlineOnly = process.argv.includes('--offline-only');
 const liveReleaseCheck = process.argv.includes('--live-release-check');
 const downloadControlsCheck = process.argv.includes('--download-controls-check');
+const zipCheck = process.argv.includes('--zip');
+let zipSite = null;
+const webDir = resolve(process.argv.includes('--web') ? process.argv[process.argv.indexOf('--web') + 1] : 'build/web');
 const downloads = resolve(out, `downloads-${Date.now()}`); mkdirSync(downloads);
 const html = readFileSync('AshenSpire.html'), build = JSON.parse(readFileSync('buildordinal.json'));
 const metadata = { branch: 'main', version: build.release, ordinal: build.ordinal, bytes: html.length };
@@ -138,8 +162,78 @@ try {
     check(errors.length === 0, `no browser exceptions: ${errors.join('; ')}`);
   } else {
   await send('Page.addScriptToEvaluateOnNewDocument', { source: 'window.showSaveFilePicker=undefined' }, sessionId);
-  let backupPath, gamePath;
-  if (offlineOnly) {
+  let backupPath, gamePath, zipFolder = null, zipPin = null;
+  if (zipCheck) {
+    // The Pages shape, served under /AshenSpire/ as the site is.
+    const webHtml = join(webDir, 'AshenSpire.html');
+    if (!existsSync(webHtml) || !packPinOf(readFileSync(webHtml))) throw new Error(`${webHtml} is not a pack-shaped build — run node tools/launch.mjs --build-only first`);
+    zipSite = mkdtempSync(join(tmpdir(), 'offline-zip-site-'));
+    const site = await serveDir(zipSite, { prefix: 'AshenSpire' });
+    try {
+      const origin = `${site.origin}/AshenSpire/`;
+      // Only the hosted QA copy points its release feed at this fixture; the
+      // zip carries that same page, byte for byte, which is what is checked.
+      const page = Buffer.from(readFileSync(webHtml, 'utf8').replaceAll('https://cehinds.github.io/AshenSpire/', origin));
+      zipPin = packPinOf(page);
+      const rel = `main/${build.ordinal}`;
+      publishPack(zipSite, rel, page, webDir);
+      mkdirSync(join(zipSite, rel, 'download'), { recursive: true });
+      writeFileSync(join(zipSite, rel, 'download', 'AshenSpire.html'), html);
+      const sha = (b) => createHash('sha256').update(b).digest('hex');
+      const info = { branch: 'main', ordinal: build.ordinal, version: build.release, bytes: null, pageBytes: page.length, pageSha256: sha(page),
+        packBytes: Object.fromEntries(Object.entries(zipPin.packs).map(([pack, p]) => [pack, p.bytes])), shape: 'pack', tier: zipPin.tier,
+        download: { path: 'download/AshenSpire.html', bytes: html.length, sha256: sha(html) } };
+      for (const dir of [rel, 'main/latest']) { mkdirSync(join(zipSite, dir), { recursive: true }); writeFileSync(join(zipSite, dir, 'build.json'), JSON.stringify(info, null, 2)); }
+      await boot(`${origin}${rel}/`);
+      check(await evaluate('document.documentElement.dataset.builtInArt') === (zipPin.tier || 'light'), 'the hosted web edition loads its pinned art from the site store');
+      await click('#download-game');
+      await until('document.querySelector("#offline-zip")?.disabled === false && document.querySelector("#offline-zip-box")?.hidden === false');
+      check(await evaluate('/MB and saves as AshenSpire-main-/.test(document.querySelector(".offline-zip-steps").textContent)'), 'the folder copy is offered with its size and file name');
+      check(await evaluate('document.querySelector("#offline-zip-none").hidden'), 'a pack-shaped build does not say it has no folder copy');
+      await capture('zip-offered');
+      const before = completed.length;
+      await click('#offline-zip');
+      for (let i = 0; i < 3000 && completed.length <= before; i++) { await wait(100); if (i % 20 === 0 && await evaluate('/could not|did not match|not published/.test(document.querySelector("#offline-zip-status").textContent)')) break; }
+      const said = await evaluate('document.querySelector("#offline-zip-status").textContent');
+      check(completed.length > before, `the browser saves the folder copy ("${said}")`);
+      check(/^Folder copy sent to your browser/.test(said) && await evaluate('document.querySelector("#offline-zip").textContent') === 'Save zip file', 'the screen says the zip was sent and offers Save zip file to retry');
+      await capture('zip-saved');
+      const zipPath = resolve(downloads, completed.at(-1));
+      check(/^AshenSpire-main-\d+\.\d+\.\d+\.\d+\.zip$/.test(completed.at(-1)), `the zip keeps the download's name (${completed.at(-1)})`);
+      // Unzip and prove every entry.
+      const unzipped = mkdtempSync(join(tmpdir(), 'offline-zip-unzipped-'));
+      const names = extractZip(zipPath, unzipped);
+      zipFolder = join(unzipped, `AshenSpire-main-${build.release}.${build.ordinal}`);
+      gamePath = join(zipFolder, `AshenSpire-main-${build.release}.${build.ordinal}.html`);
+      check(existsSync(gamePath) && readFileSync(gamePath).equals(page), 'the unzipped game file is the hosted page, byte for byte');
+      const wantObjects = new Set();
+      for (const pack of ['light', 'common']) {
+        const index = JSON.parse(readFileSync(join(zipFolder, zipPin.packs[pack].index), 'utf8'));
+        check(sha(readFileSync(join(zipFolder, zipPin.packs[pack].index))) === zipPin.packs[pack].sha256, `the ${pack} index is in the folder and hashes to the pin`);
+        check(existsSync(join(zipFolder, zipPin.packs[pack].index.replace(/\.json$/, '.js'))), `the ${pack} index's .js twin is in the folder`);
+        for (const [id, row] of Object.entries(index)) wantObjects.add(objectPath(row[0], id));
+      }
+      if (zipPin.fonts) check(existsSync(join(zipFolder, zipPin.fonts.file)), 'the font sidecar is in the folder');
+      if (zipPin.packs.high) check(!existsSync(join(zipFolder, zipPin.packs.high.index)), 'the high index is not packed (the loader falls back to light)');
+      const bad = [...wantObjects].filter((p) => !existsSync(join(zipFolder, p)) || sha(readFileSync(join(zipFolder, p))) !== /([0-9a-f]{64})/.exec(p)[1]);
+      const objectCount = readdirSync(join(zipFolder, 'objects')).reduce((n, d) => n + readdirSync(join(zipFolder, 'objects', d)).length, 0);
+      check(bad.length === 0 && objectCount === wantObjects.size, `every light and common object is in the folder with its hash, and nothing else (${objectCount} of ${wantObjects.size}${bad.length ? `; bad: ${bad.slice(0, 3).join(', ')}` : ''})`);
+      check(names.length === wantObjects.size + 2 + 2 * 2 + (zipPin.fonts ? 1 : 0), `the zip holds the page, asset-base.json, two indexes, their twins, the sidecar and the objects (${names.length} entries)`);
+      // The save-picker path: the same zip streamed into a chosen file, in coalesced writes.
+      await evaluate(`window.zipWrites = []; window.zipClosed = false; window.showSaveFilePicker = async (options) => { window.zipPicked = options.suggestedName;
+        return { createWritable: async () => ({ write: async (b) => { zipWrites.push(new Uint8Array(b)); }, close: async () => { zipClosed = true; }, abort: async () => {} }) }; }`);
+      await click('#offline-check');
+      await until('document.querySelector("#offline-zip")?.disabled === false && document.querySelector("#offline-zip").textContent === "Download game folder (zip)"');
+      await click('#offline-zip');
+      for (let i = 0; i < 3000 && !(await evaluate('window.zipClosed && /^Folder copy saved/.test(document.querySelector("#offline-zip-status").textContent)')); i++) await wait(100);
+      const streamed = await evaluate(`(async () => { const all = new Blob(zipWrites); const sha = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', await all.arrayBuffer())), (x) => x.toString(16).padStart(2, '0')).join('');
+        return { sha, bytes: all.size, writes: zipWrites.length, name: zipPicked }; })()`);
+      check(streamed.sha === sha(readFileSync(zipPath)) && streamed.name === completed.at(-1), `the save-picker path streams the same zip, byte for byte, in ${streamed.writes} coalesced writes (${streamed.bytes} bytes)`);
+      writeFileSync(resolve(out, 'zip-status.txt'), await evaluate('document.querySelector("#offline-zip-status").textContent'));
+    } finally { site.server.closeAllConnections?.(); await site.close(); }
+    backupPath = resolve(downloads, 'fixture-saves.json'); writeFileSync(backupPath, original);
+    await click('.offline-play-modal .modal-close');
+  } else if (offlineOnly) {
     backupPath = resolve(downloads, 'fixture-saves.json'); writeFileSync(backupPath, original);
     gamePath = resolve('AshenSpire.html');
     await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true }, sessionId);
@@ -167,6 +261,16 @@ try {
   await send('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 }, sessionId);
   await boot(pathToFileURL(gamePath).href);
   check(await evaluate('location.protocol === "file:"'), 'downloaded game boots locally with network disabled');
+  if (zipCheck) {
+    check(await evaluate('document.documentElement.dataset.builtInArt') === 'light', 'the unzipped folder loads its light art from its own packs under file://');
+    const faces = await evaluate('[...document.fonts].filter(f => f.status === "loaded").length');
+    check(faces >= (zipPin.fonts?.faces || 0), `the lore faces load from the folder's font sidecar (${faces})`);
+    // The title's backdrop is an ASSET_CSS rule filled with an object path; it must name the folder's objects and load.
+    const backdrop = await evaluate(`(async () => { const url = [...document.querySelectorAll('*')].map(e => getComputedStyle(e).backgroundImage).join(' ').match(/url\\("?(file:[^")]*\\/objects\\/[^")]+)"?\\)/)?.[1];
+      if (!url) return null; const img = new Image(); img.src = url; await img.decode().catch(() => {}); return { url, width: img.naturalWidth }; })()`);
+    check(backdrop && backdrop.url.startsWith(pathToFileURL(zipFolder).href) && backdrop.width > 0, `a title backdrop is drawn from the folder's objects (${backdrop ? `${backdrop.url.slice(-30)}, ${backdrop.width}px` : 'none'})`);
+    await capture('zip-offline-title');
+  }
   await click('#download-game');
   if (offlineOnly) {
     await capture('phone-download');
@@ -204,7 +308,8 @@ try {
   check(errors.length === 0, `no browser exceptions: ${errors.join('; ')}`);
   }
 } finally {
+  if (zipSite) rmSync(zipSite, { recursive: true, force: true });
   await Promise.race([send('Browser.close').catch(() => {}), wait(1000)]); ws.close(); await browser.close();
   server.closeAllConnections(); await new Promise(done => server.close(done));
 }
-console.log(`${checks} ${downloadControlsCheck ? 'download controls' : liveReleaseCheck ? 'live release preparation' : offlineOnly ? 'offline-only' : 'download and offline'} browser checks passed. ${downloadControlsCheck ? 'Throttled 1 MB fixture and controlled picker handle; native OS dialog not tested.' : liveReleaseCheck ? 'Real published metadata and HTML fetched; final file save not tested.' : offlineOnly ? 'Download skipped; local generated HTML and a save fixture were used.' : 'Release metadata is a local fixture; downloaded bytes are the real generated build.'}`);
+console.log(`${checks} ${downloadControlsCheck ? 'download controls' : liveReleaseCheck ? 'live release preparation' : zipCheck ? 'folder copy (zip) and offline' : offlineOnly ? 'offline-only' : 'download and offline'} browser checks passed. ${zipCheck ? 'The web edition was served in the Pages shape on 127.0.0.1 with a fixture build.json; the zip was assembled by the game twice (the Blob path, and a stubbed save-picker handle: no OS dialog), unzipped and played under file:// with the network off.' : downloadControlsCheck ? 'Throttled 1 MB fixture and controlled picker handle; native OS dialog not tested.' : liveReleaseCheck ? 'Real published metadata and HTML fetched; final file save not tested.' : offlineOnly ? 'Download skipped; local generated HTML and a save fixture were used.' : 'Release metadata is a local fixture; downloaded bytes are the real generated build.'}`);

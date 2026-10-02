@@ -43,6 +43,18 @@ export const offlinePlay = {
       loading: 'The game’s art is still loading. Close this panel and open it again in a moment to keep the game offline.',
     },
   },
+  // THE FOLDER COPY (docs/EXTERNAL-ASSETS-PLAN.md §5 B, step 7): a zip the
+  // game assembles from a pack-shaped build's page, its light and common packs
+  // and their objects (src/model/offlineDownload.js assembleZip). Offered only
+  // when the selected branch's build is pack-shaped; an older build's
+  // Download is already one whole file. The words are uiStrings rows
+  // (content/source/uiStrings.csv, `offline.zip.*`); `instructions` names the
+  // rows shown, in order, under the zip's heading.
+  zip: {
+    packs: ['light', 'common'],
+    concurrency: 6,
+    instructions: ['offline.zip.step.save', 'offline.zip.step.unzip', 'offline.zip.step.open', 'offline.zip.step.limits'],
+  },
   saveFormat: 'ashenspire-save-transfer',
   saveVersion: 1,
   maxSaveBytes: 20 * 1024 * 1024,

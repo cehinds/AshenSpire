@@ -1,6 +1,7 @@
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { BUILD_VERSION } from '../../buildversion.js';
-import { releasedDownload, receiveDownload } from '../../model/offlineDownload.js';
+import { releasedDownload, receiveDownload, releasedZip, assembleZip, coalesceSink, ZipDownloadError } from '../../model/offlineDownload.js';
+import { t } from '../strings.js';
 import { makeAvailableOffline, offlineState, offlineSupport, removeOfflineCopy } from '../offlineInstall.js';
 import { button, el, openModal } from '../kit/index.js';
 import { openConfirmationModal } from './confirmationModal.js';
@@ -13,6 +14,7 @@ function saveFile(blob, name) {
 }
 
 const fill = (text, values) => String(text).replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? ''));
+const megabytes = (bytes) => (bytes / 1024 / 1024).toFixed(1);
 
 // "MAKE AVAILABLE OFFLINE" (docs/EXTERNAL-ASSETS-PLAN.md §5 A, step 6b). Only a
 // pack-shaped build says anything here: a single file already plays offline
@@ -99,6 +101,19 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
   // published site, where the artifact link IS same-origin, and says so.
   const direct = el('a', { class: 'set-note offline-direct', id: 'offline-direct', hidden: true,
     text: offlinePlay.directLabel });
+  // THE FOLDER COPY (docs/EXTERNAL-ASSETS-PLAN.md §5 B, step 7): a zip the game
+  // assembles from the selected build's page, light and common packs and their
+  // objects. Drawn only when that build is pack-shaped: an older build is one
+  // whole file, and this says so in one line instead of offering a zip of it.
+  const zipButton = button({ label: t('offline.zip.button'), id: 'offline-zip' });
+  zipButton.disabled = true;
+  const zipSteps = el('ul', { class: 'offline-zip-steps' });
+  const zipProgress = el('progress', { id: 'offline-zip-progress', max: 100, hidden: true, 'aria-label': t('offline.zip.heading') });
+  // Polite, but not role=status: the screen's own status line (the saves) stays the first one in the panel.
+  const zipStatus = el('p', { 'aria-live': 'polite', class: 'set-note', id: 'offline-zip-status' });
+  const zipNone = el('p', { class: 'set-note', id: 'offline-zip-none', hidden: true, text: t('offline.zip.unavailable') });
+  const zipBox = el('div', { class: 'offline-zip', id: 'offline-zip-box', hidden: true }, [el('h3', { text: t('offline.zip.heading') }), zipSteps,
+    el('div', { class: 'offline-actions' }, [zipButton]), zipProgress, zipStatus]);
   const check = button({ label: 'Check for updates', id: 'offline-check' });
   const exportSave = button({ label: 'Export saves', id: 'offline-export' });
   const importSave = button({ label: 'Import saves', id: 'offline-import' });
@@ -106,7 +121,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
   const reload = button({ label: 'Reload game', id: 'offline-reload' }); reload.hidden = true;
   const file = el('input', { type: 'file', accept: '.json,application/json', hidden: true });
   const done = button({ label: 'Done', weight: 'primary' });
-  let manifest = null, prepared = null, busy = false;
+  let manifest = null, prepared = null, busy = false, zipPlan = null, zipPrepared = null;
   const controller = new AbortController();
   const request = async url => {
     const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(offlinePlay.requestTimeoutMs)]) });
@@ -123,6 +138,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
         el('p', { class: 'set-note', text: typeof window.showSaveFilePicker === 'function'
           ? 'Download opens a save-location dialog, then saves the game there.'
           : 'Your browser controls the save location. Enable “Ask where to save” in its download settings to choose a folder.' }),
+        zipBox, zipNone,
         ...(keep ? [keep] : []),
         el('h3', { text: 'Move your saves' }),
         el('p', { class: 'set-note', text: `A backup includes your profile and all ${transfer.slotCount} save slots. Import replaces them in this browser. Existing archives stay here. Import from the title screen.` }),
@@ -135,14 +151,18 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
     release.textContent = `${offlinePlay.branches.find(item => item.id === branch.value).label} build: ${data.version} · ${size}. ${data.version === BUILD_VERSION ? 'You have this version.' : 'Export your saves before switching versions.'}`;
   };
   const refreshRelease = async () => {
-    if (busy) return; busy = true; check.disabled = true; download.disabled = true; branch.disabled = true;
+    if (busy) return; busy = true; check.disabled = true; download.disabled = true; branch.disabled = true; zipButton.disabled = true;
+    zipPlan = null; zipPrepared = null; zipBox.hidden = true; zipNone.hidden = true; zipProgress.hidden = true; zipStatus.textContent = '';
+    zipButton.textContent = t('offline.zip.button');
     manifest = null; progressGroup.hidden = true; direct.hidden = true; direct.removeAttribute('href');
     direct.removeAttribute('download'); direct.removeAttribute('target'); direct.removeAttribute('rel');
     prepared = null; download.textContent = offlinePlay.downloadLabel;
     try {
       const selected = offlinePlay.branches.find(item => item.id === branch.value);
-      const data = releasedDownload(await (await request(selected.manifestUrl)).json(), selected.manifestUrl, selected.id);
+      const raw = await (await request(selected.manifestUrl)).json();
+      const data = releasedDownload(raw, selected.manifestUrl, selected.id);
       manifest = data;
+      showZip(raw, selected);
       const sameOrigin = new URL(data.url, location.href).origin === location.origin;
       if (sameOrigin) { direct.href = data.url; direct.download = data.filename; direct.textContent = offlinePlay.directLabel; }
       else {
@@ -154,8 +174,66 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
       showRelease(data);
       download.disabled = false; status.textContent = '';
     } catch (error) { release.textContent = 'Could not check the release. Connect to the internet and try Check for updates.'; status.textContent = error.message; }
-    finally { busy = false; check.disabled = false; branch.disabled = false; }
+    finally { busy = false; check.disabled = false; branch.disabled = false; zipButton.disabled = !zipPlan; }
   };
+  // The zip is offered for a pack-shaped build only; a build.json that names
+  // one badly hides it (and the single-file download above still stands).
+  function showZip(raw, selected) {
+    try { zipPlan = releasedZip(raw, selected.manifestUrl, selected.id); } catch { zipPlan = null; }
+    if (!zipPlan) { zipNone.hidden = raw?.shape === 'pack'; return; }
+    const sized = zipPlan.bytes !== null;
+    zipSteps.replaceChildren(...offlinePlay.zip.instructions.map(id => el('li', {
+      text: t(id === 'offline.zip.step.save' && !sized ? 'offline.zip.step.saveUnsized' : id, { mb: sized ? megabytes(zipPlan.bytes) : '', filename: zipPlan.filename }) })));
+    zipBox.hidden = false;
+  }
+  zipButton.addEventListener('click', async () => {
+    if (busy || !zipPlan) return;
+    const plan = zipPlan;
+    if (zipPrepared) {
+      saveFile(zipPrepared, plan.filename);
+      zipStatus.textContent = t('offline.zip.sent', { mb: megabytes(zipPrepared.size) });
+      return;
+    }
+    busy = true; zipButton.disabled = true; download.disabled = true; check.disabled = true; branch.disabled = true;
+    let writer = null;
+    const chunks = [];
+    try {
+      if (typeof window.showSaveFilePicker === 'function') {
+        zipStatus.textContent = t('offline.zip.choose');
+        const handle = await window.showSaveFilePicker({ suggestedName: plan.filename,
+          types: [{ description: t('offline.zip.heading'), accept: { 'application/zip': ['.zip'] } }] });
+        controller.signal.throwIfAborted();
+        writer = await handle.createWritable();
+      }
+      controller.signal.throwIfAborted();
+      zipProgress.hidden = false; zipProgress.removeAttribute('value');
+      const out = writer ? coalesceSink(chunk => writer.write(chunk)) : { sink: chunk => { chunks.push(chunk); }, flush: async () => {} };
+      const result = await assembleZip(plan, { sink: out.sink, signal: controller.signal,
+        onProgress: (done, total, bytes, totalBytes) => {
+          zipProgress.value = total ? Math.floor(done / total * 100) : 0;
+          zipStatus.textContent = t('offline.zip.working', { done, total, mb: megabytes(bytes), totalMb: megabytes(totalBytes) });
+        } });
+      await out.flush();
+      controller.signal.throwIfAborted();
+      zipProgress.value = 100;
+      if (writer) {
+        zipStatus.textContent = t('offline.zip.finishing');
+        await writer.close(); writer = null;
+        zipStatus.textContent = t('offline.zip.saved', { files: result.count, mb: megabytes(result.bytes) });
+      } else {
+        zipPrepared = new Blob(chunks, { type: 'application/zip' });
+        chunks.length = 0;
+        saveFile(zipPrepared, plan.filename);
+        zipButton.textContent = t('offline.zip.save');
+        zipStatus.textContent = t('offline.zip.sent', { mb: megabytes(result.bytes) });
+      }
+    } catch (error) {
+      if (writer) await writer.abort().catch(() => {});
+      zipProgress.hidden = true;
+      zipStatus.textContent = error?.name === 'AbortError' ? t('offline.zip.canceled')
+        : error instanceof ZipDownloadError ? t(`offline.zip.error.${error.code}`) : String(error?.message || error);
+    } finally { busy = false; zipButton.disabled = !zipPlan; download.disabled = !manifest; check.disabled = false; branch.disabled = false; }
+  });
   check.addEventListener('click', refreshRelease);
   branch.addEventListener('change', refreshRelease);
   download.addEventListener('click', async () => {
@@ -167,7 +245,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
       status.textContent = 'Save requested. Open the HTML file from your Downloads folder.';
       return;
     }
-    busy = true; download.disabled = true; check.disabled = true; branch.disabled = true;
+    busy = true; download.disabled = true; check.disabled = true; branch.disabled = true; zipButton.disabled = true;
     progressGroup.hidden = true;
     let writer = null;
     try {
@@ -201,7 +279,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
       if (writer) await writer.abort().catch(() => {});
       status.textContent = error.name === 'AbortError' ? 'Download canceled. No completed game file was saved.' : error.message;
     }
-    finally { busy = false; download.disabled = false; check.disabled = false; branch.disabled = false; }
+    finally { busy = false; download.disabled = false; check.disabled = false; branch.disabled = false; zipButton.disabled = !zipPlan; }
   });
   const exportText = (text, name) => saveFile(new Blob([text], { type: 'application/json' }), name);
   exportSave.addEventListener('click', () => { try { exportText(transfer.createBackup(), 'AshenSpire-saves.json'); status.textContent = 'Save backup downloaded.'; } catch (error) { status.textContent = error.message; } });

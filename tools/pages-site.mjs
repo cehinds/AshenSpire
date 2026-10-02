@@ -885,8 +885,14 @@ function publishBuild(outDir, b, a) {
   // pack build that page is a 9.5 MB HTML with no art. null is a size it
   // refuses ("Download information is not ready yet"), so an old copy says it
   // cannot download rather than saving a game with no art. The page's own size
-  // is `pageBytes`.
-  const top = b.shape === 'pack' ? { bytes: null, pageBytes: html.length } : { bytes: html.length };
+  // is `pageBytes`. For the in-game folder copy (step 7) a pack build also
+  // records the page's sha256, which the zip checks the page against, and
+  // `packBytes`, each pinned pack's object bytes (from the page's own pin), which
+  // size the zip before anything is fetched.
+  const packPin = b.shape === 'pack' ? packPinOf(html) : null;
+  const top = b.shape === 'pack'
+    ? { bytes: null, pageBytes: html.length, pageSha256: sha256(html), packBytes: Object.fromEntries(Object.entries(packPin?.packs || {}).map(([pack, p]) => [pack, p.bytes])) }
+    : { bytes: html.length };
   writeFileSync(join(dir, 'build.json'), JSON.stringify({ branch: b.branch, ordinal: b.ordinal, version: b.version, ...top, mobileBytes: b.mobileBytes ?? null, edition: b.edition, shape: b.shape, tier: b.tier ?? null, download: b.download ?? null, digest: b.digest, built: b.built, commit: b.sha, source: b.source, changelog: changelogUrl(b), stamp: stampOf(b) }, null, 2) + '\n');
   // The proof: what was written is the blob (or the rebuild), byte for byte.
   if (Buffer.compare(readFileSync(join(dir, 'index.html')), html) !== 0) throw new Error(`${rel}: written build differs from its source`);
@@ -1083,7 +1089,8 @@ function check(outDir) {
     const onDisk = readFileSync(join(bdir, 'index.html'));
     const download = JSON.parse(readFileSync(join(bdir, 'build.json'), 'utf8'));
     const pageBytes = b.shape === 'pack' ? download.pageBytes : download.bytes;
-    if (pageBytes !== onDisk.length || download.ordinal !== b.ordinal || download.version !== b.version) {
+    if (pageBytes !== onDisk.length || download.ordinal !== b.ordinal || download.version !== b.version
+      || (b.shape === 'pack' && download.pageSha256 !== sha256(onDisk))) {
       red(`DOWNLOAD DRIFT ${d.branch}/${b.ordinal}: metadata differs from the downloadable file`);
     } else checks++;
     if (Buffer.compare(blob, onDisk) !== 0) red(`DRIFT ${d.branch}/${b.ordinal}: site file differs from ${rebuiltBuild ? 'the recorded rebuild of' : 'git blob'} ${b.sha.slice(0, 10)}`);
