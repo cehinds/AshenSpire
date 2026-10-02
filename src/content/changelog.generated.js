@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the rules for legendary sigils are written down",
     "detail": "This is a docs-only change, and nothing you play changes yet. The design document now says how a legendary sigil works. You attune it in the Armoury, out of a fight, up to a set number at a time, and it works in every fight while attuned, with no slot or weapon needed. Only a fight or a treasure room can drop one, never a shop, and none drops until you raise its chance in Settings. A save from before keeps its sigils and starts with none attuned.",
-    "build": "0.7.1.734",
+    "build": "0.7.1.735",
     "pullRequest": 1439,
     "url": "https://github.com/cehinds/AshenSpire/pull/1439"
+  },
+  {
+    "id": "pr-1437",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: every class now plays five whole runs on every change",
+    "detail": "Nothing you play changes. The test suite now plays five full runs for each class without a screen, on fixed seeds. Each run goes from the map through fights, rewards and events to a win or a death. The suite fails if a run crashes or gets stuck, whether in a fight that never ends or on a map path that never reaches the boss.",
+    "build": "0.7.1.734",
+    "pullRequest": 1437,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1437"
   },
   {
     "id": "pr-1435",
