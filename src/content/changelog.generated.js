@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the game's wording lives in one table again",
     "detail": "Nothing you see changes. About 230 labels and sentences that had crept back into the code since mid-September (most of the Settings rows, the combat action bar, level-up and Victory, the lore fonts, layout and HUD options) now come from the game's one wording table, and an automatic check stops new ones creeping in.",
-    "build": "0.7.1.794",
+    "build": "0.7.1.795",
     "pullRequest": 1489,
     "url": "https://github.com/cehinds/AshenSpire/pull/1489"
+  },
+  {
+    "id": "pr-1450",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: every change now checks the game's art against the art repository's release",
+    "detail": "Nothing you play changes. The game pins one release of its art, light art, fonts, music and map tiles in a separate repository; each check downloads the parts it needs, verifies every file against its fingerprint, and proves the release and the copies still kept here are identical, byte for byte.",
+    "build": "0.7.1.794",
+    "pullRequest": 1450,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1450"
   },
   {
     "id": "pr-1488",
