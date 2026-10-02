@@ -1,0 +1,14 @@
+# Asset kit validation
+
+Checked October 2, 2026. This is an authored asset package; the live game was not changed or playtested with it.
+
+- **194 unique artwork assets:** 16 new raster PNGs, 129 original SVGs and 49 unchanged canonical art copies. Three canonical font copies are recorded separately. All manifest paths, byte lengths, SHA-256 values and raster/vector dimensions match the files.
+- **24 feature views:** every desktop/mobile artwork reference and every shared component reference exists, and all referenced player screen modules exist in the repository. Regional combat art retains its atlas contract; the guide does not flatten it into a single environment.
+- **Source integrity:** all 16 generated PNGs are byte-identical to their original generator outputs. All 49 canonical art copies are byte-identical to their recorded repository sources. No alpha extraction, raster reframing or source image editing occurred.
+- **Transparency:** three generated portrait cutouts have RGBA alpha values spanning 0–255. Scene, material and borderless card illustrations remain opaque. SVG exteriors and art apertures are transparent; some intentional panel centers are opaque.
+- **Visual inspection:** all new raster assets were inspected individually, then in a static contact sheet. Desktop/portrait title, merchant and forge compositions were compared side by side. SVG icon and component sheets were rendered through Sharp and inspected; 24-pixel identifying icon shapes remain legible. Canonical art reuse sheet was inspected. Leather material is used as non-repeating cover under a dark overlay and is not called seamless.
+- **Independent agent review:** source/hash/coverage checks passed. Review found disabled-state selector precedence and SVG embedding/cap guidance issues; the adapter now excludes disabled controls from primary/exit/destructive active skins, uses `box-sizing: border-box`, and preserves a visible focus outline. The generator's embedded CSS matches the exported adapter. Inline title IDs, recoloring, 44 CSS-pixel hit areas and tray-handle treatment are documented.
+- **Preview checks:** HTML/CSS local dependency links resolve and preview JavaScript passes Node syntax validation. No network assets or framework dependencies are required to open the HTML preview. Static visual compositions are review artifacts, not runtime atlases.
+- **Archive:** the ZIP is stored beside the kit directory. Every archive entry matches its source file and has a safe relative path; `SHA256SUMS.txt` records all other package files. A separate ZIP checksum file is stored beside the archive.
+
+Interactive browser verification was unavailable under the app's URL policy. This validation does not assert browser layout/input behavior or production accessibility across devices. Runtime integration must verify live theme overrides, text scaling, lawful action states, actual atlas/pose anchors, mobile asset budgets and accessible controls.
