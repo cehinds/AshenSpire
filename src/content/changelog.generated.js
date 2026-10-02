@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The first-fight tutorial no longer sits on your cards",
     "detail": "The coach marks' speech bubble used to land on the first card in your hand, so you couldn't play that card while the tutorial was showing. The bubble now finds a spot clear of your hand. After a window resize, the spotlight now follows its target until the board stops moving. Pressing Escape on an armed attack card now also drops the card's highlight, not just its targeting. Behind the scenes, the check that every tutorial button can be reached runs at eight screen sizes on every change, and it confirms that the tutorial stays dismissed after a reload.",
-    "build": "0.7.1.765",
+    "build": "0.7.1.766",
     "pullRequest": 1468,
     "url": "https://github.com/cehinds/AshenSpire/pull/1468"
+  },
+  {
+    "id": "pr-1481",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: desktop and mobile polish inspiration is saved with the project",
+    "detail": "Twelve illustrated boards explore the player-facing screens, from character creation and combat to towns, equipment, rewards, co-op and settings. The searchable gallery opens each board at full size; exact prompts, art credits and notes distinguish the generated examples from the game's real rules. These are design references, not changes to gameplay.",
+    "build": "0.7.1.765",
+    "pullRequest": 1481,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1481"
   },
   {
     "id": "pr-1478",
