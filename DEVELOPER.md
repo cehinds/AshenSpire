@@ -106,7 +106,16 @@ format from these trees into `build/asset-pack/` (ignored): a content-addressed
 `objects/<xx>/<sha256>.<ext>` store and `packs/<pack>-<digest12>.json` indexes
 for `light`, `high` and `common`, each with its `.js` twin, plus the
 `packs/fonts-<digest12>.js` sidecar; `--check` verifies a written tree and
-`tests/asset-pack.test.mjs` covers it. No build or edition reads the packs yet.
+`tests/asset-pack.test.mjs` covers it. **The web edition reads them** (step 3a):
+`bundle.mjs --external-art` writes the packs beside its HTML (`light` and
+`common` with `--light`; `high`, `light` and `common` without it), stamps each
+index's sha256 and the default tier into `ASSET_PACKS` (`src/ui/assetPacks.js`),
+and the loader checks the indexes at boot and resolves ids to objects through
+`setBuiltInSource()` in `src/ui/assetmap.js` (high → light → placeholders when
+an index is missing or fails its pin; `tests/asset-packs.test.mjs`).
+`node tools/verify-external.mjs` checks the tree on disk and
+`node tools/external-play.mjs` loads it in Chromium. The single files are
+unchanged: their `ASSET_PACKS` stays null and the loader does nothing.
 
 **The high-res release** (docs/ART-REPO-PLAN.md). `art-release.json` pins one
 release of the private `cehinds/AshenSpire-art` (repo, tag, zip, sha256; today
@@ -905,7 +914,8 @@ per-module-closure runtime (so file:// has no module/CORS issue). Double-click
 to play; no server, no Node, no external files. Re-run after any source change.
 With no flag it bundles the full art from `assets/`; `--light` reads the
 `assets-mobile/` twins (the dev/test tier), `--mobile` writes the budgeted
-`AshenSpire-mobile.html`, and `--external-art` leaves the art beside the HTML.
+`AshenSpire-mobile.html`, and `--external-art` leaves the art beside the HTML
+in the pack shape (`asset-base.json`, `packs/`, `objects/`; see *Run & test*).
 `node tools/launch.mjs --build-only` picks the flags for you (see *Run & test*).
 The file is a local build output, ignored by git on `dev`: of the build's own
 outputs, commit only `buildordinal.json` (and the generated changelog module).
