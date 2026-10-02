@@ -234,12 +234,15 @@ jobs:
       # into that worktree's ignored .art-cache/ and proves they match main's
       # trees; an older main, whose pin has no packs (or no pin), builds as
       # before. UNDER SCHEMA 2 A FETCH FAILURE BLOCKS PUBLISHING: the step is
-      # `set -e`, so a release main cannot fetch stops the stable build. The token
-      # is passed while cehinds/AshenSpire-art is private; once it is public the
-      # fetch needs none. A failure names its cause.
+      # `set -e`, so a release main cannot fetch stops the stable build. The art
+      # repository is public, so the fetch needs no token; one is passed only on
+      # a protected branch, for the higher rate limit. A failure names its cause.
       - name: Build main from source when main no longer commits its build
         env:
-          ART_REPO_TOKEN: ${{ secrets.ART_REPO_TOKEN }}
+          # Only a protected branch gets the token: a dispatch of any other ref
+          # runs that ref's own copy of this step. The art repository is public
+          # (step 10a), so a run without it fetches the public release.
+          ART_REPO_TOKEN: ${{ contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
         run: |
           set -euo pipefail
           if git cat-file -e origin/main:AshenSpire.html 2>/dev/null; then
