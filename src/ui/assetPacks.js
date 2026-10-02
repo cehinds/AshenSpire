@@ -26,9 +26,10 @@
 // WHAT THIS DOES NOT DO YET. Over http(s) only: file:// (the .js twins and the
 // font sidecar) is step 4. CSS assets, music and map tiles are steps 3b and
 // 3c. The loading line on the startup gate, the Retry notice and per-file
-// high → light fallback are step 5; Settings → Art quality Auto/Light/High is
-// step 8c. A single file (ASSET_MAP filled) and the source tree (nothing
-// stamped) never load anything here.
+// high → light fallback are step 5. Settings → Art quality Auto/Light/High
+// (step 8c, src/ui/artTier.js) passes the tier to ask for. A single file
+// (ASSET_MAP filled) and the source tree (nothing stamped) never load anything
+// here.
 
 import { ASSET_MAP, setBuiltInSource } from './assetmap.js';
 import { sha256Hex } from './sha256.js';
@@ -144,14 +145,14 @@ export async function loadIndex(pack, pin, { base = './', fetchImpl = globalThis
 export async function loadBuiltInPacks({
   pin = ASSET_PACKS, inlineMap = ASSET_MAP, fetchImpl = globalThis.fetch,
   protocol = globalThis.location?.protocol, subtle, onSource = null, deadlineMs = BOOT_WAIT_MS,
-  tier = null, keepOnFail = false,
+  tier: askedTier = null, keepOnFail = false, stillWanted = null,
 } = {}) {
   if (!packsPinned(pin, inlineMap)) {
     status = { state: Object.keys(inlineMap || {}).length ? 'inline' : 'none', tier: null, requested: null, ids: 0, failed: [] };
     return builtInArtStatus();
   }
   // `tier`: Art quality's choice (step 8c, src/ui/artTier.js), else the default.
-  const requested = ART_TIERS.includes(tier) ? tier : ART_TIERS.includes(pin.tier) ? pin.tier : 'light';
+  const requested = ART_TIERS.includes(askedTier) ? askedTier : ART_TIERS.includes(pin.tier) ? pin.tier : 'light';
   const before = status;
   if (typeof fetchImpl !== 'function' || !isHttp(protocol)) {
     // file:// reads the .js twins, which is step 4; until then a double-clicked
@@ -203,8 +204,9 @@ export async function loadBuiltInPacks({
       failed.push(got === TIMED_OUT ? `${candidate}: the index did not load within ${ms} ms` : got.error.message);
     }
     if (!art) {
-      // A tier switch in play (keepOnFail) keeps the art already on screen.
-      if (keepOnFail && before.state === 'loaded') { status = { ...before, failed }; return builtInArtStatus(); }
+      // A tier switch in play (keepOnFail) keeps the art already on screen, and
+      // records the tier it asked for, so the row can say that one failed.
+      if (keepOnFail && before.state === 'loaded') { status = { ...before, requested, failed }; return builtInArtStatus(); }
       // Placeholders: no art index, so no source. The common pack alone does
       // not make a source either.
       status = { state: 'failed', tier: null, requested, ids: 0, failed };
@@ -219,6 +221,8 @@ export async function loadBuiltInPacks({
     }
     const map = new Map(common || []);
     for (const [id, url] of art) map.set(id, url);
+    // A tier switch the player has since replaced (stillWanted) publishes nothing.
+    if (typeof stillWanted === 'function' && !stillWanted()) { status = before; return { ...builtInArtStatus(), superseded: true }; }
     const ids = setBuiltInSource(map);
     status = { state: 'loaded', tier, requested, ids, failed: [...failed] };
     if (typeof onSource === 'function') try { onSource(map); } catch { /* a listener must not fail the load */ }

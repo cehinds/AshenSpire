@@ -62,6 +62,11 @@ test('Auto is the build’s default tier, and light on a narrow layout, with Sav
   assert.equal(autoTier({ defaultTier: 'high', doc: wide, nav: { deviceMemory: LOW_MEMORY_GB } }).tier, 'light');
   assert.equal(autoTier({ defaultTier: 'high', doc: wide, nav: { deviceMemory: LOW_MEMORY_GB * 2 } }).tier, 'high');
   assert.equal(autoTier({ defaultTier: 'high', doc: wide, nav: {} }).tier, 'high', 'a browser that reports nothing keeps the default');
+  // A phone booted in landscape: the layout is wide, but its short side is a phone's.
+  const landscapePhone = { width: 844, height: 390 };
+  assert.deepEqual(autoTier({ defaultTier: 'high', doc: wide, nav: {}, scr: landscapePhone }), { tier: 'light', reason: 'the screen is small' });
+  assert.equal(autoTier({ defaultTier: 'high', doc: wide, nav: {}, scr: { width: 1366, height: 768 } }).tier, 'high', 'a laptop screen');
+  assert.equal(autoTier({ defaultTier: 'high', doc: wide, nav: {}, scr: { width: 1024, height: 768 } }).tier, 'high', 'a tablet screen');
   for (const doc of [wide, narrow]) assert.equal(autoTier({ defaultTier: 'light', doc, nav: desktop }).tier, 'light', 'a light build never asks for high');
   assert.match(autoTier({ defaultTier: 'high', doc: narrow, nav: desktop }).reason, /narrow/);
 });
@@ -102,7 +107,7 @@ test('a single file and the source tree disable Light and High and say why', () 
   const row = settingsRows().find((r) => r.key === ART_QUALITY_KEY);
   assert.equal(row.choiceDisabled(ART_HIGH), true);
   assert.equal(row.choiceDisabled(ART_AUTO), false);
-  assert.match(tierStatus(set(ART_HIGH), { pin: null, inlineMap: inline }), /carries its light art inside it.*Light and High apply to the web edition/);
+  assert.match(tierStatus(set(ART_HIGH), { pin: null, inlineMap: inline }), /carries its art inside it.*Light and High apply to the web edition/);
   assert.match(tierStatus(set(ART_AUTO), { pin: null, inlineMap: {} }), /no tiers to choose/);
 });
 
@@ -169,13 +174,62 @@ test('a switch that cannot load keeps the art on screen; quick switches load onl
   assert.ok(s.failed.length >= 2, 'both tiers were tried');
   assert.equal(tierOf(), 'light', 'the light art stays');
   assert.equal(builtInArtStatus().state, 'loaded');
-  tree.offline = false;
+  assert.equal(builtInArtStatus().requested, 'high', 'the attempted tier is kept');
+  assert.match(tierStatus(set(ART_HIGH), { pin: tree.pin, inlineMap: {} }), /^Showing light art: the high art could not be loaded\.$/);
+  fresh();
+});
+
+test('quick switches run only the last: a superseded switch never fetches', async () => {
+  fresh();
+  const tree = packTree('high');
+  const opts = { pin: tree.pin, inlineMap: {}, load: tree.load, env: { doc: wide, nav: desktop } };
+  await applyArtTier(set(ART_LIGHT), opts);
+  await loadBuiltInPacks({ pin: tree.pin, ...tree.load, tier: 'light' });
   tree.asked.length = 0;
-  const first = applyArtTier(set(ART_HIGH), opts);
-  const second = applyArtTier(set(ART_LIGHT), opts);
-  assert.equal(await first, null, 'superseded');
+  const first = applyArtTier(set(ART_HIGH), opts);  // a real change: queued, round 1
+  const second = applyArtTier(set(ART_LIGHT), opts); // round 2 supersedes it before it runs
+  assert.equal(await first, null, 'superseded by round');
   assert.equal(await second, null, 'light is already on screen');
-  assert.equal(tree.asked.length, 0, 'the superseded switch to High never fetched');
+  assert.equal(tree.asked.length, 0, 'the superseded switch to High never fetched an index');
   assert.equal(tierOf(), 'light');
+  fresh();
+});
+
+test('a switch still loading when the player picks again publishes nothing', async () => {
+  fresh();
+  const tree = packTree('high');
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  const slow = async (url, init) => { if (url.includes('high-')) await gate; return tree.fetchImpl(url, init); };
+  const opts = { pin: tree.pin, inlineMap: {}, load: { ...tree.load, fetchImpl: slow }, env: { doc: wide, nav: desktop } };
+  await applyArtTier(set(ART_LIGHT), opts);
+  await loadBuiltInPacks({ pin: tree.pin, ...tree.load, tier: 'light' });
+  const arrived = [];
+  onTierArrived((map) => arrived.push(map.get(ID)));
+  const toHigh = applyArtTier(set(ART_HIGH), opts);
+  await new Promise((r) => setTimeout(r, 10)); // the High load is in flight, waiting on its index
+  const toLight = applyArtTier(set(ART_LIGHT), opts);
+  release();
+  assert.equal(await toHigh, null, 'the obsolete High load is discarded');
+  await toLight;
+  assert.equal(arrived.length, 0, 'High was never published: no source change, no onSource');
+  assert.equal(tierOf(), 'light');
+  assert.equal(builtInArtStatus().tier, 'light');
+  fresh();
+});
+
+test('Auto is decided after the batch that set it has applied the new layout', async () => {
+  fresh();
+  const tree = packTree('high');
+  let layout = 'wide';
+  const doc = { documentElement: { getAttribute: (name) => (name === 'data-layout' ? layout : null) } };
+  const opts = { pin: tree.pin, inlineMap: {}, load: tree.load, env: { doc, nav: desktop } };
+  await applyArtTier(set(ART_HIGH), opts);
+  await loadBuiltInPacks({ pin: tree.pin, ...tree.load, tier: 'high' });
+  // A profile load: applyDisplaySettings (Auto) runs, then applyUiScale writes narrow.
+  const pending = applyArtTier(set(ART_AUTO), opts);
+  layout = 'narrow';
+  const s = await pending;
+  assert.equal(s.tier, 'light', 'Auto read the layout the same batch wrote');
   fresh();
 });

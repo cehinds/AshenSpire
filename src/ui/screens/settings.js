@@ -513,9 +513,9 @@ const ROWS = [
   // built-in. 'Built-in', the old default, reads as Auto. A per-device key
   // (LOCAL_ONLY_KEYS, never synced): a folder here means nothing on another device.
   { cat: 'Display', key: ART_QUALITY_KEY, type: 'choice', def: ART_AUTO,
-    choices: ART_QUALITY_CHOICES, legacyChoices: LEGACY_ART_QUALITY, choiceDisabled: tierChoiceDisabled,
+    choices: ART_QUALITY_CHOICES, legacyChoices: LEGACY_ART_QUALITY, choiceDisabled: tierChoiceDisabled, describedBy: 'set-artQuality-tier',
     label: 'Art quality', applied: artQualityHtml,
-    note: 'Auto loads lighter art on a narrow screen, with Data Saver on or on a device with little memory, and the best art this game carries otherwise. Light and High pick one. Local high-res uses full-resolution art from a folder on this device, either served beside the game or one you choose, and keeps the built-in art for anything it lacks. This device only.' },
+    note: 'Auto loads lighter art on a narrow or phone-sized screen, with Data Saver on or on a device with little memory, and the best art this game carries otherwise. Light and High pick one. Local high-res uses full-resolution art from a folder on this device, either served beside the game or one you choose, and keeps the built-in art for anything it lacks. This device only.' },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
     choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size', applied: appliedHtml,
     note: 'Auto flexes the whole interface with your screen; S–XL asks for a fixed size and gets as much of it as fits.' },
@@ -1776,10 +1776,10 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
     const cur = r.choices.includes(stored) ? stored : r.def;
     if (r.dropdown || r.choices.length > 3) {
       const options = r.choices.map(c => `<option value="${esc(c)}"${c === cur ? ' selected' : ''}${r.choiceDisabled?.(c) ? ' disabled' : ''}>${esc(r.choiceLabels?.[c] || c)}</option>`).join('');
-      return `${rowOpen('set-row-dropdown')}${stack(appliedSlot(settings, r))}<span class="r-trail"><select class="set-choice-select" data-key="${r.key}" aria-label="${esc(r.label)}">${options}</select></span></div>`;
+      return `${rowOpen('set-row-dropdown')}${stack(appliedSlot(settings, r))}<span class="r-trail"><select class="set-choice-select" data-key="${r.key}" aria-label="${esc(r.label)}"${r.describedBy ? ` aria-describedby="${r.describedBy}"` : ''}>${options}</select></span></div>`;
     }
     const opts = r.choices
-      .map((c) => `<button type="button" class="choice${c === cur ? ' on' : ''}" aria-pressed="${c === cur}" data-key="${r.key}" data-val="${c}"${r.choiceDisabled?.(c) ? ' disabled aria-disabled="true"' : ''}>${r.choiceLabels?.[c] || c}</button>`)
+      .map((c) => `<button type="button" class="choice${c === cur ? ' on' : ''}" aria-pressed="${c === cur}" data-key="${r.key}" data-val="${c}"${r.choiceDisabled?.(c) ? ' disabled' : ''}>${r.choiceLabels?.[c] || c}</button>`)
       .join('');
     return `${rowOpen(r.slider ? 'set-row-wide' : '')}
         ${stack(appliedSlot(settings, r))}
@@ -2145,7 +2145,7 @@ function tapCostHtml(settings) {
  * high-res art came from and the folder button.
  */
 function artQualityHtml(settings) {
-  const tier = `<span class="ls-hint set-note" data-art-tier-status aria-live="polite">${esc(tierStatus(settings))}</span>`;
+  const tier = `<span class="ls-hint set-note" id="set-artQuality-tier" data-art-tier-status aria-live="polite">${esc(tierStatus(settings))}</span>`;
   if (!wantsHighRes(settings)) return tier;
   return `${tier} ${artFolderHtml(settings)}`;
 }

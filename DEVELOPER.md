@@ -130,8 +130,9 @@ with; `tests/fetch-art.test.mjs` pins their shared vector.
 **Settings → Display → Art quality** (`src/ui/artTier.js`, `src/ui/highResArt.js`):
 *Auto*, *Light* and *High* choose which pack the web edition loads (step 8c of
 docs/EXTERNAL-ASSETS-PLAN.md). *Auto* is light on a narrow layout
-(`data-layout="narrow"`), with Save-Data on or with `navigator.deviceMemory` at
-or under 2 GB, and the build's default tier otherwise; *Light* and *High* force
+(`data-layout="narrow"`), on a screen whose short side is at most 600 CSS px
+(a phone in either orientation), with Save-Data on or with
+`navigator.deviceMemory` at or under 2 GB, and the build's default tier otherwise; *Light* and *High* force
 one. The boot load asks for that tier, a change in play reloads the indexes and
 re-points the images on screen (a switch that cannot load keeps the art already
 shown), and the loader's fallback still applies (High on a build without the

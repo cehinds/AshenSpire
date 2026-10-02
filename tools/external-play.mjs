@@ -19,7 +19,7 @@
 //
 // VERDICT: "external-play: OK — N checks passed".
 //
-// WHAT IT DOES NOT CHECK: gameplay. It mounts four screens and watches the
+// WHAT IT DOES NOT CHECK: gameplay. It mounts five screens and watches the
 // network; it does not play a run, and a screen that mounts with the wrong art
 // passes. Two known non-findings are filtered and named where they are filtered.
 import { launchBrowser } from './browser.mjs';
@@ -60,18 +60,21 @@ function connect(wsUrl) {
 }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Three screens on a phone, then combat again on a desktop window. Art quality
+// Three screens on a phone, then combat and the map again on a desktop window. Art quality
 // is Auto in a fresh profile (a ?shot= boot keeps no settings), and Auto loads
 // light on a narrow layout (src/ui/artTier.js, step 8c), so the phone screens
 // must show light art and the desktop one the tier the build pins: a high
 // build is checked at both tiers.
-const PHONE = { width: 390, height: 844, deviceScaleFactor: 2, mobile: true };
-const DESKTOP = { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false };
+// The screen size is set too: Auto also reads the screen's short side, and a
+// headless browser's own screen is 800×600, which is not a desktop's.
+const PHONE = { width: 390, height: 844, screenWidth: 390, screenHeight: 844, deviceScaleFactor: 2, mobile: true };
+const DESKTOP = { width: 1280, height: 800, screenWidth: 1920, screenHeight: 1080, deviceScaleFactor: 1, mobile: false };
 const SCREENS = [
   ['title', '?shot=title', `!!document.querySelector('#app button')`, PHONE],
   ['combat', '?shot=combat', `!!document.querySelector('.combat .hand .card')`, PHONE],
   ['map', '?shot=map', `!!document.querySelector('.map-node')`, PHONE],
   ['desktop', '?shot=combat', `!!document.querySelector('.combat .hand .card')`, DESKTOP],
+  ['dmap', '?shot=map', `!!document.querySelector('.map-node')`, DESKTOP],
 ];
 
 const server = await serve({ root: DIR, port: 8317, open: false });
@@ -158,5 +161,5 @@ if (findings.length) { console.log(`external-play: RED — ${findings.length} fi
 // tools/verdict.mjs reads the whole thing as prose and calls the run silent.
 console.log(`  ${SCREENS.length} screens mounted from ${relative(ROOT, DIR)}; 0 broken images; 0 failed requests${PINNED_TIER ? `; ${seenObjects} images from objects/ (light on the phone, ${PINNED_TIER} on the desktop)` : ''}.`);
 console.log(`external-play: OK — ${checks} checks passed`);
-console.log('BOUNDARY: four screens and the network. No run was played, and a screen that');
+console.log('BOUNDARY: five screens and the network. No run was played, and a screen that');
 console.log('          mounts with the WRONG art passes this.');

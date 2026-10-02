@@ -289,7 +289,9 @@ schema-2 pin whose top level disagrees with `packs.high`.
    4. It hands `assetmap.js` a Map of id → **relative object path**
       (`<base>objects/xx/<sha>.webp`, not a `blob:` URL).
 5. **Tier selection, with fallback.** The requested tier is Settings → Art
-   quality (Auto/Light/High, section 5), and *Auto* means the build's default.
+   quality (Auto/Light/High, section 5). *Auto* means the build's default,
+   except light on a narrow layout or phone-sized screen, with Save-Data on or
+   on a low-memory device (see [Step 8c as built](#step-8c-as-built)).
    If the requested tier's index cannot be loaded or fails its hash, the loader
    uses the light index. The fallback order is **high → light → placeholders**.
    So a main build whose default is high still shows the light art:
@@ -792,8 +794,11 @@ Where the build settles the text above (2026-10-02):
 - **Auto** (`src/ui/artTier.js` `autoTier`) asks for light when the build's
   default is high and any of these holds: `navigator.connection.saveData`, the
   layout is narrow (`<html data-layout="narrow">`, written by `applyUiScale`
-  before the boot load starts), or `navigator.deviceMemory` is at or under
-  `LOW_MEMORY_GB` (2). Otherwise it asks for the default. A light-default build
+  before the boot load starts), the screen's short side is at most
+  `SMALL_SCREEN_PX` (600 CSS px, so a phone booted in landscape counts: Safari
+  and Firefox report no `deviceMemory`), or `navigator.deviceMemory` is at or
+  under `LOW_MEMORY_GB` (2). A coarse pointer alone was not used, because it
+  would also send tablets and touch laptops to light. Otherwise it asks for the default. A light-default build
   always asks for light. *Local high-res* lays its folder over Auto's tier,
   unchanged otherwise.
 - **When it applies.** The boot load asks for the setting's tier
@@ -801,22 +806,29 @@ Where the build settles the text above (2026-10-02):
   default). A change in play **reloads the indexes at once** (`applyArtTier`,
   called from `applyDisplaySettings`): the new map goes through
   `builtInArtArrived`, which re-points the images on screen. A switch that
-  cannot load anything keeps the art already shown (`keepOnFail`), and quick
-  switches run one at a time, only the latest. Auto is decided at boot and when
-  it is chosen; a window resized later does not swap the art.
+  cannot load anything keeps the art already shown (`keepOnFail`) and records
+  the tier it asked for, so the row says that one failed. Quick switches run
+  one at a time, only the latest, and a load the player has replaced while it
+  was in flight publishes nothing (`stillWanted`). Auto is decided at boot and
+  when it is chosen, in the queued job, so a batch that sets Auto and a new
+  layout together reads the new layout; a window resized later does not swap
+  the art.
 - **The fallback is the loader's**: High on a build that pins no high pack, or
   whose high index fails, shows light; the row's live line says which tier is
   on screen and why (`tierStatus`, `aria-live="polite"`).
 - **A single file and the source tree** pin no packs, so *Light* and *High* are
   shown **disabled** (the row's new `choiceDisabled`, honoured by the choice
-  renderer for `<option>`s and segment buttons) and the live line says the file
-  carries its light art inside it. A stored *Light* or *High* is kept, not
+  renderer for `<option>`s and segment buttons; `settings-choice-row` in the
+  component catalogs) and the live line says the file
+  carries its art inside it. A stored *Light* or *High* is kept, not
   rewritten, so the same choice still applies in the web edition on the same
   origin.
 - **`external-play`** now expects Auto's tier for each window: its three
-  phone screens must load light (Auto on a narrow layout), and a fourth pass,
-  combat on a 1280×800 desktop window, must load the tier the build pins, so a
-  high build is checked at both tiers.
+  phone screens must load light (Auto on a narrow layout), and two more passes,
+  combat and the map on a 1280×800 desktop window, must load the tier the build
+  pins, so a high build is checked at both tiers. Each pass also sets the
+  emulated screen size: a headless browser's own screen is 800×600, whose
+  short side would read as a small screen.
 - **Not yet:** until step 3b, CSS `url()`s (fonts, backdrops) still name the
   default tier's objects, so *Light* on a high-default build swaps the images
   but not the CSS backdrops. 3b fills `ASSET_CSS` from the index the loader

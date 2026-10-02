@@ -6,8 +6,9 @@
 // for, from the setting:
 //
 //   Auto            light on a narrow layout (`data-layout="narrow"`, the one
-//                   decider in main.js), with Save-Data on, or on a low-memory
-//                   device; the build's default tier otherwise.
+//                   decider in main.js), on a phone-sized screen in either
+//                   orientation, with Save-Data on, or on a low-memory device;
+//                   the build's default tier otherwise.
 //   Light / High    that tier, whatever the device.
 //   Local high-res  Auto's tier, with the player's folder laid over it
 //                   (src/ui/highResArt.js, unchanged).
@@ -34,6 +35,13 @@ import { ASSET_MAP } from './assetmap.js';
 
 /** At or under this many GB (navigator.deviceMemory), Auto picks light. */
 export const LOW_MEMORY_GB = 2;
+/**
+ * At or under this many CSS pixels on the screen's SHORT side, Auto picks
+ * light: a phone booted in landscape has a wide layout but is still a phone
+ * (deviceMemory is Chromium-only, so Safari and Firefox phones need this).
+ * Phones are about 320–480; small tablets start near 740.
+ */
+export const SMALL_SCREEN_PX = 600;
 
 /** The setting's choice, with a value stored before step 8c ('Built-in') read as Auto. */
 export function artQualityChoice(settings) {
@@ -46,11 +54,13 @@ export function artQualityChoice(settings) {
  * autoTier({ defaultTier, doc, nav }) → { tier, reason }. `reason` names why
  * Auto chose light below the build's default, else ''.
  */
-export function autoTier({ defaultTier = ASSET_PACKS?.tier, doc = globalThis.document, nav = globalThis.navigator } = {}) {
+export function autoTier({ defaultTier = ASSET_PACKS?.tier, doc = globalThis.document, nav = globalThis.navigator, scr = globalThis.screen } = {}) {
   const best = defaultTier === 'high' ? 'high' : 'light';
   if (best === 'light') return { tier: 'light', reason: '' };
   if (nav?.connection?.saveData === true) return { tier: 'light', reason: 'Data Saver is on' };
   if (doc?.documentElement?.getAttribute?.('data-layout') === 'narrow') return { tier: 'light', reason: 'the screen is narrow' };
+  const short = Math.min(Number(scr?.width), Number(scr?.height));
+  if (Number.isFinite(short) && short > 0 && short <= SMALL_SCREEN_PX) return { tier: 'light', reason: 'the screen is small' };
   const memory = Number(nav?.deviceMemory);
   if (Number.isFinite(memory) && memory > 0 && memory <= LOW_MEMORY_GB) return { tier: 'light', reason: 'this device has little memory' };
   return { tier: best, reason: '' };
@@ -90,7 +100,7 @@ const TIER_WORD = { high: 'high', light: 'light' };
 export function tierStatus(settings, { pin = ASSET_PACKS, inlineMap = ASSET_MAP, env = {} } = {}) {
   if (!tiersAvailable(pin, inlineMap)) {
     return Object.keys(inlineMap || {}).length
-      ? 'This file carries its light art inside it, so it has no other tier to load: Light and High apply to the web edition (the hosted game or the full game folder).'
+      ? 'This file carries its art inside it, so it has no other tier to load: Light and High apply to the web edition (the hosted game or the full game folder).'
       : 'This copy loads its art straight from the game’s folders, so there are no tiers to choose: Light and High apply to the built web edition.';
   }
   const choice = artQualityChoice(settings);
@@ -98,8 +108,8 @@ export function tierStatus(settings, { pin = ASSET_PACKS, inlineMap = ASSET_MAP,
   if (switching || s.state === 'loading' || s.state === 'idle') return `Loading ${TIER_WORD[requestedTier(settings, { defaultTier: pin?.tier, ...env })]} art…`;
   if (s.state !== 'loaded') return 'The art could not be loaded, so the game is showing placeholders. Reload the page to try again.';
   const showing = `Showing ${TIER_WORD[s.tier]} art`;
-  if (s.requested === 'high' && s.tier !== 'high') {
-    return pin?.packs?.high ? `${showing}: the high art could not be loaded.` : `${showing}: this build carries no high art.`;
+  if (s.requested && s.requested !== s.tier) {
+    return pin?.packs?.[s.requested] ? `${showing}: the ${TIER_WORD[s.requested]} art could not be loaded.` : `${showing}: this build carries no ${TIER_WORD[s.requested]} art.`;
   }
   if (choice === ART_AUTO || choice === ART_LOCAL_HIGH) {
     const auto = autoTier({ defaultTier: pin?.tier, ...env });
@@ -155,16 +165,22 @@ export function applyArtTier(settings, opts = {}) {
   const mine = ++round;
   queue = queue.then(async () => {
     if (mine !== round) return null;
+    // Decided here, in the queued job, not when the setting changed: a batch
+    // update (a profile load, a restore) applies the display settings before
+    // applyUiScale writes the new data-layout, and Auto must read the new one.
     const want = requestedTier(settings, { defaultTier: pin.tier, ...(opts.env || {}) });
     const now = builtInArtStatus();
-    if (now.state === 'loaded' && now.requested === want) { showTierStatus(settings); return null; }
+    // Already showing it — or asked for it before on a build that has no such
+    // pack, where asking again would only fall back the same way.
+    if (now.state === 'loaded' && now.requested === want && (now.tier === want || !pin.packs?.[want])) { showTierStatus(settings); return null; }
     switching = true;
     showTierStatus(settings);
     try {
       const result = await loadBuiltInPacks({
-        ...opts.load, pin, tier: want, keepOnFail: true,
+        ...opts.load, pin, tier: want, keepOnFail: true, stillWanted: () => mine === round,
         onSource: (map) => { if (onArrived) try { onArrived(map); } catch { /* a listener must not fail the switch */ } },
       });
+      if (result.superseded) return null;
       stamp(result);
       if (result.failed.length) console.warn(`built-in art: ${result.failed.join('; ')}`);
       return result;
