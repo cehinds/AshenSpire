@@ -7,8 +7,8 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-02",
     "group": "2026-10-02",
     "summary": "Skills and your class get dearer with every level",
-    "detail": "Every weapon, armour, focus, dual-wield and class skill still needs 100 XP for its first level, but each level after now costs 1.75 times the one before (100, 175, 305, 535, 940) instead of 130 more. A run you already started keeps the costs it began with. Your character level is unchanged.",
-    "build": "0.7.1.749",
+    "detail": "Every weapon, armour, focus, dual-wield and class skill still needs 100 XP for its first level, but each level after now costs 1.75 times the one before (100, 175, 305, 535, 940) instead of 130 more. Like any XP setting, this reaches a run you already started the next time you load it. Your character level is unchanged.",
+    "build": "0.7.1.751",
     "pullRequest": 1386,
     "url": "https://github.com/cehinds/AshenSpire/pull/1386"
   },

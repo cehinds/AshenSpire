@@ -1027,11 +1027,9 @@ The October 1 owner default uses a linear table (`linear: true`):
 The first character step costs 100 XP and `multScaler` defaults to 1.3;
 at base 100 the steps cost 100, 230, 360, 490 XP. Base, scaler, rounding and
 the linear/exponential toggle are configurable. Tables without `linear: true`
-retain their exponential behavior. New runs record `advancedConfigSnapshot.xpCurveVersion: 2`.
+retain their exponential behavior. New runs record `advancedConfigSnapshot.xpCurveVersion: 1`.
 Older snapshots without that marker use exponential defaults unless the player explicitly
 sets a linear-curve override; live XP edits preserve the marker's presence or absence.
-Snapshots without version 2 keep the skill and class curve they were played with (growth 1,
-linear from version 1) unless their own overrides name `linear` or `growth`.
 Each claimed level grants `balance.levelUp.pointsPerLevel` attribute points
 (the player's dial, read when the level is reached), which wait on the run's ledger until the
 player assigns them at a shrine. Historical exponential curve receipt (base 5 / growth 1.15 /
@@ -2034,7 +2032,7 @@ Every enemy's HP and every encounter's bands were authored assuming the seat's `
 - **The progression predicates read the ledger:** `skillLevelAtLeast` and `classLevelAtLeast` read `combat.skills`, the copy of `run.skills` the combat was handed (`player.skills`) — in co-op the OWNER's seat's copy, not the active seat's; a track never touched is level 0. A gate's `skill` must be a derived track id, refused by name otherwise (`validate.js`); the shipped Siphon gates on `item:magic-focus`.
 - **`tools/runsim.mjs --skill-levels`** prints the level each track reached, averaged per class.
 
-*Falsify:* `skillTracks` names `item:blade`, `armour:heavy`, `dualWield` and `class:rogue` and not `item:armor`; `xpToNext(registries, 'weapon', 3)` costs 535 XP with the owner defaults; a linear fixture at base 100 and scaler 1.3 costs 490; a version-1 snapshot keeps 490; a reaver's seeded fight pays `item:blade` exactly `(hits + blocks by cards the sword lent) × perHit` (+ `perWinEquipped`, × `killMult` when the blade killed — the kill is read from the HP the hit left) and `item:shield` the same for the shield's cards, kit and art cards named by the bare piece id included, never `dualWield`, never a `class:` track, and the run's ledger is empty until `applySkillXp`; a rogue with a knife and a sword pays `dualWield` equal to the blade; a schema-7 save loads with `skills: {}`; a fight saved mid-way restores its receipt and ledger and keeps recording, a pre-ledger snapshot resumes with empty ones; a gate on `skill: focus` is refused by name; a co-op guard cast on an ally pays the caster's seat and a seat's gate reads its own ledger; `balance.skill.xp.growth: 0.5` is refused by name.
+*Falsify:* `skillTracks` names `item:blade`, `armour:heavy`, `dualWield` and `class:rogue` and not `item:armor`; `xpToNext(registries, 'weapon', 3)` costs 535 XP with the owner defaults; a linear fixture at base 100 and scaler 1.3 costs 490; a reaver's seeded fight pays `item:blade` exactly `(hits + blocks by cards the sword lent) × perHit` (+ `perWinEquipped`, × `killMult` when the blade killed — the kill is read from the HP the hit left) and `item:shield` the same for the shield's cards, kit and art cards named by the bare piece id included, never `dualWield`, never a `class:` track, and the run's ledger is empty until `applySkillXp`; a rogue with a knife and a sword pays `dualWield` equal to the blade; a schema-7 save loads with `skills: {}`; a fight saved mid-way restores its receipt and ledger and keeps recording, a pre-ledger snapshot resumes with empty ones; a gate on `skill: focus` is refused by name; a co-op guard cast on an ally pays the caster's seat and a seat's gate reads its own ledger; `balance.skill.xp.growth: 0.5` is refused by name.
 
 ### 13.4e Skill drafts: the level buys a pick from the track's own schools (plan phase 4b)
 
