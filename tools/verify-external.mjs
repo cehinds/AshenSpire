@@ -426,9 +426,9 @@ const dropFromCommon = (match) => (htmlFile, indexFile) => {
   const common = { ...pin.packs.common, sha256: sha256(Buffer.from(text)), ids: Object.keys(entries).length, objects: sizes.size, bytes: [...sizes.values()].reduce((a, b) => a + b, 0) };
   edit(htmlFile, PIN, () => `const ASSET_PACKS = ${JSON.stringify({ ...pin, packs: { ...pin.packs, common } })};\n`);
 };
-plant('a common index that lists no tile the map asks for', () => [html, indexOf('common')],
+plant('a common index missing one tile the map can ask for', () => [html, indexOf('common')],
   dropFromCommon((id) => id.startsWith('map-detail/')), /map-detail tiles the map can ask for/);
-plant('a common index that lists no track the score names', () => [html, indexOf('common')],
+plant('a common index missing one track the score names', () => [html, indexOf('common')],
   dropFromCommon((id) => /^music\/.+\.mp3$/.test(id)), /which the common index does not list/);
 plant('a common index without the music manifest', () => [html, indexOf('common')],
   dropFromCommon((id) => id === `${SHIPPED_MUSIC_FOLDER}/manifest.json`), /the shipped score cannot load/);

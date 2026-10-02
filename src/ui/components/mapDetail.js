@@ -52,7 +52,6 @@ export function mountMapDetail(port, surface, source) {
     loading.add(image);
     try {
       const url = assetUrl(tileId(art.assetHash, tile.key));
-      image.decoding = 'async';
       image.src = url; await image.decode();
       if (!disposed) cache.set(tile.key, url);
     } catch (error) {
@@ -80,7 +79,9 @@ export function mountMapDetail(port, surface, source) {
     level = detailLevel(art.levels,rect.width,rect.height,devicePixelRatio,level);
     desired = visibleTiles(level,{x0:(view.left-rect.left)/rect.width,y0:(view.top-rect.top)/rect.height,x1:(view.right-rect.left)/rect.width,y1:(view.bottom-rect.top)/rect.height});
     port.dataset.detailRequested = String(level.edge);
-    // Only a small visible set can enter the decoded cache, even at Fit.
+    // Only the small visible set is requested, even at Fit. `cache` only
+    // records which tiles have loaded (policy.cacheTiles bounds it); the
+    // browser's image cache holds the bytes, so evicting frees none.
     if (location.protocol !== 'file:') { paint(); pump(); }
   }
   const schedule = () => { if (!disposed && !frame) frame=requestAnimationFrame(update); };

@@ -871,7 +871,17 @@ Where the build differs from, or settles, §3.8 and §3.9 (2026-10-02):
   says which with `indexed`. A folder the player typed is always fetched by
   its literal path, even one spelled `music/` (music/README.md's own example;
   review of #1454). A single file and the source tree pass through unchanged,
-  and an absolute URL is left alone. `main.js`
+  and an absolute URL is left alone. Paths are resolved when the folder is
+  applied, so when the boot load failed (no source, the synth plays) and a
+  later Art quality switch loads, `musicHold().sourceArrived()` applies the
+  shipped score again through the new source.
+- **SPEC §7.4** still describes "the `music/` beside the page"; that wording is
+  left to step 8a (section 6, *Written rules*), as 3b left SPEC §2's status
+  row. The web edition reaches players only at step 6b.
+- **A tier switch keeps common.** Each load fetches the common index again;
+  when that fetch fails or misses its deadline on a switch, the entries the
+  earlier load verified (same pin, same base) are kept, so tiles, fonts and the
+  score do not fall back to bare paths for the rest of the session. `main.js`
   still applies the folder only when served over http(s), so `file://` keeps
   the synth (§3.9, unchanged).
 - **Only with an art index.** The common ids reach `assetUrl()` through the map
@@ -890,7 +900,10 @@ Where the build differs from, or settles, §3.8 and §3.9 (2026-10-02):
   no longer copies `map-detail/` or `music/` beside the HTML, and removes a
   copy an earlier build left there (under `build/` or `dist/` only, as for the
   retired `assets/` tree), because a copy would quietly serve a tile or a
-  track the index misses. The summary counts the tiles and score files the
+  track the index misses. Only a folder strictly inside `build/` or `dist/`
+  counts (`strictlyUnderBuild` in `tools/asset-pack.mjs`): `--out build` or
+  `--out dist` themselves keep the `music/` and `map-detail/` the single files
+  read. The summary counts the tiles and score files the
   common index lists instead.
 - **`verify-external` E**: the common index lists `music/manifest.json`, every
   track that manifest (read from its object) names, and every tile the map can
@@ -907,7 +920,8 @@ Where the build differs from, or settles, §3.8 and §3.9 (2026-10-02):
   `decodeAudioData`; and no request for a bare `music/` or `map-detail/` path.
   With the audio context running, every SFX cue also probes
   `assets/sfx/<id>.ogg` (the filename convention; no build ships one), so a
-  404 on that bare path is filtered by name, as `/api/lan/` already was.
+  404 on that bare path is filtered by name, as `/api/lan/` already was, and
+  only for an id that is an `SFX_RECIPES` key with no `SFX_MANIFEST` entry.
   Against the 3b runtime with this step's build (no copies) it is red on the
   bare requests, the missing manifest and the missing track.
 

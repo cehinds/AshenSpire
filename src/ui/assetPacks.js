@@ -42,7 +42,7 @@
 // map too. A single file (ASSET_MAP filled) and the source tree (nothing
 // stamped) never load anything here.
 
-import { ASSET_MAP, setBuiltInSource } from './assetmap.js';
+import { ASSET_MAP, setBuiltInSource, builtInSource } from './assetmap.js';
 import { sha256Hex } from './sha256.js';
 
 /* ASSET_PACKS_START */
@@ -81,6 +81,12 @@ export const BASE_SHARE = 0.25;
 
 let status = { state: 'idle', tier: null, requested: null, ids: 0, css: 0, failed: [] };
 let pending = null;
+// The last common index this page verified, with the pin it matched. A tier
+// switch fetches common again; when that fetch fails or misses its deadline,
+// these entries are kept rather than dropped, so the map tiles, the fonts and
+// the score do not fall back to bare paths for the rest of the session
+// (review of #1454). Used only while the pin names the same common index.
+let lastCommon = null;
 
 /** What the loader did: idle, none (nothing pinned), inline, loading, loaded or failed. */
 export function builtInArtStatus() {
@@ -245,6 +251,12 @@ export async function loadBuiltInPacks({
       const waited = await Promise.race([commonLoad.then(() => true), budget(left(), commonCtl, false)]);
       if (!waited) failed.push(`common: the index did not load within ${deadlineMs} ms; the art loads without it`);
     }
+    const commonSha = pin.packs.common?.sha256;
+    if (common) lastCommon = { sha: commonSha, base, map: common };
+    else if (lastCommon && lastCommon.sha === commonSha && lastCommon.base === base) {
+      common = lastCommon.map;
+      failed.push('common: kept the entries verified by the earlier load');
+    }
     const map = new Map(common || []);
     for (const [id, url] of art) map.set(id, url);
     // A tier switch the player has since replaced (stillWanted) publishes nothing.
@@ -308,28 +320,45 @@ export function whenBuiltInArtReady(fn, opts = {}) {
  * apply it at once, before the first screen, exactly as before step 3a.
  *   apply(folder, o)  — the settings path: apply now, or hold; `o` (e.g.
  *                       { indexed }) is passed to configureMusic with it
+ *   sourceArrived()   — a built-in source landed later (a tier switch after a
+ *                       failed boot load): an indexed configure that ran
+ *                       without one runs again
  *   firstScreen(show) — draw the first screen, then release the hold (always,
  *                       even if `show` throws)
  */
-export function musicHold({ pinned = packsPinned(), configureMusic }) {
+export function musicHold({ pinned = packsPinned(), configureMusic, hasSource = () => !!builtInSource() }) {
   let waiting = !!pinned;
   let held = false;
   let folder;
   let opts = {};
+  // True when the last configure asked for the shipped score through the index
+  // while no built-in source was set (the boot load failed): its paths missed
+  // and the synth plays. sourceArrived() configures again once a source lands.
+  let missed = false;
+  const run = () => {
+    missed = !!opts.indexed && !hasSource();
+    configureMusic({ ...opts, folder });
+  };
   return {
     apply(next, extra = {}) {
       folder = next;
       opts = extra;
       if (waiting) held = true;
-      else configureMusic({ ...opts, folder });
+      else run();
     },
     firstScreen(show) {
       try {
         show();
       } finally {
         waiting = false;
-        if (held) { held = false; configureMusic({ ...opts, folder }); }
+        if (held) { held = false; run(); }
       }
+    },
+    // A source arrived later (a tier switch after a failed boot load): the
+    // shipped score is read again through it. A player's own folder, or a
+    // configure that already had a source, is left alone.
+    sourceArrived() {
+      if (!waiting && missed && opts.indexed && hasSource()) run();
     },
   };
 }
@@ -405,6 +434,7 @@ export function applyAssetCss(map, { css = ASSET_CSS, doc = globalThis.document 
 /** For tests: forget the load. */
 export function resetBuiltInArt() {
   pending = null;
+  lastCommon = null;
   status = { state: 'idle', tier: null, requested: null, ids: 0, css: 0, failed: [] };
   setBuiltInSource(null);
 }

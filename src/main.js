@@ -3994,5 +3994,7 @@ const dropBootLine = bootLine(app);
 // The boot load asks for the tier Art quality names (Auto decides from the
 // layout applyUiScale has already written); a switch later re-points the
 // images on screen the same way the first load does.
-onTierArrived(builtInArtArrived);
+// A tier switch re-points the images on screen and, when the boot load had
+// failed, lets the shipped score be read through the new source.
+onTierArrived((map) => { builtInArtArrived(map); bootMusic.sourceArrived(); });
 whenBuiltInArtReady(() => bootMusic.firstScreen(() => { dropBootLine(); showFirstScreen(); }), { onSource: builtInArtArrived, tier: requestedTier(activeSettings) });

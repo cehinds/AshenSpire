@@ -285,6 +285,26 @@ test('a common index that hangs or fails never throws away a verified art map', 
   resetBuiltInArt();
 });
 
+test('a later load (a tier switch) whose common fetch fails keeps the common entries the earlier load verified', async () => {
+  resetBuiltInArt();
+  const tree = packTree({ tier: 'high' });
+  const first = await loadBuiltInPacks(opts(tree));
+  assert.equal(first.state, 'loaded');
+  assert.equal(assetUrl('assets/fonts/x.woff2'), `./objects/aa/${A}.woff2`, 'common loaded at boot');
+  // The switch: same pin, light asked for, and common now 404s.
+  const broken = async (url) => (/packs\/common-/.test(url) ? { ok: false, status: 404 } : tree.fetchImpl(url));
+  const second = await loadBuiltInPacks(opts(tree, { fetchImpl: broken, tier: 'light' }));
+  assert.equal(second.state, 'loaded');
+  assert.match(second.failed.join(';'), /common: kept the entries verified by the earlier load/);
+  assert.equal(assetUrl('assets/fonts/x.woff2'), `./objects/aa/${A}.woff2`, 'common survives the switch');
+  // A different common pin is never served from the earlier entries.
+  const other = { ...tree.pin, packs: { ...tree.pin.packs, common: { ...tree.pin.packs.common, sha256: 'd'.repeat(64) } } };
+  const third = await loadBuiltInPacks(opts(tree, { pin: other, fetchImpl: broken }));
+  assert.equal(third.state, 'loaded');
+  assert.equal(assetUrl('assets/fonts/x.woff2'), 'assets/fonts/x.woff2', 'another pin: left out');
+  resetBuiltInArt();
+});
+
 test('common is fetched alongside the art tiers, not after them', async () => {
   resetBuiltInArt();
   const tree = packTree({ tier: 'high' });
@@ -338,6 +358,27 @@ test('the music folder: a single file applies it before the first screen, as on 
   passes.firstScreen(() => {});
   passes.apply('music/', { indexed: false });
   assert.deepEqual(seen, [{ indexed: true, folder: 'music' }, { indexed: false, folder: 'music/' }], 'the options travel with the folder, held or not');
+
+  // A failed boot load: the shipped score was configured with no source, so it
+  // is configured again once a later tier switch sets one; a player's folder,
+  // or a configure that already had a source, is not.
+  let source = false;
+  const again = [];
+  const late = musicHold({ pinned: true, configureMusic: (o) => again.push(o.folder), hasSource: () => source });
+  late.apply('music', { indexed: true });
+  late.firstScreen(() => {});
+  late.sourceArrived();
+  assert.deepEqual(again, ['music'], 'no source yet: nothing to re-apply');
+  source = true;
+  late.sourceArrived();
+  assert.deepEqual(again, ['music', 'music'], 'the source arrived: the shipped score is read through it');
+  late.sourceArrived();
+  assert.deepEqual(again, ['music', 'music'], 'once only');
+  source = false;
+  late.apply('mine', { indexed: false });
+  source = true;
+  late.sourceArrived();
+  assert.deepEqual(again, ['music', 'music', 'mine'], 'a typed folder is never re-applied');
 });
 
 test('main.js routes the boot music and the first screen through musicHold', () => {
@@ -345,6 +386,7 @@ test('main.js routes the boot music and the first screen through musicHold', () 
   assert.match(main, /const bootMusic = musicHold\(\{ configureMusic:/);
   assert.match(main, /bootMusic\.apply\(folder, \{ indexed \}\)/);
   assert.match(main, /const indexed = !settings\.musicFolder && served;/, 'only the shipped score is indexed');
+  assert.match(main, /onTierArrived\(\(map\) => \{ builtInArtArrived\(map\); bootMusic\.sourceArrived\(\); \}\)/, 'a tier switch can bring the score back');
   assert.match(main, /whenBuiltInArtReady\(\(\) => bootMusic\.firstScreen\(\(\) => \{ dropBootLine\(\); showFirstScreen\(\); \}\)/);
   assert.doesNotMatch(main, /audio\.configureMusic\(\{ folder \}\)/, 'no second, unheld call');
 });

@@ -16,7 +16,7 @@ import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
 import { MOBILE_ASSET_DIR, MOBILE_BUNDLE_BUDGET_BYTES, distinctAssetId } from './mobileart-policy.mjs';
 import { headMetaTags } from './head-meta.mjs';
-import { writePacks, guardOut, realOut, objectPath } from './asset-pack.mjs';
+import { writePacks, strictlyUnderBuild, objectPath } from './asset-pack.mjs';
 import { externalizeCss, newTemplate, templateValue, slotIds } from './asset-css.mjs';
 import { sourceDigest, stampSource, bumpOrdinal, padOrdinal, ORDINAL_HOME, VERSION_MODULE, RUN_PATH_BUNDLE, EDITION_FULL, EDITION_MOBILE, EDITION_LIGHT } from './buildversion.mjs';
 import { dirname, resolve, relative, posix, extname } from 'node:path';
@@ -1157,7 +1157,9 @@ if (EXTERNAL_ART) {
   // build/ or dist/ (the asset-pack guard above already refused anything else
   // inside it), so a mistyped --out can never name the source tree, and a
   // folder outside the checkout keeps whatever its owner put there.
-  const underBuild = /^(build|dist)\//.test(`${relative(realOut(ROOT), guardOut(OUT_DIR, ROOT)).split(/[\\/]/g).join('/')}/`);
+  // A folder INSIDE build/ or dist/ only: build/ and dist/ themselves carry the
+  // map-detail/ and music/ the single files read (strictlyUnderBuild).
+  const underBuild = strictlyUnderBuild(OUT_DIR, ROOT);
   const retired = [];
   for (const dir of [EXTERNAL_ASSET_DIR, resolve(OUT_DIR, 'map-detail'), resolve(OUT_DIR, 'music')]) {
     if (underBuild && existsSync(dir)) {

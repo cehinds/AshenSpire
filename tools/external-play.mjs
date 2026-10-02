@@ -47,6 +47,7 @@ import { serve } from './serve.mjs';
 import { resolve, dirname, relative } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { objectPath } from './asset-pack.mjs';
+import { SFX_RECIPES, SFX_MANIFEST } from '../src/content/sfx.js';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -120,6 +121,15 @@ function wrongTier(url, tier = EXPECT_TIER) {
   return `only the ${[...packs].join('/')} index lists it`;
 }
 
+/** True for the SFX convention probe of a synth-only cue: `assets/sfx/<recipe id>.ogg` with no SFX_MANIFEST entry. */
+function sfxProbe404(url) {
+  const m = /^https?:\/\/[^/]+\/assets\/sfx\/([^/?#]+)\.ogg$/.exec(String(url));
+  if (!m) return false;
+  let id;
+  try { id = decodeURIComponent(m[1]); } catch { return false; }
+  return Object.hasOwn(SFX_RECIPES, id) && !Object.hasOwn(SFX_MANIFEST, id);
+}
+
 function connect(wsUrl) {
   const ws = new WebSocket(wsUrl); let id = 1; const pending = new Map(); const subs = [];
   ws.addEventListener('message', (e) => {
@@ -187,12 +197,14 @@ cdp.on((m) => {
   // assets/sfx/<id>.ogg is the SFX filename convention (src/ui/audio.js sfx(),
   // content/sfx.js): with the context running (autoplay is allowed here, for
   // the score) every cue plays its synth and probes for a sample file, and no
-  // build ships one (SFX_MANIFEST is empty). The source tree and the single
-  // file 404 on it identically. Only a BARE path is filtered: an id an index
-  // listed would have resolved to objects/ and is checked like any other.
+  // build ships one. The source tree and the single file 404 on it
+  // identically. Only a BARE path is filtered, and only for a cue that is a
+  // synth recipe with no SFX_MANIFEST entry (sfxProbe404): an override the
+  // manifest names, whose file a build forgot, still fails here, and an id an
+  // index listed would have resolved to objects/ and is checked like any other.
   if (m.method === 'Network.responseReceived' && m.params.response.status >= 400
       && !/\/api\/lan\//.test(m.params.response.url) && !/favicon\.ico/i.test(m.params.response.url)
-      && !(m.params.response.status === 404 && /^https?:\/\/[^/]+\/assets\/sfx\/[^/?#]+\.ogg$/.test(m.params.response.url))
+      && !(m.params.response.status === 404 && sfxProbe404(m.params.response.url))
       && !(m.params.response.status === 404 && removedIndex(m.params.response.url))) {
     failures.push(`${m.params.response.status} ${m.params.response.url.replace(/^https?:\/\/[^/]+\//, '')}`);
   }

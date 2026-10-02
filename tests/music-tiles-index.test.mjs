@@ -108,6 +108,16 @@ test('a Custom music folder spelled music/ is the player\'s own: fetched by its 
   }
 });
 
+test('bundle.mjs clears old map-detail/ and music/ copies only strictly inside build/ or dist/', async () => {
+  const { strictlyUnderBuild } = await import('../tools/asset-pack.mjs');
+  const { resolve } = await import('node:path');
+  const root = new URL('..', import.meta.url).pathname;
+  for (const out of ['build', 'dist', 'build/', 'src', 'music']) assert.equal(strictlyUnderBuild(resolve(root, out), root), false, out);
+  for (const out of ['build/web', 'dist/web', 'build/a/b']) assert.equal(strictlyUnderBuild(resolve(root, out), root), true, out);
+  const bundle = readFileSync(new URL('../tools/bundle.mjs', import.meta.url), 'utf8');
+  assert.match(bundle, /const underBuild = strictlyUnderBuild\(OUT_DIR, ROOT\);/);
+});
+
 test('a map-detail tile id is the path the tree and the pack both use', () => {
   assert.equal(tileId('c0903c6d0ba56c76', '512/0-1'), 'map-detail/c0903c6d0ba56c76/512/0-1.webp');
   const manifest = JSON.parse(readFileSync(new URL('../art-manifest.json', import.meta.url), 'utf8'));
