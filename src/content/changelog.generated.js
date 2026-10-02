@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Fight sounds land at the right moment",
     "detail": "A boss fight's first draw and turn sting now play when its name card lifts, not hidden behind it. In LAN co-op your turn stings once per round however many players are in the fight, and joining or reloading a fight after someone has already acted no longer replays that action's sounds.",
-    "build": "0.7.1.786",
+    "build": "0.7.1.787",
     "pullRequest": 1485,
     "url": "https://github.com/cehinds/AshenSpire/pull/1485"
+  },
+  {
+    "id": "pr-1459",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "A greyed-out Next now says why",
+    "detail": "When a Next, Continue, Confirm, Begin or Enter button is greyed out because you still have something to do, a short line under it now tells you what, for example \"Choose a class.\", \"Choose a response first.\" or \"No saved climb yet.\" Before, the reason only showed in a tooltip, which you never see on a phone. This covers character creation, events, conversations, card rewards, the title screen and save slots, the discard choice, the atlas, the Smith, and the rewards screen while a level is waiting to be claimed.",
+    "build": "0.7.1.786",
+    "pullRequest": 1459,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1459"
   },
   {
     "id": "pr-1484",

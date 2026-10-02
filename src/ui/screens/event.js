@@ -23,6 +23,7 @@ import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { mountChoiceBody, setChoiceStatus } from '../components/choiceBody.js';
 import { eventResponseStatus } from '../models/ChoiceBodyModel.js';
 import { t } from '../strings.js';
+import { reasonWhenDisabled } from '../components/refusal.js';
 
 export function mountEvent(app, opts) {
   // `opts`, not `options`: the kit's `options()` list helper is imported above,
@@ -179,6 +180,9 @@ export function mountEvent(app, opts) {
   // Continue is in the foot from the start and allowed only once a response
   // is taken; until then it is disabled, never a way out.
   cont.addEventListener('click', () => { if (!cont.disabled) onDone(); });
+  // Until then the reason stands under it as text (FINISH §6), not only a grey button.
+  const contReason = reasonWhenDisabled(cont, () => t('event.continue.reason'));
+  contReason();
 
   // Smart default (keyboard/gamepad): land on the first available choice.
   if (isEngaged()) setTimeout(() => focusFirst('#choices button'), 0);
@@ -196,6 +200,7 @@ export function mountEvent(app, opts) {
     setChoiceStatus(door, status(eventResponseStatus(responses, { resolved: true })));
     cont.textContent = run.combatEntered ? t('event.continue.combat') : t('event.continue');
     cont.disabled = false;
+    contReason();
     if (isEngaged()) setTimeout(() => focusFirst('.event-door .modal-foot button'), 0);
   }
 }
