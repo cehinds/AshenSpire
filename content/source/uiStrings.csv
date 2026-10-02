@@ -1000,7 +1000,8 @@ prologueEditor.saveFailed,,Could not save this change. Your previous value is st
 prologueEditor.liveNote,,Live preview · save first-step edits to project JSON when ready,,
 prologueEditor.project.unchanged,,Already using project defaults.,,
 prologueEditor.project.saving,,Saving project JSON…,,
-prologueEditor.followStyle,,Use opening style,,
+prologueEditor.followStyle,,Use opening style,,Remove this scene’s override for this setting
+prologueEditor.followingStyle,,Following opening style,,
 prologueEditor.travellerWidth,,Traveller width,,
 reward.level.choice.title,,Level choice,,
 reward.level.skill.eyebrow,,Skill Level Up,,

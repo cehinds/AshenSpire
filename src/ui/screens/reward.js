@@ -691,8 +691,8 @@ export function mountRewards(app, {
     }
 
     attachTooltip(cont, () => (mode === 'auto'
-      ? `<div class="tt-title">Continue</div>${esc('Takes every pending reward; a card offer is picked for you.')}`
-      : `<div class="tt-title">Continue</div>${esc('Done — only what you chose comes along.')}`));
+      ? `<div class="tt-title">${esc(t('reward.continue'))}</div>${esc('Takes every pending reward; a card offer is picked for you.')}`
+      : `<div class="tt-title">${esc(t('reward.continue'))}</div>${esc('Done — only what you chose comes along.')}`));
     const finish = () => {
       // 'cardRewards' is the stream that rolled this offer (STREAM_NAMES is a
       // closed set); the auto pick advances the same stream, so a seeded run

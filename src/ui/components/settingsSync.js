@@ -277,7 +277,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
           <span class="as-labelstack"><span class="ls-label">Without GitHub</span>
             <span class="ls-hint set-note">The same file, by hand: copy it, or download it and load it with Load settings.</span></span>
           <span class="r-trail set-sync-acts">
-            <button type="button" class="as-btn" data-sync="copy">Copy JSON</button>
+            <button type="button" class="as-btn" data-sync="copy">${esc(t('settingsSync.copy'))}</button>
             <button type="button" class="as-btn" data-sync="download">Download JSON</button>
           </span>
         </div>

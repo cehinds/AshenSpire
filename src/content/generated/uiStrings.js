@@ -6510,6 +6510,13 @@ export const uiStrings = [
     "extends": "",
     "short": "Use opening style",
     "full": "",
+    "tip": "Remove this scene’s override for this setting"
+  },
+  {
+    "id": "prologueEditor.followingStyle",
+    "extends": "",
+    "short": "Following opening style",
+    "full": "",
     "tip": ""
   },
   {

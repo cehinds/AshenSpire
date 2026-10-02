@@ -73,7 +73,9 @@ export const drawTipHtml = (count, { browse = true } = {}) => `<div class="tt-ti
 // counts, not cards), the same switch drawTipHtml takes.
 export const spentTipHtml = ({ browse = true } = {}) => `<div class="tt-title">Discard and Exhaust</div>${browse ? 'Separate views and counts' : 'Separate counts'}. Discard can reshuffle; exhausted cards remain out for this fight.`;
 export const SPENT_TIP_HTML = spentTipHtml();
-export const POTIONS_TIP_HTML = '<div class="tt-title">Potions</div>Choose a healing, mana or carried potion. Only Use spends it.';
+// The title is the button's own row (potions.run.title, line 51), so a reword
+// moves the face and the tooltip that names it together.
+export const POTIONS_TIP_HTML = `<div class="tt-title">${esc(t('potions.run.title'))}</div>Choose a healing, mana or carried potion. Only Use spends it.`;
 
 /**
  * Fill the Actions, Draw and Discard/Exhaust cells from plain counts. The

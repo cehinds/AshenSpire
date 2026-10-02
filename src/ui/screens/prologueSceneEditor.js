@@ -6,7 +6,7 @@ import {
   prologueConfig, prologueRows, prologueSequence, prologueSettingKey,
   prologueStaging, PROLOGUE_DEFAULTS, PROLOGUE_STAGE_FIELDS,
 } from '../../model/prologue.js';
-import { t } from '../strings.js';
+import { t, tTip } from '../strings.js';
 
 const STAGE_BY_KEY = new Map(PROLOGUE_STAGE_FIELDS.map(field => [field.key, field]));
 const SCENE_GROUPS = [
@@ -362,9 +362,9 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
     title.htmlFor = `pse-${key.replace(/[^a-z0-9]/gi, '-')}`;
     head.append(title);
     if (reset) {
-      const follow = element('button', 'pse-follow', settings[key] === undefined ? 'Following opening style' : 'Use opening style');
+      const follow = element('button', 'pse-follow', t(settings[key] === undefined ? 'prologueEditor.followingStyle' : 'prologueEditor.followStyle'));
       follow.type = 'button'; follow.disabled = settings[key] === undefined;
-      follow.title = 'Remove this scene’s override for this setting';
+      follow.title = tTip('prologueEditor.followStyle');
       follow.addEventListener('click', event => {
         event.preventDefault();
         if (saved(key, undefined)) { drawFields(); schedulePreview(); }

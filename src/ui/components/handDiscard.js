@@ -15,7 +15,7 @@ export function openHandDiscard(registries, plan, onConfirm, opener) {
   const confirmReason = reasonWhenDisabled(confirm, () => t('handDiscard.confirm.reason', { minimum: plan.minimum }));
   const refresh = () => {
     count.textContent = `${selected.size} selected · ${plan.minimum ? `Choose at least ${plan.minimum}, up to ${plan.maximum}.` : `Choose up to ${plan.maximum}, or keep all.`} Cards resolve before the next draw.`;
-    confirm.textContent = selected.size ? `Discard ${selected.size} & end turn` : 'Keep all & end turn';
+    confirm.textContent = selected.size ? `Discard ${selected.size} & end turn` : t('handDiscard.keepAllEndTurn');
     confirm.disabled = selected.size < plan.minimum;
     confirmReason();
     controls.forEach(([input, id]) => { input.disabled = !selected.has(id) && selected.size >= plan.maximum; });
