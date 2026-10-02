@@ -756,3 +756,16 @@ deckEditor.empty.collection,,No card you own matches these filters.,,
 deckEditor.keys,,"Tap, ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Done · {cancel} Cancel",,
 deckEditor.done,,Done,Keep this deck.,Done
 deckEditor.cancel,,Cancel,Put the deck back exactly as it was when the editor opened.,Cancel
+# ---- why a forward control is off (docs/FINISH.md §6) ------------------------
+# The visible line under a disabled Next / Continue / Confirm (refusal.js
+# reasonNote). Short and plain: what the player does to turn it on.
+event.continue.reason,,Choose a response first.,Continue opens once you take one of the responses.,
+dialogue.continue.reason,,Choose a reply first.,Continue opens once you answer.,
+reward.confirm.reason,,Choose one first.,Confirm opens once you pick an option.,
+title.continue.reason,,No saved climb yet.,Continue resumes a saved climb; start one with New.,
+title.slots.continue.reason,,Choose a slot first.,The forward button opens once you pick a save slot.,
+handDiscard.confirm.reason,,Choose at least {minimum}.,This turn needs at least {minimum} cards discarded.,
+map.enter.reason.none,,Choose a place on the map.,Enter opens once you pick a reachable place.,
+map.enter.reason.unreachable,,You cannot reach this from here.,Pick a place connected to where you stand.,
+atlas.enter.reason.none,,Choose a place first.,Enter opens once you pick a place.,
+atlas.enter.reason.closed,,No open road to here yet.,Pick a place on an open road or where you stand.,

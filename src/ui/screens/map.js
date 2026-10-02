@@ -40,6 +40,7 @@ import { runHudHtml, wireRunHud } from '../components/runHud.js';
 import { mountRunPotions } from '../components/runPotions.js';
 import { button, el, popover, row } from '../kit/index.js';
 import { t } from '../strings.js';
+import { reasonWhenDisabled } from '../components/refusal.js';
 import { pickMapNode, projectMapContext } from '../models/MapSelectionModel.js';
 import { reducedMotionRequested } from '../motion.js';
 
@@ -169,7 +170,12 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   const context = el('section', { class: 'map-context', 'aria-label': t('map.context.aria') });
   const backButton = button({ label: t('map.back'), id: 'map-back', className: 'map-back' });
   const enterButton = button({ label: t('map.enter'), weight: 'primary', id: 'map-enter', className: 'map-enter', disabled: true });
-  const trayReveal = el('div', { class: 'map-tray-reveal' }, [context, el('div', { class: 'map-tray-pair' }, [backButton, enterButton])]);
+  const trayPair = el('div', { class: 'map-tray-pair' }, [backButton, enterButton]);
+  const trayReveal = el('div', { class: 'map-tray-reveal' }, [context, trayPair]);
+  // Why Enter is off, as text under the pair (FINISH §6). The tray opens only
+  // on a chosen node, so the line it shows is the unreachable one.
+  let enterReasonText = '';
+  const enterReason = reasonWhenDisabled(enterButton, () => enterReasonText, { after: trayPair });
   trayReveal.inert = true;
   const potionsHost = el('div', { class: 'map-potions' });
   const trayRow = el('div', { class: 'map-tray-row' });
@@ -284,6 +290,8 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
           .filter(Boolean).map((text) => el('p', { class: 'map-context-line', text })),
       ]));
     enterButton.disabled = !view.canEnter;
+    enterReasonText = view.empty ? t('map.enter.reason.none') : t('map.enter.reason.unreachable');
+    enterReason();
     enterButton.textContent = view.canEnter ? (mapAdapter?.enterLabel?.(id) || t('map.enterNamed', { name: mapAdapter ? map.nodes[id].name : view.kindName })) : t('map.enter');
   }
 

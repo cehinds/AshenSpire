@@ -4859,5 +4859,75 @@ export const uiStrings = [
     "short": "Cancel",
     "full": "Put the deck back exactly as it was when the editor opened.",
     "tip": "Cancel"
+  },
+  {
+    "id": "event.continue.reason",
+    "extends": "",
+    "short": "Choose a response first.",
+    "full": "Continue opens once you take one of the responses.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.continue.reason",
+    "extends": "",
+    "short": "Choose a reply first.",
+    "full": "Continue opens once you answer.",
+    "tip": ""
+  },
+  {
+    "id": "reward.confirm.reason",
+    "extends": "",
+    "short": "Choose one first.",
+    "full": "Confirm opens once you pick an option.",
+    "tip": ""
+  },
+  {
+    "id": "title.continue.reason",
+    "extends": "",
+    "short": "No saved climb yet.",
+    "full": "Continue resumes a saved climb; start one with New.",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.continue.reason",
+    "extends": "",
+    "short": "Choose a slot first.",
+    "full": "The forward button opens once you pick a save slot.",
+    "tip": ""
+  },
+  {
+    "id": "handDiscard.confirm.reason",
+    "extends": "",
+    "short": "Choose at least {minimum}.",
+    "full": "This turn needs at least {minimum} cards discarded.",
+    "tip": ""
+  },
+  {
+    "id": "map.enter.reason.none",
+    "extends": "",
+    "short": "Choose a place on the map.",
+    "full": "Enter opens once you pick a reachable place.",
+    "tip": ""
+  },
+  {
+    "id": "map.enter.reason.unreachable",
+    "extends": "",
+    "short": "You cannot reach this from here.",
+    "full": "Pick a place connected to where you stand.",
+    "tip": ""
+  },
+  {
+    "id": "atlas.enter.reason.none",
+    "extends": "",
+    "short": "Choose a place first.",
+    "full": "Enter opens once you pick a place.",
+    "tip": ""
+  },
+  {
+    "id": "atlas.enter.reason.closed",
+    "extends": "",
+    "short": "No open road to here yet.",
+    "full": "Pick a place on an open road or where you stand.",
+    "tip": ""
   }
 ];

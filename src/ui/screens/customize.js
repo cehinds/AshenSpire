@@ -1712,7 +1712,8 @@ export function mountCustomize(app, {
     classTools.hidden = id !== 'class';
     equipmentTools.hidden = id !== 'equipment';
     if (id === 'review') fillSummary($('#cz-review-summary'));
-    refreshGates();
+    // Begin's refresh too: its visible reason follows it in and out of view.
+    updateStartRefusal();
     fitStage();
   }
   // EVERY CHOICE IN VIEW WITHOUT SCROLLING (owner, 2026-09-19). The class pane

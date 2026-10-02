@@ -70,6 +70,7 @@ import { nodeTokens } from '../../model/tree.js';
 import { el, modalHead, modalFooter, button, meter } from '../kit/index.js';
 // Every sentence this screen says is a row in content/source/uiStrings.csv.
 import { t, tFull, tTip } from '../strings.js';
+import { reasonWhenDisabled } from '../components/refusal.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { unusedInstanceId, ownedCopies } from '../../model/deckRules.js';
 
@@ -876,6 +877,9 @@ export function mountRewards(app, {
     let confirming = false;
     const message = el('p', { role: 'status', class: 'reward-confirm-status', hidden: true });
     strip.after(message);
+    // Nothing chosen yet: the reason stands under Confirm as text (FINISH §6).
+    // A press in flight is a beat, not a reason, so it stays quiet.
+    const confirmReason = reasonWhenDisabled(confirmButton, () => (selectedCardId ? null : t('reward.confirm.reason')));
     // ONE SELECTION PATH. The strip's own click and the inspect door's Choose
     // both land here, so a card chosen from inside the door is lit in the
     // strip behind it and Back still shows what you picked.
@@ -893,6 +897,7 @@ export function mountRewards(app, {
         candidate.setAttribute('aria-checked', String(selected));
       }
       confirmButton.disabled = false;
+      confirmReason();
       message.hidden = true;
     };
     for (const option of isLevelChoice ? row.options : []) {
@@ -971,6 +976,7 @@ export function mountRewards(app, {
       strip.appendChild(el);
     }
     confirmButton.disabled = !selectedCardId;
+    confirmReason();
     confirmButton.addEventListener('click', () => {
       if (!selectedCardId || confirming || taken()) return;
       confirming = true;

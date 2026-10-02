@@ -27,6 +27,78 @@
 
 import { attachTooltip, showTooltipAt, hideTooltip, esc } from './tooltip.js';
 
+// ---- the reason as VISIBLE TEXT (docs/FINISH.md §6) -------------------------
+// A tooltip and `aria-disabled` are not enough for a Next / Continue / Confirm
+// that refuses: a player on a phone never hovers, and a sighted player never
+// reads aria. So every refusing forward control also writes its reason as a
+// line of text under it — the kit's FieldNote (kit.css `.as-fieldnote`), worn
+// with `.as-reasonnote`. The line sits under the control's button row when it
+// stands in one (a footer's buttons stay one row), else right after the
+// control, and it is hidden whenever the control is usable or itself hidden.
+const ROW = '.modal-btnrow, .as-choicerow';
+let noteSerial = 0;
+
+/**
+ * reasonNote(el, { after }) → show(text)
+ *
+ * Gives `el` its visible reason line and returns the one writer for it:
+ * `show('Choose a card first.')` puts the sentence up, `show(null)` (or '')
+ * takes it down. `after` names the node the line follows when the default
+ * seat (the enclosing button row, else the control) is not the right one.
+ * The line is seated lazily, so a control built before it is mounted still
+ * gets its line on the first show after (or the microtask after) it lands.
+ */
+export function reasonNote(el, { after = null } = {}) {
+  if (!el) return () => {};
+  const id = `reason-note-${++noteSerial}`;
+  const note = document.createElement('p');
+  note.className = 'as-fieldnote as-reasonnote';
+  note.id = id;
+  note.setAttribute('role', 'status');
+  note.setAttribute('aria-live', 'polite');
+  note.hidden = true;
+  const described = (el.getAttribute('aria-describedby') || '').split(/\s+/).filter(Boolean);
+  if (!described.includes(id)) el.setAttribute('aria-describedby', [...described, id].join(' '));
+  let text = '';
+  const seat = () => {
+    if (note.isConnected) return;
+    const anchor = after || (el.closest ? el.closest(ROW) : null) || el;
+    if (anchor.parentNode) anchor.after(note);
+  };
+  const paint = () => {
+    seat();
+    note.textContent = text;
+    note.hidden = !text || !!el.hidden;
+  };
+  queueMicrotask(paint);
+  return function show(next) {
+    text = String(next == null ? '' : next).trim();
+    paint();
+  };
+}
+
+/**
+ * reasonWhenDisabled(el, reasonFn, options) → refresh()
+ *
+ * For a forward control the screen disables natively (`el.disabled`) or marks
+ * `aria-disabled="true"`: call `refresh()` wherever the screen changes that
+ * state and the visible line follows it. `reasonFn()` is read only while the
+ * control refuses. It may answer null for a refusal that is only a beat long
+ * (an entrance still playing, a write in flight): those clear by themselves,
+ * and a line that flashes up and away reads as noise, not as a reason.
+ * tools/disabled-reason.mjs is what holds every lasting refusal to a reason.
+ */
+export function reasonWhenDisabled(el, reasonFn, options = {}) {
+  if (!el) return () => {};
+  const show = reasonNote(el, options);
+  return function refresh() {
+    const refusing = !!el.disabled || el.getAttribute('aria-disabled') === 'true';
+    const why = refusing ? String(reasonFn() ?? '').trim() : '';
+    show(why);
+    return why;
+  };
+}
+
 /** How long a tapped reason stays up before it gets out of the way (ms). */
 const TAP_MS = 4000;
 let tapTimer = null;
@@ -109,8 +181,9 @@ function say(el, ev, why) {
  * handler asks reasonFn the same question — one home for the condition, and no
  * dependence on which listener happens to be registered first.
  */
-export function refusesWhen(el, reasonFn, otherwise) {
+export function refusesWhen(el, reasonFn, otherwise, noteOptions = {}) {
   if (!el) return () => {};
+  const show = reasonNote(el, noteOptions);
   const why = () => {
     const r = reasonFn();
     return r == null ? null : String(r);
@@ -126,6 +199,8 @@ export function refusesWhen(el, reasonFn, otherwise) {
       el.removeAttribute('aria-disabled');
       delete el.dataset.refusal;
     }
+    // The same sentence, as text the player can read without asking.
+    show(now);
   }
 
   attachTooltip(el, () => {

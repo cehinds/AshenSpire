@@ -606,6 +606,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
 }
 .as-titlemenu .tm-entry:hover, .as-titlemenu .tm-entry:focus-visible { color: var(--gold); background: transparent; box-shadow: none; }
 .as-titlemenu .tm-entry:disabled { color: var(--muted); background: transparent; }
+.as-titlemenu .tm-reason { margin: -0.4rem 0 0.6rem; padding: 0; border: 0; color: var(--muted); text-align: center; }
 .as-titlemenu > .as-ornament { margin-top: 1.35rem; margin-inline: auto; }
 .as-titlemenu .tm-foot { --track: 0.2em; margin-top: 1.5rem; color: var(--muted); font-size: 1.05rem; letter-spacing: var(--track); text-indent: var(--track); text-transform: uppercase; }
 
@@ -1728,6 +1729,15 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 /* ═══ FIELD NOTE — the sentence under a field that refuses ═════════════════ */
 .as-fieldnote { flex: 1 1 100%; margin: 0; padding-left: 0.8rem; border-left: 2px solid var(--danger); color: var(--parchment); font-size: 1.2rem; line-height: 1.4; }
 .as-row.setting input[aria-invalid="true"] { border-color: var(--danger); }
+/* The same note under a forward control that refuses (refusal.js reasonNote):
+   the reason a Next / Continue / Confirm is off, as text, never only a tooltip.
+   Its own floor keeps it readable wherever a screen shrinks its type. */
+.as-reasonnote { display: block; flex: 1 1 100%; width: 100%; box-sizing: border-box; margin: 0.4rem 0 0; font-size: max(11px, 1.2rem); text-align: start; }
+.as-reasonnote[hidden] { display: none; }
+/* In a foot (a flex row), the shown line takes its own row under the buttons,
+   on the primary's side. */
+.modal-foot:has(> .as-reasonnote:not([hidden])), .as-foot:has(> .as-reasonnote:not([hidden])) { flex-wrap: wrap; }
+.modal-foot > .as-reasonnote, .as-foot > .as-reasonnote { order: 2; margin: 0; padding: 0 0.8rem 0 0; border-left: 0; border-right: 2px solid var(--danger); text-align: end; }
 
 /* ═══ STACK — a column of kit pieces with one gap ══════════════════════════ */
 .as-stack { display: flex; flex-direction: column; gap: 1.2rem; min-width: 0; width: 100%; }
