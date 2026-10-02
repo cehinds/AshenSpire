@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1474",
+    "id": "pr-1458",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "Turning on \"Use flasks outside combat\" now works straight away on the map",
-    "detail": "Turning the setting on from the map's menu used to leave the Potions control refusing Drink until you left the map. Now the map updates as soon as you change it, and a drink taken there is saved. Behind the scenes, new browser checks open every flask menu (in combat, on the map and in the room rail) and confirm each one offers the same actions and does exactly what you pick.",
+    "summary": "Behind the scenes: no CI job runs longer than 20 minutes",
+    "detail": "Nothing you play changes. The slowest automated checks now run in parallel pieces, so every check still runs but no single job takes more than 20 minutes.",
     "build": "0.7.1.770",
-    "pullRequest": 1474,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1474"
+    "pullRequest": 1458,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1458"
   },
   {
     "id": "pr-1470",

@@ -2017,7 +2017,16 @@ async function selftest() {
       expect: 'release standalone changelog gained navigable anchor',
     },
   ];
-  for (const plant of treePlants) {
+  // SHARDS (tools/doorplant.mjs SHARDS; `--shard i/n` or DOORPLANT_SHARD). The
+  // copied-tree plants are the slow half — a whole-repo copy and a browser child
+  // each — so CI spreads them across parallel jobs by index mod count. The
+  // in-process corpora above and the order corpus below are seconds and run in
+  // every shard. Unsharded runs every tree plant, as before.
+  const { resolveShard, selectShard } = await import('./doorplant.mjs');
+  const shard = resolveShard();
+  const shardPlants = selectShard(treePlants, shard);
+  if (shard) console.log(`about-changelog selftest: shard ${shard.index}/${shard.count} runs ${shardPlants.length} of ${treePlants.length} copied-tree plants`);
+  for (const plant of shardPlants) {
     const tempParent = mkdtempSync(join(tmpdir(), 'about-changelog-plant-'));
     const tempRoot = join(tempParent, 'repo');
     try {
@@ -2067,7 +2076,7 @@ async function selftest() {
   }
   const order = await orderSelftest();
   caught += order.caught;
-  const grandTotal = total + treePlants.length + order.total;
+  const grandTotal = total + shardPlants.length + order.total;
   if (inverted !== EXPECTED_INVERTED) {
     console.error(`about-changelog selftest: RED — ${inverted} inverted case(s) ran, ${EXPECTED_INVERTED} declared.`
       + ' Update EXPECTED_INVERTED in this file, or restore the case that stopped running.');
