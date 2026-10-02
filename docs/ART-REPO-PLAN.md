@@ -240,7 +240,7 @@ question 1, the owner chose to make **`cehinds/AshenSpire-art` public**
 - **Pending owner action:** flipping the visibility in the repository's GitHub
   settings is not done yet. Until it is, a fetch needs the token: CI passes
   the `ART_REPO_TOKEN` secret in the env of every step that fetches, and a
-  local fetch reads `ART_REPO_TOKEN` (else `GITHUB_TOKEN`). EXTERNAL-ASSETS-PLAN
-  step 11 does not wait for the flip: `fetch-art` sends the token when one is
-  set and uses the public release URL when none is, so the day the repository
-  is public, the same code needs no token and nothing else changes.
+  local fetch reads `ART_REPO_TOKEN` (else `GITHUB_TOKEN`). The flip must
+  happen before EXTERNAL-ASSETS-PLAN step 11 (its step 10a); the token path in
+  `fetch-art` is only a belt-and-braces fallback. Once the repository is
+  public, the same code needs no token and nothing else changes.

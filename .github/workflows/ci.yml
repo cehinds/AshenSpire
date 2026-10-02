@@ -439,7 +439,7 @@ jobs:
       # makes it public; with no token (a fork, or once it is public) the public
       # release URL is used. A failure names its cause (token refused, repository
       # unreadable, rate limit, network) on the step and as an annotation.
-      - name: Fetch the art packs this build's tier is made from
+      - name: Fetch the art packs this build's tier uses
         if: ${{ matrix.digest && !cancelled() }}
         env:
           ART_REPO_TOKEN: ${{ secrets.ART_REPO_TOKEN }}

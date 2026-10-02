@@ -8,7 +8,8 @@ Status: **steps 2, 3a, 6a and 11 built** (2026-10-01: `tools/asset-pack.mjs`,
 the `og:image` Pages path and the site size in `pages-site --check`, see section 4;
 step 11: `art-release.json` schema 2 pins `hd-assets-v2`'s three zips,
 `fetch-art --pack` and `--agree`, `asset-pack --source cache`, the pin and
-manifest in `BUILD_IDENTITY_FILES`, and a fetch in every building workflow);
+manifest in `BUILD_IDENTITY_FILES`, and a fetch in every building workflow;
+its CI goes green once step 10a makes the art repository public);
 the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
@@ -64,8 +65,9 @@ named.
   FINISH.md D20** ("the high-res zip stays private"): `cehinds/AshenSpire-art`
   becomes **public**, the high-res zip included (owner answer 1, FINISH D22).
   No token is needed to fetch a release once it is public. Flipping the
-  visibility is a pending owner action (step 10a). Step 11 does not wait for
-  it: until the flip, `fetch-art` uses the `ART_REPO_TOKEN` secret CI passes it.
+  visibility is a pending owner action, due before step 11 (step 10a). The
+  `ART_REPO_TOKEN` path in `fetch-art` is a belt-and-braces fallback, not a
+  substitute for the flip.
 
 ## Summary
 
@@ -714,9 +716,10 @@ CONTRIBUTING rule 1).
 Every step is one reviewed PR (or one owner action), and the game still works
 after each. Runtime loading (b) comes first, while every file is still in this
 repository; storage (a) follows. The art repository therefore only becomes a
-build dependency at step 11. A token is needed only until the owner makes it
-public (answer 1, step 10a): CI passes the `ART_REPO_TOKEN` secret meanwhile,
-and afterwards a token only raises the rate limit.
+build dependency at step 11. No token does: the owner made it public (answer
+1, step 10a, which comes before step 11), and a token only raises the rate
+limit. `fetch-art` still sends `ART_REPO_TOKEN` when CI passes it, as a
+belt-and-braces fallback.
 
 | # | step | ships | what still works |
 |---|---|---|---|
@@ -736,8 +739,8 @@ and afterwards a token only raises the rate limit.
 | 8e | **The flip.** `launch.mjs` builds the pack shape and the light single file; `--light`/`--full-art` choose the default tier and which packs to carry; `--mobile` and the full-art single file are removed, and inline mode stays only for the light single file at `download/` (owner answers 2, 3, 6); the `EDITION` stamp becomes the default tier; `verify-shipped` A stays for the light single file and the mobile checks are retired; `bundle.test`, `web-meta`, `mobile-art-distinct` and `buildversion-selftest` follow; `/AshenSpire-mobile.html` redirects; README, `dist/README`, DEVELOPER, CREDITS, ARCHITECTURE-MAP and CLAUDE follow. Needs 8a approved. | one HTML, ~9.5 MB, and the ~30 MB light single file | every door: the light single file, double-click `dist/`, hosted, installed |
 | 9 | **Art repo PR.** Import the light tier generator (`mobile-art.mjs`, `mobileart-policy.mjs`) and generate `light/assets/` from `hd/assets/`; add `common/` (fonts, `OFL.txt`, music, tiles) with the score and tile tools; the pack script writes three zips and the schema-2 manifest; CI verifies each zip against the manifest. | — | this repo unchanged |
 | 10 | **Owner: merge step 9.** Releases are automatic (AshenSpire-art#2), so the merge publishes `hd-assets-v<N>` with three zips. | — | — |
-| 10a | **Owner: make `cehinds/AshenSpire-art` public** in its GitHub settings (owner answer 1). **Pending: not done yet.** Step 11 does not wait for it: until then every fetch in CI uses the `ART_REPO_TOKEN` secret, and once it is done the same code needs no token. | — | — |
-| 11 | **Pin and fetch.** `art-release.json` schema 2; `fetch-art --pack`; `asset-pack.mjs` reads the cache (`--source cache`); the pin and manifest join `BUILD_IDENTITY_FILES`; every building workflow (dev-preview, tests, ci, pages-builds) fetches. The art repository is private until step 10a, so those steps get the `ART_REPO_TOKEN` secret in their env, and `fetch-art` sends `ART_REPO_TOKEN` (else `GITHUB_TOKEN`) whenever one is set; with none it uses the public release URL, which works once the repository is public (it no longer refuses without a token; README.md and DEVELOPER.md follow). A failure names its cause. Does not need step 10a. The trees here are still present, and `fetch-art --agree` proves the cache and the trees agree byte for byte. | builds can read the release | all, with either source |
+| 10a | **Owner: make `cehinds/AshenSpire-art` public** in its GitHub settings (owner answer 1). **Pending: not done yet.** It must happen before step 11: step 11's CI fetches cannot be green until it does. | — | — |
+| 11 | **Pin and fetch.** `art-release.json` schema 2; `fetch-art --pack`; `asset-pack.mjs` reads the cache (`--source cache`); the pin and manifest join `BUILD_IDENTITY_FILES`; every building workflow (dev-preview, tests, ci, pages-builds) fetches. They fetch the public release; the steps also get the `ART_REPO_TOKEN` secret in their env as a belt-and-braces fallback, and `fetch-art` sends `ART_REPO_TOKEN` (else `GITHUB_TOKEN`) whenever one is set, and uses the public release URL with none or when the token cannot read the repository (it no longer refuses without a token; README.md and DEVELOPER.md follow). A failure names its cause. Needs step 10a. The trees here are still present, and `fetch-art --agree` proves the cache and the trees agree byte for byte. | builds can read the release | all, with either source |
 | 12 | **Switch every reader** of `assets-mobile/`, `music/`, `map-detail/` and `assets/fonts/` to the manifest or the cache (section 6; ART-REPO-PLAN step 4's rows, extended). The PR records `git grep` output for each tree. | — | all |
 | 13 | **Delete** `assets-mobile/`, the MP3s, `map-detail/` and `assets/fonts/` from `dev` and add them to `.gitignore`, together with ART-REPO-PLAN step 6 for `assets/` and `art/`. **Needs its own owner go-ahead** (ART-REPO-PLAN Q3). Precondition: step 12's grep finds only fetch-aware code. History is untouched. | a smaller tree | all |
 
@@ -864,11 +867,10 @@ Where the build differs from, or settles, the text above (2026-10-02):
    - No `ART_REPO_TOKEN` is needed to fetch a release. `fetch-art` keeps the
      token as optional, for rate limits (section 2).
    - Step 11 needs no secret: builds fetch the public release. *(As built,
-     step 11 landed before the flip, so CI passes the `ART_REPO_TOKEN` secret
-     until it happens.)*
+     CI also passes the `ART_REPO_TOKEN` secret, as a belt-and-braces
+     fallback.)*
    - **Pending owner action:** flipping the visibility in GitHub settings is
-     not done yet. It is step 10a. *(It was to happen before step 11; step 11
-     was built with the token instead, so it no longer has to.)*
+     not done yet. It is step 10a and must happen before step 11.
 2. **Drop the separate mobile download? Yes** (FINISH D23). One HTML picks the
    light or high tier at runtime; `AshenSpire-mobile.html` redirects and
    `--mobile` and the `mobile/` pages go at step 8e.

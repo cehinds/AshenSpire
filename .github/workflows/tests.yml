@@ -32,7 +32,10 @@
 # no job reads a tree another is mutating:
 #   core       — the engine suite, every discovered *.test.mjs, each tool's
 #                verdict on the tree as it stands (tests/run-node.mjs), and the
-#                no-browser CHANGELOG ordering check with its own known-bads
+#                no-browser CHANGELOG ordering check with its own known-bads,
+#                then the art release fetch and `fetch-art --agree`
+#                (light + common on PRs and dev, all three on test/release;
+#                its time is not yet measured in CI — record it here)
 #   selftests  — every tool's `--selftest` known-bad corpus (tests/run-node.mjs)
 #   parse-gate — the bundler's parse-gate fixtures (tools/bundle.test.mjs). It
 #                ran as a second step of `selftests` and, at about twelve
@@ -98,7 +101,7 @@ jobs:
       # release URL is used. A failure names its cause (token refused, repository
       # unreadable, rate limit, network) on the step and as an annotation.
       # The trees are still in this repository (until step 13), so this job, which
-      # gates every pull request, also proves the release and the trees are one.
+      # gates every pull request, also proves the release and the trees agree.
       # A FORK'S PULL REQUEST, and any Dependabot run, gets no secrets (a
       # Dependabot branch is not a fork, so it is named here too), and cehinds/AshenSpire-art is
       # private until the owner makes it public (step 10a), so such a run cannot
@@ -121,15 +124,22 @@ jobs:
             echo "fetch=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Fetch the pinned art release (high, light and common)
+      # THE PACKS: light and common on a pull request and on a push to dev, the
+      # same as dev-preview's dev/test build; all three (the 203 MB high zip
+      # too) on test and release, where the long suites already run. Timing
+      # per pack is recorded in the header table once a CI run measures it.
+      - name: Fetch the art packs this run's branch uses
         if: ${{ always() && steps.art.outputs.fetch == 'true' }}
         env:
           ART_REPO_TOKEN: ${{ secrets.ART_REPO_TOKEN }}
-        run: node tools/fetch-art.mjs --pack all
+          ART_PACKS: ${{ (github.event_name == 'pull_request' || github.ref_name == 'dev') && 'light,common' || 'all' }}
+        run: node tools/fetch-art.mjs --pack "$ART_PACKS"
 
       - name: The fetched art release and the trees here agree byte for byte
         if: ${{ always() && steps.art.outputs.fetch == 'true' }}
-        run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack all
+        env:
+          ART_PACKS: ${{ (github.event_name == 'pull_request' || github.ref_name == 'dev') && 'light,common' || 'all' }}
+        run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
 
   selftests:
     name: tool self-tests

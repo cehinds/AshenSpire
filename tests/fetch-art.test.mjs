@@ -566,7 +566,7 @@ test('an anonymous 403 that is not the rate limit says to set a token or check t
 // the asset by its id with `accept: application/octet-stream`, then a 302 to
 // storage that must be fetched WITHOUT the token. With no token, the public
 // release URL. And a 404 is told apart: token blind to the repo, or no release.
-async function withGitHub(fn, { repoVisible = true, release = true, publicRepo = true } = {}) {
+async function withGitHub(fn, { repoVisible = true, release = true, publicRepo = true, storage = 200 } = {}) {
   const zip = Buffer.from('the zip bytes');
   const seen = [];
   const server = createServer((req, res) => {
@@ -582,7 +582,7 @@ async function withGitHub(fn, { repoVisible = true, release = true, publicRepo =
       if (!authed || req.headers.accept !== 'application/octet-stream') return send(404, '');
       return send(302, '', { location: `http://127.0.0.1:${server.address().port}/storage/signed?x=1` });
     }
-    if (req.url === '/storage/signed?x=1') return req.headers.authorization ? send(400, 'auth sent to storage') : send(200, zip);
+    if (req.url === '/storage/signed?x=1') return req.headers.authorization ? send(400, 'auth sent to storage') : storage === 200 ? send(200, zip) : send(storage, 'denied');
     if (req.url === '/web/cehinds/AshenSpire-art/releases/download/hd-assets-v2/light-assets-v2.zip') return publicRepo ? send(200, zip) : send(404, '');
     return send(404, '');
   });
@@ -633,4 +633,14 @@ test('once the repository is public, a token that cannot read it does not stop t
     assert.match(warnings.join('\n'), /could not read cehinds\/AshenSpire-art.*public release URL served it.*fix or remove ART_REPO_TOKEN/);
     assert.equal(seen.at(-1).auth, null, 'the public URL is fetched with no token');
   }, { repoVisible: false, publicRepo: true });
+});
+
+test('known-bad: a storage hop that fails is named as the storage URL, not blamed on the token', async () => {
+  await withGitHub(async ({ api, web }) => {
+    await assert.rejects(download(PIN2, 'light', { api, web, env: { ART_REPO_TOKEN: 't0ken' }, warn: () => {} }), (e) => {
+      assert.match(e.message, /the release's storage URL answered HTTP 403 \(the token is not sent there\); run again/);
+      assert.doesNotMatch(e.message, /token in ART_REPO_TOKEN/);
+      return true;
+    });
+  }, { storage: 403, publicRepo: false });
 });

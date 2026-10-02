@@ -224,7 +224,9 @@ jobs:
       # release in a schema-2 art-release.json. When it does, main's own
       # tools/fetch-art.mjs fetches all three packs (main is the full-art build)
       # into that worktree's ignored .art-cache/ and proves they match main's
-      # trees; an older main, whose pin has no packs, builds as before. The token
+      # trees; an older main, whose pin has no packs (or no pin), builds as
+      # before. UNDER SCHEMA 2 A FETCH FAILURE BLOCKS PUBLISHING: the step is
+      # `set -e`, so a release main cannot fetch stops the stable build. The token
       # is passed while cehinds/AshenSpire-art is private; once it is public the
       # fetch needs none. A failure names its cause.
       - name: Build main from source when main no longer commits its build
@@ -237,7 +239,7 @@ jobs:
             exit 0
           fi
           git worktree add --detach "$RUNNER_TEMP/main" origin/main
-          if (cd "$RUNNER_TEMP/main" && node -e "process.exit(JSON.parse(require('fs').readFileSync('art-release.json','utf8')).schema === 2 ? 0 : 1)"); then
+          if (cd "$RUNNER_TEMP/main" && node -e "const fs=require('fs');process.exit(fs.existsSync('art-release.json') && JSON.parse(fs.readFileSync('art-release.json','utf8')).schema === 2 ? 0 : 1)"); then
             (cd "$RUNNER_TEMP/main" && node tools/fetch-art.mjs --pack all && node tools/fetch-art.mjs --agree --pack all)
           else
             echo "main's art-release.json predates the packs (schema 2) — it builds from its trees, with nothing to fetch"

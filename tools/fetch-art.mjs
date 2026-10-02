@@ -571,8 +571,12 @@ export async function download(pin, pack, { api = GITHUB.api, web = GITHUB.web, 
     if (res.status >= 300 && res.status < 400) {
       const location = res.headers.get('location');
       if (!location) throw new Error(`${pin.repo} ${pin.tag} ${zip}: HTTP ${res.status} with no Location to follow`);
-      // The storage hop: a signed URL, and no Authorization on it.
-      res = await request(new URL(location, `${repo}/`).href, { headers: ua, redirect: 'follow', ...timed(15 * 60_000) }, ctx);
+      // The storage hop: a signed URL, and no Authorization on it. Its
+      // failures are the storage's, never the token's, and say so.
+      const hop = new URL(location, `${repo}/`).href;
+      try { res = await fetch(hop, { headers: ua, redirect: 'follow', ...timed(15 * 60_000) }); }
+      catch (e) { throw new Error(`${pin.repo} ${pin.tag} ${zip}: the release's storage URL could not be reached — ${netCause(e, hop)}`); }
+      if (!res.ok) throw new Error(`${pin.repo} ${pin.tag} ${zip}: the release's storage URL answered HTTP ${res.status} (the token is not sent there); run again.`);
     }
     try { return Buffer.from(await res.arrayBuffer()); }
     catch (e) { throw new Error(`${zip}: the download broke off (${netCause(e, res.url || 'github.com')})`); }

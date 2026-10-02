@@ -383,7 +383,7 @@ jobs:
             echo "fetch=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Fetch the art packs this build's tier is made from
+      - name: Fetch the art packs this build's tier uses
         if: ${{ !cancelled() && steps.art.outputs.fetch == 'true' }}
         env:
           ART_REPO_TOKEN: ${{ secrets.ART_REPO_TOKEN }}
