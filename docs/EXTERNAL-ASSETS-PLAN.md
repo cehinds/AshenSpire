@@ -31,7 +31,8 @@ see [Step 7 as built](#step-7-as-built));
 `fetch-art --pack` and `--agree`, `asset-pack --source cache`, the pin and
 manifest in `BUILD_IDENTITY_FILES`, and a fetch in every building workflow;
 the art repository is public since step 10a);
- the rest is plan (2026-09-27). The owner answered its
+ **step 8a done (#1440)** (2026-10-02: the SPEC and FINISH wording,
+approved by the owner 2026-10-02); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -79,7 +80,7 @@ named.
 - **FINISH.md D5** (owner, 2026-09-26): *"Pages with external art and a service
   worker, installable; **the 254 MB file stays a download**."* This plan keeps
   D5's first half: the Pages web edition, the service worker, installable. It
-  retires the 254 MB file at step 8e (owner answer 6, FINISH D24). FINISH §4's
+  retires the 254 MB file at step 8e (owner answer 6, FINISH D24). FINISH §8's
   line 107 (*"the single-file download stays available"*) still holds, for the
   **light** single file the owner kept (answer 3, D24).
 - **ART-REPO-PLAN Q1 ("Private") and its *Owner answer (2026-09-27)*, and
@@ -733,8 +734,8 @@ light single file, about 30 MB, self-contained, plays by double-click. The
 | SPEC §7.5, fonts **TO BUILD** | "Cinzel/Inter … NOT bundled … self-hosting the woff2 under `assets/fonts/` is unfinished" | the interface faces are pack files loaded at runtime; system fallbacks stay. Replaces the bundling question (owner, 2026-09-27). | **yes** |
 | SPEC §11, non-goals | "bundled audio asset files" is a non-goal | still true in letter; reword to "audio ships as pack files; SFX stay synthesized" | **yes** |
 | SPEC §1, *Entry point* | "`index.html` opened directly or via any static server" | "via `node tools/serve.mjs`" once the media leaves the tree (ART-REPO-PLAN already names this) | **yes** |
-| FINISH.md D5 and §4 line 107 | "the 254 MB file stays a download"; "the single-file download stays available" | the 254 MB file is retired; the light single file stays a download, beside the install and the zip (owner answers 3 and 6; FINISH D24) | **yes** |
-| SPEC §7.1, the cold boot (*"It contains only the Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source stamp"*) | the gate contains only those four, and a press reveals the title | unchanged for the gate itself: step 5 keeps the boot status line **outside** the gate (`boot-art-status`, a sibling in `#app`). Whether SPEC should name that line, the wait for the load before the title, and the title's art notice with Retry is a question for the 8a SPEC PR ([#1440](https://github.com/cehinds/AshenSpire/pull/1440), awaiting owner approval) | **yes** |
+| FINISH.md D5 and §8 line 107 | "the 254 MB file stays a download"; "the single-file download stays available" | the 254 MB file is retired; the light single file stays a download, beside the install and the zip (owner answers 3 and 6; FINISH D24) | **yes** |
+| SPEC §7.1, the cold boot (*"It contains only the Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source stamp"*) | the gate contains only those four, and a press reveals the title | unchanged for the gate itself: step 5 keeps the boot status line **outside** the gate (`boot-art-status`, a sibling in `#app`). Whether SPEC should name that line, the wait for the load before the title, and the title's art notice with Retry was put to the 8a SPEC PR ([#1440](https://github.com/cehinds/AshenSpire/pull/1440)); the owner approved it on 2026-10-02 with §7.1 unchanged, so the line stays outside the gate and SPEC does not name it | **yes** |
 | SPEC §2 status row and §2.4 | the CSS backdrops bypass `assetUrl()` (open) | closed by `ASSET_CSS` | no (a status row) |
 | SPEC §8, the `release-shots` row | "the built bundle (`dist/AshenSpire.html`)" | `dist/` (HTML + packs) | no (wording) |
 | DEVELOPER.md, *Standalone build* (`:873-885`) | "single self-contained HTML … no external files" | the build tree, whose light single file is still self-contained; the pack HTML's double-click works when the folder stays together | no |
@@ -1210,9 +1211,11 @@ the step 3a boot wait (2026-10-02):
 - **SPEC §7.1** says the gate "contains only" the wordmark, the ash, the
   prompt and the build stamp. Step 5 does not change SPEC (CONTRIBUTING rule
   1): the status line stays outside the gate. Whether SPEC should mention the
-  boot status, the title's wait for the load and the art notice belongs with
-  the 8a SPEC PR ([#1440](https://github.com/cehinds/AshenSpire/pull/1440),
-  awaiting owner approval; section 6, *Written rules*).
+  boot status, the title's wait for the load and the art notice was put to
+  the 8a SPEC PR ([#1440](https://github.com/cehinds/AshenSpire/pull/1440);
+  section 6, *Written rules*). The owner approved it on 2026-10-02 with §7.1
+  unchanged: the gate's contents stay as written, and SPEC does not name the
+  status line, the wait or the notice.
 - **The debug profile auto-load** (Settings → Advanced → Defaults & sync, on
   a dev or test page) used to make the cold boot wait up to 3 s before the
   gate; with the gate drawn at once that wait was a blank screen (review of
@@ -1222,8 +1225,8 @@ the step 3a boot wait (2026-10-02):
 - **Follow-up (not in this step):** run `tools/startup-gate.mjs` against
   `build/web` with the indexes held, so the gate's focus and first-press
   checks cover the wait between a press and the title (today it serves the
-  source tree, which pins no packs; review of #1471). Whether SPEC §7.1 should
-  bound or describe that wait is on the #1440 question list.
+  source tree, which pins no packs; review of #1471). SPEC §7.1 neither bounds
+  nor describes that wait (#1440, approved 2026-10-02 with §7.1 unchanged).
 - **`external-play --block-index`** (http only; Chromium cannot intercept a
   `file://` twin): every `packs/` request is held on the cold boot, and the
   gate must be drawn before the load settles with its line saying "Loading
