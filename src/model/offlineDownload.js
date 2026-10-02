@@ -168,7 +168,7 @@ export function coalesceSink(write, limit = 1 << 20) {
  * objects } once the archive's last byte is in the sink.
  */
 export async function assembleZip(plan, { sink, fetchImpl = globalThis.fetch, packs = offlinePlay.zip.packs,
-  concurrency = offlinePlay.zip.concurrency, onProgress = () => {}, signal, subtle } = {}) {
+  concurrency = offlinePlay.zip.concurrency, timeoutMs = offlinePlay.requestTimeoutMs, onProgress = () => {}, signal, subtle } = {}) {
   const inner = new AbortController();
   const stop = () => inner.abort(signal?.reason);
   if (signal) { if (signal.aborted) stop(); else signal.addEventListener('abort', stop, { once: true }); }
@@ -177,13 +177,30 @@ export async function assembleZip(plan, { sink, fetchImpl = globalThis.fetch, pa
     let last = null;
     for (let attempt = 0; attempt < 2; attempt++) {
       inner.signal.throwIfAborted();
+      // Each attempt has its own deadline, over the headers AND the body: a
+      // request that stalls fails and is tried again instead of hanging the zip
+      // (Copilot and Codex, #1480). A cancel still ends everything at once.
+      const deadline = new AbortController();
+      const timer = setTimeout(() => deadline.abort(new DOMException(`${what} timed out`, 'TimeoutError')), timeoutMs);
+      const stopAttempt = () => deadline.abort(inner.signal.reason);
+      inner.signal.addEventListener('abort', stopAttempt, { once: true });
       try {
-        const response = await fetchImpl(url, { signal: inner.signal });
+        const response = await fetchImpl(url, { signal: deadline.signal });
         if (!response?.ok) throw zipError('unreachable', `${what} could not be fetched (${response ? response.status : 'no answer'}).`);
-        return new Uint8Array(await response.arrayBuffer());
+        const body = response.arrayBuffer();
+        // A fetch implementation that ignores the signal mid-body still loses the race.
+        const timedOut = new Promise((_, reject) => {
+          if (deadline.signal.aborted) reject(deadline.signal.reason);
+          deadline.signal.addEventListener('abort', () => reject(deadline.signal.reason), { once: true });
+        });
+        timedOut.catch(() => {});
+        return new Uint8Array(await Promise.race([body, timedOut]));
       } catch (error) {
         if (inner.signal.aborted) throw error;
         last = error instanceof ZipDownloadError ? error : zipError('unreachable', `${what} could not be fetched (${error?.message || error}).`);
+      } finally {
+        clearTimeout(timer);
+        inner.signal.removeEventListener('abort', stopAttempt);
       }
     }
     throw last;
@@ -221,7 +238,10 @@ export async function assembleZip(plan, { sink, fetchImpl = globalThis.fetch, pa
       for (const [id, row] of Object.entries(JSON.parse(decoder.decode(bytes)) || {})) {
         if (!Array.isArray(row) || !SHA.test(String(row[0])) || !Number.isSafeInteger(row[1]) || row[1] < 0) throw zipError('pack', `${want.index} lists ${id} without a sha256 and size.`);
         const path = zipObjectPath(row[0], id);
-        if (!objects.has(path)) objects.set(path, { sha: row[0], bytes: row[1], url: new URL(path, root).href });
+        const seen = objects.get(path);
+        // One object, two sizes: the indexes disagree about it, and no file can satisfy both (Copilot, #1480).
+        if (seen && seen.bytes !== row[1]) throw zipError('pack', `${want.index} lists ${path} at ${row[1]} bytes; another index lists it at ${seen.bytes}.`);
+        if (!seen) objects.set(path, { sha: row[0], bytes: row[1], url: new URL(path, root).href });
       }
     }
     if (pin.fonts?.file) {

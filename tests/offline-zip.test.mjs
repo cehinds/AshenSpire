@@ -97,7 +97,7 @@ test('the pin and twin readers take exactly the shapes the bundler writes', () =
 
 // A small pack-shaped site: two light objects (one shared by two ids), a
 // common font and track, a font sidecar, and a page whose pin names them.
-function fixtureSite({ highPinned = true } = {}) {
+function fixtureSite({ highPinned = true, commonExtra = {} } = {}) {
   const files = new Map();
   const ids = {
     light: { 'assets/bg/a.webp': Buffer.from('light-a'), 'assets/bg/b.webp': Buffer.from('light-a'), 'assets/ui/c.svg': Buffer.from('<svg/>') },
@@ -112,6 +112,7 @@ function fixtureSite({ highPinned = true } = {}) {
       entries[id] = [sha(bytes), bytes.length, 'application/octet-stream'];
       files.set(objectPath(sha(bytes), id), bytes);
     }
+    if (pack === 'common') Object.assign(entries, commonExtra);
     const text = indexText(entries);
     const name = `${pack}-${sha(text).slice(0, 12)}`;
     files.set(`packs/${name}.json`, Buffer.from(text));
@@ -231,4 +232,33 @@ test('every folder-copy sentence the screen asks for is an authored uiStrings ro
     assert.ok(text && !/[{}]/.test(text), `${id} resolves to a sentence`);
   }
   assert.deepEqual(offlinePlay.zip.packs, ['light', 'common'], 'the folder copy carries light and common, never high (plan §5 B)');
+});
+
+test('a stalled request times out, headers or body, and is tried again before the zip gives up', async () => {
+  const fx = fixtureSite();
+  const target = `https://example.org/AshenSpire/${[...fx.files.keys()].find((p) => p.endsWith('.svg'))}`;
+  const hangHeaders = (signal) => new Promise((_, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }));
+  const hangBody = () => new Response(new ReadableStream({ start() {} }));     // headers arrive, the body never ends
+  for (const stall of ['headers', 'body']) {
+    // Stalls once, then answers: the retry saves the zip.
+    { let tries = 0;
+      const fetchImpl = async (url, init) => (url === target && ++tries === 1 ? (stall === 'headers' ? hangHeaders(init.signal) : hangBody()) : fx.fetchImpl(url, init));
+      const { result } = await assemble({ ...fx, fetchImpl }, { timeoutMs: 50 });
+      assert.equal(tries, 2, `${stall}: the stalled request is tried again`);
+      assert.equal(result.objects, 4); }
+    // Stalls every time: refused as unreachable, after two attempts.
+    { let tries = 0;
+      const fetchImpl = async (url, init) => (url === target ? (++tries, stall === 'headers' ? hangHeaders(init.signal) : hangBody()) : fx.fetchImpl(url, init));
+      await refusedWith({ ...fx, fetchImpl }, 'unreachable', { timeoutMs: 50 });
+      assert.equal(tries, 2, `${stall}: two attempts, then the zip gives up`); }
+  }
+});
+
+test('two indexes that list one object at different sizes are refused, not deduplicated', async () => {
+  const shared = Buffer.from('light-a');
+  const conflict = fixtureSite({ commonExtra: { 'assets/other/a.webp': [sha(shared), shared.length + 1, 'image/webp'] } });
+  await refusedWith(conflict, 'pack');
+  const agree = fixtureSite({ commonExtra: { 'assets/other/a.webp': [sha(shared), shared.length, 'image/webp'] } });
+  const { result } = await assemble(agree);
+  assert.equal(result.objects, 4, 'the same object at the same size is still stored once');
 });

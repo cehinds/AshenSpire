@@ -36,7 +36,7 @@ const offlineOnly = process.argv.includes('--offline-only');
 const liveReleaseCheck = process.argv.includes('--live-release-check');
 const downloadControlsCheck = process.argv.includes('--download-controls-check');
 const zipCheck = process.argv.includes('--zip');
-let zipSite = null;
+let zipSite = null, zipUnzipped = null;
 const webDir = resolve(process.argv.includes('--web') ? process.argv[process.argv.indexOf('--web') + 1] : 'build/web');
 const downloads = resolve(out, `downloads-${Date.now()}`); mkdirSync(downloads);
 const html = readFileSync('AshenSpire.html'), build = JSON.parse(readFileSync('buildordinal.json'));
@@ -201,7 +201,7 @@ try {
       const zipPath = resolve(downloads, completed.at(-1));
       check(/^AshenSpire-main-\d+\.\d+\.\d+\.\d+\.zip$/.test(completed.at(-1)), `the zip keeps the download's name (${completed.at(-1)})`);
       // Unzip and prove every entry.
-      const unzipped = mkdtempSync(join(tmpdir(), 'offline-zip-unzipped-'));
+      const unzipped = zipUnzipped = mkdtempSync(join(tmpdir(), 'offline-zip-unzipped-'));
       const names = extractZip(zipPath, unzipped);
       zipFolder = join(unzipped, `AshenSpire-main-${build.release}.${build.ordinal}`);
       gamePath = join(zipFolder, `AshenSpire-main-${build.release}.${build.ordinal}.html`);
@@ -308,8 +308,9 @@ try {
   check(errors.length === 0, `no browser exceptions: ${errors.join('; ')}`);
   }
 } finally {
-  if (zipSite) rmSync(zipSite, { recursive: true, force: true });
   await Promise.race([send('Browser.close').catch(() => {}), wait(1000)]); ws.close(); await browser.close();
+  // The fixture site and the unzipped folder are temporary; the zip itself stays in artifacts/ with the screenshots.
+  for (const dir of [zipSite, zipUnzipped]) if (dir) rmSync(dir, { recursive: true, force: true });
   server.closeAllConnections(); await new Promise(done => server.close(done));
 }
 console.log(`${checks} ${downloadControlsCheck ? 'download controls' : liveReleaseCheck ? 'live release preparation' : zipCheck ? 'folder copy (zip) and offline' : offlineOnly ? 'offline-only' : 'download and offline'} browser checks passed. ${zipCheck ? 'The web edition was served in the Pages shape on 127.0.0.1 with a fixture build.json; the zip was assembled by the game twice (the Blob path, and a stubbed save-picker handle: no OS dialog), unzipped and played under file:// with the network off.' : downloadControlsCheck ? 'Throttled 1 MB fixture and controlled picker handle; native OS dialog not tested.' : liveReleaseCheck ? 'Real published metadata and HTML fetched; final file save not tested.' : offlineOnly ? 'Download skipped; local generated HTML and a save fixture were used.' : 'Release metadata is a local fixture; downloaded bytes are the real generated build.'}`);
