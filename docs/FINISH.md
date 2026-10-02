@@ -129,6 +129,7 @@ status* table lists each spec section as built, partly built or planned.
 - [x] **#1297 follow-up: C22 compares the semantic and Armoury catalogs separately** — [#1316](https://github.com/cehinds/AshenSpire/pull/1316): each family is compared on its own, and two `--selftest` plants move an id between families and go red on C22.
 - [x] **`tools/ui-components.mjs` is green on `dev` and runs in the suite.** — [#1316](https://github.com/cehinds/AshenSpire/pull/1316): C5 and C12 updated to the shipped design; `node tools/ui-components.mjs` exits 0 (22/22). `tests/run-node.mjs` runs the verdict (rung 95) and its `--selftest` corpus (rung 94, 62 plants).
 - [x] **DEVELOPER.md has no stale counts**. Test: `grep -n '22 assertions' DEVELOPER.md` gives 0 hits. — [#1283](https://github.com/cehinds/AshenSpire/pull/1283): 0 hits, and `tests/stale-docs.test.mjs` keeps it that way.
+- [x] **`tools/flask-action-contract.mjs` is green on `dev` and runs in the suite.** — [#1447](https://github.com/cehinds/AshenSpire/pull/1447): the map half follows the flask menus into `components/runHud.js` (moved on purpose in aaab6234d); 12/12 pass, `--selftest` GREEN with 6 plants; `tests/run-node.mjs` runs the verdict (rung 97) and the corpus (rung 96). Red before: 147 passed, 1 failed; green after: 148 passed, 0 failed.
 
 ## 12. CI
 
