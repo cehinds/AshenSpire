@@ -137,9 +137,10 @@ const BUILD_PATHS = new Set(['AshenSpire.html', 'AshenSpire-mobile.html', 'build
 const HARNESS_DIRS = new Set(['tools', 'tests']);
 // MAIN'S BASE TREE LEAVES OUT ITS MEDIA AND AUTHORING ROOTS AND ITS COMMITTED
 // BUILD HTML (docs/EXTERNAL-ASSETS-PLAN.md, section 4 "Main's base tree, and the
-// site's size", step 6a). Measured on origin/main they were 1,089 MB of a site
-// already far over the documented 1 GB Pages limit, and no build page reads
-// them from the root:
+// site's size", step 6a), except assets/ (owner, 2026-10-02: kept). Measured on
+// origin/main, art/ and the build copies were about 770 MB of a site already
+// far over the documented 1 GB Pages limit, and no build page reads them, or
+// the other excluded roots, from the root:
 //   - every build at /<branch>/<ordinal>/ is one inline file that reads only the
 //     map-detail/ and music/ written beside it below;
 //   - the stable Play links (/AshenSpire.html, /build/, /dist/, -mobile) are the
@@ -147,13 +148,16 @@ const HARNESS_DIRS = new Set(['tools', 'tests']);
 //     only folders it fetches beside itself are map-detail/ and music/. Those
 //     two are written back from main's tree as that build's payload
 //     (STABLE_PAYLOAD_DIRS), so the stable links serve what they served before.
-// Pages OTHER than builds that link into these roots lose those files: main's
-// source page at /index-game.html (its art under assets/), the art review
-// sections under art/ (they leave the site and the index with it), and the
-// images in docs/component-catalog.html, items-preview.html,
-// docs/low-poly-fighters/ and pose-studio/. docs/preview stays (owner answer 7).
+// assets/ STAYS (owner, 2026-10-02): /index-game.html (main's source page),
+// docs/component-catalog.html, items-preview.html, docs/low-poly-fighters/ and
+// pose-studio/ load their images from it. art/ GOES: its seven review sections
+// leave the site and, because discovery reads the assembled tree, the index
+// with them; the catalog's and pose-studio's plain links into art/ now 404.
+// docs/preview stays (owner answer 7).
 // Pathspecs are from the repository root: `map-detail` is the top-level folder.
-const BASE_TREE_EXCLUDED_DIRS = Object.freeze(['art', 'assets', 'assets-mobile', 'map-detail', 'music']);
+const BASE_TREE_EXCLUDED_DIRS = Object.freeze(['art', 'assets-mobile', 'map-detail', 'music']);
+// Kept on purpose, and checked by the selftest so a later edit cannot drop it unseen.
+const BASE_TREE_KEPT_DIRS = Object.freeze(['assets', 'docs/preview']);
 const BASE_TREE_EXCLUDED_HTML = Object.freeze(['AshenSpire*.html', 'build/**/*.html', 'dist/**/*.html']);
 const BASE_TREE_PATHSPECS = Object.freeze(['.',
   ...BASE_TREE_EXCLUDED_DIRS.map((d) => `:(exclude)${d}`),
@@ -164,6 +168,7 @@ const BASE_TREE_PATHSPECS = Object.freeze(['.',
 const STABLE_PAYLOAD_DIRS = Object.freeze(['map-detail', 'music']);
 // The stable Play links and their build/ and dist/ aliases.
 const STABLE_LINKS = Object.freeze(['AshenSpire.html', 'AshenSpire-mobile.html']);
+const STABLE_ALIASES = Object.freeze(['build', 'dist']);
 
 function git(args, opts = {}) {
   return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28, ...opts });
@@ -757,10 +762,15 @@ function assemble(outDir, keep) {
     }
   }
   if (existsSync(join(outDir, 'index.html'))) cpSync(join(outDir, 'index.html'), join(outDir, 'index-game.html'));
-  // The build/ and dist/ aliases fetch the shipped score from beside themselves
-  // (content/music.js SHIPPED_MUSIC_FOLDER); git carries it only at the root.
-  if (existsSync(join(outDir, 'music'))) {
-    for (const alias of ['build', 'dist']) if (existsSync(join(outDir, alias))) cpSync(join(outDir, 'music'), join(outDir, alias, 'music'), { recursive: true });
+  // The build/ and dist/ aliases fetch the shipped score AND the map tiles from
+  // beside themselves (content/music.js SHIPPED_MUSIC_FOLDER; mapDetail.js
+  // resolves map-detail/ against document.baseURI); git carries them only at
+  // the root, so every stable location gets its own copy of the payload.
+  for (const alias of STABLE_ALIASES) {
+    if (!STABLE_LINKS.some((name) => existsSync(join(outDir, alias, name)))) continue;
+    for (const d of STABLE_PAYLOAD_DIRS) {
+      if (existsSync(join(outDir, d)) && !existsSync(join(outDir, alias, d))) cpSync(join(outDir, d), join(outDir, alias, d), { recursive: true });
+    }
   }
   writeFileSync(join(outDir, '.nojekyll'), '');
 
@@ -1052,7 +1062,12 @@ function baseTreeFindings(dir) {
     }
   }
   out.push([`no committed build HTML but the stable links${strayHtml.length ? ` (found: ${strayHtml.join(', ')})` : ''}`, strayHtml.length === 0]);
-  if (inTree(mainRef, 'docs/preview')) out.push(['docs/preview is kept (owner answer 7)', existsSync(join(dir, 'docs', 'preview'))]);
+  for (const d of BASE_TREE_KEPT_DIRS) if (inTree(mainRef, d)) out.push([`${d}/ is kept (${d === 'assets' ? 'owner, 2026-10-02' : 'owner answer 7'})`, existsSync(join(dir, d))]);
+  // The index links nothing under an excluded root (the art review sections).
+  const index = existsSync(join(dir, 'index.html')) ? readFileSync(join(dir, 'index.html'), 'utf8') : '';
+  const listed = (JSON.parse(readFileSync(join(dir, 'builds.json'), 'utf8')).otherPages || []).filter((pg) => BASE_TREE_EXCLUDED_DIRS.includes(pg.path.split('/')[0]));
+  const linked = BASE_TREE_EXCLUDED_DIRS.filter((d) => index.includes(`href="${d}/`));
+  out.push([`the site index lists and links no page under ${BASE_TREE_EXCLUDED_DIRS.join(', ')}${listed.length || linked.length ? ` (found: ${[...listed.map((pg) => pg.path), ...linked].join(', ')})` : ''}`, listed.length === 0 && linked.length === 0]);
   for (const name of STABLE_LINKS) for (const artifact of [name, `build/${name}`, `dist/${name}`]) {
     const fromMain = inTree(mainRef, artifact);
     const fromBuild = !inTree(mainRef, 'AshenSpire.html') && MAIN_BUILD && existsSync(resolve(MAIN_BUILD, name));
@@ -1066,6 +1081,12 @@ function baseTreeFindings(dir) {
     const files = git(['ls-tree', '-r', '--name-only', mainRef, '--', d]).trim().split('\n').filter(Boolean);
     const missing = files.filter((f) => !existsSync(join(dir, f)) || Buffer.compare(readFileSync(join(dir, f)), gitBuf(['show', `${mainRef}:${f}`])) !== 0);
     out.push([`the stable build's ${d}/ is main's (${files.length} files${missing.length ? `, ${missing.length} wrong, e.g. ${missing[0]}` : ''})`, missing.length === 0]);
+    // Beside every stable location, not only the root (Copilot, #1442).
+    for (const alias of STABLE_ALIASES) {
+      if (!STABLE_LINKS.some((name) => existsSync(join(dir, alias, name)))) continue;
+      const absent = files.filter((f) => !existsSync(join(dir, alias, f)) || Buffer.compare(readFileSync(join(dir, alias, f)), readFileSync(join(dir, f))) !== 0);
+      out.push([`/${alias}/ carries the stable build's ${d}/ beside itself${absent.length ? ` (${absent.length} missing or wrong, e.g. ${alias}/${absent[0]})` : ''}`, absent.length === 0]);
+    }
   }
   return out;
 }
