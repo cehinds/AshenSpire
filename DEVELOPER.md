@@ -951,6 +951,19 @@ The file is a local build output, ignored by git on `dev`: of the build's own
 outputs, commit only `buildordinal.json` (and the generated changelog module).
 Generated content and config modules are committed as usual.
 
+The browser tools that drive a built page (`--dist`, `--standalone`,
+`--artifact`, and `tapsize`/`hudbars`, which always read `dist/`) ask
+`buildPageUrl()` in `tools/browser.mjs` for the URL to open. A self-contained
+single file opens over `file://`, exactly as before; a pack-shaped build (its
+HTML carries a non-empty `ASSET_PACKS` pin, docs/EXTERNAL-ASSETS-PLAN.md step 3a on) is
+served over local http from its own folder, because its indexes arrive by
+`fetch`. It is served under `/<channel>/latest/`, the channel the same file
+reads by double-click (`unknown` for `dist/AshenSpire.html`), so a served page
+keeps the file's channel and debug state instead of reading as `dev` on
+127.0.0.1. (`buildChannel()` honours `/unknown/` only on a loopback host). `ASHEN_BUILD_OVER=file` or `=http` forces either for a run;
+`node tools/browser.mjs --selftest --serve-only` (check S, no browser, run by
+`tests/browser-serve.test.mjs`) checks the helper.
+
 ## Balance & telemetry
 
 `node tools/balance.mjs` regenerates [docs/BALANCE.md](docs/BALANCE.md): enemy

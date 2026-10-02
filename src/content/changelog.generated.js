@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Art quality: Auto, Light or High",
     "detail": "In the web edition, Settings → Display → Art quality now offers Auto, Light, High and Local high-res. Auto loads lighter art on a narrow or phone-sized screen, with Data Saver on or on a device with little memory, and the best art the game carries otherwise; Light and High pick one, and the change takes effect at once and is remembered on this device. A single-file copy carries its art inside it, so there Light and High are greyed out and the setting says why.",
-    "build": "0.7.1.741",
+    "build": "0.7.1.742",
     "pullRequest": 1452,
     "url": "https://github.com/cehinds/AshenSpire/pull/1452"
+  },
+  {
+    "id": "pr-1453",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: test tools open the art-pack build the way it plays",
+    "detail": "Nothing you play changes. The browser tools that check a built game now ask one helper for its address: a single self-contained file still opens straight from disk, and a build that loads its art from packs is served to them from its own folder on this computer, with the same debug settings the file has.",
+    "build": "0.7.1.741",
+    "pullRequest": 1453,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1453"
   },
   {
     "id": "pr-1439",
