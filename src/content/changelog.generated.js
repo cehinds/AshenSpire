@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the class balance checker plays the same climbs as the run simulator",
     "detail": "Nothing you play changes. The tool that counts each class's wins used its own older copy of what happens between fights (levels, drafts, rewards, events). Over 500 climbs it reached different fights and got a different result. It now uses the simulator's own steps between fights, agrees with it fight for fight, and its own self-check runs to the end again instead of crashing.",
-    "build": "0.7.1.800",
+    "build": "0.7.1.801",
     "pullRequest": 1492,
     "url": "https://github.com/cehinds/AshenSpire/pull/1492"
   },
