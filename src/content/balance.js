@@ -670,18 +670,18 @@ export const balance = {
   //
   // THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): a win pays
   // defeated-enemy combat power × 25 × 0.2, kills pay 10 × 0.2 × enemy level,
-  // and each step costs 100 XP.
+  // and the first step costs 100 XP, each later one ×1.75 (owner, 2026-10-02).
   // Settings → Progression → Experience previews the same configured curve
   // and awards the run uses. The existing per-award level cap remains separate.
   // Cinders buy no level any more: the ladder that sat here (firstCost /
   // costStep, measured twice) is gone with the purse.
   level: {
     xp: {
-      base: 100, linear: true, multScaler: 1.3, growth: 1, roundTo: 10,
+      base: 100, linear: false, multScaler: 1.3, growth: 1.75, roundTo: 10,
       [NOTE]: {
         base: 'Character XP for the first step and the base used for later increases.',
         linear: 'Use base + (level − 1) × base × scaler. Off: use base × exponential growth^(level − 1).',
-        multScaler: 'Linear increase per character level as a multiple of the base. At base 100 and scaler 1.3: 100, 230, 360 XP.',
+        multScaler: 'Linear increase per character level as a multiple of the base, used only when the linear curve is on. At base 100 and scaler 1.3: 100, 230, 360 XP.',
         growth: 'Exponential character-step growth, used only when the linear curve is off.',
         roundTo: 'The character level curve: every step cost is rounded to a multiple of this.',
       },

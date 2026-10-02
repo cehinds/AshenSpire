@@ -72,8 +72,8 @@ function curveFor(registries, kind) {
 
 /**
  * xpToNext(registries, kind, level) → the XP the step from `level` to
- * `level + 1` costs: linear base + level × base × scaler, or legacy
- * round(base × growth^level, roundTo). One shape for every
+ * `level + 1` costs: linear base + level × base × scaler, or exponential
+ * round(base × growth^level, roundTo) (the shipped default). One shape for every
  * track (proposal §10); the class curve reads balance.skill.class.xp, the
  * rest balance.skill.xp.
  */
