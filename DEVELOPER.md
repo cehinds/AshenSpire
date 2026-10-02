@@ -238,15 +238,15 @@ using trusted desktop and phone inputs, including OS and in-game Reduced motion.
 `node tools/motion-probe.mjs` boots `?shot=combat&shotSeed=MOTION1` in Chromium
 and checks that every combatant's visible, loaded figure image is moved by
 exactly one running idle bob (on the image or its `.pose-layer` / `.facing`
-layer, or the Rendered style's `.rendered-stage`), whose keyframes really move
-it, at boot, after a turn, and with the player redrawn in the Rendered and
+layer, or the Rendered style's `.rendered-stage`), whose keyframes really displace
+it (an opacity pulse or another infinite animation does not count), at boot, after a turn, and with the player redrawn in the Rendered and
 Classic sprite styles. It then plays one full turn under the Reduced motion setting with
 the OS preference emulated, the setting alone and the OS alone: no animation
 `document.getAnimations()` or `Element.animate()` reports may run longer than
 0.01 s (a CSS animation or transition that ends between two frames is caught
 by its end event), and no script flipbook or tween (3+ changes to one element
 inside 1 s) may run. A motion-on turn is the control that proves the sampler sees both
-kinds. `--selftest` plants ten known-bads through `doorplant.mjs`.
+kinds. `--selftest` plants twelve known-bads through `doorplant.mjs` (CI runs them in 3 shards, `--shard i/3`).
 Enemy inspectors use `enemyMoveCards()` as a read-only presentation of the
 existing weighted move selector; rendering never chooses or rerolls an intent.
 Attack motion uses the actor/action, tag, intent and neutral precedence in

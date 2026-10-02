@@ -5,6 +5,7 @@
 //
 //   node tools/motion-probe.mjs              the checks below; exit 0 green, 1 red
 //   node tools/motion-probe.mjs --selftest   same-door plants (tools/doorplant.mjs)
+//   node tools/motion-probe.mjs --selftest --shard i/n   only the plants at index i mod n
 //   node tools/motion-probe.mjs --seed S     another fixed seed (default MOTION1)
 //   node tools/motion-probe.mjs --dump       also list every animation and scripted change
 //
@@ -18,7 +19,9 @@
 //                 that carries it (.facing, a painted .pose-layer; D42),
 //                 `getComputedStyle(el).animationName !== 'none'` AND a running,
 //                 infinite CSSAnimation of that name (a script cancel leaves
-//                 the name and stops the motion). IDLE-AFTER repeats it once
+//                 the name and stops the motion), and it must be sprite-idle
+//                 with keyframes that change a displacing property
+//                 (translate, transform, position, margin), not a fade. IDLE-AFTER repeats it once
 //                 the motion-on turn has settled, when enemies may rest in a
 //                 guard, wounded or afflicted pose. IDLE-rendered and
 //                 IDLE-classic redraw the player in those sprite styles and
@@ -76,7 +79,7 @@ const SEED = argv.includes('--seed') ? argv[argv.indexOf('--seed') + 1] : 'MOTIO
 const DUMP = argv.includes('--dump'); // print every animation and scripted change seen
 
 if (argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest, resolveShard } = await import('./doorplant.mjs');
   // Count the harness's own verdict lines: each plant CAUGHT and the clean
   // copy CLEAN pass; anything else it prints as a verdict fails.
   let passed = 0, failed = 0;
@@ -91,6 +94,7 @@ if (argv.includes('--selftest')) {
   const code = await doorSelftest({
     tool: 'motion-probe.mjs',
     timeoutMs: 240000,
+    shard: resolveShard(),
     // The figure art. Without it an enemy's img errors and is replaced
     // (src/ui/assets.js), and the painted player's frames load broken (the
     // painted stage has no fallback), so the clean copy would check images
@@ -131,6 +135,23 @@ if (argv.includes('--selftest')) {
         find: '@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }',
         replace: '@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 0; } }',
         expectRed: /RED IDLE \w+#\d+ — .*keyframes never move it/,
+      },
+      {
+        // #1475 review: a bob turned into a fade still "changes" keyframes.
+        name: 'the idle keyframes fade instead of moving',
+        file: 'styles/combat.css',
+        find: '@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }',
+        replace: '@keyframes sprite-idle { 0%, 100% { opacity: 1; } 50% { opacity: 0.85; } }',
+        expectRed: /RED IDLE \w+#\d+ — .*keyframes never move it/,
+      },
+      {
+        // #1475 review: another infinite animation must not stand in for the
+        // bob. The carriers run the gold pulse instead of sprite-idle.
+        name: 'the idle carriers run another infinite animation, not the bob',
+        file: 'styles/combat.css',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: sprite-idle 3.1s ease-in-out infinite;',
+        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: pulse-gold 3.1s ease-in-out infinite;',
+        expectRed: /RED IDLE \w+#\d+ — .*no idle animation on it or its layers/,
       },
       {
         // This PR's first shape: the bob on the idle images themselves. The
@@ -206,8 +227,10 @@ const check = (ok, id, detail) => {
 const SAMPLER = `(() => {
   const seen = new WeakSet();
   const log = [];
-  // What the frame poll already recorded, per element, so an end event for
-  // the same animation does not log it twice.
+  // What the frame poll already recorded, per element and name, as the
+  // Animation instance, so an end event for that same run does not log it
+  // twice. A later run of the same name on the same element is a different
+  // instance (or has no polled entry) and is logged.
   let polled = new WeakMap();
   let frames = 0;
   const describe = (el) => {
@@ -223,7 +246,7 @@ const SAMPLER = `(() => {
     const kind = a.constructor && a.constructor.name;
     const name = a.animationName || a.transitionProperty || a.id || '(script)';
     const t = a.effect && a.effect.target;
-    if (t) { let k = polled.get(t); if (!k) polled.set(t, k = new Set()); k.add(kind + ':' + name); }
+    if (t) { let k = polled.get(t); if (!k) polled.set(t, k = new Map()); k.set(kind + ':' + name, a); }
     log.push({ kind, name, via, active: active === Infinity ? 'Infinity' : Number(active) || 0,
       target: describe(a.effect && a.effect.target), at: Math.round(performance.now()) });
   };
@@ -233,9 +256,12 @@ const SAMPLER = `(() => {
   // animationend, the duration for transitionend). One that is cancelled
   // between two frames is not seen (BOUNDARY in the header).
   const ended = (kind, nameOf) => (e) => {
-    const t = e.target, name = nameOf(e);
-    if (polled.get(t)?.has(kind + ':' + name)) return;
-    let k = polled.get(t); if (!k) polled.set(t, k = new Set()); k.add(kind + ':' + name);
+    const t = e.target, key = kind + ':' + nameOf(e), name = nameOf(e);
+    const k = polled.get(t), run = k && k.get(key);
+    // The polled run is the one ending only when it has finished; a polled
+    // run that was cancelled or replaced is not this one.
+    if (k) k.delete(key);
+    if (run && run.playState === 'finished') return;
     log.push({ kind, name, via: e.type + ' event', active: Number(e.elapsedTime) * 1000 || 0,
       target: describe(t), at: Math.round(performance.now()) });
   };
@@ -447,15 +473,21 @@ async function idle({ evaluate }, label) {
             && a.playState === 'running' && a.effect.getComputedTiming().activeDuration === Infinity);
           // Running is not moving: keyframes flattened to one value run
           // forever and never shift the figure.
-          const moves = live.some((a) => new Set(a.effect.getKeyframes().map((k) => JSON.stringify(Object.entries(k)
-            .filter(([p]) => !['offset', 'computedOffset', 'easing', 'composite'].includes(p))))).size > 1);
+          // Only properties that displace the figure count: an opacity or
+          // colour pulse is not a bob.
+          const MOVE = ['translate', 'transform', 'top', 'bottom', 'left', 'right', 'inset', 'marginTop', 'marginBottom',
+            'marginLeft', 'marginRight', 'offsetDistance'];
+          const moves = live.some((a) => new Set(a.effect.getKeyframes().map((k) => JSON.stringify(MOVE.map((p) => k[p] ?? null)))).size > 1);
           named.push({ on: tag(el), anim, running: live.length > 0 && moves, flat: live.length > 0 && !moves });
         }
         if (el.classList.contains('sprite')) break;
       }
-      const carriers = named.filter((n) => n.running && n.anim.split(/,\s*/).includes('sprite-idle'));
-      return { img: tag(img), src: img.tagName === 'IMG' ? (img.getAttribute('src') || '').slice(0, 120) : '', loaded: loaded(img), carrier: named.find((n) => n.running) || null,
-        stopped: named.find((n) => !n.running) || null, twice: carriers.length > 1 ? carriers.map((n) => n.on) : null };
+      const carriers = named.filter((n) => n.running && n.anim.split(/,\\s*/).includes('sprite-idle'));
+      // The carrier is a running, moving sprite-idle; another infinite
+      // animation on the figure or a layer (a pulse, a glow) is not one.
+      const idles = named.filter((n) => n.anim.split(/,\\s*/).includes('sprite-idle'));
+      return { img: tag(img), src: img.tagName === 'IMG' ? (img.getAttribute('src') || '').slice(0, 120) : '', loaded: loaded(img), carrier: idles.find((n) => n.running) || null,
+        stopped: idles.find((n) => !n.running) || null, twice: carriers.length > 1 ? carriers.map((n) => n.on) : null };
     }) };
   })`);
   for (const f of figures) {

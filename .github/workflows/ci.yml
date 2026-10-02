@@ -969,10 +969,17 @@ jobs:
   # minute and the seven-plant selftest about ten (measured locally), inside
   # the 20 below.
   browser-motion:
-    name: idle animation and reduced motion in a real browser
+    name: idle animation and reduced motion in a real browser (${{ matrix.shard }})
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 20
+    # SHARDED, NOT GIVEN MORE TIME (owner rule D38, 2026-10-02): each leg runs
+    # the --selftest plants at index i mod 3 plus its own clean edge
+    # (tools/doorplant.mjs SHARDS); the probe itself runs once, on leg 0/3.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ['0/3', '1/3', '2/3']
     steps:
       - uses: actions/checkout@v5
         with:
@@ -980,9 +987,10 @@ jobs:
       - uses: ./.github/actions/setup-node
       - uses: ./.github/actions/which-browser
       - name: Every combatant idles, and reduced motion leaves nothing over 0.01 s in one turn
+        if: matrix.shard == '0/3'
         run: node tools/verdict.mjs -- node tools/motion-probe.mjs
-      - name: …and that gate can fail (10 plants)
-        run: node tools/verdict.mjs -- node tools/motion-probe.mjs --selftest
+      - name: …and that gate can fail (its known-bads, this leg's shard)
+        run: node tools/verdict.mjs -- node tools/motion-probe.mjs --selftest --shard ${{ matrix.shard }}
 
   # SOP 3 requirement 4. Always runs, including when everything above is red, so
   # the boundary is never the thing that got cut when the run went bad.
@@ -1041,7 +1049,7 @@ jobs:
           echo "  · on seed MOTION1 every living combatant's visible figure is moved by a running"
           echo "    idle animation, at boot and after one turn; and one full turn under Reduced"
           echo "    motion (setting+OS, setting, OS) shows no animation over 0.01 s and no script"
-          echo "    flipbook, with ten same-door known-bads caught (browser-motion)"
+          echo "    flipbook, with twelve same-door known-bads caught (browser-motion, in 3 shards)"
           # WAS: "...and it is the only rendered claim in this file that is about the
           # GAME's layout." TRUE when Bjorn wrote it, FALSE the moment I added the
           # Armoury step below — a second browser-driven rendered-layout claim in this
