@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "A Windows installer, with the high-resolution art as a choice on the install screen",
     "detail": "Nothing in the game itself changes. AshenSpire-Setup.exe installs the game for you (no administrator prompt) with Start menu and desktop shortcuts; tick High-resolution art and it downloads the full-resolution art during the install and checks every file, or leave it unticked to play with the standard art and add it later by running the installer again. Uninstalling asks before it deletes your saves.",
-    "build": "0.7.1.795",
+    "build": "0.7.1.797",
     "pullRequest": 1501,
     "url": "https://github.com/cehinds/AshenSpire/pull/1501"
+  },
+  {
+    "id": "pr-1440",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the spec wording for loading assets as separate files is approved",
+    "detail": "This is a docs-only change, and nothing you play changes. The spec now says the game will load its art, fonts and music as separate files, keep one light-art single file you can download and open by double-click, and retire the 254 MB file.",
+    "build": "0.7.1.796",
+    "pullRequest": 1440,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1440"
+  },
+  {
+    "id": "pr-1496",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: reusable desktop and mobile polish artwork is saved with the project",
+    "detail": "The illustrated design direction now has individual paintings, portraits, icons, frames and controls, with recipes for 24 player feature views and copies of the existing game art and fonts they need. Credits, provenance and portable preview helpers are included for the next visual polish pass. These are design assets; the playable screens and game rules stay as they are.",
+    "build": "0.7.1.795",
+    "pullRequest": 1496,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1496"
   },
   {
     "id": "pr-1450",
