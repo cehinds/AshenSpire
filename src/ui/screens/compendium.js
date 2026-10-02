@@ -260,7 +260,7 @@ export function mountCompendium(app, { registries, meta = {}, onBack }) {
     children: el('div', { class: 'w1-split' }, [el('div', { class: 'cp-list' }, grid), detail]),
     attrs: { class: 'cp-pane', id: 'cp-panel', role: 'tabpanel' },
   });
-  const back = button({ label: t('common.back'), role: 'exit', id: 'cp-back' });
+  const back = button({ label: t('common.back'), role: 'exit', id: 'cp-back', attrs: { 'data-back': '' } });
   const door = workspaceFrame(pageDoor({
     eyebrow: t('compendium.eyebrow', { held: view.held, total: view.total }),
     title: t('compendium.title'),

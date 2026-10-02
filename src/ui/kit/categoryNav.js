@@ -26,7 +26,7 @@
 // ESCAPE CLOSES THE LIST, NEVER THE DOOR. A door listens for Escape on
 // `document` (modalShell), on `window` in the capture phase (the in-run
 // overlay), or on `document` in the bubble phase (the Armoury), and the pad's
-// B arrives as a synthetic Escape on `window`. One `window` capture listener,
+// B arrives as a synthetic Escape at `document` (it bubbles to `window`). One `window` capture listener,
 // installed when this module loads and so ahead of every door's, claims an
 // Escape while a list is open and stops it there.
 //
