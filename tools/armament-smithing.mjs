@@ -363,6 +363,7 @@ async function main() {
   const shieldGuardBase = cardAmount(resolveCard, registries, run.deck.find((card) => card.instanceId === 'kit:roundShield:guard'), 'block');
   const pair = (base, step) => JSON.stringify([base, base + step]);
   check([swordDamageStep, swordGuardStep, swordTechniqueStep, shieldGuardStep].every((step) => Number.isInteger(step) && step > 0)
+      && [strikeBase, swordGuardBase, techniqueBase, shieldGuardBase].every((base) => Number.isInteger(base))
       && JSON.stringify(amount(strikePreview, 'damage')) === pair(strikeBase, swordDamageStep)
       && JSON.stringify(amount(swordGuardPreview, 'block')) === pair(swordGuardBase, swordGuardStep)
       && JSON.stringify(amount(techniquePreview, 'block')) === pair(techniqueBase, swordTechniqueStep)

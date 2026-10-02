@@ -34,7 +34,7 @@ const alternates = {
   // alternate is the only two-piece one, so it also proves "every piece".
   rogue: { id: 'rogueBow', rightHand: 'shortbow', leftHand: 'parryDagger' },
 };
-const alternatePieces = (classId) => [alternates[classId].rightHand, alternates[classId].leftHand].filter(Boolean);
+const alternatePieces = (classId) => [alternates[classId]?.rightHand, alternates[classId]?.leftHand].filter(Boolean);
 
 check(Array.isArray(R.equipment.startingKits), 'starting kits are a generated equipment table');
 check(R.balance.equipment.startingKitDiscovery?.undiscoveredPresentation === 'hidden',
@@ -51,6 +51,9 @@ for (const classId of R.classes.ids()) {
   check(baseline.length === 1 && cls.eligibleStartingKitIds?.includes(baseline[0].id),
     `${classId} has exactly one class-listed baseline`, JSON.stringify(baseline));
   check(!!alternates[classId], `${classId} has a representative alternate in this tool's table`);
+  // A class missing from the table is reported above; the alternate checks
+  // below cannot run for it, so they are skipped rather than crash the tool.
+  if (!alternates[classId]) continue;
   check(classKits.some((row) => row.id === alternates[classId]?.id && row.rightHand === alternates[classId]?.rightHand
       && (row.leftHand || '') === (alternates[classId]?.leftHand || '')),
     `${classId} authors its representative alternate`, JSON.stringify(classKits));
@@ -142,13 +145,27 @@ check(altRun?.startingKitId === 'reaverGreatsword' && altRun.loadout.sets.rightH
   const filler = deck.filter((c) => c.equipmentRole === 'attack' || c.equipmentRole === 'guard');
   const attacks = filler.filter((c) => c.equipmentRole === 'attack').length;
   const guards = filler.length - attacks;
+  // Bound cards counted from what the composer must deal, not from the deck's
+  // remainder: the item's kit Strike and Guard, its signature Art, the one
+  // Dodge Roll, and the class's signature and ability cards.
+  const reaver = R.classes.get('reaver');
+  const classCardIds = [reaver.startingSignatureCard, reaver.abilityCard].filter(Boolean);
+  const boundCards = [
+    ...deck.filter((c) => c.equipmentRole === 'granted' && c.grantedBy === 'greatsword'),
+    ...deck.filter((c) => c.equipmentRole === 'weaponArt' && c.grantedBy === 'greatsword'),
+    ...deck.filter((c) => c.cardId === 'dodgeRoll'),
+    ...deck.filter((c) => !c.equipmentRole && classCardIds.includes(c.cardId)),
+  ];
+  const boundCount = 2 + 1 + 1 + classCardIds.length;
   check(Number.isInteger(cap) && deck.length === cap
     && deck.some((c) => c.instanceId === 'kit:greatsword:attack' && c.kitRole === 'attack' && c.sourceArmamentId === 'greatsword')
     && deck.some((c) => c.instanceId === 'kit:greatsword:guard' && c.kitRole === 'guard' && c.sourceArmamentId === 'greatsword')
     && deck.filter((c) => c.equipmentRole === 'weaponArt' && c.grantedBy === 'greatsword').length === 1
     && deck.filter((c) => c.cardId === 'dodgeRoll').length === 1
     && !deck.some((c) => c.equipmentRole === 'technique' || c.kitRole === 'technique')
-    && filler.length === cap - (deck.length - filler.length)
+    && classCardIds.length === 2 && boundCards.length === boundCount
+    && filler.length === cap - boundCount
+    && boundCards.length + filler.length === deck.length
     && filler.every((c) => c.sourceArmamentId === 'greatsword')
     && guards > 0 && (attacks - guards === 0 || attacks - guards === 1),
     'alternate resolves through the shared starting-deck contract (kit + bound cards first, base cards fill the cap)',
@@ -236,7 +253,8 @@ const customize = readFileSync(new URL('../src/ui/screens/customize.js', import.
 check(/startingKitViews/.test(customize) && /startingKitId/.test(customize),
   'creation consumes the shared kit view and submits kit identity');
 // Every alternate's pieces, read from this tool's table (the Rogue's included).
-const alternateNames = new RegExp(Object.values(alternates).flatMap((row) => [row.rightHand, row.leftHand]).filter(Boolean).join('|'));
+const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const alternateNames = new RegExp(Object.values(alternates).flatMap((row) => [row.rightHand, row.leftHand]).filter(Boolean).map(escapeRegExp).join('|'));
 check(!alternateNames.test(customize),
   'creation contains no hard-coded alternate names or stats');
 
