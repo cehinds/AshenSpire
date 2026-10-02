@@ -652,8 +652,7 @@ button.ev-choice {
 .combat.coop .combatant.player.away { opacity: .45; }
 .combat.coop .combatant.player.throw-target { cursor: pointer; outline: 2px solid var(--gold); outline-offset: 4px; border-radius: var(--r-3); box-shadow: 0 0 12px rgba(200,160,70,.4); }
 .combat.coop .combatant.enemy.selected-target { outline: 2px solid var(--gold); outline-offset: 3px; border-radius: var(--r-3); }
-.combat.coop .coop-leave,
-.combat.coop .coop-flask { min-height: var(--tap-floor); height: auto; }
+.combat.coop .coop-leave { min-height: var(--tap-floor); height: auto; }
 
 /* co-op: fork voting on the shared map */
 .map-node.my-vote > circle { stroke: var(--gold); stroke-width: 3; }

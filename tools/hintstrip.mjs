@@ -438,7 +438,7 @@ if (process.argv.includes('--selftest')) {
         // confident nothing this gate printed over the retired strip.
         name: 'the row stops rendering and no H check may green on the empty population',
         edits: [{
-          file: 'src/ui/screens/combat.js',
+          file: 'src/ui/components/combatActionRow.js',
           find: '<div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)}',
           replace: '<div class="combat-action-row-planted-away as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)}',
         }],
