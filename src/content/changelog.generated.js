@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1470",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the heavy test run is green on Windows and macOS again",
+    "detail": "Nothing you play changes. The local server the test tools use to open a web-edition build turned away every file on Windows, because it worked out the folder's true location one way and each file's location another, and the two disagree about Windows' short folder names. Both now use the same method. A separate test on macOS called a system program by a path macOS does not have; it now writes its own stand-in.",
+    "build": "0.7.1.759",
+    "pullRequest": 1470,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1470"
+  },
+  {
     "id": "pr-1445",
     "date": "2026-10-02",
     "group": "2026-10-02",
