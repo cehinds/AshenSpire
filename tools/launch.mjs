@@ -22,6 +22,7 @@ import { serve } from './serve.mjs';
 // here since the launcher was written. A second implementation of a rule is a
 // second chance to disagree with it, and this one disagreed silently.
 import { buildVersion } from './buildversion.mjs';
+import { artDir, strictFor } from './art-source.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
@@ -69,7 +70,7 @@ function version() {
 
 const args = process.argv.slice(2);
 // THE ART TIER. Light by default (owner, 2026-09-26: "light only on dev/test"):
-// one single file, AshenSpire.html, carrying the assets-mobile/ payloads, and a
+// one single file, AshenSpire.html, carrying the light pack's payloads, and a
 // web edition with the same art. `--full-art` is the release/main shape it
 // replaced: the full-art AshenSpire.html (~255 MB) plus the mobile file.
 const FULL_ART = args.includes('--full-art');
@@ -120,12 +121,28 @@ const aliases = [
 ];
 for (const dest of aliases) copyFileSync(src, dest);
 // Optional hosted detail is separate from the offline-safe HTML fallback.
-if (existsSync(resolve(ROOT, 'map-detail'))) cpSync(resolve(ROOT, 'map-detail'), resolve(distDir, 'map-detail'), {recursive:true});
+// The tiles and the shipped score are the common pack's (docs/EXTERNAL-ASSETS-PLAN.md
+// step 12): copied from the fetched release, .art-cache/<tag>/common/, through
+// tools/art-source.mjs (which alone may still read the trees here, until step 13).
+// Without either, the single file keeps the offline map and the synth score.
+const commonCopy = (tree) => {
+  try { return artDir(tree).dir; } catch (e) {
+    // ASHEN_ART_SOURCE=cache (CI) makes a missing common pack a failure here too.
+    if (strictFor(ROOT)) { console.error(`launch: ${e.message}`); process.exit(1); }
+    console.warn(`launch: ${e.message} — the single file ships without ${tree}/`);
+    return null;
+  }
+};
+const detailDir = commonCopy('map-detail');
+if (detailDir && existsSync(detailDir)) cpSync(detailDir, resolve(distDir, 'map-detail'), {recursive:true});
 // The shipped score, the same way: a served alias with the music-folder setting
 // blank fetches music/ from beside itself (content/music.js SHIPPED_MUSIC_FOLDER),
 // so build/ and dist/ each carry a copy. Git-ignored, like dist/map-detail/.
-if (existsSync(resolve(ROOT, 'music'))) {
-  for (const dir of [distDir, resolve(ROOT, 'build')]) cpSync(resolve(ROOT, 'music'), resolve(dir, 'music'), {recursive:true});
+// The common pack carries music/manifest.json and the tracks, never the score's
+// source (music/score/, which is authoring).
+const musicDir = commonCopy('music');
+if (musicDir && existsSync(musicDir)) {
+  for (const dir of [distDir, resolve(ROOT, 'build')]) cpSync(musicDir, resolve(dir, 'music'), {recursive:true});
 }
 const landed = aliases.filter((f) => existsSync(f)).length;
 console.log(`launch: current build refreshed → AshenSpire.html + dist/AshenSpire.html + dist/AshenSpire-${ver}.html`);
@@ -136,7 +153,7 @@ if (landed !== aliases.length) {
 
 // 2b. The MOBILE single file — the second download. Same source, same stamp
 // (the full build above already bumped the ordinal if the tree moved, so this
-// one reads the same number), art from assets-mobile/. It gets the same three
+// one reads the same number), art from the light pack. It gets the same three
 // aliases the full file has, under its own name, and the same count-and-verify.
 let mobileLanded = 0;
 let mobileWanted = 0;

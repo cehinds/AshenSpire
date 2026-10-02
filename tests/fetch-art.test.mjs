@@ -414,7 +414,7 @@ test('schema 2: asset-pack writes the same objects and indexes from the fetched 
   const b = join(root, 'build', 'out-cache');
   try {
     await fetchAll(root, zips);
-    writePacks({ root, out: a });
+    writePacks({ root, out: a, source: 'trees' });
     writePacks({ root, out: b, source: 'cache' });
     const files = (dir) => { const out = {}; const walk = (d) => { for (const n of readdirSync(d).sort()) { const p = join(d, n); if (lstatSync(p).isDirectory()) walk(p); else out[p.slice(dir.length)] = sha(readFileSync(p)); } }; walk(dir); return out; };
     assert.deepEqual(files(b), files(a));

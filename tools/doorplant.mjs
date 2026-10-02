@@ -44,7 +44,10 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const REAL_ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
-const COPY_SET = ['src', 'content', 'styles', 'index.html', 'tools'];
+// The art pin and manifest ride along (docs/EXTERNAL-ASSETS-PLAN.md step 12):
+// since then a tool asks art-manifest.json, not a tree, whether an art id ships
+// (tools/art-source.mjs manifestIds), so a copy without it cannot answer.
+const COPY_SET = ['src', 'content', 'styles', 'index.html', 'tools', 'art-release.json', 'art-manifest.json'];
 
 // LINE ENDINGS ARE NOT PART OF THE PLANT (2026-09-17). Plants are authored with
 // `\n`, because that is what the committed blobs carry and what Linux CI checks
