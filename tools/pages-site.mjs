@@ -1102,8 +1102,11 @@ function check(outDir) {
     const onDisk = readFileSync(join(bdir, 'index.html'));
     const download = JSON.parse(readFileSync(join(bdir, 'build.json'), 'utf8'));
     const pageBytes = b.shape === 'pack' ? download.pageBytes : download.bytes;
+    // zipBytes is judged only when the store lets it be measured: a missing
+    // pinned file is red by its own row (MISSING INDEX), not twice.
+    const zipNow = b.shape === 'pack' ? zipBytesFor(outDir, b, onDisk) : null;
     if (pageBytes !== onDisk.length || download.ordinal !== b.ordinal || download.version !== b.version
-      || (b.shape === 'pack' && (download.pageSha256 !== sha256(onDisk) || download.zipBytes !== zipBytesFor(outDir, b, onDisk)))) {
+      || (b.shape === 'pack' && (download.pageSha256 !== sha256(onDisk) || (zipNow !== null && download.zipBytes !== zipNow)))) {
       red(`DOWNLOAD DRIFT ${d.branch}/${b.ordinal}: metadata differs from the downloadable file`);
     } else checks++;
     if (Buffer.compare(blob, onDisk) !== 0) red(`DRIFT ${d.branch}/${b.ordinal}: site file differs from ${rebuiltBuild ? 'the recorded rebuild of' : 'git blob'} ${b.sha.slice(0, 10)}`);
