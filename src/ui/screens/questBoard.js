@@ -62,7 +62,7 @@ export function mountQuestBoard(app, { registries, run, meta, ownerNodeId, hud =
     journalList(t('questBoard.journal.started'), view.journal.started, t('questBoard.journal.noneStarted'), 'started'),
     journalList(t('questBoard.journal.completed'), view.journal.completed, t('questBoard.journal.noneCompleted'), 'completed'),
   ]);
-  const leave = button({ label: t('questBoard.leave'), weight: 'primary', id: 'quest-board-leave' });
+  const leave = button({ label: t('questBoard.leave'), weight: 'primary', id: 'quest-board-leave', attrs: { 'data-back': '' } });
   mountChoiceBody(app.querySelector('.quest-board-screen'), {
     className: 'quest-board-door',
     eyebrow: t('questBoard.eyebrow'),
