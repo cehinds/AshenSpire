@@ -101,6 +101,21 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL every run-HUD flask menu is fed by the shared action plan/,
       },
       {
+        name: 'one run-HUD flask menu is handed a second plan property that overrides the shared one',
+        file: 'src/ui/components/runHud.js',
+        find: '          def,\n          plan,\n',
+        replace: '          def,\n          plan,\n          plan: {},\n',
+        all: false,
+        expectRed: /FAIL every run-HUD flask menu is fed by the shared action plan/,
+      },
+      {
+        name: 'the map Potions control hands its flask menu a second plan property after the shared one',
+        file: 'src/ui/components/runPotions.js',
+        find: 'def, plan: planFor(entry), charges:',
+        replace: 'def, plan: planFor(entry), plan: { actions: [] }, charges:',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
         name: 'one run-HUD flask menu opens without the shared action plan',
         file: 'src/ui/components/runHud.js',
         find: 'const plan = flaskActionPlan({',
@@ -191,17 +206,32 @@ function props(obj) {
   return out;
 }
 // Each `mountFlaskActionMenu(node, { … })` call: where it is, and its `plan` value.
+// The argument must carry EXACTLY ONE top-level `plan` and no spread (or other
+// unkeyed) entry: a second `plan:` or a `...rest` after it would override the
+// one checked, so either makes `plan` null and the mount red.
 function menuMounts(src) {
   const out = [];
   for (const m of src.matchAll(/\bmountFlaskActionMenu\(/g)) {
     const call = balanced(src, m.index + m[0].length - 1);
     const brace = call ? call.indexOf('{') : -1;
     const obj = brace >= 0 ? balanced(call, brace) : null;
-    const plan = obj ? props(obj).find(([key]) => key === 'plan') : null;
-    out.push({ at: m.index, plan: plan ? plan[1] : null });
+    const entries = obj ? props(obj) : [];
+    const plans = entries.filter(([key]) => key === 'plan');
+    const unkeyed = entries.some(([key]) => key === null);
+    out.push({ at: m.index, plan: plans.length === 1 && !unkeyed ? plans[0][1] : null });
   }
   return out;
 }
+
+// BOUNDARY (source half). The runHud.js and runPotions.js mount checks, the
+// planFor statement match and the runHud `const plan` initializer match are
+// SOURCE checks. They prove the shipped form against accidental drift; they do
+// not recognise every equivalent JavaScript spelling, and an unrecognised
+// spelling fails closed (red), never open. The map's plan path is BEHAVIOURAL:
+// runPotionPlan is imported and driven below. A review finding that builds a
+// deliberately adversarial spelling beyond the shipped form is answered with
+// this boundary and, where cheap, a must-fail plant; the matchers are not
+// widened to chase it.
 
 check('one pure flaskActionPlan owns action availability', typeof actions?.flaskActionPlan === 'function');
 if (actions?.flaskActionPlan) {
