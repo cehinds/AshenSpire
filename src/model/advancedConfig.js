@@ -1015,12 +1015,15 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   // Snapshots stamped before version 2 were played with the skill and class
   // tracks at growth 1 (linear from version 1). Version 2 (owner, 2026-10-02)
   // authors them at ×1.75; an older run keeps the thresholds it was saved
-  // with unless its own overrides name the curve.
+  // with unless its own overrides name the curve's shape or growth.
   if (settingsOrSnapshot?.overrides && curveVersion !== 2) {
     for (const path of ['skill.xp', 'skill.class.xp']) {
       const curve = path.split('.').reduce((row, part) => row?.[part], configured.balance);
       if (!curve) continue;
-      if (curveVersion === 1 && settings[`${ADVANCED_CONFIG_PREFIX}balance.${path}.linear`] === undefined) curve.linear = true;
+      // Only while the run still inherits its curve shape: a player who
+      // switches the curve in Settings gets the growth the screen shows.
+      if (settings[`${ADVANCED_CONFIG_PREFIX}balance.${path}.linear`] !== undefined) continue;
+      if (curveVersion === 1) curve.linear = true;
       if (settings[`${ADVANCED_CONFIG_PREFIX}balance.${path}.growth`] === undefined) curve.growth = 1;
     }
   }

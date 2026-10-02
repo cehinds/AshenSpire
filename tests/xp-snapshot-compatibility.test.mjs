@@ -59,6 +59,9 @@ test('a run saved before the ×1.75 skill curve keeps the thresholds it was save
   assert.deepEqual(skillSteps(advancedConfigSnapshot({})), ['100,175,305,535', '100,175,305,535'], 'a new run uses ×1.75');
   const tuned = { ...linearV1, overrides: { 'gameConfig.balance.skill.xp.linear': false, 'gameConfig.balance.skill.xp.growth': 1.5 } };
   assert.equal(skillSteps(tuned)[0], '100,150,225,340', 'a version-1 run that names its own curve keeps it');
+  const switched = updatedXpSnapshot(linearV1, { 'gameConfig.balance.skill.xp.linear': false });
+  assert.equal(skillSteps(switched)[0], '100,175,305,535', 'a version-1 run switched to exponential uses the growth the screen shows');
+  assert.equal(skillSteps(switched)[1], '100,230,360,490', 'the class track it did not switch keeps its saved curve');
   const character = createRegistries(configuredContentBundle(contentBundle, linearV1));
   assert.equal(characterXpToNext(character, 2), 230, 'the character curve is untouched');
 });
