@@ -12,6 +12,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync, rmSync } from 'node:fs';
 import vm from 'node:vm';
+import { createHash } from 'node:crypto';
 import { readdirSortedSync } from './dirorder.mjs';
 import { MIME, runtimeAsset } from './assetmime.mjs';
 import { MOBILE_ASSET_DIR, MOBILE_BUNDLE_BUDGET_BYTES, distinctAssetId } from './mobileart-policy.mjs';
@@ -366,6 +367,34 @@ function artManifest() {
   }
   return manifestCache;
 }
+// A FETCHED FILE IS HELD TO ITS RECORD BEFORE ITS BYTES ARE EMBEDDED. The
+// cache's .verified marker says the pack was whole when fetch-art wrote it,
+// not that nobody touched a file since; a local build reuses the cache without
+// --recheck. So every cache byte this file inlines is checked against
+// art-manifest.json's size and sha256 for that path (light, high or common).
+let manifestRecordMap = null;
+function manifestRecord(path) {
+  if (!manifestRecordMap) {
+    manifestRecordMap = new Map();
+    for (const entry of Object.values(artManifest().assets || {})) {
+      for (const tier of ['light', 'high', 'common']) {
+        const rec = entry && entry[tier];
+        if (rec && typeof rec.path === 'string') manifestRecordMap.set(rec.path, rec);
+      }
+    }
+  }
+  return manifestRecordMap.get(path);
+}
+function checkCachedBytes(absPath, manifestPath) {
+  const raw = readFileSync(absPath);
+  const rec = manifestRecord(manifestPath);
+  const fix = 'node tools/fetch-art.mjs --recheck --refetch';
+  if (!rec) fail(`${manifestPath}: the fetched cache holds a file art-manifest.json has no record of — ${fix}`);
+  const sha = createHash('sha256').update(raw).digest('hex');
+  if (raw.length !== rec.bytes || sha !== rec.sha256) {
+    fail(`${manifestPath}: the fetched cache's bytes disagree with art-manifest.json (${raw.length} bytes, sha256 ${sha.slice(0, 12)}; the record says ${rec.bytes}, ${String(rec.sha256).slice(0, 12)}) — ${fix}`);
+  }
+}
 let manifestIdSet = null;
 const manifestIds = () => (manifestIdSet = manifestIdSet || new Set(Object.keys(artManifest().assets || {})));
 
@@ -453,6 +482,7 @@ if (existsSync(ART_DIR) && sources.has(ASSET_MAP_ID)) {
       // test holds the manifest to these trees.
       copiedAssets += 1;
     } else {
+      if (TWIN_ART && lightSource.from === 'cache') checkCachedBytes(abs, `${MOBILE_ASSET_DIR}/${relative(ART_DIR, abs).split(/[\\/]/g).join('/')}`);
       // (FONTS REACH THE PAGE THROUGH CSS ONLY, and are skipped above.
       // styles/kit.css names each face in an @font-face url(), which
       // inlineCssUrls turns into a data: URI; nothing asks the asset map for a
@@ -824,6 +854,7 @@ function inlineCssUrls(css, cssAbs) {
       try { payload = artPath(fromRoot); } catch (e) { fail(`${ref}: ${e.message}`); }
       if (!existsSync(payload)) fail(`asset referenced from CSS not found: ${ref} (${idOf(payload)})`);
       if (!mime) fail(`unsupported CSS asset type '${ext}' for ${ref}`);
+      if (resolve(payload) !== resolve(ROOT, fromRoot)) checkCachedBytes(payload, fromRoot);
       const buf = readAssetBytes(payload);
       inlinedAssets += 1;
       inlinedAssetBytes += buf.length;
@@ -839,6 +870,7 @@ function inlineCssUrls(css, cssAbs) {
       if (fromAssets.startsWith('..')) fail(`CSS url outside assets/ has no mobile twin: ${ref}`);
       const twin = resolve(ART_DIR, fromAssets);
       if (!existsSync(twin)) fail(`CSS asset has no light file in ${ART_FROM}: ${ref} — node tools/fetch-art.mjs --pack light`);
+      if (lightSource.from === 'cache') checkCachedBytes(twin, `${MOBILE_ASSET_DIR}/${fromAssets.split(/[\\/]/g).join('/')}`);
       const buf = readAssetBytes(twin);
       inlinedAssets += 1;
       inlinedAssetBytes += buf.length;
