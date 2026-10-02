@@ -94,6 +94,27 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL combat and map menus share action availability/,
       },
       {
+        name: 'combat offers Use always-enabled while the expected lookup survives only in a comment',
+        file: 'src/ui/components/combatActionRow.js',
+        find: "const action = flaskActionPlan({ context: 'combat', canUse, useReason: reason }).actions.find(r => r.id === 'use');",
+        replace: "const action = { id: 'use', enabled: true, reason: '' }; // const action = flaskActionPlan({ context: 'combat', canUse, useReason: reason }).actions.find(r => r.id === 'use');",
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'one run-HUD charge flask is always usable, ignoring the setting and its charges',
+        file: 'src/ui/components/runHud.js',
+        find: "const canUse = settingOn(meta.settings, 'useRestorativeFlasksOutsideCombat') && current > 0;",
+        replace: 'const canUse = true;',
+        expectRed: /FAIL every run-HUD flask menu is fed by the shared action plan/,
+      },
+      {
+        name: 'the run HUD comments out the shared import and plans with a local stand-in',
+        file: 'src/ui/components/runHud.js',
+        find: "import { flaskActionPlan } from '../../model/flaskActions.js';",
+        replace: "// import { flaskActionPlan } from '../../model/flaskActions.js';\nconst flaskActionPlan = () => ({ actions: [] });",
+        expectRed: /FAIL every run-HUD flask menu is fed by the shared action plan/,
+      },
+      {
         name: 'the map Potions control drops its registries binding',
         file: 'src/ui/screens/map.js',
         find: 'mountRunPotions(potionsHost, { registries, run, meta,',
@@ -466,8 +487,11 @@ const mapShares = /import \{[^}]*\bmountRunPotions\b[^}]*\} from '\.\.\/componen
   && modelShares;
 check('combat and map menus share action availability',
   /mountFlaskActionMenu/.test(component)
-    && (potions.match(/\bflaskActionPlan\(/g) || []).length === 1
-    && /const action = flaskActionPlan\(\{ context: 'combat', canUse, useReason: reason \}\)\.actions\.find\(r => r\.id === 'use'\);/.test(potions) && /openCombatPotions\(/.test(combat)
+    && (code(potions).match(/\bflaskActionPlan\(/g) || []).length === 1
+    && /const action = flaskActionPlan\(\{ context: 'combat', canUse, useReason: reason \}\)\.actions\.find\(r => r\.id === 'use'\);/.test(code(potions))
+    && /import \{ flaskActionPlan \} from '\.\.\/\.\.\/model\/flaskActions\.js'/.test(code(potions))
+    && !/\bflaskActionPlan\s*=[^=]|function\s+flaskActionPlan\b/.test(code(potions))
+    && /openCombatPotions\(/.test(code(combat))
     && mapShares);
 // The run HUD's room-rail flask icons (switched off by config today, so this
 // never stands in for the map): each menu it mounts takes the `plan` shorthand
@@ -483,7 +507,24 @@ function wholeInit(block) {
 }
 const hudMounts = menuMounts(runHudCode);
 check('every run-HUD flask menu is fed by the shared action plan',
-  /import \{ flaskActionPlan \} from '\.\.\/\.\.\/model\/flaskActions\.js'/.test(runHud)
+  // Comment-stripped: a commented-out import beside a local stand-in is red.
+  /import \{ flaskActionPlan \} from '\.\.\/\.\.\/model\/flaskActions\.js'/.test(runHudCode)
+    && !/\bflaskActionPlan\s*=[^=]|function\s+flaskActionPlan\b/.test(runHudCode)
+    // The availability inputs: every plan's `canUse` is either `false` or the
+    // `canUse` shorthand, bound once from the live "Use flasks outside combat"
+    // setting and the remaining charges (settingOn is imported and driven in
+    // the map half above), so `const canUse = true` goes red.
+    && /import \{ settingOn \} from '\.\.\/screens\/settings\.js'/.test(runHudCode)
+    && (runHudCode.match(/\bcanUse\s*=[^=>]/g) || []).length === 1
+    && /\bconst canUse = settingOn\(meta\.settings, 'useRestorativeFlasksOutsideCombat'\) && current > 0;/.test(runHudCode)
+    && settingReadsLive
+    && [...runHudCode.matchAll(/\bconst plan = flaskActionPlan\(/g)].every((m) => {
+      const call = balanced(runHudCode, m.index + m[0].length - 1);
+      const obj = call ? balanced(call, call.indexOf('{')) : null;
+      const uses = obj ? props(obj).filter(([key]) => key === 'canUse') : [];
+      return uses.length === 1 && (uses[0][1] === 'canUse' || uses[0][1] === 'false')
+        && !props(obj).some(([key]) => key === null);
+    })
     && hudMounts.length > 0 && hudMounts.every((mount) => {
       if (mount.plan !== 'plan') return false;
       const block = runHudCode.slice(runHudCode.lastIndexOf('activate: (node) => {', mount.at), mount.at);
