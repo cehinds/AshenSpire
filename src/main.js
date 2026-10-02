@@ -1966,8 +1966,15 @@ function showDraft() {
  * on every volume nudge, and `mountMap` re-runs the framing camera. The list is
  * the map's own reads — grep `meta.settings` in ui/screens/map.js and
  * model/mapknowledge.js and mapboard.js, and they are the keys below.
+ *
+ * AND "Use flasks outside combat", which the map's Potions control
+ * (components/runPotions.js) and the run HUD's flask icons read at mount. A
+ * change here replaces `activeMeta`, so without the redraw the map kept
+ * refusing Drink after the player had turned it on, and its own redraw after a
+ * Potions action re-read the meta it was mounted with
+ * (tools/flask-menu-probe.mjs, persistence).
  */
-const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan'];
+const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan', 'useRestorativeFlasksOutsideCombat'];
 function remountMapIfShowing(changed) {
   if (!run || !changed) return;
   if (!MAP_REMOUNT_KEYS.some((k) => k in changed)) return;
@@ -3295,6 +3302,21 @@ if (shotState) {
   // NOT a player-facing surface: what a PLAYER should be told when their save
   // was repaired is wording, and wording is not this seat's to write.
   window.__runstatus = () => saves.runStatus();
+  // THE FLASKS, read-only, same species: the live run's flask ledger and
+  // carried potions beside the slot's saved copy, and the stored "Use flasks
+  // outside combat" setting. tools/flask-menu-probe.mjs proves a map Potions
+  // action and a setting change are SAVED, which a shot boot's memory storage
+  // hides from any localStorage read. Shot boots only; a player never has it.
+  window.__flasks = () => {
+    const saved = saves.loadRun(registries, activeSlot);
+    const charges = (r) => (r && r.flaskCharges ? { hp: r.flaskCharges.hpCurrent, mana: r.flaskCharges.manaCurrent } : null);
+    const carried = (r) => (r ? (r.flasks || []).map((f) => f.flaskId) : null);
+    return {
+      charges: charges(run), savedCharges: charges(saved),
+      carried: carried(run), savedCarried: carried(saved),
+      savedOutsideCombat: ((saves.loadMeta() || {}).settings || {}).useRestorativeFlasksOutsideCombat ?? null,
+    };
+  };
   // THE SPOILS, read-only, same species again — tools/reward-collect-drive.mjs
   // proves WHEN an armament becomes owned (meta.found) and stored (the run's
   // loadout) around the reward menu, and a shot boot runs on MEMORY storage
