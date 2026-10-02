@@ -1,4 +1,4 @@
-import { applyArtQuality, onArtSourceChange, builtInArtArrived } from './ui/highResArt.js';
+import { applyArtQuality, onArtSourceChange, builtInArtArrived, ART_REDRAW_EVENT } from './ui/highResArt.js';
 import { whenBuiltInArtReady, musicHold, bootLine, packsPinned, builtInArtStatus, builtInArtSettled } from './ui/assetPacks.js';
 import { applyArtTier, onTierArrived, requestedTier, retryBuiltInArt } from './ui/artTier.js';
 import { startBootArt, bootArtLine, bootArtRetried } from './ui/bootArt.js';
@@ -1544,7 +1544,9 @@ function artArrivedAfterFailure() {
   cancelTitleRedraw();
   cancelTitleRedraw = whenNoOverlay(() => {
     const root = app.querySelector('.title-screen');
-    if (!root) return;
+    // Any other screen (a Retry from the in-run Settings): it redraws its own
+    // art from its own state (combat's enemy placeholders), keeping the rest.
+    if (!root) { try { document.dispatchEvent(new CustomEvent(ART_REDRAW_EVENT)); } catch { /* no document */ } return; }
     const active = document.activeElement;
     const action = root.contains(active) ? active.closest?.('[data-title-action]')?.dataset.titleAction : null;
     const onNotice = fromNotice && !action;

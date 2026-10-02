@@ -55,7 +55,9 @@
 // and no debug failure banner. The block is lifted and Retry is pressed: the
 // pinned tier must load, the title be drawn again on it (ASSET_CSS in the page,
 // no notice). The combat and map screens must mount on placeholders with the
-// index refused, asking for no object. The cold boot runs with the debug
+// index refused, asking for no object; and a Retry from the in-run Settings
+// must redraw the combat's placeholder enemies as images, in the same combat,
+// once Settings closes. The cold boot runs with the debug
 // profile auto-load on (Settings → Advanced → Defaults & sync) and its GitHub
 // request held too: the gate must still be drawn at once, not after the
 // profile's 3 s wait (Codex on #1471).
@@ -369,6 +371,39 @@ async function blockedIndexPass() {
     check(!raised, `${name}: the debug failure banner was raised${raised}`);
     shots.push(`${name} in ${up} ms`);
   }
+  // 4. Retry from the in-run Settings (Codex on #1471): combat drawn on
+  // placeholders (the index refused), the block lifted, Quick menu → Settings
+  // → Art quality → Retry, Settings closed: the same combat (no remount, the
+  // same hand) must draw its enemies as images from objects/.
+  await cdp.send('Emulation.setDeviceMetricsOverride', DESKTOP, S);
+  await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/AshenSpire.html?shot=combat` }, S);
+  check(await poll(`!!document.querySelector('.combat .hand .card') && document.documentElement.dataset.builtInArt === 'failed'`, 20000) >= 0, 'in-run Retry: combat did not mount on a failed load');
+  const enemyArt = `(() => { const sprites = [...document.querySelectorAll('.enemy-row [data-enemy-id]')];
+    return { n: sprites.length, placeholders: sprites.filter((e) => !e.querySelector('img')).length,
+      drawn: sprites.filter((e) => [...e.querySelectorAll('img')].some((i) => i.complete && i.naturalWidth > 0 && (i.getAttribute('src') || '').includes('objects/'))).length,
+      hand: document.querySelectorAll('.combat .hand .card').length }; })()`;
+  await ev(`window.__retryCombat = document.querySelector('.combat')`);
+  // The images' own error handlers swap the placeholders in as each request fails.
+  await poll(`(${enemyArt}).placeholders === (${enemyArt}).n && (${enemyArt}).n > 0`, 6000);
+  const placeheld = await ev(enemyArt);
+  check(placeheld.n > 0 && placeheld.placeholders === placeheld.n, `in-run Retry: the failed load did not leave the enemies on placeholders (${placeheld.placeholders} of ${placeheld.n})`);
+  mode = 'pass';
+  await click('[aria-label="Quick menu"]');
+  await poll(`!!document.querySelector('.qn-row')`, 4000);
+  await ev(`[...document.querySelectorAll('.qn-row')].find((r) => /settings/i.test(r.textContent))?.click()`);
+  check(await poll(`!!document.querySelector('[data-art-retry]:not([hidden])')`, 6000) >= 0, 'in-run Retry: Settings offered no Retry');
+  // The row may sit below the fold of the Settings panel: scrolled into view, then pressed.
+  await ev(`document.querySelector('[data-art-retry]:not([hidden])').scrollIntoView({ block: 'center' })`);
+  await wait(300);
+  await click('[data-art-retry]:not([hidden])');
+  const inRunAt = await poll(`document.documentElement.dataset.builtInArt === ${JSON.stringify(PINNED_TIER)}`, 15000);
+  check(inRunAt >= 0, `in-run Retry: Settings' Retry did not load ${PINNED_TIER} (data-built-in-art "${await ev('document.documentElement.dataset.builtInArt || ""')}", retry button ${await ev('JSON.stringify([...document.querySelectorAll("[data-art-retry]")].map((b) => [b.hidden, b.getAttribute("aria-disabled"), Math.round(b.getBoundingClientRect().width)]))')}, line "${await ev('document.querySelector("[data-art-tier-status]")?.textContent || ""')}")`);
+  await ev(`document.querySelector('[aria-modal="true"] .modal-close')?.click()`);
+  const redrawnAt = await poll(`(${enemyArt}).drawn === (${enemyArt}).n && (${enemyArt}).n > 0`, 10000);
+  const redrawn = await ev(enemyArt);
+  check(redrawnAt >= 0, `in-run Retry: after Settings closed the enemies are still placeholders (${redrawn.drawn} of ${redrawn.n} drawn from objects/)`);
+  check(await ev(`document.querySelector('.combat') === window.__retryCombat`) && redrawn.hand === placeheld.hand, 'in-run Retry: the combat was remounted or its hand changed, not redrawn in place');
+  shots.push(`in-run Retry redrew ${redrawn.drawn} enemy sprite(s)`);
   check(!thrown.length, `${thrown.length} uncaught exception(s): ${thrown.slice(0, 2).join(' | ')}`);
   await close(); server?.server.close();
   console.log(`  gate drawn ${gateAt} ms after navigation (${afterProfile} ms after the held profile request) with the indexes held; the load failed at ${failedAt} ms past the press wait; boot to notice ${bootMs} ms`);

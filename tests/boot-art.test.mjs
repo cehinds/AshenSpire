@@ -471,3 +471,16 @@ test('a Retry pressed inside the announcement delay is not overwritten by the ol
   assert.equal(root.notice.text.textContent, tFull('art.failed.notice'));
   resetArtLoadNotice();
 });
+
+test('a Retry that loads mid-run redraws the active screen’s art in place (Codex on #1471)', async () => {
+  const { ART_REDRAW_EVENT } = await import('../src/ui/highResArt.js');
+  assert.equal(ART_REDRAW_EVENT, 'ashen:art-redraw');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  // Off the title, once nothing is open over the screen, the screen is told to redraw its art.
+  assert.match(main, /if \(!root\) \{ try \{ document\.dispatchEvent\(new CustomEvent\(ART_REDRAW_EVENT\)\); \}/);
+  const combat = readFileSync(new URL('../src/ui/screens/combat.js', import.meta.url), 'utf8');
+  // Combat forgets its cached figures (the placeholders) and renders from its own state; no remount.
+  assert.match(combat, /function redrawArt\(\) \{[\s\S]*?for \(const record of enemyFrames\.values\(\)\) \{ stageFor\(record\.box\)\?\.dispose\?\.\(\); record\.box\.remove\(\); \}\n    enemyFrames\.clear\(\);\n    playerArtKey = null;\n    render\(\);\n  \}/);
+  assert.match(combat, /document\.addEventListener\(ART_REDRAW_EVENT, redrawArt\);/);
+  assert.match(combat, /document\.removeEventListener\(ART_REDRAW_EVENT, redrawArt\);/, 'released with the combat');
+});
