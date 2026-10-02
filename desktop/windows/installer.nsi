@@ -80,6 +80,11 @@ VIAddVersionKey "LegalCopyright" "MIT License"
 ; A running game holds its files open, and the section below deletes the old
 ; version before it copies the new one: close it first, or stop before anything
 ; is touched.
+; 1 when $INSTDIR holds an earlier Ashen Spire install (the folder this
+; installer registered), so its files may be cleaned up; 0 on a first install,
+; where nothing already in the folder is touched.
+Var Upgrade
+
 !macro CloseRunningGame UN
   nsExec::ExecToStack '"$SYSDIR\cmd.exe" /c tasklist /FI "IMAGENAME eq ${APP_EXE}" /NH | find /I "${APP_EXE}"'
   Pop $0
@@ -105,10 +110,16 @@ Section "Ashen Spire (required)" SecGame
   ; end removes the objects nothing uses any more. Only files the installer
   ; writes are named here.
   SetOutPath "$INSTDIR"
-  Delete "$INSTDIR\game\packs\*.json"
-  Delete "$INSTDIR\game\packs\*.js"
-  Delete "$INSTDIR\install-data\hd-index\*.*"
-  Delete "$INSTDIR\install-data\*.*"
+  StrCpy $Upgrade 0
+  ReadRegStr $0 HKCU "${UNINST_KEY}" "InstallLocation"
+  ${If} $0 == $INSTDIR
+  ${AndIf} ${FileExists} "$INSTDIR\${APP_EXE}"
+    StrCpy $Upgrade 1
+    Delete "$INSTDIR\game\packs\*.json"
+    Delete "$INSTDIR\game\packs\*.js"
+    Delete "$INSTDIR\install-data\hd-index\*.*"
+    Delete "$INSTDIR\install-data\*.*"
+  ${EndIf}
 
   File /r "${APP_DIR}/*.*"
 
@@ -147,11 +158,14 @@ Section "Desktop shortcut" SecDesktop
   CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
 SectionEnd
 
-; Last, always: drop art files no installed pack lists (the high-res art after it
+; Last: drop art files no installed pack lists (the high-res art after it
 ; was unticked, an older version's files). A failure here only costs disk space.
 Section "-Prune"
-  nsExec::ExecToLog '"${PS_EXE}" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "${PS_SCRIPT}" -Mode Prune -InstallDir "$INSTDIR"'
-  Pop $0
+  ; Only an upgrade can leave objects behind; a first install prunes nothing.
+  ${If} $Upgrade == 1
+    nsExec::ExecToLog '"${PS_EXE}" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "${PS_SCRIPT}" -Mode Prune -InstallDir "$INSTDIR"'
+    Pop $0
+  ${EndIf}
   ; The estimated size Windows shows under Installed apps.
   ${If} ${FileExists} "$INSTDIR\game\packs\high-*.json"
     IntOp $1 ${BASE_SIZE_KB} + ${HD_SIZE_KB}
