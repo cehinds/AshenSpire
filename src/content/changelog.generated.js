@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the Sealed and Draft reload test checks what this build saves",
     "detail": "Nothing you play changes. The test that loads a save from an older build kept treating every later save as that older build's, so it never checked that a climb saved again after the fix is saved the new way. It now does.",
-    "build": "0.7.1.785",
+    "build": "0.7.1.786",
     "pullRequest": 1486,
     "url": "https://github.com/cehinds/AshenSpire/pull/1486"
+  },
+  {
+    "id": "pr-1484",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the folder copy refuses a font file it could not fetch",
+    "detail": "Nothing you play changes. The zip download and the site's publishing step now refuse a build whose font file is named in a way the site never publishes, instead of failing partway through the download.",
+    "build": "0.7.1.785",
+    "pullRequest": 1484,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1484"
   },
   {
     "id": "pr-1479",
