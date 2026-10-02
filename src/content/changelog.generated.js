@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the game's wording lives in one table again",
     "detail": "Nothing you see changes. About 230 labels and sentences that had crept back into the code since mid-September (most of the Settings rows, the combat action bar, level-up and Victory, the lore fonts, layout and HUD options) now come from the game's one wording table, and an automatic check stops new ones creeping in.",
-    "build": "0.7.1.796",
+    "build": "0.7.1.797",
     "pullRequest": 1489,
     "url": "https://github.com/cehinds/AshenSpire/pull/1489"
+  },
+  {
+    "id": "pr-1440",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the spec wording for loading assets as separate files is approved",
+    "detail": "This is a docs-only change, and nothing you play changes. The spec now says the game will load its art, fonts and music as separate files, keep one light-art single file you can download and open by double-click, and retire the 254 MB file.",
+    "build": "0.7.1.796",
+    "pullRequest": 1440,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1440"
   },
   {
     "id": "pr-1496",
