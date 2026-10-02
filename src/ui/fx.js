@@ -7,6 +7,7 @@ import { combatEffectForEvent } from '../model/combatEffectEvents.js';
 // Staggers get the loud treatment (they're the theme).
 
 import { sfx } from './sfx.js';
+import { hitTierFor } from '../content/sfx.js';
 import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 import { playPoseOn } from './services/PoseAnimator.js';
@@ -467,6 +468,16 @@ function flare(layer, anchor, color) {
  */
 export function animateEvents(events, ctx, done) {
   flushRequested = false;
+  // Beat by beat, as the paced timeline cues them, so instant or
+  // reduced-motion playback makes the same sounds as Normal pacing, in the
+  // same order: a beat's cues sound just before its first visual step (an
+  // enemy's hits land before "your turn" stings), and beats with no visual
+  // of their own sound when the walk passes them, or at the end.
+  const beats = groupBeats(events);
+  const beatOf = new Map();
+  beats.forEach((beat, b) => { for (const e of beat.events) if (!beatOf.has(e)) beatOf.set(e, b); });
+  let cued = 0;
+  const cueThrough = (b) => { while (cued <= b && cued < beats.length) playBeatCues(beats[cued++].events); };
   pending = events.filter((e) => visualFor(e) !== null);
   const skip = () => {
     flushRequested = true;
@@ -480,10 +491,12 @@ export function animateEvents(events, ctx, done) {
       i++;
     }
     if (i >= pending.length) {
+      cueThrough(beats.length - 1);
       removeEventListener('pointerdown', skip, { capture: true });
       if (done) done();
       return;
     }
+    cueThrough(beatOf.has(pending[i]) ? beatOf.get(pending[i]) : -1);
     const fn = visualFor(pending[i]);
     if (fn) fn(ctx);
     i++;
@@ -670,6 +683,7 @@ export function playTimeline(events, ctx, done) {
     const beat = beats[bi++];
 
     if (beat.banner) {
+      safe(() => playBeatCues(beat.events));
       safe(() => { if (!ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) banner(ctx.layer, beat.banner, 'turn'); });
       safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
       schedule(nextBeat, Math.max(260, speed.beatMs));
@@ -731,6 +745,7 @@ export function playTimeline(events, ctx, done) {
           return;
         }
         const applyBeat = () => {
+          safe(() => playBeatCues(beat.events));
           // 3) HUD updates for this beat, 4) inter-beat breath. Painted actor
           // sequences retain their recovery frames before the render replaces
           // the sprite host; ordinary CSS lunges update immediately as before.
@@ -748,6 +763,55 @@ export function playTimeline(events, ctx, done) {
     }, windup);
   };
   nextBeat();
+}
+
+// ---------------------------------------------------------------------------
+// Sound seams (FINISH §5 hit sound tiers). Exported so a headless test can
+// drive the same calls the timeline makes; every id reaches audio through
+// sfx.play, whose sink honours the mute and SFX-volume settings.
+// ---------------------------------------------------------------------------
+
+const hurtsPlayer = (e) => e.targetPlayerId != null || e.targetId === 'player';
+
+/** The HP half of an attack: `playerHurt` on the player, else `hit_<tier>`. */
+export function playHitSound(e) {
+  const { residual } = guardHitFloatParts(e);
+  if (residual <= 0) return;
+  if (hurtsPlayer(e)) sfx.play('playerHurt');
+  else sfx.play(`hit_${hitTierFor(residual)}`);
+}
+
+/**
+ * Once-per-beat cues: the turn stinger and the pile sounds. A five-card
+ * refill or a whole-hand discard is ONE sound, not five, and adds no step to
+ * the beat's pacing (these events have no visual of their own).
+ */
+export function playBeatCues(events) {
+  const has = (type) => events.some((e) => e && e.type === type);
+  if (has('playerTurnStart')) sfx.play('turnStinger');
+  if (has('deckShuffled')) sfx.play('deckShuffle');
+  if (has('cardDrawn')) sfx.play('cardDraw');
+  if (has('cardDiscarded')) sfx.play('cardDiscard');
+}
+
+/**
+ * The cues of a whole event list, one playBeatCues per beat exactly as the
+ * paced timeline groups them (groupBeats). Used where the events are not
+ * paced: instant/reduced-motion playback, a fresh fight's setup (the opening
+ * draw and turn start), and co-op receipts.
+ */
+export function playEventCues(events) {
+  for (const beat of groupBeats(events || [])) playBeatCues(beat.events);
+}
+
+/**
+ * Every sound a batch of authoritative receipts carries: the HP half of each
+ * attack (playHitSound) and the per-beat cues. Co-op plays its receipts
+ * through this, since its floats are drawn by coop.js, not by visualFor.
+ */
+export function playReceiptSounds(events) {
+  for (const e of events || []) if (e && e.type === 'damageDealt') playHitSound(e);
+  playEventCues(events);
 }
 
 function visualFor(e, beatKind) {
@@ -781,7 +845,7 @@ function baseVisualFor(e, beatKind) {
             { x: paired ? -26 : 0, jitter: false });
         }
         if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
-        sfx.play('hit');
+        playHitSound(e);
         const heavy = parts.residual >= 15;
         floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
           { x: paired ? 26 : 0, jitter: !paired });
