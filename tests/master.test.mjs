@@ -714,12 +714,13 @@ test('the master screen refuses a displayed training quote after another trade',
 // ---------------------------------------------------------------------------
 
 test('schema 18: the bump, run.trainingPool, the appended corpus entry, and a schema-17 save loads with a pool of 0', () => {
-  assert.equal(RUN_SCHEMA_VERSION, 18);
+  // §15.4 (legendary sigils) bumped once more; this entry and its migration stay.
+  assert.ok(RUN_SCHEMA_VERSION >= 18);
   const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
   const v18 = JSON.parse(corpus.versions['18'].bytes);
   assert.equal(v18.schemaVersion, 18);
   assert.equal(v18.trainingPool, 0);
-  assert.deepEqual(validateRunShape(v18), []);
+  assert.deepEqual(validateRunShape(v18, { preAttunedSigils: true }), [], 'a schema-18 save, before attunedSigils (SPEC §15.4)');
   const v17 = JSON.parse(corpus.versions['17'].bytes);
   assert.equal(v17.schemaVersion, 17, 'the schema-17 entry is untouched');
   assert.equal('trainingPool' in v17, false);
@@ -727,7 +728,7 @@ test('schema 18: the bump, run.trainingPool, the appended corpus entry, and a sc
   storage.setItem(RUN_KEY, JSON.stringify(v17));
   const run = createSaveManager(storage).loadRun(REG);
   assert.ok(run);
-  assert.equal(run.schemaVersion, 18);
+  assert.equal(run.schemaVersion, RUN_SCHEMA_VERSION);
   assert.equal(run.trainingPool, 0);
   const fresh = createRunState({ seed: 1, classId: 'reaver', registries: REG });
   assert.equal(fresh.trainingPool, 0);
