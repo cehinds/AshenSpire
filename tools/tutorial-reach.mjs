@@ -36,11 +36,6 @@ import { serve } from './serve.mjs';
 // The orientation gate's one number, read from its single home. See THE FIRST
 // VIEWPORT IS DERIVED, NOT TYPED below for why this import exists.
 import { balance } from '../src/content/balance.js';
-// The post-confirmation input shield's length, from its one home (see
-// armTargetedFlask). Importing it keeps this tool from typing a second copy.
-import { CONFIRMATION_INPUT_SHIELD_MS } from '../src/ui/components/confirmationModal.js';
-// The shield's timer starts after two animation frames; this covers them.
-const SHIELD_FRAMES_MS = 100;
 
 // Derived here, above --selftest, because BOTH readers need it and two reads of
 // one number is the defect this derivation exists to remove.
@@ -344,6 +339,17 @@ async function main() {
     if (pt.scrolled) console.log(`    note: ${label} laid out at top ${pt.top} — scrolled into view to click it`);
     await clickAt(pt.x, pt.y);
   };
+  // A hover tooltip owns the next Escape (tooltip.js peels one layer per
+  // press), and the pointer is left resting wherever the last real click
+  // landed — on a card, or on a combatant the board has just drawn under it.
+  // A Escape aimed at the targeting then closes a tooltip instead, and the case
+  // flakes on timing (it did, 1 run in ~6, 2026-10-02). So before an Escape
+  // under test the pointer is parked in the corner and no tooltip stands — the
+  // state a player is in when they reach for Escape, not a hover they left.
+  const parkPointer = async () => {
+    await cdp.send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: 1, y: 1 }, S);
+    await until(`![...document.querySelectorAll('.as-tip')].some((t) => t.style.display === 'block')`, 'no hover tooltip standing', 5000);
+  };
   const advanceToPlayCards = async () => {
     for (let guard = 0; guard < 4; guard++) {
       const title = await evalIn(`(document.querySelector('.tut-title') || {}).textContent || ''`);
@@ -367,7 +373,7 @@ async function main() {
         armed: !!document.querySelector('.hand .card.selected') && !!document.querySelector('.enemy-row .enemy.targetable'),
         card: (document.querySelector('.hand .card.selected') || {}).dataset?.cardId || null,
       })`);
-      if (state.armed) return state;
+      if (state.armed) { await parkPointer(); return state; }
     }
     return { armed: false, card: null };
   };
@@ -396,23 +402,31 @@ async function main() {
     if (!pt) return { armed: false, selectedCard: false, beat: null };
     if (pt.beat === 'hold') await holdAt(pt.x, pt.y);
     else await clickAt(pt.x, pt.y);
-    let confirmedAt = null;
+    let confirmedAt = null; // set when a confirmation was answered
     if (await evalIn(`!!document.querySelector('.confirmation-modal .confirmation-confirm')`)) {
       confirmedAt = Date.now();
       await clickSel('.confirmation-modal .confirmation-confirm', 'the Use confirmation');
     }
     await until(`!document.querySelector('.combat-potion-menu')`, 'the Potions list closing on Use', 5000);
     // A confirmed answer holds an input shield (confirmationModal.js) that eats
-    // every key and click for CONFIRMATION_INPUT_SHIELD_MS after the destination
-    // paints, so the confirming gesture cannot fall through to the board. Its
-    // veil can leave the DOM before its window listener does, so the DOM alone
-    // is not the answer: this also waits out the shield's own number, read from
-    // its one home, plus two frames. A player's next key lands after it; ours too.
+    // every key and click on `window` in the capture phase for
+    // CONFIRMATION_INPUT_SHIELD_MS after the destination paints, so the
+    // confirming gesture cannot fall through to the board. Its veil can leave the
+    // DOM before its listener does, and a fixed sleep raced it on a slow CI
+    // runner (2026-10-02, the first PR run). So this asks the listener itself:
+    // a probe listener added NOW runs after the shield's, so a synthetic keydown
+    // of an unbound key reaches it only once the shield has let go.
     if (confirmedAt != null) {
-      await until(`!document.querySelector('.confirmation-input-shield')`, 'the confirmation input shield releasing', 5000);
-      const left = confirmedAt + CONFIRMATION_INPUT_SHIELD_MS + SHIELD_FRAMES_MS - Date.now();
-      if (left > 0) await wait(left);
+      await until(`(() => {
+        let through = false;
+        const probe = () => { through = true; };
+        window.addEventListener('keydown', probe, true);
+        window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Unidentified', bubbles: true }));
+        window.removeEventListener('keydown', probe, true);
+        return through;
+      })()`, 'the confirmation input shield releasing', 5000);
     }
+    await parkPointer();
     const state = await evalIn(`({
       armed: !!document.querySelector('.enemy-row .enemy.targetable'),
       selectedCard: !!document.querySelector('.hand .card.selected'),
@@ -686,6 +700,10 @@ async function main() {
     await clickSel('.slot-continue', 'CONTINUE the flask-seeded run');
     await until(`!!document.querySelector('.map-node.monster.reachable')`, 'the resumed map with a reachable fight');
     await clickSel('.map-node.monster.reachable', 'a monster node');
+    // The resumed map settles its camera and footer after it mounts; ENTER was
+    // measured below the fold (top 1139 in 1080) on one run in ~6 when pressed
+    // at once. Wait for it to stand on screen rather than scroll to it.
+    await until(`(() => { const b = document.querySelector('#map-enter'); if (!b || b.disabled) return false; const r = b.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; })()`, 'ENTER on screen', 10000);
     await clickSel('#map-enter', 'ENTER the selected node');
     let mounted = true;
     try {
