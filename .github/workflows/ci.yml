@@ -503,6 +503,41 @@ jobs:
           path: build-digest-${{ matrix.os }}.txt
           retention-days: 7
 
+      # THE ART RELEASE IS A BUILD INPUT (docs/EXTERNAL-ASSETS-PLAN.md step 11).
+      # art-release.json pins one tag of cehinds/AshenSpire-art with three zips;
+      # tools/fetch-art.mjs downloads the ones named, checks each against the pin
+      # and art-manifest.json, and unpacks them into .art-cache/ (ignored). The art
+      # repository is public (step 10a), so every run fetches, with or without a
+      # token, and runs the agreement check. A failure names its cause (token
+      # refused, repository unreadable, rate limit, network) on the step and as an
+      # annotation.
+      # ONE RUNNER PER OS (the `digest` legs), so Windows' twelve shards (and the
+      # two each on Linux and macOS) do not download the release once per shard.
+      # LAST, so a failed fetch never costs the runner its digest record or
+      # another step's verdict.
+      - name: Fetch the art packs this build's tier uses
+        if: ${{ matrix.digest && !cancelled() }}
+        env:
+          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
+          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
+          # Only a push or dispatch of a protected branch (dev, test, release, main)
+          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
+          # it; but anyone who can push a branch can edit this workflow to read any
+          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
+          # move it into a GitHub Environment limited to dev, test, release and main
+          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
+          ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
+        shell: bash # $ART_PACKS is an env var; Windows' default shell would not expand it
+        run: node tools/fetch-art.mjs --pack "$ART_PACKS"
+
+      - name: The fetched packs and the trees agree byte for byte on this OS
+        if: ${{ matrix.digest && !cancelled() }}
+        env:
+          ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
+        shell: bash
+        run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
+
   reproducible-agree:
     name: the three runners built the same bytes
     needs: reproducible

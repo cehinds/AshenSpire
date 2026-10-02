@@ -6,11 +6,21 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "id": "pr-1440",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "Behind the scenes: the spec wording for loading assets as separate files is drafted for the owner",
+    "summary": "Behind the scenes: the spec wording for loading assets as separate files is approved",
     "detail": "This is a docs-only change, and nothing you play changes. The spec now says the game will load its art, fonts and music as separate files, keep one light-art single file you can download and open by double-click, and retire the 254 MB file.",
-    "build": "0.7.1.794",
+    "build": "0.7.1.795",
     "pullRequest": 1440,
     "url": "https://github.com/cehinds/AshenSpire/pull/1440"
+  },
+  {
+    "id": "pr-1450",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: every change now checks the game's art against the art repository's release",
+    "detail": "Nothing you play changes. The game pins one release of its art, light art, fonts, music and map tiles in a separate repository; each check downloads the parts it needs, verifies every file against its fingerprint, and proves the release and the copies still kept here are identical, byte for byte.",
+    "build": "0.7.1.794",
+    "pullRequest": 1450,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1450"
   },
   {
     "id": "pr-1488",
