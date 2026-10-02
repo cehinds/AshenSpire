@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1473",
+    "id": "pr-1470",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "Behind the scenes: the balance report now measures Mana and each act's difficulty",
-    "detail": "Nothing you play changes. The run simulator can now compare whole climbs with and without Mana limits, and report how often each act's boss falls in each region. Both results are written into the balance notes for the owner to tune from later.",
+    "summary": "Behind the scenes: a test keeps the Windows file-serving fix from coming back",
+    "detail": "Nothing you play changes. The fix itself landed in #1476; this adds a test that imitates Windows' short folder names on any computer and fails if the local test server ever again turns away files in its own folder.",
     "build": "0.7.1.769",
-    "pullRequest": 1473,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1473"
+    "pullRequest": 1470,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1470"
   },
   {
     "id": "pr-1480",
