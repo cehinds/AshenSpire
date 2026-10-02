@@ -237,12 +237,13 @@ function parseManifestDoc(text, whose, problems) {
 }
 
 /** Do this tree's entry for `id` and the release manifest's agree, for `pack`? */
-function rowAgrees(id, ours, theirs, pack) {
+function rowAgrees(id, ours, theirs, pack, legacy = false) {
   const common = commonOf(ours[id]);
   if (pack === 'common') return common ? same(theirs[id]?.common, common) : !has(theirs, id);
-  // A common id never belongs in the light pack's manifest; only a high zip
-  // may list one (hd-assets-v1 carried the fonts), and then with the same bytes.
-  if (common) return pack === 'high' ? agreesCommon(theirs[id], common) : !has(theirs, id);
+  // A common id never belongs in the light pack's manifest; only a legacy
+  // (schema-1) high zip may list one (hd-assets-v1 carried the fonts), and then
+  // with the same bytes. A schema-2 high zip is pack-scoped like the others.
+  if (common) return pack === 'high' && legacy ? agreesCommon(theirs[id], common) : !has(theirs, id);
   return same(theirs[id]?.[pack], ours[id]?.[pack]);
 }
 
@@ -274,7 +275,7 @@ export function verifyRelease(zipBuf, pin, manifest, pack = 'high') {
       const wrong = packProblem(doc, pack, legacyPin(pin));
       if (wrong) problems.push(wrong);
       for (const id of Object.keys(want)) {
-        if (!rowAgrees(id, want, theirs, pack)) problems.push(`${id}: the release's ${MANIFEST_PATH} disagrees with this tree's`);
+        if (!rowAgrees(id, want, theirs, pack, legacyPin(pin))) problems.push(`${id}: the release's ${MANIFEST_PATH} disagrees with this tree's`);
       }
       for (const id of Object.keys(theirs)) if (!want[id]) problems.push(`${id}: in the release's ${MANIFEST_PATH}, not in this tree's`);
     }
@@ -420,7 +421,7 @@ export function recheck(dir, manifest, pack = 'high', pin = null) {
       if (wrong) problems.push(wrong.replace("the release's", 'the cached'));
       const want = manifest.assets || {};
       for (const id of Object.keys(want)) {
-        if (!rowAgrees(id, want, theirs, pack)) problems.push(`${id}: the cached ${MANIFEST_PATH} disagrees with this tree's`);
+        if (!rowAgrees(id, want, theirs, pack, legacyPin(pin))) problems.push(`${id}: the cached ${MANIFEST_PATH} disagrees with this tree's`);
       }
       for (const id of Object.keys(theirs)) if (!want[id]) problems.push(`${id}: in the cached ${MANIFEST_PATH}, not in this tree's`);
     }

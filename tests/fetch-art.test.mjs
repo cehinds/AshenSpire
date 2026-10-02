@@ -253,6 +253,18 @@ test('schema 2: a high release that still carries the fonts verifies against the
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+test('known-bad: a schema-2 high release that carries a common id is refused, not admitted as legacy', () => {
+  const { root, zip, pin, manifest } = schema2Fixture();
+  try {
+    // The same zip and manifest that a schema-1 pin admits (hd-assets-v1 carried
+    // the fonts), but pinned by a schema-2 art-release.json: the high pack is
+    // pack-scoped there, so a common font in it is a disagreement and an extra.
+    const pin2 = { ...pin, schema: 2, packs: { high: { zip: pin.zip, sha256: pin.sha256 } } };
+    const problems = verifyRelease(readFileSync(zip), pin2, manifest, 'high').problems.join('\n');
+    assert.match(problems, /assets\/fonts\/f\.woff2: the release's art-manifest\.json disagrees/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
 test('known-bad: schema 2, a carried font that differs from its common record is refused', () => {
   const { root, zip, pin, manifest } = schema2Fixture({ fontBytes: Buffer.from('other font') });
   try {
