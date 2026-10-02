@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the balance report's checks are stricter",
     "detail": "Nothing you play changes. The run simulator now refuses to print per-act difficulty for an endless climb, where later loops would have been counted as the first three acts, and the balance notes' check now catches a boss listed for a region that cannot meet it, or the same row recorded twice.",
-    "build": "0.7.1.792",
+    "build": "0.7.1.794",
     "pullRequest": 1487,
     "url": "https://github.com/cehinds/AshenSpire/pull/1487"
+  },
+  {
+    "id": "pr-1488",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Escape and pad B close the map legend before the map",
+    "detail": "With a map node selected and the legend open, one press used to close the node's panel and leave the legend up; it now closes the legend only, and the next press closes the panel. In character creation's Equipment step, Escape went back nowhere while a card's info button was showing, and pad B hid the button instead; both now go back one step, as the Back button does.",
+    "build": "0.7.1.793",
+    "pullRequest": 1488,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1488"
+  },
+  {
+    "id": "pr-1491",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the architecture check passes again",
+    "detail": "Nothing you play changes. The offline folder download named a browser feature inside the game's core rules code, which the automatic architecture check forbids, so the check had failed on every change since. That name now lives with the game's other content settings.",
+    "build": "0.7.1.792",
+    "pullRequest": 1491,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1491"
   },
   {
     "id": "pr-1471",
