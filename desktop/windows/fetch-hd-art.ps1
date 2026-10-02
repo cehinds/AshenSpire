@@ -171,9 +171,16 @@ function Install-HighArt {
         $file = Get-ObjectFile $e.Path
         $dir = Split-Path -Parent $file
         if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
-        [IO.File]::WriteAllBytes("$file.part", $bytes)
-        if (Test-Path -LiteralPath $file) { Remove-Item -LiteralPath $file -Force }
-        Move-Item -LiteralPath "$file.part" -Destination $file
+        # A failed write (a full disk, a locked file) leaves no .part behind: the
+        # uninstaller only knows final object names.
+        try {
+          [IO.File]::WriteAllBytes("$file.part", $bytes)
+          if (Test-Path -LiteralPath $file) { Remove-Item -LiteralPath $file -Force }
+          Move-Item -LiteralPath "$file.part" -Destination $file
+        } catch {
+          Remove-Item -LiteralPath "$file.part" -Force -ErrorAction SilentlyContinue
+          throw
+        }
         $i++
         if ($i % 500 -eq 0 -or $i -eq $missing.Count) { Say "Installing high-resolution art: $i of $($missing.Count) files" }
       }
