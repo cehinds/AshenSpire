@@ -158,7 +158,7 @@ export function mountDialogue(app, options) {
   const context = el('section', { class: 'dialogue-context', dataset: { wireframe: 'WGQ4', layer: 'context' }, hidden: !layers.context }, [region]);
 
   // L6 footer (WGQ5): the three-action variant, WCB0 equal shares.
-  const back = button({ label: t('dialogue.back'), id: 'dialogue-back', attrs: { dataset: { wireframe: 'WGQ6' } } });
+  const back = button({ label: t('dialogue.back'), id: 'dialogue-back', attrs: { 'data-back': '', dataset: { wireframe: 'WGQ6' } } });
   const skip = button({ label: t('dialogue.skip'), id: 'dialogue-skip', attrs: { dataset: { wireframe: 'WGQ7' } } });
   const cont = button({ label: t('dialogue.continue'), weight: 'primary', id: 'dialogue-continue', attrs: { dataset: { wireframe: 'WGQ8' } } });
   // The layout names the footer's actions in order; Continue is the way on.
