@@ -180,11 +180,22 @@ export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/dirorder.mjs',
   'tools/mobileart-policy.mjs',
   'tools/head-meta.mjs',
-  // Where the bundler reads the light pack and the fonts from: the verified
-  // fetched cache or (until step 13) the tree (docs/EXTERNAL-ASSETS-PLAN.md
-  // step 12). It decides which bytes a build carries, so a change to it is a
-  // new build.
+  // THE REST OF THE BUNDLER'S IMPORT GRAPH (docs/EXTERNAL-ASSETS-PLAN.md step
+  // 12): every tools/ module tools/bundle.mjs reaches decides which bytes a
+  // build carries, so a change to any of them is a new build.
+  // tests/build-identity.test.mjs walks that graph and fails on one not here.
+  //   art-source   where the light pack and the fonts are read from (the
+  //                verified cache or, until step 13, the tree)
+  //   fetch-art    what "verified" means for a cached pack; zip.mjs beneath it
+  //   art-manifest the records a pack is checked against, and canonical bytes
+  //   asset-pack   the pack shape: objects/, the indexes, the font sidecar
+  //   asset-css    the ASSET_CSS template and the inlined masks
   'tools/art-source.mjs',
+  'tools/fetch-art.mjs',
+  'tools/zip.mjs',
+  'tools/art-manifest.mjs',
+  'tools/asset-pack.mjs',
+  'tools/asset-css.mjs',
   // The art release this tree pins and the manifest every pack is checked
   // against (docs/EXTERNAL-ASSETS-PLAN.md §2 *Build identity*, step 11). Not
   // executable, but they decide which media a build is made from once it reads

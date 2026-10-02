@@ -38,8 +38,9 @@
 // green (every building workflow runs it), so which one a build read never
 // changes what it ships.
 //
-// It is listed in BUILD_IDENTITY_FILES (tools/buildversion.mjs): it decides
-// which bytes tools/bundle.mjs reads, so a change here is a new build.
+// It is listed in BUILD_IDENTITY_FILES (tools/buildversion.mjs), with every
+// other tools/ module tools/bundle.mjs reaches (tests/build-identity.test.mjs):
+// it decides which bytes the bundler reads, so a change here is a new build.
 
 import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';

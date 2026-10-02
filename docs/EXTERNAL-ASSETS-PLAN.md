@@ -1502,8 +1502,11 @@ Where the build settles the step-12 row and section 6's step-12 rows (2026-10-02
   packs. `manifestIds()` answers "does this art id ship" from the committed
   manifest, with no tree and no cache. `asset-pack --source` gains `auto` (the
   default): each pack from its verified cache, else its tree, under the same
-  rule. `art-source.mjs` joins `BUILD_IDENTITY_FILES`: it decides which bytes
-  the bundler reads, so a change to it is a new build.
+  rule. `art-source.mjs` and the rest of the bundler's import graph
+  (`fetch-art`, `zip`, `art-manifest`, `asset-pack`, `asset-css`) join
+  `BUILD_IDENTITY_FILES`: they decide which bytes a build carries, so a change
+  to any of them is a new build; `tests/build-identity.test.mjs` walks the
+  graph from `bundle.mjs` and fails on a module that is not listed.
 - **Switched:** `bundle.mjs` (`--light`/`--mobile` payloads from the light
   pack; the twin oracle is the manifest's light records, not the `assets/`
   tree; every CSS url into `assets/fonts/` from the common pack in every
