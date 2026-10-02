@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Turning on \"Use flasks outside combat\" now works straight away on the map",
     "detail": "Turning the setting on from the map's menu used to leave the Potions control refusing Drink until you left the map. Now the map updates as soon as you change it, and a drink taken there is saved. Behind the scenes, new browser checks open every flask menu (in combat, on the map and in the room rail) and confirm each one offers the same actions and does exactly what you pick.",
-    "build": "0.7.1.761",
+    "build": "0.7.1.765",
     "pullRequest": 1474,
     "url": "https://github.com/cehinds/AshenSpire/pull/1474"
+  },
+  {
+    "id": "pr-1478",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Your character level gets dearer with every level too",
+    "detail": "Your first character level still needs 100 XP, but each level after now costs 1.75 times the one before (100, 180, 310, 540, 940) instead of 130 more, the same growth skills and your class already use. Like any XP setting, this reaches a run you already started the next time you load it.",
+    "build": "0.7.1.764",
+    "pullRequest": 1478,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1478"
   },
   {
     "id": "pr-1476",
