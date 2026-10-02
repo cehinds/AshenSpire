@@ -67,6 +67,7 @@ import { FOLD_GLYPH } from '../components/foldGlyph.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { t } from '../strings.js';
 import { consumableText, skillBookReadPlan, commitSkillBookRead } from '../../model/consumables.js';
+import { attuneSigil, unattuneSigil, attunedSigilIds, attuneMaxOf, sigilRuleText } from '../../model/sigils.js';
 import {
   armouryPaneSplit, inventoryComparison, inventoryEligibility, inventoryFooterPlan,
 } from '../models/ArmouryWorkspaceModel.js';
@@ -1298,6 +1299,47 @@ export function mountEquipment(host, {
   }
 
   /** The one shared Inventory: all items normally, compatible replacements while a position is selected. */
+  // SPEC §15.4: the Armoury's Sigils panel. One row per owned legendary, in
+  // `run.sigils` order, with Attune / Unattune out of combat (the model pair in
+  // model/sigils.js decides; a refusal is shown here as text). In combat the
+  // rows show and no button is drawn. Absent while the run owns no legendary.
+  let sigilRefusal = '';
+  function sigilsPanel() {
+    const owned = (run.sigils || []).filter((id) => registries.sigils.has(id) && registries.sigils.get(id).rarity === 'legendary');
+    if (!owned.length) return null;
+    const attuned = attunedSigilIds(run);
+    const section = el('section', { class: 'armoury-sigils', dataset: { component: 'armoury.sigils' } });
+    section.append(
+      titleS(t('armoury.sigils.title')),
+      statusText(t('armoury.sigils.count', { n: attuned.length, max: attuneMaxOf(registries) }), { class: 'armoury-sigils-count' }),
+    );
+    if (sigilRefusal) section.append(prose(sigilRefusal, { class: 'armoury-sigils-refusal' }));
+    sigilRefusal = '';
+    for (const id of owned) {
+      const def = registries.sigils.get(id);
+      const on = attuned.includes(id);
+      const row = el('div', { class: 'armoury-sigil', dataset: { sigil: id, attuned: on ? 'true' : 'false' } });
+      row.append(
+        el('span', { class: 'armoury-sigil-name', text: def.name }),
+        statusText(t(on ? 'armoury.sigils.attuned' : 'armoury.sigils.idle'), { class: 'armoury-sigil-state' }),
+        prose(def.blurb, { class: 'armoury-sigil-blurb' }),
+        prose(sigilRuleText(registries, id), { class: 'armoury-sigil-rule' }),
+      );
+      if (!inCombat) {
+        const label = t(on ? 'armoury.sigils.unattune' : 'armoury.sigils.attune', { name: def.name });
+        const act = button({ label, weight: on ? undefined : 'primary', className: 'armoury-sigil-act', attrs: { dataset: { focusable: 'true', sigilAct: on ? 'unattune' : 'attune' } } });
+        act.addEventListener('click', () => {
+          const result = on ? unattuneSigil(run, id) : attuneSigil(registries, run, id);
+          if (!result.ok) { sigilRefusal = result.reason; draw(); return; }
+          commit();
+        });
+        row.append(act);
+      }
+      section.append(row);
+    }
+    return section;
+  }
+
   function inventoryBlock() {
     const box = document.createElement('div');
     box.className = 'inventory-list ep-list armoury-split';
@@ -2253,6 +2295,9 @@ export function mountEquipment(host, {
       // The rail already names this view; the W1n body carries no second title,
       // and its instruction lives in the empty detail column.
       inventory.append(inventoryBlock());
+      // SPEC §15.4: the Sigils panel sits below the item collection.
+      const sigils = sigilsPanel();
+      if (sigils) inventory.append(sigils);
     } else inventory.remove();
     if (view === 'cards') {
       wrap.querySelector('.armoury-content').remove();

@@ -31,8 +31,11 @@ import { validateContent } from '../src/model/validate.js';
 import { createSaveManager, createMemoryStorage, RUN_KEY } from '../src/engine/save.js';
 import { REWARD_KIND_ORDER, rewardPlan } from '../src/model/rewardplan.js';
 import {
-  attuneSigil, unattuneSigil, legendarySigilIds, sigilDropPool, rollSigilDrop, attuneMaxOf,
+  attuneSigil, unattuneSigil, legendarySigilIds, sigilDropPool, rollSigilDrop, attuneMaxOf, sigilRarityProblems,
 } from '../src/model/sigils.js';
+import { sigilPurchasePlan } from '../src/model/marketAdditions.js';
+import { pendingRewardCheckpoint, settleTreasureNode } from '../src/model/rewardSourcePolicy.js';
+import { generateJourney, journeyGraph, completeJourneyNode } from '../src/model/worldAtlas.js';
 import { withKitDom } from './helpers/kit-dom.mjs';
 import { mountEquipment } from '../src/ui/screens/equipment.js';
 
@@ -435,16 +438,51 @@ test('the reward menu: a sigil row follows the relic row, and taking it adds the
   assert.deepEqual(rewardPlan({}, {}).rows, []);
 });
 
-test('main.js rolls the drop at a won fight, a non-terminal boss and a treasure room, and never before the last boss ends the run', () => {
+test('main.js rolls the drop at a won fight, a non-terminal boss and both treasure doors, and never before the last boss ends the run', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
-  assert.ok((main.match(/rollSigilDrop\(registries, rng, run, 'treasure'\)/g) || []).length >= 2, 'both treasure doors roll');
-  assert.match(main, /sigilId: rollSigilDrop\(registries, rng, run, 'boss'\)/);
-  assert.match(main, /sigilId: rollSigilDrop\(registries, rng, run, enc\.pool\)/);
+  assert.match(main, /function sigilOffer\(pool\) \{\s*const sigilId = rollSigilDrop\(registries, rng, run, pool\);\s*return sigilId \? \{ sigilId \} : \{\};/, 'an offer carries sigilId only when one dropped');
+  assert.equal((main.match(/\.\.\.sigilOffer\('treasure'\)/g) || []).length, 2, 'both treasure doors roll');
+  assert.match(main, /\.\.\.sigilOffer\(enc\.pool\)/);
   const finish = main.indexOf('const earned = finishRun(true);');
-  const bossRoll = main.indexOf("rollSigilDrop(registries, rng, run, 'boss')");
+  const bossRoll = main.indexOf("...sigilOffer('boss')");
   assert.ok(finish > 0 && bossRoll > finish, 'the boss roll sits after the terminal victory returns');
   const reward = readFileSync(new URL('../src/ui/screens/reward.js', import.meta.url), 'utf8');
   assert.match(reward, /sigil\(row\)/, 'the reward screen collects a sigil row');
+});
+
+test('the map treasure checkpoints its offer, completing a journey point first: claimed straight through or after a reload, the point stays complete', () => {
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const door = main.slice(main.indexOf("case 'treasure': {"), main.indexOf("default:\n      throw new Error(`Unknown node kind"));
+  assert.ok(door.includes('settleTreasureNode(run, completeJourneyNode);'), 'the map treasure settles its node');
+  assert.ok(door.indexOf('settleTreasureNode') < door.indexOf('beginPendingReward('), 'before it checkpoints');
+  assert.ok(!door.includes('mountRewards('), 'and never mounts an unsaved offer');
+  const boss = registriesWith({ [DROP_KEY('treasure')]: 100 });
+  for (const reloadFirst of [false, true]) {
+    const run = freshRun(boss, 13);
+    run.journey = generateJourney('VIGILTREASURE');
+    run.mapGraph = journeyGraph(run.journey);
+    const point = run.journey.currentNodeId;
+    const rng = createRng(13);
+    const sigilId = rollSigilDrop(boss, rng, run, 'treasure');
+    assert.ok(LEGENDARIES.includes(sigilId));
+    // The door: settle the node, then checkpoint (main.js case 'treasure').
+    settleTreasureNode(run, completeJourneyNode);
+    run.pendingReward = pendingRewardCheckpoint({ sigilId, title: 'TREASURE' }, { source: 'treasure', after: 'map' });
+    let live = run;
+    if (reloadFirst) {
+      const back = reload(run, boss);
+      assert.ok(back.run, back.status.reason);
+      live = back.run;
+      assert.equal(live.pendingReward.rewards.sigilId, sigilId, 'the unclaimed sigil row survives the reload');
+    }
+    // Take the sigil and Continue (mountPendingReward's onDone).
+    live.sigils = [...live.sigils, live.pendingReward.rewards.sigilId];
+    delete live.pendingReward;
+    assert.ok(live.journey.completedNodeIds.includes(point), `${reloadFirst ? 'after a reload' : 'straight through'}: the atlas point is complete`);
+    assert.ok(live.sigils.includes(sigilId));
+    const after = reload(live, boss);
+    assert.ok(after.run.journey.completedNodeIds.includes(point), 'and stays complete across another reload');
+  }
 });
 
 // ---------------------------------------------------------------------------
@@ -511,14 +549,14 @@ test('the load door refuses a fight whose attunedSigils differs from the run\'s,
   run.sigils = [VIGIL];
   attuneSigil(REG, run, VIGIL);
   const fight = fightFor(run);
-  run.combatEntered = { nodeId: run.mapNodeId || 'n0', snapshot: serializeCombatSnapshot(fight) };
+  run.combatEntered = { nodeId: 'n1', encounterId: 'e1', snapshot: serializeCombatSnapshot(fight) };
   const ok = reload(run);
   assert.ok(ok.run, ok.status.reason);
   run.combatEntered.snapshot = { ...run.combatEntered.snapshot, attunedSigils: [] };
   const mismatch = reload(run);
   assert.equal(mismatch.run, null);
   assert.match(mismatch.status.reason, /attunedSigils/);
-  delete run.combatEntered;
+  run.combatEntered = null;
   run.pendingReward = { schemaVersion: 1, source: 'boss', after: 'map', rewards: { sigilId: 'noSuchSigil' }, states: {} };
   const strange = reload(run);
   assert.equal(strange.run, null);
@@ -526,4 +564,63 @@ test('the load door refuses a fight whose attunedSigils differs from the run\'s,
   run.pendingReward = { schemaVersion: 1, source: 'boss', after: 'map', rewards: { sigilId: LEGENDARIES[1] }, states: { sigil: 'taken' } };
   const taken = reload(run);
   assert.ok(taken.run, taken.status.reason);
+});
+
+test('rarity at every door: no never-legendary position may hold a legendary, at the load door', () => {
+  const L = LEGENDARIES[0];
+  const cases = [
+    ['sigilSlots', (run) => { run.sigils = [L]; run.sigilSlots = { 'armament/straightSword': [L] }; }],
+    ['shopStock.sigils', (run) => { run.shopStock = { ...buildMarketStock(REG, createRng(3), run, { meta: {} }), sigils: [{ id: L, cost: 10 }] }; }],
+  ];
+  for (const [path, edit] of cases) {
+    const run = freshRun();
+    edit(run);
+    const back = reload(run);
+    assert.equal(back.run, null, `${path}: refused`);
+    assert.ok(back.status.reason.includes(path) && back.status.reason.includes(L), back.status.reason);
+  }
+  // A fight in progress's slots, and an atlas point's saved shelf.
+  const run = freshRun();
+  const fight = fightFor(run);
+  const snapshot = serializeCombatSnapshot(fight);
+  const withSlot = structuredClone(run);
+  withSlot.combatEntered = { nodeId: run.mapNodeId || 'n0', snapshot: { ...snapshot, sigilSlots: { 'armament/straightSword': [L] } } };
+  assert.ok(sigilRarityProblems(REG, withSlot).some((p) => p.includes('combatEntered.snapshot.sigilSlots') && p.includes(L)));
+  const atlas = structuredClone(run);
+  atlas.journey = { serviceStates: { p1: { stock: { kind: 'market', offerings: ['sigils'], sigils: [{ id: L, cost: 10 }] } } } };
+  assert.ok(sigilRarityProblems(REG, atlas).some((p) => p.includes('journey.serviceStates.p1.stock.sigils') && p.includes(L)));
+  // run.sigils, the inventory, holds either kind.
+  const either = freshRun();
+  either.sigils = [L, COMMON];
+  assert.deepEqual(sigilRarityProblems(REG, either), []);
+});
+
+test('rarity at every door: the co-op member restore refuses a member that breaks it, by name, and keeps the record', async () => {
+  const { createSession, restoreSession } = await import('../tools/session.mjs');
+  const host = createSession({ registries: REG, seedString: 'VIGIL' });
+  host.addMember({ id: 'p1', name: 'One', classId: 'reaver' });
+  host.addMember({ id: 'p2', name: 'Two', classId: 'reaver' });
+  host.start();
+  const saved = host.serialize();
+  const [one, two] = saved.members;
+  one.run.sigils = [LEGENDARIES[0], COMMON];
+  one.run.attunedSigils = [COMMON];
+  two.run.sigils = [LEGENDARIES[0]];
+  two.run.attunedSigils = [LEGENDARIES[0]];
+  const back = restoreSession(REG, structuredClone(saved));
+  const refused = back.refusedMembers();
+  assert.equal(refused.length, 1);
+  assert.equal(refused[0].id, one.id);
+  assert.match(refused[0].reason, new RegExp(`${COMMON}.*legendary`));
+  assert.equal(back.serialize().refusedMembers.length, 1, 'the record is kept');
+});
+
+test('defence in depth: sigilPurchasePlan refuses a legendary by name', () => {
+  const run = freshRun();
+  run.cinders = 9999;
+  const offer = { id: LEGENDARIES[0], cost: 10 };
+  run.shopStock = { ...buildMarketStock(REG, createRng(3), run, { meta: {} }), offerings: ['sigils'], sigils: [offer] };
+  const plan = sigilPurchasePlan(REG, run, offer);
+  assert.equal(plan.ok, false);
+  assert.match(plan.reason, new RegExp(REG.sigils.get(LEGENDARIES[0]).name));
 });

@@ -49,7 +49,8 @@ import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
 import { applyLevelUp, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
-import { configuredRewardOffer as rewardOfferForSource } from './model/rewardSourcePolicy.js';
+import { configuredRewardOffer as rewardOfferForSource, pendingRewardCheckpoint, settleTreasureNode } from './model/rewardSourcePolicy.js';
+import { rollSigilDrop } from './model/sigils.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
@@ -2220,21 +2221,13 @@ function enterNode(nodeId) {
       // §15.3), and only when its tables pay anything: both ship at 0, so no
       // zero-amount claim is written and a save is unchanged.
       const smithingStoneReceipt = treasureSmithingReward();
-      return mountRewards(app, {
-        registries,
-        run,
-        saves,
-        rng,
-        onCollectArmament: (id) => collectArmament(id, 'treasure'),
-        onPersist: persist,
-        rewards: configuredRewardOffer({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), title: 'TREASURE' }, 'treasure'),
-        onDone: () => {
-          rewardDoneCount++;
-          if (run.journey) completeJourneyNode(run.journey);
-          persist();
-          showMap();
-        },
-      });
+      // SPEC §15.4: the treasure CHECKPOINTS its offer (beginPendingReward),
+      // as the legacy dungeon's treasure door does, so a reload remounts an
+      // unclaimed sigil row instead of losing it. A World Journey's atlas
+      // point is completed first: the checkpoint's Continue only persists and
+      // returns to the map.
+      settleTreasureNode(run, completeJourneyNode);
+      return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), ...sigilOffer('treasure'), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
     }
     default:
       throw new Error(`Unknown node kind '${kind}'`);
@@ -2295,7 +2288,7 @@ function enterDungeonLocation() {
       const armamentId = rollDrop('treasure');
       const smithingStoneReceipt = treasureSmithingReward();
       resolveDungeonNode(run);
-      return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
+      return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), ...sigilOffer('treasure'), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
     }
     case 'combat': return enterCombat(run.legacyDungeon.parentNodeId, dungeonNode(run).encounter);
     case 'dialogue': return showDungeonDialogue();
@@ -2615,6 +2608,7 @@ async function onCombatEnd(result, combat, enc) {
       skillDrafts: bossDrafts,
       ...rollCardRows('boss', bossDrafts.length || bossClassDrafts.length, levelsEarned),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
+      ...sigilOffer('boss'),
       armamentId: bossArmament,
       smithingStoneReceipt,
       xpGains,
@@ -2638,6 +2632,8 @@ async function onCombatEnd(result, combat, enc) {
     ...rollCardRows(enc.pool, drafts.length || classDrafts.length, levelsEarned),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
+    // SPEC §15.4: a legendary sigil, on its own `sigils` stream (0 ships: none).
+    ...sigilOffer(enc.pool),
     // Elites are the mid-run source of armaments; ordinary fights are not by
     // default (balance.equipment.drops.chance.normal ships at 0, which rolls
     // nothing — SPEC §15.3 — until the owner raises it).
@@ -2731,18 +2727,17 @@ function rollClassDrafts(includeBanked = false) {
 
 function beginPendingReward(rewards, { source, after }) {
   rewards = configuredRewardOffer(rewards, source);
-  run.pendingReward = {
-    schemaVersion: 1,
-    source,
-    after,
-    rewards: structuredClone(rewards),
-    states: rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {},
-    chosenCardId: null,
-    chosenDraftCardIds: {},
-    chosenDraftNodeIds: {},
-  };
+  run.pendingReward = pendingRewardCheckpoint(rewards, { source, after });
   persist();
   return mountPendingReward();
+}
+
+// SPEC §15.4: a legendary sigil drop for this pool, on its own `sigils`
+// stream. The offer carries `sigilId` only when one dropped, so with the
+// shipped chances of 0 every offer is the one it was before, and no stream moves.
+function sigilOffer(pool) {
+  const sigilId = rollSigilDrop(registries, rng, run, pool);
+  return sigilId ? { sigilId } : {};
 }
 
 function configuredRewardOffer(rewards, source) {
