@@ -1,0 +1,108 @@
+[
+  {
+    "board": "01-arrival-and-identity",
+    "tool": "image_gen.imagegen",
+    "source": "D:/repos/.codex/generated_images/01a0f976-c95b-7872-8f4f-46e22590c7da/exec-3954820f-8f02-40c8-a3e4-1e3b9c203cb1.png",
+    "references": [
+      "docs/preview/title.png",
+      "docs/preview/armoury-simple-equipment-390.png",
+      "assets/prologue/reaver.webp",
+      "assets/prologue/road-desktop.webp"
+    ]
+  },
+  {
+    "board": "02-story-and-choices",
+    "tool": "image_gen.imagegen",
+    "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-f62d35ae-0ace-47dc-9467-086a87083db0.png",
+    "references": [
+      "docs/design/player-polish-2026-10-01/01-arrival-and-identity.png",
+      "assets/prologue/road-desktop.webp",
+      "assets/prologue/reaver.webp"
+    ]
+  },
+  {
+    "board": "03-world-and-routes",
+    "tool": "image_gen.imagegen",
+    "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-a8809c3a-ec32-49f0-b331-5315d1fa1c0b.png",
+    "references": [
+      "docs/design/player-polish-2026-10-01/01-arrival-and-identity.png",
+      "docs/preview/world-atlas/01-world-desktop.png"
+    ]
+  },
+  {
+    "board": "04-cities-and-dungeons",
+    "tool": "image_gen.imagegen",
+    "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-5d768246-cde8-408c-ae58-73e444f3e4e5.png",
+    "references": [
+      "docs/design/player-polish-2026-10-01/01-arrival-and-identity.png",
+      "assets/environments/cinder-reach-combat.webp"
+    ]
+  },
+  {
+    "board": "05-combat-and-threats",
+    "tool": "image_gen.imagegen",
+    "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-a3fa4ca9-3a74-4307-9073-4edb25851f24.png",
+    "references": [
+      "docs/design/player-polish-2026-10-01/01-arrival-and-identity.png",
+      "docs/preview/combat.png",
+      "assets/environments/cinder-reach-combat.webp"
+    ]
+  },
+  {
+    "board": "06-armoury-and-inventory",
+    "tool": "image_gen.imagegen",
+    "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-306261c4-8a7f-451a-91d7-22c116705e2b.png",
+    "references": [
+      "docs/design/player-polish-2026-10-01/01-arrival-and-identity.png",
+      "docs/preview/armoury-simple-equipment-390.png"
+    ]
+  },
+  {
+    "board": "07-cards-and-relics",
+    "tool": "image_gen.imagegen",
+    "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-41759054-99c4-43f9-9119-662731994a72.png",
+    "references": [
+      "docs/design/player-polish-2026-10-01/01-arrival-and-identity.png"
+    ]
+  },
+  {
+    "board": "08-merchant-and-forge",
+    "tool": "image_gen.imagegen",
+    "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-d91b38ce-89d1-4d5d-8c63-cd5162853326.png",
+    "references": [
+      "docs/design/player-polish-2026-10-01/01-arrival-and-identity.png"
+    ]
+  },
+  {
+    "board": "09-rest-and-rewards",
+    "tool": "image_gen.imagegen",
+    "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-f2b038f9-f027-4049-8e48-0a4f2b0d2f73.png",
+    "references": [
+      "docs/design/player-polish-2026-10-01/01-arrival-and-identity.png"
+    ]
+  },
+  {
+    "board": "10-growth-and-discovery",
+    "tool": "image_gen.imagegen",
+    "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-daf26324-44db-42e6-b94b-439dccab81ec.png",
+    "references": [
+      "docs/design/player-polish-2026-10-01/01-arrival-and-identity.png"
+    ]
+  },
+  {
+    "board": "11-company-and-history",
+    "tool": "image_gen.imagegen",
+    "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-acdb564a-3374-4273-843c-489cc0c309f9.png",
+    "references": [
+      "docs/design/player-polish-2026-10-01/01-arrival-and-identity.png"
+    ]
+  },
+  {
+    "board": "12-preferences-and-run-setup",
+    "tool": "image_gen.imagegen",
+    "source": "D:\\repos\\.codex\\generated_images\\01a0f976-c95b-7872-8f4f-46e22590c7da\\exec-6d78ec70-a4d1-441d-8d9e-7e3b0121df74.png",
+    "references": [
+      "docs/design/player-polish-2026-10-01/01-arrival-and-identity.png"
+    ]
+  }
+]

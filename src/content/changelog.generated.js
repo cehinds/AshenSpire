@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Sealed and Draft climbs can be continued after a reload",
     "detail": "A Custom Climb with a Sealed or Draft starting deck could not be loaded again: Continue set the save aside as broken, and the climb also stopped working at the end of its first fight. Both now carry on. A save made before this change loads too, with the fix noted in its load report. Your dealt deck stays the deck you were dealt. Reloading, a mid-fight save, the end of a fight, changing weapons in the Armoury and swapping weapons mid-fight no longer add your equipment's own cards (its Strike and Defend, weapon arts or Dodge Roll) to it. Your first fight now plays your cards with the same weapon bonuses a reloaded climb gives them.",
-    "build": "0.7.1.770",
+    "build": "0.7.1.772",
     "pullRequest": 1479,
     "url": "https://github.com/cehinds/AshenSpire/pull/1479"
+  },
+  {
+    "id": "pr-1481",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: desktop and mobile polish inspiration is saved with the project",
+    "detail": "Twelve illustrated boards explore the player-facing screens, from character creation and combat to towns, equipment, rewards, co-op and settings. The searchable gallery opens each board at full size; exact prompts, art credits and notes distinguish the generated examples from the game's real rules. These are design references, not changes to gameplay.",
+    "build": "0.7.1.765",
+    "pullRequest": 1481,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1481"
   },
   {
     "id": "pr-1478",
