@@ -1067,20 +1067,21 @@ test('only cards plus remove enabled at minimum 2 is refused: cards and flasks a
   assert.deepEqual(validateContent(contentBundle).errors.filter((e) => e.path.startsWith('shops')), []);
 });
 
-// Step 6 (SPEC §14.4) registered the blacksmith, so the rule now binds it
-// (tests/blacksmith.test.mjs); the master is still unregistered until step 7.
-test('the non-conditional minimum binds only a kind whose screen is registered: the shipped bundle passes while the master has none (coordinator ruling, #1375)', () => {
-  assert.deepEqual(SHOP_KIND_SCREENS, ['market', 'blacksmith']);
+// Step 6 (SPEC §14.4) registered the blacksmith and step 7 (§14.5) the master,
+// so the rule now binds every kind (tests/blacksmith.test.mjs,
+// tests/master.test.mjs).
+test('the non-conditional minimum binds every kind whose screen is registered, the master included since step 7 (coordinator ruling, #1375)', () => {
+  assert.deepEqual(SHOP_KIND_SCREENS, ['market', 'blacksmith', 'master']);
   assert.deepEqual(validateContent(contentBundle).errors.filter((e) => e.path.startsWith('shops')), []);
   assert.deepEqual(shopSettingsProblems(contentBundle, {}), []);
-  // A master with only conditional offerings left on is not refused while it
-  // has no screen (step 7 classifies its own)...
+  // A master with only conditional offerings left on is refused now that its
+  // screen is registered...
   const table = structuredClone(shippedShops);
   for (const kind of ['master']) for (const row of table[kind].offerings) row.enabled = row.conditional;
-  assert.deepEqual(validateContent({ ...contentBundle, shops: table }).errors.filter((e) => e.path.startsWith('shops')), []);
+  assert.equal(validateContent({ ...contentBundle, shops: table }).errors.filter((e) => e.path === 'shops.master').length, 1);
   const settings = Object.fromEntries(['master'].flatMap((kind) => shippedShops[kind].offerings
     .filter((row) => !row.conditional).map((row) => [`${PREFIX}${kind}.${row.id}.enabled`, false])));
-  assert.deepEqual(shopSettingsProblems(contentBundle, settings), []);
+  assert.ok(shopSettingsProblems(contentBundle, settings).some((p) => p.kind === 'master'));
   // ...but the plain enablement minimum still binds every kind.
   const bare = structuredClone(shippedShops);
   bare.blacksmith.offerings.forEach((row, i) => { row.enabled = i === 0; });

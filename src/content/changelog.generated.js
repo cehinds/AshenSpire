@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1438",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "A wise master can now train, respec and teach your weapon skills",
+    "detail": "A master teaches three or four skills and sells books, weapon arts and armaments for them. Training buys XP for one of his skills, up to a few sessions per visit. A lesson draws a skill draft of cards for one of his skills, and you buy one for your deck; a reload keeps the same cards. A respec sends a skill at level 2 or higher back to level 1 and pays part of its XP into a training pool, which you can spend on any skill. Appraisal shows each of his skills for free, and you can sell skill books and revive tokens to him. No map place has a master yet; a merchant can be one if you raise its weight in Settings. A save made while visiting a blacksmith in town no longer fails to load, and a custom run's shop price changes now apply to weapon arts too.",
+    "build": "0.7.1.727",
+    "pullRequest": 1438,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1438"
+  },
+  {
     "id": "pr-1433",
     "date": "2026-10-01",
     "group": "2026-10-01",
