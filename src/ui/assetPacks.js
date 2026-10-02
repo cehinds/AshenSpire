@@ -46,12 +46,20 @@
 // a file:// page is the build's own folder, so the base is `./`. The score stays
 // synthesized under file:// (src/main.js, SPEC §7.4).
 //
-// WHAT THIS DOES NOT DO YET. The loading line
-// on the startup gate, the Retry notice and per-file high → light fallback are
-// step 5. Settings → Art quality Auto/Light/High (step 8c, src/ui/artTier.js)
-// passes the tier to ask for; a switch in play refills the CSS from the new
-// map too. A single file (ASSET_MAP filled) and the source tree (nothing
-// stamped) never load anything here.
+// THE LOADING UX (step 5). A cold boot draws the startup gate at once and
+// loads behind it (src/main.js); the gate's status line and the critical set it
+// counts are src/ui/bootArt.js; a failed load is offered a Retry on the title
+// and in Settings → Art quality (src/ui/artTier.js retryBuiltInArt), which
+// reloads the indexes through the same queue as a tier switch. Settings → Art
+// quality Auto/Light/High (step 8c, src/ui/artTier.js) passes the tier to ask
+// for; a switch in play refills the CSS from the new map too. A single file
+// (ASSET_MAP filled) and the source tree (nothing stamped) never load anything
+// here.
+//
+// NOT HERE: a per-file high → light fallback. The light index is not loaded
+// beside a high one (a second ~700 KB index on every high boot), so one high
+// object that fails falls to its element's own placeholder recipe
+// (src/ui/assets.js), as any missing file does (§3, *Failure and fallback*).
 
 import { ASSET_MAP, setBuiltInSource, builtInSource } from './assetmap.js';
 import { sha256Hex } from './sha256.js';
@@ -86,7 +94,8 @@ export const ART_TIERS = Object.freeze(['high', 'light']);
  * is aborted and counts as failed (placeholders), and nothing it fetches later
  * is used. There is no late arrival, because a screen drawn on placeholders
  * cannot be re-pointed: the images' error handlers clear or replace the nodes
- * that named the asset id (enemySprite, pieceArt). A Retry is step 5.
+ * that named the asset id (enemySprite, pieceArt). A Retry (step 5,
+ * src/ui/artTier.js retryBuiltInArt) loads again later and the title is redrawn.
  */
 export const BOOT_WAIT_MS = 8000;
 /** The share of the deadline a tier that has a fallback (high) may use before it is abandoned for light. */
@@ -252,9 +261,11 @@ function pinnedIndex(pack, pin) {
  * a reason when the index is unpinned, unreachable, fails its hash or is not
  * an index.
  */
-export async function loadIndex(pack, pin, { base = './', fetchImpl = globalThis.fetch, subtle, signal } = {}) {
+export async function loadIndex(pack, pin, { base = './', fetchImpl = globalThis.fetch, subtle, signal, cache } = {}) {
   const want = pinnedIndex(pack, pin);
-  const res = await fetchImpl(`${base}${want.index}`, { signal });
+  // `cache` (a Retry, 'reload'): past the HTTP cache, so a cached error or a
+  // cached copy that fails its pin is not served again (Codex on #1471).
+  const res = await fetchImpl(`${base}${want.index}`, cache ? { signal, cache } : { signal });
   if (!res || !res.ok) throw new Error(`${pack}: ${want.index} ${res ? res.status : 'unreachable'}`);
   return indexFromBytes(pack, want, want.index, new Uint8Array(await res.arrayBuffer()), { base, subtle });
 }
@@ -447,6 +458,14 @@ export async function loadBuiltInPacks({
   css = ASSET_CSS, doc = globalThis.document,
   tier: askedTier = null, keepOnFail = false, stillWanted = null,
   scriptImpl = null, FontFaceImpl = globalThis.FontFace,
+  // An AbortSignal from the caller (a Retry or a tier switch the player has
+  // replaced, src/ui/artTier.js): every request in flight is aborted at once
+  // and the load settles as superseded, publishing nothing, rather than
+  // holding the queue for its whole deadline (Codex on #1471).
+  signal = null,
+  // The fetch cache mode for the indexes: unset on the boot load (the HTTP
+  // cache's default), 'reload' on a Retry (src/ui/artTier.js).
+  cache = undefined,
 } = {}) {
   if (!packsPinned(pin, inlineMap)) {
     status = { state: Object.keys(inlineMap || {}).length ? 'inline' : 'none', tier: null, requested: null, ids: 0, css: 0, failed: [] };
@@ -466,7 +485,7 @@ export async function loadBuiltInPacks({
   }
   const readIndex = viaFile
     ? (pack, o) => loadTwinIndex(pack, pin, { ...o, scriptImpl: loadScript })
-    : (pack, o) => loadIndex(pack, pin, { ...o, fetchImpl });
+    : (pack, o) => loadIndex(pack, pin, { ...o, fetchImpl, cache });
   status = { state: 'loading', tier: null, requested, ids: 0, css: 0, failed: [] };
   const failed = [];
   const controllers = [];
@@ -483,11 +502,22 @@ export async function loadBuiltInPacks({
     timers.push(setTimeout(() => { try { controller?.abort(); } catch { /* settled */ } settle(fallback); }, ms));
   });
   const TIMED_OUT = { timedOut: true };
+  const CUT = { cut: true };
+  let onCut = null;
+  const cut = new Promise((settle) => {
+    if (!signal) return;
+    onCut = () => { for (const c of controllers) try { c.abort(); } catch { /* settled */ } settle(CUT); };
+    if (signal.aborted) onCut(); else signal.addEventListener?.('abort', onCut, { once: true });
+  });
+  const superseded = () => { status = before; return { ...builtInArtStatus(), superseded: true }; };
+  const isCut = () => !!signal?.aborted;
   try {
+    if (isCut()) return superseded();
     const baseCtl = abortable();
     // A file:// page cannot fetch asset-base.json, and is the build's own
     // folder: packs/ and objects/ are beside it.
-    const base = viaFile ? './' : await Promise.race([readAssetBase({ fetchImpl, signal: baseCtl?.signal }), budget(Math.min(left(), Math.round(deadlineMs * BASE_SHARE)), baseCtl, './')]);
+    const base = viaFile ? './' : await Promise.race([readAssetBase({ fetchImpl, signal: baseCtl?.signal }), budget(Math.min(left(), Math.round(deadlineMs * BASE_SHARE)), baseCtl, './'), cut]);
+    if (base === CUT || isCut()) return superseded();
     // The common index, alongside the tiers; its failure is recorded, never fatal.
     let common = null;
     let commonDone = !pin.packs.common;
@@ -508,7 +538,9 @@ export async function loadBuiltInPacks({
       const got = await Promise.race([
         readIndex(candidate, { base, subtle, signal: ctl?.signal }).then((map) => ({ map }), (e) => ({ error: e })),
         budget(ms, ctl, TIMED_OUT),
+        cut,
       ]);
+      if (got === CUT || isCut()) return superseded();
       if (got.map) { art = got.map; tier = candidate; break; }
       failed.push(got === TIMED_OUT ? `${candidate}: the index did not load within ${ms} ms` : got.error.message);
     }
@@ -525,7 +557,8 @@ export async function loadBuiltInPacks({
     // A verified art map is kept whatever common does: common gets the time
     // left, and is left out if it is not there by then.
     if (!commonDone) {
-      const waited = await Promise.race([commonLoad.then(() => true), budget(left(), commonCtl, false)]);
+      const waited = await Promise.race([commonLoad.then(() => true), budget(left(), commonCtl, false), cut]);
+      if (waited === CUT || isCut()) return superseded();
       if (!waited) failed.push(`common: the index did not load within ${deadlineMs} ms; the art loads without it`);
     }
     const commonSha = pin.packs.common?.sha256;
@@ -537,7 +570,7 @@ export async function loadBuiltInPacks({
     const map = new Map(common || []);
     for (const [id, url] of art) map.set(id, url);
     // A tier switch the player has since replaced (stillWanted) publishes nothing.
-    if (typeof stillWanted === 'function' && !stillWanted()) { status = before; return { ...builtInArtStatus(), superseded: true }; }
+    if (isCut() || (typeof stillWanted === 'function' && !stillWanted())) return superseded();
     // file://: the faces, from the font sidecar, before the source is
     // published (within what is left of the deadline). Chrome refuses a
     // file:// page's @font-face url() loads, so those rules are left out of
@@ -548,7 +581,9 @@ export async function loadBuiltInPacks({
       const got = await Promise.race([
         loadFontSidecar(pin, common, { base, scriptImpl: loadScript, subtle, signal: fontCtl?.signal, css, doc, FontFaceImpl, stillWanted }),
         budget(left(), fontCtl, { faces: 0, failed: [`fonts: the sidecar did not load within ${deadlineMs} ms`] }),
+        cut,
       ]);
+      if (got === CUT || isCut()) return superseded();
       faces = got.faces;
       failed.push(...got.failed);
       // The sidecar was awaited: a switch the player replaced meanwhile still
@@ -566,6 +601,7 @@ export async function loadBuiltInPacks({
     if (typeof onSource === 'function') try { onSource(map); } catch { /* a listener must not fail the load */ }
     return builtInArtStatus();
   } finally {
+    if (onCut) signal?.removeEventListener?.('abort', onCut);
     for (const t of timers) clearTimeout(t);
     // Whatever is still in flight is not wanted: a late answer is never used.
     for (const c of controllers) try { c.abort(); } catch { /* settled */ }
@@ -590,6 +626,12 @@ export function startBuiltInArt(opts = {}) {
   });
   return pending;
 }
+
+/**
+ * builtInArtSettled() → the boot load's promise (its status once it has
+ * settled), or null before startBuiltInArt has been called.
+ */
+export function builtInArtSettled() { return pending; }
 
 /**
  * whenBuiltInArtReady(fn, opts) — call `fn` once the built-in art has settled:
@@ -668,18 +710,20 @@ export function musicHold({ pinned = packsPinned(), configureMusic, hasSource = 
 }
 
 /**
- * bootLine(app, { pinned }) — while a pack build waits for its load to settle
- * (up to BOOT_WAIT_MS), the page is otherwise blank. A static line says what it
- * is doing; it is removed before the first screen is drawn. Nothing is shown
- * when nothing is pinned. The real progress line on the startup gate, its
- * wording in content/config and Reduced motion are step 5. Returns the remover.
+ * bootLine(app, { pinned }) — a `?shot=` boot (any first screen but the
+ * startup gate) still waits for the load to settle (up to BOOT_WAIT_MS), with
+ * the page otherwise blank. A static line says what it is doing; it is removed
+ * before the first screen is drawn. Nothing is shown when nothing is pinned.
+ * The cold boot draws the gate at once instead, with its own line
+ * (src/ui/bootArt.js, step 5). The words are uiStrings' `art.loading`.
+ * Returns the remover.
  */
 export function bootLine(app, { pinned = packsPinned(), doc = globalThis.document } = {}) {
   if (!pinned || !app || !doc || typeof doc.createElement !== 'function') return () => {};
   const line = doc.createElement('p');
   line.setAttribute('role', 'status');
   line.dataset.bootLine = '';
-  line.textContent = t('assets.bootLine');
+  line.textContent = t('art.loading');
   line.style.cssText = 'margin:0;padding:24px;text-align:center;opacity:.7;font:16px/1.4 serif;color:inherit';
   app.append(line);
   return () => line.remove();

@@ -1,3 +1,4 @@
+import { hideOnError } from '../artFallback.js';
 import { armamentIconAsset } from '../../model/equipmentArt.js';
 // src/ui/screens/compendium.js — the Compendium: everything the Spire keeps.
 //
@@ -180,7 +181,7 @@ function cell(piece, { state, hint, gate }, modFields, tags = []) {
     },
   });
   const art = artWell({ src: assetUrl(armamentIconAsset(piece)), alt: '', small: true });
-  art.querySelector('img').addEventListener('error', (e) => e.target.remove());
+  hideOnError(art.querySelector('img'));
   card.insertBefore(art, card.firstChild);
 
   attachTooltip(card, () => {
@@ -289,7 +290,7 @@ export function mountCompendium(app, { registries, meta = {}, onBack }) {
       lockCopy: LOCK_COPY,
     });
     const art = artWell({ src: assetUrl(armamentIconAsset(piece)), alt: '' });
-    art.querySelector('img').addEventListener('error', (e) => e.target.remove());
+    hideOnError(art.querySelector('img'));
     detail.dataset.state = facts.state;
     detail.dataset.rarity = facts.rarity;
     detail.replaceChildren(art, detailCard({
