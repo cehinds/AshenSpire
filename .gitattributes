@@ -8,3 +8,13 @@
 # Original engraved UI bytes are shared by high/light exports on every OS.
 assets/player-polish/**/*.svg text eol=lf
 assets-mobile/player-polish/**/*.svg text eol=lf
+
+# Keep the polish kit checksum records stable across Windows and Linux.
+docs/design/player-polish-asset-kit-2026-10-02/**/*.svg text eol=lf
+docs/design/player-polish-asset-kit-2026-10-02/**/*.json text eol=lf
+docs/design/player-polish-asset-kit-2026-10-02/**/*.html text eol=lf
+docs/design/player-polish-asset-kit-2026-10-02/**/*.css text eol=lf
+docs/design/player-polish-asset-kit-2026-10-02/**/*.py text eol=lf
+docs/design/player-polish-asset-kit-2026-10-02/**/*.cjs text eol=lf
+docs/design/player-polish-asset-kit-2026-10-02/**/*.md text eol=lf
+docs/design/player-polish-asset-kit-2026-10-02/**/*.txt text eol=lf
