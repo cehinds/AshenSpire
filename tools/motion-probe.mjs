@@ -164,6 +164,15 @@ if (argv.includes('--selftest')) {
         expectRed: /RED IDLE \w+#\d+ — .*no visible figure image to animate/,
       },
       {
+        // #1475 review: a whole combatant made transparent hides its figure
+        // too, though every layer inside it is opaque.
+        name: 'the combatants are made transparent',
+        file: 'styles/combat.css',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: sprite-idle 3.1s ease-in-out infinite;',
+        replace: '.combatant { opacity: 0 !important; }\n.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: sprite-idle 3.1s ease-in-out infinite;',
+        expectRed: /RED IDLE \w+#\d+ — .*no visible figure image to animate/,
+      },
+      {
         // #1475 review: the co-op board rebuilds its combatants on every
         // render, and each rebuilt carrier restarted the bob at its start.
         name: 'the idle bob starts with its carrier instead of keeping the clock',
@@ -505,11 +514,12 @@ async function idle({ evaluate }, label) {
       // not a nested part of one or a decorative layer (the pose aura).
       if (img.tagName.toLowerCase() === 'svg' && (img.parentElement.closest('svg') || img.closest('[aria-hidden="true"]'))) return false;
       const cs = getComputedStyle(img);
-      // Drawn means a box with area and an effective opacity above zero
-      // (the image's and every ancestor's up to the combatant).
+      // Drawn means a box with area and an effective opacity above zero:
+      // the image's and every ancestor's, the combatant and the board above
+      // it included, up to the document root.
       const box = img.getBoundingClientRect();
       let alpha = 1;
-      for (let el = img; el && el !== c; el = el.parentElement) alpha *= Number(getComputedStyle(el).opacity);
+      for (let el = img; el; el = el.parentElement) alpha *= Number(getComputedStyle(el).opacity);
       return cs.visibility === 'visible' && cs.display !== 'none' && !img.classList.contains('defeated-frame')
         && !img.classList.contains('pose-previous') && box.width > 0 && box.height > 0 && alpha > 0;
     });
