@@ -15,16 +15,18 @@
 // sets the lore in the bundled Cinzel without changing the headings, which
 // keep the game's own --font-display stack.
 
+import { t } from '../strings.js';
+
 export const LORE_FACES = Object.freeze([
-  { id: 'fell', label: 'IM Fell English' },
-  { id: 'garamond', label: 'EB Garamond' },
-  { id: 'cormorant', label: 'Cormorant Garamond' },
-  { id: 'crimson', label: 'Crimson Pro' },
-  { id: 'spectral', label: 'Spectral' },
-  { id: 'baskerville', label: 'Libre Baskerville' },
-  { id: 'cinzel', label: 'Cinzel' },
-  { id: 'inter', label: 'Inter' },
-  { id: 'georgia', label: 'Georgia' },
+  { id: 'fell', label: t('lore.face.fell') },
+  { id: 'garamond', label: t('lore.face.garamond') },
+  { id: 'cormorant', label: t('lore.face.cormorant') },
+  { id: 'crimson', label: t('lore.face.crimson') },
+  { id: 'spectral', label: t('lore.face.spectral') },
+  { id: 'baskerville', label: t('lore.face.baskerville') },
+  { id: 'cinzel', label: t('lore.face.cinzel') },
+  { id: 'inter', label: t('lore.face.inter') },
+  { id: 'georgia', label: t('lore.face.georgia') },
 ]);
 
 export const LORE_SIZES = Object.freeze(['S', 'M', 'L', 'XL']);

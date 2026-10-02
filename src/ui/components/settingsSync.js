@@ -15,6 +15,7 @@ import {
   fetchProfile, pushProfile, profileWebUrl, listProfiles, profileName, profilePath, normalizeProfileName, DEVICE_KEYS,
 } from '../../model/settingsSync.js';
 import { esc } from './tooltip.js';
+import { t } from '../strings.js';
 
 const DIFF_PREVIEW = 12;
 
@@ -445,8 +446,8 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     });
     on('copy', async (btn) => {
       const text = profileText(settings, profileKeysNow(), { contentVersion: contentBundle.version });
-      try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; } catch { console.log(text); btn.textContent = 'In console'; }
-      setTimeout(() => { if (btn.isConnected) btn.textContent = 'Copy JSON'; }, 1800);
+      try { await navigator.clipboard.writeText(text); btn.textContent = t('settingsSync.copy.done'); } catch { console.log(text); btn.textContent = t('settingsSync.copy.console'); }
+      setTimeout(() => { if (btn.isConnected) btn.textContent = t('settingsSync.copy'); }, 1800);
     });
     on('download', () => saveJsonFile(profileText(settings, profileKeysNow(), { contentVersion: contentBundle.version }), {
       filename: `ashen-spire-settings-${profileName(cfg)}.json`, description: 'Ashen Spire settings profile',

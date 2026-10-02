@@ -44,11 +44,11 @@ export function pileButton(kind, label) {
  */
 export function combatActionRowHtml({ endTurnId = null } = {}) {
   return `<div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
-          ${html(statPair({ key: 'Actions', value: '', attrs: { class: 'energy-orb cell stack lg', role: 'status', 'aria-label': 'Actions remaining' } }))}
+          ${html(statPair({ key: 'Actions', value: '', attrs: { class: 'energy-orb cell stack lg', role: 'status', 'aria-label': t('combat.actions.remaining') } }))}
           ${html(pileButton('draw', 'Draw'))}
-          ${html(button({ label: 'End Turn', weight: 'primary', exception: 'combatEndTurn', className: 'end-turn wide tall', ...(endTurnId ? { id: endTurnId } : {}) }))}
-          ${html(button({ label: 'Discard', className: 'pile spent tall' }))}
-          ${html(button({ label: 'Potions', className: 'combat-potions tall' }))}
+          ${html(button({ label: t('combat.endTurn'), weight: 'primary', exception: 'combatEndTurn', className: 'end-turn wide tall', ...(endTurnId ? { id: endTurnId } : {}) }))}
+          ${html(button({ label: t('combat.discard'), className: 'pile spent tall' }))}
+          ${html(button({ label: t('potions.run.title'), className: 'combat-potions tall' }))}
           <!-- The Potions minis: the shared icon tray over the Potions control,
                out of the row's grid (renderCombatPotionTray). -->
           <div class="combat-potion-tray as-pips icon-tray" aria-label="${esc(t('iconTray.potions'))}"></div>
@@ -128,7 +128,7 @@ const soloTargetLine = ({ def }) => (def.targeted ? 'Choose an enemy after Use.'
 export function openCombatPotions({ rows, opener, shortcut = null, arm, useReason, stillUsable, onUse, targetLine = soloTargetLine }) {
   const shortcutIndex = shortcut == null ? -1 : rows.findIndex((row) => row.options.useActionId === shortcut || row.entry.key === shortcut);
   let shell;
-  shell = openModal({ title: 'Potions', size: 'md', className: 'combat-potion-menu', opener, bodyClassName: 'as-pane', body: host => {
+  shell = openModal({ title: t('potions.run.title'), size: 'md', className: 'combat-potion-menu', opener, bodyClassName: 'as-pane', body: host => {
     rows.forEach((row, index) => {
       const { def, options, entry } = row;
       const { slot = null, chargeKind = null, remaining, charges } = options;
@@ -136,7 +136,7 @@ export function openCombatPotions({ rows, opener, shortcut = null, arm, useReaso
       const reason = useReason(row);
       const canUse = !reason;
       const action = flaskActionPlan({ context: 'combat', canUse, useReason: reason }).actions.find(r => r.id === 'use');
-      const use = button({ label: 'Use', disabled: !action.enabled, className: 'potion-use', attrs: { 'aria-label': 'Use ' + def.name } });
+      const use = button({ label: t('combat.potions.use'), disabled: !action.enabled, className: 'potion-use', attrs: { 'aria-label': t('combat.potions.use.aria', { name: def.name }) } });
       const fold = el('details', { class: 'armoury-card-row potion-fold' });
       if (chargeKind) { fold.dataset.chargeKind = chargeKind; fold.dataset.charges = String(charges); }
       else { fold.dataset.potionSlot = String(slot); fold.dataset.potionCount = String(remaining); }
@@ -144,7 +144,7 @@ export function openCombatPotions({ rows, opener, shortcut = null, arm, useReaso
         art: flaskPresentation(def, { showName: false }),
         description: flaskDetailLines(def, { charges }).join(' '),
         meta: t(countId, { count: remaining }), trail: [use], arrow: true });
-      const detail = detailCard({ eyebrow: 'Potion', name: def.name + ' details',
+      const detail = detailCard({ eyebrow: t('reward.kind.potion'), name: def.name + ' details',
         line: def.textTemplate || '', meta: targetLine(row),
         children: [flavour(tFull(countId, { count: remaining })), reason ? flavour(reason) : null] });
       fold.append(summary, detail);
@@ -158,7 +158,7 @@ export function openCombatPotions({ rows, opener, shortcut = null, arm, useReaso
       use.addEventListener('click', event => { event.stopPropagation(); event.preventDefault(); });
       if (action.enabled) arm(use, 'useFlask', {
         ctx: { targeted: !!def.targeted },
-        question: 'Use ' + def.name + '? ' + remaining + ' remaining.', confirmLabel: 'USE',
+        question: t('combat.potions.use.question', { name: def.name, remaining }), confirmLabel: t('combat.potions.use.confirm'),
         onConfirm: () => {
           // Recheck the live fight before committing a menu snapshot.
           if (!stillUsable(row)) return;

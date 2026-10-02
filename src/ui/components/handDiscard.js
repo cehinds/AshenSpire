@@ -7,8 +7,8 @@ import { t } from '../strings.js';
 // Selection is local until Confirm; closing the shared modal cancels the turn.
 export function openHandDiscard(registries, plan, onConfirm, opener) {
   const selected = new Set();
-  const confirm = button({ label: 'Keep all & end turn', weight: 'primary', className: 'hand-discard-confirm' });
-  const keep = button({ label: 'Keep all', className: 'hand-discard-keep', disabled: plan.minimum > 0 });
+  const confirm = button({ label: t('handDiscard.keepAllEndTurn'), weight: 'primary', className: 'hand-discard-confirm' });
+  const keep = button({ label: t('handDiscard.keepAll'), className: 'hand-discard-keep', disabled: plan.minimum > 0 });
   const count = el('p', { 'aria-live': 'polite' });
   const controls = [];
   // Too few chosen: the reason stands under the foot as text (FINISH §6).
@@ -20,7 +20,7 @@ export function openHandDiscard(registries, plan, onConfirm, opener) {
     confirmReason();
     controls.forEach(([input, id]) => { input.disabled = !selected.has(id) && selected.size >= plan.maximum; });
   };
-  const shell = openModal({ title: 'Choose cards to discard', size: 'xl', className: 'hand-discard-modal', opener,
+  const shell = openModal({ title: t('handDiscard.title'), size: 'xl', className: 'hand-discard-modal', opener,
     bodyClassName: 'pile-body', body: host => {
       host.append(count);
       const grid = cardGrid([], { class: 'grid' });

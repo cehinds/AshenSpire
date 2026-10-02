@@ -55,6 +55,7 @@
 
 import { ASSET_MAP, setBuiltInSource, builtInSource } from './assetmap.js';
 import { sha256Hex } from './sha256.js';
+import { t } from './strings.js';
 
 /* ASSET_PACKS_START */
 export const ASSET_PACKS = null;
@@ -678,7 +679,7 @@ export function bootLine(app, { pinned = packsPinned(), doc = globalThis.documen
   const line = doc.createElement('p');
   line.setAttribute('role', 'status');
   line.dataset.bootLine = '';
-  line.textContent = 'Loading art…';
+  line.textContent = t('assets.bootLine');
   line.style.cssText = 'margin:0;padding:24px;text-align:center;opacity:.7;font:16px/1.4 serif;color:inherit';
   app.append(line);
   return () => line.remove();

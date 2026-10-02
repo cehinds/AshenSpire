@@ -227,14 +227,14 @@ export function viewLayout(id) {
 const REGIONS = [
   {
     id: 'slots',
-    label: 'Slots',
+    label: t('armoury.tab.slots'),
     sel: '.armoury-body',
     count: (el) => el.querySelectorAll('.equip-slot').length,
     unit: 'slot',
   },
   {
     id: 'inventory',
-    label: 'Inventory',
+    label: t('armoury.tab.inventory'),
     sel: '.armoury-inventory',
     count: (el) => [...el.querySelectorAll('[data-inventory-item]')]
       .reduce((sum, row) => sum + Number(row.dataset.itemCount || 0), 0),
@@ -242,14 +242,14 @@ const REGIONS = [
   },
   {
     id: 'cards',
-    label: 'Cards',
+    label: t('armoury.tab.cards'),
     sel: '.armoury-strip',
     count: (el) => el.querySelectorAll('[data-card-row]').length,
     unit: 'card',
   },
   {
     id: 'stats',
-    label: 'Stats',
+    label: t('armoury.tab.stats'),
     sel: '.armoury-stats-tray',
     count: () => null,
     unit: 'summary',

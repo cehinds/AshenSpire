@@ -5,6 +5,7 @@ import { prologueArtwork } from '../assets.js';
 import { builtInFor, currentArtUrl, refreshMountedArt, ART_SOURCE_EVENT } from '../highResArt.js';
 import { topVeil } from '../components/veil.js';
 import { prologueConfig, prologueCopy, prologueTint, prologueDestination, prologueSequence, prologueResumePosition, prologueSceneArt, prologueBoxBackground, prologueStaging, PROLOGUE_DEFAULTS, PROLOGUE_LAYOUT, PROLOGUE_LAYOUTS } from '../../model/prologue.js';
+import { t } from '../strings.js';
 
 /**
  * cameraFrames(stage, scene) → the drift a scene holds on, or null for still.
@@ -69,7 +70,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   const destination = prologueDestination(run);
   const portrait = matchMedia(`(max-width: ${PROLOGUE_LAYOUT.sizing.mobileBreakpoint}px) and (orientation: portrait)`);
   const prefersStill = matchMedia('(prefers-reduced-motion: reduce)');
-  const root = el('section',{class:'prologue-screen', 'aria-label':'Opening sequence'});
+  const root = el('section',{class:'prologue-screen', 'aria-label':t('prologue.aria')});
   const stage = el('div',{class:'prologue-stage','aria-hidden':'true'});
   const title = el('h1',{class:'prologue-title'});
   const speaker = el('p',{class:'prologue-speaker'});
@@ -551,7 +552,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
 
 export function previewPrologue(settings) {
   let cleanup;
-  const door = openModal({size:'xl',title:'Opening preview',bodyClassName:'prologue-preview-body',onClose:()=>cleanup?.()});
+  const door = openModal({size:'xl',title:t('prologue.preview.title'),bodyClassName:'prologue-preview-body',onClose:()=>cleanup?.()});
   const config = prologueConfig(settings);
   cleanup = mountPrologue(door.body,{settings,preview:true,
     startScene:config.scenes.findIndex(s=>s.id===config.presentation.previewScene),

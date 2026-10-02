@@ -317,8 +317,8 @@ function recoverySettingRows() {
 
 const ROWS = [
   ...tooltipSettingsRows(),
-  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
-    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },
+  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: t('settings.row.fullscreen'),
+    note: tFull('settings.row.fullscreen') },
   // Fullscreen and Music are persistent quick controls on Title, Map, and
   // Combat. Settings does not duplicate them with a second stateful surface.
   // ---- cat: 'Combat' -----------------------------------------------------
@@ -348,17 +348,17 @@ const ROWS = [
   // NOTHING IS DUPLICATED. A row has one home; each of these moved, and the
   // Advanced tip now says where the feel settings went so the section named for
   // combat stops being a dead end.
-  { cat: 'Combat', key: 'useSprites', def: true, label: 'Character sprites',
-    note: 'Show a drawn class figure in combat instead of your chosen sigil.' },
+  { cat: 'Combat', key: 'useSprites', def: true, label: t('settings.row.useSprites'),
+    note: tFull('settings.row.useSprites') },
   { cat: 'Combat', key: 'animSpeed', type: 'choice', def: 'auto',
-    choices: ['auto', 'slow', 'normal', 'fast', 'instant'], label: 'Combat pacing',
-    note: 'Auto uses Fast with Lite rendering and Normal with Full. Choose a pace to override it.' },
+    choices: ['auto', 'slow', 'normal', 'fast', 'instant'], label: t('settings.row.animSpeed'),
+    note: tFull('settings.row.animSpeed') },
   { cat: 'Combat', key: 'performanceMode', type: 'choice', def: 'auto',
-    choices: ['auto', 'full', 'lite'], label: 'Rendering quality',
-    note: 'Auto uses lighter effects on touch devices. Lite keeps targeting and hit feedback, reduces decorative effects, and uses fast combat pacing when pacing is Auto.' },
+    choices: ['auto', 'full', 'lite'], label: t('settings.row.performanceMode'),
+    note: tFull('settings.row.performanceMode') },
   { cat: 'Display', key: 'titleCityHold', type: 'choice', def: TITLE_ENTRANCE_TIMING.holdDefault,
-    choices: Object.keys(TITLE_ENTRANCE_TIMING.holdDurations), label: 'Lit city pause',
-    note: 'Pause with the city fully lit before fading to the menu. Reduced motion skips this pause.' },
+    choices: Object.keys(TITLE_ENTRANCE_TIMING.holdDurations), label: t('settings.row.titleCityHold'),
+    note: tFull('settings.row.titleCityHold') },
   // `choices` and `def` are DERIVED. The four numbers here used to be typed, and
   // they were a second copy of the zoom ladder that had already drifted: the
   // ladder has six steps and this row offered four of them, so 175% and 200%
@@ -385,8 +385,8 @@ const ROWS = [
   // 120 measured cells is not every seed, so the map keeps reporting a frame it
   // could not fit (`.map-scroll[data-framing]`, and the warning it logs).
   { cat: 'Display', key: 'mapZoom', type: 'choice', def: MAP_ZOOM_DEFAULT,
-    choices: ['Fit', ...ZOOM_STEPS.map((z) => String(Math.round(z * 100)))], label: 'Map zoom',
-    note: 'Fit opens the map close enough that your current node and every node it connects to are on screen. A percentage fixes the zoom instead; + / − and ⊙ still work in the map.' },
+    choices: ['Fit', ...ZOOM_STEPS.map((z) => String(Math.round(z * 100)))], label: t('settings.row.mapZoom'),
+    note: tFull('settings.row.mapZoom') },
   // THE FOG A/B, and it sits HERE rather than in Custom Climb — Marina's ruling,
   // reversed from Custom Climb on the argument that Settings is the only surface
   // reachable WHILE YOU ARE LOOKING AT THE THING YOU ARE JUDGING. Fog cannot be
@@ -411,7 +411,7 @@ const ROWS = [
   // above learned this the hard way — it carried four of the zoom ladder's six
   // steps for a night).
   { cat: 'Display', key: 'mapMode', type: 'choice', def: MAP_MODE_DEFAULT,
-    choices: MAP_MODES, label: 'Map reveal',
+    choices: MAP_MODES, label: t('settings.row.mapMode'),
     note: `FOG is the climb as it is meant to be read: only the door you started from, the boss, everywhere you have been, and the places you can step to next are drawn — the rest is unlit parchment. ${FOG_TRAIL_CLAUSE} PATH draws the whole act at once, the way the map looked before the fog. Switching redraws the map straight away, so you can hold the two against the same seed.` },
   // HIS OWN PARENTHESIS, AS ONE ROW — "as new paths open, the path to the
   // nearest shrine should have a glowing effect. (make this toggleable in the
@@ -425,8 +425,8 @@ const ROWS = [
   // Shrine open: Rest once, Smith while you have Stones, Level while you have
   // cinders, and leave when you choose. On by default (owner's uploaded
   // configuration, #1254).
-  { cat: 'Advanced', advancedGroup: 'World', key: 'shrineMultiUse', def: true, label: 'Multi-use Shrines',
-    note: 'Rest, Smith and Level at one Shrine, then leave when you choose. Off: taking Rest or Smith leaves the Shrine, as before.' },
+  { cat: 'Advanced', advancedGroup: 'World', key: 'shrineMultiUse', def: true, label: t('settings.row.shrineMultiUse'),
+    note: tFull('settings.row.shrineMultiUse') },
   // A SETTING, NOT A SWITCH IN THE FLOW. The creation screen's Starting
   // equipment head carried an "Auto-advance on valid choice" toggle beside
   // the List/Grid control — a preference standing in the middle of a decision
@@ -435,80 +435,80 @@ const ROWS = [
   // matches the shipped creation layout (content/source/characterCreation.json
   // `equipmentAutoAdvance`), which stays the screen's fallback when no
   // settings bag reaches it.
-  { cat: 'Advanced', advancedGroup: 'Progression', key: 'creationAutoAdvance', def: false, label: 'Auto-advance character creation',
-    note: 'After a valid starting-equipment choice, open the next equipment section. Off: each section waits for you to continue.' },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'useRestorativeFlasksOutsideCombat', def: true, label: 'Use flasks outside combat',
-    note: 'Allow Crimson and Azure Flask charges to restore Health or Mana from the map. Their charges still refill only at a Shrine.' },
+  { cat: 'Advanced', advancedGroup: 'Progression', key: 'creationAutoAdvance', def: false, label: t('settings.row.creationAutoAdvance'),
+    note: tFull('settings.row.creationAutoAdvance') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'useRestorativeFlasksOutsideCombat', def: true, label: t('settings.row.useRestorativeFlasksOutsideCombat'),
+    note: tFull('settings.row.useRestorativeFlasksOutsideCombat') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victorySummaryMode', type: 'choice', def: 'continue',
     choices: ['continue', 'anywhere', 'auto'], choiceLabels: { continue: 'Continue', anywhere: 'Click anywhere', auto: 'Expand automatically' },
-    label: 'Open full Victory summary', note: 'First show a compact Victory panel, then open the full rewards and XP summary using this action.' },
+    label: t('settings.row.victorySummaryMode'), note: tFull('settings.row.victorySummaryMode') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptSeconds', type: 'number', def: VICTORY_XP_DEFAULTS.seconds, min: 0, max: 12, step: 0.1,
-    label: 'Victory XP breakdown (seconds)', note: 'Time for the combat-power bonus and defeated enemies to count up together. 0 reveals every line immediately.' },
+    label: t('settings.row.victoryReceiptSeconds'), note: tFull('settings.row.victoryReceiptSeconds') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptPauseMs', type: 'number', def: VICTORY_XP_DEFAULTS.pauseMs, min: 0, max: 500, step: 10,
-    label: 'Pause between XP lines (ms)', note: 'A short beat after each line. Pauses compress automatically to fit the total breakdown time.' },
+    label: t('settings.row.victoryReceiptPauseMs'), note: tFull('settings.row.victoryReceiptPauseMs') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptReadySeconds', type: 'number', def: VICTORY_XP_DEFAULTS.readySeconds, min: 0, max: 5, step: 0.1,
-    label: 'Continue ready delay (seconds)', note: 'After the final XP line, wait this long before Continue turns green.' },
+    label: t('settings.row.victoryReceiptReadySeconds'), note: tFull('settings.row.victoryReceiptReadySeconds') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptFormulaTerms', type: 'number', def: VICTORY_XP_DEFAULTS.formulaTerms, min: 1, max: 20, step: 1,
-    label: 'XP terms before +…', note: 'Show this many additions beside Total XP, then use +… with the full calculation on hover or focus.' },
+    label: t('settings.row.victoryReceiptFormulaTerms'), note: tFull('settings.row.victoryReceiptFormulaTerms') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptVisibleRows', type: 'number', def: VICTORY_XP_DEFAULTS.visibleRows, min: 2, max: 8, step: 1,
-    label: 'Visible XP breakdown rows', note: 'Set the fixed list height. Longer enemy lists scroll inside the Victory panel.' },
+    label: t('settings.row.victoryReceiptVisibleRows'), note: tFull('settings.row.victoryReceiptVisibleRows') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpSeconds', type: 'number', def: 3, min: 0, max: 12, step: 0.25,
-    label: 'Victory XP animation (seconds)', note: 'Total time for all XP bars together. 0 shows the final values immediately.' },
+    label: t('settings.row.victoryXpSeconds'), note: tFull('settings.row.victoryXpSeconds') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'levelUpRefillSeconds', type: 'number', def: 0.8, min: 0, max: 12, step: 0.1,
-    label: 'Residual XP refill (seconds)', note: 'After each Level press, reset that bar and refill it with remaining XP before its reward opens. 0 settles immediately.' },
+    label: t('settings.row.levelUpRefillSeconds'), note: tFull('settings.row.levelUpRefillSeconds') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'levelUpRefillPauseMs', type: 'number', def: 200, min: 0, max: 2000, step: 50,
-    label: 'Pause after residual refill (ms)', note: 'Show the settled XP bar briefly before opening its level reward.' },
+    label: t('settings.row.levelUpRefillPauseMs'), note: tFull('settings.row.levelUpRefillPauseMs') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpCharacterWeight', type: 'number', def: 50, min: 0, max: 100, step: 5,
-    label: 'Character XP time share', note: 'Relative share of the total animation time. Shares for missing tracks are redistributed.' },
+    label: t('settings.row.victoryXpCharacterWeight'), note: tFull('settings.row.victoryXpCharacterWeight') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpClassWeight', type: 'number', def: 25, min: 0, max: 100, step: 5,
-    label: 'Class XP time share', note: 'Relative share of the total animation time.' },
+    label: t('settings.row.victoryXpClassWeight'), note: tFull('settings.row.victoryXpClassWeight') },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpSkillWeight', type: 'number', def: 25, min: 0, max: 100, step: 5,
-    label: 'Skill XP time share', note: 'Relative share, split between the skills shown.' },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'levelUpAllocateStats', def: false, label: 'Assign stats in Level Up',
-    note: 'Show shrine-style stat allocation in the level reward panel. Off: earned points wait for a Shrine.' },
-  { cat: 'Advanced', advancedGroup: 'Progression', key: 'manualLevelUp', def: true, label: 'Click to level up',
-    note: 'When XP fills a character or skill bar, wait for its Level button before advancing. Off: earned levels advance automatically.' },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelStatPoints', def: true, label: 'Level Up · Stat points',
-    note: 'Grant stat points when an earned character level is claimed.' },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelFeats', def: true, label: 'Level Up · Feats',
-    note: 'Offer permanent passive feats when a character level is claimed.' },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelClassTree', def: false, label: 'Level Up · Class upgrades',
-    note: 'Include eligible class-tree upgrades alongside feats in the character-level choices.' },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelCards', def: false, label: 'Level Up · Bonus card',
-    note: 'Offer a card on a claimed level when the card reward schedule also allows it.' },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleCinders', def: true, label: 'Battle · Cinders',
-    note: 'Include Cinders among battle rewards.' },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleCards', def: true, label: 'Battle · Card',
-    note: 'Include the normal battle card offer when its chance succeeds.' },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleSkillDrafts', def: true, label: 'Battle · Skill cards',
-    note: 'Offer earned skill drafts after battle. Unoffered drafts remain queued.' },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleClassDrafts', def: true, label: 'Battle · Class choices',
-    note: 'Offer earned class choices after battle. Unoffered choices remain queued.' },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleFlasks', def: true, label: 'Battle · Flasks',
-    note: 'Include flask drops among battle rewards.' },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleRelics', def: true, label: 'Battle · Relics',
-    note: 'Include relic drops among elite and boss rewards.' },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleArmaments', def: true, label: 'Battle · Equipment',
-    note: 'Include armament drops among battle rewards.' },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardTreasureRelics', def: true, label: 'Treasure · Relics',
-    note: 'Include relics found in treasure rooms.' },
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardTreasureArmaments', def: true, label: 'Treasure · Equipment',
-    note: 'Include armaments found in treasure rooms.' },
-  { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
-    note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
+    label: t('settings.row.victoryXpSkillWeight'), note: tFull('settings.row.victoryXpSkillWeight') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'levelUpAllocateStats', def: false, label: t('settings.row.levelUpAllocateStats'),
+    note: tFull('settings.row.levelUpAllocateStats') },
+  { cat: 'Advanced', advancedGroup: 'Progression', key: 'manualLevelUp', def: true, label: t('settings.row.manualLevelUp'),
+    note: tFull('settings.row.manualLevelUp') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelStatPoints', def: true, label: t('settings.row.rewardLevelStatPoints'),
+    note: tFull('settings.row.rewardLevelStatPoints') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelFeats', def: true, label: t('settings.row.rewardLevelFeats'),
+    note: tFull('settings.row.rewardLevelFeats') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelClassTree', def: false, label: t('settings.row.rewardLevelClassTree'),
+    note: tFull('settings.row.rewardLevelClassTree') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelCards', def: false, label: t('settings.row.rewardLevelCards'),
+    note: tFull('settings.row.rewardLevelCards') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleCinders', def: true, label: t('settings.row.rewardBattleCinders'),
+    note: tFull('settings.row.rewardBattleCinders') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleCards', def: true, label: t('settings.row.rewardBattleCards'),
+    note: tFull('settings.row.rewardBattleCards') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleSkillDrafts', def: true, label: t('settings.row.rewardBattleSkillDrafts'),
+    note: tFull('settings.row.rewardBattleSkillDrafts') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleClassDrafts', def: true, label: t('settings.row.rewardBattleClassDrafts'),
+    note: tFull('settings.row.rewardBattleClassDrafts') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleFlasks', def: true, label: t('settings.row.rewardBattleFlasks'),
+    note: tFull('settings.row.rewardBattleFlasks') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleRelics', def: true, label: t('settings.row.rewardBattleRelics'),
+    note: tFull('settings.row.rewardBattleRelics') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleArmaments', def: true, label: t('settings.row.rewardBattleArmaments'),
+    note: tFull('settings.row.rewardBattleArmaments') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardTreasureRelics', def: true, label: t('settings.row.rewardTreasureRelics'),
+    note: tFull('settings.row.rewardTreasureRelics') },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardTreasureArmaments', def: true, label: t('settings.row.rewardTreasureArmaments'),
+    note: tFull('settings.row.rewardTreasureArmaments') },
+  { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: t('settings.row.shrinePathGlow'),
+    note: tFull('settings.row.shrinePathGlow') },
   // How strongly the nodes already walked fade behind you — his clause, with
   // his number as the default and the customization he asked for as the row
   // (D17 message 4: "previous nodes shoudl be faded, maybe 50% saturation or
   // higher (settings for customization)"). The ladder itself is CSS
   // (styles/map.css, keyed on data-walked-fade); this row only picks the rung.
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'walkedFade', type: 'choice', def: 'half',
-    choices: ['off', 'subtle', 'half', 'strong'], label: 'Walked nodes',
-    note: 'How much the nodes you have already visited fade on the act map, so the way forward stands out from the trail behind you. Half mutes them to half saturation; Off keeps the trail as bright as the choice.' },
+    choices: ['off', 'subtle', 'half', 'strong'], label: t('settings.row.walkedFade'),
+    note: tFull('settings.row.walkedFade') },
   // `selfEvident`: W1a shows help only where the effect is not obvious. The
   // note stays on the row as the one place the sentence lives; it is not drawn.
   { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,
-    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
-    note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
+    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: t('settings.row.accent'),
+    note: tFull('settings.row.accent') },
   // ART QUALITY (LFS / art-tier plan, step 4, 2026-09-26; Auto / Light / High,
   // docs/EXTERNAL-ASSETS-PLAN.md step 8c). Auto, Light and High choose which
   // pack the web edition loads (src/ui/artTier.js); a single file carries its
@@ -519,109 +519,109 @@ const ROWS = [
   // (LOCAL_ONLY_KEYS, never synced): a folder here means nothing on another device.
   { cat: 'Display', key: ART_QUALITY_KEY, type: 'choice', def: ART_AUTO,
     choices: ART_QUALITY_CHOICES, legacyChoices: LEGACY_ART_QUALITY, choiceDisabled: tierChoiceDisabled, describedBy: 'set-artQuality-tier',
-    label: 'Art quality', applied: artQualityHtml,
-    note: 'Auto loads lighter art on a narrow or phone-sized screen, with Data Saver on or on a device with little memory, and the best art this game carries otherwise. Light and High pick one. Local high-res uses full-resolution art from a folder on this device, either served beside the game or one you choose, and keeps the built-in art for anything it lacks. This device only.' },
+    label: t('settings.row.artQuality'), applied: artQualityHtml,
+    note: tFull('settings.row.artQuality') },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
-    choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size', applied: appliedHtml,
-    note: 'Auto flexes the whole interface with your screen; S–XL asks for a fixed size and gets as much of it as fits.' },
+    choices: ['Auto', 'S', 'M', 'L', 'XL'], label: t('settings.row.uiScale'), applied: appliedHtml,
+    note: tFull('settings.row.uiScale') },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotif', type: 'choice', def: UI_DEFAULTS.cardMotif,
-    choices: UI_DEFAULTS.cardMotifModes, label: 'Card motif',
-    note: 'Colour cards by their class. Wash tints the card body; Accent puts your accent on the border and moves rarity to a corner pip; Band adds a class stripe. Off keeps every card the same frame.' },
+    choices: UI_DEFAULTS.cardMotifModes, label: t('settings.row.cardMotif'),
+    note: tFull('settings.row.cardMotif') },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'cardMotifStrength', type: 'choice', def: 'normal', selfEvident: true,
-    choices: ['subtle', 'normal', 'strong'], label: 'Motif strength',
-    note: 'How strongly the class colour tints a card.' },
+    choices: ['subtle', 'normal', 'strong'], label: t('settings.row.cardMotifStrength'),
+    note: tFull('settings.row.cardMotifStrength') },
   // CARD LORE TYPE (owner, 2026-09-23): "make it configurable in the advanced
   // settings for text related things, with sub options for flavor text". The
   // lists and defaults live in models/LoreTypeModel.js, which also stamps the
   // answer on <html>. Interface text size and readable headings stay in
   // General → Accessibility, their one home; the tab's tip says so.
   { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Flavor text', key: 'loreFace', type: 'choice', def: LORE_TYPE_DEFAULTS.loreFace,
-    choices: LORE_FACES.map((face) => face.label), label: 'Typeface',
-    note: 'The face card lore is set in: the one line in card inspection and the lore window it opens. Every face ships with the game; Cinzel has no italic and is always set upright.' },
+    choices: LORE_FACES.map((face) => face.label), label: t('settings.row.loreFace'),
+    note: tFull('settings.row.loreFace') },
   { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Flavor text', key: 'loreSize', type: 'choice', def: LORE_TYPE_DEFAULTS.loreSize,
-    choices: LORE_SIZES, label: 'Size',
-    note: 'How large card lore is set. Stacks with Text size and UI size.' },
+    choices: LORE_SIZES, label: t('settings.row.loreSize'),
+    note: tFull('settings.row.loreSize') },
   { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Lore window', key: 'loreLeading', type: 'choice', def: LORE_TYPE_DEFAULTS.loreLeading,
-    choices: LORE_LEADING, label: 'Line spacing', selfEvident: true,
-    note: 'Space between the lines of the lore window.' },
+    choices: LORE_LEADING, label: t('settings.row.loreLeading'), selfEvident: true,
+    note: tFull('settings.row.loreLeading') },
   { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Flavor text', key: 'loreTracking', type: 'choice', def: LORE_TYPE_DEFAULTS.loreTracking,
-    choices: LORE_TRACKING, label: 'Letter spacing', selfEvident: true,
-    note: 'Space between the letters of card lore.' },
+    choices: LORE_TRACKING, label: t('settings.row.loreTracking'), selfEvident: true,
+    note: tFull('settings.row.loreTracking') },
   { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Lore window', key: 'loreSlant', type: 'choice', def: LORE_TYPE_DEFAULTS.loreSlant,
-    choices: LORE_SLANTS, label: 'Lore slant', selfEvident: true,
-    note: 'Italic or upright for the body of the lore window.' },
+    choices: LORE_SLANTS, label: t('settings.row.loreSlant'), selfEvident: true,
+    note: tFull('settings.row.loreSlant') },
   { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Flavor text', key: 'loreIdentitySlant', type: 'choice', def: LORE_TYPE_DEFAULTS.loreIdentitySlant,
-    choices: LORE_SLANTS, label: 'Identity line slant', selfEvident: true,
-    note: 'Italic or upright for the one-line identity shown in card inspection.' },
-  { cat: 'Combat', key: 'screenShake', def: true, label: 'Screen shake', selfEvident: true,
-    note: 'Camera kick on heavy hits and staggers. Off keeps combat steady.' },
+    choices: LORE_SLANTS, label: t('settings.row.loreIdentitySlant'), selfEvident: true,
+    note: tFull('settings.row.loreIdentitySlant') },
+  { cat: 'Combat', key: 'screenShake', def: true, label: t('settings.row.screenShake'), selfEvident: true,
+    note: tFull('settings.row.screenShake') },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'ambient', type: 'choice', def: 'normal',
-    choices: ['off', 'low', 'normal', 'high'], label: 'Ambient effects',
-    note: 'Drifting embers and the title-screen glow. Off is the calmest.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'controlHints', def: true, label: 'Control hints',
-    note: 'Show the bar of keyboard shortcuts along the bottom of the map and combat.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapFreePan', def: MAP_FREE_PAN_DEFAULT, label: 'Two-axis map dragging',
-    note: 'Drag the act map left and right as well as up and down. Off keeps the map centred horizontally and allows vertical dragging only.' },
+    choices: ['off', 'low', 'normal', 'high'], label: t('settings.row.ambient'),
+    note: tFull('settings.row.ambient') },
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'controlHints', def: true, label: t('settings.row.controlHints'),
+    note: tFull('settings.row.controlHints') },
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapFreePan', def: MAP_FREE_PAN_DEFAULT, label: t('settings.row.mapFreePan'),
+    note: tFull('settings.row.mapFreePan') },
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderDensity', type: 'choice', def: 'compact',
-    choices: ['comfortable', 'compact'], label: 'Map header',
-    note: 'Comfortable shows your name and full stats; Compact tightens the bar.' },
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: 'Relics in map header', selfEvident: true,
-    note: 'Show your relic icons in the map header bar.' },
+    choices: ['comfortable', 'compact'], label: t('settings.row.mapHeaderDensity'),
+    note: tFull('settings.row.mapHeaderDensity') },
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderRelics', def: true, label: t('settings.row.mapHeaderRelics'), selfEvident: true,
+    note: tFull('settings.row.mapHeaderRelics') },
   // RETIRED (owner, 2026-09-23). The solo map header never draws the seed —
   // the header model receives it and prints nothing — and the co-op header's
   // `.mh-seed` has no rule under the `hide-header-seed` class main.js sets, so
   // this switch moved nothing anywhere. The key stays so a settings file that
   // names it still imports.
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: true, label: 'Seed in map header', selfEvident: true, retired: true,
-    note: 'Show the run seed in the map header bar.' },
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'mapHeaderSeed', def: true, label: t('settings.row.mapHeaderSeed'), selfEvident: true, retired: true,
+    note: tFull('settings.row.mapHeaderSeed') },
   // Short-screen warning is optional on narrow landscape screens.
-  { cat: 'Advanced', advancedGroup: 'Interface', key: 'uprightGate', def: false, label: 'Short-screen warning',
-    note: 'On a screen too short for the board — a phone turned sideways, or a very short window — the game explains instead of drawing a board you cannot finish a turn on. Turn this off to draw it anyway: nothing is lost, but END TURN sits off screen on a sideways phone and there is no way to scroll to it.' },
+  { cat: 'Advanced', advancedGroup: 'Interface', key: 'uprightGate', def: false, label: t('settings.row.uprightGate'),
+    note: tFull('settings.row.uprightGate') },
 
   { cat: 'Display', key: 'quickNav', type: 'choice', def: 'mirror',
-    choices: ['off', 'mirror', 'switcher'], label: 'Quick menu',
-    note: 'MIRROR keeps the menu tabs and adds the destination list. SWITCHER folds the tab strip into one button on narrow screens. OFF keeps the direct-to-Settings route. Fresh or invalid values use MIRROR.' },
+    choices: ['off', 'mirror', 'switcher'], label: t('settings.row.quickNav'),
+    note: tFull('settings.row.quickNav') },
 
   { cat: 'Combat', key: 'armamentsPresentation', type: 'choice', def: 'radial',
-    choices: ['radial', 'fixed'], label: 'Combat Armaments',
-    note: 'RADIAL SHORTCUTS moves flasks and potions into the combat Armaments cluster. FIXED HUD keeps them in the top HUD.' },
+    choices: ['radial', 'fixed'], label: t('settings.row.armamentsPresentation'),
+    note: tFull('settings.row.armamentsPresentation') },
   { cat: 'Combat', key: 'armamentsPhonePlacement', type: 'choice', def: 'left',
-    choices: ['left', 'center', 'right'], label: 'Phone Armaments location',
-    note: 'Geometry only: place the radial at the lower left, lower center, or lower right on narrow screens.' },
+    choices: ['left', 'center', 'right'], label: t('settings.row.armamentsPhonePlacement'),
+    note: tFull('settings.row.armamentsPhonePlacement') },
 
-  { cat: 'Combat', key: 'showPlayedCard', def: false, label: 'Show played card animation',
-    note: 'Show the played card flying toward its target. Off by default. Character animations, combat effects and auras still play.' },
+  { cat: 'Combat', key: 'showPlayedCard', def: false, label: t('settings.row.showPlayedCard'),
+    note: tFull('settings.row.showPlayedCard') },
 
   ...HUD_VISIBILITY_SETTINGS,
 
   { cat: 'Audio', key: 'musicEnabled', def: AUDIO_DEFAULTS.musicEnabled,
-    resolve: resolveMusicEnabled, label: 'Music', note: musicEnabledCondition },
-  { cat: 'Audio', key: 'muteAudio', def: false, positiveWhen: false, label: 'Audio',
-    note: 'Turn music and sound effects on. Music also has a quick toggle beside the HUD.' },
-  { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: 'Music volume', selfEvident: true,
-    note: 'Ambient score for the title, map, and battles.' },
-  { cat: 'Audio', key: 'sfxVolume', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: 'Sound effects', selfEvident: true,
-    note: 'Hits, blocks, status bursts, cards, and pickups.' },
-  { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'musicFolder', type: 'text', def: '', label: 'Custom music folder',
-    placeholder: 'e.g. music/ or https://…',
-    note: 'Folder/URL with a manifest.json mapping combat/boss/shop/rest/… to track files. Empty = the score shipped in music/ beside the game, or the built-in generated score where that is unavailable.' },
+    resolve: resolveMusicEnabled, label: t('settings.row.musicEnabled'), note: musicEnabledCondition },
+  { cat: 'Audio', key: 'muteAudio', def: false, positiveWhen: false, label: t('settings.row.muteAudio'),
+    note: tFull('settings.row.muteAudio') },
+  { cat: 'Audio', key: 'musicVolume', type: 'range', def: AUDIO_DEFAULTS.musicVolume, label: t('settings.row.musicVolume'), selfEvident: true,
+    note: tFull('settings.row.musicVolume') },
+  { cat: 'Audio', key: 'sfxVolume', type: 'range', def: AUDIO_DEFAULTS.sfxVolume, label: t('settings.row.sfxVolume'), selfEvident: true,
+    note: tFull('settings.row.sfxVolume') },
+  { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'musicFolder', type: 'text', def: '', label: t('settings.row.musicFolder'),
+    placeholder: t('settings.row.musicFolder.placeholder'),
+    note: tFull('settings.row.musicFolder') },
 
-  { cat: 'Accessibility', key: 'touchFlickPlay', def: UI_DEFAULTS.touchFlick.enabled, label: 'Card flick to play',
-    note: 'Flick a card upward with touch, mouse, trackpad or pen to play it on the nearest valid target. Selection and the information button work as usual.' },
+  { cat: 'Accessibility', key: 'touchFlickPlay', def: UI_DEFAULTS.touchFlick.enabled, label: t('settings.row.touchFlickPlay'),
+    note: tFull('settings.row.touchFlickPlay') },
   { cat: 'Accessibility', key: 'touchFlickDistance', type: 'number', def: UI_DEFAULTS.touchFlick.distance.def,
-    min: UI_DEFAULTS.touchFlick.distance.min, max: UI_DEFAULTS.touchFlick.distance.max, slider: true, practice: true, label: 'Card flick distance',
-    note: 'Upward travel in screen pixels. Shorter needs less movement; longer helps avoid accidental plays. Release with an upward flick.' },
-  { cat: 'Accessibility', key: 'reducedMotion', def: false, label: 'Reduced motion',
-    note: 'Calm ambient effects, drop the map pulse, and shorten animations.' },
+    min: UI_DEFAULTS.touchFlick.distance.min, max: UI_DEFAULTS.touchFlick.distance.max, slider: true, practice: true, label: t('settings.row.touchFlickDistance'),
+    note: tFull('settings.row.touchFlickDistance') },
+  { cat: 'Accessibility', key: 'reducedMotion', def: false, label: t('settings.row.reducedMotion'),
+    note: tFull('settings.row.reducedMotion') },
   // ON by default. Measured, not assumed: at the old default eight text targets
   // sat below the WCAG AA floor and the secondary buttons' own outlines sat at
   // 1.64:1 against a 3.0 floor. High contrast clears all of that and costs one
   // thing — see the note. `node tools/contrast-audit.mjs` re-runs the numbers.
-  { cat: 'Accessibility', key: 'highContrast', def: true, label: 'High contrast',
-    note: 'Brighter text and stronger borders throughout for readability. On by default — turn it off for the dimmer, more atmospheric palette.' },
+  { cat: 'Accessibility', key: 'highContrast', def: true, label: t('settings.row.highContrast'),
+    note: tFull('settings.row.highContrast') },
   { cat: 'Accessibility', key: 'textSize', type: 'choice', def: 'Auto',
-    choices: ['Auto', 'S', 'L', 'XL'], label: 'Text size',
-    note: 'Scale interface text from the browser baseline. Auto follows the browser stylesheet; S/L/XL aid readability. Stacks with UI size.' },
+    choices: ['Auto', 'S', 'L', 'XL'], label: t('settings.row.textSize'),
+    note: tFull('settings.row.textSize') },
   // Constantine, twice: "just make the tabs about 20% smaller or the size
   // configurable or scalable with UI or both", then "actually, I think it
   // should be able to go smaller than 44px." Range 24–44 is Marina's call, and
@@ -651,25 +651,25 @@ const ROWS = [
   // Declared as a CHARACTERISTIC rather than handled by name, so the stylesheet
   // keys on the property and not on `tapFloor` (Law 1 clause 3, one layer up).
   { cat: 'Accessibility', key: 'tapFloor', type: 'choice', def: String(UI_DEFAULTS.tapSize.def),
-    choices: UI_DEFAULTS.tapSize.sizes.map(String), label: 'Minimum tap size',
+    choices: UI_DEFAULTS.tapSize.sizes.map(String), label: t('settings.row.tapFloor'),
     applied: tapCostHtml, resizesWhilePressed: true,
-    note: 'How small a button, tab, or option is allowed to get. 44 is the size a fingertip reliably hits; smaller fits more on screen.' },
-  { cat: 'Accessibility', key: 'colorblindSafe', def: false, label: 'Colorblind-friendly',
-    note: 'Shift danger/heal/blight/frost colors to a more distinguishable palette.' },
-  { cat: 'Accessibility', key: 'reduceFlashes', def: false, label: 'Reduce flashes',
-    note: 'Suppress bright impact and proc flashes (photosensitivity). Damage numbers stay.' },
-  { cat: 'Accessibility', key: 'readableHeadings', def: false, label: 'Readable headings',
-    note: 'Use the plain UI font for titles instead of the decorative serif.' },
-  { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'commandLog', type: 'button', btn: 'Open', label: 'Command log',
-    note: 'The recent commands and results between the interface and the engine. Copy it into a bug report if the game misbehaves.' },
+    note: tFull('settings.row.tapFloor') },
+  { cat: 'Accessibility', key: 'colorblindSafe', def: false, label: t('settings.row.colorblindSafe'),
+    note: tFull('settings.row.colorblindSafe') },
+  { cat: 'Accessibility', key: 'reduceFlashes', def: false, label: t('settings.row.reduceFlashes'),
+    note: tFull('settings.row.reduceFlashes') },
+  { cat: 'Accessibility', key: 'readableHeadings', def: false, label: t('settings.row.readableHeadings'),
+    note: tFull('settings.row.readableHeadings') },
+  { cat: 'Advanced', advancedGroup: 'Export', debugTopic: true, key: 'commandLog', type: 'button', btn: 'Open', label: t('settings.row.commandLog'),
+    note: tFull('settings.row.commandLog') },
   // E2 (#247): the recorded answer on the row — Sell is its own bar at the
   // merchant, conditional on THIS toggle, DEFAULT ON until he says otherwise,
   // and the bar is ABSENT (not greyed) when off. shop.js reads it through
   // settingOn so the default's polarity has one home, here. ONE ROW, appended
   // on purpose while another seat serializes this file for E3 — named in the
   // E2 claim (#247) so the touch is on the record, not smuggled.
-  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'shopSell', def: true, label: 'Merchant buys back',
-    note: 'The shop offers a Sell bar for relics and flasks, at his prices. Off removes the bar entirely.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'shopSell', def: true, label: t('settings.row.shopSell'),
+    note: tFull('settings.row.shopSell') },
   // HOLD TO CONFIRM. Constantine: "yes press and hold" / "configurable in
   // debugging settings as enum drop down". Advanced is the debugging surface,
   // which is where he put it and where it stays.
@@ -694,13 +694,13 @@ const ROWS = [
   // `choices` and `def` are DERIVED from balance.ui.holdConfirm. Adding a fifth
   // speed is a row there and nothing here.
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'holdConfirm', type: 'choice', def: UI_DEFAULTS.holdConfirm.def,
-    choices: Object.keys(UI_DEFAULTS.holdConfirm.steps), label: 'Hold to confirm',
+    choices: Object.keys(UI_DEFAULTS.holdConfirm.steps), label: t('settings.row.holdConfirm'),
     // SHORT ON PURPOSE, and I measured why. My own ruling on the Map zoom row
     // tonight was that a long note plus a chip strip squeezes the text column
     // to a ribbon; the first draft of THIS note ran three sentences and took
     // the row to 216.9 px against 92.1 for Combat pacing. A rule I hold someone
     // else to on a Thursday holds on my own row on the same Thursday.
-    note: 'Choices a run can’t take back fill as you hold them, so a mis-tap can be let go before it lands. Off returns to one tap.' },
+    note: tFull('settings.row.holdConfirm') },
   // REWARD COLLECTION (E11, #256). His sentence IS this row: "Continue is
   // ALWAYS pressable and a setting decides what it means — auto-collect ON
   // takes everything, picking at random where there is a choice; OFF gives
@@ -716,8 +716,8 @@ const ROWS = [
   // released that claim ("manual has a reader and no writer a player can
   // reach").
   { cat: 'Advanced', advancedGroup: 'Interface', key: 'rewardCollect', type: 'choice', def: UI_DEFAULTS.rewardCollect.def,
-    choices: UI_DEFAULTS.rewardCollect.modes, label: 'Reward collection',
-    note: 'Auto: Continue takes everything you didn’t skip, picking a card for you. Manual: Continue means done — only what you chose comes along.' },
+    choices: UI_DEFAULTS.rewardCollect.modes, label: t('settings.row.rewardCollect'),
+    note: tFull('settings.row.rewardCollect') },
   // WEAPON SWAP COST — his three prices, switchable (A8). Constantine,
   // 2026-08-08: *"let's default to costing 2 actions. alternatively, or by a
   // setting, different weapon categories have weapon swap costs. THAT WAY I CAN
@@ -733,11 +733,11 @@ const ROWS = [
   // carried four of a six-step ladder for a night because someone typed the
   // list; a fourth rule row is a row in balance.js and nothing here.
   { cat: 'Advanced', advancedGroup: 'Equipment', key: 'swapCostRule', type: 'choice', def: EQ_DEFAULTS.swapCostRule,
-    choices: (EQ_DEFAULTS.swapCostRules || []).map((r) => r.id), label: 'Weapon swap cost',
+    choices: (EQ_DEFAULTS.swapCostRules || []).map((r) => r.id), label: t('settings.row.swapCostRule'),
     // ONE SENTENCE PER RULE AND NO MORE, on the measurement in the row above:
     // a long note squeezes the text column beside a chip strip. Three chips,
     // three clauses.
-    note: 'What switching armament sets costs mid-fight. FLAT charges the same for every weapon; TALISMAN & RELIC starts there and lets your gear make it dearer or cheaper; WEAPON CATEGORY prices it by the weapon you are drawing — a heavy one is slow, a quick one is not. Takes effect on the next fight.' },
+    note: tFull('settings.row.swapCostRule') },
   // ---- HIS TWO LEVELLING DIALS (2026-08-17) --------------------------------
   //
   //   "leave the level up value configurable. also, let's make the increment of
@@ -770,58 +770,58 @@ const ROWS = [
   // than one you were browsing past. A set of numbers that breaks it is
   // REFUSED and the authored table stands — see cardLevelsWithOverrides.
   { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_glance', type: 'number',
-    def: CARD_LEVELS.glance.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Resting card width',
-    note: 'How wide a card is while you are browsing past it, in pixels. Must stay smaller than the selected width.' },
+    def: CARD_LEVELS.glance.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: t('settings.row.cardWidth_glance'),
+    note: tFull('settings.row.cardWidth_glance') },
   { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_glance_mobile', type: 'number',
-    def: CARD_LEVELS.glance.variants.mobile, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Resting card width, phone',
-    note: 'The resting width on a narrow screen. It ships equal to the resting width above, so nothing changes until you move it.' },
+    def: CARD_LEVELS.glance.variants.mobile, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: t('settings.row.cardWidth_glance_mobile'),
+    note: tFull('settings.row.cardWidth_glance_mobile') },
   { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_focus', type: 'number',
-    def: CARD_LEVELS.focus.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Selected card width',
-    note: 'How wide the card you have picked out becomes. Must sit between the resting and reading widths.' },
+    def: CARD_LEVELS.focus.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: t('settings.row.cardWidth_focus'),
+    note: tFull('settings.row.cardWidth_focus') },
   { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardWidth_inspect', type: 'number',
-    def: CARD_LEVELS.inspect.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: 'Reading card width',
-    note: 'How wide a card is in the window you open to read it. Must stay larger than the selected width.' },
+    def: CARD_LEVELS.inspect.widthPx, min: CARD_WIDTH_BOUNDS.min, max: CARD_WIDTH_BOUNDS.max, slider: true, label: t('settings.row.cardWidth_inspect'),
+    note: tFull('settings.row.cardWidth_inspect') },
   { cat: 'Advanced', advancedGroup: 'Wireframes', cardSizeTopic: true, key: 'cardSizeExport', type: 'button', btn: 'Copy',
-    label: 'Export card sizes',
-    note: 'Copies the tuned sizes as a JSON fragment shaped like content/config/ui/components/card.json itself — merge it in at the FILE ROOT, where it replaces sizing.levels. It carries only the widths, so ratio, bands and behavior are left alone.' },
+    label: t('settings.row.cardSizeExport'),
+    note: tFull('settings.row.cardSizeExport') },
   { cat: 'Advanced', advancedGroup: 'Progression', key: 'levelUpValue', type: 'number', def: LEVEL_DEFAULTS.pointsPerLevel,
     min: LEVEL_DEFAULTS.pointsPerLevelMin, max: LEVEL_DEFAULTS.pointsPerLevelMax,
-    label: 'Level-up value', applied: numberAppliedHtml,
-    note: 'How many stat points one level grants — type any whole number from 1 to 20. Takes effect on the next level you reach, in any run, including one already in progress; the points wait at the shrine until you assign them.' },
+    label: t('settings.row.levelUpValue'), applied: numberAppliedHtml,
+    note: tFull('settings.row.levelUpValue') },
   // THE DECK EDITOR'S RULES (SPEC §14.1, owner brief 2026-09-26). Each
   // default is content/deckRules.js — the one home; model/deckRules.js reads
   // the stored choice against the same object. Live settings, not gameConfig
   // rows: a change applies the next time the editor opens (and Play in deck
   // order at the next fight), never to a fight already under way.
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckEditing', def: deckRules.defaults.deckEditing, label: 'Deck editing',
-    note: 'Add, remove and arrange your cards between fights. Off: the deck changes only through rewards, the merchant and the Armoury.' },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckEditing', def: deckRules.defaults.deckEditing, label: t('settings.row.deckEditing'),
+    note: tFull('settings.row.deckEditing') },
   { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckEditingWhere', type: 'choice', dropdown: true, def: deckRules.defaults.deckEditingWhere,
     choices: [...deckRules.where], choiceLabels: { free: 'Free (anywhere out of combat)', restOnly: 'Rest sites only' },
-    gates: [{ key: 'deckEditing' }], label: 'Where you can edit',
-    note: 'Free opens the editor from the map and the Armoury at any moment out of combat. Rest sites only offers it at a Shrine, an inn or a chapel.' },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMinUnlimited', def: deckRules.defaults.deckMinUnlimited, label: 'No minimum deck size',
-    gates: [{ key: 'deckEditing' }], note: 'Let the editor confirm a deck of any size, however small.' },
+    gates: [{ key: 'deckEditing' }], label: t('settings.row.deckEditingWhere'),
+    note: tFull('settings.row.deckEditingWhere') },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMinUnlimited', def: deckRules.defaults.deckMinUnlimited, label: t('settings.row.deckMinUnlimited'),
+    gates: [{ key: 'deckEditing' }], note: tFull('settings.row.deckMinUnlimited') },
   { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMinSize', type: 'number', def: deckRules.defaults.deckMinSize, min: deckRules.sizeRange.min, max: deckRules.sizeRange.max,
-    gates: [{ key: 'deckEditing' }, { key: 'deckMinUnlimited', when: false }], label: 'Minimum deck size', applied: numberAppliedHtml,
-    note: 'The fewest cards the editor lets you confirm. Rewards and purchases can still move the deck outside it; the editor then asks you to bring it back.' },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMaxUnlimited', def: deckRules.defaults.deckMaxUnlimited, label: 'No maximum deck size',
-    gates: [{ key: 'deckEditing' }], note: 'Let the editor confirm a deck of any size, however large.' },
+    gates: [{ key: 'deckEditing' }, { key: 'deckMinUnlimited', when: false }], label: t('settings.row.deckMinSize'), applied: numberAppliedHtml,
+    note: tFull('settings.row.deckMinSize') },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMaxUnlimited', def: deckRules.defaults.deckMaxUnlimited, label: t('settings.row.deckMaxUnlimited'),
+    gates: [{ key: 'deckEditing' }], note: tFull('settings.row.deckMaxUnlimited') },
   { cat: 'Advanced', advancedGroup: 'Deck', key: 'deckMaxSize', type: 'number', def: deckRules.defaults.deckMaxSize, min: Math.max(1, deckRules.sizeRange.min), max: deckRules.sizeRange.max,
-    gates: [{ key: 'deckEditing' }, { key: 'deckMaxUnlimited', when: false }], label: 'Maximum deck size', applied: numberAppliedHtml,
-    note: 'The most cards the editor lets you confirm. It may not sit below the minimum.' },
+    gates: [{ key: 'deckEditing' }, { key: 'deckMaxUnlimited', when: false }], label: t('settings.row.deckMaxSize'), applied: numberAppliedHtml,
+    note: tFull('settings.row.deckMaxSize') },
   { cat: 'Advanced', advancedGroup: 'Deck', key: 'classSpellPowerCopies', type: 'number', def: deckRules.defaults.classSpellPowerCopies,
-    min: deckRules.copyRange.min, max: deckRules.copyRange.max, gates: [{ key: 'deckEditing' }], label: 'Copies of a class spell or Power', applied: numberAppliedHtml,
-    note: 'How many copies of one of your class’s own spells or Powers the editor lets your deck hold. Strike and Defend stay unlimited; weapon arts and techniques stay limited to the copies you own.' },
-  { cat: 'Advanced', advancedGroup: 'Deck', key: 'playInDeckOrder', def: deckRules.defaults.playInDeckOrder, label: 'Play in deck order',
-    note: 'Your draw pile is not shuffled: you draw your cards in the order you arranged them, and a spent pile returns in that order. Card effects that shuffle still shuffle. Applies from the next fight.' },
+    min: deckRules.copyRange.min, max: deckRules.copyRange.max, gates: [{ key: 'deckEditing' }], label: t('settings.row.classSpellPowerCopies'), applied: numberAppliedHtml,
+    note: tFull('settings.row.classSpellPowerCopies') },
+  { cat: 'Advanced', advancedGroup: 'Deck', key: 'playInDeckOrder', def: deckRules.defaults.playInDeckOrder, label: t('settings.row.playInDeckOrder'),
+    note: tFull('settings.row.playInDeckOrder') },
   ...recoverySettingRows(),
   ...ADVANCED_CONFIG_ROWS,
-  { cat: 'Advanced', advancedGroup: 'Export', key: 'promptSettingsExport', def: true, label: 'Offer export when done',
-    note: 'Ask to export a configuration file after Done and Save.' },
-  { cat: 'Advanced', advancedGroup: 'Export', key: 'gameConfigExport', type: 'button', btn: 'Export JSON', label: 'Export game configuration',
-    note: 'Save every non-default game configuration value. Desktop opens Save As when available; mobile downloads the JSON locally.' },
-  { cat: 'Advanced', advancedGroup: 'Export', key: 'gameConfigImport', type: 'button', btn: 'Load JSON', label: 'Load game configuration',
-    note: 'Choose an exported settings JSON file. Included values replace your current settings; other settings and saved runs are untouched. Presentation changes apply immediately; starting stats and balance apply to new runs.' },
+  { cat: 'Advanced', advancedGroup: 'Export', key: 'promptSettingsExport', def: true, label: t('settings.row.promptSettingsExport'),
+    note: tFull('settings.row.promptSettingsExport') },
+  { cat: 'Advanced', advancedGroup: 'Export', key: 'gameConfigExport', type: 'button', btn: 'Export JSON', label: t('settings.row.gameConfigExport'),
+    note: tFull('settings.row.gameConfigExport') },
+  { cat: 'Advanced', advancedGroup: 'Export', key: 'gameConfigImport', type: 'button', btn: 'Load JSON', label: t('settings.row.gameConfigImport'),
+    note: tFull('settings.row.gameConfigImport') },
   // Advanced is the debugging surface — his word, and where Hold to confirm
   // already lives. These rows are generated from balance.graceRefill; see the
   // block above the ROWS array.
@@ -889,37 +889,37 @@ const ADVANCED_GROUPS = Object.freeze([
   //
   // A retired tab id resolves through `activeAdvancedGroup`, so a profile that
   // last had "Rules" open lands on the first tab rather than a blank panel.
-  { id: 'Opening', label: 'Opening sequence', tip: 'Opening artwork, dialogue, timing, motif and preview. Included in configuration exports.' },
-  { id: 'Progression', label: 'Character & progression', tip: 'Creation points, each class’s defaults, level-up, experience, skills and talents. What the points turn into is under Stats.' },
+  { id: 'Opening', label: t('settings.group.Opening'), tip: tFull('settings.group.Opening') },
+  { id: 'Progression', label: t('settings.group.Progression'), tip: tFull('settings.group.Progression') },
   // THE TIP CARRIES A FORWARDING ADDRESS: this section is NAMED for combat and
   // holds authored constants, so it is exactly where someone looking for an
   // animation switch lands. One clause ends that walk.
-  { id: 'Combat', label: 'Combat rules', tip: 'Action and resource costs, card values, deck limits and arcane exposure. Combat pacing, animation, sprites and Armaments are in General → Combat.' },
+  { id: 'Combat', label: t('settings.group.Combat'), tip: tFull('settings.group.Combat') },
   // ONE TAB PER IDEA, AND STATS IS ONE IDEA (owner, 2026-09-21). Hand & Draw,
   // Stats & Defence, Progression → Stats & resources and the Poise, Stagger
   // and Mana constants were four doors onto the same traits. Each trait is one
   // topic here (models/AdvancedSettingsGroups.js) with a live worked example
   // (models/StatsPreviewModel.js).
-  { id: 'Stats', label: 'Stats', tip: 'Everything that turns attributes into Actions, Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.' },
+  { id: 'Stats', label: t('settings.group.Stats'), tip: tFull('settings.group.Stats') },
   // Owner, 2026-09-27: HP, Stamina and Mana recovery — per turn, after going
   // unused, every few rounds, after a fight, at a rest — one topic per pool.
-  { id: 'Recovery', label: 'Recovery', tip: 'How HP, Stamina and Mana come back: each turn, after going unused for a few turns, every few rounds, after a won fight, and at every Rest. Applies from the next fight.' },
-  { id: 'Rewards', label: 'Rewards & economy', tip: 'Cinders, reward rarity, merchants, flasks and smithing.' },
+  { id: 'Recovery', label: t('settings.group.Recovery'), tip: tFull('settings.group.Recovery') },
+  { id: 'Rewards', label: t('settings.group.Rewards'), tip: tFull('settings.group.Rewards') },
   { id: 'Shops', label: t('settings.shops.group.label'), tip: tFull('settings.shops.group.label') },
-  { id: 'Deck', label: 'Deck', tip: 'The deck editor: where you can edit, the deck’s size limits, and playing your cards in the order you arranged them.' },
-  { id: 'Equipment', label: 'Equipment & relics', tip: 'Starting kits, drops, swapping, equipment balance and relic values.' },
-  { id: 'World', label: 'Run & world', tip: 'Rest and shrines, the atlas and seats, run modifiers, gauntlet, co-op and endless.' },
-  { id: 'Interface', label: 'Interface', tip: 'Map and HUD, card appearance, and confirmation controls.' },
-  { id: 'Text', label: 'Text & lore', tip: 'Typeface, size and spacing for card lore. Interface text size and readable headings are in General → Accessibility.' },
-  { id: 'Battlefield', label: 'Battlefield', tip: 'Formation layout, grid, character placement and formation movement.' },
+  { id: 'Deck', label: t('settings.group.Deck'), tip: tFull('settings.group.Deck') },
+  { id: 'Equipment', label: t('settings.group.Equipment'), tip: tFull('settings.group.Equipment') },
+  { id: 'World', label: t('settings.group.World'), tip: tFull('settings.group.World') },
+  { id: 'Interface', label: t('settings.group.Interface'), tip: tFull('settings.group.Interface') },
+  { id: 'Text', label: t('settings.group.Text'), tip: tFull('settings.group.Text') },
+  { id: 'Battlefield', label: t('settings.group.Battlefield'), tip: tFull('settings.group.Battlefield') },
   // The wireframe decisions the drawings leave open, one topic per family of
   // surfaces, now beside the other size controls (cards, the settings window):
   // every "how big and where" answer in one place.
-  { id: 'Wireframes', label: 'Layout', tip: 'How windows, menus, scenes and cards are sized and laid out. Every choice starts where the game already draws it.' },
-  { id: 'Export', label: 'Import, export & debug', tip: 'Load or save game configuration as a portable JSON file, and diagnostics.' },
-  { id: 'Sync', label: 'Defaults & sync', tip: 'Save your settings as your defaults on GitHub and load them on any device.' },
-  { id: 'Changelog', label: 'Changelog', tip: 'Recent changes.' },
-  { id: 'About', label: 'About', tip: 'Version and credits.' },
+  { id: 'Wireframes', label: t('settings.group.Wireframes'), tip: tFull('settings.group.Wireframes') },
+  { id: 'Export', label: t('settings.group.Export'), tip: tFull('settings.group.Export') },
+  { id: 'Sync', label: t('settings.group.Sync'), tip: tFull('settings.group.Sync') },
+  { id: 'Changelog', label: t('settings.group.Changelog'), tip: tFull('settings.group.Changelog') },
+  { id: 'About', label: t('settings.group.About'), tip: tFull('settings.group.About') },
 ]);
 
 // ---- DEBUG-ONLY SECTIONS (owner, 2026-09-24) --------------------------------
