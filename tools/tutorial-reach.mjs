@@ -175,7 +175,11 @@ const only = argOf('--only');
 // silently matching nothing — an empty sweep is not a pass.
 const CASES = [...VIEWPORTS.map((v) => `${v.w}x${v.h}`), 'resize', 'first-run'];
 // A bare `--only` or `--only ""` is an error (exit 2), not the full sweep.
-const onlySet = args.includes('--only') ? new Set((only || '').split(',').map((n) => n.trim()).filter(Boolean)) : null;
+// `smallest` names the smallest viewport by role, so the CI matrix does not
+// repeat the gate-derived `800x<gateBelowH>` and go red when the gate moves.
+const onlySet = args.includes('--only')
+  ? new Set((only || '').split(',').map((n) => n.trim()).filter(Boolean).map((n) => (n === 'smallest' ? SMALLEST_VP_NAME : n)))
+  : null;
 if (onlySet) {
   const unknown = [...onlySet].filter((n) => !CASES.includes(n));
   if (unknown.length || !onlySet.size) {
@@ -817,6 +821,12 @@ async function main() {
   await dropBrowser();
   server.close();
 
+  // A run that checked nothing is not a pass (e.g. `--root --only 1920x1080`:
+  // the viewport and resize cases do not run against the root artifact).
+  if (!fails.length && passedCount === 0) {
+    console.error('tutorial-reach: 0 checks ran for this selection — an empty run is not a pass.');
+    process.exit(2);
+  }
   console.log(`\n  ${fails.length ? `${fails.length} FAILED` : 'all checks passed'}`);
   // The counted verdict tools/verdict.mjs reads (CI runs this through it).
   console.log(`${passedCount} passed, ${fails.length} failed`);

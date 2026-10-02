@@ -50,7 +50,7 @@ jobs:
       matrix:
         shard:
           - name: small
-            only: 800x465,1024x640,1200x730
+            only: smallest,1024x640,1200x730 # `smallest` = 800 x balance.ui.uiScale.gateBelowH
           - name: mid
             only: 1280x800,1366x768,1440x900
           - name: large + first run
