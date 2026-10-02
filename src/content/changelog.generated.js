@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1471",
+    "id": "pr-1479",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "The web edition shows its art loading on the start screen, and can retry",
-    "detail": "Behind the scenes, in the web edition only: the start screen now appears at once while the art loads, with one line saying how far it has got, and if the art cannot be loaded the title screen says so and offers Retry (also in Settings → Art quality), which loads it again without reloading the page; the downloaded single file is unchanged, and nothing you play changes.",
-    "build": "0.7.1.772",
-    "pullRequest": 1471,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1471"
+    "summary": "Sealed and Draft climbs can be continued after a reload",
+    "detail": "A Custom Climb with a Sealed or Draft starting deck could not be loaded again: Continue set the save aside as broken, and the climb also stopped working at the end of its first fight. Both now carry on. A save made before this change loads too, with the fix noted in its load report. An older build of the game won't open a save made by this one; it leaves the save untouched rather than adding cards to your deck. Your dealt deck stays the deck you were dealt. Reloading, a mid-fight save, the end of a fight, changing weapons in the Armoury and swapping weapons mid-fight no longer add your equipment's own cards (its Strike and Defend, weapon arts or Dodge Roll) to it. Your first fight now plays your cards with the same weapon bonuses a reloaded climb gives them.",
+    "build": "0.7.1.784",
+    "pullRequest": 1479,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1479"
   },
   {
     "id": "pr-1472",
