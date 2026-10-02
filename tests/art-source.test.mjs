@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { artDir, artPath, manifestIds, packSource, sourceMode, strictFor, treeOf, MOVING_TREES } from '../tools/art-source.mjs';
+import { artDir, artPath, fetchPlanFor, manifestIds, packSource, sourceMode, strictFor, treeOf, MOVING_TREES } from '../tools/art-source.mjs';
 import { markerFor, readPin } from '../tools/fetch-art.mjs';
 
 const TOOL = fileURLToPath(new URL('../tools/art-source.mjs', import.meta.url));
@@ -151,4 +151,19 @@ test('the CLI names each tree\'s directory, and fails by name', () => {
   const bad = spawnSync(process.execPath, [TOOL, '--dir', 'assets'], { encoding: 'utf8' });
   assert.equal(bad.status, 1);
   assert.match(bad.stderr, /art-source: FAIL — "assets" is not one of the trees/);
+});
+
+test('fetchPlanFor: a rebuild fetches its own commit\'s packs, and only when its pin names them', () => {
+  const root = fixture([]);
+  try {
+    assert.equal(fetchPlanFor(root), null, 'no tools/fetch-art.mjs: nothing to run');
+    mkdirSync(join(root, 'tools'), { recursive: true });
+    writeFileSync(join(root, 'tools', 'fetch-art.mjs'), '');
+    assert.deepEqual(fetchPlanFor(root), ['tools/fetch-art.mjs', '--pack', 'light,common']);
+    assert.deepEqual(fetchPlanFor(root, { fullArt: true }), ['tools/fetch-art.mjs', '--pack', 'all']);
+    writeFileSync(join(root, 'art-release.json'), JSON.stringify({ ...PIN, schema: 1, packs: undefined }));
+    assert.equal(fetchPlanFor(root), null, 'a schema-1 pin builds from its trees');
+    rmSync(join(root, 'art-release.json'));
+    assert.equal(fetchPlanFor(root), null, 'no pin at all');
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });

@@ -159,6 +159,23 @@ export function artPath(rel, opts = {}) {
 }
 
 /**
+ * fetchPlanFor(root, { fullArt }) → the `node` arguments that fetch the packs a
+ * build of the checkout at `root` reads, with that checkout's OWN fetch-art
+ * (its pin, its manifest, its rules), or null when it has nothing to fetch: no
+ * tools/fetch-art.mjs, or a pin from before the packs (schema 1, whose builds
+ * read the trees). tools/pages-site.mjs runs it before rebuilding an
+ * uncommitted build (--build-missing), because after step 13 a commit's tree
+ * no longer carries the art its build reads.
+ */
+export function fetchPlanFor(root, { fullArt = false } = {}) {
+  if (!existsSync(join(root, 'tools', 'fetch-art.mjs'))) return null;
+  let pin = null;
+  try { pin = JSON.parse(readFileSync(join(root, PIN_PATH), 'utf8')); } catch { return null; }
+  if (!pin || pin.schema !== 2) return null;
+  return ['tools/fetch-art.mjs', '--pack', fullArt ? 'all' : 'light,common'];
+}
+
+/**
  * manifestIds(root) → the Set of every id art-manifest.json lists: what a check
  * asks when it wants to know whether the game's art includes a file (an id is
  * in the manifest exactly when a pinned pack carries it), without reading any
