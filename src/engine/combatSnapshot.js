@@ -6,7 +6,7 @@
 
 import { validateFoundationSnapshot } from './combatRules.js';
 import { emitEvent } from './triggers.js';
-import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncCompanionProperties } from './properties.js';
+import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncCompanionProperties, syncSigilProperties } from './properties.js';
 import { stampPlayerPoiseMax } from '../model/state.js';
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { attachSkillXp } from './skillXp.js';
@@ -95,6 +95,8 @@ export function serializeCombatSnapshot(combat) {
     // SPEC §14.4: the sigil slots the fight mounts from, so a restore mounts
     // the same sigils while their armaments are worn.
     sigilSlots: combat.sigilSlots && typeof combat.sigilSlots === 'object' ? combat.sigilSlots : {},
+    // SPEC §15.4: the attuned legendaries, which a restore mounts again.
+    attunedSigils: Array.isArray(combat.attunedSigils) ? combat.attunedSigils : [],
   });
   assertCombatSnapshot(snapshot);
   return snapshot;
@@ -183,6 +185,8 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     companions: Array.isArray(saved.companions) ? saved.companions : [],
     // A snapshot from before SPEC §14.4 carries no slots and mounts no sigil.
     sigilSlots: saved.sigilSlots && typeof saved.sigilSlots === 'object' && !Array.isArray(saved.sigilSlots) ? saved.sigilSlots : {},
+    // A snapshot from before SPEC §15.4 carries no attuned sigil and mounts none.
+    attunedSigils: Array.isArray(saved.attunedSigils) ? saved.attunedSigils : [],
   };
   combat.emit = (type, payload) => emitEvent(combat, type, payload);
   combat._emitEvent = emitEvent;
@@ -198,6 +202,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
   syncRelicProperties(combat);
   syncClassProperties(combat);
   syncCompanionProperties(combat);
+  syncSigilProperties(combat);
   // The player's poise max is RE-DERIVED, never trusted from the save (plan
   // phase 8): a fight saved before the formula changed keeps its accumulated
   // value and takes the receipt's max — Constitution, body armour, relics —
