@@ -625,8 +625,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     });
     // The Potions list is a body-level dialog the redraw below does not reach;
     // a fight another player ends must not leave it over the next scene
-    // (#1436 review, Codex P2).
+    // (#1436 review, Codex P2). The stance chooser is one too: left open it
+    // would sit over the reward or map and send a stale playCard on a pick
+    // (#1449 review, Codex P2; tools/coop-hud-top.mjs vowChoiceProbe).
     if (snap.scene.kind !== 'combat') {
+      closeCardChoice();
       closeCoopPotions();
       if (potionTray) { disposeCombatPotionTray(potionTray); potionTray = null; }
     }

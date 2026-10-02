@@ -37,7 +37,7 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | 13 | Seats, zones, skill tracks, class card and tree, levels, recovery, Mana, attributes, quest board | **partly built** | Phase 0 of [proposal-seat-adventure](docs/proposal-seat-adventure.md); plan phases 1–10 of [plan-progression-and-property-system](docs/plan-progression-and-property-system.md), phase 2 only as 2a (2b, relic passives as property rules, is unscheduled). Open, as each subsection's *Not in this phase* line states: the smithing re-point (4b-ii, §13.4e); co-op offers no skill or class draft (§13.4e, §13.4g); no tree screen (§13.4g); four ability-card sentences are approximated (§13.4f); quest XP is unpaid and the co-op host has no quest board (§13.4n). **Post-1.0** (owner decision, 2026-09-27): 3b-ii (equipment rows joining the deck), the class-swap boss-reward door (§13.4h) and quest XP. The tower, city and later seat phases are **planned** in that proposal, with no SPEC section yet; companions are owned by §14.3, not the proposal's phase 5 (owner decision, 2026-09-27). |
 | — | World Journey, shared armour sets, legacy dungeons, the opening prologue, configurable stat pools | **built**, one boundary | `ui/screens/worldAtlas.js`, `legacyDungeon.js`, `prologue.js`; `src/content/derivedStats.js`. The stat-pool rules apply to the solo path only; the combat workshop and LAN paths keep their existing rules until given a rating context (that section's last line). |
 | 14 | Deck editor and the three shops | **partly built** (steps 1–3 of 7) | The SPEC section landed in #1331; step 2, deck rules, the sideboard and ordered draw, landed in #1343 (`tests/deck-rules.test.mjs`); step 3, the deck editor UI and its doors, in #1372 (`tests/deck-editor.test.mjs`). Steps 4–7 (shop kinds, market, blacksmith, wise master) are planned, with no code on `dev`. |
-| 15 | Reward schedule, levelling pace, crafting drops, legendary sigils | **partly built** (steps 1 and 3 of 5) | The SPEC section landed in #1348; §15.2 levelling preview and per-fight cap landed in #1349 (`tests/level-pace.test.mjs`). Steps 2 and 4 are open as #1351 and #1352; §15.4 waits on §14 step 5. |
+| 15 | Reward schedule, levelling pace, crafting drops, legendary sigils | **partly built** (steps 1–4 of 5) | The SPEC section landed in #1348; §15.1, the card reward schedule, in #1351 (`tests/card-reward-schedule.test.mjs`); §15.2, the levelling preview and per-fight cap, in #1349 (`tests/level-pace.test.mjs`); §15.3, crafting drops, in #1352 (`tests/crafting-drops.test.mjs`). Step 5, legendary sigils (§15.4), is in progress, with its shapes pinned in §15.4. |
 
 ### Combat and equipment revision: implementation contract
 
@@ -2584,7 +2584,7 @@ Inscryption, and Slay the Spire's deck-view / "Deck Builder" mods.
 
 ## 15. Reward schedule, levelling pace, crafting drops and legendary sigils (owner brief, 2026-09-26)
 
-**Status: partly built** (2026-09-27: step 1, this section, landed in #1348; §15.2 levelling preview and per-fight cap landed in #1349; no other step's code is on `dev`). The owner asked for several things:
+**Status: partly built** (2026-10-02: step 1, this section, landed in #1348; §15.1, the card reward schedule, in #1351; §15.2, the levelling preview and per-fight cap, in #1349; §15.3, crafting drops, in #1352; step 5, legendary sigils (§15.4), is in progress, and its shapes are pinned below). The owner asked for several things:
 - a choice of when card rewards come: after battle, on level-up, both or neither;
 - a percent chance for a card reward to drop;
 - XP settings that show what they do ("I change them and I'm levelling up way too much");
@@ -2673,13 +2673,56 @@ A **legendary sigil** is the §14.3 sigil at a new rarity, whose effect is a pro
 - **Attunement.** A legendary sigil works while it is **attuned**. The run attunes at most `balance.sigils.attuneMax` (shipped 1) at a time, chosen from the inventory out of combat. The player does this in the **Armoury's Sigils panel** (out of combat only, like every Armoury change that is not a mid-fight swap): each owned legendary shows **Attune** or **Unattune**, through the model pair `attuneSigil(registries, run, id)` / `unattuneSigil(run, id)` in `model/sigils.js`, which refuse by name an unowned or non-legendary id and an attune past `attuneMax` (the sentence is shown in place). `MOUNTABLE_KINDS` gains a `sigil` kind, and a new `syncSigilProperties` mounts each attuned sigil's property under `sigil:<id>` the way `syncRelicProperties` mounts relics. `attunedSigils` is carried into `createCombat`, each co-op seat (`tools/session.mjs`) and combat snapshot restore. `run.attunedSigils: string[]` is saved and checked (each id owned, legendary, and within `attuneMax`). §14.4's slots hold non-legendary sigils. A legendary is attuned, never slotted.
 - **The drop.** It is a new reward kind, `sigil`, after `relic`, with chance `balance.sigils.dropChancePct` `{ normal: 0, elite: 0, boss: 0, treasure: 0 }`. It is shipped off; the owner turns it on in Settings. The roll is on a new stream, **`sigils`**, appended to the end of `STREAM_NAMES`. It never drops a sigil the run already owns, where owning covers `run.sigils`, every `run.sigilSlots` entry and `run.attunedSigils`.
 
+**The shapes step 5 builds to** (2026-10-02, SPEC-only, before the feature PR per CONTRIBUTING ground rule 1).
+
+- **Rarity at every door.** This one rule governs every persisted position that holds a sigil id. Each position belongs to exactly one of three classes, and the lists below are exhaustive.
+  - **Legendary only.** An id here must name a known legendary sigil. The positions are `run.attunedSigils`, a fight in progress's `combatEntered.snapshot.attunedSigils`, and a pending reward's `pendingReward.rewards.sigilId`.
+  - **Never legendary.** An id here must not name a legendary sigil. The positions are `run.sigilSlots`, a fight in progress's `combatEntered.snapshot.sigilSlots`, the market sigil shelf on `run.shopStock.sigils`, and the same shelf on an atlas point's `journey.serviceStates[pointId].stock.sigils`.
+  - **Either.** `run.sigils` is the inventory, so it holds both kinds: a legendary is carried there, attuned or not, and the non-legendaries wait there for a slot.
+  - `run.attunedSigils` holds no more than the run's `attuneMax`.
+  - The rule is checked at every door that restores a run: the `engine/save.js` load, and the co-op member restore in `tools/session.mjs`, which calls `migrateRunSchema` directly. Both doors read one model check, `sigilRarityProblems(registries, run)` in `model/sigils.js`, which checks both restricted classes.
+  - Each violation is refused by name. The load door archives the save as it does every other malformed reference, and the co-op door refuses that member and keeps the record, as it refuses any member that fails its restore.
+  - As defence in depth, `sigilPurchasePlan` also refuses a legendary by name, so no shelf a hand edit filled can sell one.
+  - A persisted sigil-id position added later must be assigned to one of these classes in the same PR that adds it.
+  - The bullets below cite this rule where they apply it.
+- **The field.** `run.attunedSigils: string[]` holds distinct ids, each also in `run.sigils`. `validateRunShape` is registry-free and refuses, by name: a value that is not a list, an id that is not a non-empty string, an id named twice, and an id that is not in `run.sigils`. Under **rarity at every door** (above), both restore doors refuse, by name, an attuned id that is not a legendary sigil, and a list longer than the run's `attuneMax`. They read that number from the run's frozen `advancedConfigSnapshot` override (`gameConfig.balance.sigils.attuneMax`), else from the bundle default, so the first load pass, which uses the authored registries, does not refuse a run whose Settings row was raised. An unknown attuned id is already refused through `unknownSigilId`, because the list is a subset of `run.sigils`. A legendary in `run.sigilSlots` is refused at the same doors (**rarity at every door**): §14.4's install already refuses one, so only a hand edit can put it there.
+- **Schema.** One bump, 18 → 19. `attunedSigils` is a required `RUN_SHAPE` row at 19. `migrateRunSchema` fills `[]` for a v18-or-older save and leaves `run.sigils` untouched. The step appends one captured schema-19 save to the corpus and edits no existing entry.
+- **The numbers.** `balance.sigils.attuneMax` is a whole number from 0, where 0 means nothing can be attuned. `balance.sigils.dropChancePct.normal|elite|boss|treasure` are whole numbers from 0 to 100, each with an explicit 0–100 `BALANCE_DOMAINS` entry. Every one carries a `[NOTE]`, so it gets a generated `gameConfig.balance.sigils.*` Settings row and is frozen per run. `validateContent` refuses any other value by name.
+- **The model pair.** `attuneSigil(registries, run, id)` and `unattuneSigil(run, id)` each return `{ ok, reason }` and change the run only when `ok`. Each `reason` is one sentence from `uiStrings.csv`.
+  - `attuneSigil` refuses an id the registries do not hold or `run.sigils` does not carry, a sigil that is not legendary, one already attuned, and an attune that would hold more than `attuneMax`.
+  - `unattuneSigil` refuses an id that is not attuned.
+  - Neither draws randomness, and neither needs an equipped armament: an attuned legendary is held by the run, not by a piece. Out of combat is the door's rule, so the Armoury panel shows no buttons in combat.
+- **Mounting.** `sigilCarrier(registries, id, ownerKey)` returns `{ kind: 'sigil', id, instanceId: id, ownerKey, tagIds: propertyTags }` for a legendary sigil, or null for anything else.
+  - `syncSigilProperties(combat, entity, attunedSigils?)` mounts each carrier that is not yet mounted, the way `syncRelicProperties` does. Attunement never changes mid-fight, so it only adds.
+  - The mount carries no `heldBy`, so `syncLoadoutProperties` never unmounts it.
+  - A legendary is never slotted, so its `sigil:<id>` key never meets a slotted sigil's.
+- **The combat.** `combat.attunedSigils: string[]`.
+  - `createCombat` copies the player's `attunedSigils`, which `createRunCombat` takes from `run.attunedSigils`.
+  - The combat snapshot serializes the field. `combatSnapshotProblems` refuses a value that is not a list of distinct non-empty ids, and `combatSnapshotReferenceProblems` refuses, by name, an id the registries do not hold and an id that is not a legendary sigil.
+  - Under **rarity at every door**, the load door also refuses, by name, a fight in progress (`combatEntered.snapshot`) whose `attunedSigils` (an absent field reads as `[]`) is not the same list as `run.attunedSigils`: attunement cannot change mid-fight, so a mismatch is a hand edit. The save is archived the way every other malformed snapshot reference is.
+  - A snapshot written without the field restores with `[]` and mounts none.
+- **Co-op.** The member restore applies **rarity at every door**. Each seat that `tools/session.mjs` builds hands in `attunedSigils` from its member's run. `coopCombat` keeps the list on the seat and mounts it under that seat's key, inside the same `setActive` window as the seat's relics, at the opening and at a mid-fight join. In v1 the co-op reward scene rolls no sigil drop, and its offers are unchanged.
+- **The drop.** The offer field is `rewards.sigilId`: a sigil id, or absent for none.
+  - The menu kind is `sigil`, after `relic` in `REWARD_KIND_ORDER`. Its row key is `sigil`, and its state is `pendingReward.states.sigil`.
+  - Taking the row appends the id to `run.sigils`, unattuned. Taking an id the run already owns adds nothing.
+  - The load door refuses, by name, a `sigilId` that is unknown (`pendingRewardReferenceProblems`) or not legendary (**rarity at every door**).
+  - **The pool is legendary sigils only.** It holds the legendaries the run does not own, where owning covers `run.sigils`, every `run.sigilSlots` entry and `run.attunedSigils`, in authored order.
+  - `rollSigilDrop` reads the chance for the door's pool. At a chance of 0 it returns none and draws nothing. With an empty pool it returns none and draws nothing. At 100 it makes no chance draw. Between those, it makes one `rng.chance('sigils', pct)`, and a miss returns none. Then it makes one `rng.pick('sigils', pool)`.
+  - It is rolled at a won normal or elite fight, at a boss whose reward menu opens (`main.js onCombatEnd`), and at a treasure room, both the map node and the legacy dungeon's treasure. The map-treasure door (`main.js enterNode`, `case 'treasure'`) checkpoints its offer through `beginPendingReward`, as the legacy dungeon's treasure door already does, so `resumeRun` remounts an unclaimed sigil row after a reload instead of losing it. On a World Journey the door completes its atlas point (`completeJourneyNode`) before it checkpoints, as the legacy dungeon resolves its node first, so claiming the rows never leaves the point open. The last boss of a run ends it with `finishRun(true)` before any reward is built, so it rolls no sigil, and that victory path is not reordered.
+  - With all four chances at the shipped 0, the `sigils` counter never moves. No other stream moves at any setting.
+- **The Armoury's Sigils panel.** A `.armoury-sigils` section in the Inventory view, below the item collection. It appears while the run owns a legendary sigil.
+  - It shows a count, "N / attuneMax attuned", and one row per owned legendary, in `run.sigils` order: its name, its blurb, its rule's sentence (`nodeTerms.csv`), and whether it is attuned.
+  - Out of combat, each row carries **Attune** or **Unattune**. A refusal is shown as text in the panel.
+  - In combat, the rows show and no button is drawn.
+  - Every button is at least 48 CSS px on a coarse pointer and at least 44 px otherwise.
+
 *Falsify:*
 - A sigil with a tag that is not a property node is refused by name.
 - An attuned sigil's trigger fires in a fight, and an unattuned owned sigil's trigger does not.
 - Attuning a second sigil while `attuneMax` is 1 is refused by name.
 - A DOM test opens the Armoury's Sigils panel, taps **Attune** on an owned legendary, sees it listed as attuned and in `run.attunedSigils`, taps **Unattune**, and sees it removed; the panel's buttons are absent in combat.
 - Market and blacksmith stock over 200 seeds never offers a legendary sigil.
-- With defaults, no sigil ever drops. With `dropChancePct.boss: 100`, a boss drops one unowned sigil and never a duplicate.
+- With defaults, no sigil ever drops and no stream counter moves. With `dropChancePct.boss: 100`, a boss drops one unowned legendary sigil and never a duplicate.
 - A save at §14's last schema loads with `attunedSigils: []`, and its `sigils` untouched.
 
 ### 15.5 Build order

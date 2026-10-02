@@ -441,7 +441,8 @@ async function seatSwitchProbe(cdp, sessionId, base) {
 // Through `?shot=coop&shotSeats=2` (vowChoiceProbe): seat 1 holds the Vow in
 // slot 1; key 1 opens the chooser; Tab keeps seat 1 and focus in the dialog;
 // E sends no endTurn; the pick sends one playCard as p1 with that stance; and
-// a seat-tab switch with the chooser open closes it and sends nothing.
+// a seat-tab switch with the chooser open closes it and sends nothing; and a
+// snapshot that leaves combat (another player ends the fight) closes it too.
 const VOW_STEP = {
   ready: `(() => { const s = structuredClone(window.__coopSnapshotForShot); s.scene.players.forEach((p) => { p.ended = false; });
     s.scene.players[0].hand = [{ instanceId: 'vow1', cardId: 'warriorsVow', upgraded: false }, ...s.scene.players[0].hand];
@@ -452,6 +453,8 @@ const VOW_STEP = {
     sent: window.__coopSentForShot.map((m) => ({ t: m.t, as: m.as, choice: m.choice })) }; })()`,
   pick: `(async () => { const b = document.querySelector('.card-choice .card-choice-option'); const id = b?.dataset.choice || ''; if (b) b.click();
     await new Promise((r) => setTimeout(r, 400)); return id; })()`,
+  leaveCombat: `(async () => { const s = structuredClone(window.__coopSnapshot); s.scene = { kind: 'complete', victory: true };
+    window.__receiveCoopSnapshotForShot(s); await new Promise((r) => setTimeout(r, 400)); return true; })()`,
   switchSeat: `(async () => { document.querySelector('.coop-seat-tabs [data-seat-i="1"]')?.click(); await new Promise((r) => setTimeout(r, 400)); return true; })()`,
 };
 
@@ -495,7 +498,15 @@ async function vowChoiceProbe(cdp, sessionId, base) {
   const moved = await ev(VOW_STEP.state);
   if (moved.open) bad.push(`vow chooser: a seat switch (${moved.seat}) left the chooser open over the new seat; want it closed`);
   if (moved.sent.length) bad.push(`vow chooser: a seat switch with the chooser open sent ${JSON.stringify(moved.sent)}; want nothing`);
-  console.log(`  ${bad.length ? '✗' : '✓'} vow chooser: Tab keeps ${tabbed.seat} (focus in dialog ${tabbed.inDialog}); pick ${choice} sends ${JSON.stringify(plays)}; seat switch closes it (${!moved.open})`);
+  await fresh();
+  await key('1', 'Digit1', 49);
+  const reopened = await ev(VOW_STEP.state);
+  await ev(VOW_STEP.leaveCombat);
+  const left = await ev(VOW_STEP.state);
+  if (!reopened.open) bad.push('vow chooser: key 1 did not reopen the chooser before the leave-combat check');
+  if (left.open) bad.push('vow chooser: a snapshot that left combat kept the chooser open over the next scene; want it closed');
+  if (left.sent.length) bad.push(`vow chooser: leaving combat with the chooser open sent ${JSON.stringify(left.sent)}; want nothing`);
+  console.log(`  ${bad.length ? '✗' : '✓'} vow chooser: Tab keeps ${tabbed.seat} (focus in dialog ${tabbed.inDialog}); pick ${choice} sends ${JSON.stringify(plays)}; seat switch closes it (${!moved.open}); leaving combat closes it (${!left.open})`);
   return bad;
 }
 

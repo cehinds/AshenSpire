@@ -4,11 +4,11 @@
 // not fabricate client DOM or mutate state after mount.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -153,7 +153,7 @@ async function main() {
   if (!existsSync(resolve(ROOT, 'dist/AshenSpire.html'))) throw new Error('dist/AshenSpire.html absent');
   mkdirSync(OUT, { recursive: true });
   const source = await serve({ root: ROOT, port: 8357, open: false });
-  const bases = { source: source.url.replace(/\/$/, ''), dist: pathToFileURL(resolve(ROOT, 'dist/AshenSpire.html')).href };
+  const bases = { source: source.url.replace(/\/$/, ''), dist: await buildPageUrl(resolve(ROOT, 'dist/AshenSpire.html')) };
   const b = await browser();
   const rows=[];
   try {
