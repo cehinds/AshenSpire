@@ -826,3 +826,17 @@ test('the opening renderer imports every opening symbol it names', () => {
   }
   assert.ok(named.has('PROLOGUE_DEFAULTS'), 'the symbol that taught this lesson is still one of them');
 });
+
+test('a fixed-height caption sets every scene at one size, the largest at which the longest fits', () => {
+  const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
+  // Measured over every scene in the opening, not the one on screen, so the
+  // size does not jump between scenes; never above the chosen size.
+  assert.match(screen, /order\.map\(index => config\.scenes\[index\]\)/);
+  assert.match(screen, /\(stage\.textScale \?\? 1\) \* \(fixedCaption\(stage\) \? captionFit\(\) : 1\)/);
+  assert.match(screen, /probe\.scrollHeight <= probe\.clientHeight/);
+  // Re-measured when the frame changes size, and the observer goes with the screen.
+  assert.match(screen, /new ResizeObserver/);
+  assert.match(screen, /resized\?\.disconnect\(\)/);
+  // A floor in on-screen pixels: a frame too short for readable words scrolls.
+  assert.match(screen, /const MIN_DIALOGUE_PX = 12;/);
+});

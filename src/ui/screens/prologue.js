@@ -106,6 +106,58 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     if (value === undefined || value === shipped[key]) node.style.removeProperty(name);
     else node.style.setProperty(name, format(value));
   };
+  // THE WORDS FIT THE BAND (owner, 2026-10-02). A fixed-height caption used to
+  // scroll its longest narration on a short frame, and a scene that advances on
+  // its own leaves no time to scroll it. So every scene in this opening is set
+  // in a hidden copy of the caption, and the text takes the largest size, one
+  // size for every scene and never above the chosen one, at which the longest
+  // still fits. It is measured again whenever the frame changes size. Smaller
+  // than MIN_DIALOGUE_PX on the glass the words stop being readable, so a frame
+  // too short for that (a phone on its side) keeps that size and scrolls.
+  const MIN_DIALOGUE_PX = 12;
+  let currentStage = null, fit = 1, fitKey = '';
+  const fixedCaption = stage => stage.captionFixedHeight === true && (stage.layout === 'caption' || stage.layout === 'letterbox');
+  function measureFit() {
+    const scenes = order.map(index => config.scenes[index])
+      .map(scene => ({stage: prologueStaging(config,scene), copy: prologueCopy(scene,config,{classId,name:run.customization?.name || 'Forsaken',location:destination.name})}))
+      .filter(({stage}) => fixedCaption(stage));
+    if (!scenes.length) return 1;
+    const probe = caption.cloneNode(true);
+    probe.setAttribute('aria-hidden','true');
+    Object.assign(probe.style,{position:'absolute',left:'0',bottom:'0',visibility:'hidden',pointerEvents:'none',width:`${caption.offsetWidth}px`});
+    root.append(probe);
+    const [t,sp,d,l] = ['.prologue-title','.prologue-speaker','.prologue-dialogue','.prologue-location'].map(selector => probe.querySelector(selector));
+    const fits = factor => scenes.every(({stage,copy}) => {
+      probe.style.setProperty('--prologue-text-scale', String((stage.textScale ?? 1) * factor));
+      t.textContent = copy.title; sp.textContent = copy.speaker; d.textContent = copy.text; l.textContent = copy.location;
+      l.hidden = !copy.location || stage.locationVisible === false;
+      return probe.scrollHeight <= probe.clientHeight;
+    });
+    // On-screen pixels, not CSS ones: the page may be zoomed.
+    probe.style.setProperty('--prologue-text-scale', '1');
+    const glass = probe.getBoundingClientRect().height / (probe.offsetHeight || 1);
+    const floor = Math.min(1, MIN_DIALOGUE_PX / ((parseFloat(getComputedStyle(d).fontSize) || 18) * (glass || 1)));
+    let best = 1;
+    if (!fits(1)) {
+      let lo = floor, hi = 1;
+      for (let step = 0; step < 8; step++) { const mid = (lo + hi) / 2; if (fits(mid)) lo = mid; else hi = mid; }
+      best = lo;
+    }
+    probe.remove();
+    return best;
+  }
+  function captionFit() {
+    if (!root.isConnected || !root.clientWidth || !root.clientHeight) return 1;
+    const key = `${root.clientWidth}x${root.clientHeight}`;
+    if (key !== fitKey) { fit = measureFit(); fitKey = key; }
+    return fit;
+  }
+  const refit = () => { fitKey = ''; if (currentStage && !stopped) applyStaging(currentStage); };
+  const resized = typeof ResizeObserver === 'function' ? new ResizeObserver(() => {
+    if (currentStage && fixedCaption(currentStage) && `${root.clientWidth}x${root.clientHeight}` !== fitKey) refit();
+  }) : null;
+  resized?.observe(root);
+  document.fonts?.ready?.then(refit);
   function applyStaging(stage) {
     for (const name of Object.keys(PROLOGUE_LAYOUTS)) root.classList.toggle(`prologue-layout-${name}`, name === stage.layout);
     caption.dataset.position = String(stage.textPosition || 'bottom-center');
@@ -114,7 +166,8 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     root.classList.toggle('prologue-fixed-caption', stage.captionFixedHeight === true);
     root.classList.toggle('prologue-banner-box', stage.bannerBox !== false);
     root.classList.toggle('prologue-outlined', stage.textOutline === true && Number(stage.textOutlineWidth) > 0);
-    root.style.setProperty('--prologue-text-scale', String(stage.textScale ?? 1));
+    currentStage = stage;
+    root.style.setProperty('--prologue-text-scale', String((stage.textScale ?? 1) * (fixedCaption(stage) ? captionFit() : 1)));
     root.style.setProperty('--prologue-text-align', stage.textAlign || 'center');
     root.style.setProperty('--prologue-box', prologueBoxBackground(stage));
     root.style.setProperty('--prologue-caption-vh', String(Number(stage.captionHeightVh) || 18));
@@ -194,6 +247,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   function cleanup() {
     if (stopped) return;
     stopped = true; serial++; cancelAnimationFrame(raf);
+    resized?.disconnect();
     animations.forEach(a=>a.cancel());
     portrait.removeEventListener('change',rotate);
     document.removeEventListener('visibilitychange',visibility);
