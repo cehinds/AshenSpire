@@ -1,8 +1,8 @@
 # Every asset outside the game file — plan
 
 Status: **step 2 built** (2026-10-01: `tools/asset-pack.mjs`, `art-manifest.json`
-schema 2); **step 8a built** (2026-10-02: the SPEC and FINISH wording, which the
-owner reviews in its own PR); the rest is plan (2026-09-27). The owner answered its
+schema 2); **step 8a done (#1440)** (2026-10-02: the SPEC and FINISH wording, which the
+owner reviews in that PR); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
