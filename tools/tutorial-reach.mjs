@@ -68,6 +68,7 @@ if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'tutorial-reach.mjs',
+    extraCopy: ['art-release.json'], // Required by the source server's build identity.
     // DERIVED, not typed — this named the viewport as a literal '800x450' until
     // 2026-08-16. When the gate moved 432 -> 465 the first viewport moved with
     // it and this string did not, so `--only` would have matched NO viewport and
