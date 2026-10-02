@@ -96,6 +96,14 @@ Function CheckInstallFolder
   ${AndIf} ${FileExists} "$INSTDIR\${APP_EXE}"
     Return
   ${EndIf}
+  ; Installed somewhere else already: one install per player, upgraded in place.
+  ; A second copy would share the uninstall entry, and the old uninstaller
+  ; would later remove the new copy from Installed apps.
+  ${If} $R1 != ""
+  ${AndIf} ${FileExists} "$R1\${APP_EXE}"
+    StrCpy $R0 "elsewhere"
+    Return
+  ${EndIf}
   FindFirst $R2 $R3 "$INSTDIR\*.*"
   ${DoWhile} $R3 != ""
     ${If} $R3 != "."
@@ -110,7 +118,11 @@ FunctionEnd
 
 Function DirectoryLeave
   Call CheckInstallFolder
-  ${If} $R0 != "ok"
+  ${If} $R0 == "elsewhere"
+    MessageBox MB_OK|MB_ICONEXCLAMATION "${APP_NAME} is already installed in $R1. This installer upgrades it there; to move it, uninstall it first." /SD IDOK
+    StrCpy $INSTDIR $R1
+    Abort
+  ${ElseIf} $R0 != "ok"
     MessageBox MB_OK|MB_ICONEXCLAMATION "$INSTDIR already has files in it. Choose an empty folder (or a new one) for ${APP_NAME}." /SD IDOK
     Abort
   ${EndIf}
@@ -142,7 +154,10 @@ Section "Ashen Spire (required)" SecGame
   ; writes are named here.
   ; The folder page checks this; a silent install (/S /D=…) skips that page.
   Call CheckInstallFolder
-  ${If} $R0 != "ok"
+  ${If} $R0 == "elsewhere"
+    MessageBox MB_OK|MB_ICONSTOP "${APP_NAME} is already installed in $R1. Upgrade it there, or uninstall it first to install elsewhere. Nothing was changed." /SD IDOK
+    Abort
+  ${ElseIf} $R0 != "ok"
     MessageBox MB_OK|MB_ICONSTOP "$INSTDIR already has files in it, and ${APP_NAME} only installs into an empty folder or over its own earlier install. Nothing was changed." /SD IDOK
     Abort
   ${EndIf}
