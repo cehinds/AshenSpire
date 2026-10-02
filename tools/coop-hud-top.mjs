@@ -470,6 +470,72 @@ async function repeatOpenProbe(cdp, sessionId, base) {
   return bad;
 }
 
+// A host response that lands under an open Potions list (#1436 review,
+// Codex P1 and P2). STALE: seat 1 carries Blight Coating in slot 0, opens
+// Use on it, then a snapshot shifts Flask of Stone into slot 0; the confirm
+// must send nothing (before the fix it threw slot 0, the wrong potion).
+// SCENE: the fight ends under the open list; the list must close.
+const LIVE_STEP = {
+  carry: `(() => { const s = structuredClone(window.__coopSnapshotForShot); s.scene.players.forEach((p) => { p.ended = false; });
+    s.scene.players[0].flasks = [{ flaskId: 'blightCoating' }, { flaskId: 'flaskOfStone' }];
+    window.__receiveCoopSnapshotForShot(s); window.__coopSentForShot.length = 0; return true; })()`,
+  openSlot0: `(async () => { const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    document.querySelector('.combat.coop .combat-potions').click();
+    let use = null; for (let t = 0; t < 40 && !use; t++) { await sleep(100); use = document.querySelector('.combat-potion-menu .potion-fold[data-potion-slot="0"] .potion-use'); }
+    if (!use || use.disabled) return 'no usable carried potion in slot 0';
+    use.click();
+    let yes = null; for (let t = 0; t < 40 && !yes; t++) { await sleep(100); yes = document.querySelector('.confirmation-modal .confirmation-confirm'); }
+    return yes ? '' : 'Use opened no confirmation'; })()`,
+  shift: `(() => { const s = structuredClone(window.__coopSnapshotForShot); s.scene.players.forEach((p) => { p.ended = false; });
+    s.scene.players[0].flasks = [{ flaskId: 'flaskOfStone' }];
+    window.__receiveCoopSnapshotForShot(s); return true; })()`,
+  openList: `(async () => { const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    document.querySelector('.combat.coop .combat-potions').click();
+    for (let t = 0; t < 40 && !document.querySelector('.combat-potion-menu'); t++) await sleep(100);
+    return document.querySelectorAll('.combat-potion-menu').length; })()`,
+  leave: `(() => { const s = structuredClone(window.__coopSnapshotForShot); s.scene = { kind: 'interlude' };
+    window.__receiveCoopSnapshotForShot(s); return true; })()`,
+};
+
+async function liveSnapshotProbe(cdp, sessionId, base) {
+  const ev = async (expression) => (await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId)).result?.value;
+  const fresh = async () => {
+    await cdp.send('Page.navigate', { url: `${base}?shot=coop` }, sessionId);
+    for (let t = 0; t < 90 && !(await ev(`!!document.querySelector('.combat.coop .combat-potions')`)); t++) await wait(500);
+    await wait(800);
+  };
+  const bad = [];
+  // Control: with no snapshot under it, the same carried Use is sent.
+  await fresh();
+  await ev(LIVE_STEP.carry);
+  await wait(300);
+  const ctlWhy = await ev(LIVE_STEP.openSlot0);
+  const control = ctlWhy ? null : await ev(SEAT_STEP.confirm);
+  if (ctlWhy) bad.push(`stale slot control: ${ctlWhy}`);
+  else if (!(control.length === 1 && control[0] === 'p1')) bad.push(`stale slot control: an unshifted Blight Coating Use sent ${JSON.stringify(control)}; want one flaskIntent as p1`);
+  await fresh();
+  await ev(LIVE_STEP.carry);
+  await wait(300);
+  const why = await ev(LIVE_STEP.openSlot0);
+  let stale = null;
+  if (why) bad.push(`stale slot: ${why}`);
+  else {
+    await ev(LIVE_STEP.shift);
+    await wait(300);
+    stale = await ev(SEAT_STEP.confirm);
+    if (stale.length) bad.push(`stale slot: a snapshot moved Flask of Stone into slot 0 under the list, then the Blight Coating Use sent ${JSON.stringify(stale)}; want nothing`);
+  }
+  await fresh();
+  const opened = await ev(LIVE_STEP.openList);
+  await ev(LIVE_STEP.leave);
+  await wait(500);
+  const left = await ev(REPEAT_STEP.lists);
+  if (opened !== 1) bad.push(`scene change: Potions opened ${opened} list(s); want 1`);
+  if (left !== 0) bad.push(`scene change: the fight ended under the Potions list and ${left} list(s) stayed over the next scene; want 0`);
+  console.log(`  ${bad.length ? '✗' : '✓'} live snapshot: carried Use sends ${JSON.stringify(control)}, after a slot shift ${JSON.stringify(stale)}; fight ends under the list -> ${left} list(s)`);
+  return bad;
+}
+
 async function main(args) {
   if (args.includes('--selftest')) return selftest();
   const shotsAt = args.indexOf('--shots');
@@ -523,7 +589,8 @@ async function main(args) {
       if (process.env.COOP_HUD_DEBUG) console.log(JSON.stringify({ g, coopBar, soloBar }, null, 1));
       if (vp === VIEWPORTS[0]) {
         const seatBad = [...await seatSwitchProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`),
-          ...await repeatOpenProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`)];
+          ...await repeatOpenProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`),
+          ...await liveSnapshotProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`)];
         failures.push(...seatBad);
         if (seatBad.length && !bad.length) clean--;
       }

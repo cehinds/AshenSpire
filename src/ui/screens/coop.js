@@ -306,6 +306,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // or held into keydown repeats, reopens the list: the open one closes
   // first, so Escape, a seat switch or teardown never leaves an orphaned
   // veil over the board (tools/coop-hud-top.mjs repeatOpenProbe).
+  function potionStillHeld(player, { entry, options }) {
+    if (!player) return false;
+    const live = combatPotionRows(registries, player);
+    return options.chargeKind
+      ? live.some((r) => r.options.chargeKind === options.chargeKind && r.options.remaining > 0)
+      : live.some((r) => !r.options.chargeKind && r.options.slot === options.slot && r.entry.flaskId === entry.flaskId && r.options.remaining > 0);
+  }
   function openCoopPotions(shortcut = null) {
     closeCoopPotions();
     const seat = me;
@@ -318,7 +325,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     potionsShell = openCombatPotions({
       rows: combatPotionRows(registries, meP), opener: app.querySelector('.combat-potions'), shortcut, arm,
       useReason: ({ options }) => options.remaining <= 0 ? 'No charges remaining' : seatReason(meP),
-      stillUsable: () => me === seat && !seatReason(seatPlayer()),
+      // The rows are this open's snapshot; a host response can land under the
+      // list and shift carried potions down a slot (#1436 review, Codex P1).
+      // Use commits only while the live snapshot still holds that potion in
+      // that slot (or that charge kind with a charge left).
+      stillUsable: (row) => me === seat && !seatReason(seatPlayer()) && potionStillHeld(seatPlayer(), row),
       // Co-op's own flow (#1436 review, Codex P2): a targeted potion goes at
       // the enemy already selected, and a charge drinks; a carried untargeted
       // potion arms a throw at a hero seat.
@@ -572,6 +583,13 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const member = (snap.party || []).find((p) => p.id === seat);
       return !member || !Array.isArray(member.catchupQueue) || String(member.catchupQueue.length) === at;
     });
+    // The Potions list is a body-level dialog the redraw below does not reach;
+    // a fight another player ends must not leave it over the next scene
+    // (#1436 review, Codex P2).
+    if (snap.scene.kind !== 'combat') {
+      closeCoopPotions();
+      if (potionTray) { disposeCombatPotionTray(potionTray); potionTray = null; }
+    }
     const mm = myMember();
     if (mm && mm.catchupQueue && mm.catchupQueue.length) return renderCatchup(mm);
     if (snap.scene.kind !== 'combat') prevCombat = null;

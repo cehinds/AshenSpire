@@ -22,7 +22,7 @@ import { wireframeUi } from '../../content/wireframeUi.js';
 import { t, tFull } from '../strings.js';
 import { esc } from './tooltip.js';
 import { flaskTooltipHtml, flaskDetailLines, flaskPresentation } from './flask.js';
-import { observeIconTray, setIconTrayItems, setIconTrayOverflow, trayIcon } from './iconTray.js';
+import { observeIconTray, unobserveIconTray, setIconTrayItems, setIconTrayOverflow, trayIcon } from './iconTray.js';
 import { UI_COMPONENTS as UI, uiComponentAttrs } from './uiComponents.js';
 import { el, statPair, button, html, openModal, detailCard, optionCard, flavour } from '../kit/index.js';
 
@@ -119,7 +119,8 @@ const soloTargetLine = ({ def }) => (def.targeted ? 'Choose an enemy after Use.'
  * (flask1..flask3), or the WGH8 entry key a Potions mini was tapped for; that
  * entry opens folded out. Found by action or key, not by list position.
  * `useReason(row)` is '' when Use may be offered, else the spelled-out reason;
- * `stillUsable()` rechecks the live fight before a confirmed Use commits;
+ * `stillUsable(row)` rechecks the live fight (and that the row's potion is
+ * still where the list saw it) before a confirmed Use commits;
  * `onUse(row)` is the screen's own Use (local dispatch or network intent);
  * `targetLine(row)` says where that Use lands, so the words match the board's
  * own flow (co-op aims differently from solo).
@@ -160,7 +161,7 @@ export function openCombatPotions({ rows, opener, shortcut = null, arm, useReaso
         question: 'Use ' + def.name + '? ' + remaining + ' remaining.', confirmLabel: 'USE',
         onConfirm: () => {
           // Recheck the live fight before committing a menu snapshot.
-          if (!stillUsable()) return;
+          if (!stillUsable(row)) return;
           shell.close();
           onUse(row);
         },
@@ -196,10 +197,11 @@ function placePotionTray(tray) {
 // away on every render (co-op, per snapshot) can stop the old one.
 const trayObservers = new WeakMap();
 
-/** Stop a tray's placement observer (a board replacing or tearing down its row). */
+/** Stop a tray's observers, placement and icon fit (a board replacing or tearing down its row). */
 export function disposeCombatPotionTray(tray) {
   trayObservers.get(tray)?.disconnect();
   trayObservers.delete(tray);
+  unobserveIconTray(tray);
 }
 
 export function renderCombatPotionTray(tray, rows, open) {
