@@ -359,7 +359,7 @@ export function mountCustomize(app, {
     close.querySelector('.modal-close-face').textContent = '\u00d7';
     close.before(portrait, menu, headTools);
   }
-  const back = button({ label: t('common.back'), role: 'exit', id: 'cz-back' });
+  const back = button({ label: t('common.back'), role: 'exit', id: 'cz-back', attrs: { 'data-back': '' } });
   const next = button({ label: t('creation.next'), id: 'cz-next', weight: 'primary', className: 'cz-next-stage' });
   const start = button({ label: 'Begin', id: 'cz-start', weight: 'primary' });
   const foot = modalFooter({ note: catalog ? 'Choose your path. The spire remembers.' : '', secondary: [back], primary: start, size: 'medium', className: 'cz-actions' });

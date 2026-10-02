@@ -2381,8 +2381,13 @@ export function mountEquipment(host, {
 
   // The removal moved INTO `close()` — see the block there. Leaving a copy here
   // would be two homes for one teardown, disagreeing on every path but this one.
+  // The press is the Armoury's: say so, or the screen under it (the quest
+  // board's Leave, input.js's [data-back] rule) hears the same Escape.
   const onKey = (e) => {
-    if (e.key === 'Escape' && !e.defaultPrevented && [...document.querySelectorAll('.modal-veil')].at(-1) === wrap) leave();
+    if (e.key === 'Escape' && !e.defaultPrevented && [...document.querySelectorAll('.modal-veil')].at(-1) === wrap) {
+      e.preventDefault();
+      leave();
+    }
   };
   document.addEventListener('keydown', onKey);
 

@@ -168,7 +168,7 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   let selection = { selectedId: null };
   const readings = new Map();
   const context = el('section', { class: 'map-context', 'aria-label': t('map.context.aria') });
-  const backButton = button({ label: t('map.back'), id: 'map-back', className: 'map-back' });
+  const backButton = button({ label: t('map.back'), id: 'map-back', className: 'map-back', attrs: { 'data-back': '' } });
   const enterButton = button({ label: t('map.enter'), weight: 'primary', id: 'map-enter', className: 'map-enter', disabled: true });
   const trayPair = el('div', { class: 'map-tray-pair' }, [backButton, enterButton]);
   const trayReveal = el('div', { class: 'map-tray-reveal' }, [context, trayPair]);
