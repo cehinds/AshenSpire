@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the game's wording lives in one table again",
     "detail": "Nothing you see changes. About 230 labels and sentences that had crept back into the code since mid-September (most of the Settings rows, the combat action bar, level-up and Victory, the lore fonts, layout and HUD options) now come from the game's one wording table, and an automatic check stops new ones creeping in.",
-    "build": "0.7.1.803",
+    "build": "0.7.1.804",
     "pullRequest": 1489,
     "url": "https://github.com/cehinds/AshenSpire/pull/1489"
+  },
+  {
+    "id": "pr-1509",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the co-op layout check runs when a build goes to testing",
+    "detail": "Nothing you play changes. The automatic check that the co-op screen's top bar fits on phones and desktops now runs each time a build is promoted to testing, instead of on every proposed change, where it kept stalling and holding other changes up.",
+    "build": "0.7.1.802",
+    "pullRequest": 1509,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1509"
   },
   {
     "id": "pr-1492",
