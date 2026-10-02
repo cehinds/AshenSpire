@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Escape and the controller's B button take you back",
     "detail": "Run history, the Compendium, Custom Climb, character creation, the LAN lobby, a conversation, a reward's detail view, the quest board and the \"safe to close\" screen now go back when you press Escape or B, the same as pressing their Back button. On a controller, B now also closes Settings, About, Profile and the Armoury, as Escape already did. On the map, Escape or B puts away the selected room's tray. Each press goes back one step: an open tooltip closes first, then a menu or the dialog on top, and only then the screen. Where going back would give something up, Escape and B do nothing, so you have to choose to leave: a shop, the Shrine, your rewards, a fight (they never end your turn), the map, or a finished run.",
-    "build": "0.7.1.760",
+    "build": "0.7.1.761",
     "pullRequest": 1463,
     "url": "https://github.com/cehinds/AshenSpire/pull/1463"
+  },
+  {
+    "id": "pr-1476",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: two browser-tool checks pass on Mac and Windows again",
+    "detail": "Nothing you play changes. On Windows, the helper that serves the art-pack build to the test tools refused every file it should have served, because it spelled its own folder one way and each file another; it now spells both the same way. On Mac, the check that a browser which dies on start fails at once looked for a program where Macs do not keep it; it now uses one every computer has, and runs on Windows too instead of being skipped.",
+    "build": "0.7.1.760",
+    "pullRequest": 1476,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1476"
   },
   {
     "id": "pr-1448",
