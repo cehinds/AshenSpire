@@ -57,8 +57,9 @@ export async function receiveDownload(response, { bytes = null, sha256 = null, w
 // THE FOLDER COPY: A ZIP THE GAME ASSEMBLES ITSELF (docs/EXTERNAL-ASSETS-PLAN.md
 // §5 B, step 7). Beside the light single file above, a pack-shaped build can
 // also be saved as its own folder: the build's HTML, its light and common
-// pack indexes (with their .js twins and the font sidecar's .js twin, which a
-// double-clicked page reads, step 4) and every object those indexes list,
+// pack indexes (with their .js twins, and the font sidecar, itself a .js file
+// packs/fonts-<digest12>.js, which a double-clicked page reads, step 4) and
+// every object those indexes list,
 // zipped as
 //
 //   AshenSpire-<branch>-<version>/AshenSpire-<branch>-<version>.html
@@ -158,7 +159,7 @@ const byteOrder = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
 /**
  * The folder's layout from a pin and its parsed indexes: the pack files to
- * carry (each index, its twin, the sidecar's twin) and every object, deduped
+ * carry (each index, its .js twin, the .js font sidecar) and every object, deduped
  * by path. Throws `pack` for a pin that does not pin a pack it must carry, an
  * unsafe name, or two indexes listing one object at two sizes (Copilot, #1480).
  */

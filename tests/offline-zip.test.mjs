@@ -299,7 +299,7 @@ test('a font sidecar pin that is not packs/fonts-<digest12>.js is refused, by th
   // tools/asset-pack.mjs only writes the .js sidecar, and Pages publishes only the pinned name.
   await refusedWith(fixtureSite({ sidecarJson: true }), 'pack');
   // A present but empty or null sidecar pin is a bad pin too, not "no sidecar" (Copilot, #1484).
-  for (const file of ['', null, 0, false]) {
+  for (const file of ['', null, 0, false, 'packs/../fonts-abcdefabcdef.js', 'packs/sub/fonts-abcdefabcdef.js', 'packs/fonts-ABCDEFABCDEF.js']) {
     const bad = fixtureSite();
     const page = Buffer.from(bad.html.toString().replace(JSON.stringify(bad.pin.fonts), JSON.stringify({ ...bad.pin.fonts, file })));
     bad.site.set(bad.plan.pageUrl, page); bad.plan.pageBytes = page.length; bad.plan.pageSha256 = sha(page);
@@ -312,6 +312,19 @@ test('a font sidecar pin that is not packs/fonts-<digest12>.js is refused, by th
     for (const [rel, bytes] of fx.files) { mkdirSync(dirname(join(from, rel)), { recursive: true }); writeFileSync(join(from, rel), bytes); }
     writeFileSync(join(from, 'packs/fonts-abcdefabcdef.json'), fx.files.get('packs/fonts-abcdefabcdef.js'));
     assert.throws(() => publishPack(join(dir, 'site'), 'dev/1', fx.html, from), (e) => e.refused && /font sidecar/.test(e.message));
+    // Every bad sidecar name the zip refuses, and a sidecar hash that is not 64 lowercase hex, are refused by publishPack too (review of #1484).
+    const fonts = fx.pin.fonts;
+    const withFonts = (patch) => Buffer.from(fx.html.toString().replace(JSON.stringify(fonts), JSON.stringify({ ...fonts, file: 'packs/fonts-abcdefabcdef.js', ...patch })));
+    for (const file of ['', null, 0, false, 'packs/../fonts-abcdefabcdef.js', 'packs/sub/fonts-abcdefabcdef.js', 'packs/fonts-ABCDEFABCDEF.js']) {
+      assert.throws(() => publishPack(join(dir, 'site-bad'), 'dev/1', withFonts({ file }), from), (e) => e.refused === true, `publishPack refuses fonts.file ${JSON.stringify(file)}`);
+    }
+    for (const sha256 of ['A'.repeat(64), 'a'.repeat(63), '', null]) {
+      assert.throws(() => publishPack(join(dir, 'site-bad'), 'dev/1', withFonts({ sha256 }), from), (e) => e.refused === true && /sha256/.test(e.message), `publishPack refuses fonts.sha256 ${JSON.stringify(sha256)}`);
+      const bad = fixtureSite();
+      const page = Buffer.from(bad.html.toString().replace(JSON.stringify(bad.pin.fonts), JSON.stringify({ ...bad.pin.fonts, sha256 })));
+      bad.site.set(bad.plan.pageUrl, page); bad.plan.pageBytes = page.length; bad.plan.pageSha256 = sha(page);
+      await refusedWith(bad, 'pack');
+    }
     const ok = fixtureSite();
     const from2 = join(dir, 'from2');
     for (const [rel, bytes] of ok.files) { mkdirSync(dirname(join(from2, rel)), { recursive: true }); writeFileSync(join(from2, rel), bytes); }

@@ -102,6 +102,7 @@ export function publishPack(siteDir, relDir, html, from, { name = 'index.html' }
   // the name the file:// loader and the in-game zip ask for; a pin naming any
   // other is refused here rather than published where nothing can read it (Codex, #1480).
   if (pin.fonts?.file !== undefined && !SIDECAR_FILE.test(String(pin.fonts.file))) throw refused(`${where}: its pin names the font sidecar ${JSON.stringify(pin.fonts.file)}, which is not a packs/fonts-<digest12>.js file`);
+  if (pin.fonts?.file !== undefined && !OBJECT_SHA.test(String(pin.fonts.sha256))) throw refused(`${where}: its pin gives the font sidecar ${JSON.stringify(pin.fonts.sha256)} as its sha256, which is not 64 lowercase hex`);
   for (const file of packFiles) {
     if (!PIN_FILE.test(file)) throw refused(`${where}: its pin names ${JSON.stringify(file)}, which is not a packs/<pack>-<digest12>.json|js file`);
     const src = join(packsRoot, file);
