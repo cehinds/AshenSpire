@@ -61,6 +61,14 @@ export function onArtSourceChange(fn) { onChange = typeof fn === 'function' ? fn
  * It listens while mounted and repaints from assetUrl().
  */
 export const ART_SOURCE_EVENT = 'ashen:art-source';
+/**
+ * Sent on the document once the built-in art has ARRIVED AFTER A FAILED LOAD
+ * (a Retry or a tier switch, docs/EXTERNAL-ASSETS-PLAN.md step 5) and nothing
+ * is open over the screen. Re-pointing (refreshMountedArt) cannot reach art an
+ * error handler has already swapped for a placeholder (enemySprite), so a
+ * screen that does that redraws its art from its own state on this event.
+ */
+export const ART_REDRAW_EVENT = 'ashen:art-redraw';
 // Caches of frames warmed from one tier (the Reaver attack, combat effects)
 // register here at module load, so a tier change starts them over.
 const resetters = new Set();

@@ -20,6 +20,7 @@
 // dependent slot only appears when the choice it depends on is made
 // (SmithWorkspaceModel.js); smithServices.js clears the dependent choices when
 // a parent changes.
+import { hideOnError } from '../artFallback.js';
 import { assetUrl } from '../assetmap.js';
 import { esc, attachTooltip } from './tooltip.js';
 import { renderCard } from './card.js';
@@ -82,7 +83,7 @@ export function mountMountServiceModal(host, initialModel, {
     card.dataset.itemRef = item.itemRef;
     const well = artWell({ src: assetUrl(item.artAsset), alt: '', small: true, attrs: { class: 'smith-weapon-art' } });
     const art = well.querySelector('img');
-    art?.addEventListener('error', () => art.remove());
+    hideOnError(art);
     card.replaceChildren(
       well,
       el('span', { class: 'smith-row-text' }, [
@@ -205,7 +206,7 @@ export function mountMountServiceModal(host, initialModel, {
       : [el('em', { class: 'as-tag', text: selected.kindLabel })];
     const well = artWell({ src: assetUrl(selected.artAsset), alt: '', attrs: { class: 'smith-weapon-art' } });
     const art = well.querySelector('img');
-    art?.addEventListener('error', () => art.remove());
+    hideOnError(art);
     const slot = {
       selected: [el('div', { class: 'smith-summary-grid' }, el('div', { class: 'smith-summary-cell smith-selected-head' }, [
         well,

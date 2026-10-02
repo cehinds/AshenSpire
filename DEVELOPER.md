@@ -133,7 +133,15 @@ slot names an id the common index or every art tier lists; E: the common index
 lists every tile and track, and no `map-detail/` or `music/` copy is beside the
 HTML) and
 `node tools/external-play.mjs` loads it in Chromium (`--expect-tier light` for a
-high-default build whose high index was removed). The single files are
+high-default build whose high index was removed; `--block-index` holds and then
+refuses every index: the startup gate must be drawn at once with its "Loading
+art…" line, the title must wait for the load and then offer Retry, and Retry
+must load the art). The cold boot of the web edition draws the startup gate
+while it loads (step 5): its status line and the critical set it counts
+(`content/config`, `presentation.startupGate`) are `src/ui/bootArt.js`, the
+words are `art.*` rows of `uiStrings.csv`, and a failed load shows a notice
+with Retry on the title and in Settings → Art quality
+(`retryBuiltInArt`, `tests/boot-art.test.mjs`). The single files are
 unchanged: their `ASSET_PACKS` stays null and the loader does nothing.
 
 **On Pages** (step 6b): `tools/pages-site.mjs` serves each build whose rebuild
