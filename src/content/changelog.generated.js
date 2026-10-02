@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1484",
+    "id": "pr-1470",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "Behind the scenes: the folder copy refuses a font file it could not fetch",
-    "detail": "Nothing you play changes. The zip download and the site's publishing step now refuse a build whose font file is named in a way the site never publishes, instead of failing partway through the download.",
+    "summary": "Behind the scenes: a test keeps the Windows file-serving fix from coming back",
+    "detail": "Nothing you play changes. The fix itself landed in #1476; this adds a test that imitates Windows' short folder names on any computer and fails if the local test server ever again turns away files in its own folder.",
     "build": "0.7.1.769",
-    "pullRequest": 1484,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1484"
+    "pullRequest": 1470,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1470"
   },
   {
     "id": "pr-1480",
