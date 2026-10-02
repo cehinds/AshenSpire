@@ -29,13 +29,30 @@ export const LORE_FACES = Object.freeze([
   { id: 'georgia', label: t('lore.face.georgia') },
 ]);
 
+// A face is stored and defaulted by its `id`; `label` is rewordable copy from
+// uiStrings.csv and is display only (Codex, #1489). Before #1489 a profile
+// stored the label itself, so the labels dev shipped are frozen here, as
+// literals rather than t() lookups, and read back as their ids: rewording a row
+// must not orphan a face a player chose before it.
+export const LEGACY_LORE_FACES = Object.freeze({
+  'IM Fell English': 'fell',
+  'EB Garamond': 'garamond',
+  'Cormorant Garamond': 'cormorant',
+  'Crimson Pro': 'crimson',
+  Spectral: 'spectral',
+  'Libre Baskerville': 'baskerville',
+  Cinzel: 'cinzel',
+  Inter: 'inter',
+  Georgia: 'georgia',
+});
+
 export const LORE_SIZES = Object.freeze(['S', 'M', 'L', 'XL']);
 export const LORE_LEADING = Object.freeze(['tight', 'normal', 'loose']);
 export const LORE_TRACKING = Object.freeze(['tight', 'normal', 'wide']);
 export const LORE_SLANTS = Object.freeze(['italic', 'upright']);
 
 export const LORE_TYPE_DEFAULTS = Object.freeze({
-  loreFace: 'IM Fell English',
+  loreFace: 'fell',
   loreSize: 'M',
   loreLeading: 'normal',
   loreTracking: 'normal',
@@ -47,8 +64,9 @@ const pick = (list, value, fallback) => (list.includes(value) ? value : fallback
 
 /** The stored settings, resolved to the words the stylesheet reads. */
 export function resolveLoreType(settings = {}) {
-  const face = LORE_FACES.find((entry) => entry.label === settings.loreFace)
-    || LORE_FACES.find((entry) => entry.label === LORE_TYPE_DEFAULTS.loreFace);
+  const stored = Object.hasOwn(LEGACY_LORE_FACES, settings.loreFace ?? '') ? LEGACY_LORE_FACES[settings.loreFace] : settings.loreFace;
+  const face = LORE_FACES.find((entry) => entry.id === stored)
+    || LORE_FACES.find((entry) => entry.id === LORE_TYPE_DEFAULTS.loreFace);
   return {
     face: face.id,
     size: pick(LORE_SIZES, settings.loreSize, LORE_TYPE_DEFAULTS.loreSize),

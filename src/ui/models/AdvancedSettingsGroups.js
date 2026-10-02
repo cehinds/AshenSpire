@@ -150,6 +150,7 @@ function topic(row, section) {
   // A row that names its own topic is filed under it. The Wireframes rows are
   // generated from one catalogue (models/WireframeChoiceModel.js) whose groups
   // ARE the topics — Modals, Menus, Scenes — so a fourth family files itself.
+  // `wireframeTopic` is the group's stable id, never its rewordable label.
   if (row.wireframeTopic) return row.wireframeTopic;
   if (row.cardSizeTopic) return 'Card size';
   if (row.debugTopic) return 'Diagnostics';
@@ -228,12 +229,17 @@ function topic(row, section) {
 
 export function advancedSubgroups(rows, section) {
   const groups = new Map();
+  const labels = new Map();
   for (const row of rows.filter(row => advancedSection(row) === section)) {
-    const label = topic(row, section);
-    if (!groups.has(label)) groups.set(label, []);
-    groups.get(label).push(row);
+    const id = topic(row, section);
+    if (!groups.has(id)) groups.set(id, []);
+    groups.get(id).push(row);
+    // A topic id is what a profile stores and what rows group by; a row whose
+    // topic heading is rewordable copy carries that label separately, so a
+    // reword never moves the id or merges two topics (Codex, #1489).
+    if (!labels.has(id) && row.wireframeTopic && row.wireframeTopicLabel) labels.set(id, row.wireframeTopicLabel);
   }
-  const result = [...groups].map(([label, rows]) => ({ id: label, label, rows }));
+  const result = [...groups].map(([id, rows]) => ({ id, label: labels.get(id) ?? id, rows }));
   // An override switch sits directly above the first row it governs, wherever
   // generation put it, so the switch and its number read as one control.
   for (const group of result) {
@@ -272,7 +278,7 @@ export function advancedSubgroups(rows, section) {
   // catalogue itself is written in — discovered, not restated, so the two
   // cannot disagree about which family comes first. Cards and the settings
   // window follow.
-  if (section === 'Wireframes') byOrder([...WIREFRAME_CHOICE_GROUPS.map((group) => group.label), 'Card size', 'Window']);
+  if (section === 'Wireframes') byOrder([...WIREFRAME_CHOICE_GROUPS.map((group) => group.id), 'Card size', 'Window']);
   if (section === 'Interface') byOrder(['Map & HUD', 'Appearance', 'Controls']);
   if (section === 'Text') byOrder(['Flavor text', 'Lore window']);
   if (section === 'Export') byOrder(['Configuration file', 'Diagnostics']);

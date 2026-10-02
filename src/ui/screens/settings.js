@@ -37,7 +37,7 @@ import { flasks } from '../../content/flasks.js';
 import { graceRefillTable, graceRefillLadder, flaskSlotCap, firstFlaskOfKind } from '../../model/gracerefill.js';
 import { openModal, button } from '../kit/index.js';
 import { t, tFull, has as hasString } from '../strings.js';
-import { LORE_FACES, LORE_SIZES, LORE_LEADING, LORE_TRACKING, LORE_SLANTS, LORE_TYPE_DEFAULTS } from '../models/LoreTypeModel.js';
+import { LORE_FACES, LEGACY_LORE_FACES, LORE_SIZES, LORE_LEADING, LORE_TRACKING, LORE_SLANTS, LORE_TYPE_DEFAULTS } from '../models/LoreTypeModel.js';
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
@@ -160,12 +160,15 @@ const CONTROL_ROW_TYPES = new Set(['button', 'action', 'sceneList']);
 // `dropdown: true` on every row although two of them have three options: the
 // chip strip is the default under four, and the owner asked for drop downs.
 // `wireframeTopic` is what files a row under Modals, Menus or Scenes
-// (models/AdvancedSettingsGroups.js).
+// (models/AdvancedSettingsGroups.js): the group's stable id, which is also what
+// `settingsAdvancedSubgroup.Wireframes` stores. `wireframeTopicLabel` is the
+// rewordable uiStrings label the topic tab wears, and only that (Codex, #1489).
 function wireframeChoiceRows() {
   return WIREFRAME_CHOICE_GROUPS.flatMap((group) => group.choices.map((choice) => ({
     cat: 'Advanced',
     advancedGroup: 'Wireframes',
-    wireframeTopic: group.label,
+    wireframeTopic: group.id,
+    wireframeTopicLabel: group.label,
     key: choice.key,
     type: 'choice',
     dropdown: true,
@@ -536,7 +539,8 @@ const ROWS = [
   // answer on <html>. Interface text size and readable headings stay in
   // General → Accessibility, their one home; the tab's tip says so.
   { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Flavor text', key: 'loreFace', type: 'choice', def: LORE_TYPE_DEFAULTS.loreFace,
-    choices: LORE_FACES.map((face) => face.label), label: t('settings.row.loreFace'),
+    choices: LORE_FACES.map((face) => face.id), choiceLabels: Object.fromEntries(LORE_FACES.map((face) => [face.id, face.label])),
+    legacyChoices: LEGACY_LORE_FACES, label: t('settings.row.loreFace'),
     note: tFull('settings.row.loreFace') },
   { cat: 'Advanced', advancedGroup: 'Text', textTopic: 'Flavor text', key: 'loreSize', type: 'choice', def: LORE_TYPE_DEFAULTS.loreSize,
     choices: LORE_SIZES, label: t('settings.row.loreSize'),
