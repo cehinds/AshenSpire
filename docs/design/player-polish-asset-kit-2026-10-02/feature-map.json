@@ -1,0 +1,791 @@
+{
+  "schema": 1,
+  "features": [
+    {
+      "id": "01a",
+      "name": "Title, save slots and resume",
+      "sourceModules": [
+        "src/ui/screens/title.js"
+      ],
+      "desktopArtwork": [
+        "scenes/spire-vista-desktop.png"
+      ],
+      "mobileArtwork": [
+        "scenes/spire-vista-mobile.png"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/heading-spark.svg",
+        "ui/components/button-selected.svg"
+      ],
+      "mobileComposition": "Spire stays above the menu; stacked save receipt and large bottom action."
+    },
+    {
+      "id": "01b",
+      "name": "Character creation",
+      "sourceModules": [
+        "src/ui/screens/customize.js"
+      ],
+      "desktopArtwork": [
+        "scenes/spire-vista-desktop.png",
+        "canonical/assets/painted-outfits/reaver/portrait.webp",
+        "canonical/assets/painted-outfits/rogue/portrait.webp",
+        "canonical/assets/painted-outfits/starseer/portrait.webp",
+        "canonical/assets/painted-outfits/herald/portrait.webp",
+        "canonical/assets/painted-outfits/reaver/menu.webp",
+        "canonical/assets/equipment/weapon_straightSword.webp"
+      ],
+      "mobileArtwork": [
+        "scenes/spire-vista-mobile.png",
+        "canonical/assets/painted-outfits/reaver/portrait.webp",
+        "canonical/assets/painted-outfits/rogue/portrait.webp",
+        "canonical/assets/painted-outfits/starseer/portrait.webp",
+        "canonical/assets/painted-outfits/herald/portrait.webp",
+        "canonical/assets/painted-outfits/reaver/menu.webp",
+        "canonical/assets/equipment/weapon_straightSword.webp"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/item-slot.svg",
+        "ui/components/tab-marker.svg",
+        "ui/components/meter-track.svg"
+      ],
+      "mobileComposition": "Class picker is a row; figure uses contain; optional creation choices fold below it."
+    },
+    {
+      "id": "02a",
+      "name": "Opening sequence",
+      "sourceModules": [
+        "src/ui/screens/prologue.js"
+      ],
+      "desktopArtwork": [
+        "canonical/assets/prologue/road-desktop.webp"
+      ],
+      "mobileArtwork": [
+        "canonical/assets/prologue/road-mobile.webp"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/charge-empty.svg",
+        "ui/components/charge-filled.svg"
+      ],
+      "mobileComposition": "Use the existing authored mobile narrative artwork and DOM captions."
+    },
+    {
+      "id": "02b",
+      "name": "Events and dialogue",
+      "sourceModules": [
+        "src/ui/screens/event.js",
+        "src/ui/screens/dialogue.js"
+      ],
+      "desktopArtwork": [
+        "scenes/grave-dialogue-master.png",
+        "illustrations/roadkeeper-portrait.png"
+      ],
+      "mobileArtwork": [
+        "scenes/grave-dialogue-master.png",
+        "illustrations/roadkeeper-portrait.png"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/tooltip.svg",
+        "ui/components/button-selected.svg"
+      ],
+      "mobileComposition": "Square/4:3 story header; compact dialogue portrait; consequences and choices below art."
+    },
+    {
+      "id": "03a",
+      "name": "World Journey",
+      "sourceModules": [
+        "src/ui/screens/worldAtlas.js"
+      ],
+      "desktopArtwork": [
+        "canonical/assets/environments/the-fractured-realm-world.webp"
+      ],
+      "mobileArtwork": [
+        "canonical/assets/environments/fractured-realm-square.webp"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/map-node-selected.svg",
+        "ui/components/map-node-current.svg",
+        "ui/components/hud-strip.svg"
+      ],
+      "mobileComposition": "Keep authored map coordinates/zoom; selected destination in one bottom tray."
+    },
+    {
+      "id": "03b",
+      "name": "Classic Climb map",
+      "sourceModules": [
+        "src/ui/screens/map.js"
+      ],
+      "desktopArtwork": [
+        "canonical/assets/environments/cinder-reach-map.webp"
+      ],
+      "mobileArtwork": [
+        "canonical/assets/environments/cinder-reach-map.webp"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/map-node-reachable.svg",
+        "ui/components/map-node-visited.svg",
+        "ui/components/map-node-unknown.svg",
+        "ui/components/map-node-locked.svg"
+      ],
+      "mobileComposition": "Routes and labels remain live layers over canonical art; pan rather than squish graph."
+    },
+    {
+      "id": "04a",
+      "name": "Crownfall services and quests",
+      "sourceModules": [
+        "src/ui/screens/worldAtlas.js",
+        "src/ui/screens/questBoard.js"
+      ],
+      "desktopArtwork": [
+        "canonical/assets/environments/crownfall-local.webp",
+        "canonical/assets/environments/crownfall-landmark.webp"
+      ],
+      "mobileArtwork": [
+        "canonical/assets/environments/crownfall-local.webp",
+        "canonical/assets/environments/crownfall-landmark.webp"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/map-node-current.svg",
+        "ui/components/item-slot.svg",
+        "ui/components/tab-marker.svg"
+      ],
+      "mobileComposition": "Landmark map upper area and one selected service/quest tray below."
+    },
+    {
+      "id": "04b",
+      "name": "Legacy dungeon exploration",
+      "sourceModules": [
+        "src/ui/screens/legacyDungeon.js"
+      ],
+      "desktopArtwork": [
+        "canonical/assets/environments/legacy/MAP-03-furnace-chapel.webp"
+      ],
+      "mobileArtwork": [
+        "canonical/assets/environments/legacy/MAP-03-furnace-chapel.webp"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/map-node-current.svg",
+        "ui/components/map-node-unknown.svg",
+        "ui/components/map-node-visited.svg"
+      ],
+      "mobileComposition": "Preserve canonical room graph and unknown states; details become one lower tray."
+    },
+    {
+      "id": "05a",
+      "name": "Tactical combat",
+      "sourceModules": [
+        "src/ui/screens/combat.js"
+      ],
+      "desktopArtwork": [
+        "canonical/assets/environments/cinder-reach-combat.webp",
+        "canonical/assets/painted-outfits/reaver/menu.webp",
+        "canonical/assets/enemy-poses/wanderingSoldier_idle.webp",
+        "canonical/assets/enemy-poses/blightHound_idle.webp",
+        "illustrations/card-attack-illustration.png",
+        "illustrations/card-guard-illustration.png",
+        "illustrations/card-ember-illustration.png"
+      ],
+      "mobileArtwork": [
+        "canonical/assets/environments/cinder-reach-combat.webp",
+        "canonical/assets/painted-outfits/reaver/menu.webp",
+        "canonical/assets/enemy-poses/wanderingSoldier_idle.webp",
+        "canonical/assets/enemy-poses/blightHound_idle.webp",
+        "illustrations/card-attack-illustration.png",
+        "illustrations/card-guard-illustration.png",
+        "illustrations/card-ember-illustration.png"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/hud-strip.svg",
+        "ui/components/card-folio.svg",
+        "ui/components/cost-medallion.svg",
+        "ui/components/target-brackets.svg",
+        "ui/components/meter-track.svg"
+      ],
+      "mobileComposition": "Canonical combat image is an atlas: use scene boxes/floorStart from existing resolver, not entire atlas. Keep fighters clear above focused hand."
+    },
+    {
+      "id": "05b",
+      "name": "Boss and status inspection",
+      "sourceModules": [
+        "src/ui/screens/combat.js"
+      ],
+      "desktopArtwork": [
+        "canonical/assets/environments/legacy/FC-ENV-01-background.webp",
+        "canonical/assets/environments/legacy/FC-ENV-01-floor.webp",
+        "canonical/assets/enemy-poses/charredColossus_idle.webp",
+        "illustrations/card-attack-illustration.png",
+        "illustrations/card-guard-illustration.png",
+        "illustrations/card-ember-illustration.png"
+      ],
+      "mobileArtwork": [
+        "canonical/assets/environments/legacy/FC-ENV-01-background.webp",
+        "canonical/assets/environments/legacy/FC-ENV-01-floor.webp",
+        "canonical/assets/enemy-poses/charredColossus_idle.webp",
+        "illustrations/card-attack-illustration.png",
+        "illustrations/card-guard-illustration.png",
+        "illustrations/card-ember-illustration.png"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/hud-strip.svg",
+        "ui/components/tooltip.svg",
+        "ui/components/meter-fill-health.svg",
+        "ui/components/meter-fill-poise.svg",
+        "ui/components/card-folio-selected.svg"
+      ],
+      "mobileComposition": "Selected status inspection is a fold; keep boss silhouette and action intent readable."
+    },
+    {
+      "id": "06a",
+      "name": "Character and equipment",
+      "sourceModules": [
+        "src/ui/screens/equipment.js"
+      ],
+      "desktopArtwork": [
+        "scenes/spire-vista-desktop.png",
+        "canonical/assets/painted-outfits/reaver/menu.webp",
+        "canonical/assets/equipment/weapon_straightSword.webp",
+        "canonical/assets/equipment/weapon_roundShield.webp"
+      ],
+      "mobileArtwork": [
+        "scenes/spire-vista-mobile.png",
+        "canonical/assets/painted-outfits/reaver/menu.webp",
+        "canonical/assets/equipment/weapon_straightSword.webp",
+        "canonical/assets/equipment/weapon_roundShield.webp"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/item-slot.svg",
+        "ui/components/item-slot-selected.svg",
+        "ui/components/meter-track.svg"
+      ],
+      "mobileComposition": "One figure, equipment rows, and Equipment/Stats tabs. Use actual outfit/pose lookup."
+    },
+    {
+      "id": "06b",
+      "name": "Inventory and comparison",
+      "sourceModules": [
+        "src/ui/screens/equipment.js"
+      ],
+      "desktopArtwork": [
+        "scenes/armoury-still-life-master.png",
+        "canonical/assets/equipment/weapon_straightSword.webp",
+        "canonical/assets/equipment/weapon_roundShield.webp",
+        "canonical/assets/equipment/weapon_warhammer.webp"
+      ],
+      "mobileArtwork": [
+        "scenes/armoury-still-life-master.png",
+        "canonical/assets/equipment/weapon_straightSword.webp",
+        "canonical/assets/equipment/weapon_roundShield.webp",
+        "canonical/assets/equipment/weapon_warhammer.webp"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/item-slot.svg",
+        "ui/components/item-slot-selected.svg",
+        "ui/components/tab-marker.svg"
+      ],
+      "mobileComposition": "Two-column grid and one receipt; never crop full weapon silhouette."
+    },
+    {
+      "id": "07a",
+      "name": "Deck and card inspection",
+      "sourceModules": [
+        "src/ui/screens/deckEditor.js"
+      ],
+      "desktopArtwork": [
+        "scenes/armoury-still-life-master.png",
+        "illustrations/card-attack-illustration.png",
+        "illustrations/card-guard-illustration.png",
+        "illustrations/card-ember-illustration.png"
+      ],
+      "mobileArtwork": [
+        "scenes/armoury-still-life-master.png",
+        "illustrations/card-attack-illustration.png",
+        "illustrations/card-guard-illustration.png",
+        "illustrations/card-ember-illustration.png"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/card-folio.svg",
+        "ui/components/card-folio-selected.svg",
+        "ui/components/cost-medallion.svg",
+        "ui/components/card-parchment-label.svg"
+      ],
+      "mobileComposition": "Two-column grid or selected-card inspector; costs/names/effects remain DOM from canonical card model."
+    },
+    {
+      "id": "07b",
+      "name": "Relics and flasks",
+      "sourceModules": [
+        "src/ui/screens/equipment.js"
+      ],
+      "desktopArtwork": [
+        "scenes/armoury-still-life-master.png",
+        "canonical/assets/relics/crackedLantern.webp",
+        "canonical/assets/relics/forsakenMedallion.webp",
+        "canonical/assets/ui/flasks/flask-crimson.webp",
+        "canonical/assets/ui/flasks/flask-azure.webp"
+      ],
+      "mobileArtwork": [
+        "scenes/armoury-still-life-master.png",
+        "canonical/assets/relics/crackedLantern.webp",
+        "canonical/assets/relics/forsakenMedallion.webp",
+        "canonical/assets/ui/flasks/flask-crimson.webp",
+        "canonical/assets/ui/flasks/flask-azure.webp"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/item-slot.svg",
+        "ui/components/charge-empty.svg",
+        "ui/components/charge-filled.svg"
+      ],
+      "mobileComposition": "One selected relic and flask rows; charges come from actual flask state."
+    },
+    {
+      "id": "08a",
+      "name": "Merchant",
+      "sourceModules": [
+        "src/ui/screens/shop.js"
+      ],
+      "desktopArtwork": [
+        "scenes/merchant-desktop.png",
+        "illustrations/merchant-portrait.png",
+        "canonical/assets/relics/crackedLantern.webp"
+      ],
+      "mobileArtwork": [
+        "scenes/merchant-mobile.png",
+        "illustrations/merchant-portrait.png",
+        "canonical/assets/relics/crackedLantern.webp"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/item-slot.svg",
+        "ui/components/button-disabled.svg"
+      ],
+      "mobileComposition": "Portrait upper hero and one product tray; affordability and stock stay live."
+    },
+    {
+      "id": "08b",
+      "name": "Smith services",
+      "sourceModules": [
+        "src/ui/screens/blacksmith.js",
+        "src/ui/screens/smithServices.js"
+      ],
+      "desktopArtwork": [
+        "scenes/forge-desktop.png",
+        "illustrations/smith-portrait.png",
+        "canonical/assets/equipment/weapon_straightSword.webp",
+        "illustrations/card-attack-illustration.png",
+        "illustrations/card-guard-illustration.png",
+        "illustrations/card-ember-illustration.png"
+      ],
+      "mobileArtwork": [
+        "scenes/forge-mobile.png",
+        "illustrations/smith-portrait.png",
+        "canonical/assets/equipment/weapon_straightSword.webp",
+        "illustrations/card-attack-illustration.png",
+        "illustrations/card-guard-illustration.png",
+        "illustrations/card-ember-illustration.png"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/card-folio.svg",
+        "ui/components/item-slot.svg",
+        "ui/components/button-disabled.svg"
+      ],
+      "mobileComposition": "Portrait upper scene; one selected operation with actual compatibility/preview receipt."
+    },
+    {
+      "id": "09a",
+      "name": "Rest site",
+      "sourceModules": [
+        "src/ui/screens/rest.js"
+      ],
+      "desktopArtwork": [
+        "scenes/chapel-rest-master.png",
+        "canonical/assets/painted-outfits/reaver/menu.webp",
+        "illustrations/card-attack-illustration.png",
+        "illustrations/card-guard-illustration.png",
+        "illustrations/card-ember-illustration.png"
+      ],
+      "mobileArtwork": [
+        "scenes/chapel-rest-master.png",
+        "canonical/assets/painted-outfits/reaver/menu.webp",
+        "illustrations/card-attack-illustration.png",
+        "illustrations/card-guard-illustration.png",
+        "illustrations/card-ember-illustration.png"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/card-folio-selected.svg",
+        "ui/components/meter-track.svg"
+      ],
+      "mobileComposition": "Square scene stays above recovery/choice rows; actual recovery values from location rules."
+    },
+    {
+      "id": "09b",
+      "name": "Post-combat rewards",
+      "sourceModules": [
+        "src/ui/screens/reward.js"
+      ],
+      "desktopArtwork": [
+        "scenes/spire-vista-desktop.png",
+        "illustrations/card-attack-illustration.png",
+        "illustrations/card-guard-illustration.png",
+        "illustrations/card-ember-illustration.png",
+        "canonical/assets/relics/crackedLantern.webp"
+      ],
+      "mobileArtwork": [
+        "scenes/spire-vista-mobile.png",
+        "illustrations/card-attack-illustration.png",
+        "illustrations/card-guard-illustration.png",
+        "illustrations/card-ember-illustration.png",
+        "canonical/assets/relics/crackedLantern.webp"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/card-folio.svg",
+        "ui/components/selection-tick.svg",
+        "ui/components/charge-filled.svg"
+      ],
+      "mobileComposition": "One card carousel plus folded reward rows and live claimed-state markers."
+    },
+    {
+      "id": "10a",
+      "name": "Class progression",
+      "sourceModules": [
+        "src/ui/screens/equipment.js",
+        "src/ui/screens/rest.js"
+      ],
+      "desktopArtwork": [
+        "scenes/armoury-still-life-master.png",
+        "canonical/assets/painted-outfits/reaver/menu.webp"
+      ],
+      "mobileArtwork": [
+        "scenes/armoury-still-life-master.png",
+        "canonical/assets/painted-outfits/reaver/menu.webp"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/map-node-locked.svg",
+        "ui/components/map-node-selected.svg",
+        "ui/components/meter-track.svg"
+      ],
+      "mobileComposition": "One branch/training family at a time and prerequisite details; retain actual progression model."
+    },
+    {
+      "id": "10b",
+      "name": "Compendium",
+      "sourceModules": [
+        "src/ui/screens/compendium.js"
+      ],
+      "desktopArtwork": [
+        "scenes/armoury-still-life-master.png",
+        "canonical/assets/equipment/weapon_straightSword.webp",
+        "canonical/assets/equipment/weapon_roundShield.webp",
+        "canonical/assets/equipment/weapon_greatsword.webp"
+      ],
+      "mobileArtwork": [
+        "scenes/armoury-still-life-master.png",
+        "canonical/assets/equipment/weapon_straightSword.webp",
+        "canonical/assets/equipment/weapon_roundShield.webp",
+        "canonical/assets/equipment/weapon_greatsword.webp"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/item-slot-selected.svg",
+        "ui/components/card-parchment-label.svg"
+      ],
+      "mobileComposition": "Stable two-column gallery; create undiscovered silhouettes via CSS mask and hide unknown details."
+    },
+    {
+      "id": "11a",
+      "name": "Forsaken Together co-op",
+      "sourceModules": [
+        "src/ui/screens/lobby.js",
+        "src/ui/screens/coop.js"
+      ],
+      "desktopArtwork": [
+        "scenes/chapel-rest-master.png",
+        "canonical/assets/painted-outfits/reaver/portrait.webp",
+        "canonical/assets/painted-outfits/rogue/portrait.webp",
+        "canonical/assets/painted-outfits/starseer/portrait.webp",
+        "canonical/assets/painted-outfits/herald/portrait.webp"
+      ],
+      "mobileArtwork": [
+        "scenes/chapel-rest-master.png",
+        "canonical/assets/painted-outfits/reaver/portrait.webp",
+        "canonical/assets/painted-outfits/rogue/portrait.webp",
+        "canonical/assets/painted-outfits/starseer/portrait.webp",
+        "canonical/assets/painted-outfits/herald/portrait.webp"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/item-slot.svg",
+        "ui/components/selection-tick.svg",
+        "ui/components/charge-empty.svg"
+      ],
+      "mobileComposition": "Party rows with DOM connection/readiness labels; route vote remains a distinct in-run flow."
+    },
+    {
+      "id": "11b",
+      "name": "Run results and history",
+      "sourceModules": [
+        "src/ui/screens/gameover.js",
+        "src/ui/screens/history.js"
+      ],
+      "desktopArtwork": [
+        "scenes/spire-vista-desktop.png",
+        "canonical/assets/painted-outfits/reaver/menu.webp"
+      ],
+      "mobileArtwork": [
+        "scenes/spire-vista-mobile.png",
+        "canonical/assets/painted-outfits/reaver/menu.webp"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/item-slot-selected.svg",
+        "ui/components/map-node-visited.svg",
+        "ui/components/divider-plain.svg"
+      ],
+      "mobileComposition": "Atmospheric upper illustration and concise expandable run receipt below."
+    },
+    {
+      "id": "12a",
+      "name": "Settings, controls and profile",
+      "sourceModules": [
+        "src/ui/screens/settings.js",
+        "src/ui/screens/controls.js",
+        "src/ui/screens/profileArchive.js"
+      ],
+      "desktopArtwork": [
+        "scenes/spire-vista-desktop.png"
+      ],
+      "mobileArtwork": [
+        "scenes/spire-vista-mobile.png"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/toggle-on.svg",
+        "ui/components/toggle-off.svg",
+        "ui/components/slider-track.svg",
+        "ui/components/slider-thumb.svg",
+        "ui/components/tab-marker.svg"
+      ],
+      "mobileComposition": "Readable searchable categories; one section open and touch targets independent of icon size."
+    },
+    {
+      "id": "12b",
+      "name": "Custom run and draft",
+      "sourceModules": [
+        "src/ui/screens/customRun.js",
+        "src/ui/screens/draft.js"
+      ],
+      "desktopArtwork": [
+        "scenes/spire-vista-desktop.png",
+        "illustrations/card-attack-illustration.png",
+        "illustrations/card-guard-illustration.png",
+        "illustrations/card-ember-illustration.png"
+      ],
+      "mobileArtwork": [
+        "scenes/spire-vista-mobile.png",
+        "illustrations/card-attack-illustration.png",
+        "illustrations/card-guard-illustration.png",
+        "illustrations/card-ember-illustration.png"
+      ],
+      "sharedAssets": [
+        "ui/components/panel-frame.svg",
+        "ui/components/panel-backed.svg",
+        "ui/components/button-neutral.svg",
+        "ui/components/button-primary-ready.svg",
+        "ui/components/button-disabled.svg",
+        "ui/components/focus-outline.svg",
+        "ui/components/divider-plain.svg",
+        "materials/soot-leather-material.png",
+        "ui/components/card-folio-selected.svg",
+        "ui/components/cost-medallion.svg"
+      ],
+      "mobileComposition": "Configuration folds around current draft pick; one enlarged card plus compact alternatives."
+    }
+  ],
+  "sharedLayerOrder": [
+    "world illustration",
+    "optional canonical figure/object",
+    "soot veil",
+    "leather surface material",
+    "transparent vector frame",
+    "live DOM text/values",
+    "focus/selection overlays"
+  ],
+  "scope": "All 24 board feature views, each mapped for desktop and mobile. Shared components are reusable; assets do not implement game behavior."
+}
