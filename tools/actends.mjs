@@ -92,11 +92,11 @@
 // the climb.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { createConnection } from 'node:net';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -178,7 +178,7 @@ if (SHOTS) mkdirSync(resolve(SHOTS), { recursive: true });
 
 const served = useDist ? null : await serve({ root: ROOT, port: 8177, open: false });
 const pageBase = useDist
-  ? pathToFileURL(resolve(ROOT, 'dist', 'AshenSpire.html')).href
+  ? await buildPageUrl(resolve(ROOT, 'dist', 'AshenSpire.html'))
   : `http://localhost:${served.port}/index.html`;
 
 // The page-side probe. It runs in the document, so it must not import anything.

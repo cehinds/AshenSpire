@@ -72,7 +72,7 @@
 //
 // Usage
 //   node tools/holdbeat.mjs                  source tree via tools/serve.mjs
-//   node tools/holdbeat.mjs --dist           dist/AshenSpire.html over file://
+//   node tools/holdbeat.mjs --dist           dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
 //   node tools/holdbeat.mjs --mutate         must catch a suspended context
 //   CHROME=/path/to/chrome node tools/holdbeat.mjs
 //
@@ -93,11 +93,11 @@
 // holds — with no hold there is no beat and this tool has no subject.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 import { printArtifactProvenance } from './artifact-provenance.mjs';
 import { recipeLoudness } from './sfx-loudness.mjs';
@@ -202,7 +202,7 @@ async function main() {
   if (!MARKS.length) console.log('  note: balance.ui.holdBeat.at is empty — the ticks are off by data; only the arrival is expected.');
 
   let base; let stop = () => {};
-  if (useDist) base = pathToFileURL(resolve(ROOT, 'dist/AshenSpire.html')).href;
+  if (useDist) base = await buildPageUrl(resolve(ROOT, 'dist/AshenSpire.html'));
   else { const s = await serve({ root: ROOT, port: Number(argOf('--port') || 8291), open: false }); base = `http://127.0.0.1:${s.port}/index.html`; stop = () => s.server.close(); }
 
   // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins

@@ -44,6 +44,11 @@ export const STREAM_NAMES = Object.freeze([
   // existing seed's shelves are byte-identical. A save written before the
   // stream existed starts it at 0.
   'shopOffers',
+  // The legendary-sigil drop (SPEC §15.4): appended last so no stream above
+  // moves. A chance of 0 (every pool's shipped value) draws nothing here, so
+  // every existing seed rolls exactly what it rolled before. A save written
+  // before the stream existed starts it at 0.
+  'sigils',
 ]);
 
 const MULBERRY_INC = 0x6d2b79f5;

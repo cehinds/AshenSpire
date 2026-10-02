@@ -8,9 +8,99 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The opening is restaged",
     "detail": "The first scene shifts its view slightly right. The Burning's camera now rises slowly up the burning towers. The last two scenes pull the camera back, and the final step eases in. The caption band holds one fixed height on every scene, slightly lower than before, and the words take one size across the whole opening: the largest at which the longest line still fits your screen, so nothing spills or needs scrolling. On a phone held sideways the words stop shrinking before they become too small to read, and the longest caption may scroll there.",
-    "build": "0.7.1.737",
+    "build": "0.7.1.747",
     "pullRequest": 1444,
     "url": "https://github.com/cehinds/AshenSpire/pull/1444"
+  },
+  {
+    "id": "pr-1456",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Play the hosted game offline, and download it whole",
+    "detail": "On the build site, newer builds now play as the web edition, loading their art from one shared store, and each build's Download saves the light-art single file, one self-contained HTML that plays by double-click. In the game, Download & saves → Make available offline keeps the build and its art in your browser, so the same address opens without internet (the map uses simpler artwork and the music is synthesized offline); Remove this build's offline copy undoes it.",
+    "build": "0.7.1.745",
+    "pullRequest": 1456,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1456"
+  },
+  {
+    "id": "pr-1455",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Legendary sigils: attune one in the Armoury and it works in every fight",
+    "detail": "Three legendary sigils join the game: the Sigil of the Last Vigil raises a guard when you start a fight wounded, the Pyre Sigil raises a guard whenever a card is exhausted, and the Gravelight Sigil heals you when a foe falls while you are wounded. A new Sigils panel in the Armoury's Inventory view lets you attune and unattune them out of a fight, one at a time by default; an attuned sigil needs no slot and no weapon, and a refusal is shown in the panel. No shop sells one. A won fight, a boss before the last, or a treasure room can drop one you do not own, but every drop chance starts at 0, so none drops until you raise it in Settings. A treasure room's spoils now survive a reload before you take them. Older saves load with nothing attuned.",
+    "build": "0.7.1.744",
+    "pullRequest": 1455,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1455"
+  },
+  {
+    "id": "pr-1452",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Art quality: Auto, Light or High",
+    "detail": "In the web edition, Settings → Display → Art quality now offers Auto, Light, High and Local high-res. Auto loads lighter art on a narrow or phone-sized screen, with Data Saver on or on a device with little memory, and the best art the game carries otherwise; Light and High pick one, and the change takes effect at once and is remembered on this device. A single-file copy carries its art inside it, so there Light and High are greyed out and the setting says why.",
+    "build": "0.7.1.742",
+    "pullRequest": 1452,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1452"
+  },
+  {
+    "id": "pr-1453",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: test tools open the art-pack build the way it plays",
+    "detail": "Nothing you play changes. The browser tools that check a built game now ask one helper for its address: a single self-contained file still opens straight from disk, and a build that loads its art from packs is served to them from its own folder on this computer, with the same debug settings the file has.",
+    "build": "0.7.1.741",
+    "pullRequest": 1453,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1453"
+  },
+  {
+    "id": "pr-1439",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the rules for legendary sigils are written down",
+    "detail": "This is a docs-only change, and nothing you play changes yet. The design document now says how a legendary sigil works. You attune it in the Armoury, out of a fight, up to a set number at a time, and it works in every fight while attuned, with no slot or weapon needed. Only a fight or a treasure room can drop one, never a shop, and none drops until you raise its chance in Settings. A save from before keeps its sigils and starts with none attuned.",
+    "build": "0.7.1.740",
+    "pullRequest": 1439,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1439"
+  },
+  {
+    "id": "pr-1446",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the browser checks wait longer for a slow browser to start",
+    "detail": "Nothing you play changes. The automated checks that open the game in a real browser sometimes failed because the browser took longer than 12 seconds to start on the build servers. They now wait up to 30 seconds for it, and this limit can be changed without editing any check. A browser that crashes on start still fails the check at once.",
+    "build": "0.7.1.739",
+    "pullRequest": 1446,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1446"
+  },
+  {
+    "id": "pr-1451",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition's fonts and backdrops follow its art packs",
+    "detail": "Behind the scenes: the served web edition now loads its lore fonts and backdrop pictures through the same checked list as the rest of its art. When the high-resolution list is missing it now shows the light backdrops, the same as the rest of its art, instead of asking for high-resolution pictures the list no longer vouches for; when no list loads it keeps its plain background and system fonts. The door masks stay inside the game file. Nothing you play changes.",
+    "build": "0.7.1.738",
+    "pullRequest": 1451,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1451"
+  },
+  {
+    "id": "pr-1441",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the action-bar layout check runs again",
+    "detail": "Nothing you play changes. When co-op got the solo action bar, the bar's markup moved into a shared component, and the tool that checks the bar never lands on your cards, the top bar or the battlefield was still looking for it in the old place. It stopped before it measured anything. It now reads the shared component and checks all 44 cells again.",
+    "build": "0.7.1.737",
+    "pullRequest": 1441,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1441"
+  },
+  {
+    "id": "pr-1442",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The Pages site no longer copies the art review folder",
+    "detail": "Behind the scenes: the project site stops carrying the art review pages and old build-file copies from main, the stable links get their map tiles beside every copy, and link previews use a picture the site itself serves; nothing you play changes.",
+    "build": "0.7.1.736",
+    "pullRequest": 1442,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1442"
   },
   {
     "id": "pr-1443",

@@ -415,6 +415,38 @@ jobs:
           node tools/bundle.mjs --external-art $WEB_TIER --out build/web
           node tools/verdict.mjs -- node tools/external-play.mjs --dir build/web
 
+      # THE PAGES SERVICE WORKER (docs/EXTERNAL-ASSETS-PLAN.md step 6b). The web
+      # edition above, published into a local copy of the Pages shape (the shared
+      # store, asset-base.json, /AshenSpire/sw.js) and served under /AshenSpire/:
+      # "Make available offline" keeps it, the worker's scope is /AshenSpire/,
+      # online the network beats the kept copy, offline the page boots from the
+      # cache and a music object answers a Range with a 206, and the kill-switch
+      # unregisters the worker. About a minute.
+      - name: The hosted web edition keeps offline through the Pages service worker, and its kill-switch unregisters it
+        run: node tools/verdict.mjs -- node tools/pages-offline.mjs --web build/web
+
+      # THE TIER FALLBACK, CSS INCLUDED (docs/EXTERNAL-ASSETS-PLAN.md §3.5, step
+      # 3b). A high-default build whose high index is gone must load light: its
+      # sprites, and its ASSET_CSS backdrops and fonts, from light and common
+      # objects, never a high one. On test this job builds the light tier, so the
+      # high-default edition is built here (about 12 s); on release and main the
+      # build above already is one. The copy is hard links, then the pinned high
+      # index (and its .js twin) is removed — the 404 is the plant, which
+      # external-play --expect-tier names and filters.
+      - name: A high-default build with its high index removed falls back to light, CSS included
+        run: |
+          if [ "$(echo $WEB_TIER)" = "--light" ]; then
+            node tools/bundle.mjs --external-art --out build/web-high
+            SRC=build/web-high
+          else
+            SRC=build/web
+          fi
+          rm -rf build/web-nohigh
+          cp -al "$SRC" build/web-nohigh
+          ls build/web-nohigh/packs/high-*.json >/dev/null
+          rm build/web-nohigh/packs/high-*.json build/web-nohigh/packs/high-*.js
+          node tools/verdict.mjs -- node tools/external-play.mjs --dir build/web-nohigh --expect-tier light
+
       - name: Hand-side placement reaches the correct rendered side
         run: node tools/verdict.mjs -- node tools/hand-side-probe.mjs
 

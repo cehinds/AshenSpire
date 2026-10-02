@@ -85,6 +85,8 @@ export function runCombatPlayer(run) {
     companionIds: (Array.isArray(run.companions) ? run.companions : []).map((row) => row.id),
     // SPEC §14.4: the sigils set into slots, mounted while their armament is worn.
     sigilSlots: run.sigilSlots && typeof run.sigilSlots === 'object' ? run.sigilSlots : {},
+    // SPEC §15.4: the attuned legendaries, mounted at combat start.
+    attunedSigils: Array.isArray(run.attunedSigils) ? run.attunedSigils : [],
   };
 }
 

@@ -19,9 +19,9 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { inflateSync } from 'node:zlib';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 import { balance } from '../src/content/balance.js';
 
@@ -376,7 +376,7 @@ async function main() {
   }
   let server = null;
   let base;
-  if (artifact) base = pathToFileURL(artifact).href;
+  if (artifact) base = await buildPageUrl(artifact);
   else { const served = await serve({ root: ROOT, port: 8282, open: false }); server = served.server; base = `http://localhost:${served.port}/`; }
   let dropBrowser = async () => {};
   let cdp;
