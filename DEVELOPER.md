@@ -1029,8 +1029,17 @@ runs/class on 2026-09-24, under the live rules (plan A1, simulator parity): Reav
 Frostbite is not on this list: it is CUT (SPEC §4.4, which carries the
 falsifier), not deferred.
 
-1. **Warrior's Vow** enters Gorefire instead of "a stance of your choice" —
-   a generic choose-one UI primitive is an M2/M3 feature.
+None open.
+
+Resolved: **Warrior's Vow** enters a stance of your choice, solo and in co-op.
+Its `enterStance` effect carries `choose: 'classStance'` instead of a fixed
+`stance`; `cardChoicePlan` (engine/combat.js, and engine/coopCombat.js for a
+seat) offers every stance row whose `class` is the player's class (the card's
+own class when the player's owns none, `model/cardChoices.js`), the play intent
+answers it with `choice`, and a play without a legal choice is refused before
+anything is spent. Solo and co-op screens ask through one dialog
+(`ui/components/cardChoiceModal.js`); bots take the first option
+(`tests/warriors-vow.test.mjs`).
 
 Resolved: **Goreblood** no longer freezes Bleed as well as Poise. Bleed
 thresholds are constant by design (#61), so `meterMaxGrowthDisabled` binds

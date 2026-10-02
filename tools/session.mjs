@@ -665,7 +665,7 @@ export function createSession({ registries, seedString, endless = false, restore
         damageResistanceBySchool: e.damageResistanceBySchool ? { ...e.damageResistanceBySchool } : undefined,
       })),
       players: [...c.players.values()].map((P) => ({
-        id: P.id, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
+        id: P.id, classId: P.entity.classId, hp: P.entity.hp, maxHp: P.entity.maxHp, block: P.entity.block,
         mana: P.entity.mana, maxMana: P.entity.maxMana,
         stamina: P.entity.stamina, maxStamina: P.entity.maxStamina,
         attributeMode: P.attributeMode, attributes: { ...P.attributes },
@@ -695,9 +695,9 @@ export function createSession({ registries, seedString, endless = false, restore
   }
 
   // Route a member's combat intents to the live shared fight.
-  function combatPlay(memberId, cardInstanceId, targetId) {
+  function combatPlay(memberId, cardInstanceId, targetId, choice) {
     if (!live) return { ok: false, error: 'no combat' };
-    try { playCard(live.combat, memberId, cardInstanceId, targetId); }
+    try { playCard(live.combat, memberId, cardInstanceId, targetId, choice); }
     catch (e) { return { ok: false, error: e.message }; }
     return settleCombat();
   }

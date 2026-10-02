@@ -64,8 +64,9 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
+import { cardChoice } from '../src/model/cardChoices.js';
 import { createRng } from '../src/engine/rng.js';
-import { createCombat, dispatch, previewCard, previewIntent } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCard, previewIntent, cardChoicePlan } from '../src/engine/combat.js';
 import { emitEvent } from '../src/engine/triggers.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { affordableCards, refusalsFor } from './simbot.mjs';
@@ -156,7 +157,11 @@ const SIGNATURE = {
 const hasEff = (def, pred) => (def.effects || []).some(pred);
 const appliesStatus = (def, status) => hasEff(def, (e) => e.op === 'applyStatus' && e.status === status);
 const hasStaggerPayoff = (def) => hasEff(def, (e) => e.if && e.if.p === 'hasStatus' && e.if.status === 'staggered');
-const entersStance = (def, stanceId) => hasEff(def, (e) => e.op === 'enterStance' && (!stanceId || e.stance === stanceId));
+// A choose-a-stance card (Warrior's Vow, model/cardChoices.js) enters the
+// option the bot sends, which is the first offered (see the dispatch below),
+// so it counts as that stance's card, as the Vow did when it was Gorefire-only.
+const enteredStance = (def, e, classId) => (e.choose ? cardChoice(REG, def, classId)?.options[0]?.id : e.stance);
+const entersStance = (def, stanceId, classId) => hasEff(def, (e) => e.op === 'enterStance' && (!stanceId || enteredStance(def, e, classId) === stanceId));
 const givesBlock = (def) => hasEff(def, (e) => e.op === 'block' && (e.target === 'self' || e.target === 'owner'));
 const doesPoiseDamage = (def) => hasEff(def, (e) => e.op === 'poiseDamage');
 
@@ -168,8 +173,8 @@ function reaverkitPick(combat, affordable) {
   //    entry), Bulwark when hurting; any stance beats none.
   if (!combat.player.stanceId) {
     const pick = hp >= 0.5
-      ? (find((d) => entersStance(d, 'gorefire')) || find((d) => entersStance(d)))
-      : (find((d) => entersStance(d, 'bulwark')) || find((d) => entersStance(d)));
+      ? (find((d) => entersStance(d, 'gorefire', combat.player.classId)) || find((d) => entersStance(d)))
+      : (find((d) => entersStance(d, 'bulwark', combat.player.classId)) || find((d) => entersStance(d)));
     if (pick) return pick;
   }
   // 2. An enemy is staggered: spend the window on a stagger-payoff card.
@@ -598,8 +603,8 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
     try {
       if (card && chargedAtDecision) {
         decisionTrace = traceCardDispatch(combat, selectedDef, card.instanceId,
-          () => dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id }));
-      } else if (card) dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id });
+          () => dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id }));
+      } else if (card) dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id });
       else dispatch(combat, { type: 'endTurn' });
     } catch (e) {
       // Refused: set it aside for the turn and choose again (runsim.mjs). The
