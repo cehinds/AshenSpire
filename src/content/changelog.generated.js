@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Turning on \"Use flasks outside combat\" now works straight away on the map",
     "detail": "Turning the setting on from the map's menu used to leave the Potions control refusing Drink until you left the map. Now the map updates as soon as you change it, and a drink taken there is saved. Behind the scenes, new browser checks open every flask menu (in combat, on the map and in the room rail) and confirm each one offers the same actions and does exactly what you pick.",
-    "build": "0.7.1.791",
+    "build": "0.7.1.792",
     "pullRequest": 1474,
     "url": "https://github.com/cehinds/AshenSpire/pull/1474"
+  },
+  {
+    "id": "pr-1471",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition shows its art loading on the start screen, and can retry",
+    "detail": "Behind the scenes, in the web edition only: the start screen now appears at once while the art loads, with one line saying how far it has got, and if the art cannot be loaded the title screen says so and offers Retry (also in Settings → Art quality), which loads it again without reloading the page; the downloaded single file is unchanged, and nothing you play changes.",
+    "build": "0.7.1.791",
+    "pullRequest": 1471,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1471"
   },
   {
     "id": "pr-1485",
