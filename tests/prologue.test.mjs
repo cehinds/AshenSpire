@@ -842,3 +842,16 @@ test('a fixed-height caption sets every scene at one size, the largest at which 
   // A floor in on-screen pixels: a frame too short for readable words scrolls.
   assert.match(screen, /const MIN_DIALOGUE_PX = 12;/);
 });
+
+test('the words sit centred in the fixed band, and a short landscape screen gives them the whole panel', () => {
+  assert.equal(PROLOGUE_DEFAULTS.presentation.textPosition, 'middle-center', 'the owner centres the words in the band');
+  const css = readFileSync(new URL('../styles/prologue.css', import.meta.url), 'utf8');
+  assert.match(css, /\.prologue-fixed-caption:is\(\.prologue-layout-caption,\.prologue-layout-letterbox\) \.prologue-caption\[data-position\^=middle\]\{align-content:center;align-content:safe center\}/, 'an overflowing band keeps its first line reachable');
+  // On a short landscape screen the caption layout is a side panel: no band height, no fit.
+  assert.match(css, /@media\(max-height:500px\) and \(orientation:landscape\)\{[^@]*\.prologue-fixed-caption\.prologue-layout-caption \.prologue-caption\{height:auto\}/);
+  const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
+  assert.match(screen, /stage\.layout === 'caption' && !\(shortLandscape\.matches && !root\.closest\('\.pse-phone'\)\)/, 'the editor phone preview keeps its fitted band');
+  assert.match(css, /\.pse-phone \.prologue-fixed-caption\.prologue-layout-caption \.prologue-caption\{height:calc\(var\(--prologue-caption-vh,18\) \* 1cqh\)\}/);
+  assert.match(screen, /if \(currentStage\?\.captionFixedHeight !== true\) return;/, 'a rotation into the panel lets go of the fitted size');
+  assert.match(screen, /if \(key !== seen\) \{ seen = key; refit\(\); \}/, 'an unmeasured panel is not re-staged on every callback');
+});
