@@ -120,8 +120,17 @@ turns each backdrop `url()` into `var(--as-css-<id>, none)` defined there, and
 inlines the two SVG masks as `data:`; the loader fills the slots from the index it
 used (light when high failed) and injects one `<style data-asset-css>`, and a
 failed load injects nothing (no backdrop, system faces; `tests/asset-css.test.mjs`).
+The map-detail tiles and the shipped score follow the common index too (step
+3c): `mapDetail.js` loads each tile as an image of
+`assetUrl('map-detail/<hash>/<edge>/<x>-<y>.webp')` and `audio.js` reads
+`music/manifest.json` and its tracks through `assetUrl()`, so the web edition
+carries no `map-detail/` or `music/` folder; a single file served over http(s)
+and the source tree still read those folders beside the page
+(`tests/music-tiles-index.test.mjs`).
 `node tools/verify-external.mjs` checks the tree on disk (D: every `ASSET_CSS`
-slot names an id the common index or every art tier lists) and
+slot names an id the common index or every art tier lists; E: the common index
+lists every tile and track, and no `map-detail/` or `music/` copy is beside the
+HTML) and
 `node tools/external-play.mjs` loads it in Chromium (`--expect-tier light` for a
 high-default build whose high index was removed). The single files are
 unchanged: their `ASSET_PACKS` stays null and the loader does nothing.
