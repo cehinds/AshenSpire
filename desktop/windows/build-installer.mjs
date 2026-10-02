@@ -6,7 +6,8 @@
 //     --web <dir>     use a web edition already built with
 //                     `node tools/bundle.mjs --external-art --out <dir>` (no --light:
 //                     it must pin the high pack); default: build one into <out>/web
-//     --out <dir>     where everything is written (default desktop/windows/build/)
+//     --out <dir>     where everything is written (default build/windows-installer/,
+//                     under the ignored build/ that tools/bundle.mjs requires for its output)
 //     --stage-only    stop after staging (no Electron package, no makensis)
 //
 // Needs Node 22+, npx (it runs @electron/packager) and NSIS 3 (`makensis` on PATH,
@@ -43,7 +44,7 @@ const ELECTRON = resolve(ROOT, 'desktop', 'electron');
 
 const args = process.argv.slice(2);
 const opt = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : null; };
-const OUT = resolve(opt('--out') || join(HERE, 'build'));
+const OUT = resolve(opt('--out') || join(ROOT, 'build', 'windows-installer'));
 const STAGE_ONLY = args.includes('--stage-only');
 
 function fail(msg) { console.error(`build-installer: ${msg}`); process.exit(1); }

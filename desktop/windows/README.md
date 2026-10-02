@@ -16,7 +16,7 @@ and optional desktop shortcuts and an entry under *Installed apps*.
   node desktop/windows/build-installer.mjs
   ```
 
-  Output: `desktop/windows/build/AshenSpire-Setup-<version>.exe` (ignored by git).
+  Output: `build/windows-installer/AshenSpire-Setup-<version>.exe` (ignored by git).
   `--web <dir>` reuses a web edition built with
   `node tools/bundle.mjs --external-art --out <dir>` (without `--light`);
   `--stage-only` stops before packaging.

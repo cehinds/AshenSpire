@@ -59,9 +59,13 @@ function Read-ObjectList([string]$File) {
 
 function Get-ObjectFile([string]$RelPath) { Join-Path $Game ($RelPath.Replace('/', [IO.Path]::DirectorySeparatorChar)) }
 
+# An object already on disk counts only when its bytes hash to the index's sha256:
+# a damaged file is fetched again rather than shown.
 function Test-Object($Entry) {
   $file = Get-ObjectFile $Entry.Path
-  return (Test-Path -LiteralPath $file -PathType Leaf) -and ((Get-Item -LiteralPath $file).Length -eq $Entry.Bytes)
+  if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { return $false }
+  if ((Get-Item -LiteralPath $file).Length -ne $Entry.Bytes) { return $false }
+  return (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant() -eq $Entry.Sha
 }
 
 function Save-Download([string]$From, [string]$To) {

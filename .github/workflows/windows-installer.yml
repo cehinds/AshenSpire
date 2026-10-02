@@ -57,7 +57,7 @@ jobs:
       - name: Install silently, with the high-resolution art
         shell: pwsh
         run: |
-          $setup = Get-ChildItem desktop/windows/build/AshenSpire-Setup-*.exe | Select-Object -First 1
+          $setup = Get-ChildItem build/windows-installer/AshenSpire-Setup-*.exe | Select-Object -First 1
           $dir = Join-Path $env:RUNNER_TEMP 'AshenSpire'
           $p = Start-Process $setup.FullName -ArgumentList '/S', "/D=$dir" -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "installer exited $($p.ExitCode)" }
@@ -107,7 +107,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows-installer-${{ github.sha }}
-          path: desktop/windows/build/AshenSpire-Setup-*.exe
+          path: build/windows-installer/AshenSpire-Setup-*.exe
           compression-level: 0
           retention-days: 30
           if-no-files-found: error
