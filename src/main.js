@@ -1,5 +1,5 @@
 import { applyArtQuality, onArtSourceChange, builtInArtArrived } from './ui/highResArt.js';
-import { whenBuiltInArtReady } from './ui/assetPacks.js';
+import { whenBuiltInArtReady, musicHold, bootLine } from './ui/assetPacks.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
@@ -450,12 +450,10 @@ installHoldBeat({ root: document, at: (UI.holdBeat || {}).at || [] });
 
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
 let lastMusicFolder;
-// The music folder is first applied once the first screen is drawn (step 3a,
-// the first screen waits for the built-in art). Applied before it, a manifest
-// that lands while the boot path walks through several screens (a ?shot= state
-// starts a run, then shows the title) starts and aborts a track per screen.
-let musicWaitsForFirstScreen = true;
-let musicFolderHeld = false;
+// The music folder: in a build that pins packs (the web edition) it is first
+// applied once the first screen is drawn, after the load has settled; a single
+// file and the source tree apply it at once, as before (assetPacks.js musicHold).
+const bootMusic = musicHold({ configureMusic: (opts) => audio.configureMusic(opts) });
 // UI size — the whole app is zoomed by `body.style.zoom` so every fixed-px
 // element (cards, sprites, map nodes, menus) scales together. "Auto" flexes the
 // zoom with the window against a design baseline so the board fills big screens
@@ -901,8 +899,7 @@ function applyDisplaySettings(settings) {
   const folder = settings.musicFolder || (served ? SHIPPED_MUSIC_FOLDER : '');
   if (folder !== lastMusicFolder) {
     lastMusicFolder = folder;
-    if (musicWaitsForFirstScreen) musicFolderHeld = true;
-    else audio.configureMusic({ folder });
+    bootMusic.apply(folder);
   }
   // THE WIREFRAME CHOICES (Settings → Advanced → Wireframes). One word per
   // choice on the root, read by the modal shell, the kit's category navigation,
@@ -3983,8 +3980,5 @@ if (shotState === 'combat-test') {
   showTitle();
 }
 }
-whenBuiltInArtReady(() => {
-  showFirstScreen();
-  musicWaitsForFirstScreen = false;
-  if (musicFolderHeld) audio.configureMusic({ folder: lastMusicFolder });
-}, { onSource: builtInArtArrived });
+const dropBootLine = bootLine(app);
+whenBuiltInArtReady(() => bootMusic.firstScreen(() => { dropBootLine(); showFirstScreen(); }), { onSource: builtInArtArrived });

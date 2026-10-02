@@ -19,7 +19,7 @@
 // synced (LOCAL_ONLY_KEYS in src/model/settingsSync.js): a folder on this machine means
 // nothing on another.
 
-import { setHighResSource, assetUrl, ASSET_MAP } from './assetmap.js';
+import { setHighResSource, assetUrl, ASSET_MAP, builtInSource } from './assetmap.js';
 
 export const ART_QUALITY_KEY = 'artQuality';
 export const ART_BUILT_IN = 'Built-in';
@@ -133,6 +133,9 @@ const urlToId = new Map();
 // all its ids and the one a source covers is taken: any of them is the same art.
 const inlineIds = new Map();
 let inlineIndexed = false;
+// The built-in pack (the web edition) does the same: byte-identical assets are
+// one object, so an object URL maps to all its ids (builtInArtArrived fills it).
+const builtInIds = new Map();
 function remember(map) {
   if (map) for (const [id, url] of map) urlToId.set(url, id);
 }
@@ -148,7 +151,8 @@ function idOfUrl(url) {
   // A URL from an earlier source names one alias; its group is recovered from
   // that id's inlined URI, so a folder that covers only another alias still wins.
   const id = url.startsWith('assets/') ? url : urlToId.get(url) || null;
-  const aliases = inlineIds.get(url) || (id && inlineIds.get(ASSET_MAP[id]));
+  const aliases = inlineIds.get(url) || builtInIds.get(url)
+    || (id && (inlineIds.get(ASSET_MAP[id]) || builtInIds.get(builtInSource()?.get(id))));
   if (!aliases || aliases.length < 2) return id || (aliases ? aliases[0] : null);
   return aliases.find((a) => current && current.has(a)) || id || aliases[0];
 }
@@ -244,6 +248,11 @@ export function watchMissingFiles(doc = globalThis.document) {
  */
 export function builtInArtArrived(map) {
   remember(map);
+  builtInIds.clear();
+  for (const [id, url] of map || []) {
+    const list = builtInIds.get(url);
+    if (list) list.push(id); else builtInIds.set(url, [id]);
+  }
   const moved = refreshMountedArt();
   announce(current ? current.size : 0);
   return moved;
@@ -370,5 +379,6 @@ export function resetHighResArt() {
   urlToId.clear();
   inlineIds.clear();
   inlineIndexed = false;
+  builtInIds.clear();
   setHighResSource(null);
 }

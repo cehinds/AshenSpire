@@ -49,6 +49,10 @@ export const ART_TIERS = Object.freeze(['high', 'light']);
  * that named the asset id (enemySprite, pieceArt). A Retry is step 5.
  */
 export const BOOT_WAIT_MS = 8000;
+/** The share of the deadline a tier that has a fallback (high) may use before it is abandoned for light. */
+export const HIGH_SHARE = 0.5;
+/** The share asset-base.json may use; past it the loader assumes `./`. */
+export const BASE_SHARE = 0.25;
 
 let status = { state: 'idle', tier: null, requested: null, ids: 0, failed: [] };
 let pending = null;
@@ -124,10 +128,18 @@ export async function loadIndex(pack, pin, { base = './', fetchImpl = globalThis
 
 /**
  * loadBuiltInPacks(opts) → the status above, once the built-in source is set
- * (or left unset). Loads the requested tier, falling back down tierOrder, plus
- * the common pack, and settles by `deadlineMs` at the latest (BOOT_WAIT_MS):
- * past it the fetches are aborted, the state is `failed`, and a response that
- * still arrives is dropped. Never throws.
+ * (or left unset). Never throws. It settles by `deadlineMs` (BOOT_WAIT_MS) at
+ * the latest, and no single stalled request can take the whole budget:
+ *   · the common index is fetched IN PARALLEL with the art tiers, and only
+ *     ever adds to a verified art map: a common index that fails, or has not
+ *     arrived by the deadline, is left out (in 3a nothing reads common through
+ *     assetUrl; fonts, music and tiles reach the page by their own routes);
+ *   · each art tier but the last gets a sub-budget (HIGH_SHARE of the
+ *     deadline), so a high index that hangs is aborted and light still has
+ *     time to load;
+ *   · past the deadline every fetch is aborted, an art map not yet verified
+ *     counts as failed (placeholders), and anything that arrives later is
+ *     dropped, never laid over a screen already drawn.
  */
 export async function loadBuiltInPacks({
   pin = ASSET_PACKS, inlineMap = ASSET_MAP, fetchImpl = globalThis.fetch,
@@ -145,61 +157,72 @@ export async function loadBuiltInPacks({
     return builtInArtStatus();
   }
   status = { state: 'loading', tier: null, requested, ids: 0, failed: [] };
-  const controller = typeof AbortController === 'function' ? new AbortController() : null;
-  let timer = null;
-  const deadline = new Promise((settle) => {
-    timer = setTimeout(() => settle({ timedOut: true }), deadlineMs);
-  });
-  const outcome = await Promise.race([
-    readPacks(pin, requested, { fetchImpl, subtle, signal: controller?.signal }),
-    deadline,
-  ]);
-  clearTimeout(timer);
-  if (outcome.timedOut) {
-    // Settled as failed, for good: whatever the aborted load would still
-    // return never reaches assetmap.js (readPacks sets nothing).
-    try { controller?.abort(); } catch { /* already settled */ }
-    status = { state: 'failed', tier: null, requested, ids: 0, failed: [`the pack index did not load within ${deadlineMs} ms`] };
-    setBuiltInSource(null);
-    return builtInArtStatus();
-  }
-  const { art, tier, common, failed } = outcome;
-  if (!art) {
-    // Placeholders: no art index, so no source. The common pack alone does not
-    // make a source either; its files (fonts, music, tiles) reach the page by
-    // their own routes until steps 3b and 3c.
-    status = { state: 'failed', tier: null, requested, ids: 0, failed };
-    setBuiltInSource(null);
-    return builtInArtStatus();
-  }
-  const map = new Map(common || []);
-  for (const [id, url] of art) map.set(id, url);
-  const ids = setBuiltInSource(map);
-  status = { state: 'loaded', tier, requested, ids, failed };
-  if (typeof onSource === 'function') try { onSource(map); } catch { /* a listener must not fail the load */ }
-  return builtInArtStatus();
-}
-
-/** The fetches and checks of one load; sets nothing. */
-async function readPacks(pin, requested, { fetchImpl, subtle, signal }) {
   const failed = [];
-  const base = await readAssetBase({ fetchImpl, signal });
-  let tier = null;
-  let art = null;
-  for (const candidate of tierOrder(requested)) {
-    try {
-      art = await loadIndex(candidate, pin, { base, fetchImpl, subtle, signal });
-      tier = candidate;
-      break;
-    } catch (e) {
-      failed.push(e.message);
+  const controllers = [];
+  const abortable = () => {
+    const c = typeof AbortController === 'function' ? new AbortController() : null;
+    if (c) controllers.push(c);
+    return c;
+  };
+  const started = Date.now();
+  const left = () => Math.max(0, deadlineMs - (Date.now() - started));
+  const timers = [];
+  // Resolves to `fallback` after ms, and aborts that attempt's fetches.
+  const budget = (ms, controller, fallback) => new Promise((settle) => {
+    timers.push(setTimeout(() => { try { controller?.abort(); } catch { /* settled */ } settle(fallback); }, ms));
+  });
+  const TIMED_OUT = { timedOut: true };
+  try {
+    const baseCtl = abortable();
+    const base = await Promise.race([readAssetBase({ fetchImpl, signal: baseCtl?.signal }), budget(Math.min(left(), Math.round(deadlineMs * BASE_SHARE)), baseCtl, './')]);
+    // The common index, alongside the tiers; its failure is recorded, never fatal.
+    let common = null;
+    let commonDone = !pin.packs.common;
+    const commonCtl = abortable();
+    const commonLoad = pin.packs.common
+      ? loadIndex('common', pin, { base, fetchImpl, subtle, signal: commonCtl?.signal })
+        .then((map) => { common = map; }, (e) => { failed.push(e.message); })
+        .finally(() => { commonDone = true; })
+      : Promise.resolve();
+    let tier = null;
+    let art = null;
+    const order = tierOrder(requested);
+    for (const [i, candidate] of order.entries()) {
+      const last = i === order.length - 1;
+      const ms = last ? left() : Math.min(left(), Math.round(deadlineMs * HIGH_SHARE));
+      if (ms <= 0) { failed.push(`${candidate}: no time left before the ${deadlineMs} ms deadline`); continue; }
+      const ctl = abortable();
+      const got = await Promise.race([
+        loadIndex(candidate, pin, { base, fetchImpl, subtle, signal: ctl?.signal }).then((map) => ({ map }), (e) => ({ error: e })),
+        budget(ms, ctl, TIMED_OUT),
+      ]);
+      if (got.map) { art = got.map; tier = candidate; break; }
+      failed.push(got === TIMED_OUT ? `${candidate}: the index did not load within ${ms} ms` : got.error.message);
     }
+    if (!art) {
+      // Placeholders: no art index, so no source. The common pack alone does
+      // not make a source either.
+      status = { state: 'failed', tier: null, requested, ids: 0, failed };
+      setBuiltInSource(null);
+      return builtInArtStatus();
+    }
+    // A verified art map is kept whatever common does: common gets the time
+    // left, and is left out if it is not there by then.
+    if (!commonDone) {
+      const waited = await Promise.race([commonLoad.then(() => true), budget(left(), commonCtl, false)]);
+      if (!waited) failed.push(`common: the index did not load within ${deadlineMs} ms; the art loads without it`);
+    }
+    const map = new Map(common || []);
+    for (const [id, url] of art) map.set(id, url);
+    const ids = setBuiltInSource(map);
+    status = { state: 'loaded', tier, requested, ids, failed: [...failed] };
+    if (typeof onSource === 'function') try { onSource(map); } catch { /* a listener must not fail the load */ }
+    return builtInArtStatus();
+  } finally {
+    for (const t of timers) clearTimeout(t);
+    // Whatever is still in flight is not wanted: a late answer is never used.
+    for (const c of controllers) try { c.abort(); } catch { /* settled */ }
   }
-  let common = null;
-  if (pin.packs.common) {
-    try { common = await loadIndex('common', pin, { base, fetchImpl, subtle, signal }); } catch (e) { failed.push(e.message); }
-  }
-  return { art, tier, common, failed };
 }
 
 /**
@@ -236,6 +259,56 @@ export function whenBuiltInArtReady(fn, opts = {}) {
   let done = false;
   const go = () => { if (!done) { done = true; fn(); } };
   startBuiltInArt(opts).then(go, go);
+}
+
+/**
+ * musicHold({ pinned, configureMusic }) — when the music folder is applied at
+ * boot. A build that pins packs draws its first screen only after the load has
+ * settled, so a manifest that lands meanwhile would start and abort a track
+ * per screen a ?shot= boot walks through: the folder is held and applied once
+ * the first screen is drawn. A single file and the source tree pin nothing and
+ * apply it at once, before the first screen, exactly as before step 3a.
+ *   apply(folder)     — the settings path: apply now, or hold
+ *   firstScreen(show) — draw the first screen, then release the hold (always,
+ *                       even if `show` throws)
+ */
+export function musicHold({ pinned = packsPinned(), configureMusic }) {
+  let waiting = !!pinned;
+  let held = false;
+  let folder;
+  return {
+    apply(next) {
+      folder = next;
+      if (waiting) held = true;
+      else configureMusic({ folder });
+    },
+    firstScreen(show) {
+      try {
+        show();
+      } finally {
+        waiting = false;
+        if (held) { held = false; configureMusic({ folder }); }
+      }
+    },
+  };
+}
+
+/**
+ * bootLine(app, { pinned }) — while a pack build waits for its load to settle
+ * (up to BOOT_WAIT_MS), the page is otherwise blank. A static line says what it
+ * is doing; it is removed before the first screen is drawn. Nothing is shown
+ * when nothing is pinned. The real progress line on the startup gate, its
+ * wording in content/config and Reduced motion are step 5. Returns the remover.
+ */
+export function bootLine(app, { pinned = packsPinned(), doc = globalThis.document } = {}) {
+  if (!pinned || !app || !doc || typeof doc.createElement !== 'function') return () => {};
+  const line = doc.createElement('p');
+  line.setAttribute('role', 'status');
+  line.dataset.bootLine = '';
+  line.textContent = 'Loading art…';
+  line.style.cssText = 'margin:0;padding:24px;text-align:center;opacity:.7;font:16px/1.4 serif;color:inherit';
+  app.append(line);
+  return () => line.remove();
 }
 
 /** For tests: forget the load. */

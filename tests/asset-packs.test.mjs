@@ -7,8 +7,9 @@ import assert from 'node:assert/strict';
 import { createHash, randomBytes } from 'node:crypto';
 import {
   loadBuiltInPacks, whenBuiltInArtReady, resetBuiltInArt, packsPinned, tierOrder, objectUrl, cleanBase,
-  builtInArtStatus, ASSET_PACKS,
+  builtInArtStatus, ASSET_PACKS, musicHold, bootLine,
 } from '../src/ui/assetPacks.js';
+import { readFileSync } from 'node:fs';
 import { assetUrl, builtInSource, setBuiltInSource, setHighResSource } from '../src/ui/assetmap.js';
 import { sha256Bytes, sha256Hex } from '../src/ui/sha256.js';
 import { objectPath, indexText } from '../tools/asset-pack.mjs';
@@ -234,4 +235,145 @@ test('a load past its deadline settles as failed before the first screen, and th
   assert.equal(sourced, 0);
   assert.equal(builtInArtStatus().state, 'failed');
   resetBuiltInArt();
+});
+
+/** A fetch that never answers the URLs `hang` matches until released (abort rejects it). */
+function stalling(tree, hang) {
+  const released = [];
+  const fetchImpl = (url, init = {}) => {
+    if (!hang.test(url)) return tree.fetchImpl(url, init);
+    return new Promise((resolve, reject) => {
+      released.push(() => resolve(tree.fetchImpl(url, init)));
+      init.signal?.addEventListener?.('abort', () => reject(new Error('aborted')));
+    });
+  };
+  return { fetchImpl, release: () => released.forEach((r) => r()) };
+}
+
+test('a high index that hangs is abandoned at its sub-budget, and light still loads before the deadline', async () => {
+  resetBuiltInArt();
+  const tree = packTree({ tier: 'high' });
+  const { fetchImpl, release } = stalling(tree, /packs\/high-/);
+  const t0 = Date.now();
+  const r = await loadBuiltInPacks(opts(tree, { fetchImpl, deadlineMs: 200 }));
+  assert.equal(r.state, 'loaded');
+  assert.equal(r.tier, 'light');
+  assert.match(r.failed.join(';'), /high: the index did not load within 100 ms/);
+  assert.ok(Date.now() - t0 < 200, 'light loaded inside the deadline');
+  assert.equal(assetUrl('assets/bg/bg_act1.webp'), `./objects/aa/${A}.webp`);
+  release();
+  await new Promise((r2) => setTimeout(r2, 20));
+  assert.equal(assetUrl('assets/bg/bg_act1.webp'), `./objects/aa/${A}.webp`, 'the late high index changes nothing');
+  resetBuiltInArt();
+});
+
+test('a common index that hangs or fails never throws away a verified art map', async () => {
+  for (const how of ['hang', 'fail']) {
+    resetBuiltInArt();
+    const tree = packTree({ drop: how === 'fail' ? ['common'] : [] });
+    const { fetchImpl, release } = stalling(tree, how === 'hang' ? /packs\/common-/ : /^$/);
+    const r = await loadBuiltInPacks(opts(tree, { fetchImpl, deadlineMs: 80 }));
+    assert.equal(r.state, 'loaded', how);
+    assert.equal(r.tier, 'light');
+    assert.match(r.failed.join(';'), how === 'hang' ? /common: the index did not load/ : /common: .*404/);
+    assert.equal(assetUrl('assets/bg/bg_act1.webp'), `./objects/aa/${A}.webp`, `${how}: the art is in place`);
+    assert.equal(assetUrl('assets/fonts/x.woff2'), 'assets/fonts/x.woff2', `${how}: common is left out`);
+    release();
+  }
+  resetBuiltInArt();
+});
+
+test('common is fetched alongside the art tiers, not after them', async () => {
+  resetBuiltInArt();
+  const tree = packTree({ tier: 'high' });
+  const order = [];
+  const { fetchImpl } = stalling(tree, /packs\/high-/);
+  const watched = (url, init) => { order.push(url.replace(/^\.\//, '').replace(/-[0-9a-f]{12}\.json$/, '')); return fetchImpl(url, init); };
+  await loadBuiltInPacks(opts(tree, { fetchImpl: watched, deadlineMs: 100 }));
+  assert.deepEqual(order.slice(0, 3), ['asset-base.json', 'packs/common', 'packs/high'], `common is requested with the first tier: ${order.join(', ')}`);
+  resetBuiltInArt();
+});
+
+test('an asset-base.json that hangs falls back to ./ and the art still loads', async () => {
+  resetBuiltInArt();
+  const tree = packTree({ base: './' });
+  const { fetchImpl, release } = stalling(tree, /asset-base\.json/);
+  const r = await loadBuiltInPacks(opts(tree, { fetchImpl, deadlineMs: 200 }));
+  assert.equal(r.state, 'loaded');
+  release();
+  resetBuiltInArt();
+});
+
+test('the music folder: a single file applies it before the first screen, as on dev; a pack build holds it until after', () => {
+  const calls = [];
+  const configureMusic = ({ folder }) => calls.push(`music:${folder}`);
+  const single = musicHold({ pinned: false, configureMusic });
+  single.apply('music');
+  calls.push('-- first screen');
+  single.firstScreen(() => calls.push('screen'));
+  assert.deepEqual(calls, ['music:music', '-- first screen', 'screen'], 'unpinned: configureMusic before the first screen, and not again after');
+
+  calls.length = 0;
+  const web = musicHold({ pinned: true, configureMusic });
+  web.apply('music');
+  assert.deepEqual(calls, [], 'held while the load settles');
+  web.firstScreen(() => calls.push('screen'));
+  assert.deepEqual(calls, ['screen', 'music:music']);
+  web.apply('other');
+  assert.deepEqual(calls, ['screen', 'music:music', 'music:other'], 'released: later changes apply at once');
+
+  calls.length = 0;
+  const throwing = musicHold({ pinned: true, configureMusic });
+  throwing.apply('music');
+  assert.throws(() => throwing.firstScreen(() => { throw new Error('boom'); }), /boom/);
+  assert.deepEqual(calls, ['music:music'], 'the hold releases even when the first screen throws');
+  assert.equal(musicHold({ configureMusic }).apply('x') ?? null, null);
+  assert.deepEqual(calls.slice(-1), ['music:x'], 'the default reads the pin: the source tree pins nothing');
+});
+
+test('main.js routes the boot music and the first screen through musicHold', () => {
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /const bootMusic = musicHold\(\{ configureMusic:/);
+  assert.match(main, /bootMusic\.apply\(folder\)/);
+  assert.match(main, /whenBuiltInArtReady\(\(\) => bootMusic\.firstScreen\(\(\) => \{ dropBootLine\(\); showFirstScreen\(\); \}\)/);
+  assert.doesNotMatch(main, /audio\.configureMusic\(\{ folder \}\)/, 'no second, unheld call');
+});
+
+test('an object shared by byte-identical assets resolves to the alias a high-res source covers', async () => {
+  const { builtInArtArrived, applyArtQuality, resetHighResArt, ART_QUALITY_KEY, ART_LOCAL_HIGH, ART_BUILT_IN } = await import('../src/ui/highResArt.js');
+  resetBuiltInArt();
+  resetHighResArt();
+  const shared = `./objects/aa/${A}.webp`;
+  const map = new Map([['assets/ui/a.webp', shared], ['assets/ui/b.webp', shared]]);
+  setBuiltInSource(map);
+  const attrs = { src: shared };
+  const img = { tagName: 'IMG', getAttribute: (k) => attrs[k], setAttribute: (k, v) => { attrs[k] = v; } };
+  globalThis.document = { querySelectorAll: () => [img], addEventListener: () => {} };
+  try {
+    builtInArtArrived(map);
+    // urlToId remembers the shared object under the LAST id (b); the source covers a.
+    const only = { assets: { 'assets/ui/a.webp': { high: { path: 'assets/ui/a.webp' } } } };
+    await applyArtQuality({ [ART_QUALITY_KEY]: ART_LOCAL_HIGH }, { fetchImpl: async () => ({ ok: true, json: async () => only }), protocol: 'https:' });
+    assert.equal(attrs.src, 'hd/assets/ui/a.webp', 'the covered alias, not whichever id the object URL was remembered under');
+    await applyArtQuality({ [ART_QUALITY_KEY]: ART_BUILT_IN });
+    assert.equal(attrs.src, shared, 'back to the shared object');
+  } finally {
+    delete globalThis.document;
+    resetHighResArt();
+    resetBuiltInArt();
+  }
+});
+
+test('a pack build shows a static loading line while it waits; a single file shows nothing', () => {
+  const children = [];
+  const app = { append: (el) => children.push(el) };
+  const doc = { createElement: () => { const el = { dataset: {}, style: {}, setAttribute() {}, remove: () => children.splice(children.indexOf(el), 1) }; return el; } };
+  const none = bootLine(app, { pinned: false, doc });
+  assert.equal(children.length, 0);
+  none();
+  const drop = bootLine(app, { pinned: true, doc });
+  assert.equal(children.length, 1);
+  assert.match(children[0].textContent, /Loading art/);
+  drop();
+  assert.equal(children.length, 0, 'removed before the first screen');
 });

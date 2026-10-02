@@ -51,7 +51,7 @@ import { resolve, dirname, relative, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
-import { verifyPacks, PACKS } from './asset-pack.mjs';
+import { verifyPacks, PACKS, objectPath } from './asset-pack.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ARGV = process.argv.slice(2);
@@ -78,7 +78,8 @@ function readPin(text) {
   try { return JSON.parse(m[1]); } catch { return null; }
 }
 
-const objectOf = (id, sha) => `objects/${sha.slice(0, 2)}/${sha}${id.slice(id.lastIndexOf('.')).toLowerCase()}`;
+// The object name is asset-pack's own: one home, so the two cannot drift.
+const objectOf = (id, sha) => objectPath(sha, id);
 
 function verify(outDir) {
   const findings = [];
