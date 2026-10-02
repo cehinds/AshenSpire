@@ -293,7 +293,9 @@ export function retryBuiltInArt(settings = lastSettings, opts = {}) {
       // Its own deadline (RETRY_WAIT_MS, content/config), not the boot's: the
       // title stays usable meanwhile, and a slow link needs the time.
       const result = await loadBuiltInPacks({
-        deadlineMs: RETRY_WAIT_MS, ...opts.load, pin, tier: want, keepOnFail: true, stillWanted: () => mine === round, signal: startInFlight(mine),
+        // Past the HTTP cache ('reload'): the failure it retries may be a
+        // cached error, or a cached copy that fails its pin (Codex on #1471).
+        deadlineMs: RETRY_WAIT_MS, cache: 'reload', ...opts.load, pin, tier: want, keepOnFail: true, stillWanted: () => mine === round, signal: startInFlight(mine),
         onSource: (map) => { if (onArrived) try { onArrived(map); } catch { /* a listener must not fail the retry */ } },
       });
       if (result.superseded) return null;

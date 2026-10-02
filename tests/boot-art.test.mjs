@@ -662,3 +662,21 @@ test('the notice’s state counts as announced only once its words land (review 
   assert.equal(third.notice.text.textContent, tFull('art.failed.notice'));
   resetArtLoadNotice();
 });
+
+test('a Retry fetches the indexes past the HTTP cache; the boot load does not (Codex on #1471)', async () => {
+  fresh();
+  const tree = packTree('light');
+  const modes = [];
+  const fetchImpl = (url, o) => { if (/^(?:\.\/)?packs\//.test(url)) modes.push([url.replace(/^\.\//, '').split('-')[0], o?.cache ?? 'default']); return tree.fetchImpl(url, o); };
+  const settings = { [ART_QUALITY_KEY]: ART_AUTO };
+  const opts = { pin: tree.pin, inlineMap: {}, load: { ...tree.load, fetchImpl }, env: { doc: wide, nav: desktop } };
+  await applyArtTier(settings, opts);
+  tree.blocked.add('all');
+  await loadBuiltInPacks({ pin: tree.pin, ...tree.load, fetchImpl, tier: 'light', deadlineMs: 200 });
+  assert.ok(modes.length && modes.every(([, m]) => m === 'default'), `the boot load uses the cache's default (${JSON.stringify(modes)})`);
+  tree.blocked.clear();
+  modes.length = 0;
+  const r = await retryBuiltInArt(settings, opts);
+  assert.equal(r.state, 'loaded');
+  assert.ok(modes.length >= 2 && modes.every(([, m]) => m === 'reload'), `every index a Retry asks for is fetched with cache: 'reload' (${JSON.stringify(modes)})`);
+});

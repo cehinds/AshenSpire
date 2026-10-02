@@ -261,9 +261,11 @@ function pinnedIndex(pack, pin) {
  * a reason when the index is unpinned, unreachable, fails its hash or is not
  * an index.
  */
-export async function loadIndex(pack, pin, { base = './', fetchImpl = globalThis.fetch, subtle, signal } = {}) {
+export async function loadIndex(pack, pin, { base = './', fetchImpl = globalThis.fetch, subtle, signal, cache } = {}) {
   const want = pinnedIndex(pack, pin);
-  const res = await fetchImpl(`${base}${want.index}`, { signal });
+  // `cache` (a Retry, 'reload'): past the HTTP cache, so a cached error or a
+  // cached copy that fails its pin is not served again (Codex on #1471).
+  const res = await fetchImpl(`${base}${want.index}`, cache ? { signal, cache } : { signal });
   if (!res || !res.ok) throw new Error(`${pack}: ${want.index} ${res ? res.status : 'unreachable'}`);
   return indexFromBytes(pack, want, want.index, new Uint8Array(await res.arrayBuffer()), { base, subtle });
 }
@@ -461,6 +463,9 @@ export async function loadBuiltInPacks({
   // and the load settles as superseded, publishing nothing, rather than
   // holding the queue for its whole deadline (Codex on #1471).
   signal = null,
+  // The fetch cache mode for the indexes: unset on the boot load (the HTTP
+  // cache's default), 'reload' on a Retry (src/ui/artTier.js).
+  cache = undefined,
 } = {}) {
   if (!packsPinned(pin, inlineMap)) {
     status = { state: Object.keys(inlineMap || {}).length ? 'inline' : 'none', tier: null, requested: null, ids: 0, css: 0, failed: [] };
@@ -480,7 +485,7 @@ export async function loadBuiltInPacks({
   }
   const readIndex = viaFile
     ? (pack, o) => loadTwinIndex(pack, pin, { ...o, scriptImpl: loadScript })
-    : (pack, o) => loadIndex(pack, pin, { ...o, fetchImpl });
+    : (pack, o) => loadIndex(pack, pin, { ...o, fetchImpl, cache });
   status = { state: 'loading', tier: null, requested, ids: 0, css: 0, failed: [] };
   const failed = [];
   const controllers = [];
