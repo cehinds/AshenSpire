@@ -239,6 +239,10 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   });
   snapshot.itemUpgradeLevels = structuredClone(runLevels);
   delete snapshot.armamentLevels;
+  // The rule rides the snapshot from here on: a fight saved before the fix
+  // has no flag, and restoreCombatSnapshot builds the live combat from the
+  // snapshot alone, so its next mid-fight swap would deal lent cards.
+  if (poolDeck) snapshot.poolDeck = true;
 
   // Commit only after validation and every pile rebind succeed. Resume then
   // observes the exact same loadout in run state and restored combat state.

@@ -28,7 +28,7 @@ import { createRunState, createIdGen, createDeck } from '../src/model/state.js';
 import { createRng, seedToString } from '../src/engine/rng.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { commitCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { dispatch } from '../src/engine/combat.js';
 import { isPoolDeckRun, dealtAttackSlotCount, POOL_DECK_RULE } from '../src/model/cardRemoval.js';
 import { stampDeck } from '../src/model/loadout.js';
@@ -170,6 +170,28 @@ for (const fixed of [true, false]) {
     }
   });
 }
+
+test('sealed: a pre-fix mid-fight save, loaded and resumed, deals no lent card at its next weapon swap (Codex review)', () => {
+  const { run, rng, saves } = deal('starseer', 'sealed', { fixed: false });
+  run.loadout.sets.rightHand[1] = 'dagger';
+  const combat = fight(run, rng);
+  commitCombatSnapshot({ run, combat, nodeId: 'n0', encounterId: 'loneSoldier' });
+  delete run.combatEntered.snapshot.poolDeck; // a fight saved before the fix knew nothing of the rule
+  saves.saveRun(run, rng);
+  const back = saves.loadRun(registries, 1);
+  assert.ok(back, `reload refused: ${saves.runStatus().reason}`);
+  const snapshot = back.combatEntered.snapshot;
+  assert.equal(snapshot.poolDeck, true, 'the migrated snapshot carries the rule');
+  const before = Object.values(piles(snapshot.piles)).flat().sort();
+  // main.js resumeRun's restore, with and without the snapshot's own flag.
+  for (const saved of [snapshot, { ...snapshot, poolDeck: undefined }]) {
+    const resumed = restoreCombatSnapshot({ registries, rng: createRng(SEED), snapshot: structuredClone(saved), fallbackAttackSlotCount: back.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: back.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: back.derivedStatRuleSnapshot, fallbackAttributeMode: back.attributeMode, fallbackPoolDeck: isPoolDeckRun(back) });
+    resumed.player.energy = 10;
+    dispatch(resumed, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
+    assert.equal(resumed.loadout.active.rightHand, 1, 'the swap happened');
+    assert.deepEqual(Object.values(piles(resumed.piles)).flat().sort(), before);
+  }
+});
 
 test('sealed: a mid-fight weapon swap deals no lent card into the piles', () => {
   const { run, rng } = deal('starseer', 'sealed');
