@@ -21,6 +21,7 @@ import {
   cardMountRules, isExtraMountKey, itemMountEntries, openExtraMountKey, resolveFallbackCard,
 } from './cardMounts.js';
 import { normalizeSmithingRules, SMITH_SERVICES } from './smithingRules.js';
+import { isPoolDeckRun } from './cardRemoval.js';
 
 export { SMITH_SERVICES };
 export const MOUNT_RECEIPT_SCHEMA_VERSION = 1;
@@ -176,13 +177,28 @@ function priced(cost, stones) {
 
 // ---- extract ---------------------------------------------------------------
 
-/** Every extractable mount on every owned item, priced. */
+/**
+ * extractionRefusal(run) -> null | 'poolDeck'
+ *
+ * Why this run may not extract at all, before any item is asked. A Sealed or
+ * Draft run (cardRemoval.js isPoolDeckRun) is never dealt the equipment's lent
+ * cards; extracting one would hand it a free run-owned copy of exactly what
+ * those modes exclude (owner ruling, 2026-10-02). The answer is read from the
+ * run's own Custom Climb rules every time, never stored, so no save can carry
+ * it away. Installing a card the run already owns is unaffected.
+ */
+export function extractionRefusal(run) {
+  return isPoolDeckRun(run) ? 'poolDeck' : null;
+}
+
+/** Every extractable mount on every owned item, priced. A refused run has none, and says why (`refusal`). */
 export function extractionPlan(registries, run, explicitRules = undefined) {
   const rules = smithServiceRules(registries, explicitRules);
   const stones = stoneBalance(run);
   const cost = rules.extract.cost;
+  const refusal = extractionRefusal(run);
   const candidates = [];
-  for (const item of ownedMountItems(registries, run)) {
+  if (!refusal) for (const item of ownedMountItems(registries, run)) {
     const mounts = mountRows(registries, run, item).filter((row) => row.extractable);
     if (!mounts.length) continue;
     candidates.push(Object.freeze({
@@ -192,7 +208,7 @@ export function extractionPlan(registries, run, explicitRules = undefined) {
       mounts,
     }));
   }
-  return Object.freeze({ schemaVersion: MOUNT_RECEIPT_SCHEMA_VERSION, service: 'extract', stones, cost, candidates: Object.freeze(candidates) });
+  return Object.freeze({ schemaVersion: MOUNT_RECEIPT_SCHEMA_VERSION, service: 'extract', stones, cost, refusal, candidates: Object.freeze(candidates) });
 }
 
 function nextTransaction(run) {
@@ -219,6 +235,8 @@ function writeMount(run, itemRef, mountKey, entry) {
  * the service.
  */
 export function commitExtraction(registries, run, itemRef, mountKey, explicitRules = undefined, { free = false } = {}) {
+  // Refused before the plan, and for a free grant too: a pool-deck run takes no lent card.
+  if (extractionRefusal(run) === 'poolDeck') throw new Error('A Sealed or Draft run cannot extract a card: its deck takes no card the equipment lends');
   const plan = extractionPlan(registries, run, explicitRules);
   const candidate = plan.candidates.find((row) => row.itemRef === itemRef);
   if (!candidate) throw new Error(`Item '${itemRef}' has no extractable mount`);
