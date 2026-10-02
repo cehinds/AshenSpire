@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: no CI job runs longer than 20 minutes",
     "detail": "Nothing you play changes. The slowest automated checks now run in parallel pieces, so every check still runs but no single job takes more than 20 minutes.",
-    "build": "0.7.1.769",
+    "build": "0.7.1.770",
     "pullRequest": 1458,
     "url": "https://github.com/cehinds/AshenSpire/pull/1458"
+  },
+  {
+    "id": "pr-1470",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: a test keeps the Windows file-serving fix from coming back",
+    "detail": "Nothing you play changes. The fix itself landed in #1476; this adds a test that imitates Windows' short folder names on any computer and fails if the local test server ever again turns away files in its own folder.",
+    "build": "0.7.1.769",
+    "pullRequest": 1470,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1470"
   },
   {
     "id": "pr-1480",
