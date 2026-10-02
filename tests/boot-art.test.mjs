@@ -344,10 +344,16 @@ test('Settings’ Retry is aria-disabled while it runs and hands focus to the ro
   globalThis.document = doc;
   // ASSET_PACKS is null under test, so the button's "offered" reads false; drive the attributes through a running Retry.
   try {
-    const run = retryBuiltInArt(settings, opts);
+    // The answer is held until the busy state has been read: a fetch that
+    // answers at once could finish the whole load before this test looks.
+    let release;
+    const held = new Promise((r) => { release = r; });
+    const fetchImpl = async (url, o) => { await held; return tree.fetchImpl(url, o); };
+    const run = retryBuiltInArt(settings, { ...opts, load: { ...opts.load, fetchImpl } });
     await new Promise((r) => setTimeout(r, 0));
     assert.equal(attrs(button)['aria-disabled'], 'true', 'aria-disabled while it runs');
     assert.equal(doc.activeElement, button, 'the focus stays on it while it runs');
+    release();
     const r = await run;
     assert.equal(r.state, 'loaded');
     assert.equal(button.hidden, true);
@@ -391,4 +397,41 @@ test('main.js: a superseded Retry is not a failure, and the title redraw waits f
   const notice = readFileSync(new URL('../src/ui/components/artLoadNotice.js', import.meta.url), 'utf8');
   assert.match(notice, /insertAdjacentHTML\('afterbegin'/, 'first in the title’s reading and tab order');
   assert.match(notice, /else text\.textContent = message;/, 'a state change rewrites the one live node in place');
+});
+
+test('a Settings slot rebuilt mid-retry draws Retry busy, and a second press is refused (Codex on #1471)', async () => {
+  fresh();
+  const { retryRunning } = await import('../src/ui/artTier.js');
+  const { settingsRows } = await import('../src/ui/screens/settings.js');
+  const row = settingsRows().find((r) => r.key === ART_QUALITY_KEY);
+  const tree = packTree('light');
+  const settings = { [ART_QUALITY_KEY]: ART_AUTO };
+  const opts = { pin: tree.pin, inlineMap: {}, load: { ...tree.load, deadlineMs: 2000 }, env: { doc: wide, nav: desktop } };
+  await applyArtTier(settings, opts);
+  tree.blocked.add('all');
+  await loadBuiltInPacks({ pin: tree.pin, ...tree.load, tier: 'light', deadlineMs: 200 });
+  tree.blocked.clear();
+  // A slow answer, so the Retry is still in flight while the slot is rebuilt.
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  const fetchImpl = async (url, o) => { await gate; return tree.fetchImpl(url, o); };
+  const before = tree.asked.length;
+  assert.equal(retryRunning(), false);
+  assert.doesNotMatch(row.applied(settings), /aria-disabled/, 'idle: the button is not busy');
+  const first = retryBuiltInArt(settings, { ...opts, load: { ...opts.load, fetchImpl } });
+  assert.equal(retryRunning(), true, 'in flight from the press');
+  // The slot rebuilt now (Settings opened mid-retry, or refreshApplied): busy in the markup.
+  assert.match(row.applied(settings), /data-art-retry[^>]*aria-disabled="true" aria-busy="true"/);
+  // A second press meanwhile starts nothing: the same outcome comes back.
+  const second = retryBuiltInArt(settings, { ...opts, load: { ...opts.load, fetchImpl } });
+  assert.equal(second, first, 'one Retry at a time');
+  release();
+  const r = await first;
+  assert.equal(r.state, 'loaded');
+  assert.equal(tree.asked.slice(before).filter((u) => u.startsWith('packs/')).length, 2, 'one load: the light and common indexes, once');
+  assert.equal(retryRunning(), false, 'settled');
+  assert.doesNotMatch(row.applied(settings), /aria-busy/);
+  // The click handler refuses on the shared flag, whatever the button says.
+  const src = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  assert.match(src, /if \(retry\) \{ if \(!retryRunning\(\) && retry\.getAttribute\('aria-disabled'\) !== 'true'\) retryBuiltInArt/);
 });

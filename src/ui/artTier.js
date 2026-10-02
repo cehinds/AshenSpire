@@ -93,6 +93,16 @@ let lastSettings = null;
 let lastChoice = null; // the choice the art on screen was loaded for
 let switching = false;
 let retrying = false; // a Retry (step 5) is running
+// The Retry in flight, from the press until it settles (queued or loading):
+// one at a time, shared by the title's notice and Settings (Codex on #1471).
+let retryInFlight = null;
+
+/**
+ * True from a Retry's press until it settles. Every Retry control reads this
+ * when it is drawn and when it is pressed: a Settings slot rebuilt mid-retry
+ * draws its button busy, and a press meanwhile is refused.
+ */
+export function retryRunning() { return !!retryInFlight; }
 let queue = Promise.resolve();
 let round = 0;
 let onArrived = null;
@@ -240,6 +250,10 @@ export function retryBuiltInArt(settings = lastSettings, opts = {}) {
   const pin = opts.pin ?? ASSET_PACKS;
   const where = { pin, inlineMap: opts.inlineMap ?? ASSET_MAP };
   if (!packsPinned(pin, where.inlineMap)) return Promise.resolve(null);
+  // One Retry at a time: a second press while one is in flight gets the same
+  // outcome, rather than queuing a second load behind it.
+  if (retryInFlight) return retryInFlight;
+  retrying = true;
   if (settings) lastSettings = settings;
   lastChoice = artQualityChoice(lastSettings);
   const mine = ++round;
@@ -265,10 +279,14 @@ export function retryBuiltInArt(settings = lastSettings, opts = {}) {
     } finally {
       switching = false;
       retrying = false;
+      retryInFlight = null;
       showTierStatus(lastSettings, where);
     }
   });
-  return queue;
+  // A Retry superseded before it ran (the job returns at once) settles here too.
+  const tracked = queue.finally(() => { if (retryInFlight === tracked) { retryInFlight = null; retrying = false; } });
+  retryInFlight = tracked;
+  return tracked;
 }
 
 /** For tests: forget the switches. */
@@ -277,6 +295,7 @@ export function resetArtTier() {
   lastChoice = null;
   switching = false;
   retrying = false;
+  retryInFlight = null;
   queue = Promise.resolve();
   round = 0;
   onArrived = null;
