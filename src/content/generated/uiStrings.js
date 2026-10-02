@@ -2000,7 +2000,7 @@ export const uiStrings = [
   {
     "id": "sigils.refuse.full",
     "extends": "",
-    "short": "You cannot attune {name}: at most {max} sigils can be attuned at once. Unattune one first.",
+    "short": "You cannot attune {name}: the most you can attune at once is {max}. Unattune one first.",
     "full": "",
     "tip": ""
   },
