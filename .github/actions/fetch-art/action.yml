@@ -25,10 +25,16 @@ inputs:
 runs:
   using: composite
   steps:
+    # A cache key cannot contain a comma, and `light,common` is one.
+    - id: key
+      shell: bash
+      env:
+        ART_PACKS: ${{ inputs.packs }}
+      run: echo "packs=${ART_PACKS//,/-}" >> "$GITHUB_OUTPUT"
     - uses: actions/cache@v4
       with:
         path: .art-cache
-        key: art-cache-${{ runner.os }}-${{ inputs.packs }}-${{ hashFiles('art-release.json', 'art-manifest.json') }}
+        key: art-cache-${{ runner.os }}-${{ steps.key.outputs.packs }}-${{ hashFiles('art-release.json', 'art-manifest.json') }}
     - shell: bash # $ART_PACKS is an env var; Windows' default shell would not expand it
       env:
         ART_PACKS: ${{ inputs.packs }}
