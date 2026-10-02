@@ -8715,15 +8715,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(tracks.find((t) => t.id === 'item:magic-focus').kind, 'focus');
     eq(tracks.find((t) => t.id === 'item:blade').kind, 'weapon');
     assert(tracks.every((t) => SKILL_KINDS.includes(t.kind)), 'every track has a kind');
-    // Every default track uses the same linear step calculation.
+    // Skill and class tracks share the owner's exponential curve (2026-10-02:
+    // base 100, ×1.75 per step); the linear option stays for tuning.
     const c = REG.balance.skill.xp;
     eq(xpToNext(REG, 'weapon', 0), Math.round(c.base / c.roundTo) * c.roundTo, 'step 0 costs the base');
-    eq(xpToNext(REG, 'weapon', 3), Math.round((c.base + 3 * c.base * c.multScaler) / c.roundTo) * c.roundTo, 'step 3 adds three scaled increments');
+    eq(xpToNext(REG, 'weapon', 3), Math.round((c.base * Math.pow(c.growth, 3)) / c.roundTo) * c.roundTo, 'step 3 grows three times');
     const steps = (kind) => Array.from({ length: 10 }, (_, n) => xpToNext(REG, kind, n));
     assert(steps('class').every((cost, n) => cost >= steps('weapon')[n]), 'the class curve is never cheaper at any step');
-    eq(steps('class').reduce((a, b) => a + b), steps('weapon').reduce((a, b) => a + b), 'class and weapon curves share the default linear costs');
+    eq(steps('class').reduce((a, b) => a + b), steps('weapon').reduce((a, b) => a + b), 'class and weapon curves share the default costs');
     const armourSteps = Array.from({ length: 10 }, (_, n) => xpToNext(REG, 'armour', n));
-    eq(armourSteps.join(','), '100,230,360,490,620,750,880,1010,1140,1270', 'armour starts at 100 and adds 130 each step');
+    eq(armourSteps.slice(0, 5).join(','), '100,175,305,535,940', 'armour starts at 100 and each step costs 1.75 times the last');
     // The ledger: a fresh run has none; XP writes it and climbs, queuing a draft per level.
     const run = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
     eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{}', 'a fresh run has an empty ledger');

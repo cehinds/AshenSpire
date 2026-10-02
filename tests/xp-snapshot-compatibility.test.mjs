@@ -24,8 +24,9 @@ for (const [growth, expectedSkill, expectedCharacter] of [[1.025, 100, 105], [1.
     assert.equal(skillXpToNext(registries, 'class', 1), expectedSkill, 'the saved class threshold retains its original rounding');
     assert.equal(characterXpToNext(registries, 2), expectedCharacter, 'character exponential curves retain their existing epsilon');
     const linear = createRegistries(configuredContentBundle(contentBundle, advancedConfigSnapshot({})));
-    assert.equal(skillXpToNext(linear, 'weapon', 1), 230);
-    assert.equal(skillXpToNext(linear, 'class', 1), 230);
+    // Skill and class default to the owner's ×1.75 curve (2026-10-02).
+    assert.equal(skillXpToNext(linear, 'weapon', 1), 175);
+    assert.equal(skillXpToNext(linear, 'class', 1), 175);
   });
 }
 

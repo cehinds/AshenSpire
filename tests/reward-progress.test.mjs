@@ -417,7 +417,8 @@ test('each manual claim refills from residual XP until the final partial step, f
         } }) },
       });
       const ledger = () => track === 'character' ? run.level : run.skills[track];
-      for (const remaining of [255, 25]) {
+      // Character steps 100, 230; skill steps 100, 175 (the ×1.75 curve).
+      for (const remaining of track === 'character' ? [255, 25] : [255, 80]) {
         app.querySelector(`.reward-level-up[data-track="${track}"]`).click();
         assert.equal(ledger().xp, remaining, 'only the cost is deducted; animation awards nothing');
         const bar = app.querySelector(`.rp-layered-bar[data-track="${track}"]`);
@@ -433,11 +434,12 @@ test('each manual claim refills from residual XP until the final partial step, f
         assert.ok(app.querySelector(doneSelector), 'reward follows the refill');
         app.querySelector(doneSelector).click();
       }
-      assert.equal(ledger().xp, 25);
+      const [left, nextStep] = track === 'character' ? [25, 360] : [80, 305];
+      assert.equal(ledger().xp, left);
       assert.equal(app.querySelector('.reward-level-up'), null);
       const final = app.querySelector(`.rp-layered-bar[data-track="${track}"]`);
       assert.equal(final.classList.contains('rp-bar-ready'), false);
-      assert.equal(Number(final.dataset.target), 25 / 360 * 100);
+      assert.equal(Number(final.dataset.target), left / nextStep * 100);
     } finally { Object.assign(globalThis, saved); }
   }
 });
