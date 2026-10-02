@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: every owner decision has its own number",
     "detail": "Nothing you play changes. Two decisions in the project's finish list were both numbered D38, so a note citing D38 could mean either; the hit sound tiers decision is now D47, and a test fails if two decisions ever share a number again.",
-    "build": "0.7.1.792",
+    "build": "0.7.1.793",
     "pullRequest": 1493,
     "url": "https://github.com/cehinds/AshenSpire/pull/1493"
+  },
+  {
+    "id": "pr-1491",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the architecture check passes again",
+    "detail": "Nothing you play changes. The offline folder download named a browser feature inside the game's core rules code, which the automatic architecture check forbids, so the check had failed on every change since. That name now lives with the game's other content settings.",
+    "build": "0.7.1.792",
+    "pullRequest": 1491,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1491"
   },
   {
     "id": "pr-1471",
