@@ -1941,6 +1941,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         selfArm = null;
         hideTooltip();
         render();
+        // render() repaints the hand only when its key moves, and a selection
+        // is not in that key — so the card kept `.selected` (and aria-pressed)
+        // after its targeting was cancelled. The one writer of selection
+        // presentation clears it, the same way every other disarm does.
+        syncCardSelection();
         const cancelledCard = cancelledSelf
           ? combatEl.querySelector(`.hand .card[data-instance-id="${CSS.escape(cancelledSelf)}"]`)
           : null;

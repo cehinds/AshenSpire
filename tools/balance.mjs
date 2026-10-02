@@ -11,6 +11,7 @@
 //   4. Sanity table: elites/bosses — turns-to-kill at reference DPS bands vs.
 //      turns-to-die, with an unbeatable-by-construction (heal >= DPS) check.
 //   5. Tier-1 empirical: greedy-bot win rate + avg HP lost, starting decks.
+//   7. Recorded runsim reports, copied verbatim from docs/balance-runs.md.
 //
 // "Tier" is the seat's authored baseTier (SPEC §13.1) — the act a seat's numbers
 // were written for. An act is a seat AT a tier, so a run's act 2 is whichever
@@ -297,6 +298,25 @@ P('- **Section 5 is tier 1 only**, starting deck only, 300 seeds per row.');
 P('- It asserts exactly ONE thing (SPEC §9 acceptance: no encounter is');
 P('  unbeatable by construction). Every other number above is a report.');
 P('');
+// THE RECORDED RUNSIM REPORTS (FINISH §4: the Mana-aware A/B and the seat-tier
+// win rates). Full runs take minutes, so they are measured by hand and kept in
+// docs/balance-runs.md; this document carries them verbatim, so --check still
+// compares every line and a regenerate never drops them.
+{
+  const { readFileSync } = await import('node:fs');
+  const recorded = readFileSync(new URL('../docs/balance-runs.md', import.meta.url), 'utf8').replace(/\r\n/g, '\n').replace(/\n+$/, '');
+  for (const line of recorded.split('\n')) P(line);
+  P('');
+  // Verbatim, but not unchecked: every multiplier the report states must be
+  // the live configuration, or the rates beside it were measured under a
+  // config that no longer ships (tools/balance-runs-check.mjs).
+  const { recordedMultiplierProblems } = await import('./balance-runs-check.mjs');
+  const stale = recordedMultiplierProblems(REG, recorded);
+  if (stale.length) {
+    console.error(`docs/balance-runs.md records configuration that is not live content:\n  ${stale.join('\n  ')}\nRe-run the runsim reports it names and record them, then regenerate.`);
+    process.exit(1);
+  }
+}
 
 // `--check` is the drift gate: regenerate, compare with the committed
 // docs/BALANCE.md, and exit 1 naming the first line that moved. The document
