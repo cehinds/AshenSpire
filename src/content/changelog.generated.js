@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the action-bar layout check runs again",
     "detail": "Nothing you play changes. When co-op got the solo action bar, the bar's markup moved into a shared component, and the tool that checks the bar never lands on your cards, the top bar or the battlefield was still looking for it in the old place. It stopped before it measured anything. It now reads the shared component and checks all 44 cells again.",
-    "build": "0.7.1.733",
+    "build": "0.7.1.735",
     "pullRequest": 1441,
     "url": "https://github.com/cehinds/AshenSpire/pull/1441"
+  },
+  {
+    "id": "pr-1437",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: every class now plays five whole runs on every change",
+    "detail": "Nothing you play changes. The test suite now plays five full runs for each class without a screen, on fixed seeds. Each run goes from the map through fights, rewards and events to a win or a death. The suite fails if a run crashes or gets stuck, whether in a fight that never ends or on a map path that never reaches the boss.",
+    "build": "0.7.1.734",
+    "pullRequest": 1437,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1437"
+  },
+  {
+    "id": "pr-1435",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: combat screenshots no longer leave out your character",
+    "detail": "Nothing you play changes: your character was always drawn in the game itself. The tool that takes the preview pictures sometimes took the combat picture before your character was painted, which left only a shadow where they stand. It now waits until every fighter's artwork has loaded and the picture holds still, and if that never happens it reports the problem instead of saving the picture. The larger enemies in recent pictures are intended, from the recent changes that made enemies larger on the battlefield.",
+    "build": "0.7.1.733",
+    "pullRequest": 1435,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1435"
   },
   {
     "id": "pr-1436",
