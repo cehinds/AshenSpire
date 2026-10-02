@@ -28,7 +28,7 @@ import { createRunState, createIdGen, createDeck } from '../src/model/state.js';
 import { createRng, seedToString } from '../src/engine/rng.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
-import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/combatSnapshot.js';
+import { commitCombatSnapshot, restoreCombatSnapshot, serializeCombatSnapshot } from '../src/engine/combatSnapshot.js';
 import { dispatch } from '../src/engine/combat.js';
 import { isPoolDeckRun, dealtAttackSlotCount, POOL_DECK_RULE } from '../src/model/cardRemoval.js';
 import { stampDeck } from '../src/model/loadout.js';
@@ -378,6 +378,20 @@ test('a fight\'s poolDeck flag must agree with its run, and never rides a run (C
     const snapshot = { ...structuredClone(run.combatEntered.snapshot), poolDeck: true };
     assert.throws(() => restoreCombatSnapshot({ registries, rng: createRng(SEED), snapshot, fallbackPoolDeck: false }), /poolDeck/);
   }
+});
+
+test('a Sealed fight round-trips through a standalone restore; only supplied run context can disagree (Codex review)', () => {
+  const { run, rng } = deal('reaver', 'sealed');
+  const combat = fight(run, rng);
+  const saved = serializeCombatSnapshot(combat);
+  assert.equal(saved.poolDeck, true, 'a new Sealed fight carries the flag');
+  // No run context: the snapshot's own flag stands and nothing throws.
+  const back = restoreCombatSnapshot({ registries, rng: createRng(SEED), snapshot: structuredClone(saved) });
+  assert.equal(back.poolDeck, true);
+  assert.deepEqual(serializeCombatSnapshot(back), saved, 'the round trip is exact');
+  // Agreeing context restores; an explicit Standard context is refused.
+  assert.equal(restoreCombatSnapshot({ registries, rng: createRng(SEED), snapshot: structuredClone(saved), fallbackPoolDeck: true }).poolDeck, true);
+  assert.throws(() => restoreCombatSnapshot({ registries, rng: createRng(SEED), snapshot: structuredClone(saved), fallbackPoolDeck: false }), /poolDeck/);
 });
 
 test('standard: a deck missing its composed attack slots is still refused', () => {

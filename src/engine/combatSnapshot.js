@@ -113,13 +113,17 @@ export function serializeCombatSnapshot(combat) {
  * non-idempotent for a current one, which tools/weapon-card-packages.mjs is
  * right to assert against: a load must not rewrite a snapshot it understands.
  */
+// `fallback` is run context: a boolean only when the caller holds the run
+// (main.js resumeRun passes isPoolDeckMode(run)). Left undefined, the
+// snapshot's own flag stands, so a standalone round trip of a Sealed or
+// Draft fight restores it; only a supplied context can disagree.
 function restoredPoolDeck(saved, fallback) {
   if (saved !== undefined && saved !== true) throw new Error(`combat snapshot poolDeck must be true when present (got ${JSON.stringify(saved)})`);
-  if (typeof fallback === 'boolean' && saved === true && !fallback) throw new Error('combat snapshot poolDeck disagrees with the run\'s deck mode');
+  if (typeof fallback === 'boolean' && saved === true && fallback === false) throw new Error('combat snapshot poolDeck disagrees with the run\'s deck mode');
   return saved === true || fallback === true;
 }
 
-export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode, fallbackPoolDeck = false }) {
+export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode, fallbackPoolDeck }) {
   assertCombatSnapshot(snapshot);
   const saved = structuredClone(snapshot);
   if (saved.foundation) validateFoundationSnapshot(saved.foundation);
