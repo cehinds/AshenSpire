@@ -62,6 +62,17 @@ test('promoted defaults follow the build, never the Developer tools switch', asy
   } finally { setPageDebugForTests(null); }
 });
 
+test('a dev seat with Developer tools off offers no hidden tuning to clear', async () => {
+  const { hiddenTuningKeys } = await import('../src/ui/screens/settings.js');
+  const { SETTINGS_DEFAULTS } = await import('../src/content/settingsDefaults.js');
+  const settings = { shrineMultiUse: true, 'gameConfig.balance.anything': 3, ...(SETTINGS_DEFAULTS.values || {}) };
+  try {
+    setPageDebugForTests(false);
+    assert.deepEqual(hiddenTuningKeys(settings), [], 'dev/test hide the rows but keep them, so Clear would fight the boot seed');
+    assert.ok(hiddenTuningKeys(settings, false).length > 0, 'a release build still lists what it cannot show');
+  } finally { setPageDebugForTests(null); }
+});
+
 test('Developer tools is a toggle on dev, test and unknown builds, and hidden on the release builds', () => {
   const memory = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v), removeItem: (k) => m.delete(k) }; };
   for (const channel of ['main', 'release']) {
@@ -584,7 +595,11 @@ test('a Reset goes back to the promotion this build applies, never hidden tuning
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.match(screen, /export function resetKeys\(settings, onChange, keys, label = 'Reset', \{ promoted = buildPromotion\(\) \} = \{\}\)/);
-  assert.match(screen, /return debug \? PROMOTED_DEFAULTS : promotionFor\(SETTINGS_DEFAULTS, false\)\.values;/);
+  assert.match(screen, /if \(debug\) return PROMOTED_DEFAULTS;\n  return releasePromotion \?\?= Object\.freeze\(promotionFor\(SETTINGS_DEFAULTS, false\)\.values\);/);
+  // The row's dot, its Reset button and the Changed filter read the same
+  // promotion boot seeds, so they cannot disagree with it (#1457 review).
+  assert.match(screen, /export function rowDefault\(row, promoted = buildPromotion\(\)\)/);
+  assert.match(screen, /export function rowModified\(settings, row, promoted = buildPromotion\(\)\)/);
   const { resetKeys } = await import('../src/ui/screens/settings.js');
   const settings = { shrineMultiUse: true, screenShake: true };
   resetKeys(settings, () => ({ ok: true }), ['shrineMultiUse', 'screenShake'], 'all', { promoted: { screenShake: false } });

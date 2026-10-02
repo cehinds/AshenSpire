@@ -232,7 +232,10 @@ function graceRefillRows() {
  * still apply, but nothing on screen can see or reset them — so the options
  * menu offers to clear them.
  */
-export function hiddenTuningKeys(settings = {}, debug = pageDebug()) {
+// A dev or test build has every row even with Developer tools switched off
+// (the switch only hides them), and boot seeds their promoted values there
+// (promotionDebug), so nothing on it counts as hidden tuning to clear.
+export function hiddenTuningKeys(settings = {}, debug = pageDebug() || promotionDebug()) {
   if (debug) return [];
   const hidden = releaseHidden();
   return Object.keys(settings).filter((key) => settings[key] !== undefined && hidden(key));
@@ -272,8 +275,10 @@ export function promotionFor(defaults, debug = promotionDebug()) {
  * not show, as boot does, so no Reset reinstalls hidden tuning.
  */
 function buildPromotion(debug = promotionDebug()) {
-  return debug ? PROMOTED_DEFAULTS : promotionFor(SETTINGS_DEFAULTS, false).values;
+  if (debug) return PROMOTED_DEFAULTS;
+  return releasePromotion ??= Object.freeze(promotionFor(SETTINGS_DEFAULTS, false).values);
 }
+let releasePromotion = null;
 
 /** The owner's promoted defaults, by setting key (tools/settings-defaults.mjs). */
 const PROMOTED_DEFAULTS = Object.freeze({ ...(SETTINGS_DEFAULTS.values || {}) });
@@ -1405,7 +1410,7 @@ function markModified(container, settings, changes) {
  * rowDefault(row) → the value Reset restores: the owner's promoted default
  * (src/content/settingsDefaults.js) when there is one, else the row's own.
  */
-export function rowDefault(row, promoted = PROMOTED_DEFAULTS) {
+export function rowDefault(row, promoted = buildPromotion()) {
   if (row && Object.hasOwn(promoted, row.key)) return promoted[row.key];
   return row?.def;
 }
@@ -1531,7 +1536,7 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
 const VALUE_ROW_TYPES = new Set(['number', 'range', 'choice', 'color', 'colorSwatch', 'text', 'textarea', undefined, 'toggle']);
 
 /** rowModified(settings, row) → true when the stored value differs from the default. */
-export function rowModified(settings, row, promoted = PROMOTED_DEFAULTS) {
+export function rowModified(settings, row, promoted = buildPromotion()) {
   if (!row || !VALUE_ROW_TYPES.has(row.type)) return false;
   const stored = settings?.[row.key];
   if (stored === undefined) return false;
