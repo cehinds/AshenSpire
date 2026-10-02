@@ -498,6 +498,7 @@ export function createSession({ registries, seedString, endless = false, restore
       attributeMode: m.run.attributeMode, attributes: { ...m.run.attributes },
       skills: m.run.skills, // the seat's ledger, for the progression predicates (plan phase 4a)
       coreTags: m.run.coreTags, // the seat's class tree picks (plan phase 5b)
+      attunedSigils: m.run.attunedSigils || [], // the seat's attuned legendary sigils (SPEC §15.4)
       // The seat's loadout rides into the co-op engine so the framework Weight
       // Class (dodge check and pricing) is this player's, not a Light default.
       loadout: m.run.loadout ? structuredClone(m.run.loadout) : null,
