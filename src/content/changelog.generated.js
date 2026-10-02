@@ -3,6 +3,56 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1442",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The Pages site no longer copies the art review folder",
+    "detail": "Behind the scenes: the project site stops carrying the art review pages and old build-file copies from main, the stable links get their map tiles beside every copy, and link previews use a picture the site itself serves; nothing you play changes.",
+    "build": "0.7.1.736",
+    "pullRequest": 1442,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1442"
+  },
+  {
+    "id": "pr-1443",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition loads its art from hash-pinned packs",
+    "detail": "Behind the scenes: the served web edition now keeps its art as files named by their contents, checks the list of them against a fingerprint inside the game file before using it, and falls back from high to light art (or to placeholders) when a list is missing; the single-file download is unchanged and nothing you play changes.",
+    "build": "0.7.1.735",
+    "pullRequest": 1443,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1443"
+  },
+  {
+    "id": "pr-1437",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: every class now plays five whole runs on every change",
+    "detail": "Nothing you play changes. The test suite now plays five full runs for each class without a screen, on fixed seeds. Each run goes from the map through fights, rewards and events to a win or a death. The suite fails if a run crashes or gets stuck, whether in a fight that never ends or on a map path that never reaches the boss.",
+    "build": "0.7.1.734",
+    "pullRequest": 1437,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1437"
+  },
+  {
+    "id": "pr-1435",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: combat screenshots no longer leave out your character",
+    "detail": "Nothing you play changes: your character was always drawn in the game itself. The tool that takes the preview pictures sometimes took the combat picture before your character was painted, which left only a shadow where they stand. It now waits until every fighter's artwork has loaded and the picture holds still, and if that never happens it reports the problem instead of saving the picture. The larger enemies in recent pictures are intended, from the recent changes that made enemies larger on the battlefield.",
+    "build": "0.7.1.733",
+    "pullRequest": 1435,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1435"
+  },
+  {
+    "id": "pr-1436",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Co-op combat has the same bottom bar as solo",
+    "detail": "In a co-op fight the bottom of the screen showed an Actions circle, a stretched End Turn bar and a second row of flask buttons, and it had no Draw, Discard or Potions. Now it is the solo bar: Actions, Draw, End Turn, Discard/Exhaust and Potions, in one tidy row, laid out exactly as solo lays them out on a phone, a sideways phone and a desktop. Your flasks are behind Potions, as they are in solo, and the flask keys open that list. With two players on one screen, the Potions list belongs to whoever opened it: switching seats with Tab closes it, so you can never drink the other player's flask by mistake. A player who is down or disconnected can still open Potions to see what they carry. Each potion's details now say where it goes in co-op: at the selected enemy, or at a player you pick. Pressing a flask key twice no longer stacks a second Potions list over the board, and screen readers hear the Actions count as it changes. If the fight ends while the Potions list is open, it closes, and a Use confirmed after the host has moved your potions spends nothing.",
+    "build": "0.7.1.732",
+    "pullRequest": 1436,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1436"
+  },
+  {
     "id": "pr-1438",
     "date": "2026-10-01",
     "group": "2026-10-01",
