@@ -96,7 +96,8 @@ fails the core suite while it is stale, or when any field differs from what
 `src/ui/assetmap.js` resolves; `assetUrl()` checks an optional high-res source
 first (built from a manifest by the Art quality setting), then the built-in
 art. Not yet covered: game code still builds many `assets/…` paths from
-templates, and 14 CSS `url(../assets/…)` backdrops bypass `assetUrl()`.
+templates, and the CSS `url(../assets/…)` backdrops bypass `assetUrl()` in the
+source tree and the single file (the web edition reads them through `ASSET_CSS`).
 Schema 2 (docs/EXTERNAL-ASSETS-PLAN.md, step 2) adds `common` ids with one
 `{path, bytes, sha256}` record each: the 15 fonts under `assets/fonts/`,
 `licenses/OFL.txt` (read from `asset-data/fonts/OFL.txt`), `music/manifest.json`
@@ -113,8 +114,16 @@ index's sha256 and the default tier into `ASSET_PACKS` (`src/ui/assetPacks.js`),
 and the loader checks the indexes at boot and resolves ids to objects through
 `setBuiltInSource()` in `src/ui/assetmap.js` (high → light → placeholders when
 an index is missing or fails its pin; `tests/asset-packs.test.mjs`).
-`node tools/verify-external.mjs` checks the tree on disk and
-`node tools/external-play.mjs` loads it in Chromium. The single files are
+The CSS assets follow the same index (step 3b): `tools/asset-css.mjs` moves the
+"AS Lore" `@font-face` rules into an `ASSET_CSS` template with `{{id}}` slots,
+turns each backdrop `url()` into `var(--as-css-<id>, none)` defined there, and
+inlines the two SVG masks as `data:`; the loader fills the slots from the index it
+used (light when high failed) and injects one `<style data-asset-css>`, and a
+failed load injects nothing (no backdrop, system faces; `tests/asset-css.test.mjs`).
+`node tools/verify-external.mjs` checks the tree on disk (D: every `ASSET_CSS`
+slot names an id the common index or every art tier lists) and
+`node tools/external-play.mjs` loads it in Chromium (`--expect-tier light` for a
+high-default build whose high index was removed). The single files are
 unchanged: their `ASSET_PACKS` stays null and the loader does nothing.
 
 **The high-res release** (docs/ART-REPO-PLAN.md). `art-release.json` pins one
@@ -289,6 +298,16 @@ Linux jobs, plus the bundler's parse-gate fixtures (`node tools/bundle.test.mjs`
 several minutes) as a third; on a pull request into `dev` only the fast half
 (`core suite`) runs, and all three run on every push to `test` and `release`
 (see *Which checks gate a pull request* above).
+
+Every browser tool launches Chromium through `tools/browser.mjs` (`CHROME`
+picks the binary). The wait for Chrome's DevTools endpoint is never shorter
+than a launch floor, `LAUNCH_FLOOR_MS` (30000 ms), whatever `timeoutMs` the
+tool passes, because a cold Chrome start on a GitHub runner can take longer
+than the 12000 ms most tools ask for (D35). Set `ASHEN_BROWSER_LAUNCH_MS` to
+change the floor in ms (`0` turns it off; a value that is not a whole number,
+or is above 2147483647, is ignored). A browser that exits or fails to start
+still fails at once; only a slow one is waited for.
+`node --test tests/browser-launch-floor.test.mjs` covers the floor.
 
 ```
 # what raises the red failure banner, and what must not
