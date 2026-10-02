@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildChannel, debugEnabled, DEBUG_STORAGE_KEY } from '../src/ui/buildChannel.js';
+import { buildChannel, debugEnabled, debugSwitch, setDebugEnabled, setPageDebugForTests, DEBUG_STORAGE_KEY } from '../src/ui/buildChannel.js';
 import {
-  visibleAdvancedGroups, RELEASE_ADVANCED_GROUP_IDS, ADVANCED_GROUP_IDS, settingsSearchHits,
+  visibleAdvancedGroups, developerSwitchHtml, RELEASE_ADVANCED_GROUP_IDS, ADVANCED_GROUP_IDS, settingsSearchHits,
   settingsRowHtml, settingsRow, sliderSpan, niceCeil, buttonStep, rowModified, settingsRows,
 } from '../src/ui/screens/settings.js';
 import {
@@ -28,7 +28,7 @@ test('the channel is read from where the page was served or saved', () => {
   assert.equal(buildChannel(null), 'dev', 'no page (Node) is a developer’s seat');
 });
 
-test('debug opens on dev and test, never on main or release, and on unknown only when asked', () => {
+test('debug is on by default on dev and test, never on main or release, and off on unknown until asked', () => {
   const memory = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v), removeItem: (k) => m.delete(k) }; };
   assert.equal(debugEnabled('dev', { search: '', storage: memory() }), true);
   assert.equal(debugEnabled('test', { search: '', storage: memory() }), true);
@@ -39,13 +39,51 @@ test('debug opens on dev and test, never on main or release, and on unknown only
   assert.equal(debugEnabled('unknown', { search: '?debug=1', storage: store }), true);
   assert.equal(store.getItem(DEBUG_STORAGE_KEY), '1', 'remembered on the device');
   assert.equal(debugEnabled('unknown', { search: '', storage: store }), true);
-  assert.equal(debugEnabled('unknown', { search: '?debug=0', storage: store }), false, '?debug=0 forgets it');
+  assert.equal(debugEnabled('unknown', { search: '?debug=0', storage: store }), false, '?debug=0 turns it off');
+  assert.equal(debugEnabled('unknown', { search: '', storage: store }), false);
+  const devStore = memory();
+  assert.equal(debugEnabled('dev', { search: '?debug=0', storage: devStore }), false, 'a dev build can be switched off');
+  assert.equal(debugEnabled('dev', { search: '', storage: devStore }), false, 'and stays off on this device');
+  assert.equal(debugEnabled('test', { search: '?debug=0', storage: null }), false, 'without storage the flag still counts for the page');
+});
+
+test('Developer tools is a toggle on dev, test and unknown builds, and hidden on the release builds', () => {
+  const memory = () => { const m = new Map(); return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v), removeItem: (k) => m.delete(k) }; };
+  for (const channel of ['main', 'release']) {
+    const state = debugSwitch(channel, { search: '', storage: memory() });
+    assert.equal(state.hidden, true, `${channel} hides the switch`);
+    assert.equal(state.on, false);
+    assert.equal(developerSwitchHtml(state), '', `${channel} draws no row`);
+  }
+  for (const channel of ['dev', 'test', 'unknown']) {
+    const store = memory();
+    const state = debugSwitch(channel, { search: '', storage: store });
+    assert.equal(state.hidden, false);
+    assert.equal(state.on, channel !== 'unknown', `${channel} default`);
+    assert.match(developerSwitchHtml(state), /data-developer-switch/, `${channel} draws a toggle`);
+    try {
+      assert.equal(setDebugEnabled(!state.on, { channel, storage: store }), !state.on);
+      assert.equal(store.getItem(DEBUG_STORAGE_KEY), state.on ? '0' : '1', 'remembered like ?debug=');
+      assert.equal(debugSwitch(channel, { search: '', storage: store }).on, !state.on);
+    } finally { setPageDebugForTests(null); }
+  }
+  const store = memory();
+  try {
+    setPageDebugForTests(false);
+    assert.equal(setDebugEnabled(true, { channel: 'release', storage: store }), false, 'release stays off');
+    assert.equal(store.getItem(DEBUG_STORAGE_KEY), null);
+    setPageDebugForTests(true);
+    assert.equal(debugSwitch('dev').on, true, 'with no options the switch reads the page’s own answer');
+    setPageDebugForTests(false);
+    assert.equal(debugSwitch('dev').on, false);
+  } finally { setPageDebugForTests(null); }
 });
 
 test('a release build shows only the player-facing Advanced sections, and search follows', () => {
   assert.deepEqual(visibleAdvancedGroups(true).map((g) => g.id), [...ADVANCED_GROUP_IDS]);
   assert.deepEqual(visibleAdvancedGroups(false).map((g) => g.id), [...RELEASE_ADVANCED_GROUP_IDS]);
   assert.ok(ADVANCED_GROUP_IDS.includes('Sync'), 'Defaults & sync is a debug section');
+  assert.ok(visibleAdvancedGroups(false).some((g) => g.id === 'Deck'), 'the deck editor settings reach release players (SPEC §14.1)');
   const debugHits = settingsSearchHits('poise', true);
   const releaseHits = settingsSearchHits('poise', false);
   assert.ok(debugHits.some(({ row }) => row.key.startsWith('gameConfig.')), 'debug search reaches tuning rows');
@@ -254,13 +292,17 @@ test('a profile that already matches is recorded as loaded', async () => {
   assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?if \(!write\(SYNC_STORAGE\.lastSha, remote\.sha/);
 });
 
-test('the dev-preview standalone files are named so they open as dev builds', async () => {
+test('the preview standalone files are named so they open as their branch\'s builds', async () => {
   const { readFileSync } = await import('node:fs');
   const workflow = readFileSync(new URL('../.github/workflows/dev-preview.yml', import.meta.url), 'utf8');
-  const names = [...workflow.matchAll(/standalone\/(AshenSpire[^\s]*\.html)/g)].map((m) => m[1]);
+  const names = [...workflow.matchAll(/standalone\/(AshenSpire[^\s"]*\.html)/g)].map((m) => m[1]);
   assert.ok(names.length >= 2, 'the workflow still writes the standalone files');
-  for (const name of names) {
-    assert.equal(buildChannel({ pathname: `/Downloads/dev-standalone/${name}`, hostname: '', protocol: 'file:' }, 'standalone file'), 'dev', name);
+  // The workflow names each file for the branch it built (${CHANNEL}: the PR's
+  // base or the pushed branch), so a main build must not open as dev.
+  for (const channel of ['dev', 'test', 'release', 'main']) {
+    for (const name of names.map((n) => n.replace('${CHANNEL}', channel))) {
+      assert.equal(buildChannel({ pathname: `/Downloads/${channel}-standalone/${name}`, hostname: '', protocol: 'file:' }, 'standalone file'), channel, name);
+    }
   }
 });
 
@@ -398,10 +440,10 @@ test('a key a profile leaves out goes back to its promoted default, not the code
   assert.deepEqual(profileDiff(here, parsed).map((d) => d.to), [undefined, undefined], 'no promoted default: cleared');
 });
 
-test('changing the device-key scope forgets the loaded version, and Changed counts only what it can show', async () => {
+test('widening the device-key scope forgets the loaded version (narrowing keeps it), and Changed counts only what it can show', async () => {
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
-  assert.match(panel, /write\(SYNC_STORAGE\.includeDevice[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*write\(SYNC_STORAGE\.lastSha, null\);/);
+  assert.match(panel, /write\(SYNC_STORAGE\.includeDevice[^\n]*\n(?:\s*\/\/[^\n]*\n)*\s*if \(next\) write\(SYNC_STORAGE\.lastSha, null\);/, 'widening re-reads the loaded version; narrowing keeps it');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.match(screen, /const count = settingsSearchHits\('', pageDebug\(\), settings, \{ changedOnly: true \}\)\.length;/);
   const hidden = settingsSearchHits('', false, { 'gameConfig.derivedStatRules.rules.ar.strength': 1.5 }, { changedOnly: true });

@@ -1,9 +1,14 @@
 # dist — the standalone build
 
-The three current standalone HTML files are stored through Git LFS. Use GitHub's
-download button or a hydrated checkout (`git lfs pull`) to obtain the playable
-file; the small LFS pointer shown by raw Git commands is not the game. Once
-downloaded, the complete HTML still plays offline without Git or other tools.
+**On `dev` nothing built is tracked here any more** (since 2026-09-26): every
+rebuild uploaded ~284 MB of new Git LFS objects and exhausted the repository's
+LFS budget. `node tools/launch.mjs --build-only` writes the files described
+below locally (git ignores them), and CI publishes each commit's build as the
+`dev-standalone-<commit>` artifact of `.github/workflows/dev-preview.yml`.
+`release` and `main` still track their copies through Git LFS until the owner
+promotes this change. Wherever it came from, the complete HTML plays offline
+without Git or other tools. The rest of this file describes the build shapes; its
+"tracked in git" wording is true of `release`/`main`, not of `dev`.
 
 **There are three shapes of this build now, and this directory holds two of
 them.** `tools/bundle.mjs` writes the consolidated single file by default, the
@@ -63,7 +68,7 @@ operation and `tools/verify-shipped.mjs` verifies both against `build/`.
 From the project root:
 
 ```
-node tools/launch.mjs --build-only     # rebuild build/ (full + mobile) and refresh root + dist/
+node tools/launch.mjs --build-only     # rebuild build/ (light art; --full-art for full + mobile) and refresh root + dist/
 node tools/bundle.mjs                  # ONLY the bundler → build/AshenSpire.html; root + dist/ untouched
 node tools/bundle.mjs --mobile         # ONLY the mobile bundler → build/AshenSpire-mobile.html
 node tools/verify-shipped.mjs          # check root + dist/ ARE those builds, carry art, and the mobile one fits

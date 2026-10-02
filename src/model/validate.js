@@ -12,6 +12,14 @@
 // Headless: no document/window/localStorage/timers.
 
 import { handRulesDefaults } from '../content/handRules.js';
+import { deckRules as shippedDeckRules } from '../content/deckRules.js';
+import { shops as shippedShops } from '../content/shops.js';
+import { sigils as shippedSigils } from '../content/sigils.js';
+import { consumables as shippedConsumables } from '../content/consumables.js';
+import { companions as shippedCompanions } from '../content/companions.js';
+import { consumableTableProblems, companionTableProblems } from './consumables.js';
+import { shopsTableProblems } from './shopKinds.js';
+import { marketAdditionTableProblems, blacksmithTableProblems } from './marketStock.js';
 import { resolveFloorPlan } from './floorplan.js';
 import { validateAttack } from './combatRules.js';
 import { assertTableSane } from './secondbeat.js';
@@ -39,6 +47,7 @@ import {
   NODE_RELATIONS,
   VARIABLE_SCOPES,
   CARD_RARITIES,
+  SIGIL_RARITIES,
 } from './schemas.js';
 import { RESOURCE_SOURCE_IDS } from './resources.js';
 import { treeProblems, nodeTokens, nodeVariableBindings, cardKind } from './tree.js';
@@ -102,6 +111,10 @@ const KNOWN_BUNDLE_KEYS = new Set([
   'version',
   'contentVersion',
   'balance',
+  'shops', // SPEC §14.2: the shop kinds and their offerings (content/shops.js)
+  'sigils', // SPEC §14.3: sigils, sold at the market into run.sigils (content/sigils.js)
+  'consumables', // SPEC §14.3: skill books and revive tokens (content/consumables.js)
+  'companions', // SPEC §14.3: temporary companions (content/companions.js)
   'mapConfigs',
   'scripts',
   'equipment',
@@ -645,6 +658,15 @@ function collectContentProblems(bundle, errors = []) {
       if (handRulesDefaults[group] !== undefined) err(`handRulesDefaults.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${row}`);
       if (b.handRules && b.handRules[group] !== undefined) err(`handRules.${group}`, `was retired in derived-stat ruleset 7: the count is derivedStatRules.rules.${row}, and a copy here is a second home for one number`);
     }
+    // The deck editor's rules (content/deckRules.js, SPEC §14.1) are data the
+    // editor reads at use; a malformed table is refused here, by name, at boot.
+    deckRulesTableProblems(b.deckRules || shippedDeckRules, b.cards, err, b.nodes);
+    // The shop kinds (content/shops.js, SPEC §14.2): the guaranteed minimum,
+    // the offerings, a [NOTE] beside every number, and no weight for a kind
+    // whose screen has not shipped.
+    shopsTableProblems(b.shops || shippedShops, err, b);
+    marketAdditionTableProblems(b.shops || shippedShops, err);
+    blacksmithTableProblems(b.shops || shippedShops, err);
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
       if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);
@@ -673,15 +695,45 @@ function collectContentProblems(bundle, errors = []) {
     }
   }
 
+  // THE CARD REWARD SCHEDULE (SPEC §15.1). Absent reads as the shipped
+  // defaults (model/rewardplan.js cardRewardSchedule, read by cardRewardPlan); present, every key is
+  // checked, and a key it does not know is refused rather than ignored.
+  if (b.balance?.rewards?.cardRewards !== undefined) {
+    const s = b.balance.rewards.cardRewards;
+    const root = 'balance.rewards.cardRewards';
+    const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
+    if (!object(s)) err(root, 'must be an object { afterCombat, chancePct, onLevelUp, onLevelUpMaxPerFight }');
+    else {
+      for (const key of Object.keys(s)) if (!['afterCombat', 'chancePct', 'onLevelUp', 'onLevelUpMaxPerFight'].includes(key)) err(`${root}.${key}`, 'Unknown field');
+      for (const [key, check, want] of [
+        ['afterCombat', value => typeof value === 'boolean', 'true or false'],
+        ['chancePct', value => Number.isInteger(value) && value >= 0 && value <= 100, 'an integer percent 0–100'],
+      ]) {
+        const table = s[key];
+        if (!object(table)) { err(`${root}.${key}`, 'must be an object { normal, elite, boss }'); continue; }
+        for (const pool of Object.keys(table)) if (!['normal', 'elite', 'boss'].includes(pool)) err(`${root}.${key}.${pool}`, 'unknown reward pool');
+        for (const pool of ['normal', 'elite', 'boss']) if (!check(table[pool])) err(`${root}.${key}.${pool}`, `must be ${want}, got ${JSON.stringify(table[pool])}`);
+      }
+      if (typeof s.onLevelUp !== 'boolean') err(`${root}.onLevelUp`, `must be true or false, got ${JSON.stringify(s.onLevelUp)}`);
+      if (!(Number.isInteger(s.onLevelUpMaxPerFight) && s.onLevelUpMaxPerFight >= 0)) err(`${root}.onLevelUpMaxPerFight`, `must be a non-negative integer, got ${JSON.stringify(s.onLevelUpMaxPerFight)}`);
+    }
+  }
+
   if (b.balance && b.balance.level !== undefined) {
     const lv = b.balance.level;
     if (!lv || typeof lv !== 'object' || Array.isArray(lv)) err('balance.level', 'must be an object { xp }');
     else {
-      for (const key of Object.keys(lv)) if (!['xp'].includes(key)) err(`balance.level.${key}`, 'Unknown field');
+      for (const key of Object.keys(lv)) if (!['xp', 'maxLevelsPerFight'].includes(key)) err(`balance.level.${key}`, 'Unknown field');
+      // The levelling cap (SPEC §15.2): 0 is no cap, else a whole number of levels.
+      if (lv.maxLevelsPerFight !== undefined && !(Number.isInteger(lv.maxLevelsPerFight) && lv.maxLevelsPerFight >= 0)) {
+        err('balance.level.maxLevelsPerFight', `must be a non-negative integer (0 is no cap), got ${JSON.stringify(lv.maxLevelsPerFight)}`);
+      }
       const xp = lv.xp;
       if (!xp || typeof xp !== 'object' || Array.isArray(xp)) err('balance.level.xp', 'must be an object { base, growth, roundTo }');
       else {
-        for (const key of Object.keys(xp)) if (!['base', 'growth', 'roundTo'].includes(key)) err(`balance.level.xp.${key}`, 'Unknown field');
+        for (const key of Object.keys(xp)) if (!['base', 'growth', 'roundTo', 'linear', 'multScaler'].includes(key)) err(`balance.level.xp.${key}`, 'Unknown field');
+        if (xp.linear !== undefined && typeof xp.linear !== 'boolean') err('balance.level.xp.linear', 'must be a boolean');
+        if ((xp.linear === true || xp.multScaler !== undefined) && !(Number.isFinite(xp.multScaler) && xp.multScaler >= 0)) err('balance.level.xp.multScaler', 'must be a non-negative number');
         if (!(Number.isFinite(xp.base) && xp.base > 0)) err('balance.level.xp.base', `must be a positive number, got ${JSON.stringify(xp.base)}`);
         if (!(Number.isFinite(xp.growth) && xp.growth >= 1)) err('balance.level.xp.growth', `must be a number of at least 1, got ${JSON.stringify(xp.growth)}`);
         if (!(Number.isInteger(xp.roundTo) && xp.roundTo > 0)) err('balance.level.xp.roundTo', `must be a positive integer, got ${JSON.stringify(xp.roundTo)}`);
@@ -690,10 +742,12 @@ function collectContentProblems(bundle, errors = []) {
   }
   if (b.balance && b.balance.xp !== undefined) {
     const xp = b.balance.xp;
-    if (!xp || typeof xp !== 'object' || Array.isArray(xp)) err('balance.xp', 'must be an object { combatWin, kill, quest }');
+    if (!xp || typeof xp !== 'object' || Array.isArray(xp)) err('balance.xp', 'must be an object { combatWin, combatPowerMultiplier, kill, killLevelMultiplier, quest }');
     else {
-      for (const key of Object.keys(xp)) if (!['combatWin', 'kill', 'quest'].includes(key)) err(`balance.xp.${key}`, 'Unknown field');
+      for (const key of Object.keys(xp)) if (!['combatWin', 'combatPowerMultiplier', 'kill', 'killLevelMultiplier', 'quest'].includes(key)) err(`balance.xp.${key}`, 'Unknown field');
       for (const key of ['combatWin', 'quest']) if (!(Number.isInteger(xp[key]) && xp[key] >= 0)) err(`balance.xp.${key}`, `must be a non-negative integer, got ${JSON.stringify(xp[key])}`);
+      if (!(Number.isFinite(xp.killLevelMultiplier) && xp.killLevelMultiplier >= 0)) err('balance.xp.killLevelMultiplier', `must be a non-negative number, got ${JSON.stringify(xp.killLevelMultiplier)}`);
+      if (!(Number.isFinite(xp.combatPowerMultiplier) && xp.combatPowerMultiplier >= 0)) err('balance.xp.combatPowerMultiplier', `must be a non-negative number, got ${JSON.stringify(xp.combatPowerMultiplier)}`);
       if (!xp.kill || typeof xp.kill !== 'object' || Array.isArray(xp.kill)) err('balance.xp.kill', 'must be an object { normal, elite, boss }');
       else {
         for (const key of Object.keys(xp.kill)) if (!['normal', 'elite', 'boss'].includes(key)) err(`balance.xp.kill.${key}`, 'Unknown field');
@@ -731,6 +785,8 @@ function collectContentProblems(bundle, errors = []) {
       if (!posInt(row.base)) err(`${path}.base`, `must be a positive integer, got ${JSON.stringify(row.base)}`);
       if (!Number.isFinite(row.growth) || row.growth < 1) err(`${path}.growth`, `must be a number ≥ 1, got ${JSON.stringify(row.growth)}`);
       if (!posInt(row.roundTo)) err(`${path}.roundTo`, `must be a positive integer, got ${JSON.stringify(row.roundTo)}`);
+      if (row.linear !== undefined && typeof row.linear !== 'boolean') err(`${path}.linear`, 'must be a boolean');
+      if ((row.linear === true || row.multScaler !== undefined) && !nonNeg(row.multScaler)) err(`${path}.multScaler`, 'must be a non-negative number');
     };
     if (!skill || typeof skill !== 'object' || Array.isArray(skill)) err('balance.skill', 'must be an object { xp, class }');
     else {
@@ -755,14 +811,14 @@ function collectContentProblems(bundle, errors = []) {
         for (const key of ['perHit', 'perWinEquipped', 'evadeXp']) if (!nonNeg(skill.xp[key])) err(`balance.skill.xp.${key}`, `must be a non-negative number, got ${JSON.stringify(skill.xp[key])}`);
         for (const key of ['impactPerXp', 'buildupPerXp']) if (!(Number.isFinite(skill.xp[key]) && skill.xp[key] > 0)) err(`balance.skill.xp.${key}`, `must be a positive number, got ${JSON.stringify(skill.xp[key])}`);
         if (!(Number.isFinite(skill.xp.killMult) && skill.xp.killMult >= 1)) err('balance.skill.xp.killMult', `must be a number ≥ 1, got ${JSON.stringify(skill.xp.killMult)}`);
-        for (const key of Object.keys(skill.xp)) if (!['base', 'growth', 'roundTo', 'perHit', 'perWinEquipped', 'killMult', 'impactPerXp', 'evadeXp', 'buildupPerXp'].includes(key)) err(`balance.skill.xp.${key}`, 'Unknown field');
+        for (const key of Object.keys(skill.xp)) if (!['base', 'growth', 'roundTo', 'linear', 'multScaler', 'perHit', 'perWinEquipped', 'killMult', 'impactPerXp', 'evadeXp', 'buildupPerXp'].includes(key)) err(`balance.skill.xp.${key}`, 'Unknown field');
       }
       if (!skill.class || typeof skill.class !== 'object') err('balance.skill.class', 'must be an object { xp }');
       else {
         for (const key of Object.keys(skill.class)) if (!['xp', 'tierAt'].includes(key)) err(`balance.skill.class.${key}`, 'Unknown field');
         curve(skill.class.xp, 'balance.skill.class.xp');
         if (skill.class.xp && typeof skill.class.xp === 'object') {
-          for (const key of Object.keys(skill.class.xp)) if (!['base', 'growth', 'roundTo', 'perWin', 'bossKill', 'perQuest'].includes(key)) err(`balance.skill.class.xp.${key}`, 'Unknown field');
+          for (const key of Object.keys(skill.class.xp)) if (!['base', 'growth', 'roundTo', 'linear', 'multScaler', 'perWin', 'bossKill', 'perQuest'].includes(key)) err(`balance.skill.class.xp.${key}`, 'Unknown field');
           // The class XP sources (plan phase 5b), each present and non-negative.
           for (const key of ['perWin', 'bossKill', 'perQuest']) if (!nonNeg(skill.class.xp[key])) err(`balance.skill.class.xp.${key}`, `must be a non-negative number, got ${JSON.stringify(skill.class.xp[key])}`);
         }
@@ -1365,6 +1421,9 @@ function collectContentProblems(bundle, errors = []) {
   }
   for (const problem of levelConfigProblems(b.balance)) err(problem.path, problem.msg);
   for (const enemy of Array.isArray(b.enemies) ? b.enemies : []) {
+    if (enemy?.equipmentPower !== undefined && !(Number.isFinite(enemy.equipmentPower) && enemy.equipmentPower >= 0 && enemy.equipmentPower <= 1)) {
+      err(`enemies.${enemy.id || '?'}.equipmentPower`, 'must be a number from 0 to 1');
+    }
     if (!enemy || enemy.levelProfile == null) continue;
     for (const problem of enemyLevelProfileProblems(enemy.levelProfile, `enemies.${enemy.id || '?'}.levelProfile`)) {
       err(problem.path, problem.msg);
@@ -1824,6 +1883,19 @@ function collectContentProblems(bundle, errors = []) {
       err(`relics.${relic.id}.passives.poiseThresholdAdd`, `must be a finite non-negative integer, got ${JSON.stringify(poiseAdd)}`);
     }
   }
+
+  // ---- sigils (SPEC §14.3): { id, name, rarity, cost, blurb, triggers } ------
+  // The triggers are the relic DSL, checked by the same walker, so a sigil adds
+  // nothing to the engine's vocabulary. A legendary sigil is §15.4's (attuned,
+  // no triggers, never stock) and is refused until that section lands.
+  validateSigils(b.sigils === undefined ? shippedSigils : b.sigils, vctx, b);
+
+  // ---- consumables and companions (SPEC §14.3, step 5b) ----------------------
+  // Whole numbers with a [NOTE] each, a sale never above the price, a skill
+  // book's track a derived non-class one; a companion writes no triggers — its
+  // property is its tagging.csv row, a leaf under the companion branch.
+  consumableTableProblems(b.consumables === undefined ? shippedConsumables : b.consumables, b, err);
+  companionTableProblems(b.companions === undefined ? shippedCompanions : b.companions, b, err);
 
   // ---- threshold-proc second layer (#61): meaning, not shape ---------------
   // Every red names its row and, for tag errors, lists the legal tags — a
@@ -2330,6 +2402,48 @@ export function validateEffects(effects, path, vctx) {
   });
 }
 
+const SIGIL_FIELDS = new Set(['id', 'name', 'rarity', 'cost', 'blurb']);
+
+// WHAT A SIGIL DOES IS ITS TAGGING ROW (SPEC §14.3, §14.4; Codex on #1376). A
+// sigil authors no `triggers` or `modifiers`: its `family = sigil` row in
+// tagging.csv names a leaf under the `sigil` branch of `property`, whose rule
+// is in nodeEffects.json, and stampTags derives its `propertyTags`. A tag that
+// is the branch itself, sits elsewhere in the tree, or has no rule is refused.
+function validateSigils(rows, vctx, bundle = {}) {
+  const { err } = vctx;
+  if (!Array.isArray(rows)) { err('sigils', `must be an array of sigil rows, got ${describe(rows)}`); return; }
+  const tagging = Array.isArray(bundle.tagging) ? bundle.tagging : [];
+  const propertyIds = new Set((Array.isArray(bundle.tags) ? bundle.tags : []).filter((tag) => tag && tag.domain === 'property').map((tag) => tag.id));
+  const nodes = new Map((Array.isArray(bundle.nodes) ? bundle.nodes : []).map((node) => [node.id, node]));
+  const effects = isPlainObject(bundle.nodeEffects) ? bundle.nodeEffects : {};
+  const underSigil = (id) => {
+    for (let at = nodes.get(id); at; at = nodes.get(at.parentId)) if (at.parentId === 'sigil') return true;
+    return false;
+  };
+  const seen = new Set();
+  rows.forEach((row, index) => {
+    if (!isPlainObject(row) || typeof row.id !== 'string' || !row.id) { err(`sigils[${index}]`, 'must be a sigil { id, name, rarity, cost, blurb }'); return; }
+    const at = `sigils.${row.id}`;
+    if (seen.has(row.id)) err(at, 'is listed twice');
+    seen.add(row.id);
+    for (const key of ['triggers', 'modifiers']) {
+      if (row[key] !== undefined) err(`${at}.${key}`, 'is not authored on a sigil (Codex on #1376): what a sigil does is its property row in tagging.csv, a leaf under the sigil branch with its rule in nodeEffects.json');
+    }
+    for (const key of Object.keys(row)) if (!SIGIL_FIELDS.has(key) && key !== 'triggers' && key !== 'modifiers') err(`${at}.${key}`, `is not a sigil field (fields: ${[...SIGIL_FIELDS].join(', ')})`);
+    if (typeof row.name !== 'string' || !row.name) err(`${at}.name`, 'must be a non-empty string');
+    if (typeof row.blurb !== 'string' || !row.blurb) err(`${at}.blurb`, 'must be a non-empty string (the sentence the shelf shows)');
+    if (!SIGIL_RARITIES.includes(row.rarity)) err(`${at}.rarity`, `must be one of ${SIGIL_RARITIES.join(', ')}, got ${describe(row.rarity)}`);
+    else if (row.rarity === 'legendary') err(`${at}.rarity`, 'is legendary, which SPEC §15.4 authors as an attuned sigil with no cost; it cannot ship before that section lands');
+    if (!(Number.isSafeInteger(row.cost) && row.cost > 0)) err(`${at}.cost`, `must be a whole number of cinders above 0, got ${describe(row.cost)}`);
+    const props = tagging.filter((tag) => tag && tag.family === 'sigil' && tag.objectId === row.id && propertyIds.has(tag.tagId)).map((tag) => tag.tagId);
+    if (!props.length) err(at, 'derives no property tag: give it a `sigil` row in tagging.csv naming a leaf under the sigil branch of property');
+    for (const tag of props) {
+      if (!underSigil(tag)) err(at, `carries property '${tag}', which is not a leaf under the sigil branch of property`);
+      else if (!Object.hasOwn(effects, tag)) err(at, `carries property '${tag}', which has no rule in nodeEffects.json`);
+    }
+  });
+}
+
 const TRIGGER_FIELDS = new Set(['on', 'if', 'do', 'once', 'limitPerTurn', 'chance', 'rollScope', 'limitPerAction', 'priority', 'allowSecondary']);
 
 export function validateTriggers(triggers, path, vctx) {
@@ -2721,4 +2835,49 @@ function usesScript(node) {
     return Object.values(node).some(usesScript);
   }
   return false;
+}
+
+/**
+ * deckRulesTableProblems(table, cards, err) — the shape the deck editor reads
+ * (SPEC §14.1): whole-number ranges with min ≤ max, defaults inside them, a
+ * `where` list holding the default, string lists for `singleCopy`, and
+ * unlimited ids that name real cards.
+ */
+export function deckRulesTableProblems(table, cards, err, nodes) {
+  const at = (path, msg) => err(`deckRules.${path}`, msg);
+  if (!table || typeof table !== 'object') { at('', 'must be an object'); return; }
+  const range = (key) => {
+    const r = table[key];
+    if (!r || !Number.isInteger(r.min) || !Number.isInteger(r.max) || r.min < 0 || r.min > r.max) {
+      at(key, `must be { min, max } whole numbers with 0 ≤ min ≤ max, got ${JSON.stringify(r)}`);
+      return null;
+    }
+    return r;
+  };
+  const sizes = range('sizeRange');
+  const copies = range('copyRange');
+  const d = table.defaults || {};
+  for (const key of ['deckEditing', 'deckMinUnlimited', 'deckMaxUnlimited', 'playInDeckOrder']) {
+    if (typeof d[key] !== 'boolean') at(`defaults.${key}`, `must be true or false, got ${JSON.stringify(d[key])}`);
+  }
+  for (const key of ['deckMinSize', 'deckMaxSize']) {
+    if (!Number.isInteger(d[key]) || (sizes && (d[key] < sizes.min || d[key] > sizes.max))) at(`defaults.${key}`, `must be a whole number within sizeRange, got ${JSON.stringify(d[key])}`);
+  }
+  if (Number.isInteger(d.deckMinSize) && Number.isInteger(d.deckMaxSize) && d.deckMinSize > d.deckMaxSize) at('defaults.deckMinSize', `(${d.deckMinSize}) must not exceed deckMaxSize (${d.deckMaxSize})`);
+  if (!Number.isInteger(d.classSpellPowerCopies) || (copies && (d.classSpellPowerCopies < copies.min || d.classSpellPowerCopies > copies.max))) at('defaults.classSpellPowerCopies', `must be a whole number within copyRange, got ${JSON.stringify(d.classSpellPowerCopies)}`);
+  const where = table.where;
+  if (!Array.isArray(where) || !where.length || !where.every((w) => typeof w === 'string')) at('where', 'must be a non-empty list of strings');
+  else if (!where.includes(d.deckEditingWhere)) at('defaults.deckEditingWhere', `must be one of ${where.join(', ')}, got ${JSON.stringify(d.deckEditingWhere)}`);
+  const single = table.singleCopy || {};
+  for (const key of ['types', 'tags']) {
+    if (!Array.isArray(single[key]) || !single[key].every((v) => typeof v === 'string' && v)) at(`singleCopy.${key}`, 'must be a list of non-empty strings');
+  }
+  // A typo here would silently lift the copy limit, so each value must name a
+  // real card type or tag node.
+  const nodeIds = new Set((Array.isArray(nodes) ? nodes : []).map((n) => n && n.id));
+  if (Array.isArray(single.types)) single.types.forEach((v, i) => { if (!CARD_TYPES.includes(v)) at(`singleCopy.types[${i}]`, `names no card type: '${v}' (one of ${CARD_TYPES.join(', ')})`); });
+  if (Array.isArray(single.tags) && nodeIds.size) single.tags.forEach((v, i) => { if (!nodeIds.has(v)) at(`singleCopy.tags[${i}]`, `names no tag node: '${v}'`); });
+  const ids = new Set((Array.isArray(cards) ? cards : []).map((c) => c && c.id));
+  if (!Array.isArray(table.unlimitedCardIds)) at('unlimitedCardIds', 'must be a list of card ids');
+  else table.unlimitedCardIds.forEach((id, i) => { if (ids.size && !ids.has(id)) at(`unlimitedCardIds[${i}]`, `names no card: '${id}'`); });
 }

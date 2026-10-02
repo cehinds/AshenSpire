@@ -105,8 +105,9 @@ All ten suggestions from the first pass have been built.
 1. **Live preview strip**: see the preview component under
    `src/ui/components/`. It sits at the top of General → Display and
    Accessibility. It shows a real card, text, buttons and a resource bar, all
-   drawn with the current UI size, text size, accent and contrast. It can be
-   folded away, and it remembers whether it was open.
+   drawn with the current UI size, text size, accent and contrast. It starts
+   folded, so the Fullscreen row stays on a phone screen; opening it is
+   remembered.
 2. **Changed filter**: the **Changed · N** button in the header lists every
    setting whose value differs from its default, across all sections. A search
    narrows that list further. While the list is showing, the ⋮ menu's scoped

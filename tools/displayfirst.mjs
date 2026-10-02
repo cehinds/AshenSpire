@@ -1215,12 +1215,12 @@ function selftestPlants() {
             "  { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,",
             "    choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',",
             "    note: 'Tint the interface \u2014 highlights, borders, focus ring, and glow.' },",
-            "  { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',",
+            '  // ART QUALITY (LFS / art-tier plan, step 4, 2026-09-26). Built-in is the art',
           ].join(settingsEol),
           replace: [
             "  { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',",
             "    note: 'Fill the screen when this browser supports app-controlled fullscreen.' },",
-            "  { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',",
+            '  // ART QUALITY (LFS / art-tier plan, step 4, 2026-09-26). Built-in is the art',
           ].join(settingsEol),
         },
       ],
@@ -1231,21 +1231,13 @@ function selftestPlants() {
       // categoryHandler().rows, which this never touches: GREEN there, wrong
       // here.
       //
-      // RE-AIMED — AND IT WAS DECORATION FOR AS LONG AS THE DOOR WAS BROKEN.
-      // It mutated `categoryHtml`'s LAST line, the fallback branch for a
-      // category rendered as one flat list. Display has not gone through that
-      // branch since it became a group inside General: it is drawn by the
-      // General branch's `topics.get(topic).map(...)` instead. So the plant
-      // still applied cleanly, still ran, and reversed a code path the Display
-      // panel no longer takes — exit 0, UNCAUGHT, "decoration, not evidence" in
-      // this harness's own words. Nothing noticed, because with the door dead
-      // every cell was already red for a different reason. Fixing the door is
-      // what made this visible, and this is the branch that actually draws the
-      // rows a player meets.
+      // Reverses the General group's rendered row list. Display keeps
+      // Fullscreen before its preview, so reversing that list makes a
+      // different control the first visible row while the table stays intact.
       name: 'the renderer reverses what the table hands it (test 61 stays green)',
       file: 'src/ui/screens/settings.js',
-      find: "      + `</div>${settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : ''}<div class=\"set-card-list\">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;",
-      replace: "      + `</div>${settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : ''}<div class=\"set-card-list\">${[...topics.get(topic)].reverse().map(row => settingsRowHtml(settings, row)).join('')}</div>`;",
+      find: '    const rowHtml = rows.map(row => settingsRowHtml(settings, row));',
+      replace: '    const rowHtml = [...rows].reverse().map(row => settingsRowHtml(settings, row));',
       expectRed: /FINDING D1\/order .*want=fullscreen/,
     },
     {
@@ -1537,7 +1529,8 @@ function selftestPlants() {
     {
       // 20 — A RENDERED ROW WHOLLY ABOVE THE VIEWPORT IS NOT VISIBLE ORDER.
       // The mutation removes the viewport-intersection term from D1 and moves
-      // the row behind Fullscreen (the Accent colour) above the screen; the
+      // Accent colour row above the screen; the preview now separates it from
+      // Fullscreen, so a child-position selector would move the wrong box. The
       // legacy predicate then names it first even though the player cannot
       // meet it.
       name: 'an off-screen non-Fullscreen row is incorrectly allowed to outrank visible Fullscreen',
@@ -1549,7 +1542,7 @@ function selftestPlants() {
         },
         {
           file: 'styles/ui.css',
-          append: '.set-panel .set-row:nth-child(2) { position: relative !important; top: -4000px !important; }',
+          append: '.set-panel .set-row:has([data-key="accent"]) { position: relative !important; top: -4000px !important; }',
         },
       ],
       expectRed: /FINDING D1\/order .*first=accent want=fullscreen/,
@@ -1948,6 +1941,15 @@ async function serverClosePlant() {
       '// Browser boundary for the server-close regression: no browser is launched.',
       'export function resolveBrowser() { return null; }',
       "export async function launchBrowser() { throw new Error('server-close regression must not launch a browser'); }",
+      '',
+    ].join('\n'));
+    // serve.mjs imports the prologue authoring bridge, which imports game
+    // content. This copied tree deliberately contains tools only; the no-browser
+    // path cannot call the bridge, so make that boundary explicit in the copy.
+    writeFileSync(join(dir, 'tools', 'prologue-editor-save.mjs'), [
+      'export async function saveFirstStepDefaults() {',
+      "  throw new Error('server-close regression must not save prologue defaults');",
+      '}',
       '',
     ].join('\n'));
 

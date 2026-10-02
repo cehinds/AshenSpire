@@ -6,8 +6,8 @@ import { saveFirstStepDefaults } from '../tools/prologue-editor-save.mjs';
 test('the first-step mobile traveler ships at the foreground position and size', () => {
   const config = prologueConfig({});
   const step = config.scenes.find(scene => scene.id === 'step');
-  assert.deepEqual(step.actor.mobile, { x: 40, y: 96, height: 40 });
-  assert.deepEqual(step.actor.desktop, { x: 50, y: 96, height: 40 });
+  assert.deepEqual(step.actor.mobile, { x: 40, y: 96, height: 40, rotation:0, layer:'behindWash' });
+  assert.deepEqual(step.actor.desktop, { x: 50, y: 96, height: 40, rotation:0, layer:'behindWash' });
 });
 
 test('caption height, banner container, and grid defaults are recognized config settings', () => {

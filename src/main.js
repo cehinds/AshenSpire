@@ -1,3 +1,4 @@
+import { applyArtQuality, onArtSourceChange } from './ui/highResArt.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
@@ -21,32 +22,33 @@ import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armam
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
 import { STAT_ROWS_CHANGED_MEANING, STAT_ROWS_MARKER, STAT_ROWS_VERSION } from './model/statRows.js';
-import { advancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig } from './model/advancedConfig.js';
+import { advancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig, isLiveXpSetting, updatedXpSnapshot, xpSnapshotFromProfile } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
 import { configureTooltipSettings } from './ui/components/tooltip.js';
 import { createRunState, createDeck, createIdGen, characterLevelOf } from './model/state.js';
 import { stampDeck, addToStorage, carriedIds } from './model/loadout.js';
-import { grantSmithingReward, smithingPlan, commitSmithing } from './model/smithing.js';
+import { grantSmithingReward, smithingPlan, smithingRewardId, smithingRewardPays } from './model/smithing.js';
 import { ATLAS, generateJourney, journeyGraph, journeyEncounter, travelJourney, completeJourneyNode } from './model/worldAtlas.js';
 import { atlasQuestAction, boardQuestResponse } from './engine/quests.js';
 import { mountQuestBoard, QUEST_EXCHANGE_COPY } from './ui/screens/questBoard.js';
 import { questBoardModel, questExchange } from './ui/models/QuestBoardModel.js';
 import { mountWorldAtlas } from './ui/screens/worldAtlas.js';
-import { mountSmithUpgradeModal } from './ui/components/smithUpgradeModal.js';
-import { smithSelectionModel } from './ui/models/SmithSelectionModel.js';
 import { smithServicesAt } from './model/cardExtraction.js';
 import { recordProgress, evaluateUnlocks } from './model/unlocks.js';
 import { recordArmamentDiscovery } from './model/startingKits.js';
 import { activeMods, isCustomRun, endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from './content/customMods.js';
 import { createRng, seedToString, seedFromString, seedProblem } from './engine/rng.js';
 import { createRunCombat, runCombatEnd } from './engine/runCombat.js';
+import { applyAfterCombatRecovery, restRecoveryBonus } from './model/recoveryRules.js';
 import { skillXpReceipt, applySkillXp } from './engine/skillXp.js';
-import { skillTracks, skillSchools, classSkillId } from './model/skills.js';
+import { skillTracks, skillSchools, skillKindOf, classSkillId, claimBankedSkillLevel, pendingSkillLevelCount, xpToNext as skillXpToNext } from './model/skills.js';
+import { featMultiplier, featStacks, rollFeatOptions } from './model/feats.js';
 import { equippedPieces } from './model/loadout.js';
 import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
-import { awardLevelXp, combatLevelXp } from './model/levelup.js';
+import { applyLevelUp, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
+import { configuredRewardOffer as rewardOfferForSource } from './model/rewardSourcePolicy.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
@@ -57,14 +59,18 @@ import { openOfflinePlay } from './ui/components/offlinePlay.js';
 import {
   rollEncounter,
   rollRuneReward,
-  rollCardRewardIds,
+  rollCombatCardOffer,
   rollSkillDraftIds,
   rollClassDraftIds,
   rollFlaskDrop,
   rollRelicReward,
-  buildShopStock,
   rollArmamentDrop,
 } from './engine/encounters.js';
+import { buildMarketStock, marketVisitStock, commitInnRest, buildBlacksmithStock, blacksmithVisitStock } from './engine/shopKinds.js';
+import { mountBlacksmith } from './ui/screens/blacksmith.js';
+import { shopStockKind } from './model/shopKinds.js';
+import { commitQuestEvent } from './model/marketAdditions.js';
+import { combatEncounterFor, victoryCompletesJourneyNode, serviceEventCombatEntry } from './model/serviceCombat.js';
 import { createLocationVisit, arriveAt, leaveLocation } from './engine/locations.js';
 import { restLocationAtPoint, questBoardPointAt, CAMP_LOCATION } from './model/locations.js';
 import { mountTitle, focusTitleDefault } from './ui/screens/title.js';
@@ -80,6 +86,8 @@ import { mountCombat } from './ui/screens/combat.js';
 import { mountCombatTest } from './ui/screens/combatTest.js';
 import { mountRewards } from './ui/screens/reward.js';
 import { mountRest } from './ui/screens/rest.js';
+import { mountDeckEditor } from './ui/screens/deckEditor.js';
+import { deckEditorDoors } from './ui/models/DeckEditorModel.js';
 import { mountShop } from './ui/screens/shop.js';
 import { mountEvent } from './ui/screens/event.js';
 import { mountGameOver } from './ui/screens/gameover.js';
@@ -99,7 +107,7 @@ import { setQuickNav } from './ui/components/quicknav.js';
 import { showBossIntro } from './ui/components/intro.js';
 import { openConfirmationModal } from './ui/components/confirmationModal.js';
 import { runIdentity } from './ui/models/ConfirmationReviewModel.js';
-import { openNewerSaveNotice, openReplaceSaveReview, openSaveSlotSelector, openSaveStatusReview, slotFacts } from './ui/components/saveSlotSelector.js';
+import { openNewerSaveNotice, openRefusedSaveNotice, openReplaceSaveReview, openSaveSlotSelector, openSaveStatusReview, slotFacts } from './ui/components/saveSlotSelector.js';
 import { loadOverRunReview } from './ui/models/ConfirmationReviewModel.js';
 import { initInput, setBindings, setKeyBindings, setInputGate, hasGamepad } from './ui/input.js';
 import { mountStartupGate } from './ui/components/startupGate.js';
@@ -180,6 +188,7 @@ if (!validation.ok) {
 }
 
 let registries = createRegistries(contentBundle);
+let xpCombat = null;
 configureTooltipGlossary(registries);
 setClassGlyphs(registries.classes.all()); // class sigils are data (class defs)
 
@@ -764,6 +773,10 @@ function applyCardSizeSettings(settings) {
 }
 
 function applyDisplaySettings(settings) {
+  // Art quality: lay a local high-res source over the built-in art, or clear
+  // it. Asynchronous (a served hd/ folder is fetched); screens drawn after it
+  // resolves use the new tier, and anything the source lacks stays built-in.
+  applyArtQuality(settings);
   applyHudVisibility(document.documentElement, settings);
   applyCardSizeSettings(settings);
   const advancedPresentation = presentationConfig(settings);
@@ -901,6 +914,11 @@ function applyDisplaySettings(settings) {
   restampWorkspaceFrames(document);
   replanCategoryNavs();
 }
+// A new high-res source (Art quality) must not be undercut by pose preloads,
+// which are keyed by pose, not URL, and would keep serving the old art.
+// The pose preloads start over; reaverAttack.js and combatEffectSprites.js
+// reset their own warmers through whenArtSourceChanges.
+onArtSourceChange(() => clearPosePreloads());
 applyDisplaySettings(activeSettings);
 // The resting width depends on the viewport, so it is re-resolved when the
 // viewport changes — a phone rotated into landscape crosses the compact
@@ -1217,21 +1235,51 @@ function refusedRunLanding(slot) {
   openNewerSaveNotice({ slot });
 }
 
-function resumeRun(slot = 1) {
+// THE LIVE RUN IS SWAPPED ONLY AFTER A LOAD SUCCEEDS. Both loadRun passes
+// land in a local; `run`, `activeSlot`, the Armoury tray and the registries
+// (rebuilt for the slot's own snapshot between the passes) are the climb in
+// hand until the second pass hands back a run. A refusal restores the
+// registries and calls `onRefused` — the title by default; the in-run Load
+// door passes its own, which keeps the run on screen (confirmSlotLoad).
+function resumeRun(slot = 1, { onRefused = refusedRunLanding, onLoaded = null } = {}) {
+  const liveRegistries = registries;
+  const refused = () => {
+    if (registries !== liveRegistries) {
+      registries = liveRegistries;
+      configureTooltipGlossary(registries);
+      setClassGlyphs(registries.classes.all());
+    }
+    return onRefused(slot);
+  };
+  const authoredRegistries = createRegistries(contentBundle);
+  let loaded = saves.loadRun(authoredRegistries, slot);
+  if (!loaded) return refused();
+  rebuildRegistries(loaded.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} });
+  loaded = saves.loadRun(registries, slot);
+  if (!loaded) return refused();
+  // The load is certain from here; a caller that must tear down what the
+  // refusal would have returned to (the in-run overlay) does it now, not before.
+  onLoaded?.();
   resetArmouryTraySession();
   activeSlot = slot;
-  const authoredRegistries = createRegistries(contentBundle);
-  run = saves.loadRun(authoredRegistries, slot);
-  if (!run) return refusedRunLanding(slot);
-  rebuildRegistries(run.advancedConfigSnapshot || { schemaVersion: 1, overrides: {} });
-  run = saves.loadRun(registries, slot);
-  if (!run) return refusedRunLanding(slot);
+  run = loaded;
   if (run.journey) syncWorldPosition();
   rng = createRng(run.seed, run.streamCounters);
   // A snapshot still carrying the retired ×20 Cinder key: the bundle above
   // already left it out, so this only says so — on the channel boot uses for
   // a profile — and saves the cleaned run once, after `rng` (see below).
   for (const line of bringRunSnapshotForward(run, () => persist())) console.warn('[advanced-config]', line);
+  const currentXpSnapshot = xpSnapshotFromProfile(run.advancedConfigSnapshot, activeSettings);
+  if (JSON.stringify(currentXpSnapshot.overrides) !== JSON.stringify(run.advancedConfigSnapshot?.overrides || {})) {
+    const configured = configuredContentBundle(contentBundle, currentXpSnapshot);
+    if (validateContent(configured).ok && advancedConfigStructuralProblems(contentBundle, currentXpSnapshot.overrides).length === 0) {
+      run.advancedConfigSnapshot = currentXpSnapshot;
+      rebuildRegistries(currentXpSnapshot);
+      persist();
+    } else {
+      showSettingsNotice('XP settings need valid values before they can affect this run.', 'game-config');
+    }
+  }
   // THE LOAD DOOR IS WHERE AN OLD OPENING STATE IS REWRITTEN. A version-1
   // `scene` indexes the six-scene order; `onScene` below writes the NEW order
   // back into the same field, so a state left marked version 1 would be read
@@ -1246,7 +1294,7 @@ function resumeRun(slot = 1) {
   } else if (run.combatEntered && run.combatEntered.encounterId) {
     // Current saves resume the exact committed turn. Older saves that only
     // carry the encounter receipt still use the deterministic restart path.
-    enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true });
+    enterCombat(run.combatEntered.nodeId, run.combatEntered.encounterId, { resuming: true, serviceEvent: run.combatEntered.serviceEvent === true });
   } else if (run.shopStock) {
     showShop();
   } else if (run.journey?.activeService?.handlerId === 'rest') {
@@ -1298,11 +1346,23 @@ function confirmSlotLoad(slot, { returnFocusElement } = {}) {
     returnFocusElement,
     onConfirm: () => {
       // AND AGAIN AT THE PRESS. Run saves share localStorage across tabs and
-      // this confirmation can stay open indefinitely, so a newer build in
-      // another tab can rewrite the slot after the check above passed.
-      if (saves.slotSummary(slot)?.newer) return openNewerSaveNotice({ slot, returnFocusElement });
-      closeOverlay();
-      resumeRun(slot);
+      // this confirmation can stay open indefinitely, so another tab can
+      // rewrite the slot (a newer build), clear it or corrupt it after the
+      // check above passed; content validation and migration refuse only
+      // inside loadRun. resumeRun swaps the live run only after a successful
+      // load, so every refusal lands here, on the run still in hand.
+      //
+      // THE OVERLAY CLOSES ONLY ONCE THE LOAD IS CERTAIN. Opened from the
+      // in-run overlay's quick navigation, `returnFocusElement` is a button
+      // inside that overlay; closing it before the outcome disconnected the
+      // button, so a refusal's "Keep playing" had nowhere to return focus and
+      // keyboard and gamepad players landed on <body> (Codex review, #1355).
+      resumeRun(slot, {
+        onLoaded: closeOverlay,
+        onRefused: () => (saves.runStatus().state === 'newer'
+          ? openNewerSaveNotice({ slot, returnFocusElement })
+          : openRefusedSaveNotice({ slot, returnFocusElement })),
+      });
     },
   });
 }
@@ -1468,6 +1528,20 @@ function persistSettingsChange(changed) {
   // A value the player moves off a promoted one is theirs from now on.
   const seed = seedAfterChange(activeSettings, changed);
   Object.assign(activeSettings, changed);
+  if (run && Object.keys(changed || {}).some(isLiveXpSetting)) {
+    const snapshot = updatedXpSnapshot(run.advancedConfigSnapshot, changed);
+    const configured = configuredContentBundle(contentBundle, snapshot);
+    const validation = validateContent(configured);
+    const problems = advancedConfigStructuralProblems(contentBundle, snapshot.overrides);
+    if (validation.ok && problems.length === 0) {
+      run.advancedConfigSnapshot = snapshot;
+      rebuildRegistries(snapshot);
+      if (xpCombat) xpCombat.registries = registries;
+      persist();
+    } else {
+      showSettingsNotice('XP settings need valid values before they can affect this run.', 'game-config');
+    }
+  }
   // A `draw` or `poise` stat row written by this build means what it means
   // now (ruleset 7); the marker keeps a later boot from reading it as the
   // pre-ruleset-7 co-op draw or ratings-off pool (model/statRows.js).
@@ -1565,6 +1639,29 @@ function showArmoury(request = '', returnTo = showMap) {
       persist();
     },
     onClose: returnTo,
+    onEditDeck: deckDoors().armoury ? () => showDeckEditor(returnTo) : null,
+  });
+}
+
+// ---- the deck editor (SPEC §14.1) --------------------------------------------
+// Which doors open it is the settings' answer (DeckEditorModel.deckEditorDoors):
+// under `free` the map's Quick Access and the Armoury, under `restOnly` the
+// Rest screen of a place carrying `deckEdit`, and none with deck editing off.
+// Every door here is out of combat; the fight's Armoury gets none.
+function deckDoors(services = null) {
+  return deckEditorDoors({ settings: saves.loadMeta().settings || {}, inCombat: false, services });
+}
+
+function showDeckEditor(returnTo = showMap) {
+  if (!run) return;
+  mountDeckEditor(document.body, {
+    registries,
+    run,
+    settings: saves.loadMeta().settings || {},
+    // A confirmed edit is written at once; a cancelled one restored the run
+    // exactly (cancelDeckEdit), so there is nothing to write.
+    onDone: () => { persist(); returnTo(); },
+    onCancel: () => returnTo(),
   });
 }
 
@@ -1743,6 +1840,12 @@ function recordCollectedArmament(id, source) {
   return true;
 }
 
+/** A treasure node's Smithing Stone door (SPEC §15.3); null when it pays nothing. */
+function treasureSmithingReward() {
+  if (!smithingRewardPays(registries, 'treasure')) return null;
+  return grantSmithingReward(registries, run, 'treasure', smithingRewardId(run, 'treasure'), rng);
+}
+
 function finishRun(victory) {
   const result = runResult(victory);
   const meta = saves.recordResult(result);
@@ -1860,12 +1963,14 @@ function showMap() {
     serviceContext: {
       healMult: run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1,
       refillCounts: resolveGraceRefill(saves.loadMeta().settings || {}).counts,
+      restBonus: restRecoveryBonus(saves.loadMeta().settings || {}),
       // The run's live streams: the rest preview copies their position, so a
       // rolling rule shows the roll the visit will make and advances nothing.
       rng,
     },
     onTravel: enterWorldNode, onAction: worldLocationAction, onSave: persist,
     onMenu: showOverlay, onArmoury: showArmoury,
+    onEditDeck: deckDoors().quickAccess ? () => showDeckEditor(showMap) : null,
     onQuit: () => { persist(); showCollapsedTitle(); },
     inspectNodeId: run.journey.inspectNodeId || null,
   });
@@ -1878,6 +1983,7 @@ function showMap() {
     onSettingsChange: persistSettingsChange,
     onMenu: showOverlay,
     onArmoury: showArmoury,
+    onEditDeck: deckDoors().quickAccess ? () => showDeckEditor(showMap) : null,
     onLoad: loadActiveSlot,
     onQuitWithoutSave: quitWithoutSaving,
     quickControls: quickMenuControls,
@@ -1960,21 +2066,22 @@ function worldLocationAction(action) {
     if (!j.localCompletedIds.includes(action.pointId)) j.localCompletedIds.push(action.pointId);
     persist(); j.inspectNodeId = j.currentNodeId; return showMap();
   }
-  if (handlerId === 'smith') {
-    showMap();
-    let selection = null;
-    const model = () => smithSelectionModel(registries, smithingPlan(registries, run), selection, { multiUse: true });
-    const modal = mountSmithUpgradeModal(app, model(), {
-      registries, meta: saves.loadMeta(),
-      onSelect: ref => { selection = ref; modal.update(model()); },
-      onBack: () => {},
-      onConfirm: ref => { commitSmithing(registries, run, ref); persist(); j.inspectNodeId = j.currentNodeId; showMap(); },
-    });
-    return;
-  }
   j.activeService = { ownerId: action.ownerId, pointId: action.pointId, handlerId };
+  if (handlerId === 'smith') {
+    // The atlas `smith` service is a BLACKSMITH (SPEC §14.2, §14.4): its stock
+    // is rolled on `shopOffers` on first entry and kept on the point, so a
+    // revisit reopens it as saved; a custom run's price multiplier reaches it
+    // as it reaches the market.
+    state.stock ||= blacksmithVisitStock(registries, rng, run, { priceMult: shopPriceMult() });
+    run.shopStock = state.stock;
+    persist(); return showShop();
+  }
   if (handlerId === 'shop') {
-    state.stock ||= buildShopStock(registries, rng, run);
+    // The atlas `shop` service is a market (SPEC §14.2): today's shelves on
+    // `shop`, and which of them are out on `shopOffers`. A custom run's price
+    // multiplier reaches it as it reaches a classic merchant (review, #1374;
+    // before that no atlas shelf was scaled).
+    state.stock ||= marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'atlas', ownerId: action.ownerId, priceMult: shopPriceMult() });
     run.shopStock = state.stock;
     persist(); return showShop();
   }
@@ -2074,18 +2181,18 @@ function enterNode(nodeId) {
       // small rest and no services. A shrine node is the Shrine.
       return showRest(null, node.type === 'event' ? CAMP_LOCATION : 'shrine');
     case 'merchant': {
-      const stock = buildShopStock(registries, rng, run);
-      const pm = shopPriceMult();
-      if (pm !== 1) {
-        for (const kind of ['cards', 'relics', 'flasks']) {
-          for (const item of stock[kind]) item.cost = Math.ceil(item.cost * pm);
-        }
-        stock.removeCost = Math.ceil(stock.removeCost * pm);
-      }
+      // A classic merchant rolls its kind first (SPEC §14.2, `shopOffers`); the
+      // shipped weights make every one a market with every shelf out, drawing
+      // nothing new, so a seed's shelves are what they always were.
+      // Greedy Merchants and Hoarder scale every price it lays out, the
+      // market additions included (SPEC §14.3).
+      const stock = marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'merchant', priceMult: shopPriceMult() });
       // Does a smith travel with him? Rolled once here, on the smith's own
       // stream (balance.smithing.services.offeredAt.merchant), and kept with
       // the stock so leaving and re-entering the screen does not roll again.
-      stock.smith = smithServicesAt(registries, 'merchant', rng);
+      // A merchant that turned out to be a blacksmith (SPEC §14.2) is the smith;
+      // no add-on is rolled for it.
+      if (stock.kind !== 'blacksmith') stock.smith = smithServicesAt(registries, 'merchant', rng);
       run.shopStock = stock;
       persist();
       return showShop();
@@ -2093,6 +2200,10 @@ function enterNode(nodeId) {
     case 'treasure': {
       const relicId = rollRelicReward(registries, rng, run.relics);
       const armamentId = rollDrop('treasure');
+      // Treasure pays Smithing Stones through the combat door's faucet (SPEC
+      // §15.3), and only when its tables pay anything: both ship at 0, so no
+      // zero-amount claim is written and a save is unchanged.
+      const smithingStoneReceipt = treasureSmithingReward();
       return mountRewards(app, {
         registries,
         run,
@@ -2100,7 +2211,7 @@ function enterNode(nodeId) {
         rng,
         onCollectArmament: (id) => collectArmament(id, 'treasure'),
         onPersist: persist,
-        rewards: { relicId, armamentId, title: 'TREASURE' },
+        rewards: configuredRewardOffer({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), title: 'TREASURE' }, 'treasure'),
         onDone: () => {
           rewardDoneCount++;
           if (run.journey) completeJourneyNode(run.journey);
@@ -2166,8 +2277,9 @@ function enterDungeonLocation() {
     case 'treasure': {
       const relicId = rollRelicReward(registries, rng, run.relics);
       const armamentId = rollDrop('treasure');
+      const smithingStoneReceipt = treasureSmithingReward();
       resolveDungeonNode(run);
-      return beginPendingReward({ relicId, armamentId, title: 'TREASURE' }, { source: 'treasure', after: 'map' });
+      return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
     }
     case 'combat': return enterCombat(run.legacyDungeon.parentNodeId, dungeonNode(run).encounter);
     case 'dialogue': return showDungeonDialogue();
@@ -2234,7 +2346,7 @@ function startFight(pool, nodeId) {
   enterCombat(nodeId, encounterId);
 }
 
-function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
+function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = false } = {}) {
   const storedSnapshot = resuming ? run.combatEntered?.snapshot : null;
   // SAVES IN THE WILD ALREADY CARRY THE POISONED SHAPE. Saving during the
   // victory hand-off wrote a checkpoint whose `result` was 'victory', and
@@ -2245,11 +2357,13 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   // encounter receipt alone has always supported. A refought encounter is a
   // far smaller loss than an unplayable slot.
   const savedSnapshot = storedSnapshot && !storedSnapshot.result ? storedSnapshot : null;
-  run.combatEntered = { nodeId, encounterId, ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
+  // A service event's fight (the market's quest event, SPEC §14.3) says so on
+  // its receipt, so a resumed save still fights the event's own encounter.
+  run.combatEntered = { ...(serviceEvent ? serviceEventCombatEntry(nodeId, encounterId) : { nodeId, encounterId }), ...(savedSnapshot ? { snapshot: savedSnapshot } : {}) };
   // The entry receipt is a deterministic recovery checkpoint. An explicit Save
   // Game replaces it with an exact committed-turn snapshot below.
   if (!resuming) persist();
-  const enc = run.journey && !run.legacyDungeon ? journeyEncounter(run.journey, nodeId, registries) : registries.encounters.get(encounterId);
+  const enc = combatEncounterFor(registries, run, run.combatEntered);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool, enc);
   const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot, fallbackAttributeMode: run.attributeMode }) : createRunCombat({
@@ -2261,6 +2375,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
     // then derives the threshold from the loadout receipt, the real path).
     player: shotPoiseMaxOverride != null ? { poiseMax: shotPoiseMaxOverride } : {},
     enemyIds: enc.enemies,
+    encounter: enc,
     hpMult: cm.hpMult,
     enemyDamageMult: cm.damageMult,
     enemyStatuses: cm.enemyStatuses,
@@ -2268,6 +2383,7 @@ function enterCombat(nodeId, encounterId, { resuming = false } = {}) {
   });
   // A restored combat owns the live loadout copy from its snapshot. Rejoin it
   // to the run so later swaps and the post-combat receipt share one object.
+  xpCombat = combat;
   if (savedSnapshot) run.loadout = combat.loadout;
   // `?shotHand=<n>` — STAND WITH A FULLER HAND.
   //
@@ -2372,30 +2488,52 @@ function victoryTitle(enc) {
 }
 
 async function onCombatEnd(result, combat, enc) {
+  if (xpCombat === combat) xpCombat = null;
   runCombatEnd(run, combat); // pools, flasks and deficits, as every simulator settles them
+  const xpBefore = {
+    character: { ...run.level },
+    tracks: Object.fromEntries(Object.entries(run.skills || {}).map(([id, row]) => [id, { level: row.level || 0, xp: row.xp || 0 }])),
+  };
+  const pendingBefore = pendingLevelCount(registries, run);
+  const manualLevelUp = settingOn(saves.loadMeta().settings, 'manualLevelUp');
   // THE SKILL TRACKS ARE PAID HERE, ONCE (plan phase 4a): the fight kept a
   // receipt of every hit, block, evade and buildup by track; the run's ledger
   // takes it now, win or loss, and climbs whatever the XP buys.
   const trackReceipt = skillXpReceipt(combat);
-  applySkillXp(registries, run, trackReceipt);
+  for (const [skillId, amount] of Object.entries(trackReceipt)) {
+    const kind = skillKindOf(registries, skillId);
+    const bonus = kind === 'armour' ? 'armourXp' : 'weaponXp';
+    trackReceipt[skillId] = Math.floor(amount * featMultiplier(run, bonus));
+  }
+  applySkillXp(registries, run, trackReceipt, { bank: manualLevelUp });
   // The class track (plan phase 5b) is paid by the run's owner, who knows
   // the door's pool: a won fight, more for a boss; a lost one nothing.
-  const classAward = awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool });
-  // THE CHARACTER LEVEL (plan phase 6), paid by the run's owner too: a won
-  // fight and every kill by the door's pool. His level-value dial is read at
-  // the moment the level is reached — the points it grants wait on the
-  // ledger for the shrine.
-  const levelAward = awardLevelXp(registries, run, combatLevelXp(registries, {
-    victory: result === 'victory', pool: enc.pool, kills: combat.eventLog.filter((e) => e.type === 'enemyDied').length,
-  }), { pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings) });
+  const classAward = awardClassXp(registries, run, { victory: result === 'victory', pool: enc.pool, bank: manualLevelUp, multiplier: featMultiplier(run, 'classXp') });
+  // Character XP is paid now; the level and its stat points wait for the blue
+  // Level Up button. Excess XP remains on the ledger after each claim.
+  const xpReceipt = combatXpReceipt(registries, {
+    victory: result === 'victory', pool: enc.pool, enemies: combat.enemies,
+    characterMultiplier: featMultiplier(run, 'characterXp'),
+  });
+  const levelXp = xpReceipt.total;
+  const levelAward = manualLevelUp
+    ? bankLevelXp(registries, run, levelXp)
+    : awardLevelXp(registries, run, levelXp, {
+      pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings),
+      grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
+    });
+  const levelsEarned = manualLevelUp
+    ? Math.max(0, levelAward.pendingLevelUps - pendingBefore)
+    : levelAward.levelUps;
   // THE RECEIPT THE SPOILS DOOR SHOWS (model/rewardprogress.js). Every ledger
-  // above moved before the door opens, so the screen cannot re-derive what
+  // above were paid before the door opens, so the screen cannot re-derive what
   // this fight paid — it is handed the amounts, on the offer, where the
   // pending-reward checkpoint persists them and a reload resumes the same
   // sentence. Ledger state is read live from the run; only the GAIN is kept,
   // and it is the amount each award SAYS it paid, never a second reading of
   // the same numbers beside it.
-  const xpGains = combatXpGains({ receipt: trackReceipt, awards: [classAward], levelGained: levelAward.gained });
+  const xpGains = combatXpGains({ receipt: trackReceipt, awards: [classAward], levelGained: levelAward.gained, levelDiscarded: levelAward.discarded });
+  const levelChoices = rollLevelChoices(levelsEarned);
   // A weapon swapped mid-fight stays swapped: combat works on copies of the
   // deck's instances, so the run's own copies need the new numbers stamped in.
   stampDeck(registries, run, undefined, { adoptEquipmentBonuses: combat.equipmentChanged });
@@ -2409,6 +2547,10 @@ async function onCombatEnd(result, combat, enc) {
     const earnedOnDeath = finishRun(false);
     return mountGameOver(app, { registries, game: run, victory: false, earned: earnedOnDeath, onTitle: showTitle, onHistory: showHistory });
   }
+  // Settings → Advanced → Recovery: a won fight restores its after-combat
+  // percent of each pool (0 at the defaults, model/recoveryRules.js).
+  applyAfterCombatRecovery(run, saves.loadMeta().settings);
+  if (result === 'victory') run.hp = Math.min(run.maxHp, run.hp + 5 * featStacks(run, 'vitalRenewal'));
 
   // A breath between the last blow and the spoils (components/victoryBeat.js):
   // the combat screen is still mounted here, so the beat stands over it and
@@ -2417,14 +2559,11 @@ async function onCombatEnd(result, combat, enc) {
 
   run.stats.fightsWon += 1;
   if (run.legacyDungeon) resolveDungeonNode(run);
-  else if (run.journey) completeJourneyNode(run.journey);
+  else if (victoryCompletesJourneyNode(run)) completeJourneyNode(run.journey);
   run.combatEntered = null;
-  const smithingStoneReceipt = grantSmithingReward(
-    registries,
-    run,
-    enc.pool,
-    `combat:${run.actNumber}:${run.floor}:${run.mapNodeId || 'unknown'}${run.legacyDungeon ? `:${run.legacyDungeon.current}` : ''}:${enc.pool}`,
-  );
+  // The claim id is the one this door has always written (smithingRewardId);
+  // a partial rewardChancePct rolls once on the `smith` stream (SPEC §15.3).
+  const smithingStoneReceipt = grantSmithingReward(registries, run, enc.pool, smithingRewardId(run, enc.pool), rng);
   // The Stone, its idempotent claim, the cleared combat receipt, every RNG
   // counter used to roll the offer, and the offer itself cross one persistence
   // boundary below. A reload therefore resumes the reward menu instead of
@@ -2451,18 +2590,21 @@ async function onCombatEnd(result, combat, enc) {
     // could give, in which case it pays out instead of dropping nothing.
     const bossArmament = rollDrop('boss');
     const drops = registries.balance.equipment.drops || {};
-    const bossDrafts = rollSkillDrafts('boss');
-    const bossClassDrafts = rollClassDrafts();
+    const bossDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts('boss', manualLevelUp) : [];
+    const bossClassDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
     const bossRewards = {
       title: victoryTitle(enc),
-      cinders: rollRuneReward(registries, rng, 'boss', run.relics) + (bossArmament ? 0 : drops.consolationCinders || 0),
+      cinders: Math.floor(rollRuneReward(registries, rng, 'boss', run.relics) * featMultiplier(run, 'cinders')) + (bossArmament ? 0 : drops.consolationCinders || 0),
       classDrafts: bossClassDrafts,
       skillDrafts: bossDrafts,
-      cardIds: bossDrafts.length || bossClassDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: 'boss', relicIds: run.relics, flatRarity: chaosRewardsOn() }),
+      ...rollCardRows('boss', bossDrafts.length || bossClassDrafts.length, levelsEarned),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
       armamentId: bossArmament,
       smithingStoneReceipt,
       xpGains,
+      xpReceipt,
+      xpBefore,
+      levelChoices,
     };
     return beginPendingReward(bossRewards, { source: 'boss', after: run.journey || run.legacyDungeon ? 'map' : 'advanceAct' });
   }
@@ -2470,24 +2612,63 @@ async function onCombatEnd(result, combat, enc) {
   // THE SKILL DRAFTS TAKE THE CARD ROW'S SEAT (plan phase 4b, proposal §6.1):
   // a level the fight bought is offered as a pick from the track's own
   // schools, and while one is on the table the class-card offer is not.
-  const drafts = rollSkillDrafts(enc.pool);
-  const classDrafts = rollClassDrafts();
+  const drafts = settingOn(saves.loadMeta().settings, 'rewardBattleSkillDrafts') ? rollSkillDrafts(enc.pool, manualLevelUp) : [];
+  const classDrafts = settingOn(saves.loadMeta().settings, 'rewardBattleClassDrafts') ? rollClassDrafts(manualLevelUp) : [];
   const rewards = {
     title: victoryTitle(enc),
-    cinders: rollRuneReward(registries, rng, enc.pool, run.relics),
+    cinders: Math.floor(rollRuneReward(registries, rng, enc.pool, run.relics) * featMultiplier(run, 'cinders')),
     classDrafts,
     skillDrafts: drafts,
-    cardIds: drafts.length || classDrafts.length ? [] : rollCardRewardIds(registries, rng, { classId: run.class, pool: enc.pool, relicIds: run.relics, flatRarity: chaosRewardsOn() }),
+    ...rollCardRows(enc.pool, drafts.length || classDrafts.length, levelsEarned),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
-    // Elites are the mid-run source of armaments; ordinary fights are not
-    // (balance.equipment.drops.chance has no 'normal' key, so the roll is a
-    // no-op there rather than a hidden 0%).
+    // Elites are the mid-run source of armaments; ordinary fights are not by
+    // default (balance.equipment.drops.chance.normal ships at 0, which rolls
+    // nothing — SPEC §15.3 — until the owner raises it).
     armamentId: rollDrop(enc.pool),
     smithingStoneReceipt,
     xpGains,
+    xpReceipt,
+    xpBefore,
+    levelChoices,
   };
   beginPendingReward(rewards, { source: enc.pool, after: 'map' });
+}
+
+/**
+ * The spoils' card rows (SPEC §15.1): the card offer — unless a draft holds
+ * its seat, the schedule turns it off for this pool, or its chance misses —
+ * and a level card per level this fight bought when `onLevelUp` is on. The
+ * decision is engine/encounters.js rollCombatCardOffer's; this hands it the
+ * run's facts and returns the offer fields (`cardIds`, and `cardMissed` /
+ * `levelCards` only when they say something, so the shipped schedule writes
+ * the offer it wrote before).
+ */
+function rollCardRows(pool, draftWaiting, levelUps) {
+  return rollCombatCardOffer(registries, rng, {
+    classId: run.class, pool, relicIds: run.relics, flatRarity: chaosRewardsOn(), draftWaiting: !!draftWaiting,
+    levelUps: settingOn(saves.loadMeta().settings, 'rewardLevelCards') ? levelUps : 0,
+  }).rewards;
+}
+
+function rollLevelChoices(levelsEarned) {
+  const settings = saves.loadMeta().settings || {};
+  const offerFeats = settingOn(settings, 'rewardLevelFeats');
+  const offerClassTree = settingOn(settings, 'rewardLevelClassTree');
+  if (!offerFeats && !offerClassTree) return [];
+  const out = [];
+  const firstRewardLevel = run.level.level - (settingOn(settings, 'manualLevelUp') ? 0 : levelsEarned);
+  for (let ordinal = 0; ordinal < levelsEarned; ordinal++) {
+    const options = [];
+    if (offerFeats) options.push(...rollFeatOptions(rng).map((id) => ({ kind: 'feat', id })));
+    if (offerClassTree) {
+      const level = Math.max(run.skills?.[classSkillId(run.class)]?.level || 0, firstRewardLevel + ordinal + 1);
+      options.push(...rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level })
+        .map((id) => ({ kind: 'classNode', id })));
+    }
+    if (options.length) out.push({ ordinal, options });
+  }
+  return out;
 }
 
 /**
@@ -2497,15 +2678,18 @@ async function onCombatEnd(result, combat, enc) {
  * its draft. Rolled on the 'cardRewards' stream the card offer would have
  * used, at the door's own odds (the boss's at a boss door).
  */
-function rollSkillDrafts(pool) {
+function rollSkillDrafts(pool, includeBanked = false) {
   const perDoor = registries.balance.skill.draftsPerCombat;
   const out = [];
   for (const track of skillTracks(registries)) {
     const row = run.skills && run.skills[track.id];
-    if (!row || !(row.pendingDrafts > 0)) continue;
-    for (let i = 0; i < Math.min(perDoor, row.pendingDrafts); i++) {
-      const cardIds = rollSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level: row.level, pool, flatRarity: chaosRewardsOn() });
-      if (cardIds.length) out.push({ skillId: track.id, level: row.level, cardIds });
+    if (!row) continue;
+    const queued = row.pendingDrafts || 0;
+    const banked = includeBanked ? pendingSkillLevelCount(registries, run, track.id) : 0;
+    for (let i = 0; i < Math.min(perDoor, queued + banked); i++) {
+      const level = row.level + banked;
+      const cardIds = rollSkillDraftIds(registries, rng, { classId: run.class, loadout: run.loadout, skillId: track.id, level, pool, flatRarity: chaosRewardsOn() });
+      if (cardIds.length) out.push({ skillId: track.id, level, cardIds, claimOrdinal: i < queued ? 0 : i - queued + 1 });
     }
   }
   return out;
@@ -2519,14 +2703,18 @@ function rollSkillDrafts(pool) {
  * of the queue waits for the next fight; a level whose tier offers nothing
  * draftable keeps its draft.
  */
-function rollClassDrafts() {
+function rollClassDrafts(includeBanked = false) {
   const row = run.skills && run.skills[classSkillId(run.class)];
-  if (!row || !(row.pendingDrafts > 0)) return [];
-  const nodeIds = rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level: row.level });
-  return nodeIds.length ? [{ classId: run.class, level: row.level, nodeIds }] : [];
+  if (!row) return [];
+  const banked = includeBanked ? pendingSkillLevelCount(registries, run, classSkillId(run.class)) : 0;
+  if (!(row.pendingDrafts > 0 || banked > 0)) return [];
+  const level = row.level + banked;
+  const nodeIds = rollClassDraftIds(registries, rng, { classId: run.class, coreTags: run.coreTags, level });
+  return nodeIds.length ? [{ classId: run.class, level, nodeIds, claimOrdinal: row.pendingDrafts > 0 ? 0 : 1 }] : [];
 }
 
 function beginPendingReward(rewards, { source, after }) {
+  rewards = configuredRewardOffer(rewards, source);
   run.pendingReward = {
     schemaVersion: 1,
     source,
@@ -2541,6 +2729,11 @@ function beginPendingReward(rewards, { source, after }) {
   return mountPendingReward();
 }
 
+function configuredRewardOffer(rewards, source) {
+  const settings = saves.loadMeta().settings || {};
+  return rewardOfferForSource(rewards, source, (key) => settingOn(settings, key));
+}
+
 function mountPendingReward() {
   const checkpoint = run.pendingReward;
   if (!checkpoint) throw new Error('No pending reward checkpoint to mount');
@@ -2551,6 +2744,12 @@ function mountPendingReward() {
     rng,
     rewards: checkpoint.rewards,
     checkpoint,
+    onClaimLevel: () => claimBankedLevel(registries, run, {
+      pointsPerLevel: resolveLevelUpValue(saves.loadMeta().settings),
+      grantStats: settingOn(saves.loadMeta().settings, 'rewardLevelStatPoints'),
+    }),
+    onClaimSkill: (skillId) => claimBankedSkillLevel(registries, run, skillId),
+    onAllocateStat: (attributeId) => applyLevelUp(registries, run, attributeId),
     onCollectArmament: (id) => collectArmament(id, checkpoint.source),
     onPersist: persist,
     onDone: () => {
@@ -2628,7 +2827,7 @@ function showRest(openPanel = null, locationId = null) {
   const worldRest = run.journey?.activeService;
   const restState = run.legacyDungeon?.activeRest || (worldRest ? run.journey.serviceStates[worldRest.pointId] : null);
   if (!openVisit || openVisit.locationId !== restLocationId || openVisit.ctx.run !== run) {
-    openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts });
+    openVisit = createLocationVisit({ run, registries, rng }, restLocationId, { healMult, refillCounts: counts, restBonus: restRecoveryBonus(saves.loadMeta().settings || {}) });
     // A resumed atlas visit arrived once already (the service state says so);
     // a resumed classic shrine arrives again, and the refill is a top-up so
     // that pours nothing twice. The arrival's effects — the refill, or any
@@ -2662,6 +2861,9 @@ function showRest(openPanel = null, locationId = null) {
       // A place whose town posts no quest (a dungeon's rescue inn) offers no board.
       return counts.offered ? { ready: counts.ready, open: counts.open, onOpen: () => showQuestBoard(worldRest.ownerId, () => showRest()) } : null;
     })() : null,
+    // The deck editor under Rest sites only (SPEC §14.1): where the place
+    // carries `deckEdit`; it closes back onto this visit.
+    deckEditor: deckDoors(visit.services).rest ? { onOpen: () => showDeckEditor(() => showRest()) } : null,
     onReallocate: () => persist(),
     // An assigned point is permanent. It persists the moment it is assigned,
     // not when the player leaves the shrine, for the same reason the
@@ -2691,6 +2893,21 @@ function showShop() {
     run.shopStock = state.stock;
   }
   audio.music('shop');
+  // A blacksmith visit is a screen of its own (SPEC §14.4); the same door
+  // resumes it after a reload, since the kind rides the stock.
+  if (shopStockKind(run.shopStock) === 'blacksmith') {
+    return mountBlacksmith(app, {
+      registries, run, meta: saves.loadMeta(), hud: roomHud(showShop), priceMult: shopPriceMult(),
+      onChanged: () => persist(),
+      onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
+      onLeave: () => {
+        finishWorldService();
+        run.shopStock = null;
+        persist();
+        showMap();
+      },
+    });
+  }
   mountShop(app, {
     registries,
     run,
@@ -2698,6 +2915,28 @@ function showShop() {
     meta: saves.loadMeta(),
     onChanged: () => persist(),
     onArmamentPurchased: (id) => recordCollectedArmament(id, 'shop'),
+    // A full rest bought at the market (SPEC §14.3): the inn's own visit on
+    // the run's streams, with the same heal scale and refill counts the Rest
+    // screen's visit is given (showRest).
+    restAtInn: (quote) => {
+      const healMult = run.custom && activeMods(run.custom).lessHealing ? registries.balance.customMods.lessHealingMult : 1;
+      const { counts } = resolveGraceRefill(saves.loadMeta().settings || {});
+      return commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts: counts, restBonus: restRecoveryBonus(saves.loadMeta().settings || {}) });
+    },
+    // A custom run's price multiplier: what a consumable sells back for is
+    // capped at what one would cost here now (SPEC §14.3).
+    priceMult: shopPriceMult(),
+    // The market's quest event (SPEC §14.3): paid and marked seen, then the
+    // visit closes exactly as Leave closes it, and the event door opens once.
+    enterQuestEvent: (quote) => {
+      const { eventId } = commitQuestEvent(registries, run, quote);
+      finishWorldService();
+      run.shopStock = null;
+      persist();
+      // A service event: a fight its choice starts is the event's own, and
+      // winning it completes no journey node (Codex P1 on #1377).
+      return showEvent(eventId, { serviceEvent: true });
+    },
     onLeave: () => {
       finishWorldService();
       run.shopStock = null;
@@ -2707,11 +2946,14 @@ function showShop() {
   });
 }
 
-function showEvent(eventId) {
+// `serviceEvent`: the event was opened by a service (the market's quest event,
+// SPEC §14.3), so a fight it starts is its own encounter and completes no
+// journey node.
+function showEvent(eventId, { serviceEvent = false } = {}) {
   mountEvent(app, {
     registries,
     run,
-    hud: roomHud(() => showEvent(eventId)),
+    hud: roomHud(() => showEvent(eventId, { serviceEvent })),
     // The hold-to-confirm dial lives in meta.settings; the screen reads it the
     // same way every other screen reads a display setting.
     meta: saves.loadMeta(),
@@ -2722,7 +2964,10 @@ function showEvent(eventId) {
         // A startCombat effect stored the encounter id (string form).
         const encounterId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
         run.combatEntered = null;
-        return enterCombat(run.mapNodeId, encounterId);
+        // An atlas run may stand on no classic map node; the fight is labelled
+        // with the journey node it happens at.
+        const nodeId = run.mapNodeId || run.journey?.currentNodeId;
+        return enterCombat(nodeId, encounterId, { serviceEvent });
       }
       persist();
       showMap();
@@ -3058,7 +3303,7 @@ if (shotState) {
 
 if (shotState === 'combat-test') {
   mountCombatTest(app, { params: shotParams, meta: activeMeta });
-} else if (shotState === 'atlas' || shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'reward') {
+} else if (shotState === 'atlas' || shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'blacksmith' || shotState === 'reward') {
   // Suppress the first-run tutorial so captures show a clean board.
   const shotMeta = saves.loadMeta();
   shotMeta.settings.seenTutorial = true;
@@ -3094,6 +3339,16 @@ if (shotState === 'combat-test') {
       const aged = JSON.parse(bootStorage.getItem(runKey(slot)));
       bootStorage.setItem(runKey(slot), JSON.stringify({ ...aged, schemaVersion: aged.schemaVersion + 1 }));
     };
+  }
+  // `?shotRefusedSlot=<n>` — STAND BESIDE A CLIMB THIS BUILD REFUSES. Slot n
+  // gets slot 1's bytes with a seat order no registry holds: slotSummary
+  // parses it (the picker offers it as a climb), loadRun's content validation
+  // refuses and archives it (SPEC §3.12). Memory storage only, as above.
+  // tools/slot-load-door.mjs is the reader.
+  const shotRefusedSlot = Number(shotParams.get('shotRefusedSlot'));
+  if (Number.isInteger(shotRefusedSlot) && shotRefusedSlot > 1 && shotRefusedSlot <= SLOTS) {
+    const bytes = JSON.parse(bootStorage.getItem(runKey(1)));
+    bootStorage.setItem(runKey(shotRefusedSlot), JSON.stringify({ ...bytes, seatOrder: ['no-such-seat'] }));
   }
   if (shotState === 'combat' && shotParams.get('shotKit') === '1') {
     configureArmamentKitPreview(registries, run, shotParams.get('shotMainHand'), shotParams.get('shotOffHand'));
@@ -3352,7 +3607,19 @@ if (shotState === 'combat-test') {
     // ABSENT on the only screen the census can open, and "not wired" and
     // "nothing to sell" read identically. One flask, authored id, no rng.
     run.flasks.push({ flaskId: 'crimsonFlask' });
-    run.shopStock = buildShopStock(registries, rng, run);
+    run.shopStock = buildMarketStock(registries, rng, run, { meta: saves.loadMeta() });
+    showShop();
+  } else if (shotState === 'blacksmith') {
+    // THE BLACKSMITH (SPEC §14.4), a reach state beside `?shot=shop`: the atlas
+    // smith's visit, posed so each service has something to act on — a purse
+    // of stones and cinders, a carried katana (an art to lift out and an
+    // armament to cut a slot into) and a sigil to set. Which offerings are
+    // out is the harness's own settings door (?shotSettings, Advanced → Shops).
+    run.cinders = 2000;
+    run.smithingStones = 12;
+    run.loadout.storage.push('katana');
+    run.sigils = [registries.sigils.all()[0].id];
+    run.shopStock = buildBlacksmithStock(registries, rng, run);
     showShop();
   } else if (shotState === 'reward') {
     // A REACH STATE for the reward MENU (E11/#256), the same shape and reason
@@ -3376,7 +3643,7 @@ if (shotState === 'combat-test') {
     const pose = shotParams.get('shotReward') || 'full';
     const smithingStoneReceipt = pose === 'empty'
       ? null
-      : grantSmithingReward(registries, run, 'elite', 'shot:reward');
+      : grantSmithingReward(registries, run, 'elite', 'shot:reward', rng);
     // `?shotReward=draft` poses a skill draft in the card row's seat (plan
     // phase 4b): the ledger is given the queued draft the row spends, so the
     // take runs the real door, and the cards are the pool's first three of
@@ -3387,7 +3654,7 @@ if (shotState === 'combat-test') {
     // the same reason the offer's ids are authored rather than rolled. The
     // draft pose's own ledger write below still wins for its track.
     if (pose !== 'empty') {
-      run.level = { xp: 40, level: 3, unspentPoints: 0 };
+      run.level = { xp: 40, level: 1, unspentPoints: 0 };
       run.skills = {
         'item:blade': { xp: 18, level: 2, pendingDrafts: 0 },
         'armour:heavy': { xp: 6, level: 1, pendingDrafts: 0 },
@@ -3396,10 +3663,33 @@ if (shotState === 'combat-test') {
         ...(run.skills || {}),
       };
     }
+    if (pose === 'level') {
+      run.level.xp = levelXpToNext(registries, 1) + 25;
+      run.skills['item:blade'] = { xp: skillXpToNext(registries, 'weapon', 2) + 18, level: 2, pendingDrafts: 0 };
+    }
+    if (pose === 'refill') {
+      run.level.xp = 355;
+      run.skills['item:blade'] = { xp: 355, level: 0, pendingDrafts: 0 };
+    }
     if (pose === 'draft') {
       run.skills = { ...(run.skills || {}), 'item:blade': { xp: 0, level: 2, pendingDrafts: 1 } };
     }
     const draftSchools = pose === 'draft' ? new Set(skillSchools(registries, run.loadout, 'item:blade')) : null;
+    const shotReceipt = pose === 'receipt' ? { total: 65, rows: [
+      { kind: 'power', amount: 25 },
+      { kind: 'enemy', name: 'Blight Hound', level: 2, amount: 12 },
+      { kind: 'enemy', name: 'Ash Warden', level: 3, amount: 18 },
+      { kind: 'enemy', name: 'Blight Hound', level: 1, amount: 4 },
+      { kind: 'enemy', name: 'Ash Warden', level: 2, amount: 3 },
+      { kind: 'enemy', name: 'Blight Hound', level: 1, amount: 2 },
+      { kind: 'enemy', name: 'Ash Warden', level: 1, amount: 1 },
+    ] } : pose === 'level' ? { total: levelXpToNext(registries, 1) - 15, rows: [
+      { kind: 'power', amount: levelXpToNext(registries, 1) - 55 },
+      { kind: 'enemy', name: 'Blight Hound', level: 2, amount: 12 },
+      { kind: 'enemy', name: 'Ash Warden', level: 3, amount: 28 },
+    ] } : { total: 24, rows: [
+      { kind: 'power', amount: 16 }, { kind: 'enemy', name: 'Blight Hound', level: 2, amount: 8 },
+    ] };
     const shotOffer = pose === 'empty' ? { title: 'VICTORY' } : {
       title: 'VICTORY',
       cinders: 32,
@@ -3412,9 +3702,22 @@ if (shotState === 'combat-test') {
       armamentId: 'greatsword',
       smithingStoneReceipt,
       // What the fight paid, authored like the rest of the pose.
-      xpGains: { level: 24, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 } },
+      xpGains: { level: shotReceipt.total, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 } },
+      xpReceipt: shotReceipt,
+      ...(pose === 'level' ? {
+        levelChoices: [{ ordinal: 0, options: [
+          { kind: 'feat', id: 'fieldStudy' },
+          { kind: 'feat', id: 'weaponDrill' },
+          { kind: 'feat', id: 'vitalRenewal' },
+        ] }],
+        skillDrafts: [{ skillId: 'item:blade', level: 3, claimOrdinal: 1,
+          cardIds: registries.classes.get(run.class).cardPool.filter((id) =>
+            (registries.cards.get(id).tags || []).some((tag) => skillSchools(registries, run.loadout, 'item:blade').includes(tag))).slice(0, 3) }],
+        xpGains: { level: levelXpToNext(registries, 1) - 15, tracks: { 'item:blade': 18, [`class:${run.class}`]: 10 } },
+        xpBefore: { character: { level: 1, xp: 40 }, tracks: { 'item:blade': { level: 2, xp: 0 }, [`class:${run.class}`]: { level: 1, xp: 10 } } },
+      } : {}),
     };
-    if (pose === 'pending') {
+    if (pose === 'pending' || pose === 'level' || pose === 'receipt' || pose === 'refill') {
       beginPendingReward(shotOffer, { source: 'elite', after: 'map' });
       // Cross the ordinary load door in the same ephemeral shot store. This is
       // the interruption/reload proof: the mounted row below comes from saved
@@ -3617,4 +3920,3 @@ if (shotState === 'combat-test') {
 } else {
   showTitle();
 }
-

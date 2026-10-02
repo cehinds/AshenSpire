@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import { categoryHandler, statsTopicPreviewHtml, activeAdvancedGroup, storedAdvancedTopic } from '../src/ui/screens/settings.js';
 import { advancedSection, advancedSubgroups, statsSection, CLASS_TOPICS, STATS_TOPICS } from '../src/ui/models/AdvancedSettingsGroups.js';
 import { statsTopicPreview } from '../src/ui/models/StatsPreviewModel.js';
+import { contentBundle as AUTHORED_BUNDLE } from '../src/content/index.js';
+
+// The authored HP base (51 since the A3 retune, 30 before), read off the row.
+const HP_BASE = AUTHORED_BUNDLE.derivedStatRules.rules.hp.base;
 
 test('grouping keeps every Advanced option reachable exactly once', () => {
   const rows = categoryHandler('Advanced').rows;
@@ -714,7 +718,7 @@ test('the worked example recomputes from the edited values and shows the whole s
   // HP growth is.
   const veteran = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.hp.perLevel': 1 }, 'HP', { constitution: 2 }, 11);
   assert.equal(veteran.examples[0].lines[0].label, 'HP at level 11');
-  assert.equal(veteran.examples[0].lines[0].total, 30 + 2 * 4 + Math.floor(10 * 1), 'ten levels of growth by level 11');
+  assert.equal(veteran.examples[0].lines[0].total, HP_BASE + 2 * 4 + Math.floor(10 * 1), 'ten levels of growth by level 11');
   assert.match(veteran.examples[0].lines[0].expression, /10 levels × 1 → 10/);
   assert.equal(veteran.examples[0].lines[1].label, 'HP at level 12', 'and the next level that adds to it');
   assert.match(veteran.subject.label, /level 11/);
@@ -847,7 +851,7 @@ test('a refused configuration is named, and the example shows the rules a run ke
   // elsewhere means the edited HP base is not what any run receives.
   const inRun = statsTopicPreview({ 'gameConfig.balance.flaskCapacity': 9, 'gameConfig.derivedStatRules.rules.hp.base': 50 }, 'HP', { constitution: 2 });
   assert.match(inRun.refused, /flask/i);
-  assert.equal(inRun.examples[0].lines[0].total, 30 + 2 * 4, 'the authored HP base, not the refused edit');
+  assert.equal(inRun.examples[0].lines[0].total, HP_BASE + 2 * 4, 'the authored HP base, not the refused edit');
   // Held to the whole of validateContent, not only what createRunState trips
   // on (Codex, #1252): a Mana card-cost floor no card meets is refused at boot.
   const cost = statsTopicPreview({ 'gameConfig.balance.mana.minActionCost': 99, 'gameConfig.derivedStatRules.rules.hp.base': 50, settingsStatsExampleClass: 'reaver' }, 'HP');
@@ -891,7 +895,7 @@ test('the example shows what a run is born with at the edges', async () => {
   const eighth = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.stamina.perLevel': 0.125 }, 'Stamina', { constitution: 1 }, 9);
   assert.match(eighth.examples[0].lines[0].expression, /8 levels × 0\.125 → 1/);
   const drawGrowth = statsTopicPreview({ 'gameConfig.derivedStatRules.rules.draw.perLevel': 0.125 }, 'Draw & hand', { intelligence: 1 }, 9);
-  // Stock Draw / turn at INT 1, level 9: 2 base + nothing above 4 + floor(8 × 0.125) = 3.
-  assert.equal(drawGrowth.examples[0].lines[1].total, 3);
-  assert.match(drawGrowth.examples[0].lines[1].expression, /^2 base \+ INT 1 \(none above 4\) × 0\.2 → 0 \+ 1 from level/);
+  // Stock Draw / turn at INT 1, level 9: 3 base (FINISH D22) + nothing above 4 + floor(8 × 0.125) = 4.
+  assert.equal(drawGrowth.examples[0].lines[1].total, 4);
+  assert.match(drawGrowth.examples[0].lines[1].expression, /^3 base \+ INT 1 \(none above 4\) × 0\.2 → 0 \+ 1 from level/);
 });

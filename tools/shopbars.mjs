@@ -38,6 +38,18 @@
 //                not exist. Not disabled, not greyed: no #shop-cat-sell and no
 //                #shop-sell node at all. The recorded answer's word is ABSENT.
 //
+// THE BLACKSMITH (SPEC §14.4, §14.6 step 6) is the same W1d workspace on its
+// own screen, so it gets its own shapes (390x844 and 1200x730, every offering
+// forced out through ?shotSettings) and its own four checks:
+//   B1 RAIL      exactly the blacksmith's offerings are drawn, BY KEY, in
+//                content/shops.js order, each label AND status on the glass.
+//   B2 ARRIVAL   the first offering's shelf is on the glass with area; every
+//                other shelf has no painted box.
+//   B3 SWITCH    tapping REFINE shows its shelf and hides the first one.
+//   B4 PLACE     refining through the shelf's own action re-renders the
+//                screen: REFINE is still the selected category, and the purse
+//                in the header shows one more refined stone.
+//
 // BOUNDARY. This measures the shop's rail, not its economy: whether half the
 // low-end price is a GOOD price is Constantine's and the balance seat's
 // question, and the number's one home (balance.shop.sellFraction) says so.
@@ -69,8 +81,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the toggled-off SELL category comes back greyed instead of absent',
         edits: [{
           file: 'src/ui/screens/shop.js',
-          find: '    const categories = shopCategories({ sellOn: sellOn() });',
-          replace: '    const categories = shopCategories({ sellOn: true }); // planted: discoverable over absent',
+          find: '    const categories = shopCategories({ sellOn: sellOn(), offered, services: removeOffered || smithOffered });',
+          replace: '    const categories = shopCategories({ sellOn: true, offered, services: removeOffered || smithOffered }); // planted: discoverable over absent',
         }],
         expectRed: /BAD\s+S6 .*sell/,
       },
@@ -80,8 +92,8 @@ if (process.argv.includes('--selftest')) {
         name: 'the re-render forgets the selected category',
         edits: [{
           file: 'src/ui/screens/shop.js',
-          find: "    if (!categories.includes(activeCategory)) activeCategory = 'cards';",
-          replace: "    activeCategory = 'cards'; // planted: every purchase snaps the shop back to the first shelf",
+          find: '    if (!categories.includes(activeCategory)) activeCategory = categories[0];',
+          replace: "    activeCategory = categories[0]; // planted: every purchase snaps the shop back to the first shelf",
         }],
         expectRed: /BAD\s+S4 .*category after the purchase/,
       },
@@ -112,10 +124,54 @@ if (process.argv.includes('--selftest')) {
   }));
 }
 
+// The market additions (SPEC §14.3) come up by their own chances, so a visit
+// may or may not draw them; each is named, so one is never a stray, and the
+// roster above is still required whole. THE ONE LIST is model/marketStock.js
+// MARKET_ADDITIONS, read through the same module the game reads, never a copy.
+const { MARKET_ADDITIONS: ADDITIONS } = await import(pathToFileURL(join(ROOT, 'src/model/marketStock.js')).href);
+// The additions shape forces every addition out through the harness's own
+// settings door (?shotSettings, the Advanced → Shops rows), so S1 must find
+// each of them on the rail, laid in after the flasks and before services.
+const ADDITIONS_OUT = Object.fromEntries(ADDITIONS.map((id) => [`gameConfig.shops.market.${id}.chance`, 100]));
+
 const SHAPES = [
   { tag: '390x844', w: 390, h: 844, d: 2, mobile: true },
   { tag: '1200x730', w: 1200, h: 730, d: 1, mobile: false },
+  // Every market addition out (SPEC §14.3): chance 100 for each, through ?shotSettings.
+  { tag: '1200x730+additions', w: 1200, h: 730, d: 1, mobile: false, settings: ADDITIONS_OUT },
+  // …and on a phone, where step 5b's four shelves (skill books, revive
+  // tokens, the quest event, companions) push the rail to twelve items and
+  // the compact selector must still reach every one.
+  { tag: '390x844+additions', w: 390, h: 844, d: 2, mobile: true, settings: ADDITIONS_OUT },
 ];
+const settingsQuery = (settings) => (settings ? `&shotSettings=${encodeURIComponent(JSON.stringify(settings))}` : '');
+
+// The blacksmith's roster is its offerings as content/shops.js writes them,
+// read through the module the game reads — never a copy.
+const { shops: SHOPS } = await import(pathToFileURL(join(ROOT, 'src/content/shops.js')).href);
+const SMITH_OFFERINGS = SHOPS.blacksmith.offerings.map((row) => row.id);
+const SMITH_ALL_OUT = Object.fromEntries(SMITH_OFFERINGS.map((id) => [`gameConfig.shops.blacksmith.${id}.chance`, 100]));
+const SMITH_SHAPES = [
+  { tag: '390x844+blacksmith', w: 390, h: 844, d: 2, mobile: true, settings: SMITH_ALL_OUT },
+  { tag: '1200x730+blacksmith', w: 1200, h: 730, d: 1, mobile: false, settings: SMITH_ALL_OUT },
+];
+const SMITH_READ = `(() => {
+  const area = (el) => !!el && [...el.getClientRects()].some((r) => r.width > 0 && r.height > 0);
+  const items = [...document.querySelectorAll('.blacksmith-workspace .shop-rail [data-shop-category]')];
+  const selected = items.find((el) => el.getAttribute('aria-selected') === 'true');
+  return {
+    bars: items.map((el) => ({
+      key: el.dataset.shopCategory,
+      label: ((el.childNodes[0] || {}).textContent || '').trim(),
+      labelOnGlass: area(el),
+      valueOnGlass: area(el.querySelector('.as-status')),
+      value: ((el.querySelector('.as-status') || {}).textContent || '').trim(),
+    })),
+    open: selected ? selected.dataset.shopCategory : null,
+    shelves: Object.fromEntries([...document.querySelectorAll('.blacksmith-workspace [data-shop-shelf]')].map((el) => [el.dataset.shopShelf, area(el)])),
+    purse: ((document.querySelector('.blacksmith-workspace .modal-head-status') || {}).textContent || '').trim(),
+  };
+})()`;
 
 // The roster, a CONTRACT like creationbrief's: a category that stops being
 // drawn is red by name, a category that appears unnamed is red by name. The
@@ -213,7 +269,7 @@ async function main() {
       while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(150); } throw new Error('timeout ' + w); };
     console.log(`\n  ${shape}`);
 
-    await cdp.send('Page.navigate', { url: `${base}?shot=shop` }, S);
+    await cdp.send('Page.navigate', { url: `${base}?shot=shop${settingsQuery(vp.settings)}` }, S);
     // The first mount of the unbundled module route can pass 20 s on a
     // loaded machine (measured 21.4 s, 2026-09-14), so it gets a minute.
     await until(`!!document.querySelector('.shop-rail [data-shop-category]')`, 'shop rail', 60000);
@@ -231,13 +287,21 @@ async function main() {
     // S1 — the roster, both directions, and every item speaks.
     const drawn = arrival.bars.map((b) => b.key);
     const missing = CATEGORIES.filter((k) => !drawn.includes(k));
-    const stray = drawn.filter((k) => !CATEGORIES.includes(k));
+    const stray = drawn.filter((k) => !CATEGORIES.includes(k) && !ADDITIONS.includes(k));
     const mute = arrival.bars.filter((b) => !b.labelOnGlass || !b.valueOnGlass || b.value === '' || b.label === '');
+    // With every addition forced out, each must be drawn, in the rail's order:
+    // the shelves, then the additions, then services and sell.
+    if (vp.settings) {
+      for (const k of ADDITIONS) if (!drawn.includes(k)) missing.push(k);
+    }
+    const expectedOrder = vp.settings ? [...CATEGORIES.slice(0, 5), ...ADDITIONS, ...CATEGORIES.slice(5)] : null;
+    const misordered = expectedOrder && !missing.length && drawn.join() !== expectedOrder.join();
+    if (misordered) stray.push(`order ${drawn.join('>')} (want ${expectedOrder.join('>')})`);
     if (missing.length || stray.length || mute.length) {
       bad('S1', shape, `the rail is not the roster — missing: [${missing.join(', ')}] stray: [${stray.join(', ')}]`
         + `${mute.length ? ` · item(s) with label or status off the glass: ${mute.map((b) => b.key).join(', ')}` : ''}`);
     } else {
-      ok('S1', shape, `${CATEGORIES.length} categories by key, each label+status on the glass — ${arrival.bars.map((b) => `${b.key} '${b.value}'`).join(' · ')}`);
+      ok('S1', shape, `${drawn.length} categories by key${vp.settings ? ' (every addition out, in rail order)' : ''}, each label+status on the glass — ${arrival.bars.map((b) => `${b.key} '${b.value}'`).join(' · ')}`);
     }
 
     // S2 — arrival: cards selected WITH AREA, every other shelf unpainted.
@@ -305,7 +369,7 @@ async function main() {
     }
 
     // S6 — his toggle: ABSENT, not greyed. The harness settings door.
-    await cdp.send('Page.navigate', { url: `${base}?shot=shop&shotSettings=${encodeURIComponent('{"shopSell":false}')}` }, S);
+    await cdp.send('Page.navigate', { url: `${base}?shot=shop${settingsQuery({ ...(vp.settings || {}), shopSell: false })}` }, S);
     await until(`!!document.querySelector('.shop-rail [data-shop-category]')`, 'shop rail, toggle off', 60000);
     await wait(400);
     const off = await ev(READ);
@@ -316,6 +380,69 @@ async function main() {
       bad('S6', shape, `the toggled-off shop still carries sell in some form — items: ${offKeys.join(', ')}, sell nodes: ${off.sellNodes}`);
     }
 
+    await cdp.send('Target.closeTarget', { targetId }, S).catch(() => {});
+  }
+
+  for (const vp of SMITH_SHAPES) {
+    const shape = vp.tag;
+    const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+    const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+    await cdp.send('Page.enable', {}, S); await cdp.send('Runtime.enable', {}, S);
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: vp.h, deviceScaleFactor: vp.d, mobile: vp.mobile }, S);
+    const ev = async (e) => { const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
+      if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'threw'); return r.result.value; };
+    const until = async (x, w, ms = 20000) => { const t = Date.now();
+      while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(150); } throw new Error('timeout ' + w); };
+    console.log(`\n  ${shape}`);
+    await cdp.send('Page.navigate', { url: `${base}?shot=blacksmith${settingsQuery(vp.settings)}` }, S);
+    await until(`!!document.querySelector('.blacksmith-workspace .shop-rail [data-shop-category]')`, 'blacksmith rail', 60000);
+    await wait(600);
+    const compact = await ev(`(() => { const t = document.querySelector('.blacksmith-workspace .as-catnav-toggle');
+      if (!t || !t.getClientRects().length) return false; t.click(); return true; })()`);
+    if (compact) await wait(250);
+    const arrival = await ev(SMITH_READ);
+    if (compact) { await ev(`document.querySelector('.blacksmith-workspace .as-catnav-toggle').click(); true`); await wait(200); }
+
+    // B1 — the roster, in content order, and every item speaks.
+    const drawn = arrival.bars.map((b) => b.key);
+    const mute = arrival.bars.filter((b) => !b.labelOnGlass || !b.valueOnGlass || b.value === '' || b.label === '');
+    if (drawn.join() !== SMITH_OFFERINGS.join() || mute.length) {
+      bad('B1', shape, `the blacksmith rail is not its offerings — drawn ${drawn.join('>')} (want ${SMITH_OFFERINGS.join('>')})`
+        + `${mute.length ? ` · off the glass: ${mute.map((b) => b.key).join(', ')}` : ''}`);
+    } else {
+      ok('B1', shape, `${drawn.length} offerings by key in content order, each label+status on the glass — ${arrival.bars.map((b) => `${b.key} '${b.value}'`).join(' · ')}`);
+    }
+
+    // B2 — arrival: the first offering shown, the rest away.
+    const first = SMITH_OFFERINGS[0];
+    const leaking = Object.entries(arrival.shelves).filter(([k, v]) => k !== first && v).map(([k]) => k);
+    if (arrival.open !== first || !arrival.shelves[first] || leaking.length) {
+      bad('B2', shape, `arrival is not '${first} shown, the rest away' — selected=${arrival.open}, area=${arrival.shelves[first]}${leaking.length ? `, painted: ${leaking.join(', ')}` : ''}`);
+    } else {
+      ok('B2', shape, `${first.toUpperCase()} is selected with its shelf painted; every other shelf is away`);
+    }
+
+    // B3 — the rail switches.
+    await ev(`document.querySelector('#shop-cat-refineStones').click(); true`);
+    await wait(250);
+    const switched = await ev(SMITH_READ);
+    if (switched.open === 'refineStones' && switched.shelves.refineStones && !switched.shelves[first]) {
+      ok('B3', shape, 'REFINE shows on a tap and the first shelf leaves the glass');
+    } else {
+      bad('B3', shape, `the rail did not switch — selected=${switched.open}, refine area=${switched.shelves.refineStones}, ${first} area=${switched.shelves[first]}`);
+    }
+
+    // B4 — an action keeps the player's place, and the purse moves.
+    const refinedOf = (purse) => { const m = purse.match(/(\d+) refined/); return m ? +m[1] : null; };
+    const before = refinedOf(switched.purse);
+    const pressed = await ev(`(() => { const b = document.querySelector('#blacksmith-refine'); if (!b || b.disabled) return false; b.click(); return true; })()`);
+    await wait(400);
+    const after = await ev(SMITH_READ);
+    if (pressed && after.open === 'refineStones' && before !== null && refinedOf(after.purse) === before + 1) {
+      ok('B4', shape, `refined through the shelf: REFINE still selected, purse '${switched.purse}' -> '${after.purse}'`);
+    } else {
+      bad('B4', shape, `the refine action lost the place or the purse — pressed=${pressed}, selected=${after.open}, purse '${switched.purse}' -> '${after.purse}'`);
+    }
     await cdp.send('Target.closeTarget', { targetId }, S).catch(() => {});
   }
 

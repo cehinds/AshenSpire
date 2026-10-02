@@ -128,8 +128,8 @@ At `70d35e2` the same sentences are :590 and :657. Status before this branch:
 - §1 titled the game "Spire of the Erdtree" (heading and Working-title row) — the
   shipped title is **Ashen Spire** (`title.js:47` `ASHEN SPIRE`, bundle
   `dist/AshenSpire.html`). **Both fixed**, with a header note naming
-  `docs/IP-SCRUB.md` as the authority for shipped names until the document-wide
-  pre-scrub-vocabulary rename lands (finding 5 below).
+  `docs/IP-SCRUB.md` as the authority for shipped names (finding 5 below). The
+  document-wide rename once planned is dropped (owner decision, 2026-09-27).
 
 Falsify any of it: `grep -n "no-op" SPEC.md` → 0 audio hits; `ls src/ui/audio.js
 src/content/music.js src/net/lan.js`.
@@ -153,8 +153,9 @@ src/content/music.js src/net/lan.js`.
    disagrees with itself. Map section's ground; recorded, not edited here.
 5. **SPEC's vocabulary is pre-scrub document-wide** (runes/Vagabond/Erdtree/Scarlet
    Rot/Watchful Omen/…, vs shipped cinders/Reaver/Goldbough/Crimson Blight/Fell
-   Warden — `docs/IP-SCRUB.md` is the map). One rename act, not per-section nibbles;
-   left intact so SPEC stays internally consistent until that act.
+   Warden — `docs/IP-SCRUB.md` is the map). Left intact so SPEC stays internally
+   consistent. The one rename act proposed for it is dropped (owner decision, 2026-09-27:
+   not wanted).
 
 ## Boundary of this sweep
 
@@ -218,9 +219,9 @@ grep before it was written down; `verify-shipped: OK`; suite green at the releas
 ## Standing debts, unchanged and named
 
 1. **Pre-scrub vocabulary, document-wide** — 24 remaining hits
-   (`grep -cE "runes|Vagabond|Astrologer|Prophet|Erdtree|Scarlet Rot" SPEC.md`). One
-   deliberate rename act; now stated once in the header as **to-build** rather than
-   apologised for per section.
+   (`grep -cE "runes|Vagabond|Astrologer|Prophet|Erdtree|Scarlet Rot" SPEC.md`). Stated
+   once in the header rather than apologised for per section. The rename act once proposed
+   for it is dropped (owner decision, 2026-09-27: not wanted).
 2. **The dangling unlock refs** (`graveWardenUnlock`, `ashChildUnlock` → classes that do not
    exist; green because the ref check is written per *known* kind) — **still open, and it is
    a code/test defect, not a SPEC defect.** It does not belong in a documentation pass:
@@ -328,7 +329,7 @@ clauses were not (see the boundary below).
 | P3 | 12.3 One Discard-with-Exhaust entry with separate views; potions in the far-right action-row slot; selection is inert and only Use spends | **shipped** | `combat.js` action row (Actions · Draw · End Turn · Discard · Potions) and `openSpentPileModal` (`src/ui/components/piles.js`); potion rows through `PotionContentsModel` / `RunPotionModel` | `node --test tests/wireframe-pile-viewer.test.mjs tests/wireframe-potion-inspection.test.mjs`; `grep -n "combat-potions tall" src/ui/screens/combat.js` → the last button in the row |
 | P4 | 12.4 Multiple terminal bosses per act; every route reachable with a pre-boss rest; legacy saves keep the original boss with no RNG draw | **shipped** | `src/engine/actmap.js` `bossEncounterForNode`; `src/content/bossDestinations.js` | `node --test tests/branchingBosses.test.mjs tests/bossDestinationLabels.test.mjs tests/legacyBossReferences.test.mjs` |
 | P5 | 12.4 Roster target: 20 regular enemies and 10 bosses, elites not counted | **shipped** | `contentBundle.enemies`: 33 = 20 regular + 10 boss + 3 elite | `node --test tests/expandedRoster.test.mjs` ("roster has exactly 20 regular enemies, 10 bosses, and 3 elites"; "live pools expose all 20 regular enemies and 10 bosses through seeded legal encounters") |
-| P6 | 12.4 Elites for 1.0: **two per seat** (D4, added in this stage) | **to-build** | One elite encounter per seat ships: `eliteWyrm` (weald), `a2_eliteDuelist` (marches), `a3_eliteWyrmLord` (reach). The target needs three more. The "3 elites" count in `tests/expandedRoster.test.mjs` has to move with that content PR | `node -e "import('./src/content/index.js').then(m=>{const c={};for(const e of m.contentBundle.encounters)if(e.pool==='elite')c[e.seat]=(c[e.seat]\|\|0)+1;console.log(c)})"`: today `{ weald: 1, marches: 1, reach: 1 }`; built when every seat reads at least 2 |
+| P6 | 12.4 Elites for 1.0: **one to five per seat, averaging three** (D4, added in this stage; revised 2026-09-26) | **to-build** | One elite encounter per seat ships: `eliteWyrm` (weald), `a2_eliteDuelist` (marches), `a3_eliteWyrmLord` (reach). The target needs at least five more (a mean of 3 ±0.5 across 3 seats is 8 to 10 elites), with no seat above 5. The "3 elites" count in `tests/expandedRoster.test.mjs` has to move with that content PR | `node -e "import('./src/content/index.js').then(m=>{const c={};for(const e of m.contentBundle.encounters)if(e.pool==='elite')for(const x of e.enemies)(c[e.seat]??=new Set).add(x);console.log(Object.fromEntries(Object.entries(c).map(([k,v])=>[k,v.size])))})"`: today `{ weald: 1, marches: 1, reach: 1 }`; built when every seat reads 1–5 distinct elite enemies (a reused enemy counts once) and the mean across seats is 3 (±0.5) |
 | P7 | 12.4 Enemy card movesets over the seeded weighted selector; no parallel picker | **shipped** | `src/model/enemyMoveCards.js` (presentation only; the move picker is unchanged) | `node tests/enemyMoveCards.test.mjs` (every move gets a card, inputs not mutated); `node --test tests/expandedRoster.test.mjs` ("seeded weighted plans replay exactly and respect move locks and repeat limits") |
 | P8 | 12.5 Player animation groups (attack / Power glow / guard / cast; shield bash, guard, parry); the **guard** resting stance (guard, shield guard, parry) held until the next turn; payment auras; enemy precedence override → tag → intent → neutral | **shipped** ⚠ | the `actionAnimation`, `combatAnimation` and `combatAura` resolvers | `node --test tests/actionAnimation.test.mjs tests/combatAnimation.test.mjs tests/combatAura.test.mjs`. ⚠ The clauses that ask for real browser playtests (timing, handler cleanup, multi-enemy performance, reduced motion) are not node cases. `tests/mobile-performance.test.mjs` and the `tools/*-animation-browser.mjs` gates cover part of that, and none of it was watched in this pass |
 | P8b | 12.5 Powers replace the visual resting stance until that character's next turn begins | **to-build** | `resolveCombatAnimation` (`src/model/combatAnimation.js`) records `rest: 'cast'` for a Power, but `resolveCombatPose` (`src/model/combatPose.js`, last line) keeps only `guard` / `shieldGuard` / `parry` and returns `idle` for anything else, so the player drops back to idle when the Power frames finish. `content/config/ui/presentation/combatPoseStates.json` has no Power resting pose yet. The existing tests assert only the intermediate `rest` value, not the pose | `node -e "import('./src/model/combatPose.js').then(m=>console.log(m.resolveCombatPose({hp:1},'cast',[])))"`: today prints `idle`; built when it prints a Power resting pose |
@@ -343,7 +344,7 @@ boundary) and 2 to-build (P6, added by D4; P8b).**
 |---|---|---|
 | **D2** Build Guilt's in-hand turn-end hook and Warrior's Vow's stance choice | **No SPEC change.** The §5.2 text ("Guilt … at turn end in hand: lose 1 HP"; "Warrior's Vow … Enter a Stance of your choice") is the contract and will be implemented as written. Frostbite stays **CUT** (stage 2, §4.4) | §5.2, unchanged |
 | **D3** The COMBAT-EQUIPMENT-RULES prototype gate and the 36 → 50 card pool expansion are post-1.0 | Scope note added under "Combat and equipment revision: implementation contract". The linked contract itself is unchanged | SPEC header note |
-| **D4** Two elites per seat for 1.0 | Target added to §12.4 beside the 20/10 roster target; verdict P6, **to-build** | §12.4 |
+| **D4** One to five elites per seat for 1.0, averaging three (was two; revised 2026-09-26) | Target added to §12.4 beside the 20/10 roster target; verdict P6, **to-build** | §12.4 |
 
 No contractual formula, ordering or state shape changed in this stage.
 
@@ -354,3 +355,47 @@ played.** The §12.3 and §12.5 presentation claims are verified as code plus wi
 tests, not as pixels. Not checked: that a Rogue deck is exactly 11 cards in a live browser run
 (the number is read from `balance.startingDeckSize` and the loadout tests); Guilt and Warrior's
 Vow behaviour (D2 is to-build and outside a spec PR); the balance of any row.
+
+# Stage 4: scope status after the §14 and §15 spec PRs
+
+*2026-09-27, at `dev` = `7f78c5d0` (build `0.7.1.625`). The owner asked for the scope docs
+to match the game. This stage adds no new SPEC claims. It re-runs stage 3's open rows, and it
+gives §14 and §15 a verdict per subsection so that planned work reads as planned. SPEC.md's
+new *Scope status* table (under the opening notes) is the one-line-per-section summary, and
+this stage is its evidence.*
+
+## Stage 3's open rows, re-run
+
+| Row | Stage 3 verdict | 2026-09-27 | Falsifier, as run |
+|---|---|---|---|
+| P6 elites per seat | to-build | **to-build**, unchanged | The stage 3 command prints `{ weald: 1, marches: 1, reach: 1 }` (`wyrmAspirant`, `courtDuelist`, `wyrmLord`) |
+| P8b Power resting stance | to-build | **to-build**, unchanged | `resolveCombatPose({hp:1},'cast',[])` prints `idle` |
+| P1 ⚠ dodge receipt text | shipped ⚠ | **shipped ⚠**, boundary unchanged | `grep -rln dodgeReceipt tests` still finds nothing |
+| C1/C2 content rows | rewritten | hold | 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies = 20 regular + 10 boss + 3 elite, read from `contentBundle` |
+
+The D2 hooks: Guilt shipped in #1286 (`tests/guilt.test.mjs`). Warrior's Vow is still
+**to-build**: `src/content/cards/reaver.js` `warriorsVow` enters `gorefire`, not a chosen stance.
+
+## §14 and §15: contract landed, code for §14 step 2 and §15.2
+
+| Row | Claim | Verdict | Falsifier |
+|---|---|---|---|
+| S14.1 | Deck rules, sideboard, ordered draw, Deck settings | **shipped** (#1343) | `node --test tests/deck-rules.test.mjs` |
+| S14.1b | Deck editor UI | **to-build** | no `DeckEditorModel` in `src/` |
+| S14.2 | Shop kinds and the guaranteed minimum | **to-build** | `grep -rl guaranteedMinimum src` → nothing |
+| S14.3 | Market additions | **to-build** | no `consumables` or `sigils` row in `RUN_SHAPE` |
+| S14.4 | Blacksmith screen | **to-build** (the existing smith services stay as they are) | no `smithingStonesRefined` in `src/` |
+| S14.5 | Wise master | **to-build** | `grep -rl respecRefundPct src` → nothing |
+| S15.1 | Card reward schedule | **to-build**, open as #1351 | no `levelCard` in `src/` |
+| S15.2 | Levelling preview and cap | **shipped (#1349)** | `node --test tests/level-pace.test.mjs` |
+| S15.3 | Crafting drops | **to-build**, open as #1352 | `grep -rl rewardChancePct src` → nothing |
+| S15.4 | Legendary sigils | **to-build**, after §14 step 5 | `grep -rl attunedSigils src` → nothing |
+
+**Counts, stage 4: §14 and §15 have 10 rows: 2 shipped (S14.1, #1343; S15.2, #1349) and 8 to-build; their spec steps landed (#1331, #1348).
+Stage 3's two to-build rows are unchanged.**
+
+## Boundary of stage 4
+
+Source and `contentBundle` reads on one Linux runner, in a checkout without `art/`. Nothing
+was rendered or played. The open PRs named above were not read: a verdict here moves when one
+of them merges, and that PR updates its row.

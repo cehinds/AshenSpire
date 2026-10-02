@@ -6,7 +6,7 @@
 //   node tools/credits-check.mjs --selftest  prove each rule can still go red
 //
 // WHAT IT READS, AND NOTHING ELSE:
-//   · the asset directories — every child directory of assets/ and music/,
+//   · the asset directories — every child directory of assets/, asset-data/ and music/,
 //     plus the assets-mobile/ twin tree as one unit (it mirrors assets/ and is
 //     produced by tools/mobile-art.mjs, so one row covers it)
 //   · CREDITS.md — a directory is covered only by an ATTRIBUTION ROW: a line of
@@ -32,7 +32,7 @@
 // that says a fact is NOT recorded (e.g. "Provenance not recorded") passes: the
 // row exists and states the gap; closing the gap is the owner's call.
 //
-// Scope limit. Coverage is checked one level under assets/ and music/ only; a
+// Scope limit. Coverage is checked one level under assets/, asset-data/ and music/ only; a
 // row naming any subpath (`assets/animations/reaver/…`) covers the whole
 // directory, so a new sibling subdirectory under a covered directory is not
 // checked.
@@ -158,7 +158,7 @@ export function audit({ dirs, credits, readme, disclosure }) {
 /** The real tree's inputs. */
 export async function treeInputs(root = ROOT) {
   const dirs = [];
-  for (const top of ['assets', 'music']) {
+  for (const top of ['assets', 'asset-data', 'music']) {
     const abs = resolve(root, top);
     if (!existsSync(abs)) continue;
     for (const e of readdirSync(abs, { withFileTypes: true })) if (e.isDirectory()) dirs.push(`${top}/${e.name}`);
@@ -240,7 +240,7 @@ async function selftest() {
     { name: 'credits-names-undisclosed-vendor', rule: 'credits-vendor', input: { ...clean, credits: `${credits}Music by Suno.\n` } },
     // The same plants against the real tree's text: the rules bite on what ships.
     { name: 'real-credits-loses-a-row', rule: 'row', input: { ...real, dirs: [...real.dirs, 'assets/zz-planted'] } },
-    { name: 'real-legal-drops-a-vendor', rule: 'legal-vendor-missing', input: onRealLegal((l) => l.replace(/ElevenLabs( Music)?/g, 'a music model')) },
+    { name: 'real-legal-drops-a-vendor', rule: 'legal-vendor-missing', input: onRealLegal((l) => l.replace(/OpenAI|ChatGPT|Codex/g, 'an image model')) },
     { name: 'real-legal-edits-summary-sentence', rule: 'legal-summary', input: onRealLegal((l) => l.replace(AI_SUMMARY, 'Ashen Spire was built with AI under human direction.')) },
     { name: 'real-legal-loses-disclosure-link', rule: 'legal-disclosure-link', input: onRealLegal((l) => l.replace(new RegExp(`\\]\\(${escapeRe(DISCLOSURE_PATH)}\\)`, 'g'), '](docs/)')) },
   ];

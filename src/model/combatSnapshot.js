@@ -1,5 +1,6 @@
 import { retiredAttackSlots } from './cardRemoval.js';
 import { handRulesProblems } from './handRules.js';
+import { recoveryRulesProblems } from './recoveryRules.js';
 import { combatRatingProblems, ratingIds } from './combatRatings.js';
 // src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
 //
@@ -79,6 +80,27 @@ export function combatSnapshotProblems(snapshot) {
   // (Codex, #1296).
   if (snapshot.characterLevel !== undefined && (!Number.isInteger(snapshot.characterLevel) || snapshot.characterLevel < 1)) problems.push('characterLevel must be a positive integer when present');
   if (snapshot.handRules !== undefined) problems.push(...handRulesProblems(snapshot.handRules));
+  // Play in deck order (SPEC §14.1): absent on an older fight, which shuffles;
+  // a present one is the deck's order and the empty-pile return reads it.
+  if (snapshot.orderedDraw !== undefined && snapshot.orderedDraw !== null) {
+    const order = record(snapshot.orderedDraw) ? snapshot.orderedDraw.order : undefined;
+    if (!Array.isArray(order) || order.some((id) => typeof id !== 'string' || !id) || new Set(order).size !== order.length) {
+      problems.push('orderedDraw.order must be an array of unique card instance ids');
+    }
+  }
+  // Settings → Advanced → Recovery: absent on a fight built at the defaults.
+  if (snapshot.recovery !== undefined) {
+    const state = snapshot.recovery;
+    if (!record(state)) problems.push('recovery must be an object');
+    else {
+      problems.push(...recoveryRulesProblems(state.rules));
+      if (!record(state.idle) || ['hp', 'stamina', 'mana'].some((pool) => !Number.isInteger(state.idle[pool]) || state.idle[pool] < 0)) problems.push('recovery.idle must hold a whole-number streak per pool');
+      // The cursor is where the next turn end starts reading the log: past the
+      // log's end, every spend and loss before it would read as an idle turn.
+      const logLength = Array.isArray(snapshot.eventLog) ? snapshot.eventLog.length : 0;
+      if (!Number.isInteger(state.logIndex) || state.logIndex < 0 || state.logIndex > logLength) problems.push('recovery.logIndex must be a whole number within the saved event log');
+    }
+  }
   if (snapshot.ratingsRules !== undefined) {
     problems.push(...combatRatingProblems(snapshot.ratingsRules));
     // A saved fight's rating rows are what `refreshCombatRatings` prices on
@@ -107,6 +129,27 @@ export function combatSnapshotProblems(snapshot) {
   // before them, refused by name when present and malformed.
   if (snapshot.skills !== undefined) problems.push(...skillsProblems(snapshot.skills));
   if (snapshot.coreTags !== undefined) problems.push(...coreTagsProblems(snapshot.coreTags).map((p) => `snapshot.${p}`));
+  // SPEC §14.3: the fight's consumable counts and the companions it mounted;
+  // absent on a snapshot written before them, refused by name when malformed.
+  if (snapshot.consumables !== undefined) {
+    if (!record(snapshot.consumables)) problems.push('consumables must be an object { [consumableId]: count }');
+    else for (const [id, n] of Object.entries(snapshot.consumables)) {
+      if (!Number.isSafeInteger(n) || n < 1) problems.push(`consumables.${id} must be a whole count of at least 1 (a spent-out entry is deleted)`);
+    }
+  }
+  // SPEC §14.4: the sigil slots, `{ [itemRef]: (sigilId|null)[] }`.
+  if (snapshot.sigilSlots !== undefined) {
+    const slots = snapshot.sigilSlots;
+    if (!slots || typeof slots !== 'object' || Array.isArray(slots)
+      || Object.values(slots).some((list) => !Array.isArray(list) || list.some((id) => id !== null && !nonEmptyString(id)))) {
+      problems.push('sigilSlots must be an object { [itemRef]: (sigilId|null)[] }');
+    }
+  }
+  if (snapshot.companions !== undefined) {
+    if (!Array.isArray(snapshot.companions) || snapshot.companions.some((id) => !nonEmptyString(id)) || new Set(snapshot.companions).size !== snapshot.companions.length) {
+      problems.push('companions must be a list of distinct companion ids');
+    }
+  }
   if (snapshot.skillXp !== undefined) {
     if (!record(snapshot.skillXp)) problems.push('skillXp must be an object keyed by owner');
     else for (const [owner, receipt] of Object.entries(snapshot.skillXp)) {

@@ -2,22 +2,21 @@
 //
 // Constantine, 2026-09-20, on the victory door: "why don't I see level
 // progression, xp gained, skill progression in here either". He was right to
-// ask: the fight pays the character level (model/levelup.js) and every skill
+// ask: the fight banks character XP (model/levelup.js) and pays every skill
 // track it touched (engine/skillXp.js) at `onCombatEnd`, BEFORE the door
 // opens — so the ledgers the player is being rewarded on had already moved
 // and the screen said nothing about it. The spoils read like the whole payout
 // while being only the half you pick up.
 //
-// This is that missing half, derived ONCE, here, the rewardplan.js precedent:
+// This is that missing half, derived from the current ledgers:
 // the screen draws rows and decides nothing. A row is a track's ledger as it
-// stands NOW (levels are paid before the door) plus the XP this fight paid
+// stands NOW (skill levels are paid; the character level awaits a click) plus the XP this fight paid
 // into it — the gain is a receipt the caller hands in (main.js keeps it on
 // the pending-reward offer, so a reload resumes the same sentence), never a
 // re-derivation from the combat log this file cannot see.
 //
-// WHICH TRACKS. The character level always, then the skill tracks, the ones
-// this fight paid first and the highest-levelled after, `maxSkills` shown and
-// the rest counted — his layout ("up to three shown", "+Y (other skills)").
+// WHICH TRACKS. The character level always, then every active skill track,
+// the ones this fight paid first and the highest-levelled after.
 // A track nothing has ever touched and this fight did not pay is not a row:
 // the door would otherwise list every weapon group in the game.
 //
@@ -34,12 +33,14 @@
 import { characterLevel, levelOf, xpToNext as levelXpToNext } from './levelup.js';
 import { skillTracks, skillLevel, xpToNext as skillXpToNext } from './skills.js';
 
-/** His layout's ceiling: three tracks shown, the rest counted. */
-export const MAX_SKILL_ROWS = 3;
+/** Every active track has a visible bar and can claim its own level. */
+export const MAX_SKILL_ROWS = Infinity;
 
 /**
- * combatXpGains({ receipt, awards, levelGained }) → the offer's receipt,
- * `{ level, tracks }`: the fight's per-track XP as the combat recorded it
+ * combatXpGains({ receipt, awards, levelGained, levelDiscarded }) → the
+ * offer's receipt, `{ level, tracks }` (plus `levelDiscarded` when the
+ * per-fight level cap threw XP away, SPEC §15.2 — absent otherwise, so an
+ * uncapped receipt keeps its old shape): the fight's per-track XP as the combat recorded it
  * (engine/skillXp.js skillXpReceipt), plus every award the run's OWNER made
  * on top of it — the class track's pay, which the combat cannot know — and
  * what the character level was paid. Summed, never replaced: a track that
@@ -49,7 +50,7 @@ export const MAX_SKILL_ROWS = 3;
  * door and it crosses the save: main.js composes it here rather than inline,
  * so what a reload resumes is the same derivation a test can hold.
  */
-export function combatXpGains({ receipt = null, awards = [], levelGained = 0 } = {}) {
+export function combatXpGains({ receipt = null, awards = [], levelGained = 0, levelDiscarded = 0 } = {}) {
   const tracks = {};
   const add = (id, xp) => {
     if (typeof id !== 'string' || !id || !(Number.isFinite(xp) && xp > 0)) return;
@@ -57,7 +58,9 @@ export function combatXpGains({ receipt = null, awards = [], levelGained = 0 } =
   };
   for (const [id, xp] of Object.entries(receipt || {})) add(id, xp);
   for (const award of awards || []) if (award) add(award.skillId, award.gained);
-  return { level: Number.isFinite(levelGained) && levelGained > 0 ? Math.floor(levelGained) : 0, tracks };
+  const level = Number.isFinite(levelGained) && levelGained > 0 ? Math.floor(levelGained) : 0;
+  const discarded = Number.isFinite(levelDiscarded) && levelDiscarded > 0 ? Math.floor(levelDiscarded) : 0;
+  return discarded ? { level, levelDiscarded: discarded, tracks } : { level, tracks };
 }
 
 /** A class row from either registry shape (a registry, or the authored array). */
@@ -80,7 +83,7 @@ const ratio = (xp, next) => (Number.isFinite(next) && next > 0 ? Math.max(0, Mat
  * row without a next level. `capped` is balance.levelUp.maxLevels reached —
  * the XP stays on the ledger and there is no next level to point at.
  */
-export function characterProgress(registries, run, gained = 0) {
+export function characterProgress(registries, run, gained = 0, discarded = 0) {
   if (!run || (!run.class && !run.level)) return null;
   const ledger = levelOf(run);
   const level = characterLevel(run);
@@ -100,6 +103,8 @@ export function characterProgress(registries, run, gained = 0) {
     xpToNext: next,
     fraction: capped ? 1 : ratio(xp, next),
     gained: Number.isFinite(gained) && gained > 0 ? Math.floor(gained) : 0,
+    // What the per-fight level cap threw away of `gained` (SPEC §15.2).
+    discarded: Number.isFinite(discarded) && discarded > 0 ? Math.floor(discarded) : 0,
     capped,
   });
 }
@@ -157,7 +162,8 @@ export function skillProgress(registries, run, trackGains = {}, { maxSkills = MA
 export function rewardProgress(registries, run, gains = null, { maxSkills = MAX_SKILL_ROWS } = {}) {
   const level = gains && Number.isFinite(gains.level) ? Math.max(0, Math.floor(gains.level)) : 0;
   const tracks = (gains && gains.tracks && typeof gains.tracks === 'object' && !Array.isArray(gains.tracks)) ? gains.tracks : {};
-  const character = characterProgress(registries, run, level);
+  const discarded = gains && Number.isFinite(gains.levelDiscarded) ? Math.max(0, Math.floor(gains.levelDiscarded)) : 0;
+  const character = characterProgress(registries, run, level, discarded);
   const { rows, hidden } = skillProgress(registries, run, tracks, { maxSkills });
   return Object.freeze({ character, skills: Object.freeze(rows), hidden });
 }

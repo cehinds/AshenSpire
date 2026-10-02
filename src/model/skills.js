@@ -15,6 +15,7 @@
 
 import { mechanics } from '../framework/data/mechanics.js';
 import { activeIn, HAND_SLOT_IDS } from './zones.js';
+import { xpStepCost } from './xpCurve.js';
 
 // The roles of an item-owned card (loadout.js ITEM_OWNED_ROLES; spelled here
 // because loadout.js would close an import cycle through validate.js).
@@ -71,17 +72,17 @@ function curveFor(registries, kind) {
 
 /**
  * xpToNext(registries, kind, level) → the XP the step from `level` to
- * `level + 1` costs: round(base × growth^level, roundTo). One shape for every
+ * `level + 1` costs: linear base + level × base × scaler, or legacy
+ * round(base × growth^level, roundTo). One shape for every
  * track (proposal §10); the class curve reads balance.skill.class.xp, the
  * rest balance.skill.xp.
  */
 export function xpToNext(registries, kind, level) {
   if (!SKILL_KINDS.includes(kind)) throw new Error(`xpToNext: '${kind}' is not a skill kind (${SKILL_KINDS.join(', ')})`);
-  const { base, growth, roundTo } = curveFor(registries, kind);
   const step = Number.isInteger(level) && level > 0 ? level : 0;
-  const raw = base * Math.pow(growth, step);
-  const unit = Number.isInteger(roundTo) && roundTo > 0 ? roundTo : 1;
-  return Math.max(unit, Math.round(raw / unit) * unit);
+  // Legacy skill/class curves rounded without the character curve's epsilon.
+  // Preserve those saved thresholds; new linear curves share the new rounding.
+  return xpStepCost(curveFor(registries, kind), step, { exponentialEpsilon: 0 });
 }
 
 /** A fresh ledger: no track has been touched. */
@@ -124,6 +125,49 @@ export function awardSkillXp(registries, run, skillId, amount) {
   // one pass over the deck.
   const upgraded = skillUpgradesCards(registries, row.level) ? applySkillUpgrades(registries, run, skillId) : [];
   return { skillId, before, after: row.level, levelUps: row.level - before, upgraded, gained: gain };
+}
+
+/** Count the levels already paid for by a track, without advancing its ledger. */
+export function pendingSkillLevelCount(registries, run, skillId) {
+  const kind = skillKindOf(registries, skillId);
+  const row = run && run.skills && run.skills[skillId];
+  if (!kind || !row) return 0;
+  let xp = row.xp;
+  let level = row.level;
+  let count = 0;
+  while (xp >= xpToNext(registries, kind, level)) {
+    xp -= xpToNext(registries, kind, level);
+    level += 1;
+    count += 1;
+  }
+  return count;
+}
+
+/** Pay XP now; the player's Level Up! action advances the skill later. */
+export function bankSkillXp(registries, run, skillId, amount) {
+  const kind = skillKindOf(registries, skillId);
+  if (!kind) throw new Error(`bankSkillXp: '${skillId}' is not a skill track`);
+  if (!run.skills || typeof run.skills !== 'object') run.skills = emptySkills();
+  const row = run.skills[skillId] || (run.skills[skillId] = { xp: 0, level: 0, pendingDrafts: 0 });
+  const before = row.level;
+  const gain = Number.isFinite(amount) ? Math.max(0, Math.floor(amount)) : 0;
+  row.xp += gain;
+  return { skillId, before, after: before, levelUps: 0, pendingLevelUps: pendingSkillLevelCount(registries, run, skillId), upgraded: [], gained: gain };
+}
+
+/** Claim exactly one paid-for skill level, retaining excess XP and queuing its reward. */
+export function claimBankedSkillLevel(registries, run, skillId) {
+  const kind = skillKindOf(registries, skillId);
+  const row = run && run.skills && run.skills[skillId];
+  if (!kind || !row) return null;
+  const cost = xpToNext(registries, kind, row.level);
+  if (row.xp < cost) return null;
+  const before = row.level;
+  row.xp -= cost;
+  row.level += 1;
+  row.pendingDrafts += 1;
+  const upgraded = skillUpgradesCards(registries, row.level) ? applySkillUpgrades(registries, run, skillId) : [];
+  return { skillId, before, after: row.level, levelUps: 1, upgraded, gained: 0 };
 }
 
 // ---- drafts, rarity and auto-upgrade (plan phase 4b) ------------------------
@@ -194,7 +238,9 @@ export function applySkillUpgrades(registries, run, skillId) {
   if (!schools.size || !Array.isArray(run.deck)) return [];
   const cards = registries && registries.cards;
   const out = [];
-  for (const inst of run.deck) {
+  // Owned means deck ∪ sideboard (SPEC §14.1): a card set aside by the deck
+  // editor keeps the standing rule and comes back upgraded.
+  for (const inst of [...run.deck, ...(Array.isArray(run.sideboard) ? run.sideboard : [])]) {
     if (!inst || inst.upgraded || inst.sourceArmamentId || ITEM_OWNED_ROLES.includes(inst.equipmentRole)) continue;
     const def = cards && cards.has(inst.cardId) ? cards.get(inst.cardId) : null;
     if (!def || !(def.tags || []).some((t) => schools.has(t))) continue;

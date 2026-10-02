@@ -1,7 +1,7 @@
 # Ashen Spire — Game Design Document
 
 - **Rebuild baseline:** 2026-08-23
-- **Status:** Design baseline approved for planning; implementation not started by this document
+- **Status:** Design baseline approved for planning. The rebuild this document plans (§17, §22–§24) has **not started** and is **not planned**: the owner decided on 2026-09-27 to keep the vanilla-JS game as the product (§24). The vanilla-JS game on `dev` is the maintained product, and most of the player experience below ships in it; [SPEC.md](../SPEC.md)'s *Scope status* table says per section what is built, partly built or planned.
 - **Product:** Ashen Spire (`AshenSpire`)
 - **Platform:** Modern desktop and mobile browsers
 - **Genre:** Single-player, run-based tactical deckbuilder with optional co-op seams
@@ -9,8 +9,10 @@
 
 ## 0. Purpose and authority
 
-The September encounter expansion adds seven regular enemies and seven bosses
-to the existing roster, with multiple named terminal destinations per act.
+The September encounter expansion added seven regular enemies and seven bosses
+to the existing roster, with multiple named terminal destinations per act. The
+roster now ships 20 regular enemies, 10 bosses and 3 elites (SPEC §12.4); the
+1.0 elite target is one to five per seat, averaging three.
 The [roster checklist](ENEMY-ROSTER.md) records the current content and verification
 scope. Enemy moves retain seeded weighted selection; their new cards explain
 the live intent, base values and phase requirements without changing selection.
@@ -159,7 +161,7 @@ The replay driver is mastery: class identity, route knowledge, equipment combina
 
 ### 6.1 Core resources
 
-- Energy and actions govern what can be done this turn.
+- Actions (the engine id is still `energy`), Stamina and Mana govern what can be done this turn.
 - Cards move through explicit draw, hand, discard, exhaust, and in-play ownership states.
 - Guard or Block absorbs damage before HP according to the current rules contract.
 - Mana supports class and equipment actions where authored.
@@ -233,6 +235,7 @@ Each class requires at least two viable build directions and a silhouette that r
 - Relics alter the shape of a run rather than merely adding small percentages.
 - Shrines preserve the recurring heal-versus-improve dilemma.
 - Equipment changes combat verbs and ownership while preserving clear before-and-after receipts.
+- Progression is experience as well as cinders: skill tracks and a character level (SPEC §13.4d–§13.4i, built; the smithing re-point 4b-ii and co-op drafts are still open). SPEC §15's levelling-pace preview and per-fight level cap are built (#1349); its configurable card-reward schedule, crafting drops and legendary sigils are **planned**, not built.
 
 Nothing enters the player's run merely because a reward screen opened. Collection occurs only through an explicit action or an explicitly configured Auto collection policy.
 
@@ -461,7 +464,8 @@ and refusal states remain equivalent between List and Grid.
 
 ### 12.2 Merchant
 
-- Cards, Relics, Flasks, Remove a Card, and Sell are progressive-disclosure sections.
+- Cards, Relics, Flasks, Remove a Card, and Sell are progressive-disclosure sections; armaments and weapon arts are sold too (SPEC §12.2, built).
+- A market, a blacksmith and a wise master as three shop kinds, and a deck editor between fights, are specified in SPEC §14 and **planned**: only its deck rules (the sideboard and ordered draw, #1343) are built; the editor screen and the shops are not.
 - One section is open at a time on compact layouts.
 - Buying preserves the current browsing context.
 - Disabled or absent features use truthful authored policy; they are not decorative dead controls.
@@ -803,10 +807,12 @@ The first rebuild milestone is acceptable when:
 
 ## 24. Open decisions before implementation
 
-These choices remain explicit rebuild gates:
+**Owner decision (2026-09-27): the JavaScript game stays the product, and the rebuild is not planned.** This settles gate 2: the existing vanilla JavaScript game is the maintained product. The other five gates stay undecided and matter only if a rebuild is ever planned again.
+
+These choices were the rebuild gates:
 
 1. Final runtime and presentation stack for the .NET-oriented rebuild.
-2. Whether the existing vanilla JavaScript game remains the behavioral oracle, a maintained product, or a migration source only.
+2. Whether the existing vanilla JavaScript game remains the behavioral oracle, a maintained product, or a migration source only. **Decided 2026-09-27: it stays the product.**
 3. Final production-art sourcing mix: first-party rendered, commissioned, generated, and licensed library assets.
 4. The authoritative naming and coding convention document referred to as the Dimitar convention; it must be supplied or written before enforcement.
 5. Which co-op features belong in the first rebuild milestone versus preserved extension seams.

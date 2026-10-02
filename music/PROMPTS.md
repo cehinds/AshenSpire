@@ -1,10 +1,12 @@
-# Music generation prompts
+# Score brief
 
-Each track prompt = **BASE** + the context line. Generated with ElevenLabs Music
-(`eleven_music_v2`). Drop the renders you choose into `music/<context>/` and list them in
-`manifest.json`.
+The brief every track in `music/score/` is composed against: **BASE** applies to
+all of them, and each context line adds its own. The score is written as code and
+rendered by `tools/score/render.mjs` (see `music/README.md`). These lines began as
+prompts for an AI music model; that route was dropped on 2026-09-26, and the words
+now brief the composer, which is code.
 
-## BASE (prepend to every track)
+## BASE (applies to every track)
 
 Instrumental only, no vocals with words. Dark-fantasy orchestral score for "Ashen Spire",
 a roguelike card game set in a kingdom after the Burning: the Sovereign Ember, fed on the
@@ -26,7 +28,7 @@ The map plays the track for the region it stands in (`map-<region id>`). A regio
 with no track plays the plain `map` list, then the generated score. All of them are
 slow and dark, never bright or dance-like: travel through a ruined land, not an adventure.
 
-| Context | Region lore (docs/LORE.md) | Prompt |
+| Context | Region lore (docs/LORE.md) | Brief |
 |---|---|---|
 | map-hollow-weald | Meadows, forest, river valleys. The Field Flame kept harvest and the seasons; "growth without a Field Flame does not stop; it goes wrong." | 56 BPM, D minor. Slow, heavy, overgrown: detuned harp and low cello over a damp organ drone, wordless choir "oo" that sours into dissonance, creaking bowed metal like wood under strain, one distant bell. Oppressive stillness, sickly warmth, no rhythm section. |
 | map-pale-marches | Ice tundra and frozen lakes; the Citadel's bridges froze the night the Court Flame died; gilded stone, verdigris, rime. | 52 BPM, B minor. Frozen and hollow: glassy bowed metal and high sul ponticello strings, sparse harp harmonics like ice cracking, a thin choir "ah" far away, low string pedal. Cold, silent law; no drums. |
@@ -37,7 +39,7 @@ slow and dark, never bright or dance-like: travel through a ruined land, not an 
 
 ## Other contexts
 
-| Context | Prompt |
+| Context | Brief |
 |---|---|
 | title | Main theme, 70 BPM, D minor. Solo cello states a slow, noble melody over an organ drone and choir "oo" pads; harp arpeggios answer; distant bells mark phrases. Gentle swell mid-loop, returns to the opening chord. |
 | combat | Battle loop, 110 BPM, C minor/phrygian. Driving taiko and frame drums, low string ostinato, cello counter-line, choir pads, bowed-metal accents. Tense, steady energy. |
@@ -45,4 +47,4 @@ slow and dark, never bright or dance-like: travel through a ruined land, not an 
 | boss | Boss battle, 126 BPM, G minor. Full choir "ah" chant, pounding taiko, organ pedal, racing string ostinato, tolling bells. Epic, doom-laden, sustained high intensity without sudden hits. |
 | shop | Merchant theme, 76 BPM, F major pentatonic tinged minor. Warm harp and plucked strings, soft cello, faint bells, light frame drum. Cozy, curious, slightly uneasy. |
 | rest | Shrine of grace, 60 BPM, D major/dorian. Solo cello and harp over soft organ drone and choir "oo". Serene, reverent, healing, very low energy. |
-| victory | Run cleared, 84 BPM, C major modal, **about 60 seconds**. Rising choir "ah", organ and strings in a solemn triumphant hymn, bells ringing; bittersweet, golden, restrained. The shipped track is the first 61 s of a 180 s render. |
+| victory | Run cleared, 84 BPM, C major modal, **about 60 seconds**. Rising choir "ah", organ and strings in a solemn triumphant hymn, bells ringing; bittersweet, golden, restrained.  |

@@ -205,12 +205,10 @@ export function mountHand(handEl, { registries, wireCard = null, animateArrival 
     // left at the last render's value.
     if (emptyHtml != null) { handEl.style.setProperty(FAN_LIFT_PROP, '0px'); handEl.innerHTML = emptyHtml; return; }
     const n = cards.length;
-    // ONE HOME FOR THE FAN'S OWN HEIGHT COST. The lift is derived here, so the
-    // room for it is published here too and the stylesheets READ it — they never
-    // restate it (Law 0 clause 4). Both `.hand` rules reserve
-    // var(--fan-lift) in padding-top; a stylesheet that forgets falls back to
-    // 0px and the defect is visible, not plausible (Law 0 clause 5).
-    handEl.style.setProperty(FAN_LIFT_PROP, `${((n - 1) / 2) * 6}px`);
+    // The legacy transform fan publishes its lift for CSS to reserve. The
+    // fitted wireframe hand instead gives every card an absolute top position
+    // inside its own box; it has no transform lift for padding to reserve.
+    handEl.style.setProperty(FAN_LIFT_PROP, fitFan ? '0px' : `${((n - 1) / 2) * 6}px`);
     cards.forEach((entry, i) => {
       const id = entry.inst.instanceId;
       // Solo action callbacks resolve current combat state by instance ID. A

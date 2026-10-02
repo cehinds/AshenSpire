@@ -37,7 +37,7 @@ Posed with `?shot=customize&shotClass=<id>&shotTint=<id>`, added in this change.
 Without it the screen could only ever photograph the first class in the first
 tint — evidence for one of the twenty replaced files.
 
-**The matrix is read from `assets/sprites/class-sprites.manifest.json`, not
+**The matrix is read from `asset-data/sprites/class-sprites.manifest.json`, not
 listed in the tool.** A hand-written list of twenty would be right the day it
 was typed and wrong the first time a class or a tint is added, and the coverage
 gap would reappear silently — which is how the first version of this folder,

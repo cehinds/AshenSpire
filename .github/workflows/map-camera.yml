@@ -1,0 +1,65 @@
+# .github/workflows/map-camera.yml — the map camera's re-fit guard, in a real
+# browser, on every pull request into dev.
+#
+# WHY THIS FILE EXISTS. #1289 and #1314 made the map camera fit the scrollport
+# after it settles and keep the tray's selected-destination framing through a
+# re-fit. The only check that sees that property is
+# `tools/map-camera-persistence.mjs --check`: it opens the real map at 390x844,
+# changes the scrollport box after it settles, and asks whether the camera
+# followed it and kept the tray's node in the middle of the visible band.
+# tests/mapboard-refit.test.mjs covers only the `refitCamera` helper — put the
+# viewport watch back to `centerOnCurrent()` and that test stays green while
+# `--check` goes red. Nothing called `--check`, so the guard ran nowhere.
+#
+# WHERE IT RUNS, by the owner's ruling of 2026-09-26 (DEVELOPER.md, *Which
+# checks gate a pull request*): a pull request into `dev` is gated by fast
+# checks only, about five minutes or less.
+#   pull_request into dev / push to dev — `--check` only: the one re-fit case,
+#                              about ten seconds of browser time.
+#   push to test / release, workflow_dispatch — also the full persistence drive
+#                              (nine judged cases through the real Map ->
+#                              Armaments -> Map remount, character creation and
+#                              Save & Quit), about a minute more.
+#
+# A JOB OF ITS OWN, not a step in tests.yml's core suite: `core` is a no-browser
+# lane, and this needs Chrome. It serves the SOURCE tree (no --entry), so it
+# needs no build and no LFS. ubuntu-latest carries /usr/bin/google-chrome, which
+# is on the tool's browser list; with none, the tool throws and the door reads
+# it as HARNESS (exit 2), never as a pass.
+
+name: map camera
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev, test, release]
+  workflow_dispatch:
+
+concurrency:
+  group: map-camera-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  refit:
+    name: map camera re-fit (real browser)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # serves the checked-out source tree; reads no LFS object
+
+      - uses: ./.github/actions/setup-node
+
+      - uses: ./.github/actions/which-browser
+
+      - name: A settled map camera re-fits to its scrollport and keeps the tray's node (#1142, #1314)
+        run: node tools/verdict.mjs -- node tools/map-camera-persistence.mjs --check --no-screenshots
+
+      - name: The full map-camera persistence drive (push to test/release, or dispatch)
+        if: github.event_name != 'pull_request' && !(github.event_name == 'push' && github.ref_name == 'dev')
+        run: node tools/verdict.mjs -- node tools/map-camera-persistence.mjs --no-screenshots

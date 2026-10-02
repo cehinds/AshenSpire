@@ -1137,6 +1137,12 @@
   width: max-content; min-width: 0; scale: none; flex: none; pointer-events: auto;
   transition: none !important;
 }
+:root .combat[data-layout='formation'] .combatant.enemy-target-hitbox::after {
+  content: ''; position: absolute;
+  left: var(--enemy-hit-x); top: var(--enemy-hit-y);
+  width: calc(44px / var(--ui-zoom, 1)); height: calc(44px / var(--ui-zoom, 1));
+  transform: translate(-50%, -50%); z-index: 900; pointer-events: auto;
+}
 :root .combat[data-layout='formation'] .combatant .sprite > :first-child { flex-shrink: 0; }
 :root .combat[data-layout='formation'] .combatant :is(.nm,.meters) {
   width: 100%; min-width: 0; max-width: none; pointer-events: auto;
@@ -1154,7 +1160,7 @@
 :root .combat[data-layout='formation'] .combatant [data-tip-attached], .combat .turn-ribbon { pointer-events: auto; }
 .combat-ability-badge { cursor: pointer; }
 .combat-ability-badge:focus-visible { outline: var(--focus-ring); outline-offset: 3px; }
-:root .combat[data-layout='formation'] .combatant:is(:focus-within,.hover-target,.context-selected) .combatant-leading { z-index: 30; }
+:root .combat[data-layout='formation'] .combatant:is(:focus-within,.hover-target,.context-selected) .combatant-leading { z-index: 1200; }
 :root .combat[data-layout='formation'] > .hand-area {
   grid-row: 3; height: 100%; min-height: 0; margin: 0; padding: 0;
   display: grid; grid-template-rows: 2fr 1fr; grid-template-areas: 'hand' 'actions'; gap: 0;
@@ -1336,7 +1342,7 @@
    do not create stacking contexts; only sprite art participates in depth. */
 :root .combat[data-layout='formation'] .field .combatant { transform:none; }
 :root .combat[data-layout='formation'] .combatant-stack { left:0; transform:none; }
-:root .combat[data-layout='formation'] .combatant :is(.nm,.meters,.statuses) { position:relative; z-index:40; }
+:root .combat[data-layout='formation'] .combatant :is(.nm,.meters,.statuses) { position:relative; z-index:1000; }
 :root .combat[data-layout='formation'] .combatant .nm { background:#17130fa6; border-radius:3px; }
 :root .combat.coop[data-layout='formation'] .combat-action-row .energy-orb {
  width:var(--combat-control-size); height:var(--combat-control-size); border-radius:50%;
@@ -1368,6 +1374,15 @@
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .resbars { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:calc(12px / var(--ui-zoom,1)); }
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .resline { min-width:0; }
  :root :is(.combat[data-layout='formation'], .w4-frame) .topbar .topbar-btn { height:calc(32px / var(--ui-zoom,1)); min-height:0; width:calc(32px / var(--ui-zoom,1)); }
+ /* INTENDED, measured in Chromium (#1368; D29 in docs/FINISH.md). The co-op
+    board's `.hud-top` (src/ui/screens/coop.js) is not the shared run HUD: it
+    has no `.shared-hud` ancestor, so kit.css's `.shared-hud > .hud-top` grid
+    never applies and this row overrides nothing shared; without it the box is
+    block flow. In short landscape block flow drops Leave to a second line and
+    the band takes that height from the battlefield. This row keeps the bars
+    (flex:1) and Leave on one row, fight label hidden: the compact band above.
+    tools/coop-hud-top.mjs holds it (overlap, clipping, lost parts, horizontal
+    overflow at 390x844, 844x390, 1280x800; one row at 844x390). */
  :root .combat.coop[data-layout='formation'] .topbar .hud-top { display:flex; flex-direction:row; align-items:center; }
  :root .combat.coop[data-layout='formation'] .topbar .resbars-host { flex:1; min-width:0; }
  :root .combat.coop[data-layout='formation'] .topbar .fight-label { display:none; }
@@ -1465,7 +1480,7 @@
   top: var(--overhead-top, 0); bottom: auto;
   transform: translateY(-100%);
   display: flex; flex-direction: column; align-items: center;
-  gap: calc(4px / var(--ui-zoom, 1)); z-index: 20;
+  gap: calc(4px / var(--ui-zoom, 1)); z-index: 1100;
   pointer-events: none;
 }
 .combatant-leading .overhead-control {
@@ -1505,6 +1520,11 @@
   :root .combat[data-layout='formation'] { grid-template-rows: 10% 55% 35%; }
 }
 @media (max-height: 480px) and (min-width: 600px) {
+  /* Keep inspection beside the intent on short screens so selection does
+     not consume another row above the fixed card-to-action gap. */
+  :root .combat[data-layout='formation'] .combatant-leading {
+    flex-direction: row; align-items: flex-end;
+  }
   /* The expanded relic tray can extend beyond its HUD row. Only its actual
      controls should intercept a press on the battlefield below. */
   :root:has(.combat) .hud-relics { pointer-events: none; }

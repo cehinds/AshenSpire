@@ -1,0 +1,4979 @@
+{
+ "_WARNING": "Captured, never hand-edited: the classic merchant shelves origin/dev wrote before SPEC 14.2 shop kinds existed. tests/shop-kinds.test.mjs holds the new merchant flow byte-identical to these on every seed.",
+ "_provenance": {
+  "ref": "3611d6b44 (origin/dev, 2026-09-27), recaptured for #1388 with only its content applied (the five round-4 class cards in their class cardPool, their school tags, Astral Insight cost); the shop code is 3611d6b44 unchanged",
+  "method": "For seed n in 1..50: createRunState({ seed: n*7919, classId: classes[n % classes.length], registries }); rng = createRng(n*7919, { shop: n % 5 }); stock = buildShopStock(registries, rng, run); stock.smith = smithServicesAt(registries, \"merchant\", rng) (main.js merchant case, price multiplier 1); counters = rng.getCounters()."
+ },
+ "classes": [
+  "reaver",
+  "starseer",
+  "rogue",
+  "herald"
+ ],
+ "shelves": {
+  "1": {
+   "runSeed": 7919,
+   "classId": "starseer",
+   "shopCounterAtEntry": 1,
+   "stock": {
+    "cards": [
+     {
+      "id": "starfallBeam",
+      "cost": 457
+     },
+     {
+      "id": "hamstring",
+      "cost": 231
+     },
+     {
+      "id": "astromancerCard",
+      "cost": 426
+     },
+     {
+      "id": "scholarsInsight",
+      "cost": 150
+     },
+     {
+      "id": "meteorite",
+      "cost": 214
+     }
+    ],
+    "relics": [
+     {
+      "id": "blessedDew",
+      "cost": 617
+     },
+     {
+      "id": "carrionTalon",
+      "cost": 883
+     }
+    ],
+    "flasks": [
+     {
+      "id": "wondrousDraught",
+      "cost": 175
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 238
+     }
+    ],
+    "armaments": [
+     {
+      "id": "roundShield",
+      "cost": 263
+     },
+     {
+      "id": "gorefireBrand",
+      "cost": 619
+     },
+     {
+      "id": "spikedShield",
+      "cost": 444
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 279
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 335
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 29,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "2": {
+   "runSeed": 15838,
+   "classId": "rogue",
+   "shopCounterAtEntry": 2,
+   "stock": {
+    "cards": [
+     {
+      "id": "afterimageCard",
+      "cost": 222
+     },
+     {
+      "id": "toxicVolley",
+      "cost": 436
+     },
+     {
+      "id": "hex",
+      "cost": 225
+     },
+     {
+      "id": "lowBlow",
+      "cost": 159
+     },
+     {
+      "id": "sweepingBlow",
+      "cost": 220
+     }
+    ],
+    "relics": [
+     {
+      "id": "ivoryComb",
+      "cost": 443
+     },
+     {
+      "id": "emberFragment",
+      "cost": 670
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfStone",
+      "cost": 175
+     },
+     {
+      "id": "wondrousDraught",
+      "cost": 221
+     }
+    ],
+    "armaments": [
+     {
+      "id": "warhammer",
+      "cost": 404
+     },
+     {
+      "id": "shortbow",
+      "cost": 254
+     },
+     {
+      "id": "spikedShield",
+      "cost": 366
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 308
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 301
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 30,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "3": {
+   "runSeed": 23757,
+   "classId": "herald",
+   "shopCounterAtEntry": 3,
+   "stock": {
+    "cards": [
+     {
+      "id": "hamstring",
+      "cost": 220
+     },
+     {
+      "id": "secondBloom",
+      "cost": 423
+     },
+     {
+      "id": "witheringTouch",
+      "cost": 150
+     },
+     {
+      "id": "bloodOfferingRite",
+      "cost": 425
+     },
+     {
+      "id": "martyrBlood",
+      "cost": 215
+     }
+    ],
+    "relics": [
+     {
+      "id": "emberIdol",
+      "cost": 814
+     },
+     {
+      "id": "moonlitVial",
+      "cost": 474
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfFerocity",
+      "cost": 219
+     },
+     {
+      "id": "bloodUnction",
+      "cost": 185
+     }
+    ],
+    "armaments": [
+     {
+      "id": "blightRod",
+      "cost": 395
+     },
+     {
+      "id": "gorefireBrand",
+      "cost": 678
+     },
+     {
+      "id": "cinderAxe",
+      "cost": 397
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 271
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 312
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 31,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "4": {
+   "runSeed": 31676,
+   "classId": "reaver",
+   "shopCounterAtEntry": 4,
+   "stock": {
+    "cards": [
+     {
+      "id": "enterBulwark",
+      "cost": 158
+     },
+     {
+      "id": "unbreakable",
+      "cost": 471
+     },
+     {
+      "id": "cleavingBlow",
+      "cost": 145
+     },
+     {
+      "id": "bloodhuntersStrike",
+      "cost": 432
+     },
+     {
+      "id": "warcry",
+      "cost": 241
+     }
+    ],
+    "relics": [
+     {
+      "id": "bloodstainedChalice",
+      "cost": 656
+     },
+     {
+      "id": "goldleafCharm",
+      "cost": 474
+     }
+    ],
+    "flasks": [
+     {
+      "id": "blightCoating",
+      "cost": 170
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 193
+     }
+    ],
+    "armaments": [
+     {
+      "id": "halberd",
+      "cost": 424
+     },
+     {
+      "id": "torch",
+      "cost": 270
+     },
+     {
+      "id": "wyrmhornStaff",
+      "cost": 660
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 292
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 332
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 32,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "5": {
+   "runSeed": 39595,
+   "classId": "starseer",
+   "shopCounterAtEntry": 0,
+   "stock": {
+    "cards": [
+     {
+      "id": "starstoneKris",
+      "cost": 419
+     },
+     {
+      "id": "moonrendCut",
+      "cost": 230
+     },
+     {
+      "id": "lucidity",
+      "cost": 228
+     },
+     {
+      "id": "timeDilation",
+      "cost": 450
+     },
+     {
+      "id": "astralArmorCard",
+      "cost": 240
+     }
+    ],
+    "relics": [
+     {
+      "id": "crackedLantern",
+      "cost": 449
+     },
+     {
+      "id": "wayfarersKnot",
+      "cost": 421
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfStone",
+      "cost": 235
+     },
+     {
+      "id": "bloodUnction",
+      "cost": 155
+     }
+    ],
+    "armaments": [
+     {
+      "id": "kiteShield",
+      "cost": 282
+     },
+     {
+      "id": "halberd",
+      "cost": 432
+     },
+     {
+      "id": "boneSceptre",
+      "cost": 372
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 305
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 334
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 28,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "6": {
+   "runSeed": 47514,
+   "classId": "rogue",
+   "shopCounterAtEntry": 1,
+   "stock": {
+    "cards": [
+     {
+      "id": "disorient",
+      "cost": 207
+     },
+     {
+      "id": "pocketSand",
+      "cost": 136
+     },
+     {
+      "id": "hamstringRogue",
+      "cost": 152
+     },
+     {
+      "id": "deathblow",
+      "cost": 474
+     },
+     {
+      "id": "setupRogue",
+      "cost": 215
+     }
+    ],
+    "relics": [
+     {
+      "id": "flayersCenser",
+      "cost": 839
+     },
+     {
+      "id": "watchmansBadge",
+      "cost": 878
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfFerocity",
+      "cost": 174
+     },
+     {
+      "id": "bloodUnction",
+      "cost": 150
+     }
+    ],
+    "armaments": [
+     {
+      "id": "duskChime",
+      "cost": 701
+     },
+     {
+      "id": "spikedShield",
+      "cost": 445
+     },
+     {
+      "id": "starstoneStaff",
+      "cost": 447
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 315
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 271
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 29,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "7": {
+   "runSeed": 55433,
+   "classId": "herald",
+   "shopCounterAtEntry": 2,
+   "stock": {
+    "cards": [
+     {
+      "id": "blightBloom",
+      "cost": 240
+     },
+     {
+      "id": "blightTouch",
+      "cost": 143
+     },
+     {
+      "id": "litany",
+      "cost": 148
+     },
+     {
+      "id": "emberTideCard",
+      "cost": 243
+     },
+     {
+      "id": "transfusion",
+      "cost": 160
+     }
+    ],
+    "relics": [
+     {
+      "id": "radiantAegis",
+      "cost": 824
+     },
+     {
+      "id": "twinnedArmor",
+      "cost": 627
+     }
+    ],
+    "flasks": [
+     {
+      "id": "blightCoating",
+      "cost": 169
+     },
+     {
+      "id": "wondrousDraught",
+      "cost": 196
+     }
+    ],
+    "armaments": [
+     {
+      "id": "greatsword",
+      "cost": 433
+     },
+     {
+      "id": "kiteShield",
+      "cost": 251
+     },
+     {
+      "id": "katana",
+      "cost": 422
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 338
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 303
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 30,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "8": {
+   "runSeed": 63352,
+   "classId": "reaver",
+   "shopCounterAtEntry": 3,
+   "stock": {
+    "cards": [
+     {
+      "id": "impale",
+      "cost": 218
+     },
+     {
+      "id": "twinFang",
+      "cost": 158
+     },
+     {
+      "id": "shieldwall",
+      "cost": 239
+     },
+     {
+      "id": "executioner",
+      "cost": 431
+     },
+     {
+      "id": "warcry",
+      "cost": 242
+     }
+    ],
+    "relics": [
+     {
+      "id": "travelersWhetstone",
+      "cost": 447
+     },
+     {
+      "id": "fellWardenBrand",
+      "cost": 633
+     }
+    ],
+    "flasks": [
+     {
+      "id": "bloodUnction",
+      "cost": 226
+     },
+     {
+      "id": "flaskOfStone",
+      "cost": 216
+     }
+    ],
+    "armaments": [
+     {
+      "id": "twinblade",
+      "cost": 619
+     },
+     {
+      "id": "wyrmhornStaff",
+      "cost": 621
+     },
+     {
+      "id": "spikedShield",
+      "cost": 443
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 285
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 288
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 31,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "9": {
+   "runSeed": 71271,
+   "classId": "starseer",
+   "shopCounterAtEntry": 4,
+   "stock": {
+    "cards": [
+     {
+      "id": "lucidity",
+      "cost": 222
+     },
+     {
+      "id": "starfallBeam",
+      "cost": 422
+     },
+     {
+      "id": "starShower",
+      "cost": 151
+     },
+     {
+      "id": "cometFragment",
+      "cost": 144
+     },
+     {
+      "id": "constellationCard",
+      "cost": 478
+     }
+    ],
+    "relics": [
+     {
+      "id": "travelersWhetstone",
+      "cost": 435
+     },
+     {
+      "id": "ancestralHorn",
+      "cost": 893
+     }
+    ],
+    "flasks": [
+     {
+      "id": "bloodUnction",
+      "cost": 177
+     },
+     {
+      "id": "blightCoating",
+      "cost": 152
+     }
+    ],
+    "armaments": [
+     {
+      "id": "duskChime",
+      "cost": 710
+     },
+     {
+      "id": "cinderAxe",
+      "cost": 396
+     },
+     {
+      "id": "buckler",
+      "cost": 259
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 285
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 303
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 32,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "10": {
+   "runSeed": 79190,
+   "classId": "rogue",
+   "shopCounterAtEntry": 0,
+   "stock": {
+    "cards": [
+     {
+      "id": "hamstringRogue",
+      "cost": 150
+     },
+     {
+      "id": "colossusSmash",
+      "cost": 412
+     },
+     {
+      "id": "smokeBomb",
+      "cost": 412
+     },
+     {
+      "id": "deadlyTempoCard",
+      "cost": 471
+     },
+     {
+      "id": "quickGuard",
+      "cost": 157
+     }
+    ],
+    "relics": [
+     {
+      "id": "watchmansBadge",
+      "cost": 849
+     },
+     {
+      "id": "forsakenWarflag",
+      "cost": 820
+     }
+    ],
+    "flasks": [
+     {
+      "id": "bloodUnction",
+      "cost": 195
+     },
+     {
+      "id": "bloodUnction",
+      "cost": 205
+     }
+    ],
+    "armaments": [
+     {
+      "id": "greatsword",
+      "cost": 408
+     },
+     {
+      "id": "starstoneStaff",
+      "cost": 432
+     },
+     {
+      "id": "battleaxe",
+      "cost": 262
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 292
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 346
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 28,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "11": {
+   "runSeed": 87109,
+   "classId": "herald",
+   "shopCounterAtEntry": 1,
+   "stock": {
+    "cards": [
+     {
+      "id": "communionCard",
+      "cost": 236
+     },
+     {
+      "id": "emberTideCard",
+      "cost": 242
+     },
+     {
+      "id": "lastMercy",
+      "cost": 204
+     },
+     {
+      "id": "bloodHarvest",
+      "cost": 425
+     },
+     {
+      "id": "thornHaloCard",
+      "cost": 230
+     }
+    ],
+    "relics": [
+     {
+      "id": "sacrificialKnife",
+      "cost": 473
+     },
+     {
+      "id": "flayersCenser",
+      "cost": 816
+     }
+    ],
+    "flasks": [
+     {
+      "id": "blightCoating",
+      "cost": 201
+     },
+     {
+      "id": "wondrousDraught",
+      "cost": 205
+     }
+    ],
+    "armaments": [
+     {
+      "id": "duskChime",
+      "cost": 713
+     },
+     {
+      "id": "buckler",
+      "cost": 271
+     },
+     {
+      "id": "shortbow",
+      "cost": 270
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 274
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 321
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 29,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "12": {
+   "runSeed": 95028,
+   "classId": "reaver",
+   "shopCounterAtEntry": 2,
+   "stock": {
+    "cards": [
+     {
+      "id": "masterOfStrategy",
+      "cost": 440
+     },
+     {
+      "id": "hex",
+      "cost": 242
+     },
+     {
+      "id": "rondelParry",
+      "cost": 149
+     },
+     {
+      "id": "bashingBlow",
+      "cost": 159
+     },
+     {
+      "id": "sweepingBlow",
+      "cost": 246
+     }
+    ],
+    "relics": [
+     {
+      "id": "prismaticThorn",
+      "cost": 662
+     },
+     {
+      "id": "warhorn",
+      "cost": 652
+     }
+    ],
+    "flasks": [
+     {
+      "id": "wondrousDraught",
+      "cost": 203
+     },
+     {
+      "id": "blightCoating",
+      "cost": 231
+     }
+    ],
+    "armaments": [
+     {
+      "id": "spikedShield",
+      "cost": 423
+     },
+     {
+      "id": "warhammer",
+      "cost": 437
+     },
+     {
+      "id": "lantern",
+      "cost": 268
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 300
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 359
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 30,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "13": {
+   "runSeed": 102947,
+   "classId": "starseer",
+   "shopCounterAtEntry": 3,
+   "stock": {
+    "cards": [
+     {
+      "id": "celestialLance",
+      "cost": 478
+     },
+     {
+      "id": "starstoneArc",
+      "cost": 210
+     },
+     {
+      "id": "starcaller",
+      "cost": 405
+     },
+     {
+      "id": "wardingStar",
+      "cost": 145
+     },
+     {
+      "id": "twinkling",
+      "cost": 145
+     }
+    ],
+    "relics": [
+     {
+      "id": "sealstoneKey",
+      "cost": 684
+     },
+     {
+      "id": "pearlOfSagacity",
+      "cost": 637
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfStone",
+      "cost": 229
+     },
+     {
+      "id": "wondrousDraught",
+      "cost": 239
+     }
+    ],
+    "armaments": [
+     {
+      "id": "dagger",
+      "cost": 260
+     },
+     {
+      "id": "frostSpear",
+      "cost": 448
+     },
+     {
+      "id": "buckler",
+      "cost": 291
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 318
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 332
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 31,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "14": {
+   "runSeed": 110866,
+   "classId": "rogue",
+   "shopCounterAtEntry": 4,
+   "stock": {
+    "cards": [
+     {
+      "id": "masterOfStrategy",
+      "cost": 419
+     },
+     {
+      "id": "twinFang",
+      "cost": 140
+     },
+     {
+      "id": "smokeVeil",
+      "cost": 138
+     },
+     {
+      "id": "garrote",
+      "cost": 217
+     },
+     {
+      "id": "afterimageCard",
+      "cost": 223
+     }
+    ],
+    "relics": [
+     {
+      "id": "cinderPouch",
+      "cost": 464
+     },
+     {
+      "id": "bloodstainedChalice",
+      "cost": 670
+     }
+    ],
+    "flasks": [
+     {
+      "id": "wondrousDraught",
+      "cost": 231
+     },
+     {
+      "id": "flaskOfStone",
+      "cost": 229
+     }
+    ],
+    "armaments": [
+     {
+      "id": "parryDagger",
+      "cost": 410
+     },
+     {
+      "id": "battleaxe",
+      "cost": 289
+     },
+     {
+      "id": "katana",
+      "cost": 369
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 298
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 331
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 32,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "15": {
+   "runSeed": 118785,
+   "classId": "herald",
+   "shopCounterAtEntry": 0,
+   "stock": {
+    "cards": [
+     {
+      "id": "harbingerOfBlightCard",
+      "cost": 440
+     },
+     {
+      "id": "bloodPact",
+      "cost": 159
+     },
+     {
+      "id": "secondBloom",
+      "cost": 430
+     },
+     {
+      "id": "blightTouch",
+      "cost": 137
+     },
+     {
+      "id": "cullTheWeak",
+      "cost": 155
+     }
+    ],
+    "relics": [
+     {
+      "id": "cinderPouch",
+      "cost": 456
+     },
+     {
+      "id": "restlessClasp",
+      "cost": 895
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfFerocity",
+      "cost": 168
+     },
+     {
+      "id": "blightCoating",
+      "cost": 222
+     }
+    ],
+    "armaments": [
+     {
+      "id": "straightSword",
+      "cost": 244
+     },
+     {
+      "id": "katana",
+      "cost": 435
+     },
+     {
+      "id": "torch",
+      "cost": 249
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 270
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 284
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 28,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "16": {
+   "runSeed": 126704,
+   "classId": "reaver",
+   "shopCounterAtEntry": 1,
+   "stock": {
+    "cards": [
+     {
+      "id": "guardCounter",
+      "cost": 152
+     },
+     {
+      "id": "shieldBash",
+      "cost": 150
+     },
+     {
+      "id": "flameToBlade",
+      "cost": 222
+     },
+     {
+      "id": "goreslash",
+      "cost": 151
+     },
+     {
+      "id": "quickGuard",
+      "cost": 148
+     }
+    ],
+    "relics": [
+     {
+      "id": "carrionTalon",
+      "cost": 837
+     },
+     {
+      "id": "howlingStandard",
+      "cost": 841
+     }
+    ],
+    "flasks": [
+     {
+      "id": "wondrousDraught",
+      "cost": 156
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 207
+     }
+    ],
+    "armaments": [
+     {
+      "id": "dagger",
+      "cost": 290
+     },
+     {
+      "id": "torch",
+      "cost": 256
+     },
+     {
+      "id": "buckler",
+      "cost": 250
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 327
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 284
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 29,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "17": {
+   "runSeed": 134623,
+   "classId": "starseer",
+   "shopCounterAtEntry": 2,
+   "stock": {
+    "cards": [
+     {
+      "id": "honedEdge",
+      "cost": 147
+     },
+     {
+      "id": "quickGuard",
+      "cost": 139
+     },
+     {
+      "id": "azureCoilCard",
+      "cost": 244
+     },
+     {
+      "id": "constellationCard",
+      "cost": 479
+     },
+     {
+      "id": "masterOfStrategy",
+      "cost": 424
+     }
+    ],
+    "relics": [
+     {
+      "id": "warhorn",
+      "cost": 602
+     },
+     {
+      "id": "blessedDew",
+      "cost": 662
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfStone",
+      "cost": 173
+     },
+     {
+      "id": "blightCoating",
+      "cost": 161
+     }
+    ],
+    "armaments": [
+     {
+      "id": "kiteShield",
+      "cost": 278
+     },
+     {
+      "id": "torch",
+      "cost": 257
+     },
+     {
+      "id": "spikedShield",
+      "cost": 402
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 292
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 313
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 30,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "18": {
+   "runSeed": 142542,
+   "classId": "rogue",
+   "shopCounterAtEntry": 3,
+   "stock": {
+    "cards": [
+     {
+      "id": "hamstring",
+      "cost": 230
+     },
+     {
+      "id": "smokeBomb",
+      "cost": 439
+     },
+     {
+      "id": "deadlyTempoCard",
+      "cost": 472
+     },
+     {
+      "id": "colossusSmash",
+      "cost": 455
+     },
+     {
+      "id": "quickCut",
+      "cost": 155
+     }
+    ],
+    "relics": [
+     {
+      "id": "wyrmHeart",
+      "cost": 877
+     },
+     {
+      "id": "twinnedArmor",
+      "cost": 612
+     }
+    ],
+    "flasks": [
+     {
+      "id": "blightCoating",
+      "cost": 198
+     },
+     {
+      "id": "wondrousDraught",
+      "cost": 235
+     }
+    ],
+    "armaments": [
+     {
+      "id": "goldboughBranch",
+      "cost": 638
+     },
+     {
+      "id": "battleaxe",
+      "cost": 242
+     },
+     {
+      "id": "kiteShield",
+      "cost": 277
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 302
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 271
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 31,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "19": {
+   "runSeed": 150461,
+   "classId": "herald",
+   "shopCounterAtEntry": 4,
+   "stock": {
+    "cards": [
+     {
+      "id": "lastMercy",
+      "cost": 228
+     },
+     {
+      "id": "scourge",
+      "cost": 206
+     },
+     {
+      "id": "painOffering",
+      "cost": 159
+     },
+     {
+      "id": "blightwardLash",
+      "cost": 157
+     },
+     {
+      "id": "bloodHarvest",
+      "cost": 416
+     }
+    ],
+    "relics": [
+     {
+      "id": "forsakenWarflag",
+      "cost": 865
+     },
+     {
+      "id": "twinnedArmor",
+      "cost": 653
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfFerocity",
+      "cost": 176
+     },
+     {
+      "id": "flaskOfStone",
+      "cost": 223
+     }
+    ],
+    "armaments": [
+     {
+      "id": "straightSword",
+      "cost": 243
+     },
+     {
+      "id": "spikedShield",
+      "cost": 445
+     },
+     {
+      "id": "battleaxe",
+      "cost": 260
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 278
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 278
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 32,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "20": {
+   "runSeed": 158380,
+   "classId": "reaver",
+   "shopCounterAtEntry": 0,
+   "stock": {
+    "cards": [
+     {
+      "id": "cleavingBlow",
+      "cost": 163
+     },
+     {
+      "id": "fieldDressing",
+      "cost": 206
+     },
+     {
+      "id": "bloodhuntersStrike",
+      "cost": 468
+     },
+     {
+      "id": "wardingLunge",
+      "cost": 240
+     },
+     {
+      "id": "poiseBreaker",
+      "cost": 479
+     }
+    ],
+    "relics": [
+     {
+      "id": "gildedTear",
+      "cost": 684
+     },
+     {
+      "id": "pearlOfSagacity",
+      "cost": 600
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfFerocity",
+      "cost": 235
+     },
+     {
+      "id": "flaskOfStone",
+      "cost": 224
+     }
+    ],
+    "armaments": [
+     {
+      "id": "greatsword",
+      "cost": 449
+     },
+     {
+      "id": "twinblade",
+      "cost": 688
+     },
+     {
+      "id": "katana",
+      "cost": 376
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 337
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 360
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 28,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "21": {
+   "runSeed": 166299,
+   "classId": "starseer",
+   "shopCounterAtEntry": 1,
+   "stock": {
+    "cards": [
+     {
+      "id": "colossusSmash",
+      "cost": 468
+     },
+     {
+      "id": "stargazerCard",
+      "cost": 233
+     },
+     {
+      "id": "ironSkin",
+      "cost": 156
+     },
+     {
+      "id": "bashingBlow",
+      "cost": 136
+     },
+     {
+      "id": "meteorSwarm",
+      "cost": 241
+     }
+    ],
+    "relics": [
+     {
+      "id": "vigilantHalo",
+      "cost": 882
+     },
+     {
+      "id": "radiantAegis",
+      "cost": 831
+     }
+    ],
+    "flasks": [
+     {
+      "id": "bloodUnction",
+      "cost": 208
+     },
+     {
+      "id": "wondrousDraught",
+      "cost": 225
+     }
+    ],
+    "armaments": [
+     {
+      "id": "warhammer",
+      "cost": 428
+     },
+     {
+      "id": "duskChime",
+      "cost": 641
+     },
+     {
+      "id": "shortbow",
+      "cost": 300
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 350
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 303
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 29,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "22": {
+   "runSeed": 174218,
+   "classId": "rogue",
+   "shopCounterAtEntry": 2,
+   "stock": {
+    "cards": [
+     {
+      "id": "hex",
+      "cost": 233
+     },
+     {
+      "id": "ricochet",
+      "cost": 151
+     },
+     {
+      "id": "lowBlow",
+      "cost": 137
+     },
+     {
+      "id": "fieldDressing",
+      "cost": 245
+     },
+     {
+      "id": "sweepingBlow",
+      "cost": 245
+     }
+    ],
+    "relics": [
+     {
+      "id": "blessedDew",
+      "cost": 609
+     },
+     {
+      "id": "vowOfVengeance",
+      "cost": 680
+     }
+    ],
+    "flasks": [
+     {
+      "id": "wondrousDraught",
+      "cost": 173
+     },
+     {
+      "id": "blightCoating",
+      "cost": 218
+     }
+    ],
+    "armaments": [
+     {
+      "id": "parryDagger",
+      "cost": 411
+     },
+     {
+      "id": "roundShield",
+      "cost": 287
+     },
+     {
+      "id": "torch",
+      "cost": 292
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 352
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 316
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 30,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "23": {
+   "runSeed": 182137,
+   "classId": "herald",
+   "shopCounterAtEntry": 3,
+   "stock": {
+    "cards": [
+     {
+      "id": "blindingSand",
+      "cost": 146
+     },
+     {
+      "id": "enfeeble",
+      "cost": 205
+     },
+     {
+      "id": "blightNova",
+      "cost": 448
+     },
+     {
+      "id": "graveOffering",
+      "cost": 145
+     },
+     {
+      "id": "blightwardLash",
+      "cost": 146
+     }
+    ],
+    "relics": [
+     {
+      "id": "blightTouchedIdol",
+      "cost": 647
+     },
+     {
+      "id": "ivoryComb",
+      "cost": 430
+     }
+    ],
+    "flasks": [
+     {
+      "id": "blightCoating",
+      "cost": 226
+     },
+     {
+      "id": "blightCoating",
+      "cost": 192
+     }
+    ],
+    "armaments": [
+     {
+      "id": "roundShield",
+      "cost": 249
+     },
+     {
+      "id": "towerShield",
+      "cost": 654
+     },
+     {
+      "id": "emberlightSceptre",
+      "cost": 613
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 276
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 350
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 31,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "24": {
+   "runSeed": 190056,
+   "classId": "reaver",
+   "shopCounterAtEntry": 4,
+   "stock": {
+    "cards": [
+     {
+      "id": "hemorrhage",
+      "cost": 213
+     },
+     {
+      "id": "serratedBlade",
+      "cost": 147
+     },
+     {
+      "id": "transmute",
+      "cost": 441
+     },
+     {
+      "id": "guardCounter",
+      "cost": 150
+     },
+     {
+      "id": "riposte",
+      "cost": 146
+     }
+    ],
+    "relics": [
+     {
+      "id": "travelersWhetstone",
+      "cost": 425
+     },
+     {
+      "id": "prismaticThorn",
+      "cost": 645
+     }
+    ],
+    "flasks": [
+     {
+      "id": "bloodUnction",
+      "cost": 226
+     },
+     {
+      "id": "blightCoating",
+      "cost": 156
+     }
+    ],
+    "armaments": [
+     {
+      "id": "katana",
+      "cost": 424
+     },
+     {
+      "id": "wyrmhornStaff",
+      "cost": 606
+     },
+     {
+      "id": "emberlightSceptre",
+      "cost": 633
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 280
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 290
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 32,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "25": {
+   "runSeed": 197975,
+   "classId": "starseer",
+   "shopCounterAtEntry": 0,
+   "stock": {
+    "cards": [
+     {
+      "id": "transmute",
+      "cost": 419
+     },
+     {
+      "id": "twinFang",
+      "cost": 142
+     },
+     {
+      "id": "waxingMoonCard",
+      "cost": 471
+     },
+     {
+      "id": "starbladePhalanx",
+      "cost": 137
+     },
+     {
+      "id": "ironSkin",
+      "cost": 153
+     }
+    ],
+    "relics": [
+     {
+      "id": "prismaticThorn",
+      "cost": 623
+     },
+     {
+      "id": "bloodstainedChalice",
+      "cost": 613
+     }
+    ],
+    "flasks": [
+     {
+      "id": "wondrousDraught",
+      "cost": 179
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 186
+     }
+    ],
+    "armaments": [
+     {
+      "id": "kiteShield",
+      "cost": 287
+     },
+     {
+      "id": "roundShield",
+      "cost": 258
+     },
+     {
+      "id": "gorefireBrand",
+      "cost": 648
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 282
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 340
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 28,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "26": {
+   "runSeed": 205894,
+   "classId": "rogue",
+   "shopCounterAtEntry": 1,
+   "stock": {
+    "cards": [
+     {
+      "id": "enfeeble",
+      "cost": 245
+     },
+     {
+      "id": "opportunistCard",
+      "cost": 480
+     },
+     {
+      "id": "feint",
+      "cost": 139
+     },
+     {
+      "id": "pocketSand",
+      "cost": 161
+     },
+     {
+      "id": "cheapShot",
+      "cost": 163
+     }
+    ],
+    "relics": [
+     {
+      "id": "wardensLantern",
+      "cost": 444
+     },
+     {
+      "id": "warhorn",
+      "cost": 627
+     }
+    ],
+    "flasks": [
+     {
+      "id": "wondrousDraught",
+      "cost": 203
+     },
+     {
+      "id": "flaskOfStone",
+      "cost": 225
+     }
+    ],
+    "armaments": [
+     {
+      "id": "cinderAxe",
+      "cost": 435
+     },
+     {
+      "id": "duskChime",
+      "cost": 689
+     },
+     {
+      "id": "shortbow",
+      "cost": 298
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 335
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 336
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 29,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "27": {
+   "runSeed": 213813,
+   "classId": "herald",
+   "shopCounterAtEntry": 2,
+   "stock": {
+    "cards": [
+     {
+      "id": "thornHaloCard",
+      "cost": 241
+     },
+     {
+      "id": "bloodPact",
+      "cost": 161
+     },
+     {
+      "id": "crimsonRite",
+      "cost": 441
+     },
+     {
+      "id": "cullTheWeak",
+      "cost": 159
+     },
+     {
+      "id": "hamstring",
+      "cost": 211
+     }
+    ],
+    "relics": [
+     {
+      "id": "blightTouchedIdol",
+      "cost": 645
+     },
+     {
+      "id": "emberFragment",
+      "cost": 660
+     }
+    ],
+    "flasks": [
+     {
+      "id": "wondrousDraught",
+      "cost": 155
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 161
+     }
+    ],
+    "armaments": [
+     {
+      "id": "duskChime",
+      "cost": 644
+     },
+     {
+      "id": "frostSpear",
+      "cost": 432
+     },
+     {
+      "id": "starstoneStaff",
+      "cost": 384
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 271
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 320
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 30,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "28": {
+   "runSeed": 221732,
+   "classId": "reaver",
+   "shopCounterAtEntry": 3,
+   "stock": {
+    "cards": [
+     {
+      "id": "rondelParry",
+      "cost": 143
+     },
+     {
+      "id": "warcry",
+      "cost": 246
+     },
+     {
+      "id": "guardCounter",
+      "cost": 143
+     },
+     {
+      "id": "poiseBreaker",
+      "cost": 412
+     },
+     {
+      "id": "transmute",
+      "cost": 425
+     }
+    ],
+    "relics": [
+     {
+      "id": "bloodstainedChalice",
+      "cost": 615
+     },
+     {
+      "id": "emberIdol",
+      "cost": 881
+     }
+    ],
+    "flasks": [
+     {
+      "id": "wondrousDraught",
+      "cost": 153
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 206
+     }
+    ],
+    "armaments": [
+     {
+      "id": "twinblade",
+      "cost": 617
+     },
+     {
+      "id": "dagger",
+      "cost": 245
+     },
+     {
+      "id": "katana",
+      "cost": 376
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 352
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 343
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 31,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "29": {
+   "runSeed": 229651,
+   "classId": "starseer",
+   "shopCounterAtEntry": 4,
+   "stock": {
+    "cards": [
+     {
+      "id": "radiantSpray",
+      "cost": 213
+     },
+     {
+      "id": "transmute",
+      "cost": 437
+     },
+     {
+      "id": "wardingStar",
+      "cost": 153
+     },
+     {
+      "id": "moonlitShieldCard",
+      "cost": 224
+     },
+     {
+      "id": "scholarsInsight",
+      "cost": 161
+     }
+    ],
+    "relics": [
+     {
+      "id": "pearlOfSagacity",
+      "cost": 651
+     },
+     {
+      "id": "emberFragment",
+      "cost": 661
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfStone",
+      "cost": 184
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 220
+     }
+    ],
+    "armaments": [
+     {
+      "id": "starstoneStaff",
+      "cost": 433
+     },
+     {
+      "id": "roundShield",
+      "cost": 272
+     },
+     {
+      "id": "kiteShield",
+      "cost": 260
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 358
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 284
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 32,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "30": {
+   "runSeed": 237570,
+   "classId": "rogue",
+   "shopCounterAtEntry": 0,
+   "stock": {
+    "cards": [
+     {
+      "id": "ricochet",
+      "cost": 147
+     },
+     {
+      "id": "blindingSand",
+      "cost": 153
+     },
+     {
+      "id": "enfeeble",
+      "cost": 231
+     },
+     {
+      "id": "feint",
+      "cost": 161
+     },
+     {
+      "id": "cheapShot",
+      "cost": 155
+     }
+    ],
+    "relics": [
+     {
+      "id": "carrionMorsel",
+      "cost": 423
+     },
+     {
+      "id": "restlessClasp",
+      "cost": 825
+     }
+    ],
+    "flasks": [
+     {
+      "id": "wondrousDraught",
+      "cost": 172
+     },
+     {
+      "id": "wondrousDraught",
+      "cost": 198
+     }
+    ],
+    "armaments": [
+     {
+      "id": "goldboughBranch",
+      "cost": 688
+     },
+     {
+      "id": "twinblade",
+      "cost": 699
+     },
+     {
+      "id": "spikedShield",
+      "cost": 425
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 333
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 281
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 28,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "31": {
+   "runSeed": 245489,
+   "classId": "herald",
+   "shopCounterAtEntry": 1,
+   "stock": {
+    "cards": [
+     {
+      "id": "enfeeble",
+      "cost": 216
+     },
+     {
+      "id": "stigmataCard",
+      "cost": 241
+     },
+     {
+      "id": "witheringTouch",
+      "cost": 155
+     },
+     {
+      "id": "plagueBearer",
+      "cost": 205
+     },
+     {
+      "id": "communionCard",
+      "cost": 246
+     }
+    ],
+    "relics": [
+     {
+      "id": "emberFragment",
+      "cost": 671
+     },
+     {
+      "id": "restlessClasp",
+      "cost": 879
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfStone",
+      "cost": 190
+     },
+     {
+      "id": "wondrousDraught",
+      "cost": 176
+     }
+    ],
+    "armaments": [
+     {
+      "id": "torch",
+      "cost": 240
+     },
+     {
+      "id": "greatsword",
+      "cost": 442
+     },
+     {
+      "id": "starstoneStaff",
+      "cost": 406
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 276
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 284
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 29,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "32": {
+   "runSeed": 253408,
+   "classId": "reaver",
+   "shopCounterAtEntry": 2,
+   "stock": {
+    "cards": [
+     {
+      "id": "crimsonCleave",
+      "cost": 163
+     },
+     {
+      "id": "shieldBash",
+      "cost": 144
+     },
+     {
+      "id": "ironVowCard",
+      "cost": 232
+     },
+     {
+      "id": "stitchedArms",
+      "cost": 431
+     },
+     {
+      "id": "cleavingBlow",
+      "cost": 148
+     }
+    ],
+    "relics": [
+     {
+      "id": "goldenSprout",
+      "cost": 430
+     },
+     {
+      "id": "emberwickCharm",
+      "cost": 480
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfStone",
+      "cost": 221
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 233
+     }
+    ],
+    "armaments": [
+     {
+      "id": "goldboughBranch",
+      "cost": 647
+     },
+     {
+      "id": "boneSceptre",
+      "cost": 430
+     },
+     {
+      "id": "katana",
+      "cost": 443
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 303
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 308
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 30,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "33": {
+   "runSeed": 261327,
+   "classId": "starseer",
+   "shopCounterAtEntry": 3,
+   "stock": {
+    "cards": [
+     {
+      "id": "meteorSwarm",
+      "cost": 219
+     },
+     {
+      "id": "starShower",
+      "cost": 164
+     },
+     {
+      "id": "frostVeil",
+      "cost": 165
+     },
+     {
+      "id": "moonlitShieldCard",
+      "cost": 206
+     },
+     {
+      "id": "celestialLance",
+      "cost": 454
+     }
+    ],
+    "relics": [
+     {
+      "id": "moonlitVial",
+      "cost": 425
+     },
+     {
+      "id": "feralEye",
+      "cost": 423
+     }
+    ],
+    "flasks": [
+     {
+      "id": "bloodUnction",
+      "cost": 188
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 223
+     }
+    ],
+    "armaments": [
+     {
+      "id": "cinderAxe",
+      "cost": 395
+     },
+     {
+      "id": "roundShield",
+      "cost": 291
+     },
+     {
+      "id": "blightRod",
+      "cost": 423
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 281
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 295
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 31,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "34": {
+   "runSeed": 269246,
+   "classId": "rogue",
+   "shopCounterAtEntry": 4,
+   "stock": {
+    "cards": [
+     {
+      "id": "opportunistCard",
+      "cost": 427
+     },
+     {
+      "id": "garrote",
+      "cost": 227
+     },
+     {
+      "id": "lowBlow",
+      "cost": 144
+     },
+     {
+      "id": "toxicVolley",
+      "cost": 431
+     },
+     {
+      "id": "venomcoat",
+      "cost": 234
+     }
+    ],
+    "relics": [
+     {
+      "id": "fellWardenBrand",
+      "cost": 688
+     },
+     {
+      "id": "warhorn",
+      "cost": 688
+     }
+    ],
+    "flasks": [
+     {
+      "id": "bloodUnction",
+      "cost": 154
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 163
+     }
+    ],
+    "armaments": [
+     {
+      "id": "wyrmhornStaff",
+      "cost": 640
+     },
+     {
+      "id": "battleaxe",
+      "cost": 283
+     },
+     {
+      "id": "towerShield",
+      "cost": 690
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 333
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 281
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 32,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "35": {
+   "runSeed": 277165,
+   "classId": "herald",
+   "shopCounterAtEntry": 0,
+   "stock": {
+    "cards": [
+     {
+      "id": "bloodletting",
+      "cost": 136
+     },
+     {
+      "id": "honedEdge",
+      "cost": 142
+     },
+     {
+      "id": "blightTouch",
+      "cost": 160
+     },
+     {
+      "id": "graveOffering",
+      "cost": 156
+     },
+     {
+      "id": "desperateRite",
+      "cost": 242
+     }
+    ],
+    "relics": [
+     {
+      "id": "prismaticThorn",
+      "cost": 665
+     },
+     {
+      "id": "ivoryComb",
+      "cost": 452
+     }
+    ],
+    "flasks": [
+     {
+      "id": "bloodUnction",
+      "cost": 174
+     },
+     {
+      "id": "bloodUnction",
+      "cost": 191
+     }
+    ],
+    "armaments": [
+     {
+      "id": "twinblade",
+      "cost": 647
+     },
+     {
+      "id": "wyrmhornStaff",
+      "cost": 611
+     },
+     {
+      "id": "emberlightSceptre",
+      "cost": 632
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 309
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 337
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 28,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "36": {
+   "runSeed": 285084,
+   "classId": "reaver",
+   "shopCounterAtEntry": 1,
+   "stock": {
+    "cards": [
+     {
+      "id": "stomp",
+      "cost": 205
+     },
+     {
+      "id": "fieldDressing",
+      "cost": 206
+     },
+     {
+      "id": "rallyingStandard",
+      "cost": 210
+     },
+     {
+      "id": "twinbladeFlurry",
+      "cost": 209
+     },
+     {
+      "id": "twinFang",
+      "cost": 154
+     }
+    ],
+    "relics": [
+     {
+      "id": "blessedDew",
+      "cost": 631
+     },
+     {
+      "id": "gildedTear",
+      "cost": 672
+     }
+    ],
+    "flasks": [
+     {
+      "id": "wondrousDraught",
+      "cost": 207
+     },
+     {
+      "id": "flaskOfStone",
+      "cost": 166
+     }
+    ],
+    "armaments": [
+     {
+      "id": "parryDagger",
+      "cost": 385
+     },
+     {
+      "id": "dagger",
+      "cost": 243
+     },
+     {
+      "id": "lantern",
+      "cost": 296
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 353
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 310
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 29,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "37": {
+   "runSeed": 293003,
+   "classId": "starseer",
+   "shopCounterAtEntry": 2,
+   "stock": {
+    "cards": [
+     {
+      "id": "wardingStar",
+      "cost": 160
+     },
+     {
+      "id": "frostVeil",
+      "cost": 138
+     },
+     {
+      "id": "moonrendCut",
+      "cost": 219
+     },
+     {
+      "id": "twinkling",
+      "cost": 138
+     },
+     {
+      "id": "astralArmorCard",
+      "cost": 226
+     }
+    ],
+    "relics": [
+     {
+      "id": "emberwickCharm",
+      "cost": 439
+     },
+     {
+      "id": "sealstoneKey",
+      "cost": 682
+     }
+    ],
+    "flasks": [
+     {
+      "id": "bloodUnction",
+      "cost": 156
+     },
+     {
+      "id": "bloodUnction",
+      "cost": 220
+     }
+    ],
+    "armaments": [
+     {
+      "id": "towerShield",
+      "cost": 673
+     },
+     {
+      "id": "halberd",
+      "cost": 446
+     },
+     {
+      "id": "buckler",
+      "cost": 244
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 289
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 355
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 30,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "38": {
+   "runSeed": 300922,
+   "classId": "rogue",
+   "shopCounterAtEntry": 3,
+   "stock": {
+    "cards": [
+     {
+      "id": "hamstringRogue",
+      "cost": 139
+     },
+     {
+      "id": "ironSkin",
+      "cost": 140
+     },
+     {
+      "id": "garrote",
+      "cost": 214
+     },
+     {
+      "id": "thousandCutsRogue",
+      "cost": 457
+     },
+     {
+      "id": "honedEdge",
+      "cost": 156
+     }
+    ],
+    "relics": [
+     {
+      "id": "whetstoneFragment",
+      "cost": 475
+     },
+     {
+      "id": "sentinelsOath",
+      "cost": 652
+     }
+    ],
+    "flasks": [
+     {
+      "id": "blightCoating",
+      "cost": 191
+     },
+     {
+      "id": "blightCoating",
+      "cost": 190
+     }
+    ],
+    "armaments": [
+     {
+      "id": "halberd",
+      "cost": 448
+     },
+     {
+      "id": "ashStaff",
+      "cost": 258
+     },
+     {
+      "id": "boneSceptre",
+      "cost": 433
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 305
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 286
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 31,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "39": {
+   "runSeed": 308841,
+   "classId": "herald",
+   "shopCounterAtEntry": 4,
+   "stock": {
+    "cards": [
+     {
+      "id": "honedEdge",
+      "cost": 144
+     },
+     {
+      "id": "litany",
+      "cost": 150
+     },
+     {
+      "id": "ironSkin",
+      "cost": 149
+     },
+     {
+      "id": "blightNova",
+      "cost": 469
+     },
+     {
+      "id": "martyrBlood",
+      "cost": 228
+     }
+    ],
+    "relics": [
+     {
+      "id": "twinnedArmor",
+      "cost": 641
+     },
+     {
+      "id": "radiantAegis",
+      "cost": 877
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfStone",
+      "cost": 204
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 233
+     }
+    ],
+    "armaments": [
+     {
+      "id": "starstoneStaff",
+      "cost": 374
+     },
+     {
+      "id": "emberlightSceptre",
+      "cost": 638
+     },
+     {
+      "id": "ashStaff",
+      "cost": 264
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 305
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 285
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 32,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "40": {
+   "runSeed": 316760,
+   "classId": "reaver",
+   "shopCounterAtEntry": 0,
+   "stock": {
+    "cards": [
+     {
+      "id": "honedEdge",
+      "cost": 150
+     },
+     {
+      "id": "bloodTithe",
+      "cost": 459
+     },
+     {
+      "id": "fieldDressing",
+      "cost": 217
+     },
+     {
+      "id": "stitchedArms",
+      "cost": 420
+     },
+     {
+      "id": "twinFang",
+      "cost": 165
+     }
+    ],
+    "relics": [
+     {
+      "id": "bloodstainedChalice",
+      "cost": 651
+     },
+     {
+      "id": "carrionTalon",
+      "cost": 834
+     }
+    ],
+    "flasks": [
+     {
+      "id": "blightCoating",
+      "cost": 182
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 168
+     }
+    ],
+    "armaments": [
+     {
+      "id": "battleaxe",
+      "cost": 295
+     },
+     {
+      "id": "parryDagger",
+      "cost": 448
+     },
+     {
+      "id": "greatsword",
+      "cost": 363
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 334
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 315
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 28,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "41": {
+   "runSeed": 324679,
+   "classId": "starseer",
+   "shopCounterAtEntry": 1,
+   "stock": {
+    "cards": [
+     {
+      "id": "timeDilation",
+      "cost": 462
+     },
+     {
+      "id": "starPath",
+      "cost": 207
+     },
+     {
+      "id": "bashingBlow",
+      "cost": 138
+     },
+     {
+      "id": "meteorSwarm",
+      "cost": 227
+     },
+     {
+      "id": "colossusSmash",
+      "cost": 416
+     }
+    ],
+    "relics": [
+     {
+      "id": "sacrificialKnife",
+      "cost": 469
+     },
+     {
+      "id": "bloodiedTalisman",
+      "cost": 660
+     }
+    ],
+    "flasks": [
+     {
+      "id": "wondrousDraught",
+      "cost": 230
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 156
+     }
+    ],
+    "armaments": [
+     {
+      "id": "katana",
+      "cost": 412
+     },
+     {
+      "id": "greatsword",
+      "cost": 362
+     },
+     {
+      "id": "straightSword",
+      "cost": 249
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 301
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 304
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 29,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "42": {
+   "runSeed": 332598,
+   "classId": "rogue",
+   "shopCounterAtEntry": 2,
+   "stock": {
+    "cards": [
+     {
+      "id": "deadlyTempoCard",
+      "cost": 435
+     },
+     {
+      "id": "thousandCutsRogue",
+      "cost": 459
+     },
+     {
+      "id": "colossusSmash",
+      "cost": 470
+     },
+     {
+      "id": "backstep",
+      "cost": 143
+     },
+     {
+      "id": "twinPrick",
+      "cost": 155
+     }
+    ],
+    "relics": [
+     {
+      "id": "blessedDew",
+      "cost": 650
+     },
+     {
+      "id": "twinnedArmor",
+      "cost": 641
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfFerocity",
+      "cost": 231
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 165
+     }
+    ],
+    "armaments": [
+     {
+      "id": "emberlightSceptre",
+      "cost": 719
+     },
+     {
+      "id": "warhammer",
+      "cost": 367
+     },
+     {
+      "id": "wyrmhornStaff",
+      "cost": 607
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 354
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 330
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 30,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "43": {
+   "runSeed": 340517,
+   "classId": "herald",
+   "shopCounterAtEntry": 3,
+   "stock": {
+    "cards": [
+     {
+      "id": "ironSkin",
+      "cost": 138
+     },
+     {
+      "id": "reclamation",
+      "cost": 245
+     },
+     {
+      "id": "lastRites",
+      "cost": 427
+     },
+     {
+      "id": "colossusSmash",
+      "cost": 413
+     },
+     {
+      "id": "blightTouch",
+      "cost": 152
+     }
+    ],
+    "relics": [
+     {
+      "id": "twinnedArmor",
+      "cost": 615
+     },
+     {
+      "id": "sacrificialKnife",
+      "cost": 439
+     }
+    ],
+    "flasks": [
+     {
+      "id": "wondrousDraught",
+      "cost": 225
+     },
+     {
+      "id": "blightCoating",
+      "cost": 226
+     }
+    ],
+    "armaments": [
+     {
+      "id": "shortbow",
+      "cost": 287
+     },
+     {
+      "id": "emberlightSceptre",
+      "cost": 642
+     },
+     {
+      "id": "kiteShield",
+      "cost": 283
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 358
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 324
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 31,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "44": {
+   "runSeed": 348436,
+   "classId": "reaver",
+   "shopCounterAtEntry": 4,
+   "stock": {
+    "cards": [
+     {
+      "id": "sanguinePactCard",
+      "cost": 436
+     },
+     {
+      "id": "goreslash",
+      "cost": 155
+     },
+     {
+      "id": "unbreakable",
+      "cost": 444
+     },
+     {
+      "id": "twinFang",
+      "cost": 150
+     },
+     {
+      "id": "crimsonCleave",
+      "cost": 135
+     }
+    ],
+    "relics": [
+     {
+      "id": "watchmansBadge",
+      "cost": 888
+     },
+     {
+      "id": "warhorn",
+      "cost": 638
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfStone",
+      "cost": 204
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 229
+     }
+    ],
+    "armaments": [
+     {
+      "id": "greatsword",
+      "cost": 385
+     },
+     {
+      "id": "shortbow",
+      "cost": 275
+     },
+     {
+      "id": "starstoneStaff",
+      "cost": 441
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 284
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 359
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 32,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "45": {
+   "runSeed": 356355,
+   "classId": "starseer",
+   "shopCounterAtEntry": 0,
+   "stock": {
+    "cards": [
+     {
+      "id": "starcaller",
+      "cost": 427
+     },
+     {
+      "id": "astralArmorCard",
+      "cost": 213
+     },
+     {
+      "id": "supernova",
+      "cost": 411
+     },
+     {
+      "id": "timeDilation",
+      "cost": 432
+     },
+     {
+      "id": "shootingShard",
+      "cost": 161
+     }
+    ],
+    "relics": [
+     {
+      "id": "curedHide",
+      "cost": 422
+     },
+     {
+      "id": "wrathCoil",
+      "cost": 863
+     }
+    ],
+    "flasks": [
+     {
+      "id": "blightCoating",
+      "cost": 238
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 222
+     }
+    ],
+    "armaments": [
+     {
+      "id": "duskChime",
+      "cost": 618
+     },
+     {
+      "id": "buckler",
+      "cost": 274
+     },
+     {
+      "id": "kiteShield",
+      "cost": 290
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 288
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 314
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 28,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "46": {
+   "runSeed": 364274,
+   "classId": "rogue",
+   "shopCounterAtEntry": 1,
+   "stock": {
+    "cards": [
+     {
+      "id": "assassinate",
+      "cost": 412
+     },
+     {
+      "id": "pilfer",
+      "cost": 160
+     },
+     {
+      "id": "disorient",
+      "cost": 233
+     },
+     {
+      "id": "fieldDressing",
+      "cost": 214
+     },
+     {
+      "id": "vanish",
+      "cost": 141
+     }
+    ],
+    "relics": [
+     {
+      "id": "travelersWhetstone",
+      "cost": 426
+     },
+     {
+      "id": "emberwickCharm",
+      "cost": 476
+     }
+    ],
+    "flasks": [
+     {
+      "id": "blightCoating",
+      "cost": 234
+     },
+     {
+      "id": "wondrousDraught",
+      "cost": 163
+     }
+    ],
+    "armaments": [
+     {
+      "id": "roundShield",
+      "cost": 284
+     },
+     {
+      "id": "parryDagger",
+      "cost": 402
+     },
+     {
+      "id": "cinderAxe",
+      "cost": 364
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "katanaDrawCut",
+      "cost": 274
+     },
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 300
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 29,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "47": {
+   "runSeed": 372193,
+   "classId": "herald",
+   "shopCounterAtEntry": 2,
+   "stock": {
+    "cards": [
+     {
+      "id": "bloodOfferingRite",
+      "cost": 471
+     },
+     {
+      "id": "blightwardLash",
+      "cost": 140
+     },
+     {
+      "id": "communionCard",
+      "cost": 211
+     },
+     {
+      "id": "crimsonRite",
+      "cost": 454
+     },
+     {
+      "id": "reclamation",
+      "cost": 228
+     }
+    ],
+    "relics": [
+     {
+      "id": "bloodstainedChalice",
+      "cost": 673
+     },
+     {
+      "id": "sacrificialKnife",
+      "cost": 427
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfFerocity",
+      "cost": 171
+     },
+     {
+      "id": "wondrousDraught",
+      "cost": 197
+     }
+    ],
+    "armaments": [
+     {
+      "id": "towerShield",
+      "cost": 641
+     },
+     {
+      "id": "dagger",
+      "cost": 291
+     },
+     {
+      "id": "emberlightSceptre",
+      "cost": 652
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 333
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 300
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": true,
+     "rolled": true,
+     "chance": 25,
+     "services": [
+      "upgrade",
+      "extract",
+      "install"
+     ]
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 30,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "48": {
+   "runSeed": 380112,
+   "classId": "reaver",
+   "shopCounterAtEntry": 3,
+   "stock": {
+    "cards": [
+     {
+      "id": "goreslash",
+      "cost": 146
+     },
+     {
+      "id": "ruinousBlow",
+      "cost": 433
+     },
+     {
+      "id": "twinFang",
+      "cost": 152
+     },
+     {
+      "id": "quickstep",
+      "cost": 152
+     },
+     {
+      "id": "enfeeble",
+      "cost": 206
+     }
+    ],
+    "relics": [
+     {
+      "id": "blightTouchedIdol",
+      "cost": 635
+     },
+     {
+      "id": "cinderPouch",
+      "cost": 427
+     }
+    ],
+    "flasks": [
+     {
+      "id": "bloodUnction",
+      "cost": 196
+     },
+     {
+      "id": "bloodUnction",
+      "cost": 209
+     }
+    ],
+    "armaments": [
+     {
+      "id": "goldboughBranch",
+      "cost": 651
+     },
+     {
+      "id": "wyrmhornStaff",
+      "cost": 656
+     },
+     {
+      "id": "lantern",
+      "cost": 276
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 311
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 358
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 31,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "49": {
+   "runSeed": 388031,
+   "classId": "starseer",
+   "shopCounterAtEntry": 4,
+   "stock": {
+    "cards": [
+     {
+      "id": "umbralWard",
+      "cost": 467
+     },
+     {
+      "id": "gravityWell",
+      "cost": 215
+     },
+     {
+      "id": "radiantSpray",
+      "cost": 244
+     },
+     {
+      "id": "astralInsight",
+      "cost": 232
+     },
+     {
+      "id": "timeDilation",
+      "cost": 415
+     }
+    ],
+    "relics": [
+     {
+      "id": "pearlOfSagacity",
+      "cost": 635
+     },
+     {
+      "id": "moonlitVial",
+      "cost": 444
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfFerocity",
+      "cost": 219
+     },
+     {
+      "id": "flaskOfStone",
+      "cost": 156
+     }
+    ],
+    "armaments": [
+     {
+      "id": "frostSpear",
+      "cost": 438
+     },
+     {
+      "id": "twinblade",
+      "cost": 687
+     },
+     {
+      "id": "parryDagger",
+      "cost": 435
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 287
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 281
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 32,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  },
+  "50": {
+   "runSeed": 395950,
+   "classId": "rogue",
+   "shopCounterAtEntry": 0,
+   "stock": {
+    "cards": [
+     {
+      "id": "quickCut",
+      "cost": 165
+     },
+     {
+      "id": "fanOfKnives",
+      "cost": 219
+     },
+     {
+      "id": "coupDeGrace",
+      "cost": 246
+     },
+     {
+      "id": "envenomCard",
+      "cost": 457
+     },
+     {
+      "id": "deathblow",
+      "cost": 456
+     }
+    ],
+    "relics": [
+     {
+      "id": "prismaticThorn",
+      "cost": 616
+     },
+     {
+      "id": "moonlitVial",
+      "cost": 474
+     }
+    ],
+    "flasks": [
+     {
+      "id": "flaskOfFerocity",
+      "cost": 164
+     },
+     {
+      "id": "flaskOfFerocity",
+      "cost": 175
+     }
+    ],
+    "armaments": [
+     {
+      "id": "wyrmhornStaff",
+      "cost": 644
+     },
+     {
+      "id": "boneSceptre",
+      "cost": 421
+     },
+     {
+      "id": "gorefireBrand",
+      "cost": 616
+     }
+    ],
+    "weaponArts": [
+     {
+      "id": "greatswordSunderingHew",
+      "cost": 290
+     },
+     {
+      "id": "katanaDrawCut",
+      "cost": 354
+     }
+    ],
+    "removeCost": 225,
+    "smith": {
+     "nodeKind": "merchant",
+     "offered": false,
+     "rolled": true,
+     "chance": 25,
+     "services": []
+    }
+   },
+   "counters": {
+    "map": 0,
+    "shuffle": 0,
+    "cardRewards": 0,
+    "relicRewards": 0,
+    "flaskRewards": 0,
+    "armaments": 0,
+    "enemyAI": 0,
+    "enemyHP": 0,
+    "events": 0,
+    "shop": 28,
+    "misc": 0,
+    "smith": 1,
+    "combatProcs": 0,
+    "seats": 0,
+    "rewardRolls": 0
+   }
+  }
+ }
+}

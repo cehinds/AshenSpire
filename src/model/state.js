@@ -32,8 +32,12 @@ import { openLedger, closeLedger, note } from './healLedger.js';
 import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
 import { skillsProblems } from './skills.js';
 import { coreTagsProblems } from './classTree.js';
+import { featById } from './feats.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
+import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
+import { boughtArmourProblems, consumablesProblems, companionsProblems } from './marketStock.js';
+import { sigilInventoryProblems } from './sigils.js';
 
 // v3 (2026-08-14): flaskCharges carries its capacity ledger — base, grown,
 // granted — and capacity must derive from the three (validateRunShape). v2
@@ -46,7 +50,32 @@ import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 // legacy fields stay authoritative until phase 3b flips the readers and
 // writers; until then a save whose zones disagree with its legacy fields is
 // re-projected at the load door with a ledger note, never refused.
-export const RUN_SCHEMA_VERSION = 10;
+// 12 (SPEC §15.1): a pending reward may carry `levelCards` rows (keyed
+// `levelCard:<n>`, picks in `chosenDraftCardIds`) and `cardMissed`. The bump
+// is what makes an OLDER build refuse-and-keep such a save rather than read
+// it and drop the rows; an 11 save has no level-card rows, so 11 → 12 is a
+// no-op at the migration door.
+// 13 (SPEC §15.3): `smithingStonesRefined`, the refined-stone purse, rides
+// the save. A v12-or-older save is filled with 0 at migrateRunSchema, so an
+// older build can never be the one to write the field away.
+// 14 (SPEC §14.2): a shop stock carries its kind and the offerings its visit
+// laid out (`shopStock.kind`, `shopStock.offerings`, and the same on an atlas
+// shop point's persisted stock). A v13-or-older stock is read as `market`
+// offering today's shelves, filled at migrateRunSchema with nothing rerolled.
+// 15 (SPEC §14.3, §14.6 step 5a): `sigils` (owned, uninstalled sigil ids) and
+// `sigilSlots` (the slots cut into items, keyed like itemMounts) ride the
+// save, and a loadout may carry `boughtArmour`, the armour sets bought at a
+// market. A v14-or-older save is filled with [] and {} at migrateRunSchema;
+// `boughtArmour` is optional (absent means none bought).
+// 16 (SPEC §14.3, §14.6 step 5b): `consumables` ({ [id]: count }, skill books
+// and revive tokens) and `companions` ([{ id, combatsLeft }]) ride the save. A
+// v15-or-older save is filled with {} and [] at migrateRunSchema.
+// 17 (SPEC §14.4, §14.6 step 6): a `blacksmith` stock can sit on `shopStock`
+// and on an atlas smith point's `serviceStates[pointId].stock` (rolled on
+// first entry). The bump is what makes an OLDER build refuse-and-keep such a
+// save rather than open a kind it has no screen for; a v16 save has no
+// blacksmith stock, so 16 → 17 fills nothing at the migration door.
+export const RUN_SCHEMA_VERSION = 17;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -151,6 +180,7 @@ export function createRunState({
     skills: {},
     // The class tree's picks (plan phase 5b): the core zone's own tagging rows.
     coreTags: [],
+    feats: [],
     // THE POINTS THOSE LEVELS GRANTED, and not a copy of the count above: the
     // two are one number only while the level value is one number. Constantine
     // made it a dial on 2026-08-17 ("leave the level up value configurable"),
@@ -174,9 +204,19 @@ export function createRunState({
     equipmentPoolDeficits: { hp: 0, mana: 0, stamina: 0 },
     cinders: registries.balance.startingCinders || 0,
     smithingStones: 0,
+    smithingStonesRefined: 0, // refined Smithing Stones (SPEC §15.3)
     itemUpgradeLevels: {},
     smithingRewardClaims: [],
     deck: startingDeckRefs(registries, loadout, classId).map((ref) => ({ ...createCardInstance(ref.cardId, false, idGen), ...ref })),
+    sideboard: [], // owned cards the deck editor took out of the deck (SPEC §14.1)
+    // SPEC §14.3: owned sigils not installed anywhere, and the sigil slots cut
+    // into items ({ [itemRef]: (sigilId|null)[] }, keyed like itemMounts).
+    sigils: [],
+    sigilSlots: {},
+    // SPEC §14.3 (schema 16): skill books and revive tokens carried, and the
+    // companions travelling with the run.
+    consumables: {},
+    companions: [],
     loadout,
     // THE BIRTH QUOTA, WRITTEN DOWN. How many attack slots this run was composed
     // with is a fact about the run, not something to re-derive from whatever
@@ -602,6 +642,10 @@ export const RUN_SHAPE = [
   { key: 'drawPerTurn', type: 'number', optional: true },
   { key: 'cinders', type: 'number' },
   { key: 'smithingStones', type: 'number', optional: true },
+  // Refined Smithing Stones (SPEC §15.3, the §14.4 refined stone). Required
+  // at schema 13; a preRefinedStones save (≤ 12) is filled with 0 at the
+  // migration door.
+  { key: 'smithingStonesRefined', type: 'number' },
   { key: 'itemUpgradeLevels', type: 'object', optional: true },
   { key: 'armamentLevels', type: 'object', optional: true },
   { key: 'smithingRewardClaims', type: 'array', optional: true },
@@ -630,12 +674,33 @@ export const RUN_SHAPE = [
   // Plan phase 5b. Required at schema 9; a preCoreTags save (≤ 8) is filled
   // with no picks at the migration door.
   { key: 'coreTags', type: 'array' },
+  { key: 'feats', type: 'array', optional: true },
   // Plan phase 5c: the item types in hand as each boss fell, for the
   // bossWithGroup unlock; optional, written at the boss door.
   { key: 'bossGroups', type: 'object', optional: true },
   // Plan phase 4a. Required at schema 8; a preSkills save (≤ 7) is filled
   // with the empty ledger at the migration door.
   { key: 'skills', type: 'object' },
+  // SPEC §14.1. Required at schema 11: the owned cards the deck editor took out
+  // of the deck. A preSideboard save (≤ 10) is filled with none at the
+  // migration door. `editMintCounter` keeps minted basics' instance ids unique;
+  // absent means none minted.
+  { key: 'sideboard', type: 'array' },
+  { key: 'editMintCounter', type: 'number', optional: true },
+  // SPEC §14.3. Required at schema 15: the owned, uninstalled sigils and the
+  // sigil slots cut into items (sigilInventoryProblems). A preSigils save
+  // (≤ 14) is filled with [] and {} at the migration door.
+  { key: 'sigils', type: 'array' },
+  { key: 'sigilSlots', type: 'object' },
+  // SPEC §14.3. Required at schema 16: the consumables carried and the
+  // companions travelling (consumablesProblems, companionsProblems). A
+  // preConsumables save (≤ 15) is filled with {} and [] at the migration door.
+  { key: 'consumables', type: 'object' },
+  { key: 'companions', type: 'array' },
+  // SPEC §14.2. The open shop visit's stock, null between visits. Since
+  // schema 14 it carries `kind` and `offerings` (shopStockProblems); a
+  // preShopKinds save (≤ 13) is read as a market at the migration door.
+  { key: 'shopStock', type: 'object', optional: true, nullable: true },
   { key: 'seedString', type: 'string', nullable: true },
   { key: 'savedAt', type: 'string', optional: true }, // ISO time of the last landed save (W1l–W1r)
   { key: 'mapNodeId', type: 'string', nullable: true },
@@ -728,7 +793,18 @@ function pendingDraftRows(pending) {
   const cls = (Array.isArray(rewards.classDrafts) ? rewards.classDrafts : [])
     .filter((d) => d && typeof d.classId === 'string' && Array.isArray(d.nodeIds) && d.nodeIds.length > 0)
     .map((d) => ({ key: `classDraft:${d.classId}:${(seen[`c:${d.classId}`] = (seen[`c:${d.classId}`] || 0) + 1) - 1}`, nodeIds: d.nodeIds, ids: d.nodeIds }));
-  return [...cls, ...skill];
+  // A level card (SPEC §15.1) picks a card, keyed by its ordinal; its pick is
+  // kept in chosenDraftCardIds beside the skill drafts', one map keyed by row.
+  const level = (Array.isArray(rewards.levelCards) ? rewards.levelCards : [])
+    .filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
+    .map((d, i) => ({ key: `levelCard:${Number.isInteger(d.ordinal) ? d.ordinal : i}`, cardIds: d.cardIds, ids: d.cardIds }));
+  const choices = (Array.isArray(rewards.levelChoices) ? rewards.levelChoices : [])
+    .filter((d) => d && Array.isArray(d.options) && d.options.length > 0)
+    .map((d, i) => {
+      const ids = d.options.map((option) => `${option.kind}:${option.id}`);
+      return { key: `levelChoice:${Number.isInteger(d.ordinal) ? d.ordinal : i}`, cardIds: ids, ids };
+    });
+  return [...cls, ...skill, ...level, ...choices];
 }
 const pendingDraftKeys = (pending) => pendingDraftRows(pending).map((d) => d.key);
 
@@ -747,10 +823,14 @@ export function levelProblems(level) {
   return problems;
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags } = {}) {
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils } = {}) {
   const problems = [];
   problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
+  problems.push(...shopStockProblems(run.shopStock, 'shopStock', { required: !preShopKinds }));
+  for (const [pointId, state] of Object.entries(run.journey?.serviceStates || {})) {
+    if (state && typeof state === 'object') problems.push(...shopStockProblems(state.stock, `journey.serviceStates.${pointId}.stock`, { required: !preShopKinds }));
+  }
   try { retiredAttackSlots(run.equipmentAttackSlotCount, run.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
   for (const f of RUN_SHAPE) {
     if (legacy && (f.key === 'startingKitId' || f.key === 'startingKitSnapshot')) continue;
@@ -761,6 +841,10 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (preSkills && f.key === 'skills') continue;
     if (preCoreTags && f.key === 'coreTags') continue;
     if (preXpLevels && f.key === 'level') continue;
+    if (preSideboard && f.key === 'sideboard') continue;
+    if (preRefinedStones && f.key === 'smithingStonesRefined') continue;
+    if (preSigils && (f.key === 'sigils' || f.key === 'sigilSlots')) continue;
+    if (preConsumables && (f.key === 'consumables' || f.key === 'companions')) continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -780,6 +864,30 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
+  if (Array.isArray(run.feats)) run.feats.forEach((id, i) => {
+    if (typeof id !== 'string' || !featById(id)) problems.push(`feats[${i}] must name an authored feat`);
+  });
+  problems.push(...sigilInventoryProblems(run), ...boughtArmourProblems(run.loadout), ...consumablesProblems(run), ...companionsProblems(run));
+  if (Array.isArray(run.sideboard)) {
+    run.sideboard.forEach((card, i) => {
+      if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
+        problems.push(`sideboard[${i}] must be a card instance with instanceId and cardId`);
+      }
+    });
+    // A set-aside card keeps its identity, so it may share an id with no other
+    // owned card: returning it would put two instances with one id in play.
+    // Only ids the sideboard holds are checked — a pre-§14 deck is not re-judged.
+    const seen = new Set((Array.isArray(run.deck) ? run.deck : []).map((c) => c && c.instanceId));
+    run.sideboard.forEach((card, i) => {
+      const id = card && card.instanceId;
+      if (typeof id !== 'string' || !id) return;
+      if (seen.has(id)) problems.push(`sideboard[${i}] instanceId '${id}' is already owned by another card (deck ∪ sideboard ids must be unique)`);
+      seen.add(id);
+    });
+  }
+  if (run.editMintCounter !== undefined && (!Number.isInteger(run.editMintCounter) || run.editMintCounter < 0)) {
+    problems.push('editMintCounter must be a non-negative integer');
+  }
   if (Array.isArray(run.collection)) {
     run.collection.forEach((card, i) => {
       if (!typeOk(card, 'object') || typeof card.instanceId !== 'string' || !card.instanceId || typeof card.cardId !== 'string' || !card.cardId) {
@@ -813,6 +921,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     const entered = run.combatEntered;
     if (typeof entered.nodeId !== 'string' || !entered.nodeId) problems.push('combatEntered.nodeId must be a non-empty string');
     if (typeof entered.encounterId !== 'string' || !entered.encounterId) problems.push('combatEntered.encounterId must be a non-empty string');
+    // SPEC §14.3: a fight a service event started (the market's quest event)
+    // says so, so a resumed save fights that encounter and completes no node.
+    if (entered.serviceEvent !== undefined && typeof entered.serviceEvent !== 'boolean') problems.push('combatEntered.serviceEvent must be true or false when present');
     if (entered.snapshot !== undefined) {
       for (const problem of combatSnapshotProblems(entered.snapshot)) problems.push(`combatEntered.snapshot.${problem}`);
     }
@@ -829,6 +940,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.level !== undefined) problems.push(...levelProblems(run.level));
   if (run.smithingStones !== undefined && (!Number.isInteger(run.smithingStones) || run.smithingStones < 0)) {
     problems.push('smithingStones must be a non-negative integer');
+  }
+  if (run.smithingStonesRefined !== undefined && (!Number.isInteger(run.smithingStonesRefined) || run.smithingStonesRefined < 0)) {
+    problems.push('smithingStonesRefined must be a non-negative integer');
   }
   if (run.armamentLevels !== undefined && typeOk(run.armamentLevels, 'object')) {
     for (const [pieceId, level] of Object.entries(run.armamentLevels)) {
@@ -884,6 +998,14 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (pending.schemaVersion !== 1) problems.push('pendingReward.schemaVersion must be 1');
       if (typeof pending.source !== 'string' || !pending.source) problems.push('pendingReward.source must be a non-empty string');
       if (!['map', 'advanceAct'].includes(pending.after)) problems.push('pendingReward.after must be map or advanceAct');
+      if (pending.expanded !== undefined && typeof pending.expanded !== 'boolean') problems.push('pendingReward.expanded must be a boolean');
+      if (pending.levelClaims !== undefined && (!Number.isInteger(pending.levelClaims) || pending.levelClaims < 0)) problems.push('pendingReward.levelClaims must be a non-negative integer');
+      if (pending.skillClaims !== undefined) {
+        if (!pending.skillClaims || Array.isArray(pending.skillClaims) || typeof pending.skillClaims !== 'object') problems.push('pendingReward.skillClaims must be an object');
+        else for (const [id, count] of Object.entries(pending.skillClaims)) {
+          if (!id || !Number.isInteger(count) || count < 0) problems.push(`pendingReward.skillClaims.${id || '<empty>'} must be a non-negative integer`);
+        }
+      }
       if (!pending.rewards || Array.isArray(pending.rewards) || typeof pending.rewards !== 'object') {
         problems.push('pendingReward.rewards must be an object');
       }
@@ -910,8 +1032,42 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
           if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
         });
       }
-      if (pending.chosenDraftCardIds !== undefined) {
-        const chosen = pending.chosenDraftCardIds;
+      if (pending.rewards?.levelCards !== undefined) {
+        // SPEC §15.1: absent on an offer written before the schedule.
+        const rows = pending.rewards.levelCards;
+        if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelCards must be an array');
+        else {
+          const ordinals = new Set();
+          rows.forEach((d, i) => {
+            const p = `pendingReward.rewards.levelCards[${i}]`;
+            if (!d || typeof d !== 'object' || Array.isArray(d)) { problems.push(`${p} must be { ordinal, cardIds }`); return; }
+            if (!Number.isInteger(d.ordinal) || d.ordinal < 0 || ordinals.has(d.ordinal)) problems.push(`${p}.ordinal must be a distinct non-negative integer`);
+            ordinals.add(d.ordinal);
+            if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
+          });
+        }
+      }
+      if (pending.rewards?.levelChoices !== undefined) {
+        const rows = pending.rewards.levelChoices;
+        if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelChoices must be an array');
+        else rows.forEach((d, i) => {
+          const p = `pendingReward.rewards.levelChoices[${i}]`;
+          if (!d || !Number.isInteger(d.ordinal) || d.ordinal < 0 || !Array.isArray(d.options) || !d.options.length) {
+            problems.push(`${p} must have an ordinal and choices`); return;
+          }
+          for (const option of d.options) {
+            if (!option || !['feat', 'classNode'].includes(option.kind) || typeof option.id !== 'string' || !option.id) problems.push(`${p}.options must name feats or class nodes`);
+          }
+        });
+      }
+      if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
+        problems.push('pendingReward.rewards.cardMissed must be a boolean');
+      }
+      {
+        // The map may be absent (a save written before it existed); the rule
+        // that a Taken draft or level card (SPEC §15.1) names its card holds
+        // all the same, as the class-draft rule below does.
+        const chosen = pending.chosenDraftCardIds === undefined ? {} : pending.chosenDraftCardIds;
         if (!chosen || Array.isArray(chosen) || typeof chosen !== 'object') problems.push('pendingReward.chosenDraftCardIds must be an object keyed by draft row');
         else {
           const drafts = pendingDraftRows(pending).filter((d) => d.cardIds);
@@ -971,21 +1127,43 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   }
   // Deck entries are the ids the run is rebuilt from — the one nested shape
   // worth checking, since a bad entry breaks combat rather than the load.
-  if (Array.isArray(run.deck)) {
-    const bad = run.deck.findIndex((c) => !c || typeof c.cardId !== 'string' || typeof c.instanceId !== 'string');
-    if (bad !== -1) problems.push(`deck[${bad}] is not { instanceId, cardId }`);
-    for (let i = 0; i < run.deck.length; i++) {
-      const card = run.deck[i];
+  // The sideboard holds the same instances (SPEC §14.1), so it is held to the
+  // same invariants: a malformed set-aside card is refused here, at the load
+  // door, not when the editor returns it to the deck.
+  for (const pile of ['deck', 'sideboard']) {
+    const cards = run[pile];
+    if (!Array.isArray(cards)) continue;
+    const bad = cards.findIndex((c) => !c || typeof c.cardId !== 'string' || typeof c.instanceId !== 'string');
+    if (bad !== -1) problems.push(`${pile}[${bad}] is not { instanceId, cardId }`);
+    for (let i = 0; i < cards.length; i++) {
+      const card = cards[i];
       if (!card) continue;
       const schoolAbsent = card.damageSchool === undefined;
       const buildupAbsent = card.exposureBuildupPerHit === undefined;
-      if (schoolAbsent !== buildupAbsent) problems.push(`deck[${i}] damageSchool and exposureBuildupPerHit must both be present or both be absent`);
-      if (!schoolAbsent && !DAMAGE_SCHOOLS.includes(card.damageSchool)) problems.push(`deck[${i}].damageSchool '${card.damageSchool}' is unknown`);
-      if (!buildupAbsent && (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0)) problems.push(`deck[${i}].exposureBuildupPerHit must be a non-negative integer`);
-      if (card.ratingId !== undefined && !['ar', 'pr', 'dr', 'poise', 'ward'].includes(card.ratingId)) problems.push(`deck[${i}].ratingId '${card.ratingId}' is unknown`);
-      if (card.ratingValue !== undefined && (!Number.isFinite(card.ratingValue) || card.ratingValue < 0)) problems.push(`deck[${i}].ratingValue must be a finite non-negative number`);
-      if (card.ratingCap !== undefined && (!Number.isFinite(card.ratingCap) || card.ratingCap < 0)) problems.push(`deck[${i}].ratingCap must be a finite non-negative number`);
+      if (schoolAbsent !== buildupAbsent) problems.push(`${pile}[${i}] damageSchool and exposureBuildupPerHit must both be present or both be absent`);
+      if (!schoolAbsent && !DAMAGE_SCHOOLS.includes(card.damageSchool)) problems.push(`${pile}[${i}].damageSchool '${card.damageSchool}' is unknown`);
+      if (!buildupAbsent && (!Number.isInteger(card.exposureBuildupPerHit) || card.exposureBuildupPerHit < 0)) problems.push(`${pile}[${i}].exposureBuildupPerHit must be a non-negative integer`);
+      if (card.ratingId !== undefined && !['ar', 'pr', 'dr', 'poise', 'ward'].includes(card.ratingId)) problems.push(`${pile}[${i}].ratingId '${card.ratingId}' is unknown`);
+      if (card.ratingValue !== undefined && (!Number.isFinite(card.ratingValue) || card.ratingValue < 0)) problems.push(`${pile}[${i}].ratingValue must be a finite non-negative number`);
+      if (card.ratingCap !== undefined && (!Number.isFinite(card.ratingCap) || card.ratingCap < 0)) problems.push(`${pile}[${i}].ratingCap must be a finite non-negative number`);
+      // A set-aside attack basic's slot is retired; any other would make the
+      // next restamp disagree with the allocation.
+      if (pile === 'sideboard' && card.equipmentAttackSlotId !== undefined
+        && !(Array.isArray(run.removedAttackSlotIds) && run.removedAttackSlotIds.includes(card.equipmentAttackSlotId))) {
+        problems.push(`sideboard[${i}].equipmentAttackSlotId '${card.equipmentAttackSlotId}' must be a retired slot`);
+      }
     }
+  }
+  // Each retired slot holds at most one set-aside basic: a second would be
+  // pushed back into the deck before the restamp refused the duplicate.
+  if (Array.isArray(run.sideboard)) {
+    const slots = new Set();
+    run.sideboard.forEach((card, i) => {
+      const slot = card && card.equipmentAttackSlotId;
+      if (slot === undefined) return;
+      if (slots.has(slot)) problems.push(`sideboard[${i}].equipmentAttackSlotId '${slot}' is held by another set-aside card`);
+      slots.add(slot);
+    });
   }
   if (Number.isFinite(run.hp) && Number.isFinite(run.maxHp) && run.maxHp <= 0) {
     problems.push('maxHp must be > 0');
@@ -1171,12 +1349,36 @@ export function migrateRunSchema(run) {
   // Filled HERE (plan phase 6): the displayed level those purchases reached,
   // no XP toward the next, nothing waiting — the points were spent as bought.
   const preXpLevels = [1, 2, 3, 4, 5, 6, 7, 8, 9].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, ${RUN_SCHEMA_VERSION})`);
+  // v10 and older: no sideboard. Filled HERE with none (SPEC §14.1): a run the
+  // deck editor never touched has no owned card out of its deck.
+  const preSideboard = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].includes(run.schemaVersion);
+  // v11: no level-card rows could be written (SPEC §15.1); nothing to fill.
+  // v12 and older: no refined-stone purse. Filled HERE with 0 (SPEC §15.3):
+  // no refined stone was ever paid before the purse existed.
+  const preRefinedStones = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].includes(run.schemaVersion);
+  // v13 and older: a shop stock without a kind. Filled HERE (SPEC §14.2): it
+  // is a market offering today's shelves, and its shelves are kept as saved.
+  const preShopKinds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].includes(run.schemaVersion);
+  // v14 and older: no sigil inventory. Filled HERE (SPEC §14.3): a run that
+  // could not buy a sigil owns none and has cut no slot.
+  const preSigils = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14].includes(run.schemaVersion);
+  // v15 and older: no consumables, no companions. Filled HERE (SPEC §14.3): a
+  // run that could not buy either holds none.
+  const preConsumables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].includes(run.schemaVersion);
+  // v16: no blacksmith stock could be written (SPEC §14.4); nothing to fill.
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, ${RUN_SCHEMA_VERSION})`);
   }
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels });
+  if (preShopKinds) bringShopStockForward(run);
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables });
+  if (preSigils && (run.sigils === undefined || run.sigils === null)) run.sigils = [];
+  if (preConsumables && (run.consumables === undefined || run.consumables === null)) run.consumables = {};
+  if (preConsumables && (run.companions === undefined || run.companions === null)) run.companions = [];
+  if (preSigils && (run.sigilSlots === undefined || run.sigilSlots === null)) run.sigilSlots = {};
   if (preSkills && (run.skills === undefined || run.skills === null)) run.skills = {};
   if (preCoreTags && (run.coreTags === undefined || run.coreTags === null)) run.coreTags = [];
+  if (preSideboard && (run.sideboard === undefined || run.sideboard === null)) run.sideboard = [];
+  if (preRefinedStones && (run.smithingStonesRefined === undefined || run.smithingStonesRefined === null)) run.smithingStonesRefined = 0;
   if (preXpLevels && (run.level === undefined || run.level === null)) {
     run.level = { xp: 0, level: 1 + (Number.isInteger(run.levelUps) && run.levelUps > 0 ? run.levelUps : 0), unspentPoints: 0 };
   }
@@ -1290,11 +1492,12 @@ export function stampPlayerPoiseMax(entity, max) {
  * the poiseDamage opcode (SPEC §3.7, §4.4); everything else about Stagger is
  * content data.
  */
-export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, damageMult = 1 }) {
+export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, damageMult = 1, level = 1 }) {
   const entity = {
     id: instanceId,
     kind: 'enemy',
     enemyId,
+    level: Number.isSafeInteger(level) && level > 0 ? level : 1,
     hp,
     maxHp: hp,
     block: 0,

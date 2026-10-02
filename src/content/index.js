@@ -4,6 +4,10 @@
 // Adding content = adding a data object in one file here (SPEC §3.1(2)).
 
 import { balance } from './balance.js';
+import { shops } from './shops.js';
+import { sigils } from './sigils.js';
+import { consumables } from './consumables.js';
+import { companions } from './companions.js';
 import { statuses } from './statuses.js';
 import { stances } from './stances.js';
 import { resources } from './resources.js';
@@ -70,6 +74,16 @@ export const contentBundle = {
   // MINOR under docs/versioning.md rule 2; the owner's release cut names 0.7.0.
   version: '0.7.1',
   balance,
+  // The shop kinds and their offerings (SPEC §14.2). A bundle key, not a
+  // balance leaf, so Advanced → Shops can generate its own rows from it.
+  shops,
+  // Sigils (SPEC §14.3): owned in `run.sigils`, sold at the market; they work
+  // only once installed in a slot (the blacksmith, §14.6 step 6).
+  sigils,
+  // Skill books and revive tokens, and temporary companions (SPEC §14.3):
+  // sold at the market into run.consumables and run.companions.
+  consumables,
+  companions,
   cards,
   relics,
   statuses,

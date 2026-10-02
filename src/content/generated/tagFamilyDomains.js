@@ -361,5 +361,21 @@ export const tagFamilyDomains = [
   {
     "family": "location",
     "domain": "property"
+  },
+  {
+    "family": "companion",
+    "domain": "property"
+  },
+  {
+    "family": "companion",
+    "domain": "classification"
+  },
+  {
+    "family": "sigil",
+    "domain": "property"
+  },
+  {
+    "family": "sigil",
+    "domain": "classification"
   }
 ];

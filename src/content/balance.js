@@ -331,7 +331,7 @@ export const balance = {
   // ---- Skill tracks (plan phase 4a, proposal §6.1 and §10) ----------------
   // One curve shape for every track: the step from level n costs
   // round(base × growth^n, roundTo). `xp` is the weapon, armour, focus and
-  // dual-wield curve; `class.xp` the slower class curve. The award rows are
+  // dual-wield curve; `class.xp` the class curve. The award rows are
   // what the engine's hooks pay (engine/skillXp.js): perHit for a hit or a
   // block a group's card resolves on a live target; perWinEquipped per
   // equipped group on a win, × killMult when that group landed the killing
@@ -340,10 +340,12 @@ export const balance = {
   // buildup dealt (focus). model/skills.js is the one reader of the curve.
   skill: {
     xp: {
-      base: 5, growth: 1.2, roundTo: 5, perHit: 2, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 3, buildupPerXp: 5,
+      base: 100, linear: true, multScaler: 1.3, growth: 1, roundTo: 5, perHit: 5, perWinEquipped: 5, killMult: 1.5, impactPerXp: 5, evadeXp: 5, buildupPerXp: 5,
       [NOTE]: {
-        base: 'Weapon, armour, focus and dual-wield tracks: what the first level step costs. Each step is round(base × growth^n) to the rounding below.',
-        growth: 'Those tracks: how much dearer each level step is than the one before it.',
+        base: 'Weapon, armour, focus and dual-wield tracks: XP for the first step and the base used for later increases.',
+        linear: 'Use base + skill level × base × scaler. Off: use base × exponential growth^skill level.',
+        multScaler: 'Linear XP increase per step as a multiple of the base. At base 100 and scaler 1.3: 100, 230, 360 XP.',
+        growth: 'Exponential growth per step, used only when the linear curve is off.',
         roundTo: 'Those tracks: every step cost is rounded to a multiple of this.',
         perHit: 'Skill XP for a hit or block a track\'s card lands on a live target.',
         perWinEquipped: 'Skill XP each equipped track earns for a won fight.',
@@ -353,15 +355,17 @@ export const balance = {
         buildupPerXp: 'Arcane Exposure buildup a caster must deal per point of focus skill XP.',
       },
     },
-    // The class track (plan phase 5b): a slower curve; paid by the run's
+    // The class track (plan phase 5b): paid by the run's
     // owner for a won fight, more for a boss (the owner knows the door's
     // pool; the combat does not), and per quest once phase 10a's event
     // exists. `tierAt` is the class level each tree tier opens at.
     class: {
-      xp: { base: 5, growth: 1.25, roundTo: 5, perWin: 10, bossKill: 30, perQuest: 20 }, tierAt: [1, 3, 5],
+      xp: { base: 100, linear: true, multScaler: 1.3, growth: 1, roundTo: 5, perWin: 5, bossKill: 10, perQuest: 5 }, tierAt: [1, 3, 5],
       [NOTE]: {
-        'xp.base': 'The class track: what its first level step costs. Deliberately slower than the equipment tracks.',
-        'xp.growth': 'The class track: how much dearer each of its level steps is than the last.',
+          'xp.base': 'The class track: what its first level step costs.',
+          'xp.linear': 'Use base + class skill level × base × scaler. Off: use exponential growth.',
+          'xp.multScaler': 'Linear increase per class skill step as a multiple of the base. Default 1.3.',
+          'xp.growth': 'Exponential class-step growth, used only when the linear curve is off.',
         'xp.roundTo': 'The class track: every step cost is rounded to a multiple of this.',
         'xp.perWin': 'Class XP for a won fight.',
         'xp.bossKill': 'Class XP for killing an act boss, on top of the win.',
@@ -438,6 +442,31 @@ export const balance = {
     // Decaying flask drop (StS potion rule): −step on drop, +step on miss.
     flaskDropBasePct: 35,
     flaskDropStepPct: 10,
+    // THE CARD REWARD SCHEDULE (SPEC §15.1): when a won fight offers a card
+    // row, and whether a level the fight bought adds one. Every default here
+    // reproduces the rewards before the schedule existed: every pool offers,
+    // a chance of 100 rolls nothing on `rewardRolls`, and no level card.
+    // Read by engine/encounters.js `rollCombatCardOffer`.
+    cardRewards: {
+      afterCombat: {
+        normal: true, elite: true, boss: true,
+        [NOTE]: {
+          '{kind}': 'Whether winning {pool} offers a card to choose. Off, that fight lays out no card row.',
+        },
+      },
+      chancePct: {
+        normal: 100, elite: 100, boss: 100,
+        [NOTE]: {
+          '{kind}': 'The percent chance that winning {pool} offers its card row. At 100 nothing is rolled; a miss says "No card this time."',
+        },
+      },
+      onLevelUp: true,
+      onLevelUpMaxPerFight: 1,
+      [NOTE]: {
+        onLevelUp: 'When a fight raises the character level, show a Level Up! button beside the XP bar to choose a bonus card at that fight\'s rarity odds.',
+        onLevelUpMaxPerFight: 'How many level card rows one fight can add, however many levels it gained.',
+      },
+    },
     [NOTE]: {
       cardChoices: 'How many cards a reward door lays out to choose from.',
       flaskDropBasePct: 'The chance a fight drops a flask charge, before the run\'s running adjustment.',
@@ -534,6 +563,26 @@ export const balance = {
         '{kind}': 'How many Smithing Stones {pool} pays out.',
       },
     },
+    // THE STONE DOOR'S CHANCE (SPEC §15.3). A stone reward is paid when the
+    // pool pays anything and this percent passes, rolled once per door on the
+    // `smith` stream. 100 is always and rolls nothing, so the shipped table
+    // pays exactly what it always did; 0 is never, and rolls nothing either.
+    rewardChancePct: {
+      normal: 100, elite: 100, boss: 100, treasure: 100,
+      [NOTE]: {
+        '{kind}': 'Percent chance {pool} pays its Smithing Stone reward, ordinary and refined alike. 100 is always and rolls nothing; 0 is never.',
+      },
+    },
+    // Refined stones as a drop — the crafting-material reward. Paid through
+    // the same door and the same chance as the ordinary stones above, into
+    // `run.smithingStonesRefined`. Shipped off everywhere. They are paid and
+    // shown only: spending them is §14.4's blacksmith (`refine.value`).
+    refinedRewardByPool: {
+      normal: 0, elite: 0, boss: 0, treasure: 0,
+      [NOTE]: {
+        '{kind}': 'How many Refined Smithing Stones {pool} pays out, through the same chance as its ordinary stones.',
+      },
+    },
 
     // THE SMITH'S SERVICES, AND WHO OFFERS THEM (owner ruling, 2026-09-03).
     // A smith does three things: upgrade an item (the tier promotion above),
@@ -619,47 +668,50 @@ export const balance = {
   // past a threshold, scalable", measured at 20+4 and again at 50+10 against
   // the tripled faucet) is GONE with plan phase 6: a level is earned, below.
   //
-  // THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): XP from a
-  // won fight and from each kill by the door's pool (and per quest once phase
-  // 10a's door pays it), on the one curve shape every track shares —
-  // `xpToNext(n) = round(base × growth^(n − 1), roundTo)`. Curve receipt at
-  // these numbers: the steps from level 1 cost 100, 120, 130, 150, 170, 200,
-  // 230, 270, 310, 350 — 2,030 XP to level 11. The owner's band is 10–20
-  // levels a full run and `tools/runsim.mjs --xp-levels` measures it (a
-  // greedy bot, the ceiling a real climb approaches).
-  //
-  // THE AWARDS, MEASURED (2026-09-19, 4 runs/class). The proposal's table
-  // (20 a win; 10 / 30 / 80 a kill; 50 a quest) assumed about 36 normal
-  // fights, 6 elites and 3 bosses a run; this map pays fewer, and at those
-  // numbers a full run earned ~1,030 XP — 6.7 levels, under the band. The
-  // curve is the proposal's and stays (its receipt above is quoted in SPEC);
-  // the awards are what a run of THIS length has to pay to land in it, so
-  // they were raised ×2.5 and re-measured — see the fleet line the sim prints.
+  // THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): a win pays
+  // defeated-enemy combat power × 25 × 0.2, kills pay 10 × 0.2 × enemy level,
+  // and each step costs 100 XP.
+  // Settings → Progression → Experience previews the same configured curve
+  // and awards the run uses. The existing per-award level cap remains separate.
   // Cinders buy no level any more: the ladder that sat here (firstCost /
   // costStep, measured twice) is gone with the purse.
   level: {
     xp: {
-      base: 5, growth: 1.15, roundTo: 10,
+      base: 100, linear: true, multScaler: 1.3, growth: 1, roundTo: 10,
       [NOTE]: {
-        base: 'The character level curve: what the step from level 1 costs. Each later step is round(base × growth^n) to the rounding below.',
-        growth: 'The character level curve: how much dearer each step is than the one before it.',
+        base: 'Character XP for the first step and the base used for later increases.',
+        linear: 'Use base + (level − 1) × base × scaler. Off: use base × exponential growth^(level − 1).',
+        multScaler: 'Linear increase per character level as a multiple of the base. At base 100 and scaler 1.3: 100, 230, 360 XP.',
+        growth: 'Exponential character-step growth, used only when the linear curve is off.',
         roundTo: 'The character level curve: every step cost is rounded to a multiple of this.',
       },
+    },
+    // THE LEVELLING CAP (SPEC §15.2). 0 is no cap, as shipped. Above 0, one
+    // award (a fight's XP, or a quest's) never raises the level by more than
+    // this, and the XP past the cap is DISCARDED: the ledger keeps at most one
+    // XP short of the next step, so the progress bar never reads past full.
+    maxLevelsPerFight: 0,
+    [NOTE]: {
+      maxLevelsPerFight: 'The most character levels one fight or quest can raise you; 0 is no cap. XP past the cap is lost, leaving you just short of the next level.',
     },
     // The maxima bump cadence is authored on the derived-stat rows that carry
     // it (content/derivedStats.js `perLevel`), where the snapshot keeps it.
   },
   xp: {
-    combatWin: 15,
+    combatWin: 25,
     kill: {
-      normal: 5, elite: 75, boss: 200,
+      normal: 10, elite: 10, boss: 10,
       [NOTE]: {
-        '{kind}': 'Character XP for killing an enemy out of the roster {pool} draws from.',
+        '{kind}': 'Base character XP for killing an enemy out of the roster {pool} draws from. Multiply by the enemy-level factor and that enemy\'s level.',
       },
     },
+    killLevelMultiplier: 0.2,
+    combatPowerMultiplier: 0.2,
     quest: 125,
     [NOTE]: {
-      combatWin: 'Character XP for winning a fight, before any kill awards.',
+      combatWin: 'Base XP multiplied by the total combat power of defeated enemies and the combat-power multiplier after a win.',
+      combatPowerMultiplier: 'Multiplier on defeated-enemy combat power for a win. Combat power adds level, health, poise, attack, and a small equipment bonus.',
+      killLevelMultiplier: 'Multiply each kill\'s base XP and enemy level by this factor. At 0.2, two level-5 kills give 20 XP before combat-power XP.',
       quest: 'Character XP for a completed quest.',
     },
   },
@@ -1569,6 +1621,54 @@ export const balance = {
     shadow: {
         block: 3
     },
+    partingBlow: {
+        damage: 3
+    },
+    ironRebuke: {
+        damage: 3
+    },
+    cinderGrip: {
+        bleed: 2
+    },
+    mendingGrip: {
+        heal: 2
+    },
+    spentStars: {
+        restoreMana: 1
+    },
+    fallingStar: {
+        damage: 3
+    },
+    lodestarPull: {
+        vulnerable: 1
+    },
+    shardHunger: {
+        restoreMana: 1
+    },
+    burningGrace: {
+        damage: 2
+    },
+    dazzlingLight: {
+        weak: 1
+    },
+    anointedBlade: {
+        strength: 1
+    },
+    unsealedScroll: {
+        draw: 2
+    },
+    lowProfile: {
+        block: 3
+    },
+    feint: {
+        poiseDamage: 4
+    },
+    spareWhetstone: {
+        gainEnergy: 1
+    },
+    whettedGuard: {
+        block: 1
+    },
   [NOTE]: {
     '{node}.{variable}': '{talent}, {talentPlace} — {effect}.{blurbSuffix}',
   },
@@ -1628,8 +1728,28 @@ export const balance = {
     lodestarShard: { restoreMana: 1 },
     waxenSeal: { heal: 3 },
     whetstonePouch: { bleed: 2 },
+    // The two companions (SPEC §14.3): their property rules read these, so a
+    // companion's numbers are tuned beside every relic's.
+    hollowSquire: { block: 5 },
+    emberHound: { damage: 3 },
     [NOTE]: {
       '{relic}.{variable}': '{relicName} — {effect}.',
+    },
+  },
+  // THE SIGILS' NUMBERS (SPEC §14.3, §15.4). A sigil's property rule lives in
+  // nodeEffects.json and reads its numbers here, through variableBindings.csv,
+  // so each gets its generated Settings row like every balance number.
+  sigils: {
+    emberSigil: { block: 4 },
+    thornSigil: { bleed: 2 },
+    tideSigil: { n: 5, draw: 1 },
+    hearthSigil: { block: 3 },
+    [NOTE]: {
+      'emberSigil.block': 'Ember Sigil — the Block it gives at the start of each fight, while it sits in a slot of an equipped armament.',
+      'thornSigil.bleed': 'Thorn Sigil — the Bleed your first attack hit of each fight applies, while it sits in a slot of an equipped armament.',
+      'tideSigil.n': 'Tide Sigil — every this-many-th card you play in a fight draws, while it sits in a slot of an equipped armament.',
+      'tideSigil.draw': 'Tide Sigil — how many cards that card draws.',
+      'hearthSigil.block': 'Hearth Sigil — the Block you gain whenever you heal, while it sits in a slot of an equipped armament.',
     },
   },
   equipment: {
@@ -2020,13 +2140,17 @@ export const balance = {
       reveal: 'teased',
       // Chance a node of each kind yields an armament, and the rarity odds when
       // it does. Bosses always drop; their table is weighted to the good stuff.
+      // `normal` (SPEC §15.3) ships at 0, which returns before any draw, so an
+      // ordinary fight drops nothing until the owner raises it. The roll draws
+      // from the authored weapons only; armour has no run inventory to drop into.
       chance: {
-        treasure: 60, elite: 30, boss: 100, shop: 0,
+        normal: 0, treasure: 60, elite: 30, boss: 100, shop: 0,
         [NOTE]: {
           '{kind}': 'Percent chance {pool} yields an armament.',
         },
       },
       rarityWeights: {
+        normal: { common: 40, uncommon: 45, rare: 15 },
         treasure: { common: 55, uncommon: 35, rare: 10 },
         elite: { common: 40, uncommon: 45, rare: 15 },
         boss: { common: 15, uncommon: 45, rare: 40 },

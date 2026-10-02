@@ -10,6 +10,11 @@ import { REGISTRY_TYPES, PASSIVE_KEYS } from './schemas.js';
 import { tagIndex } from './tags.js';
 import { nodeTree } from './tree.js';
 import { itemTypeLabel } from '../content/equipment.js';
+import { shops as shippedShops } from '../content/shops.js';
+import { sigils as shippedSigils } from '../content/sigils.js';
+import { consumables as shippedConsumables } from '../content/consumables.js';
+import { companions as shippedCompanions } from '../content/companions.js';
+import { cloneShops } from './shopKinds.js';
 import { applyCardMods } from './loadout.js';
 import { deriveStat, resolveDerivedStatRules } from './derivedStats.js';
 import { resolveRelicModifiers } from './relicModifiers.js';
@@ -225,6 +230,19 @@ export function createRegistries(contentBundle) {
   registries.tree = nodeTree(registries);
 
   registries.balance = deepFreeze({ ...(bundle.balance || {}) });
+  // The shop kinds and their offerings (SPEC §14.2), as configured for this
+  // run; a bundle without them reads the shipped table.
+  registries.shops = deepFreeze(cloneShops(bundle.shops || shippedShops));
+  // Sigils (SPEC §14.3): what the market's sigil shelf sells into `run.sigils`.
+  // A bundle without them reads the shipped collection.
+  // A sigil is a tagged collection (SPEC §14.4): its property rows are
+  // tagging.csv's, so it is read stamped, `propertyTags` and all.
+  registries.sigils = makeRegistry('sigil', collection('sigils', bundle.sigils || shippedSigils));
+  // Consumables and companions (SPEC §14.3), as configured for this run. A
+  // companion is a tagged collection (its property rows are tagging.csv's),
+  // so it is read stamped; a bundle without either reads the shipped one.
+  registries.consumables = makeRegistry('consumable', bundle.consumables || shippedConsumables);
+  registries.companions = makeRegistry('companion', collection('companions', bundle.companions || shippedCompanions));
   // Quest steps (E12): which events an Unknown node may roll only once the
   // run's history earns them. Keyed by event id; absent means ungated.
   registries.eventHistoryRequirements = deepFreeze({ ...(bundle.eventHistoryRequirements || {}) });

@@ -5,7 +5,8 @@ presentation only; it does not alter damage, resources, targeting, saves or RNG.
 
 ## Builds
 
-Run `node tools/launch.mjs --build-only` to generate all three editions:
+Run `node tools/launch.mjs --build-only --full-art` to generate all three editions
+(without `--full-art` it builds only the light single file and web edition):
 
 - `AshenSpire.html`, `build/AshenSpire.html` and `dist/AshenSpire.html` are the
   portable single-file game with the art as painted (~253 MB on 0.7.1).
@@ -20,8 +21,9 @@ Run `node tools/launch.mjs --build-only` to generate all three editions:
   the budget was 50 MB before 2026-09-24), with the inlined art itself held
   under 20 MB — `bundle.mjs --mobile` refuses to write one over the budget,
   `mobile-art.mjs --check` refuses an art tree over its share, and
-  `verify-shipped.mjs` fails a committed one. The Pages site serves it at
-  `/<branch>/<ordinal>/mobile/` and offers both downloads side by side.
+  `verify-shipped.mjs` fails if any built HTML is tracked. `tools/pages-site.mjs`
+  places it at `/<branch>/<ordinal>/mobile/` beside the full download when a
+  build has one (only `--full-art` builds do).
   Regenerate the twins after any change under `assets/` with
   `node tools/mobile-art.mjs` (needs `cwebp`); `--check` proves the tree without
   an encoder and is the CI gate. Settings → About names the edition.

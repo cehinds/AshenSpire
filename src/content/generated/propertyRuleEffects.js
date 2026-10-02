@@ -471,6 +471,122 @@ export const propertyRuleEffects = {
       }
     ]
   },
+  "hollowSquire": {
+    "triggers": [
+      {
+        "on": "combatStart",
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "balance": "powers.hollowSquire.block"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "emberHound": {
+    "triggers": [
+      {
+        "on": "playerTurnStart",
+        "do": [
+          {
+            "op": "damage",
+            "target": "randomEnemy",
+            "amount": {
+              "balance": "powers.emberHound.damage"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "emberSigil": {
+    "triggers": [
+      {
+        "on": "combatStart",
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "balance": "sigils.emberSigil.block"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "thornSigil": {
+    "triggers": [
+      {
+        "on": "damageDealt",
+        "once": true,
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventIsAttack"
+            },
+            {
+              "p": "eventSourceIsOwner"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "applyStatus",
+            "status": "bleed",
+            "stacks": {
+              "balance": "sigils.thornSigil.bleed"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "tideSigil": {
+    "triggers": [
+      {
+        "on": "cardPlayed",
+        "if": {
+          "p": "everyNthCardThisCombat",
+          "n": {
+            "balance": "sigils.tideSigil.n"
+          }
+        },
+        "do": [
+          {
+            "op": "draw",
+            "amount": {
+              "balance": "sigils.tideSigil.draw"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "hearthSigil": {
+    "triggers": [
+      {
+        "on": "healed",
+        "if": {
+          "p": "eventTargetIsOwner"
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "balance": "sigils.hearthSigil.block"
+            }
+          }
+        ]
+      }
+    ]
+  },
   "warhorn": {
     "triggers": [
       {
@@ -1794,6 +1910,396 @@ export const propertyRuleEffects = {
             "target": "owner",
             "amount": {
               "balance": "classTree.shadow.block"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "partingBlow": {
+    "triggers": [
+      {
+        "on": "stanceExited",
+        "do": [
+          {
+            "op": "damage",
+            "target": "randomEnemy",
+            "amount": {
+              "balance": "classTree.partingBlow.damage"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "ironRebuke": {
+    "triggers": [
+      {
+        "on": "hpLost",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventTargetIsOwner"
+            },
+            {
+              "p": "inStance",
+              "stance": "brace"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "damage",
+            "target": "randomEnemy",
+            "amount": {
+              "balance": "classTree.ironRebuke.damage"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "cinderGrip": {
+    "triggers": [
+      {
+        "on": "stanceEntered",
+        "limitPerTurn": 1,
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "bleed",
+            "stacks": {
+              "balance": "classTree.cinderGrip.bleed"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "mendingGrip": {
+    "triggers": [
+      {
+        "on": "stanceEntered",
+        "limitPerTurn": 1,
+        "do": [
+          {
+            "op": "heal",
+            "target": "owner",
+            "amount": {
+              "balance": "classTree.mendingGrip.heal"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "spentStars": {
+    "triggers": [
+      {
+        "on": "cardExhausted",
+        "limitPerTurn": 1,
+        "do": [
+          {
+            "op": "restoreMana",
+            "target": "owner",
+            "amount": {
+              "balance": "classTree.spentStars.restoreMana"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "fallingStar": {
+    "triggers": [
+      {
+        "on": "manaRestored",
+        "limitPerTurn": 1,
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventTargetIsOwner"
+            },
+            {
+              "p": "manaPositive"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "damage",
+            "target": "randomEnemy",
+            "amount": {
+              "balance": "classTree.fallingStar.damage"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lodestarPull": {
+    "triggers": [
+      {
+        "on": "combatStart",
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "vulnerable",
+            "stacks": {
+              "balance": "classTree.lodestarPull.vulnerable"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "shardHunger": {
+    "triggers": [
+      {
+        "on": "enemyStaggered",
+        "do": [
+          {
+            "op": "restoreMana",
+            "target": "owner",
+            "amount": {
+              "balance": "classTree.shardHunger.restoreMana"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "burningGrace": {
+    "triggers": [
+      {
+        "on": "healed",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventTargetIsOwner"
+            },
+            {
+              "p": "healPositive"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "damage",
+            "target": "randomEnemy",
+            "amount": {
+              "balance": "classTree.burningGrace.damage"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "dazzlingLight": {
+    "triggers": [
+      {
+        "on": "healed",
+        "limitPerTurn": 1,
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventTargetIsOwner"
+            },
+            {
+              "p": "healPositive"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "allEnemies",
+            "status": "weak",
+            "stacks": {
+              "balance": "classTree.dazzlingLight.weak"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "anointedBlade": {
+    "triggers": [
+      {
+        "on": "healed",
+        "once": true,
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventTargetIsOwner"
+            },
+            {
+              "p": "healPositive"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "applyStatus",
+            "target": "owner",
+            "status": "strength",
+            "stacks": {
+              "balance": "classTree.anointedBlade.strength"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "unsealedScroll": {
+    "triggers": [
+      {
+        "on": "healed",
+        "once": true,
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventTargetIsOwner"
+            },
+            {
+              "p": "healPositive"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "draw",
+            "amount": {
+              "balance": "classTree.unsealedScroll.draw"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lowProfile": {
+    "triggers": [
+      {
+        "on": "statusApplied",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventStatusIs",
+              "status": "prepared"
+            },
+            {
+              "p": "eventTargetIsOwner"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "balance": "classTree.lowProfile.block"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "feint": {
+    "triggers": [
+      {
+        "on": "statusApplied",
+        "limitPerTurn": 1,
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventStatusIs",
+              "status": "prepared"
+            },
+            {
+              "p": "eventTargetIsOwner"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "poiseDamage",
+            "target": "randomEnemy",
+            "amount": {
+              "balance": "classTree.feint.poiseDamage"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "spareWhetstone": {
+    "triggers": [
+      {
+        "on": "damageDealt",
+        "once": true,
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventIsAttack"
+            },
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "hasStatus",
+              "of": "owner",
+              "status": "prepared"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "gainEnergy",
+            "amount": {
+              "balance": "classTree.spareWhetstone.gainEnergy"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "whettedGuard": {
+    "triggers": [
+      {
+        "on": "damageDealt",
+        "if": {
+          "p": "all",
+          "preds": [
+            {
+              "p": "eventIsAttack"
+            },
+            {
+              "p": "eventSourceIsOwner"
+            },
+            {
+              "p": "hasStatus",
+              "of": "owner",
+              "status": "prepared"
+            }
+          ]
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "balance": "classTree.whettedGuard.block"
             }
           }
         ]

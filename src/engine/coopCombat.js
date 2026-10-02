@@ -46,6 +46,7 @@ import { refreshCombatRatings } from './combatRatings.js';
 import { resolveHandRules, handRow, scaledCards } from '../model/handRules.js';
 import { handStatRows, ratingStatRows, readsLegacyStatHomes, LEGACY_HAND_MAX } from '../model/statRows.js';
 import { turnDrawCount, endTurnCardFate } from './handRules.js';
+import { orderedDrawPile } from '../model/deckRules.js';
 
 const QUEUE_GUARD = 10000;
 
@@ -62,7 +63,7 @@ export function coopHpMult(headcount, factor = 0.6) {
  * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom);
  * enemy move damage × enemyDamageMult (balance.bossTiers, SPEC §13.3).
  */
-export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null }) {
+export function createCoopCombat({ registries, rng, players, enemyIds, enemyLevels = [], extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null }) {
   const C = {
     ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
@@ -115,7 +116,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
     let hp = rng.int('enemyHP', def.hp[0], def.hp[1]);
     hp = Math.max(1, Math.round(hp * C.baseHpMult));
     C.enemies.push(createEnemyCombatEntity({
-      instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax,
+      instanceId: `e${i + 1}`, enemyId, level: enemyLevels[i], hp, poiseMax: def.poiseMax,
       arcaneExposure: def.arcaneExposure,
       damageResistanceBySchool: def.damageResistanceBySchool,
       damageMult: enemyDamageMult,
@@ -195,12 +196,11 @@ function addPlayerState(C, p, { initial = false } = {}) {
     ...(c.sourceArmamentId ? { sourceArmamentId: c.sourceArmamentId } : {}),
     ...(Number.isInteger(c.smithingLevel) ? { smithingLevel: c.smithingLevel } : {}),
   }));
-  const shuffled = C.rng.shuffle('shuffle', deck);
-  const innate = [];
-  const rest = [];
-  for (const card of shuffled) {
-    (C.registries.framework.isInnate(resolveCard(C.registries, card)) ? innate : rest).push(card);
-  }
+  // Play in deck order is each seat owner's own setting (SPEC §14.1): that
+  // seat draws its deck as arranged and rolls nothing for it.
+  const orderedDraw = p.orderedDraw ? { order: deck.map((card) => card.instanceId) } : null;
+  const drawPile = orderedDrawPile(orderedDraw ? deck : C.rng.shuffle('shuffle', deck),
+    (card) => C.registries.framework.isInnate(resolveCard(C.registries, card)));
   // THE SAME ROWS A SOLO FIGHT READS (ruleset 7): the seat's hand rules are
   // the shipped behaviour options plus its own opening-hand, draw and
   // hand-size rows, and its ratings its own rating rows. A seat born before
@@ -228,7 +228,8 @@ function addPlayerState(C, p, { initial = false } = {}) {
     skills: p.skills ? structuredClone(p.skills) : {},
     coreTags: Array.isArray(p.coreTags) ? [...p.coreTags] : [],
     entity,
-    piles: { draw: [...innate, ...rest], hand: [], discard: [], exhaust: [] },
+    orderedDraw,
+    piles: { draw: drawPile, hand: [], discard: [], exhaust: [] },
     connected: true,
     ended: false,
   };
@@ -278,6 +279,7 @@ function setActive(C, P) {
   // The seat's own stat rows: the hand rules and hand size its draws obey,
   // the level its rows read, and the rating rows its ratings are priced by.
   C.handRules = P ? P.handRules : null;
+  C.orderedDraw = P ? P.orderedDraw || null : null;
   C.handMax = P ? P.handMax : LEGACY_HAND_MAX;
   C.characterLevel = P ? P.level : undefined;
   C.derivedStatRuleSnapshot = P ? P.derivedStatRuleSnapshot : null;
@@ -737,9 +739,16 @@ function executeMove(C, enemy, move, moveId) {
   for (const eff of move.effects || []) applyEnemyEffect(C, enemy, eff, moveId);
 }
 
-// Player-targeted effects fan out; self/enemy effects apply once.
+// Ops that act on the active seat's card piles (actions.js reads `ctx.piles`,
+// never `eff.target`). An enemy has no piles, so in an enemy effect these are
+// always aimed at the players: they fan out like `target: 'player'` even when
+// the row names no target (Dazed injectors; docs/FINISH.md, Owner decisions).
+const SEAT_PILE_OPS = new Set(['addCard', 'draw', 'discard', 'exhaust', 'shuffleDiscardIntoDraw']);
+
+// Player-targeted effects (and seat-pile ops) fan out to every living seat;
+// self/enemy effects apply once.
 function applyEnemyEffect(C, enemy, eff, moveId) {
-  if (eff.target === 'player') {
+  if (eff.target === 'player' || SEAT_PILE_OPS.has(eff.op)) {
     for (const P of livingPlayers(C)) {
       if (C.result) return;
       setActive(C, P);

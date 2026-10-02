@@ -66,6 +66,7 @@ import { traySizeService } from '../services/TraySizeService.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { t } from '../strings.js';
+import { consumableText, skillBookReadPlan, commitSkillBookRead } from '../../model/consumables.js';
 import {
   armouryPaneSplit, inventoryComparison, inventoryEligibility, inventoryFooterPlan,
 } from '../models/ArmouryWorkspaceModel.js';
@@ -562,7 +563,10 @@ function inventoryReveal(registries, row, {
   }
   const description = row.category === 'Relic'
     ? relicText(item, registries)
-    : (item.blurb || item.textTemplate || 'No additional information.');
+    // A consumable's sentence names its live numbers (SPEC §14.3).
+    : row.category === 'Consumable'
+      ? `${consumableText(registries, item)}${row.read ? '' : ` ${t('armoury.consumable.token')}`}`
+      : (item.blurb || item.textTemplate || 'No additional information.');
   const mods = modSummary(registries, item);
   const detailModel = inventoryDetailCardModel({ row, art, description, mods, instruction, classModel });
   const comparisonPresentation = comparisonConfig?.presentation || 'tooltip';
@@ -692,6 +696,8 @@ function inventoryReveal(registries, row, {
  */
 export function mountEquipment(host, {
   registries, run, meta = {}, destination = '', inCombat: inCombatArg, onClose, onChange, onSwap, onEquip, onEquipmentChanged,
+  // SPEC §14.1: the deck editor's Armoury door (under `free`, out of combat).
+  onEditDeck = null,
   handRules = null,
 }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
@@ -1485,6 +1491,19 @@ export function mountEquipment(host, {
         const plan = inventoryFooterPlan({ target, actionLabel, eligibility }).primary;
         // The footer runs the same act, through the same hold, as the card.
         if (plan) footerPlans.set(row.key, { ...plan, act, holdMs: inventoryItemClass.holdAction ? holdDuration : 0 });
+      } else if (row.read && !inCombat) {
+        // SPEC §14.3: a skill book is read here, out of combat only — one
+        // awardSkillXp on its track (model/consumables.js), then one fewer.
+        const label = t('armoury.consumable.read');
+        const act = () => {
+          commitSkillBookRead(registries, run, skillBookReadPlan(registries, run, row.id, { inCombat }), { inCombat });
+          commit();
+        };
+        actionButton = button({ label, weight: 'primary', className: 'ep-equip armoury-read-book' });
+        actionButton.dataset.act = 'read';
+        actionButton.addEventListener('pointerdown', (event) => event.stopPropagation());
+        actionButton.addEventListener('click', (event) => { event.stopPropagation(); act(); });
+        footerPlans.set(row.key, { label, kind: 'read', act, holdMs: 0 });
       }
       return {
         key: row.key,
@@ -1521,6 +1540,8 @@ export function mountEquipment(host, {
       revealHost: detail,
       onReveal: (key) => {
         prompt.hidden = !!key;
+        // Phone rows collapse the detail track until an item is chosen (kit.css).
+        box.dataset.detailOpen = key ? 'true' : 'false';
         setFooterPrimary(key ? footerAction(footerPlans.get(key)) : null);
       },
       armFace: ({ button, entry, onTap }) => {
@@ -2235,7 +2256,17 @@ export function mountEquipment(host, {
     } else inventory.remove();
     if (view === 'cards') {
       wrap.querySelector('.armoury-content').remove();
-      cards.append(titleS(`Cards · ${(run.deck || []).length}`), prose('Your complete deck, including class and equipment cards.'), cardStrip());
+      cards.append(titleS(`Cards · ${(run.deck || []).length}`), prose('Your complete deck, including class and equipment cards.'));
+      // The deck editor's Armoury door (SPEC §14.1): the host hands it in only
+      // under `free` and out of combat; the Armoury closes onto the editor.
+      if (onEditDeck && !inCombat) {
+        const edit = button({ label: t('deckEditor.armoury'), weight: 'primary', id: 'armoury-edit-deck', className: 'armoury-edit-deck', attrs: { title: t('deckEditor.armoury') } });
+        // Through `leave`, so the Armoury's own deck floor still gates the way
+        // out; a refused leave keeps the Armoury open and opens no editor.
+        edit.addEventListener('click', () => { leave(); if (!wrap.isConnected) onEditDeck(); });
+        cards.append(edit);
+      }
+      cards.append(cardStrip());
     } else cards.parentElement.remove();
 
     let lastPaneWidths = null;

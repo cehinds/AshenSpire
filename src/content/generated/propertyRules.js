@@ -123,6 +123,54 @@ export const propertyRules = [
     "textTemplate": ""
   },
   {
+    "tag": "companion",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
+    "tag": "hollowSquire",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "At the start of each fight, gain {block} Block."
+  },
+  {
+    "tag": "emberHound",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "At the start of each of your turns, deal {damage} damage to a random enemy."
+  },
+  {
+    "tag": "sigil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
+    "tag": "emberSigil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "At the start of each fight, gain {block} Block."
+  },
+  {
+    "tag": "thornSigil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first time you hit with an attack each fight, apply {bleed} Bleed."
+  },
+  {
+    "tag": "tideSigil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Every {n}th card you play in a fight draws {draw} card."
+  },
+  {
+    "tag": "hearthSigil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Whenever you heal, gain {block} Block."
+  },
+  {
     "tag": "warhorn",
     "requires": "",
     "excludes": "",
@@ -435,6 +483,12 @@ export const propertyRules = [
     "textTemplate": ""
   },
   {
+    "tag": "deckEdit",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": ""
+  },
+  {
     "tag": "warlord",
     "requires": "",
     "excludes": [
@@ -561,5 +615,101 @@ export const propertyRules = [
     "requires": "",
     "excludes": "",
     "textTemplate": "At the start of your turn, gain {block} Block."
+  },
+  {
+    "tag": "partingBlow",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Leaving a stance deals {damage} damage to a random enemy."
+  },
+  {
+    "tag": "ironRebuke",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "While in Brace, losing HP deals {damage} damage to a random enemy."
+  },
+  {
+    "tag": "cinderGrip",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first stance you enter each turn applies {bleed} Bleed to every enemy."
+  },
+  {
+    "tag": "mendingGrip",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first stance you enter each turn heals {heal}."
+  },
+  {
+    "tag": "spentStars",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first card you exhaust each turn restores {restoreMana} Mana."
+  },
+  {
+    "tag": "fallingStar",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first time you restore Mana each turn, deal {damage} damage to a random enemy."
+  },
+  {
+    "tag": "lodestarPull",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Begin each combat with {vulnerable} Vulnerable on every enemy."
+  },
+  {
+    "tag": "shardHunger",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Whenever an enemy Staggers, restore {restoreMana} Mana."
+  },
+  {
+    "tag": "burningGrace",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Whenever you heal, deal {damage} damage to a random enemy."
+  },
+  {
+    "tag": "dazzlingLight",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first time you heal each turn, apply {weak} Weak to every enemy."
+  },
+  {
+    "tag": "anointedBlade",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first time you heal each combat, gain {strength} Strength."
+  },
+  {
+    "tag": "unsealedScroll",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first time you heal each combat, draw {draw} cards."
+  },
+  {
+    "tag": "lowProfile",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Each time Prepared is applied to you, gain {block} Block."
+  },
+  {
+    "tag": "feint",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "The first time Prepared is applied to you each turn, deal {poiseDamage} Poise damage to a random enemy."
+  },
+  {
+    "tag": "spareWhetstone",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Your first attack while Prepared each combat gains {gainEnergy} Energy."
+  },
+  {
+    "tag": "whettedGuard",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Each hit you land while Prepared grants {block} Block."
   }
 ];

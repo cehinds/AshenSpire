@@ -69,6 +69,7 @@ const SHOTS = [
   { name: 'coop-combat', query: '?shot=coop' }, // LAN co-op combat board (2 players)
   { name: 'coop-map', query: '?shot=coopmap' }, // LAN co-op shared map
   { name: 'coop-reward', query: '?shot=coopreward' }, // per-member reward pick
+  { name: 'victory-receipt', query: 'build/AshenSpire.html?shot=reward&shotReward=receipt' }, // itemized character XP in the built game
   { name: 'coop-shrine', query: '?shot=coopshrine' }, // rest / smith / Mend an ally
   { name: 'coop-catchup', query: '?shot=coopcatchup' }, // reconnect catch-up series
   // Added 2026-09-03 (AS-HD-040). ?shot=customize has existed in src/main.js all
@@ -151,7 +152,7 @@ const ONLY = yi >= 0 && args[yi + 1] && !args[yi + 1].startsWith('--')
 // it is a flag the evidence run passes and the preview run does not.
 const CLASS_MATRIX = args.includes('--class-matrix');
 function classMatrixShots() {
-  const path = resolve(ROOT, 'assets/sprites/class-sprites.manifest.json');
+  const path = resolve(ROOT, 'asset-data/sprites/class-sprites.manifest.json');
   if (!existsSync(path)) {
     console.error(`screenshot: --class-matrix needs ${path}, which is missing.`);
     process.exit(1);

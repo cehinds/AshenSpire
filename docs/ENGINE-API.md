@@ -67,7 +67,7 @@ Returns the **effective card def** (frozen, cached). Upgrade merge rules:
 |---|---|
 | `energy` (3) | player energy at turn start |
 | `draw` (5) | cards drawn at player turn start |
-| (`handMax` — retired in derived-stat ruleset 7) | the hand limit is the `handSize` stat row (`content/derivedStats.js`, SPEC §3.5, §4.1) in every fight; `combat.handMax` holds its value. A fight created without hand rules (an old headless fixture) keeps the retired fallback of 5; overflow draws go to discard |
+| (`handMax` — retired in derived-stat ruleset 7) | the hand limit is the `handSize` stat row (`src/content/derivedStats.js`, SPEC §3.5, §4.1) in every fight; `combat.handMax` holds its value. A fight created without hand rules (an old headless fixture) keeps the retired fallback of 5; overflow draws go to discard |
 | `flaskSlots` (3) | max flask slots (run-level `addFlask`) |
 | `poise.growthMult` (1.25) | poiseMax multiplier after each Stagger (ceil) |
 | `poise.playerImpactPerHit` (2) | outside the foundation ruleset, the Poise damage an enemy blow that draws blood deals the player (SPEC §13.4k) |

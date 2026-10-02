@@ -34,7 +34,8 @@ export function commitArmamentPurchase(registries, run, quote) {
   let instance = null;
   if (plan.kind !== 'armament') {
     let n = 1;
-    while (run.deck.some((card) => card.instanceId === `shop-art:${n}:${plan.item.id}`)) n++;
+    const owned = [...run.deck, ...(run.sideboard || [])];
+    while (owned.some((card) => card.instanceId === `shop-art:${n}:${plan.item.id}`)) n++;
     instance = { instanceId: `shop-art:${n}:${plan.item.id}`, cardId: plan.item.id, upgraded: false };
   }
   // No callback or fallible derivation inside this mutation group.

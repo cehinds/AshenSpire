@@ -46,7 +46,14 @@ const LOADOUT_KINDS = new Set(['armament', 'armour']);
 // holders whose window the engine knows (worn, worn, owned, chosen, and a
 // location's arrival-to-departure — engine/locations.js, plan phase 7). A kind
 // gains a mount by gaining a window here, never by a content row.
-const MOUNTABLE_KINDS = Object.freeze(['armament', 'armour', 'relic', 'class', 'location']);
+// A companion (SPEC §14.3) is held from combat start while it travels with
+// the run: it is mounted at createCombat and on restore, and leaves between
+// fights (engine/runCombat.js runCombatEnd counts it down).
+// A slotted sigil (SPEC §14.4) is held while the armament its slot is cut
+// into is equipped: syncLoadoutProperties mounts and unmounts it with the worn
+// pieces, so a swap (mid-fight included) takes it along. §15.4's attuned
+// legendary will share the kind under the same `sigil:<id>` key.
+const MOUNTABLE_KINDS = Object.freeze(['armament', 'armour', 'relic', 'class', 'location', 'companion', 'sigil']);
 
 /** The key a carrier's mount lives under, per owner. */
 export function propertySourceKey(carrier) {
@@ -85,7 +92,12 @@ export function mountProperties(ctx, carrier) {
   // so a scoped passive reader (engine/skillXp.js: skillXpMult for the tracks
   // the class card names) can ask which mounts speak for a track without a
   // second table. Empty for the carriers that carry none.
-  owned[sourceKey] = { kind: carrier.kind, id: carrier.id, instanceId: carrier.instanceId || carrier.id, rules, scopeTags: [...(carrier.scopeTags || [])] };
+  owned[sourceKey] = {
+    kind: carrier.kind, id: carrier.id, instanceId: carrier.instanceId || carrier.id, rules, scopeTags: [...(carrier.scopeTags || [])],
+    // The worn piece a slotted sigil rides (SPEC §14.4), so the loadout diff
+    // knows the mount is its to take away.
+    ...(carrier.heldBy ? { heldBy: carrier.heldBy } : {}),
+  };
   return owned[sourceKey];
 }
 
@@ -105,9 +117,16 @@ export function propertyMountsOf(ctx, entity) {
   return ctx.propertyMounts[triggerOwnerKey(ctx, entity)] || null;
 }
 
-/** The carriers a loadout presents: every worn piece that holds a property tag. */
-export function loadoutCarriers(registries, loadout, classId, ownerKey, itemUpgradeLevels = {}) {
-  return equippedPieces(registries, loadout, classId, { itemUpgradeLevels })
+/**
+ * The carriers a loadout presents: every worn piece that holds a property
+ * tag, and every sigil set into a slot of a worn armament (SPEC §14.4) —
+ * `{ kind: 'sigil', id, instanceId: id }`, one per sigil, since a sigil is
+ * owned at most once. `sigilSlots` is `run.sigilSlots` (keyed like itemMounts);
+ * none given, no sigil mounts.
+ */
+export function loadoutCarriers(registries, loadout, classId, ownerKey, itemUpgradeLevels = {}, sigilSlots = null) {
+  const worn = equippedPieces(registries, loadout, classId, { itemUpgradeLevels });
+  const pieces = worn
     .filter((piece) => Array.isArray(piece.propertyTags) && piece.propertyTags.length)
     .map((piece) => ({
       kind: piece.kind === 'armor' ? 'armour' : 'armament',
@@ -116,6 +135,21 @@ export function loadoutCarriers(registries, loadout, classId, ownerKey, itemUpgr
       ownerKey,
       tagIds: [...piece.propertyTags],
     }));
+  const sigils = [];
+  if (sigilSlots && typeof sigilSlots === 'object' && registries.sigils) {
+    const seen = new Set();
+    for (const piece of worn) {
+      const itemRef = pieceItemRef(piece);
+      if (!itemRef || seen.has(itemRef) || !Array.isArray(sigilSlots[itemRef])) continue;
+      seen.add(itemRef);
+      for (const id of sigilSlots[itemRef]) {
+        if (typeof id !== 'string' || !registries.sigils.has(id) || sigils.some((c) => c.id === id)) continue;
+        const tagIds = registries.sigils.get(id).propertyTags || [];
+        if (tagIds.length) sigils.push({ kind: 'sigil', id, instanceId: id, ownerKey, tagIds: [...tagIds], heldBy: itemRef });
+      }
+    }
+  }
+  return [...pieces, ...sigils];
 }
 
 /**
@@ -182,6 +216,36 @@ export function syncClassProperties(combat, entity) {
 }
 
 /**
+ * companionCarrier(registries, companionId, ownerKey) → the carrier a
+ * travelling companion presents (SPEC §14.3), or null when it confers
+ * nothing. Its tags are its tagging.csv property rows, resolved through
+ * carrierRules like a relic's; `instanceId` is the id, since one of each
+ * travels at a time.
+ */
+export function companionCarrier(registries, companionId, ownerKey) {
+  const def = registries.companions && registries.companions.has(companionId) ? registries.companions.get(companionId) : null;
+  const tagIds = def && Array.isArray(def.propertyTags) ? def.propertyTags : [];
+  return tagIds.length ? { kind: 'companion', id: companionId, instanceId: companionId, ownerKey, tagIds: [...tagIds] } : null;
+}
+
+/**
+ * syncCompanionProperties(combat) — mount every companion the fight carries
+ * (`combat.companions`) that is not mounted yet, under the solo player. A
+ * companion never joins or leaves mid-fight, so this only ever adds.
+ */
+export function syncCompanionProperties(combat) {
+  const owner = combat && combat.player;
+  if (!owner || !Array.isArray(combat.companions)) return;
+  const ownerKey = triggerOwnerKey(combat, owner);
+  for (const id of combat.companions) {
+    const carrier = companionCarrier(combat.registries, id, ownerKey);
+    if (!carrier) continue;
+    const owned = combat.propertyMounts && combat.propertyMounts[ownerKey];
+    if (!owned || !owned[propertySourceKey(carrier)]) mountProperties(combat, carrier);
+  }
+}
+
+/**
  * syncRelicProperties(combat, entity) — mount every relic the entity holds that
  * is not mounted yet. Relics are never taken away mid-run, so this only ever
  * adds: `addRelic` calls it for the one new relic and combat start calls it for
@@ -206,7 +270,7 @@ export function syncRelicProperties(combat, entity) {
  * Called at createCombat, after both equipment doors (swapArmament and
  * changeEquipment) and when a combat snapshot is restored.
  */
-export function syncLoadoutProperties(combat, entity, loadout, itemUpgradeLevels) {
+export function syncLoadoutProperties(combat, entity, loadout, itemUpgradeLevels, sigilSlots) {
   // A CO-OP SEAT CARRIES ITS OWN KIT. Solo reads the one loadout off the
   // combat; a party's seats each hand in theirs, under their own owner key,
   // for the reason the relic sync states — mounted under whichever seat is
@@ -215,14 +279,17 @@ export function syncLoadoutProperties(combat, entity, loadout, itemUpgradeLevels
   if (!combat || !owner) return;
   const kit = loadout !== undefined ? loadout : combat.loadout;
   const tiers = itemUpgradeLevels !== undefined ? itemUpgradeLevels : combat.itemUpgradeLevels;
+  // The slots ride the combat (`combat.sigilSlots`, SPEC §14.4) for the solo
+  // seat; a co-op seat handing in its own kit carries none in v1.
+  const slots = sigilSlots !== undefined ? sigilSlots : (loadout === undefined ? combat.sigilSlots : null);
   const ownerKey = triggerOwnerKey(combat, owner);
   const wanted = kit
-    ? loadoutCarriers(combat.registries, kit, owner.classId, ownerKey, tiers || {})
+    ? loadoutCarriers(combat.registries, kit, owner.classId, ownerKey, tiers || {}, slots || null)
     : [];
   const wantedKeys = new Set(wanted.map(propertySourceKey));
   const current = (combat.propertyMounts && combat.propertyMounts[ownerKey]) || {};
   for (const [sourceKey, mount] of Object.entries(current)) {
-    if (LOADOUT_KINDS.has(mount.kind) && !wantedKeys.has(sourceKey)) {
+    if ((LOADOUT_KINDS.has(mount.kind) || (mount.kind === 'sigil' && mount.heldBy)) && !wantedKeys.has(sourceKey)) {
       unmountProperties(combat, { ...mount, ownerKey, tagIds: [] });
     }
   }

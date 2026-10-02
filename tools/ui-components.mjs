@@ -130,10 +130,27 @@ export function catalogDisagreement(md, html) {
 // blocks, and yields each style rule as { selector, decls } where decls lists
 // { prop, value } in source order (a last declaration without `;` counts).
 // Nested rules (CSS nesting) are judged as `:is(parent) child`.
-// BOUNDARY: it does not model the cascade (specificity, !important, @layer
-// order, @scope limits) or custom-property substitution; a var() value is
-// judged as unreadable. A further CSS form is fixed here only if the shipped
-// CSS uses it; otherwise this note is the answer.
+// BOUNDARY: it reads CSS as text, so it does not model
+//   - the cascade: specificity, !important, @layer order and @scope limits
+//     (`to (...)`) are ignored; within a rule the last declaration wins, and
+//     every rule is judged on its own;
+//   - var() substitution: a custom property is never resolved, so a var()
+//     value is judged as unreadable (a failing grid, not a skip);
+//   - per-property value grammar: an invalid later value, which a browser
+//     drops, is read as the effective one.
+// It parses styles/kit.css and styles/hud-visibility.css (the player's HUD
+// preference hides, the one other sheet that writes the rail's display); it
+// does not parse combat.css, ui.css, map.css or any other sheet. A further
+// CSS form is fixed here only if the shipped CSS uses it; otherwise this note
+// is the answer. Checked against the shipped sheets 2026-09-27: no @layer, no
+// @scope, no CSS nesting, and no var() or invalid value in a property C12
+// judges, and no escape in any selector. Two guard forms are therefore
+// rejected (fail closed), not parsed:
+//   - a preference guard written with CSS nesting is rejected; un-nest it;
+//   - a hexadecimal escape in a quoted guard value (`'fal\73 e'`) is not
+//     decoded, so the guard is rejected; write the value plainly.
+// Unseen here: combat.css's co-op formation rule sets the HUD top to
+// display:flex (`.combat.coop[data-layout='formation'] .topbar .hud-top`).
 function splitTop(text, sep) {
   const out = []; let depth = 0; let quote = null; let cur = ''; let escaped = false;
   for (const ch of text) {
@@ -321,6 +338,108 @@ function validAreas(rows) {
 // rule whose subject compound carries `.hud-bottom` (the rail itself, in any
 // state, layout or media override; not its children) hangs it again with an
 // effective absolute or fixed position or moves it out of the `rail` area.
+// A rail hide that a player's HUD preference allows (styles/hud-visibility.css):
+// the rail holds only relics and potions, so it may be hidden when the
+// preferences leave it empty, and only then. The guard must be positive: the
+// selector's FIRST compound is `:root` plus attribute selectors alone, so a
+// `:root:not([…])`, a `.hud-bottom:not([…])` or an `:is([…], .x)` never counts.
+// Both relics and potions off empties the rail; one of them off empties it
+// only when the rail's own compound also carries a top-level
+// `:not(:has(.hud-<other>))`. Any other preference (vitality, currency,
+// position, or a key that does not exist) leaves the rail full.
+// The guard is compared as TOKENS, never as text: selectorTokens() reads the
+// selector once (identifiers with CSS escapes decoded, strings, `.`/`#`,
+// pseudo-classes, functions, delimiters) and keeps whitespace only where it
+// is a descendant combinator. So `:not( :has(.hud-relics) )` and
+// `[data-hud-show-relics = false]` read as their plain forms, while
+// `:has(.hud- potions)` stays `.hud-` then a descendant `potions`.
+function selectorTokens(text) {
+  const toks = []; let i = 0; let brackets = 0;
+  const identChar = (ch) => ch !== undefined && (/[\w-]/.test(ch) || ch >= '\u0080');
+  const ident = () => {
+    let out = '';
+    while (i < text.length && (identChar(text[i]) || text[i] === '\\')) {
+      if (text[i] !== '\\') { out += text[i++]; continue; }
+      const hex = /^[0-9a-f]{1,6}\s?/i.exec(text.slice(i + 1));
+      if (hex) { out += String.fromCodePoint(parseInt(hex[0], 16)); i += 1 + hex[0].length; } else { out += text[i + 1] ?? ''; i += 2; }
+    }
+    return out;
+  };
+  while (i < text.length) {
+    const ch = text[i];
+    if (/\s/.test(ch)) { while (/\s/.test(text[i] ?? '')) i++; if (!brackets) toks.push({ t: 'ws', v: ' ' }); continue; }
+    if (ch === '"' || ch === "'") {
+      let v = ''; i++;
+      while (i < text.length && text[i] !== ch) { if (text[i] === '\\') i++; v += text[i++] ?? ''; }
+      i++; toks.push({ t: 'str', v }); continue;
+    }
+    if (ch === '.' || ch === '#') { i++; toks.push({ t: 'name', v: ch + ident() }); continue; }
+    if (ch === ':') {
+      i++; const colons = text[i] === ':' ? (i++, '::') : ':';
+      const name = colons + ident().toLowerCase();
+      if (text[i] === '(') { i++; toks.push({ t: 'fn', v: `${name}(` }); } else toks.push({ t: 'name', v: name });
+      continue;
+    }
+    if (identChar(ch) || ch === '\\') { toks.push({ t: 'ident', v: ident() }); continue; }
+    if (ch === '[') brackets++;
+    if (ch === ']') brackets--;
+    toks.push({ t: 'delim', v: ch }); i++;
+  }
+  // Whitespace next to a combinator, a comma or a bracket is not a combinator.
+  const quiet = (tok, open) => !tok || (tok.t === 'delim' && /[>+~,]/.test(tok.v)) || (open ? tok.t === 'fn' || tok.v === '(' : tok.v === ')');
+  return toks.filter((tok, k) => tok.t !== 'ws' || !(quiet(toks[k - 1], true) || quiet(toks[k + 1], false)));
+}
+const tokenText = (toks) => toks.map((tok) => (tok.t === 'str' ? JSON.stringify(tok.v) : tok.v)).join('');
+// Split at top-level combinators: each compound is one token run.
+function compoundsOf(toks) {
+  const out = [[]]; let depth = 0;
+  for (const tok of toks) {
+    if (tok.t === 'fn' || tok.v === '(' || tok.v === '[') depth++;
+    if (tok.v === ')' || tok.v === ']') depth--;
+    if (!depth && (tok.t === 'ws' || (tok.t === 'delim' && /[>+~]/.test(tok.v)))) { out.push([]); continue; }
+    out.at(-1).push(tok);
+  }
+  return out.filter((c) => c.length);
+}
+// One attribute selector's tokens mean "this preference is off" only as
+// name `=` value [flag]: the attribute name in any case, the value quoted or
+// bare and compared case-sensitively unless the `i` flag is given. `~=` and
+// `|=` also match values that are not exactly `false`, so they never count.
+function preferenceOff(body) {
+  const [name, eq, value, flag, ...rest] = body;
+  if (rest.length || name?.t !== 'ident' || eq?.v !== '=' || !['ident', 'str'].includes(value?.t)) return null;
+  if (flag && !(flag.t === 'ident' && /^[is]$/i.test(flag.v))) return null;
+  const which = /^data-hud-show-(relics|potions)$/i.exec(name.v)?.[1].toLowerCase();
+  const off = flag?.v.toLowerCase() === 'i' ? value.v.toLowerCase() === 'false' : value.v === 'false';
+  return which && off ? which : null;
+}
+function preferenceEmptiesRail(part) {
+  const compounds = compoundsOf(selectorTokens(part.trim()));
+  const [lead] = compounds;
+  if (compounds.length < 2 || lead[0]?.v !== ':root' || lead.length < 2) return false;
+  const off = new Set();
+  for (let k = 1; k < lead.length;) {
+    const close = lead.findIndex((tok, j) => j > k && tok.v === ']');
+    if (lead[k].v !== '[' || close < 0) return false;
+    off.add(preferenceOff(lead.slice(k + 1, close)));
+    k = close + 1;
+  }
+  if (off.has('relics') && off.has('potions')) return true;
+  const other = off.has('relics') ? 'potions' : off.has('potions') ? 'relics' : null;
+  return other !== null && topLevel(compounds.at(-1)).includes(`:not(:has(.hud-${other}))`);
+}
+// The compound's top-level functional calls, each as its canonical text.
+function topLevel(compound) {
+  const calls = []; let depth = 0; let cur = null;
+  for (const tok of compound) {
+    if (!depth && tok.t === 'fn') cur = [];
+    if (cur) cur.push(tok);
+    if (tok.t === 'fn' || tok.v === '(' || tok.v === '[') depth++;
+    if (tok.v === ')' || tok.v === ']') depth--;
+    if (cur && !depth) { calls.push(tokenText(cur)); cur = null; }
+  }
+  return calls;
+}
 export function railInFlow(css) {
   const rules = cssRules(css)
     .filter((rule) => splitTop(rule.selector, /,/).some((part) => hasClass(subjectOf(part), 'hud-bottom')));
@@ -336,11 +455,12 @@ export function railInFlow(css) {
       || (lastValue(rule.decls, ['grid-area']) ?? 'rail') !== 'rail'
       || rule.decls.some((d) => /^grid-(?:row|column)(?:-start|-end)?$/.test(d.prop))
       // Display too: none or contents takes the rail out of the grid. Only a
-      // rule whose subject is `:empty` may hide it (a rail with no relics).
+      // rule whose subject is `:empty` may hide it (a rail with no relics), or
+      // one whose HUD preferences leave it empty (preferenceEmptiesRail).
       || (/^(?:none|contents)$/i.test(lastValue(rule.decls, ['display']) ?? '')
         // `:empty` must sit on the rail's own compound alternative: in
         // `:is(.hud-bottom, .x:empty)` it is on `.x`, not on the rail.
-        && !splitTop(rule.selector, /,/).every((part) => subjectAlternatives(part)
+        && !splitTop(rule.selector, /,/).every((part) => preferenceEmptiesRail(part) || subjectAlternatives(part)
           .filter((alt) => hasClass(alt, 'hud-bottom')).every((alt) => /:empty(?![\w-])/i.test(alt)))));
 }
 
@@ -404,6 +524,7 @@ export function receipt() {
     equipment: read('src/ui/screens/equipment.js'),
     css: read('styles/combat.css'),
     kit: read('styles/kit.css'),
+    hudVisibility: read('styles/hud-visibility.css'),
     uiCss: read('styles/ui.css'),
     kitCss: read('styles/kit.css'),
     spec: read('SPEC.md'),
@@ -496,7 +617,9 @@ export function findings(r) {
       // scaling is red.
       || !/fitCombatSprites\(\{ width: fieldRect\.width, height: fieldRect\.height, actors \}\)/.test(r.battlefieldStage)
       || !/base = Math\.min\(base, maxHeight \/ ratio,/.test(r.spriteScale)
-      || !/const visibleHeight = base \* a\.ratio \* a\.slot\.depth;/.test(r.spriteScale)
+      // A presentation multiplier (sprite scale settings) grows a figure after
+      // this shared height, capped per side to the screen (2026-09-27).
+      || !/const heightOf = a => base \* a\.ratio \* a\.slot\.depth;/.test(r.spriteScale)
       || !/function renderCombatantStage\(\)[\s\S]*?renderPlayer\(\);\s*renderEnemies\(\);[\s\S]*?battlefieldStage\.refresh\(\);[\s\S]*?function render\(\)/.test(r.combat)
       || (r.combat.match(/renderCombatantStage\(\);/g) || []).length < 2
       || !/UI\.playerHandTray/.test(r.combat)
@@ -600,7 +723,7 @@ export function findings(r) {
       // this clause pinned the hang and left C12 red on dev. What it means
       // now: the rail is in flow in the `rail` area, and the shared grid
       // stacks a rail row directly under the meters row.
-      || !railInFlow(r.kit)
+      || !railInFlow(`${r.kit}\n${r.hudVisibility ?? ''}`)
       || !railUnderMeters(r.kit)
       // The relic rail is the shared icon tray (components/iconTray.js), the
       // combatant card's status row its reference: the rail wears the tray's
@@ -885,6 +1008,10 @@ function selftest() {
     ['hide an expanded rail with display: none', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { display: none; }\n` })],
     ['hide a rail rule behind a string holding an escaped quote', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.a::before { content: "\\""; }\n.shared-hud .hud-bottom.x { position: absolute; }\n` })],
     ['hide a rail rule between comment markers inside strings', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.a::before { content: "/*"; }\n.shared-hud .hud-bottom.x { position: absolute; }\n.b::before { content: "*/"; }\n` })],
+    ['hide the rail behind a negated HUD preference', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n:root:not([data-hud-show-relics='false']) .hud-bottom { display: none !important; }\n` })],
+    ['hide the rail behind an optional HUD preference', 'C12 ', (r) => ({ ...r, hudVisibility: `${r.hudVisibility}\n.shared-hud .hud-bottom:is([data-hud-show-relics='false'], .expanded) { display: none; }\n` })],
+    ['hide the whole rail when only potions are off', 'C12 ', (r) => ({ ...r, hudVisibility: `${r.hudVisibility}\n:root[data-hud-show-potions='false'] .hud-bottom { display: none !important; }\n` })],
+    ['hang the rail from the HUD preference sheet', 'C12 ', (r) => ({ ...r, hudVisibility: `${r.hudVisibility}\n:root[data-hud-show-relics='false'] .shared-hud .hud-bottom { position: absolute; }\n` })],
     ['reset an expanded rail with all: unset', 'C12 ', (r) => ({ ...r, kit: `${r.kit}\n.shared-hud .hud-bottom.expanded { all: unset; }\n` })],
     ['draw a fourth button weight for the HUD', 'C12 ', (r) => ({ ...r, hud: r.hud.replace(/iconButton\(\{/g, 'button({') })],
     ['make HUD ViewModel mutable', 'C13 ', (r) => ({ ...r, componentModel: r.componentModel.replace(/return Object\.freeze\(\{\r?\n\s*component,/, 'return ({\n    component,') })],

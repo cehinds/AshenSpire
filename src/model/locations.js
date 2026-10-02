@@ -34,6 +34,10 @@ export const LOCATION_FAMILY = 'location';
 
 /** The Unknown node's rest outcome (proposal §7.4: the field camp). */
 export const CAMP_LOCATION = 'camp';
+// SPEC §14.3: the place a full rest bought at the market is taken at. Its own
+// tag set (content/source/tagging.csv, `location,,inn,…`) decides what the
+// rest restores and whether a relic's `restDenied` refuses it.
+export const INN_LOCATION = 'inn';
 
 /**
  * `restMana` restores by the configured mode (balance.rest.mana.mode); a
@@ -57,6 +61,9 @@ export const SERVICE_TAGS = Object.freeze({
   // Plan phase 10b: the place keeps a quest board — the atlas quests offered
   // in its town and a journal of the run's quests (ui/screens/questBoard.js).
   questBoard: 'questBoard',
+  // SPEC §14.1: under Rest sites only, the deck editor opens from the Rest
+  // screen of a place carrying this marker (shrine, inn, chapel; not camp).
+  deckEdit: 'deckEdit',
 });
 
 /** The classic node types the door opens a visit at (main.js enterNode). */
@@ -149,6 +156,7 @@ export function locationServices(registries, tags) {
     levelUp: held.has(SERVICE_TAGS.levelUp),
     flasks: held.has(SERVICE_TAGS.flasks),
     questBoard: held.has(SERVICE_TAGS.questBoard),
+    deckEdit: held.has(SERVICE_TAGS.deckEdit),
   });
 }
 
@@ -184,6 +192,17 @@ export function questBoardPointAt(registries, ownerNodeId, atlas = ATLAS) {
     if (locationId && locationTags(registries, locationId).includes(SERVICE_TAGS.questBoard)) return point.nodeId;
   }
   return null;
+}
+
+/**
+ * innInTown(registries, ownerNodeId, atlas) → whether the town an atlas point
+ * belongs to keeps an inn: some point of its local map rests as the inn
+ * location. A market there always offers the inn rest (SPEC §14.3).
+ */
+export function innInTown(registries, ownerNodeId, atlas = ATLAS) {
+  const local = atlas && atlas.localByOwner ? atlas.localByOwner[ownerNodeId] : null;
+  const points = (local && atlas.localPoints[local.mapId]) || [];
+  return points.some((point) => restLocationAtPoint(registries, point.nodeId, atlas) === INN_LOCATION);
 }
 
 /**

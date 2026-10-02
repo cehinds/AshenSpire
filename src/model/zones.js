@@ -71,6 +71,11 @@ export function projectZones(run) {
       hands,
       passive: Array.isArray(run && run.relics) ? run.relics.filter((id) => typeof id === 'string' && id) : [],
     },
-    collection: Array.isArray(run && run.deck) ? run.deck.filter(Boolean).map((card) => structuredClone(card)) : [],
+    // Owned means deck ∪ sideboard (SPEC §14.1): a card the deck editor set
+    // aside is still the run's.
+    collection: [
+      ...(Array.isArray(run && run.deck) ? run.deck : []),
+      ...(Array.isArray(run && run.sideboard) ? run.sideboard : []),
+    ].filter(Boolean).map((card) => structuredClone(card)),
   };
 }

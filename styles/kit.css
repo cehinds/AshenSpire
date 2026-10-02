@@ -1491,6 +1491,24 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
    are OptionCards; the foot carries the hold copy and Continue on the ladder. */
 .reward-backdrop { min-height: 100%; }
 .reward-door > .modal-body { display: flex; flex-direction: column; align-items: center; gap: 1.2rem; padding: var(--modal-inset); }
+.reward-door[data-victory-compact='true'] > .modal-head { justify-content: center; }
+.reward-door[data-victory-compact='true'] > .modal-head .modal-head-id { align-items: center; text-align: center; }
+.reward-door[data-victory-compact='true'] > .modal-head .modal-head-actions { display: none; }
+.reward-door .reward-compact-xp { width: 100%; min-width: 0; display: grid; gap: .65rem; }
+.reward-door .reward-compact-summary { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: baseline; column-gap: .6rem; min-width: 0; font-variant-numeric: tabular-nums; }
+.reward-door .reward-compact-heading { white-space: nowrap; color: var(--parchment); font-weight: 700; }
+.reward-door .reward-compact-arithmetic { display: flex; align-items: baseline; justify-content: flex-start; gap: .15rem; min-width: 0; }
+.reward-door .reward-compact-formula { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.reward-door .reward-compact-more { flex: none; border: 0; padding: 0 .15rem; background: transparent; color: var(--gold); font: inherit; cursor: help; }
+.reward-door .reward-compact-more[hidden] { display: none; }
+.reward-door .reward-compact-value { justify-self: end; white-space: nowrap; color: var(--gold); }
+.reward-door .reward-compact-list { box-sizing: border-box; height: min(calc(var(--receipt-rows, 4) * 2.1rem + .7rem), 32vh); margin: 0; padding: .35rem .55rem; list-style: none; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; border: 1px solid var(--line); border-radius: var(--r-4); background: color-mix(in srgb, var(--panel) 72%, var(--bg)); }
+.reward-door .reward-compact-row { min-height: 2.1rem; display: flex; align-items: center; justify-content: space-between; gap: .7rem; min-width: 0; }
+.reward-door .reward-compact-row-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reward-door .reward-compact-row-value { flex: none; white-space: nowrap; color: var(--gold); font-variant-numeric: tabular-nums; }
+.reward-door .reward-compact-continue:disabled { opacity: .58; cursor: default; }
+.reward-door .reward-compact-continue.is-ready { background: #2b7047; border-color: #71c990; color: #fff; }
+.reward-door .reward-compact-continue.is-ready:is(:hover, :focus-visible) { background: #368a59; border-color: #a0e6b6; }
 .reward-door .reward-menu { max-width: none; width: 100%; }
 /* W1t: reward choices beside their claim status; stacked on narrow hosts. */
 .reward-door .reward-claim-layout { width: 100%; display: grid;grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2vw; align-items: start; }
@@ -1538,14 +1556,39 @@ details.armoury-card-row > .as-detailcard { border-radius: 0 0 var(--r-3) var(--
 .reward-door .rp-next { grid-area: next; white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
 .reward-door .rp-gain { grid-area: gain; margin-top: .15rem; color: var(--muted); font-size: .92em; font-variant-numeric: tabular-nums; }
 .reward-door .rp-bar { grid-area: bar; min-width: 0; }
+.reward-door .reward-level-ready { --level-ready-blue: #75bfff; }
+.reward-door .rp-bar-ready { --meter-tone: var(--level-ready-blue); }
+.reward-door .rp-bar-ready .m-track { background: color-mix(in srgb, var(--level-ready-blue) 18%, var(--bg)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--level-ready-blue) 48%, var(--line)); }
+.reward-door .reward-level-up { grid-area: next; box-sizing: border-box; height: 1.6rem; min-height: 0; padding: 0 .5rem; white-space: nowrap; border-color: var(--level-ready-blue); background: color-mix(in srgb, var(--level-ready-blue) 28%, var(--panel)); color: #e9f6ff; font-size: .75rem; line-height: 1; font-weight: 700; }
+.reward-door .reward-level-up:is(:hover, :focus-visible) { background: color-mix(in srgb, var(--level-ready-blue) 43%, var(--panel)); border-color: #a7d9ff; }
+.reward-door .rp-layered-bar { position: relative; height: 1.6rem; overflow: hidden; border-radius: 999px; background: #2b2821; box-shadow: inset 0 0 0 1px var(--line); }
+.reward-door .rp-layered-bar .rp-under, .reward-door .rp-layered-bar .rp-over { position: absolute; inset: 0 auto 0 0; border-radius: inherit; }
+.reward-door .rp-layered-bar .rp-under { background: #62c686; z-index: 1; }
+.reward-door .rp-layered-bar .rp-over { background: #d7b64b; z-index: 2; }
+.reward-door .rp-layered-bar .rp-bar-text { position: absolute; inset: 0 .55rem 0 auto; z-index: 3; display: flex; align-items: center; color: #fff; font: 700 .75rem/1 var(--font-body); white-space: nowrap; text-shadow: 0 1px 2px #111; }
+.reward-door .rp-layered-bar.rp-bar-ready .rp-under, .reward-door .rp-layered-bar.rp-bar-ready .rp-over { background: #6ab8f5; }
+.reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(5rem, 1fr) auto; grid-template-areas: 'level bar next'; gap: .6rem; white-space: nowrap; }
+.reward-door .reward-progress-row[data-kind='character'] .rp-level { color: var(--parchment); }
+.reward-door .reward-progress-row[data-kind='character'] .rp-next { position: relative; z-index: 1; transition: transform .35s ease; }
+.reward-door .reward-progress-row[data-kind='character'].reward-level-ready .rp-next { transform: translateX(-2rem); }
+.reward-door .reward-progress-row[data-kind='character'] .reward-level-up { position: relative; z-index: 2; grid-area: next; }
+.reward-door .reward-stat-allocation { display: grid; gap: .5rem; width: 100%; border-top: 1px solid var(--line); padding-top: .8rem; }
+.reward-door .reward-stat-allocation h3 { margin: 0; font-size: 1rem; }
+.reward-door .reward-stat-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: .6rem; }
+.reward-door .reward-stat-add { min-width: 2.5rem; }
+/* What the per-fight level cap threw away (SPEC §15.2): its own line under the row. */
+.reward-door .rp-discarded { grid-column: 1 / -1; margin-top: .1rem; color: var(--ember, var(--gold)); font-size: .88em; font-variant-numeric: tabular-nums; }
 .reward-door .reward-progress-more { margin: 0; color: var(--muted); font-size: .92em; }
 :root[data-layout='narrow'] .reward-door .reward-progress { grid-template-columns: minmax(0, 1fr) auto; }
 :root[data-layout='narrow'] .reward-door .reward-progress-row {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas: 'name level' 'bar bar' 'gain next';
 }
+:root[data-layout='narrow'] .reward-door .reward-progress-row.reward-level-ready { grid-template-areas: 'name level' 'bar next' 'gain gain'; }
+:root[data-layout='narrow'] .reward-door .reward-progress-row[data-kind='character'] { grid-template-columns: auto minmax(3rem, 1fr) auto; grid-template-areas: 'level bar next'; font-size: .85rem; }
 :root[data-layout='narrow'] .reward-door .rp-next { justify-self: end; }
 .reward-door .reward-row { justify-content: center; flex-wrap: wrap; padding: 0.6rem 0; max-width: 100%; }
+.reward-door .reward-row .reward-node { white-space: normal; }
 .reward-door .reward-kind[data-state='taken'] .chip { color: var(--gold); border-color: var(--gold); }
 /* The ring itself is the shared one above; the door adds only the lift. */
 .reward-door .reward-row .card.reward-selected { transform: translateY(-8px) scale(1.06); }
@@ -3317,6 +3360,12 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
   grid-template-rows: auto minmax(0, var(--armoury-collection-track, 1fr)) minmax(0, var(--armoury-detail-track, 1fr));
 }
 .armoury[data-split='rows'] .ep-list.armoury-split > .armoury-item-detail { grid-column: 1; grid-row: 3; border-left: 0; padding-left: 0; border-top: 1px solid var(--line); padding-top: 0.8rem; }
+/* Before a selection the phone detail row holds one line of instruction; a
+   half-height track for it squeezed the item list to a sliver. It sizes to
+   its content until an item is chosen. */
+.armoury[data-split='rows'] .armoury-inventory > .ep-list.armoury-split:not([data-detail-open='true']) {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
 .armoury .armoury-item-detail > .disc-reveal { margin: 0; }
 /* The shared equipment inspection is laid out for a 450px face (220px art
    beside its details) and stacks only under the phone media rule below. The
@@ -3972,7 +4021,7 @@ article.enemy-move-card.as-option:not(.is-selected):hover { border-color: var(--
    card-inspection pane's zoom floor, the same in playing-card and equipment
    inspection. */
 /* FONT LICENCES — carried here so the notices travel inside every build,
-   single-file and mobile alike (the same text is assets/fonts/OFL.txt).
+   single-file and mobile alike (the same text is asset-data/fonts/OFL.txt).
 
 Card lore faces bundled in assets/fonts/ (Latin subset WOFF2, from the Fontsource
 packages of the Google Fonts releases). Each is licensed under the SIL Open Font
@@ -4875,6 +4924,16 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 }
 .modal-foot-actions[data-action-count] > button { width: 100%; min-width: 0; max-width: none; }
 .modal-foot-actions[data-action-count='0'] { display: none; }
+/* The compact receipt has one small way forward at its lower-right edge. It
+   keeps the shared footer assembly, but does not stretch that single action
+   across the entire modal as a full reward decision does. */
+.reward-door[data-victory-compact='true'] > .reward-foot { flex-direction: row; align-items: center; }
+.reward-door[data-victory-compact='true'] > .reward-foot > .modal-foot-actions[data-action-count] {
+  display: flex; width: 100%; margin-left: 0; justify-content: flex-end;
+}
+.reward-door[data-victory-compact='true'] > .reward-foot > .modal-foot-actions > .reward-compact-continue {
+  flex: 0 0 10rem; width: 10rem; min-width: 0; max-width: none;
+}
 /* WCB0 BUTTON SIZES. Every value comes from wireframeUi.buttons through
    ButtonSizeModel.buttonSizeTokens(), written onto :root by the kit; this
    block only combines them. A reference rem is at least 16 physical px (the
@@ -4926,6 +4985,20 @@ button[data-button-size] {
   width: var(--hand-hit-width); height: var(--hand-card-height); z-index: 20;
   transform-origin: calc(var(--hand-card-width) / 2) calc(var(--hand-card-height) / 2);
   transform: rotate(calc(-1 * var(--hand-card-angle))) translateY(calc(-1 * var(--hand-card-arc)));
+}
+/* The next card's hit lane covers this card's lower corner in a tight fan.
+   Keep the reading chevron above the face, fully inside the hand's clip. */
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-more-button {
+  pointer-events: auto; z-index: 21;
+  left: 0; right: auto;
+  top: max(calc(-1 * var(--tap-floor) + 16px / var(--ui-zoom, 1)), calc(4px / var(--ui-zoom, 1) - var(--hand-card-y)));
+  bottom: auto;
+  align-items: center; justify-content: center; padding: 0;
+  border: 1px solid var(--line); border-radius: var(--r-2);
+  background: var(--panel);
+}
+:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-truncated='true'] .cname {
+  box-sizing: border-box; width: 100%; padding-left: var(--tap-floor);
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) > .hand-hit-lane {
   transform: translateY(calc(var(--hand-selection-lift) - var(--hand-card-arc)));

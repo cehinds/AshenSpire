@@ -1014,6 +1014,12 @@ export const tagging = [
     "family": "armament",
     "scope": "",
     "objectId": "shortbow",
+    "tagId": "bow"
+  },
+  {
+    "family": "armament",
+    "scope": "",
+    "objectId": "shortbow",
     "tagId": "precision"
   },
   {
@@ -1735,6 +1741,12 @@ export const tagging = [
     "scope": "",
     "objectId": "bowPierceAttack",
     "tagId": "ranged"
+  },
+  {
+    "family": "basicCardProfile",
+    "scope": "",
+    "objectId": "bowPierceAttack",
+    "tagId": "bow"
   },
   {
     "family": "basicCardProfile",
@@ -10043,6 +10055,12 @@ export const tagging = [
   {
     "family": "card",
     "scope": "",
+    "objectId": "astralInsight",
+    "tagId": "starstone"
+  },
+  {
+    "family": "card",
+    "scope": "",
     "objectId": "flagellation",
     "tagId": "ritual"
   },
@@ -10236,6 +10254,18 @@ export const tagging = [
     "family": "card",
     "scope": "",
     "objectId": "harbingerOfBlightCard",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "blightwardLash",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastMercy",
     "tagId": "ritual"
   },
   {
@@ -10655,6 +10685,12 @@ export const tagging = [
   {
     "family": "location",
     "scope": "",
+    "objectId": "shrine",
+    "tagId": "deckEdit"
+  },
+  {
+    "family": "location",
+    "scope": "",
     "objectId": "camp",
     "tagId": "restHpSmall"
   },
@@ -10697,6 +10733,12 @@ export const tagging = [
   {
     "family": "location",
     "scope": "",
+    "objectId": "inn",
+    "tagId": "deckEdit"
+  },
+  {
+    "family": "location",
+    "scope": "",
     "objectId": "chapel",
     "tagId": "restHpPartial"
   },
@@ -10717,5 +10759,1133 @@ export const tagging = [
     "scope": "",
     "objectId": "chapel",
     "tagId": "levelUp"
+  },
+  {
+    "family": "location",
+    "scope": "",
+    "objectId": "chapel",
+    "tagId": "deckEdit"
+  },
+  {
+    "family": "companion",
+    "scope": "",
+    "objectId": "hollowSquire",
+    "tagId": "hollowSquire"
+  },
+  {
+    "family": "companion",
+    "scope": "",
+    "objectId": "hollowSquire",
+    "tagId": "classification.companion"
+  },
+  {
+    "family": "companion",
+    "scope": "",
+    "objectId": "emberHound",
+    "tagId": "emberHound"
+  },
+  {
+    "family": "companion",
+    "scope": "",
+    "objectId": "emberHound",
+    "tagId": "classification.companion"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "rend",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "goreslash",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cleavingBlow",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "twinbladeFlurry",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "impale",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "flameToBlade",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "executioner",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stitchedArms",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ruinousBlow",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodhuntersStrike",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bloodTithe",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "poiseBreaker",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cleavingBlow",
+    "tagId": "heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "stomp",
+    "tagId": "heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "executioner",
+    "tagId": "heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ruinousBlow",
+    "tagId": "heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "poiseBreaker",
+    "tagId": "heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bracingStance",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldwall",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "wardingLunge",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ironVowCard",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "unbreakable",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "lastStand",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hewingArc",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hewingArc",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hewingArc",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hewingArc",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hewingArc",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hewingArc",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderingChop",
+    "tagId": "blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderingChop",
+    "tagId": "heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderingChop",
+    "tagId": "fx:blade"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderingChop",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderingChop",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderingChop",
+    "tagId": "technique:heavy"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "sunderingChop",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "setTheShield",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "setTheShield",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "setTheShield",
+    "tagId": "theme:stance"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "setTheShield",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aegisOfEmbers",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aegisOfEmbers",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aegisOfEmbers",
+    "tagId": "theme:stance"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aegisOfEmbers",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldCrash",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldCrash",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldCrash",
+    "tagId": "fx:shield"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldCrash",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldCrash",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "shieldCrash",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pinningShot",
+    "tagId": "pierce"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pinningShot",
+    "tagId": "ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pinningShot",
+    "tagId": "fx:pierce"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pinningShot",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pinningShot",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pinningShot",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pinningShot",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pinningShot",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "arrowVolley",
+    "tagId": "pierce"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "arrowVolley",
+    "tagId": "ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "arrowVolley",
+    "tagId": "fx:pierce"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "arrowVolley",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "arrowVolley",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "arrowVolley",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "arrowVolley",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "arrowVolley",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "arrowVolley",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "nockAndWait",
+    "tagId": "ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "nockAndWait",
+    "tagId": "precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "nockAndWait",
+    "tagId": "technique:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "nockAndWait",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aimedShot",
+    "tagId": "pierce"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aimedShot",
+    "tagId": "ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aimedShot",
+    "tagId": "precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aimedShot",
+    "tagId": "fx:pierce"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aimedShot",
+    "tagId": "fx:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aimedShot",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aimedShot",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aimedShot",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aimedShot",
+    "tagId": "technique:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "aimedShot",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barbedArrow",
+    "tagId": "pierce"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barbedArrow",
+    "tagId": "ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barbedArrow",
+    "tagId": "fx:pierce"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barbedArrow",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barbedArrow",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barbedArrow",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barbedArrow",
+    "tagId": "damage:piercing"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barbedArrow",
+    "tagId": "theme:blood"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "barbedArrow",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bindingParry",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bindingParry",
+    "tagId": "flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bindingParry",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bindingParry",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bindingParry",
+    "tagId": "technique:counter"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bindingParry",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "whirlingGuard",
+    "tagId": "guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "whirlingGuard",
+    "tagId": "flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "whirlingGuard",
+    "tagId": "fx:guard"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "whirlingGuard",
+    "tagId": "source:weapon"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "whirlingGuard",
+    "tagId": "delivery:melee"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "whirlingGuard",
+    "tagId": "technique:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "whirlingGuard",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderSigil",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderSigil",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderSigil",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderSigil",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderSigil",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderSigil",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderSigil",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashenMote",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashenMote",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashenMote",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashenMote",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashenMote",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashenMote",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashenMote",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberVigil",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberVigil",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberVigil",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "emberVigil",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "readTheAsh",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "readTheAsh",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "readTheAsh",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "readTheAsh",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreOfCharts",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreOfCharts",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreOfCharts",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreOfCharts",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreOfCharts",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreOfCharts",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreOfCharts",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreOfCharts",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashCircle",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashCircle",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashCircle",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashCircle",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kindledOmen",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kindledOmen",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kindledOmen",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "kindledOmen",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderLance",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderLance",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderLance",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderLance",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderLance",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderLance",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "cinderLance",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashfallRite",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashfallRite",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashfallRite",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashfallRite",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashfallRite",
+    "tagId": "delivery:area"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashfallRite",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "ashfallRite",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "phoenixChart",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "phoenixChart",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "phoenixChart",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "phoenixChart",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreLight",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreLight",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreLight",
+    "tagId": "source:spell"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreLight",
+    "tagId": "damage:arcane"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreLight",
+    "tagId": "delivery:projectile"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreLight",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "pyreLight",
+    "tagId": "classification.attack"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riteOfCinders",
+    "tagId": "ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riteOfCinders",
+    "tagId": "fx:ritual"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riteOfCinders",
+    "tagId": "theme:astral"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "riteOfCinders",
+    "tagId": "classification.skill"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "nockAndWait",
+    "tagId": "fx:ranged"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "nockAndWait",
+    "tagId": "fx:precision"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "bindingParry",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "whirlingGuard",
+    "tagId": "fx:flourish"
+  },
+  {
+    "family": "card",
+    "scope": "",
+    "objectId": "hewingArc",
+    "tagId": "fx:blood"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "emberSigil",
+    "tagId": "emberSigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "emberSigil",
+    "tagId": "classification.sigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "thornSigil",
+    "tagId": "thornSigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "thornSigil",
+    "tagId": "classification.sigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "tideSigil",
+    "tagId": "tideSigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "tideSigil",
+    "tagId": "classification.sigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "hearthSigil",
+    "tagId": "hearthSigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "hearthSigil",
+    "tagId": "classification.sigil"
   }
 ];

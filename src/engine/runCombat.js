@@ -15,9 +15,27 @@
 
 import { createCombat } from './combat.js';
 import { runHandRules } from '../model/handRules.js';
+import { playInDeckOrder } from '../model/deckRules.js';
+import { recoveryRulesFor } from '../model/recoveryRules.js';
 import { ratingsConfigFor } from '../model/statRows.js';
 import { runMods, resolveSwapCostRule } from '../model/loadout.js';
 import { staminaAtCombatStart, staminaDeficitAtCombatStart } from '../framework/resources.js';
+import { settleFightConsumables, tickCompanions } from '../model/consumables.js';
+import { resolveEnemyLevel } from '../model/levels.js';
+
+export function enemyLevelsForFight(registries, run, enemyIds, encounter = null) {
+  return enemyIds.map((enemyId, index) => {
+    const profile = registries.enemies.get(enemyId)?.levelProfile;
+    if (!profile) return 1;
+    return resolveEnemyLevel(profile, {
+      seed: run.seed >>> 0,
+      contextKey: `${encounter?.id || enemyIds.join(',')}/${index}`,
+      act: Number.isSafeInteger(run.actNumber) && run.actNumber > 0 ? run.actNumber : 1,
+      floor: Number.isSafeInteger(run.floor) && run.floor >= 0 ? run.floor : 0,
+      targetBand: encounter?.targetBand || profile,
+    }).result;
+  });
+}
 
 /** The run fields a fight consumes, by name — never `...run`. */
 export function runCombatPlayer(run) {
@@ -61,6 +79,12 @@ export function runCombatPlayer(run) {
     flasks: run.flasks,
     flaskCharges: run.flaskCharges,
     loadout: run.loadout,
+    // SPEC §14.3: the fight's copy of the consumable counts (a revive token
+    // spends from it), and the companions whose property mounts at its start.
+    consumables: run.consumables && typeof run.consumables === 'object' ? { ...run.consumables } : {},
+    companionIds: (Array.isArray(run.companions) ? run.companions : []).map((row) => row.id),
+    // SPEC §14.4: the sigils set into slots, mounted while their armament is worn.
+    sigilSlots: run.sigilSlots && typeof run.sigilSlots === 'object' ? run.sigilSlots : {},
   };
 }
 
@@ -75,7 +99,7 @@ export function runCombatPlayer(run) {
  * (the screenshot door's Poise override).
  */
 export function createRunCombat({
-  registries, rng, run, enemyIds, settings = {},
+  registries, rng, run, enemyIds, encounter = null, settings = {},
   hpMult = 1, enemyDamageMult = 1, enemyStatuses = [], playerStatuses = [], player = {},
 }) {
   return createCombat({
@@ -86,10 +110,16 @@ export function createRunCombat({
     // fight keeps the hand it was born with.
     ratingsRules: ratingsConfigFor(registries, run) || null,
     handRules: runHandRules(registries, run, settings),
+    // Play in deck order (SPEC §14.1): read here, once, like the other rules.
+    orderedDraw: playInDeckOrder(settings),
+    // Settings → Advanced → Recovery, read once here and snapshotted: null at
+    // the defaults (model/recoveryRules.js).
+    recoveryRules: recoveryRulesFor(settings),
     registries,
     rng,
     player: { ...runCombatPlayer(run), ...player },
     enemyIds,
+    enemyLevels: enemyLevelsForFight(registries, run, enemyIds, encounter),
     hpMult,
     enemyDamageMult,
     enemyStatuses,
@@ -115,4 +145,8 @@ export function runCombatEnd(run, combat) {
     run[maxField] = combat.player[maxField];
   }
   run.equipmentPoolDeficits = { ...combat.equipmentPoolDeficits };
+  // SPEC §14.3: a spent revive token stays spent, and every companion is one
+  // fight closer to leaving, win or loss.
+  settleFightConsumables(run, combat);
+  tickCompanions(run);
 }

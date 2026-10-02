@@ -11,7 +11,7 @@
 // exclude one another by content rule (validate.js), so the top pick is the
 // subclass, never a stack.
 
-import { classSkillId, awardSkillXp, skillLevel } from './skills.js';
+import { classSkillId, awardSkillXp, bankSkillXp, skillLevel } from './skills.js';
 
 /** The tree rows of one class, in table order. */
 export function classTreeRows(registries, classId) {
@@ -61,9 +61,9 @@ export function classDraftPool(registries, classId, coreTags = [], level = 0) {
  * `run.coreTags`; false (and no write) when the node is not draftable now —
  * the reward door's one write to the core zone's tags.
  */
-export function pickClassNode(registries, run, nodeId) {
+export function pickClassNode(registries, run, nodeId, { levelOverride = null } = {}) {
   if (!run || !run.class) return false;
-  const level = skillLevel(run, classSkillId(run.class));
+  const level = Number.isInteger(levelOverride) ? levelOverride : skillLevel(run, classSkillId(run.class));
   if (!classDraftPool(registries, run.class, run.coreTags || [], level).includes(nodeId)) return false;
   if (!Array.isArray(run.coreTags)) run.coreTags = [];
   run.coreTags.push(nodeId);
@@ -77,12 +77,12 @@ export function pickClassNode(registries, run, nodeId) {
  * combat does not. A lost fight pays nothing; a boss pays `bossKill` on top
  * of `perWin`.
  */
-export function awardClassXp(registries, run, { victory = false, pool = 'normal' } = {}) {
+export function awardClassXp(registries, run, { victory = false, pool = 'normal', bank = false, multiplier = 1 } = {}) {
   if (!victory || !run || !run.class) return null;
   const xp = ((((registries || {}).balance || {}).skill || {}).class || {}).xp || {};
-  const amount = (xp.perWin || 0) + (pool === 'boss' ? (xp.bossKill || 0) : 0);
+  const amount = Math.floor(((xp.perWin || 0) + (pool === 'boss' ? (xp.bossKill || 0) : 0)) * multiplier);
   if (!(amount > 0)) return null;
-  return awardSkillXp(registries, run, classSkillId(run.class), amount);
+  return (bank ? bankSkillXp : awardSkillXp)(registries, run, classSkillId(run.class), amount);
 }
 
 /**
