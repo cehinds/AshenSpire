@@ -1,17 +1,22 @@
 # Every asset outside the game file — plan
 
-Status: **steps 2, 3a, 3b, 6a and 8c built** (2026-10-01: `tools/asset-pack.mjs`,
+Status: **steps 2, 3a, 3b, 3c, 6a and 8c built** (2026-10-01: `tools/asset-pack.mjs`,
 `art-manifest.json` schema 2; 2026-10-02: the loader `src/ui/assetPacks.js`,
 `setBuiltInSource`, the `ASSET_PACKS` stamp and the tier fallback, with
 `bundle.mjs --external-art` writing packs and `verify-external` rewritten; see
 [Step 3a as built](#step-3a-as-built); the `ASSET_CSS` template for the fonts
 and backdrops, the masks inline, see [Step 3b as built](#step-3b-as-built);
-the Pages base tree without `art/`, the `og:image` Pages path and the site
-size in `pages-site --check`, see section 4; Settings → Art quality
-Auto / Light / High, see [Step 8c as built](#step-8c-as-built)); **step 8d
-built** (2026-10-02: `buildPageUrl`/`serveDir` in `tools/browser.mjs`, and the
-30 tools that opened a built page by `file://` ask it); the rest is plan
-(2026-09-27). The owner answered its
+the map tiles and the shipped score through the common index, see
+[Step 3c as built](#step-3c-as-built); the Pages base tree without `art/`, the
+`og:image` Pages path and the site size in `pages-site --check`, see section 4;
+Settings → Art quality Auto / Light / High, see
+[Step 8c as built](#step-8c-as-built)); **step 8d built** (2026-10-02:
+`buildPageUrl`/`serveDir` in `tools/browser.mjs`, and the 30 tools that opened
+a built page by `file://` ask it); **step 6b built** (2026-10-02: the Pages
+store, `asset-base.json` for every page kind, `/AshenSpire/sw.js` with
+Range/206 and a kill-switch, "Make available offline", and the light single
+file at `download/` for every kept build; see
+[Step 6b as built](#step-6b-as-built)); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -539,6 +544,10 @@ only ever served as build payloads", and listed `assets/` among them):
 | object store (high 185 + light 14 + common 32, plus the files each release changes) | — | about 240 MB |
 | **total** | **well above 5 GB** | **about 1.1 GB** before the light single files while `assets/` is kept (about 895 MB after step 13): about 1.2 GB with one per branch, about 2.2 GB with one per kept build |
 
+**Step 6b keeps one for every retained pack-shaped build** (see
+[Step 6b as built](#step-6b-as-built)): every Download link stays valid
+without the zip of step 7, and the higher estimate applies.
+
 If step 6b keeps light single files only for each branch's latest build, every older retained build must hide its per-build Download cell and use the offline zip path inside the game; no link may target an absent `download/AshenSpire.html`. Its check iterates every rendered build-list link and every offered offline-download action and verifies that the destination exists. Keeping a single file for every retained build keeps those links and uses the higher storage estimate.
 
 - **The published site is already far over the documented 1 GB Pages limit**
@@ -638,7 +647,7 @@ light single file, about 30 MB, self-contained, plays by double-click. The
 | `tools/verify-shipped.mjs` check A (art inline, the count floor) | `ci.yml` reproducible, `dev-preview.yml` | ASSET_MAP entries in the HTML | **stays, for the light single file** (owner answer 3), with its light count floor. The pack HTML gains its own checks: it carries `ASSET_PACKS`, zero `data:` media except the two masks, and each named index is in `packs/` with that hash. Checks B and C (the aliases are this build, nothing tracked) stay. | 8e |
 | `verify-shipped` mobile-edition check (budget, smaller than full) | same | a mobile file | removed with the edition | 8e |
 | `tests/mobile-art-distinct.test.mjs:20` | core suite | the bundle's `ASSET_MAP[alias] = ASSET_MAP[key]` loop | unchanged for the light single file, which keeps the loop; adds that the pack index maps aliased ids to one object | 8e |
-| `tools/verify-external.mjs` A–D (`--dir preview`, `--selftest`) | dev-preview | `assets/` copied beside the HTML, compared with source `assets/` | A: pins are present; B: no `data:` media except the masks; C: every object in every index is present and hashes to its name; D: every `ASSET_CSS` slot names an id the index has. The selftest plants a missing object, a wrong hash, a stale pin and a twin whose string does not match. | 3a–3c |
+| `tools/verify-external.mjs` A–E (`--dir preview`, `--selftest`) | dev-preview | `assets/` copied beside the HTML, compared with source `assets/` | A: pins are present; B: no `data:` media except the masks; C: every object in every index is present and hashes to its name; D: every `ASSET_CSS` slot names an id the index has; E (3c): the common index lists every map tile and every track the score's manifest names, and no `map-detail/` or `music/` copy sits beside the HTML. The selftest plants a missing object, a wrong hash, a stale pin and a twin whose string does not match. | 3a–3c |
 | `tools/external-play.mjs` (reachability job) | `test`, `release`, `main`, dispatch | served build, art over the wire | unchanged over http; adds a `file://` pass (the zip shape, masks and fonts included) and a pass that must stay playable with the index blocked (placeholders), plus one with only light present on a high-default build | 3a, 4, 5 |
 | `tools/bundle.test.mjs` parse gate and EOL corpus (`tests.yml:125`, `ci.yml:287-308`) | `test`/`release` | sandboxes copy `assets/`, run the unflagged full-art build, and read `bg_act1.webp` | sandboxes build the pack shape from a small fixture pack and the light single file with `--light`; the EOL corpus reads a fixture object | 8e |
 | `ci.yml` reproducible (3 OSes) and `reproducible-agree` | `test`/`release` | the HTML digest is the build | digests of the HTML, the light single file **and** each pack index; objects are a function of the pin | 8e |
@@ -742,9 +751,10 @@ Where the build differs from, or settles, the text above (2026-10-02):
     pack-shaped builds must not be published there before 3b fills the
     template from the base. Met by 3b: the slots are filled from the loader's
     map, whose object paths are built on `asset-base.json`'s base.
-- **`map-detail/` and `music/` are still copied** beside the HTML until step
-  3c reads them through the common index, so a 3a web edition carries those
-  bytes twice (as copies and as common objects, about 32 MB).
+- **`map-detail/` and `music/` were still copied** beside the HTML until step
+  3c read them through the common index, so a 3a web edition carried those
+  bytes twice (as copies and as common objects, about 32 MB). Done: see
+  [Step 3c as built](#step-3c-as-built).
 - **The first screen waits for the index**, behind a static "Loading art…"
   line (pack builds only). `src/main.js` draws its first
   screen through `whenBuiltInArtReady()`: at once when nothing is pinned (the
@@ -851,6 +861,87 @@ Where the build differs from, or settles, §3.7 (2026-10-02):
   `ASSET_CSS` is `null`. SPEC §2's status row (the CSS bypass) still holds for
   them and is left to step 8a.
 
+### Step 3c as built
+
+Where the build differs from, or settles, §3.8 and §3.9 (2026-10-02):
+
+- **Tiles.** `mapDetail.js` names each tile by its id, `tileId(hash, key)` =
+  `map-detail/<hash>/<edge>/<x>-<y>.webp`, and resolves it with `assetUrl()`.
+  `load()` is now an `Image` load of that URL, awaited with `decode()`: no
+  `fetch`, no `blob:` URL, nothing to revoke. A tile still loading when the map
+  is disposed has its `src` dropped, which stops the request (the old
+  `AbortController`). The `file://` guard stays: under `file://` the map
+  requests nothing and keeps its low-detail fallback until step 4 lifts it.
+- **Music.** For the shipped score only (the Custom music folder blank),
+  `configureMusic` in `audio.js` passes the manifest path and every relative
+  track path through `assetUrl()`; `SHIPPED_MUSIC_FOLDER` (`music`) is the id
+  prefix (`music/manifest.json`, `music/<context>/<track>.mp3`). `main.js`
+  says which with `indexed`. A folder the player typed is always fetched by
+  its literal path, even one spelled `music/` (music/README.md's own example;
+  review of #1454). A single file and the source tree pass through unchanged,
+  and an absolute URL is left alone. Paths are resolved when the folder is
+  applied, so when the boot load failed (no source, the synth plays) and a
+  later Art quality switch loads, `musicHold().sourceArrived()` applies the
+  shipped score again through the new source. "Missed" means the source did
+  not list `music/manifest.json` (`shippedScoreResolves`), which also covers
+  a boot whose art loaded and whose common index did not.
+- **Tiles retry on a source change.** A mounted detail layer listens for
+  `ART_SOURCE_EVENT` (`highResArt.js`, sent after `builtInArtArrived`); it
+  forgets its failed tiles and requests the visible set again, so a switch
+  that brings the common index draws the tiles a failed one could not. A load
+  still in flight when the source changes belongs to the old source (a
+  generation counter): its failure is not recorded, and the tile is asked for
+  again once it ends.
+- **SPEC §7.4** still describes "the `music/` beside the page"; that wording is
+  left to step 8a (section 6, *Written rules*), as 3b left SPEC §2's status
+  row. The web edition reaches players only at step 6b.
+- **A tier switch keeps common.** Each load fetches the common index again;
+  when that fetch fails or misses its deadline on a switch, the entries the
+  earlier load verified (same pin, same base) are kept, so tiles, fonts and the
+  score do not fall back to bare paths for the rest of the session. `main.js`
+  still applies the folder only when served over http(s), so `file://` keeps
+  the synth (§3.9, unchanged).
+- **Only with an art index.** The common ids reach `assetUrl()` through the map
+  the loader sets, and the loader sets none when no art index loads (3a: "the
+  common pack alone does not make a source"). That was kept: a build whose art
+  failed shows placeholders, the synth score and the low-detail map, which is
+  what a missing track or tile already gave. Making common usable on its own
+  is left to step 5's failure handling.
+- **The single files and the source tree are unchanged.** Their `ASSET_MAP`
+  is empty of music and tiles, so the ids pass through as the paths of the
+  `music/` and `map-detail/` folders `launch.mjs` still writes beside
+  `build/` and `dist/` (and `pages-site` beside each build); the light single
+  file's `ASSET_MAP` and inlined `<style>`s hash the same as dev's, and its
+  `ASSET_PACKS` and `ASSET_CSS` stay `null`.
+- **The web edition stops carrying the copies.** `bundle.mjs --external-art`
+  no longer copies `map-detail/` or `music/` beside the HTML, and removes a
+  copy an earlier build left there (under `build/` or `dist/` only, as for the
+  retired `assets/` tree), because a copy would quietly serve a tile or a
+  track the index misses. Only a folder strictly inside `build/` or `dist/`
+  counts (`strictlyUnderBuild` in `tools/asset-pack.mjs`): `--out build` or
+  `--out dist` themselves keep the `music/` and `map-detail/` the single files
+  read. The summary counts the tiles and score files the
+  common index lists instead.
+- **`verify-external` E**: the common index lists `music/manifest.json`, every
+  track that manifest (read from its object) names, and every tile the map can
+  ask for (each `MAP_ART` source, each level, the whole painting, through the
+  page's own `tileId()` and `visibleTiles()`); and no `map-detail/` or `music/`
+  folder sits beside the HTML. Five new plants (21 in all); the three that
+  drop an id from the common index re-pin it, and must be caught by E's own
+  finding, not by C's.
+- **`external-play`** runs Chromium with autoplay allowed (output muted, as
+  every browser tool is), so the title's track is fetched without a gesture.
+  It requires: the map screen's detail layer to reach `ready` with each tile a
+  common `map-detail/` object that decodes; `music/manifest.json` and at least
+  one track requested as common objects, each track decoding with
+  `decodeAudioData`; and no request for a bare `music/` or `map-detail/` path.
+  With the audio context running, every SFX cue also probes
+  `assets/sfx/<id>.ogg` (the filename convention; no build ships one), so a
+  404 on that bare path is filtered by name, as `/api/lan/` already was, and
+  only for an id that is an `SFX_RECIPES` key with no `SFX_MANIFEST` entry.
+  Against the 3b runtime with this step's build (no copies) it is red on the
+  bare requests, the missing manifest and the missing track.
+
 ### Step 8c as built
 
 Where the build settles the text above (2026-10-02):
@@ -910,6 +1001,108 @@ Where the build settles the text above (2026-10-02):
   screens a phone-sized screen, so Auto loads light there, and the run must
   go RED.
 
+### Step 6b as built
+
+Where the build differs from, or settles, §4 and §5 A (2026-10-02):
+
+- **Which builds are pack-shaped.** `pages-site` serves a build as the web
+  edition when its commit's rebuild writes a pack-shaped `build/web/`
+  (`ASSET_PACKS` pinned, so every dev build from step 3a on). That HTML is the
+  page at `/<branch>/<ordinal>/`, byte-proven against the rebuild and its
+  source digest like the single file was; its indexes, twins, font sidecar and
+  objects are merged into the one store at the site root (`/packs/`,
+  `/objects/`), only what its pin names, so a stale object beside a build is
+  never published. Two builds that disagree about one index name stop the run.
+  Committed (older) builds, and rebuilds of commits before step 3a, keep their
+  inline shape and their `mobile/` folder (`tools/pages-store.mjs`).
+- **`asset-base.json` for every page kind**: `{"base":"../../"}` beside each
+  `/<branch>/<ordinal>/` and `/latest/`, `{"base":"../"}` at `/build/` and
+  `/dist/`, `{"base":"./"}` at the root, written by the same function
+  (`assetBaseFor`). The stable links become the web edition only when the main
+  build handed in (`--main-build`) carries one: `pages-builds.yml` now copies
+  `build/web` there as `web/`. While main still commits its inline build,
+  nothing about the stable links changes.
+- **The download, kept whole, for every retained pack-shaped build** (the
+  choice §4 left to this step): `download/AshenSpire.html` is the build's light
+  single file (`AshenSpire.html` of a light rebuild; the light-art
+  `AshenSpire-mobile.html` of a `--full-art` one, until step 8e names the light
+  single file). The build lists' Download links name it. `build.json` records
+  it as `download: {path, bytes, sha256}`, and its top-level `bytes` is
+  **null** for a pack-shaped build (the page's size is `pageBytes`): a copy of
+  the game from before 6b reads only `bytes` and `../<ordinal>/index.html`,
+  and null is a size it refuses, so it says the download is not ready instead
+  of saving a 9.5 MB page with no art. `src/model/offlineDownload.js` reads
+  `download` and refuses a path that is not a plain relative `.html` file.
+- **Map tiles and the score are still copied beside each page** until step 3c
+  reads them through the common index (their objects are already in the
+  store). So the "no per-build media copies" saving of §4 waits for 3c.
+- **The service worker** (`tools/pages-sw.mjs`, written as `/sw.js`):
+  objects cache-first, each checked against its own name before it is cached
+  (a mismatch answers 502 and is never cached); a Range on a cached object is
+  a `206` slice, and a Range on a miss is answered only after the whole object
+  is fetched, checked and cached, so no unchecked byte is served; pages (navigations, `asset-base.json`, `build.json`,
+  `packs/`) network-first, written to the cache **only** when "Make available
+  offline" asks (an `X-Ashen-Offline` request header), read only when the
+  network fails. Browsing never writes a page, so an offline copy is the HTML,
+  indexes and objects of one moment, and online the network always wins.
+  Everything else in scope passes through untouched.
+- **The kill-switch is the committed constant `SW_KILL`** in
+  `tools/pages-sw.mjs`, not a dispatch input: every push to dev republishes
+  the site, so a switch thrown by one run would be undone by the next. Its
+  worker registers no fetch handler, deletes every `ashen-` cache, unregisters
+  and reloads the pages it controlled; the page registers with
+  `updateViaCache: 'none'`, so the browser re-checks `sw.js` on each
+  navigation. `builds.json` records the worker's version, kill state and
+  sha256 instead of the worker reading `builds.json` (§8's wording): the
+  browser's own update check is what delivers a new worker.
+- **Pulling the worker (the recipe).** Set `SW_KILL = true` in
+  `tools/pages-sw.mjs` and merge that one-line PR to `dev`: the push to `dev`
+  republishes the site with the kill-switch `sw.js` (`--check` proves the
+  published file is it). Each browser that kept a build picks it up on its next
+  visit to any page under `/AshenSpire/`, deletes its `ashen-` caches,
+  unregisters, and reloads **every window the worker controlled**, losing
+  nothing but the offline copy (saves live in `localStorage`). Leave it
+  published for weeks, since a browser only meets it on a visit; set it back to
+  `false` in a later PR to offer offline play again. `node tools/pages-site.mjs
+  --sw-kill` writes it for one local run, for a test.
+- **Risk: a publication by a pre-6b `pages-site`** (for example the owner's
+  `PUBLISH` dispatch from a branch whose tool predates this step) leaves `/sw.js`
+  out. A browser's update check then gets a 404, which does **not** unregister
+  a worker: kept builds keep working offline and online (pages are
+  network-first), but no new worker, kill-switch included, can arrive until a
+  6b `pages-site` publishes again. Publish the kill-switch from `dev`.
+- **The worker is registered only when the player asks** (Download & saves →
+  "Make available offline", `src/ui/offlineInstall.js`), relative to the base
+  the loader read (`builtInArtStatus().base`), with the default scope, which is
+  the site root `/AshenSpire/`. It keeps light and common, plus high only when
+  the player ticks it. The worker is shared by every build under the root, so
+  "kept" is decided per page: this page's HTML and its pinned indexes are in
+  the page cache. The page is written last, and only when every object
+  arrived, so a keep that fails partway does not count. "Remove this build's offline copy" deletes that page, its
+  `asset-base.json` and the indexes no other kept build pins; the shared
+  objects stay until the last kept build is removed, which also unregisters
+  the worker and deletes every `ashen-` cache. The section shows only on a pack-shaped build; on `file://` or
+  without service workers it says why in one line. The PWA manifest and the
+  install prompt of §5 A are not in this step.
+- **`--check` rows**: per pack-shaped build, the download's bytes and hash;
+  for every pack-shaped page found in the tree (each build, each `/latest/`,
+  the stable links), an `asset-base.json` that resolves to the site root and
+  each pinned index (and the font sidecar, by its text) hashing to the pin;
+  every object a served index lists present with its hash; no store file
+  unreferenced; `sw.js` byte-identical to `tools/pages-sw.mjs`'s text for the
+  recorded kill state; every Download link on the build lists a file on the
+  site. `--selftest` publishes a real rebuild of dev's head into a fixture
+  store and plants a missing object, a missing index, a stale `sw.js`, a
+  missing `download/` file, a missing `asset-base.json` and a stray object,
+  each red by its own name.
+- **`tools/pages-offline.mjs`** drives it in Chromium over
+  `tools/browser.mjs serveDir` under `/AshenSpire/`: the keep, the scope, the
+  kept files, network-first online, an offline boot, offline `206` answers for
+  a music object and an `<audio>` load, and the kill-switch unregistering.
+  `dev-preview.yml`'s browser-gates job runs it (about a minute);
+  `--selftest` (several minutes, by hand) plants a Range answered with `200`, a kill-switch
+  that keeps its registration, and a kept page served before the network.
+
 ---
 
 ## 8. Risks
@@ -927,6 +1120,10 @@ Where the build settles the text above (2026-10-02):
   - objects are immutable by name;
   - the worker carries a version it checks against `builds.json`;
   - a kill-switch `sw.js` that unregisters itself is kept ready.
+  - As built (6b): the kill-switch is `SW_KILL` in `tools/pages-sw.mjs`; it
+    reloads every window the worker controlled; and a publication by a pre-6b
+    `pages-site` drops `/sw.js`, which does not unregister a worker (see
+    [Step 6b as built](#step-6b-as-built)).
 - **Safari audio in the worker.** A `200` answer to a `Range` request breaks
   MP3 playback on iOS. The worker slices cached responses into `206`, and
   `offline-play-qa` plays a track offline.

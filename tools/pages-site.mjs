@@ -39,6 +39,9 @@
 // index page proven to link every build it lists.
 import { readGitArtifact } from './git-artifact.mjs';
 import { OG_IMAGE } from './og-image.mjs';
+import { ASSET_BASE_FILE, packPinOf, packPages, publishPack, serviceWorkerFindings, storeFindings, writeServiceWorker } from './pages-store.mjs';
+import { SW_FILE, SW_KILL, SW_VERSION, serviceWorkerSource } from './pages-sw.mjs';
+import { objectPath } from './asset-pack.mjs';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, cpSync, readdirSync, statSync, mkdtempSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
@@ -62,6 +65,20 @@ const KEEP = Math.min(KEEP_MAX, Math.max(1, Number(flag('--keep', '10')) || 10))
 // main's source. Needed once main no longer commits its build (the Git LFS budget
 // ran out, 2026-09-26): without it the stable Play links at the site root 404.
 const MAIN_BUILD = flag('--main-build', null);
+// THE SERVICE WORKER'S KILL-SWITCH (tools/pages-sw.mjs SW_KILL, committed).
+// `--sw-kill` writes it for one run, for a local test; the published switch is
+// the committed constant, because every push to dev republishes the site.
+const SW_KILL_RUN = SW_KILL || has('--sw-kill');
+// THE PACK SHAPE (docs/EXTERNAL-ASSETS-PLAN.md §4, step 6b). A build whose
+// tree carries a pack-shaped web edition (bundle.mjs --external-art, step 3a
+// on) is published as that edition: its HTML at /<branch>/<ordinal>/, its
+// indexes and objects in the one store at the site root (/packs/, /objects/),
+// an asset-base.json beside it, and its light single file whole at
+// /<branch>/<ordinal>/download/AshenSpire.html, which every Download link and
+// offlineDownload.js name. Older builds (inline single files, the mobile/
+// folder) keep their shape until they age out of --keep.
+const WEB_DIR = 'web';
+const DOWNLOAD_PATH = 'download/AshenSpire.html';
 // BUILDS THAT ARE NO LONGER COMMITTED ARE REBUILT FROM THEIR COMMIT'S SOURCE.
 //
 // Since 2026-09-26 (#1332) dev commits no built HTML; test, release and main
@@ -311,6 +328,17 @@ function rebuildAt(sha, fullArt) {
     for (const artifact of ['AshenSpire.html', MOBILE_ARTIFACT]) {
       if (existsSync(join(buildTree, artifact))) cpSync(join(buildTree, artifact), join(dir, artifact));
     }
+    // THE PACK-SHAPED WEB EDITION, where this commit builds one: its HTML and
+    // packs/ beside the single files, and its objects merged into one staging
+    // store every rebuild of this run shares (content-addressed, so a file
+    // twenty builds use is copied once).
+    const web = join(buildTree, 'build', 'web');
+    if (existsSync(join(web, 'AshenSpire.html')) && packPinOf(readFileSync(join(web, 'AshenSpire.html')))) {
+      mkdirSync(join(dir, WEB_DIR), { recursive: true });
+      cpSync(join(web, 'AshenSpire.html'), join(dir, WEB_DIR, 'AshenSpire.html'));
+      if (existsSync(join(web, 'packs'))) cpSync(join(web, 'packs'), join(dir, WEB_DIR, 'packs'), { recursive: true });
+      mergeObjects(join(web, 'objects'), join(stagingStore(), 'objects'));
+    }
     console.log(`  rebuilt ${sha.slice(0, 10)} (${fullArt ? 'full' : 'light'} art requested${!fullArt && existsSync(join(dir, MOBILE_ARTIFACT)) ? '; this commit predates the light tier and built full art with its mobile twin' : ''}) in ${Math.round((Date.now() - t0) / 1000)}s`);
     result = { dir };
   } catch (error) {
@@ -319,6 +347,37 @@ function rebuildAt(sha, fullArt) {
   }
   rebuilt.set(key, result);
   return result;
+}
+
+/** The objects every rebuild of this run stages, under --build-missing. */
+function stagingStore() { return join(resolve(BUILD_MISSING), 'store'); }
+/** The pack-shaped web edition of the main build handed in, or null. */
+function stableWebEdition() {
+  return MAIN_BUILD ? webEditionIn(resolve(MAIN_BUILD)) : null;
+}
+/** Copy each object under `from` into `to` unless it is already there (the name is the content). */
+function mergeObjects(from, to) {
+  if (!existsSync(from)) return;
+  for (const sub of readdirSync(from, { withFileTypes: true })) {
+    if (!sub.isDirectory()) continue;
+    mkdirSync(join(to, sub.name), { recursive: true });
+    for (const f of readdirSync(join(from, sub.name))) {
+      if (!existsSync(join(to, sub.name, f))) cpSync(join(from, sub.name, f), join(to, sub.name, f));
+    }
+  }
+}
+
+/**
+ * The pack-shaped web edition in a build folder (a rebuild's out dir, or the
+ * --main-build folder, which holds build/web as `web/`), or null: { html, from }
+ * where `from` is what publishPack copies the store from.
+ */
+function webEditionIn(dir, objectsRoot) {
+  const file = join(dir, WEB_DIR, 'AshenSpire.html');
+  if (!existsSync(file)) return null;
+  const html = readFileSync(file);
+  if (!packPinOf(html)) return null;
+  return { html, from: { packs: join(dir, WEB_DIR), objects: objectsRoot || join(dir, WEB_DIR) } };
 }
 
 function dropBuildTree() {
@@ -350,7 +409,17 @@ function artifactsOf(b) {
   if (b.digest && !html.includes(b.digest)) return { error: `the rebuilt HTML does not carry src digest ${b.digest}` };
   const mobilePath = join(r.dir, MOBILE_ARTIFACT);
   const mobile = existsSync(mobilePath) ? readFileSync(mobilePath) : null;
-  return { html, mobile, edition: rebuiltEdition(fullArt, Boolean(mobile)) };
+  const edition = rebuiltEdition(fullArt, Boolean(mobile));
+  const web = webEditionIn(r.dir, seeded ? null : stagingStore());
+  if (!web) return { html, mobile, edition };
+  // A PACK-SHAPED BUILD: the page is the web edition, and the download is the
+  // build's LIGHT single file, kept whole (owner answer 3): AshenSpire.html on
+  // a light build, the light-art mobile file on a full-art one (until step 8e
+  // builds the light single file under that name).
+  if (b.digest && !web.html.includes(b.digest)) return { error: `the rebuilt web edition does not carry src digest ${b.digest}` };
+  const single = edition === 'light' ? html : mobile;
+  if (!single) return { error: 'a full-art pack build with no light-art single file to publish at download/' };
+  return { html: web.html, web, download: single, edition };
 }
 /**
  * ONLY "THE COMMIT HAS NO MOBILE FILE" MEANS "PREDATES THE EDITION". A commit
@@ -476,7 +545,18 @@ const EDITIONS = Object.freeze({
 });
 function mb(bytes) { return `${(bytes / 1e6).toFixed(1)} MB`; }
 function downloadName(b, edition = 'full') { return `AshenSpire-${EDITIONS[edition].prefix}${b.branch}-${b.version ? `${b.version}.${b.ordinal}` : b.ordinal}.html`; }
-function downloadHref(rel, b, edition = 'full') { return `${rel}${b.branch}/${b.ordinal}/${EDITIONS[edition].sub}index.html`; }
+// A PACK-SHAPED BUILD'S DOWNLOAD IS ITS LIGHT SINGLE FILE at download/ (step
+// 6b): the page itself is a 9.5 MB HTML whose art lives in the site's store,
+// which saved alone would play with placeholders.
+function downloadHref(rel, b, edition = 'full') {
+  if (b.shape === 'pack' && edition === 'full') return `${rel}${b.branch}/${b.ordinal}/${DOWNLOAD_PATH}`;
+  return `${rel}${b.branch}/${b.ordinal}/${EDITIONS[edition].sub}index.html`;
+}
+/** The size of what a download link saves. */
+function downloadBytes(b, edition = 'full') {
+  if (edition === 'mobile') return b.mobileBytes;
+  return b.shape === 'pack' ? b.download.bytes : b.bytes;
+}
 function downloadLink(rel, b, label = 'Download', edition = 'full') {
   return `<a class="play dl" href="${downloadHref(rel, b, edition)}" download="${esc(downloadName(b, edition))}">${esc(label)}</a>`;
 }
@@ -484,15 +564,17 @@ function downloadLink(rel, b, label = 'Download', edition = 'full') {
 function downloadButtons(rel, b, suffix) {
   // A LIGHT BUILD (dev/test since 2026-09-26) is one file with phone-sized art
   // and no mobile twin; calling it "full" would promise art it does not carry.
+  if (b.shape === 'pack') return downloadLink(rel, b, `Download${suffix} — light art single file (${mb(downloadBytes(b))})`, 'full');
   if (b.edition === 'light' && !b.mobileBytes) return downloadLink(rel, b, `Download${suffix} — light art, phone-sized (${mb(b.bytes)})`, 'full');
   const full = downloadLink(rel, b, `Download full${suffix} (${mb(b.bytes)})`, 'full');
   const mobile = b.mobileBytes ? ` ${downloadLink(rel, b, `Download mobile${suffix} (${mb(b.mobileBytes)})`, 'mobile')}` : '';
   return full + mobile;
 }
 function tableDownload(rel, b, edition) {
+  if (edition === 'mobile' && b.shape === 'pack') return '<span class="meta">— (web edition: its download is the light single file)</span>';
   if (edition === 'mobile' && b.edition === 'light' && !b.mobileBytes) return '<span class="meta">— (light build: the one file is already phone-sized)</span>';
   if (edition === 'mobile' && !b.mobileBytes) return '<span class="meta">— (predates the mobile edition)</span>';
-  return `<a href="${downloadHref(rel, b, edition)}" download="${esc(downloadName(b, edition))}">${esc(downloadName(b, edition))}</a> <span class="meta">${mb(edition === 'mobile' ? b.mobileBytes : b.bytes)}</span>`;
+  return `<a href="${downloadHref(rel, b, edition)}" download="${esc(downloadName(b, edition))}">${esc(downloadName(b, edition))}</a> <span class="meta">${mb(downloadBytes(b, edition))}${b.shape === 'pack' ? ' · light art single file' : ''}</span>`;
 }
 
 /**
@@ -502,7 +584,7 @@ function tableDownload(rel, b, edition) {
  */
 function rowsTable(builds, rel, latest = new Set()) {
   return `<table><thead><tr><th>Build</th><th class="mono">Stamp</th><th>Built</th><th>Download</th><th>Mobile download</th><th>Commit</th><th>Changelog</th></tr></thead><tbody>${
-    builds.map((b) => `<tr><td><a href="${rel}${b.branch}/${b.ordinal}/">${b.branch}/${b.ordinal}</a>${latest.has(b) ? ' <em>(latest)</em>' : ''}${b.source === 'rebuild' ? ' <span class="meta">rebuilt from source</span>' : ''}${b.edition === 'light' ? ' <span class="meta">light art</span>' : ''}</td><td class="mono">${esc(stampOf(b))}</td><td>${esc(b.built)}</td><td>${tableDownload(rel, b, 'full')}</td><td>${tableDownload(rel, b, 'mobile')}</td><td class="mono"><a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a></td><td><a href="${changelogUrl(b)}">CHANGELOG at this build</a></td></tr>`).join('')
+    builds.map((b) => `<tr><td><a href="${rel}${b.branch}/${b.ordinal}/">${b.branch}/${b.ordinal}</a>${latest.has(b) ? ' <em>(latest)</em>' : ''}${b.source === 'rebuild' ? ' <span class="meta">rebuilt from source</span>' : ''}${b.shape === 'pack' ? ` <span class="meta">web edition · ${esc(b.tier || 'light')} art</span>` : (b.edition === 'light' ? ' <span class="meta">light art</span>' : '')}</td><td class="mono">${esc(stampOf(b))}</td><td>${esc(b.built)}</td><td>${tableDownload(rel, b, 'full')}</td><td>${tableDownload(rel, b, 'mobile')}</td><td class="mono"><a href="${commitUrl(b)}">${b.sha.slice(0, 10)}</a></td><td><a href="${changelogUrl(b)}">CHANGELOG at this build</a></td></tr>`).join('')
   }</tbody></table>`;
 }
 
@@ -626,8 +708,9 @@ function rootIndex(branchData, generatedAt, otherPages) {
   const all = branchData.flatMap((d) => d.builds).sort((a, b) => b.ordinal - a.ordinal);
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AshenSpire — builds</title><style>${CSS}</style></head><body><main>
 <h1>AshenSpire — every build, by branch</h1>
-<p class="lead">Each build is the <code>AshenSpire.html</code> that commit shipped — the committed file byte for byte, or, for a commit that no longer commits its build, rebuilt here from that commit's source and checked against the source digest its <code>buildordinal.json</code> names — served at <code>/&lt;branch&gt;/&lt;build&gt;/</code>, and, for a full-art build, its mobile edition <code>AshenSpire-mobile.html</code> at <code>/&lt;branch&gt;/&lt;build&gt;/mobile/</code>. The stamp here is the one the game shows on its title screen.</p>
+<p class="lead">Each build is the game that commit shipped — the committed file byte for byte, or, for a commit that no longer commits its build, rebuilt here from that commit's source and checked against the source digest its <code>buildordinal.json</code> names — served at <code>/&lt;branch&gt;/&lt;build&gt;/</code>. A newer build is the <strong>web edition</strong>: the page loads its art from this site's shared store, and its <em>Download</em> is the light-art single file at <code>/&lt;branch&gt;/&lt;build&gt;/download/</code>. An older full-art build also has its mobile edition <code>AshenSpire-mobile.html</code> at <code>/&lt;branch&gt;/&lt;build&gt;/mobile/</code>. The stamp here is the one the game shows on its title screen.</p>
 <div class="grid">${cards}</div>
+<div class="note"><strong>Web edition builds</strong> play here with their art fetched as needed; in the game, <em>Download &amp; saves</em> → <em>Make available offline</em> keeps one in this browser for offline play. Their <em>Download</em> saves the light-art single file: one self-contained <code>.html</code> that plays by double-click.</div>
 <div class="note"><strong>Light builds</strong> (dev and test) are one file whose art is already phone-sized, so they have no separate mobile download. <strong>Two downloads, one game</strong> for the others: <em>Full</em> is the whole game with its art as painted. <em>Mobile</em> is the same build with every image shrunk to under a third of its size and recompressed, held under 30 MB — the one to take on a phone or a slow connection; it plays the same, looks softer. Both are single self-contained <code>.html</code> files: the link saves the file straight from this site (the path that works on phones, where the in-game downloader cannot hold the whole file in memory), and the saved file plays offline in any browser. Use <em>Export saves</em> in the game to carry saves across; saves are compatible between the two editions.</div>
 <div class="note">Saves live in this site's browser storage and are shared between builds; a build that cannot read a save archives it by name instead of losing it. <strong>main</strong> is the stable line; <strong>dev</strong> is unreviewed integration work.</div>
 <h2>All listed builds</h2>${rowsTable(all, '', new Set(branchData.filter((d) => d.builds[0] && isCurrent(d)).map((d) => d.builds[0])))}
@@ -651,7 +734,7 @@ ${uncommittedNote(branch, current, headTracksBuild)}
 ${skippedNote(branch)}
 ${builds.length && !current ? `<p><a class="play" href="${builds[0].ordinal}/">Play newest listed (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play newest listed mobile</a>` : ''}</p>` : ''}
 ${builds.length && current ? `<p><a class="play" href="${builds[0].ordinal}/">Play latest (${builds[0].ordinal})</a>${builds[0].mobileBytes ? ` <a class="play" href="${builds[0].ordinal}/mobile/">Play latest mobile</a>` : ''} ${downloadButtons('../', builds[0], ` latest (${builds[0].ordinal})`)} <a class="play" href="latest/">/latest/ alias</a>${builds[0].mobileBytes ? ` <a class="play" href="latest/mobile/">/latest/mobile/ alias</a>` : ''}</p>
-<p class="meta">${builds[0].edition === 'light' ? 'A download is one self-contained HTML file. This is a light build: its art is the phone-sized set, so there is no separate mobile file.' : 'A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 30 MB.'} On a phone or tablet, download from here rather than from inside the game.</p>` : (builds.length ? '' : '<p class="meta">no build on this branch</p>')}
+<p class="meta">${builds[0].shape === 'pack' ? 'This is the web edition: Play loads its art from this site. A download is the light-art single file, one self-contained HTML file.' : builds[0].edition === 'light' ? 'A download is one self-contained HTML file. This is a light build: its art is the phone-sized set, so there is no separate mobile file.' : 'A download is one self-contained HTML file: <em>full</em> carries the art as painted, <em>mobile</em> the same build with its art shrunk under 30 MB.'} On a phone or tablet, download from here rather than from inside the game.</p>` : (builds.length ? '' : '<p class="meta">no build on this branch</p>')}
 ${rowsTable(builds, '../', new Set(current && builds[0] ? [builds[0]] : []))}
 <footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code>.</footer></main></body></html>`;
 }
@@ -718,6 +801,99 @@ function sizeLine(dir) {
   return `site size: ${mb(bytes)} in ${files} files; largest: ${roots.slice(0, 6).map(([r, n]) => `${r} ${mb(n)}`).join(', ')}`;
 }
 
+/**
+ * Write one served build at /<branch>/<ordinal>/ and prove what was written is
+ * its source, byte for byte. `a` is what artifactsOf returned. Returns the
+ * number of byte-proofs made. Sets on `b` the facts every page and builds.json
+ * read: edition, shape, version, bytes, sha256, mobile*, download.
+ */
+function publishBuild(outDir, b, a) {
+  let checks = 0;
+  const { html, mobile: mobileHtml, edition } = a;
+  b.edition = edition || 'full';
+  b.version = versionIn(html.toString('latin1'));
+  b.bytes = html.length;
+  b.sha256 = sha256(html);
+  const rel = `${b.branch}/${b.ordinal}`;
+  const dir = join(outDir, rel);
+  mkdirSync(dir, { recursive: true });
+  if (a.web) {
+    // THE PACK SHAPE: the web edition's HTML, its asset-base.json, and its
+    // packs and objects merged into the site's one store.
+    b.shape = 'pack';
+    const { pin } = publishPack(outDir, rel, html, a.web.from);
+    b.tier = pin.tier || null;
+    // THE DOWNLOAD, KEPT WHOLE: the light single file, beside the page.
+    const target = join(dir, DOWNLOAD_PATH);
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, a.download);
+    if (Buffer.compare(readFileSync(target), a.download) !== 0) throw new Error(`${rel}: written download differs from its source`);
+    b.download = { path: DOWNLOAD_PATH, bytes: a.download.length, sha256: sha256(a.download) };
+    checks++;
+  } else {
+    b.shape = 'single';
+    writeFileSync(join(dir, 'index.html'), html);
+  }
+  // THE MOBILE EDITION, WHERE AN OLDER BUILD HAS ONE: a committed mobile file,
+  // or the one a --full-art rebuild of an inline build writes (a light build
+  // has none — it IS the phone-sized file — and a pack-shaped build's light
+  // art is its download/). `mobileBytes` is the fact every page reads to
+  // decide whether to offer the second link.
+  const hasMobile = Boolean(mobileHtml) && !a.web;
+  if (hasMobile) {
+    mkdirSync(join(dir, 'mobile'), { recursive: true });
+    writeFileSync(join(dir, 'mobile', 'index.html'), mobileHtml);
+    if (Buffer.compare(readFileSync(join(dir, 'mobile', 'index.html')), mobileHtml) !== 0) throw new Error(`${rel}: written mobile build differs from its source`);
+    b.mobileBytes = mobileHtml.length;
+    b.mobileSha256 = sha256(mobileHtml);
+    checks++;
+  }
+  // Detail belongs to this exact build, not main's potentially older art.
+  // The tiles are resolved against the page's own URL (mapDetail.js reads
+  // document.baseURI), so the mobile page at mobile/ needs its own copy
+  // beside it or every tile 404s and the hosted mobile build falls back
+  // to the low-detail map while the full one beside it shows detail. A
+  // pack-shaped build reads them the same way until step 3c moves the
+  // tiles and the score into the common index (their objects are already in
+  // the store; the page does not ask for them there yet).
+  const detailFiles = gitBuf(['ls-tree', '-r', '--name-only', b.sha, '--', 'map-detail']).toString('utf8').trim().split('\n').filter(Boolean);
+  for (const file of detailFiles) {
+    const tile = gitBuf(['show', `${b.sha}:${file}`]);
+    for (const base of hasMobile ? [dir, join(dir, 'mobile')] : [dir]) {
+      const destination = join(base, file);
+      mkdirSync(dirname(destination), {recursive:true});
+      writeFileSync(destination, tile);
+    }
+  }
+  // The shipped score belongs to this exact build too, read the same way:
+  // a served page with the music-folder setting blank fetches music/ from
+  // beside itself (content/music.js SHIPPED_MUSIC_FOLDER), so the mobile
+  // page needs its own copy for the same reason as the detail tiles.
+  const musicFiles = gitBuf(['ls-tree', '-r', '--name-only', b.sha, '--', 'music']).toString('utf8').trim().split('\n').filter(Boolean);
+  for (const file of musicFiles) {
+    const blob = gitBuf(['show', `${b.sha}:${file}`]);
+    for (const base of hasMobile ? [dir, join(dir, 'mobile')] : [dir]) {
+      const destination = join(base, file);
+      mkdirSync(dirname(destination), {recursive:true});
+      writeFileSync(destination, blob);
+    }
+  }
+  // build.json IS WHAT THE IN-GAME DOWNLOADER READS (src/model/offlineDownload.js,
+  // from <branch>/latest/build.json). A pack-shaped build names its download in
+  // `download`, and its top-level `bytes` is null: a copy of the game from
+  // before step 6b reads only `bytes` and `../<ordinal>/index.html`, and for a
+  // pack build that page is a 9.5 MB HTML with no art. null is a size it
+  // refuses ("Download information is not ready yet"), so an old copy says it
+  // cannot download rather than saving a game with no art. The page's own size
+  // is `pageBytes`.
+  const top = b.shape === 'pack' ? { bytes: null, pageBytes: html.length } : { bytes: html.length };
+  writeFileSync(join(dir, 'build.json'), JSON.stringify({ branch: b.branch, ordinal: b.ordinal, version: b.version, ...top, mobileBytes: b.mobileBytes ?? null, edition: b.edition, shape: b.shape, tier: b.tier ?? null, download: b.download ?? null, digest: b.digest, built: b.built, commit: b.sha, source: b.source, changelog: changelogUrl(b), stamp: stampOf(b) }, null, 2) + '\n');
+  // The proof: what was written is the blob (or the rebuild), byte for byte.
+  if (Buffer.compare(readFileSync(join(dir, 'index.html')), html) !== 0) throw new Error(`${rel}: written build differs from its source`);
+  checks++;
+  return checks;
+}
+
 function assemble(outDir, keep) {
   const generatedAt = new Date().toISOString();
   skippedBuilds.length = 0;
@@ -755,11 +931,21 @@ function assemble(outDir, keep) {
   // ("main's tree carries no AshenSpire-mobile.html"). That link is absent
   // until main is promoted past the edition, and the run says so.
   const mainTracksBuild = inTree(mainRef, 'AshenSpire.html');
+  // A main build handed in that carries a pack-shaped web edition (MAIN_BUILD/web,
+  // pages-builds.yml copies build/web there) serves it at the stable Play link:
+  // the 9.5 MB page, an asset-base.json beside each location, the store at the
+  // root (step 6b). The mobile link keeps its file until step 8e redirects it.
+  const mainPack = !mainTracksBuild && MAIN_BUILD ? stableWebEdition() : null;
+  const stableWrite = (dir, artifact) => {
+    if (artifact === 'AshenSpire.html' && mainPack) { publishPack(outDir, dir, mainPack.html, mainPack.from, { name: artifact }); return; }
+    mkdirSync(join(outDir, dir), { recursive: true });
+    cpSync(resolve(MAIN_BUILD, artifact), join(outDir, dir, artifact));
+  };
   for (const artifact of STABLE_LINKS) {
     if (existsSync(join(outDir, artifact))) continue;
     if (mainTracksBuild) { console.log(`  note: main's committed build predates ${artifact}; /${artifact} is not served until main is promoted past it`); continue; }
     if (!MAIN_BUILD) throw new Error(`main's tree carries no ${artifact} — pass --main-build <dir> holding a build of main's source, or the stable Play link at /${artifact} 404s`);
-    cpSync(resolve(MAIN_BUILD, artifact), join(outDir, artifact));
+    stableWrite('', artifact);
   }
   // THE build/ AND dist/ ALIASES TOO (Codex, #1360): the hydration loop above
   // serves them when main tracks its build, and tools/launch.mjs writes the
@@ -767,10 +953,7 @@ function assemble(outDir, keep) {
   if (!mainTracksBuild && MAIN_BUILD) {
     for (const artifact of STABLE_LINKS) {
       if (!existsSync(resolve(MAIN_BUILD, artifact))) continue;
-      for (const alias of ['build', 'dist']) {
-        mkdirSync(join(outDir, alias), { recursive: true });
-        cpSync(resolve(MAIN_BUILD, artifact), join(outDir, alias, artifact));
-      }
+      for (const alias of STABLE_ALIASES) stableWrite(alias, artifact);
     }
   }
   if (existsSync(join(outDir, 'index.html'))) cpSync(join(outDir, 'index.html'), join(outDir, 'index-game.html'));
@@ -797,62 +980,21 @@ function assemble(outDir, keep) {
       const a = artifactsOf(b);
       if (a.error) skip(b, a.error); else served.set(b, a);
     }
-    const builds = listed.filter((b) => served.has(b));
-    enforceHead(branch, headTracksBuild, headOrdinal, skippedBuilds);
-    for (const b of builds) {
-      const { html, mobile: mobileHtml, edition } = served.get(b);
-      b.edition = edition || 'full';
-      b.version = versionIn(html.toString('latin1'));
-      b.bytes = html.length;
-      b.sha256 = sha256(html);
-      const dir = join(outDir, branch, String(b.ordinal));
-      mkdirSync(dir, { recursive: true });
-      writeFileSync(join(dir, 'index.html'), html);
-      // THE MOBILE EDITION, WHERE THE BUILD HAS ONE: a committed mobile file,
-      // or the one a --full-art rebuild writes (a light build has none — it IS
-      // the phone-sized file). `mobileBytes` is the fact every page reads to
-      // decide whether to offer the second link.
-      const hasMobile = Boolean(mobileHtml);
-      if (hasMobile) {
-        mkdirSync(join(dir, 'mobile'), { recursive: true });
-        writeFileSync(join(dir, 'mobile', 'index.html'), mobileHtml);
-        if (Buffer.compare(readFileSync(join(dir, 'mobile', 'index.html')), mobileHtml) !== 0) throw new Error(`${branch}/${b.ordinal}: written mobile build differs from its source`);
-        b.mobileBytes = mobileHtml.length;
-        b.mobileSha256 = sha256(mobileHtml);
-        checks++;
+    // A build the store refuses (a name another build already published with
+    // other bytes, or a pin or index naming a file outside packs/ and
+    // objects/) is skipped and named like any other unservable build; the
+    // rest of the publication goes ahead (review of #1456).
+    const builds = [];
+    for (const b of listed) {
+      if (!served.has(b)) continue;
+      try { checks += publishBuild(outDir, b, served.get(b)); builds.push(b); }
+      catch (error) {
+        if (!error.refused) throw error;
+        rmSync(join(outDir, branch, String(b.ordinal)), { recursive: true, force: true });
+        skip(b, error.message);
       }
-      // Detail belongs to this exact build, not main's potentially older art.
-      // The tiles are resolved against the page's own URL (mapDetail.js reads
-      // document.baseURI), so the mobile page at mobile/ needs its own copy
-      // beside it or every tile 404s and the hosted mobile build falls back
-      // to the low-detail map while the full one beside it shows detail.
-      const detailFiles = gitBuf(['ls-tree', '-r', '--name-only', b.sha, '--', 'map-detail']).toString('utf8').trim().split('\n').filter(Boolean);
-      for (const file of detailFiles) {
-        const tile = gitBuf(['show', `${b.sha}:${file}`]);
-        for (const base of hasMobile ? [dir, join(dir, 'mobile')] : [dir]) {
-          const destination = join(base, file);
-          mkdirSync(dirname(destination), {recursive:true});
-          writeFileSync(destination, tile);
-        }
-      }
-      // The shipped score belongs to this exact build too, read the same way:
-      // a served page with the music-folder setting blank fetches music/ from
-      // beside itself (content/music.js SHIPPED_MUSIC_FOLDER), so the mobile
-      // page needs its own copy for the same reason as the detail tiles.
-      const musicFiles = gitBuf(['ls-tree', '-r', '--name-only', b.sha, '--', 'music']).toString('utf8').trim().split('\n').filter(Boolean);
-      for (const file of musicFiles) {
-        const blob = gitBuf(['show', `${b.sha}:${file}`]);
-        for (const base of hasMobile ? [dir, join(dir, 'mobile')] : [dir]) {
-          const destination = join(base, file);
-          mkdirSync(dirname(destination), {recursive:true});
-          writeFileSync(destination, blob);
-        }
-      }
-      writeFileSync(join(dir, 'build.json'), JSON.stringify({ branch, ordinal: b.ordinal, version: b.version, bytes: html.length, mobileBytes: b.mobileBytes ?? null, edition: b.edition, digest: b.digest, built: b.built, commit: b.sha, source: b.source, changelog: changelogUrl(b), stamp: stampOf(b) }, null, 2) + '\n');
-      // The proof: what was written is the blob (or the rebuild), byte for byte.
-      if (Buffer.compare(readFileSync(join(dir, 'index.html')), html) !== 0) throw new Error(`${branch}/${b.ordinal}: written build differs from its source`);
-      checks++;
     }
+    enforceHead(branch, headTracksBuild, headOrdinal, skippedBuilds);
     // /latest/ ONLY WHEN THE NEWEST LISTED BUILD IS THE HEAD'S BUILD — committed,
     // or rebuilt from the head's source. Otherwise the newest listed build is
     // an older one, and an alias called latest would launch an ever-staler
@@ -868,6 +1010,11 @@ function assemble(outDir, keep) {
       mkdirSync(latest, { recursive: true });
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'index.html'), join(latest, 'index.html'));
       cpSync(join(outDir, branch, String(builds[0].ordinal), 'build.json'), join(latest, 'build.json'));
+      // A pack-shaped build's base (same depth, so the same text) and its download.
+      for (const extra of [ASSET_BASE_FILE, 'download']) {
+        const from = join(outDir, branch, String(builds[0].ordinal), extra);
+        if (existsSync(from)) cpSync(from, join(latest, extra), { recursive: true });
+      }
       const detail = join(outDir, branch, String(builds[0].ordinal), 'map-detail');
       if (existsSync(detail)) cpSync(detail, join(latest, 'map-detail'), {recursive:true});
       const score = join(outDir, branch, String(builds[0].ordinal), 'music');
@@ -884,7 +1031,7 @@ function assemble(outDir, keep) {
   }
   // Discovered AFTER the branch directories exist, so this tool's own output is
   // excluded by name-of-thing-we-just-wrote rather than by a hardcoded list.
-  const generatedNames = new Set([...BRANCHES, 'index.html', 'builds.json']);
+  const generatedNames = new Set([...BRANCHES, 'index.html', 'builds.json', 'objects', 'packs', SW_FILE]);
   const otherPages = discoverPages(outDir, generatedNames);
   const root = rootIndex(branchData, generatedAt, otherPages);
   writeFileSync(join(outDir, 'index.html'), root);
@@ -901,39 +1048,90 @@ function assemble(outDir, keep) {
       checks++;
     }
   }
+  // THE SERVICE WORKER, at the site root, always: the kill-switch must be
+  // publishable whatever the site holds (tools/pages-sw.mjs).
+  const serviceWorker = { ...writeServiceWorker(outDir, { kill: SW_KILL_RUN }), version: SW_VERSION };
   dropBuildTree();
-  writeFileSync(join(outDir, 'builds.json'), JSON.stringify({ generatedAt, keep, otherPages, skipped: skippedBuilds, branches: branchData.map((d) => ({ branch: d.branch, head: d.head, builds: d.builds.map((b) => ({ ...b, stamp: stampOf(b), changelog: changelogUrl(b) })) })) }, null, 2) + '\n');
+  writeFileSync(join(outDir, 'builds.json'), JSON.stringify({ generatedAt, keep, otherPages, skipped: skippedBuilds, serviceWorker, branches: branchData.map((d) => ({ branch: d.branch, head: d.head, builds: d.builds.map((b) => ({ ...b, stamp: stampOf(b), changelog: changelogUrl(b) })) })) }, null, 2) + '\n');
   return { checks, branchData };
 }
 
+// Every red check() raised in its last run, by text, so a selftest plant can
+// prove it was caught BY NAME rather than by whatever else turned the run red.
+const lastReds = [];
+function red(message) {
+  console.error(message);
+  lastReds.push(message);
+  process.exitCode = 1;
+}
+
 function check(outDir) {
+  lastReds.length = 0;
   const manifest = JSON.parse(readFileSync(join(outDir, 'builds.json'), 'utf8'));
   let checks = 0;
   for (const d of manifest.branches) for (const b of d.builds) {
     // A committed build is proven against its git blob; a rebuilt one against
     // the SHA-256 recorded when it was built and the digest its commit names.
     const rebuiltBuild = b.source === 'rebuild';
+    const bdir = join(outDir, d.branch, String(b.ordinal));
     const expectedFile = (path, hash) => {
       const onDisk = readFileSync(path);
       if (!rebuiltBuild) return null;
       return sha256(onDisk) === hash && (!b.digest || onDisk.includes(b.digest)) ? onDisk : Buffer.from('');
     };
-    const blob = rebuiltBuild ? expectedFile(join(outDir, d.branch, String(b.ordinal), 'index.html'), b.sha256) : readGitArtifact(ROOT, b.sha, 'AshenSpire.html');
-    const onDisk = readFileSync(join(outDir, d.branch, String(b.ordinal), 'index.html'));
-    const download = JSON.parse(readFileSync(join(outDir, d.branch, String(b.ordinal), 'build.json'), 'utf8'));
-    if (download.bytes !== onDisk.length || download.ordinal !== b.ordinal || download.version !== b.version) {
-      console.error(`DOWNLOAD DRIFT ${d.branch}/${b.ordinal}: metadata differs from the downloadable file`); process.exitCode = 1;
+    const blob = rebuiltBuild ? expectedFile(join(bdir, 'index.html'), b.sha256) : readGitArtifact(ROOT, b.sha, 'AshenSpire.html');
+    const onDisk = readFileSync(join(bdir, 'index.html'));
+    const download = JSON.parse(readFileSync(join(bdir, 'build.json'), 'utf8'));
+    const pageBytes = b.shape === 'pack' ? download.pageBytes : download.bytes;
+    if (pageBytes !== onDisk.length || download.ordinal !== b.ordinal || download.version !== b.version) {
+      red(`DOWNLOAD DRIFT ${d.branch}/${b.ordinal}: metadata differs from the downloadable file`);
     } else checks++;
-    if (Buffer.compare(blob, onDisk) !== 0) { console.error(`DRIFT ${d.branch}/${b.ordinal}: site file differs from ${rebuiltBuild ? 'the recorded rebuild of' : 'git blob'} ${b.sha.slice(0, 10)}`); process.exitCode = 1; }
+    if (Buffer.compare(blob, onDisk) !== 0) red(`DRIFT ${d.branch}/${b.ordinal}: site file differs from ${rebuiltBuild ? 'the recorded rebuild of' : 'git blob'} ${b.sha.slice(0, 10)}`);
     else checks++;
+    if (b.shape === 'pack') {
+      // THE DOWNLOAD, KEPT WHOLE: the light single file the build list and
+      // offlineDownload.js name, present with the bytes recorded for it.
+      const file = join(bdir, b.download?.path || DOWNLOAD_PATH);
+      if (!b.download || !existsSync(file)) red(`MISSING ${d.branch}/${b.ordinal}/${DOWNLOAD_PATH}: the build's Download names it and the site has no such file`);
+      else {
+        const bytes = readFileSync(file);
+        const meta = download.download || {};
+        if (bytes.length !== b.download.bytes || sha256(bytes) !== b.download.sha256 || meta.bytes !== bytes.length || meta.sha256 !== b.download.sha256 || meta.path !== b.download.path || (b.digest && !bytes.includes(b.digest))) {
+          red(`DOWNLOAD DRIFT ${d.branch}/${b.ordinal}/${DOWNLOAD_PATH}: the file differs from the light single file recorded for it`);
+        } else checks++;
+      }
+    }
     if (b.mobileBytes) {
-      const mobileBlob = rebuiltBuild ? expectedFile(join(outDir, d.branch, String(b.ordinal), 'mobile', 'index.html'), b.mobileSha256) : readGitArtifact(ROOT, b.sha, MOBILE_ARTIFACT);
-      const mobileOnDisk = readFileSync(join(outDir, d.branch, String(b.ordinal), 'mobile', 'index.html'));
-      if (download.mobileBytes !== mobileOnDisk.length) { console.error(`DOWNLOAD DRIFT ${d.branch}/${b.ordinal}/mobile: metadata differs from the downloadable file`); process.exitCode = 1; }
+      const mobileBlob = rebuiltBuild ? expectedFile(join(bdir, 'mobile', 'index.html'), b.mobileSha256) : readGitArtifact(ROOT, b.sha, MOBILE_ARTIFACT);
+      const mobileOnDisk = readFileSync(join(bdir, 'mobile', 'index.html'));
+      if (download.mobileBytes !== mobileOnDisk.length) red(`DOWNLOAD DRIFT ${d.branch}/${b.ordinal}/mobile: metadata differs from the downloadable file`);
       else checks++;
-      if (Buffer.compare(mobileBlob, mobileOnDisk) !== 0) { console.error(`DRIFT ${d.branch}/${b.ordinal}/mobile: site file differs from ${rebuiltBuild ? 'the recorded rebuild of' : 'git blob'} ${b.sha.slice(0, 10)}`); process.exitCode = 1; }
+      if (Buffer.compare(mobileBlob, mobileOnDisk) !== 0) red(`DRIFT ${d.branch}/${b.ordinal}/mobile: site file differs from ${rebuiltBuild ? 'the recorded rebuild of' : 'git blob'} ${b.sha.slice(0, 10)}`);
       else checks++;
     }
+  }
+  // THE STORE (step 6b): every pack-shaped page — each build, each /latest/,
+  // the stable links — has an asset-base.json that resolves its pinned
+  // indexes; every object a served index lists is there with its hash; nothing
+  // in the store is unreferenced. And the service worker is this tool's text.
+  const pages = packPages(outDir, manifest.branches.map((d) => d.branch));
+  for (const [text, ok] of [...storeFindings(outDir, pages), ...serviceWorkerFindings(outDir, manifest.serviceWorker)]) {
+    if (ok) checks++;
+    else red(text);
+  }
+  // Every download link a build list offers is a file on the site.
+  for (const page of ['index.html', ...manifest.branches.map((d) => `${d.branch}/index.html`)]) {
+    const abs = join(outDir, page);
+    if (!existsSync(abs)) continue;
+    const html = readFileSync(abs, 'utf8');
+    const base = dirname(page);
+    let offered = 0;
+    for (const m of html.matchAll(/href="([^"]+)" download="/g)) {
+      offered++;
+      const target = join(outDir, base, m[1]);
+      if (!existsSync(target)) red(`DEAD DOWNLOAD on /${page}: ${m[1]} is not on the site`);
+    }
+    if (offered) checks++;
   }
   // THE DISCOVERED PAGES GET THE SAME TREATMENT AS THE BUILDS. A list derived
   // from the tree is only better than a typed one if something proves it still
@@ -944,13 +1142,13 @@ function check(outDir) {
   const root = existsSync(join(outDir, 'index.html')) ? readFileSync(join(outDir, 'index.html'), 'utf8') : '';
   for (const pg of manifest.otherPages || []) {
     const target = join(outDir, pg.path);
-    if (!existsSync(target)) { console.error(`MISSING page ${pg.path}: listed on the index, not in the site`); process.exitCode = 1; continue; }
-    if (!root.includes(`href="${pg.href}"`)) { console.error(`UNLINKED page ${pg.path}: in the manifest, not linked from the root index`); process.exitCode = 1; continue; }
+    if (!existsSync(target)) { red(`MISSING page ${pg.path}: listed on the index, not in the site`); continue; }
+    if (!root.includes(`href="${pg.href}"`)) { red(`UNLINKED page ${pg.path}: in the manifest, not linked from the root index`); continue; }
     checks++;
   }
   // THE SHARE IMAGE every build's og:image names (OG_IMAGE.url) is served.
   const og = join(outDir, OG_IMAGE.sitePath);
-  if (!existsSync(og) || !isWebp(readFileSync(og))) { console.error(`MISSING ${OG_IMAGE.sitePath}: every build's og:image (${OG_IMAGE.url}) names it, and the site has no WebP there`); process.exitCode = 1; }
+  if (!existsSync(og) || !isWebp(readFileSync(og))) red(`MISSING ${OG_IMAGE.sitePath}: every build's og:image (${OG_IMAGE.url}) names it, and the site has no WebP there`);
   else checks++;
   // THE SITE'S SIZE, printed so its growth is seen (Pages documents a 1 GB limit).
   console.log(`  ${sizeLine(outDir)}`);
@@ -1090,9 +1288,10 @@ function baseTreeFindings(dir) {
     const fromMain = inTree(mainRef, artifact);
     const fromBuild = !inTree(mainRef, 'AshenSpire.html') && MAIN_BUILD && existsSync(resolve(MAIN_BUILD, name));
     if (!fromMain && !fromBuild) continue;
-    const want = fromMain ? readGitArtifact(ROOT, mainRef, artifact) : readFileSync(resolve(MAIN_BUILD, name));
+    const web = !fromMain && name === 'AshenSpire.html' ? stableWebEdition() : null;
+    const want = fromMain ? readGitArtifact(ROOT, mainRef, artifact) : web ? web.html : readFileSync(resolve(MAIN_BUILD, name));
     const at = join(dir, artifact);
-    out.push([`stable link /${artifact} is ${fromMain ? "main's committed build" : 'the main build handed in'}, byte for byte`, existsSync(at) && Buffer.compare(readFileSync(at), want) === 0]);
+    out.push([`stable link /${artifact} is ${fromMain ? "main's committed build" : web ? "the main build's web edition" : 'the main build handed in'}, byte for byte`, existsSync(at) && Buffer.compare(readFileSync(at), want) === 0]);
   }
   for (const d of STABLE_PAYLOAD_DIRS) {
     if (!inTree(mainRef, d)) continue;
@@ -1116,12 +1315,12 @@ function ogImagePlant() {
     writeFileSync(join(dir, 'builds.json'), JSON.stringify({ branches: [], otherPages: [] }));
     const saved = process.exitCode;
     process.exitCode = 0;
-    check(dir);
-    const redWithout = process.exitCode === 1;
+    const n0 = check(dir);
+    const redWithout = process.exitCode === 1 && lastReds.length === 1 && lastReds[0].startsWith(`MISSING ${OG_IMAGE.sitePath}`);
     process.exitCode = 0;
     writeFileSync(join(dir, OG_IMAGE.sitePath), Buffer.from('RIFF\0\0\0\0WEBPVP8 '));
     const n = check(dir);
-    const greenWith = process.exitCode !== 1 && n === 1;
+    const greenWith = process.exitCode !== 1 && n === n0 + 1;
     process.exitCode = saved || 0;
     // The fallback, on hand-written refs: main without the art defers to the
     // first other branch that has it, a missing branch is skipped, and none
@@ -1136,6 +1335,65 @@ function ogImagePlant() {
       [`--check passes /${OG_IMAGE.sitePath} once it is a WebP`, greenWith],
     ];
   } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+
+/**
+ * THE STORE'S KNOWN-BADS (step 6b), on a real pack-shaped build: dev's head,
+ * rebuilt by the selftest above. It is published into a fixture site the way
+ * assemble() publishes every build (publishBuild, the store, the worker, a
+ * builds.json), --check must pass it whole, and then each plant, laid alone
+ * and repaired before the next, must turn --check red BY ITS OWN NAME.
+ */
+const PACK_PLANTS = Object.freeze([
+  ['a missing object', 'MISSING OBJECT', (dir, b) => {
+    const index = JSON.parse(readFileSync(join(dir, packPinOf(readFileSync(join(dir, b.branch, String(b.ordinal), 'index.html'))).packs.light.index), 'utf8'));
+    const [id, row] = Object.entries(index)[0];
+    return [join(dir, objectPath(row[0], id))];
+  }, 'remove'],
+  ['a missing pack index', 'MISSING INDEX', (dir, b) => [join(dir, packPinOf(readFileSync(join(dir, b.branch, String(b.ordinal), 'index.html'))).packs.light.index)], 'remove'],
+  ['a stale sw.js', 'STALE sw.js', (dir) => [join(dir, SW_FILE)], (file) => writeFileSync(file, serviceWorkerSource({ kill: false }).replace(/const VERSION = \d+;/, 'const VERSION = 0;'))],
+  ['a missing download/ file', /^MISSING dev\/\d+\/download\/AshenSpire\.html:/, (dir, b) => [join(dir, b.branch, String(b.ordinal), DOWNLOAD_PATH)], 'remove'],
+  ['a missing asset-base.json', /^MISSING dev\/\d+\/asset-base\.json:/, (dir, b) => [join(dir, b.branch, String(b.ordinal), ASSET_BASE_FILE)], 'remove'],
+  ['an unreferenced object', 'UNREFERENCED', (dir) => [join(dir, 'objects', '00', `${'0'.repeat(64)}.webp`)], (file) => { mkdirSync(dirname(file), { recursive: true }); writeFileSync(file, 'stray'); }],
+]);
+function packStorePlants(probe, box, good) {
+  const rows = [];
+  if (good.error || !good.web) {
+    rows.push([`dev's head rebuilds as a pack-shaped web edition, so the store plants can arm${good.error ? ` (${good.error})` : ''}`, false]);
+    return rows;
+  }
+  const dir = mkdtempSync(join(tmpdir(), 'pages-site-store-'));
+  try {
+    const b = { branch: 'dev', ordinal: probe.ordinal, sha: probe.sha, digest: String(box.digest), built: String(box.built || ''), source: 'rebuild' };
+    publishBuild(dir, b, good);
+    writeFileSync(join(dir, OG_IMAGE.sitePath), Buffer.from('RIFF\0\0\0\0WEBPVP8 '));
+    const serviceWorker = { ...writeServiceWorker(dir, { kill: false }), version: SW_VERSION };
+    writeFileSync(join(dir, 'builds.json'), JSON.stringify({ otherPages: [], serviceWorker, branches: [{ branch: 'dev', builds: [b] }] }));
+    const saved = process.exitCode;
+    process.exitCode = 0;
+    const clean = check(dir);
+    const greenClean = process.exitCode !== 1;
+    rows.push([`a pack-shaped dev/${b.ordinal} published into the store passes --check whole (${clean} checks${greenClean ? '' : `; red: ${lastReds.join(' | ')}`})`, greenClean && b.shape === 'pack' && existsSync(join(dir, 'objects')) && existsSync(join(dir, b.branch, String(b.ordinal), DOWNLOAD_PATH))]);
+    for (const [name, want, targets, act] of PACK_PLANTS) {
+      const files = targets(dir, b);
+      const kept = files.map((f) => (existsSync(f) ? readFileSync(f) : null));
+      for (const f of files) {
+        if (act === 'remove') rmSync(f, { force: true });
+        else act(f);
+      }
+      process.exitCode = 0;
+      check(dir);
+      const named = (r) => (want instanceof RegExp ? want.test(r) : r.startsWith(want));
+      const caught = process.exitCode === 1 && lastReds.length > 0 && lastReds.every(named);
+      rows.push([`--check is red by name for ${name} (${want})${caught ? '' : `; got: ${lastReds.join(' | ') || 'green'}`}`, caught]);
+      files.forEach((f, i) => { if (kept[i]) writeFileSync(f, kept[i]); else rmSync(f, { force: true }); });
+    }
+    process.exitCode = 0;
+    check(dir);
+    rows.push(['the repaired store passes --check again', process.exitCode !== 1]);
+    process.exitCode = saved || 0;
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+  return rows;
 }
 
 function boundary() {
@@ -1172,7 +1430,13 @@ try {
     const baseTree = baseTreeFindings(dir);
     const before = process.exitCode;
     const ok = check(dir);
-    const caught = process.exitCode === 1 && ok === pages - 2 + discovered.length + ogRow;
+    // Caught BY NAME: the victim's drift is red, and every red is the
+    // victim's (its bytes, and the metadata that no longer matches them). The
+    // count is the rest of the proof: every other check still passed.
+    const victimName = `${victim.branch}/${victim.builds[0].ordinal}`;
+    const caught = process.exitCode === 1 && lastReds.some((r) => r.startsWith(`DRIFT ${victimName}:`))
+      && lastReds.every((r) => r.startsWith(`DRIFT ${victimName}:`) || r.startsWith(`DOWNLOAD DRIFT ${victimName}:`))
+      && ok >= pages - 2 + discovered.length + ogRow;
     process.exitCode = before || 0;
     void checks;
     if (!caught) { console.error(`MISS planted drift on ${victim.branch}/${victim.builds[0].ordinal} was not caught`); process.exitCode = 1; }
@@ -1298,6 +1562,7 @@ try {
     // cannot run is an error; and that error on dev's head build turns the run
     // red while the same error on an older build does not. dev's head, not
     // HEAD: this runs on pushes to main too, whose old tree is not dev's shape.
+    let packPlants = [];
     const rbDir = mkdtempSync(join(tmpdir(), 'pages-site-rebuild-'));
     const savedBuildMissing = BUILD_MISSING;
     BUILD_MISSING = rbDir;
@@ -1308,6 +1573,7 @@ try {
       const probe = { branch: 'dev', ordinal: Number(box.ordinal), sha: headSha, source: 'rebuild' };
       const good = artifactsOf({ ...probe, digest: String(box.digest) });
       rules.push([`a rebuild of dev's head ${headSha.slice(0, 10)} serves${good.error ? ` (${good.error})` : ''}`, !good.error && good.html.includes(String(box.digest))]);
+      packPlants = packStorePlants(probe, box, good);
       const wrong = artifactsOf({ ...probe, digest: `not-a-digest-${process.pid}-planted` });
       rules.push(['a rebuild that lacks its commit\'s source digest is refused', /does not carry src digest/.test(wrong.error || '')]);
       const broken = rebuildAt('0'.repeat(40), false);
@@ -1323,6 +1589,7 @@ try {
       rmSync(rbDir, { recursive: true, force: true });
       BUILD_MISSING = savedBuildMissing;
     }
+    rules.push(...packPlants);
     for (const [name, ok] of rules) {
       if (ok) console.log(`OK ${name}`);
       else { console.error(`MISS ${name}`); process.exitCode = 1; }
@@ -1338,7 +1605,8 @@ try {
     // and stops. A fact worth printing is not worth breaking the verdict for.
     if (!process.exitCode) {
       console.log(`pages-site selftest: fixture exact, ${discovered.length} page(s) discovered from the real tree`);
-      console.log(`pages-site selftest: OK — 2 known-bads, 2 caught`);
+      const known = 2 + PACK_PLANTS.length;
+      console.log(`pages-site selftest: OK — ${known} known-bads, ${known} caught`);
     }
   } else if (has('--check')) {
     const n = check(flag('--check', '_site'));

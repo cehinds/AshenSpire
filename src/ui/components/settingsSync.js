@@ -140,7 +140,9 @@ export function autoLoadEnabled() { return read(SYNC_STORAGE.auto) === '1'; }
 /** True when this device saves and loads its screen settings (DEVICE_KEYS) with the profile. */
 export function includeDeviceEnabled() { return read(SYNC_STORAGE.includeDevice) === '1'; }
 
-export async function autoLoadProfile({ settings, onChange, rows, fetch = globalThis.fetch, stillWanted = () => true }) {
+// `promoted`: the promotion THIS BUILD seeds (settings.js buildPromotion), so a
+// loaded profile cannot reinstate defaults boot withheld (Codex, #1457).
+export async function autoLoadProfile({ settings, onChange, rows, fetch = globalThis.fetch, stillWanted = () => true, promoted = PROMOTED }) {
   if (!autoLoadEnabled()) return { applied: 0, reason: 'off' };
   const cfg = deviceSyncConfig();
   const remote = await fetchProfile(cfg, { token: read(SYNC_STORAGE.token) || '', fetch });
@@ -155,12 +157,12 @@ export async function autoLoadProfile({ settings, onChange, rows, fetch = global
   const previous = read(SYNC_STORAGE.lastSha);
   if (!write(SYNC_STORAGE.lastSha, remote.sha || '')) return { applied: 0, reason: 'unrecorded' };
   let applied;
-  try { applied = applyProfile(settings, onChange, parsed); } catch (error) { write(SYNC_STORAGE.lastSha, previous); throw error; }
+  try { applied = applyProfile(settings, onChange, parsed, promoted); } catch (error) { write(SYNC_STORAGE.lastSha, previous); throw error; }
   write(SYNC_STORAGE.lastAt, new Date().toISOString());
   return { applied, reason: 'loaded' };
 }
 
-export function renderSettingsSync(mount, { settings, onChange, rows, afterApply = () => {} }) {
+export function renderSettingsSync(mount, { settings, onChange, rows, afterApply = () => {}, promoted = PROMOTED }) {
   // afterApply(moved, before, seedMoved): Settings offers Undo and repaints.
   // Read at each use: the per-device toggle changes which keys a profile owns.
   const profileKeysNow = () => profileKeys(rows, { includeDevice: includeDeviceEnabled() });
@@ -309,7 +311,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       if (mine !== generation || !btn.isConnected) return;
       if (!remote) { status('There is no profile there yet. Save one from a device first.'); return; }
       const parsed = profileChanges(remote.text, contentBundle, settings, rows, profileKeysNow());
-      const diff = profileDiff(settings, parsed, PROMOTED);
+      const diff = profileDiff(settings, parsed, promoted);
       pending = { parsed, sha: remote.sha };
       // Already matching IS loaded: record this version, or the next start
       // would treat it as new and overwrite edits made here since.
@@ -317,7 +319,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
         // Nothing visible moves, but a key the profile leaves out may still go
         // back to the promotion: save that ownership before calling it loaded.
         const seedBefore = settings[SEED_KEY];
-        try { applyProfile(settings, onChange, parsed); } catch (error) { status(error.message); return; }
+        try { applyProfile(settings, onChange, parsed, promoted); } catch (error) { status(error.message); return; }
         const seedMoved = seedShape(seedBefore) !== seedShape(settings[SEED_KEY]);
         if (!write(SYNC_STORAGE.lastSha, remote.sha || '')) {
           if (seedMoved) { carriedStatus = UNNOTED; afterApply(0, { [SEED_KEY]: seedBefore }, true); }
@@ -345,10 +347,10 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
       box.querySelector('[data-sync="apply"]')?.addEventListener('click', () => {
         try {
           // What every key held before, so Settings can offer Undo.
-          const before = Object.fromEntries(profileDiff(settings, pending.parsed, PROMOTED).map(({ key, from }) => [key, from]));
+          const before = Object.fromEntries(profileDiff(settings, pending.parsed, promoted).map(({ key, from }) => [key, from]));
           // …and which of them the promotion owned, so Undo hands those back too.
           before[SEED_KEY] = settings[SEED_KEY];
-          const moved = applyProfile(settings, onChange, pending.parsed);
+          const moved = applyProfile(settings, onChange, pending.parsed, promoted);
           const seedMoved = seedShape(before[SEED_KEY]) !== seedShape(settings[SEED_KEY]);
           const noted = write(SYNC_STORAGE.lastSha, pending.sha || '');
           write(SYNC_STORAGE.lastAt, new Date().toISOString());

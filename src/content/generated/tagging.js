@@ -11887,5 +11887,41 @@ export const tagging = [
     "scope": "",
     "objectId": "hearthSigil",
     "tagId": "classification.sigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "vigilSigil",
+    "tagId": "vigilSigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "vigilSigil",
+    "tagId": "classification.sigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "pyreSigil",
+    "tagId": "pyreSigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "pyreSigil",
+    "tagId": "classification.sigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "gravelightSigil",
+    "tagId": "gravelightSigil"
+  },
+  {
+    "family": "sigil",
+    "scope": "",
+    "objectId": "gravelightSigil",
+    "tagId": "classification.sigil"
   }
 ];

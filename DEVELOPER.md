@@ -120,11 +120,41 @@ turns each backdrop `url()` into `var(--as-css-<id>, none)` defined there, and
 inlines the two SVG masks as `data:`; the loader fills the slots from the index it
 used (light when high failed) and injects one `<style data-asset-css>`, and a
 failed load injects nothing (no backdrop, system faces; `tests/asset-css.test.mjs`).
+The map-detail tiles and the shipped score follow the common index too (step
+3c): `mapDetail.js` loads each tile as an image of
+`assetUrl('map-detail/<hash>/<edge>/<x>-<y>.webp')` and `audio.js` reads
+`music/manifest.json` and its tracks through `assetUrl()`, so the web edition
+carries no `map-detail/` or `music/` folder; a single file served over http(s)
+and the source tree still read those folders beside the page
+(`tests/music-tiles-index.test.mjs`).
 `node tools/verify-external.mjs` checks the tree on disk (D: every `ASSET_CSS`
-slot names an id the common index or every art tier lists) and
+slot names an id the common index or every art tier lists; E: the common index
+lists every tile and track, and no `map-detail/` or `music/` copy is beside the
+HTML) and
 `node tools/external-play.mjs` loads it in Chromium (`--expect-tier light` for a
 high-default build whose high index was removed). The single files are
 unchanged: their `ASSET_PACKS` stays null and the loader does nothing.
+
+**On Pages** (step 6b): `tools/pages-site.mjs` serves each build whose rebuild
+writes that web edition as the page at `/<branch>/<ordinal>/`, with an
+`asset-base.json` beside it and its packs and objects in one store at the
+site root shared by every build (`tools/pages-store.mjs`), and its light
+single file whole at `/<branch>/<ordinal>/download/AshenSpire.html`, which
+the Download links and the in-game downloader (`build.json`'s `download`)
+name. `/sw.js` is the service worker (`tools/pages-sw.mjs`: objects
+cache-first and hash-checked, Range answered `206`, pages network-first; its
+kill-switch is the committed `SW_KILL`), registered only by Download & saves
+→ *Make available offline* (`src/ui/offlineInstall.js`). `pages-site --check`
+proves the store, the bases, the downloads and `sw.js`; its `--selftest`
+plants each known-bad. `node tools/pages-offline.mjs` drives the worker in
+Chromium over `serveDir` (`tests/pages-sw.test.mjs` runs it in a sandbox).
+**To pull the worker** from every browser that kept a build: set
+`SW_KILL = true` in `tools/pages-sw.mjs` and merge that PR to `dev`, whose push
+republishes `/sw.js` as the kill-switch; each browser deletes its `ashen-`
+caches, unregisters and reloads the windows it controlled on its next visit.
+Leave it published for weeks, then set it back in a later PR. Publish it from
+`dev`: a site published by a pre-6b `pages-site` has no `/sw.js`, and a 404 does
+not unregister a worker (docs/EXTERNAL-ASSETS-PLAN.md, *Step 6b as built*).
 
 **The high-res release** (docs/ART-REPO-PLAN.md). `art-release.json` pins one
 release of the private `cehinds/AshenSpire-art` (repo, tag, zip, sha256; today
@@ -1069,6 +1099,12 @@ reach the audio engine through the `audio` option `main.js` passes to
 `mountPrologue`; the settings preview passes none and keeps what is playing.
 Deliberate quiet is the `quiet` bed (`src/content/music.js`), never `stopMusic()` —
 the engine remembers the context it is in.
+
+With `captionFixedHeight` on (caption or letterbox layout), the screen sets every
+scene's words at one size: the largest, never above `textScale`, at which the
+longest caption in the opening fits the band, measured in a hidden copy of the
+caption and again on every resize. Under 12 on-screen pixels of dialogue it stops
+shrinking and the band scrolls (a phone on its side at a short band height).
 
 The controls are the FRAME's, not the caption's: a band (`.prologue-bar`) that
 is the last grid row of every wireframe, so text that floats does not take

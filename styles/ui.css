@@ -1383,3 +1383,26 @@ button.armoury-position-card { display: grid; grid-template-columns: var(--armou
 @media (pointer: coarse) { .deck-editor-keys { display: none; } }
 .deck-editor-foot .as-btn { min-height: var(--deck-editor-target); font-size: max(1em, var(--deck-editor-text)); }
 .armoury-edit-deck { align-self: flex-start; min-height: var(--tap-floor); }
+
+/* SPEC §15.4 — the Armoury's Sigils panel (src/ui/screens/equipment.js
+   sigilsPanel). Every button is at least 48 CSS px on a coarse pointer and 44
+   otherwise, ON GLASS (divided by the app's zoom, never below the player's own
+   Minimum tap size), as the deck editor's targets are. */
+.armoury-sigils {
+  --armoury-sigils-target: max(var(--tap-floor), calc(44px / var(--ui-zoom, 1)));
+  display: grid; gap: 0.6rem; margin-top: 1rem; padding: 0.8rem;
+  border: 1px solid var(--line); background: var(--bg-raise); color: var(--parchment);
+}
+@media (pointer: coarse) {
+  .armoury-sigils { --armoury-sigils-target: max(var(--tap-floor), calc(48px / var(--ui-zoom, 1))); }
+}
+.armoury-sigils .armoury-sigils-count { color: var(--muted); }
+.armoury-sigils .armoury-sigils-refusal { margin: 0; color: var(--parchment); font-weight: 600; }
+.armoury-sigil {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.2rem 0.8rem; align-items: center;
+  padding: 0.6rem 0; border-top: 1px solid var(--line);
+}
+.armoury-sigil > .as-prose { grid-column: 1 / -1; margin: 0; }
+.armoury-sigil[data-attuned="true"] .armoury-sigil-name { color: var(--gold); }
+.armoury-sigil-name { font-weight: 600; }
+.armoury-sigils button { min-height: var(--armoury-sigils-target); min-width: var(--armoury-sigils-target); grid-column: 1 / -1; justify-self: start; }

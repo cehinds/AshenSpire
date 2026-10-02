@@ -52,7 +52,9 @@ const LOADOUT_KINDS = new Set(['armament', 'armour']);
 // A slotted sigil (SPEC §14.4) is held while the armament its slot is cut
 // into is equipped: syncLoadoutProperties mounts and unmounts it with the worn
 // pieces, so a swap (mid-fight included) takes it along. §15.4's attuned
-// legendary will share the kind under the same `sigil:<id>` key.
+// legendary shares the kind under the same `sigil:<id>` key: it is held by the
+// run while attuned (syncSigilProperties), carries no `heldBy`, and is never
+// slotted, so the two never meet.
 const MOUNTABLE_KINDS = Object.freeze(['armament', 'armour', 'relic', 'class', 'location', 'companion', 'sigil']);
 
 /** The key a carrier's mount lives under, per owner. */
@@ -239,6 +241,38 @@ export function syncCompanionProperties(combat) {
   const ownerKey = triggerOwnerKey(combat, owner);
   for (const id of combat.companions) {
     const carrier = companionCarrier(combat.registries, id, ownerKey);
+    if (!carrier) continue;
+    const owned = combat.propertyMounts && combat.propertyMounts[ownerKey];
+    if (!owned || !owned[propertySourceKey(carrier)]) mountProperties(combat, carrier);
+  }
+}
+
+/**
+ * sigilCarrier(registries, sigilId, ownerKey) → the carrier an ATTUNED
+ * legendary sigil presents (SPEC §15.4), or null for anything else. No
+ * `heldBy`: the run holds it, not a piece, so syncLoadoutProperties leaves it.
+ */
+export function sigilCarrier(registries, sigilId, ownerKey) {
+  const def = registries.sigils && registries.sigils.has(sigilId) ? registries.sigils.get(sigilId) : null;
+  if (!def || def.rarity !== 'legendary') return null;
+  const tagIds = Array.isArray(def.propertyTags) ? def.propertyTags : [];
+  return tagIds.length ? { kind: 'sigil', id: sigilId, instanceId: sigilId, ownerKey, tagIds: [...tagIds] } : null;
+}
+
+/**
+ * syncSigilProperties(combat, entity, attunedSigils) — mount every attuned
+ * legendary (SPEC §15.4) that is not mounted yet, as syncRelicProperties
+ * mounts relics. Attunement never changes mid-fight, so this only adds. Solo
+ * reads `combat.attunedSigils`; a co-op seat hands in its own list.
+ */
+export function syncSigilProperties(combat, entity, attunedSigils) {
+  const owner = entity || (combat && combat.player);
+  if (!combat || !owner) return;
+  const ids = attunedSigils !== undefined ? attunedSigils : combat.attunedSigils;
+  if (!Array.isArray(ids)) return;
+  const ownerKey = triggerOwnerKey(combat, owner);
+  for (const id of ids) {
+    const carrier = sigilCarrier(combat.registries, id, ownerKey);
     if (!carrier) continue;
     const owned = combat.propertyMounts && combat.propertyMounts[ownerKey];
     if (!owned || !owned[propertySourceKey(carrier)]) mountProperties(combat, carrier);
