@@ -1,8 +1,9 @@
-// Ashen Spire desktop wrapper — Electron main process (spike).
-// Loads dist/AshenSpire.html unmodified; the preload probe measures
-// boot-to-playable, gamepad API, and save persistence; this file measures
-// fullscreen toggle and clean quit.
-const { app, BrowserWindow, ipcMain } = require('electron');
+// Ashen Spire desktop wrapper — Electron main process.
+// Serves a game folder unmodified (the Windows installer's `game\`, the Steam
+// package's dist-embed, or the repo's dist) and shows it in a window; under the
+// spike harness the preload probe measures boot-to-playable, gamepad API, and
+// save persistence, and this file measures fullscreen toggle and clean quit.
+const { app, BrowserWindow, ipcMain, protocol, net, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -43,12 +44,67 @@ app.on('child-process-gone', (_e, details) => {
   if (details && details.type === 'GPU') relaunchWithoutGpu('the GPU process went away');
 });
 
-// Packaged build carries the game beside main.js (dist-embed); the repo
-// checkout serves it from ../../dist.
-const GAME_HTML = [
-  path.join(__dirname, 'dist-embed', 'AshenSpire.html'),
-  path.join(__dirname, '..', '..', 'dist', 'AshenSpire.html'),
-].find(fs.existsSync);
+// WHERE THE GAME IS. First match wins:
+//   ASHEN_GAME_DIR          an explicit folder (testing)
+//   <exe dir>\game          the Windows installer (desktop/windows/), the web
+//                           edition with its packs/ and objects/ beside it
+//   dist-embed/             the Steam package (package.sh)
+//   ../../dist              a repo checkout
+// Each holds AshenSpire.html.
+const GAME_ENTRY = 'AshenSpire.html';
+const GAME_DIR = [
+  process.env.ASHEN_GAME_DIR,
+  path.join(path.dirname(process.execPath), 'game'),
+  path.join(__dirname, 'dist-embed'),
+  path.join(__dirname, '..', '..', 'dist'),
+].filter(Boolean).map((d) => path.resolve(d)).find((d) => fs.existsSync(path.join(d, GAME_ENTRY)));
+
+// WHY HTTPS, NOT file://. The web edition loads its art packs, fonts, music and
+// map tiles with fetch() and only over http(s) (src/ui/assetPacks.js isHttp);
+// a single file reads music/ and map-detail/ beside itself the same way. So the
+// game folder is served at a fixed https origin that never reaches the network:
+// requests for GAME_HOST are answered from disk, every other https request
+// passes through untouched (settings sync to GitHub). The origin is fixed, so
+// localStorage — the saves — is the same on every launch. `.invalid` is a
+// reserved name (RFC 2606): it can never be a real site.
+const GAME_HOST = 'ashenspire.invalid';
+const GAME_URL = `https://${GAME_HOST}/${GAME_ENTRY}`;
+const MIME = {
+  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json',
+  '.css': 'text/css; charset=utf-8', '.txt': 'text/plain; charset=utf-8',
+  '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp', '.gif': 'image/gif', '.avif': 'image/avif',
+  '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav', '.m4a': 'audio/mp4',
+  '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.otf': 'font/otf',
+};
+
+async function serveGameFile(request) {
+  const url = new URL(request.url);
+  let rel;
+  try { rel = decodeURIComponent(url.pathname).replace(/^\/+/, ''); } catch { return new Response('bad path', { status: 400 }); }
+  const file = path.resolve(GAME_DIR, rel || GAME_ENTRY);
+  // Nothing outside the game folder is ever served.
+  if (!file.startsWith(GAME_DIR + path.sep)) return new Response('forbidden', { status: 403 });
+  try {
+    const data = await fs.promises.readFile(file);
+    return new Response(data, {
+      headers: {
+        'content-type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream',
+        'cache-control': 'no-cache',
+      },
+    });
+  } catch {
+    return new Response('not found', { status: 404 });
+  }
+}
+
+function serveGame() {
+  protocol.handle('https', (request) => {
+    if (new URL(request.url).hostname === GAME_HOST) return serveGameFile(request);
+    return net.fetch(request, { bypassCustomProtocolHandlers: true });
+  });
+}
 
 const out = (obj) => console.log('SPIKE ' + JSON.stringify(obj));
 
@@ -67,7 +123,20 @@ function createWindow() {
     },
   });
 
-  win.loadFile(GAME_HTML);
+  // Links out of the game (credits, the repository) open in the player's
+  // browser, never inside the game window.
+  const isGame = (u) => { try { return new URL(u).hostname === GAME_HOST; } catch { return false; } };
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (!isGame(url) && /^https?:/.test(url)) shell.openExternal(url);
+    return { action: 'deny' };
+  });
+  win.webContents.on('will-navigate', (event, url) => {
+    if (isGame(url)) return;
+    event.preventDefault();
+    if (/^https?:/.test(url)) shell.openExternal(url);
+  });
+
+  win.loadURL(GAME_URL);
 
   // The watchdog: 'ready-to-show' is the first proof a frame exists. If it has
   // not fired in time, the compositor never came up — that is the hang.
@@ -111,5 +180,22 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+// One window per player: a second launch focuses the first, so two copies
+// never write the same saves at once.
+if (!app.requestSingleInstanceLock()) app.exit(0);
+app.on('second-instance', () => {
+  const [win] = BrowserWindow.getAllWindows();
+  if (win) { if (win.isMinimized()) win.restore(); win.focus(); }
+});
+
+app.whenReady().then(() => {
+  if (!GAME_DIR) {
+    const { dialog } = require('electron');
+    dialog.showErrorBox('Ashen Spire', `The game files were not found (${GAME_ENTRY}). Reinstall the game.`);
+    app.exit(1);
+    return;
+  }
+  serveGame();
+  createWindow();
+});
 app.on('window-all-closed', () => app.quit());

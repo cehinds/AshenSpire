@@ -1,0 +1,113 @@
+name: windows installer
+
+# Builds AshenSpire-Setup-<version>.exe (desktop/windows/README.md) on a real
+# Windows runner, installs it silently with the high-resolution art (the real
+# download from the pinned art release, through Windows PowerShell 5.1), checks
+# what landed, starts the game once, uninstalls, and uploads the installer as the
+# `windows-installer-<commit>` artifact — where a player downloads it.
+#
+# NOT A PULL-REQUEST GATE FOR THE GAME (owner, 2026-09-26: a PR into `dev` is
+# gated by fast checks only). It runs on a pull request only when the PR touches
+# the desktop wrapper or this file, on every push to `test`, `release` and `main`,
+# and by hand (Actions → windows installer → Run workflow) on any branch.
+
+on:
+  push:
+    branches: [test, release, main]
+  pull_request:
+    branches: [dev]
+    paths:
+      - 'desktop/**'
+      - '.github/workflows/windows-installer.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: windows-installer-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      # Same reason as ci.yml: the bundler reads files verbatim, so CRLF from
+      # autocrlf would make the Windows build differ from the Linux one.
+      - name: Keep checked-out bytes identical to stored bytes
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+
+      - uses: ./.github/actions/setup-node
+
+      - name: NSIS
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'C:\Program Files (x86)\NSIS\makensis.exe') -and -not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+            choco install nsis -y --no-progress
+          }
+
+      - name: Build the installer
+        run: node desktop/windows/build-installer.mjs
+
+      - name: Install silently, with the high-resolution art
+        shell: pwsh
+        run: |
+          $setup = Get-ChildItem desktop/windows/build/AshenSpire-Setup-*.exe | Select-Object -First 1
+          $dir = Join-Path $env:RUNNER_TEMP 'AshenSpire'
+          $p = Start-Process $setup.FullName -ArgumentList '/S', "/D=$dir" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "installer exited $($p.ExitCode)" }
+          foreach ($f in 'AshenSpire.exe', 'Uninstall.exe', 'game\AshenSpire.html', 'install-data\fetch-hd-art.ps1') {
+            if (-not (Test-Path (Join-Path $dir $f))) { throw "missing after install: $f" }
+          }
+          $packs = Get-ChildItem (Join-Path $dir 'game\packs') -Name
+          $packs
+          foreach ($p in 'light-', 'common-', 'high-') {
+            if (-not ($packs | Where-Object { $_ -like "$p*.json" })) { throw "no $p index in game\packs — the high-resolution art did not install" }
+          }
+          # Every object every index lists is on disk (the game shows no broken art).
+          $missing = 0
+          foreach ($list in 'base-objects.tsv', 'high-objects.tsv') {
+            foreach ($line in Get-Content (Join-Path $dir "install-data\$list")) {
+              if (-not $line) { continue }
+              $rel = $line.Split("`t")[2]
+              if (-not (Test-Path (Join-Path $dir ('game\' + $rel.Replace('/', '\'))))) { $missing++ }
+            }
+          }
+          if ($missing) { throw "$missing objects listed by an index are missing" }
+          "installed: $((Get-ChildItem $dir -Recurse -File | Measure-Object Length -Sum).Sum / 1MB) MB"
+
+      - name: The game starts and stays up
+        shell: pwsh
+        run: |
+          $exe = Join-Path $env:RUNNER_TEMP 'AshenSpire\AshenSpire.exe'
+          Start-Process $exe
+          Start-Sleep -Seconds 20
+          # By process name, not the first PID: with no usable GPU the wrapper
+          # relaunches itself once with acceleration off (desktop/electron/main.js).
+          if (-not (Get-Process AshenSpire -ErrorAction SilentlyContinue)) { throw 'AshenSpire.exe is not running 20 s after start' }
+          Get-Process AshenSpire | Stop-Process -Force
+          Start-Sleep -Seconds 3
+
+      - name: Uninstall silently
+        shell: pwsh
+        run: |
+          $dir = Join-Path $env:RUNNER_TEMP 'AshenSpire'
+          # _?= runs the uninstaller in place, so -Wait waits for it.
+          $p = Start-Process (Join-Path $dir 'Uninstall.exe') -ArgumentList '/S', "_?=$dir" -Wait -PassThru
+          if ($p.ExitCode -ne 0) { throw "uninstaller exited $($p.ExitCode)" }
+          $left = Get-ChildItem $dir -Recurse -File | Where-Object Name -ne 'Uninstall.exe'
+          if ($left) { $left.FullName; throw 'files left after uninstall' }
+
+      - name: Upload the installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer-${{ github.sha }}
+          path: desktop/windows/build/AshenSpire-Setup-*.exe
+          compression-level: 0
+          retention-days: 30
+          if-no-files-found: error

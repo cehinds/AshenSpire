@@ -1,7 +1,8 @@
 {
   "name": "ashen-spire-desktop",
+  "productName": "AshenSpire",
   "version": "0.1.0",
-  "description": "Ashen Spire desktop wrapper spike (Electron)",
+  "description": "Ashen Spire desktop wrapper (Electron)",
   "main": "main.js",
   "scripts": {
     "start": "electron ."

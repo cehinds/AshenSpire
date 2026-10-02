@@ -48,6 +48,7 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `ci.yml` → shipped artifact is this source (3 OSes), the three runners built the same bytes | no | yes |
 | `ci.yml` → the checks that need a real browser | no | yes |
 | `dev-preview.yml` → the reachability gates a phone would fail | no | yes (also `main`) |
+| `windows-installer.yml` → build, silent install with the high-res art, start, uninstall; uploads `windows-installer-<commit>` ([desktop/windows/README.md](desktop/windows/README.md)) | only when the PR touches `desktop/` | yes (also `main`) |
 
 The workflows' own `on:` blocks and job `if:` conditions are the source of this
 table; a skipped job shows on the PR as *skipped*, not as missing.
