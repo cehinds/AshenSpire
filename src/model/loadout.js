@@ -2092,8 +2092,14 @@ function adoptWanted(inst, wanted) {
 export function reconcileGrantedCards(registries, run) {
   if (!run.deck) run.deck = [];
   // A dealt deck (Sealed, Draft) is never dealt the equipment's lent cards
-  // (model/cardRemoval.js isPoolDeckRun): every full restamp leaves it as is.
-  if (isPoolDeckRun(run)) return run.deck;
+  // (model/cardRemoval.js isPoolDeckRun): every full restamp sweeps any an
+  // older build left (item-owned roles only) and appends none.
+  if (isPoolDeckRun(run)) {
+    const dealt = run.deck.filter((inst) => !isItemOwned(inst));
+    run.deck.length = 0;
+    run.deck.push(...dealt);
+    return run.deck;
+  }
   const desired = desiredGrantInstances(registries, run);
   const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();
@@ -2316,8 +2322,17 @@ export function itemMountInstances(registries, run, piece, { authored = false } 
  * Deterministic instance ids keep the sweep idempotent and combat-save-stable.
  */
 export function reconcileGrantedCardsInCombat(registries, run, piles) {
-  // A dealt deck's fight is left as dealt, too (model/cardRemoval.js).
-  if (isPoolDeckRun(run)) return;
+  // A dealt deck's fight is held to the same rule (model/cardRemoval.js):
+  // lent cards an older build's mid-fight swap put into a pile are swept from
+  // every pile, and the current equipment's are not appended.
+  if (isPoolDeckRun(run)) {
+    for (const pile of [piles.hand, piles.draw, piles.discard, piles.exhaust]) {
+      const dealt = pile.filter((inst) => !isItemOwned(inst));
+      pile.length = 0;
+      pile.push(...dealt);
+    }
+    return;
+  }
   // Combat's swap hands in a synthetic run with an empty deck; the piles are
   // the deck here, and the Dodge Roll rule reads the deck for a legacy copy.
   const deck = run.deck && run.deck.length ? run.deck : [...piles.hand, ...piles.draw, ...piles.discard, ...piles.exhaust];

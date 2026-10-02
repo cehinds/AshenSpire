@@ -193,6 +193,37 @@ test('sealed: a pre-fix mid-fight save, loaded and resumed, deals no lent card a
   }
 });
 
+test('sealed: a fight an older build saved after a mid-fight swap loads with its lent cards swept (Codex review)', () => {
+  // Before the fix a Sealed fight had no pool rule, so its mid-fight swap put
+  // the new armament's lent cards into the discard pile, and Save Game wrote them.
+  const { run, rng, saves } = deal('starseer', 'sealed', { fixed: false });
+  run.loadout.sets.rightHand[1] = 'dagger';
+  const combat = fight(run, rng);
+  const dealt = Object.values(piles(combat.piles)).flat().sort();
+  delete combat.poolDeck; // the old build's fight knew nothing of the rule
+  combat.player.energy = 10;
+  dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
+  const lentIds = Object.values(combat.piles).flat().filter((c) => c && (c.equipmentRole === 'granted' || c.equipmentRole === 'weaponArt')).map((c) => c.instanceId);
+  assert.ok(lentIds.length > 0, 'the old swap really dealt lent cards (the fixture is the bug)');
+  commitCombatSnapshot({ run, combat, nodeId: 'n0', encounterId: 'loneSoldier' });
+  delete run.combatEntered.snapshot.poolDeck;
+  saves.saveRun(run, rng);
+  const back = saves.loadRun(registries, 1);
+  assert.ok(back, `reload refused: ${saves.runStatus().reason}`);
+  assert.deepEqual(Object.values(piles(back.combatEntered.snapshot.piles)).flat().sort(), dealt, 'the resumed fight holds the dealt cards only');
+  const row = saves.runStatus().ledger.entries.find((e) => e.site === 'save.js:sweepPoolDeckLentCards');
+  assert.ok(row, 'the sweep is named in the heal ledger');
+  assert.deepEqual([...row.was].sort(), [...lentIds].sort());
+});
+
+test('sealed: a full restamp sweeps a lent card from a dealt deck and appends none', () => {
+  const { run } = deal('starseer', 'sealed');
+  const dealt = ids(run.deck);
+  run.deck.push({ instanceId: 'weaponArt:stale:x', cardId: 'dodgeRoll', upgraded: false, equipmentRole: 'weaponArt', grantedBy: 'stale' });
+  stampDeck(registries, run);
+  assert.deepEqual(ids(run.deck), dealt);
+});
+
 test('sealed: a mid-fight weapon swap deals no lent card into the piles', () => {
   const { run, rng } = deal('starseer', 'sealed');
   run.loadout.sets.rightHand[1] = 'dagger';
