@@ -510,14 +510,15 @@ jobs:
       # art-release.json pins one tag of cehinds/AshenSpire-art with three zips;
       # tools/fetch-art.mjs downloads the ones named, checks each against the pin
       # and art-manifest.json, and unpacks them into .art-cache/ (ignored). The
-      # token is passed because the art repository is private until the owner
-      # makes it public; with no token (a fork, or once it is public) the public
-      # release URL is used. A failure names its cause (token refused, repository
+      # token is passed only on a protected branch (dev, test, release, main),
+      # whose code is reviewed: a dispatch on any other ref runs that ref's own
+      # fetch-art.mjs and gets no token. With none (any other ref, a fork, or
+      # once the repository is public) the public release URL is used. A failure names its cause (token refused, repository
       # unreadable, rate limit, network) on the step and as an annotation.
       - name: Fetch the art packs this build's tier uses
         if: ${{ matrix.digest && !cancelled() }}
         env:
-          ART_REPO_TOKEN: ${{ secrets.ART_REPO_TOKEN }}
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
           ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
         shell: bash # $ART_PACKS is an env var; Windows' default shell would not expand it
         run: node tools/fetch-art.mjs --pack "$ART_PACKS"

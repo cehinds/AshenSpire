@@ -277,10 +277,11 @@ schema-2 pin whose top level disagrees with `packs.high`.
   answer 1): with none set, the zip comes from the release's public download
   URL. Until the owner flips the visibility, the repository is private and the
   download needs `ART_REPO_TOKEN` (else `GITHUB_TOKEN`); CI passes the
-  `ART_REPO_TOKEN` secret in the env of each step that fetches on a push or
-  dispatch, and never on a pull request: that step runs the branch's own
-  `fetch-art.mjs`, which could read a token handed to it, so a pull request
-  fetches the public release with none (step 10a comes first). A token, when
+  `ART_REPO_TOKEN` secret in the env of each step that fetches only on a push
+  or dispatch of a protected branch (dev, test, release, main), never on a pull
+  request or a dispatch of any other ref: that step runs the checked-out ref's
+  own `fetch-art.mjs`, which could read a token handed to it, so those runs
+  fetch the public release with none (step 10a comes first). A token, when
   set, is always sent (to the API only), which also raises GitHub's rate
   limit. A token that cannot read the repository falls back to the public
   URL, so making the repository public is enough even with a stale secret.

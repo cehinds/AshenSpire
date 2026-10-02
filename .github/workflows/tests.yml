@@ -135,8 +135,10 @@ jobs:
           # tools/fetch-art.mjs, so a token here would be readable by any
           # branch. Pull requests fetch the public art repository without
           # one (EXTERNAL-ASSETS-PLAN step 10a makes it public before this
-          # step lands); pushes run reviewed code and keep the token.
-          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && secrets.ART_REPO_TOKEN || '' }}
+          # step lands). Only a push or dispatch on a protected branch (dev,
+          # test, release, main) runs reviewed code, so only those get it; a
+          # dispatch on any other ref fetches with none, like a pull request.
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
           ART_PACKS: ${{ (github.event_name == 'pull_request' || github.ref_name == 'dev') && 'light,common' || 'all' }}
         run: node tools/fetch-art.mjs --pack "$ART_PACKS"
 
