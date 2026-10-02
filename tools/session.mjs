@@ -643,12 +643,18 @@ export function createSession({ registries, seedString, endless = false, restore
         blockRemaining: e.blockRemaining, success: e.success, blocked: e.blocked, isAttack: e.isAttack, cause: e.cause,
         requested: e.requested, attempted: e.attempted,
         threshold: e.threshold, status: e.status, stacks: e.stacks, total: e.total, duration: e.duration,
+        turn: e.turn,
       }));
+    // THE OPENING IS A MARKER, NOT A TURN NUMBER: only the scene that carries
+    // the setup cues is the fight's opening (coop.js coopReceiptSounds), so a
+    // client joining after a turn-1 action does not replay that action.
+    const opening = live.opening != null;
     live.evCursor = c.eventLog.length;
     live.opening = null;
     return {
       kind: 'combat',
       receiptSeq: ++combatReceiptSeq,
+      opening,
       events,
       pool: live.pool,
       phase: c.phase,

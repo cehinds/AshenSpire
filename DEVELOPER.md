@@ -133,7 +133,15 @@ slot names an id the common index or every art tier lists; E: the common index
 lists every tile and track, and no `map-detail/` or `music/` copy is beside the
 HTML) and
 `node tools/external-play.mjs` loads it in Chromium (`--expect-tier light` for a
-high-default build whose high index was removed). The single files are
+high-default build whose high index was removed; `--block-index` holds and then
+refuses every index: the startup gate must be drawn at once with its "Loading
+art…" line, the title must wait for the load and then offer Retry, and Retry
+must load the art). The cold boot of the web edition draws the startup gate
+while it loads (step 5): its status line and the critical set it counts
+(`content/config`, `presentation.startupGate`) are `src/ui/bootArt.js`, the
+words are `art.*` rows of `uiStrings.csv`, and a failed load shows a notice
+with Retry on the title and in Settings → Art quality
+(`retryBuiltInArt`, `tests/boot-art.test.mjs`). The single files are
 unchanged: their `ASSET_PACKS` stays null and the loader does nothing.
 
 **On Pages** (step 6b): `tools/pages-site.mjs` serves each build whose rebuild
@@ -875,11 +883,15 @@ URL, making a bad asset diagnosable without delaying combat feedback. Run
 Combat cues (hit tiers, `playerHurt`, the turn stinger, draw/shuffle/discard;
 D38 in docs/FINISH.md) reach `sfx.play` through `src/ui/fx.js`: the paced
 timeline per beat, `playEventCues` for instant playback and a fresh fight's
-opening, and `playReceiptSounds` for co-op receipts (`coopReceiptSounds` in
-`src/ui/screens/coop.js`, gated by `receiptSeq`). `node --test
-tests/sound-tiers.test.mjs` covers them, including the opening turn and the
-real co-op session digest; `node tools/sound-opening.mjs` (hand-run, real
-Chromium) mounts a fresh fight and a remounted one.
+opening (a boss fight's waits for its name splash to close), and
+`playReceiptSounds` for co-op receipts (`coopReceiptSounds` in
+`src/ui/screens/coop.js`, gated by `receiptSeq`; a late joiner hears only the
+scene the host marks `opening`). `playEventCues` stings once per shared turn,
+however many co-op seats start it. `node --test tests/sound-tiers.test.mjs`
+covers them, including the opening turn and the real co-op session digest;
+`node tools/sound-opening.mjs` (hand-run, real Chromium) mounts a fresh fight,
+a remounted one, and a fresh boss fight behind its splash
+(`?shot=boss&shotBossHold=0` lets the splash close).
 
 ## Performance (SPEC §9 M4)
 

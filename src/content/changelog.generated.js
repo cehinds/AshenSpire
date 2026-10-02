@@ -8,9 +8,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The tutorial bubble moves off your cards when the hand rearranges itself",
     "detail": "After a window resize, your hand can spread itself out again a moment after the tutorial has found a spot for its speech bubble. If that put a card under the bubble, the bubble stayed there and you couldn't click that card. The bubble now moves whenever your cards move, not only when the thing it points at moves.",
-    "build": "0.7.1.789",
+    "build": "0.7.1.792",
     "pullRequest": 1490,
     "url": "https://github.com/cehinds/AshenSpire/pull/1490"
+  },
+  {
+    "id": "pr-1471",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition shows its art loading on the start screen, and can retry",
+    "detail": "Behind the scenes, in the web edition only: the start screen now appears at once while the art loads, with one line saying how far it has got, and if the art cannot be loaded the title screen says so and offers Retry (also in Settings → Art quality), which loads it again without reloading the page; the downloaded single file is unchanged, and nothing you play changes.",
+    "build": "0.7.1.791",
+    "pullRequest": 1471,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1471"
+  },
+  {
+    "id": "pr-1485",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Fight sounds land at the right moment",
+    "detail": "A boss fight's first draw and turn sting now play when its name card lifts, not hidden behind it. In LAN co-op your turn stings once per round however many players are in the fight, and joining or reloading a fight after someone has already acted no longer replays that action's sounds.",
+    "build": "0.7.1.790",
+    "pullRequest": 1485,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1485"
+  },
+  {
+    "id": "pr-1486",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the Sealed and Draft reload test checks what this build saves",
+    "detail": "Nothing you play changes. The test that loads a save from an older build kept treating every later save as that older build's, so it never checked that a climb saved again after the fix is saved the new way. It now does.",
+    "build": "0.7.1.789",
+    "pullRequest": 1486,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1486"
   },
   {
     "id": "pr-1468",
