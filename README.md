@@ -89,6 +89,8 @@ More captures — Armoury: [Equipment](docs/preview/armoury-simple-equipment-144
 
 ## UI component library
 
+- **[Player polish inspiration](docs/design/player-polish-2026-10-01/index.html)** — twelve illustrated concept boards showing desktop and portrait-mobile directions for the player-facing feature families. [Design notes and implementation caveats](docs/design/player-polish-2026-10-01/README.md) distinguish generated examples from the game's rules.
+
 - **[Component catalog](https://cehinds.github.io/AshenSpire/docs/component-catalog.html)** ([source](docs/component-catalog.html)) — stable component IDs, model/renderer names, reuse surfaces and a visual miniature per component. Select a card for its detail drawer.
 - **[Markdown catalog](docs/COMPONENT-CATALOG.md)** — the chat-friendly reference.
 - **[Folding Tray gallery](docs/tray-gallery.html)** — every top/right/bottom/left folded and unfolded state; the [Folding Tray contract](docs/TRAY-COMPONENTS.md) defines the grammar.
