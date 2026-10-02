@@ -3134,7 +3134,7 @@ export const uiStrings = [
   {
     "id": "master.lesson.unasked",
     "extends": "",
-    "short": "Ask for a lesson to see its three cards.",
+    "short": "Ask for a lesson to see its {count} card(s).",
     "full": "",
     "tip": ""
   },

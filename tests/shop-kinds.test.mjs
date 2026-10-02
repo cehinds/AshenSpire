@@ -249,7 +249,7 @@ test('FINISH: a pre-§14 run.shopStock loads as market unchanged', () => {
 
 // Step 6 (SPEC §14.4) registered the blacksmith and step 7 (§14.5) the
 // master: every kind's weight is now a row and may be raised.
-test('FINISH: a non-zero blacksmith or master weight is refused by name while that kind\'s screen is unregistered', () => {
+test('FINISH: every kind\'s screen is registered, so the blacksmith and master weights are Settings rows that may be raised, and every open kind at 0 is refused by name', () => {
   assert.deepEqual([...SHOP_KIND_SCREENS], ['market', 'blacksmith', 'master']);
   for (const kind of ['blacksmith', 'master']) {
     assert.deepEqual(errorsAt(bundleWithShops((table) => { table.kindWeights[kind] = 10; }), `shops.kindWeights.${kind}`), [], `the ${kind} is registered now`);
@@ -529,7 +529,7 @@ test('a schema-14 stock must name its kind and offerings; only an older save get
 
 // Every kind's screen has shipped since step 7 (SPEC §14.5), so the refusal is
 // now met by a kind this build does not have at all.
-test('a saved stock of a kind whose screen has not shipped is refused by name (Codex, on #1371)', () => {
+test('a saved stock of a kind this build does not have is refused by name and archived, never opened (Codex, on #1371)', () => {
   const run = createRunState({ seed: 10, classId: 'reaver', registries: REG });
   run.shopStock = buildMarketStock(REG, createRng(10), run);
   const master = { ...structuredClone(run.shopStock), kind: 'bazaar', offerings: ['training'] };

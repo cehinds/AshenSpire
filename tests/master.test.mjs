@@ -565,6 +565,58 @@ test('Codex and Copilot on #1438: a custom price multiplier scales the master\'s
   assert.deepEqual(market(1.5).weaponArts, up(base.weaponArts));
 });
 
+test('review of #1438: training, respec and lesson quotes scale by a custom price multiplier, rounding up, and a quote made at another multiplier is refused as stale', () => {
+  const mult = 1.5;
+  const { run, rng } = masterRun(OUT, { seed: 12 });
+  const [first, second] = masterOf(OUT, run).skills;
+  const training = offeringOf(OUT, 'training').training;
+  const cost = offeringOf(OUT, 'respec').respec.cost;
+  const lesson = offeringOf(OUT, 'lesson').cinders;
+  // Training.
+  const train = trainingPlan(OUT, run, first, { priceMult: mult });
+  assert.equal(train.cost, Math.ceil(training.cinders * mult));
+  let before = JSON.stringify(run);
+  assert.throws(() => commitTraining(OUT, run, train), (e) => e.message === shopSentence('shop.refuse.stale'), 'a 1.5× quote at 1× is stale');
+  assert.equal(JSON.stringify(run), before);
+  let cinders = run.cinders;
+  commitTraining(OUT, run, train, { priceMult: mult });
+  assert.equal(run.cinders, cinders - train.cost);
+  // Respec.
+  track(run, second, { level: 3, xp: 0 });
+  const respec = respecPlan(OUT, run, second, { priceMult: mult });
+  assert.equal(respec.cost, Math.ceil((cost.base + cost.perLevel * 3) * mult));
+  before = JSON.stringify(run);
+  assert.throws(() => commitRespec(OUT, run, respec, { priceMult: 2 }), (e) => e.message === shopSentence('shop.refuse.stale'), 'a 1.5× quote at 2× is stale');
+  assert.equal(JSON.stringify(run), before);
+  cinders = run.cinders;
+  commitRespec(OUT, run, respec, { priceMult: mult });
+  assert.equal(run.cinders, cinders - respec.cost);
+  // Lesson.
+  const { cardIds } = rollMasterLesson(OUT, rng, run, first);
+  const quote = lessonPlan(OUT, run, first, cardIds[0], { priceMult: mult });
+  assert.equal(quote.cost, Math.ceil(lesson * mult));
+  before = JSON.stringify(run);
+  assert.throws(() => commitLesson(OUT, run, quote), (e) => e.message === shopSentence('shop.refuse.stale'));
+  assert.equal(JSON.stringify(run), before);
+  cinders = run.cinders;
+  commitLesson(OUT, run, quote, { priceMult: mult });
+  assert.equal(run.cinders, cinders - quote.cost);
+});
+
+test('review of #1438: with an empty training pool the redistribute shelf draws no Spend control, only its idle reason, once', () => {
+  withKitDom((dom) => {
+    const { run } = masterRun(OUT, { seed: 7 });
+    assert.equal(run.trainingPool, 0);
+    const app = dom.document.createElement('main');
+    dom.document.body.replaceChildren(app);
+    mountMaster(app, { registries: OUT, run, meta: { settings: {} }, onChanged() {}, onLeave() {} });
+    const shelf = app.querySelector('#master-redistribute');
+    assert.equal(shelf.querySelectorAll('button').filter((b) => String(b.id).startsWith('master-spend-')).length, 0, 'no Spend 0 XP button');
+    assert.equal(shelf.querySelectorAll('.bs-idle').length, 1, 'the idle reason, once');
+    assert.equal(shelf.children.length, 1, 'and nothing else');
+  });
+});
+
 test('rollSkillDraftIds without schools or stream draws exactly as the reward door always has', () => {
   const run = createRunState({ seed: 3, classId: 'reaver', registries: REG });
   const args = { classId: 'reaver', loadout: run.loadout, skillId: 'item:blade', level: 4 };

@@ -17,7 +17,7 @@
 // THE LESSON ROLLS WHEN ASKED. A track's lesson has no cards until the player
 // asks for it; the roll (engine/shopKinds.js rollMasterLesson, on the run's
 // `shopOffers` stream) is persisted with the stock, so a reload shows the
-// same three cards and never rolls the track again on the visit.
+// same cards (balance.skill.draftSize of them) and never rolls the track again.
 import { esc } from '../components/tooltip.js';
 import { sfx } from '../sfx.js';
 import { modalHead, modalFooter } from '../components/modalShell.js';
@@ -140,9 +140,9 @@ export function mountMaster(app, { registries, run, meta, rng = null, flatRarity
     lesson(shelf) {
       for (const skillId of master()?.skills || []) {
         const entry = stock.lessons?.[skillId] || null;
-        const host = tile(GLYPH.lesson, trackLabel(registries, skillId), entry ? (entry.cardIds.length ? cardNames(entry.cardIds) : '') : t('master.lesson.unasked'));
+        const host = tile(GLYPH.lesson, trackLabel(registries, skillId), entry ? (entry.cardIds.length ? cardNames(entry.cardIds) : '') : t('master.lesson.unasked', { count: registries.balance.skill.draftSize }));
         if (!entry) {
-          // Asking rolls the track's three cards once, kept with the stock.
+          // Asking rolls the track's cards once, kept with the stock.
           const ask = button({ label: t('master.action.askLesson'), id: `master-ask-${slug(skillId)}`, weight: 'primary', disabled: !rng });
           if (rng) ask.addEventListener('click', () => act(host, () => rollMasterLesson(registries, rng, run, skillId, { flatRarity }), 'shrine'));
           host.append(ask);
@@ -166,12 +166,14 @@ export function mountMaster(app, { registries, run, meta, rng = null, flatRarity
     },
     redistribute(shelf) {
       const pool = run.trainingPool || 0;
+      // An empty pool draws no track and no "Spend 0 XP" control: the idle
+      // reason, prepended once by render(), says why.
+      if (!pool) return;
       for (const { id: skillId, label } of skillTracks(registries)) {
         const host = tile(GLYPH.redistribute, label, levelLine(skillId));
         const kind = skillKindOf(registries, skillId);
         const need = kind ? xpToNext(registries, kind, skillLevel(run, skillId)) - (run.skills?.[skillId]?.xp ?? 0) : 0;
         const amounts = [...new Set([need > 0 && need < pool ? need : null, pool].filter((n) => n > 0))];
-        if (!amounts.length) amounts.push(pool);
         for (const amount of amounts) {
           const plan = redistributePlan(registries, run, skillId, amount);
           actionButton(host, { id: `master-spend-${slug(skillId)}-${amount}`, label: t('master.action.spend', { amount }), plan, commit: () => commitRedistribute(registries, run, plan) });
