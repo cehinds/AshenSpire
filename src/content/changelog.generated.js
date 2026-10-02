@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1474",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Turning on \"Use flasks outside combat\" now works straight away on the map",
+    "detail": "Turning the setting on from the map's menu used to leave the Potions control refusing Drink until you left the map. Now the map updates as soon as you change it, and a drink taken there is saved. Behind the scenes, new browser checks open every flask menu (in combat, on the map and in the room rail) and confirm each one offers the same actions and does exactly what you pick.",
+    "build": "0.7.1.786",
+    "pullRequest": 1474,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1474"
+  },
+  {
     "id": "pr-1484",
     "date": "2026-10-02",
     "group": "2026-10-02",
