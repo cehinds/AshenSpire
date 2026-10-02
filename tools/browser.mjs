@@ -147,6 +147,31 @@ export const PATH_BUDGET = 90;
 const DEFAULT_ARGS = ['--no-sandbox', '--disable-gpu', '--mute-audio', '--remote-debugging-port=0', '--no-first-run'];
 const ENDPOINT = /DevTools listening on (ws:\/\/\S+)/;
 
+// THE ENDPOINT WAIT HAS A FLOOR (FINISH §12, D35). About 30 tools pass
+// `timeoutMs: 12000`, and on 2026-10-02 the 'map camera re-fit (real browser)'
+// job of #1435 and #1436 failed twice with "no DevTools endpoint ... in
+// 12000 ms" — that job's own `chrome --version` step took 7 s, so a cold Chrome
+// start on a GitHub runner can exceed 12 s. The fix is here, once: the wait for
+// the endpoint is max(caller's timeoutMs, floor). A slow cold start is waited
+// out; a DEAD browser still fails fast, because the exit/error handlers below
+// settle the wait the moment the process goes, whatever the budget. The floor
+// is data, not a literal in each tool (D1): ASHEN_BROWSER_LAUNCH_MS overrides it
+// (a non-negative integer in ms; 0 turns it off; anything else is ignored).
+// A value above Node's timer ceiling (2^31-1 ms, about 24.8 days) is ignored
+// too: setTimeout would clamp it to 1 ms and fail every slow launch at once.
+export const LAUNCH_FLOOR_MS = 30000;
+export const TIMER_MAX_MS = 2147483647;
+export const LAUNCH_FLOOR_ENV = 'ASHEN_BROWSER_LAUNCH_MS';
+export function launchFloorMs(env = process.env) {
+  const raw = env[LAUNCH_FLOOR_ENV];
+  if (raw === undefined || !/^\d+$/.test(String(raw).trim())) return LAUNCH_FLOOR_MS;
+  const n = Number(String(raw).trim());
+  return Number.isSafeInteger(n) && n <= TIMER_MAX_MS ? n : LAUNCH_FLOOR_MS;
+}
+export function effectiveLaunchMs(timeoutMs, env = process.env) {
+  return Math.max(Number(timeoutMs) || 0, launchFloorMs(env));
+}
+
 // Every live profile this process owns. The sweep at exit reads this set, so a
 // profile is registered BEFORE the browser is spawned — the window between
 // mkdtemp and spawn is small and it is not zero.
@@ -411,6 +436,7 @@ export async function launchBrowser({
 
   if (!awaitEndpoint) return { child, wsUrl: null, profile, close };
 
+  const waitMs = effectiveLaunchMs(timeoutMs);
   try {
     const wsUrl = await new Promise((res, rej) => {
       let buf = '';
@@ -430,8 +456,12 @@ export async function launchBrowser({
         }
       });
       const timer = setTimeout(() => {
-        if (!settled) { settled = true; rej(new Error(`browser: no DevTools endpoint from ${bin} in ${timeoutMs} ms:\n${buf.slice(-300)}`)); }
-      }, timeoutMs);
+        if (!settled) {
+          settled = true;
+          const why = waitMs === timeoutMs ? '' : ` (caller asked ${timeoutMs} ms; launch floor ${waitMs} ms, ${LAUNCH_FLOOR_ENV} to change)`;
+          rej(new Error(`browser: no DevTools endpoint from ${bin} in ${waitMs} ms${why}:\n${buf.slice(-300)}`));
+        }
+      }, waitMs);
     });
     return { child, wsUrl, profile, close };
   } catch (e) {
