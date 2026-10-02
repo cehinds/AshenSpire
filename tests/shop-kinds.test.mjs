@@ -310,7 +310,9 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
     for (const key of Object.keys(stock)) assert.ok(key in before.stock || key === 'kind' || key === 'offerings' || MARKET_ADDITIONS.includes(key), `seed ${n}: stray stock key ${key}`);
     // Nothing new is drawn on any existing stream. Only the additions' own
     // rolls (§14.3, on shopOffers after the offering roll) draw on the new one.
-    const { shopOffers: _offers, ...counters } = rng.getCounters();
+    // `sigils` (SPEC §15.4) was appended after the fixture; a shop draws nothing there.
+    const { shopOffers: _offers, sigils: _sigils, ...counters } = rng.getCounters();
+    assert.equal(_sigils, 0);
     assert.deepEqual(counters, before.counters, `seed ${n}: every existing stream`);
   }
 });
