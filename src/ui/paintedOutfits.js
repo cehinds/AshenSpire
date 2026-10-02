@@ -126,10 +126,6 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
   let resources = [], active = false;
   let reactionTimer, reactionQueue = [];
   const clear = () => { timers.forEach(clearTimeout); timers = []; };
-  // Cancel only this file's own blend animations. Cancelling a CSS animation
-  // from script holds it cancelled until its name changes, which is how the
-  // idle bob on the pose frames stopped at the first pose swap.
-  const cancelBlends = el => el.getAnimations().forEach(a => { if (!a.animationName && !a.transitionProperty) a.cancel(); });
   const syncAura = (stateId, fade = false, initialOpacity) => {
     const state = COMBAT_POSE_STATES[stateId];
     const opacity = initialOpacity ?? (Number.parseFloat(getComputedStyle(aura).opacity) || 0);
@@ -152,8 +148,8 @@ export function createPaintedStage(classId, armourId = POSE.defaultArmourId, { s
     const state = COMBAT_POSE_STATES[pose];
     const frame = frames[pose] || (state ? frames[state.frame] || frames[state.fallback] : null) || (Object.hasOwn(POWER_FRAMES, pose) ? frames.idle : null);
     if (!frame) return false;
-    cancelBlends(previous);
-    cancelBlends(img);
+    previous.getAnimations().forEach(a => a.cancel());
+    img.getAnimations().forEach(a => a.cancel());
     if (blend && current !== pose && img.getAttribute('src') && !reducedMotionRequested()) {
       previous.src = img.src; previous.style.filter = img.style.filter;
       previous.style.display = '';

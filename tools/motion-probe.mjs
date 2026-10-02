@@ -12,12 +12,18 @@
 // node entered the way the map enters it, on the shot boot's memory storage.
 //
 //   IDLE <who>    every combatant (players and enemies) draws at least one
-//                 visible figure image, and every visible figure image has
-//                 `getComputedStyle(img).animationName !== 'none'` AND a running
-//                 CSSAnimation of that name (a script cancel leaves the name).
-//   CONTROL       with motion on, the same sampler over the same turn sees at
-//                 least one animation longer than the limit, so a green
-//                 REDUCED line below is not a blind sampler.
+//                 visible figure image, and every visible figure image is
+//                 moved by an idle animation: on the image or on the layer
+//                 inside .sprite that carries it (.facing, .pose-layer; D42),
+//                 `getComputedStyle(el).animationName !== 'none'` AND a running,
+//                 infinite CSSAnimation of that name (a script cancel leaves
+//                 the name and stops the motion). IDLE-AFTER repeats it once
+//                 the motion-on turn has settled, when enemies may rest in a
+//                 guard, wounded or afflicted pose.
+//   CONTROL       with motion on, the same sampler over the same turn sees a
+//                 finite CSS animation, a CSS transition and an Element.animate()
+//                 call over the limit, so a green REDUCED line is not a blind
+//                 sampler.
 //   TURN <mode>   one full turn was played: a card landed on an enemy, End
 //                 Turn was held, the enemies acted and turn 2 is back in hand.
 //   REDUCED <mode> no animation `document.getAnimations()` returned on any
@@ -80,16 +86,19 @@ if (argv.includes('--selftest')) {
       {
         name: 'the idle bob goes back to the dead `.sprite > img` selector',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(img.pose-frame, img.enemy-pose-idle) { animation: sprite-idle',
+        find: '.combatant .sprite :is(.facing, .pose-layer) { animation: sprite-idle',
         replace: '.combatant .sprite > img { animation: sprite-idle',
-        expectRed: /RED IDLE /,
+        expectRed: /RED IDLE player#\d+ — .*no idle animation/,
       },
       {
-        name: 'a pose swap cancels the CSS idle bob along with its own blend',
-        file: 'src/ui/paintedOutfits.js',
-        find: '    cancelBlends(img);',
-        replace: '    img.getAnimations().forEach(a => a.cancel());',
-        expectRed: /RED IDLE player#\d+ — .*named but not running/,
+        // This PR's first shape: the bob on the idle images themselves. The
+        // painted player's pose swap cancels every animation on its frame
+        // (paintedOutfits.js), so the name stays and nothing runs.
+        name: 'the idle bob sits on the figure images instead of their layer',
+        file: 'styles/combat.css',
+        find: '.combatant .sprite :is(.facing, .pose-layer) { animation: sprite-idle',
+        replace: '.combatant .sprite :is(img.pose-frame, img.enemy-pose-idle) { animation: sprite-idle',
+        expectRed: /RED IDLE player#\d+ — .*named on .* but not running/,
       },
       {
         name: 'the Reduced motion setting stops shortening CSS animations',
@@ -113,15 +122,22 @@ if (argv.includes('--selftest')) {
         expectRed: /RED REDUCED setting\+os — .*card-flight/,
       },
       {
-        name: 'the fx timeline plays its scripted beats under reduced motion',
-        file: 'src/ui/fx.js',
-        find: '  if (!speed || reduced) {',
-        replace: '  if (!speed) {',
-        expectRed: /RED REDUCED-SCRIPT setting\+os/,
+        // A timer flipbook with no Animation object. Two gates stand in front
+        // of it (the fx timeline and the layer's own), so both are lifted:
+        // either alone still leaves the board still, which is the design.
+        name: 'the combatant effect flipbook runs under reduced motion',
+        edits: [
+          { file: 'src/ui/fx.js', find: '  if (!speed || reduced) {', replace: '  if (!speed) {' },
+          { file: 'src/ui/combatantEffectLayers.js',
+            find: " if(!stage||reducedMotionRequested()||document.body.classList.contains('reduce-flashes'))return null;",
+            replace: " if(!stage||document.body.classList.contains('reduce-flashes'))return null;" },
+        ],
+        expectRed: /RED REDUCED-SCRIPT setting\+os — .*combatant-effect-layer/,
       },
     ],
   });
-  console.info(`motion-probe --selftest: ${passed} passed, ${failed} failed`);
+  // The one counted verdict line (tools/verdict.mjs reads it bare).
+  console.info(`${passed} passed, ${failed} failed`);
   process.exit(code || (failed ? 1 : 0));
 }
 
@@ -177,14 +193,22 @@ const SAMPLER = `(() => {
   new MutationObserver((records) => {
     for (const r of records) {
       const el = r.target;
-      if (r.attributeName === 'src') { note(el, 'src'); continue; }
+      // An assignment of the value already there moves nothing.
+      if (r.attributeName === 'src') { if (el.getAttribute('src') !== r.oldValue) note(el, 'src'); continue; }
       const st = el.style; if (!st) continue;
       const now = MOTION_PROPS.map((p) => st.getPropertyValue(p)).join('|');
-      const was = lastStyle.get(el);
+      // The first write seen is compared with the style before it (the
+      // record's old value), so a tween's first step counts too.
+      let was = lastStyle.get(el);
+      if (was === undefined) {
+        const probe = document.createElement('i');
+        probe.setAttribute('style', r.oldValue || '');
+        was = MOTION_PROPS.map((p) => probe.style.getPropertyValue(p)).join('|');
+      }
       lastStyle.set(el, now);
-      if (was !== undefined && was !== now) note(el, 'style');
+      if (was !== now) note(el, 'style');
     }
-  }).observe(document, { subtree: true, attributes: true, attributeFilter: ['style', 'src'] });
+  }).observe(document, { subtree: true, attributes: true, attributeOldValue: true, attributeFilter: ['style', 'src'] });
   const tick = () => {
     frames++;
     for (const a of document.getAnimations()) record(a, 'getAnimations');
@@ -324,6 +348,48 @@ const dump = (mode, turn) => {
 const long = (log) => log.filter((a) => a.active === 'Infinity' || a.active > MAX_ACTIVE_MS);
 const show = (a) => `${a.kind} ${a.name} on ${a.target} (${a.active === 'Infinity' ? 'infinite' : `${Math.round(a.active)} ms`}, via ${a.via})`;
 
+// Every living combatant's visible figure images, each with the element that
+// moves it: the image itself or a layer up to .sprite (D42 puts the bob on
+// .facing / .pose-layer). A carrier needs a computed animationName AND a
+// running infinite CSSAnimation of that name on that element.
+async function idle({ evaluate }, label) {
+  const figures = await evaluate(`[...document.querySelectorAll('.combatant')].map((c, i) => {
+    const who = (c.classList.contains('player') ? 'player' : c.classList.contains('enemy') ? 'enemy' : 'combatant') + '#' + i;
+    const dead = c.classList.contains('dead') || c.classList.contains('down');
+    const name = c.querySelector('.nm')?.textContent?.trim() || '';
+    const imgs = [...c.querySelectorAll('.sprite img')].filter((img) => {
+      const cs = getComputedStyle(img);
+      return cs.visibility === 'visible' && cs.display !== 'none' && !img.classList.contains('defeated-frame')
+        && !img.classList.contains('pose-previous');
+    });
+    const tag = (el) => el.tagName.toLowerCase() + [...el.classList].slice(0, 2).map((k) => '.' + k).join('');
+    return { who, dead, name, imgs: imgs.map((img) => {
+      const named = [];
+      for (let el = img; el && el !== c; el = el.parentElement) {
+        const anim = getComputedStyle(el).animationName;
+        if (anim !== 'none') {
+          const running = el.getAnimations().some((a) => a.animationName && anim.split(/,\\s*/).includes(a.animationName)
+            && a.playState === 'running' && a.effect.getComputedTiming().activeDuration === Infinity);
+          named.push({ on: tag(el), anim, running });
+          if (running) break;
+        }
+        if (el.classList.contains('sprite')) break;
+      }
+      return { img: tag(img), carrier: named.find((n) => n.running) || null, stopped: named.find((n) => !n.running) || null };
+    }) };
+  })`);
+  for (const f of figures) {
+    if (label !== 'IDLE' && f.dead) continue;
+    const bare = f.imgs.filter((i) => !i.carrier);
+    const why = (i) => i.stopped ? `${i.stopped.anim} is named on ${i.stopped.on} but not running (cancelled from script?)` : 'no idle animation on it or its layers';
+    check(f.imgs.length > 0 && bare.length === 0, `${label} ${f.who}`,
+      f.imgs.length === 0 ? `${f.name}: no visible figure image to animate`
+        : bare.length ? `${f.name}: ${bare.map((i) => `${i.img}: ${why(i)}`).join('; ')}`
+          : `${f.name}: ${f.imgs.map((i) => `${i.img} moved by ${i.carrier.anim} on ${i.carrier.on}`).join('; ')}`);
+  }
+  return figures;
+}
+
 const server = await serve({ root: ROOT, port: 0, open: false });
 const base = `http://localhost:${server.server.address().port}/`;
 const browser = await launchBrowser({ prefix: 'motion-', headless: '--headless=new' });
@@ -333,40 +399,22 @@ try {
 
   // ---- §5: the idle animation plays on every combatant, motion on ----------
   await boot(s, base, { setting: false, os: false });
-  const figures = await s.evaluate(`[...document.querySelectorAll('.combatant')].map((c, i) => {
-    const who = (c.classList.contains('player') ? 'player' : c.classList.contains('enemy') ? 'enemy' : 'combatant') + '#' + i;
-    const imgs = [...c.querySelectorAll('.sprite img')].filter((img) => {
-      const cs = getComputedStyle(img);
-      return cs.visibility === 'visible' && cs.display !== 'none' && !img.classList.contains('defeated-frame')
-        && !img.classList.contains('pose-previous');
-    });
-    return { who, name: c.querySelector('.nm')?.textContent?.trim() || '', imgs: imgs.map((img) => ({ cls: img.className, anim: getComputedStyle(img).animationName,
-      running: img.getAnimations().some((a) => a.animationName === getComputedStyle(img).animationName && a.playState === 'running') })) };
-  })`);
-  const players = figures.filter((f) => f.who.startsWith('player')).length;
-  const enemies = figures.filter((f) => f.who.startsWith('enemy')).length;
+  const first = await idle(s, 'IDLE');
+  const players = first.filter((f) => f.who.startsWith('player')).length;
+  const enemies = first.filter((f) => f.who.startsWith('enemy')).length;
   check(players >= 1 && enemies >= 1, 'IDLE-BOARD', `seed ${SEED}: ${players} player(s) and ${enemies} enemy(ies) on the board`);
-  for (const f of figures) {
-    // FINISH's test is the computed name; a name whose CSSAnimation was
-    // cancelled from script (Animation.cancel() on a CSS animation holds until
-    // the name changes) still reads as that name and draws nothing, so the
-    // animation must also be running.
-    const still = f.imgs.filter((i) => i.anim === 'none');
-    const stopped = f.imgs.filter((i) => i.anim !== 'none' && !i.running);
-    const named = (list) => list.map((i) => `img.${i.cls.replace(/\s+/g, '.')}`).join(', ');
-    check(f.imgs.length > 0 && still.length === 0 && stopped.length === 0, `IDLE ${f.who}`,
-      f.imgs.length === 0 ? `${f.name}: no visible figure image to animate`
-        : still.length ? `${f.name}: animationName none on ${named(still)}`
-          : stopped.length ? `${f.name}: ${stopped[0].anim} is named but not running on ${named(stopped)} (cancelled from script?)`
-            : `${f.name}: ${f.imgs.map((i) => `${i.anim} running`).join(', ')}`);
-  }
 
   // ---- CONTROL: the sampler can see a long animation when motion is on ------
   const control = await playTurn(s);
   check(control.landed && control.turn >= 2, 'TURN motion-on', `${control.attack} landed, turn ${control.turn}, ${control.frames} frames sampled`);
   const seen = long(control.log);
   if (DUMP) dump('motion-on', control);
-  check(seen.length > 0, 'CONTROL', `motion on: ${control.log.length} animation(s) seen, ${seen.length} over ${MAX_ACTIVE_MS} ms (e.g. ${seen.slice(0, 3).map(show).join('; ') || 'none'})`);
+  const kinds = { 'finite CSS animation': seen.find((a) => a.kind === 'CSSAnimation' && a.active !== 'Infinity'),
+    'CSS transition': seen.find((a) => a.kind === 'CSSTransition'), 'Element.animate()': seen.find((a) => a.via === 'Element.animate') };
+  const missing = Object.keys(kinds).filter((k) => !kinds[k]);
+  check(missing.length === 0, 'CONTROL', `motion on: ${control.log.length} animation(s) seen, ${seen.length} over ${MAX_ACTIVE_MS} ms; `
+    + (missing.length ? `never saw a ${missing.join(' or ')} over the limit — the sampler may be blind to it` : Object.entries(kinds).map(([k, a]) => `${k}: ${show(a)}`).join('; ')));
+  await idle(s, 'IDLE-AFTER');
   const flipbooks = scripted(control.scripted);
   check(flipbooks.length > 0, 'CONTROL-SCRIPT', `motion on: ${flipbooks.length} script-driven change burst(s) seen (e.g. ${flipbooks.slice(0, 3).map(showScripted).join('; ') || 'none'})`);
 
@@ -395,5 +443,6 @@ try {
 }
 
 const failed = results.filter((ok) => !ok).length;
-console.log(`motion-probe: ${results.length - failed} passed, ${failed} failed`);
+// The one counted verdict line (tools/verdict.mjs reads it bare).
+console.log(`${results.length - failed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
