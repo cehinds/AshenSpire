@@ -314,6 +314,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       rows: combatPotionRows(registries, meP), opener: app.querySelector('.combat-potions'), shortcut, arm,
       useReason: ({ options }) => options.remaining <= 0 ? 'No charges remaining' : seatReason(meP),
       stillUsable: () => me === seat && !seatReason(seatPlayer()),
+      // Co-op's own flow (#1436 review, Codex P2): a targeted potion goes at
+      // the enemy already selected, and a charge drinks; a carried untargeted
+      // potion arms a throw at a hero seat.
+      targetLine: ({ def, options }) => options.chargeKind ? 'Applies to your character.'
+        : def.targeted ? 'Thrown at the selected enemy.' : 'Choose a player after Use.',
       onUse: ({ def, options: { slot = null, chargeKind = null } }) => {
         if (me !== seat) return;
         if (chargeKind) sendFlaskUse({ chargeKind });

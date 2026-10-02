@@ -104,15 +104,19 @@ export function combatPotionRows(registries, player) {
   ));
 }
 
+const soloTargetLine = ({ def }) => (def.targeted ? 'Choose an enemy after Use.' : 'Applies to your character.');
+
 /**
  * The Potions list. `shortcut` is the flask action a key pressed
  * (flask1..flask3), or the WGH8 entry key a Potions mini was tapped for; that
  * entry opens folded out. Found by action or key, not by list position.
  * `useReason(row)` is '' when Use may be offered, else the spelled-out reason;
  * `stillUsable()` rechecks the live fight before a confirmed Use commits;
- * `onUse(row)` is the screen's own Use (local dispatch or network intent).
+ * `onUse(row)` is the screen's own Use (local dispatch or network intent);
+ * `targetLine(row)` says where that Use lands, so the words match the board's
+ * own flow (co-op aims differently from solo).
  */
-export function openCombatPotions({ rows, opener, shortcut = null, arm, useReason, stillUsable, onUse }) {
+export function openCombatPotions({ rows, opener, shortcut = null, arm, useReason, stillUsable, onUse, targetLine = soloTargetLine }) {
   const shortcutIndex = shortcut == null ? -1 : rows.findIndex((row) => row.options.useActionId === shortcut || row.entry.key === shortcut);
   let shell;
   shell = openModal({ title: 'Potions', size: 'md', className: 'combat-potion-menu', opener, bodyClassName: 'as-pane', body: host => {
@@ -132,7 +136,7 @@ export function openCombatPotions({ rows, opener, shortcut = null, arm, useReaso
         description: flaskDetailLines(def, { charges }).join(' '),
         meta: t(countId, { count: remaining }), trail: [use], arrow: true });
       const detail = detailCard({ eyebrow: 'Potion', name: def.name + ' details',
-        line: def.textTemplate || '', meta: def.targeted ? 'Choose an enemy after Use.' : 'Applies to your character.',
+        line: def.textTemplate || '', meta: targetLine(row),
         children: [flavour(tFull(countId, { count: remaining })), reason ? flavour(reason) : null] });
       fold.append(summary, detail);
       const moveUse = () => {
