@@ -65,6 +65,7 @@ import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
 import { verifyPacks, PACKS, objectPath, indexText } from './asset-pack.mjs';
 import { slotIds, VAR_PREFIX } from './asset-css.mjs';
+import { unmappedFaceDescriptors } from '../src/ui/assetPacks.js';
 import { MAP_ART } from '../src/content/mapArt.generated.js';
 import { visibleTiles } from '../src/ui/models/MapDetailModel.js';
 import { tileId } from '../src/ui/components/mapDetail.js';
@@ -243,6 +244,11 @@ function verify(outDir) {
         findings.push(`ASSET_CSS carries a rule that is neither a backdrop variable nor an @font-face: ${String(rule).slice(0, 60)}`);
       }
     }
+    // file:// (step 4) builds each face as a FontFace from its rule: a
+    // descriptor FACE_DESCRIPTORS does not map would make that door declare a
+    // different face than the @font-face rule over http(s).
+    checks++;
+    for (const d of unmappedFaceDescriptors(css)) findings.push(`an ASSET_CSS @font-face carries ${d}, which the file:// FontFace would drop — map it in FACE_DESCRIPTORS (src/ui/assetPacks.js)`);
     const used = new Set([...styles.matchAll(VAR_USE)].map((m) => m[1]));
     for (const name of used) {
       checks++;
@@ -401,6 +407,8 @@ plant('an ASSET_CSS slot naming an id no index lists', () => [html],
 plant('a stylesheet reading a backdrop variable no ASSET_CSS rule defines', () => [html],
   (f) => edit(f, /(<style data-src="[^"]*">[\s\S]*?)var\(--as-css-([A-Za-z0-9_-]+)/, (_, head, name) => `${head}var(--as-css-planted-${name}`));
 plant('no ASSET_CSS template', () => [html], (f) => edit(f, CSS_PIN, 'const ASSET_CSS = null;\n'));
+plant('an ASSET_CSS @font-face with a descriptor the file:// FontFace would drop', () => [html],
+  (f) => edit(f, /@font-face \{ /, '@font-face { font-palette:light; '), /which the file:\/\/ FontFace would drop/);
 plant('an injected ASSET_MAP — the wrong shape shipped', () => [html],
   (f) => edit(f, /ASSET_MAP = \{\}/g, 'ASSET_MAP = {"assets/x.webp":"data:image/webp;base64,AAAA"}'));
 // E — the music and the tiles (step 3c).

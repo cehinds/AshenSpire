@@ -146,17 +146,23 @@ export function twinOf(file) {
 }
 
 // THE TWIN HOOKS. A twin is a classic script that calls one of these with its
-// name and its text. What it hands over is kept by name until the loader that
-// asked for that twin reads it; a call nobody asked for is kept too (and
-// replaced by the next one), and is only ever used after it hashes to a pin.
+// name and its text. A call is kept only while a loader is waiting for that
+// name (between inserting the twin's <script> and reading it back), and only
+// the first one; a call nobody is waiting for, or one that arrives after the
+// reader gave up, is dropped. What is kept is still used only once it hashes
+// to its pin. The hooks stay installed on the window once the first twin is
+// asked for (a later load or a tier switch reads twins too).
 const TWIN_FNS = Object.freeze({ pack: '__ashenPack', fonts: '__ashenFonts' });
 const delivered = new Map(); // `${kind}:${name}` → text
+const awaiting = new Map(); // `${kind}:${name}` → readers waiting for it
 
 function installTwinHooks(root = globalThis) {
   for (const [kind, fn] of Object.entries(TWIN_FNS)) {
     if (typeof root[fn] === 'function' && root[fn].ashenTwinHook) continue;
     const hook = (name, text) => {
-      if (typeof name === 'string' && typeof text === 'string') delivered.set(`${kind}:${name}`, text);
+      if (typeof name !== 'string' || typeof text !== 'string') return;
+      const key = `${kind}:${name}`;
+      if (awaiting.get(key) > 0 && !delivered.has(key)) delivered.set(key, text);
     };
     hook.ashenTwinHook = true;
     try { root[fn] = hook; } catch { /* a frozen global: nothing loads */ }
@@ -197,9 +203,16 @@ async function readTwin(kind, file, { base = './', scriptImpl, signal } = {}) {
   installTwinHooks();
   const key = `${kind}:${twin.name}`;
   delivered.delete(key);
-  await scriptImpl(`${base}${twin.file}`, { signal });
-  const text = delivered.get(key);
-  delivered.delete(key);
+  awaiting.set(key, (awaiting.get(key) || 0) + 1);
+  let text;
+  try {
+    await scriptImpl(`${base}${twin.file}`, { signal });
+    text = delivered.get(key);
+  } finally {
+    const left = (awaiting.get(key) || 1) - 1;
+    if (left > 0) awaiting.set(key, left);
+    else { awaiting.delete(key); delivered.delete(key); }
+  }
   if (typeof text !== 'string') throw new Error(`${twin.file} did not call ${TWIN_FNS[kind]}("${twin.name}", …)`);
   return { text, file: twin.file };
 }
@@ -267,10 +280,44 @@ function objectSha(url) {
   return (/([0-9a-f]{64})(?:\.[a-z0-9]+)?$/.exec(String(url || '')) || [])[1] || null;
 }
 
-const FACE_DESCRIPTORS = Object.freeze({
+/** Every @font-face descriptor a FontFace takes, CSS name → FontFace option. */
+export const FACE_DESCRIPTORS = Object.freeze({
   'font-style': 'style', 'font-weight': 'weight', 'font-stretch': 'stretch',
   'font-display': 'display', 'unicode-range': 'unicodeRange', 'font-feature-settings': 'featureSettings',
+  'font-variation-settings': 'variationSettings', 'size-adjust': 'sizeAdjust',
+  'ascent-override': 'ascentOverride', 'descent-override': 'descentOverride', 'line-gap-override': 'lineGapOverride',
 });
+
+/** The declarations of one @font-face rule, comments stripped: [property, value] pairs. */
+function faceDeclarations(text) {
+  const body = text.slice(text.indexOf('{') + 1, text.lastIndexOf('}')).replace(/\/\*[\s\S]*?\*\//g, ' ');
+  const out = [];
+  for (const part of body.split(';')) {
+    const at = part.indexOf(':');
+    if (at < 0) continue;
+    out.push([part.slice(0, at).trim().toLowerCase(), part.slice(at + 1).trim()]);
+  }
+  return out;
+}
+
+/**
+ * unmappedFaceDescriptors(css) → the descriptors an ASSET_CSS @font-face rule
+ * carries that a FontFace built by fontFaceRules would lose (anything but
+ * font-family, src and FACE_DESCRIPTORS), as `<property> (<rule start>)`. The
+ * file:// door would declare a different face than the http(s) one, so
+ * tools/verify-external.mjs D refuses any.
+ */
+export function unmappedFaceDescriptors(css) {
+  const out = [];
+  for (const rule of (css && Array.isArray(css.rules) ? css.rules : [])) {
+    const text = String(rule);
+    if (!/^\s*@font-face\b/.test(text)) continue;
+    for (const [prop] of faceDeclarations(text)) {
+      if (prop !== 'font-family' && prop !== 'src' && !FACE_DESCRIPTORS[prop]) out.push(`${prop} (${text.slice(0, 48)})`);
+    }
+  }
+  return out;
+}
 
 /**
  * fontFaceRules(css) → Map id → { family, descriptors } for every ASSET_CSS
@@ -284,14 +331,9 @@ export function fontFaceRules(css) {
     if (!/^\s*@font-face\b/.test(text)) continue;
     const ids = [...text.matchAll(SLOT)].map((m) => m[1]);
     if (ids.length !== 1) continue;
-    const body = text.slice(text.indexOf('{') + 1, text.lastIndexOf('}'));
     let family = '';
     const descriptors = {};
-    for (const part of body.split(';')) {
-      const at = part.indexOf(':');
-      if (at < 0) continue;
-      const prop = part.slice(0, at).trim().toLowerCase();
-      const value = part.slice(at + 1).trim();
+    for (const [prop, value] of faceDeclarations(text)) {
       if (prop === 'font-family') family = value.replace(/^(['"])(.*)\1$/, '$2');
       else if (FACE_DESCRIPTORS[prop] && value) descriptors[FACE_DESCRIPTORS[prop]] = value;
     }
@@ -321,7 +363,7 @@ let facesAdded = null; // { sha, count }
  */
 export async function loadFontSidecar(pin, common, {
   base = './', scriptImpl = scriptTag, subtle, signal, css = ASSET_CSS, doc = globalThis.document,
-  FontFaceImpl = globalThis.FontFace,
+  FontFaceImpl = globalThis.FontFace, stillWanted = null,
 } = {}) {
   const failed = [];
   const want = pin?.fonts;
@@ -335,12 +377,15 @@ export async function loadFontSidecar(pin, common, {
   } catch (e) {
     return { faces: 0, failed: [`fonts: ${e.message}`] };
   }
-  // Past the deadline (the load aborted `signal`) nothing more is added: the
-  // load has settled, and a face arriving later is never laid over it.
-  const ABORTED = { faces: 0, failed: ['fonts: aborted at the deadline; no face added'] };
-  if (signal?.aborted) return ABORTED;
+  // Past the deadline (the load aborted `signal`), or once the player has
+  // replaced the tier switch this load belongs to (stillWanted), nothing more is
+  // added: the load has settled or is not wanted, and a face arriving later is
+  // never laid over it.
+  const stop = () => !!signal?.aborted || (typeof stillWanted === 'function' && !stillWanted());
+  const ABORTED = { faces: 0, failed: ['fonts: aborted at the deadline or superseded; no face added'] };
+  if (stop()) return ABORTED;
   const sha = await sha256Hex(new TextEncoder().encode(got.text), subtle);
-  if (signal?.aborted) return ABORTED;
+  if (stop()) return ABORTED;
   if (sha !== want.sha256) return { faces: 0, failed: [`fonts: ${got.file} hashes to ${sha.slice(0, 12)}, the pin says ${want.sha256.slice(0, 12)}`] };
   let faces;
   try { faces = JSON.parse(got.text); } catch { return { faces: 0, failed: [`fonts: ${got.file} is not a sidecar`] }; }
@@ -353,7 +398,7 @@ export async function loadFontSidecar(pin, common, {
     let bytes;
     try { bytes = base64Bytes(b64); } catch { failed.push(`fonts: ${id} is not base64`); continue; }
     const got256 = await sha256Hex(bytes, subtle);
-    if (signal?.aborted) return ABORTED;
+    if (stop()) return ABORTED;
     if (got256 !== record) { failed.push(`fonts: ${id} hashes to ${got256.slice(0, 12)}, its common record says ${record.slice(0, 12)}`); continue; }
     made.push([id, rule, bytes]);
   }
@@ -365,14 +410,14 @@ export async function loadFontSidecar(pin, common, {
     try {
       const face = new FontFaceImpl(rule.family, bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), rule.descriptors);
       if (typeof face.load === 'function') await face.load();
-      if (signal?.aborted) return ABORTED;
+      if (stop()) return ABORTED;
       ready.push(face);
     } catch (e) {
-      if (signal?.aborted) return ABORTED;
+      if (stop()) return ABORTED;
       failed.push(`fonts: ${id} did not load (${e?.message || e})`);
     }
   }
-  if (signal?.aborted) return ABORTED;
+  if (stop()) return ABORTED;
   for (const face of ready) doc.fonts.add(face);
   const count = ready.length;
   if (count) facesAdded = { sha: want.sha256, count };
@@ -500,7 +545,7 @@ export async function loadBuiltInPacks({
     if (viaFile && pin.fonts && common) {
       const fontCtl = abortable();
       const got = await Promise.race([
-        loadFontSidecar(pin, common, { base, scriptImpl: loadScript, subtle, signal: fontCtl?.signal, css, doc, FontFaceImpl }),
+        loadFontSidecar(pin, common, { base, scriptImpl: loadScript, subtle, signal: fontCtl?.signal, css, doc, FontFaceImpl, stillWanted }),
         budget(left(), fontCtl, { faces: 0, failed: [`fonts: the sidecar did not load within ${deadlineMs} ms`] }),
       ]);
       faces = got.faces;
@@ -698,6 +743,7 @@ export function resetBuiltInArt() {
   lastCommon = null;
   facesAdded = null;
   delivered.clear();
+  awaiting.clear();
   status = { state: 'idle', tier: null, requested: null, ids: 0, css: 0, failed: [] };
   setBuiltInSource(null);
 }

@@ -954,10 +954,19 @@ Where the build settles §3.2, §3.8–§3.10 for `file://` (2026-10-02):
 - **The indexes.** Under `file://`, `loadBuiltInPacks` reads each pinned index
   from its `.js` twin (`loadTwinIndex`), one classic `<script>` per twin,
   removed once it has run. The twin calls `window.__ashenPack(name, text)`;
-  the loader keeps what each name handed over, hashes **the string** (as
-  UTF-8) against the index's pin and only then parses it, so a twin that does
-  not match is dropped unparsed and the tier fallback applies exactly as for a
-  `.json` that fails its pin. A twin that is missing, or never calls its hook,
+  the loader keeps a call only while it is waiting for that name, and only
+  the first one: a call nobody is waiting for, or one that arrives after the
+  reader gave up, is dropped. It hashes **the string** (as UTF-8) against the
+  index's pin and only then parses it, so a twin that does not match is
+  dropped unparsed and the tier fallback applies exactly as for a `.json` that
+  fails its pin.
+- **What the pin covers.** The pin covers the **data** a twin hands over, not
+  the **code** the twin runs: a `<script>` from the build's folder executes
+  before its argument can be checked, with the same trust as the HTML beside
+  it (§3.2). The pin catches a wrong or stale twin, not a hostile one. The two
+  hooks, `window.__ashenPack` and `window.__ashenFonts`, are installed when the
+  first twin is asked for and **stay installed** for the page's life, because a
+  later tier switch reads twins too; outside a wait they keep nothing. A twin that is missing, or never calls its hook,
   is a failed index. The deadlines, the high sub-budget, the parallel common
   load and `keepOnFail` are the http(s) ones.
 - **The base is `./`.** A `file://` page cannot fetch `asset-base.json`, and
@@ -968,10 +977,16 @@ Where the build settles §3.2, §3.8–§3.10 for `file://` (2026-10-02):
   and each face it carries must be one an `ASSET_CSS` `@font-face` rule
   declares, listed by the verified common map, and decode to bytes that hash
   to that common record. Each that passes becomes a `FontFace` whose family
-  and descriptors are read from that same rule (`fontFaceRules`), added to
+  and descriptors are read from that same rule (`fontFaceRules`, comments
+  stripped, every standard descriptor in `FACE_DESCRIPTORS`; `verify-external`
+  D refuses a rule carrying one it does not map), added to
   `document.fonts`; the `@font-face` rules themselves are left out of the
   injected `<style data-asset-css>` under `file://` (Chrome refuses their
-  url() loads). A tier switch never adds the same faces twice. A sidecar off
+  url() loads). A tier switch never adds the same faces twice. The faces are
+  loaded first and added together, and nothing is added (nor the faces cache
+  written) once the deadline has aborted the load or the player has replaced
+  the switch it belongs to (`stillWanted`); `stillWanted` is checked again
+  after the sidecar, before anything is published (review of #1461). A sidecar off
   its pin, or a face off its record, leaves that face on the system fallback
   and is reported in the load's `failed` list; the art still loads.
 - **The backdrops** need nothing new: `ASSET_CSS` fills each slot with the

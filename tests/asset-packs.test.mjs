@@ -8,9 +8,9 @@ import { createHash, randomBytes } from 'node:crypto';
 import {
   loadBuiltInPacks, whenBuiltInArtReady, resetBuiltInArt, packsPinned, tierOrder, objectUrl, cleanBase,
   builtInArtStatus, ASSET_PACKS, musicHold, bootLine, ASSET_CSS, fillAssetCss, applyAssetCss,
-  fontFaceRules, twinOf,
+  fontFaceRules, twinOf, unmappedFaceDescriptors,
 } from '../src/ui/assetPacks.js';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { assetUrl, builtInSource, setBuiltInSource, setHighResSource } from '../src/ui/assetmap.js';
 import { sha256Bytes, sha256Hex } from '../src/ui/sha256.js';
 import { objectPath, indexText, twinText } from '../tools/asset-pack.mjs';
@@ -330,6 +330,29 @@ test('file://: a tier switch replaced while a face is loading publishes nothing'
   assert.equal(published, 0, 'onSource never ran');
   assert.equal(builtInSource(), null, 'setBuiltInSource never ran');
   assert.equal(doc.styles.length, 0, 'no CSS injected');
+  assert.equal(doc.fontList.length, 0, 'document.fonts unchanged: the superseded switch added no face');
+  // Nor was the faces cache written: the next wanted load adds the face.
+  const next = await loadBuiltInPacks(fileOpts(tree, { css: FACE_CSS, doc }));
+  assert.equal(next.faces, 1);
+  assert.equal(doc.fontList.length, 1);
+  resetBuiltInArt();
+});
+
+test('file://: a twin call nobody is waiting for is dropped, and so is a late one', async () => {
+  resetBuiltInArt();
+  const tree = twinTree();
+  await loadBuiltInPacks(fileOpts(tree)); // installs the hooks
+  resetBuiltInArt();
+  const name = tree.pin.packs.light.index.replace(/^packs\/|\.json$/g, '');
+  const text = tree.files.get(tree.pin.packs.light.index);
+  globalThis.__ashenPack(name, text); // unsolicited, even with the right text
+  const silent = twinTree({ silent: ['light'] });
+  const r = await loadBuiltInPacks(fileOpts(silent));
+  assert.equal(r.state, 'failed', 'the unsolicited call was not kept for the next reader');
+  assert.ok(r.failed.some((f) => /did not call __ashenPack/.test(f)), r.failed.join('; '));
+  globalThis.__ashenPack(name, text); // late: the reader has given up
+  const again = await loadBuiltInPacks(fileOpts(silent));
+  assert.equal(again.state, 'failed', 'nor a late one');
   resetBuiltInArt();
 });
 
@@ -341,6 +364,23 @@ test('fontFaceRules reads a FontFace from each ASSET_CSS @font-face rule', () =>
   assert.deepEqual([...rules.keys()], ['assets/fonts/inter-400-normal.woff2']);
   assert.deepEqual(rules.get('assets/fonts/inter-400-normal.woff2'), { family: 'AS Lore Inter', descriptors: { style: 'normal', weight: '400', display: 'swap' } });
   assert.equal(fontFaceRules(null).size, 0);
+  // Comments are stripped, and every standard descriptor is carried.
+  const full = fontFaceRules({ schema: 1, rules: [
+    "@font-face { /* the lore face; size: 1 */ font-family:'AS Lore X'; size-adjust:90%; ascent-override:80%; descent-override:20%; line-gap-override:0%; font-variation-settings:'wght' 400; /* end */ src:url(\"{{assets/fonts/x.woff2}}\"); }",
+  ] });
+  assert.deepEqual(full.get('assets/fonts/x.woff2'), { family: 'AS Lore X', descriptors: {
+    sizeAdjust: '90%', ascentOverride: '80%', descentOverride: '20%', lineGapOverride: '0%', variationSettings: "'wght' 400" } });
+});
+
+test('a @font-face descriptor a FontFace would lose is found, and the shipped stylesheets carry none', () => {
+  const css = { schema: 1, rules: ["@font-face { font-family:'AS Lore X'; font-palette:light; src:url(\"{{assets/fonts/x.woff2}}\"); }"] };
+  assert.deepEqual(unmappedFaceDescriptors(css).map((d) => d.split(' ')[0]), ['font-palette']);
+  assert.deepEqual(unmappedFaceDescriptors(FACE_CSS), []);
+  for (const name of readdirSync(new URL('../styles/', import.meta.url)).filter((f) => f.endsWith('.css'))) {
+    const text = readFileSync(new URL(`../styles/${name}`, import.meta.url), 'utf8');
+    const rules = [...text.matchAll(/@font-face\s*\{[^{}]*\}/g)].map((m) => m[0]);
+    assert.deepEqual(unmappedFaceDescriptors({ rules }), [], `styles/${name}: a face the file:// door would declare differently`);
+  }
 });
 
 test('twinOf names the .js twin of a pinned index', () => {
