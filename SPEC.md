@@ -71,7 +71,7 @@ on the prototype gate; both remain the contract for the work after 1.0, unchange
 | Platform | Modern evergreen browsers. 1280×720 is the **layout reference** (§7.2), not a minimum: a narrow layout ships and is selected once by `main.js` writing `data-layout` (§11). |
 | Tech | Vanilla ES-module JS, HTML, CSS. No framework, no build step |
 | Persistence | `localStorage`: three run slots, plus a **durable profile** (settings, unlocks, progress, last 20 results) with a verified-write mirror and a keyed archive drawer the player can open from **Profile on the title screen** (§3.12) |
-| Entry point | `index.html` served by `node tools/serve.mjs`. Opening it directly or from any static server works only while the media are still in this tree; EXTERNAL-ASSETS-PLAN step 13 moves them to the art repository. |
+| Entry point | `index.html` served by `node tools/serve.mjs`, which serves the full media. Opened directly or from any static server, it still boots and plays; once EXTERNAL-ASSETS-PLAN step 13 moves the media trees to the art repository, such a page has placeholders (§2.4), synthesized audio and the low-detail map. |
 | Session length | One full run ≈ 45–90 minutes; one combat ≈ 2–5 minutes |
 
 A **run**: pick 1 of 4 classes → traverse a branching node map across 3 acts → fight monsters/elites/bosses, visit shrines/merchants/events → build a deck from that class's 36-card reward pool + colorless cards → win by defeating the Act 3 boss, or die and see the "YOU PERISHED" screen with seed and stats.
