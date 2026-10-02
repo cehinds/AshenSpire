@@ -17,8 +17,29 @@ function hash(text, initial = 2166136261) {
 // naming who hands a quest over (plan phase 10a, the dialogue screen's
 // speaker) must neither reroute a seed nor strand a journey in progress.
 const PRESENTATION_COLUMNS = Object.freeze({ quests: Object.freeze(['speakerId']) });
+// Rows no node can reach stay out of it for the same reason: a service that
+// no `node_services` row places, a service type no remaining service names,
+// and a handler no remaining type names cannot shape a route, an encounter or
+// a claim. So declaring a service before any point carries it (the wise
+// master, SPEC §14.5) neither reroutes a seed nor strands a journey; placing
+// it on a point does move the revision, as any route change does.
+function unplacedRowsOut(data) {
+  const placed = new Set((data.node_services || []).map((row) => row.serviceId));
+  const services = (data.services || []).filter((row) => placed.has(row.serviceId));
+  const typeIds = new Set(services.map((row) => row.serviceTypeId));
+  const types = (data.service_types || []).filter((row) => typeIds.has(row.serviceTypeId));
+  const handlerIds = new Set(types.map((row) => row.handlerId));
+  const handlers = (data.service_handlers || []).filter((row) => handlerIds.has(row.handlerId));
+  return {
+    ...data,
+    ...(data.services ? { services } : {}),
+    ...(data.service_types ? { service_types: types } : {}),
+    ...(data.service_handlers ? { service_handlers: handlers } : {}),
+  };
+}
 
-export function atlasRevision(data) {
+export function atlasRevision(source) {
+  const data = unplacedRowsOut(source);
   const text = JSON.stringify(
     Object.keys(data)
       .sort()
@@ -606,7 +627,7 @@ export function journeyProblems(j, atlas = ATLAS) {
     j.activeService &&
     (!j.serviceStates[j.activeService.pointId] ||
       j.activeService.ownerId !== j.currentNodeId ||
-      !["shop", "rest"].includes(j.activeService.handlerId))
+      !["shop", "smith", "master", "rest"].includes(j.activeService.handlerId))
   )
     return ["invalid active service"];
   if (Object.keys(j.outcomes).some((id) => !j.activeNodeIds.includes(id)))

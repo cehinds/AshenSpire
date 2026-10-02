@@ -18,7 +18,7 @@ import { sigils as shippedSigils } from '../content/sigils.js';
 import { consumables as shippedConsumables } from '../content/consumables.js';
 import { companions as shippedCompanions } from '../content/companions.js';
 import { consumableTableProblems, companionTableProblems } from './consumables.js';
-import { shopsTableProblems } from './shopKinds.js';
+import { shopsTableProblems, masterTableProblems } from './shopKinds.js';
 import { marketAdditionTableProblems, blacksmithTableProblems } from './marketStock.js';
 import { resolveFloorPlan } from './floorplan.js';
 import { validateAttack } from './combatRules.js';
@@ -667,6 +667,7 @@ function collectContentProblems(bundle, errors = []) {
     shopsTableProblems(b.shops || shippedShops, err, b);
     marketAdditionTableProblems(b.shops || shippedShops, err);
     blacksmithTableProblems(b.shops || shippedShops, err);
+    masterTableProblems(b.shops || shippedShops, err, b);
     const exposure = b.balance.exposure;
     if (exposure && typeof exposure === 'object' && !Array.isArray(exposure)) {
       if (!(Number.isInteger(exposure.buildupPerManaSpell) && exposure.buildupPerManaSpell >= 0)) err('balance.exposure.buildupPerManaSpell', `must be a non-negative integer, got ${JSON.stringify(exposure.buildupPerManaSpell)}`);

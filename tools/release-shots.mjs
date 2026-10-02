@@ -190,6 +190,9 @@ const SCREENS = [
   // The blacksmith (SPEC §14.4, §14.6 step 6): the atlas smith's own screen,
   // its rail drawn from the offerings the visit laid out.
   { name: 'blacksmith', query: '?shot=blacksmith', landmark: '.blacksmith-workspace .shop-rail [data-shop-category]', state: 'blacksmith' },
+  // The wise master (SPEC §14.5, §14.6 step 7): a master visit's own screen,
+  // its rail drawn from the offerings the visit laid out.
+  { name: 'master', query: '?shot=master', landmark: '.master-workspace .shop-rail [data-shop-category]', state: 'master' },
   // The event screen. Rune added `?shot=event` in the tap-size work (#104) and
   // did not register it here, so THIS TOOL REFUSED TO RUN at `52e0bc1` —
   // "1 app shot state neither photographed nor excluded: event" — and
