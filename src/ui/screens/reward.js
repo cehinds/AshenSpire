@@ -835,7 +835,7 @@ export function mountRewards(app, {
     const isFlask = row.kind === 'flask';
     const kindLabel = t(isFlask ? 'reward.kind.potion' : row.kind === 'relic' ? 'reward.kind.relic' : 'reward.kind.armament');
     const takeButton = button({ label: t('reward.detail.take', { kind: kindLabel.toLowerCase() }), weight: 'primary', id: 'reward-detail-take' });
-    const backButton = button({ label: t('reward.detail.back'), id: 'reward-back', className: 'subtle' });
+    const backButton = button({ label: t('reward.detail.back'), id: 'reward-back', className: 'subtle', attrs: { 'data-back': '' } });
     const detailBody = el('div', { class: 'class-row reward-menu' });
     const armament = !isFlask && registries.equipment.armaments.find(piece => piece.id === row.armamentId);
     if (armament) detailBody.append(renderEquipmentInspection(registries, armament));
@@ -871,7 +871,7 @@ export function mountRewards(app, {
     const isLevelChoice = row.kind === 'levelChoice';
     const ids = isNodeRow ? row.nodeIds : isLevelChoice ? row.options.map((o) => `${o.kind}:${o.id}`) : row.cardIds;
     const pickField = isNodeRow ? 'nodeId' : isLevelChoice ? 'choiceId' : 'cardId';
-    const backButton = button({ label: t('reward.chooser.back'), id: 'reward-back', className: 'subtle' });
+    const backButton = button({ label: t('reward.chooser.back'), id: 'reward-back', className: 'subtle', attrs: { 'data-back': '' } });
     const confirmButton = button({
       label: t('reward.confirm'), weight: 'primary', id: 'reward-card-confirm', className: 'reward-confirm', disabled: true,
     });

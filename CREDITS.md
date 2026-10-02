@@ -1,5 +1,15 @@
 # Credits & Asset Licenses
 
+## Player interface polish concepts (2026-10-01)
+
+Twelve original concept boards covering 24 player-facing feature views on
+desktop and portrait mobile were generated with OpenAI's built-in Image
+Generation tool using this project's existing artwork and screen captures.
+The PNG boards, searchable gallery, exact prompts, provenance and review notes
+are preserved in [player polish inspiration](docs/design/player-polish-2026-10-01/README.md).
+These are design references, not runtime assets. No third-party artwork was
+downloaded and no third-party asset license is claimed.
+
 ## Empty-hand magic animation suites (2026-09-19)
 
 Original artwork generated for AshenSpire with OpenAI's built-in image generation, using the project's approved class and armor references. Transparent PNG masters and exact prompts: `art/unarmed-magic-2026-09-19/`. Runtime WebP frames: `assets/animations/unarmed-magic/`. All four classes and 35 armor catalog entries share one choreography across 32 distinct appearances; no external artwork was downloaded and no third-party asset license is claimed. The existing `src/ui/assets.js` painted-stage and asset-map path resolves the configured frames.

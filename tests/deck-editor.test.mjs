@@ -674,10 +674,10 @@ test('DOM: Enter on the Rest card through input.js\'s real listener opens exactl
     assert.ok(opened <= 1, `Enter opened the editor ${opened} times`);
     // With no focus cursor on it (a plain browser Enter on the focused card), the card's own handler opens it once.
     opened = 0;
-    const plain = new dom.Event('keydown', { key: 'Enter', bubbles: true });
+    const plain = new dom.Event('keydown', { key: 'Enter', bubbles: true, cancelable: true });
     card.dispatchEvent(plain);
     assert.equal(opened, 1, 'the card\'s own Enter opens it once');
-    const consumed = new dom.Event('keydown', { key: 'Enter', bubbles: true });
+    const consumed = new dom.Event('keydown', { key: 'Enter', bubbles: true, cancelable: true });
     consumed.preventDefault();
     card.dispatchEvent(consumed);
     assert.equal(opened, 1, 'a keydown already consumed opens nothing more');
