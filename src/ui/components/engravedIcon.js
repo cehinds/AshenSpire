@@ -1,6 +1,6 @@
 // Original icon geometry from the reviewed player-polish kit. Masks inherit
 // the caller's semantic colour; canonical item/character paintings stay intact.
-import { assetUrl } from '../assetmap.js';
+import { assetUrl, assetTier } from '../assetmap.js';
 import { UI_COMPONENTS as UI } from '../models/UiComponentId.js';
 
 const ICONS = new Set('accessibility actions armour attack audio back bleed blight block boss burn check cinders close collapse combat compare compendium connected contrast controls coop deck dexterity dialogue discard disconnected display draw equipment expand flask-health flask-mana frail frost health history info insanity inventory journey link location lock madness mana map menu merchant motion next poise profile progression quest regen relic reset rest reward save search seed settings shield skill smith staggered stamina strength sword target touch unknown vulnerable warning weak weight world'.split(' '));
@@ -18,8 +18,14 @@ export function engravedIconUrl(id) {
 }
 // CSS carries an exporter-inlined fallback for file play. Chromium rejects
 // relative/file SVG masks in CORS mode; picked-folder blob URLs are usable.
+// The original vectors are identical in both built-in tiers. A served high-res
+// manifest can name missing files; CSS masks have no error event, so keep the
+// embedded original for that unverified overlay. Picked-folder blobs are real
+// files and may override it without making icon-only controls disappear.
 export function engravedMaskUrl(id, protocol = globalThis.location?.protocol) {
   const url = engravedIconUrl(id);
+  const resolved = engravedIconId(id);
+  if (resolved && assetTier(`assets/player-polish/ui/icons/${resolved}.svg`) === 'high' && !/^(data:|blob:)/i.test(url)) return null;
   return protocol === 'file:' && url && !/^(data:|blob:|https?:)/i.test(url) ? null : url;
 }
 const maskValue = (url) => `url("${String(url).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/[\r\n\f]/g, '')}")`;

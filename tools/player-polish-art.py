@@ -1,6 +1,6 @@
 """Export the reviewed kit into the game's existing high/light runtime trees.
 
-Python/Pillow is an authoring dependency only. Builds consume committed bytes.
+Python/Pillow and cwebp are authoring dependencies. Builds consume committed bytes.
 Use --kit for a standalone delivery before its source kit has merged to dev.
 """
 import argparse
@@ -16,6 +16,9 @@ ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--kit', type=Path, default=ROOT / 'docs/design/player-polish-asset-kit-2026-10-02')
 args = parser.parse_args()
+if not shutil.which('cwebp'):
+    parser.error('cwebp must be on PATH for the art repository light-tier provenance.')
+cwebp_version = subprocess.check_output(['cwebp', '-version'], text=True).strip().splitlines()[0]
 if not (args.kit / 'manifest.json').is_file():
     parser.error('Reviewed kit manifest is missing. Supply --kit or merge the source kit.')
 records = []
@@ -68,10 +71,14 @@ for record in records:
         row = by_path[relative]
         with Image.open(source) as art:
             size = (row['size']['width'], row['size']['height'])
-            if art.size == size:
-                shutil.copyfile(source, target)
-            else:
-                art.resize(size, Image.Resampling.LANCZOS).save(target, format='WEBP', quality=row['policy']['quality'], method=6)
+            resized = art.size != size
+        command = ['cwebp', '-quiet', '-m', '6', '-q', str(row['policy']['quality']),
+                   '-alpha_q', str(row['policy']['alphaQuality']), '-alpha_filter', 'best']
+        if resized:
+            command += ['-resize', str(size[0]), str(size[1])]
+        subprocess.run(command + [str(source), '-o', str(target)], check=True)
+        if not resized and target.stat().st_size >= source.stat().st_size:
+            shutil.copyfile(source, target)
 for record in records:
     record['sourceSha256'] = hashlib.sha256((args.kit / record['source']).read_bytes()).hexdigest()
     record['tiers'] = {}
@@ -80,5 +87,5 @@ for record in records:
         record['tiers'][tier] = {'bytes': len(payload), 'sha256': hashlib.sha256(payload).hexdigest()}
 provenance = ROOT / 'art/player-polish-runtime/exports.json'
 provenance.parent.mkdir(parents=True, exist_ok=True)
-provenance.write_text(json.dumps({'schema': 1, 'sourceKit': 'docs/design/player-polish-asset-kit-2026-10-02', 'encoder': f'Pillow {pillow_version} WebP; high quality 88/method 6; light policyFor()/LANCZOS/method 6', 'records': records}, indent=2) + '\n', encoding='utf-8')
+provenance.write_text(json.dumps({'schema': 1, 'sourceKit': 'docs/design/player-polish-asset-kit-2026-10-02', 'encoder': f'Pillow {pillow_version} WebP high quality 88/method 6; cwebp {cwebp_version} light policyFor()/method 6/alpha_filter best', 'records': records}, indent=2) + '\n', encoding='utf-8')
 print(f'Exported {len(records)} player-polish assets to high and light trees. Run art-manifest.mjs --write next.')

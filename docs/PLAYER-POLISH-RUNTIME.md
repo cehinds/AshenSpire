@@ -55,3 +55,8 @@ focus/escape/return behavior remains in the shared modal shell. Engraved icons
 are hidden from assistive technology and preserve surrounding labels and live
 values. Unknown/class-specific symbols retain their authored representation.
 High contrast uses a calm solid information surface with the live semantic edge.
+
+Engraved high/light vectors have identical geometry. A served high-res folder
+may be partial, so masks retain their embedded original for that unverified
+overlay; a picked-folder blob can replace it. This prevents a missing served
+SVG from making an icon-only control invisible.

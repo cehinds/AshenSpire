@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "sourceKit": "docs/design/player-polish-asset-kit-2026-10-02",
-  "encoder": "Pillow 11.1.0 WebP; high quality 88/method 6; light policyFor()/LANCZOS/method 6",
+  "encoder": "Pillow 11.1.0 WebP high quality 88/method 6; cwebp 1.6.0 light policyFor()/method 6/alpha_filter best",
   "records": [
     {
       "source": "scenes/armoury-still-life-master.png",
@@ -13,8 +13,8 @@
           "sha256": "b3ba12f65b3cdfca2f8382136459e159ade4eae17b6dfc4574cc005e07306aaa"
         },
         "assets-mobile": {
-          "bytes": 12154,
-          "sha256": "184ab22d17a25ee2ff22e63f43f505d5d712e73292a67f5470f1c2d0746798f1"
+          "bytes": 11202,
+          "sha256": "235c3b0172f9eb37c17e086d9717cdcfa1cf0e95419de0963a55fe73af15e71d"
         }
       }
     },
@@ -28,8 +28,8 @@
           "sha256": "2fea1b18bf4e19bf5912335f7475d0ca3f5905a5b029532da65ce675908c0205"
         },
         "assets-mobile": {
-          "bytes": 38872,
-          "sha256": "5f1decb2ac7def71e26d04bf38194e9f78646feec48c0e23bd1b8e258f702df6"
+          "bytes": 35344,
+          "sha256": "f9f19a2c998193628f1b7cdb50cdb25b96da09d43fce0a6e36faafe54c564303"
         }
       }
     },
@@ -43,8 +43,8 @@
           "sha256": "32c7141230f341e6d17015951524a70247cf66b0a36edb9ff9894063f80d13b3"
         },
         "assets-mobile": {
-          "bytes": 26234,
-          "sha256": "e3eac18ebead4da7cab970db7c30ab17b254e6fd204d58f582270971da4fcd41"
+          "bytes": 24034,
+          "sha256": "f2a1faa97740d711c299e4b0390ec942d3d8ce374fd7d6700680031d6679eef5"
         }
       }
     },
@@ -58,8 +58,8 @@
           "sha256": "28e9810651b97b6eb853d0da223f32020b1ea4205fabe9f99238dc52b9a51cb1"
         },
         "assets-mobile": {
-          "bytes": 29772,
-          "sha256": "7b85044d1335e1fc78f032f93f069f123c521b84f14d1bf0f0b4d63c0665fe62"
+          "bytes": 27430,
+          "sha256": "df1f60f4dce61b9c1e1f00bf63d1528654d6a85f0956ca56d90a75cd3ff55f3f"
         }
       }
     },
@@ -73,8 +73,8 @@
           "sha256": "4791f9197d30b0b462c4fc5e619fadba34b24b245a8ab181c7d9a7ba3af57f9b"
         },
         "assets-mobile": {
-          "bytes": 39366,
-          "sha256": "0bfe5ae28d587d51c5a395369bbdb14960ea68b0569980808c73fc7acd7bc9ab"
+          "bytes": 36432,
+          "sha256": "3a64f7c901266651bb6b92b984b5c38b0ffd929b764cb31c384f0ccfe2a6572f"
         }
       }
     },
@@ -88,8 +88,8 @@
           "sha256": "8523ce8a1182b3ef72b78e0b74d31f22c8d578a56a7cd8973df0911463d18ca1"
         },
         "assets-mobile": {
-          "bytes": 24138,
-          "sha256": "57ab87febce8bbb9830d2045b972ea8c66e98150484cb2a781ce9628cc316e37"
+          "bytes": 22588,
+          "sha256": "9b42a13d06eaafdc93ebfa3ed8863c227b85a030ff49fcbd969e82ad3988e358"
         }
       }
     },
@@ -103,8 +103,8 @@
           "sha256": "7a36a4d7f72d4593cfe128303e7f55ed0d2f11cbcf61673e315209b8765b7d12"
         },
         "assets-mobile": {
-          "bytes": 17558,
-          "sha256": "ea0e190f183901a7a6737146d2e79d0336f1a9062f9e7b4df3cacd7b1fe0d602"
+          "bytes": 16090,
+          "sha256": "aebefc8075d2bec86801fdba6f80185af4facbc386d50d24ff636a6e4371ae76"
         }
       }
     },
@@ -118,8 +118,8 @@
           "sha256": "23d5a0c6024824a7a05287bb40a1b79c22cae0668a0a15f133aa14a01f721938"
         },
         "assets-mobile": {
-          "bytes": 33414,
-          "sha256": "f9716c424263aed878b6ee5af97a29f5241b597429d8267752cd43821ae39a06"
+          "bytes": 30942,
+          "sha256": "ce7b67053d348c2c1dec735953eba55a509ff2ab5fb1f20f887a851dba4bd2bc"
         }
       }
     },
@@ -133,8 +133,8 @@
           "sha256": "5cb88b129ae6fced67527fcb3edac08a0b54f07af2c227ef27712e4157e9b41f"
         },
         "assets-mobile": {
-          "bytes": 32358,
-          "sha256": "2f2255efdc8185ef09944d73ec40d8cff651cfe3545e2ad6296e36919d22ee7e"
+          "bytes": 29492,
+          "sha256": "fdf569ed71136465c296f3b8ab41344dff4f2c98aef84306a03e2f3741380430"
         }
       }
     },
@@ -148,15 +148,15 @@
           "sha256": "4dfb0e033040b8d06817ecb62c779053b58b1e0fc5f27fd1f988ca7fe0ee884f"
         },
         "assets-mobile": {
-          "bytes": 2250,
-          "sha256": "f3d6845d138583c4742b619a0b33215fb58b59c72465468014031f91b1646d99"
+          "bytes": 1848,
+          "sha256": "8a5d3ba1cf3aeafc3ca2a2d7253b572924207b02d1b2fdffcd42a037e487fef4"
         }
       }
     },
     {
       "source": "ui/components/cost-medallion.svg",
       "runtime": "player-polish/ui/components/cost-medallion.svg",
-      "sourceSha256": "70deb4c4d6095039a4c019e8fc88bd0f9baff4c88c61f63657388313e1fe46cb",
+      "sourceSha256": "63c92daaf76f159227cdd2a2ef8fb41078de9fbf1efa5f643982d8281320c46a",
       "tiers": {
         "assets": {
           "bytes": 416,
@@ -171,7 +171,7 @@
     {
       "source": "ui/components/divider-ornate.svg",
       "runtime": "player-polish/ui/components/divider-ornate.svg",
-      "sourceSha256": "86b6623c3cfced274fefd10250f267b3a8681834a1780925fd5d2e18cf6d39f1",
+      "sourceSha256": "63270677441b00066d716da11d1610431314640734bd29c64d56359581d1e39c",
       "tiers": {
         "assets": {
           "bytes": 419,
@@ -186,7 +186,7 @@
     {
       "source": "ui/components/item-slot-selected.svg",
       "runtime": "player-polish/ui/components/item-slot-selected.svg",
-      "sourceSha256": "90b4770584aba4732f2b88488eb1dcc2194ec1d4e6d6cb7de7d75ab8689bb757",
+      "sourceSha256": "f2b548c7c19f1c3b7cdb8d5cdb1b5a6357dcac8d422e99c4dc89637add5a2810",
       "tiers": {
         "assets": {
           "bytes": 835,
@@ -201,7 +201,7 @@
     {
       "source": "ui/components/item-slot.svg",
       "runtime": "player-polish/ui/components/item-slot.svg",
-      "sourceSha256": "94c68520dba45e791193aead8897890884ce416da563f902d0bc6d020128ae7c",
+      "sourceSha256": "9d41a392954aff808d4d8f0df8b7a4c0443e9a531657290c8888aadd81030737",
       "tiers": {
         "assets": {
           "bytes": 700,
@@ -216,7 +216,7 @@
     {
       "source": "ui/components/meter-track.svg",
       "runtime": "player-polish/ui/components/meter-track.svg",
-      "sourceSha256": "ad454466a3c65cb300b1a2fe916b540170119c86d878e0f50e322d4cf9b79954",
+      "sourceSha256": "4b25bb378aebe86c0803b7e96e37cf7ab2698218fd107a033e5612e1f8c9db53",
       "tiers": {
         "assets": {
           "bytes": 466,
@@ -231,7 +231,7 @@
     {
       "source": "ui/components/panel-frame.svg",
       "runtime": "player-polish/ui/components/panel-frame.svg",
-      "sourceSha256": "a7decaba6749472c5fc357723ad87e725ca34d6be5c1aba6c758e6a88a8b2291",
+      "sourceSha256": "9918718c3af71c7ecac023208f395b0da1bd4ef254c18d80fedb968351219355",
       "tiers": {
         "assets": {
           "bytes": 705,
@@ -246,7 +246,7 @@
     {
       "source": "ui/icons/accessibility.svg",
       "runtime": "player-polish/ui/icons/accessibility.svg",
-      "sourceSha256": "5a197df8d7d0f5f7af7e452ffdcba5e5eeb0677148ab213cb21f949593a95abd",
+      "sourceSha256": "cf7da9acd87a6a4d6c12feed31ac651731627ba0a4e06bac785afa95ec57b554",
       "tiers": {
         "assets": {
           "bytes": 419,
@@ -261,7 +261,7 @@
     {
       "source": "ui/icons/actions.svg",
       "runtime": "player-polish/ui/icons/actions.svg",
-      "sourceSha256": "813ab3352776d79025278f51448e12eac06bedc2ba72adf1fc602ca7ec011810",
+      "sourceSha256": "d8b2da80c5f4b4e1f04af00c5e1b4a8e1a7218e5af4143d1d503343ddb75ff03",
       "tiers": {
         "assets": {
           "bytes": 350,
@@ -276,7 +276,7 @@
     {
       "source": "ui/icons/armour.svg",
       "runtime": "player-polish/ui/icons/armour.svg",
-      "sourceSha256": "fd0e919ec051a157345954887ca3a0b8ff9b78b2931e741e19f1396da452c1ff",
+      "sourceSha256": "4a1c73d184329cd343e042ae6fe9ee74313db6c77c1962c88f5189158ad5593f",
       "tiers": {
         "assets": {
           "bytes": 386,
@@ -291,7 +291,7 @@
     {
       "source": "ui/icons/attack.svg",
       "runtime": "player-polish/ui/icons/attack.svg",
-      "sourceSha256": "4172c3852d1af358ad3b33171676c6b9f70a2538a398b79ecf1dbe6f0639705a",
+      "sourceSha256": "5a942fe1ad5f512fe01a37b34436c5b2efc6430cc1680d5a8c2516c17aeded84",
       "tiers": {
         "assets": {
           "bytes": 399,
@@ -306,7 +306,7 @@
     {
       "source": "ui/icons/audio.svg",
       "runtime": "player-polish/ui/icons/audio.svg",
-      "sourceSha256": "2e891c4a5a441ab55ec03501df86cbf8b1eef53db85da325a46b3c3643b56fc0",
+      "sourceSha256": "656388641e68c98033b90d71390c3e68578db19e3e74b5ed0eae9e8dd32393f7",
       "tiers": {
         "assets": {
           "bytes": 375,
@@ -321,7 +321,7 @@
     {
       "source": "ui/icons/back.svg",
       "runtime": "player-polish/ui/icons/back.svg",
-      "sourceSha256": "4a69e27b7a47022c84339cf86c182796073443ba7dc68d489e11f40a445d2bc2",
+      "sourceSha256": "3de92c8b5e74ece9ac0f14ac73f1e8a4a140f5f268223598f7073d27824fe102",
       "tiers": {
         "assets": {
           "bytes": 335,
@@ -336,7 +336,7 @@
     {
       "source": "ui/icons/bleed.svg",
       "runtime": "player-polish/ui/icons/bleed.svg",
-      "sourceSha256": "96d9ee288ea75051ef347fa64c7eba4bfb77ebcb2ee14f6ccdfd5fe4c3b66649",
+      "sourceSha256": "a3100a87944413abe6f349fd48d0202a0c0fe4b4e037c91214856eed3765e076",
       "tiers": {
         "assets": {
           "bytes": 408,
@@ -351,7 +351,7 @@
     {
       "source": "ui/icons/blight.svg",
       "runtime": "player-polish/ui/icons/blight.svg",
-      "sourceSha256": "eaf9d368738c6eefacffa7aa3850ea4044e8989792b7fc2835fb53ab39f51dc1",
+      "sourceSha256": "e60aa873bcc21b49780df1a3b4170a6afce6387bdfddc71925a7048b47ab7010",
       "tiers": {
         "assets": {
           "bytes": 403,
@@ -366,7 +366,7 @@
     {
       "source": "ui/icons/block.svg",
       "runtime": "player-polish/ui/icons/block.svg",
-      "sourceSha256": "47a54655e35fafb8c22cf61bfdf5e3d46bc58604e4b6c4b6bd931f1428f36f1b",
+      "sourceSha256": "767f36eaf939de1ca78035a76234392a7f57ba73ef3f3e752856594153847a2c",
       "tiers": {
         "assets": {
           "bytes": 385,
@@ -381,7 +381,7 @@
     {
       "source": "ui/icons/boss.svg",
       "runtime": "player-polish/ui/icons/boss.svg",
-      "sourceSha256": "22c1df44ff5b1a77518fa4d3b86d16e736835702599ea30f1be5f699d0d42b2b",
+      "sourceSha256": "34e62b8a2ba1aef301d2a75ee4558eceb5c911559f4fe9230817ead2858c204b",
       "tiers": {
         "assets": {
           "bytes": 358,
@@ -396,7 +396,7 @@
     {
       "source": "ui/icons/burn.svg",
       "runtime": "player-polish/ui/icons/burn.svg",
-      "sourceSha256": "b2700d675619d67bdc3871a536e8b674ca149ca7d988002ea5692bf83c8d5af8",
+      "sourceSha256": "67353bc7d4eea1b056c36aa31ccb97ecbf7ded11e311da18915503661c9baea3",
       "tiers": {
         "assets": {
           "bytes": 463,
@@ -411,7 +411,7 @@
     {
       "source": "ui/icons/check.svg",
       "runtime": "player-polish/ui/icons/check.svg",
-      "sourceSha256": "11f8892e02675f4128960a86c7dfe9e7af9e79f2e524dfad7bb3b4835aefa5c8",
+      "sourceSha256": "f81b950e3b7e819a85162e6f02f370c30269ec09959a92aadc5c61e057be117e",
       "tiers": {
         "assets": {
           "bytes": 332,
@@ -426,7 +426,7 @@
     {
       "source": "ui/icons/cinders.svg",
       "runtime": "player-polish/ui/icons/cinders.svg",
-      "sourceSha256": "72557cd8d52a8ea6fba89482f00876d726a330829862ef6ce22b8fb20f6e53c9",
+      "sourceSha256": "48f314012098e4521619477b91a7426c049554c43b6a46cdb663ba48a76ca988",
       "tiers": {
         "assets": {
           "bytes": 451,
@@ -441,7 +441,7 @@
     {
       "source": "ui/icons/close.svg",
       "runtime": "player-polish/ui/icons/close.svg",
-      "sourceSha256": "c2ac097ea78b1e9c5a5594c52c720199a4b1a03e42f50db025206ca5f4cadfc2",
+      "sourceSha256": "3df45d58185be94aced3115fd5895285086cf82be32d6758ac879abd36e81657",
       "tiers": {
         "assets": {
           "bytes": 338,
@@ -456,7 +456,7 @@
     {
       "source": "ui/icons/collapse.svg",
       "runtime": "player-polish/ui/icons/collapse.svg",
-      "sourceSha256": "c3a9de58f4811d358c53f12e304fc76282b30b64c723f23bb5b98479a26bb39a",
+      "sourceSha256": "a77edd5e77a1a24d17bc9c6d2ba691a566ab4ae765e93d988191b5071e7176f3",
       "tiers": {
         "assets": {
           "bytes": 340,
@@ -471,7 +471,7 @@
     {
       "source": "ui/icons/combat.svg",
       "runtime": "player-polish/ui/icons/combat.svg",
-      "sourceSha256": "3becdda3717a262496c60e8f5aed12d24395bbe412b6999a9a33a93e090446af",
+      "sourceSha256": "cb12940b1cf9064ff8d9dd4d783d1f198bb66648dc11822bd314ea652fb4f98b",
       "tiers": {
         "assets": {
           "bytes": 388,
@@ -486,7 +486,7 @@
     {
       "source": "ui/icons/compare.svg",
       "runtime": "player-polish/ui/icons/compare.svg",
-      "sourceSha256": "82e395a0d77d1b4f2fea62fdbb00d487ab288932c739d52088f7da8637e578dc",
+      "sourceSha256": "a5d8a236fb33d5c76a9703770e74599ba97b177dbde3b7b7af1b5c566fdc285c",
       "tiers": {
         "assets": {
           "bytes": 399,
@@ -501,7 +501,7 @@
     {
       "source": "ui/icons/compendium.svg",
       "runtime": "player-polish/ui/icons/compendium.svg",
-      "sourceSha256": "a29dff72b887809e89f34b84b5ef8a8455b10dffb8d8da336f9f0d9b8d553f32",
+      "sourceSha256": "b9a10322d04e3715eca6dc196c76ab4b426cf216ecd708f51cc4d23e43729e66",
       "tiers": {
         "assets": {
           "bytes": 432,
@@ -516,7 +516,7 @@
     {
       "source": "ui/icons/connected.svg",
       "runtime": "player-polish/ui/icons/connected.svg",
-      "sourceSha256": "475538724fd8f65e0c380c1777de73f5bc66fcf15372be3af436c4212b5434da",
+      "sourceSha256": "9ae45d289d24d4913b440fbea8537cdd856fc87bd59908633d26ad673799b78d",
       "tiers": {
         "assets": {
           "bytes": 452,
@@ -531,7 +531,7 @@
     {
       "source": "ui/icons/contrast.svg",
       "runtime": "player-polish/ui/icons/contrast.svg",
-      "sourceSha256": "f85e434ca3f162d1ca759743f57ca9d599d12545fcb0c55d8c0b4e287a3e7986",
+      "sourceSha256": "6c50c81f7916102429a519376e0856931bf55706784ebd58c8a9a9c5b8b344e4",
       "tiers": {
         "assets": {
           "bytes": 413,
@@ -546,7 +546,7 @@
     {
       "source": "ui/icons/controls.svg",
       "runtime": "player-polish/ui/icons/controls.svg",
-      "sourceSha256": "12d2dbe8b52521091a557fa65c73946e3b60f0b5374ba4746fe964c2eee8b3f1",
+      "sourceSha256": "d76a290b2329edc9631bd6bd21969b718b2b40c85c6e60705d95fa60fbb18938",
       "tiers": {
         "assets": {
           "bytes": 532,
@@ -561,7 +561,7 @@
     {
       "source": "ui/icons/coop.svg",
       "runtime": "player-polish/ui/icons/coop.svg",
-      "sourceSha256": "9504114857765a3347e979c700529b77abfc1604fdde9184e6eb232dfa08b2c1",
+      "sourceSha256": "d45ed9d69b9f3a43e8845af9310ab1720d99840638467c1281294f80e4bbd3a0",
       "tiers": {
         "assets": {
           "bytes": 424,
@@ -576,7 +576,7 @@
     {
       "source": "ui/icons/deck.svg",
       "runtime": "player-polish/ui/icons/deck.svg",
-      "sourceSha256": "d6211e1032eb381003824ca94cee6c41d8707ed6275f8c20514fffdd36baa21e",
+      "sourceSha256": "8097e6fc9c59497d600babb5dacb8a1fbde237ded189d79d8273a435dd1e8ed0",
       "tiers": {
         "assets": {
           "bytes": 374,
@@ -591,7 +591,7 @@
     {
       "source": "ui/icons/dexterity.svg",
       "runtime": "player-polish/ui/icons/dexterity.svg",
-      "sourceSha256": "a2d83337dd54e1f38f129c1711710d689e0cb283afbbd1b9267a0a0dca7d034c",
+      "sourceSha256": "9ca48c7d9ecca8ce4f19ed4c599e4eb6b24d90e906e0cc2d944b494840e4973d",
       "tiers": {
         "assets": {
           "bytes": 367,
@@ -606,7 +606,7 @@
     {
       "source": "ui/icons/dialogue.svg",
       "runtime": "player-polish/ui/icons/dialogue.svg",
-      "sourceSha256": "e1763b3dd182e2f18f3484979102db71f125d94591d222bc54b74f8367d9747c",
+      "sourceSha256": "8870e1b7e11fe156dd500b6bdba67813e6a224457eab0bf3f887e93b0dd87acd",
       "tiers": {
         "assets": {
           "bytes": 359,
@@ -621,7 +621,7 @@
     {
       "source": "ui/icons/discard.svg",
       "runtime": "player-polish/ui/icons/discard.svg",
-      "sourceSha256": "ee33ec9f44699d96e0e81f15bfe3a5d64e75db4bd6b10b3f413f39e91ce252b9",
+      "sourceSha256": "2237786151bc20e73f84b24144bb4906c34f02b920abba979b1d182a339ce538",
       "tiers": {
         "assets": {
           "bytes": 422,
@@ -636,7 +636,7 @@
     {
       "source": "ui/icons/disconnected.svg",
       "runtime": "player-polish/ui/icons/disconnected.svg",
-      "sourceSha256": "60b73a6065eb02b664757f1611535f916e7f6dba5133807e8ceaf8f247c7749c",
+      "sourceSha256": "318ce24ae518606c8516f6bfc3b22b64c2a1e64864a759d76e7d16b73b5fd9ea",
       "tiers": {
         "assets": {
           "bytes": 469,
@@ -651,7 +651,7 @@
     {
       "source": "ui/icons/display.svg",
       "runtime": "player-polish/ui/icons/display.svg",
-      "sourceSha256": "f77cac8315613ad7b22af951d99b1fbd152354dd128cdec9408a55a2db95a82b",
+      "sourceSha256": "d86b9eb6d1aa139783d4edde97859d3616996b9ab950eb146e91d4621a3732c1",
       "tiers": {
         "assets": {
           "bytes": 396,
@@ -666,7 +666,7 @@
     {
       "source": "ui/icons/draw.svg",
       "runtime": "player-polish/ui/icons/draw.svg",
-      "sourceSha256": "c2ba4ce05d358a07eb58f0cbb3df1801c3d361851c6317a96237a31fe9ef1412",
+      "sourceSha256": "493d0178b4f04a8da6d2d19e862e13c0e67244936feade18df8fb76cc9bb345d",
       "tiers": {
         "assets": {
           "bytes": 395,
@@ -681,7 +681,7 @@
     {
       "source": "ui/icons/equipment.svg",
       "runtime": "player-polish/ui/icons/equipment.svg",
-      "sourceSha256": "a0be7f19a651ca13806084abde382891543fbc571be2b0496f02c49b378e5611",
+      "sourceSha256": "b852a2ef8fa5840d9e0dacf296b58e13e99aa38b34cd5d389b631b532f9ca6a8",
       "tiers": {
         "assets": {
           "bytes": 389,
@@ -696,7 +696,7 @@
     {
       "source": "ui/icons/expand.svg",
       "runtime": "player-polish/ui/icons/expand.svg",
-      "sourceSha256": "7818870331d4ca0fc7fab642f4fb2375f6febe7a58d4597386a1a3107598ed69",
+      "sourceSha256": "ddc11383446f9a018653c0f223a51697bf6135d11533e0926dee16e004839ebc",
       "tiers": {
         "assets": {
           "bytes": 333,
@@ -711,7 +711,7 @@
     {
       "source": "ui/icons/flask-health.svg",
       "runtime": "player-polish/ui/icons/flask-health.svg",
-      "sourceSha256": "4d43f31651f6b61bda9877c627384dbe06c52fc499f5f1d2cae7e5ff1526ddd8",
+      "sourceSha256": "c8e9c6507f96a7aac81ff88e4fbe8499085a6d546169b1fe99b8d4ccf4471edb",
       "tiers": {
         "assets": {
           "bytes": 443,
@@ -726,7 +726,7 @@
     {
       "source": "ui/icons/flask-mana.svg",
       "runtime": "player-polish/ui/icons/flask-mana.svg",
-      "sourceSha256": "401cb7a7fae84c2df665fa0ef5def4920a08b2d357cc923932ed0ca482438cae",
+      "sourceSha256": "e568411548f6dc1f0e232448e76b1e7af84e3c06a4055501d3bb23e79cc16fce",
       "tiers": {
         "assets": {
           "bytes": 468,
@@ -741,7 +741,7 @@
     {
       "source": "ui/icons/frail.svg",
       "runtime": "player-polish/ui/icons/frail.svg",
-      "sourceSha256": "796aaf02d7c58806251d758744cfe09a098211428b08b83a5c61da1a89423748",
+      "sourceSha256": "d81bb419d932db486d3f07dfe4c5c82de5d29f858e8c1ca66c116126cc1c3c21",
       "tiers": {
         "assets": {
           "bytes": 377,
@@ -756,7 +756,7 @@
     {
       "source": "ui/icons/frost.svg",
       "runtime": "player-polish/ui/icons/frost.svg",
-      "sourceSha256": "e88277df6028257cdef4d1c57a854499f9330d686e34aaea6a603998bd23f489",
+      "sourceSha256": "da642a0b5628d4bc3664805c862a1dac7c255e8e289a422168d6e7b52a3b1e35",
       "tiers": {
         "assets": {
           "bytes": 427,
@@ -771,7 +771,7 @@
     {
       "source": "ui/icons/health.svg",
       "runtime": "player-polish/ui/icons/health.svg",
-      "sourceSha256": "7e57b88f70b3a4336f623f85e45b16a40d9fdfd661166a669a35bdd2ea53bce6",
+      "sourceSha256": "b54e961a7e345cc1d1d0dd4d77123ba03ca8b809a6881de18c3caf380e97aac4",
       "tiers": {
         "assets": {
           "bytes": 405,
@@ -786,7 +786,7 @@
     {
       "source": "ui/icons/history.svg",
       "runtime": "player-polish/ui/icons/history.svg",
-      "sourceSha256": "5aae06a147aa5e8fddbe3fc7d706dedfe26669a155741a2f8776351c4aad0ece",
+      "sourceSha256": "c4e5917a02fbce8d9c94df1e42eb586fac1d573e2018bf275dbd4e5221cdc4f2",
       "tiers": {
         "assets": {
           "bytes": 361,
@@ -801,7 +801,7 @@
     {
       "source": "ui/icons/info.svg",
       "runtime": "player-polish/ui/icons/info.svg",
-      "sourceSha256": "a1bbfe7c23ecfa44b4642451cbcb83427cdfdd6eef91a88ee97706b463300f83",
+      "sourceSha256": "191ee5c0fe44c9349e43dae98c464e7fae3fa0cf2c254c2e3bb6d96dcc3f59fe",
       "tiers": {
         "assets": {
           "bytes": 426,
@@ -816,7 +816,7 @@
     {
       "source": "ui/icons/insanity.svg",
       "runtime": "player-polish/ui/icons/insanity.svg",
-      "sourceSha256": "d0cf11736a4f176cd39ff9ed059f4d73ba477281fdb3985388aa58ac7975e2c1",
+      "sourceSha256": "990ecccba7bf7cb12bdf38ffa1fe1f39972e19d2bf2039bbaf4fedc517504142",
       "tiers": {
         "assets": {
           "bytes": 405,
@@ -831,7 +831,7 @@
     {
       "source": "ui/icons/inventory.svg",
       "runtime": "player-polish/ui/icons/inventory.svg",
-      "sourceSha256": "1ee93c3819dfd29238342fd7c6682723a3d010fd9e3d81d7acf4cfc004836cf9",
+      "sourceSha256": "76d42bf7b92195c2d8237848086b6f0f360b13b087edc1e6803b74d1c837b2f8",
       "tiers": {
         "assets": {
           "bytes": 392,
@@ -846,7 +846,7 @@
     {
       "source": "ui/icons/journey.svg",
       "runtime": "player-polish/ui/icons/journey.svg",
-      "sourceSha256": "1bae79e4048228de9bae4e0b4c07f58a2eb19022f4c94dc24347dc5fd919414f",
+      "sourceSha256": "b76c2cbc9ca54efd27f67fdf6fc02f22862ba6f4215b0f13bcf55e2b4f2589ca",
       "tiers": {
         "assets": {
           "bytes": 374,
@@ -861,7 +861,7 @@
     {
       "source": "ui/icons/link.svg",
       "runtime": "player-polish/ui/icons/link.svg",
-      "sourceSha256": "98500d7fcd95e578f0a5088127f693047e09c084af8da43552f0d8aa1d97abe9",
+      "sourceSha256": "1c636836f42bcf61d28c8e29aad24d969e9fd3ed8ef4dadc62531f2a046301c6",
       "tiers": {
         "assets": {
           "bytes": 381,
@@ -876,7 +876,7 @@
     {
       "source": "ui/icons/location.svg",
       "runtime": "player-polish/ui/icons/location.svg",
-      "sourceSha256": "caae87c52663747107e102741fdaf33035ee7b9133561e516fc6b83a1f708570",
+      "sourceSha256": "468805ed04262158d86c359f7b4fd385f15045cb28081c4cf7d463df98cb89c5",
       "tiers": {
         "assets": {
           "bytes": 403,
@@ -891,7 +891,7 @@
     {
       "source": "ui/icons/lock.svg",
       "runtime": "player-polish/ui/icons/lock.svg",
-      "sourceSha256": "08387a8d7ed5852e50eeaae356d4c38fe3adf17a114ba536f2aca4ca73cf701e",
+      "sourceSha256": "7e993655d6f57ada13c5d99c29ee7d9087e279bce29526b6ff80c54d921e8ab7",
       "tiers": {
         "assets": {
           "bytes": 396,
@@ -906,7 +906,7 @@
     {
       "source": "ui/icons/madness.svg",
       "runtime": "player-polish/ui/icons/madness.svg",
-      "sourceSha256": "54806d442397648e5911f62b05a412cbb736c28a125e2500cf7ac04a9fb3cffa",
+      "sourceSha256": "646ecd17bbc9b1d652df4516bbd63d367552c127ab99f2d64e8a89e58cdfcdac",
       "tiers": {
         "assets": {
           "bytes": 458,
@@ -921,7 +921,7 @@
     {
       "source": "ui/icons/mana.svg",
       "runtime": "player-polish/ui/icons/mana.svg",
-      "sourceSha256": "e8db217654bd8065114df5f2accd5eafdbbba4720a83cfccb726863314b7cb05",
+      "sourceSha256": "93cb98e2a9781df669d4721a48d6ff6ee073303bb55c20bf341760255b1e7c19",
       "tiers": {
         "assets": {
           "bytes": 405,
@@ -936,7 +936,7 @@
     {
       "source": "ui/icons/map.svg",
       "runtime": "player-polish/ui/icons/map.svg",
-      "sourceSha256": "b8494f2c3a4ae726bc7de136e5e943b387900312e4c19ae43e7b4955859b4454",
+      "sourceSha256": "364d73489c2f81b2761c73ed00540a141595a1e519d3d0c0353a0c3013ddb450",
       "tiers": {
         "assets": {
           "bytes": 369,
@@ -951,7 +951,7 @@
     {
       "source": "ui/icons/menu.svg",
       "runtime": "player-polish/ui/icons/menu.svg",
-      "sourceSha256": "bfdb302f30e4f444b9ef9a78ccf828df0e45292ed19904dca1b6c1d9c8f8b801",
+      "sourceSha256": "81b33d6c4024594a5a962cee0168d1ced9dc620612703203510d6ffe0753fd0b",
       "tiers": {
         "assets": {
           "bytes": 338,
@@ -966,7 +966,7 @@
     {
       "source": "ui/icons/merchant.svg",
       "runtime": "player-polish/ui/icons/merchant.svg",
-      "sourceSha256": "b989cf5550b9e5efa8bd2b5777ef277d652ee258bbcd990c0fedf743ca84c1a2",
+      "sourceSha256": "c014da552cd70a67ad7f6373925bbc9004a51d74d781cdbb6d9716a67aa40d27",
       "tiers": {
         "assets": {
           "bytes": 415,
@@ -981,7 +981,7 @@
     {
       "source": "ui/icons/motion.svg",
       "runtime": "player-polish/ui/icons/motion.svg",
-      "sourceSha256": "89ef37e6dfba6dcfae14e1749f520a963f54d699f4865d28f75f92d3df59ee92",
+      "sourceSha256": "5dd0e6dc30751922da96a9ba5f13d621261d96af135a9554ac31ceb9f85fefb2",
       "tiers": {
         "assets": {
           "bytes": 388,
@@ -996,7 +996,7 @@
     {
       "source": "ui/icons/next.svg",
       "runtime": "player-polish/ui/icons/next.svg",
-      "sourceSha256": "cead4931f063d5f2201535a241d1544065714b3f01a17ba2c5f0a97ee887365d",
+      "sourceSha256": "4384b903876d02027b4d99c95189f1f8b0066563c7adb396de3df3496aa6914c",
       "tiers": {
         "assets": {
           "bytes": 336,
@@ -1011,7 +1011,7 @@
     {
       "source": "ui/icons/poise.svg",
       "runtime": "player-polish/ui/icons/poise.svg",
-      "sourceSha256": "4eac5e76896cdeb37fcec192e395cb28e84486e33d075dc168dd0cf1acdf9f09",
+      "sourceSha256": "64e23f18906d20d319bc38fa08ca431c281e75409d007d07bb7ae09ca88608fb",
       "tiers": {
         "assets": {
           "bytes": 374,
@@ -1026,7 +1026,7 @@
     {
       "source": "ui/icons/profile.svg",
       "runtime": "player-polish/ui/icons/profile.svg",
-      "sourceSha256": "c4c34d9ddbaeb2cb50700bae2416a49fac19e48196a12dc312cab0a3194dd543",
+      "sourceSha256": "061583ae5381cd71d8d9e448024fa570bbd33ff129eb568e049320f8e650e2d2",
       "tiers": {
         "assets": {
           "bytes": 386,
@@ -1041,7 +1041,7 @@
     {
       "source": "ui/icons/progression.svg",
       "runtime": "player-polish/ui/icons/progression.svg",
-      "sourceSha256": "e625384b360d02aad3240d81bbca0e0b0903c23c9764882e6bbb20592cd9bcab",
+      "sourceSha256": "28461dfb0c4730aa3b2e4243fbff10f10443f97c9cf1e09782bc7d219631f22b",
       "tiers": {
         "assets": {
           "bytes": 486,
@@ -1056,7 +1056,7 @@
     {
       "source": "ui/icons/quest.svg",
       "runtime": "player-polish/ui/icons/quest.svg",
-      "sourceSha256": "9275d653be6525efb7011ebdd58a4e0636045f165ed214a683e51c8fcdfa3fdd",
+      "sourceSha256": "2f9f87689305a6c5e0451a8f5a040f230edfc978055385e347b5632c29a98bd9",
       "tiers": {
         "assets": {
           "bytes": 359,
@@ -1071,7 +1071,7 @@
     {
       "source": "ui/icons/regen.svg",
       "runtime": "player-polish/ui/icons/regen.svg",
-      "sourceSha256": "fabf55d118dab5c17644e1710678d9b7bc766fdc9d5c6d935f7d4df859001f8e",
+      "sourceSha256": "0594d16a9914d42e890cedc3060e43eca968058371c9e6ddc0aa6be7e4f537b5",
       "tiers": {
         "assets": {
           "bytes": 358,
@@ -1086,7 +1086,7 @@
     {
       "source": "ui/icons/relic.svg",
       "runtime": "player-polish/ui/icons/relic.svg",
-      "sourceSha256": "8fd69f7441092d59fda4c3691d0c365dd5b36607f6a8bedd0064359fae2b4c21",
+      "sourceSha256": "eb389ef4223f6101334e91fd074103645a43fac98bc7a8e1f712ad8cf69fcaa2",
       "tiers": {
         "assets": {
           "bytes": 405,
@@ -1101,7 +1101,7 @@
     {
       "source": "ui/icons/reset.svg",
       "runtime": "player-polish/ui/icons/reset.svg",
-      "sourceSha256": "4fc2c845cadec1fbb60ea397508943bdfca1049b5a9c94ad0b66ed5c49b42d46",
+      "sourceSha256": "a17adf22dd00e6b98a9976a6887b1040110786e2bdd548ad06041b98cfc006e9",
       "tiers": {
         "assets": {
           "bytes": 353,
@@ -1116,7 +1116,7 @@
     {
       "source": "ui/icons/rest.svg",
       "runtime": "player-polish/ui/icons/rest.svg",
-      "sourceSha256": "3a89069c09a34ee4ebf04d2ebc5b4f0de7fa79c717a4bdd6b675d0a6f5b9af0e",
+      "sourceSha256": "15e13a26a5d7e43c3e62506cd5f99dbedb8c689eeb9e3287eb88b315a2cf2306",
       "tiers": {
         "assets": {
           "bytes": 403,
@@ -1131,7 +1131,7 @@
     {
       "source": "ui/icons/reward.svg",
       "runtime": "player-polish/ui/icons/reward.svg",
-      "sourceSha256": "aca2809e0675395d725dbaa16f99bf943a25b15f72d6d3ffef2313965182ca22",
+      "sourceSha256": "daf17536bf46ea04bf040495ce5c2a16be1b0c4209ead640bc7e53e20c0457df",
       "tiers": {
         "assets": {
           "bytes": 388,
@@ -1146,7 +1146,7 @@
     {
       "source": "ui/icons/save.svg",
       "runtime": "player-polish/ui/icons/save.svg",
-      "sourceSha256": "a53c451c0cc270b46c55c7b0ecb6eca8f672397e3251f803c3c2634ffd97cd72",
+      "sourceSha256": "bc14e30fdf69caf8f43566d642d589d996c520b0371ab35f141159885ac2db98",
       "tiers": {
         "assets": {
           "bytes": 363,
@@ -1161,7 +1161,7 @@
     {
       "source": "ui/icons/search.svg",
       "runtime": "player-polish/ui/icons/search.svg",
-      "sourceSha256": "4369a9e4da9ec0e3f4667d462cff395d3bf7dcf76facb4c65c53a83ec94cf751",
+      "sourceSha256": "73c25a9c964ff36988f572529ddfc21f8e63aa2d2ae2e9ea189b7dae23ea6062",
       "tiers": {
         "assets": {
           "bytes": 364,
@@ -1176,7 +1176,7 @@
     {
       "source": "ui/icons/seed.svg",
       "runtime": "player-polish/ui/icons/seed.svg",
-      "sourceSha256": "418beedeab02dfc5807abf9850933897940672f372e7e05d9d74c4378662b93a",
+      "sourceSha256": "6f10564b3b489575c5ccc5e7b50cdb4e0c798bf540a270033cdcb34fe39c6eb9",
       "tiers": {
         "assets": {
           "bytes": 673,
@@ -1191,7 +1191,7 @@
     {
       "source": "ui/icons/settings.svg",
       "runtime": "player-polish/ui/icons/settings.svg",
-      "sourceSha256": "52dfb89cebc97c84ed3530039c8e9c81fd8cde495dda3d2afe0ea80e4927616b",
+      "sourceSha256": "2867fad9be64d30471aa3a9639ed77e9af845df44effce3353b470a4490b823c",
       "tiers": {
         "assets": {
           "bytes": 453,
@@ -1206,7 +1206,7 @@
     {
       "source": "ui/icons/shield.svg",
       "runtime": "player-polish/ui/icons/shield.svg",
-      "sourceSha256": "726591c7d20fc44a9ceb57eb646aba7d7c388895f57a37a237a090f13c292b30",
+      "sourceSha256": "cb79788ba87fbb934a8be18d491fb3c0fecc4d701a219de4a0e03888c2886026",
       "tiers": {
         "assets": {
           "bytes": 380,
@@ -1221,7 +1221,7 @@
     {
       "source": "ui/icons/skill.svg",
       "runtime": "player-polish/ui/icons/skill.svg",
-      "sourceSha256": "bfde19910d730e30b8d08167c40454907e93c5734c92eba9de9060b954c687c1",
+      "sourceSha256": "8a449efbc704887affd6dabc79408acf63250b64d9e1e7bf54e4eb886abb6925",
       "tiers": {
         "assets": {
           "bytes": 403,
@@ -1236,7 +1236,7 @@
     {
       "source": "ui/icons/smith.svg",
       "runtime": "player-polish/ui/icons/smith.svg",
-      "sourceSha256": "6708885ccb3c82efc0236ffe8a051ba79bcc7a7755ec3f062b8533ce26a82b39",
+      "sourceSha256": "d843940055f18f1dbf81e0cbd346d1d6b63bfe1ca99a85e47177f88725a33a20",
       "tiers": {
         "assets": {
           "bytes": 385,
@@ -1251,7 +1251,7 @@
     {
       "source": "ui/icons/staggered.svg",
       "runtime": "player-polish/ui/icons/staggered.svg",
-      "sourceSha256": "26e5b39ef84b268d64d60724bae54c5c87e8cb0dabef4b154d2e91d75a6022d3",
+      "sourceSha256": "0dfecb502f809b95f87153e3bde4b22da1c1d3d7acec8001820cb6a7811d25fe",
       "tiers": {
         "assets": {
           "bytes": 414,
@@ -1266,7 +1266,7 @@
     {
       "source": "ui/icons/stamina.svg",
       "runtime": "player-polish/ui/icons/stamina.svg",
-      "sourceSha256": "145c03b380d92faade8c6711b4e88ad98e77c6321b25bcede785813e9cb73b7f",
+      "sourceSha256": "b0968eda700d314d957fee539b3b6c2cdde1fe38d3cf7be710a09824767b6520",
       "tiers": {
         "assets": {
           "bytes": 383,
@@ -1281,7 +1281,7 @@
     {
       "source": "ui/icons/strength.svg",
       "runtime": "player-polish/ui/icons/strength.svg",
-      "sourceSha256": "457e6fac49eccf5591b4b32f0ade1c8efcc72fd76f1521b4ee42b6928ca9f2e0",
+      "sourceSha256": "f771336312ae349adf6c8eb7b1fd87277a49abb96c56153a8f905b9987fc7253",
       "tiers": {
         "assets": {
           "bytes": 359,
@@ -1296,7 +1296,7 @@
     {
       "source": "ui/icons/sword.svg",
       "runtime": "player-polish/ui/icons/sword.svg",
-      "sourceSha256": "1674191ad2ce9ecec73702aad88116a22356a0903122df1d2b6ad81d66f7841d",
+      "sourceSha256": "75f6e34694c19ab922beac5a1302cf812a2a2e119baef9043d75c64359e9e7f6",
       "tiers": {
         "assets": {
           "bytes": 378,
@@ -1311,7 +1311,7 @@
     {
       "source": "ui/icons/target.svg",
       "runtime": "player-polish/ui/icons/target.svg",
-      "sourceSha256": "4cba246d01c226986b098b97a69348c9397244d53ab3e6e8aeac6a4e9047d7d4",
+      "sourceSha256": "19b6c61f0f92b1b94d9f7e00f80da38dbac69e124456bdbd3e801a04968b30f9",
       "tiers": {
         "assets": {
           "bytes": 413,
@@ -1326,7 +1326,7 @@
     {
       "source": "ui/icons/touch.svg",
       "runtime": "player-polish/ui/icons/touch.svg",
-      "sourceSha256": "5875bcd6626720d9196d8e08430fe204bc4ed6a77039798346352c7d816f66f2",
+      "sourceSha256": "e9d1e49c2d4e5968e06b3fafb910c483263f773c0d397526614174506f859707",
       "tiers": {
         "assets": {
           "bytes": 472,
@@ -1341,7 +1341,7 @@
     {
       "source": "ui/icons/unknown.svg",
       "runtime": "player-polish/ui/icons/unknown.svg",
-      "sourceSha256": "59818a47bb1f75c3064fd8d25b4dc13941c606ad5aa513202267ddbdabb92a15",
+      "sourceSha256": "cc9d5bba660d504797a5fa67acfec401b778b9450d51118cb5d84f2c6568e9a9",
       "tiers": {
         "assets": {
           "bytes": 420,
@@ -1356,7 +1356,7 @@
     {
       "source": "ui/icons/vulnerable.svg",
       "runtime": "player-polish/ui/icons/vulnerable.svg",
-      "sourceSha256": "eb681de0018d0982804fa69b7d553a706e668fd006d6b9a79c61b85c9a4c1ab0",
+      "sourceSha256": "74d685574fdf3c4738f92e8aa67172dd32a4618114639a37cf176ae53cda3463",
       "tiers": {
         "assets": {
           "bytes": 391,
@@ -1371,7 +1371,7 @@
     {
       "source": "ui/icons/warning.svg",
       "runtime": "player-polish/ui/icons/warning.svg",
-      "sourceSha256": "1e0407d8ba2784b79f3c309e932faf44b39d98f3557e729c229074a3ace313e6",
+      "sourceSha256": "56243301a71f7c083c19004a4cda5972aaaedd80771705abfcb032fdae759de9",
       "tiers": {
         "assets": {
           "bytes": 411,
@@ -1386,7 +1386,7 @@
     {
       "source": "ui/icons/weak.svg",
       "runtime": "player-polish/ui/icons/weak.svg",
-      "sourceSha256": "b2e00f894c8fa393f114e0eb6e2431ced6b64d9b67413403c42dbebb4e7763e0",
+      "sourceSha256": "07aa2d3f15f5aca26a26832794b00178b8b1590ceec5447de74c435bb9915015",
       "tiers": {
         "assets": {
           "bytes": 344,
@@ -1401,7 +1401,7 @@
     {
       "source": "ui/icons/weight.svg",
       "runtime": "player-polish/ui/icons/weight.svg",
-      "sourceSha256": "6c124e0eafcbfaa58de788f48a041136708d1c9c6746fe7ef54dcd7ff91d6999",
+      "sourceSha256": "7d8ced1ce62a45e664445cea8ad225971c0429565d8a2fd9d5bd4e80edbf0920",
       "tiers": {
         "assets": {
           "bytes": 369,
@@ -1416,7 +1416,7 @@
     {
       "source": "ui/icons/world.svg",
       "runtime": "player-polish/ui/icons/world.svg",
-      "sourceSha256": "f61ac0db2d999bcaa4c1f69ecad41c87134853790d58996ccbee86f82109f891",
+      "sourceSha256": "ee62d7afba0a92e64c0d728b7d2a4357b15b87c70a6672c2f6304ba3cdeb8e4f",
       "tiers": {
         "assets": {
           "bytes": 407,

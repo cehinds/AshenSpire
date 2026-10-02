@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The Spire's menus gain painted places and engraved details",
     "detail": "Title, services, choices and archives use the approved paintings; cards, item slots, resources and shared panels gain a consistent folio finish. On portrait phones the Compendium shows two columns with complete names and contained artwork, and forge offers keep their prices and Buy actions readable. On a phone held sideways every title action remains reachable and fully named. Your settings, control colours, canonical artwork and gameplay rules still decide what you see and can do.",
-    "build": "0.7.1.798",
+    "build": "0.7.1.800",
     "pullRequest": 1503,
     "url": "https://github.com/cehinds/AshenSpire/pull/1503"
   },

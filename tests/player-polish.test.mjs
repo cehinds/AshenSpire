@@ -48,9 +48,26 @@ test('file play uses the embedded vector fallback for relative masks and accepts
     assert.equal(engravedMaskUrl('health', 'https:'), 'objects/health.svg');
     setHighResSource(new Map([[id, 'blob:health']]));
     assert.equal(engravedMaskUrl('health', 'file:'), 'blob:health');
-    setHighResSource(new Map([[id, 'hd/health.svg" onmouseover="bad']]));
+    setBuiltInSource(new Map([[id, 'objects/health.svg" onmouseover="bad']]));
+    setHighResSource(null);
     const html = engravedIconHtml('health');
     assert.doesNotMatch(html, /" onmouseover="/);
     assert.match(html, /&quot;/);
   } finally { setHighResSource(null); setBuiltInSource(null); }
+});
+
+test('unverified served high-res masks retain the embedded original, including partial folders', () => {
+  const id = 'assets/player-polish/ui/icons/health.svg';
+  const values = new Map([['--engraving', 'url("blob:previous-health")']]);
+  const icon = { dataset: { engravedIcon: 'health' }, style: {
+    setProperty: (key, value) => values.set(key, value),
+    removeProperty: (key) => values.delete(key),
+  } };
+  try {
+    setHighResSource(new Map([[id, 'https://example.invalid/partial-hd/health.svg']]));
+    assert.equal(engravedMaskUrl('health', 'https:'), null);
+    refreshEngravedIcons({ querySelectorAll: () => [icon] });
+    assert.equal(values.has('--engraving'), false);
+    assert.doesNotMatch(engravedIconHtml('health'), /partial-hd/);
+  } finally { setHighResSource(null); }
 });

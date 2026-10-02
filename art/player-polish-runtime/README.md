@@ -9,7 +9,8 @@ Generic role portraits and example card paintings are supplemental art without
 canonical identities; this integration keeps actual character, NPC, enemy,
 card, equipment, relic and flask bindings.
 
-Regenerate from the repository root with Python/Pillow and Node:
+Regenerate from the repository root with Python/Pillow, Node and libwebp's
+`cwebp` on PATH. The light encoder flags match the art repository's generator:
 
 ```powershell
 python tools/player-polish-art.py
