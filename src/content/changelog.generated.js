@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the map legend's Escape test now opens the node panel first",
     "detail": "Nothing you play changes. The automatic test for closing the map legend with Escape or pad B never selected a map node, so the node's panel was never open and the test could not see it close by mistake. It now selects a node, checks the panel stays open when the legend closes, and checks the next press closes the panel.",
-    "build": "0.7.1.796",
+    "build": "0.7.1.797",
     "pullRequest": 1499,
     "url": "https://github.com/cehinds/AshenSpire/pull/1499"
+  },
+  {
+    "id": "pr-1440",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the spec wording for loading assets as separate files is approved",
+    "detail": "This is a docs-only change, and nothing you play changes. The spec now says the game will load its art, fonts and music as separate files, keep one light-art single file you can download and open by double-click, and retire the 254 MB file.",
+    "build": "0.7.1.796",
+    "pullRequest": 1440,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1440"
   },
   {
     "id": "pr-1496",
