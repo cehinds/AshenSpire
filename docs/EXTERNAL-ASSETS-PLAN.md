@@ -902,8 +902,11 @@ Where the build settles the text above (2026-10-02):
   or is superseded publishes nothing and leaves the CSS as it was.
 - **`external-play` with 3b**: the phone screens (the startup gate among them)
   check light objects and CSS, the desktop screens the build's tier, or the
-  one `--expect-tier` names; each screen's requested objects are checked
-  against that screen's tier.
+  one `--expect-tier` names; each screen's requested objects (its own
+  requests, by the navigation's `loaderId`, with the cache off) are checked
+  against that screen's tier. `--plant desktop-light` gives the desktop
+  screens a phone-sized screen, so Auto loads light there, and the run must
+  go RED.
 
 ---
 

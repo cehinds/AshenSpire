@@ -15,7 +15,7 @@
 // directory), and the map-detail tiles were not copied at all. Static checks
 // were green for both.
 //
-//   node tools/external-play.mjs [--dir build/web] [--expect-tier light]
+//   node tools/external-play.mjs [--dir build/web] [--expect-tier light] [--plant desktop-light]
 //
 // Art quality is Auto in a fresh profile, so the phone screens must load light
 // (step 8c) and the desktop screens the build's tier; --expect-tier names the
@@ -59,6 +59,15 @@ const HTML_TEXT = readFileSync(resolve(DIR, 'AshenSpire.html'), 'utf8');
 const PINNED_TIER = (HTML_TEXT.match(/const ASSET_PACKS = \{"schema":1,"tier":"(high|light)"/) || [])[1] || null;
 const tierFlag = ARGV.indexOf('--expect-tier');
 const EXPECT_TIER = tierFlag >= 0 ? ARGV[tierFlag + 1] : PINNED_TIER;
+// --plant desktop-light: the self-check for the per-screen object rule. The
+// desktop screens are given a phone-sized SCREEN (their window stays 1280×800),
+// so Auto loads light where the gate expects the build's tier; on a high build
+// the run must go RED, the object rule included ("not their screen's tier").
+const PLANT = ARGV.includes('--plant') ? ARGV[ARGV.indexOf('--plant') + 1] : null;
+if (PLANT !== null && PLANT !== 'desktop-light') {
+  console.error('external-play: --plant takes desktop-light');
+  process.exit(2);
+}
 if (tierFlag >= 0 && !['high', 'light'].includes(EXPECT_TIER)) {
   console.error('external-play: --expect-tier takes high or light');
   process.exit(2);
@@ -136,8 +145,14 @@ const cdp = connect(wsUrl); await cdp.ready;
 const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
 const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
 await cdp.send('Page.enable', {}, S); await cdp.send('Runtime.enable', {}, S); await cdp.send('Network.enable', {}, S);
+// Every screen must show its own requests: with the cache on, a screen that
+// reuses an earlier screen's objects could load them without a request.
+await cdp.send('Network.setCacheDisabled', { cacheDisabled: true }, S);
 
 const failures = []; const thrown = []; const urls = new Map();
+// The requests of the screen being mounted, reset before each navigation: one
+// entry per request, so a url an earlier screen also asked for still counts.
+let screenLog = [];
 const removedIndex = (url) => EXPECT_TIER !== PINNED_TIER && new RegExp(`(^|/)packs/${PINNED_TIER}-[0-9a-f]{12}\\.json$`).test(String(url));
 cdp.on((m) => {
   // /api/lan/* is the LAUNCHER's endpoint (src/net/lan.js), not an asset: a
@@ -155,7 +170,11 @@ cdp.on((m) => {
       && !(m.params.response.status === 404 && removedIndex(m.params.response.url))) {
     failures.push(`${m.params.response.status} ${m.params.response.url.replace(/^https?:\/\/[^/]+\//, '')}`);
   }
-  if (m.method === 'Network.requestWillBeSent') urls.set(m.params.requestId, m.params.request.url.replace(/^https?:\/\/[^/]+\//, ''));
+  if (m.method === 'Network.requestWillBeSent') {
+    const u = m.params.request.url.replace(/^https?:\/\/[^/]+\//, '');
+    urls.set(m.params.requestId, u);
+    screenLog.push([m.params.loaderId, u]);
+  }
   if (m.method === 'Network.loadingFailed' && !/favicon/i.test(m.params.errorText || '') && !removedIndex(urls.get(m.params.requestId) || '')) failures.push(`${m.params.errorText} ${urls.get(m.params.requestId) || ''}`.trim());
   if (m.method === 'Runtime.exceptionThrown') thrown.push(m.params.exceptionDetails.text || 'exception');
 });
@@ -169,12 +188,14 @@ let checks = 0; const findings = []; let seenObjects = 0; let cssBackdrops = 0; 
 // Every object url each screen asked for, with the tier that screen must show.
 const askedBy = [];
 for (const [name, query, ready, viewport] of SCREENS) {
-  await cdp.send('Emulation.setDeviceMetricsOverride', viewport, S);
+  await cdp.send('Emulation.setDeviceMetricsOverride', PLANT === 'desktop-light' && !viewport.mobile ? { ...viewport, screenWidth: 390, screenHeight: 844 } : viewport, S);
   // Auto's tier for this window: light on the phone; on a desktop the tier the
   // build pins, or the one --expect-tier names when that index was removed.
   const wantTier = viewport.mobile ? 'light' : EXPECT_TIER;
-  const before = new Set(urls.values());
-  await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/AshenSpire.html${query}` }, S);
+  screenLog = [];
+  // The document this navigation makes: requests are kept by its loaderId, so
+  // a late request from the screen before cannot be counted as this one's.
+  const { loaderId } = await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/AshenSpire.html${query}` }, S);
   const t0 = Date.now(); let up = false;
   while (Date.now() - t0 < 20000) { if (await ev(ready).catch(() => false)) { up = true; break; } await wait(200); }
   await wait(1200);
@@ -239,7 +260,7 @@ for (const [name, query, ready, viewport] of SCREENS) {
     cssBackdrops += bgs.length; cssMasks += masks.length;
     cssNote = `; css ${bgs.length} backdrop(s) from objects, ${masks.length} inline mask(s), ${css.loaded}/${css.faces} lore faces`;
   }
-  for (const u of new Set(urls.values())) if (!before.has(u) && objectPathOf(u)) askedBy.push([u, wantTier, name]);
+  for (const u of new Set(screenLog.filter(([id]) => id === loaderId).map(([, u]) => u))) if (objectPathOf(u)) askedBy.push([u, wantTier, name]);
   console.log(`  ${name.padEnd(7)} mounted, ${art.imgs} image(s), ${art.objects} from objects/, ${art.broken.length} broken${PINNED_TIER ? `, built-in art ${art.tier || 'none'}` : ''}${cssNote}`);
 }
 if (PINNED_TIER) {
