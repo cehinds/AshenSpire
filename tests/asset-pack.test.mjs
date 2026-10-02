@@ -329,3 +329,32 @@ test('known-bad: --out or --pack without a value is refused before anything is w
     assert.match(r.stderr, /needs a value/);
   }
 });
+
+test('known-bad: a .asset-pack marker that is a symlink or a directory is refused, and nothing is written through it', (t) => {
+  const root = tree(FILES);
+  const out = mkdtempSync(join(tmpdir(), 'asset-pack-out-'));
+  const elsewhere = mkdtempSync(join(tmpdir(), 'asset-pack-elsewhere-'));
+  try {
+    writeFileSync(join(elsewhere, 'precious.txt'), 'keep\n');
+    mkdirSync(join(out, '.asset-pack'));
+    assert.throws(() => writePacks({ root, out }), /\.asset-pack exists and is not a regular file/);
+    rmSync(join(out, '.asset-pack'), { recursive: true });
+    try { symlinkSync(join(elsewhere, 'precious.txt'), join(out, '.asset-pack')); } catch (e) { t.skip(`symlinks unavailable here (${e.code})`); return; }
+    assert.throws(() => writePacks({ root, out }), /\.asset-pack exists and is not a regular file/);
+    assert.equal(readFileSync(join(elsewhere, 'precious.txt'), 'utf8'), 'keep\n');
+    assert.ok(!readdirSync(out).includes('packs'), 'nothing was written');
+  } finally {
+    for (const d of [root, out, elsewhere]) rmSync(d, { recursive: true, force: true });
+  }
+});
+
+test('.gitignore keeps the store and its marker out of git at any depth under build/ and dist/', (t) => {
+  const repo = fileURLToPath(new URL('..', import.meta.url));
+  const paths = ['build/asset-pack/.asset-pack', 'build/web/packs/light-000000000000.json', 'build/a/b/objects/aa/x.webp', 'build/a/.asset-pack',
+    'dist/packs/light-000000000000.json', 'dist/objects/aa/x.webp', 'dist/.asset-pack', 'dist/staging/packs/x.json', 'dist/staging/objects/aa/x.webp', 'dist/staging/.asset-pack'];
+  const r = spawnSync('git', ['check-ignore', '--no-index', ...paths], { cwd: repo, encoding: 'utf8' });
+  if (r.error || r.status === 128) { t.skip(`git unavailable here (${r.error?.code || r.stderr.trim()})`); return; }
+  assert.deepEqual(r.stdout.split('\n').filter(Boolean).sort(), [...paths].sort(), 'every path is ignored');
+  const kept = spawnSync('git', ['check-ignore', '--no-index', 'src/packs/x.js', 'dist/README.md'], { cwd: repo, encoding: 'utf8' });
+  assert.equal(kept.stdout, '', 'source directories named packs/ and dist/README.md stay tracked');
+});

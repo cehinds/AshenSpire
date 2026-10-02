@@ -145,6 +145,9 @@ export function verifyRelease(zipBuf, pin, manifest) {
         if (!theirs || Object.prototype.hasOwnProperty.call(theirs, id)) problems.push(`${id}: not in the release`);
         continue;
       }
+      // Allowed in the zip only when the release's own manifest declares it;
+      // otherwise it is an extra file like any other.
+      if (!theirs || !Object.prototype.hasOwnProperty.call(theirs, id)) continue;
       paths.add(common.path);
       if (data.length !== common.bytes || sha256(data) !== common.sha256) problems.push(`${id}: the release's file differs from ${MANIFEST_PATH}`);
       continue;

@@ -285,3 +285,16 @@ test('the cache marker folds in the fonts a high release can carry, not music or
   const newFont = { assets: { ...base.assets, 'assets/fonts/f.woff2': { common: rec(6) } } };
   assert.notEqual(markerFor(pin, newFont), mark, 'a changed font re-verifies the cache');
 });
+
+test('known-bad: schema 2, a common file the release carries but its own manifest does not declare is an extra file', () => {
+  const { root, pin, manifest } = schema2Fixture();
+  try {
+    const theirs = { schema: 1, count: 1, assets: { 'assets/bg/a.webp': manifest.assets['assets/bg/a.webp'] } };
+    const zip = join(root, 'undeclared.zip');
+    writeZip(zip, [{ name: 'art-manifest.json', data: Buffer.from(JSON.stringify(theirs)) },
+      { name: 'assets/bg/a.webp', data: Buffer.from('high-a') }, { name: 'assets/fonts/f.woff2', data: Buffer.from('font') }]);
+    const buf = readFileSync(zip);
+    const problems = verifyRelease(buf, { ...pin, sha256: sha(buf) }, manifest).problems.join('\n');
+    assert.match(problems, /assets\/fonts\/f\.woff2: in the release, not in art-manifest\.json/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});

@@ -51,7 +51,7 @@
 // twin that does not match, each of which --check must catch.
 
 import { createHash } from 'node:crypto';
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MIME } from './assetmime.mjs';
@@ -238,10 +238,18 @@ export function writePacks({ root = ROOT, out: asked = resolve(ROOT, DEFAULT_OUT
   const { files, summary } = renderPacks(plan);
   const marker = resolve(out, MARKER);
   let marked = false;
-  try { marked = lstatSync(marker).isFile(); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+  try {
+    const st = lstatSync(marker);
+    // A symlinked or non-file marker could make the write below land anywhere.
+    if (!st.isFile()) throw new Error(`${marker} exists and is not a regular file (a symlink or directory); asset-pack will not write through it`);
+    marked = true;
+  } catch (e) { if (e.code !== 'ENOENT') throw e; }
   const clear = [clearable(resolve(out, PACKS_DIR), marked), clearable(resolve(out, OBJECTS_DIR), marked)];
   mkdirSync(out, { recursive: true });
-  writeFileSync(marker, MARKER_TEXT);
+  // Replace only a regular marker, then create the new one exclusively
+  // ('wx'), so a link planted between the check and the write is refused.
+  if (marked) unlinkSync(marker);
+  writeFileSync(marker, MARKER_TEXT, { flag: 'wx' });
   for (const dir of clear) rmSync(dir, { recursive: true, force: true });
   for (const path of [...files.keys()].sort(byteOrder)) {
     const abs = resolve(out, path);
