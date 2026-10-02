@@ -158,15 +158,15 @@ export function levelCardStrips(registries, offer, picks) {
  * hits, playerHurt, the turn stinger, draw/shuffle/discard). The host's
  * receiptSeq, not object identity, says whether the receipts are new, so a
  * resync or a re-render of the same scene never replays them. A client that
- * has heard nothing yet (lastSeq 0: it just joined or reloaded) hears only a
- * turn-1 scene, i.e. the fight's opening; joining mid-fight replays no
- * history.
+ * has heard nothing yet (lastSeq 0: it just joined or reloaded) hears only the
+ * scene the host marks `opening` (the one carrying the setup cues); joining
+ * after any action, turn 1 included, replays no history.
  */
 export function coopReceiptSounds(scene, lastSeq = 0) {
   if (!scene || scene.kind !== 'combat') return lastSeq;
   const seq = Number(scene.receiptSeq) || 0;
   if (seq <= lastSeq) return lastSeq;
-  if (lastSeq > 0 || Number(scene.turn) === 1) playReceiptSounds(scene.events || []);
+  if (lastSeq > 0 || scene.opening === true) playReceiptSounds(scene.events || []);
   return seq;
 }
 
