@@ -83,10 +83,13 @@ await wait(40);
 
 const app = () => dom.document.getElementById('app');
 const PRESSES = {
-  /** One physical Escape, at the focused element (or the body). */
-  Escape() {
+  /** One physical Escape, at the focused element (or the body). The Back
+   *  rule decides after the whole dispatch (a task), so the press waits one. */
+  async Escape() {
     const event = new dom.Event('keydown', { key: 'Escape', bubbles: true });
+    Object.defineProperty(event, 'isTrusted', { value: true });
     globalThis.__deliver(dom.document.activeElement || dom.document.body, event);
+    await wait(10);
   },
   /** One pad B: press and release button 1 through the real poller. */
   async 'pad B'() {
@@ -171,6 +174,83 @@ for (const [name, press] of Object.entries(PRESSES)) {
     assert.equal(backs, 0);
   });
 
+  // Review of #1463 (Codex PRRT_kwDOTLMIe86oSP_w): the Armoury answers Escape
+  // on the document and removes its veil without preventDefault. The press was
+  // aimed at the Armoury, so the screen under it must not back out as well.
+  test(`${name}: a layer that closes itself without consuming the press does not take the screen's Back with it`, async () => {
+    resetDom();
+    const { mountHistory } = await import('../src/ui/screens/history.js');
+    let backs = 0;
+    mountHistory(app(), { meta: { results: [] }, onBack: () => { backs += 1; } });
+    const veil = dom.document.createElement('div');
+    veil.classList.add('modal-veil');
+    veil.setAttribute('aria-modal', 'true');
+    dom.document.body.appendChild(veil);
+    const armoury = (event) => { if (event.key === 'Escape') veil.remove(); };
+    dom.document.addEventListener('keydown', armoury);
+    try {
+      await press();
+    } finally {
+      dom.document.removeEventListener('keydown', armoury);
+    }
+    assert.equal(veil.isConnected, false, 'the layer closed');
+    assert.equal(backs, 0, 'the screen under it stayed');
+  });
+
+  // Review of #1463 (Codex PRRT_kwDOTLMIe86oTFEI, PRRT_kwDOTLMIe86oTXgQ): the
+  // flask menu's Cancel and a hold's Escape listen on the window, registered
+  // AFTER input.js's rule. One press closes the menu (or drops the hold) only.
+  test(`${name}: a menu whose window Cancel is registered after input.js still takes the press alone`, async () => {
+    resetDom();
+    const { mountQuestBoard } = await import('../src/ui/screens/questBoard.js');
+    const { contentBundle } = await import('../src/content/index.js');
+    const { createRegistries } = await import('../src/model/registries.js');
+    const { createRunState } = await import('../src/model/state.js');
+    const { ATLAS, generateJourney } = await import('../src/model/worldAtlas.js');
+    const registries = createRegistries(contentBundle);
+    const run = createRunState({ seed: 123, classId: 'reaver', registries });
+    run.journey = generateJourney('BOARD0');
+    const row = ATLAS.data.node_quests[0];
+    const point = ATLAS.data.local_map_nodes.find((p) => p.nodeId === row.nodeId);
+    const ownerNodeId = point ? ATLAS.localMaps[point.mapId].ownerNodeId : row.nodeId;
+    app().innerHTML = '<div class="quest-board-screen"></div>';
+    let leaves = 0;
+    let menuCloses = 0;
+    mountQuestBoard(app(), { registries, run, meta: {}, ownerNodeId, onOpen: () => {}, onDone: () => { leaves += 1; } });
+    const menuCancel = (event) => { if (event.key === 'Escape') { event.preventDefault(); menuCloses += 1; } };
+    globalThis.addEventListener('keydown', menuCancel);
+    try {
+      await press();
+    } finally {
+      globalThis.removeEventListener('keydown', menuCancel);
+    }
+    assert.equal(menuCloses, 1, 'the menu closed once');
+    assert.equal(leaves, 0, 'the quest board stayed');
+  });
+
+  // Review of #1463 (Codex PRRT_kwDOTLMIe86oTXgN): character creation's menu
+  // is a native popover, not a .modal-veil. The press is the popover's: the
+  // browser closes it on a real Escape, and the rule closes it for pad B (a
+  // synthetic key the browser ignores). The creation step's Back never runs.
+  test(`${name}: an open native popover takes the press, not the screen's Back`, async () => {
+    resetDom();
+    let backs = 0;
+    const back = dom.document.createElement('button');
+    back.setAttribute('data-back', '');
+    back.addEventListener('click', () => { backs += 1; });
+    app().appendChild(back);
+    // The fixture reads `[popover]:popover-open` as "has a popover attribute",
+    // so an element carrying one stands for a popover the browser shows.
+    const menu = dom.document.createElement('div');
+    menu.setAttribute('popover', 'auto');
+    let hidden = 0;
+    menu.hidePopover = () => { hidden += 1; menu.remove(); };
+    app().appendChild(menu);
+    await press();
+    assert.equal(backs, 0, 'the creation step stayed');
+    assert.equal(hidden, name === 'pad B' ? 1 : 0, 'pad B closes the popover; the browser closes it on a real Escape');
+  });
+
   test(`${name}: a disabled Back, or none at all, does nothing`, async () => {
     resetDom();
     let backs = 0;
@@ -195,10 +275,17 @@ test('Escape typed in a text field stays the field\'s; pad B still backs out', a
   const field = dom.document.createElement('input');
   app().append(field, back);
   dom.document.activeElement = field;
-  PRESSES.Escape();
+  await PRESSES.Escape();
   assert.equal(backs, 0);
   await PRESSES['pad B']();
   assert.equal(backs, 1);
+});
+
+test('a hold-to-confirm cancelled by Escape consumes the press (holdconfirm.js onKeyEsc)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const source = readFileSync(new URL('../src/ui/components/holdconfirm.js', import.meta.url), 'utf8');
+  const body = source.slice(source.indexOf('const onKeyEsc'), source.indexOf('const onCardDragStart'));
+  assert.match(body, /ev\.preventDefault\(\)/, 'a hold dropped by Escape says the press is taken');
 });
 
 test('pad B reaches a document listener, as the keyboard\'s Escape does', async () => {
@@ -225,6 +312,7 @@ test('the inventory: every screen with a plain Back marks it, and each row of th
     'src/ui/screens/dialogue.js': '#dialogue-back',
     'src/ui/screens/reward.js': '#reward-back',
     'src/ui/screens/questBoard.js': '#quest-board-leave',
+    'src/ui/screens/map.js': '#map-back',
   };
   for (const [file, id] of Object.entries(marked)) {
     const source = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
@@ -234,11 +322,14 @@ test('the inventory: every screen with a plain Back marks it, and each row of th
   }
   const { SCREENS, NOT_DRIVEN } = await import('../tools/escape-back.mjs');
   for (const row of SCREENS) {
-    assert.ok(['back', 'peel', 'leave', 'none'].includes(row.expect), row.id);
+    assert.ok(['back', 'peel', 'leave', 'none', 'popover'].includes(row.expect), row.id);
     if (row.expect === 'none') assert.ok(row.why, `${row.id} documents why it has no Back`);
-    if (row.expect === 'back') assert.ok(Object.values(marked).includes(row.back), `${row.id}: ${row.back} is a marked Back`);
+    if (row.expect === 'back') assert.ok([...Object.values(marked), '#farewell-back'].includes(row.back), `${row.id}: ${row.back} is a marked Back`);
   }
   assert.ok(SCREENS.some((row) => row.id === 'title' && row.why), 'the title documents its Back');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /id="farewell-back" data-back/, 'the farewell screen marks Return to title');
+  assert.ok(SCREENS.some((row) => row.back === '#farewell-back'), 'the farewell screen is a row');
   assert.ok(NOT_DRIVEN.every(([name, how]) => name && how));
 });
 

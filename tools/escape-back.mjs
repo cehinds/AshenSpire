@@ -17,6 +17,8 @@
 //         the title folds back to the startup gate) and nothing else moved;
 //   none  the screen has no Back, and the press changed nothing (for combat:
 //         the turn did not end).
+//   popover a native popover is open over the screen: the press closed it,
+//         the screen's Back (`back`) ran zero times and nothing else moved.
 // An open tooltip is dismissed before each press (it is a layer of its own,
 // and Escape peels it first by design: src/ui/components/tooltip.js).
 //
@@ -50,10 +52,12 @@ export const SCREENS = [
   { id: 'compendium', shot: 'compendium', expect: 'back', back: '#cp-back' },
   { id: 'customrun', shot: 'customrun', expect: 'back', back: '#cr-back' },
   { id: 'customize', shot: 'customize', expect: 'back', back: '#cz-back' },
+  { id: 'customize-menu', shot: 'customize', open: '.cz-menu-button', expect: 'popover', back: '#cz-back' },
   { id: 'lobby', shot: 'lobby', expect: 'back', back: '#lb-back' },
   { id: 'atlas', shot: 'atlas', expect: 'none', why: 'the world atlas is the run itself; its exits (Save & quit) end the session' },
   { id: 'armoury', shot: 'atlas', open: '[data-atlas-armoury]', expect: 'peel' },
   { id: 'map', shot: 'map', expect: 'none', why: 'the act map is the run itself; its exits (Save & quit) end the session' },
+  { id: 'map-tray', shot: 'map', open: '.map-node.reachable', expect: 'back', back: '#map-back' },
   { id: 'combat', shot: 'combat', expect: 'none', why: 'a fight has no Back; Escape only cancels a selection and never ends the turn' },
   { id: 'smith', shot: 'smith', expect: 'peel' },
   { id: 'shop', shot: 'shop', expect: 'none', why: 'Leave ends the visit and discards the stock (D41): a commitment, not a Back' },
@@ -65,12 +69,14 @@ export const SCREENS = [
   { id: 'death', shot: 'death', expect: 'none', why: 'the run is over; Return to title is the way on, not a Back' },
   { id: 'victory', shot: 'victory', expect: 'none', why: 'the run is over; Return to title is the way on, not a Back' },
   { id: 'prologue', shot: 'prologue', expect: 'none', why: 'the opening plays forward; Skip is its exit and is not a Back' },
+  { id: 'farewell', shot: 'title', open: '#quit-game', expect: 'back', back: '#farewell-back' },
 ];
 
 // Surfaces reached by no `?shot=` state, and the test that covers each instead.
 export const NOT_DRIVEN = [
   ['deck editor', 'tests/deck-editor.test.mjs — Escape and pad B cancel the whole edit'],
   ['quest board', 'tests/escape-back.test.mjs — Escape and pad B press Leave (back to the place) once'],
+  ['Armoury or flask menu over the quest board', 'tests/escape-back.test.mjs — a layer that closes itself, or a window Cancel registered after input.js, takes the press alone'],
   ['dialogue Back (after the first line)', 'tests/escape-back.test.mjs — the [data-back] rule'],
   ['reward detail and chooser Back', 'tests/escape-back.test.mjs — the [data-back] rule'],
   ['menu overlay, quick nav, confirmation, tutorial', 'their own window-capture Escape (overlay.js, quicknav.js, confirmationModal.js, tutorial.js); tools/confirmation-modal.mjs drives pad B'],
@@ -115,7 +121,9 @@ const SIGNATURE = `(() => {
   const modals = document.querySelectorAll('[aria-modal="true"]').length;
   const fight = window.__combat ? [window.__combat.turn, window.__combat.phase, document.querySelector('.combat')?.dataset.turn].join('/') : '';
   const pane = document.querySelector('.cz-cat.on, [aria-current="step"], .dialogue-caption-text')?.textContent?.slice(0, 40) || '';
-  return JSON.stringify({ screen, modals, fight, pane });
+  const tray = document.querySelector('.map-tray')?.dataset.open || '';
+  const popover = document.querySelectorAll('[popover]:popover-open').length;
+  return JSON.stringify({ screen, modals, fight, pane, tray, popover });
 })()`;
 
 async function main() {
@@ -139,10 +147,13 @@ async function main() {
       if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text);
       return r.result.value;
     };
-    for (let i = 0; i < 80; i += 1) { await wait(250); if (await ev("!!document.getElementById('app')?.firstElementChild")) break; }
+    let booted = false;
+    for (let i = 0; i < 80 && !booted; i += 1) { await wait(250); booted = await ev("!!document.getElementById('app')?.firstElementChild"); }
+    if (!booted) throw new Error(`?shot=${row.shot} never mounted a screen`);
     await wait(2500);
     if (row.open) {
-      const opened = await ev(`(() => { const b = document.querySelector(${JSON.stringify(row.open)}); if (!b) return false; b.click(); return true; })()`);
+      // A dispatched click, not .click(): an SVG map node has no click().
+      const opened = await ev(`(() => { const b = document.querySelector(${JSON.stringify(row.open)}); if (!b) return false; b.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); return true; })()`);
       if (!opened) throw new Error(`opening control ${row.open} not found`);
       await wait(1500);
     }
@@ -185,7 +196,7 @@ async function main() {
         p = await page(row);
         await p.settle();
         const before = JSON.parse(await p.ev(SIGNATURE));
-        if (row.expect === 'back') {
+        if (row.expect === 'back' || row.expect === 'popover') {
           await p.ev(`(() => { window.__backRuns = 0; document.querySelector(${JSON.stringify(row.back)})?.addEventListener('click', () => { window.__backRuns += 1; }, true); })()`);
         }
         await press[input](p);
@@ -200,6 +211,10 @@ async function main() {
         } else if (row.expect === 'peel') {
           ok = before.modals >= 1 && after.modals === before.modals - 1 && after.screen === before.screen && after.fight === before.fight;
           note = `dialogs ${before.modals} -> ${after.modals}; screen ${after.screen === before.screen ? 'unchanged' : 'CHANGED'}`;
+        } else if (row.expect === 'popover') {
+          const runs = await p.ev('window.__backRuns ?? -1');
+          ok = before.popover >= 1 && after.popover === before.popover - 1 && runs === 0 && after.screen === before.screen && after.pane === before.pane;
+          note = `popovers ${before.popover} -> ${after.popover}; Back ran ${runs}x; screen ${after.screen === before.screen ? 'unchanged' : 'CHANGED'}`;
         } else if (row.expect === 'leave') {
           const there = await p.ev(`!!document.querySelector(${JSON.stringify(row.to)})`);
           ok = there && after.modals === before.modals;

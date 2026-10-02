@@ -230,8 +230,8 @@ export function mountFlaskActionMenu(anchor, { def, plan, charges = null, useAct
     if (root.contains(target) || anchor === target || anchor.contains(target)) return;
     close({ cancelled: true, restoreFocus: false });
   };
-  // Gamepad Cancel is a synthesized Escape dispatched on window by input.js,
-  // not on the focused button. Root bubbling covers physical keyboard Escape;
+  // Gamepad Cancel is a synthesized Escape dispatched on the document by
+  // input.js, not on the focused button. Root bubbling covers physical keyboard Escape;
   // this mounted listener is the parity seam for pad B / Back.
   const onGlobalCancel = (ev) => {
     if (ev.key !== 'Escape' && ev.key !== 'Backspace') return;

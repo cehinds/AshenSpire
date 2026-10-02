@@ -779,26 +779,64 @@ function synthKey(key) {
 // docs/FINISH.md §9: "Escape or pad B backs out of every screen." A screen
 // whose Back is a plain button (History, Compendium, Custom Climb, character
 // creation, the LAN lobby, a dialogue, a reward's detail pane, the quest
-// board) marks that button `data-back`, and this ONE listener presses it — a
-// click on the screen's existing Back, so the key and the pad run the same
-// handler the mouse runs, once. It is the LAST word on Escape: it sits on the
-// window in the bubble phase and steps aside for any press already taken
-// (`defaultPrevented`) by a dialog, the tooltip, an overlay or a screen that
-// answers Escape itself. A screen that answers Escape itself must therefore
-// not mark a `data-back` too; tools/escape-back.mjs counts the presses.
-// Only the topmost focus scope is searched (a Back under an open veil is not
-// the Back the player is looking at), and a text field keeps its Escape.
+// board, the farewell screen, the map tray) marks that button `data-back`, and
+// this ONE rule presses it — a click on the screen's existing Back, so the key
+// and the pad run the same handler the mouse runs, once.
+//
+// It is the LAST word on Escape, and "last" is enforced, not hoped for:
+//   1. `onBackCapture` (window, capture, registered ahead of initInput's own
+//      keydown) notes the focus scope, its Back and whether a native popover
+//      is open BEFORE the layers on the path answer the press.
+//   2. `onBackKey` (window, bubble) only schedules the decision for after the
+//      whole dispatch (a task, not a microtask: a real key's microtasks run
+//      between listeners). A listener registered after this one — the flask
+//      menu's window Cancel, a hold-to-confirm's Escape — has had its say.
+//   3. The decision steps aside if the press was taken (`defaultPrevented`),
+//      if the scope or the Back it was aimed at is gone or changed (a layer
+//      that closed itself without saying so, as the Armoury's document Escape
+//      once did; a screen that navigated on its own Escape), or if a
+//      native popover was open (character creation's menu): the press is that
+//      popover's. The browser closes a popover on a real Escape; a pad B is a
+//      synthetic key the browser ignores, so the rule closes it instead.
+// A screen that answers Escape itself must not mark a `data-back` too;
+// tools/escape-back.mjs counts the presses. A text field keeps its Escape.
 export const BACK_SELECTOR = '[data-back]';
+let backAim = null;
+function openPopover(root) {
+  try {
+    return root.querySelector('[popover]:popover-open');
+  } catch {
+    return null; // a DOM without the pseudo-class has no native popover either
+  }
+}
+function backIn(root) {
+  return [...root.querySelectorAll(BACK_SELECTOR)]
+    .find((el) => !el.disabled && !el.closest('[inert]') && visible(el)) || null;
+}
+function onBackCapture(ev) {
+  if (ev.key !== 'Escape') return;
+  const scope = scopeRoot();
+  backAim = { ev, scope, popover: openPopover(scope), back: backIn(scope) };
+}
 function onBackKey(ev) {
-  if (ev.key !== 'Escape' || ev.repeat || ev.defaultPrevented) return;
+  if (ev.key !== 'Escape' || ev.repeat) return;
+  const aim = backAim && backAim.ev === ev ? backAim : null;
+  backAim = null;
+  if (!aim) return;
   const tag = (ev.target && ev.target.tagName) || '';
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-  const root = scopeRoot();
-  const back = [...root.querySelectorAll(BACK_SELECTOR)]
-    .find((el) => !el.disabled && !el.closest('[inert]') && visible(el));
-  if (!back) return;
-  ev.preventDefault();
-  back.click();
+  setTimeout(() => {
+    if (ev.defaultPrevented) return;
+    if (aim.popover) {
+      if (!ev.isTrusted && aim.popover.isConnected && aim.popover.matches?.(':popover-open')) aim.popover.hidePopover?.();
+      return;
+    }
+    // The Back pressed is the one the player was looking at when they pressed:
+    // same scope, same control, still standing.
+    const root = scopeRoot();
+    if (!aim.back || root !== aim.scope || !root.isConnected) return;
+    if (backIn(root) === aim.back) aim.back.click();
+  }, 0);
 }
 
 function doAction(id, source = 'key') {
@@ -1135,6 +1173,7 @@ export function initInput({ getSettings } = {}) {
   const s = (getSettings && getSettings()) || {};
   setBindings(s.bindings || {});
   setKeyBindings(s.keyBindings || {});
+  addEventListener('keydown', onBackCapture, true);
   addEventListener('keydown', onKeydown, true);
   addEventListener('keyup', onKeyup, true);
   addEventListener('keydown', onBackKey);

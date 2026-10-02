@@ -555,7 +555,13 @@ export function armHold(btn, {
     if (tapped && onTap) onTap(ev);
   };
 
-  const onKeyEsc = (ev) => { if (ev.key === 'Escape' && armed) stop('idle'); };
+  // Escape cancelling a hold is the whole of that press: the screen under the
+  // button (a dialogue's Back, input.js's [data-back] rule) must not also act.
+  const onKeyEsc = (ev) => {
+    if (ev.key !== 'Escape' || !armed) return;
+    ev.preventDefault();
+    stop('idle');
+  };
   const onCardDragStart = () => { movedThisPress = true; if (armed) stop('idle'); };
   const onContextMenu = (ev) => {
     if (armed || offPointerPress) ev.preventDefault();
