@@ -108,6 +108,8 @@ test('ASHEN_ART_SOURCE=cache refuses the tree; =trees reads it silently; anythin
     assert.equal(strictFor(root, { ASHEN_ART_SOURCE: 'cache', GITHUB_WORKSPACE: root }), true);
     assert.equal(artDir('music', { root, env: { ASHEN_ART_SOURCE: 'trees' }, warn: () => assert.fail('trees mode is silent') }).from, 'trees');
     assert.throws(() => sourceMode({ ASHEN_ART_SOURCE: 'tree' }), /one of auto, cache, trees/);
+    // The high pack's tree (assets/) is not one of the four: it leaves with ART-REPO-PLAN step 6.
+    assert.equal(packSource('high', { root, env: { ASHEN_ART_SOURCE: 'cache' }, warn: () => {} }).from, 'trees');
     rmSync(join(root, 'music'), { recursive: true });
     assert.throws(() => artDir('music', { root, env: {}, warn: () => {} }), /not in this checkout and the common pack is not fetched/);
   } finally { rmSync(root, { recursive: true, force: true }); }

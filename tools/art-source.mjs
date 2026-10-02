@@ -21,7 +21,10 @@
 //
 //   ASHEN_ART_SOURCE unset (or `auto`)  the tree in this checkout, with one note
 //                                       naming the fetch that replaces it;
-//   ASHEN_ART_SOURCE=cache              refused: the error names the fetch. CI sets
+//   ASHEN_ART_SOURCE=cache              refused for the light and common packs (the
+//                                       high pack's assets/ tree leaves with
+//                                       ART-REPO-PLAN step 6): the error names the
+//                                       fetch. CI sets
 //                                       this, so a job that reads the trees
 //                                       without fetching is red now, not at step 13.
 //                                       It binds the checkout CI runs in
@@ -51,6 +54,8 @@ export const MOVING_TREES = Object.freeze({
   'map-detail': 'common',
 });
 
+/** The packs that carry a moving tree: the ones ASHEN_ART_SOURCE=cache holds to their cache. */
+const TREE_PACKS = new Set(Object.values(MOVING_TREES));
 const posix = (p) => p.split(/[\\/]/g).join('/');
 const real = (p) => { try { return realpathSync(p); } catch { return resolve(p); } };
 
@@ -95,7 +100,11 @@ export function packSource(pack, { root = ROOT, env = process.env, warn = defaul
   const hit = verified.get(vkey);
   if (hit.dir) return { from: 'cache', dir: hit.dir };
   const why = hit.why;
-  if (strictFor(root, env)) throw new Error(`${ENV}=cache: ${why}`);
+  // The refusal guards the four trees step 13 deletes. The high pack's tree,
+  // assets/, leaves with ART-REPO-PLAN step 6, so a build that packs the high
+  // tier without the 203 MB high zip (a high-default web edition on dev) still
+  // reads assets/ here, with the note.
+  if (TREE_PACKS.has(pack) && strictFor(root, env)) throw new Error(`${ENV}=cache: ${why}`);
   if (!noted.has(vkey)) {
     noted.add(vkey);
     warn(`art-source: ${why}; reading the ${pack} pack's files from the trees in this checkout until docs/EXTERNAL-ASSETS-PLAN.md step 13 removes them`);
