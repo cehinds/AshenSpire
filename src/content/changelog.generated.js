@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1456",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Play the hosted game offline, and download it whole",
+    "detail": "On the build site, newer builds now play as the web edition, loading their art from one shared store, and each build's Download saves the light-art single file, one self-contained HTML that plays by double-click. In the game, Download & saves → Make available offline keeps the build and its art in your browser, so the same address opens without internet (the map uses simpler artwork and the music is synthesized offline); Remove offline copy undoes it.",
+    "build": "0.7.1.743",
+    "pullRequest": 1456,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1456"
+  },
+  {
     "id": "pr-1452",
     "date": "2026-10-02",
     "group": "2026-10-02",
