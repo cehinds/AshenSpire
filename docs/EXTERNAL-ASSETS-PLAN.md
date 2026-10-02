@@ -1,7 +1,10 @@
 # Every asset outside the game file — plan
 
-Status: **step 2 built** (2026-10-01: `tools/asset-pack.mjs`, `art-manifest.json`
-schema 2); the rest is plan (2026-09-27). The owner answered its
+Status: **steps 2 and 3a built** (2026-10-01: `tools/asset-pack.mjs`,
+`art-manifest.json` schema 2; 2026-10-02: the loader `src/ui/assetPacks.js`,
+`setBuiltInSource`, the `ASSET_PACKS` stamp and the tier fallback, with
+`bundle.mjs --external-art` writing packs and `verify-external` rewritten; see
+[Step 3a as built](#step-3a-as-built)); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -408,10 +411,11 @@ download/AshenSpire.html   the light single file: inline, about 30 MB (owner ans
 
 - `dist/AshenSpire.html` still opens by double-click (section 5), so the
   player door in ARCHITECTURE-MAP.md stays open.
-- **`.gitignore`.** Today `build/` and `dist/` ignore only `*.html` and named
-  subfolders (`.gitignore:452-493`), so `packs/` and `objects/` are **not**
-  ignored yet. Step 3a adds `build/**/packs/`, `build/**/objects/`,
-  `dist/packs/` and `dist/objects/`, before any tool writes them there.
+- **`.gitignore`.** `build/` and `dist/` used to ignore only `*.html` and named
+  subfolders, so `packs/` and `objects/` were not ignored. Step 2 added
+  `build/**/packs/`, `build/**/objects/`, `dist/**/packs/` and
+  `dist/**/objects/` (and the `.asset-pack` markers) when `asset-pack` first
+  wrote there; the plan had put this in step 3a.
 
 ### GitHub Pages (`tools/pages-site.mjs`, `pages-builds.yml`)
 
@@ -675,6 +679,53 @@ build dependency at step 11. No token does: the owner made it public (answer
 Steps 2–8e need no token and no art-repo change, so they can start now (step
 8e also needs 8a). ART-REPO-PLAN step 5 (the `art/` readers) is
 independent of all of them.
+
+### Step 3a as built
+
+Where the build differs from, or settles, the text above (2026-10-02):
+
+- **CSS `url()`s name objects directly** until step 3b. `bundle.mjs
+  --external-art` rewrites each one to the default tier's object (the common
+  pack's for a font), relative to the HTML, instead of to a copied `assets/`
+  tree. The rules stay in the inlined `<style>`; the `ASSET_CSS` template, and
+  with it the high → light fallback for CSS, are step 3b. `verify-external` D
+  checks that each `url()` names an object a pinned index lists.
+- **`map-detail/` and `music/` are still copied** beside the HTML until step
+  3c reads them through the common index, so a 3a web edition carries those
+  bytes twice (as copies and as common objects, about 32 MB).
+- **The first screen waits for the index.** `src/main.js` draws its first
+  screen through `whenBuiltInArtReady()`: at once when nothing is pinned (the
+  single files, the source tree), else when the indexes settle or after
+  `BOOT_WAIT_MS` (8 s). A screen drawn before the index would ask for bare
+  `assets/…` paths, and the images' own error handlers would keep their
+  placeholders. The shipped music folder is applied after that first screen,
+  so a `?shot=` boot that walks through two screens does not start and abort a
+  track. A late index still re-points what is on screen
+  (`builtInArtArrived` in `highResArt.js`).
+- **Over http(s) only.** Under `file://` the loader loads nothing and the web
+  edition shows placeholders (the `.js` twins are step 4). The single files are
+  unaffected.
+- **`asset-base.json` is written by the bundler** beside every web-edition
+  HTML (`{"base":"./"}`), so the loader's first request is never a 404; the
+  loader accepts only a plain relative folder from it.
+- **The build stops on a stale manifest.** The packs are written from
+  `art-manifest.json`, and `asset-pack` refuses when a tree's file does not
+  match its record; before, the web edition copied whatever the tree held.
+- **dev-preview builds under `build/web` and copies the tree into `preview/`**,
+  because `asset-pack` writes `packs/` and `objects/` only under `build/` or
+  `dist/`. The preview pages that run the source modules (`world-atlas-`,
+  `equipment-selection-`, `armament-kits-preview.html`) still read `assets/`
+  by path, so the job copies the tier's art tree into `preview/assets/` for
+  them until step 12.
+- **`.gitignore`** already carried `build/**/packs/`, `build/**/objects/`,
+  `dist/**/packs/` and `dist/**/objects/` from step 2, so 3a adds nothing there.
+- **`assetsAreInlined()` has no callers** on dev, so nothing switched to
+  `builtInSource()`; both are exported.
+- A pre-pack `assets/` tree left in `build/web` (or any output under `build/`
+  or `dist/`) by an earlier build is removed, so it cannot serve an id the index
+  lacks.
+- `external-play` now also requires every screen to have loaded the pinned
+  tier (`<html data-built-in-art>`) and its images to come from `objects/`.
 
 ---
 

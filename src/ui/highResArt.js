@@ -237,6 +237,18 @@ export function watchMissingFiles(doc = globalThis.document) {
   }, true);
 }
 
+/**
+ * builtInArtArrived(map) — src/ui/assetPacks.js has set the built-in pack.
+ * The same moment as a tier change: images drawn before it are traced back to
+ * their ids and re-pointed, and the warmers keyed by URL start over.
+ */
+export function builtInArtArrived(map) {
+  remember(map);
+  const moved = refreshMountedArt();
+  announce(current ? current.size : 0);
+  return moved;
+}
+
 /** False on browsers whose file picker cannot hand over a folder (phones). */
 export function canPickFolder(doc = globalThis.document) {
   if (!doc || typeof doc.createElement !== 'function') return false;

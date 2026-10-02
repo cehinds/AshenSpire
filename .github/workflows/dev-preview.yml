@@ -220,12 +220,24 @@ jobs:
           #
           # The root used to be the single file, so opening the preview on a
           # phone meant 57.6 MB before the first frame. --external-art writes
-          # AshenSpire.html plus assets/ and map-detail/ into preview/ in one
-          # pass (and the shipped score, music/), so the copies that used to place
-          # those by hand are gone with it.
+          # AshenSpire.html plus the pack shape (asset-base.json, packs/,
+          # objects/ — docs/EXTERNAL-ASSETS-PLAN.md step 3a) and the map-detail/
+          # and music/ copies beside it. It is built under build/web, because
+          # tools/asset-pack.mjs writes packs/ and objects/ only under build/
+          # or dist/, and the built tree is copied into preview/.
           # The same tier as the standalone: light on dev/test, full on release/main.
-          node tools/bundle.mjs --external-art $WEB_TIER --out preview
+          node tools/bundle.mjs --external-art $WEB_TIER --out build/web
+          cp -r build/web/. preview/
           cp preview/AshenSpire.html preview/index.html
+          # THE PREVIEW PAGES STILL READ assets/ BY PATH. world-atlas-,
+          # equipment-selection- and armament-kits-preview.html run the source
+          # modules from preview/src/, where assetUrl() returns the plain
+          # `assets/…` path; the game itself reads the packs. Until step 12
+          # points them at the fetched cache, they get this tier's art tree,
+          # which the pre-pack build used to leave here.
+          if [ "$(echo $WEB_TIER)" = "--light" ]; then ART_TREE=assets-mobile; else ART_TREE=assets; fi
+          mkdir -p preview/assets
+          cp -r "$ART_TREE"/. preview/assets/
           # The standalone is collected and uploaded by its own steps, right
           # after the build, so nothing here can cost a commit its download.
           mkdir -p preview/art/combat-effects-2026-09-07 preview/assets
@@ -235,7 +247,7 @@ jobs:
           cp armament-kits-preview.html preview/
           cp tools/serve-preview.mjs preview/serve-preview.mjs
           cp -r styles preview/styles
-          # --update=none: the build above already placed this tier's art under
+          # --update=none: the copy above already placed this tier's art under
           # preview/assets/ (the light twins on dev/test); these copies only add
           # the files it does not ship, and never overwrite its art.
           cp -r --update=none assets/environments preview/assets/
@@ -274,7 +286,8 @@ jobs:
             echo "Card/tag assignments and screenshots are in the same art folder."
             echo
             echo "This folder is the DE-INLINED build: serve it and open AshenSpire.html"
-            echo "(or run serve-preview.mjs). It needs a server. For the double-clickable"
+            echo "(or run serve-preview.mjs). Its art is in packs/ and objects/, loaded and"
+            echo "hash-checked at runtime. It needs a server. For the double-clickable"
             echo "single file that needs none, download the ${CHANNEL}-standalone artifact"
             echo "from this same run: AshenSpire-${CHANNEL}-preview.html. On dev and test it"
             echo "carries the light art tier (~29 MB); on release and main it is the full"
