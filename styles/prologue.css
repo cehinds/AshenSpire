@@ -180,6 +180,9 @@
   .prologue-layout-overlay{grid-template-columns:1fr;grid-template-rows:1fr auto}
   .prologue-layout-letterbox{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto auto}
   .prologue-layout-letterbox .prologue-bar{grid-row:3}
+  /* Here the caption is a side panel, not a band: a fixed band height would
+     leave it a strip at the top of an empty column. It fills the panel. */
+  .prologue-fixed-caption.prologue-layout-caption .prologue-caption{height:auto}
 }
 /* A scene with no painting is a text card: the backdrop, and the words. */
 .prologue-plate-bare{background:#100e0c}

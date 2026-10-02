@@ -847,6 +847,10 @@ test('the fixed caption is one share of every screen, centred, and its words shr
   assert.match(screen, /function fitCaption\(\)/);
   assert.match(screen, /resized\?\.observe\(root\)/, 'a resize re-fits the words');
   assert.match(screen, /resized\?\.observe\(dialogue\)/, 'a Text size change mid-opening re-fits the words');
+  // A short landscape screen turns the caption layout into a side panel; the
+  // band height and the fit both stand aside there.
+  assert.match(css, /@media\(max-height:500px\) and \(orientation:landscape\)\{[^@]*\.prologue-fixed-caption\.prologue-layout-caption \.prologue-caption\{height:auto\}/);
+  assert.match(screen, /matchMedia\('\(max-height:500px\) and \(orientation:landscape\)'\)/);
   assert.match(screen, /resized\?\.disconnect\(\)/, 'cleanup lets the observer go');
   assert.match(screen, /removeEventListener\?\.\('loadingdone', fitCaption\)/, 'cleanup lets the font listener go');
   for (const part of ['title', 'speaker', 'dialogue', 'location']) {

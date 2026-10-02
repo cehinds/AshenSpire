@@ -199,9 +199,13 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   // bands are fixed (the stylesheet says so too); a panel column scrolls, and
   // with the controls inside the caption the buttons cannot shrink, so fitting
   // there would only make the words tiny and still scroll.
+  const shortLandscape = matchMedia('(max-height:500px) and (orientation:landscape)');
   function fitCaption() {
     caption.style.removeProperty('--prologue-caption-fit');
-    const banded = root.classList.contains('prologue-layout-caption') || root.classList.contains('prologue-layout-letterbox');
+    // On a short landscape screen the caption layout is a side panel (the
+    // stylesheet's max-height:500px fallback), which scrolls rather than fits.
+    const panelled = root.classList.contains('prologue-layout-caption') && shortLandscape.matches;
+    const banded = !panelled && (root.classList.contains('prologue-layout-caption') || root.classList.contains('prologue-layout-letterbox'));
     if (!root.classList.contains('prologue-fixed-caption') || !banded || root.classList.contains('prologue-controls-text')) return;
     if (!caption.clientHeight) return;
     for (let step = 19; step >= 7 && caption.scrollHeight > caption.clientHeight + 1; step--) {
