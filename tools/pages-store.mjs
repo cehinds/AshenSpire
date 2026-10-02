@@ -91,41 +91,62 @@ export function publishPack(siteDir, relDir, html, from, { name = 'index.html' }
   // store shared by every rebuild of the run).
   const packsRoot = typeof from === 'string' ? from : from.packs;
   const objectsRoot = typeof from === 'string' ? from : from.objects;
+  const where = `${relDir ? `${relDir}/` : ''}${name}`;
   const pin = packPinOf(html);
-  if (!pin) throw new Error(`${relDir || '/'}${name}: not a pack-shaped HTML (no ASSET_PACKS pin)`);
+  if (!pin) throw refused(`${where}: not a pack-shaped HTML (no ASSET_PACKS pin)`);
+  // EVERYTHING IS CHECKED BEFORE ANYTHING IS WRITTEN (review of #1456): a build
+  // the store cannot take is refused whole, by name, and leaves the site as it
+  // was, so the caller skips that one build instead of the whole publication.
+  const packFiles = pinnedPackFiles(pin);
+  for (const file of packFiles) {
+    if (!PIN_FILE.test(file)) throw refused(`${where}: its pin names ${JSON.stringify(file)}, which is not a packs/<pack>-<digest12>.json|js file`);
+    const src = join(packsRoot, file);
+    if (!existsSync(src)) throw refused(`${where}: its pin names ${file}, and the build has none`);
+    const dest = join(siteDir, file);
+    if (existsSync(dest) && Buffer.compare(readFileSync(dest), readFileSync(src)) !== 0) {
+      throw refused(`${where}: the store already holds a different ${file} (a newer build published it first; two builds disagree about one name)`);
+    }
+  }
+  const wanted = [];
+  for (const p of Object.values(pin.packs)) {
+    const entries = JSON.parse(readFileSync(join(packsRoot, p.index), 'utf8'));
+    for (const [id, row] of Object.entries(entries)) {
+      if (!Array.isArray(row) || !OBJECT_SHA.test(String(row[0]))) throw refused(`${where}: ${p.index} lists ${JSON.stringify(id)} with no sha256 name`);
+      const rel = objectPath(row[0], id);
+      if (!OBJECT_FILE.test(rel)) throw refused(`${where}: ${p.index} lists ${JSON.stringify(id)} at ${rel}, outside objects/`);
+      const src = join(objectsRoot, rel);
+      if (!existsSync(join(siteDir, rel)) && !existsSync(src)) throw refused(`${where}: ${p.index} lists ${id} (${rel}), and the build has no such object`);
+      wanted.push([rel, src]);
+    }
+  }
   const dir = join(siteDir, relDir);
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, name), html);
   writeFileSync(join(dir, ASSET_BASE_FILE), assetBaseText(relDir));
-  let objects = 0;
-  let added = 0;
-  for (const file of pinnedPackFiles(pin)) {
-    const src = join(packsRoot, file);
-    if (!existsSync(src)) throw new Error(`${relDir || '/'}${name}: its pin names ${file}, and the build has none`);
+  for (const file of packFiles) {
     const dest = join(siteDir, file);
-    if (existsSync(dest)) {
-      if (Buffer.compare(readFileSync(dest), readFileSync(src)) !== 0) throw new Error(`the store already holds a different ${file} — two builds disagree about one index name`);
-      continue;
-    }
+    if (existsSync(dest)) continue;
+    mkdirSync(dirname(dest), { recursive: true });
+    copyFileSync(join(packsRoot, file), dest);
+  }
+  let added = 0;
+  for (const [rel, src] of wanted) {
+    const dest = join(siteDir, rel);
+    if (existsSync(dest)) continue;
     mkdirSync(dirname(dest), { recursive: true });
     copyFileSync(src, dest);
+    added++;
   }
-  for (const p of Object.values(pin.packs)) {
-    const entries = JSON.parse(readFileSync(join(packsRoot, p.index), 'utf8'));
-    for (const [id, row] of Object.entries(entries)) {
-      const rel = objectPath(row[0], id);
-      objects++;
-      const dest = join(siteDir, rel);
-      if (existsSync(dest)) continue;
-      const src = join(objectsRoot, rel);
-      if (!existsSync(src)) throw new Error(`${p.index} lists ${id} (${rel}), and the build has no such object`);
-      mkdirSync(dirname(dest), { recursive: true });
-      copyFileSync(src, dest);
-      added++;
-    }
-  }
-  return { pin, objects, added };
+  return { pin, objects: wanted.length, added };
 }
+
+// The names a pin and an index may use (review of #1456): nothing a pin or an
+// index says can write outside packs/ and objects/.
+const PIN_FILE = /^packs\/[a-z]+-[0-9a-f]{12}\.(?:json|js)$/;
+const OBJECT_SHA = /^[0-9a-f]{64}$/;
+const OBJECT_FILE = /^objects\/[0-9a-f]{2}\/[0-9a-f]{64}(?:\.[a-z0-9]+)?$/;
+/** An error that refuses one build, not the run: `refused` is set. */
+function refused(message) { return Object.assign(new Error(message), { refused: true }); }
 
 /** Write the service worker at the site root; returns what builds.json records about it. */
 export function writeServiceWorker(siteDir, { kill } = {}) {

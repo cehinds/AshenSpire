@@ -100,7 +100,11 @@ const workerText = (kind) => {
 // The site, in the Pages shape.
 const SITE = GIVEN_SITE || mkdtempSync(join(tmpdir(), 'pages-offline-'));
 const SITE_SW = GIVEN_SITE && existsSync(join(SITE, SW_FILE)) ? readFileSync(join(SITE, SW_FILE)) : null;
-if (!GIVEN_SITE) publishPack(SITE, REL, HTML, WEB);
+if (!GIVEN_SITE) {
+  publishPack(SITE, REL, HTML, WEB);
+  // A second build under the same worker, never kept: it must not say it is.
+  publishPack(SITE, 'dev/2', HTML, WEB);
+}
 writeFileSync(join(SITE, SW_FILE), workerText('live'));
 // What "Make available offline" must keep: light and common (high only when asked).
 const kept = ['light', 'common'].filter((p) => PIN.packs[p]);
@@ -199,6 +203,30 @@ try {
   const objectKeys = await ev(`caches.open(${JSON.stringify(OBJECT_CACHE)}).then((c) => c.keys()).then((ks) => ks.map((k) => new URL(k.url).pathname.replace('/AshenSpire/', '')))`);
   const absent = [...expectedObjects].filter((p) => !objectKeys.includes(p));
   check('OBJECTS', absent.length === 0 && objectKeys.length >= expectedObjects.size, `every ${kept.join(' and ')} object is cached (${objectKeys.length} of ${expectedObjects.size})`);
+
+  // 2b. Another build shares the worker but was not kept: it offers the keep,
+  // and does not claim to be kept (Codex, #1456).
+  if (!GIVEN_SITE) {
+    await go(`${ORIGIN}/AshenSpire/dev/2/`);
+    await until(`!!document.querySelector('.startup-gate')`, 30000);
+    await ev(`document.querySelector('.startup-gate').click()`);
+    await until(`!!document.querySelector('#download-game')`);
+    await ev(`document.querySelector('#download-game').click()`);
+    await until(`!!document.querySelector('#offline-keep')`, 10000);
+    await wait(1500);
+    const other = await ev(`({ label: document.querySelector('#offline-keep').textContent, status: document.querySelector('#offline-keep-status').textContent, remove: !document.querySelector('#offline-keep-remove').hidden })`);
+    check('PERPAGE', other.label === 'Make available offline' && !/kept for offline/.test(other.status) && !other.remove,
+      `another build under the same worker is not called kept ("${other.label}", "${other.status || 'no status'}")`);
+    // Keep it too, then remove it: only its own copy goes; dev/1 stays kept.
+    await ev(`document.querySelector('#offline-keep').click()`);
+    await until(`/^Ready offline/.test(document.querySelector('#offline-keep-status')?.textContent || '')`, 180000);
+    await ev(`document.querySelector('#offline-keep-remove').click()`);
+    await until(`/removed/.test(document.querySelector('#offline-keep-status')?.textContent || '')`, 15000);
+    const after = await ev(`caches.open(${JSON.stringify(PAGE_CACHE)}).then((c) => c.keys()).then((ks) => ks.map((k) => k.url))`);
+    const regs = await ev(`navigator.serviceWorker.getRegistrations().then((rs) => rs.length)`);
+    check('REMOVE', !after.includes(`${ORIGIN}/AshenSpire/dev/2/`) && after.includes(PAGE) && regs === 1,
+      `removing dev/2's copy leaves dev/1 kept and the worker registered (${after.length} page entries, ${regs} registration)`);
+  }
 
   // 3. Online, the network wins over the kept copies.
   const htmlPath = join(SITE, REL, 'index.html');

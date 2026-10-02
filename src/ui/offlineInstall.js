@@ -36,6 +36,7 @@ export function offlineSupport({ pin = ASSET_PACKS, status = builtInArtStatus(),
   if (!packsPinned(pin)) return { ok: false, base: null, high, reason: 'single' };
   if (!/^https?:$/.test(String(loc?.protocol || ''))) return { ok: false, base: null, high, reason: 'protocol' };
   if (!nav?.serviceWorker || typeof nav.serviceWorker.register !== 'function') return { ok: false, base: null, high, reason: 'unsupported' };
+  if (status?.state === 'loading' || status?.state === 'idle') return { ok: false, base: null, high, reason: 'loading' };
   if (status?.state !== 'loaded' || typeof status.base !== 'string') return { ok: false, base: null, high, reason: 'art' };
   return { ok: true, base: status.base, high, reason: '' };
 }
@@ -87,12 +88,15 @@ export async function makeAvailableOffline({
   let persisted = false;
   try { persisted = !!(await nav.storage?.persist?.()); } catch { persisted = false; }
   const keep = (url, init = {}) => fetchImpl(url, { ...init, cache: 'no-store', signal, headers: { [OFFLINE_HEADER]: '1' } });
-  // The page and its base first: these are what an offline visit asks for.
-  for (const url of [new URL(loc.pathname, loc.href).href, new URL('asset-base.json', loc.href).href]) {
+  const keepOne = async (url) => {
     const res = await keep(url);
     if (!res.ok) throw new Error('This page could not be kept offline. Check your connection and try again.');
     await res.arrayBuffer();
-  }
+  };
+  // The base first; THE PAGE ITSELF LAST, only once every index and object is
+  // in: the kept page is what offlineState reads as "kept", so a keep that
+  // fails partway never claims this build (review of #1456).
+  await keepOne(new URL('asset-base.json', loc.href).href);
   // Each index, kept by the worker as it passes, and checked against its pin here.
   const objects = new Set();
   for (const pack of offlinePacks(pin, includeHigh)) {
@@ -124,26 +128,80 @@ export async function makeAvailableOffline({
     }
   };
   await Promise.all(Array.from({ length: Math.max(1, Math.min(concurrency, total)) }, worker));
-  return { objects: total, failed, persisted, scope: registration?.scope || null };
+  if (!failed) await keepOne(new URL(loc.pathname, loc.href).href);
+  return { objects: total, failed, kept: !failed, persisted, scope: registration?.scope || null };
 }
 
-/** Whether this page is kept offline now: its worker is registered and controls the page. */
-export async function offlineState({ status = builtInArtStatus(), loc = globalThis.location, nav = globalThis.navigator } = {}) {
+/** The worker's page cache (tools/pages-sw.mjs PAGE_CACHE). */
+export const PAGE_CACHE = 'ashen-pages-v1';
+
+/** The key the worker keeps a page under: origin + path, a trailing index.html folded (pages-sw.mjs pageKey). */
+export function pageCacheKey(href) {
+  const url = new URL(href);
+  const path = url.pathname.endsWith('/index.html') ? url.pathname.slice(0, -'index.html'.length) : url.pathname;
+  return url.origin + path;
+}
+
+/**
+ * Whether THIS build is kept offline: { registered, kept }. The worker's
+ * registration is shared by every build under the site root, so it only says
+ * the service is on (`registered`). `kept` is per page: this page's HTML and
+ * the light and common indexes its own pin names are in the worker's page
+ * cache, which only "Make available offline" for this page writes.
+ */
+export async function offlineState({ pin = ASSET_PACKS, status = builtInArtStatus(), loc = globalThis.location, nav = globalThis.navigator, cacheStorage = globalThis.caches } = {}) {
   try {
-    if (!nav?.serviceWorker?.getRegistration || typeof status?.base !== 'string') return { registered: false };
+    if (!nav?.serviceWorker?.getRegistration || typeof status?.base !== 'string') return { registered: false, kept: false };
     const registration = await nav.serviceWorker.getRegistration(new URL(status.base, loc.href).href);
-    return { registered: !!registration && registration.active?.scriptURL === workerUrl(status.base, loc.href) };
-  } catch { return { registered: false }; }
+    const registered = !!registration && registration.active?.scriptURL === workerUrl(status.base, loc.href);
+    if (!registered || !cacheStorage?.open) return { registered, kept: false };
+    const cache = await cacheStorage.open(PAGE_CACHE);
+    const wanted = [pageCacheKey(loc.href), ...offlinePacks(pin).map((p) => pageCacheKey(new URL(`${status.base}${pin.packs[p].index}`, loc.href).href))];
+    for (const key of wanted) if (!(await cache.match(key))) return { registered, kept: false };
+    return { registered, kept: true };
+  } catch { return { registered: false, kept: false }; }
 }
 
-/** Remove the offline copy: unregister the site's worker and delete its caches. Returns how many were removed. */
-export async function removeOfflineCopy({ status = builtInArtStatus(), loc = globalThis.location, nav = globalThis.navigator, cacheStorage = globalThis.caches } = {}) {
-  let removed = 0;
-  const script = typeof status?.base === 'string' ? workerUrl(status.base, loc.href) : null;
-  for (const registration of (await nav?.serviceWorker?.getRegistrations?.()) || []) {
-    const url = registration.active?.scriptURL || registration.waiting?.scriptURL || registration.installing?.scriptURL;
-    if (script && url === script && await registration.unregister()) removed++;
+const PIN_IN_HTML = /const ASSET_PACKS = (\{.*?\});\n/;
+const isPageEntry = (url) => !/\.json$/.test(new URL(url).pathname);
+
+/**
+ * Remove THIS build's offline copy (Copilot, #1456): its page, its
+ * asset-base.json and the indexes no other kept build pins. The objects are
+ * shared by every kept build and stay. When no other build is kept, the
+ * worker is unregistered and every ashen- cache deleted, objects included.
+ * Returns { scope: 'build' | 'all', others } — `others` kept builds remain.
+ */
+export async function removeOfflineCopy({ pin = ASSET_PACKS, status = builtInArtStatus(), loc = globalThis.location, nav = globalThis.navigator, cacheStorage = globalThis.caches } = {}) {
+  const base = typeof status?.base === 'string' ? status.base : './';
+  const cache = await cacheStorage.open(PAGE_CACHE);
+  const mine = pageCacheKey(loc.href);
+  await cache.delete(mine);
+  await cache.delete(pageCacheKey(new URL('asset-base.json', loc.href).href));
+  const keys = (await cache.keys()).map((k) => (typeof k === 'string' ? k : k.url));
+  const others = keys.filter((k) => isPageEntry(k) && k !== mine);
+  if (!others.length) {
+    const script = workerUrl(base, loc.href);
+    for (const registration of (await nav?.serviceWorker?.getRegistrations?.()) || []) {
+      const url = registration.active?.scriptURL || registration.waiting?.scriptURL || registration.installing?.scriptURL;
+      if (url === script) await registration.unregister();
+    }
+    for (const name of (await cacheStorage.keys()) || []) if (name.startsWith(CACHE_PREFIX)) await cacheStorage.delete(name);
+    return { scope: 'all', others: 0 };
   }
-  for (const name of (await cacheStorage?.keys?.()) || []) if (name.startsWith(CACHE_PREFIX) && await cacheStorage.delete(name)) removed++;
-  return removed;
+  // The indexes another kept build still pins stay.
+  const root = new URL(base, loc.href);
+  const pinned = new Set();
+  for (const key of others) {
+    try {
+      const res = await cache.match(key);
+      const m = PIN_IN_HTML.exec(res ? await res.text() : '');
+      for (const p of Object.values(m ? JSON.parse(m[1]).packs || {} : {})) pinned.add(new URL(p.index, root).href);
+    } catch { /* an unreadable entry pins nothing */ }
+  }
+  for (const p of Object.values(pin?.packs || {})) {
+    const url = new URL(p.index, root).href;
+    if (!pinned.has(url)) await cache.delete(url);
+  }
+  return { scope: 'build', others: others.length };
 }

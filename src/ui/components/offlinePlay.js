@@ -32,7 +32,11 @@ function keepOffline(signal) {
   const high = el('input', { type: 'checkbox', id: 'offline-keep-high' });
   const highRow = support.high ? [el('label', { for: 'offline-keep-high', class: 'set-note' }, [high, ` ${words.includeHigh}`])] : [];
   const kept = () => { keepButton.textContent = words.again; removeButton.hidden = false; };
-  void offlineState().then((state) => { if (state.registered) { kept(); if (!status.textContent) status.textContent = words.kept; } });
+  // "Kept" is this build's own copy, not the site-wide worker (Codex, #1456):
+  // another build kept offline registers the same worker.
+  void offlineState().then((state) => {
+    if (state.kept) { kept(); if (!status.textContent) status.textContent = words.kept; }
+  });
   keepButton.addEventListener('click', async () => {
     keepButton.disabled = true; removeButton.disabled = true; progress.hidden = false; progress.removeAttribute('value');
     try {
@@ -41,7 +45,7 @@ function keepOffline(signal) {
           progress.value = total ? Math.floor(done / total * 100) : 100;
           status.textContent = fill(words.working, { done, total });
         } });
-      kept();
+      if (result.kept) kept();
       progress.value = 100;
       status.textContent = fill(result.failed ? words.partial : words.done, { done: result.objects - result.failed, total: result.objects, failed: result.failed })
         + (result.persisted ? '' : ` ${words.notPersisted}`);
@@ -52,9 +56,9 @@ function keepOffline(signal) {
   removeButton.addEventListener('click', async () => {
     keepButton.disabled = true; removeButton.disabled = true;
     try {
-      await removeOfflineCopy();
+      const result = await removeOfflineCopy();
       keepButton.textContent = words.button; removeButton.hidden = true; progress.hidden = true;
-      status.textContent = words.removed;
+      status.textContent = result.scope === 'all' ? words.removed : fill(words.removedBuild, { others: result.others });
     } catch (error) { status.textContent = error.message; }
     finally { keepButton.disabled = false; removeButton.disabled = false; }
   });
@@ -178,7 +182,7 @@ export function openOfflinePlay({ transfer, assertImportAllowed = () => {}, onIm
       controller.signal.throwIfAborted();
       status.textContent = 'Downloading the game… keep this panel open.';
       progressGroup.hidden = false; progress.removeAttribute('value'); progressText.textContent = 'Connecting…';
-      const result = await receiveDownload(await request(manifest.url), { bytes: manifest.bytes, writer,
+      const result = await receiveDownload(await request(manifest.url), { bytes: manifest.bytes, sha256: manifest.sha256, writer,
         onProgress: (received, total) => {
           controller.signal.throwIfAborted();
           const amount = (received / 1024 / 1024).toFixed(1);

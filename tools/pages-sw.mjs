@@ -15,8 +15,8 @@
 //     content, so a cached object can never be stale.
 //   · a Range request for a cached object (an <audio> element asks for ranges,
 //     and Safari needs a 206 to play) is answered with a 206 slice of the cached
-//     bytes; a miss goes to the network, which answers its own 206, and the
-//     whole object is cached beside it for next time.
+//     bytes; on a miss the whole object is fetched, checked and cached first,
+//     then sliced, so no unchecked byte is ever answered.
 //   · pages — navigations, asset-base.json, build.json and packs/ — are
 //     NETWORK-FIRST. Online, the network always answers, so a cached copy can
 //     never shadow a newer build. The cache answers only when the network
@@ -175,6 +175,8 @@ async function page(request) {
   }
 }
 
+const filling = new Map();
+
 async function object(event, url, sha) {
   const request = event.request;
   const key = url.origin + url.pathname;
@@ -182,15 +184,24 @@ async function object(event, url, sha) {
   const range = request.headers.get('range');
   const hit = await cache.match(key);
   if (hit) return range ? slice(hit, range) : hit;
-  if (range) {
-    event.waitUntil(fill(cache, key, sha).catch(() => {}));
-    return fetch(request);
+  // A miss is fetched WHOLE and checked against its name before any byte of it
+  // is answered, a Range included (Copilot, #1456): a range straight from the
+  // network could hand out a corrupt object's bytes as a 206.
+  // One fill per object at a time: requests for an object already being
+  // fetched (an <audio> asks for several ranges at once) wait for that fill.
+  let pending = filling.get(key);
+  if (!pending) {
+    pending = fill(cache, key, sha).finally(() => filling.delete(key));
+    filling.set(key, pending);
   }
-  try { return await fill(cache, key, sha); }
+  let got;
+  try { got = await pending; }
   catch (error) { return new Response('', { status: 502, statusText: 'object unavailable or failed its hash' }); }
+  const whole = new Response(got.bytes, { status: 200, headers: got.headers });
+  return range ? slice(whole, range) : whole;
 }
 
-// Fetch the whole object, check it against its name, cache it, answer it.
+// Fetch the whole object, check it against its name, cache it; { bytes, headers }.
 async function fill(cache, key, sha) {
   const response = await fetch(key);
   if (!response.ok) throw new Error(String(response.status));
@@ -199,7 +210,7 @@ async function fill(cache, key, sha) {
   const headers = { 'Content-Type': response.headers.get('Content-Type') || 'application/octet-stream',
     'Content-Length': String(bytes.byteLength), 'Accept-Ranges': 'bytes' };
   await cache.put(key, new Response(bytes, { status: 200, headers }));
-  return new Response(bytes, { status: 200, headers });
+  return { bytes, headers };
 }
 
 async function slice(response, header) {

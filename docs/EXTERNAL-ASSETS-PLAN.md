@@ -955,8 +955,8 @@ Where the build differs from, or settles, §4 and §5 A (2026-10-02):
 - **The service worker** (`tools/pages-sw.mjs`, written as `/sw.js`):
   objects cache-first, each checked against its own name before it is cached
   (a mismatch answers 502 and is never cached); a Range on a cached object is
-  a `206` slice, a Range on a miss goes to the network and the whole object is
-  cached beside it; pages (navigations, `asset-base.json`, `build.json`,
+  a `206` slice, and a Range on a miss is answered only after the whole object
+  is fetched, checked and cached, so no unchecked byte is served; pages (navigations, `asset-base.json`, `build.json`,
   `packs/`) network-first, written to the cache **only** when "Make available
   offline" asks (an `X-Ashen-Offline` request header), read only when the
   network fails. Browsing never writes a page, so an offline copy is the HTML,
@@ -971,12 +971,33 @@ Where the build differs from, or settles, §4 and §5 A (2026-10-02):
   navigation. `builds.json` records the worker's version, kill state and
   sha256 instead of the worker reading `builds.json` (§8's wording): the
   browser's own update check is what delivers a new worker.
+- **Pulling the worker (the recipe).** Set `SW_KILL = true` in
+  `tools/pages-sw.mjs` and merge that one-line PR to `dev`: the push to `dev`
+  republishes the site with the kill-switch `sw.js` (`--check` proves the
+  published file is it). Each browser that kept a build picks it up on its next
+  visit to any page under `/AshenSpire/`, deletes its `ashen-` caches,
+  unregisters, and reloads **every window the worker controlled**, losing
+  nothing but the offline copy (saves live in `localStorage`). Leave it
+  published for weeks, since a browser only meets it on a visit; set it back to
+  `false` in a later PR to offer offline play again. `node tools/pages-site.mjs
+  --sw-kill` writes it for one local run, for a test.
+- **Risk: a publication by a pre-6b `pages-site`** (for example the owner's
+  `PUBLISH` dispatch from a branch whose tool predates this step) leaves `/sw.js`
+  out. A browser's update check then gets a 404, which does **not** unregister
+  a worker: kept builds keep working offline and online (pages are
+  network-first), but no new worker, kill-switch included, can arrive until a
+  6b `pages-site` publishes again. Publish the kill-switch from `dev`.
 - **The worker is registered only when the player asks** (Download & saves →
   "Make available offline", `src/ui/offlineInstall.js`), relative to the base
   the loader read (`builtInArtStatus().base`), with the default scope, which is
   the site root `/AshenSpire/`. It keeps light and common, plus high only when
-  the player ticks it; "Remove offline copy" unregisters and deletes the
-  caches. The section shows only on a pack-shaped build; on `file://` or
+  the player ticks it. The worker is shared by every build under the root, so
+  "kept" is decided per page: this page's HTML and its pinned indexes are in
+  the page cache. The page is written last, and only when every object
+  arrived, so a keep that fails partway does not count. "Remove this build's offline copy" deletes that page, its
+  `asset-base.json` and the indexes no other kept build pins; the shared
+  objects stay until the last kept build is removed, which also unregisters
+  the worker and deletes every `ashen-` cache. The section shows only on a pack-shaped build; on `file://` or
   without service workers it says why in one line. The PWA manifest and the
   install prompt of §5 A are not in this step.
 - **`--check` rows**: per pack-shaped build, the download's bytes and hash;
@@ -1015,6 +1036,10 @@ Where the build differs from, or settles, §4 and §5 A (2026-10-02):
   - objects are immutable by name;
   - the worker carries a version it checks against `builds.json`;
   - a kill-switch `sw.js` that unregisters itself is kept ready.
+  - As built (6b): the kill-switch is `SW_KILL` in `tools/pages-sw.mjs`; it
+    reloads every window the worker controlled; and a publication by a pre-6b
+    `pages-site` drops `/sw.js`, which does not unregister a worker (see
+    [Step 6b as built](#step-6b-as-built)).
 - **Safari audio in the worker.** A `200` answer to a `Range` request breaks
   MP3 playback on iOS. The worker slices cached responses into `206`, and
   `offline-play-qa` plays a track offline.

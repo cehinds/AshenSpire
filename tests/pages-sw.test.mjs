@@ -11,13 +11,22 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { parseRange, objectSha, pageKey, isPagePath, serviceWorkerSource, SW_KILL, OBJECT_CACHE, PAGE_CACHE, OFFLINE_HEADER } from '../tools/pages-sw.mjs';
 import { assetBaseFor, assetBaseText, packPinOf, pinnedPackFiles, publishPack, storeFindings, packPages, writeServiceWorker, serviceWorkerFindings } from '../tools/pages-store.mjs';
-import { releasedDownload } from '../src/model/offlineDownload.js';
-import { offlinePacks, workerUrl, offlineSupport } from '../src/ui/offlineInstall.js';
+import { releasedDownload, receiveDownload } from '../src/model/offlineDownload.js';
+import { createSha256 } from '../src/ui/sha256.js';
+import { offlinePacks, workerUrl, offlineSupport, offlineState, removeOfflineCopy, makeAvailableOffline, pageCacheKey, PAGE_CACHE as PAGE_CACHE_UI, OFFLINE_HEADER as OFFLINE_HEADER_UI, SW_FILE as SW_FILE_UI } from '../src/ui/offlineInstall.js';
+import { SW_FILE } from '../tools/pages-sw.mjs';
 
 const sha = (b) => createHash('sha256').update(b).digest('hex');
 
-test('the kill-switch is committed off', () => {
-  assert.equal(SW_KILL, false);
+test('the kill-switch is a committed boolean, and what is published is recorded and checked', () => {
+  assert.equal(typeof SW_KILL, 'boolean');
+  const dir = mkdtempSync(join(tmpdir(), 'pages-sw-test-'));
+  try {
+    const rec = writeServiceWorker(dir, { kill: SW_KILL });
+    assert.equal(rec.kill, SW_KILL);
+    assert.equal(rec.sha256, sha(readFileSync(join(dir, 'sw.js'))));
+    assert.deepEqual(serviceWorkerFindings(dir, rec).map(([, ok]) => ok), [true]);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
 test('parseRange reads one byte range the way serveDir does', () => {
@@ -128,20 +137,30 @@ test('an object is checked against its name before it is cached, and a cached on
   assert.equal(bad.stores.get(OBJECT_CACHE)?.size || 0, 0);
 });
 
-test('a Range for an object not yet cached goes to the network and the whole object is cached beside it', async () => {
+test('a Range for an object not yet cached is answered only after the whole object is fetched and checked (Copilot, #1456)', async () => {
   const body = new TextEncoder().encode('abcdefghij');
   const h = sha(body);
   const url = `https://x.io/AshenSpire/objects/${h.slice(0, 2)}/${h}.mp3`;
   const asked = [];
   const sw = sandbox({ network: async (req) => {
-    const r = typeof req === 'string' ? null : req.headers.get('range');
-    asked.push(r || 'whole');
-    return r ? new Response(body.slice(0, 2), { status: 206, headers: { 'Content-Range': `bytes 0-1/${body.length}` } }) : new Response(body, { status: 200 });
+    asked.push(typeof req === 'string' ? 'whole' : (req.headers.get('range') || 'whole'));
+    return new Response(body, { status: 200, headers: { 'Content-Type': 'audio/mpeg' } });
   } });
-  const res = await sw.fetchEvent(url, { headers: { Range: 'bytes=0-1' } });
+  const [res, again, whole] = await Promise.all([sw.fetchEvent(url, { headers: { Range: 'bytes=2-4' } }),
+    sw.fetchEvent(url, { headers: { Range: 'bytes=0-1' } }), sw.fetchEvent(url)]);
+  assert.equal(again.status, 206);
+  assert.equal(new TextDecoder().decode(await again.arrayBuffer()), 'ab');
+  assert.equal((await whole.arrayBuffer()).byteLength, body.length);
   assert.equal(res.status, 206);
-  assert.deepEqual(asked.sort(), ['bytes=0-1', 'whole']);
+  assert.equal(res.headers.get('Content-Range'), `bytes 2-4/${body.length}`);
+  assert.equal(new TextDecoder().decode(await res.arrayBuffer()), 'cde');
+  assert.deepEqual(asked, ['whole'], 'three requests at once share one whole fetch; no ranged network request');
   assert.equal(sw.stores.get(OBJECT_CACHE).size, 1);
+  // A corrupt object is never sliced out to the page, nor cached.
+  const bad = sandbox({ network: async () => new Response('corrupt!!!', { status: 200 }) });
+  const answer = await bad.fetchEvent(url, { headers: { Range: 'bytes=0-3' } });
+  assert.equal(answer.status, 502);
+  assert.equal(bad.stores.get(OBJECT_CACHE)?.size || 0, 0);
 });
 
 test('pages are network-first: online the network answers even when a copy is kept; only a kept page is written; offline the copy answers', async () => {
@@ -227,9 +246,11 @@ test('publishPack shares one store between builds, and storeFindings proves it a
     rmSync(join(site, 'objects/00'), { recursive: true });
     rmSync(join(site, f.index));
     assert.match(reds().join('\n'), /^MISSING INDEX for dev\/1\/index\.html/m);
-    // A store that already holds a different file under the same index name is an error.
+    // A store that already holds a different file under the same name refuses
+    // THAT build, by name, before writing anything of it (review of #1456).
     writeFileSync(join(site, f.index), 'other');
-    assert.throws(() => publishPack(site, 'dev/4', f.html, join(f.dir, 'build')), /disagree/);
+    assert.throws(() => publishPack(site, 'dev/4', f.html, join(f.dir, 'build')), (e) => e.refused === true && /disagree/.test(e.message));
+    assert.ok(!existsSync(join(site, 'dev/4')), 'a refused build writes nothing');
   } finally { rmSync(f.dir, { recursive: true, force: true }); }
 });
 
@@ -277,4 +298,126 @@ test('the offline install keeps light and common (and high only when asked), and
   assert.equal(offlineSupport({ pin: { packs: { light: {} } }, status: loaded, loc: http, nav: {} }).reason, 'unsupported');
   assert.equal(offlineSupport({ pin: { packs: { light: {} } }, status: { state: 'failed' }, loc: http, nav }).reason, 'art');
   assert.deepEqual(offlineSupport({ pin: { packs: { light: {} } }, status: loaded, loc: http, nav }), { ok: true, base: '../../', high: false, reason: '' });
+});
+
+test('the page and the worker agree on the cache, the header, the file and the page key', () => {
+  assert.equal(PAGE_CACHE_UI, PAGE_CACHE);
+  assert.equal(OFFLINE_HEADER_UI, OFFLINE_HEADER);
+  assert.equal(SW_FILE_UI, SW_FILE);
+  for (const href of ['https://x.io/AshenSpire/dev/1/?shot=map', 'https://x.io/AshenSpire/dev/1/index.html', 'https://x.io/AshenSpire/AshenSpire.html']) {
+    assert.equal(pageCacheKey(href), pageKey(href));
+  }
+});
+
+test('"kept" is this build\'s own copy, not the site-wide worker another build registered (Codex, #1456)', async () => {
+  const pin = { packs: { light: { index: 'packs/light-aaa.json' }, common: { index: 'packs/common-bbb.json' } } };
+  const status = { state: 'loaded', base: '../../' };
+  const nav = { serviceWorker: { async getRegistration() { return { active: { scriptURL: 'https://x.io/AshenSpire/sw.js' } }; } } };
+  const cacheWith = (keys) => ({ async open(name) { assert.equal(name, PAGE_CACHE); return { async match(k) { return keys.includes(k) ? {} : undefined; } }; } });
+  const dev1 = ['https://x.io/AshenSpire/dev/1/', 'https://x.io/AshenSpire/packs/light-aaa.json', 'https://x.io/AshenSpire/packs/common-bbb.json'];
+  // dev/1 was kept; dev/1 itself reads as kept, under any query.
+  assert.deepEqual(await offlineState({ pin, status, nav, loc: { href: 'https://x.io/AshenSpire/dev/1/?shot=title' }, cacheStorage: cacheWith(dev1) }), { registered: true, kept: true });
+  // Another ordinal shares the worker but is not kept.
+  assert.deepEqual(await offlineState({ pin, status, nav, loc: { href: 'https://x.io/AshenSpire/dev/2/' }, cacheStorage: cacheWith(dev1) }), { registered: true, kept: false });
+  // Same page, but a newer build pins a different index: not kept.
+  const pin2 = { packs: { ...pin.packs, light: { index: 'packs/light-ccc.json' } } };
+  assert.equal((await offlineState({ pin: pin2, status, nav, loc: { href: 'https://x.io/AshenSpire/dev/1/' }, cacheStorage: cacheWith(dev1) })).kept, false);
+  // No worker at all: neither.
+  const none = { serviceWorker: { async getRegistration() { return undefined; } } };
+  assert.deepEqual(await offlineState({ pin, status, nav: none, loc: { href: 'https://x.io/AshenSpire/dev/1/' }, cacheStorage: cacheWith(dev1) }), { registered: false, kept: false });
+});
+
+test('"Remove" takes only this build, keeps what another kept build pins, and retires the worker with the last one (Copilot, #1456)', async () => {
+  const pinOf = (light) => ({ packs: { light: { index: `packs/light-${light}.json` }, common: { index: 'packs/common-c.json' } } });
+  const html = (light) => `<script>const ASSET_PACKS = ${JSON.stringify(pinOf(light))};\n</script>`;
+  const R = 'https://x.io/AshenSpire/';
+  const entries = new Map([
+    [`${R}dev/1/`, html('a')], [`${R}dev/1/asset-base.json`, '{}'],
+    [`${R}dev/2/`, html('b')], [`${R}dev/2/asset-base.json`, '{}'],
+    [`${R}packs/light-a.json`, '{}'], [`${R}packs/light-b.json`, '{}'], [`${R}packs/common-c.json`, '{}'],
+  ]);
+  const caches = new Map([[PAGE_CACHE, entries], [OBJECT_CACHE, new Map([['o', 'x']])]]);
+  let unregistered = 0;
+  const nav = { serviceWorker: { async getRegistrations() { return [{ active: { scriptURL: `${R}sw.js` }, async unregister() { unregistered++; return true; } }]; } } };
+  const cacheStorage = {
+    async open(n) { const m = caches.get(n); return { async delete(k) { return m.delete(k); }, async keys() { return [...m.keys()]; }, async match(k) { return m.has(k) ? new Response(m.get(k)) : undefined; } }; },
+    async keys() { return [...caches.keys()]; },
+    async delete(n) { return caches.delete(n); },
+  };
+  const status = { state: 'loaded', base: '../../' };
+  const one = await removeOfflineCopy({ pin: pinOf('a'), status, nav, cacheStorage, loc: { href: `${R}dev/1/?shot=x` } });
+  assert.deepEqual(one, { scope: 'build', others: 1 });
+  assert.deepEqual([...entries.keys()].sort(), [`${R}dev/2/`, `${R}dev/2/asset-base.json`, `${R}packs/common-c.json`, `${R}packs/light-b.json`]);
+  assert.equal(unregistered, 0);
+  assert.ok(caches.has(OBJECT_CACHE), 'the shared objects stay');
+  const two = await removeOfflineCopy({ pin: pinOf('b'), status, nav, cacheStorage, loc: { href: `${R}dev/2/` } });
+  assert.deepEqual(two, { scope: 'all', others: 0 });
+  assert.equal(unregistered, 1);
+  assert.equal(caches.size, 0);
+});
+
+test('a keep that fails partway never keeps the page, so the build is not called kept (review of #1456)', async () => {
+  const h = 'ab'.repeat(32);
+  const index = `{\n"assets/a.webp":["${h}",1,"image/webp"],\n"assets/b.webp":["${'cd'.repeat(32)}",1,"image/webp"]\n}\n`;
+  const pin = { tier: 'light', packs: { light: { index: 'packs/light-x.json', sha256: sha(index) } } };
+  const status = { state: 'loaded', base: '../../' };
+  const loc = { protocol: 'https:', href: 'https://x.io/AshenSpire/dev/1/', pathname: '/AshenSpire/dev/1/' };
+  const nav = { serviceWorker: { controller: {}, ready: Promise.resolve(), async register() { return { scope: 'https://x.io/AshenSpire/' }; }, addEventListener() {} } };
+  const run = async (failObject) => {
+    const kept = [];
+    const fetchImpl = async (url, init = {}) => {
+      const abs = new URL(url, loc.href).href;
+      if (init.headers?.['X-Ashen-Offline'] === '1') kept.push(abs);
+      if (abs.endsWith('light-x.json')) return new Response(index);
+      if (failObject && abs.includes(`/${'cd'.repeat(32)}`)) return new Response('', { status: 502 });
+      return new Response('x');
+    };
+    const result = await makeAvailableOffline({ pin, status, loc, nav, fetchImpl });
+    return { result, kept };
+  };
+  const bad = await run(true);
+  assert.equal(bad.result.failed, 1);
+  assert.equal(bad.result.kept, false);
+  assert.ok(!bad.kept.includes(loc.href), 'the page is never kept after a failure');
+  const good = await run(false);
+  assert.equal(good.result.kept, true);
+  assert.equal(good.kept.at(-1), loc.href, 'the page is kept last');
+  assert.equal(offlineSupport({ pin, status: { state: 'loading' }, loc, nav }).reason, 'loading', 'still loading is not "did not load"');
+});
+
+test('the downloaded light single file is checked against its published sha256 as it streams (review of #1456)', async () => {
+  for (const n of [0, 1, 55, 56, 63, 64, 65, 1000, 4097]) {
+    const bytes = new Uint8Array(n).map((_, i) => (i * 31 + 7) & 255);
+    const h = createSha256();
+    for (let i = 0; i < n; i += 13) h.update(bytes.subarray(i, i + 13));
+    assert.equal(h.digest(), sha(bytes), `chunked digest of ${n} bytes`);
+  }
+  const body = new TextEncoder().encode('the whole light single file');
+  const stream = () => new Response(new ReadableStream({ start(c) { c.enqueue(body.subarray(0, 5)); c.enqueue(body.subarray(5)); c.close(); } }));
+  const ok = await receiveDownload(stream(), { bytes: body.length, sha256: sha(body) });
+  assert.equal(ok.bytes, body.length);
+  await assert.rejects(receiveDownload(stream(), { bytes: body.length, sha256: 'f'.repeat(64) }), /did not match/);
+  const info = { branch: 'dev', ordinal: 1, version: '0.7.1', bytes: null, download: { path: 'download/AshenSpire.html', bytes: 3, sha256: 'a'.repeat(64) } };
+  assert.equal(releasedDownload(info, 'https://e.org/dev/latest/build.json', 'dev').sha256, 'a'.repeat(64));
+  assert.throws(() => releasedDownload({ ...info, download: { ...info.download, sha256: 'nothex' } }, 'https://e.org/dev/latest/build.json', 'dev'));
+});
+
+test('a pin or index that names a file outside packs/ and objects/ is refused, and nothing is written (review of #1456)', () => {
+  const f = fixtureBuild();
+  const site = join(f.dir, 'site');
+  try {
+    const withPin = (pin) => Buffer.from(`<script>const ASSET_PACKS = ${JSON.stringify(pin)};\n</script>`);
+    for (const index of ['../escape.json', 'packs/../../x.json', 'packs/light-zz.json', 'packs/Light-0123456789ab.json']) {
+      assert.throws(() => publishPack(site, 'dev/9', withPin({ packs: { light: { index, sha256: 'a'.repeat(64) } } }), join(f.dir, 'build')),
+        (e) => e.refused === true && /not a packs\//.test(e.message), index);
+    }
+    // An index row whose name is not a sha256.
+    const badIndex = '{\n"assets/a.webp":["../../etc/passwd",1,"image/webp"]\n}\n';
+    const name = `packs/light-${sha(badIndex).slice(0, 12)}.json`;
+    writeFileSync(join(f.dir, 'build', name), badIndex);
+    writeFileSync(join(f.dir, 'build', name.replace(/\.json$/, '.js')), 'twin');
+    assert.throws(() => publishPack(site, 'dev/9', withPin({ packs: { light: { index: name, sha256: sha(badIndex) } } }), join(f.dir, 'build')),
+      (e) => e.refused === true && /no sha256 name/.test(e.message));
+    assert.ok(!existsSync(site), 'nothing was written');
+  } finally { rmSync(f.dir, { recursive: true, force: true }); }
 });

@@ -980,9 +980,21 @@ function assemble(outDir, keep) {
       const a = artifactsOf(b);
       if (a.error) skip(b, a.error); else served.set(b, a);
     }
-    const builds = listed.filter((b) => served.has(b));
+    // A build the store refuses (a name another build already published with
+    // other bytes, or a pin or index naming a file outside packs/ and
+    // objects/) is skipped and named like any other unservable build; the
+    // rest of the publication goes ahead (review of #1456).
+    const builds = [];
+    for (const b of listed) {
+      if (!served.has(b)) continue;
+      try { checks += publishBuild(outDir, b, served.get(b)); builds.push(b); }
+      catch (error) {
+        if (!error.refused) throw error;
+        rmSync(join(outDir, branch, String(b.ordinal)), { recursive: true, force: true });
+        skip(b, error.message);
+      }
+    }
     enforceHead(branch, headTracksBuild, headOrdinal, skippedBuilds);
-    for (const b of builds) checks += publishBuild(outDir, b, served.get(b));
     // /latest/ ONLY WHEN THE NEWEST LISTED BUILD IS THE HEAD'S BUILD — committed,
     // or rebuilt from the head's source. Otherwise the newest listed build is
     // an older one, and an alias called latest would launch an ever-staler

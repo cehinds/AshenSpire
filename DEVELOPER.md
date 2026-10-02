@@ -139,6 +139,13 @@ kill-switch is the committed `SW_KILL`), registered only by Download & saves
 proves the store, the bases, the downloads and `sw.js`; its `--selftest`
 plants each known-bad. `node tools/pages-offline.mjs` drives the worker in
 Chromium over `serveDir` (`tests/pages-sw.test.mjs` runs it in a sandbox).
+**To pull the worker** from every browser that kept a build: set
+`SW_KILL = true` in `tools/pages-sw.mjs` and merge that PR to `dev`, whose push
+republishes `/sw.js` as the kill-switch; each browser deletes its `ashen-`
+caches, unregisters and reloads the windows it controlled on its next visit.
+Leave it published for weeks, then set it back in a later PR. Publish it from
+`dev`: a site published by a pre-6b `pages-site` has no `/sw.js`, and a 404 does
+not unregister a worker (docs/EXTERNAL-ASSETS-PLAN.md, *Step 6b as built*).
 
 **The high-res release** (docs/ART-REPO-PLAN.md). `art-release.json` pins one
 release of the private `cehinds/AshenSpire-art` (repo, tag, zip, sha256; today
