@@ -180,7 +180,7 @@ function zipLayout(pin, packs, indexOf) {
       if (!seen) objects.set(path, { sha: row[0], bytes: row[1] });
     }
   }
-  if (pin.fonts?.file) {
+  if (pin.fonts?.file !== undefined) {   // present at all: "", null or false is a bad pin, not "no sidecar" (Copilot, #1484)
     const twin = twinFileOf(pin.fonts.file);
     if (!twin || !SIDECAR_FILE.test(String(pin.fonts.file)) || !SHA.test(String(pin.fonts.sha256))) throw zipError('pack', 'The build does not pin its font sidecar as packs/fonts-<digest12>.js.');
     packFiles.push({ kind: 'sidecar', file: twin.file, id: twin.id, sha256: pin.fonts.sha256 });

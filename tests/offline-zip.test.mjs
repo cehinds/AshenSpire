@@ -298,6 +298,13 @@ test('a definitive 4xx is not tried again; a 5xx or 429 is', async () => {
 test('a font sidecar pin that is not packs/fonts-<digest12>.js is refused, by the zip and by the Pages store (Codex, #1480)', async () => {
   // tools/asset-pack.mjs only writes the .js sidecar, and Pages publishes only the pinned name.
   await refusedWith(fixtureSite({ sidecarJson: true }), 'pack');
+  // A present but empty or null sidecar pin is a bad pin too, not "no sidecar" (Copilot, #1484).
+  for (const file of ['', null, 0, false]) {
+    const bad = fixtureSite();
+    const page = Buffer.from(bad.html.toString().replace(JSON.stringify(bad.pin.fonts), JSON.stringify({ ...bad.pin.fonts, file })));
+    bad.site.set(bad.plan.pageUrl, page); bad.plan.pageBytes = page.length; bad.plan.pageSha256 = sha(page);
+    await refusedWith(bad, 'pack');
+  }
   const fx = fixtureSite({ sidecarJson: true });
   const dir = mkdtempSync(join(tmpdir(), 'offline-zip-store-'));
   try {
