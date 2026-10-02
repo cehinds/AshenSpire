@@ -10,6 +10,7 @@ import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSyn
 import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { crc32, readZip, writeZip } from '../tools/zip.mjs';
 import { createServer } from 'node:http';
 import { agree, download, fetchArt, httpCause, markerFor, netCause, packDirFor, packOfZip, packsOf, readPin, unpack, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
@@ -739,11 +740,11 @@ test('under a schema-2 pin the high cache marker leaves out the font rows: a fon
 });
 
 test('every ART_REPO_TOKEN a workflow passes is gated on a protected ref', () => {
-  const dir = new URL('../.github/workflows/', import.meta.url);
+  const dir = fileURLToPath(new URL('../.github/workflows/', import.meta.url));
   const GATE = `contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}`;
   let lines = 0;
   for (const name of readdirSync(dir).filter((n) => /\.ya?ml$/.test(n)).sort()) {
-    const text = readFileSync(new URL(name, dir), 'utf8');
+    const text = readFileSync(join(dir, name), 'utf8');
     text.split('\n').forEach((line, i) => {
       if (/^\s*#/.test(line) || !line.includes('secrets.ART_REPO_TOKEN')) return;
       lines += 1;
