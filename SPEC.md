@@ -25,8 +25,8 @@ Numbers in this spec are the **initial balance targets**. They will move during 
 | 1 | Product overview | **built** | 4 classes, 3 seats climbed as 3 tiers, profile and slots. |
 | 2 | Legal and asset constraints | **partly built** | Attribution: `tools/credits-check.mjs`, 40 checks, 33/33 asset directories (FINISH §10). Open: §2.4 asset indirection. 14 CSS `url(../assets/…)` backdrops (for example `styles/combat.css`, `styles/ui.css`) still bypass `assetUrl()` and its fallback (DEVELOPER.md, *high-res release*). |
 | 3 | Architecture, DSLs, procedural systems, saves, validation | **built** | Run schema 11 (`RUN_SCHEMA_VERSION` in `src/model/state.js`; `tests/save-migration.test.mjs`); `validateContent` 0 errors. |
-| 4 | Combat rules | **built**, one deviation | Warrior's Vow enters Gorefire instead of a chosen stance (DEVELOPER "M1 known deviations"; FINISH §1, open). |
-| 5 | Content | **built**, one card open | Warrior's Vow (§5.2) enters Gorefire instead of a chosen stance (FINISH §1, open). 5.2–5.4 are the historical M1/M2 sets under pre-scrub names. Live counts: 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
+| 4 | Combat rules | **built** | No open M1 deviation: Warrior's Vow enters the stance the player chooses (DEVELOPER "M1 known deviations"; `tests/warriors-vow.test.mjs`). |
+| 5 | Content | **built** | Warrior's Vow (§5.2) offers every stance of the player's class and enters the chosen one. 5.2–5.4 are the historical M1/M2 sets under pre-scrub names. Live counts: 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies (20 regular, 10 boss, 3 elite). |
 | 6 | Map generation | **built** | `engine/mapgen.js`, `tools/mapplan.mjs`. |
 | 7 | UI/UX, HUD, input, feedback, visual style | **partly built** | Screens, HUD, input and feedback ship. Open: §7.5 interface fonts are **TO BUILD** (Cinzel/Inter are named with system fallbacks and not bundled; only the "AS Lore" copies ship), and the release proofs for contrast, reduced motion, target size and Back-everywhere (FINISH §5–§9). |
 | 8 | Testing | **built** | `tests/run-node.mjs`. |

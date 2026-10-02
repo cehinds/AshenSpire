@@ -3,6 +3,8 @@ import { combatantDetailBody } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
 import { openModal } from '../kit/index.js';
+import { cardChoice } from '../../model/cardChoices.js';
+import { openCardChoiceModal } from '../components/cardChoiceModal.js';
 import { combatEffectForEvent, decorateCombatEffects, combatEffectReceipt, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { statureFor } from '../components/stature.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
@@ -276,8 +278,42 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // ownership and falls back to the connection's main seat.
   // Animation follows authoritative cardPlayed receipts below, never an
   // optimistic local intent. Remote seats and repeated resyncs use the same path.
+  // The open card-choice dialog (Warrior's Vow's stance), if any.
+  let cardChoiceShell = null;
+  function closeCardChoice() {
+    const shell = cardChoiceShell;
+    cardChoiceShell = null;
+    if (shell && shell.close) shell.close();
+  }
   const send = (obj) => {
     if (pacing && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t)) return;
+    // A card that offers a choice (Warrior's Vow's stance, SPEC §5.2) asks it
+    // here, before its one network intent, from the same offer the host
+    // validates (model/cardChoices.js); Cancel sends nothing.
+    if (obj.t === 'playCard' && obj.choice == null) {
+      const seat = latestWireSnap?.scene?.players?.find((entry) => entry.id === me);
+      const inst = seat?.hand?.find((entry) => entry.instanceId === obj.cardInstanceId);
+      const def = inst ? resolveCard(registries, { cardId: inst.cardId, upgraded: inst.upgraded, mods: inst.mods }) : null;
+      const plan = def ? cardChoice(registries, def, seat.classId, seat.stanceId) : null;
+      if (plan) {
+        // THE CHOOSER OWNS THE COUCH KEYBOARD while it stands (#1449 review,
+        // Codex P1): keyHandler and flaskKeyHandler stand down, so Tab moves
+        // between the stance buttons instead of switching the seat, and the
+        // 1-9/Q and E keys do not act on the board behind it. A seat switch
+        // that still happens (a pad press, a seat tab) closes it; the pick
+        // is pinned to the seat that opened it (tools/coop-hud-top.mjs
+        // vowChoiceProbe).
+        closeCardChoice();
+        const seatAtOpen = me;
+        const shell = openCardChoiceModal({
+          plan, cardName: def.name,
+          onClosed: () => { if (cardChoiceShell === shell) cardChoiceShell = null; },
+          onChoose: (choice) => { if (me === seatAtOpen) send({ ...obj, choice }); },
+        });
+        cardChoiceShell = shell;
+        return;
+      }
+    }
     return conn.send(obj.t === 'resync' ? obj : { ...obj, as: me });
   };
 
@@ -349,6 +385,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     seatIdx = i;
     me = seats[i];
     closeCoopPotions();
+    closeCardChoice();
     armedFlask = null;
     armedFriendlyCard = null;
     render();
@@ -449,6 +486,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   const releaseFlaskKeyClaim = setScreenKeyClaim((ev) => matchedFlaskSlot(ev) >= 0);
   const flaskKeyHandler = (ev) => {
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
+    if (cardChoiceShell) return;
     if (!snap || snap.scene.kind !== 'combat') return;
     const meP = snap.scene.players.find((p) => p.id === me);
     if (!meP || !meP.alive || !meP.connected) return;
@@ -462,6 +500,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   };
   const keyHandler = (ev) => {
     if (ev.target && /INPUT|TEXTAREA/.test(ev.target.tagName)) return;
+    if (cardChoiceShell) return; // the stance chooser owns the keyboard (see send)
     if (ev.key === 'Tab' && seats.length > 1) { ev.preventDefault(); setSeat((seatIdx + 1) % seats.length); return; }
     if (ev.key === 'Escape') selectCombatant(null);
     if (ev.key === 'Escape' && (armedFriendlyCard || armedFlask != null)) {
@@ -523,6 +562,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     endTurnBeat = null;
     removeSeatTabs();
     closeCoopPotions();
+    closeCardChoice();
     if (potionTray) { disposeCombatPotionTray(potionTray); potionTray = null; }
     if (mapBoard) { mapBoard.teardown(); mapBoard = null; }
     if (handStrip) { handStrip.teardown(); handStrip = null; }
@@ -585,8 +625,11 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
     });
     // The Potions list is a body-level dialog the redraw below does not reach;
     // a fight another player ends must not leave it over the next scene
-    // (#1436 review, Codex P2).
+    // (#1436 review, Codex P2). The stance chooser is one too: left open it
+    // would sit over the reward or map and send a stale playCard on a pick
+    // (#1449 review, Codex P2; tools/coop-hud-top.mjs vowChoiceProbe).
     if (snap.scene.kind !== 'combat') {
+      closeCardChoice();
       closeCoopPotions();
       if (potionTray) { disposeCombatPotionTray(potionTray); potionTray = null; }
     }

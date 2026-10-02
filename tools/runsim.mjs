@@ -34,7 +34,7 @@
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
-import { dispatch } from '../src/engine/combat.js';
+import { dispatch, cardChoicePlan } from '../src/engine/combat.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { affordableCards, refusalsFor } from './simbot.mjs';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
@@ -396,7 +396,8 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
       // engine bug in card resolution would, so the selftest proves the catch
       // below lets it escape as a CRASH rather than set the card aside.
       if (PLANT === 'fight-throw') throw new Error(`planted: card resolution threw inside ${encounterId}`);
-      dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id });
+      // A card that offers a choice (Warrior's Vow) takes its first option.
+      dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id });
     } catch (e) {
       setAsideOrCrash(e);
       refused.add(card.instanceId);

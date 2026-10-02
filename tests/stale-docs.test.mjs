@@ -4,9 +4,9 @@
 // without anybody editing it. The docs now point at the home instead; this
 // file keeps the old wording from coming back.
 //
-// NOT checked: whether the remaining "M1 known deviations" rows are still true
-// (Warrior's Vow was checked by hand against src/content; the Goreblood row
-// was resolved by #61 and the Guilt row by #1286, and each is marked so),
+// NOT checked: whether the "M1 known deviations" rows are still true (the
+// Goreblood row was resolved by #61, the Guilt row by #1286 and the Warrior's
+// Vow row by its stance choice, tests/warriors-vow.test.mjs; each is marked so),
 // any other doc in the repository, or stale numbers phrased differently from
 // the patterns below.
 import { test } from 'node:test';

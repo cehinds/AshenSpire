@@ -425,11 +425,26 @@ Combat intents (closed set for M1):
 
 | Intent | Effect |
 |---|---|
-| `{ type:'playCard', cardInstanceId, targetId? }` | validates phase / hand / `unplayable` keyword / cost (X-cost = all current energy, always affordable); pays cost (`energySpent`), removes from hand, bumps counters, enqueues card effects then emits `cardPlayed`, drains the queue; then places the card (Exhaust keyword → exhaust pile + `cardExhausted(played)`; power → removed from play; else → discard, silently). `targetId` required semantics: cards with any `target:'enemy'` effect should get one from the UI (engine falls back to the first living enemy). |
+| `{ type:'playCard', cardInstanceId, targetId?, choice? }` | validates phase / hand / `unplayable` keyword / the card's pending choice (below) / cost (X-cost = all current energy, always affordable); pays cost (`energySpent`), removes from hand, bumps counters, enqueues card effects then emits `cardPlayed`, drains the queue; then places the card (Exhaust keyword → exhaust pile + `cardExhausted(played)`; power → removed from play; else → discard, silently). `targetId` required semantics: cards with any `target:'enemy'` effect should get one from the UI (engine falls back to the first living enemy). |
 | `{ type:'endTurn' }` | `playerTurnEnd` + owner hooks → player decay → discard hand except **Retain**, **Ethereal** in hand exhausts (`cardExhausted(ethereal)`) → energy zeroed → enemy phase (below) → intents rerolled → next player turn starts. Returns after the whole cycle. |
 | `{ type:'useFlask', slot, targetId? }` | consumes `player.flasks[slot]`, emits `flaskUsed`, enqueues the flask's effects, drains. Throws on empty slot (no-op registries are fine — just don't give the player flasks). |
 | `{ type:'swapArmament', slotId, setIndex }` | during the player turn, selects another prepared set allowed by the slot and pays the authored equipment-action price; immediately reconciles equipment-granted cards, restamps live piles, updates resource vessels and Poise, and emits `armamentSwapped`. |
 | `{ type:'changeEquipment', slotId, setIndex, pieceId? }` | during the player turn, replaces, moves, or unequips carried gear when `allowChangesInCombat` is on. It pays the same authored equipment-action price, atomically updates the live combat projections, and emits `equipmentChanged` plus `equipmentRearmed`. `pieceId:null` unequips. |
+
+**A card that asks a choice.** Some cards ask the player to choose before they
+play: Warrior's Vow's `enterStance { choose: 'classStance' }` asks for a stance
+(SPEC §5.2). Ask `cardChoicePlan(combat, cardInstanceId)` before dispatching a
+card. It returns `null` when the card plays as it is, or `{ kind: 'stance',
+options: [{ id, name, icon, tooltip, active }] }`. In that case, send one of the
+option ids as `choice`. `active` marks the stance the player is already in;
+picking it does nothing, so a client should prefer another. A play that needs
+a choice and gets none, or gets one that is not offered, is refused before
+anything is spent (`Choose a stance: …`). A `choice` sent with a card that asks
+none is refused too. A bot that always plays the leftmost card must therefore
+supply a choice, or it will retry the same refused card. In co-op the same
+offer is `cardChoicePlan(C, playerId, cardInstanceId)` from
+`engine/coopCombat.js`, and the pick is `playCard(C, playerId, cardInstanceId,
+targetId, choice)`. Both read `model/cardChoices.js`.
 
 Enemy phase order (per SPEC §4.1(5)): `enemyTurnStart` → all living enemies
 lose block (unless `retainBlock`) → for each enemy in row order:
@@ -608,14 +623,17 @@ same imports, no UI modules):
 ```js
 import { createRegistries } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
-import { createCombat, dispatch } from '../src/engine/combat.js';
+import { createCombat, dispatch, cardChoicePlan } from '../src/engine/combat.js';
 
 const registries = createRegistries(bundle);
 const combat = createCombat({ registries, rng: createRng(0xC0FFEE), player, enemyIds });
 while (!combat.result) {
   const card = combat.piles.hand.find(/* leftmost affordable */);
-  if (card) dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e1' });
-  else dispatch(combat, { type: 'endTurn' });
+  if (!card) { dispatch(combat, { type: 'endTurn' }); continue; }
+  // A card that asks a choice (Warrior's Vow's stance) needs one in the intent.
+  const plan = cardChoicePlan(combat, card.instanceId);
+  const choice = plan ? (plan.options.find((o) => !o.active) || plan.options[0]).id : undefined;
+  dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: 'e1', choice });
 }
 ```
 Fixed seed ⇒ identical shuffles, enemy HP, moves, and events every run.
