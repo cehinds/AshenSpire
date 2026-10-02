@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1496",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: reusable desktop and mobile polish artwork is saved with the project",
+    "detail": "The illustrated design direction now has individual paintings, portraits, icons, frames and controls, with recipes for 24 player feature views and copies of the existing game art and fonts they need. Credits, provenance and portable preview helpers are included for the next visual polish pass. These are design assets; the playable screens and game rules stay as they are.",
+    "build": "0.7.1.795",
+    "pullRequest": 1496,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1496"
+  },
+  {
+    "id": "pr-1450",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: every change now checks the game's art against the art repository's release",
+    "detail": "Nothing you play changes. The game pins one release of its art, light art, fonts, music and map tiles in a separate repository; each check downloads the parts it needs, verifies every file against its fingerprint, and proves the release and the copies still kept here are identical, byte for byte.",
+    "build": "0.7.1.794",
+    "pullRequest": 1450,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1450"
+  },
+  {
     "id": "pr-1488",
     "date": "2026-10-02",
     "group": "2026-10-02",
