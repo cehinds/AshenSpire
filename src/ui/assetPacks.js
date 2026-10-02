@@ -505,6 +505,9 @@ export async function loadBuiltInPacks({
       ]);
       faces = got.faces;
       failed.push(...got.failed);
+      // The sidecar was awaited: a switch the player replaced meanwhile still
+      // publishes nothing (review of #1461).
+      if (typeof stillWanted === 'function' && !stillWanted()) { status = before; return { ...builtInArtStatus(), superseded: true }; }
     }
     const ids = setBuiltInSource(map);
     // The CSS assets come from the same map: the tier that loaded, plus common.

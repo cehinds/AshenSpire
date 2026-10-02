@@ -310,6 +310,29 @@ test('file://: a face still loading at the deadline is never added after the loa
   resetBuiltInArt();
 });
 
+test('file://: a tier switch replaced while a face is loading publishes nothing', async () => {
+  resetBuiltInArt();
+  const tree = twinTree({ fonts: true });
+  const doc = fakeDoc('file:///p/AshenSpire.html');
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  let started;
+  const loading = new Promise((r) => { started = r; });
+  class SlowFace extends FakeFontFace { async load() { started(); await gate; return this; } }
+  let wanted = true;
+  let published = 0;
+  const pending = loadBuiltInPacks(fileOpts(tree, { css: FACE_CSS, doc, FontFaceImpl: SlowFace, stillWanted: () => wanted, onSource: () => { published++; } }));
+  await loading;
+  wanted = false; // the player switched again while the face was loading
+  release();
+  const r = await pending;
+  assert.equal(r.superseded, true);
+  assert.equal(published, 0, 'onSource never ran');
+  assert.equal(builtInSource(), null, 'setBuiltInSource never ran');
+  assert.equal(doc.styles.length, 0, 'no CSS injected');
+  resetBuiltInArt();
+});
+
 test('fontFaceRules reads a FontFace from each ASSET_CSS @font-face rule', () => {
   const rules = fontFaceRules({ schema: 1, rules: [
     ':root{--as-css-bg-x-webp:url("{{assets/bg/x.webp}}")}',
