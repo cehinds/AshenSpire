@@ -12,14 +12,19 @@
 // node entered the way the map enters it, on the shot boot's memory storage.
 //
 //   IDLE <who>    every combatant (players and enemies) draws at least one
-//                 visible figure image, and every visible figure image is
-//                 moved by an idle animation: on the image or on the layer
-//                 inside .sprite that carries it (.facing, .pose-layer; D42),
+//                 visible, loaded figure image (an <img> with pixels, or the
+//                 Classic style's drawn <svg>), and every one is moved by an
+//                 idle animation: on the image or on the layer inside .sprite
+//                 that carries it (.facing, a painted .pose-layer; D42),
 //                 `getComputedStyle(el).animationName !== 'none'` AND a running,
 //                 infinite CSSAnimation of that name (a script cancel leaves
 //                 the name and stops the motion). IDLE-AFTER repeats it once
 //                 the motion-on turn has settled, when enemies may rest in a
-//                 guard, wounded or afflicted pose.
+//                 guard, wounded or afflicted pose. IDLE-rendered and
+//                 IDLE-classic redraw the player in those sprite styles and
+//                 repeat it (the Glyph style is a sigil panel, not a figure,
+//                 and is not checked). No figure may be moved by two idle
+//                 carriers at once (it would bob twice as far).
 //   CONTROL       with motion on, the same sampler over the same turn sees a
 //                 finite CSS animation, a CSS transition and an Element.animate()
 //                 call over the limit, so a green REDUCED line is not a blind
@@ -78,17 +83,29 @@ if (argv.includes('--selftest')) {
   const code = await doorSelftest({
     tool: 'motion-probe.mjs',
     timeoutMs: 240000,
-    // The enemy figure images: without them an enemy's img errors and is
-    // replaced (src/ui/assets.js), so the clean copy would have no figure to
-    // check. The player's painted outfit falls back to a drawn frame on its own.
-    extraCopy: ['assets/enemy-poses', 'assets/enemy-states', 'assets/defeated-poses'],
+    // The figure art. Without it an enemy's img errors and is replaced
+    // (src/ui/assets.js), and the painted player's frames load broken (the
+    // painted stage has no fallback), so the clean copy would check images
+    // that draw nothing; IDLE goes red on an image that did not load. The
+    // seed's Reaver fights in the sword-and-shield set's outfit frames.
+    extraCopy: ['assets/enemy-poses', 'assets/enemy-states', 'assets/defeated-poses', 'assets/painted-outfits',
+      'assets/animations/sword-shield-outfits'],
     plants: [
       {
         name: 'the idle bob goes back to the dead `.sprite > img` selector',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .pose-layer) { animation: sprite-idle',
+        find: '.combatant .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation: sprite-idle',
         replace: '.combatant .sprite > img { animation: sprite-idle',
         expectRed: /RED IDLE player#\d+ — .*no idle animation/,
+      },
+      {
+        // #1475 review: the carrier list before the Rendered style's still
+        // painting was in it, so that figure never bobbed.
+        name: 'the idle bob leaves out the Rendered style\'s painting',
+        file: 'styles/combat.css',
+        find: '.combatant .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation: sprite-idle',
+        replace: '.combatant .sprite :is(.facing, .painted-stage > .pose-layer) { animation: sprite-idle',
+        expectRed: /RED IDLE-rendered player#\d+ — .*img\.painted-presentation: no idle animation/,
       },
       {
         // This PR's first shape: the bob on the idle images themselves. The
@@ -96,7 +113,7 @@ if (argv.includes('--selftest')) {
         // (paintedOutfits.js), so the name stays and nothing runs.
         name: 'the idle bob sits on the figure images instead of their layer',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .pose-layer) { animation: sprite-idle',
+        find: '.combatant .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation: sprite-idle',
         replace: '.combatant .sprite :is(img.pose-frame, img.enemy-pose-idle) { animation: sprite-idle',
         expectRed: /RED IDLE player#\d+ — .*named on .* but not running/,
       },
@@ -357,11 +374,16 @@ async function idle({ evaluate }, label) {
     const who = (c.classList.contains('player') ? 'player' : c.classList.contains('enemy') ? 'enemy' : 'combatant') + '#' + i;
     const dead = c.classList.contains('dead') || c.classList.contains('down');
     const name = c.querySelector('.nm')?.textContent?.trim() || '';
-    const imgs = [...c.querySelectorAll('.sprite img')].filter((img) => {
+    const imgs = [...c.querySelectorAll('.sprite img, .sprite svg')].filter((img) => {
+      // An <svg> is a figure only when it is drawn art (the Classic style),
+      // not a nested part of one or a decorative layer (the pose aura).
+      if (img.tagName.toLowerCase() === 'svg' && (img.parentElement.closest('svg') || img.closest('[aria-hidden="true"]'))) return false;
       const cs = getComputedStyle(img);
       return cs.visibility === 'visible' && cs.display !== 'none' && !img.classList.contains('defeated-frame')
         && !img.classList.contains('pose-previous');
     });
+    // An <img> that did not load draws nothing, whatever moves it.
+    const loaded = (img) => img.tagName !== 'IMG' || (img.complete && img.naturalWidth > 0);
     const tag = (el) => el.tagName.toLowerCase() + [...el.classList].slice(0, 2).map((k) => '.' + k).join('');
     return { who, dead, name, imgs: imgs.map((img) => {
       const named = [];
@@ -371,17 +393,20 @@ async function idle({ evaluate }, label) {
           const running = el.getAnimations().some((a) => a.animationName && anim.split(/,\\s*/).includes(a.animationName)
             && a.playState === 'running' && a.effect.getComputedTiming().activeDuration === Infinity);
           named.push({ on: tag(el), anim, running });
-          if (running) break;
         }
         if (el.classList.contains('sprite')) break;
       }
-      return { img: tag(img), carrier: named.find((n) => n.running) || null, stopped: named.find((n) => !n.running) || null };
+      const carriers = named.filter((n) => n.running && n.anim.split(/,\s*/).includes('sprite-idle'));
+      return { img: tag(img), src: img.tagName === 'IMG' ? (img.getAttribute('src') || '').slice(0, 120) : '', loaded: loaded(img), carrier: named.find((n) => n.running) || null,
+        stopped: named.find((n) => !n.running) || null, twice: carriers.length > 1 ? carriers.map((n) => n.on) : null };
     }) };
   })`);
   for (const f of figures) {
     if (label !== 'IDLE' && f.dead) continue;
-    const bare = f.imgs.filter((i) => !i.carrier);
-    const why = (i) => i.stopped ? `${i.stopped.anim} is named on ${i.stopped.on} but not running (cancelled from script?)` : 'no idle animation on it or its layers';
+    const bare = f.imgs.filter((i) => !i.carrier || !i.loaded || i.twice);
+    const why = (i) => !i.loaded ? `the image did not load, it draws nothing (src ${i.src || 'empty'})`
+      : i.twice ? `bobbed twice, by sprite-idle on ${i.twice.join(' and ')}`
+        : !i.carrier && i.stopped ? `${i.stopped.anim} is named on ${i.stopped.on} but not running (cancelled from script?)` : 'no idle animation on it or its layers';
     check(f.imgs.length > 0 && bare.length === 0, `${label} ${f.who}`,
       f.imgs.length === 0 ? `${f.name}: no visible figure image to animate`
         : bare.length ? `${f.name}: ${bare.map((i) => `${i.img}: ${why(i)}`).join('; ')}`
@@ -415,6 +440,20 @@ try {
   check(missing.length === 0, 'CONTROL', `motion on: ${control.log.length} animation(s) seen, ${seen.length} over ${MAX_ACTIVE_MS} ms; `
     + (missing.length ? `never saw a ${missing.join(' or ')} over the limit — the sampler may be blind to it` : Object.entries(kinds).map(([k, a]) => `${k}: ${show(a)}`).join('; ')));
   await idle(s, 'IDLE-AFTER');
+  // The other figure styles a player can choose (customize.js SPRITE_STYLES):
+  // the run's customization is part of the player frame's art key, so a
+  // render after changing it draws the player afresh in that style.
+  for (const style of ['rendered', 'classic']) {
+    const mark = style === 'rendered' ? '.rendered-stage' : 'svg';
+    await s.evaluate(`(() => { const run = window.__combatRunForShot;
+      run.customization = { ...(run.customization || {}), spriteStyle: ${JSON.stringify(style)} };
+      window.__renderCombatForShot(); })()`);
+    await until(s.evaluate, `!!document.querySelector('.combatant.player .sprite ${mark}')
+      && [...document.querySelectorAll('.combatant.player .sprite img')].every((i) => i.complete)`, `the player redrawn in the ${style} style`);
+    await wait(300);
+    const drawn = await idle(s, `IDLE-${style}`);
+    check(drawn.some((f) => f.who.startsWith('player')), `IDLE-${style}-BOARD`, `the player is on the board in the ${style} style`);
+  }
   const flipbooks = scripted(control.scripted);
   check(flipbooks.length > 0, 'CONTROL-SCRIPT', `motion on: ${flipbooks.length} script-driven change burst(s) seen (e.g. ${flipbooks.slice(0, 3).map(showScripted).join('; ') || 'none'})`);
 

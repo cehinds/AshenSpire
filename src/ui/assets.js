@@ -158,14 +158,15 @@ export function enemySprite(enemyDef, entity = {}) {
   //     `matrix(1,0,0,1,12.8,0)`, wobble held `matrix(1,…)` for its whole
   //     550ms, and crumble interpolated -1 → -0.43, flipping THROUGH the
   //     mirror and ending the death animation facing the wrong way.
-  //   · the `img` — `sprite-idle` (infinite) and `enemy-lunge` are aimed at
-  //     `.combatant .sprite > img`. Those selectors are dead today, because
-  //     the img is a grandchild of `.sprite` rather than a child, so the mirror
-  //     would survive there by accident; the day that selector is repaired it
-  //     would break, and it is already carded to be repaired.
+  //   · the `img` — `enemy-lunge` is aimed at `.combatant .sprite > img`, a
+  //     selector that matches nothing here, because the img is a grandchild
+  //     of `.sprite` rather than a child, so the mirror would survive there by
+  //     accident; the day that selector is repaired it would break.
   //
-  // So: a layer between them that nothing selects. It carries the facing and
-  // only the facing.
+  // So: a layer between them whose only transform is the facing. The idle
+  // bob (`sprite-idle`, styles/combat.css; D42) does ride this layer, but it
+  // moves the separate `translate` property, which composes with the inline
+  // mirror rather than replacing it.
   el.style.cssText = `width:${px(tier.w)};height:${px(tier.h)};position:relative;`
     + 'display:flex;align-items:flex-end;justify-content:center;';
   const facing = document.createElement('div');

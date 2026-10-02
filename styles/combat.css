@@ -621,13 +621,20 @@
    previous frame) moves together and a pose swap never jumps it. It moves
    the individual `translate` property, not `transform`, so it composes with
    the inline transforms those layers already carry (the mirror on .facing,
-   the centring on .pose-layer) instead of replacing them (D42). */
+   the centring on .pose-layer) instead of replacing them (D42).
+   Exactly one carrier per figure, so nothing bobs twice: .facing (enemies,
+   the Classic figure, a rendered image or pose stage that falls back inside
+   it), a painted stage's own .pose-layer (never inside a .facing), and the
+   Rendered style's still painting. The Glyph style is a sigil panel, not a
+   figure, and stays put. */
 @keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
 .combatant .sprite > img { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
-.combatant .sprite :is(.facing, .pose-layer) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
+.combatant .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation: sprite-idle 3.1s ease-in-out infinite; will-change: translate; }
 /* A fallen combatant holds still: the idle bob kept every dead sprite on the
-   compositor's per-frame list for the rest of the fight. */
-.combatant.dead .sprite > img, .combatant.dead .sprite :is(.facing, .pose-layer) { animation: none; }
+   compositor's per-frame list for the rest of the fight. A downed co-op
+   player is fallen too (its Classic figure bobbed on .facing). */
+.combatant.dead .sprite > img, .combatant.dead .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation),
+.combatant.down .sprite > img, .combatant.down .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation: none; }
 .player .sprite.reaver-attack-playing { overflow: visible; }
 .combatant .sprite > img.reaver-attack-sequence {
   width: 17rem;
@@ -641,17 +648,17 @@
   animation: none;
   filter: drop-shadow(0 0.55rem 0.5rem rgba(0, 0, 0, 0.58));
 }
-.combatant.enemy .sprite > img, .combatant.enemy .sprite :is(.facing, .pose-layer) { animation-duration: 2.6s; }
+.combatant.enemy .sprite > img, .combatant.enemy .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation-duration: 2.6s; }
 /* WCF3: one glow over the whole selected assembly — intent, the delayed
    inspect control, art, name and lower stack — never one per child. */
 .combatant.context-selected > .combatant-stack {
   filter: var(--selection-glow, drop-shadow(0 0 calc(0.35 * max(16px / var(--ui-zoom, 1), 1rem)) var(--gold)));
 }
 .combatant.context-selected .nm { color: var(--gold); }
-.combatant:nth-child(2) .sprite > img, .combatant:nth-child(2) .sprite :is(.facing, .pose-layer) { animation-delay: -0.9s; }
-.combatant:nth-child(3) .sprite > img, .combatant:nth-child(3) .sprite :is(.facing, .pose-layer) { animation-delay: -1.7s; }
-.combatant:nth-child(4) .sprite > img, .combatant:nth-child(4) .sprite :is(.facing, .pose-layer) { animation-delay: -2.3s; }
-.reduced-motion .combatant .sprite > img, .reduced-motion .combatant .sprite :is(.facing, .pose-layer) { animation: none; }
+.combatant:nth-child(2) .sprite > img, .combatant:nth-child(2) .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation-delay: -0.9s; }
+.combatant:nth-child(3) .sprite > img, .combatant:nth-child(3) .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation-delay: -1.7s; }
+.combatant:nth-child(4) .sprite > img, .combatant:nth-child(4) .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation-delay: -2.3s; }
+.reduced-motion .combatant .sprite > img, .reduced-motion .combatant .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation: none; }
 .combatant.dead .sprite > img, .combatant.down .sprite > img { transition: filter 400ms, opacity 400ms; }
 
 /* ---------- short-wide combat composition (#27) ---------------------------
@@ -1392,7 +1399,7 @@
 }
 :root[data-performance='lite'] .backdrop::after,
 :root[data-performance='lite'] .sprite > img,
-:root[data-performance='lite'] .sprite :is(.facing, .pose-layer) { animation: none; }
+:root[data-performance='lite'] .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation: none; }
 :root[data-performance='lite'] .sprite img,
 :root[data-performance='lite'] .sprite .facing { filter: none !important; }
 
