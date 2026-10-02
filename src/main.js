@@ -23,6 +23,7 @@ import { contentBundle } from './content/index.js';
 import { configureArmamentKitPreview, drawArmamentKitPreview } from './dev/armamentKitPreview.js';
 import { validateContent } from './model/validate.js';
 import { createRegistries } from './model/registries.js';
+import { isPoolDeckMode, dealtAttackSlotCount, POOL_DECK_RULE } from './model/cardRemoval.js';
 import { STAT_ROWS_CHANGED_MEANING, STAT_ROWS_MARKER, STAT_ROWS_VERSION } from './model/statRows.js';
 import { advancedConfigSnapshot, advancedConfigStructuralProblems, bringProfileForward, bringRunSnapshotForward, configuredContentBundle, presentationConfig, isLiveXpSetting, updatedXpSnapshot, xpSnapshotFromProfile } from './model/advancedConfig.js';
 import { configureTooltipGlossary } from './ui/components/tooltipGlossary.js';
@@ -1145,6 +1146,13 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
   } else if (deckMode === 'draft') {
     run.deck = createDeck(draftBaseIds(), createIdGen('rc'));
   }
+  // The dealt deck replaced the composed one, attack slots and all, so its
+  // birth attack quota is what it holds (none), not the composed deck's; else
+  // the first full restamp (an Armoury swap, a reload) refuses the run.
+  if (isPoolDeckMode(run)) {
+    run.equipmentAttackSlotCount = dealtAttackSlotCount(run.deck);
+    run.poolDeckRule = POOL_DECK_RULE;
+  }
   if (mods.cursedStart) run.deck.push(...createDeck(['guilt'], createIdGen('cx')));
   if (mods.hoarder) run.cinders += registries.balance.customMods.hoarderCinders;
 
@@ -1154,6 +1162,11 @@ function newRun({ classId, seedString, customization, keepsakeId, custom, starti
 
 // After the deck is finalized (incl. any draft), generate the map and go.
 function startClimb() {
+  // A dealt deck (Sealed, Draft, with any picks) was never stamped: give its
+  // cards their equipment faces now, as the load door and every later restamp
+  // do, so the first fight plays the same cards a reload would. A pool deck is
+  // dealt no lent card by it (model/cardRemoval.js isPoolDeckMode).
+  if (isPoolDeckMode(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });
   run.mapGraph = run.journey ? journeyGraph(run.journey) : buildActMap(registries, rng, currentSeat(), contentAct(), runMapShape(), { history: run.history });
   if (run.journey) syncWorldPosition();
   if ((!shotState || shotState === 'prologue') && shouldPlayPrologue(saves.loadMeta().settings, saves.loadMeta().settings?.prologueSeen === true)) {
@@ -2389,7 +2402,7 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
   const enc = combatEncounterFor(registries, run, run.combatEntered);
   audio.music(enc.pool === 'boss' ? 'boss' : enc.pool === 'elite' ? 'elite' : 'combat');
   const cm = combatMods(enc.pool, enc);
-  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot, fallbackAttributeMode: run.attributeMode }) : createRunCombat({
+  const combat = savedSnapshot ? restoreCombatSnapshot({ registries, rng, snapshot: savedSnapshot, fallbackAttackSlotCount: run.equipmentAttackSlotCount, fallbackRemovedAttackSlotIds: run.removedAttackSlotIds, fallbackDerivedStatRuleSnapshot: run.derivedStatRuleSnapshot, fallbackAttributeMode: run.attributeMode, fallbackPoolDeck: isPoolDeckMode(run) }) : createRunCombat({
     registries,
     rng,
     run,
