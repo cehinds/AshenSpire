@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the build checker's self-test catches up with the art-pack change",
     "detail": "Nothing you play changes. One of the build tool's self-tests plants a deliberate fault in a line the asset loading work rewrote, so it could no longer find that line and the test build's checks went red. It now plants the fault in the line as it reads today.",
-    "build": "0.7.1.753",
+    "build": "0.7.1.754",
     "pullRequest": 1465,
     "url": "https://github.com/cehinds/AshenSpire/pull/1465"
+  },
+  {
+    "id": "pr-1447",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: a flask check that had stopped working runs again",
+    "detail": "Nothing you play changes. A check makes sure flasks on the map offer the same choices as flasks in a fight. It had stopped looking at the Potions button you use on the map, and nothing ran it, so it failed without anyone noticing. It now follows that Potions button to the choices each flask offers, and the test suite runs it on every change.",
+    "build": "0.7.1.753",
+    "pullRequest": 1447,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1447"
   },
   {
     "id": "pr-1386",
