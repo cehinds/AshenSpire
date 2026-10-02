@@ -27,7 +27,15 @@ export const POOL_DECK_MODES = Object.freeze(['sealed', 'draft']);
 // Combat works on a synthetic run with no `custom`, so a fight carries the
 // flag itself (`poolDeck: true`, runCombat.js → combat → its snapshot).
 export function isPoolDeckRun(run) {
-  return !!run && (POOL_DECK_MODES.includes(run.custom && run.custom.deckMode) || run.poolDeck === true);
+  return !!run && (isPoolDeckMode(run) || run.poolDeck === true);
+}
+
+// The run-level answer, from the run's own Custom Climb rules only. Every
+// door that holds a SAVED run (the load door, newRun, resumeRun, runCombat)
+// asks this, never a flag: `poolDeck` belongs to a fight and its snapshot,
+// and is cross-checked against this at the load door rather than trusted.
+export function isPoolDeckMode(run) {
+  return !!run && POOL_DECK_MODES.includes(run.custom && run.custom.deckMode);
 }
 
 // Written on a pool run by the build that holds it to its own rule (main.js

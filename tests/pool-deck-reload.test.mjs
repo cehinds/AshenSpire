@@ -328,6 +328,58 @@ test('sealed: a present but unknown dealt-deck marker is refused, never migrated
   assert.match(standard.saves.runStatus().reason, /poolDeckRule/);
 });
 
+test('a fight\'s poolDeck flag must agree with its run, and never rides a run (Codex review)', () => {
+  const archived = (saves, why) => {
+    assert.equal(saves.loadRun(registries, 1), null, why);
+    assert.equal(saves.runStatus().state, 'archived', why);
+    assert.match(saves.runStatus().reason, /poolDeck/, why);
+  };
+  // A Standard fight claiming the pool rule: its equipment cards must not be swept.
+  {
+    const { run, rng, saves } = deal('reaver', 'standard');
+    const combat = fight(run, rng);
+    commitCombatSnapshot({ run, combat, nodeId: 'n0', encounterId: 'loneSoldier' });
+    run.combatEntered.snapshot.poolDeck = true;
+    saves.saveRun(run, rng);
+    archived(saves, 'a Standard snapshot with poolDeck: true');
+  }
+  // A pool fight denying it (false, or not a boolean).
+  for (const flag of [false, 'true', 1]) {
+    const { run, rng, saves } = deal('starseer', 'sealed');
+    const combat = fight(run, rng);
+    commitCombatSnapshot({ run, combat, nodeId: 'n0', encounterId: 'loneSoldier' });
+    run.combatEntered.snapshot.poolDeck = flag;
+    saves.saveRun(run, rng);
+    archived(saves, `a Sealed snapshot with poolDeck: ${JSON.stringify(flag)}`);
+  }
+  // The flag on a saved run, Standard or pool, is refused: the run's deck mode decides.
+  for (const [cls, mode] of [['reaver', 'standard'], ['starseer', 'sealed']]) {
+    const { run, rng, saves } = deal(cls, mode);
+    run.poolDeck = true;
+    saves.saveRun(run, rng);
+    archived(saves, `poolDeck on a ${mode} run`);
+  }
+  // Absent on a pool fight is a pre-fix snapshot: accepted, and written.
+  {
+    const { run, rng, saves } = deal('starseer', 'sealed');
+    const combat = fight(run, rng);
+    commitCombatSnapshot({ run, combat, nodeId: 'n0', encounterId: 'loneSoldier' });
+    delete run.combatEntered.snapshot.poolDeck;
+    saves.saveRun(run, rng);
+    const back = saves.loadRun(registries, 1);
+    assert.ok(back, `reload refused: ${saves.runStatus().reason}`);
+    assert.equal(back.combatEntered.snapshot.poolDeck, true);
+  }
+  // resumeRun's restore cross-checks the snapshot against the run's own rule.
+  {
+    const { run, rng } = deal('reaver', 'standard');
+    const combat = fight(run, rng);
+    commitCombatSnapshot({ run, combat, nodeId: 'n0', encounterId: 'loneSoldier' });
+    const snapshot = { ...structuredClone(run.combatEntered.snapshot), poolDeck: true };
+    assert.throws(() => restoreCombatSnapshot({ registries, rng: createRng(SEED), snapshot, fallbackPoolDeck: false }), /poolDeck/);
+  }
+});
+
 test('standard: a deck missing its composed attack slots is still refused', () => {
   const { run, rng, saves } = deal('reaver', 'standard');
   run.deck = run.deck.filter((c) => c.equipmentRole !== 'attack');
@@ -371,7 +423,7 @@ test('main.js newRun writes the dealt deck\'s quota after the deal, and startCli
   assert.ok(sealed > 0 && draft > sealed, 'the deal this test mirrors moved');
   assert.ok(quota > draft && quota < showDraft, 'the quota must follow the deal and precede the draft and the first persist');
   const climb = src.slice(src.indexOf('function startClimb()'), src.indexOf('function showPrologue()'));
-  const stamp = climb.indexOf('if (isPoolDeckRun(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });');
+  const stamp = climb.indexOf('if (isPoolDeckMode(run)) stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false, reconcileEquipmentPools: false });');
   assert.ok(stamp > 0 && stamp < climb.indexOf('persist();'), 'startClimb must stamp a dealt deck before its first persist');
   const body = src.slice(src.indexOf('function sealedDeckIds'), src.indexOf('function draftBaseIds'));
   assert.match(body, /\['strike', 'strike', 'strike', 'strike', 'defend', 'defend', 'defend'\]/);

@@ -113,6 +113,12 @@ export function serializeCombatSnapshot(combat) {
  * non-idempotent for a current one, which tools/weapon-card-packages.mjs is
  * right to assert against: a load must not rewrite a snapshot it understands.
  */
+function restoredPoolDeck(saved, fallback) {
+  if (saved !== undefined && saved !== true) throw new Error(`combat snapshot poolDeck must be true when present (got ${JSON.stringify(saved)})`);
+  if (typeof fallback === 'boolean' && saved === true && !fallback) throw new Error('combat snapshot poolDeck disagrees with the run\'s deck mode');
+  return saved === true || fallback === true;
+}
+
 export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttackSlotCount, fallbackRemovedAttackSlotIds, fallbackDerivedStatRuleSnapshot, fallbackAttributeMode, fallbackPoolDeck = false }) {
   assertCombatSnapshot(snapshot);
   const saved = structuredClone(snapshot);
@@ -136,8 +142,9 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     foundation: saved.foundation || null,
     equipmentProfileRuleSnapshot: saved.equipmentProfileRuleSnapshot,
     removedAttackSlotIds: saved.removedAttackSlotIds ?? structuredClone(fallbackRemovedAttackSlotIds || []),
-    // The run's own rule backs the snapshot's flag (model/cardRemoval.js isPoolDeckRun).
-    ...(saved.poolDeck === true || fallbackPoolDeck === true ? { poolDeck: true } : {}),
+    // The run's own rule backs the snapshot's flag (model/cardRemoval.js), and
+    // when the caller knows the run the two must agree, never be OR-ed.
+    ...(restoredPoolDeck(saved.poolDeck, fallbackPoolDeck) ? { poolDeck: true } : {}),
     equipmentAttackSlotCount: Number.isFinite(saved.equipmentAttackSlotCount)
       ? saved.equipmentAttackSlotCount
       : (Number.isFinite(fallbackAttackSlotCount) ? fallbackAttackSlotCount : undefined),
