@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-02
 
+- **One game file and one download: the separate mobile and full-art files are retired** ([#1506](https://github.com/cehinds/AshenSpire/pull/1506), `0.7.1.799`). Every build is now one game page of about 10 MB that loads its art, fonts, music and map tiles from files beside it and picks phone-sized art on a phone by itself, plus one self-contained light-art file (about 31 MB) to download and play by double-click. The old mobile link sends you to the main game.
+
 - **The game's starting settings follow the owner's latest configuration** ([#1498](https://github.com/cehinds/AshenSpire/pull/1498), `0.7.1.798`). Character-level XP growth starts at 1.5, reward card choices at zero and the normal-fight card reward chance at 24%. Enemy sprites start at 1.5 scale, the player starts in column 1, row B uses double scale, and the opening's first-step traveller uses the supplied desktop placement. All 38 supplied settings become defaults; settings you already chose keep their values.
 
 - **Behind the scenes: the spec wording for loading assets as separate files is approved** ([#1440](https://github.com/cehinds/AshenSpire/pull/1440), `0.7.1.796`). This is a docs-only change, and nothing you play changes. The spec now says the game will load its art, fonts and music as separate files, keep one light-art single file you can download and open by double-click, and retire the 254 MB file.
