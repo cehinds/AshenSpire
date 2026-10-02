@@ -404,7 +404,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # SHARD COUNTS (owner rule D36, 2026-10-02: every CI job finishes in 20
+        # SHARD COUNTS (owner rule D38, 2026-10-02: every CI job finishes in 20
         # minutes or less). The buildversion corpus is planned by measured cost
         # (tools/buildversion-selftest.mjs, SHARD_COST and planShards), not by
         # index. Windows ran it in 4 shards of 13-36 minutes; Windows is 2.4-5.2x

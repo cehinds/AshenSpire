@@ -120,7 +120,7 @@ function copyTree(extra = [], { includePng = false } = {}, realRoot = REAL_ROOT)
   return dir;
 }
 
-/* ── SHARDS (owner rule D36 in docs/FINISH.md, 2026-10-02: every CI job
+/* ── SHARDS (owner rule D38 in docs/FINISH.md, 2026-10-02: every CI job
  * finishes in 20 minutes or less) ─────────────────────────────────────────────
  *
  * A browser corpus runs its plants one after another, a browser boot each, and

@@ -1,7 +1,7 @@
 // tests/buildversion-shard.test.mjs — the buildversion selftest's shard plan
 // covers the whole corpus, each item once, and is balanced by measured cost.
 //
-// WHY (owner rule D36, 2026-10-02: every CI job finishes in 20 minutes or less).
+// WHY (owner rule D38, 2026-10-02: every CI job finishes in 20 minutes or less).
 // The Windows `reproducible` shards used to split each list by index mod count,
 // so shard 0 always carried the extra plant, the extra row-H case AND the
 // --which history; it ran 26-36 minutes while its siblings ran 13-24. The plan

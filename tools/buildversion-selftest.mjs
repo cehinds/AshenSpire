@@ -77,7 +77,7 @@ if (shardText !== 'all' && (!shardMatch || !Number.isSafeInteger(Number(shardMat
 }
 const SHARD = shardText === 'all' ? null : { index: Number(shardMatch[1]), count: Number(shardMatch[2]) };
 
-// BALANCED BY MEASURED COST, NOT BY INDEX (owner rule D36, 2026-10-02: every CI
+// BALANCED BY MEASURED COST, NOT BY INDEX (owner rule D38, 2026-10-02: every CI
 // job finishes in 20 minutes or less). Shards used to take index mod count in
 // each list separately, so shard 0 got the first plant, the first row-H case
 // AND the traceability corpus, and the Windows shard 0/4 ran 26-36 minutes
