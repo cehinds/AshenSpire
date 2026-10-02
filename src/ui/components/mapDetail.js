@@ -1,7 +1,7 @@
 import { MAP_ART } from '../../content/mapArt.generated.js';
 import { MAP_PRESENTATION as policy } from '../../content/mapPresentation.js';
 import { detailLevel, visibleTiles } from '../models/MapDetailModel.js';
-import { assetUrl } from '../assetmap.js';
+import { assetUrl, builtInSource } from '../assetmap.js';
 import { ART_SOURCE_EVENT } from '../highResArt.js';
 
 // Fallback stays underneath at all times. Detail files are never bundled into
@@ -11,9 +11,16 @@ import { ART_SOURCE_EVENT } from '../highResArt.js';
 // single file served over http(s) and the source tree pass the id through as
 // the path of the map-detail/ folder beside the page, as before. A tile is a
 // plain Image load of that URL (no fetch, no blob), so it is cached by the
-// browser like any other image. Under file:// nothing is requested yet: the
-// map keeps its low-detail fallback until step 4.
+// browser like any other image, and works under file:// too (step 4): a
+// double-clicked web edition draws its tiles from the objects beside it. Under
+// file:// only a tile the built-in source lists is requested: a single file
+// has no index, and a path beside a downloaded file is usually not there, so
+// it keeps its low-detail fallback without asking, as before.
 export const tileId = (assetHash, key) => `map-detail/${assetHash}/${key}.webp`;
+/** Whether a tile may be requested: always over http(s); under file:// only when the pack index lists it. */
+export function tileReachable(id, { protocol = globalThis.location?.protocol, source = builtInSource() } = {}) {
+  return protocol !== 'file:' || !!(source && source.has(id));
+}
 export function mountMapDetail(port, surface, source) {
   const art = MAP_ART[source], base = surface?.querySelector('image');
   if (!art || !base) return () => {};
@@ -69,11 +76,17 @@ export function mountMapDetail(port, surface, source) {
     }
   }
   function pump() {
-    if (disposed || location.protocol === 'file:') return;
+    if (disposed) return;
+    let marked = false;
     for (const tile of desired) {
       if (active >= policy.concurrentLoads) break;
-      if (!cache.has(tile.key) && !failed.has(tile.key) && !pending.has(tile.key)) load(tile);
+      if (cache.has(tile.key) || failed.has(tile.key) || pending.has(tile.key)) continue;
+      if (tileReachable(tileId(art.assetHash, tile.key))) load(tile);
+      // file:// with an index that lacks this tile: it counts as missing, as a
+      // 404 would over http(s), so the tiles the index has still draw.
+      else if (builtInSource()) { failed.add(tile.key); marked = true; }
     }
+    if (marked) paint();
   }
   function update() {
     frame = 0; if (disposed || !base.isConnected) return;
@@ -88,7 +101,7 @@ export function mountMapDetail(port, surface, source) {
     // Only the small visible set is requested, even at Fit. `cache` only
     // records which tiles have loaded (policy.cacheTiles bounds it); the
     // browser's image cache holds the bytes, so evicting frees none.
-    if (location.protocol !== 'file:') { paint(); pump(); }
+    paint(); pump();
   }
   const schedule = () => { if (!disposed && !frame) frame=requestAnimationFrame(update); };
   const resize = new ResizeObserver(schedule); resize.observe(port);

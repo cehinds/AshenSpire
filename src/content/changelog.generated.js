@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1461",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition opens by double-click",
+    "detail": "Behind the scenes: the web edition's game file, kept together with its folder of art, now plays when opened straight from disk, with its art, fonts and map close-ups, and the music played by the game's own synthesizer; nothing you play changes.",
+    "build": "0.7.1.757",
+    "pullRequest": 1461,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1461"
+  },
+  {
     "id": "pr-1449",
     "date": "2026-10-02",
     "group": "2026-10-02",

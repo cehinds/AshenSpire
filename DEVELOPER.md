@@ -976,6 +976,14 @@ With no flag it bundles the full art from `assets/`; `--light` reads the
 `assets-mobile/` twins (the dev/test tier), `--mobile` writes the budgeted
 `AshenSpire-mobile.html`, and `--external-art` leaves the art beside the HTML
 in the pack shape (`asset-base.json`, `packs/`, `objects/`; see *Run & test*).
+That folder plays by double-click too, as long as it stays together
+(docs/EXTERNAL-ASSETS-PLAN.md step 4): under `file://` the loader reads each
+index from its `.js` twin through a `<script>` tag and checks the string
+against the same pin, adds the "AS Lore" faces from the font sidecar as
+`FontFace` objects (Chrome refuses a `file://` page's `@font-face` url()
+loads), and draws sprites, backdrops and map tiles from the objects beside
+the HTML; the score stays synthesized, as for any `file://` page.
+`node tools/external-play.mjs --file` opens it that way in Chromium.
 `node tools/launch.mjs --build-only` picks the flags for you (see *Run & test*).
 The file is a local build output, ignored by git on `dev`: of the build's own
 outputs, commit only `buildordinal.json` (and the generated changelog module).
