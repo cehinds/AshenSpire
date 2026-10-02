@@ -110,6 +110,14 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL persistence: the map keeps the selected destination, its tray open, across the setting's redraw/,
       },
       {
+        name: 'the act map restores the selected node without its reading',
+        file: 'src/ui/screens/map.js',
+        find: '    if (reading) readings.set(selectedId, reading);',
+        replace: '',
+        args: ['--only', 'persistence'],
+        expectRed: /FAIL persistence: the reopened tray names the destination as it did before the redraw/,
+      },
+      {
         name: 'the world atlas remounts when "Use flasks outside combat" changes, losing its selected destination',
         file: 'src/main.js',
         find: "const flaskKey = FLASK_REMOUNT_KEYS.some((k) => k in changed) && !!screen.querySelector('.map-potions, .hud-potions');",
@@ -437,7 +445,9 @@ async function persistenceProbe(cdp, base, check) {
       if (!node) return { why: 'no reachable node' };
       node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       const open = await __fm.until(() => document.querySelector('.map-tray')?.dataset.shown === 'true');
-      return { id: node.dataset.node, open: !!open, selected: document.querySelector('.map-node.selected')?.dataset.node };
+      // What the tray says about it: the kind's name and its lines.
+      const tray = [...document.querySelectorAll('.map-context .map-context-title, .map-context .map-context-line')].map((p) => p.textContent.trim());
+      return { id: node.dataset.node, open: !!open, selected: document.querySelector('.map-node.selected')?.dataset.node, tray };
     })()`);
     check('persistence: a reachable node is selected and its tray opens',
       !picked.why && picked.open && picked.selected === picked.id, JSON.stringify(picked));
@@ -445,10 +455,14 @@ async function persistenceProbe(cdp, base, check) {
     check('persistence: the setting turns on through Menu → Settings', toggled === '', toggled);
     const keptPick = await ev(`(async () => {
       const open = await __fm.until(() => document.querySelector('.map-tray')?.dataset.shown === 'true');
-      return { open: !!open, selected: document.querySelector('.map-node.selected')?.dataset.node || null };
+      const tray = [...document.querySelectorAll('.map-context .map-context-title, .map-context .map-context-line')].map((p) => p.textContent.trim());
+      return { open: !!open, selected: document.querySelector('.map-node.selected')?.dataset.node || null, tray };
     })()`);
     check('persistence: the map keeps the selected destination, its tray open, across the setting\'s redraw',
       keptPick.open && keptPick.selected === picked.id, JSON.stringify({ ...keptPick, want: picked.id }));
+    check('persistence: the reopened tray names the destination as it did before the redraw (kind, blurb, reveal)',
+      Array.isArray(picked.tray) && picked.tray.length > 1 && JSON.stringify(keptPick.tray) === JSON.stringify(picked.tray),
+      JSON.stringify({ before: picked.tray, after: keptPick.tray }));
     const after = await ev(`__fm.mapList()`);
     check('persistence: the setting turned on in Settings reaches the map Potions list (Drink offered)',
       after && after['charge:hp']?.enabled === true, JSON.stringify(after?.['charge:hp']));

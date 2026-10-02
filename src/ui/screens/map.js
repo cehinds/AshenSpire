@@ -290,7 +290,11 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // A redraw of this same map (a Potions action, a flask-setting change) hands
   // back the node the player had selected: it stays selected and its tray
   // opens again, rather than the redraw silently dropping the destination.
+  // The reading (what the node shows, and whether it is revealed) comes back
+  // from the board just drawn, so the tray names the same destination it did.
   if (selectedId && reachable.has(selectedId)) {
+    const reading = board.readingOf(selectedId);
+    if (reading) readings.set(selectedId, reading);
     selection = { selectedId };
     renderSelection();
     openTray();
