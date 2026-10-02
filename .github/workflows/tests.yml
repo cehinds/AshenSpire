@@ -118,7 +118,7 @@ jobs:
           DEPENDABOT: ${{ github.actor == 'dependabot[bot]' }}
         run: |
           if [ "$HAS_TOKEN" != "true" ] && { [ "$FORK_PR" = "true" ] || [ "$DEPENDABOT" = "true" ]; }; then
-            echo "::notice title=Art release not fetched::a fork's or Dependabot's run gets no ART_REPO_TOKEN and cehinds/AshenSpire-art is still private, so this run skips the art fetch and the agreement check; same-repository pull requests and pushes run both"
+            echo "::notice title=Art release not fetched::a fork's or Dependabot's run gets no ART_REPO_TOKEN and cehinds/AshenSpire-art is still private, so this run skips the art fetch and the agreement check; pull requests fetch the public release with no token, and pushes run both"
             echo "fetch=false" >> "$GITHUB_OUTPUT"
           else
             echo "fetch=true" >> "$GITHUB_OUTPUT"
@@ -131,7 +131,12 @@ jobs:
       - name: Fetch the art packs this run's branch uses
         if: ${{ always() && steps.art.outputs.fetch == 'true' }}
         env:
-          ART_REPO_TOKEN: ${{ secrets.ART_REPO_TOKEN }}
+          # NO TOKEN ON A PULL REQUEST: this step runs the PR's own
+          # tools/fetch-art.mjs, so a token here would be readable by any
+          # branch. Pull requests fetch the public art repository without
+          # one (EXTERNAL-ASSETS-PLAN step 10a makes it public before this
+          # step lands); pushes run reviewed code and keep the token.
+          ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && secrets.ART_REPO_TOKEN || '' }}
           ART_PACKS: ${{ (github.event_name == 'pull_request' || github.ref_name == 'dev') && 'light,common' || 'all' }}
         run: node tools/fetch-art.mjs --pack "$ART_PACKS"
 
