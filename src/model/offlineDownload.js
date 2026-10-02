@@ -57,8 +57,9 @@ export async function receiveDownload(response, { bytes = null, sha256 = null, w
 // THE FOLDER COPY: A ZIP THE GAME ASSEMBLES ITSELF (docs/EXTERNAL-ASSETS-PLAN.md
 // §5 B, step 7). Beside the light single file above, a pack-shaped build can
 // also be saved as its own folder: the build's HTML, its light and common
-// pack indexes (with their .js twins and the font sidecar's .js twin, which a
-// double-clicked page reads, step 4) and every object those indexes list,
+// pack indexes (with their .js twins, and the font sidecar, itself a .js file
+// packs/fonts-<digest12>.js, which a double-clicked page reads, step 4) and
+// every object those indexes list,
 // zipped as
 //
 //   AshenSpire-<branch>-<version>/AshenSpire-<branch>-<version>.html
@@ -86,6 +87,10 @@ export class ZipDownloadError extends Error {
 const zipError = (code, message) => new ZipDownloadError(code, message);
 const SHA = /^[0-9a-f]{64}$/;
 const PIN_FILE = /^packs\/[a-z]+-[0-9a-f]{12}\.(?:json|js)$/;
+// tools/asset-pack.mjs only ever writes the font sidecar as packs/fonts-<digest12>.js,
+// and tools/pages-store.mjs publishes exactly the pinned name, so a pin naming
+// anything else could never be fetched from the site (Codex, #1480).
+const SIDECAR_FILE = /^packs\/fonts-[0-9a-f]{12}\.js$/;
 const PACK_PIN = /const ASSET_PACKS = (\{.*?\});\n/;
 const ASSET_BASE_TEXT = '{"base":"./"}\n';
 
@@ -136,9 +141,8 @@ export function twinString(text, fn, name = null) {
 
 /**
  * The file a double-clicked page reads for a pinned pack file, and the id it
- * must call its hook with: the `.js` twin of that name, whatever suffix the pin
- * gives (src/ui/assetPacks.js twinOf). So a font sidecar pinned as `.json` is
- * archived as the `.js` the loader asks for (Codex, #1480).
+ * must call its hook with: the `.js` twin of that name (src/ui/assetPacks.js
+ * twinOf).
  */
 export function twinFileOf(file) {
   const m = /^((?:[A-Za-z0-9_-]+\/)*)([A-Za-z0-9_-]+)\.(?:json|js)$/.exec(String(file || ''));
@@ -155,7 +159,7 @@ const byteOrder = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
 /**
  * The folder's layout from a pin and its parsed indexes: the pack files to
- * carry (each index, its twin, the sidecar's twin) and every object, deduped
+ * carry (each index, its .js twin, the .js font sidecar) and every object, deduped
  * by path. Throws `pack` for a pin that does not pin a pack it must carry, an
  * unsafe name, or two indexes listing one object at two sizes (Copilot, #1480).
  */
@@ -177,9 +181,9 @@ function zipLayout(pin, packs, indexOf) {
       if (!seen) objects.set(path, { sha: row[0], bytes: row[1] });
     }
   }
-  if (pin.fonts?.file) {
+  if (pin.fonts?.file !== undefined) {   // present at all: "", null or false is a bad pin, not "no sidecar" (Copilot, #1484)
     const twin = twinFileOf(pin.fonts.file);
-    if (!twin || !PIN_FILE.test(String(pin.fonts.file)) || !SHA.test(String(pin.fonts.sha256))) throw zipError('pack', 'The build does not pin its font sidecar.');
+    if (!twin || !SIDECAR_FILE.test(String(pin.fonts.file)) || !SHA.test(String(pin.fonts.sha256))) throw zipError('pack', 'The build does not pin its font sidecar as packs/fonts-<digest12>.js.');
     packFiles.push({ kind: 'sidecar', file: twin.file, id: twin.id, sha256: pin.fonts.sha256 });
   }
   return { packFiles, objects };

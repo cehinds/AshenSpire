@@ -39,7 +39,7 @@ import { helpText, resolveTooltipSettings } from '../../model/tooltipSettings.js
 import { configureTooltipGlossary } from '../components/tooltipGlossary.js';
 import { relicText, renderCard } from '../components/card.js';
 import { enemySprite, playerSprite, spritesAreEnabled } from '../assets.js';
-import { animateEvents, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
+import { animateEvents, playEventCues, playTimeline, anchorLocalBox, viewportLocalBox, clampBox, VIEWPORT_ORIGIN } from '../fx.js';
 import { figureSpec, equippedPieces } from '../../model/loadout.js';
 import { resourceAura } from '../combatAura.js';
 import { resolveCombatAnimation, combatRestAfterEvent } from '../../model/combatAnimation.js';
@@ -114,7 +114,7 @@ export function cardHotkeyAction(key, { targeting = false, handSize = 0, livingE
   return index < handSize ? { kind: 'select', index } : { kind: 'none' };
 }
 
-export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {} }) {
+export function mountCombat(app, { registries, run, combat, meta, onEnd, showTutorial, onTutorialDone, onSettings, onSettingsChange, onMenu, onSave, onQuit, onLoad, onQuitWithoutSave, onArmoury, enemyAppearance = {}, quickControls = {}, readSettings = () => meta.settings || {}, opening = false }) {
   // A SPENT BEAT BELONGS TO THE SCREEN THAT SPENT IT. cardSelection is a
   // page-wide store, and nothing in production ever emptied it — so a card
   // whose `i` had been read kept its first beat for the life of the page, and
@@ -2539,6 +2539,11 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
   focusHandDefault();
 
   // Combat-start events (relic triggers, opening draw) get a quick pass too.
+  // The visual pass is relic triggers only. A FRESH fight (`opening`, set by
+  // the caller that created it) also sounds its setup — the opening draw,
+  // any shuffle and the first turn's stinger — once, beat by beat. A restored
+  // fight carries its whole saved history in eventLog, so it plays none of it.
+  if (opening) playEventCues(combat.eventLog);
   animateEvents(combat.eventLog.filter((e) => e.type === 'relicTriggered'), fxCtx, () => {});
 
   // First-run guided callouts (SPEC §9 M4) — once per player, over a live board.

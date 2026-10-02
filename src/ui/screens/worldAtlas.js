@@ -24,6 +24,7 @@ import { atlasFocusCamera } from '../models/AtlasCameraModel.js';
 import { atlasEnterKind, pickAtlasNode, projectAtlasContext } from '../models/AtlasSelectionModel.js';
 import { button as kitButton, buttonRow, el } from '../kit/index.js';
 import { t } from '../strings.js';
+import { reasonWhenDisabled } from '../components/refusal.js';
 // World-specific places project onto the established run-node vocabulary.
 const traditionalType = type => ({start:'shrine',city:'merchant',dungeon:'boss',landmark:'event',service:'merchant',quest:'event',gate:'event'}[type] || type);
 const uri = (id) => assetUrl(ATLAS.assets[id]?.uri);
@@ -141,6 +142,9 @@ export function mountWorldAtlas(
     .forEach((b) => (b.onclick = () => pick(b.dataset.atlasNode, b)));
   inspectButton.onclick = () => inspect(selection.selectedId, inspectButton);
   enterButton.onclick = () => enter(enterButton);
+  let enterReasonText = "";
+  const enterReasonOf = reasonWhenDisabled(enterButton, () => enterReasonText);
+  const enterReason = (text) => { enterReasonText = text; enterReasonOf(); };
   function pick(id, from) {
     selection = pickAtlasNode(selection, id, sets);
     if (selection.action === "enter") return enter(from);
@@ -169,6 +173,8 @@ export function mountWorldAtlas(
     ]));
     description.textContent = view.empty ? "" : view.description;
     enterButton.disabled = !view.canEnter;
+    // Why Enter is off, as text under the footer row (FINISH §6).
+    enterReason(view.empty ? t("atlas.enter.reason.none") : t("atlas.enter.reason.closed"));
     enterButton.textContent = view.canEnter ? t("atlas.enterNamed", { name: view.name }) : t("atlas.enter");
   }
   renderSelection();

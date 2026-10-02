@@ -81,7 +81,7 @@ async function main() {
   if (missing.length) throw new Error(`selected root is missing: ${missing.join(', ')}`);
 
   const [{ contentBundle }, registriesModule, validateModule, stateModule, loadoutModule,
-    smithingModule, statProjectionModule, combatModule, combatSnapshotModule, actionsModule, saveModule, rngModule, sessionModule] = await Promise.all([
+    smithingModule, statProjectionModule, combatModule, combatSnapshotModule, actionsModule, saveModule, rngModule, sessionModule, cardRemovalModule] = await Promise.all([
     fromRoot('src/content/index.js'),
     fromRoot('src/model/registries.js'),
     fromRoot('src/model/validate.js'),
@@ -95,6 +95,7 @@ async function main() {
     fromRoot('src/engine/save.js'),
     fromRoot('src/engine/rng.js'),
     fromRoot('tools/session.mjs'),
+    fromRoot('src/model/cardRemoval.js').catch(() => ({})),
   ]);
 
   const { createRegistries, resolveCard, passiveSum } = registriesModule;
@@ -113,6 +114,8 @@ async function main() {
   const { executeRunEffects } = actionsModule;
   const { createSaveManager, createMemoryStorage, RUN_KEY } = saveModule;
   const { createRng } = rngModule;
+  // An older --root has no isPoolDeckMode; no run context is then passed.
+  const runPoolDeck = (run) => cardRemovalModule.isPoolDeckMode?.(run);
   const { createSession, restoreSession } = sessionModule;
 
   const registries = createRegistries(contentBundle);
@@ -428,6 +431,7 @@ async function main() {
       registries,
       rng: createRng(loadedCombatRun.seed, loadedCombatRun.streamCounters),
       snapshot: loadedCombatRun.combatEntered.snapshot,
+      fallbackPoolDeck: runPoolDeck(loadedCombatRun),
     })
     : null;
   const restoredCombatCards = restoredCombat
@@ -505,6 +509,7 @@ async function main() {
       registries,
       rng: createRng(migratedLegacyCombatRun.seed, migratedLegacyCombatRun.streamCounters),
       snapshot: migratedLegacyCombatRun.combatEntered.snapshot,
+      fallbackPoolDeck: runPoolDeck(migratedLegacyCombatRun),
     })
     : null;
   check(migratedLegacyCombatRun?.itemUpgradeLevels?.['armament/straightSword'] === 1

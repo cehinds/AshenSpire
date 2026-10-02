@@ -58,8 +58,8 @@ function connectCdp(wsUrl) {
 }
 
 if (args.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
-  const code = await doorSelftest({
+  const { doorSelftest, resolveShard, selectShard } = await import('./doorplant.mjs');
+  const SELFTEST = {
     tool: 'startup-gate.mjs',
     args: ['--only', 'selftest'],
     timeoutMs: 180000,
@@ -265,8 +265,15 @@ if (args.includes('--selftest')) {
         expectRed: /RED A8\.SETTINGS-ESCAPE-PRECEDENCE/,
       },
     ],
-  });
-  if (code === 0) console.log('startup-gate-selftest: OK — 26 plants, 26 caught');
+  };
+  // A SHARD (`--shard i/n`, tools/doorplant.mjs SHARDS) runs part of the corpus,
+  // so the count is the plants THIS run executed — never a typed literal (it
+  // read 26 by hand before, a second copy of the corpus size).
+  const shard = resolveShard();
+  const ran = selectShard(SELFTEST.plants, shard).length;
+  const code = await doorSelftest({ ...SELFTEST, shard });
+  if (code === 0 && shard) console.log(`startup-gate-selftest: shard ${shard.index}/${shard.count} of a ${SELFTEST.plants.length}-plant corpus`);
+  if (code === 0) console.log(`startup-gate-selftest: OK — ${ran} plants, ${ran} caught`);
   process.exit(code);
 }
 
