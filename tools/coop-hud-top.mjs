@@ -432,6 +432,73 @@ async function seatSwitchProbe(cdp, sessionId, base) {
   return bad;
 }
 
+// THE STANCE CHOOSER OWNS THE COUCH KEYBOARD (#1449 review, Codex P1).
+// Warrior's Vow opens a body-level dialog before its play intent. Tab inside
+// it must move between the stance buttons, not switch the couch seat (which
+// used to drop the pick silently), and the board's 1-9/Q and E keys must not
+// act behind it. A seat switch that does happen (a pad press, a seat tab)
+// closes the chooser, so nothing is chosen for a seat that did not open it.
+// Through `?shot=coop&shotSeats=2` (vowChoiceProbe): seat 1 holds the Vow in
+// slot 1; key 1 opens the chooser; Tab keeps seat 1 and focus in the dialog;
+// E sends no endTurn; the pick sends one playCard as p1 with that stance; and
+// a seat-tab switch with the chooser open closes it and sends nothing.
+const VOW_STEP = {
+  ready: `(() => { const s = structuredClone(window.__coopSnapshotForShot); s.scene.players.forEach((p) => { p.ended = false; });
+    s.scene.players[0].hand = [{ instanceId: 'vow1', cardId: 'warriorsVow', upgraded: false }, ...s.scene.players[0].hand];
+    window.__receiveCoopSnapshotForShot(s); window.__coopSentForShot.length = 0; return true; })()`,
+  state: `(() => { const d = document.querySelector('.card-choice'); return {
+    open: !!d, inDialog: !!(d && d.contains(document.activeElement)), options: document.querySelectorAll('.card-choice .card-choice-option').length,
+    seat: document.querySelector('.coop-seat-tabs [aria-selected="true"]')?.textContent || '',
+    sent: window.__coopSentForShot.map((m) => ({ t: m.t, as: m.as, choice: m.choice })) }; })()`,
+  pick: `(async () => { const b = document.querySelector('.card-choice .card-choice-option'); const id = b?.dataset.choice || ''; if (b) b.click();
+    await new Promise((r) => setTimeout(r, 400)); return id; })()`,
+  switchSeat: `(async () => { document.querySelector('.coop-seat-tabs [data-seat-i="1"]')?.click(); await new Promise((r) => setTimeout(r, 400)); return true; })()`,
+};
+
+async function vowChoiceProbe(cdp, sessionId, base) {
+  const ev = async (expression) => (await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, sessionId)).result?.value;
+  const key = async (k, code, vk) => {
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: vk, ...(k.length === 1 ? { text: k } : {}) }, sessionId);
+    await cdp.send('Input.dispatchKeyEvent', { type: 'keyUp', key: k, code, windowsVirtualKeyCode: vk }, sessionId);
+    await wait(300);
+  };
+  const fresh = async () => {
+    await cdp.send('Page.navigate', { url: `${base}?shot=coop&shotSeats=2` }, sessionId);
+    for (let t = 0; t < 90 && !(await ev(`!!document.querySelector('.combat.coop .combat-potions')`)); t++) await wait(500);
+    await wait(800);
+    await ev(VOW_STEP.ready);
+    await wait(300);
+  };
+  const bad = [];
+  await fresh();
+  const before = await ev(VOW_STEP.state);
+  await key('1', 'Digit1', 49);
+  const opened = await ev(VOW_STEP.state);
+  if (!opened.open || opened.options < 2) return [`vow chooser: key 1 on Warrior's Vow opened ${opened.open ? opened.options + ' option(s)' : 'no chooser'}; want a stance chooser`];
+  await key('Tab', 'Tab', 9);
+  const tabbed = await ev(VOW_STEP.state);
+  if (tabbed.seat !== before.seat) bad.push(`vow chooser: Tab with the chooser open switched the seat (${before.seat} -> ${tabbed.seat}); want the chooser to keep Tab`);
+  if (!tabbed.open || !tabbed.inDialog) bad.push(`vow chooser: after Tab the chooser is ${tabbed.open ? 'open but focus left it' : 'closed'}; want focus inside it`);
+  await key('e', 'KeyE', 69);
+  const ended = await ev(VOW_STEP.state);
+  if (ended.sent.some((m) => m.t === 'endTurn')) bad.push('vow chooser: E behind the open chooser sent endTurn; want nothing');
+  await key('2', 'Digit2', 50);
+  const pressed = await ev(VOW_STEP.state);
+  if (pressed.sent.some((m) => m.t === 'playCard')) bad.push(`vow chooser: key 2 behind the open chooser sent ${JSON.stringify(pressed.sent)}; want nothing`);
+  const choice = await ev(VOW_STEP.pick);
+  const played = await ev(VOW_STEP.state);
+  const plays = played.sent.filter((m) => m.t === 'playCard');
+  if (!(plays.length === 1 && plays[0].as === 'p1' && plays[0].choice === choice && choice)) bad.push(`vow chooser: picking ${choice} sent ${JSON.stringify(played.sent)}; want one playCard as p1 with choice ${choice}`);
+  await fresh();
+  await key('1', 'Digit1', 49);
+  await ev(VOW_STEP.switchSeat);
+  const moved = await ev(VOW_STEP.state);
+  if (moved.open) bad.push(`vow chooser: a seat switch (${moved.seat}) left the chooser open over the new seat; want it closed`);
+  if (moved.sent.length) bad.push(`vow chooser: a seat switch with the chooser open sent ${JSON.stringify(moved.sent)}; want nothing`);
+  console.log(`  ${bad.length ? '✗' : '✓'} vow chooser: Tab keeps ${tabbed.seat} (focus in dialog ${tabbed.inDialog}); pick ${choice} sends ${JSON.stringify(plays)}; seat switch closes it (${!moved.open})`);
+  return bad;
+}
+
 // A flask key pressed twice (or held into keydown repeats) leaves ONE
 // Potions list, and Escape clears the board (#1436 review, Codex P2). Before
 // the fix each press stacked another modal and Escape closed only the newest.
@@ -590,7 +657,8 @@ async function main(args) {
       if (vp === VIEWPORTS[0]) {
         const seatBad = [...await seatSwitchProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`),
           ...await repeatOpenProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`),
-          ...await liveSnapshotProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`)];
+          ...await liveSnapshotProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`),
+          ...await vowChoiceProbe(cdp, sessionId, `http://localhost:${served.port}/index.html`)];
         failures.push(...seatBad);
         if (seatBad.length && !bad.length) clean--;
       }

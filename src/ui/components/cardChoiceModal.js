@@ -5,11 +5,12 @@
 import { openModal, button, el } from '../kit/index.js';
 
 /**
- * openCardChoiceModal({ plan, cardName, opener, onChoose }) → the modal shell.
- * `onChoose(optionId)` runs once, after the dialog closes; Cancel or Escape
- * runs nothing and the card stays in hand.
+ * openCardChoiceModal({ plan, cardName, opener, onChoose, onClosed }) → the
+ * modal shell. `onChoose(optionId)` runs once, after the dialog closes; Cancel
+ * or Escape runs nothing and the card stays in hand. `onClosed()` runs on
+ * every close, before `onChoose`, so a screen can tell the dialog is gone.
  */
-export function openCardChoiceModal({ plan, cardName = 'Card', opener = document.activeElement, onChoose }) {
+export function openCardChoiceModal({ plan, cardName = 'Card', opener = document.activeElement, onChoose, onClosed = null }) {
   let chosen = null;
   const cancel = button({ label: 'Cancel', role: 'exit', attrs: { 'data-focusable': 'true' } });
   const shell = openModal({
@@ -37,7 +38,7 @@ export function openCardChoiceModal({ plan, cardName = 'Card', opener = document
     },
     primary: cancel,
     footSize: 'short',
-    onClose: () => { if (chosen != null) onChoose(chosen); },
+    onClose: () => { onClosed?.(); if (chosen != null) onChoose(chosen); },
   });
   cancel.addEventListener('click', shell.close);
   return shell;
