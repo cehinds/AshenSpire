@@ -2082,7 +2082,7 @@ function worldLocationAction(action) {
     // master picked on `shop` and its stock rolled on `shopOffers` on first
     // entry, kept on the point, so a revisit reopens it as saved. No shipped
     // point carries the service yet; content places it.
-    state.stock ||= masterVisitStock(registries, rng, run, { priceMult: shopPriceMult() });
+    state.stock ||= masterVisitStock(registries, rng, run, { priceMult: shopPriceMult(), flatRarity: chaosRewardsOn() });
     run.shopStock = state.stock;
     persist(); return showShop();
   }
@@ -2196,7 +2196,7 @@ function enterNode(nodeId) {
       // nothing new, so a seed's shelves are what they always were.
       // Greedy Merchants and Hoarder scale every price it lays out, the
       // market additions included (SPEC §14.3).
-      const stock = marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'merchant', priceMult: shopPriceMult() });
+      const stock = marketVisitStock(registries, rng, run, { meta: saves.loadMeta(), door: 'merchant', priceMult: shopPriceMult(), flatRarity: chaosRewardsOn() });
       // Does a smith travel with him? Rolled once here, on the smith's own
       // stream (balance.smithing.services.offeredAt.merchant), and kept with
       // the stock so leaving and re-entering the screen does not roll again.

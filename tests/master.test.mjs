@@ -25,7 +25,7 @@ import { NOTE } from '../src/content/balance.js';
 import { createRegistries } from '../src/model/registries.js';
 import { advancedConfigRows, configuredContentBundle } from '../src/model/advancedConfig.js';
 import { createRng } from '../src/engine/rng.js';
-import { buildMasterStock, buildMerchantStock, masterVisitStock, rollMasterLesson, rollShopOfferings } from '../src/engine/shopKinds.js';
+import { buildMasterStock, buildMerchantStock, masterVisitStock, marketVisitStock, rollMasterLesson, rollShopOfferings } from '../src/engine/shopKinds.js';
 import { rollSkillDraftIds } from '../src/engine/encounters.js';
 import { createRunState, RUN_SCHEMA_VERSION, validateRunShape } from '../src/model/state.js';
 import { validateContent } from '../src/model/validate.js';
@@ -142,6 +142,13 @@ test('every master number is a noted Settings row with its floor; a bad one is r
   refused((t) => { find(t, 'armaments').stock = -1; }, /shops\.master\.armaments\.stock/);
   refused((t) => { find(t, 'skillBooks').stock = 0.5; }, /shops\.master\.skillBooks\.stock/);
   refused((t) => { t.master.respecRefundPct = 60.5; }, /shops\.master\.respecRefundPct/);
+  // A required number that is missing is refused by name, not only an invalid one (Copilot on #1438).
+  refused((t) => { delete find(t, 'training').training.xp; }, /shops\.master\.training\.training\.xp is missing/);
+  refused((t) => { delete find(t, 'lesson').cinders; }, /shops\.master\.lesson\.cinders is missing/);
+  refused((t) => { delete t.master.respecRefundPct; }, /shops\.master\.respecRefundPct is missing/);
+  // The blacksmith's and the market's validators had the same gap.
+  refused((t) => { delete t.blacksmith.offerings.find((row) => row.id === 'refineStones').refine.value; }, /shops\.blacksmith\.refineStones\.refine\.value is missing/);
+  refused((t) => { delete t.market.offerings.find((row) => row.id === 'smithStones').price; }, /shops\.market\.smithStones\.price is missing/);
   // The refund is clamped, not refused: 80 is accepted and read as 75.
   assert.deepEqual(errorsOf(bundleWithShops((t) => { t.master.respecRefundPct = 80; })).filter((m) => /respecRefundPct/.test(m)), []);
 });
@@ -518,6 +525,44 @@ test('FINISH: a level-0 track still draws commons; a roll-less, unrolled card or
   assert.ok(quote.reason.includes(closed.nodes.find((n) => n.id === id)?.label || id), quote.reason);
   assert.throws(() => commitLesson(closed, made.run, quote));
   assert.equal(JSON.stringify(made.run), before, 'nothing paid');
+});
+
+test('Copilot on #1438: the lesson check and appraisal use the roll\'s own odds — a rarity at weight 0 is out, Chaos Rewards puts it back', () => {
+  const balance = structuredClone(contentBundle.balance);
+  balance.rewards.rarityWeights.normal = { ...balance.rewards.rarityWeights.normal, common: 0 };
+  const registries = createRegistries({ ...contentBundle, balance, shops: registriesWith(ALL_OUT).shops });
+  const { run, rng } = masterRun(registries, { seed: 30 });
+  const skillId = masterOf(registries, run).skills[0];
+  assert.equal(run.skills?.[skillId]?.level ?? 0, 0, 'a level-0 track opens commons only');
+  assert.deepEqual(lessonPool(registries, run, skillId), [], 'commons at weight 0: nothing to draw');
+  assert.equal(masterServiceCandidates(registries, run, 'lesson').includes(skillId), false, 'so the lesson is not usable for it');
+  assert.deepEqual(masterAppraisal(registries, run).find((row) => row.skillId === skillId).cardIds, []);
+  assert.deepEqual(rollMasterLesson(registries, createRng(30, rng.getCounters()), structuredClone(run), skillId).cardIds, [], 'and the roll agrees');
+  // Chaos Rewards gives every rarity equal odds, as the roll does.
+  assert.ok(lessonPool(registries, run, skillId, { flatRarity: true }).length > 0);
+  assert.ok(masterServiceCandidates(registries, run, 'lesson', { flatRarity: true }).includes(skillId));
+  assert.ok(rollMasterLesson(registries, rng, run, skillId, { flatRarity: true }).cardIds.length > 0);
+});
+
+test('Codex and Copilot on #1438: a custom price multiplier scales the master\'s weapon arts once, through the atlas and the merchant alike', () => {
+  const plainRun = () => createRunState({ seed: 9, classId: 'reaver', registries: OUT });
+  const plain = buildMasterStock(OUT, createRng(9), plainRun());
+  assert.ok((plain.weaponArts || []).length > 0, 'the visit stocks arts to price');
+  const up = (list) => list?.map((item) => ({ ...item, cost: Math.ceil(item.cost * 1.5) }));
+  const atlas = masterVisitStock(OUT, createRng(9), plainRun(), { priceMult: 1.5 });
+  assert.deepEqual(atlas.weaponArts, up(plain.weaponArts), 'atlas: scaled once, rounding up');
+  const forced = createRegistries({ ...contentBundle, shops: { ...OUT.shops, kindWeights: { market: 0, blacksmith: 0, master: 1 } } });
+  const merchantPlain = marketVisitStock(forced, createRng(9), createRunState({ seed: 9, classId: 'reaver', registries: forced }), { meta: {}, door: 'merchant' });
+  const merchant = marketVisitStock(forced, createRng(9), createRunState({ seed: 9, classId: 'reaver', registries: forced }), { meta: {}, door: 'merchant', priceMult: 1.5 });
+  assert.equal(merchant.kind, 'master');
+  assert.ok((merchantPlain.weaponArts || []).length > 0);
+  for (const shelf of ['skillBooks', 'weaponArts', 'armaments']) assert.deepEqual(merchant[shelf], up(merchantPlain[shelf]), `merchant: ${shelf} scaled once`);
+  // The market's own art shelf takes the same multiplier now; under the
+  // defaults it is byte-identical (tests/master-shop-identity.test.mjs).
+  const market = (mult) => marketVisitStock(REG, createRng(4), createRunState({ seed: 4, classId: 'reaver', registries: REG }), { meta: {}, door: 'atlas', priceMult: mult });
+  const base = market(1);
+  assert.ok(base.weaponArts.length > 0);
+  assert.deepEqual(market(1.5).weaponArts, up(base.weaponArts));
 });
 
 test('rollSkillDraftIds without schools or stream draws exactly as the reward door always has', () => {

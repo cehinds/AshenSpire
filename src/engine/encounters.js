@@ -62,13 +62,11 @@ export function rollRuneReward(registries, rng, pool, relicIds) {
   return Math.floor(base * passiveMult(registries, relicIds, 'runeGainMult'));
 }
 
-/** Shared authored reward odds; Chaos always bypasses class and pool weights. */
-export function cardRewardRarityWeights(registries, { classId, pool = 'normal', flatRarity = false } = {}) {
-  if (flatRarity) return { common: 1, uncommon: 1, rare: 1 };
-  const rewards = registries.balance.rewards;
-  const poolId = Object.hasOwn(rewards.rarityWeights, pool) ? pool : 'normal';
-  return rewards.rarityWeightsByClass?.[classId]?.[poolId] || rewards.rarityWeights[poolId];
-}
+// The door's rarity odds live in the model (model/rewardOdds.js), so a reader
+// that judges a draw without making it uses the same odds; re-exported here,
+// where every caller already finds them.
+import { cardRewardRarityWeights } from '../model/rewardOdds.js';
+export { cardRewardRarityWeights };
 
 /**
  * rollCardRewardIds(registries, rng, { classId, pool, relicIds }) → distinct

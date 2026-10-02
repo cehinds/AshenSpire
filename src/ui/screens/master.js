@@ -158,7 +158,7 @@ export function mountMaster(app, { registries, run, meta, rng = null, flatRarity
       }
     },
     appraisal(shelf) {
-      for (const row of masterAppraisal(registries, run, { priceMult })) {
+      for (const row of masterAppraisal(registries, run, { priceMult, flatRarity })) {
         const draws = row.cardIds.length ? t('master.appraisal.draws', { names: cardNames(row.cardIds) }) : t('master.appraisal.drawsNone');
         const respec = row.respec.ok ? t('master.appraisal.respec', { refund: row.respec.refund, cost: row.respec.cost }) : row.respec.reason;
         shelf.append(tile(GLYPH.appraisal, row.label, `${t('master.track.line', { level: row.level, xp: row.xp, next: row.toNext })} · ${draws} · ${respec}`));
@@ -198,7 +198,7 @@ export function mountMaster(app, { registries, run, meta, rng = null, flatRarity
   const readyCount = (key) => {
     if (key === 'skillBooks' || key === 'weaponArts' || key === 'armaments') return (stock[key] || []).length;
     if (key === 'sell') return Object.keys(run.consumables || {}).length;
-    return MASTER_SERVICES.includes(key) ? masterServiceCandidates(registries, run, key).length : 0;
+    return MASTER_SERVICES.includes(key) ? masterServiceCandidates(registries, run, key, { flatRarity }).length : 0;
   };
 
   function render() {

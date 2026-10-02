@@ -42,6 +42,7 @@ import { carriedIds, WeaponCardPackageModel } from './loadout.js';
 import { eligibleWeaponArts } from './armamentTrading.js';
 import { awardSkillXp, skillTracks, skillKindOf, skillLevel, xpToNext, rarityUnlockedAt, skillUpgradesCards, DUAL_WIELD_SKILL } from './skills.js';
 import { unusedInstanceId } from './deckRules.js';
+import { cardRewardRarityWeights } from './rewardOdds.js';
 
 const say = (id, tokens = {}) => shopSentence(id, tokens);
 const object = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -290,14 +291,18 @@ export function commitRedistribute(registries, run, quote) {
 export const lessonLevel = (run, skillId) => Math.max(skillLevel(run, skillId), 1);
 
 /**
- * lessonPool(registries, run, skillId) → the card ids a lesson could draw
- * now: the class pool filtered to the track's master schools and to the
- * rarities `max(level, 1)` opens. Pure; the appraisal and the live service
- * check read it.
+ * lessonPool(registries, run, skillId, { flatRarity }) → the card ids a
+ * lesson could draw now: the class pool filtered to the track's master
+ * schools and to the rarities `max(level, 1)` opens that the normal door can
+ * draw — the same odds rollSkillDraftIds weighs by (model/rewardOdds.js), so
+ * a rarity at weight 0 is left out, and Chaos Rewards (`flatRarity`) gives
+ * every rarity equal odds. Pure; the appraisal and the live service check
+ * read it, so a lesson never looks usable when its roll would be empty.
  */
-export function lessonPool(registries, run, skillId) {
+export function lessonPool(registries, run, skillId, { flatRarity = false } = {}) {
   const schools = new Set(masterSchools(registries, skillId));
-  const unlocked = rarityUnlockedAt(registries, lessonLevel(run, skillId));
+  const weights = cardRewardRarityWeights(registries, { classId: run.class, pool: 'normal', flatRarity }) || {};
+  const unlocked = rarityUnlockedAt(registries, lessonLevel(run, skillId)).filter((rarity) => weights[rarity] > 0);
   if (!schools.size || !unlocked.length || !registries.classes.has(run.class)) return [];
   return registries.classes.get(run.class).cardPool.filter((id) => {
     const def = registries.cards.has(id) ? registries.cards.get(id) : null;
@@ -342,7 +347,7 @@ export function commitLesson(registries, run, quote, { priceMult = 1 } = {}) {
  * the card ids a lesson could draw now, and the respec quote or its refusal.
  * A read and nothing else: it writes nothing and draws nothing.
  */
-export function masterAppraisal(registries, run, { priceMult = 1 } = {}) {
+export function masterAppraisal(registries, run, { priceMult = 1, flatRarity = false } = {}) {
   const master = masterOf(registries, run);
   if (!master) return [];
   return master.skills.map((skillId) => {
@@ -352,7 +357,7 @@ export function masterAppraisal(registries, run, { priceMult = 1 } = {}) {
       skillId, label: trackLabel(registries, skillId), level,
       xp: run.skills?.[skillId]?.xp ?? 0,
       toNext: kind ? xpToNext(registries, kind, level) : 0,
-      cardIds: lessonPool(registries, run, skillId),
+      cardIds: lessonPool(registries, run, skillId, { flatRarity }),
       respec: respecPlan(registries, run, skillId, { priceMult }),
     };
   });
@@ -367,17 +372,18 @@ export function masterAppraisal(registries, run, { priceMult = 1 } = {}) {
  * service `id` could act on now, for the screen and for the build-time
  * backstop (a service with none is empty for the guarantee, but stays laid
  * out). `master` and `stock` default to the visit open now; the stock builder
- * passes the ones it is building. Affordability is not asked: a price the
+ * passes the ones it is building. `flatRarity` is Chaos Rewards, as the lesson
+ * roll reads it. Affordability is not asked: a price the
  * purse cannot meet is a refusal, not an empty service.
  */
-export function masterServiceCandidates(registries, run, id, { master = masterOf(registries, run), stock = run.shopStock } = {}) {
+export function masterServiceCandidates(registries, run, id, { master = masterOf(registries, run), stock = run.shopStock, flatRarity = false } = {}) {
   const skills = master?.skills || [];
   switch (id) {
     case 'training': return (stock?.training?.left ?? 0) > 0 ? [...skills] : [];
     case 'respec': return skills.filter((skillId) => skillLevel(run, skillId) >= 2);
     case 'lesson': return skills.filter((skillId) => {
       const entry = stock?.lessons?.[skillId];
-      return entry ? !entry.taken && entry.cardIds.length > 0 : lessonPool(registries, run, skillId).length > 0;
+      return entry ? !entry.taken && entry.cardIds.length > 0 : lessonPool(registries, run, skillId, { flatRarity }).length > 0;
     });
     case 'appraisal': return [...skills];
     case 'redistribute': return pool(run) ? skillTracks(registries).map((row) => row.id) : [];

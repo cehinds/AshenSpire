@@ -312,14 +312,17 @@ export function masterTableProblems(table, err, bundle = null) {
     const row = offerings.find((offering) => offering && offering.id === id);
     return row ? path.split('.').reduce((at, key) => (at == null ? at : at[key]), row) : undefined;
   };
+  // Required when the offering is written (Copilot on #1438), not only
+  // checked when present: a missing number would reach a quote as undefined.
   const whole = (id, path, floor) => {
+    if (!offerings.some((offering) => offering && offering.id === id)) return;
     const value = valueAt(id, path);
-    if (value !== undefined && !(Number.isSafeInteger(value) && value >= floor)) err(`shops.master.${id}.${path}`, `must be a whole number of at least ${floor}, got ${JSON.stringify(value)}`);
+    if (!(Number.isSafeInteger(value) && value >= floor)) err(`shops.master.${id}.${path}`, value === undefined ? `is missing: write a whole number of at least ${floor}` : `must be a whole number of at least ${floor}, got ${JSON.stringify(value)}`);
   };
   for (const [id, path] of [['skillBooks', 'stock'], ['weaponArts', 'stock'], ['armaments', 'stock'], ['training', 'training.perVisit'], ['respec', 'respec.cost.perLevel']]) whole(id, path, 0);
   for (const [id, path] of [['training', 'training.cinders'], ['training', 'training.xp'], ['lesson', 'cinders'], ['respec', 'respec.cost.base']]) whole(id, path, 1);
   const pct = table.master?.respecRefundPct;
-  if (pct !== undefined && !Number.isSafeInteger(pct)) err('shops.master.respecRefundPct', `must be a whole percentage (it is read between 50 and 75), got ${JSON.stringify(pct)}`);
+  if (object(table.master) && !Number.isSafeInteger(pct)) err('shops.master.respecRefundPct', pct === undefined ? 'is missing: write a whole percentage (it is read between 50 and 75)' : `must be a whole percentage (it is read between 50 and 75), got ${JSON.stringify(pct)}`);
 
   const masters = table.masters;
   if (!Array.isArray(masters) || !masters.length) { err('shops.masters', 'must be a non-empty list of masters { id, name, speakerId, skills }'); return; }

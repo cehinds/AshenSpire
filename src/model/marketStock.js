@@ -193,8 +193,10 @@ export function marketAdditionTableProblems(table, err) {
     const offering = row(id);
     if (!offering) return;
     const value = path.split('.').reduce((at, key) => (at == null ? at : at[key]), offering);
-    if (value !== undefined && !(Number.isSafeInteger(value) && value >= floor)) {
-      err(`shops.market.${id}.${path}`, `must be a whole number of at least ${floor}, got ${JSON.stringify(value)}`);
+    // A number the offering needs is required, not only checked when present
+    // (Copilot on #1438): a missing one would reach a stock as undefined.
+    if (!(Number.isSafeInteger(value) && value >= floor)) {
+      err(`shops.market.${id}.${path}`, value === undefined ? `is missing: write a whole number of at least ${floor}` : `must be a whole number of at least ${floor}, got ${JSON.stringify(value)}`);
     }
   };
   whole('smithStones', 'perVisit', 0);
@@ -232,10 +234,13 @@ export function blacksmithTableProblems(table, err) {
     const offering = row(id);
     return offering ? path.split('.').reduce((at, key) => (at == null ? at : at[key]), offering) : undefined;
   };
+  // Required when the offering is written (Copilot on #1438), not only
+  // checked when present.
   const whole = (id, path, floor) => {
+    if (!row(id)) return;
     const value = valueAt(id, path);
-    if (value !== undefined && !(Number.isSafeInteger(value) && value >= floor)) {
-      err(`shops.blacksmith.${id}.${path}`, `must be a whole number of at least ${floor}, got ${JSON.stringify(value)}`);
+    if (!(Number.isSafeInteger(value) && value >= floor)) {
+      err(`shops.blacksmith.${id}.${path}`, value === undefined ? `is missing: write a whole number of at least ${floor}` : `must be a whole number of at least ${floor}, got ${JSON.stringify(value)}`);
     }
   };
   for (const [id, path] of [['armaments', 'stock'], ['smithStones', 'perVisit'], ['sigilSlots', 'sigilSlots.base'], ['sigilSlots', 'sigilSlots.max'], ['stackCopy', 'stack.stepPerOwned']]) whole(id, path, 0);
@@ -257,7 +262,9 @@ export function blacksmithTableProblems(table, err) {
 export function applyShopPriceMult(stock, mult) {
   if (!stock || mult === 1) return stock;
   const up = (n) => Math.ceil(n * mult);
-  for (const kind of ['cards', 'relics', 'flasks', 'armaments', 'armour', 'sigils', ...ITEM_LIST_SHELVES]) {
+  // Weapon arts too (Codex and Copilot on #1438): a market's art shelf and a
+  // master's, through whichever door opened the visit, scaled here once.
+  for (const kind of ['cards', 'relics', 'flasks', 'armaments', 'weaponArts', 'armour', 'sigils', ...ITEM_LIST_SHELVES]) {
     if (Array.isArray(stock[kind])) for (const item of stock[kind]) item.cost = up(item.cost);
   }
   if (Number.isFinite(stock.removeCost)) stock.removeCost = up(stock.removeCost);

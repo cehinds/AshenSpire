@@ -154,10 +154,10 @@ export function buildMarketStock(registries, rng, run, { meta = {}, innInTown = 
  * a custom run's price multiplier (Greedy Merchants, Hoarder) is applied to
  * every price the visit laid out, the additions included.
  */
-export function marketVisitStock(registries, rng, run, { meta = {}, door = 'merchant', ownerId = null, priceMult = 1 } = {}) {
+export function marketVisitStock(registries, rng, run, { meta = {}, door = 'merchant', ownerId = null, priceMult = 1, flatRarity = false } = {}) {
   const stock = door === 'atlas'
     ? buildMarketStock(registries, rng, run, { meta, innInTown: innInTown(registries, ownerId) })
-    : buildMerchantStock(registries, rng, run, { meta });
+    : buildMerchantStock(registries, rng, run, { meta, flatRarity });
   return applyShopPriceMult(stock, priceMult);
 }
 
@@ -308,7 +308,7 @@ export function buildMerchantStock(registries, rng, run, opts = {}) {
   if (kind === 'blacksmith') return buildBlacksmithStock(registries, rng, run);
   // …and one that rolls `master` (weight 0 shipped) opens a master visit
   // (SPEC §14.5): his offerings only, no market shelf.
-  if (kind === 'master') return buildMasterStock(registries, rng, run);
+  if (kind === 'master') return buildMasterStock(registries, rng, run, { flatRarity: opts.flatRarity === true });
   return buildMarketStock(registries, rng, run, opts);
 }
 
@@ -406,9 +406,10 @@ export function blacksmithVisitStock(registries, rng, run, { priceMult = 1 } = {
  * (it is judged live), but does not count toward the guarantee, which adds
  * the missing enabled offerings that have something now, by weight, with no
  * further draw. Service prices are never stored: model/master.js reads them
- * when quoted. `lessons` is absent until the first lesson roll.
+ * when quoted. `lessons` is absent until the first lesson roll. `flatRarity`
+ * is Chaos Rewards, so the live lesson check judges the roll it would make.
  */
-export function buildMasterStock(registries, rng, run) {
+export function buildMasterStock(registries, rng, run, { flatRarity = false } = {}) {
   const kindDef = registries.shops.master;
   const masters = registries.shops.masters || [];
   if (!masters.length) throw new Error('buildMasterStock: shops.masters lists no master (SPEC §14.5)');
@@ -424,7 +425,7 @@ export function buildMasterStock(registries, rng, run) {
   const stockEmpty = (offering) => MASTER_SHELVES.includes(offering.id) && (!pools[offering.id].length || !(offering.stock > 0));
   // The services are judged against the visit being built.
   const draft = { kind: 'master', masterId: master.id, training: { left: row('training')?.training?.perVisit ?? 0 } };
-  const idle = (offering) => MASTER_SERVICES.includes(offering.id) && masterServiceCandidates(registries, run, offering.id, { master, stock: draft }).length === 0;
+  const idle = (offering) => MASTER_SERVICES.includes(offering.id) && masterServiceCandidates(registries, run, offering.id, { master, stock: draft, flatRarity }).length === 0;
   for (const offering of written) if (up.has(offering.id) && stockEmpty(offering)) up.delete(offering.id);
   const minimum = Number(kindDef.guaranteedMinimum) || 0;
   const usable = () => written.filter((offering) => up.has(offering.id) && !idle(offering)).length;
@@ -453,13 +454,12 @@ export function buildMasterStock(registries, rng, run) {
 /**
  * masterVisitStock(registries, rng, run, { priceMult }) → the stock an atlas
  * master point opens with (SPEC §14.5), rolled on first entry and kept on the
- * point. A custom run's price multiplier scales every stocked cost, rounding
- * up, as it scales the market's — the weapon arts included.
+ * point. A custom run's price multiplier scales every stocked cost once,
+ * rounding up, through applyShopPriceMult, as it scales the market's.
+ * `flatRarity` is Chaos Rewards, read by the live lesson check.
  */
-export function masterVisitStock(registries, rng, run, { priceMult = 1 } = {}) {
-  const stock = applyShopPriceMult(buildMasterStock(registries, rng, run), priceMult);
-  if (priceMult !== 1) for (const item of stock.weaponArts || []) item.cost = Math.ceil(item.cost * priceMult);
-  return stock;
+export function masterVisitStock(registries, rng, run, { priceMult = 1, flatRarity = false } = {}) {
+  return applyShopPriceMult(buildMasterStock(registries, rng, run, { flatRarity }), priceMult);
 }
 
 /**
