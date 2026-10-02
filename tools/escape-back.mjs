@@ -19,6 +19,11 @@
 //         the turn did not end).
 //   popover a native popover is open over the screen: the press closed it,
 //         the screen's Back (`back`) ran zero times and nothing else moved.
+//   layer a layer that is NOT a dialog is mounted over the screen by `mount`
+//         (the real flask menu, a real armed hold-to-confirm): the press
+//         closed or dropped it, the screen's Back ran zero times and the
+//         screen did not move (review of #1463: pad B's key was not
+//         cancelable, so the layer's preventDefault was lost and Back ran too).
 // An open tooltip is dismissed before each press (it is a layer of its own,
 // and Escape peels it first by design: src/ui/components/tooltip.js).
 //
@@ -70,14 +75,42 @@ export const SCREENS = [
   { id: 'victory', shot: 'victory', expect: 'none', why: 'the run is over; Return to title is the way on, not a Back' },
   { id: 'prologue', shot: 'prologue', expect: 'none', why: 'the opening plays forward; Skip is its exit and is not a Back' },
   { id: 'farewell', shot: 'title', open: '#quit-game', expect: 'back', back: '#farewell-back' },
+  { id: 'flask-menu', shot: 'history', mount: 'flask', expect: 'layer', back: '#hx-back' },
+  { id: 'hold', shot: 'history', mount: 'hold', expect: 'layer', back: '#hx-back' },
 ];
+
+// `mount` rows: page-side code that opens the layer through the production
+// module (the same module instance the page runs) and leaves `__layerOpen()`.
+const MOUNTS = {
+  flask: `(async () => {
+    const { mountFlaskActionMenu } = await import('/src/ui/components/flask.js');
+    const anchor = document.createElement('button');
+    anchor.textContent = 'flask';
+    document.getElementById('app').firstElementChild.appendChild(anchor);
+    mountFlaskActionMenu(anchor, { def: { id: 'escape-back-flask', name: 'Test Flask' }, plan: { actions: [{ id: 'use', label: 'Use', enabled: true }] }, onAction() {}, onCancel() {} });
+    window.__layerOpen = () => !!document.querySelector('.flask-action-menu');
+    return window.__layerOpen();
+  })()`,
+  hold: `(async () => {
+    const { armHold } = await import('/src/ui/components/holdconfirm.js');
+    const { PRESS_EVENT } = await import('/src/ui/gesture.js');
+    const btn = document.createElement('button');
+    btn.textContent = 'hold';
+    document.getElementById('app').firstElementChild.appendChild(btn);
+    window.__holdConfirms = 0;
+    armHold(btn, { ms: 600000, onConfirm() { window.__holdConfirms += 1; } });
+    btn.dispatchEvent(new CustomEvent(PRESS_EVENT, { cancelable: true, detail: { source: 'pad' } }));
+    window.__layerOpen = () => btn.dataset.hold === 'holding' && window.__holdConfirms === 0;
+    return window.__layerOpen();
+  })()`,
+};
 
 // Surfaces reached by no `?shot=` state, and the test that covers each instead.
 export const NOT_DRIVEN = [
   ['deck editor', 'tests/deck-editor.test.mjs — Escape and pad B cancel the whole edit'],
   ['quest board', 'tests/escape-back.test.mjs — Escape and pad B press Leave (back to the place) once'],
-  ['Armoury or flask menu over the quest board', 'tests/escape-back.test.mjs — a layer that closes itself, or a window Cancel registered after input.js, takes the press alone'],
-  ['dialogue Back (after the first line)', 'tests/escape-back.test.mjs — the [data-back] rule'],
+  ['Armoury or flask menu over the quest board', 'tests/escape-back.test.mjs — the real flask menu and a layer that closes itself take the press alone; the flask-menu row here drives it over History'],
+  ['dialogue Back (after the first line)', 'tests/escape-back.test.mjs — the [data-back] rule; a dropped hold over it is the hold row here'],
   ['reward detail and chooser Back', 'tests/escape-back.test.mjs — the [data-back] rule'],
   ['menu overlay, quick nav, confirmation, tutorial', 'their own window-capture Escape (overlay.js, quicknav.js, confirmationModal.js, tutorial.js); tools/confirmation-modal.mjs drives pad B'],
   ['co-op board and LAN room', 'no Back by design: Leave ends the co-op session (D41)'],
@@ -195,8 +228,9 @@ async function main() {
       try {
         p = await page(row);
         await p.settle();
+        if (row.mount && !(await p.ev(MOUNTS[row.mount]))) throw new Error(`layer ${row.mount} did not open`);
         const before = JSON.parse(await p.ev(SIGNATURE));
-        if (row.expect === 'back' || row.expect === 'popover') {
+        if (row.expect === 'back' || row.expect === 'popover' || row.expect === 'layer') {
           await p.ev(`(() => { window.__backRuns = 0; document.querySelector(${JSON.stringify(row.back)})?.addEventListener('click', () => { window.__backRuns += 1; }, true); })()`);
         }
         await press[input](p);
@@ -215,6 +249,11 @@ async function main() {
           const runs = await p.ev('window.__backRuns ?? -1');
           ok = before.popover >= 1 && after.popover === before.popover - 1 && runs === 0 && after.screen === before.screen && after.pane === before.pane;
           note = `popovers ${before.popover} -> ${after.popover}; Back ran ${runs}x; screen ${after.screen === before.screen ? 'unchanged' : 'CHANGED'}`;
+        } else if (row.expect === 'layer') {
+          const runs = await p.ev('window.__backRuns ?? -1');
+          const open = await p.ev('window.__layerOpen()');
+          ok = !open && runs === 0 && after.screen === before.screen && after.modals === before.modals;
+          note = `${row.mount} ${open ? 'STILL OPEN' : 'closed'}; Back ran ${runs}x; screen ${after.screen === before.screen ? 'unchanged' : 'CHANGED'}`;
         } else if (row.expect === 'leave') {
           const there = await p.ev(`!!document.querySelector(${JSON.stringify(row.to)})`);
           ok = there && after.modals === before.modals;

@@ -86,7 +86,7 @@ const PRESSES = {
   /** One physical Escape, at the focused element (or the body). The Back
    *  rule decides after the whole dispatch (a task), so the press waits one. */
   async Escape() {
-    const event = new dom.Event('keydown', { key: 'Escape', bubbles: true });
+    const event = new dom.Event('keydown', { key: 'Escape', bubbles: true, cancelable: true });
     Object.defineProperty(event, 'isTrusted', { value: true });
     globalThis.__deliver(dom.document.activeElement || dom.document.body, event);
     await wait(10);
@@ -197,16 +197,19 @@ for (const [name, press] of Object.entries(PRESSES)) {
     assert.equal(backs, 0, 'the screen under it stayed');
   });
 
-  // Review of #1463 (Codex PRRT_kwDOTLMIe86oTFEI, PRRT_kwDOTLMIe86oTXgQ): the
-  // flask menu's Cancel and a hold's Escape listen on the window, registered
-  // AFTER input.js's rule. One press closes the menu (or drops the hold) only.
-  test(`${name}: a menu whose window Cancel is registered after input.js still takes the press alone`, async () => {
+  // Review of #1463 (Codex PRRT_kwDOTLMIe86oTFEI, PRRT_kwDOTLMIe86oTXgQ,
+  // PRRT_kwDOTLMIe86oUwG6): the flask menu's Cancel listens on the window,
+  // registered AFTER input.js's rule, and calls preventDefault. One press
+  // closes the menu only. This is the REAL mountFlaskActionMenu; pad B used to
+  // back out as well, because its synthesized key was not cancelable.
+  test(`${name}: the flask menu over the quest board takes the press alone`, async () => {
     resetDom();
-    const { mountQuestBoard } = await import('../src/ui/screens/questBoard.js');
+    const { mountFlaskActionMenu } = await import('../src/ui/components/flask.js');
     const { contentBundle } = await import('../src/content/index.js');
     const { createRegistries } = await import('../src/model/registries.js');
     const { createRunState } = await import('../src/model/state.js');
     const { ATLAS, generateJourney } = await import('../src/model/worldAtlas.js');
+    const { mountQuestBoard } = await import('../src/ui/screens/questBoard.js');
     const registries = createRegistries(contentBundle);
     const run = createRunState({ seed: 123, classId: 'reaver', registries });
     run.journey = generateJourney('BOARD0');
@@ -215,17 +218,49 @@ for (const [name, press] of Object.entries(PRESSES)) {
     const ownerNodeId = point ? ATLAS.localMaps[point.mapId].ownerNodeId : row.nodeId;
     app().innerHTML = '<div class="quest-board-screen"></div>';
     let leaves = 0;
-    let menuCloses = 0;
+    let menuCancels = 0;
     mountQuestBoard(app(), { registries, run, meta: {}, ownerNodeId, onOpen: () => {}, onDone: () => { leaves += 1; } });
-    const menuCancel = (event) => { if (event.key === 'Escape') { event.preventDefault(); menuCloses += 1; } };
-    globalThis.addEventListener('keydown', menuCancel);
-    try {
-      await press();
-    } finally {
-      globalThis.removeEventListener('keydown', menuCancel);
-    }
-    assert.equal(menuCloses, 1, 'the menu closed once');
+    const anchor = dom.document.createElement('button');
+    dom.document.body.appendChild(anchor);
+    const menu = mountFlaskActionMenu(anchor, {
+      def: { id: 'test-flask', name: 'Test Flask' },
+      plan: { actions: [{ id: 'use', label: 'Use', enabled: true }] },
+      onAction: () => {},
+      onCancel: () => { menuCancels += 1; },
+    });
+    assert.ok(menu, 'the menu mounted');
+    await press();
+    assert.equal(menuCancels, 1, 'the menu closed once');
     assert.equal(leaves, 0, 'the quest board stayed');
+  });
+
+  // A hold-to-confirm dropped by Escape (a dialogue response held with pad A
+  // or Enter, then B or Escape) is the whole of that press: the dialogue's
+  // Back under it does not rewind a beat as well. The REAL armHold.
+  test(`${name}: a hold dropped by the press does not take the screen's Back with it`, async () => {
+    resetDom();
+    const { armHold } = await import('../src/ui/components/holdconfirm.js');
+    const { PRESS_EVENT } = await import('../src/ui/gesture.js');
+    let backs = 0;
+    let confirms = 0;
+    const back = dom.document.createElement('button');
+    back.setAttribute('data-back', '');
+    back.addEventListener('click', () => { backs += 1; });
+    const hold = dom.document.createElement('button');
+    app().append(hold, back);
+    const disarm = armHold(hold, { ms: 60000, onConfirm: () => { confirms += 1; } });
+    try {
+      // The press door input.js opens for a held key or pad A.
+      const took = !hold.dispatchEvent(new dom.Event(PRESS_EVENT, { cancelable: true, detail: { source: name === 'pad B' ? 'pad' : 'key' } }));
+      assert.ok(took, 'the hold took the press');
+      assert.equal(hold.dataset.hold, 'holding');
+      await press();
+      assert.notEqual(hold.dataset.hold, 'holding', 'the hold dropped');
+    } finally {
+      disarm();
+    }
+    assert.equal(confirms, 0);
+    assert.equal(backs, 0, 'the screen under it stayed');
   });
 
   // Review of #1463 (Codex PRRT_kwDOTLMIe86oTXgN): character creation's menu
@@ -281,13 +316,6 @@ test('Escape typed in a text field stays the field\'s; pad B still backs out', a
   assert.equal(backs, 1);
 });
 
-test('a hold-to-confirm cancelled by Escape consumes the press (holdconfirm.js onKeyEsc)', async () => {
-  const { readFileSync } = await import('node:fs');
-  const source = readFileSync(new URL('../src/ui/components/holdconfirm.js', import.meta.url), 'utf8');
-  const body = source.slice(source.indexOf('const onKeyEsc'), source.indexOf('const onCardDragStart'));
-  assert.match(body, /ev\.preventDefault\(\)/, 'a hold dropped by Escape says the press is taken');
-});
-
 test('pad B reaches a document listener, as the keyboard\'s Escape does', async () => {
   resetDom();
   const heard = [];
@@ -322,8 +350,9 @@ test('the inventory: every screen with a plain Back marks it, and each row of th
   }
   const { SCREENS, NOT_DRIVEN } = await import('../tools/escape-back.mjs');
   for (const row of SCREENS) {
-    assert.ok(['back', 'peel', 'leave', 'none', 'popover'].includes(row.expect), row.id);
+    assert.ok(['back', 'peel', 'leave', 'none', 'popover', 'layer'].includes(row.expect), row.id);
     if (row.expect === 'none') assert.ok(row.why, `${row.id} documents why it has no Back`);
+    if (row.expect === 'layer') assert.ok(row.mount && row.back, `${row.id} names its layer and the Back under it`);
     if (row.expect === 'back') assert.ok([...Object.values(marked), '#farewell-back'].includes(row.back), `${row.id}: ${row.back} is a marked Back`);
   }
   assert.ok(SCREENS.some((row) => row.id === 'title' && row.why), 'the title documents its Back');

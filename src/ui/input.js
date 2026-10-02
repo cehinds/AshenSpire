@@ -770,8 +770,12 @@ function nudgeRange(el, delta) {
 // pad B closed none of them while the keyboard's Escape closed every one
 // (docs/FINISH.md §9, measured by tools/escape-back.mjs). The window still
 // hears it, in capture and in bubble, exactly as before.
+// It is CANCELABLE, as a real key is: an event built without `cancelable`
+// ignores preventDefault(), so a layer that takes the press (the flask menu's
+// Cancel, a dropped hold) could not say so, and the Back rule below would
+// back the screen out from under it as well.
 function synthKey(key) {
-  document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+  document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
 }
 
 // ---- Back: Escape and pad B on a screen without an Escape of its own --------
