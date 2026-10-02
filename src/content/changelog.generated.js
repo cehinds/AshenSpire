@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1491",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the architecture check passes again",
+    "detail": "Nothing you play changes. The offline folder download named a browser feature inside the game's core rules code, which the automatic architecture check forbids, so the check had failed on every change since. That name now lives with the game's other content settings.",
+    "build": "0.7.1.792",
+    "pullRequest": 1491,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1491"
+  },
+  {
     "id": "pr-1471",
     "date": "2026-10-02",
     "group": "2026-10-02",
