@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "A greyed-out Next now says why",
     "detail": "When a Next, Continue, Confirm, Begin or Enter button is greyed out because you still have something to do, a short line under it now tells you what, for example \"Choose a class.\", \"Choose a response first.\" or \"No saved climb yet.\" Before, the reason only showed in a tooltip, which you never see on a phone. This covers character creation, events, conversations, card rewards, the title screen and save slots, the discard choice, the atlas, the Smith, and the rewards screen while a level is waiting to be claimed.",
-    "build": "0.7.1.785",
+    "build": "0.7.1.786",
     "pullRequest": 1459,
     "url": "https://github.com/cehinds/AshenSpire/pull/1459"
+  },
+  {
+    "id": "pr-1484",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the folder copy refuses a font file it could not fetch",
+    "detail": "Nothing you play changes. The zip download and the site's publishing step now refuse a build whose font file is named in a way the site never publishes, instead of failing partway through the download.",
+    "build": "0.7.1.785",
+    "pullRequest": 1484,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1484"
   },
   {
     "id": "pr-1479",
