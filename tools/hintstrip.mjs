@@ -127,7 +127,7 @@ const FAN_LIFT_PROP = (() => {
 })();
 
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  const { doorSelftest, resolveShard, selectShard } = await import('./doorplant.mjs');
   // THE WAIVER THREADING IS GONE, AND SO IS THE REASON FOR IT. It used to
   // forward --waive into the corpus because doorplant finishes on an UNPLANTED
   // copy that must come back green, and the tree carried #295's two findings —
@@ -446,12 +446,20 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   };
-  const selftestCode = await doorSelftest(SELFTEST);
+  // A SHARD (`--shard i/n`, tools/doorplant.mjs SHARDS) runs part of the corpus;
+  // the count below is the plants THIS run executed, never the corpus total.
+  const shard = resolveShard();
+  const ran = selectShard(SELFTEST.plants, shard).length;
+  const selftestCode = await doorSelftest({ ...SELFTEST, shard });
   // THE COUNT IS THE CORPUS'S, not a literal: a literal said 8 over nine plants.
   // THE TERMINAL LINE IS IN A FORM tools/verdict.mjs ACCEPTS ("label: OK — N <words>, N caught"): the
   // previous wording was refused as SILENCE on the hosted board (run 299) and the whole
   // browser-guard job read red for a selftest that had caught every plant.
-  if (selftestCode === 0) console.log(`hintstrip-selftest: OK — ${SELFTEST.plants.length} plants, ${SELFTEST.plants.length} caught`);
+  if (selftestCode === 0) {
+    // The qualifier prints on its own line: verdict.mjs ends the counted line at its claim.
+    if (shard) console.log(`hintstrip-selftest: shard ${shard.index}/${shard.count} of a ${SELFTEST.plants.length}-plant corpus`);
+    console.log(`hintstrip-selftest: OK — ${ran} plants, ${ran} caught`);
+  }
   process.exit(selftestCode);
 }
 

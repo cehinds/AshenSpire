@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Hits sound bigger the harder they land",
     "detail": "A small hit, a solid hit and a heavy hit now each have their own sound, chosen by the damage it does. Being hit yourself has a sound of its own, your turn starts with a short two-note sting, and drawing, shuffling and discarding cards each make a quiet sound. The first turn of a fight has them too, and so does LAN co-op. Your sound volume and mute settings apply to all of them.",
-    "build": "0.7.1.770",
+    "build": "0.7.1.771",
     "pullRequest": 1472,
     "url": "https://github.com/cehinds/AshenSpire/pull/1472"
+  },
+  {
+    "id": "pr-1458",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: no CI job runs longer than 20 minutes",
+    "detail": "Nothing you play changes. The slowest automated checks now run in parallel pieces, so every check still runs but no single job takes more than 20 minutes.",
+    "build": "0.7.1.770",
+    "pullRequest": 1458,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1458"
   },
   {
     "id": "pr-1470",
