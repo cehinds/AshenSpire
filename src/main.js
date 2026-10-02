@@ -133,7 +133,7 @@ import { setSpritesEnabled, classGlyph, setClassGlyphs } from './ui/assets.js';
 import { mountLobby } from './ui/screens/lobby.js';
 import { mountCoop } from './ui/screens/coop.js';
 import { lanInfo } from './net/lan.js';
-import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum } from './ui/fx.js';
+import { setAnimSpeed, anchorLocalBox, clampBox, floatNum as fxFloatNum, playEventCues } from './ui/fx.js';
 import { sfx } from './ui/sfx.js';
 import { initAudio, resolveMusicEnabled, AUDIO_DEFAULTS } from './ui/audio.js';
 import { SHIPPED_MUSIC_FOLDER, mapMusicContext } from './content/music.js';
@@ -2573,13 +2573,18 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
     }
     subject.statuses.crimsonBlight = { stacks: 3, duration: 3 };
   }
+  // Boss fights open on a name splash (skippable; not repeated on reload-resume).
+  const bossIntro = enc.pool === 'boss' && !resuming;
+  // The setup log as it stands at mount: what a boss splash sounds on close.
+  const openingLog = combat.eventLog.slice();
   mountCombat(app, {
     registries,
     run,
     combat,
     // A fight created here sounds its opening draw and turn stinger; one
     // restored from a save does not replay its history (fx playEventCues).
-    opening: !savedSnapshot,
+    // Under a boss splash the cues wait for the splash to close.
+    opening: !savedSnapshot && !bossIntro,
     readSettings: () => activeSettings,
     // The second-beat dial lives in meta.settings, and combat has two actions
     // in the table (End Turn, drinking a flask). Same read as the event screen.
@@ -2607,11 +2612,15 @@ function enterCombat(nodeId, encounterId, { resuming = false, serviceEvent = fal
       saves.saveMeta(meta);
     },
   });
-  // Boss fights open on a name splash (skippable; not repeated on reload-resume).
-  if (enc.pool === 'boss' && !resuming) {
+  if (bossIntro) {
     showBossIntro(
       { name: registries.enemies.get(enc.enemies[0]).name, act: run.actNumber },
-      { hold: shotState === 'boss' }
+      {
+        // `?shot=boss` freezes the splash for captures; `&shotBossHold=0`
+        // lets it run and close as a player sees it (tools/sound-opening.mjs).
+        hold: shotState === 'boss' && shotParams.get('shotBossHold') !== '0',
+        onClose: !savedSnapshot ? () => playEventCues(openingLog) : null,
+      }
     );
   }
 }

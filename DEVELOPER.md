@@ -883,11 +883,15 @@ URL, making a bad asset diagnosable without delaying combat feedback. Run
 Combat cues (hit tiers, `playerHurt`, the turn stinger, draw/shuffle/discard;
 D38 in docs/FINISH.md) reach `sfx.play` through `src/ui/fx.js`: the paced
 timeline per beat, `playEventCues` for instant playback and a fresh fight's
-opening, and `playReceiptSounds` for co-op receipts (`coopReceiptSounds` in
-`src/ui/screens/coop.js`, gated by `receiptSeq`). `node --test
-tests/sound-tiers.test.mjs` covers them, including the opening turn and the
-real co-op session digest; `node tools/sound-opening.mjs` (hand-run, real
-Chromium) mounts a fresh fight and a remounted one.
+opening (a boss fight's waits for its name splash to close), and
+`playReceiptSounds` for co-op receipts (`coopReceiptSounds` in
+`src/ui/screens/coop.js`, gated by `receiptSeq`; a late joiner hears only the
+scene the host marks `opening`). `playEventCues` stings once per shared turn,
+however many co-op seats start it. `node --test tests/sound-tiers.test.mjs`
+covers them, including the opening turn and the real co-op session digest;
+`node tools/sound-opening.mjs` (hand-run, real Chromium) mounts a fresh fight,
+a remounted one, and a fresh boss fight behind its splash
+(`?shot=boss&shotBossHold=0` lets the splash close).
 
 ## Performance (SPEC §9 M4)
 
