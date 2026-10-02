@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Fighters breathe while they wait",
     "detail": "Your fighter and every enemy now bob gently in place between actions, each at its own rhythm; before, the idle motion was meant to play but reached no one. This covers the Animated, Rendered and Classic figure styles; the Glyph style shows a sigil, not a figure, and stays still, and a fallen fighter, including a downed co-op ally, stops moving. With Reduced motion on, in the game's settings or your device's, they stand still, and a new check plays a whole turn that way to prove nothing on the board moves.",
-    "build": "0.7.1.795",
+    "build": "0.7.1.796",
     "pullRequest": 1475,
     "url": "https://github.com/cehinds/AshenSpire/pull/1475"
+  },
+  {
+    "id": "pr-1496",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: reusable desktop and mobile polish artwork is saved with the project",
+    "detail": "The illustrated design direction now has individual paintings, portraits, icons, frames and controls, with recipes for 24 player feature views and copies of the existing game art and fonts they need. Credits, provenance and portable preview helpers are included for the next visual polish pass. These are design assets; the playable screens and game rules stay as they are.",
+    "build": "0.7.1.795",
+    "pullRequest": 1496,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1496"
   },
   {
     "id": "pr-1450",
