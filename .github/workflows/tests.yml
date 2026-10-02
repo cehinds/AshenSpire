@@ -99,7 +99,8 @@ jobs:
       # unreadable, rate limit, network) on the step and as an annotation.
       # The trees are still in this repository (until step 13), so this job, which
       # gates every pull request, also proves the release and the trees are one.
-      # A FORK'S PULL REQUEST gets no secrets, and cehinds/AshenSpire-art is
+      # A FORK'S PULL REQUEST, and any Dependabot run, gets no secrets (a
+      # Dependabot branch is not a fork, so it is named here too), and cehinds/AshenSpire-art is
       # private until the owner makes it public (step 10a), so such a run cannot
       # read the release. It skips the fetch and the agreement check, says so in
       # a notice, and nothing else: a same-repository pull request and every
@@ -111,9 +112,10 @@ jobs:
         env:
           HAS_TOKEN: ${{ secrets.ART_REPO_TOKEN != '' }}
           FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+          DEPENDABOT: ${{ github.actor == 'dependabot[bot]' }}
         run: |
-          if [ "$FORK_PR" = "true" ] && [ "$HAS_TOKEN" != "true" ]; then
-            echo "::notice title=Art release not fetched::a pull request from a fork gets no ART_REPO_TOKEN and cehinds/AshenSpire-art is still private, so this run skips the art fetch and the agreement check; same-repository pull requests and pushes run both"
+          if [ "$HAS_TOKEN" != "true" ] && { [ "$FORK_PR" = "true" ] || [ "$DEPENDABOT" = "true" ]; }; then
+            echo "::notice title=Art release not fetched::a fork's or Dependabot's run gets no ART_REPO_TOKEN and cehinds/AshenSpire-art is still private, so this run skips the art fetch and the agreement check; same-repository pull requests and pushes run both"
             echo "fetch=false" >> "$GITHUB_OUTPUT"
           else
             echo "fetch=true" >> "$GITHUB_OUTPUT"

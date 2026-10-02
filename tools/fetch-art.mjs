@@ -519,29 +519,46 @@ export const GITHUB = Object.freeze({ api: 'https://api.github.com', web: 'https
  * WITHOUT ONE: the release's public download URL, which needs no API call (and
  * spends no API rate limit). It works once the repository is public.
  */
-export async function download(pin, pack, { api = GITHUB.api, web = GITHUB.web, env = process.env } = {}) {
+export async function download(pin, pack, { api = GITHUB.api, web = GITHUB.web, env = process.env, warn = (m) => console.warn(m) } = {}) {
   const zip = pin.packs[pack].zip;
   const { name: tokenName, token } = tokenFromEnv(env);
   const ctx = { pin, zip, tokenName };
   const timed = (ms) => ({ signal: AbortSignal.timeout(ms) });
   const ua = { 'user-agent': 'ashenspire-fetch-art' };
-  let res;
-  if (!token) {
+  const anonymous = async () => {
     const url = `${web}/${pin.repo}/releases/download/${encodeURIComponent(pin.tag)}/${encodeURIComponent(zip)}`;
-    res = await request(url, { headers: ua, redirect: 'follow', ...timed(15 * 60_000) }, ctx);
-  } else {
+    const r = await request(url, { headers: ua, redirect: 'follow', ...timed(15 * 60_000) }, { ...ctx, tokenName: null });
+    try { return Buffer.from(await r.arrayBuffer()); }
+    catch (e) { throw new Error(`${zip}: the download broke off (${netCause(e, r.url || url)})`); }
+  };
+  if (!token) return anonymous();
+  try { return await viaApi(); } catch (e) {
+    // A token that cannot read the repository (refused, expired, no access)
+    // must not stop a build once the repository is public: try the public
+    // URL, and keep the token's own diagnosis when that fails too.
+    if (!e.tokenRefused) throw e;
+    try {
+      const buf = await anonymous();
+      warn(`fetch-art: ${zip}: the token in ${tokenName} could not read ${pin.repo} (${e.message.replace(/^.*?HTTP /, 'HTTP ')}); the public release URL served it, so the repository is public — fix or remove ${tokenName}.`);
+      return buf;
+    } catch { throw e; }
+  }
+
+  async function viaApi() {
+    let res;
     const repo = `${api}/repos/${pin.repo}`;
     const headers = { ...ua, authorization: `Bearer ${token}`, 'x-github-api-version': '2022-11-28' };
     let rel;
     try {
       rel = await request(`${repo}/releases/tags/${encodeURIComponent(pin.tag)}`, { headers: { ...headers, accept: 'application/vnd.github+json' }, ...timed(30_000) }, ctx);
     } catch (e) {
+      if (e.status === 401 || e.status === 403) e.tokenRefused = true;
       if (e.status !== 404) throw e;
       // Which 404? Ask for the repository: a token that cannot see it gets 404 there too.
       let probe = null;
       try { probe = await fetch(repo, { headers: { ...headers, accept: 'application/vnd.github+json' }, ...timed(30_000) }); } catch { /* the first answer stands */ }
       if (probe && probe.status === 404) {
-        throw new Error(`${pin.repo} ${pin.tag} ${zip}: HTTP 404 — the token in ${tokenName} cannot see ${pin.repo} at all (GitHub answers 404 for a private repository the token has no access to). Give the token read access to that repository's Contents (a fine-grained token must list ${pin.repo} under its repository access), then update the ${tokenName} secret.`);
+        throw Object.assign(new Error(`${pin.repo} ${pin.tag} ${zip}: HTTP 404 — the token in ${tokenName} cannot see ${pin.repo} at all (GitHub answers 404 for a private repository the token has no access to). Give the token read access to that repository's Contents (a fine-grained token must list ${pin.repo} under its repository access), then update the ${tokenName} secret, or make the repository public (then no token is needed).`), { tokenRefused: true });
       }
       if (probe && probe.ok) {
         throw new Error(`${pin.repo} ${pin.tag} ${zip}: HTTP 404 — the token can read ${pin.repo}, but it has no published release tagged ${pin.tag} (a draft is not found by its tag). Check the pin's tag.`);
@@ -557,9 +574,9 @@ export async function download(pin, pack, { api = GITHUB.api, web = GITHUB.web, 
       // The storage hop: a signed URL, and no Authorization on it.
       res = await request(new URL(location, `${repo}/`).href, { headers: ua, redirect: 'follow', ...timed(15 * 60_000) }, ctx);
     }
+    try { return Buffer.from(await res.arrayBuffer()); }
+    catch (e) { throw new Error(`${zip}: the download broke off (${netCause(e, res.url || 'github.com')})`); }
   }
-  try { return Buffer.from(await res.arrayBuffer()); }
-  catch (e) { throw new Error(`${zip}: the download broke off (${netCause(e, res.url || 'github.com')})`); }
 }
 
 /**

@@ -256,10 +256,13 @@ schema-2 pin whose top level disagrees with `packs.high`.
   download needs `ART_REPO_TOKEN` (else `GITHUB_TOKEN`); CI passes the
   `ART_REPO_TOKEN` secret in the env of each step that fetches. A token, when
   set, is always sent (to the API only), which also raises GitHub's rate
-  limit. Every failure names its cause: the token refused, the repository
-  unreadable, the rate limit, the network. A pull request from a fork gets
-  no secrets, so while the repository is private its `tests.yml` and
-  `dev-preview.yml` runs skip the fetch and `--agree` with a notice; every
+  limit. A token that cannot read the repository falls back to the public
+  URL, so making the repository public is enough even with a stale secret.
+  Every failure names its cause: the token refused, the repository
+  unreadable, the rate limit, the network. A pull request from a fork, and any
+  Dependabot run, gets no secrets, so while the repository is private those
+  `tests.yml` and `dev-preview.yml` runs skip the fetch and `--agree` with a
+  notice; every
   same-repository pull request and every push runs both.
 
 ### Build identity

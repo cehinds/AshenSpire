@@ -566,7 +566,7 @@ test('an anonymous 403 that is not the rate limit says to set a token or check t
 // the asset by its id with `accept: application/octet-stream`, then a 302 to
 // storage that must be fetched WITHOUT the token. With no token, the public
 // release URL. And a 404 is told apart: token blind to the repo, or no release.
-async function withGitHub(fn, { repoVisible = true, release = true } = {}) {
+async function withGitHub(fn, { repoVisible = true, release = true, publicRepo = true } = {}) {
   const zip = Buffer.from('the zip bytes');
   const seen = [];
   const server = createServer((req, res) => {
@@ -583,7 +583,7 @@ async function withGitHub(fn, { repoVisible = true, release = true } = {}) {
       return send(302, '', { location: `http://127.0.0.1:${server.address().port}/storage/signed?x=1` });
     }
     if (req.url === '/storage/signed?x=1') return req.headers.authorization ? send(400, 'auth sent to storage') : send(200, zip);
-    if (req.url === '/web/cehinds/AshenSpire-art/releases/download/hd-assets-v2/light-assets-v2.zip') return send(200, zip);
+    if (req.url === '/web/cehinds/AshenSpire-art/releases/download/hd-assets-v2/light-assets-v2.zip') return publicRepo ? send(200, zip) : send(404, '');
     return send(404, '');
   });
   await new Promise((done) => server.listen(0, '127.0.0.1', done));
@@ -612,12 +612,25 @@ test('with no token, the public release URL is used and nothing is sent to the A
 
 test('known-bad: a 404 says whether the token cannot see the repository or the release is missing', async () => {
   await withGitHub(async ({ api, web }) => {
-    await assert.rejects(download(PIN2, 'light', { api, web, env: { ART_REPO_TOKEN: 't0ken' } }), /token in ART_REPO_TOKEN cannot see cehinds\/AshenSpire-art at all.*read access/);
-  }, { repoVisible: false });
+    await assert.rejects(download(PIN2, 'light', { api, web, env: { ART_REPO_TOKEN: 't0ken' } }), /token in ART_REPO_TOKEN cannot see cehinds\/AshenSpire-art at all.*read access.*or make the repository public/);
+  }, { repoVisible: false, publicRepo: false });
   await withGitHub(async ({ api, web }) => {
     await assert.rejects(download(PIN2, 'light', { api, web, env: { ART_REPO_TOKEN: 't0ken' } }), /can read cehinds\/AshenSpire-art, but it has no published release tagged hd-assets-v2/);
   }, { release: false });
   await withGitHub(async ({ api, web }) => {
+    await assert.rejects(download(PIN2, 'light', { api, web, env: { ART_REPO_TOKEN: 'wrong' } }), /token in ART_REPO_TOKEN cannot see/, 'a refused token with a private repo keeps the token\'s diagnosis');
+  }, { publicRepo: false });
+  await withGitHub(async ({ api, web }) => {
     await assert.rejects(download({ ...PIN2, tag: 'hd-assets-v9' }, 'light', { api, web, env: {} }), /HTTP 404 at .*no token was set/);
   });
+});
+
+test('once the repository is public, a token that cannot read it does not stop the fetch: the public URL serves it, with a warning', async () => {
+  await withGitHub(async ({ api, web, zip, seen }) => {
+    const warnings = [];
+    const got = await download(PIN2, 'light', { api, web, env: { ART_REPO_TOKEN: 't0ken' }, warn: (m) => warnings.push(m) });
+    assert.deepEqual(got, zip);
+    assert.match(warnings.join('\n'), /could not read cehinds\/AshenSpire-art.*public release URL served it.*fix or remove ART_REPO_TOKEN/);
+    assert.equal(seen.at(-1).auth, null, 'the public URL is fetched with no token');
+  }, { repoVisible: false, publicRepo: true });
 });
