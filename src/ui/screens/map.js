@@ -314,18 +314,19 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
   // rather than growing a second copy of it.
   const legendBtn = app.querySelector('#map-legend');
   const legendPop = app.querySelector('.map-legend-pop');
+  let legendOff = null;
+  function closeLegend() {
+    legendPop.hidden = true;
+    if (legendOff) document.removeEventListener('click', legendOff, true);
+    legendOff = null;
+  }
   function toggleLegend() {
-    const opening = legendPop.hidden;
-    legendPop.hidden = !opening;
-    if (opening) {
-      const off = (ev) => {
-        if (ev.target !== legendBtn && !legendPop.contains(ev.target)) {
-          legendPop.hidden = true;
-          document.removeEventListener('click', off, true);
-        }
-      };
-      document.addEventListener('click', off, true);
-    }
+    if (!legendPop.hidden) { closeLegend(); return; }
+    legendPop.hidden = false;
+    legendOff = (ev) => {
+      if (ev.target !== legendBtn && !legendPop.contains(ev.target)) closeLegend();
+    };
+    document.addEventListener('click', legendOff, true);
   }
   legendBtn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -357,6 +358,15 @@ export function mountMap(app, { registries, run, meta, onPick, onSave, onQuit, o
     if (veilIsOpen()) return;
     const tag = (ev.target && ev.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    // An open legend is the top layer: Escape (and pad B, which arrives as
+    // Escape) closes it and nothing else — the press is taken, so input.js's
+    // Back rule does not close the node tray under it as well (review of
+    // #1463, Codex; tests/escape-back.test.mjs, tools/escape-back.mjs).
+    if (ev.key === 'Escape' && !legendPop.hidden) {
+      closeLegend();
+      ev.preventDefault();
+      return;
+    }
     const armouryAction = actionDestinationForEvent(ev);
     if (matchAction(ev, 'menu')) {
       if (onMenu) onMenu('settings');

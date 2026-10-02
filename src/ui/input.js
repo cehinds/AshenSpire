@@ -799,16 +799,26 @@ function synthKey(key) {
 //      if the scope or the Back it was aimed at is gone or changed (a layer
 //      that closed itself without saying so, as the Armoury's document Escape
 //      once did; a screen that navigated on its own Escape), or if a
-//      native popover was open (character creation's menu): the press is that
-//      popover's. The browser closes a popover on a real Escape; a pad B is a
+//      light-dismiss native popover was open (character creation's menu): the
+//      press is that popover's (a manual popover is not a layer: see
+//      openPopover). The browser closes a popover on a real Escape; a pad B is a
 //      synthetic key the browser ignores, so the rule closes it instead.
 // A screen that answers Escape itself must not mark a `data-back` too;
 // tools/escape-back.mjs counts the presses. A text field keeps its Escape.
 export const BACK_SELECTOR = '[data-back]';
 let backAim = null;
+// Only a LIGHT-DISMISS popover (`popover`, `popover="auto"`, `popover="hint"`)
+// is a layer the press belongs to: the browser closes it on a real Escape. A
+// `popover="manual"` one (any other value is manual too) is presentation —
+// character creation paints its card-info button in the top layer that way
+// (components/creationInfoLayer.js) — and the browser never closes it on
+// Escape, so stepping aside for it would swallow every Escape and pad B would
+// hide the button. Review of #1463 (Codex).
+const LIGHT_DISMISS = new Set(['', 'auto', 'hint']);
 function openPopover(root) {
   try {
-    return root.querySelector('[popover]:popover-open');
+    return [...root.querySelectorAll('[popover]:popover-open')]
+      .find((el) => LIGHT_DISMISS.has(String(el.getAttribute('popover') ?? '').trim().toLowerCase())) || null;
   } catch {
     return null; // a DOM without the pseudo-class has no native popover either
   }
