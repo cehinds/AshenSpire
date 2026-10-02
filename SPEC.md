@@ -2688,7 +2688,8 @@ A **legendary sigil** is the §14.3 sigil at a new rarity, whose effect is a pro
   - A legendary is never slotted, so its `sigil:<id>` key never meets a slotted sigil's.
 - **The combat.** `combat.attunedSigils: string[]`.
   - `createCombat` copies the player's `attunedSigils`, which `createRunCombat` takes from `run.attunedSigils`.
-  - The combat snapshot serializes the field. `combatSnapshotProblems` refuses a value that is not a list of distinct non-empty ids, and `combatSnapshotReferenceProblems` refuses an id the registries do not hold, each by name.
+  - The combat snapshot serializes the field. `combatSnapshotProblems` refuses a value that is not a list of distinct non-empty ids, and `combatSnapshotReferenceProblems` refuses, by name, an id the registries do not hold and an id that is not a legendary sigil.
+  - The load door also refuses, by name, a fight in progress (`combatEntered.snapshot`) whose `attunedSigils` (an absent field reads as `[]`) is not the same list as `run.attunedSigils`: attunement cannot change mid-fight, so a mismatch is a hand edit. The save is archived the way every other malformed snapshot reference is.
   - A snapshot written without the field restores with `[]` and mounts none.
 - **Co-op.** Each seat that `tools/session.mjs` builds hands in `attunedSigils` from its member's run. `coopCombat` keeps the list on the seat and mounts it under that seat's key, inside the same `setActive` window as the seat's relics, at the opening and at a mid-fight join. In v1 the co-op reward scene rolls no sigil drop, and its offers are unchanged.
 - **The drop.** The offer field is `rewards.sigilId`: a sigil id, or absent for none.
@@ -2697,7 +2698,7 @@ A **legendary sigil** is the §14.3 sigil at a new rarity, whose effect is a pro
   - The load door refuses an unknown `sigilId` by name (`pendingRewardReferenceProblems`).
   - **The pool is legendary sigils only.** It holds the legendaries the run does not own, where owning covers `run.sigils`, every `run.sigilSlots` entry and `run.attunedSigils`, in authored order.
   - `rollSigilDrop` reads the chance for the door's pool. At a chance of 0 it returns none and draws nothing. With an empty pool it returns none and draws nothing. At 100 it makes no chance draw. Between those, it makes one `rng.chance('sigils', pct)`, and a miss returns none. Then it makes one `rng.pick('sigils', pool)`.
-  - It is rolled at a won normal, elite or boss fight (`main.js onCombatEnd`) and at a treasure room, both the map node and the legacy dungeon's treasure.
+  - It is rolled at a won normal or elite fight, at a boss whose reward menu opens (`main.js onCombatEnd`), and at a treasure room, both the map node and the legacy dungeon's treasure. The last boss of a run ends it with `finishRun(true)` before any reward is built, so it rolls no sigil, and that victory path is not reordered.
   - With all four chances at the shipped 0, the `sigils` counter never moves. No other stream moves at any setting.
 - **The Armoury's Sigils panel.** A `.armoury-sigils` section in the Inventory view, below the item collection. It appears while the run owns a legendary sigil.
   - It shows a count, "N / attuneMax attuned", and one row per owned legendary, in `run.sigils` order: its name, its blurb, its rule's sentence (`nodeTerms.csv`), and whether it is attuned.
