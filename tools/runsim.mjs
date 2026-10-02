@@ -468,6 +468,10 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
 // The Mana-OFF arm's one intervention: raise the pool to the dearest Mana price
 // among the hand's playable cards, so the Mana line never refuses one. The
 // lift is counted (manaBook.waived) so the OFF arm says how much it gave away.
+// Skipping a card already in `refused` loses nothing: the lift runs before
+// every play and prices each card with the engine's own cardPlayCosts, so in
+// this arm a card is never set aside for "Not enough mana" — anything in the
+// set was refused for another reason and is not played this turn anyway.
 function waiveMana(combat, refused) {
   const p = combat.player;
   let need = 0;
