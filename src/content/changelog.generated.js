@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1506",
+    "id": "pr-1495",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "One game file and one download: the separate mobile and full-art files are retired",
-    "detail": "Every build is now one game page of about 10 MB that loads its art, fonts, music and map tiles from files beside it and picks phone-sized art on a phone by itself, plus one self-contained light-art file (about 31 MB) to download and play by double-click. The old mobile link sends you to the main game.",
+    "summary": "Sealed and Draft climbs can no longer extract cards at the smith",
+    "detail": "A Sealed or Draft deck is never given the cards your equipment lends, but extracting one at the Blacksmith, the Shrine or a merchant's smith used to hand you a free copy anyway. In those climbs Extract now shows as unavailable, saying why, and cannot be done; reloading the climb does not bring it back. Seating a card you already own in an item works as before, and Standard climbs are unchanged.",
     "build": "0.7.1.799",
-    "pullRequest": 1506,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1506"
+    "pullRequest": 1495,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1495"
   },
   {
     "id": "pr-1498",
