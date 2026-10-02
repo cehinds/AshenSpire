@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1465",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the build checker's self-test catches up with the art-pack change",
+    "detail": "Nothing you play changes. One of the build tool's self-tests plants a deliberate fault in a line the asset loading work rewrote, so it could no longer find that line and the test build's checks went red. It now plants the fault in the line as it reads today.",
+    "build": "0.7.1.751",
+    "pullRequest": 1465,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1465"
+  },
+  {
     "id": "pr-1444",
     "date": "2026-10-02",
     "group": "2026-10-02",
