@@ -18,7 +18,7 @@
 //
 // Usage
 //   node tools/zoomplace.mjs                 scan the source tree via tools/serve.mjs
-//   node tools/zoomplace.mjs --dist          scan dist/AshenSpire.html over file://
+//   node tools/zoomplace.mjs --dist          scan dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
 //   node tools/zoomplace.mjs --only 1920x1080
 //   CHROME=/path/to/chrome node tools/zoomplace.mjs
 //
@@ -34,11 +34,11 @@
 // about how any of it FEELS — that is Sunna's read, not a number.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
 // DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
@@ -275,7 +275,7 @@ async function main() {
       console.error(`zoomplace: ${f} does not exist — run \`node tools/launch.mjs --build-only\` first`);
       process.exit(2);
     }
-    base = pathToFileURL(f).href;
+    base = await buildPageUrl(f);
   } else {
     const s = await serve({ root: ROOT, port: 8260, open: false });
     server = s.server;

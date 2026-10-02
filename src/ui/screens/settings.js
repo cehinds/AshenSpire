@@ -20,11 +20,13 @@ import { settingsPreviewHtml, settingsPreviewShown, mountSettingsPreview } from 
 import { offlinePlay } from '../../content/offlinePlay.js';
 import { openDebugLog } from '../debuglog.js';
 import { esc, attachTooltip } from '../components/tooltip.js';
-import { ART_QUALITY_KEY, ART_BUILT_IN, ART_QUALITY_CHOICES, wantsHighRes, artQualityStatus, pickHighResFolder, canPickFolder } from '../highResArt.js';
+import { ART_QUALITY_KEY, ART_AUTO, ART_QUALITY_CHOICES, LEGACY_ART_QUALITY, wantsHighRes, artQualityStatus, pickHighResFolder, canPickFolder } from '../highResArt.js';
+import { tierStatus, tierChoiceDisabled } from '../artTier.js';
 import { setTabRing, hasTabRing } from '../input.js';
 import { renderAboutSection, renderChangelogSection } from './about.js';
 import { AUDIO_DEFAULTS, resolveMusicEnabled } from '../audio.js';
 import { balance } from '../../content/balance.js';
+import { VICTORY_XP_DEFAULTS } from '../../model/victoryXpPresentation.js';
 import { tooltipSettingsRows } from '../../model/tooltipSettings.js';
 import { TITLE_ENTRANCE_TIMING } from '../models/StartupGateModels.js';
 import { ZOOM_STEPS, MAP_ZOOM_DEFAULT, MAP_FREE_PAN_DEFAULT } from '../../model/mapview.js';
@@ -39,7 +41,7 @@ import { LORE_FACES, LORE_SIZES, LORE_LEADING, LORE_TRACKING, LORE_SLANTS, LORE_
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
-import { pageDebug } from '../buildChannel.js';
+import { pageDebug, debugSwitch, setDebugEnabled } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
 import { deckRules } from '../../content/deckRules.js';
 import { deckSettingsProblems } from '../../model/deckRules.js';
@@ -49,6 +51,9 @@ import { importOwnership, promotionProblem } from '../../model/settingsSync.js';
 import { gateOpen, ownOn } from '../../model/settingOverrides.js';
 import { advancedConfigProblemRows, advancedConfigRows, configuredContentBundle, parseAdvancedConfigFile } from '../../model/advancedConfig.js';
 import { saveAdvancedConfigFile, saveJsonFile } from '../services/saveJsonFile.js';
+import { RECOVERY_POOLS, RECOVERY_UNITS, recoveryRules } from '../../content/recoveryRules.js';
+import { recoveryKey } from '../../model/recoveryRules.js';
+import { mechanics } from '../../framework/data/mechanics.js';
 import {
   prologueScenePreset, prologueConfig, prologueSequence, prologueSlotPayload, prologueSlotChanges,
   prologueSettingKey, isPrologueSlot, prologueReorderChanges, prologueSceneCopy, prologueSceneClear,
@@ -276,6 +281,35 @@ const PROMOTED_DEFAULTS = Object.freeze({ ...(SETTINGS_DEFAULTS.values || {}) })
 /** settingsRows() → every row this screen draws (the sync profile's key list). */
 export function settingsRows() { return ROWS; }
 
+// ---- RECOVERY (owner, 2026-09-27) ------------------------------------------
+// "a setting to set recovery rate for hp stamina and mp to at rest and or after
+// combat and or after x rounds and or if not being used for x turns". One topic
+// per pool, five triggers each; every default is content/recoveryRules.js and
+// model/recoveryRules.js reads the stored keys against it.
+function recoverySettingRows() {
+  const names = { hp: 'HP', stamina: 'Stamina', mana: 'Mana' };
+  const use = { hp: 'you lose no HP', stamina: 'you spend no Stamina', mana: 'you spend no Mana' };
+  const range = recoveryRules.ranges;
+  return RECOVERY_POOLS.flatMap((pool) => {
+    const D = recoveryRules.defaults[pool];
+    const name = names[pool];
+    const row = (field, extra) => ({ cat: 'Advanced', advancedGroup: 'Recovery', statTopic: name, key: recoveryKey(pool, field), ...extra });
+    const number = (field, label, note) => row(field, { type: 'number', def: D[field], min: range[field].min, max: range[field].max, label, applied: numberAppliedHtml, note });
+    // A fight opens with Stamina full (mechanics.stamina.combatStartRefill),
+    // so Stamina restored between fights would be overwritten: no rows for it.
+    const betweenFights = pool !== 'stamina' || mechanics.stamina.combatStartRefill !== 'full';
+    return [
+      number('perTurn', `${name} per turn`, `What a qualifying combat turn restores, at the end of your turn. 0: ${name} does not recover in a fight.`),
+      row('unit', { type: 'choice', def: D.unit, choices: [...RECOVERY_UNITS], choiceLabels: { flat: 'Points', percent: '% of max' }, label: 'Per-turn amount is',
+        note: `Points, or a percent of your maximum ${name} rounded down.` }),
+      number('idleTurns', 'Only after unused turns', `A turn restores ${name} only after this many turns in a row in which ${use[pool]} (the enemies’ turn counts). 0: every turn.`),
+      number('everyRounds', 'Only every N rounds', `Restore only on every Nth round of the fight. 1: every round.`),
+      ...(!betweenFights ? [] : [number('afterCombat', 'After a won fight', `Percent of your maximum ${name} restored when you win a fight.`),
+      number('atRest', 'At every Rest', `Percent of your maximum ${name} restored when you Rest, on top of what the place restores. The Rest preview includes it.`)]),
+    ];
+  });
+}
+
 const ROWS = [
   ...tooltipSettingsRows(),
   { cat: 'Display', key: 'fullscreen', type: 'action', def: false, label: 'Fullscreen',
@@ -400,6 +434,61 @@ const ROWS = [
     note: 'After a valid starting-equipment choice, open the next equipment section. Off: each section waits for you to continue.' },
   { cat: 'Advanced', advancedGroup: 'Rewards', key: 'useRestorativeFlasksOutsideCombat', def: true, label: 'Use flasks outside combat',
     note: 'Allow Crimson and Azure Flask charges to restore Health or Mana from the map. Their charges still refill only at a Shrine.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victorySummaryMode', type: 'choice', def: 'continue',
+    choices: ['continue', 'anywhere', 'auto'], choiceLabels: { continue: 'Continue', anywhere: 'Click anywhere', auto: 'Expand automatically' },
+    label: 'Open full Victory summary', note: 'First show a compact Victory panel, then open the full rewards and XP summary using this action.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptSeconds', type: 'number', def: VICTORY_XP_DEFAULTS.seconds, min: 0, max: 12, step: 0.1,
+    label: 'Victory XP breakdown (seconds)', note: 'Time for the combat-power bonus and defeated enemies to count up together. 0 reveals every line immediately.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptPauseMs', type: 'number', def: VICTORY_XP_DEFAULTS.pauseMs, min: 0, max: 500, step: 10,
+    label: 'Pause between XP lines (ms)', note: 'A short beat after each line. Pauses compress automatically to fit the total breakdown time.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptReadySeconds', type: 'number', def: VICTORY_XP_DEFAULTS.readySeconds, min: 0, max: 5, step: 0.1,
+    label: 'Continue ready delay (seconds)', note: 'After the final XP line, wait this long before Continue turns green.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptFormulaTerms', type: 'number', def: VICTORY_XP_DEFAULTS.formulaTerms, min: 1, max: 20, step: 1,
+    label: 'XP terms before +…', note: 'Show this many additions beside Total XP, then use +… with the full calculation on hover or focus.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryReceiptVisibleRows', type: 'number', def: VICTORY_XP_DEFAULTS.visibleRows, min: 2, max: 8, step: 1,
+    label: 'Visible XP breakdown rows', note: 'Set the fixed list height. Longer enemy lists scroll inside the Victory panel.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpSeconds', type: 'number', def: 3, min: 0, max: 12, step: 0.25,
+    label: 'Victory XP animation (seconds)', note: 'Total time for all XP bars together. 0 shows the final values immediately.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'levelUpRefillSeconds', type: 'number', def: 0.8, min: 0, max: 12, step: 0.1,
+    label: 'Residual XP refill (seconds)', note: 'After each Level press, reset that bar and refill it with remaining XP before its reward opens. 0 settles immediately.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'levelUpRefillPauseMs', type: 'number', def: 200, min: 0, max: 2000, step: 50,
+    label: 'Pause after residual refill (ms)', note: 'Show the settled XP bar briefly before opening its level reward.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpCharacterWeight', type: 'number', def: 50, min: 0, max: 100, step: 5,
+    label: 'Character XP time share', note: 'Relative share of the total animation time. Shares for missing tracks are redistributed.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpClassWeight', type: 'number', def: 25, min: 0, max: 100, step: 5,
+    label: 'Class XP time share', note: 'Relative share of the total animation time.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'victoryXpSkillWeight', type: 'number', def: 25, min: 0, max: 100, step: 5,
+    label: 'Skill XP time share', note: 'Relative share, split between the skills shown.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'levelUpAllocateStats', def: false, label: 'Assign stats in Level Up',
+    note: 'Show shrine-style stat allocation in the level reward panel. Off: earned points wait for a Shrine.' },
+  { cat: 'Advanced', advancedGroup: 'Progression', key: 'manualLevelUp', def: true, label: 'Click to level up',
+    note: 'When XP fills a character or skill bar, wait for its Level button before advancing. Off: earned levels advance automatically.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelStatPoints', def: true, label: 'Level Up · Stat points',
+    note: 'Grant stat points when an earned character level is claimed.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelFeats', def: true, label: 'Level Up · Feats',
+    note: 'Offer permanent passive feats when a character level is claimed.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelClassTree', def: false, label: 'Level Up · Class upgrades',
+    note: 'Include eligible class-tree upgrades alongside feats in the character-level choices.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardLevelCards', def: false, label: 'Level Up · Bonus card',
+    note: 'Offer a card on a claimed level when the card reward schedule also allows it.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleCinders', def: true, label: 'Battle · Cinders',
+    note: 'Include Cinders among battle rewards.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleCards', def: true, label: 'Battle · Card',
+    note: 'Include the normal battle card offer when its chance succeeds.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleSkillDrafts', def: true, label: 'Battle · Skill cards',
+    note: 'Offer earned skill drafts after battle. Unoffered drafts remain queued.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleClassDrafts', def: true, label: 'Battle · Class choices',
+    note: 'Offer earned class choices after battle. Unoffered choices remain queued.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleFlasks', def: true, label: 'Battle · Flasks',
+    note: 'Include flask drops among battle rewards.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleRelics', def: true, label: 'Battle · Relics',
+    note: 'Include relic drops among elite and boss rewards.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardBattleArmaments', def: true, label: 'Battle · Equipment',
+    note: 'Include armament drops among battle rewards.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardTreasureRelics', def: true, label: 'Treasure · Relics',
+    note: 'Include relics found in treasure rooms.' },
+  { cat: 'Advanced', advancedGroup: 'Rewards', key: 'rewardTreasureArmaments', def: true, label: 'Treasure · Equipment',
+    note: 'Include armaments found in treasure rooms.' },
   { cat: 'Display', key: 'shrinePathGlow', def: SHRINE_GLOW_DEFAULT, label: 'Shrine path glow',
     note: 'Light the way to the nearest shrine on the act map. The lane re-aims itself as new paths open, and under fog it is drawn only as far as you can already see — it never shows you a node the fog is covering.' },
   // How strongly the nodes already walked fade behind you — his clause, with
@@ -415,14 +504,18 @@ const ROWS = [
   { cat: 'Display', key: 'accent', type: 'choice', def: 'gold', selfEvident: true,
     choices: ['gold', 'crimson', 'frost', 'verdant', 'violet'], label: 'Accent color',
     note: 'Tint the interface — highlights, borders, focus ring, and glow.' },
-  // ART QUALITY (LFS / art-tier plan, step 4, 2026-09-26). Built-in is the art
-  // this build carries — the light tier on dev/test, full art on release/main.
-  // Local high-res lays full-resolution files from this device over it
-  // (src/ui/highResArt.js); anything the folder lacks stays built-in. A
-  // per-device key (LOCAL_ONLY_KEYS, never synced): a folder here means nothing on another device.
-  { cat: 'Display', key: ART_QUALITY_KEY, type: 'choice', def: ART_BUILT_IN,
-    choices: ART_QUALITY_CHOICES, label: 'Art quality', applied: artQualityHtml,
-    note: 'Built-in uses the art this game carries. Local high-res uses full-resolution art from a folder on this device, either served beside the game or one you choose, and keeps the built-in art for anything it lacks. This device only.' },
+  // ART QUALITY (LFS / art-tier plan, step 4, 2026-09-26; Auto / Light / High,
+  // docs/EXTERNAL-ASSETS-PLAN.md step 8c). Auto, Light and High choose which
+  // pack the web edition loads (src/ui/artTier.js); a single file carries its
+  // light art inside it, so there Light and High are disabled and the live line
+  // says why. Local high-res lays full-resolution files from this device over
+  // Auto's tier (src/ui/highResArt.js); anything the folder lacks stays
+  // built-in. 'Built-in', the old default, reads as Auto. A per-device key
+  // (LOCAL_ONLY_KEYS, never synced): a folder here means nothing on another device.
+  { cat: 'Display', key: ART_QUALITY_KEY, type: 'choice', def: ART_AUTO,
+    choices: ART_QUALITY_CHOICES, legacyChoices: LEGACY_ART_QUALITY, choiceDisabled: tierChoiceDisabled, describedBy: 'set-artQuality-tier',
+    label: 'Art quality', applied: artQualityHtml,
+    note: 'Auto loads lighter art on a narrow or phone-sized screen, with Data Saver on or on a device with little memory, and the best art this game carries otherwise. Light and High pick one. Local high-res uses full-resolution art from a folder on this device, either served beside the game or one you choose, and keeps the built-in art for anything it lacks. This device only.' },
   { cat: 'Display', key: 'uiScale', type: 'choice', def: 'Auto',
     choices: ['Auto', 'S', 'M', 'L', 'XL'], label: 'UI size', applied: appliedHtml,
     note: 'Auto flexes the whole interface with your screen; S–XL asks for a fixed size and gets as much of it as fits.' },
@@ -716,6 +809,7 @@ const ROWS = [
     note: 'How many copies of one of your class’s own spells or Powers the editor lets your deck hold. Strike and Defend stay unlimited; weapon arts and techniques stay limited to the copies you own.' },
   { cat: 'Advanced', advancedGroup: 'Deck', key: 'playInDeckOrder', def: deckRules.defaults.playInDeckOrder, label: 'Play in deck order',
     note: 'Your draw pile is not shuffled: you draw your cards in the order you arranged them, and a spent pile returns in that order. Card effects that shuffle still shuffle. Applies from the next fight.' },
+  ...recoverySettingRows(),
   ...ADVANCED_CONFIG_ROWS,
   { cat: 'Advanced', advancedGroup: 'Export', key: 'promptSettingsExport', def: true, label: 'Offer export when done',
     note: 'Ask to export a configuration file after Done and Save.' },
@@ -802,6 +896,9 @@ const ADVANCED_GROUPS = Object.freeze([
   // topic here (models/AdvancedSettingsGroups.js) with a live worked example
   // (models/StatsPreviewModel.js).
   { id: 'Stats', label: 'Stats', tip: 'Everything that turns attributes into Actions, Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.' },
+  // Owner, 2026-09-27: HP, Stamina and Mana recovery — per turn, after going
+  // unused, every few rounds, after a fight, at a rest — one topic per pool.
+  { id: 'Recovery', label: 'Recovery', tip: 'How HP, Stamina and Mana come back: each turn, after going unused for a few turns, every few rounds, after a won fight, and at every Rest. Applies from the next fight.' },
   { id: 'Rewards', label: 'Rewards & economy', tip: 'Cinders, reward rarity, merchants, flasks and smithing.' },
   { id: 'Shops', label: t('settings.shops.group.label'), tip: tFull('settings.shops.group.label') },
   { id: 'Deck', label: 'Deck', tip: 'The deck editor: where you can edit, the deck’s size limits, and playing your cards in the order you arranged them.' },
@@ -834,6 +931,19 @@ const ADVANCED_GROUPS = Object.freeze([
 export const RELEASE_ADVANCED_GROUP_IDS = Object.freeze(['Deck', 'Interface', 'Text', 'Changelog', 'About']);
 /** Groups with their own mounted panel instead of rows. */
 const MOUNTED_ADVANCED_GROUPS = Object.freeze({ Changelog: 'set-changelog-mount', About: 'set-about-mount', Sync: 'set-sync-mount' });
+
+/**
+ * developerSwitchHtml() → the Developer tools switch drawn above every
+ * Advanced section: a toggle on dev, test and unrecognised builds, and nothing
+ * at all on the 1.0 release builds, where the tools stay off (owner,
+ * 2026-09-27).
+ */
+export function developerSwitchHtml(state = debugSwitch()) {
+  if (state.hidden) return '';
+  return '<div class="as-row setting set-row set-developer-switch" data-row-key="developerTools">'
+    + `<span class="as-labelstack"><span class="set-label-line"><span class="ls-label">Developer tools</span></span><span class="ls-hint set-note">${esc(state.note)}</span></span>`
+    + `<span class="r-trail"><button type="button" class="as-toggle toggle${state.on ? ' on' : ''}" role="switch" aria-checked="${state.on}" aria-label="Developer tools" data-developer-switch><span class="knob"></span></button></span></div>`;
+}
 
 /** visibleAdvancedGroups(debug) → the Advanced sections this build shows. */
 export function visibleAdvancedGroups(debug = pageDebug()) {
@@ -1665,11 +1775,11 @@ export function settingsRowHtml(settings, r, doc = globalThis.document) {
     const stored = r.legacyChoices?.[settings[r.key]] ?? settings[r.key];
     const cur = r.choices.includes(stored) ? stored : r.def;
     if (r.dropdown || r.choices.length > 3) {
-      const options = r.choices.map(c => `<option value="${esc(c)}"${c === cur ? ' selected' : ''}>${esc(r.choiceLabels?.[c] || c)}</option>`).join('');
-      return `${rowOpen('set-row-dropdown')}${stack(appliedSlot(settings, r))}<span class="r-trail"><select class="set-choice-select" data-key="${r.key}" aria-label="${esc(r.label)}">${options}</select></span></div>`;
+      const options = r.choices.map(c => `<option value="${esc(c)}"${c === cur ? ' selected' : ''}${r.choiceDisabled?.(c) ? ' disabled' : ''}>${esc(r.choiceLabels?.[c] || c)}</option>`).join('');
+      return `${rowOpen('set-row-dropdown')}${stack(appliedSlot(settings, r))}<span class="r-trail"><select class="set-choice-select" data-key="${r.key}" aria-label="${esc(r.label)}"${r.describedBy ? ` aria-describedby="${r.describedBy}"` : ''}>${options}</select></span></div>`;
     }
     const opts = r.choices
-      .map((c) => `<button type="button" class="choice${c === cur ? ' on' : ''}" aria-pressed="${c === cur}" data-key="${r.key}" data-val="${c}">${r.choiceLabels?.[c] || c}</button>`)
+      .map((c) => `<button type="button" class="choice${c === cur ? ' on' : ''}" aria-pressed="${c === cur}" data-key="${r.key}" data-val="${c}"${r.choiceDisabled?.(c) ? ' disabled' : ''}>${r.choiceLabels?.[c] || c}</button>`)
       .join('');
     return `${rowOpen(r.slider ? 'set-row-wide' : '')}
         ${stack(appliedSlot(settings, r))}
@@ -2029,9 +2139,18 @@ function tapCostHtml(settings) {
 // is worse than no readout. The requested value comes from the same balance
 // data main.js caps against, so "limited" is a comparison of one computed
 // number against one authored one, not of two computations.
-/** The Art quality row's live line: where the high-res art came from, and the folder button. */
+/**
+ * The Art quality row's live lines: which built-in tier is on screen (or why
+ * Light and High do nothing in this copy), then, for Local high-res, where the
+ * high-res art came from and the folder button.
+ */
 function artQualityHtml(settings) {
-  if (!wantsHighRes(settings)) return '';
+  const tier = `<span class="ls-hint set-note" id="set-artQuality-tier" data-art-tier-status aria-live="polite">${esc(tierStatus(settings))}</span>`;
+  if (!wantsHighRes(settings)) return tier;
+  return `${tier} ${artFolderHtml(settings)}`;
+}
+
+function artFolderHtml(settings) {
   const status = `<span class="ls-hint set-note" data-art-status aria-live="polite">${esc(artQualityStatus())}</span>`;
   // Phone browsers have no folder picker: a plain file picker hands over names
   // without the folder path, so no file could be matched to an asset id.
@@ -2370,7 +2489,7 @@ function levelPacePreviewMarkup(settings, pointsPerLevel) {
     + `<ol class="set-level-pace-curve">${pace.curve.map((row) => `<li><span>${esc(row.label)}</span> <b>${row.step}</b> <small>${esc(row.totalText)}</small></li>`).join('')}</ol></div>`;
   return `<div class="set-example set-level-pace" data-level-pace aria-live="polite"><div class="set-example-head"><strong>${esc(pace.title)}</strong><span>${esc(pace.subtitle)}</span></div>`
     + (pace.refused ? `<p class="set-example-refused" role="status" data-level-pace-refused>${esc(pace.refused)}</p>` : '')
-    + `<p class="set-example-attrs">${esc(pace.terms)}</p>${fights}${curve}</div>`;
+    + `<p class="set-example-attrs">${esc(pace.terms)}</p><p class="set-example-attrs">${esc(pace.killText)}</p><p class="set-example-attrs">${esc(pace.skillText)}</p>${fights}${curve}</div>`;
 }
 
 function visibleAdvancedSubgroups(rows, groupId) {
@@ -2462,10 +2581,19 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
     const topics = generalGroups(selected);
     const storedTopic = settings[`settingsGeneralTopic.${selected}`];
     const topic = topics.has(storedTopic) ? storedTopic : topics.keys().next().value;
+    const rows = topics.get(topic);
+    const preview = settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : '';
+    const firstFullscreen = selected === 'Display' && rows[0]?.key === 'fullscreen';
+    const rowHtml = rows.map(row => settingsRowHtml(settings, row));
+    // On a phone the expanded preview can fill the visible pane. Keep the
+    // first Display control ahead of it so Fullscreen is reachable on entry.
+    const body = firstFullscreen
+      ? `<div class="set-card-list">${rowHtml[0]}${preview}${rowHtml.slice(1).join('')}</div>`
+      : `${preview}<div class="set-card-list">${rowHtml.join('')}</div>`;
     return '<div class="set-general-pickers">'
       + (groups.length > 1 ? `<select class="set-general-select" data-general-select aria-label="General section">${groups.map(group => `<option${group === selected ? ' selected' : ''}>${group}</option>`).join('')}</select>` : '')
       + (topics.size > 1 ? `<select class="set-general-select" data-general-topic aria-label="${cat} option group">${[...topics.keys()].map(label => `<option${label === topic ? ' selected' : ''}>${label}</option>`).join('')}</select>` : '')
-      + `</div>${settingsPreviewShown(cat, selected) ? settingsPreviewHtml(settings) : ''}<div class="set-card-list">${topics.get(topic).map(row => settingsRowHtml(settings, row)).join('')}</div>`;
+      + `</div>${body}`;
   }
   const h = categoryHandler(cat);
   if (!h) {
@@ -2503,7 +2631,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
       const subTabs = subgroups.length > 1 ? `<div class="set-topic-tabs" role="tablist" aria-label="${esc(group.label)} groups">`
         + subgroups.map((sub, index) => `<button type="button" class="as-btn${sub === activeSub ? ' on' : ''}" role="tab" aria-selected="${sub === activeSub}" aria-controls="set-topic-${group.id}-${index}" data-topic="${esc(sub.id)}">${esc(sub.label)}</button>`).join('') + '</div>' : '';
       return `<section class="set-advanced-group" data-advanced-panel="${esc(group.id)}"`
-        + `>${subTabs}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' New runs only.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
+        + `>${subTabs}<div class="set-group-summary"><span>${esc(group.tip)}${group.id === 'Progression' ? ' XP changes also apply to the current run.' : ''}</span><output data-config-count aria-live="polite"></output></div>`
         + subgroups.map((sub, index) => sub !== activeSub
           ? `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}" data-lazy hidden></div>`
           : `<div class="set-card-list set-topic-panel" id="set-topic-${group.id}-${index}" data-topic-panel="${esc(sub.id)}">`
@@ -2522,6 +2650,7 @@ export function categoryHtml(cat, settings, saves, previewAttributes = null, pre
           + '</div>').join('') + '</section>';
     }).join('');
     return `<div class="as-pane-head set-advanced-head"><span class="set-subtabs" role="tablist" aria-label="Advanced settings sections">${tabs}</span></div>`
+      + developerSwitchHtml()
       + `<div class="set-mobile-pickers"><select class="set-section-select" aria-label="Advanced section">${shownGroups.map(group => `<option value="${esc(group.id)}"${group.id === active ? ' selected' : ''}>${esc(group.label)}</option>`).join('')}</select><select class="set-topic-select" aria-label="Option group"></select></div>`
       + groups;
   }
@@ -3303,6 +3432,14 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
       resetKeys(settings, onChange, [key], `${stripTags(rowByKey(key)?.label || key)} reset`);
       repaintPanel({ keepScroll: true });
       container.querySelector(`[data-row-key="${CSS.escape(key)}"] [data-key], [data-row-key="${CSS.escape(key)}"] .toggle`)?.focus({ preventScroll: true });
+    });
+  });
+
+  container.querySelectorAll('[data-developer-switch]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const on = setDebugEnabled(btn.getAttribute('aria-checked') !== 'true');
+      showSettingsNotice(on ? 'Developer tools on: tuning and diagnostics sections are shown.' : 'Developer tools off.');
+      repaintPanel({ keepScroll: true });
     });
   });
 

@@ -56,6 +56,20 @@ export function marketAdditionStockProblems(stock, path = 'shopStock') {
 }
 
 /**
+ * blacksmithStockProblems(stock, path) → the blacksmith's own shelf and every
+ * stock's trade revision, refused by name (SPEC §14.4). A blacksmith stock is
+ * `{ kind: 'blacksmith', offerings, tradeRevision?, armaments?, smithStones? }`;
+ * `smithStones` is the market's shape (marketAdditionStockProblems), and its
+ * services keep no stock at all.
+ */
+export function blacksmithStockProblems(stock, path = 'shopStock') {
+  const problems = [];
+  if (stock.tradeRevision !== undefined && !count(stock.tradeRevision)) problems.push(`${path}.tradeRevision must be a whole number of at least 0, got ${JSON.stringify(stock.tradeRevision)}`);
+  if (stock.kind === 'blacksmith' && stock.armaments !== undefined) itemList(stock.armaments, `${path}.armaments`, problems);
+  return problems;
+}
+
+/**
  * pruneUnknownAdditionOffers(stock, { sigilKnown, armourKnown }) → the offers
  * removed. AN UNSOLD OFFER IS NOT A POSSESSION (Codex, on #1374; coordinator
  * ruling): when a content update drops a sigil or an armour set, an offer for
@@ -64,10 +78,16 @@ export function marketAdditionStockProblems(stock, path = 'shopStock') {
  * empties is no longer laid out (its id leaves `stock.offerings`, unless it is
  * the last one), so no empty rail item is left behind.
  */
-export function pruneUnknownAdditionOffers(stock, { sigilKnown, armourKnown, consumableKnown = () => true, companionKnown = () => true, eventKnown = () => true }) {
+export function pruneUnknownAdditionOffers(stock, { sigilKnown, armourKnown, consumableKnown = () => true, companionKnown = () => true, eventKnown = () => true, armamentKnown = () => true, cardKnown = () => true }) {
   if (!object(stock)) return [];
   const removed = [];
   const keep = {
+    // The blacksmith's armament shelf (SPEC §14.4): an unsold offer for an
+    // armament this build no longer has is pruned like any market offer.
+    ...(stock.kind === 'blacksmith' ? { armaments: (item) => armamentKnown(item.id) } : {}),
+    // The master's rack and art shelf (SPEC §14.5), the same way; his skill
+    // books are the `skillBooks` row below.
+    ...(stock.kind === 'master' ? { armaments: (item) => armamentKnown(item.id), weaponArts: (item) => cardKnown(item.id) } : {}),
     sigils: (item) => sigilKnown(item.id),
     armour: (item) => armourKnown(item.classId, item.id),
     skillBooks: (item) => consumableKnown(item.id),
@@ -94,6 +114,19 @@ export function pruneUnknownAdditionOffers(stock, { sigilKnown, armourKnown, con
   if (object(stock.questEvent) && !eventKnown(stock.questEvent.eventId)) {
     removed.push({ shelf: 'questEvent', id: stock.questEvent.eventId });
     retire('questEvent');
+  }
+  // A master's lesson rolls (SPEC §14.5): an unknown card id is dropped from
+  // its entry. An entry left with no card is a roll that found nothing, and it
+  // stays refused; the lesson offering stays laid out (a service stays once
+  // rolled).
+  if (stock.kind === 'master' && object(stock.lessons)) {
+    for (const [skillId, entry] of Object.entries(stock.lessons)) {
+      if (!object(entry) || !Array.isArray(entry.cardIds)) continue;
+      const kept = entry.cardIds.filter((id) => cardKnown(id));
+      if (kept.length === entry.cardIds.length) continue;
+      for (const id of entry.cardIds) if (!kept.includes(id)) removed.push({ shelf: `lessons.${skillId}`, id });
+      stock.lessons[skillId] = { ...entry, cardIds: kept };
+    }
   }
   return removed;
 }
@@ -160,8 +193,10 @@ export function marketAdditionTableProblems(table, err) {
     const offering = row(id);
     if (!offering) return;
     const value = path.split('.').reduce((at, key) => (at == null ? at : at[key]), offering);
-    if (value !== undefined && !(Number.isSafeInteger(value) && value >= floor)) {
-      err(`shops.market.${id}.${path}`, `must be a whole number of at least ${floor}, got ${JSON.stringify(value)}`);
+    // A number the offering needs is required, not only checked when present
+    // (Copilot on #1438): a missing one would reach a stock as undefined.
+    if (!(Number.isSafeInteger(value) && value >= floor)) {
+      err(`shops.market.${id}.${path}`, value === undefined ? `is missing: write a whole number of at least ${floor}` : `must be a whole number of at least ${floor}, got ${JSON.stringify(value)}`);
     }
   };
   whole('smithStones', 'perVisit', 0);
@@ -186,6 +221,37 @@ export function marketAdditionTableProblems(table, err) {
 }
 
 /**
+ * The blacksmith's numbers (SPEC §14.4, the floors of #1378), refused by name
+ * in validateContent: every one whole; `refine.value` (a divisor), `refine.from`
+ * and every price from 1; every count from 0; and a piece's base sigil slots
+ * never above its most.
+ */
+export function blacksmithTableProblems(table, err) {
+  const offerings = table?.blacksmith?.offerings;
+  if (!Array.isArray(offerings)) return;
+  const row = (id) => offerings.find((offering) => offering && offering.id === id);
+  const valueAt = (id, path) => {
+    const offering = row(id);
+    return offering ? path.split('.').reduce((at, key) => (at == null ? at : at[key]), offering) : undefined;
+  };
+  // Required when the offering is written (Copilot on #1438), not only
+  // checked when present.
+  const whole = (id, path, floor) => {
+    if (!row(id)) return;
+    const value = valueAt(id, path);
+    if (!(Number.isSafeInteger(value) && value >= floor)) {
+      err(`shops.blacksmith.${id}.${path}`, value === undefined ? `is missing: write a whole number of at least ${floor}` : `must be a whole number of at least ${floor}, got ${JSON.stringify(value)}`);
+    }
+  };
+  for (const [id, path] of [['armaments', 'stock'], ['smithStones', 'perVisit'], ['sigilSlots', 'sigilSlots.base'], ['sigilSlots', 'sigilSlots.max'], ['stackCopy', 'stack.stepPerOwned']]) whole(id, path, 0);
+  for (const [id, path] of [['smithStones', 'price'], ['refineStones', 'refine.from'], ['refineStones', 'refine.value'], ['refineStones', 'refine.cinders'],
+    ['sigilSlots', 'sigilSlots.cinders'], ['upgradeArt', 'stones'], ['stackCopy', 'stack.stones'], ['stackCopy', 'stack.cinders']]) whole(id, path, 1);
+  const base = valueAt('sigilSlots', 'sigilSlots.base');
+  const max = valueAt('sigilSlots', 'sigilSlots.max');
+  if (Number.isFinite(base) && Number.isFinite(max) && base > max) err('shops.blacksmith.sigilSlots.sigilSlots', `base (${base}) must not be above max (${max}): max counts the base slots`);
+}
+
+/**
  * applyShopPriceMult(stock, mult) — a custom run's shop price multiplier
  * (Greedy Merchants, Hoarder: main.js shopPriceMult) applied to a classic
  * merchant's stock in place: the cards, relics and flasks, the Remove price,
@@ -196,7 +262,9 @@ export function marketAdditionTableProblems(table, err) {
 export function applyShopPriceMult(stock, mult) {
   if (!stock || mult === 1) return stock;
   const up = (n) => Math.ceil(n * mult);
-  for (const kind of ['cards', 'relics', 'flasks', 'armour', 'sigils', ...ITEM_LIST_SHELVES]) {
+  // Weapon arts too (Codex and Copilot on #1438): a market's art shelf and a
+  // master's, through whichever door opened the visit, scaled here once.
+  for (const kind of ['cards', 'relics', 'flasks', 'armaments', 'weaponArts', 'armour', 'sigils', ...ITEM_LIST_SHELVES]) {
     if (Array.isArray(stock[kind])) for (const item of stock[kind]) item.cost = up(item.cost);
   }
   if (Number.isFinite(stock.removeCost)) stock.removeCost = up(stock.removeCost);

@@ -4,7 +4,34 @@ import { fitCombatSprites, combatSpriteRatio } from '../src/ui/models/CombatSpri
 import { combatFormation } from '../src/ui/models/CombatFormationModel.js';
 import { statureFor } from '../src/ui/components/stature.js';
 import { contentBundle } from '../src/content/index.js';
-import { combatSpriteGeometry } from '../src/ui/components/combatSpriteGeometry.js';
+import { combatSpriteGeometry, visibleArtBox } from '../src/ui/components/combatSpriteGeometry.js';
+
+test('light and full enemy art measure the same figure and floor', () => {
+  const previous = globalThis.document;
+  let drawn;
+  globalThis.document = { createElement: () => ({ getContext: () => ({
+    drawImage(img) { drawn = img; },
+    getImageData() {
+      const size = drawn.naturalHeight, data = new Uint8ClampedArray(size * size * 4);
+      for (let y = size / 4; y < size * 3 / 4; y++) for (let x = size / 4; x < size * 3 / 4; x++) data[(y * size + x) * 4 + 3] = 255;
+      return { data };
+    },
+  }) }) };
+  try {
+    const measured = [384, 120].map(size => {
+      const img = { src: `tier-${size}`, complete: true, naturalHeight: size, naturalWidth: size,
+        dataset: { artSource: 'enemy-poses' }, closest: () => null,
+        getBoundingClientRect: () => ({ left: 0, top: 0, width: 200, height: 200 }) };
+      const host = { offsetWidth: 200, offsetHeight: 200,
+        getBoundingClientRect: img.getBoundingClientRect,
+        querySelector: selector => selector === '.painted-stage' ? null : img };
+      return { sprite: combatSpriteGeometry({ firstElementChild: host, offsetWidth: 200, offsetHeight: 200 }, () => {}),
+        portrait: visibleArtBox(host, () => {}) };
+    });
+    assert.deepEqual(measured[1], measured[0]);
+    assert.ok(measured[0].sprite.visibleHeight < 200);
+  } finally { if (previous === undefined) delete globalThis.document; else globalThis.document = previous; }
+});
 test('a cached sprite still waits for the new image element to load', () => {
   const previous = globalThis.document;
   globalThis.document = { createElement: () => ({ getContext: () => ({ drawImage() {}, getImageData: () => ({ data: new Uint8ClampedArray([255, 255, 255, 255]) }) }) }) };
@@ -67,4 +94,24 @@ test('transparent padding does not consume overhead clearance or erase the visib
   assert.ok(p.visibleHeight<150,'player yields space to the large boss');
   const padded = fitCombatSprites({width:1000,height:405,actors:actors.map(a=>({...a,boxHeight:a.boxHeight*2}))});
   assert.deepEqual(padded.map(a=>a.visibleHeight),[p.visibleHeight,b.visibleHeight]);
+});
+
+test('presentation growth is shared so a capped enemy never becomes smaller than the player', () => {
+  const slot = (id, x) => ({ id, ground: 300, x, artWidth: 60, depth: 1 });
+  const actor = (id, side, x, multiplier) => ({ slot: slot(id, x), side, ratio: 1, leading: 30, visibleHeight: 100, visibleWidth: 150, multiplier });
+  const sizes = fitCombatSprites({ width: 360, height: 400, actors: [actor('p', 'player', 90, 1.1), actor('e1', 'enemy', 230, 2.2), actor('e2', 'enemy', 300, 2.2)] });
+  const [p, e1, e2] = sizes;
+  assert.equal(e1.multiplier, e2.multiplier, 'two of the same foe stay the same size');
+  assert.ok(e1.multiplier >= 1 && e1.multiplier < 2.2, 'the edge caps the enemy multiplier');
+  assert.ok(e1.visibleHeight >= p.visibleHeight, 'enemy cap cannot invert the requested size order');
+  for (const [s, a] of [[p, 90], [e2, 300]]) assert.ok(a + s.scale * 150 / 2 <= 360 - 6 + 1e-8 && a - s.scale * 150 / 2 >= 6 - 1e-8);
+  const shrunk = fitCombatSprites({ width: 360, height: 400, actors: [actor('p', 'player', 90, 0.5)] });
+  assert.equal(shrunk[0].multiplier, 0.5, 'a multiplier below 1 is never capped');
+});
+
+test('a phone cell no longer boxes the figure into a thumbnail', () => {
+  const plan = combatFormation({ width: 360, height: 400, friends: ['p'], enemies: ['e'] });
+  const actors = plan.slots.map((slot) => ({ slot, ratio: 1, leading: 28, visibleHeight: 180, visibleWidth: 180 }));
+  const [player] = fitCombatSprites({ width: 360, height: 400, actors });
+  assert.ok(player.visibleHeight >= 80, `player figure ${player.visibleHeight}px`);
 });

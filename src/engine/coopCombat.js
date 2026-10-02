@@ -63,7 +63,7 @@ export function coopHpMult(headcount, factor = 0.6) {
  * Enemy HP = base roll × coopHpMult(headcount) × extraHpMult (endless/custom);
  * enemy move damage × enemyDamageMult (balance.bossTiers, SPEC §13.3).
  */
-export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null }) {
+export function createCoopCombat({ registries, rng, players, enemyIds, enemyLevels = [], extraHpMult = 1, enemyDamageMult = 1, enemyStatuses = [], ruleset = null, combatProfiles = {}, ratingsRules = registries.balance?.combatRatings || null }) {
   const C = {
     ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
@@ -116,7 +116,7 @@ export function createCoopCombat({ registries, rng, players, enemyIds, extraHpMu
     let hp = rng.int('enemyHP', def.hp[0], def.hp[1]);
     hp = Math.max(1, Math.round(hp * C.baseHpMult));
     C.enemies.push(createEnemyCombatEntity({
-      instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax,
+      instanceId: `e${i + 1}`, enemyId, level: enemyLevels[i], hp, poiseMax: def.poiseMax,
       arcaneExposure: def.arcaneExposure,
       damageResistanceBySchool: def.damageResistanceBySchool,
       damageMult: enemyDamageMult,
@@ -739,9 +739,16 @@ function executeMove(C, enemy, move, moveId) {
   for (const eff of move.effects || []) applyEnemyEffect(C, enemy, eff, moveId);
 }
 
-// Player-targeted effects fan out; self/enemy effects apply once.
+// Ops that act on the active seat's card piles (actions.js reads `ctx.piles`,
+// never `eff.target`). An enemy has no piles, so in an enemy effect these are
+// always aimed at the players: they fan out like `target: 'player'` even when
+// the row names no target (Dazed injectors; docs/FINISH.md, Owner decisions).
+const SEAT_PILE_OPS = new Set(['addCard', 'draw', 'discard', 'exhaust', 'shuffleDiscardIntoDraw']);
+
+// Player-targeted effects (and seat-pile ops) fan out to every living seat;
+// self/enemy effects apply once.
 function applyEnemyEffect(C, enemy, eff, moveId) {
-  if (eff.target === 'player') {
+  if (eff.target === 'player' || SEAT_PILE_OPS.has(eff.op)) {
     for (const P of livingPlayers(C)) {
       if (C.result) return;
       setActive(C, P);

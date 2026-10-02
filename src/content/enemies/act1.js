@@ -9,6 +9,7 @@
 export const act1Enemies = [
   {
     id: 'wanderingSoldier',
+    equipmentPower: 0.2,
     size: 'medium',
     name: 'Wandering Soldier',
     hp: [22, 26],
@@ -63,7 +64,11 @@ export const act1Enemies = [
       club: { intent: 'attack', damage: 9, weight: 50 },
       bellow: {
         intent: 'debuff', weight: 25, maxConsecutive: 1,
-        effects: [{ op: 'applyStatus', target: 'player', status: 'frail', stacks: 1 }],
+        effects: [
+          { op: 'applyStatus', target: 'player', status: 'frail', stacks: 1 },
+          // Grey weald muck (colorless.js slimed); SPEC §5.2: "enemies and events inject these".
+          { op: 'addCard', target: 'player', card: 'slimed', pile: 'discard' },
+        ],
       },
       brace: { intent: 'block', block: 8, weight: 25, maxConsecutive: 1 },
     },
@@ -92,6 +97,7 @@ export const act1Enemies = [
   // ---- Elite (SPEC §5.3) ----------------------------------------------------
   {
     id: 'wyrmAspirant',
+    equipmentPower: 0.3,
     size: 'large',
     tint: 'var(--gold)',
     name: 'Wyrm Aspirant',
@@ -120,6 +126,7 @@ export const act1Enemies = [
   // ---- Boss: The Fell Warden (SPEC §5.3 — the Fell Warden-inspired) -----------------
   {
     id: 'fellWarden',
+    equipmentPower: 0.3,
     size: 'large',
     tint: 'var(--blood)',
     name: 'The Fell Warden',

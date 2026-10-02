@@ -127,5 +127,12 @@ export const tagFamilies = [
     "scopeField": "",
     "label": "Companion",
     "blurb": "A temporary ally bought at the market (SPEC §14.3). It travels with the run for a number of fights, and what it does is its property rows here, mounted at combat start (engine/properties.js)."
+  },
+  {
+    "family": "sigil",
+    "source": "sigils",
+    "scopeField": "",
+    "label": "Sigil",
+    "blurb": "A sigil set into an armament's slot at the blacksmith (SPEC §14.3, §14.4). What it does is its property row here, mounted while its armament is equipped (engine/properties.js)."
   }
 ];

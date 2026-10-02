@@ -283,6 +283,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "reward.levelUp.action",
+    "extends": "",
+    "short": "Level Up!",
+    "full": "Choose a bonus card for the level gained.",
+    "tip": "Level Up!"
+  },
+  {
     "id": "reward.note.cardMissed",
     "extends": "",
     "short": "No card this time.",
@@ -2105,7 +2112,7 @@ export const uiStrings = [
   {
     "id": "settings.levelPace.subtitle",
     "extends": "",
-    "short": "A new run under these settings",
+    "short": "Current XP settings",
     "full": "",
     "tip": ""
   },
@@ -2161,7 +2168,21 @@ export const uiStrings = [
   {
     "id": "settings.levelPace.fightLine",
     "extends": "",
-    "short": "{fight} ({kills} kill{killsPlural}) gives {xp} XP: {worth}.",
+    "short": "{fight} ({kills} level-1 kill{killsPlural} at power 3 each) gives {xp} XP: {worth}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.killLine",
+    "extends": "",
+    "short": "Fight XP = floor(total enemy power × {powerFactor} × {powerBase} + {base} × {levelFactor} × total enemy levels). Power adds level and combat stats plus a small equipment bonus. Two level-5 enemies at power 3 each give {example} XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.levelPace.skillLine",
+    "extends": "",
+    "short": "A skill hit gives {hit} XP and a win gives {win} equipped-skill XP; the first skill level costs {cost} XP.",
     "full": "",
     "tip": ""
   },
@@ -2239,7 +2260,7 @@ export const uiStrings = [
     "id": "settings.shops.topic.blacksmith",
     "extends": "",
     "short": "Blacksmith",
-    "full": "The blacksmith's offerings and prices. No merchant is a blacksmith until its screen ships.",
+    "full": "The blacksmith's offerings and prices. An atlas smith is always a blacksmith; a merchant on the map is one only when its weight is above 0.",
     "tip": ""
   },
   {
@@ -2260,7 +2281,7 @@ export const uiStrings = [
     "id": "settings.shops.topic.master",
     "extends": "",
     "short": "Wise master",
-    "full": "The wise master's offerings and prices. No merchant is a master until its screen ships.",
+    "full": "The wise master's offerings and prices. An atlas master is always one; a merchant on the map is one only when its weight is above 0.",
     "tip": ""
   },
   {
@@ -2547,6 +2568,762 @@ export const uiStrings = [
     "id": "settings.shops.refuse.armourCost",
     "extends": "",
     "short": "{kind} · {offering}: a cost from {min} to {max} is refused; the least must not be above the most. The authored shops stay in force until it is fixed.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.title",
+    "extends": "",
+    "short": "THE BLACKSMITH",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.leave",
+    "extends": "",
+    "short": "Leave",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.rail.aria",
+    "extends": "",
+    "short": "The blacksmith's offerings",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.bar.armaments",
+    "extends": "",
+    "short": "ARMAMENTS",
+    "full": "The blacksmith's rack of weapons and shields.",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.bar.upgrade",
+    "extends": "",
+    "short": "UPGRADE",
+    "full": "Raise an item you own by one tier.",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.bar.smithStones",
+    "extends": "",
+    "short": "SMITHING STONES",
+    "full": "The stones a smith's work is paid in.",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.bar.refineStones",
+    "extends": "",
+    "short": "REFINE",
+    "full": "Fold ordinary stones into a refined one.",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.bar.sigilSlots",
+    "extends": "",
+    "short": "SIGIL SLOTS",
+    "full": "Cut a sigil slot into an armament you carry.",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.bar.sigils",
+    "extends": "",
+    "short": "SET SIGILS",
+    "full": "Set a sigil you carry into a slot, or take one out.",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.bar.extractArt",
+    "extends": "",
+    "short": "EXTRACT",
+    "full": "Lift a weapon art out of an item.",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.bar.installArt",
+    "extends": "",
+    "short": "SEAT AN ART",
+    "full": "Seat a loose weapon art in an open mount.",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.bar.upgradeArt",
+    "extends": "",
+    "short": "UPGRADE AN ART",
+    "full": "Upgrade a loose weapon-art card.",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.bar.stackCopy",
+    "extends": "",
+    "short": "STACK A COPY",
+    "full": "Forge one more copy of a weapon art or technique you own.",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.status.ready",
+    "extends": "",
+    "short": "{count} ready",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.status.idle",
+    "extends": "",
+    "short": "nothing yet",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.purse",
+    "extends": "",
+    "short": "{stones} stone(s) · {refined} refined · {cinders} cinders",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refine.title",
+    "extends": "",
+    "short": "Refine a stone",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refine.desc",
+    "extends": "",
+    "short": "{from} Smithing Stone(s) and {cost} cinders make one refined stone, worth {value} stone(s) toward any upgrade.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.action.refine",
+    "extends": "",
+    "short": "Refine",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.action.buy",
+    "extends": "",
+    "short": "Buy",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.action.upgrade",
+    "extends": "",
+    "short": "Upgrade ({cost} stone(s))",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.action.upgradeRefined",
+    "extends": "",
+    "short": "Upgrade ({cost} refined)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.action.cutSlot",
+    "extends": "",
+    "short": "Cut a slot ({cost} cinders)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.action.setSigil",
+    "extends": "",
+    "short": "Set {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.action.removeSigil",
+    "extends": "",
+    "short": "Take out {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.action.open",
+    "extends": "",
+    "short": "Open",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.action.upgradeArt",
+    "extends": "",
+    "short": "Upgrade ({cost} stone(s))",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.action.stack",
+    "extends": "",
+    "short": "Stack ({stones} stone(s), {cost} cinders)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.upgrade.line",
+    "extends": "",
+    "short": "{name}: tier {from} to {to}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.slots.line",
+    "extends": "",
+    "short": "{name}: {count} of {max} slot(s)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.slot.empty",
+    "extends": "",
+    "short": "empty slot",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.stones.line",
+    "extends": "",
+    "short": "{left} left, {price} cinders each",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.art.line",
+    "extends": "",
+    "short": "{name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.stack.line",
+    "extends": "",
+    "short": "{name}: {owned} owned",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.armament.line",
+    "extends": "",
+    "short": "{name}: {cost} cinders",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.idle.upgrade",
+    "extends": "",
+    "short": "Nothing you own has an upgrade left.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.idle.refineStones",
+    "extends": "",
+    "short": "There is nothing to refine.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.idle.sigilSlots",
+    "extends": "",
+    "short": "You carry no armament that can take another slot.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.idle.sigils",
+    "extends": "",
+    "short": "You have no sigil to set in an empty slot, and none set to take out.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.idle.extractArt",
+    "extends": "",
+    "short": "Nothing you carry holds a weapon art a smith can lift out.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.idle.installArt",
+    "extends": "",
+    "short": "No item has an open mount, or you have no loose art that fits one.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.idle.upgradeArt",
+    "extends": "",
+    "short": "You have no loose weapon art left to upgrade.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.idle.stackCopy",
+    "extends": "",
+    "short": "You own no loose weapon art or technique to stack.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.notOffered",
+    "extends": "",
+    "short": "This blacksmith is not offering that.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.stones",
+    "extends": "",
+    "short": "That costs {cost} Smithing Stone(s); you have {have}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.refined",
+    "extends": "",
+    "short": "That costs {cost} refined stone(s); you have {have}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.refineStones",
+    "extends": "",
+    "short": "Refining takes {from} Smithing Stone(s); you have {have}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.notCarried",
+    "extends": "",
+    "short": "You do not carry {name}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.slotsFull",
+    "extends": "",
+    "short": "{name} already has its most sigil slots ({max}).",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.noSlot",
+    "extends": "",
+    "short": "{name} has no such slot.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.slotTaken",
+    "extends": "",
+    "short": "That slot of {name} already holds a sigil.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.slotEmpty",
+    "extends": "",
+    "short": "That slot of {name} holds no sigil.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.sigilNotCarried",
+    "extends": "",
+    "short": "You do not carry {name}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.sigilLegendary",
+    "extends": "",
+    "short": "{name} is legendary: it is attuned, never set into a slot.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.artNotLoose",
+    "extends": "",
+    "short": "{name} belongs to an item; only a loose card can be worked.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.notArt",
+    "extends": "",
+    "short": "{name} is not a weapon art.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.artUpgraded",
+    "extends": "",
+    "short": "{name} is already upgraded.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.noCardUpgrade",
+    "extends": "",
+    "short": "{name} has no upgrade.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.stackBasic",
+    "extends": "",
+    "short": "{name} is a basic card; you already have it without limit.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.stackGranted",
+    "extends": "",
+    "short": "{name} is granted by an item; only a loose copy you own can be stacked.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.stackUnowned",
+    "extends": "",
+    "short": "You own no {name} to stack.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.stackKind",
+    "extends": "",
+    "short": "{name} is neither a weapon art nor a technique.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.upgradeNone",
+    "extends": "",
+    "short": "{name} has no upgrade the blacksmith can make now.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "blacksmith.refuse.noMount",
+    "extends": "",
+    "short": "That mount cannot be worked now.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.title",
+    "extends": "",
+    "short": "THE WISE MASTER",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.leave",
+    "extends": "",
+    "short": "Leave",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.rail.aria",
+    "extends": "",
+    "short": "The master's offerings",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.skillBooks",
+    "extends": "",
+    "short": "SKILL BOOKS",
+    "full": "Books for the skills this master teaches.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.weaponArts",
+    "extends": "",
+    "short": "WEAPON ARTS",
+    "full": "Weapon arts of the pieces this master teaches.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.armaments",
+    "extends": "",
+    "short": "ARMAMENTS",
+    "full": "Armaments of the item types this master teaches.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.training",
+    "extends": "",
+    "short": "TRAINING",
+    "full": "Pay for XP on one of the master's skills.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.respec",
+    "extends": "",
+    "short": "RESPEC",
+    "full": "Return one of the master's skills to level 1, and keep part of its XP in your training pool.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.lesson",
+    "extends": "",
+    "short": "LESSON",
+    "full": "Buy one skill draft for one of the master's skills.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.appraisal",
+    "extends": "",
+    "short": "APPRAISAL",
+    "full": "See the master's skills: level, XP, what a lesson could draw and what a respec would pay.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.redistribute",
+    "extends": "",
+    "short": "REDISTRIBUTE",
+    "full": "Spend your training pool on any skill.",
+    "tip": ""
+  },
+  {
+    "id": "master.bar.sell",
+    "extends": "",
+    "short": "SELL",
+    "full": "Sell the skill books and revive tokens you carry.",
+    "tip": ""
+  },
+  {
+    "id": "master.purse",
+    "extends": "",
+    "short": "{cinders} cinders · training pool {pool} XP · {left} session(s) left",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.track.line",
+    "extends": "",
+    "short": "Level {level} · {xp} / {next} XP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.offer.line",
+    "extends": "",
+    "short": "{text} {cost} cinders.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.respec.line",
+    "extends": "",
+    "short": "refund {refund} XP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.lesson.unasked",
+    "extends": "",
+    "short": "Ask for a lesson to see its {count} card(s).",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.appraisal.draws",
+    "extends": "",
+    "short": "A lesson could draw: {names}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.appraisal.drawsNone",
+    "extends": "",
+    "short": "A lesson could draw nothing now.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.appraisal.respec",
+    "extends": "",
+    "short": "Respec: {refund} XP back for {cost} cinders",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.sell.none",
+    "extends": "",
+    "short": "You carry no skill book or revive token to sell.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.buy",
+    "extends": "",
+    "short": "Buy",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.train",
+    "extends": "",
+    "short": "Train ({cost} cinders, +{xp} XP)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.respec",
+    "extends": "",
+    "short": "Respec ({cost} cinders)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.askLesson",
+    "extends": "",
+    "short": "Ask for a lesson",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.lesson",
+    "extends": "",
+    "short": "Learn {name} ({cost} cinders)",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.action.spend",
+    "extends": "",
+    "short": "Spend {amount} XP",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.idle.training",
+    "extends": "",
+    "short": "No training sessions are left this visit.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.idle.respec",
+    "extends": "",
+    "short": "None of the master's skills is at level 2 or higher.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.idle.lesson",
+    "extends": "",
+    "short": "Every one of the master's skills has taken its lesson this visit, or has nothing to draw.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.idle.appraisal",
+    "extends": "",
+    "short": "The master has no skill to appraise.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.idle.redistribute",
+    "extends": "",
+    "short": "Your training pool is empty. A respec fills it.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.notOffered",
+    "extends": "",
+    "short": "This master is not offering that.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.untaught",
+    "extends": "",
+    "short": "{master} does not teach {skill}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.trainingSpent",
+    "extends": "",
+    "short": "No training sessions are left this visit.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.respecLevel",
+    "extends": "",
+    "short": "{skill} is at level {level}; a respec needs level 2 or higher.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.unknownTrack",
+    "extends": "",
+    "short": "'{skill}' is not a skill.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.poolEmpty",
+    "extends": "",
+    "short": "Your training pool is empty.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.amount",
+    "extends": "",
+    "short": "Spend a whole amount from 1 to {pool} XP, not {amount}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.lessonUnrolled",
+    "extends": "",
+    "short": "Ask for a lesson in {skill} first.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.lessonEmpty",
+    "extends": "",
+    "short": "There is nothing a lesson in {skill} could teach you now.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.lessonTaken",
+    "extends": "",
+    "short": "You have already taken this visit's lesson in {skill}.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "master.refuse.lessonCard",
+    "extends": "",
+    "short": "That card is not one of this lesson's.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.shops.refuse.sigilSlotBase",
+    "extends": "",
+    "short": "Blacksmith · Sigil slots: a base of {base} is refused; it must not be above the most slots, {max}, which counts the base. The authored shops stay in force until it is fixed.",
     "full": "",
     "tip": ""
   },

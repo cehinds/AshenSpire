@@ -459,6 +459,102 @@ export const nodeTerms = [
     "template": "At the start of your turn, gain {block} Block."
   },
   {
+    "nodeId": "partingBlow",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Leaving a stance deals {damage} damage to a random enemy."
+  },
+  {
+    "nodeId": "ironRebuke",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "While in Brace, losing HP deals {damage} damage to a random enemy."
+  },
+  {
+    "nodeId": "cinderGrip",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first stance you enter each turn applies {bleed} Bleed to every enemy."
+  },
+  {
+    "nodeId": "mendingGrip",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first stance you enter each turn heals {heal}."
+  },
+  {
+    "nodeId": "spentStars",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first card you exhaust each turn restores {restoreMana} Mana."
+  },
+  {
+    "nodeId": "fallingStar",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first time you restore Mana each turn, deal {damage} damage to a random enemy."
+  },
+  {
+    "nodeId": "lodestarPull",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Begin each combat with {vulnerable} Vulnerable on every enemy."
+  },
+  {
+    "nodeId": "shardHunger",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Whenever an enemy Staggers, restore {restoreMana} Mana."
+  },
+  {
+    "nodeId": "burningGrace",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Whenever you heal, deal {damage} damage to a random enemy."
+  },
+  {
+    "nodeId": "dazzlingLight",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first time you heal each turn, apply {weak} Weak to every enemy."
+  },
+  {
+    "nodeId": "anointedBlade",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first time you heal each combat, gain {strength} Strength."
+  },
+  {
+    "nodeId": "unsealedScroll",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first time you heal each combat, draw {draw} cards."
+  },
+  {
+    "nodeId": "lowProfile",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Each time Prepared is applied to you, gain {block} Block."
+  },
+  {
+    "nodeId": "feint",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first time Prepared is applied to you each turn, deal {poiseDamage} Poise damage to a random enemy."
+  },
+  {
+    "nodeId": "spareWhetstone",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Your first attack while Prepared each combat gains {gainEnergy} Energy."
+  },
+  {
+    "nodeId": "whettedGuard",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Each hit you land while Prepared grants {block} Block."
+  },
+  {
     "nodeId": "restHpSmall",
     "playerTermId": "",
     "tooltipTermId": "",
@@ -511,5 +607,29 @@ export const nodeTerms = [
     "playerTermId": "",
     "tooltipTermId": "",
     "template": "At the start of each of your turns, deal {damage} damage to a random enemy."
+  },
+  {
+    "nodeId": "emberSigil",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "At the start of each fight, gain {block} Block."
+  },
+  {
+    "nodeId": "thornSigil",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "The first time you hit with an attack each fight, apply {bleed} Bleed."
+  },
+  {
+    "nodeId": "tideSigil",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Every {n}th card you play in a fight draws {draw} card."
+  },
+  {
+    "nodeId": "hearthSigil",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Whenever you heal, gain {block} Block."
   }
 ];

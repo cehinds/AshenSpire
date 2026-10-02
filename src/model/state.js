@@ -32,6 +32,7 @@ import { openLedger, closeLedger, note } from './healLedger.js';
 import { WORN_ZONE_SLOTS, WORN_SLOT_IDS, HAND_SLOT_IDS, projectZones } from './zones.js';
 import { skillsProblems } from './skills.js';
 import { coreTagsProblems } from './classTree.js';
+import { featById } from './feats.js';
 import { combatSnapshotProblems } from './combatSnapshot.js';
 import { defaultSeatOrder, seatOrderProblems } from './seats.js';
 import { bringShopStockForward, shopStockProblems } from './shopKinds.js';
@@ -69,7 +70,17 @@ import { sigilInventoryProblems } from './sigils.js';
 // 16 (SPEC §14.3, §14.6 step 5b): `consumables` ({ [id]: count }, skill books
 // and revive tokens) and `companions` ([{ id, combatsLeft }]) ride the save. A
 // v15-or-older save is filled with {} and [] at migrateRunSchema.
-export const RUN_SCHEMA_VERSION = 16;
+// 17 (SPEC §14.4, §14.6 step 6): a `blacksmith` stock can sit on `shopStock`
+// and on an atlas smith point's `serviceStates[pointId].stock` (rolled on
+// first entry). The bump is what makes an OLDER build refuse-and-keep such a
+// save rather than open a kind it has no screen for; a v16 save has no
+// blacksmith stock, so 16 → 17 fills nothing at the migration door.
+// 18 (SPEC §14.5, §14.6 step 7): `trainingPool`, the XP a wise master's
+// respec refunded and redistribute spends, rides the save; and a `master`
+// stock can sit on `shopStock` and on an atlas master point's
+// `serviceStates[pointId].stock`, which an older build must refuse and keep.
+// A v17-or-older save is filled with a pool of 0 at migrateRunSchema.
+export const RUN_SCHEMA_VERSION = 18;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -174,6 +185,7 @@ export function createRunState({
     skills: {},
     // The class tree's picks (plan phase 5b): the core zone's own tagging rows.
     coreTags: [],
+    feats: [],
     // THE POINTS THOSE LEVELS GRANTED, and not a copy of the count above: the
     // two are one number only while the level value is one number. Constantine
     // made it a dial on 2026-08-17 ("leave the level up value configurable"),
@@ -206,6 +218,9 @@ export function createRunState({
     // into items ({ [itemRef]: (sigilId|null)[] }, keyed like itemMounts).
     sigils: [],
     sigilSlots: {},
+    // SPEC §14.5: the XP a wise master's respec refunded, spent on any track
+    // through his redistribute.
+    trainingPool: 0,
     // SPEC §14.3 (schema 16): skill books and revive tokens carried, and the
     // companions travelling with the run.
     consumables: {},
@@ -667,6 +682,7 @@ export const RUN_SHAPE = [
   // Plan phase 5b. Required at schema 9; a preCoreTags save (≤ 8) is filled
   // with no picks at the migration door.
   { key: 'coreTags', type: 'array' },
+  { key: 'feats', type: 'array', optional: true },
   // Plan phase 5c: the item types in hand as each boss fell, for the
   // bossWithGroup unlock; optional, written at the boss door.
   { key: 'bossGroups', type: 'object', optional: true },
@@ -689,6 +705,10 @@ export const RUN_SHAPE = [
   // preConsumables save (≤ 15) is filled with {} and [] at the migration door.
   { key: 'consumables', type: 'object' },
   { key: 'companions', type: 'array' },
+  // SPEC §14.5. Required at schema 18: the training pool a respec fills and
+  // redistribute spends, a whole number of at least 0. A preTrainingPool save
+  // (≤ 17) is filled with 0 at the migration door.
+  { key: 'trainingPool', type: 'number' },
   // SPEC §14.2. The open shop visit's stock, null between visits. Since
   // schema 14 it carries `kind` and `offerings` (shopStockProblems); a
   // preShopKinds save (≤ 13) is read as a market at the migration door.
@@ -790,7 +810,13 @@ function pendingDraftRows(pending) {
   const level = (Array.isArray(rewards.levelCards) ? rewards.levelCards : [])
     .filter((d) => d && Array.isArray(d.cardIds) && d.cardIds.length > 0)
     .map((d, i) => ({ key: `levelCard:${Number.isInteger(d.ordinal) ? d.ordinal : i}`, cardIds: d.cardIds, ids: d.cardIds }));
-  return [...cls, ...skill, ...level];
+  const choices = (Array.isArray(rewards.levelChoices) ? rewards.levelChoices : [])
+    .filter((d) => d && Array.isArray(d.options) && d.options.length > 0)
+    .map((d, i) => {
+      const ids = d.options.map((option) => `${option.kind}:${option.id}`);
+      return { key: `levelChoice:${Number.isInteger(d.ordinal) ? d.ordinal : i}`, cardIds: ids, ids };
+    });
+  return [...cls, ...skill, ...level, ...choices];
 }
 const pendingDraftKeys = (pending) => pendingDraftRows(pending).map((d) => d.key);
 
@@ -809,7 +835,7 @@ export function levelProblems(level) {
   return problems;
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils } = {}) {
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables } = {}) {
   const problems = [];
   problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
@@ -831,6 +857,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (preRefinedStones && f.key === 'smithingStonesRefined') continue;
     if (preSigils && (f.key === 'sigils' || f.key === 'sigilSlots')) continue;
     if (preConsumables && (f.key === 'consumables' || f.key === 'companions')) continue;
+    if (preTrainingPool && f.key === 'trainingPool') continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -850,6 +877,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.zones !== undefined) problems.push(...zonesProblems(run.zones));
   if (run.skills !== undefined) problems.push(...skillsProblems(run.skills));
   if (run.coreTags !== undefined) problems.push(...coreTagsProblems(run.coreTags));
+  if (Array.isArray(run.feats)) run.feats.forEach((id, i) => {
+    if (typeof id !== 'string' || !featById(id)) problems.push(`feats[${i}] must name an authored feat`);
+  });
   problems.push(...sigilInventoryProblems(run), ...boughtArmourProblems(run.loadout), ...consumablesProblems(run), ...companionsProblems(run));
   if (Array.isArray(run.sideboard)) {
     run.sideboard.forEach((card, i) => {
@@ -924,6 +954,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.smithingStones !== undefined && (!Number.isInteger(run.smithingStones) || run.smithingStones < 0)) {
     problems.push('smithingStones must be a non-negative integer');
   }
+  if (run.trainingPool !== undefined && (!Number.isSafeInteger(run.trainingPool) || run.trainingPool < 0)) {
+    problems.push(`trainingPool must be a whole number of at least 0, got ${JSON.stringify(run.trainingPool)}`);
+  }
   if (run.smithingStonesRefined !== undefined && (!Number.isInteger(run.smithingStonesRefined) || run.smithingStonesRefined < 0)) {
     problems.push('smithingStonesRefined must be a non-negative integer');
   }
@@ -981,6 +1014,14 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
       if (pending.schemaVersion !== 1) problems.push('pendingReward.schemaVersion must be 1');
       if (typeof pending.source !== 'string' || !pending.source) problems.push('pendingReward.source must be a non-empty string');
       if (!['map', 'advanceAct'].includes(pending.after)) problems.push('pendingReward.after must be map or advanceAct');
+      if (pending.expanded !== undefined && typeof pending.expanded !== 'boolean') problems.push('pendingReward.expanded must be a boolean');
+      if (pending.levelClaims !== undefined && (!Number.isInteger(pending.levelClaims) || pending.levelClaims < 0)) problems.push('pendingReward.levelClaims must be a non-negative integer');
+      if (pending.skillClaims !== undefined) {
+        if (!pending.skillClaims || Array.isArray(pending.skillClaims) || typeof pending.skillClaims !== 'object') problems.push('pendingReward.skillClaims must be an object');
+        else for (const [id, count] of Object.entries(pending.skillClaims)) {
+          if (!id || !Number.isInteger(count) || count < 0) problems.push(`pendingReward.skillClaims.${id || '<empty>'} must be a non-negative integer`);
+        }
+      }
       if (!pending.rewards || Array.isArray(pending.rewards) || typeof pending.rewards !== 'object') {
         problems.push('pendingReward.rewards must be an object');
       }
@@ -1021,6 +1062,19 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
             if (!Array.isArray(d.cardIds) || !d.cardIds.length || d.cardIds.some((id) => typeof id !== 'string' || !id)) problems.push(`${p}.cardIds must be a non-empty array of card ids`);
           });
         }
+      }
+      if (pending.rewards?.levelChoices !== undefined) {
+        const rows = pending.rewards.levelChoices;
+        if (!Array.isArray(rows)) problems.push('pendingReward.rewards.levelChoices must be an array');
+        else rows.forEach((d, i) => {
+          const p = `pendingReward.rewards.levelChoices[${i}]`;
+          if (!d || !Number.isInteger(d.ordinal) || d.ordinal < 0 || !Array.isArray(d.options) || !d.options.length) {
+            problems.push(`${p} must have an ordinal and choices`); return;
+          }
+          for (const option of d.options) {
+            if (!option || !['feat', 'classNode'].includes(option.kind) || typeof option.id !== 'string' || !option.id) problems.push(`${p}.options must name feats or class nodes`);
+          }
+        });
       }
       if (pending.rewards?.cardMissed !== undefined && typeof pending.rewards.cardMissed !== 'boolean') {
         problems.push('pendingReward.rewards.cardMissed must be a boolean');
@@ -1327,11 +1381,16 @@ export function migrateRunSchema(run) {
   // v15 and older: no consumables, no companions. Filled HERE (SPEC §14.3): a
   // run that could not buy either holds none.
   const preConsumables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, ${RUN_SCHEMA_VERSION})`);
+  // v16: no blacksmith stock could be written (SPEC §14.4); nothing to fill.
+  // v17 and older: no training pool. Filled HERE with 0 (SPEC §14.5): no
+  // respec could have refunded anything before the wise master existed.
+  const preTrainingPool = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(run.schemaVersion);
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, ${RUN_SCHEMA_VERSION})`);
   }
   if (preShopKinds) bringShopStockForward(run);
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables, preTrainingPool });
+  if (preTrainingPool && (run.trainingPool === undefined || run.trainingPool === null)) run.trainingPool = 0;
   if (preSigils && (run.sigils === undefined || run.sigils === null)) run.sigils = [];
   if (preConsumables && (run.consumables === undefined || run.consumables === null)) run.consumables = {};
   if (preConsumables && (run.companions === undefined || run.companions === null)) run.companions = [];
@@ -1453,11 +1512,12 @@ export function stampPlayerPoiseMax(entity, max) {
  * the poiseDamage opcode (SPEC §3.7, §4.4); everything else about Stagger is
  * content data.
  */
-export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, damageMult = 1 }) {
+export function createEnemyCombatEntity({ instanceId, enemyId, hp, poiseMax, arcaneExposure, damageResistanceBySchool, damageMult = 1, level = 1 }) {
   const entity = {
     id: instanceId,
     kind: 'enemy',
     enemyId,
+    level: Number.isSafeInteger(level) && level > 0 ? level : 1,
     hp,
     maxHp: hp,
     block: 0,

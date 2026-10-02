@@ -71,13 +71,18 @@ export function withKitDom(fn) {
   dom.document.addEventListener = add(docListeners);
   dom.document.removeEventListener = drop(docListeners);
   dom.document.getElementById = (id) => dom.document.body.querySelector(`#${id}`);
+  // The fixture represents text as element content, without native Text nodes.
+  dom.document.createTreeWalker = () => ({ nextNode: () => false, currentNode: null });
   dom.document.activeElement = dom.document.body;
   // Custom elements are registered and never upgraded: the fixture has no
   // connection lifecycle, so a registered tag builds a plain element.
   const registry = new Map();
   const win = {
     ...dom,
-    HTMLElement: class {},
+    HTMLElement: dom.document.body.constructor,
+    Node: dom.document.body.constructor,
+    NodeFilter: { SHOW_TEXT: 4 },
+    MutationObserver: class { observe() {} disconnect() {} },
     customElements: { get: (name) => registry.get(name), define: (name, ctor) => { registry.set(name, ctor); } },
     addEventListener: add(listeners),
     removeEventListener: drop(listeners),
@@ -86,6 +91,7 @@ export function withKitDom(fn) {
     MouseEvent: dom.Event,
     PointerEvent: dom.Event,
     innerWidth: 390,
+    innerHeight: 844,
     // A key press as a browser delivers it: window capture (input.js), then
     // document capture (the modal shell), then window bubble, unless stopped.
     press(key, extra = {}) {

@@ -4,7 +4,7 @@
 // so no existing stream moves. The market's shelves still roll on `shop`
 // exactly as buildShopStock always has; this file only decides which of them
 // are out on the visit, and which kind a classic merchant turns out to be.
-import { buildShopStock, eligibleEventIds } from './encounters.js';
+import { buildShopStock, eligibleEventIds, rollSkillDraftIds } from './encounters.js';
 import { createRng } from './rng.js';
 import { createLocationVisit, arriveAt, restAt, leaveLocation } from './locations.js';
 import { SHOP_KINDS, SHOP_KIND_SCREENS, MARKET_SHELVES } from '../model/shopKinds.js';
@@ -14,6 +14,13 @@ import { applyShopPriceMult } from '../model/marketStock.js';
 import { innRestPlan, stale } from '../model/marketAdditions.js';
 import { ownedSigilIds } from '../model/sigils.js';
 import { hasRemovableCard } from '../model/cardRemoval.js';
+import { carriedIds } from '../model/loadout.js';
+import { BLACKSMITH_SERVICES, serviceCandidates } from '../model/blacksmith.js';
+import {
+  MASTER_SERVICES, MASTER_SHELVES, masterOf, masterOffers, masterBookPool, masterArtPool, masterArmamentPool,
+  masterServiceCandidates, masterSchools, lessonLevel, trackLabel,
+} from '../model/master.js';
+import { shopSentence } from '../model/shopKinds.js';
 
 const STREAM = 'shopOffers';
 
@@ -147,10 +154,10 @@ export function buildMarketStock(registries, rng, run, { meta = {}, innInTown = 
  * a custom run's price multiplier (Greedy Merchants, Hoarder) is applied to
  * every price the visit laid out, the additions included.
  */
-export function marketVisitStock(registries, rng, run, { meta = {}, door = 'merchant', ownerId = null, priceMult = 1 } = {}) {
+export function marketVisitStock(registries, rng, run, { meta = {}, door = 'merchant', ownerId = null, priceMult = 1, flatRarity = false } = {}) {
   const stock = door === 'atlas'
     ? buildMarketStock(registries, rng, run, { meta, innInTown: innInTown(registries, ownerId) })
-    : buildMerchantStock(registries, rng, run, { meta });
+    : buildMerchantStock(registries, rng, run, { meta, flatRarity });
   return applyShopPriceMult(stock, priceMult);
 }
 
@@ -245,7 +252,7 @@ const ADDITION_STOCK = Object.freeze({
 });
 
 /**
- * commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts }) →
+ * commitInnRest({ run, registries, rng }, quote, { healMult, refillCounts, restBonus }) →
  * the rest receipt (SPEC §14.3). Runs the inn's own visit on the run's own
  * streams — createLocationVisit(ctx, 'inn') → arriveAt → restAt →
  * leaveLocation (§13.4j) — so the inn's `arrived` rules (the flask refill)
@@ -257,11 +264,12 @@ const ADDITION_STOCK = Object.freeze({
  * refusal names the relic; otherwise the real visit, being the same rules on
  * the same values, does exactly what the copy did.
  */
-export function commitInnRest({ run, registries, rng }, quote, { healMult = 1, refillCounts = null } = {}) {
+export function commitInnRest({ run, registries, rng }, quote, { healMult = 1, refillCounts = null, restBonus = null } = {}) {
   const plan = innRestPlan(registries, run);
   if (!plan.ok) throw new Error(plan.reason);
   stale(quote, plan);
-  const opts = { healMult, refillCounts };
+  // restBonus: Settings → Advanced → Recovery's at-Rest percents, as every Rest.
+  const opts = { healMult, refillCounts, restBonus };
   const dryRng = rng && typeof rng.getCounters === 'function' ? createRng(rng.seed, rng.getCounters()) : createRng((run.seed ?? 0) >>> 0);
   const dry = createLocationVisit({ run: structuredClone(run), registries, rng: dryRng }, INN_LOCATION, opts);
   try {
@@ -295,5 +303,187 @@ export function commitInnRest({ run, registries, rng }, quote, { healMult = 1, r
 export function buildMerchantStock(registries, rng, run, opts = {}) {
   const kind = rollShopKind(registries.shops, rng);
   if (!SHOP_KIND_SCREENS.includes(kind)) throw new Error(`buildMerchantStock: the ${kind} shop has no screen registered yet (SPEC §14.6)`);
+  // A merchant that rolls `blacksmith` (weight 0 shipped) offers that kind's
+  // offerings only, not market shelves (SPEC §14.2).
+  if (kind === 'blacksmith') return buildBlacksmithStock(registries, rng, run);
+  // …and one that rolls `master` (weight 0 shipped) opens a master visit
+  // (SPEC §14.5): his offerings only, no market shelf.
+  if (kind === 'master') return buildMasterStock(registries, rng, run, { flatRarity: opts.flatRarity === true });
   return buildMarketStock(registries, rng, run, opts);
+}
+
+// ---------------------------------------------------------------------------
+// The blacksmith (SPEC §14.4, §14.6 step 6)
+// ---------------------------------------------------------------------------
+
+// The armaments the blacksmith's rack can draw from: every armament the run
+// does not carry that has a `balance.shop.armamentCost` row, the market's pool.
+function blacksmithArmamentPool(registries, run) {
+  const carried = new Set(carriedIds(run.loadout));
+  const costs = registries.balance.shop.armamentCost || {};
+  return (registries.equipment.armaments || []).filter((piece) => !carried.has(piece.id) && Array.isArray(costs[piece.rarity]));
+}
+
+/**
+ * buildBlacksmithStock(registries, rng, run) → a blacksmith visit:
+ * `{ kind: 'blacksmith', offerings, armaments?, smithStones? }` (SPEC §14.4).
+ *
+ * Every draw is on `shopOffers`, never `shop`, so no market shelf moves. The
+ * offerings roll as every kind's do (rollShopOfferings); then:
+ *   · a STOCKED shelf that comes up empty — no armament left to draw, a rack
+ *     or stone stock of 0 — is omitted, as §14.2's backstop omits one;
+ *   · a SERVICE with nothing to act on now STAYS laid out (coordinator ruling
+ *     on #1378): it is judged live on the screen and when quoted, so it can
+ *     become usable on this visit. It does not count toward the guarantee, so
+ *     the missing enabled offerings that have something now are added by
+ *     weight, with no further draw, until enough usable ones are out.
+ * Then the rack draws `armaments.stock` pieces and prices each over its
+ * rarity's `armamentCost` row, and the stone shelf is `{ price, left }`.
+ * Service prices are never stored: model/blacksmith.js reads them when quoted.
+ */
+export function buildBlacksmithStock(registries, rng, run) {
+  const kindDef = registries.shops.blacksmith;
+  const written = (kindDef.offerings || []).filter(Boolean);
+  const row = (id) => written.find((offering) => offering.id === id);
+  const pool = blacksmithArmamentPool(registries, run);
+  const up = new Set(rollShopOfferings(kindDef, rng));
+  const stockEmpty = (offering) => {
+    if (offering.id === 'armaments') return !pool.length || !(offering.stock > 0);
+    if (offering.id === 'smithStones') return !(offering.perVisit > 0);
+    return false;
+  };
+  const idle = (offering) => BLACKSMITH_SERVICES.includes(offering.id) && serviceCandidates(registries, run, offering.id).length === 0;
+  for (const offering of written) if (up.has(offering.id) && stockEmpty(offering)) up.delete(offering.id);
+  const minimum = Number(kindDef.guaranteedMinimum) || 0;
+  const usable = () => written.filter((offering) => up.has(offering.id) && !idle(offering)).length;
+  if (usable() < minimum) {
+    const missing = written
+      .map((offering, index) => ({ offering, index }))
+      .filter(({ offering }) => offering.enabled === true && !up.has(offering.id) && !stockEmpty(offering) && !idle(offering))
+      .sort((a, b) => (Number(b.offering.weight) || 0) - (Number(a.offering.weight) || 0) || a.index - b.index);
+    for (const { offering } of missing) {
+      if (usable() >= minimum) break;
+      up.add(offering.id);
+    }
+  }
+  const stock = { kind: 'blacksmith', offerings: written.filter((offering) => up.has(offering.id)).map((offering) => offering.id) };
+  if (up.has('armaments')) {
+    const costs = registries.balance.shop.armamentCost;
+    stock.armaments = pickSome(rng, pool, row('armaments').stock).map((piece) => ({ id: piece.id, cost: Math.max(1, rng.int(STREAM, ...costs[piece.rarity])) }));
+  }
+  if (up.has('smithStones')) stock.smithStones = { price: row('smithStones').price, left: row('smithStones').perVisit };
+  return stock;
+}
+
+/**
+ * blacksmithVisitStock(registries, rng, run, { priceMult }) → the stock an
+ * atlas smith point opens with (SPEC §14.2, §14.4), rolled on first entry and
+ * kept on the point; a custom run's price multiplier scales its stone price,
+ * rounding up, as it scales the market's.
+ */
+export function blacksmithVisitStock(registries, rng, run, { priceMult = 1 } = {}) {
+  return applyShopPriceMult(buildBlacksmithStock(registries, rng, run), priceMult);
+}
+
+// ---------------------------------------------------------------------------
+// The wise master (SPEC §14.5, §14.6 step 7)
+// ---------------------------------------------------------------------------
+
+/**
+ * buildMasterStock(registries, rng, run) → a master visit:
+ * `{ kind: 'master', masterId, offerings, skillBooks?, weaponArts?,
+ * armaments?, training? }` (SPEC §14.5).
+ *
+ * THE DRAWS, IN ORDER. The master is picked first, on the `shop` stream —
+ * `rng.int('shop', 0, n − 1)` over `shops.masters` in written order, drawn
+ * even when n is 1. Then the offerings roll on `shopOffers` (§14.2), and then
+ * each stocked shelf that is laid out rolls on `shopOffers`, in written
+ * order. A market or blacksmith visit draws none of this, so their shelves
+ * stay byte-identical.
+ *
+ * As the blacksmith's (§14.4): a STOCKED shelf whose pool is empty or whose
+ * stock is 0 is omitted; a SERVICE with nothing to act on now STAYS laid out
+ * (it is judged live), but does not count toward the guarantee, which adds
+ * the missing enabled offerings that have something now, by weight, with no
+ * further draw. Service prices are never stored: model/master.js reads them
+ * when quoted. `lessons` is absent until the first lesson roll. `flatRarity`
+ * is Chaos Rewards, so the live lesson check judges the roll it would make.
+ */
+export function buildMasterStock(registries, rng, run, { flatRarity = false } = {}) {
+  const kindDef = registries.shops.master;
+  const masters = registries.shops.masters || [];
+  if (!masters.length) throw new Error('buildMasterStock: shops.masters lists no master (SPEC §14.5)');
+  const master = masters[rng.int('shop', 0, masters.length - 1)];
+  const written = (kindDef.offerings || []).filter(Boolean);
+  const row = (id) => written.find((offering) => offering.id === id);
+  const pools = {
+    skillBooks: masterBookPool(registries, master),
+    weaponArts: masterArtPool(registries, master),
+    armaments: masterArmamentPool(registries, run, master),
+  };
+  const up = new Set(rollShopOfferings(kindDef, rng));
+  const stockEmpty = (offering) => MASTER_SHELVES.includes(offering.id) && (!pools[offering.id].length || !(offering.stock > 0));
+  // The services are judged against the visit being built.
+  const draft = { kind: 'master', masterId: master.id, training: { left: row('training')?.training?.perVisit ?? 0 } };
+  const idle = (offering) => MASTER_SERVICES.includes(offering.id) && masterServiceCandidates(registries, run, offering.id, { master, stock: draft, flatRarity }).length === 0;
+  for (const offering of written) if (up.has(offering.id) && stockEmpty(offering)) up.delete(offering.id);
+  const minimum = Number(kindDef.guaranteedMinimum) || 0;
+  const usable = () => written.filter((offering) => up.has(offering.id) && !idle(offering)).length;
+  if (usable() < minimum) {
+    const missing = written
+      .map((offering, index) => ({ offering, index }))
+      .filter(({ offering }) => offering.enabled === true && !up.has(offering.id) && !stockEmpty(offering) && !idle(offering))
+      .sort((a, b) => (Number(b.offering.weight) || 0) - (Number(a.offering.weight) || 0) || a.index - b.index);
+    for (const { offering } of missing) {
+      if (usable() >= minimum) break;
+      up.add(offering.id);
+    }
+  }
+  const stock = { kind: 'master', masterId: master.id, offerings: written.filter((offering) => up.has(offering.id)).map((offering) => offering.id) };
+  const costs = registries.balance.shop;
+  for (const offering of written) {
+    if (!up.has(offering.id)) continue;
+    if (offering.id === 'skillBooks') stock.skillBooks = pickSome(rng, pools.skillBooks, offering.stock).map((def) => ({ id: def.id, cost: def.cost }));
+    else if (offering.id === 'weaponArts') stock.weaponArts = pickSome(rng, pools.weaponArts, offering.stock).map((id) => ({ id, cost: Math.max(1, rng.int(STREAM, ...costs.weaponArtCost)) }));
+    else if (offering.id === 'armaments') stock.armaments = pickSome(rng, pools.armaments, offering.stock).map((piece) => ({ id: piece.id, cost: Math.max(1, rng.int(STREAM, ...costs.armamentCost[piece.rarity])) }));
+  }
+  if (up.has('training')) stock.training = { left: row('training').training.perVisit };
+  return stock;
+}
+
+/**
+ * masterVisitStock(registries, rng, run, { priceMult }) → the stock an atlas
+ * master point opens with (SPEC §14.5), rolled on first entry and kept on the
+ * point. A custom run's price multiplier scales every stocked cost once,
+ * rounding up, through applyShopPriceMult, as it scales the market's.
+ * `flatRarity` is Chaos Rewards, read by the live lesson check.
+ */
+export function masterVisitStock(registries, rng, run, { priceMult = 1, flatRarity = false } = {}) {
+  return applyShopPriceMult(buildMasterStock(registries, rng, run, { flatRarity }), priceMult);
+}
+
+/**
+ * rollMasterLesson(registries, rng, run, skillId, { flatRarity }) → the
+ * track's `{ cardIds, taken }` (SPEC §14.5). Its own step, because a plan is
+ * inert: asked for a master track with no `lessons` entry, it calls
+ * rollSkillDraftIds with the track's loadout-independent schools, the level
+ * `max(track level, 1)`, the normal door's odds (equal under Chaos Rewards,
+ * `flatRarity`), `balance.skill.draftSize` and the `shopOffers` stream, and
+ * writes `{ cardIds, taken: false }` on the stock. It never rolls that track
+ * again on the visit: an entry already there is returned as it is.
+ */
+export function rollMasterLesson(registries, rng, run, skillId, { flatRarity = false } = {}) {
+  const master = masterOf(registries, run);
+  if (!master || !masterOffers(run, 'lesson')) throw new Error(shopSentence('master.refuse.notOffered'));
+  if (!master.skills.includes(skillId)) throw new Error(shopSentence('master.refuse.untaught', { master: master.name, skill: trackLabel(registries, skillId) }));
+  const kept = run.shopStock.lessons?.[skillId];
+  if (kept) return kept;
+  const cardIds = rollSkillDraftIds(registries, rng, {
+    classId: run.class, loadout: run.loadout, skillId, level: lessonLevel(run, skillId),
+    pool: 'normal', flatRarity, size: registries.balance.skill.draftSize,
+    schools: masterSchools(registries, skillId), stream: STREAM,
+  });
+  const entry = { cardIds, taken: false };
+  run.shopStock.lessons = { ...(run.shopStock.lessons || {}), [skillId]: entry };
+  return entry;
 }

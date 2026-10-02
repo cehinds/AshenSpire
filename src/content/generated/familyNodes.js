@@ -369,5 +369,13 @@ export const familyNodes = [
   {
     "family": "companion",
     "nodeId": "classification"
+  },
+  {
+    "family": "sigil",
+    "nodeId": "property"
+  },
+  {
+    "family": "sigil",
+    "nodeId": "classification"
   }
 ];

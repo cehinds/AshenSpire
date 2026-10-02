@@ -6375,27 +6375,23 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(fresh.attributeMode, contentBundle.attributeRules.defaultMode, 'new run selects the authored default mode');
     eq(JSON.stringify(fresh.attributes), JSON.stringify(contentBundle.attributeRules.presets[fresh.attributeMode].herald), 'new run copies the authored Herald preset');
     eq(JSON.stringify(fresh.attributeModeSnapshot), JSON.stringify(standard), 'new run owns the creation-mode rules that admitted its allocation');
-    // Herald lean is STR 1 · DEX 1 · CON 2 · WIS 3 · INT 1. HP 30 + ⌊0.35⌋ +
-    // ⌊4 × 2⌋ + ⌊0.1 × 3⌋ = 38; Actions 3 (every weight floors to 0 at 1–3
-    // points); Draw is the ruleset-7 draw row, 2 + ⌊0.1 × INT 1⌋ = 2 (min 2).
-    // It read 3 under ruleset 6, whose draw row had base 3; the hand's draw
-    // now IS that row, and it lands on the old hand-rule turn draw (2 below
-    // INT 9) rather than the old derived one.
-    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '38/3/2', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
-    // THE OWNER'S CURVE SINCE 2026-09-24 (base 5, growth 1.15, roundTo 10 —
-    // 100,120,…,350 before). The rounding holds the first eight steps at its
-    // own floor of 10: 5 × 1.15^n does not reach 15 until n = 8.
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '10,10,10,10,10,10,10,10,20,20', 'the XP curve receipt (plan phase 6, proposal §10): the steps from level 1');
+    // Herald lean is STR 1 · DEX 1 · CON 2 · WIS 3 · INT 1. HP 51 + ⌊0.35⌋ +
+    // ⌊4 × 2⌋ + ⌊0.1 × 3⌋ = 59; Actions 3 (every weight floors to 0 at 1–3
+    // points); Draw is the ruleset-7 draw row, base 3 since FINISH D27
+    // (2026-09-27) and nothing from INT 1, below the row's baseline of 4. It
+    // read 3 under ruleset 6 and 2 under ruleset 7 before D27.
+    eq(`${fresh.maxHp}/${fresh.energyMax}/${fresh.drawPerTurn}`, '59/3/3', 'lean HP/actions/hand formulas reach the run, read against the attributes the sheet shows');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((l) => xpToNextLevel(REG, l)).join(','), '100,230,360,490,620,750,880,1010,1140,1270', 'default XP steps start at 100 and add 130');
     eq(`${HUD_REFERENCE_MAX.hp}/${HUD_REFERENCE_MAX.mana}/${HUD_REFERENCE_MAX.stamina}`, '200/20/20', 'HUD references are authored as 200/20/20');
     const tunedProfiles = fresh.equipmentProfileRuleSnapshot.profiles;
     eq(`${tunedProfiles.unarmedAttack.baseValue}/${tunedProfiles.unarmedAttack.ratingId}`, '3/ar', 'physical Strike is 3 base + AR');
     eq(`${tunedProfiles.staffMagicAttack.baseValue}/${tunedProfiles.staffMagicAttack.ratingId}`, '2/pr', 'magic Strike is 2 base + PR');
     eq(`${tunedProfiles.unarmedGuard.baseValue}/${tunedProfiles.unarmedGuard.ratingId}`, '1/dr', 'Defend is 1 base + DR');
-    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 120, '120 XP reaches level 11 (2,030 before 2026-09-24) — a curve receipt, not a second hard-coded total');
+    eq([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].reduce((sum, l) => sum + xpToNextLevel(REG, l), 0), 6850, '6,850 XP reaches level 11 on the default linear curve');
     const rogue = createRunState({ seed: 50, classId: 'rogue', registries: REG });
     eq(JSON.stringify(rogue.attributes), JSON.stringify({ strength: 1, dexterity: 3, constitution: 2, wisdom: 1, intelligence: 1 }), 'Rogue copies the exact approved lean preset');
-    // Rogue: HP 30 + ⌊4 × 2⌋ = 38; Actions 3 + ⌊0.2 × DEX 3⌋ = 3; Draw 2 + ⌊0.1 × INT 1⌋ = 2.
-    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/38/3/2', 'Rogue lean stats reach the HP, action, and hand formulas');
+    // Rogue: HP 51 + ⌊4 × 2⌋ = 59; Actions 3 + ⌊0.25 × DEX 3⌋ = 3; Draw 3 (D27) + nothing from INT 1.
+    eq(`${rogue.attributeMode}/${rogue.maxHp}/${rogue.energyMax}/${rogue.drawPerTurn}`, 'lean/59/3/3', 'Rogue lean stats reach the HP, action, and hand formulas');
     eq(rogue.startingKitId, 'rogueBaseline', 'Rogue starts through its authored baseline equipment profile');
     const rogueAttack = rogue.deck.find((card) => card.equipmentRole === 'attack');
     const rogueGuard = rogue.deck.find((card) => card.equipmentRole === 'guard');
@@ -6633,7 +6629,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(saves.loadRun(REG), null, 'a save carrying both vigour and constitution is refused, never guessed');
   });
 
-  test('50d. lean HP is 30 + 4 × CON-tier + flat bonuses at every legal edge (plan phase 9)', () => {
+  test('50d. lean HP is 51 + 4 × CON-tier + flat bonuses at every legal edge (plan phase 9; base 30 → 51, A3 2026-09-27)', () => {
     // RESTATED AGAIN WHEN THE CONVERSION SCALE WENT (2026-09-21). #1238 read
     // this row through the lean mode's fifth, so one point of the 1–4 span was
     // five tiers and a point bought 20 HP. Nothing divides the attribute now:
@@ -6650,8 +6646,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       const run = createRunState({ seed: 0xf1, classId, registries: REG });
       const hp = statProjection(REG, run).derived.find((row) => row.id === 'hp');
       eq(run.attributes.constitution, con, `${classId} uses the approved lean CON preset`);
-      eq(`${hp.base}/${hp.weights.constitution}`, `${30 + flat}/4`, `${classId} receipt exposes the configured formula and flat bonus`);
-      eq(run.maxHp, 30 + perPoint * con + otherTerms(run.attributes) + flat, `${classId} max HP is 30 + 4 × CON + the row's other terms + flat bonuses`);
+      eq(`${hp.base}/${hp.weights.constitution}`, `${51 + flat}/4`, `${classId} receipt exposes the configured formula and flat bonus`);
+      eq(run.maxHp, 51 + perPoint * con + otherTerms(run.attributes) + flat, `${classId} max HP is 51 + 4 × CON + the row's other terms + flat bonuses`);
       assert(hp.formula.endsWith(`= ${run.maxHp}`), `${classId} printed receipt lands on the real pool`);
     }
     // Each row spends the mode's whole total (8) so the allocation is legal;
@@ -6668,8 +6664,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
       seed: 0xf2, classId: 'reaver', registries: REG,
       attributes: { ...REST[con], constitution: con },
     });
-    eq(at(1).maxHp, 45, 'CON floor 1 gives 30 + 4 + 1 (STR 4 × 0.35) + 10 flat');
-    eq(at(4).maxHp, 56, 'CON ceiling 4 gives 30 + 16 + 10 flat (STR 1 × 0.35 floors to nothing)');
+    eq(at(1).maxHp, 66, 'CON floor 1 gives 51 + 4 + 1 (STR 4 × 0.35) + 10 flat');
+    eq(at(4).maxHp, 77, 'CON ceiling 4 gives 51 + 16 + 10 flat (STR 1 × 0.35 floors to nothing)');
     eq(at(4).maxHp - at(3).maxHp, perPoint, 'one adjacent CON point is exactly four HP — one tier, one point');
     for (const outside of [0, 5]) {
       let refused = false;
@@ -6924,10 +6920,10 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
 
     // THE AWARDS: a won fight, each kill by the door's pool; a loss keeps its kills.
     const xp = REG.balance.xp;
-    eq(combatLevelXp(REG, { victory: true, pool: 'normal', kills: 2 }), xp.combatWin + 2 * xp.kill.normal);
-    eq(combatLevelXp(REG, { victory: true, pool: 'boss', kills: 1 }), xp.combatWin + xp.kill.boss);
-    eq(combatLevelXp(REG, { victory: false, pool: 'elite', kills: 1 }), xp.kill.elite, 'a lost fight pays its kills and no win');
-    eq(combatLevelXp(REG, { victory: true, pool: 'nowhere', kills: 1 }), xp.combatWin + xp.kill.normal, 'an unknown pool pays the normal rate');
+    eq(combatLevelXp(REG, { victory: true, pool: 'normal', kills: 2 }), 34);
+    eq(combatLevelXp(REG, { victory: true, pool: 'boss', kills: 1 }), 17);
+    eq(combatLevelXp(REG, { victory: false, pool: 'elite', kills: 1 }), 2, 'a lost fight pays its kills and no combat-power award');
+    eq(combatLevelXp(REG, { victory: true, pool: 'nowhere', kills: 1 }), 17, 'an unknown pool pays the normal rate');
     eq(questLevelXp(REG), xp.quest);
 
     // THE CAP holds the level and keeps the XP.
@@ -8719,19 +8715,16 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(tracks.find((t) => t.id === 'item:magic-focus').kind, 'focus');
     eq(tracks.find((t) => t.id === 'item:blade').kind, 'weapon');
     assert(tracks.every((t) => SKILL_KINDS.includes(t.kind)), 'every track has a kind');
-    // One curve shape: round(base × growth^n, roundTo).
+    // Skill and class tracks share the owner's exponential curve (2026-10-02:
+    // base 100, ×1.75 per step); the linear option stays for tuning.
     const c = REG.balance.skill.xp;
     eq(xpToNext(REG, 'weapon', 0), Math.round(c.base / c.roundTo) * c.roundTo, 'step 0 costs the base');
     eq(xpToNext(REG, 'weapon', 3), Math.round((c.base * Math.pow(c.growth, 3)) / c.roundTo) * c.roundTo, 'step 3 grows three times');
-    // NEVER CHEAPER: the owner's config (2026-09-27) gives both tracks base
-    // 100 and growth 1.75, so the class track may equal the equipment tracks
-    // but is never cheaper at any step.
     const steps = (kind) => Array.from({ length: 10 }, (_, n) => xpToNext(REG, kind, n));
     assert(steps('class').every((cost, n) => cost >= steps('weapon')[n]), 'the class curve is never cheaper at any step');
-    // THE CLIMB, READ OVER TEN STEPS.
+    eq(steps('class').reduce((a, b) => a + b), steps('weapon').reduce((a, b) => a + b), 'class and weapon curves share the default costs');
     const armourSteps = Array.from({ length: 10 }, (_, n) => xpToNext(REG, 'armour', n));
-    assert(armourSteps.every((cost, n) => n === 0 || cost >= armourSteps[n - 1]) && armourSteps[9] > armourSteps[0],
-      `the curve climbs — ${armourSteps.join(',')}`);
+    eq(armourSteps.slice(0, 5).join(','), '100,175,305,535,940', 'armour starts at 100 and each step costs 1.75 times the last');
     // The ledger: a fresh run has none; XP writes it and climbs, queuing a draft per level.
     const run = createRunState({ seed: 0x4a4a, classId: 'reaver', registries: REG });
     eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.skills), '{}', 'a fresh run has an empty ledger');
@@ -8908,7 +8901,8 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(high.every((id) => ['common', 'uncommon', 'rare'].includes(REG.cards.get(id).rarity)), 'a high level drafts from the opened set');
     const rngEmpty = createRng(7); const beforeCounters = JSON.stringify(rngEmpty.getCounters());
     const starseer = createRunState({ seed: 0x4b4b, classId: 'starseer', registries: REG });
-    eq(rollSkillDraftIds(REG, rngEmpty, { classId: 'starseer', loadout: starseer.loadout, skillId: 'item:magic-focus', level: 1 }).length, 0, 'a pool with no card of the schools rolls nothing');
+    // The Starseer's Ash Focus drafts its ash rites; the Reaver's pool holds no ritual card.
+    eq(rollSkillDraftIds(REG, rngEmpty, { classId: 'reaver', loadout: starseer.loadout, skillId: 'item:magic-focus', level: 1 }).length, 0, 'a pool with no card of the schools rolls nothing');
     eq(JSON.stringify(rngEmpty.getCounters()), beforeCounters, 'and draws nothing');
     eq(rollSkillDraftIds(REG, createRng(7), { classId: 'starseer', loadout: starseer.loadout, skillId: 'item:blade', level: 1 }).length, 0, 'a track whose type no hand holds rolls nothing');
     eq(rollSkillDraftIds(REG, createRng(7), { classId: 'reaver', loadout: reaver.loadout, skillId: 'item:blade', level: 1, pool: 'boss' }).length, c.draftSize, 'a boss door rolls at its own odds');
@@ -9111,14 +9105,15 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     const c = REG.balance.skill.class;
     // THE TABLE IS THE TREE: rows per class, tiers the balance rows open.
     const rows = classTreeRows(REG, 'reaver');
-    eq(rows.length, 6, 'the reaver tree has six nodes'); eq(new Set(rows.map((r) => r.tier)).size, 3, 'in three tiers');
+    eq(rows.length, 10, 'the reaver tree has ten nodes'); eq(new Set(rows.map((r) => r.tier)).size, 3, 'in three tiers');
+    eq([1, 2, 3].map((t) => rows.filter((r) => r.tier === t).length).join(','), '4,4,2', 'four at tier 1, four at tier 2, the subclass pair at tier 3');
     eq(tierOpensAt(REG, 1), c.tierAt[0]); eq(tierOpensAt(REG, 3), c.tierAt[2]); eq(tierOpensAt(REG, 9), Infinity, 'a tier the table has not got never opens');
     for (const cls of REG.classes.all()) assert(classTreeRows(REG, cls.id).some((r) => r.tier === 3), `${cls.id} has a subclass tier`);
     // THE POOL: what a class at a level may draft, given what it picked.
     eq(classDraftPool(REG, 'reaver', [], 0).length, 0, 'level 0 opens nothing');
-    eq(classDraftPool(REG, 'reaver', [], c.tierAt[0]).join(','), 'ironFooting,bloodTempo', 'tier 1 at its level');
-    eq(classDraftPool(REG, 'reaver', ['ironFooting'], c.tierAt[0]).join(','), 'bloodTempo', 'a picked node leaves the pool');
-    eq(classDraftPool(REG, 'reaver', [], c.tierAt[2]).length, 6, 'every tier open at the top level');
+    eq(classDraftPool(REG, 'reaver', [], c.tierAt[0]).join(','), 'ironFooting,bloodTempo,partingBlow,ironRebuke', 'tier 1 at its level');
+    eq(classDraftPool(REG, 'reaver', ['ironFooting'], c.tierAt[0]).join(','), 'bloodTempo,partingBlow,ironRebuke', 'a picked node leaves the pool');
+    eq(classDraftPool(REG, 'reaver', [], c.tierAt[2]).length, 10, 'every tier open at the top level');
     eq(classDraftPool(REG, 'reaver', ['warlord'], c.tierAt[2]).includes('bulwarkKing'), false, 'the other subclass is excluded once one is picked');
     eq(classDraftPool(REG, 'reaver', ['warlord'], c.tierAt[2]).includes('ironFooting'), true, 'the lower tiers stay open');
     // THE ROLL: draftSize distinct nodes on the cardRewards stream; an empty pool draws nothing.
@@ -9127,7 +9122,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     assert(roll.every((id) => rows.some((r) => r.nodeId === id)), 'every pick is a reaver node');
     const rngEmpty = createRng(9); const before = JSON.stringify(rngEmpty.getCounters());
     eq(rollClassDraftIds(REG, rngEmpty, { classId: 'reaver', coreTags: [], level: 0 }).length, 0); eq(JSON.stringify(rngEmpty.getCounters()), before, 'nothing drawn for nothing');
-    eq(rollClassDraftIds(REG, createRng(9), { classId: 'reaver', coreTags: ['ironFooting'], level: c.tierAt[0] }).join(','), 'bloodTempo', 'a pool smaller than the draft is the whole pool');
+    eq(rollClassDraftIds(REG, createRng(9), { classId: 'reaver', coreTags: ['ironFooting', 'bloodTempo', 'partingBlow'], level: c.tierAt[0] }).join(','), 'ironRebuke', 'a pool smaller than the draft is the whole pool');
     // THE PICK writes the core card's own tags, and only what the tree allows.
     const run = createRunState({ seed: 0x5b5b, classId: 'reaver', registries: REG });
     eq(run.schemaVersion, RUN_SCHEMA_VERSION); eq(JSON.stringify(run.coreTags), '[]', 'a fresh run has picked nothing'); eq(JSON.stringify(run.zones.coreTags), '[]', 'and the core zone projects it');
@@ -9169,8 +9164,9 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     // THE CLASS TRACK is paid by the run's owner: a win, more for a boss, a loss nothing.
     const paid = createRunState({ seed: 0x5b5b, classId: 'reaver', registries: REG });
     eq(awardClassXp(REG, paid, { victory: false, pool: 'boss' }), null, 'a lost fight pays nothing');
-    // Read off the award's own receipt, not the ledger's remainder: a tuned
-    // curve can let one win climb a level, and the remainder then hides the pay.
+    // Read off the award's own receipt, not the ledger's remainder: since the
+    // class curve's base became 5 (2026-09-24) a single win of 10 climbs two
+    // levels and leaves 0 on the ledger, so the remainder no longer shows the pay.
     eq(awardClassXp(REG, paid, { victory: true, pool: 'normal' }).gained, c.xp.perWin, 'a won fight pays perWin');
     eq(awardClassXp(REG, paid, { victory: true, pool: 'boss' }).gained, c.xp.perWin + c.xp.bossKill, 'a boss pays bossKill on top');
     const classRow = paid.skills['class:reaver'];
@@ -9793,7 +9789,7 @@ export async function runTests({ artManifest = null, assetExists = null, legacyR
     eq(derivedStatIdsFor(7).includes('handSize') && derivedStatIdsFor(7).includes('ar'), true, 'ruleset 7 does');
     eq(rules.rules.mana.wisdom, 0.5, 'Wisdom leads Mana at half a point a point (1 before 2026-09-24)');
     eq(rules.rules.stamina.constitution, 0.5, 'Constitution leads Stamina at half a point a point (1 before 2026-09-24)');
-    eq(`${rules.rules.hp.base}/${rules.rules.hp.constitution}`, '30/4', 'HP is 30 + 4 × CON');
+    eq(`${rules.rules.hp.base}/${rules.rules.hp.constitution}`, '51/4', 'HP is 51 + 4 × CON (base 30 before the A3 retune, 2026-09-27)');
     const star = createRunState({ seed: 93, classId: 'starseer', registries: REG });
     // A pool carries its own flat base beside the attribute — a class or relic
     // addend folds into it — so the attribute half is read off the receipt

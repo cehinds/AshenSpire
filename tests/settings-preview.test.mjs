@@ -12,7 +12,7 @@ const STRIP = 'data-settings-preview';
 
 test('the strip carries every sample piece, drawn with the game\'s own classes', () => {
   const html = settingsPreviewHtml({});
-  assert.match(html, /<details class="set-preview" data-settings-preview open>/);
+  assert.match(html, /<details class="set-preview" data-settings-preview>/, 'folded by default');
   assert.match(html, /<summary[^>]*>Preview<\/summary>/);
   assert.match(html, /class="as-title-s[^"]*"/, 'a heading');
   assert.match(html, /class="as-prose[^"]*"/, 'a line of body text');
@@ -30,7 +30,7 @@ test('the sample card is a real card in the content', () => {
   assert.equal(card.rarity, 'starter');
 });
 
-test('the fold is remembered in settingsPreviewOpen (absent = open)', () => {
+test('the fold is remembered in settingsPreviewOpen (absent = folded)', () => {
   assert.equal(SETTINGS_PREVIEW_OPEN_KEY, 'settingsPreviewOpen');
   assert.match(settingsPreviewHtml({ settingsPreviewOpen: true }), /data-settings-preview open>/);
   assert.doesNotMatch(settingsPreviewHtml({ settingsPreviewOpen: false }), /data-settings-preview open>/);
@@ -43,11 +43,16 @@ test('shown only for General › Display and Accessibility', () => {
   assert.equal(settingsPreviewShown('Advanced', 'Display'), false);
 });
 
-test('categoryHtml puts the strip above the rows of Display and Accessibility only', () => {
+test('categoryHtml keeps Fullscreen ahead of the Display preview and previews Accessibility first', () => {
   for (const [cat, group] of [['General', 'Display'], ['Accessibility', 'Accessibility']]) {
     const html = categoryHtml(cat, { settingsGeneralCategory: group }, null);
     assert.equal(html.match(/data-settings-preview[\s>]/g)?.length, 1, `${cat} carries one strip`);
-    assert.ok(html.indexOf(STRIP) < html.indexOf('set-card-list'), `${cat}: the strip sits above the rows`);
+    if (cat === 'General') {
+      assert.ok(html.indexOf('data-key="fullscreen"') < html.indexOf(STRIP), 'Fullscreen is reachable before the expanded preview');
+      assert.ok(html.indexOf('set-card-list') < html.indexOf(STRIP), 'the Display preview follows the first row inside the list');
+    } else {
+      assert.ok(html.indexOf(STRIP) < html.indexOf('set-card-list'), 'Accessibility keeps its preview above the rows');
+    }
     assert.ok(html.indexOf('set-general-pickers') < html.indexOf(STRIP), `${cat}: the section pickers stay first`);
   }
   for (const group of GENERAL_GROUPS.filter((g) => g !== 'Display')) {
@@ -70,13 +75,13 @@ test('mounting is a no-op on a pane without the strip', () => {
 
 test('the fold saves through the pane\'s onChange', () => {
   const listeners = {};
-  const strip = { open: false, addEventListener: (type, fn) => { listeners[type] = fn; }, querySelector: () => null };
+  const strip = { open: true, addEventListener: (type, fn) => { listeners[type] = fn; }, querySelector: () => null };
   const settings = {};
   const changes = [];
   mountSettingsPreview({ querySelector: () => strip }, settings, (c) => changes.push(c));
   listeners.toggle();
-  assert.deepEqual(changes, [{ settingsPreviewOpen: false }]);
-  assert.equal(settings.settingsPreviewOpen, false);
+  assert.deepEqual(changes, [{ settingsPreviewOpen: true }]);
+  assert.equal(settings.settingsPreviewOpen, true);
   listeners.toggle();
   assert.equal(changes.length, 1, 'an unchanged fold is not saved again');
 });

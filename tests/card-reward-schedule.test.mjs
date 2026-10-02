@@ -18,6 +18,7 @@ import { resolveCard } from '../src/model/registries.js';
 import { playCard, endTurn } from '../src/engine/coopCombat.js';
 import { createSession } from '../tools/session.mjs';
 import { createLevelCardPicks, levelCardStrips } from '../src/ui/screens/coop.js';
+import { xpToNext } from '../src/model/levelup.js';
 import { advancedConfigRows } from '../src/model/advancedConfig.js';
 import { mountRewards } from '../src/ui/screens/reward.js';
 import { t } from '../src/ui/strings.js';
@@ -55,12 +56,12 @@ test('the shipped schedule is the §15.1 table', () => {
   assert.deepEqual(cardRewardSchedule(REG.balance), {
     afterCombat: { normal: true, elite: true, boss: true },
     chancePct: { normal: 100, elite: 100, boss: 100 },
-    onLevelUp: false,
+    onLevelUp: true,
     onLevelUpMaxPerFight: 1,
   });
-  // A bundle without the block reads as the defaults.
+  // An older bundle without the block keeps its historical card schedule.
   const bare = { ...REG.balance, rewards: { ...REG.balance.rewards, cardRewards: undefined } };
-  assert.deepEqual(cardRewardSchedule(bare), cardRewardSchedule(REG.balance));
+  assert.equal(cardRewardSchedule(bare).onLevelUp, false);
 });
 
 test('Falsify: with afterCombat.normal false, a normal win offers no card row and an elite win still offers one', () => {
@@ -137,9 +138,9 @@ test('Falsify: with onLevelUp true, a fight that levels offers exactly one level
   const two = rollCombatCardOffer(withSchedule({ onLevelUp: true, onLevelUpMaxPerFight: 2 }), createRng(4), args('normal', { levelUps: 5 }));
   assert.deepEqual(two.levelCards.map((d) => d.ordinal), [0, 1]);
   assert.deepEqual(rewardPlan(two.rewards).rows.filter((r) => r.kind === 'levelCard').map((r) => r.key), ['levelCard:0', 'levelCard:1']);
-  // Off (the default): a level gained adds nothing and rolls nothing more.
+  // Off by choice: a level gained adds nothing and rolls nothing more.
   const rng = createRng(4);
-  const off = rollCombatCardOffer(REG, rng, args('normal', { levelUps: 2 }));
+  const off = rollCombatCardOffer(withSchedule({ onLevelUp: false }), rng, args('normal', { levelUps: 2 }));
   assert.equal(off.levelCards.length, 0);
   assert.equal(off.rewards.levelCards, undefined);
 });
@@ -164,9 +165,9 @@ test('cardRewardPlan is the one door: rowKey spells levelCard, and a waiting dra
   const drafted = cardRewardPlan(on, { pool: 'normal', levelsGained: 2, draftWaiting: true }, rng);
   assert.deepEqual(drafted, { offerCard: false, cardMissed: false, levelCards: 1 }, '…but the level card stays');
   assert.equal(rng.getCounters().rewardRolls, 0);
-  // Shipped schedule: always offer, never roll, never a level card.
+  // Shipped schedule: always offer and never roll, including the level card.
   const shipped = createRng(9);
-  assert.deepEqual(cardRewardPlan(REG.balance, { pool: 'boss', levelsGained: 4 }, shipped), { offerCard: true, cardMissed: false, levelCards: 0 });
+  assert.deepEqual(cardRewardPlan(REG.balance, { pool: 'boss', levelsGained: 4 }, shipped), { offerCard: true, cardMissed: false, levelCards: 1 });
   assert.equal(shipped.getCounters().rewardRolls, 0);
   // Through the offer roller too: a drafted, levelling fight has a level card row and no card row.
   const offer = rollCombatCardOffer(withSchedule({ onLevelUp: true }), createRng(5), args('elite', { draftWaiting: true, levelUps: 1 }));
@@ -201,6 +202,9 @@ function coopFirstSpoils(reg, seedString) {
   const host = createSession({ registries: reg, seedString });
   host.addMember({ id: 'p1', name: 'p1', classId: 'reaver' });
   host.start();
+  // This test is about the reward door. Prime the ledger so one modest fight
+  // crosses the level threshold regardless of the currently tuned XP rate.
+  host.livingMembers()[0].run.level.xp = xpToNext(reg, 1) - 1;
   host.chooseNode('p1', host.session.mapGraph.startIds[0]);
   for (const enemy of host.live.combat.enemies) enemy.hp = 1;
   host.autoResolveCombat(botTurn);
@@ -219,10 +223,10 @@ test('co-op reads the schedule through cardRewardPlan: a pool turned off offers 
   const deck = off.livingMembers()[0].run.deck;
   assert.equal(deck.length, deckBefore + 1);
   assert.equal(deck.at(-1).cardId, picked);
-  // The shipped schedule: the co-op offer is the one it always was.
+  // The shipped schedule offers the ordinary card and a level card.
   const shipped = coopFirstSpoils(REG, 'SCHEDULE');
   assert.equal(shipped.scene.offers.p1.cardIds.length, REG.balance.rewards.cardChoices);
-  assert.equal(shipped.scene.offers.p1.levelCards, undefined);
+  assert.equal(shipped.scene.offers.p1.levelCards.length, 1);
   assert.equal(shipped.scene.offers.p1.cardMissed, undefined);
   assert.equal(shipped.livingMembers()[0].rng.getCounters().rewardRolls, 0);
 });
@@ -237,12 +241,13 @@ test('a waiting draft still takes the card row\'s seat, and rolls no chance', ()
   assert.equal(rng.getCounters().cardRewards, 0);
 });
 
-test('Falsify: with every key at its default, 50 fixed seeds offer byte-identical rewards to the ones before this section', () => {
+test('Falsify: with level cards switched off, 50 fixed seeds retain the old card offer bytes', () => {
   // THE BASELINE is the roll main.js made before the schedule: the draft
   // seat, else rollCardRewardIds straight — no chance, no level card. The
-  // schedule must reproduce its ids AND leave every stream counter where it
+  // switched-off schedule must reproduce its ids AND leave every stream counter where it
   // left them, so every later roll in the seed is unchanged too.
   const before = (rng, a) => (a.draftWaiting ? [] : rollCardRewardIds(REG, rng, { classId: a.classId, pool: a.pool, relicIds: a.relicIds, flatRarity: a.flatRarity }));
+  const withoutLevelCards = withSchedule({ onLevelUp: false });
   const classes = ['reaver', 'rogue', 'starseer', 'herald'].filter((id) => REG.classes.has(id));
   for (let seed = 1; seed <= 50; seed++) {
     for (const pool of ['normal', 'elite', 'boss']) {
@@ -256,7 +261,7 @@ test('Falsify: with every key at its default, 50 fixed seeds offer byte-identica
       const baseRng = createRng(seed * 7919, { cardRewards: seed });
       const baseRewards = { cardIds: before(baseRng, a) };
       const rng = createRng(seed * 7919, { cardRewards: seed });
-      const offer = rollCombatCardOffer(REG, rng, a);
+      const offer = rollCombatCardOffer(withoutLevelCards, rng, a);
       assert.equal(JSON.stringify(offer.rewards), JSON.stringify(baseRewards), `seed ${seed} ${pool}: same offer bytes`);
       assert.deepEqual(rng.getCounters(), baseRng.getCounters(), `seed ${seed} ${pool}: same draws on every stream`);
     }
@@ -264,7 +269,7 @@ test('Falsify: with every key at its default, 50 fixed seeds offer byte-identica
 });
 
 test('the reward menu: levelCard is ordered after card, is a choice, is taken and skipped like the card offer', () => {
-  assert.equal(REWARD_KIND_ORDER.indexOf('levelCard'), REWARD_KIND_ORDER.indexOf('card') + 1);
+  assert.ok(REWARD_KIND_ORDER.indexOf('levelCard') > REWARD_KIND_ORDER.indexOf('card'));
   const offer = { cinders: 10, cardIds: ['stomp', 'rend', 'gildedOath'], levelCards: [{ ordinal: 0, cardIds: ['guardCounter', 'executioner', 'crimsonCleave'] }] };
   const plan = rewardPlan(offer, { flaskSlotsFree: 1, armamentSlotsFree: 1 });
   const row = plan.rows.find((r) => r.kind === 'levelCard');
@@ -422,7 +427,7 @@ test('two level cards are taken, and both picks persist in chosenDraftCardIds[<r
     assert.deepEqual(back.pendingReward.chosenDraftCardIds, picks);
     assert.deepEqual(back.pendingReward.states, { 'levelCard:0': 'taken', 'levelCard:1': 'taken' });
     const again = mount(back);
-    assert.deepEqual(again.querySelectorAll('[data-kind="levelCard"]').map((row) => row.dataset.state), ['taken', 'taken'], 'the resumed door shows both rows taken');
+    assert.deepEqual(again.querySelectorAll('.reward-kind[data-kind="levelCard"]').map((row) => row.dataset.state), ['taken', 'taken'], 'the resumed door shows both rows taken');
     again.remove();
   } finally {
     for (const [key, value] of Object.entries(saved)) globalThis[key] = value;
@@ -444,6 +449,7 @@ test('a co-op seat that was away claims its level card through the catch-up', ()
   const host = createSession({ registries: reg, seedString: 'AWAY' });
   for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
   host.start();
+  for (const member of host.livingMembers()) member.run.level.xp = xpToNext(reg, 1) - 1;
   for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
   for (const enemy of host.live.combat.enemies) enemy.hp = 1;
   host.setConnected('p2', false);
@@ -585,6 +591,7 @@ test('co-op: a repeat choice while another seat still chooses grants nothing twi
   host.addMember({ id: 'p2', name: 'p2', classId: 'rogue' });
   host.setConnectedMany(['p1', 'p2'], true);
   host.start();
+  for (const member of host.livingMembers()) member.run.level.xp = xpToNext(REG, 1) - 1;
   host.chooseNode('p1', host.session.mapGraph.startIds[0]);
   if (host.scene.kind !== 'reward') {
     for (const id of ['p2']) { try { host.chooseNode(id, host.session.mapGraph.startIds[0]); } catch {} }

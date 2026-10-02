@@ -15,11 +15,17 @@
 //   file:///…/AshenSpire-dev-0.7.1.449.html        a download from that site
 //   file:///…/AshenSpire-mobile-test-0.7.1.1.html  the mobile download
 //   http://localhost:8080/                 tools/serve.mjs (the source tree)
+//   http://127.0.0.1:N/unknown/latest/     tools/browser.mjs serving a build
+//                                          with the channel its file reads
 //
-// Anything else — the site root (main's tree), an unrecognised file — is
-// treated as `main`: an unknown page never opens debug on its own. An unknown
-// file can still be opened with `?debug=1` (remembered on this device); main
-// and release never can.
+// Anything else — the site root (main's tree) — is treated as `main`; an
+// unrecognised file is `unknown` and never opens debug on its own.
+//
+// Owner, 2026-09-27: "Make dev tools a toggle and hidden on the 1.0 release
+// version". Settings → Advanced → Developer tools is a switch on dev, test
+// and unknown builds (on by default for dev/test, off for unknown; `?debug=1`
+// and `?debug=0` write the same remembered answer). On main and release — the
+// 1.0 release builds — the switch is not drawn and the tools stay off.
 
 import { RUN_PATH } from '../buildversion.js';
 
@@ -43,7 +49,12 @@ export function buildChannel(loc = globalThis.location, runPath = RUN_PATH) {
   if (served) return served[1];
   const saved = path.match(/AshenSpire-(?:mobile-)?(dev|test|release|main)-[^/]*\.html$/i);
   if (saved) return saved[1].toLowerCase();
-  if (/^(localhost|127\.\d+\.\d+\.\d+|0\.0\.0\.0|\[::1\])$/.test(host)) return 'dev';
+  const loopback = /^(localhost|127\.\d+\.\d+\.\d+|0\.0\.0\.0|\[::1\])$/.test(host);
+  // `/unknown/<n|latest>/` on THIS machine only: how a local tool
+  // (tools/browser.mjs buildPageUrl) serves a build over http while keeping the
+  // channel the same file reads by double-click. Never a Pages path.
+  if (loopback && /\/unknown\/(?:\d+|latest)(?:\/|$)/.test(path)) return 'unknown';
+  if (loopback) return 'dev';
   // A private-network host is a workstation serving the dev preview to a
   // phone on the same Wi-Fi (tools/serve-preview.mjs): released builds are
   // only ever served from the Pages site or opened as files.
@@ -54,25 +65,58 @@ export function buildChannel(loc = globalThis.location, runPath = RUN_PATH) {
 
 /**
  * debugEnabled(channel, { search, storage }) → true when debug-only settings
- * and tools are shown. dev/test: always. main/release: never. unknown: only
- * when `?debug=1` was passed (remembered) — `?debug=0` forgets it.
+ * and tools are shown. main/release (the 1.0 release builds): never.
+ * dev/test: ON unless switched off on this device. unknown: OFF unless
+ * switched on. The Developer tools switch and `?debug=1` / `?debug=0` both
+ * write the same remembered answer ('1' on, '0' off).
  */
 export function debugEnabled(channel = buildChannel(), { search = globalThis.location?.search || '', storage = safeStorage() } = {}) {
-  if (DEBUG_CHANNELS.has(channel)) return true;
   if (LOCKED_CHANNELS.has(channel)) return false;
-  const flag = new URLSearchParams(search).get('debug');
+  const byDefault = DEBUG_CHANNELS.has(channel);
+  const raw = new URLSearchParams(search).get('debug');
+  const flag = raw === '1' || raw === 'true' ? '1' : raw === '0' || raw === 'false' ? '0' : null;
   // No storage (a sandboxed or private file view): the flag still counts for
   // this page, it just cannot be remembered.
-  if (!storage) return flag === '1' || flag === 'true';
+  if (!storage) return flag ? flag === '1' : byDefault;
   try {
-    if (flag === '1' || flag === 'true') storage?.setItem(DEBUG_STORAGE_KEY, '1');
-    if (flag === '0' || flag === 'false') storage?.removeItem(DEBUG_STORAGE_KEY);
-    return storage?.getItem(DEBUG_STORAGE_KEY) === '1';
-  } catch { return flag === '1' || flag === 'true'; }
+    if (flag) storage.setItem(DEBUG_STORAGE_KEY, flag);
+    const stored = storage.getItem(DEBUG_STORAGE_KEY);
+    return stored === '1' ? true : stored === '0' ? false : byDefault;
+  } catch { return flag ? flag === '1' : byDefault; }
 }
 
 function safeStorage() {
   try { return globalThis.localStorage || null; } catch { return null; }
+}
+
+/**
+ * debugSwitch(channel, { search, storage }) → { on, hidden, note } — the
+ * Developer tools switch at the top of Settings → Advanced (owner,
+ * 2026-09-27: "Make dev tools a toggle and hidden on the 1.0 release
+ * version"). A toggle on every build but the release builds, where the row is
+ * not drawn at all and the tools stay off.
+ */
+export function debugSwitch(channel = buildChannel(), options = {}) {
+  if (LOCKED_CHANNELS.has(channel)) return { on: false, hidden: true, note: '' };
+  // With no options this is the page's own answer — the cache setDebugEnabled
+  // writes — so the switch never disagrees with the sections on screen (a
+  // browser with no storage, or a `?debug=1` page switched off).
+  const on = options.search === undefined && options.storage === undefined ? pageDebug() : debugEnabled(channel, options);
+  const storage = options.storage === undefined ? safeStorage() : options.storage;
+  const what = 'Shows tuning, rules, layout, import/export and diagnostics sections.';
+  const where = DEBUG_CHANNELS.has(channel) ? ` On by default in ${channel} builds.` : '';
+  return { on, hidden: false, note: `${what}${where} ${storage ? 'Remembered on this device.' : 'This browser cannot remember it past this page.'}` };
+}
+
+/**
+ * setDebugEnabled(on, { channel, storage }) → the page's new answer. The
+ * release builds stay off whatever is asked.
+ */
+export function setDebugEnabled(on, { channel = buildChannel(), storage = safeStorage() } = {}) {
+  if (LOCKED_CHANNELS.has(channel)) return pageDebug();
+  try { storage?.setItem(DEBUG_STORAGE_KEY, on ? '1' : '0'); } catch { /* unwritable storage: the answer still holds for this page */ }
+  cached = !!on;
+  return cached;
 }
 
 let cached = null;

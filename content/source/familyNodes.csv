@@ -112,3 +112,7 @@ location,property
 # backed family it states its kind once.
 companion,property
 companion,classification
+# A sigil (SPEC §14.3, §15.4) confers only property rules, and as a collection-
+# backed family it states its kind once.
+sigil,property
+sigil,classification

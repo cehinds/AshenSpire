@@ -38,7 +38,7 @@
   "hand": {
     "minimumHeightPx": 208,
     "minWidthRem": 5,
-    "maxWidthRem": 9,
+    "maxWidthRem": 11.5,
     "minCapacity": 5,
     "maxCapacity": 15,
     "narrowWidthRem": 22,

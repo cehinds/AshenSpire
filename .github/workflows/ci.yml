@@ -342,13 +342,20 @@ jobs:
   # green — and `unknown` blocks.
   # ---------------------------------------------------------------------------
   reproducible:
-    name: shipped artifact is this source (${{ matrix.os }})
+    name: shipped artifact is this source (${{ matrix.os }}, ${{ matrix.shard }})
     if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - { os: ubuntu-latest, shard: all, digest: true }
+          - { os: macos-latest, shard: all, digest: true }
+          - { os: windows-latest, shard: '0/4', digest: true }
+          - { os: windows-latest, shard: '1/4', digest: false }
+          - { os: windows-latest, shard: '2/4', digest: false }
+          - { os: windows-latest, shard: '3/4', digest: false }
     steps:
       - name: Keep checked-out bytes identical to stored bytes
         run: git config --global core.autocrlf false
@@ -363,6 +370,7 @@ jobs:
       - name: Build the standalone and refresh root + dist/
         # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
         env:
+          NODE_OPTIONS: --max-old-space-size=6144
           ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
         shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
         run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
@@ -397,13 +405,16 @@ jobs:
         # bundle is no longer committed on dev.
         run: node tools/verdict.mjs -- node tools/buildversion.mjs --check
 
-      - name: …and it can fail — six known-bads, each caught by the row that owns it
+      - name: …and it can fail — known-bads, each caught by the row that owns it
         # Inverted expectation, the idiom already in this job twice. Includes the
         # fixture SOP 5 asks for by name: a tree that RE-TYPES the version.
-        run: node tools/verdict.mjs -- node tools/buildversion.mjs --selftest
+        # Windows previously spent 68 minutes here. Four shards keep every
+        # fixture and its real-tree entry while bounding each runner's work.
+        run: node tools/verdict.mjs -- node tools/buildversion-selftest.mjs --shard ${{ matrix.shard }}
 
 
       - name: Record this runner's build digests
+        if: matrix.digest
         # CROSS-PLATFORM DRIFT, the other half of what the old committed-artifact
         # diff caught. Each runner hashes what it built; `reproducible-agree`
         # requires all three to be identical.
@@ -411,6 +422,7 @@ jobs:
         run: node -e "const c=require('crypto'),f=require('fs');for(const p of ['build/AshenSpire.html','build/AshenSpire-mobile.html'].filter((p)=>f.existsSync(p)))console.log(c.createHash('sha256').update(f.readFileSync(p)).digest('hex')+'  '+p)" > build-digest-${{ matrix.os }}.txt
 
       - uses: actions/upload-artifact@v4
+        if: matrix.digest
         with:
           name: build-digest-${{ matrix.os }}
           path: build-digest-${{ matrix.os }}.txt
@@ -478,6 +490,7 @@ jobs:
     name: the checks that need a real browser
     if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v5
         with:
@@ -571,13 +584,22 @@ jobs:
       - name: Cold boot owns and consumes the first input before Title exists
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs
 
-      - name: The startup gate can fail by the same rendered door (18 plants)
-        run: node tools/verdict.mjs -- node tools/startup-gate.mjs --selftest
+  browser-layout-guard:
+    name: mobile and combat layout in a real browser
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/which-browser
 
       - name: Mobile Shrine, combat receipts, Settings lifecycle, and Armoury shortcut
         run: node tools/verdict.mjs -- node tools/screenreach.mjs --only 390x650
 
-      - name: The mobile visual reach gate can fail (8 plants)
+      - name: The mobile visual reach gate can fail (13 plants)
         run: node tools/verdict.mjs -- node tools/screenreach.mjs --selftest
 
       # No menu paints two scrollbars on one axis. Kept to the shape
@@ -745,18 +767,34 @@ jobs:
       # Vira's finding above says a list cannot assume.
 
   # ---------------------------------------------------------------------------
+  browser-startup-plants:
+    name: startup gate known-bads in a real browser
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/which-browser
+      - name: The startup gate can fail by the same rendered door (26 plants)
+        # This took about 41 minutes after 31 minutes of earlier browser checks.
+        # Its own runner keeps the complete same-door corpus under one hour.
+        run: node tools/verdict.mjs -- node tools/startup-gate.mjs --selftest
+
   # SOP 3 requirement 4. Always runs, including when everything above is red, so
   # the boundary is never the thing that got cut when the run went bad.
   # ---------------------------------------------------------------------------
   boundary:
     name: what this green does NOT cover
     runs-on: ubuntu-latest
-    needs: [test, reproducible, reproducible-agree, browser-guard, display-first]
+    needs: [test, reproducible, reproducible-agree, browser-guard, browser-layout-guard, browser-startup-plants, display-first]
     if: always()
     steps:
       - name: Named boundary
         run: |
-          echo "upstream results: test=${{ needs.test.result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }} browser-guard=${{ needs.browser-guard.result }} display-first=${{ needs['display-first'].result }}"
+          echo "upstream results: test=${{ needs.test.result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }} browser-guard=${{ needs.browser-guard.result }} browser-layout-guard=${{ needs['browser-layout-guard'].result }} browser-startup-plants=${{ needs['browser-startup-plants'].result }} display-first=${{ needs['display-first'].result }}"
           echo ""
           echo "A GREEN RUN OF THIS WORKFLOW MEANS:"
           # Was "34 engine tests". #10 adds test 35, so the number was wrong the moment
@@ -779,7 +817,7 @@ jobs:
           echo "  · the browser probe's three UNAVAILABLE branches were each triggered and"
           echo "    each resolved to exit 2 (unknown/blocks), not to a verdict about the gate"
           echo "  · the build version has ONE home, is derived at build time rather than typed,"
-          echo "    and derives the same string on all three runners — with six known-bads,"
+          echo "    and derives the same string on all three runners — with known-bads,"
           echo "    including a tree that re-types it, each observed red by its own row"
           echo "  · that version is INK on the main menu, the map and combat, at 390x844 and"
           echo "    1200x730 — pixels, not DOM presence, with six ways to lose the ink caught"
@@ -844,11 +882,12 @@ jobs:
           # PASS over this rather than let it stand, on her own test: a MISSING boundary
           # leaves a reader uninformed; a FALSE one leaves them confidently wrong.
           # — Sunna.
-          echo "  · that the game is playable. NOTHING HERE PLAYS IT. Two jobs open a browser."
-          echo "    browser-guard owns focused guards including the hint strip, Armoury, and"
-          echo "    hand-side rendered placement. display-first owns Settings through BOTH the"
+          echo "  · that the game is playable. NOTHING HERE PLAYS IT. Four jobs open a browser."
+          echo "    browser-guard owns focused checks like hand-side placement; browser-layout-guard"
+          echo "    owns phone reach, the hint strip and Armoury. display-first owns Settings through BOTH the"
           echo "    cold Startup -> Title door and the in-run door. It sends a complete CDP"
           echo "    Enter down/up through Startup, then the Settings controls are DOM clicks."
+          echo "    browser-startup-plants runs the cold-boot known-bad corpus."
           echo "    These gates inspect focused rectangles or alpha-weighted rendered pixels;"
           echo "    none fights, wins, loses, or finishes a run, or proves general playability."
           # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
