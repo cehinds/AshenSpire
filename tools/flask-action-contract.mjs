@@ -80,6 +80,20 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL combat and map menus share action availability/,
       },
       {
+        name: 'the map Potions control ignores the "Use flasks outside combat" setting',
+        file: 'src/ui/components/runPotions.js',
+        find: "const drinkOutsideCombat = settingOn(meta.settings, 'useRestorativeFlasksOutsideCombat');",
+        replace: 'const drinkOutsideCombat = false;',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'the map Potions control reads a different setting for outside-combat drinking',
+        file: 'src/ui/components/runPotions.js',
+        find: "const drinkOutsideCombat = settingOn(meta.settings, 'useRestorativeFlasksOutsideCombat');",
+        replace: "const drinkOutsideCombat = settingOn(meta.settings, 'reducedMotion');",
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
         name: 'the map Potions control drops its registries binding',
         file: 'src/ui/screens/map.js',
         find: 'mountRunPotions(potionsHost, { registries, run, meta,',
@@ -419,10 +433,24 @@ const runPotionsMounts = [...mapCode.matchAll(/\bmountRunPotions\(potionsHost, /
     return hits.length === 1 && hits[0][1] === name;
   });
 });
+let settingReadsLive = false;
+try {
+  const { settingOn } = await import('../src/ui/screens/settings.js');
+  const key = 'useRestorativeFlasksOutsideCombat';
+  settingReadsLive = settingOn({ [key]: true }, key) === true && settingOn({ [key]: false }, key) === false;
+} catch { settingReadsLive = false; /* observed red */ }
 const mapShares = /import \{[^}]*\bmountRunPotions\b[^}]*\} from '\.\.\/components\/runPotions\.js'/.test(mapCode)
   && runPotionsMounts.length > 0 && runPotionsMounts.every((ok) => ok)
   && /import \{[^}]*\brunPotionPlan\b[^}]*\} from '\.\.\/models\/RunPotionModel\.js'/.test(runPotionsCode)
   && /const planFor = \(entry\) => runPotionPlan\(entry(?:, \{[^{}]*\})?\);/.test(runPotionsCode)
+  // The live setting reaches the plan: `drinkOutsideCombat` is bound once,
+  // from the player's "Use flasks outside combat" setting via settingOn, and
+  // settingOn (imported and driven) reads that setting on and off. A constant
+  // or another key would make Drink's availability ignore the setting.
+  && /import \{ settingOn \} from '\.\.\/screens\/settings\.js'/.test(runPotionsCode)
+  && (runPotionsCode.match(/\bdrinkOutsideCombat\s*=[^=>]/g) || []).length === 1
+  && /\bconst drinkOutsideCombat = settingOn\(meta\.settings, 'useRestorativeFlasksOutsideCombat'\);/.test(runPotionsCode)
+  && settingReadsLive
   && potionMounts.length > 0 && potionMounts.every((mount) => mount.plan === 'planFor(entry)')
   // The Potions LIST (openRunPotions) and the action handler use the same
   // planFor: each row's verb is `runPotionVerb(entry, planFor(entry))`, the
