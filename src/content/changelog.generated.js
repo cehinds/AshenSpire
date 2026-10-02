@@ -4,13 +4,23 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1439",
-    "date": "2026-10-01",
-    "group": "2026-10-01",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
     "summary": "Behind the scenes: the rules for legendary sigils are written down",
     "detail": "This is a docs-only change, and nothing you play changes yet. The design document now says how a legendary sigil works. You attune it in the Armoury, out of a fight, up to a set number at a time, and it works in every fight while attuned, with no slot or weapon needed. Only a fight or a treasure room can drop one, never a shop, and none drops until you raise its chance in Settings. A save from before keeps its sigils and starts with none attuned.",
-    "build": "0.7.1.728",
+    "build": "0.7.1.733",
     "pullRequest": 1439,
     "url": "https://github.com/cehinds/AshenSpire/pull/1439"
+  },
+  {
+    "id": "pr-1436",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Co-op combat has the same bottom bar as solo",
+    "detail": "In a co-op fight the bottom of the screen showed an Actions circle, a stretched End Turn bar and a second row of flask buttons, and it had no Draw, Discard or Potions. Now it is the solo bar: Actions, Draw, End Turn, Discard/Exhaust and Potions, in one tidy row, laid out exactly as solo lays them out on a phone, a sideways phone and a desktop. Your flasks are behind Potions, as they are in solo, and the flask keys open that list. With two players on one screen, the Potions list belongs to whoever opened it: switching seats with Tab closes it, so you can never drink the other player's flask by mistake. A player who is down or disconnected can still open Potions to see what they carry. Each potion's details now say where it goes in co-op: at the selected enemy, or at a player you pick. Pressing a flask key twice no longer stacks a second Potions list over the board, and screen readers hear the Actions count as it changes. If the fight ends while the Potions list is open, it closes, and a Use confirmed after the host has moved your potions spends nothing.",
+    "build": "0.7.1.732",
+    "pullRequest": 1436,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1436"
   },
   {
     "id": "pr-1438",
