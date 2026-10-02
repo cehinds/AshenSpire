@@ -321,9 +321,9 @@ test('FINISH: inn rest is refused by name under a restDenied relic, and nothing 
 // sigil now authors no triggers, and one that does is refused by name.
 test('sigils are content: each non-legendary with a rarity, a cost and a property from its tagging row, refused by name when malformed', () => {
   assert.ok(shippedSigils.length >= 3);
-  for (const sigil of shippedSigils) {
+  // SPEC §15.4's legendaries have no cost; tests/legendary-sigils.test.mjs holds them.
+  for (const sigil of shippedSigils.filter((row) => row.rarity !== 'legendary')) {
     assert.ok(REG.sigils.has(sigil.id), `${sigil.id} registered`);
-    assert.notEqual(sigil.rarity, 'legendary', 'legendary sigils arrive with SPEC §15.4');
     assert.ok(Number.isInteger(sigil.cost) && sigil.cost > 0);
     assert.equal(sigil.triggers, undefined, 'no inline triggers since step 6');
     assert.ok(REG.sigils.get(sigil.id).propertyTags.length, `${sigil.id} derives its property`);

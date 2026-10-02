@@ -1047,6 +1047,33 @@ export const tags = [
     "blurb": "A hearth set in steel turns every mending into a guard."
   },
   {
+    "id": "vigilSigil",
+    "domain": "property",
+    "label": "Sigil of the Last Vigil",
+    "color": "8A7A3C",
+    "glyph": "🕯",
+    "visibility": "",
+    "blurb": "A legendary vigil: a guard rises at the start of a fight you enter already wounded."
+  },
+  {
+    "id": "pyreSigil",
+    "domain": "property",
+    "label": "Pyre Sigil",
+    "color": "B5522A",
+    "glyph": "🔥",
+    "visibility": "",
+    "blurb": "A legendary pyre: every card you burn away raises a guard."
+  },
+  {
+    "id": "gravelightSigil",
+    "domain": "property",
+    "label": "Gravelight Sigil",
+    "color": "6F7FA8",
+    "glyph": "💀",
+    "visibility": "",
+    "blurb": "A legendary gravelight: a fallen foe mends you while you stand wounded."
+  },
+  {
     "id": "warhorn",
     "domain": "property",
     "label": "Warhorn",

@@ -2305,5 +2305,67 @@ export const nodeEffects = {
         ]
       }
     ]
+  },
+  "vigilSigil": {
+    "triggers": [
+      {
+        "on": "combatStart",
+        "if": {
+          "p": "hpBelowPct",
+          "of": "owner",
+          "pct": {
+            "variable": "pct"
+          }
+        },
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "variable": "block"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "pyreSigil": {
+    "triggers": [
+      {
+        "on": "cardExhausted",
+        "do": [
+          {
+            "op": "block",
+            "target": "owner",
+            "amount": {
+              "variable": "block"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "gravelightSigil": {
+    "triggers": [
+      {
+        "on": "enemyDied",
+        "if": {
+          "p": "hpBelowPct",
+          "of": "owner",
+          "pct": {
+            "variable": "pct"
+          }
+        },
+        "do": [
+          {
+            "op": "heal",
+            "target": "owner",
+            "amount": {
+              "variable": "heal"
+            }
+          }
+        ]
+      }
+    ]
   }
 };
