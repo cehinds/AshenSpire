@@ -227,7 +227,9 @@ test('a load past its deadline settles as failed before the first screen, and th
   }, { ...opts(tree), fetchImpl: slow, deadlineMs: 30, onSource: () => { sourced += 1; } }));
   assert.equal(drawnWith.state, 'failed', 'the first screen draws only after the load has settled');
   assert.equal(drawnWith.url, 'assets/bg/bg_act1.webp', 'placeholders: no source');
-  assert.match(builtInArtStatus().failed[0], /did not load within 30 ms/);
+  // The budget is what was LEFT of the 30 ms once asset-base.json answered,
+  // so a slow millisecond there makes it 29: the number is not the point.
+  assert.match(builtInArtStatus().failed[0], /^light: the index did not load within (?:[12]?\d|30) ms$/);
   assert.ok(aborted, 'the fetches are aborted');
   release();
   await new Promise((r) => setTimeout(r, 30));

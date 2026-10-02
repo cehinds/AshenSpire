@@ -7,10 +7,20 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-02",
     "group": "2026-10-02",
     "summary": "The web edition's fonts and backdrops follow its art packs",
-    "detail": "Behind the scenes: the served web edition now loads its lore fonts and backdrop pictures through the same checked list as the rest of its art, so when the high-resolution list is missing it shows the light backdrops instead of blank ones, and when no list loads it keeps its plain background and system fonts; the door masks stay inside the game file. Nothing you play changes.",
-    "build": "0.7.1.736",
+    "detail": "Behind the scenes: the served web edition now loads its lore fonts and backdrop pictures through the same checked list as the rest of its art. When the high-resolution list is missing it now shows the light backdrops, the same as the rest of its art, instead of asking for high-resolution pictures the list no longer vouches for; when no list loads it keeps its plain background and system fonts. The door masks stay inside the game file. Nothing you play changes.",
+    "build": "0.7.1.737",
     "pullRequest": 1451,
     "url": "https://github.com/cehinds/AshenSpire/pull/1451"
+  },
+  {
+    "id": "pr-1442",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The Pages site no longer copies the art review folder",
+    "detail": "Behind the scenes: the project site stops carrying the art review pages and old build-file copies from main, the stable links get their map tiles beside every copy, and link previews use a picture the site itself serves; nothing you play changes.",
+    "build": "0.7.1.736",
+    "pullRequest": 1442,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1442"
   },
   {
     "id": "pr-1443",

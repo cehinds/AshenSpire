@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname, relative, posix } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { externalizeCss, newTemplate, templateValue, slotIds, cssVarName, CSS_URL } from '../tools/asset-css.mjs';
+import { externalizeCss, newTemplate, templateValue, slotIds, cssVarName, CSS_URL, propertyAt } from '../tools/asset-css.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const hrefs = [...readFileSync(resolve(ROOT, 'index.html'), 'utf8').matchAll(/<link\b[^>]*\brel=["']stylesheet["'][^>]*\bhref=["']([^"']+)["']/gi)].map((m) => m[1]);
@@ -63,4 +63,15 @@ test('a url() where var(…, none) would change its meaning is refused, and so i
   assert.equal(externalizeCss('.y { background-image: url("https://example.com/a.webp"); }', ok), '.y { background-image: url("https://example.com/a.webp"); }', 'a remote url is left alone');
   assert.equal(cssVarName('assets/bg/bg_act1.webp'), '--as-css-bg-bg_act1-webp');
   assert.equal(templateValue(newTemplate()), null, 'no asset url(), no template');
+});
+
+test('the property is read past a `;` inside a data: url, a string or a comment, and an unreadable one says so', () => {
+  const opts = () => ({ idFor: (ref) => `assets/${ref}`, inlineData: MASK, template: newTemplate() });
+  assert.equal(externalizeCss('.x { background: url(data:image/png;base64,AA), url(a.webp); }', opts()),
+    '.x { background: url(data:image/png;base64,AA), var(--as-css-a-webp, none); }');
+  assert.equal(externalizeCss('.x { /* a; b */ background-image: url(a.webp); }', opts()), '.x { /* a; b */ background-image: var(--as-css-a-webp, none); }');
+  assert.equal(externalizeCss('.x { background-image: image-set("x;y" 1x), url(a.webp); }', opts()), '.x { background-image: image-set("x;y" 1x), var(--as-css-a-webp, none); }');
+  const css = '.x { color: red; } .y { background: url(a.webp) }';
+  assert.equal(propertyAt(css, css.indexOf('url(a')), 'background');
+  assert.throws(() => externalizeCss('url(a.webp)', opts()), /could not be read/);
 });

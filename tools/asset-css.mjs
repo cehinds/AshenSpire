@@ -44,12 +44,26 @@ export function cssVarName(id) {
   return VAR_PREFIX + String(id).replace(/^assets\//, '').replace(/[^A-Za-z0-9_-]/g, '-');
 }
 
+// THE RULE FOR A url() THAT NAMES NO FILE, shared with verify-external D: an
+// authored data: URI, a remote url and a fragment are left exactly as written
+// (nothing to load through the index); verify-external B still refuses a large
+// non-SVG base64 payload, wherever it sits.
 const external = (ref) => /^(data:|https?:|\/\/|#)/i.test(ref);
 
-/** The CSS property a declaration at `offset` belongs to, or '' when it cannot tell. */
-function propertyAt(css, offset) {
-  const start = Math.max(css.lastIndexOf('{', offset), css.lastIndexOf(';', offset)) + 1;
-  const m = /^\s*(?:\/\*[\s\S]*?\*\/\s*)*([-a-zA-Z]+)\s*:/.exec(css.slice(start, offset));
+// What can hide a `{`, `}` or `;` that does not end a declaration: a comment,
+// a quoted string, and a url() (an unquoted `data:…;base64` has a `;` in it).
+const OPAQUE = /\/\*[\s\S]*?\*\/|"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|url\([^)]*\)/g;
+
+/**
+ * The CSS property a declaration at `offset` belongs to, or '' when it cannot
+ * be read. Comments, strings and url()s before it are blanked first (same
+ * length, so the offset holds), so their `;` or `{` is not taken for the
+ * declaration's start.
+ */
+export function propertyAt(css, offset) {
+  const before = css.slice(0, offset).replace(OPAQUE, (m) => ' '.repeat(m.length));
+  const start = Math.max(before.lastIndexOf('{'), before.lastIndexOf(';'), before.lastIndexOf('}')) + 1;
+  const m = /^\s*([-a-zA-Z]+)\s*:/.exec(before.slice(start));
   return m ? m[1].toLowerCase() : '';
 }
 
@@ -91,8 +105,11 @@ export function externalizeCss(css, { idFor, inlineData, template }) {
       return `url("${inlineData(id)}")`;
     }
     const prop = propertyAt(all, offset);
+    if (!prop) {
+      throw new Error(`the CSS property that names ${id} could not be read; only ${[...VAR_PROPERTIES].join(' and ')} may name a raster asset in the web edition, and this one cannot be shown to be either`);
+    }
     if (!VAR_PROPERTIES.has(prop)) {
-      throw new Error(`a CSS url() for ${id} sits in "${prop || '?'}", where var(…, none) is not a safe stand-in; only ${[...VAR_PROPERTIES].join(' and ')} may name a raster asset in the web edition`);
+      throw new Error(`a CSS url() for ${id} sits in "${prop}", where var(…, none) is not a safe stand-in; only ${[...VAR_PROPERTIES].join(' and ')} may name a raster asset in the web edition`);
     }
     const name = cssVarName(id);
     const owner = template.names.get(name);

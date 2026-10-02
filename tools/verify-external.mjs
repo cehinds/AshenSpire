@@ -36,7 +36,8 @@
 //      art-manifest.json, and each .js twin carries its index's text
 //      (tools/asset-pack.mjs verifyPacks — the same rules the pack tool keeps)
 //   D  the CSS assets go through the loader (step 3b): the inlined <style>s
-//      name no file by url() (only the two SVG masks, inline as data:), the
+//      name no file by url() (data:, remote and fragment urls name none; the
+//      two SVG masks are inline as data:), the
 //      HTML carries an ASSET_CSS template, every slot in it names an id the
 //      common index lists or EVERY pinned art tier lists (so the high → light
 //      fallback can fill it), and every `var(--as-css-…)` a stylesheet reads is
@@ -185,7 +186,10 @@ function verify(outDir) {
   for (const m of styles.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g)) {
     const ref = m[2];
     checks++;
-    if (/^data:image\/svg\+xml[;,]/i.test(ref) || /^(https?:|\/\/|#)/i.test(ref)) continue;
+    // The same rule as tools/asset-css.mjs: a url() that names no file (an
+    // authored data: URI, a remote url, a fragment) is left as written; B
+    // polices large non-SVG base64 payloads, the masks included in that rule.
+    if (/^(data:|https?:|\/\/|#)/i.test(ref)) continue;
     findings.push(`a stylesheet names ${ref.slice(0, 60)} by url() — every CSS asset but the SVG masks must be an ASSET_CSS slot the loader fills`);
   }
   const css = readCss(text);

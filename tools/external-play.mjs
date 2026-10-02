@@ -36,6 +36,7 @@ import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 import { resolve, dirname, relative } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
+import { objectPath } from './asset-pack.mjs';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -71,13 +72,16 @@ if (PINNED_TIER) {
     const file = resolve(DIR, String(p.index));
     if (!existsSync(file)) continue;
     for (const [id, [sha]] of Object.entries(JSON.parse(readFileSync(file, 'utf8')))) {
-      const dot = id.lastIndexOf('.');
-      const path = `objects/${sha.slice(0, 2)}/${sha}${dot > id.lastIndexOf('/') ? id.slice(dot).toLowerCase() : ''}`;
+      const path = objectPath(sha, id);
       if (!PACK_OF.has(path)) PACK_OF.set(path, new Set());
       PACK_OF.get(path).add(pack);
     }
   }
 }
+// The "AS Lore" faces the page must load: as many as the build's ASSET_CSS
+// stamp declares, read from the HTML rather than typed here.
+let LORE_FACES = 0;
+try { LORE_FACES = (JSON.parse((HTML_TEXT.match(/const ASSET_CSS = (\{.*?\}|null);\n/) || [])[1] || 'null')?.rules || []).filter((r) => /^@font-face\b/.test(r) && /AS Lore/.test(r)).length; } catch { LORE_FACES = 0; }
 const objectPathOf = (url) => (String(url).match(/objects\/[0-9a-f]{2}\/[0-9a-f]{64}\.[a-z0-9]+/) || [])[0] || null;
 /** Why an object url is not one the expected tier (or common) may show, or ''. */
 function wrongTier(url) {
@@ -212,7 +216,7 @@ for (const [name, query, ready] of SCREENS) {
     checks++;
     if (css.injected <= 0 || css.unfilled) findings.push(`${name}: the ASSET_CSS rules are ${css.injected <= 0 ? 'not in the page' : 'in the page with unfilled slots'}`);
     checks++;
-    if (css.faces < 15 || css.loaded !== css.faces) findings.push(`${name}: ${css.loaded} of ${css.faces} "AS Lore" faces loaded (15 are declared)`);
+    if (!LORE_FACES || css.faces !== LORE_FACES || css.loaded !== css.faces) findings.push(`${name}: ${css.loaded} of ${css.faces} "AS Lore" faces loaded (ASSET_CSS declares ${LORE_FACES})`);
     cssBackdrops += bgs.length; cssMasks += masks.length;
     cssNote = `; css ${bgs.length} backdrop(s) from objects, ${masks.length} inline mask(s), ${css.loaded}/${css.faces} lore faces`;
   }
