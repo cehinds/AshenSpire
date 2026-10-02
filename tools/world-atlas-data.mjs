@@ -102,7 +102,7 @@ export function validateAtlasData(data) {
       )
         throw Error(`Missing or unsafe asset ${row.assetId}: ${row.uri}`);
     for (const row of data.service_handlers)
-      if (!["shop", "smith", "rest", "lore"].includes(row.handlerId))
+      if (!["shop", "smith", "rest", "lore", "master"].includes(row.handlerId))
         throw Error(`Unsupported handlerId ${row.handlerId}`);
     for (const row of data.node_types)
       if (

@@ -8,6 +8,7 @@
 // on the real boots, before a line changed:
 //
 //   .coop-flask   min-height: var(--tap-floor); height: auto   — the right one
+//                 (retired 2026-10-01: co-op flasks moved behind Potions)
 //   .flask-slot   borrowed `.topbar .relic`'s width/height: 2.6rem
 //                 -> 54.2 x 26.0 local px at 390x844 AND 1200x730, against a
 //                 --tap-target of 44. 41% under the house floor, on the control
@@ -303,7 +304,10 @@ const SURFACES = [
   { group: 'charge', name: 'room charge', sel: '.shared-hud .hud-potions .flask-charge', door: 'shop-after-buy' },
   { group: 'belt', name: 'combat utility', sel: '.combat-potion-menu .potion-fold[data-potion-slot] .potion-use', door: 'combat' },
   { group: 'utility', name: 'room utility', sel: '.shared-hud .hud-potions .mh-flask', door: 'shop-after-buy' },
-  { group: 'utility', name: 'co-op board', sel: '.combat.coop .coop-flask', door: 'coop' },
+  // The co-op board's flasks sit behind its Potions control, the same footer
+  // and the same list solo mounts (components/combatActionRow.js, 2026-10-01).
+  // Its canned seat carries the two charge flasks and no carried potion.
+  { group: 'belt', name: 'co-op charge', sel: '.combat-potion-menu .potion-fold[data-charge-kind] .potion-use', door: 'coop' },
 ];
 
 const findings = [];
@@ -385,7 +389,10 @@ async function main() {
         await until(`!!document.querySelector('.combat-potion-menu .potion-fold')`, 'combat potions menu');
       } else if (surface.door === 'coop') {
         await cdp.send('Page.navigate', { url: `${base}?shot=coop` }, S);
-        await until(`!!document.querySelector('.combat.coop')`, 'coop');
+        await until(`!!document.querySelector('.combat.coop .combat-potions')`, 'coop');
+        await wait(300);
+        await ev(`document.querySelector('.combat.coop .combat-potions').click(); true`);
+        await until(`!!document.querySelector('.combat-potion-menu .potion-fold')`, 'co-op potions menu');
       } else {
         // THE PLAYER'S OWN ROAD TO A MAP WITH FLASKS ON IT. RE-AIMED
         // 2026-08-21 (Sunna, E2 / #247): the merchant became five folding

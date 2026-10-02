@@ -740,8 +740,9 @@ async function captureLayoutPage(b, href, [w, h], state, tree) {
       notes.push(`A9 ${tree} ${w}x${h}: BATTLEFIELD REACH ok — ${battlefield.fighters.length} fighters fit horizontally and are vertically reachable; ${battlefield.cards.length} cards each have a whole-card scroll position`);
     }
 
-    // Leave plus both fixed charge controls are always visible; utility
-    // consumables may add more controls and must obey the same floor.
+    // Leave and the action row's Potions control (which holds both charge
+    // flasks since 2026-10-01, as solo's does) are always visible and obey
+    // the floor.
     // Read the floor from the same custom property they must obey; a typed 44
     // here would disagree as soon as UI zoom changes.
     const actions = await b.ev(`(() => {
@@ -750,18 +751,18 @@ async function captureLayoutPage(b, href, [w, h], state, tree) {
       document.body.appendChild(probe);
       const floor = probe.getBoundingClientRect().height;
       probe.remove();
-      return { floor, controls: [...document.querySelectorAll('.combat.coop .coop-leave, .combat.coop .coop-flask')].map((el) => ({
+      return { floor, controls: [...document.querySelectorAll('.combat.coop .coop-leave, .combat.coop .combat-potions')].map((el) => ({
         text: el.textContent.trim(), height: el.getBoundingClientRect().height,
       })) };
     })()`);
     const undersized = actions.controls.filter((control) => control.height < actions.floor - 0.5);
     const names = actions.controls.map((control) => control.text);
-    const required = ['Leave', 'Crimson Flask', 'Azure Flask'].filter((name) => !names.some((text) => text.includes(name)));
+    const required = ['Leave', 'Potions'].filter((name) => !names.some((text) => text.includes(name)));
     if (required.length || undersized.length) {
       fail('A10', `${tree} ${w}x${h}: CO-OP ACTION FLOOR — missing ${required.join(', ') || 'none'} or below ${actions.floor}px; `
         + `${actions.controls.map((control) => `${control.text}=${control.height.toFixed(1)}`).join(', ') || 'no controls'}`);
     } else {
-      notes.push(`A10 ${tree} ${w}x${h}: CO-OP ACTION FLOOR ok — Leave, Crimson and Azure are at/above ${actions.floor}px`);
+      notes.push(`A10 ${tree} ${w}x${h}: CO-OP ACTION FLOOR ok — Leave and Potions are at/above ${actions.floor}px`);
     }
   }
 

@@ -4,13 +4,43 @@
 export const GENERATED_CHANGELOG = Object.freeze([
   {
     "id": "pr-1435",
-    "date": "2026-10-01",
-    "group": "2026-10-01",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
     "summary": "Behind the scenes: combat screenshots no longer leave out your character",
     "detail": "Nothing you play changes: your character was always drawn in the game itself. The tool that takes the preview pictures sometimes took the combat picture before your character was painted, which left only a shadow where they stand. It now waits until every fighter's artwork has loaded and the picture holds still, and if that never happens it reports the problem instead of saving the picture. The larger enemies in recent pictures are intended, from the recent changes that made enemies larger on the battlefield.",
-    "build": "0.7.1.727",
+    "build": "0.7.1.733",
     "pullRequest": 1435,
     "url": "https://github.com/cehinds/AshenSpire/pull/1435"
+  },
+  {
+    "id": "pr-1436",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Co-op combat has the same bottom bar as solo",
+    "detail": "In a co-op fight the bottom of the screen showed an Actions circle, a stretched End Turn bar and a second row of flask buttons, and it had no Draw, Discard or Potions. Now it is the solo bar: Actions, Draw, End Turn, Discard/Exhaust and Potions, in one tidy row, laid out exactly as solo lays them out on a phone, a sideways phone and a desktop. Your flasks are behind Potions, as they are in solo, and the flask keys open that list. With two players on one screen, the Potions list belongs to whoever opened it: switching seats with Tab closes it, so you can never drink the other player's flask by mistake. A player who is down or disconnected can still open Potions to see what they carry. Each potion's details now say where it goes in co-op: at the selected enemy, or at a player you pick. Pressing a flask key twice no longer stacks a second Potions list over the board, and screen readers hear the Actions count as it changes. If the fight ends while the Potions list is open, it closes, and a Use confirmed after the host has moved your potions spends nothing.",
+    "build": "0.7.1.732",
+    "pullRequest": 1436,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1436"
+  },
+  {
+    "id": "pr-1438",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "A wise master can now train, respec and teach your weapon skills",
+    "detail": "A master teaches three or four skills and sells books, weapon arts and armaments for them. Training buys XP for one of his skills, up to a few sessions per visit. A lesson draws a skill draft of cards for one of his skills, and you buy one for your deck; a reload keeps the same cards. A respec sends a skill at level 2 or higher back to level 1 and pays part of its XP into a training pool, which you can spend on any skill. Appraisal shows each of his skills for free, and you can sell skill books and revive tokens to him. No map place has a master yet; a merchant can be one if you raise its weight in Settings. A save made while visiting a blacksmith in town no longer fails to load, and a custom run's shop price changes now apply to weapon arts too.",
+    "build": "0.7.1.727",
+    "pullRequest": 1438,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1438"
+  },
+  {
+    "id": "pr-1433",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "Behind the scenes: the format for loading art, fonts, music and map tiles as separate files is written and checked",
+    "detail": "Nothing you play changes. A new tool packs the art, fonts, music and map tiles into files named by their contents, with an index for each art tier, and the art list now records the fonts, the font licence, the music and the map tiles as one shared set; the game does not load them this way yet.",
+    "build": "0.7.1.726",
+    "pullRequest": 1433,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1433"
   },
   {
     "id": "pr-1431",

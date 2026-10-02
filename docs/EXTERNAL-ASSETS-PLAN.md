@@ -1,6 +1,7 @@
 # Every asset outside the game file — plan
 
-Status: **plan only, nothing built** (2026-09-27). The owner answered its
+Status: **step 2 built** (2026-10-01: `tools/asset-pack.mjs`, `art-manifest.json`
+schema 2); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -207,6 +208,11 @@ schema-2 pin whose top level disagrees with `packs.high`.
   - `mobile-art.mjs --check`;
   - `verify-external` C;
   - `tests/art-manifest.test.mjs`.
+  Step 2 switched the readers of the manifest's records (`fetch-art` and the
+  manifest test). The twin check in `bundle.mjs`, `mobile-art --check` and
+  `verify-external` C walk the trees, not the manifest. They stay tree-based
+  on purpose until the fonts leave `assets-mobile/` (step 13), because the
+  fonts are byte-identical in both trees and those gates still check them.
 - **New ids** get one `common` record: `music/manifest.json`,
   `music/<context>/<track>.mp3` and `map-detail/<hash>/<size>/<x>-<y>.webp`.
 - **`licenses/OFL.txt`** is a listed `common` record too, so `fetch-art`'s

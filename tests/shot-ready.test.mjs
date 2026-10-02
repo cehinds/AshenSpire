@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { combatantArt, devtoolsClient, readyExpression } from '../tools/shotReady.mjs';
+import { combatantArt, devtoolsClient, readyExpression, settledFrame } from '../tools/shotReady.mjs';
 
 const img = (src, { complete = true, naturalWidth = 512, display = 'block', visibility = 'visible', opacity = '1' } = {}) => ({
   complete, naturalWidth, css: { display, visibility, opacity }, getAttribute: (name) => (name === 'src' ? src : null),
@@ -95,4 +95,35 @@ test('screenshot.mjs routes both combat shots through the ready wait', () => {
     assert.match(src, new RegExp(`name: '${name}',[^}\\n]*ready: 'combatants'`), `${name} is a ready shot`);
   }
   assert.match(src, /shot\.ready \? await captureReady\(shot\)/);
+});
+
+test('a frame is kept only once a retake agrees with it', async () => {
+  const frames = [Buffer.from('a'), Buffer.from('b'), Buffer.from('b')];
+  const retries = [];
+  const got = await settledFrame(async () => frames.shift(), { tries: 4, waitMs: 0, onRetry: (n) => retries.push(n) });
+  assert.equal(got.toString(), 'b');
+  assert.deepEqual(retries, [1]);
+});
+
+test('BOUNDARY must-fail: a board that never holds still writes no frame', async () => {
+  // An always-running animation (e.g. backdropGlow on a plain .backdrop) gives a
+  // new frame every grab; the capture must fail closed, never pick one.
+  let n = 0;
+  const got = await settledFrame(async () => Buffer.from(String(n++)), { tries: 4, waitMs: 0 });
+  assert.equal(got, null);
+  assert.equal(n, 5);
+});
+
+test('BOUNDARY: the combat and co-op boards hide the animated backdrop glow', () => {
+  const css = readFileSync(new URL('../styles/combat.css', import.meta.url), 'utf8');
+  assert.match(css, /\.backdrop::after \{[^}]*animation: backdropGlow[^}]*infinite/);
+  assert.match(css, /\.environment-backdrop::after \{ display: none; \}/);
+  const art = readFileSync(new URL('../src/ui/components/environmentArt.js', import.meta.url), 'utf8');
+  const backdrops = [...art.matchAll(/class="(backdrop[^"]*)"/g)].map((m) => m[1]);
+  assert.ok(backdrops.length > 0);
+  for (const cls of backdrops) assert.match(cls, /\benvironment-backdrop\b/, `combat backdrop "${cls}"`);
+  for (const screen of ['combat', 'coop']) {
+    const src = readFileSync(new URL(`../src/ui/screens/${screen}.js`, import.meta.url), 'utf8');
+    assert.match(src, /\$\{combatBackdropHtml\(/, `${screen} draws its backdrop through combatBackdropHtml`);
+  }
 });

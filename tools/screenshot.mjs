@@ -14,7 +14,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
-import { devtoolsClient, readyExpression } from './shotReady.mjs';
+import { devtoolsClient, readyExpression, settledFrame } from './shotReady.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
@@ -336,16 +336,9 @@ async function captureReady(shot) {
       // SETTLE_MS later agrees with it, the same bar captureStable sets.
       const grab = async () => Buffer.from((await send('Page.captureScreenshot',
         { format: 'png', fromSurface: true, captureBeyondViewport: false }, SHOT_CALL_MS)).data, 'base64');
-      let frame = await grab();
-      let agreed = false;
-      for (let attempt = 1; attempt <= MAX_TRIES && !agreed; attempt++) {
-        await new Promise((ok) => setTimeout(ok, SETTLE_MS));
-        const retake = await grab();
-        agreed = retake.equals(frame);
-        if (!agreed) console.error(`    ${shot.name}: frame still changing (try ${attempt}/${MAX_TRIES})`);
-        frame = retake;
-      }
-      if (!agreed) {
+      const frame = await settledFrame(grab, { tries: MAX_TRIES, waitMs: SETTLE_MS,
+        onRetry: (attempt) => console.error(`    ${shot.name}: frame still changing (try ${attempt}/${MAX_TRIES})`) });
+      if (!frame) {
         console.error(`  ✗ ${shot.name}: no settled frame in ${MAX_TRIES} retakes; NOT captured.`);
         return false;
       }

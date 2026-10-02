@@ -97,6 +97,16 @@ fails the core suite while it is stale, or when any field differs from what
 first (built from a manifest by the Art quality setting), then the built-in
 art. Not yet covered: game code still builds many `assets/…` paths from
 templates, and 14 CSS `url(../assets/…)` backdrops bypass `assetUrl()`.
+Schema 2 (docs/EXTERNAL-ASSETS-PLAN.md, step 2) adds `common` ids with one
+`{path, bytes, sha256}` record each: the 15 fonts under `assets/fonts/`,
+`licenses/OFL.txt` (read from `asset-data/fonts/OFL.txt`), `music/manifest.json`
+and the score's MP3s, and the `map-detail/` tiles; readers that walk the light
+and high twins skip them. `node tools/asset-pack.mjs` writes the plan's pack
+format from these trees into `build/asset-pack/` (ignored): a content-addressed
+`objects/<xx>/<sha256>.<ext>` store and `packs/<pack>-<digest12>.json` indexes
+for `light`, `high` and `common`, each with its `.js` twin, plus the
+`packs/fonts-<digest12>.js` sidecar; `--check` verifies a written tree and
+`tests/asset-pack.test.mjs` covers it. No build or edition reads the packs yet.
 
 **The high-res release** (docs/ART-REPO-PLAN.md). `art-release.json` pins one
 release of the private `cehinds/AshenSpire-art` (repo, tag, zip, sha256; today

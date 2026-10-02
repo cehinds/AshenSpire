@@ -107,3 +107,29 @@ export function devtoolsClient(socket) {
     try { socket.send(JSON.stringify({ id: next, method, params })); } catch (e) { waiting.delete(next); settle(no)(e); }
   });
 }
+
+/**
+ * Keep a frame only when a retake `waitMs` later is byte-identical to it, up to
+ * `tries` retakes. Resolves with the agreed frame, or null when the frames
+ * never agree; the caller then writes NO PNG.
+ *
+ * BOUNDARY: this assumes the captured board holds still once its art is ready.
+ * The shipped combat and co-op boards do: both draw their backdrop through
+ * combatBackdropHtml() as `.environment-backdrop`, whose `::after` (the only
+ * carrier of the infinite `backdropGlow` animation) is `display: none` in
+ * styles/combat.css. A board that showed an always-running animation would
+ * never agree here and FAILS CLOSED (no PNG) rather than being widened to
+ * tolerate motion; freezing animations would change what the preview shows,
+ * so that is its own change. tests/shot-ready.test.mjs pins both halves.
+ */
+export async function settledFrame(grab, { tries, waitMs, onRetry = () => {} }) {
+  let frame = await grab();
+  for (let attempt = 1; attempt <= tries; attempt++) {
+    await new Promise((ok) => setTimeout(ok, waitMs));
+    const retake = await grab();
+    if (retake.equals(frame)) return retake;
+    onRetry(attempt);
+    frame = retake;
+  }
+  return null;
+}
