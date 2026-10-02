@@ -34,13 +34,24 @@ test('runsim and measure-classes run the shared loop and keep no copy of it', ()
 
 test('the pilot thresholds are named once and a caller can override them', () => {
   assert.deepEqual({ ...PILOT }, { pathHurtBelow: 0.55, restBelow: 0.6 });
-  // A fight bot that loses at once: the run ends in its first fight, and the
-  // loop says where. No pilot override can make the loop crash or loop.
+  // A stub bot that wins every fight untouched, so the run walks the whole
+  // climb at full HP. Only an override that counts full HP as hurt sends the
+  // pilot down shrine paths it otherwise skips.
+  const walk = (pilot) => {
+    const loop = createRunLoop(registries, { fight: () => 'victory', pilot });
+    const r = loop.simulateRun(registries.classes.all()[0].id, fleetSeed(1));
+    return { r, graces: loop.counters.graces };
+  };
+  const plain = walk(undefined);
+  const hurt = walk({ pathHurtBelow: 2 });
+  assert.equal(plain.r.victory, true);
+  assert.equal(hurt.r.victory, true);
+  assert.ok(hurt.graces > plain.graces, `an always-hurt pilot visits more shrines (${hurt.graces} vs ${plain.graces})`);
+});
+
+test('a fight the bot loses ends the run there, and the loop says where', () => {
   const seen = [];
-  const loop = createRunLoop(registries, {
-    fight: (run, rng, encId) => { seen.push(encId); return 'defeat'; },
-    pilot: { pathHurtBelow: 1, restBelow: 0 },
-  });
+  const loop = createRunLoop(registries, { fight: (run, rng, encId) => { seen.push(encId); return 'defeat'; } });
   const r = loop.simulateRun(registries.classes.all()[0].id, fleetSeed(1));
   assert.equal(r.victory, false);
   assert.equal(seen.length, 1, 'one fight, then the death');

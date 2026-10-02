@@ -295,16 +295,23 @@ function resolvedLiveHpLoss(combat, hand, def, target) {
 // the event/queue doors to the clone, and dispatch the exact hand instance at
 // the exact authoritative target. No product state, RNG counter, pile, log,
 // target or trace object is touched by this probe.
+// The function-valued keys a combat carries, each rebound to the probe below.
+const PROBE_DOORS = ['emit', '_emitEvent', 'enqueue', 'nextInstanceId'];
 function cloneCombatForOrderedProbe(combat) {
   if (combat.queue.length || combat._buffer) throw new Error('ordered lethal probe requires a settled dispatch boundary');
   const state = {};
   // Every function on the combat is a door bound to it (emit, enqueue, the id
   // counter) or a module helper (createCombat's `_emitEvent`): none is state,
-  // and structuredClone refuses functions outright (DataCloneError). Skip them
-  // all, by kind rather than by a list of names a new door would outgrow, and
-  // rebind each door to the probe below.
+  // and structuredClone refuses functions outright (DataCloneError). Each is
+  // skipped and rebound to the probe below; one not in PROBE_DOORS throws.
   for (const [key, value] of Object.entries(combat)) {
-    if (key === 'registries' || key === 'rng' || typeof value === 'function') continue;
+    if (key === 'registries' || key === 'rng') continue;
+    if (typeof value === 'function') {
+      // A door this probe does not rebind would be missing from the probe and
+      // fail later, or quietly; refuse it here, by name (PR #1492 review).
+      if (!PROBE_DOORS.includes(key)) throw new Error(`ordered lethal probe: combat.${key} is a function the probe does not rebind`);
+      continue;
+    }
     state[key] = key === 'eventLog' ? [] : value;
   }
   const probe = structuredClone(state);
