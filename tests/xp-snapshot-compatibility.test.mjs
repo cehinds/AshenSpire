@@ -34,7 +34,7 @@ test('new snapshots use linear costs while legacy XP edits preserve their expone
   const current = advancedConfigSnapshot({});
   const old = { schemaVersion: 1, overrides: { [xpKey]: 100, 'gameConfig.balance.level.xp.growth': 1.2 } };
   const currentBundle = configuredContentBundle(contentBundle, current);
-  assert.equal(current.xpCurveVersion, 1);
+  assert.equal(current.xpCurveVersion, 2);
   assert.equal(currentBundle.balance.level.xp.linear, true);
   const edited = updatedXpSnapshot(old, { [xpKey]: 200 });
   assert.equal(Object.hasOwn(edited, 'xpCurveVersion'), false);
@@ -45,7 +45,22 @@ test('new snapshots use linear costs while legacy XP edits preserve their expone
   const adopted = configuredContentBundle(contentBundle, updatedXpSnapshot(old, { [linearKey]: true }));
   assert.equal(adopted.balance.level.xp.linear, true);
   assert.equal(adopted.balance.level.xp.multScaler, 1.3);
-  assert.equal(updatedXpSnapshot(current, { [xpKey]: 200 }).xpCurveVersion, 1);
+  assert.equal(updatedXpSnapshot(current, { [xpKey]: 200 }).xpCurveVersion, 2);
+});
+test('a run saved before the ×1.75 skill curve keeps the thresholds it was saved with', () => {
+  const skillSteps = (snapshot) => {
+    const registries = createRegistries(configuredContentBundle(contentBundle, snapshot));
+    return ['weapon', 'class'].map((kind) => [0, 1, 2, 3].map((level) => skillXpToNext(registries, kind, level)).join(','));
+  };
+  const linearV1 = { schemaVersion: 1, ratingsVersion: 1, xpCurveVersion: 1, overrides: {} };
+  assert.deepEqual(skillSteps(linearV1), ['100,230,360,490', '100,230,360,490'], 'a version-1 run keeps the linear +130 steps');
+  const legacy = { schemaVersion: 1, overrides: {} };
+  assert.deepEqual(skillSteps(legacy), ['100,100,100,100', '100,100,100,100'], 'a pre-linear run keeps its growth-1 steps');
+  assert.deepEqual(skillSteps(advancedConfigSnapshot({})), ['100,175,305,535', '100,175,305,535'], 'a new run uses ×1.75');
+  const tuned = { ...linearV1, overrides: { 'gameConfig.balance.skill.xp.linear': false, 'gameConfig.balance.skill.xp.growth': 1.5 } };
+  assert.equal(skillSteps(tuned)[0], '100,150,225,340', 'a version-1 run that names its own curve keeps it');
+  const character = createRegistries(configuredContentBundle(contentBundle, linearV1));
+  assert.equal(characterXpToNext(character, 2), 230, 'the character curve is untouched');
 });
 const ratingsKey = 'gameConfig.balance.combatRatings.enabled';
 

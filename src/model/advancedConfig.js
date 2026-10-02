@@ -965,7 +965,7 @@ export function advancedConfigSnapshot(settings = {}) {
   return Object.freeze({
     schemaVersion: ADVANCED_CONFIG_SCHEMA_VERSION,
     ratingsVersion: 1,
-    xpCurveVersion: 1,
+    xpCurveVersion: 2,
     overrides: advancedConfigSettings(settings),
   });
 }
@@ -1003,12 +1003,25 @@ export function configuredContentBundle(bundle, settingsOrSnapshot = {}) {
   const configured = cloneConfigurableBundle(bundle);
   // A saved pre-linear run keeps its curve unless a live XP setting opts in.
   // Profile settings and newly stamped snapshots use the authored defaults.
-  if (settingsOrSnapshot?.overrides && settingsOrSnapshot.xpCurveVersion !== 1) {
+  const curveVersion = settingsOrSnapshot?.xpCurveVersion;
+  if (settingsOrSnapshot?.overrides && curveVersion !== 1 && curveVersion !== 2) {
     for (const path of ['level.xp', 'skill.xp', 'skill.class.xp']) {
       const key = `${ADVANCED_CONFIG_PREFIX}balance.${path}.linear`;
       if (settings[key] !== undefined) continue;
       const curve = path.split('.').reduce((row, part) => row?.[part], configured.balance);
       if (curve && Object.hasOwn(curve, 'linear')) curve.linear = false;
+    }
+  }
+  // Snapshots stamped before version 2 were played with the skill and class
+  // tracks at growth 1 (linear from version 1). Version 2 (owner, 2026-10-02)
+  // authors them at ×1.75; an older run keeps the thresholds it was saved
+  // with unless its own overrides name the curve.
+  if (settingsOrSnapshot?.overrides && curveVersion !== 2) {
+    for (const path of ['skill.xp', 'skill.class.xp']) {
+      const curve = path.split('.').reduce((row, part) => row?.[part], configured.balance);
+      if (!curve) continue;
+      if (curveVersion === 1 && settings[`${ADVANCED_CONFIG_PREFIX}balance.${path}.linear`] === undefined) curve.linear = true;
+      if (settings[`${ADVANCED_CONFIG_PREFIX}balance.${path}.growth`] === undefined) curve.growth = 1;
     }
   }
   // EQUIPMENT REQUIREMENTS RESOLVE FIRST, because every floor the starting-stat
