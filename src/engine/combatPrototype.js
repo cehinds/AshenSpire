@@ -1,5 +1,5 @@
 // Shared deterministic playtest policy. Uses real dispatch and exact previews.
-import { dispatch } from './combat.js';
+import { dispatch, cardChoicePlan } from './combat.js';
 import { previewFoundationAction } from './combatRules.js';
 import { createPrototypeCombat, prototypeBuilds, prototypeScenarios } from '../content/prototypes/combatBuilds.js';
 
@@ -12,7 +12,8 @@ export function prototypeOptions(c) {
     const def = c.registries.cards.get(card.cardId);
     const targeted = def.effects.some((e) => e.target === 'enemy');
     for (const target of targeted ? targets : [null]) {
-      const intent = { type: 'playCard', cardInstanceId: card.instanceId, ...(target ? { targetId: target.id } : {}) };
+      const choice = cardChoicePlan(c, card.instanceId)?.options[0]?.id;
+      const intent = { type: 'playCard', cardInstanceId: card.instanceId, ...(target ? { targetId: target.id } : {}), ...(choice ? { choice } : {}) };
       try {
         const preview = previewFoundationAction(c, (copy) => dispatch(copy, intent));
         const next = preview.state;

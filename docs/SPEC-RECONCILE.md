@@ -373,8 +373,9 @@ this stage is its evidence.*
 | P1 ⚠ dodge receipt text | shipped ⚠ | **shipped ⚠**, boundary unchanged | `grep -rln dodgeReceipt tests` still finds nothing |
 | C1/C2 content rows | rewritten | hold | 195 cards (40 per class, 35 colorless), 63 relics, 25 events, 7 flasks, 33 enemies = 20 regular + 10 boss + 3 elite, read from `contentBundle` |
 
-The D2 hooks: Guilt shipped in #1286 (`tests/guilt.test.mjs`). Warrior's Vow is still
-**to-build**: `src/content/cards/reaver.js` `warriorsVow` enters `gorefire`, not a chosen stance.
+The D2 hooks: Guilt shipped in #1286 (`tests/guilt.test.mjs`). Warrior's Vow now
+**shipped**: `warriorsVow` offers every stance of the player's class and enters the
+chosen one, solo and co-op (`tests/warriors-vow.test.mjs`).
 
 ## §14 and §15: contract landed, code for §14 step 2 and §15.2
 
