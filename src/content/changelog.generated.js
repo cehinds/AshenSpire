@@ -8,9 +8,69 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The first-fight tutorial no longer sits on your cards",
     "detail": "The coach marks' speech bubble used to land on the first card in your hand, so you couldn't play that card while the tutorial was showing. The bubble now finds a spot clear of your hand. After a window resize, the spotlight now follows its target until the board stops moving. Pressing Escape on an armed attack card now also drops the card's highlight, not just its targeting. Behind the scenes, the check that every tutorial button can be reached runs at eight screen sizes on every change, and it confirms that the tutorial stays dismissed after a reload.",
-    "build": "0.7.1.758",
+    "build": "0.7.1.760",
     "pullRequest": 1468,
     "url": "https://github.com/cehinds/AshenSpire/pull/1468"
+  },
+  {
+    "id": "pr-1448",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: co-op enemy effects on your cards are tested for every player",
+    "detail": "Nothing you play changes. New tests check that an enemy move which makes players draw, discard, exhaust, or shuffle their discard pile back into their deck does it to every living player in a co-op fight, and not to a player who is down or disconnected.",
+    "build": "0.7.1.759",
+    "pullRequest": 1448,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1448"
+  },
+  {
+    "id": "pr-1445",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The opening's words sit in the middle of the caption band",
+    "detail": "The narration is now centred top to bottom in the fixed caption band, not pinned to its top. On a phone turned on its side, where the words sit in a panel beside the painting, the panel now fills its whole column instead of a thin strip at the top.",
+    "build": "0.7.1.758",
+    "pullRequest": 1445,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1445"
+  },
+  {
+    "id": "pr-1461",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition opens by double-click",
+    "detail": "Behind the scenes: the web edition's game file, kept together with its folder of art, now plays when opened straight from disk, with its art, fonts and map close-ups, and the music played by the game's own synthesizer; nothing you play changes.",
+    "build": "0.7.1.757",
+    "pullRequest": 1461,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1461"
+  },
+  {
+    "id": "pr-1449",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Warrior's Vow lets you choose your stance",
+    "detail": "Playing Warrior's Vow used to put you in Gorefire Stance every time, though the card promised a stance of your choice. Now it asks: you pick Gorefire, Bulwark or Brace, each with what it does, and that is the stance you enter. Cancel keeps the card in your hand. It works the same in co-op, and on a shared couch screen the chooser keeps the keyboard while it is open: Tab moves between the stances instead of switching player, and the card and End Turn keys wait until you choose.",
+    "build": "0.7.1.756",
+    "pullRequest": 1449,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1449"
+  },
+  {
+    "id": "pr-1465",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the build checker's self-test catches up with the art-pack change",
+    "detail": "Nothing you play changes. One of the build tool's self-tests plants a deliberate fault in a line the asset loading work rewrote, so it could no longer find that line and the test build's checks went red. It now plants the fault in the line as it reads today.",
+    "build": "0.7.1.754",
+    "pullRequest": 1465,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1465"
+  },
+  {
+    "id": "pr-1447",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: a flask check that had stopped working runs again",
+    "detail": "Nothing you play changes. A check makes sure flasks on the map offer the same choices as flasks in a fight. It had stopped looking at the Potions button you use on the map, and nothing ran it, so it failed without anyone noticing. It now follows that Potions button to the choices each flask offers, and the test suite runs it on every change.",
+    "build": "0.7.1.753",
+    "pullRequest": 1447,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1447"
   },
   {
     "id": "pr-1386",
