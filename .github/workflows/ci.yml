@@ -1049,7 +1049,7 @@ jobs:
           echo "  · on seed MOTION1 every living combatant's visible figure is moved by a running"
           echo "    idle animation, at boot and after one turn; and one full turn under Reduced"
           echo "    motion (setting+OS, setting, OS) shows no animation over 0.01 s and no script"
-          echo "    flipbook, with twelve same-door known-bads caught (browser-motion, in 3 shards)"
+          echo "    flipbook, with thirteen same-door known-bads caught (browser-motion, in 3 shards)"
           # WAS: "...and it is the only rendered claim in this file that is about the
           # GAME's layout." TRUE when Bjorn wrote it, FALSE the moment I added the
           # Armoury step below — a second browser-driven rendered-layout claim in this

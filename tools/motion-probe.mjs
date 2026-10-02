@@ -145,6 +145,20 @@ if (argv.includes('--selftest')) {
         expectRed: /RED IDLE \w+#\d+ — .*keyframes never move it/,
       },
       {
+        // #1475 review: a moving companion animation on the carrier must not
+        // vouch for a flattened bob beside it.
+        name: 'the idle keyframes are flattened while a shake runs beside them',
+        edits: [
+          { file: 'styles/combat.css',
+            find: '@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }',
+            replace: '@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 0; } }' },
+          { file: 'styles/combat.css',
+            find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: sprite-idle 3.1s ease-in-out infinite;',
+            replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: sprite-idle 3.1s ease-in-out infinite, shake 3.1s infinite;' },
+        ],
+        expectRed: /RED IDLE \w+#\d+ — .*keyframes never move it/,
+      },
+      {
         // #1475 review: another infinite animation must not stand in for the
         // bob. The carriers run the gold pulse instead of sprite-idle.
         name: 'the idle carriers run another infinite animation, not the bob',
@@ -469,7 +483,10 @@ async function idle({ evaluate }, label) {
       for (let el = img; el && el !== c; el = el.parentElement) {
         const anim = getComputedStyle(el).animationName;
         if (anim !== 'none') {
-          const live = el.getAnimations().filter((a) => a.animationName && anim.split(/,\\s*/).includes(a.animationName)
+          // Only sprite-idle's own effect is judged: a companion animation
+          // on the same layer that moves must not vouch for a stopped or
+          // flattened bob.
+          const live = el.getAnimations().filter((a) => a.animationName === 'sprite-idle' && anim.split(/,\\s*/).includes('sprite-idle')
             && a.playState === 'running' && a.effect.getComputedTiming().activeDuration === Infinity);
           // Running is not moving: keyframes flattened to one value run
           // forever and never shift the figure.
