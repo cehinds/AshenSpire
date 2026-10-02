@@ -49,11 +49,14 @@
           "enabled": true,
           "order": 1,
           "banner": false,
-          "ownStaging": false,
+          "ownStaging": true,
           "waitForInput": false,
           "music": "keep",
           "stinger": "none",
-          "stage": {},
+          "stage": {
+            "imageFocusX": 57,
+            "textPosition": "middle-center"
+          },
           "actor": {
             "desktop": {
               "x": 33,
@@ -77,17 +80,22 @@
           "seconds": 5,
           "speaker": "Hamlet witness",
           "text": "The cities burned toward their towers.\nThe bells fell silent. No spring followed.",
-          "effect": "fade",
+          "effect": "push",
           "character": false,
           "art": "year",
           "enabled": true,
           "order": 2,
           "banner": false,
-          "ownStaging": false,
+          "ownStaging": true,
           "waitForInput": false,
           "music": "keep",
           "stinger": "none",
-          "stage": {},
+          "stage": {
+            "cameraEase": "ease-out",
+            "camera": "up",
+            "imageFocusX": 52,
+            "imageFocusY": 0
+          },
           "actor": {
             "desktop": {
               "x": 33,
@@ -156,7 +164,8 @@
           "music": "keep",
           "stinger": "none",
           "stage": {
-            "wash": 0.06
+            "wash": 0.06,
+            "camera": "out"
           },
           "actor": {
             "desktop": {
@@ -209,7 +218,10 @@
           "music": "keep",
           "stinger": "none",
           "stage": {
-            "imageFocusY": 0
+            "imageFocusY": 0,
+            "transitionEase": "ease-out",
+            "camera": "out",
+            "cameraEase": "ease-out"
           }
         },
         {
@@ -379,8 +391,8 @@
         "textBoxVisible": true,
         "textBoxOpacity": 1,
         "textBoxColor": "#100e0c",
-        "captionFixedHeight": false,
-        "captionHeightVh": 18,
+        "captionFixedHeight": true,
+        "captionHeightVh": 15,
         "bannerBox": true,
         "bannerBoxColor": "#100e0c",
         "bannerBoxOpacity": 1,
