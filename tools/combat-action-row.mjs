@@ -663,7 +663,7 @@ async function main() {
           // same layout adapter, with the flasks behind Potions. The co-op cell
           // holds it to the same plan the solo cells read back.
           // tools/coop-hud-top.mjs compares it against solo, control by
-          // control, on every pull request.
+          // control, on every push to test and release.
           const coop = await evaluate(`(() => {
             const combat=document.querySelector('.combat.coop');
             const area=combat?.querySelector(':scope > .hand-area');
