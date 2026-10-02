@@ -927,7 +927,13 @@ const winsOf = (fleet, id) => fleet[id].rows.filter((r) => r.victory).length;
 const RUNSIM = fileURLToPath(new URL('runsim.mjs', import.meta.url));
 
 function deriveRunsimWins(n) {
-  const r = spawnSync(process.execPath, [RUNSIM, String(n), '--digest'], { encoding: 'utf8' });
+  // --digest prints a line per fight (about 1 KB per run per class; 422 KB at
+  // n=100), so the default n=500 is about 2 MB of stdout, past spawnSync's
+  // 1 MiB default (ENOBUFS, exit 2 before any comparison). The buffer is sized
+  // from n with 16x headroom, at least 64 MiB; an overflow is still an ERROR,
+  // never a pass.
+  const maxBuffer = Math.max(64, Math.ceil(n * REG.classes.all().length * 16 / 1024)) * 1024 * 1024;
+  const r = spawnSync(process.execPath, [RUNSIM, String(n), '--digest'], { encoding: 'utf8', maxBuffer });
   if (r.error) throw new Error(`could not run runsim.mjs: ${r.error.message}`);
   if (r.status !== 0) {
     throw new Error(`runsim.mjs exited ${r.status} — the baseline could not be derived.\n${(r.stderr || '').trim()}`);

@@ -102,10 +102,13 @@ Fixed seat order (weald → marches → reach), per class:
 | Herald | 293/300 (97.7%) | 3/293 (1.0%) | 2/3 (66.7%) | 2/300 |
 | All | 1178/1200 (98.2%) | 17/1178 (1.4%) | 3/17 (17.6%) | 3/1200 |
 
-Fixed seat order, the boss each tier fought: tier 1 `bossOmen` (hp × 0.800,
-damage × 0.800) fought 1185, cleared 1178; tier 2 `a2_bossStitchedKing`
-(2.200 / 1.500) fought 840, cleared 17; tier 3 `a3_bossRotValkyrie`
-(2.200 / 1.500) fought 16, cleared 3.
+Fixed seat order, the boss each tier fought:
+
+| Tier | Seat | Boss | Boss HP × | Boss damage × | Fought | Cleared |
+|---|---|---|---|---|---|---|
+| 1 | weald | `bossOmen` | 0.800 | 0.800 | 1185 | 1178 |
+| 2 | marches | `a2_bossStitchedKing` | 2.200 | 1.500 | 840 | 17 |
+| 3 | reach | `a3_bossRotValkyrie` | 2.200 | 1.500 | 16 | 3 |
 
 Tolerance, stated: under D1 there is no band, so any recorded rate passes.
 What the tables show is that on this tree the tier-2 boss is the wall (3.4% of

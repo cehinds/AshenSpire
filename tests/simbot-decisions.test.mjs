@@ -84,3 +84,14 @@ test('a copy that skips the Azure charge is caught on decisions, not left to the
   assert.equal(r.status, 1, `the planted drift must fail --check\n${r.stdout}\n${r.stderr}`);
   assert.match(r.stdout, /decisions DRIFT — \d+ fights opened on the same state, [1-9]\d* decided differently/);
 });
+
+test('the runsim baseline is read with a buffer sized for the --digest output', () => {
+  // The default `--check` is n=500, about 2 MB of digest lines; spawnSync's
+  // 1 MiB default buffer failed it with ENOBUFS before any comparison. The
+  // 500-run check is too slow for this suite; it was run by hand (PR #1473).
+  const text = source('tools/measure-classes.mjs');
+  assert.match(text, /spawnSync\(process\.execPath, \[RUNSIM, String\(n\), '--digest'\], \{ encoding: 'utf8', maxBuffer \}\)/);
+  const bytes = spawnSync(process.execPath, ['tools/runsim.mjs', '5', '--digest'], { cwd: new URL('..', import.meta.url), encoding: 'utf8' }).stdout.length;
+  // 16 KB per class-run of headroom, the rule the tool sizes its buffer by.
+  assert.ok(bytes < 5 * registries.classes.all().length * 16 * 1024, `5 runs printed ${bytes} bytes, past the per-run headroom`);
+});

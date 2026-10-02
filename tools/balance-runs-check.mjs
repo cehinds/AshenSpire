@@ -15,9 +15,16 @@
 //   - every row of a table with an "Enemy HP ×" column: seatTierHpMult;
 //   - every row of a table with a "Boss" column and "Boss HP ×" / "Boss
 //     damage ×": bossTierScale for that boss encounter at that tier;
-//   - at least one table of each kind exists.
+//   - at least one table of each kind exists;
+//   - every such table covers its whole tier × seat set: the line before it
+//     names the order ("Seeded seat order" → every configured tier × every
+//     seat; "Fixed seat order" → defaultSeatOrder, one seat per tier), and a
+//     missing or extra (tier, seat) is named, so a deleted row cannot pass;
+//   - no multiplier is stated outside a table (`2.200 / 1.500`, `hp × 2.2`,
+//     `damage × 1.5`): prose cannot be checked, so the report carries every
+//     multiplier in a checked table.
 
-import { seatTierHpMult, bossTierScale } from '../src/model/seats.js';
+import { seatTierHpMult, bossTierScale, defaultSeatOrder } from '../src/model/seats.js';
 
 const safeGet = (reg, id) => { try { return reg.get(id) || null; } catch { return null; } };
 const tierKeys = (table) => Object.keys(table).map(Number).filter(Number.isInteger).sort((a, b) => a - b);
@@ -32,14 +39,40 @@ export function configuredMultiplierText(REG) {
 function tables(text) {
   const out = [];
   let cur = null;
+  // `lead` is the first line of the paragraph before the table.
+  let lead = '';
+  let fresh = true;
   for (const line of text.split(/\r?\n/)) {
-    if (!line.startsWith('|')) { cur = null; continue; }
+    if (!line.startsWith('|')) {
+      cur = null;
+      if (!line.trim()) fresh = true;
+      else if (fresh) { lead = line.trim(); fresh = false; }
+      continue;
+    }
+    fresh = true;
     const cells = line.split('|').slice(1, -1).map((c) => c.trim());
-    if (!cur) { cur = { header: cells, rows: [] }; out.push(cur); continue; }
+    if (!cur) { cur = { header: cells, rows: [], lead }; out.push(cur); continue; }
     if (cells.every((c) => /^:?-+:?$/.test(c))) continue;
     cur.rows.push(cells);
   }
   return out;
+}
+
+// Multipliers written in prose: `2.200 / 1.500`, `hp × 0.8`, `damage x 1.5`.
+const PROSE_MULTIPLIER = /\d+\.\d{3}\s*\/\s*\d+\.\d{3}|\b(?:hp|damage|HP)\s*[×x]\s*\d/;
+
+/** The (tier, seat) pairs a table must cover, from the order its lead line names. */
+function expectedPairs(REG, lead) {
+  const tiers = tierKeys(REG.balance.seatTiers);
+  if (/^Seeded seat order\b/.test(lead)) {
+    const seats = REG.seats.all().map((x) => x.id);
+    return tiers.flatMap((t) => seats.map((seat) => `${t} ${seat}`));
+  }
+  if (/^Fixed seat order\b/.test(lead)) {
+    const order = defaultSeatOrder(REG);
+    return tiers.map((t) => `${t} ${order[t - 1]}`);
+  }
+  return null;
 }
 
 /** recordedMultiplierProblems(REG, text) → [] when every stated multiplier is live. */
@@ -51,13 +84,30 @@ export function recordedMultiplierProblems(REG, text) {
   if (!flat.includes(want.boss)) problems.push(`docs/balance-runs.md does not state the live balance.bossTiers (${want.boss})`);
   const fmt = (n) => n.toFixed(3);
   let seatTables = 0, bossTables = 0;
-  for (const { header, rows } of tables(text)) {
+  for (const line of text.split(/\r?\n/)) {
+    if (line.startsWith('|')) continue;
+    const m = PROSE_MULTIPLIER.exec(line);
+    if (m) problems.push(`a multiplier is stated in prose, where nothing checks it ('${m[0]}' in "${line.trim().slice(0, 80)}"): record it in a table with Tier, Seat, Boss, Boss HP × and Boss damage × columns`);
+  }
+  for (const { header, rows, lead } of tables(text)) {
     const col = (name) => header.indexOf(name);
     const tier = col('Tier'), seat = col('Seat'), enemy = col('Enemy HP ×');
     const boss = col('Boss'), bossHp = col('Boss HP ×'), bossDmg = col('Boss damage ×');
     if (tier < 0) continue;
     if (enemy >= 0) seatTables++;
     if (boss >= 0 && bossHp >= 0 && bossDmg >= 0) bossTables++;
+    if (enemy >= 0 || (boss >= 0 && bossHp >= 0 && bossDmg >= 0)) {
+      // The whole tier × seat set, so a deleted row is named, not passed.
+      const kind = enemy >= 0 ? 'Enemy HP ×' : 'boss';
+      const want = expectedPairs(REG, lead);
+      if (seat < 0) problems.push(`a ${kind} table has no Seat column`);
+      else if (!want) problems.push(`a ${kind} table does not follow a "Seeded seat order" or "Fixed seat order" line, so its rows cannot be checked for completeness (after "${lead.slice(0, 60)}")`);
+      else {
+        const got = new Set(rows.map((r) => `${r[tier]} ${r[seat]}`));
+        for (const pair of want) if (!got.has(pair)) problems.push(`${lead.split(',')[0]} ${kind} table: no row for tier ${pair}`);
+        for (const pair of got) if (!want.includes(pair)) problems.push(`${lead.split(',')[0]} ${kind} table: tier ${pair} is not in that order`);
+      }
+    }
     for (const row of rows) {
       const t = Number(row[tier]);
       const where = `tier ${row[tier]}${seat >= 0 ? ` ${row[seat]}` : ''}`;
