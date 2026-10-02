@@ -65,6 +65,20 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL combat and map menus share action availability/,
       },
       {
+        name: 'the map Potions control transforms the shared plan before handing it to the menu',
+        file: 'src/ui/components/runPotions.js',
+        find: 'const planFor = (entry) => runPotionPlan(entry, { drinkOutsideCombat });',
+        replace: 'const planFor = (entry) => runPotionPlan(entry, { drinkOutsideCombat }).actions;',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'BOUNDARY: a planFor whose options argument nests braces fails closed (not a shipped form)',
+        file: 'src/ui/components/runPotions.js',
+        find: 'const planFor = (entry) => runPotionPlan(entry, { drinkOutsideCombat });',
+        replace: 'const planFor = (entry) => runPotionPlan(entry, { drinkOutsideCombat, extra: {} });',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
         name: 'one run-HUD flask menu opens without the shared action plan',
         file: 'src/ui/components/runHud.js',
         find: 'const plan = flaskActionPlan({',
@@ -192,6 +206,11 @@ if (actions?.flaskActionPlan) {
 // MAP HALF, on the live path: map.js mounts the Potions control; every flask
 // menu that control opens is handed `planFor(entry)`; planFor is
 // runPotionPlan; and every plan runPotionPlan returns is a flaskActionPlan.
+// planFor is matched as the WHOLE statement, through its closing `);`, so a
+// transform of the helper's result (`runPotionPlan(...).actions`) goes red.
+// BOUNDARY: the options argument must be a flat `{ ... }` with no nested
+// braces (the shipped `{ drinkOutsideCombat }` is). A nested-object options
+// argument fails closed here; widen the match only when the code needs it.
 const mapCode = code(map);
 const runPotionsCode = code(runPotions);
 const potionMounts = menuMounts(runPotionsCode);
@@ -200,7 +219,7 @@ const potionReturns = potionPlanBody ? [...potionPlanBody.matchAll(/\breturn\b\s
 const mapShares = /import \{[^}]*\bmountRunPotions\b[^}]*\} from '\.\.\/components\/runPotions\.js'/.test(mapCode)
   && /\bmountRunPotions\(potionsHost, \{/.test(mapCode)
   && /import \{[^}]*\brunPotionPlan\b[^}]*\} from '\.\.\/models\/RunPotionModel\.js'/.test(runPotionsCode)
-  && /const planFor = \(entry\) => runPotionPlan\(entry\b/.test(runPotionsCode)
+  && /const planFor = \(entry\) => runPotionPlan\(entry(?:, \{[^{}]*\})?\);/.test(runPotionsCode)
   && potionMounts.length > 0 && potionMounts.every((mount) => mount.plan === 'planFor(entry)')
   && /import \{ flaskActionPlan \} from '\.\.\/\.\.\/model\/flaskActions\.js'/.test(runPotionModel)
   && potionReturns.length > 0 && potionReturns.every((ret) => /^flaskActionPlan\(\{/.test(ret));

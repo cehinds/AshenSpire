@@ -162,6 +162,7 @@ rename or remove a FINISH.md criterion, update this table in the same pull reque
 | §12 | The slowest `tests.yml` job fits the <10 min target | G20 |
 | §12 | A browser-gate run of `ci.yml` exists on the release candidate | G13 |
 | §12 | Builds are not committed; CI builds them | G20 |
+| §12 | A slow cold Chrome start does not fail a browser job | G20 |
 | §13 | A written release gate | waived: this checklist is that gate. It is met when this file merges and the owner signs off under it, so it cannot gate itself. |
 | §13 | A release-heading format in CHANGELOG | G20 |
 | §13 | The save-migration test covers the 1.0 schema | G20 |

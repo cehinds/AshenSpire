@@ -998,19 +998,22 @@ if (CORE) {
     else zoomExtra++;
   }
 
-  // Already inside `if (CORE)`, so the tree verdict needs no second gate.
-  const flaskTree = runFlaskActions([]);
-  const flaskTreeV = flaskTree.out.match(/^flask-action-contract: (\d+) passed, (\d+) failed$/m);
-  const flaskTreeOk = flaskTree.code === 0 && !!flaskTreeV && flaskTreeV[2] === '0' && Number(flaskTreeV[1]) > 0;
-  const flaskFails = [...flaskTree.out.matchAll(/^FAIL (.*)$/gm)].map((m) => m[1]).join('; ');
-  console.log(
-    `${flaskTreeOk ? 'PASS' : 'FAIL'}  97. combat and the map's Potions control share one flask action contract` +
-      ` — ${flaskTreeV ? flaskTreeV[0] : `flask-action-contract (exit ${flaskTree.code}) printed no verdict`}` +
-      `${flaskFails ? ` (${flaskFails})` : ''}` +
-      ` (\`node tools/flask-action-contract.mjs\` names each check)`
-  );
-  if (flaskTreeOk) zoomPassed++;
-  else zoomExtra++;
+  // The enclosing block is unconditional, so the tree verdict carries its own
+  // CORE gate like rung 95: the --selftests-only lane must not run it.
+  if (CORE) {
+    const flaskTree = runFlaskActions([]);
+    const flaskTreeV = flaskTree.out.match(/^flask-action-contract: (\d+) passed, (\d+) failed$/m);
+    const flaskTreeOk = flaskTree.code === 0 && !!flaskTreeV && flaskTreeV[2] === '0' && Number(flaskTreeV[1]) > 0;
+    const flaskFails = [...flaskTree.out.matchAll(/^FAIL (.*)$/gm)].map((m) => m[1]).join('; ');
+    console.log(
+      `${flaskTreeOk ? 'PASS' : 'FAIL'}  97. combat and the map's Potions control share one flask action contract` +
+        ` — ${flaskTreeV ? flaskTreeV[0] : `flask-action-contract (exit ${flaskTree.code}) printed no verdict`}` +
+        `${flaskFails ? ` (${flaskFails})` : ''}` +
+        ` (\`node tools/flask-action-contract.mjs\` names each check)`
+    );
+    if (flaskTreeOk) zoomPassed++;
+    else zoomExtra++;
+  }
 }
 
 // 76 — destructive quit/load confirmation without a native browser prompt.

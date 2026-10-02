@@ -8,9 +8,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: a flask check that had stopped working runs again",
     "detail": "Nothing you play changes. A check makes sure flasks on the map offer the same choices as flasks in a fight. It had stopped looking at the Potions button you use on the map, and nothing ran it, so it failed without anyone noticing. It now follows that Potions button to the choices each flask offers, and the test suite runs it on every change.",
-    "build": "0.7.1.737",
+    "build": "0.7.1.740",
     "pullRequest": 1447,
     "url": "https://github.com/cehinds/AshenSpire/pull/1447"
+  },
+  {
+    "id": "pr-1446",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the browser checks wait longer for a slow browser to start",
+    "detail": "Nothing you play changes. The automated checks that open the game in a real browser sometimes failed because the browser took longer than 12 seconds to start on the build servers. They now wait up to 30 seconds for it, and this limit can be changed without editing any check. A browser that crashes on start still fails the check at once.",
+    "build": "0.7.1.739",
+    "pullRequest": 1446,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1446"
+  },
+  {
+    "id": "pr-1451",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition's fonts and backdrops follow its art packs",
+    "detail": "Behind the scenes: the served web edition now loads its lore fonts and backdrop pictures through the same checked list as the rest of its art. When the high-resolution list is missing it now shows the light backdrops, the same as the rest of its art, instead of asking for high-resolution pictures the list no longer vouches for; when no list loads it keeps its plain background and system fonts. The door masks stay inside the game file. Nothing you play changes.",
+    "build": "0.7.1.738",
+    "pullRequest": 1451,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1451"
+  },
+  {
+    "id": "pr-1441",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the action-bar layout check runs again",
+    "detail": "Nothing you play changes. When co-op got the solo action bar, the bar's markup moved into a shared component, and the tool that checks the bar never lands on your cards, the top bar or the battlefield was still looking for it in the old place. It stopped before it measured anything. It now reads the shared component and checks all 44 cells again.",
+    "build": "0.7.1.737",
+    "pullRequest": 1441,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1441"
   },
   {
     "id": "pr-1442",
