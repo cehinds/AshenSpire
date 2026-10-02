@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1471",
+    "id": "pr-1448",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "The web edition shows its art loading on the start screen, and can retry",
-    "detail": "Behind the scenes, in the web edition only: the start screen now appears at once while the art loads, with one line saying how far it has got, and if the art cannot be loaded the title screen says so and offers Retry (also in Settings → Art quality), which loads it again without reloading the page; the downloaded single file is unchanged, and nothing you play changes.",
+    "summary": "Behind the scenes: co-op enemy effects on your cards are tested for every player",
+    "detail": "Nothing you play changes. New tests check that an enemy move which makes players draw, discard, exhaust, or shuffle their discard pile back into their deck does it to every living player in a co-op fight, and not to a player who is down or disconnected.",
     "build": "0.7.1.759",
-    "pullRequest": 1471,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1471"
+    "pullRequest": 1448,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1448"
   },
   {
     "id": "pr-1445",
