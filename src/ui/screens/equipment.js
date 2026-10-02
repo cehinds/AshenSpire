@@ -1298,7 +1298,6 @@ export function mountEquipment(host, {
     return node;
   }
 
-  /** The one shared Inventory: all items normally, compatible replacements while a position is selected. */
   // SPEC §15.4: the Armoury's Sigils panel. One row per owned legendary, in
   // `run.sigils` order, with Attune / Unattune out of combat (the model pair in
   // model/sigils.js decides; a refusal is shown here as text). In combat the
@@ -1340,6 +1339,7 @@ export function mountEquipment(host, {
     return section;
   }
 
+  /** The one shared Inventory: all items normally, compatible replacements while a position is selected. */
   function inventoryBlock() {
     const box = document.createElement('div');
     box.className = 'inventory-list ep-list armoury-split';

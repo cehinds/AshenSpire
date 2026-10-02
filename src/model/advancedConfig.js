@@ -120,7 +120,8 @@ const BALANCE_DOMAINS = Object.freeze({
   'smithing.rewardChancePct.boss': PERCENT,
   'smithing.rewardChancePct.treasure': PERCENT,
   // SPEC §15.4's legendary-sigil drop chances ship at 0 (a range read off the
-  // value would cap them at 20); attuneMax starts at 0, nothing attuned.
+  // value would cap them at 20). attuneMax ships at 1; its row starts at 0,
+  // which means nothing can be attuned.
   'sigils.dropChancePct.normal': PERCENT,
   'sigils.dropChancePct.elite': PERCENT,
   'sigils.dropChancePct.boss': PERCENT,
