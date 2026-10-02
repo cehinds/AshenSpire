@@ -166,15 +166,25 @@ Leave it published for weeks, then set it back in a later PR. Publish it from
 `dev`: a site published by a pre-6b `pages-site` has no `/sw.js`, and a 404 does
 not unregister a worker (docs/EXTERNAL-ASSETS-PLAN.md, *Step 6b as built*).
 
-**The high-res release** (docs/ART-REPO-PLAN.md). `art-release.json` pins one
-release of the private `cehinds/AshenSpire-art` (repo, tag, zip, sha256; today
-`hd-assets-v1`). `node tools/fetch-art.mjs` downloads
-it with `ART_REPO_TOKEN` (a token with read access to that repo's Contents),
-refuses unless the zip's sha256 is the pinned one and every file matches its
-`high` record in `art-manifest.json`, and unpacks it into `.art-cache/<tag>/`
-(gitignored). `--from <zip>` verifies a zip already on disk; `--recheck`
-re-hashes a cache. `tools/zip.mjs` is the same file the art repository packs
-with; `tests/fetch-art.test.mjs` pins their shared vector.
+**The art release** (docs/ART-REPO-PLAN.md, docs/EXTERNAL-ASSETS-PLAN.md step
+11). `art-release.json` (schema 2) pins one release of `cehinds/AshenSpire-art`:
+its tag (today `hd-assets-v2`) and three zips with their sha256s — `high`
+(`hd-assets-v2.zip`, the full art), `light` (`light-assets-v2.zip`, the
+`assets-mobile/` twins) and `common` (`common-assets-v2.zip`: the fonts,
+`licenses/OFL.txt`, the music and the map tiles). `node tools/fetch-art.mjs`
+fetches all three (`--pack high|light|common`, a comma list, or `all`), refuses
+a zip unless its sha256 is the pinned one and every file matches its record in
+`art-manifest.json`, and unpacks each into `.art-cache/<tag>/<pack>/`
+(gitignored). The art repository is public, so no token is needed: the
+download uses the release's public URL. `ART_REPO_TOKEN` (else `GITHUB_TOKEN`),
+when set, only raises GitHub's rate limit. A failure names its cause (token refused, repository unreadable,
+rate limit, network). `--from <zip>` verifies a zip already on disk (its pack is
+read from its name); `--recheck` re-hashes a cache. The trees here stay until
+step 13, and `node tools/fetch-art.mjs --agree` proves the fetched caches and
+the trees agree byte for byte; `node tools/asset-pack.mjs --source cache` writes
+the packs from the cache instead of the trees. The pin and the manifest are
+build identity (`BUILD_IDENTITY_FILES`). `tools/zip.mjs` is the same file the
+art repository packs with; `tests/fetch-art.test.mjs` pins their shared vector.
 
 **Settings → Display → Art quality** (`src/ui/artTier.js`, `src/ui/highResArt.js`):
 *Auto*, *Light* and *High* choose which pack the web edition loads (step 8c of
