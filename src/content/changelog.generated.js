@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "A Windows installer, with the high-resolution art as a choice on the install screen",
     "detail": "Nothing in the game itself changes. AshenSpire-Setup.exe installs the game for you (no administrator prompt) with Start menu and desktop shortcuts; tick High-resolution art and it downloads the full-resolution art during the install and checks every file, or leave it unticked to play with the standard art and add it later by running the installer again. Uninstalling asks before it deletes your saves.",
-    "build": "0.7.1.803",
+    "build": "0.7.1.804",
     "pullRequest": 1501,
     "url": "https://github.com/cehinds/AshenSpire/pull/1501"
+  },
+  {
+    "id": "pr-1505",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the startup-gate checks run again",
+    "detail": "Nothing you play changes. The checks that plant known bugs in a scratch copy of the game did not copy the two files that name the pinned art release. So the copy could not stamp a build, and the checks failed before testing anything.",
+    "build": "0.7.1.803",
+    "pullRequest": 1505,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1505"
   },
   {
     "id": "pr-1509",
