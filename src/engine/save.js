@@ -890,6 +890,12 @@ export function createSaveManager(storage) {
           if (run.poolDeckRule !== POOL_DECK_RULE) throw new Error(`poolDeckRule ${JSON.stringify(run.poolDeckRule)} is not a dealt-deck rule this build knows (${POOL_DECK_RULE})`);
           if (!isPoolDeckMode(run)) throw new Error(`poolDeckRule is set on a '${run.custom?.deckMode || 'standard'}' run; only a Sealed or Draft run carries it`);
         }
+        // The heal is a schema migration: only a save written before schema
+        // 20 can lack the marker. A schema-20 Sealed/Draft save without it
+        // was not written by newRun, so it is refused by name.
+        if (isPoolDeckMode(run) && !Object.hasOwn(run, 'poolDeckRule') && run.migratedFromRunSchemaVersion === undefined) {
+          throw new Error(`a schema-${RUN_SCHEMA_VERSION} ${run.custom.deckMode} run is missing poolDeckRule`);
+        }
         if (isPoolDeckMode(run) && !Object.hasOwn(run, 'poolDeckRule')) {
           const legacy = !(run.removedAttackSlotIds || []).length;
           const healQuota = (holder, cards) => {

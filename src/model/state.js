@@ -83,7 +83,7 @@ import { sigilInventoryProblems, attunedSigilProblems } from './sigils.js';
 // 19 (SPEC §15.4, §15.5 step 5): `attunedSigils`, the legendary sigils the run
 // holds attuned (a subset of `sigils`), rides the save. A v18-or-older save is
 // filled with [] at migrateRunSchema and its `sigils` are left untouched.
-export const RUN_SCHEMA_VERSION = 19;
+export const RUN_SCHEMA_VERSION = 20;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -634,8 +634,12 @@ export const RUN_SHAPE = [
   { key: 'equipmentAttackSlotCount', type: 'number', optional: true },
   { key: 'removedAttackSlotIds', type: 'array', optional: true },
   // A Sealed/Draft run held to the dealt-deck rule (model/cardRemoval.js
-  // POOL_DECK_RULE). Absent on every Standard run and on a pool save written
-  // before the rule, which the load door heals once and marks.
+  // POOL_DECK_RULE). Absent on every Standard run. Schema 20 is the bump that
+  // brought it: a pool save from schema 19 or older has none, and the load
+  // door heals it once and marks it; a schema-20 pool save without it is
+  // refused (engine/save.js). The bump is what makes a schema-19 build refuse
+  // and preserve a schema-20 pool save instead of re-dealing it the
+  // equipment's cards (Codex review on #1479).
   { key: 'poolDeckRule', type: 'number', optional: true },
   { key: 'floor', type: 'number' },
   { key: 'actNumber', type: 'number' },
@@ -1406,8 +1410,12 @@ export function migrateRunSchema(run) {
   // v18 and older: no attuned sigils. Filled HERE with [] (SPEC §15.4): no
   // legendary could be attuned before the Sigils panel existed.
   const preAttunedSigils = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].includes(run.schemaVersion);
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, ${RUN_SCHEMA_VERSION})`);
+  // v19 and older: no dealt-deck rule. Nothing is filled HERE: the heal
+  // needs the deck's own attack slots, so the load door does it once
+  // (engine/save.js, the POOL-BUILT DECK block), reading this version from
+  // migratedFromRunSchemaVersion. A Standard run has nothing to migrate.
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, ${RUN_SCHEMA_VERSION})`);
   }
   if (preShopKinds) bringShopStockForward(run);
   const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables, preTrainingPool, preAttunedSigils });

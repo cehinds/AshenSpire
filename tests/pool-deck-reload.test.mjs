@@ -24,7 +24,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
-import { createRunState, createIdGen, createDeck } from '../src/model/state.js';
+import { createRunState, createIdGen, createDeck, RUN_SCHEMA_VERSION } from '../src/model/state.js';
 import { createRng, seedToString } from '../src/engine/rng.js';
 import { createSaveManager, createMemoryStorage } from '../src/engine/save.js';
 import { createRunCombat } from '../src/engine/runCombat.js';
@@ -38,10 +38,25 @@ const registries = createRegistries(contentBundle);
 const SEED = 5;
 const BASE = ['strike', 'strike', 'strike', 'strike', 'defend', 'defend', 'defend'];
 
+// Builds before this fix wrote run schema 19 (the bump to 20 came with the
+// dealt-deck rule), so a pre-fix save is stamped 19 in its slot. Only the
+// stamp is rewritten: the shape is one a schema-19 build wrote.
+function asSchema19(storage) {
+  const set = storage.setItem;
+  storage.setItem = (key, value) => {
+    if (/^sote_run_v1(_s\d+)?$/.test(key)) {
+      const saved = JSON.parse(value);
+      if (saved.schemaVersion === RUN_SCHEMA_VERSION) { saved.schemaVersion = 19; value = JSON.stringify(saved); }
+    }
+    return set(key, value);
+  };
+  return storage;
+}
+
 // main.js newRun → (showDraft) → startClimb's persist. `fixed: false` writes
 // the save the way builds before this fix wrote it.
 function deal(classId, deckMode, { fixed = true } = {}) {
-  const storage = createMemoryStorage();
+  const storage = fixed ? createMemoryStorage() : asSchema19(createMemoryStorage());
   const saves = createSaveManager(storage);
   saves.ensureProfile();
   const run = createRunState({ seed: SEED, classId, registries, profileMeta: saves.loadMeta() });
@@ -377,6 +392,59 @@ test('a fight\'s poolDeck flag must agree with its run, and never rides a run (C
     commitCombatSnapshot({ run, combat, nodeId: 'n0', encounterId: 'loneSoldier' });
     const snapshot = { ...structuredClone(run.combatEntered.snapshot), poolDeck: true };
     assert.throws(() => restoreCombatSnapshot({ registries, rng: createRng(SEED), snapshot, fallbackPoolDeck: false }), /poolDeck/);
+  }
+});
+
+test('schema 20 brings the dealt-deck rule: a 20 save loads as it is, a 19 pool save heals through the migration, a 20 pool save without the marker is refused (Codex review)', () => {
+  assert.equal(RUN_SCHEMA_VERSION, 20);
+  // A schema-20 Sealed save (newRun wrote the marker) loads untouched.
+  {
+    const { saves, storage } = deal('starseer', 'sealed');
+    const bytes = JSON.parse(storage.getItem('sote_run_v1'));
+    assert.equal(bytes.schemaVersion, 20);
+    assert.equal(bytes.poolDeckRule, POOL_DECK_RULE);
+    const back = saves.loadRun(registries, 1);
+    assert.ok(back, `reload refused: ${saves.runStatus().reason}`);
+    assert.equal(saves.runStatus().state, 'ok');
+    assert.equal(back.schemaVersion, 20);
+  }
+  // A schema-19 Sealed save (no marker, the composed quota) migrates to 20:
+  // the ledger names the migration from 19, the quota heal, and the marker.
+  {
+    const { saves, storage } = deal('starseer', 'sealed', { fixed: false });
+    const bytes = JSON.parse(storage.getItem('sote_run_v1'));
+    assert.equal(bytes.schemaVersion, 19);
+    assert.equal('poolDeckRule' in bytes, false);
+    const back = saves.loadRun(registries, 1);
+    assert.ok(back, `reload refused: ${saves.runStatus().reason}`);
+    assert.equal(saves.runStatus().state, 'healed');
+    assert.equal(back.schemaVersion, 20);
+    assert.equal(back.poolDeckRule, POOL_DECK_RULE);
+    const rows = saves.runStatus().ledger.entries;
+    assert.ok(rows.some((row) => row.field === 'schemaVersion' && row.was === 19 && row.now === 20), 'the migration from 19 is named');
+    assert.ok(rows.some((row) => row.site === 'save.js:dealtAttackSlotCount'), 'the heal is named');
+    // Saved again, it is a schema-20 save carrying the marker, and loads clean.
+    saves.saveRun(back, createRng(SEED));
+    assert.ok(saves.loadRun(registries, 1));
+    assert.equal(saves.runStatus().state, 'ok');
+  }
+  // A schema-19 Standard save has nothing to migrate but the stamp.
+  {
+    const { saves } = deal('reaver', 'standard', { fixed: false });
+    const back = saves.loadRun(registries, 1);
+    assert.ok(back, `reload refused: ${saves.runStatus().reason}`);
+    assert.equal(back.schemaVersion, 20);
+    assert.equal('poolDeckRule' in back, false);
+  }
+  // A schema-20 Sealed or Draft save without the marker was not written by
+  // newRun: refused by name, never healed.
+  for (const [classId, deckMode] of [['starseer', 'sealed'], ['rogue', 'draft']]) {
+    const { run, rng, saves } = deal(classId, deckMode);
+    delete run.poolDeckRule;
+    saves.saveRun(run, rng);
+    assert.equal(saves.loadRun(registries, 1), null, `${deckMode}: a schema-20 save without the marker must be refused`);
+    assert.equal(saves.runStatus().state, 'archived');
+    assert.match(saves.runStatus().reason, /schema-20 .* missing poolDeckRule/);
   }
 });
 
