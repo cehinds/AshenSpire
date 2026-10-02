@@ -428,6 +428,32 @@ jobs:
           path: build-digest-${{ matrix.os }}.txt
           retention-days: 7
 
+      # ONE RUNNER PER OS (the `digest` legs), so Windows' four shards do not
+      # download the release four times. LAST, so a failed fetch never costs
+      # the runner its digest record or another step's verdict.
+      # THE ART RELEASE IS A BUILD INPUT (docs/EXTERNAL-ASSETS-PLAN.md step 11).
+      # art-release.json pins one tag of cehinds/AshenSpire-art with three zips;
+      # tools/fetch-art.mjs downloads the ones named, checks each against the pin
+      # and art-manifest.json, and unpacks them into .art-cache/ (ignored). The
+      # token is passed because the art repository is private until the owner
+      # makes it public; with no token (a fork, or once it is public) the public
+      # release URL is used. A failure names its cause (token refused, repository
+      # unreadable, rate limit, network) on the step and as an annotation.
+      - name: Fetch the art packs this build's tier is made from
+        if: ${{ matrix.digest && !cancelled() }}
+        env:
+          ART_REPO_TOKEN: ${{ secrets.ART_REPO_TOKEN }}
+          ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
+        shell: bash # $ART_PACKS is an env var; Windows' default shell would not expand it
+        run: node tools/fetch-art.mjs --pack "$ART_PACKS"
+
+      - name: The fetched packs and the trees agree byte for byte on this OS
+        if: ${{ matrix.digest && !cancelled() }}
+        env:
+          ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
+        shell: bash
+        run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
+
   reproducible-agree:
     name: the three runners built the same bytes
     needs: reproducible

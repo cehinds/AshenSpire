@@ -89,6 +89,26 @@ jobs:
         if: always()
         run: node tools/verdict.mjs -- node tools/about-changelog.mjs --check-order --selftest
 
+      # THE ART RELEASE IS A BUILD INPUT (docs/EXTERNAL-ASSETS-PLAN.md step 11).
+      # art-release.json pins one tag of cehinds/AshenSpire-art with three zips;
+      # tools/fetch-art.mjs downloads the ones named, checks each against the pin
+      # and art-manifest.json, and unpacks them into .art-cache/ (ignored). The
+      # token is passed because the art repository is private until the owner
+      # makes it public; with no token (a fork, or once it is public) the public
+      # release URL is used. A failure names its cause (token refused, repository
+      # unreadable, rate limit, network) on the step and as an annotation.
+      # The trees are still in this repository (until step 13), so this job, which
+      # gates every pull request, also proves the release and the trees are one.
+      - name: Fetch the pinned art release (high, light and common)
+        if: always()
+        env:
+          ART_REPO_TOKEN: ${{ secrets.ART_REPO_TOKEN }}
+        run: node tools/fetch-art.mjs --pack all
+
+      - name: The fetched art release and the trees here agree byte for byte
+        if: always()
+        run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack all
+
   selftests:
     name: tool self-tests
     # About 6 minutes: over the dev-PR budget, so it runs on push to test and

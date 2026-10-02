@@ -219,7 +219,17 @@ jobs:
       # on 2026-09-26 and main follows on promotion), the stable Play links at the
       # site root have no file in main's tree. Build main from source here and hand
       # it to the generator; while main still tracks its build this does nothing.
+      #
+      # FROM STEP 11 (docs/EXTERNAL-ASSETS-PLAN.md) main's tree pins its art
+      # release in a schema-2 art-release.json. When it does, main's own
+      # tools/fetch-art.mjs fetches all three packs (main is the full-art build)
+      # into that worktree's ignored .art-cache/ and proves they match main's
+      # trees; an older main, whose pin has no packs, builds as before. The token
+      # is passed while cehinds/AshenSpire-art is private; once it is public the
+      # fetch needs none. A failure names its cause.
       - name: Build main from source when main no longer commits its build
+        env:
+          ART_REPO_TOKEN: ${{ secrets.ART_REPO_TOKEN }}
         run: |
           set -euo pipefail
           if git cat-file -e origin/main:AshenSpire.html 2>/dev/null; then
@@ -227,6 +237,11 @@ jobs:
             exit 0
           fi
           git worktree add --detach "$RUNNER_TEMP/main" origin/main
+          if (cd "$RUNNER_TEMP/main" && node -e "process.exit(JSON.parse(require('fs').readFileSync('art-release.json','utf8')).schema === 2 ? 0 : 1)"); then
+            (cd "$RUNNER_TEMP/main" && node tools/fetch-art.mjs --pack all && node tools/fetch-art.mjs --agree --pack all)
+          else
+            echo "main's art-release.json predates the packs (schema 2) — it builds from its trees, with nothing to fetch"
+          fi
           (cd "$RUNNER_TEMP/main" && node tools/launch.mjs --build-only --full-art)
           # The same gate every other build workflow applies: a rebuild that had
           # to rewrite main's committed box is a build main's receipts do not

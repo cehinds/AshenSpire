@@ -7,6 +7,10 @@
 //                                    (default <dir>: build/asset-pack)
 //   node tools/asset-pack.mjs --check [--out <dir>] [--pack …]
 //                                    verify a written tree (exit 1 = red)
+//   node tools/asset-pack.mjs --source cache [--out <dir>] [--pack …]
+//                                    write from the fetched release
+//                                    (.art-cache/<tag>/<pack>/, tools/fetch-art.mjs)
+//                                    instead of the trees here
 //
 // WHY (docs/EXTERNAL-ASSETS-PLAN.md §3, step 2). The game is moving from one
 // HTML with every asset inlined to an HTML that loads its assets at runtime
@@ -38,7 +42,12 @@
 // WHERE THE FILES COME FROM. art-manifest.json (schema 2) is the list: an art
 // id's `light` record is read from assets-mobile/, its `high` record from
 // assets/, and a `common` id (the fonts, licenses/OFL.txt, music/, map-detail/)
-// from the source tools/art-manifest.mjs `commonSources` names. Each file is
+// from the source tools/art-manifest.mjs `commonSources` names. With
+// `--source cache` (step 11) every record is read instead from the fetched
+// release, .art-cache/<tag>/<pack>/<record path>, and only from a pack cache
+// tools/fetch-art.mjs has verified against the current pin and manifest; an
+// unfetched or stale pack is refused by name. Either source writes the same
+// bytes while `node tools/fetch-art.mjs --agree` is green. Each file is
 // hashed as it is read and must match its record, so a stale manifest stops the
 // write instead of shipping bytes the manifest does not describe. Text (SVG,
 // JSON, the licence) is packed with LF line endings, so a Windows checkout
@@ -56,9 +65,12 @@ import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } 
 import { fileURLToPath } from 'node:url';
 import { MIME } from './assetmime.mjs';
 import { MANIFEST_PATH, canonicalBytes, commonSources, isCommonEntry } from './art-manifest.mjs';
+import { verifiedPackDir } from './fetch-art.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const PACKS = Object.freeze(['light', 'high', 'common']);
+/** Where planPacks reads the files: the trees in this repository, or the fetched release. */
+export const SOURCES = Object.freeze(['trees', 'cache']);
 export const DEFAULT_OUT = 'build/asset-pack';
 export const FONTS_SIDECAR = 'fonts';
 export const PACKS_DIR = 'packs';
@@ -103,23 +115,30 @@ const PACK_FN = 'window.__ashenPack';
 const FONTS_FN = '__ashenFonts';
 
 /**
- * planPacks(root, packs) → { packs: { name: { entries, files } }, fonts, problems }.
+ * planPacks(root, packs, { source }) → { packs: { name: { entries, files } }, fonts, problems }.
  * `entries` is id → [sha256, bytes, mime]; `files` is objectPath → Buffer.
  * Nothing is written; every source is read and checked against the manifest.
+ * `source` is 'trees' (this repository) or 'cache' (the fetched release).
  */
-export function planPacks(root = ROOT, packs = PACKS) {
+export function planPacks(root = ROOT, packs = PACKS, { source: from = 'trees' } = {}) {
   const problems = [];
+  if (!SOURCES.includes(from)) return { packs: {}, fonts: null, problems: [`unknown source ${JSON.stringify(from)} (one of ${SOURCES.join(', ')})`] };
   const manifestFile = resolve(root, MANIFEST_PATH);
   if (!existsSync(manifestFile)) return { packs: {}, fonts: null, problems: [`${MANIFEST_PATH} is missing — node tools/art-manifest.mjs --write`] };
   const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'));
   if (manifest.schema !== 2) problems.push(`${MANIFEST_PATH} is schema ${manifest.schema}; the pack format needs schema 2 (node tools/art-manifest.mjs --write)`);
-  const sources = new Map(commonSources(root).map((c) => [c.id, c.source]));
+  const sources = from === 'trees' ? new Map(commonSources(root).map((c) => [c.id, c.source])) : null;
   const out = {};
   let fonts = null;
   for (const pack of packs) {
     if (!PACKS.includes(pack)) { problems.push(`unknown pack ${JSON.stringify(pack)} (one of ${PACKS.join(', ')})`); continue; }
     const entries = {};
     const files = new Map();
+    // The fetched pack: verified against this pin and this manifest, or refused.
+    let cacheDir = null;
+    if (from === 'cache') {
+      try { cacheDir = resolve(verifiedPackDir(pack, { root })); } catch (e) { problems.push(e.message); continue; }
+    }
     for (const id of Object.keys(manifest.assets || {}).sort(byteOrder)) {
       const entry = manifest.assets[id];
       const common = isCommonEntry(entry);
@@ -128,8 +147,12 @@ export function planPacks(root = ROOT, packs = PACKS) {
       if (!rec) { problems.push(`${id}: ${MANIFEST_PATH} has no ${pack} record`); continue; }
       const mime = mimeOf(id);
       if (!mime) { problems.push(`${id}: no mime for ${extname(id) || 'a file without an extension'} — the pack cannot carry it`); continue; }
-      const source = common ? sources.get(id) : resolve(root, rec.path);
-      if (!source || !existsSync(source)) { problems.push(`${id}: the ${pack} source ${common ? '(see commonSources)' : rec.path} is missing`); continue; }
+      let source;
+      if (cacheDir) {
+        source = resolve(cacheDir, rec.path);
+        if (!source.startsWith(cacheDir + sep)) { problems.push(`${id}: its ${pack} path ${rec.path} escapes the cache`); continue; }
+      } else source = common ? sources.get(id) : resolve(root, rec.path);
+      if (!source || !existsSync(source)) { problems.push(`${id}: the ${pack} source ${cacheDir ? `${posix(relative(root, source))} (the fetched ${pack} pack)` : common ? '(see commonSources)' : rec.path} is missing`); continue; }
       const buf = canonicalBytes(source);
       const sha = sha256(buf);
       if (sha !== rec.sha256 || buf.length !== rec.bytes) {
@@ -230,10 +253,10 @@ function clearable(dir, marked) {
   return dir;
 }
 
-/** writePacks({ root, out, packs }) → summary. Clears out/packs and out/objects first. */
-export function writePacks({ root = ROOT, out: asked = resolve(ROOT, DEFAULT_OUT), packs = PACKS } = {}) {
+/** writePacks({ root, out, packs, source }) → summary. Clears out/packs and out/objects first. */
+export function writePacks({ root = ROOT, out: asked = resolve(ROOT, DEFAULT_OUT), packs = PACKS, source = 'trees' } = {}) {
   const out = guardOut(asked, root);
-  const plan = planPacks(root, packs);
+  const plan = planPacks(root, packs, { source });
   if (plan.problems.length) throw Object.assign(new Error('the sources do not match the manifest; nothing was written'), { problems: plan.problems });
   const { files, summary } = renderPacks(plan);
   const marker = resolve(out, MARKER);
@@ -411,13 +434,14 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     if (at < 0) return null;
     const v = args[at + 1];
     if (!v || v.startsWith('--')) {
-      console.error(`asset-pack: FAIL — ${flag} needs a value (${flag === '--out' ? 'a directory' : 'light,high,common'})`);
+      console.error(`asset-pack: FAIL — ${flag} needs a value (${{ '--out': 'a directory', '--pack': 'light,high,common', '--source': SOURCES.join(' or ') }[flag]})`);
       process.exit(2);
     }
     return v;
   };
   const outArg = value('--out');
   const packArg = value('--pack');
+  const sourceArg = value('--source') || 'trees';
   const out = resolve(process.cwd(), outArg || resolve(ROOT, DEFAULT_OUT));
   const packs = packArg ? packArg.split(',').filter(Boolean) : PACKS;
   try {
@@ -432,7 +456,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       }
       console.log(`asset-pack: OK — ${posix(relative(process.cwd(), out)) || '.'} verified`);
     } else {
-      const summary = writePacks({ out, packs });
+      const summary = writePacks({ out, packs, source: sourceArg });
       if (args.includes('--json')) console.log(JSON.stringify(summary, null, 2));
       else {
         for (const [pack, s] of Object.entries(summary.packs)) console.log(`  ${pack}: ${s.ids} ids, ${s.objects} objects, ${s.bytes} bytes → ${s.index}`);

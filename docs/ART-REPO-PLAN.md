@@ -215,7 +215,7 @@ Each step is one reviewed PR, or one owner action.
 ## Status
 
 - Steps 1–3 are done (2026-09-26). The owner created `cehinds/AshenSpire-art` (private for now; the owner decided on 2026-09-27 to make it public, not yet done). [AshenSpire-art#1](https://github.com/cehinds/AshenSpire-art/pull/1) imported `hd/assets/` (5,201 files) and `art/`, and its release workflow published `hd-assets-v1`: zip sha256 `c03e4024…88a4`, the same bytes as a local pack of that commit.
-- Step 4 has started. `tools/fetch-art.mjs` landed in #1340, and #1353 pins `hd-assets-v1` in `art-release.json`. #1367 moved the 23 non-art files to `asset-data/` and switched every reader of them (tools, tests, `src/framework/data/assets.js`, the ship tools that write those manifests, the art pages that fetch `enemy-poses/manifest.json`, CREDITS and the docs). Still to do: switch the `assets/` (high-tier) readers, and add both files to `BUILD_IDENTITY_FILES` in the PR that first builds full art from the cache.
+- Step 4 has started. `tools/fetch-art.mjs` landed in #1340, and #1353 pins `hd-assets-v1` in `art-release.json`. #1367 moved the 23 non-art files to `asset-data/` and switched every reader of them (tools, tests, `src/framework/data/assets.js`, the ship tools that write those manifests, the art pages that fetch `enemy-poses/manifest.json`, CREDITS and the docs). Still to do: switch the `assets/` (high-tier) readers. Both files joined `BUILD_IDENTITY_FILES` at [EXTERNAL-ASSETS-PLAN.md](./EXTERNAL-ASSETS-PLAN.md) step 11, which also pins `hd-assets-v2` (three zips, schema 2) and fetches each pack into `.art-cache/<tag>/<pack>/`.
 - Releases are automatic: the art repo publishes the next `hd-assets-v<N>` on every merge to `main` that changes the pack ([AshenSpire-art#2](https://github.com/cehinds/AshenSpire-art/pull/2)).
 
 ## Owner answer (2026-09-27)
@@ -238,6 +238,9 @@ question 1, the owner chose to make **`cehinds/AshenSpire-art` public**
   keeps the token optional (`ART_REPO_TOKEN`, else `GITHUB_TOKEN`), sent only
   when set, to raise GitHub's rate limit. CI needs no secret.
 - **Pending owner action:** flipping the visibility in the repository's GitHub
-  settings is not done yet. Until it is, a fetch still needs the token, and
-  `fetch-art`, README.md and DEVELOPER.md still say so. It must happen before
-  EXTERNAL-ASSETS-PLAN step 11 (its step 10a), which drops the requirement.
+  settings is not done yet. Until it is, a fetch needs the token: CI passes
+  the `ART_REPO_TOKEN` secret in the env of every step that fetches, and a
+  local fetch reads `ART_REPO_TOKEN` (else `GITHUB_TOKEN`). EXTERNAL-ASSETS-PLAN
+  step 11 does not wait for the flip: `fetch-art` sends the token when one is
+  set and uses the public release URL when none is, so the day the repository
+  is public, the same code needs no token and nothing else changes.

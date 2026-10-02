@@ -48,6 +48,10 @@ env:
   # The web (external-art) edition's tier flag for bundle.mjs: light on
   # dev/test (owner, 2026-09-26), full on release/main.
   WEB_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && ' ' || '--light' }}
+  # The art packs that tier is made from (docs/EXTERNAL-ASSETS-PLAN.md §2,
+  # tools/fetch-art.mjs --pack): light and common on dev/test, all three on
+  # release/main.
+  ART_PACKS: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && 'all' || 'light,common' }}
 
 jobs:
   preview:
@@ -331,6 +335,26 @@ jobs:
           name: ${{ env.CHANNEL }}-preview-${{ github.sha }}
           path: preview/
           retention-days: 14
+
+      # THE ART RELEASE IS A BUILD INPUT (docs/EXTERNAL-ASSETS-PLAN.md step 11).
+      # art-release.json pins one tag of cehinds/AshenSpire-art with three zips;
+      # tools/fetch-art.mjs downloads the ones named, checks each against the pin
+      # and art-manifest.json, and unpacks them into .art-cache/ (ignored). The
+      # token is passed because the art repository is private until the owner
+      # makes it public; with no token (a fork, or once it is public) the public
+      # release URL is used. A failure names its cause (token refused, repository
+      # unreadable, rate limit, network) on the step and as an annotation.
+      # LAST, AND WHATEVER RAN BEFORE: a failed fetch never costs this commit
+      # its build, its preview package or another gate's verdict.
+      - name: Fetch the art packs this build's tier is made from
+        if: ${{ !cancelled() }}
+        env:
+          ART_REPO_TOKEN: ${{ secrets.ART_REPO_TOKEN }}
+        run: node tools/fetch-art.mjs --pack "$ART_PACKS"
+
+      - name: The fetched packs and the trees here agree byte for byte
+        if: ${{ !cancelled() }}
+        run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
 
   # THE BROWSER GATES THAT NOTHING RAN ON `dev`, AND WHAT THAT COST.
   #
