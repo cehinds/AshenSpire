@@ -120,13 +120,13 @@ Section "Ashen Spire (required)" SecGame
     ; file and folder can be written.
     InitPluginsDir
     CopyFiles /SILENT "$INSTDIR\install-data\files.txt" "$PLUGINSDIR\old-files.txt"
-    File "/oname=$PLUGINSDIR\new-files.txt" "${APP_DIR}/install-data/files.txt"
-    File "/oname=$PLUGINSDIR\fetch-hd-art.ps1" "${APP_DIR}/install-data/fetch-hd-art.ps1"
+    File "/oname=$PLUGINSDIR\new-files.txt" "${APP_DIR}\install-data\files.txt"
+    File "/oname=$PLUGINSDIR\fetch-hd-art.ps1" "${APP_DIR}\install-data\fetch-hd-art.ps1"
     nsExec::ExecToLog '"${PS_EXE}" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\fetch-hd-art.ps1" -Mode Drop -InstallDir "$INSTDIR" -OldFiles "$PLUGINSDIR\old-files.txt" -NewFiles "$PLUGINSDIR\new-files.txt"'
     Pop $0
   ${EndIf}
 
-  File /r "${APP_DIR}/*.*"
+  File /r "${APP_DIR}\*.*"
 
   ; The desktop shortcut is the optional section's to make again.
   Delete "$DESKTOP\${APP_NAME}.lnk"

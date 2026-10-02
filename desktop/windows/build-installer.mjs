@@ -178,7 +178,7 @@ for (const f of readdirSync(join(APP, 'locales'))) if (f !== 'en-US.pak') rmSync
 
 // install-data/files.txt: every file this version installs outside the object
 // store. The next version's upgrade deletes what this list has and its own does
-// not (fetch-hd-art.ps1 -Mode Prune -OldFiles), so a file a later version drops
+// not (fetch-hd-art.ps1 -Mode Drop), so a file a later version drops
 // does not outlive it.
 const installed = [];
 (function walk(dir) {
