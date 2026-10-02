@@ -1065,6 +1065,34 @@ if (CORE) {
     }
   }
 }
+// FINISH §3, *A headless full run in CI*: five whole seeded runs for every
+// class (map → fights → rewards → events → acts → boss), each to a win or a
+// death. Red on a crash, and red on a SOFT-LOCK — a fight the bot's actions
+// never resolve, or a map walk longer than the map without reaching its boss.
+// Seeds are runsim's fixed formula, so the run is the same every time; it takes
+// a few seconds. The selftest plants a throw inside a fight, a stalled fight and
+// a boss-less map cycle, and requires a clean fleet to repeat seed for seed.
+{
+  const { execFileSync } = await import('node:child_process');
+  const runSim = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/runsim.mjs', ...args], { cwd: new URL('..', import.meta.url), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 120000 }), code: 0 };
+    } catch (e) {
+      return { out: `${e.stdout || ''}${e.stderr || ''}`, code: e.status ?? 1 };
+    }
+  };
+  const lanes = [];
+  if (CORE) lanes.push({ args: ['5'], label: 'runsim 5: a headless full run for every class on fixed seeds, 0 crashes, 0 soft-locks' });
+  if (SELFTESTS) lanes.push({ args: ['--selftest'], label: 'runsim --selftest: a crash, a stalled fight and a boss-less map each still go red' });
+  for (const lane of lanes) {
+    const r = runSim(lane.args);
+    const result = (r.out.match(/^RESULT: (.*)$/m) || [])[1];
+    const ok = r.code === 0 && result && !/^FAILED/.test(result);
+    console.log(`${ok ? 'PASS' : 'FAIL'}  ${lane.label} — ${result || `runsim ${lane.args.join(' ')} (exit ${r.code}): no RESULT line\n${r.out.slice(-800)}`}`);
+    if (ok) zoomPassed++;
+    else zoomExtra++;
+  }
+}
 // The third authored tree: content/config/**.json compiles to
 // src/config/generated/ui.js. A hand edit to the generated module, or a JSON
 // edit nobody compiled, is red here (tests/ui-config.test.mjs holds the rules).
