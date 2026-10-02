@@ -174,11 +174,9 @@ its tag (today `hd-assets-v2`) and three zips with their sha256s — `high`
 fetches all three (`--pack high|light|common`, a comma list, or `all`), refuses
 a zip unless its sha256 is the pinned one and every file matches its record in
 `art-manifest.json`, and unpacks each into `.art-cache/<tag>/<pack>/`
-(gitignored). The art repository is private until the owner makes it public:
-until then the download needs `ART_REPO_TOKEN` (else `GITHUB_TOKEN`), a token
-with read access to its Contents, which CI passes from the secret of that name;
-with no token it uses the release's public URL, which works once the repository
-is public. A failure names its cause (token refused, repository unreadable,
+(gitignored). The art repository is public, so no token is needed: the
+download uses the release's public URL. `ART_REPO_TOKEN` (else `GITHUB_TOKEN`),
+when set, only raises GitHub's rate limit. A failure names its cause (token refused, repository unreadable,
 rate limit, network). `--from <zip>` verifies a zip already on disk (its pack is
 read from its name); `--recheck` re-hashes a cache. The trees here stay until
 step 13, and `node tools/fetch-art.mjs --agree` proves the fetched caches and

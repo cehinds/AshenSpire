@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { crc32, readZip, writeZip } from '../tools/zip.mjs';
 import { createServer } from 'node:http';
-import { agree, download, fetchArt, httpCause, markerFor, netCause, packOfZip, packsOf, readPin, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
+import { agree, download, fetchArt, httpCause, markerFor, netCause, packDirFor, packOfZip, packsOf, readPin, unpack, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
 import { buildManifest, canonicalBytes, commonSources, serialize } from '../tools/art-manifest.mjs';
 import { planPacks, verifyPacks, writePacks } from '../tools/asset-pack.mjs';
 
@@ -243,7 +243,7 @@ function schema2Fixture({ fontBytes = Buffer.from('font') } = {}) {
   return { root, zip, pin, manifest: ours };
 }
 
-test('schema 2: a high release that still carries the fonts verifies against their common records', async () => {
+test('schema-1 pin (schema-2 manifest): a legacy high release that still carries the fonts verifies against their common records', async () => {
   const { root, zip, pin, manifest } = schema2Fixture();
   try {
     assert.deepEqual(verifyRelease(readFileSync(zip), pin, manifest).problems, []);
@@ -301,7 +301,7 @@ test('known-bad: schema 2, a release whose manifest lists a font its zip lacks i
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('the cache marker folds in the fonts a high release can carry, not music or tiles', () => {
+test('under a schema-1 pin the high cache marker folds in the fonts a legacy high release can carry, not music or tiles', () => {
   const rec = (n) => ({ path: `p${n}`, bytes: n, sha256: String(n).repeat(64).slice(0, 64) });
   const pin = { sha256: 'a'.repeat(64) };
   const base = { assets: { 'assets/bg/a.webp': { high: rec(1) }, 'assets/fonts/f.woff2': { common: rec(2) }, 'music/title/title.mp3': { common: rec(3) } } };
@@ -655,4 +655,101 @@ test('known-bad: a storage hop that fails is named as the storage URL, not blame
       return true;
     });
   }, { storage: 403, publicRepo: false });
+});
+
+// Independent review 5395850998 of #1450: the layers a --from or pin-bump
+// mistake would rely on, each now a known-bad.
+
+/** A zip whose one entry is named `name`: written under a same-length safe name, then renamed in place. */
+function zipNamed(name, data = Buffer.from('x')) {
+  const dir = tmp();
+  try {
+    const safe = 'a'.repeat(name.length);
+    const file = join(dir, 'z.zip');
+    writeZip(file, [{ name: safe, data }]);
+    const buf = readFileSync(file);
+    const from = Buffer.from(safe);
+    let at = buf.indexOf(from);
+    let n = 0;
+    while (at >= 0) { Buffer.from(name).copy(buf, at); n += 1; at = buf.indexOf(from, at + 1); }
+    assert.equal(n, 2, 'the name sits in the local header and the central directory');
+    return buf;
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+
+test('known-bad: the zip reader refuses an entry that climbs out with ../, and so does a pinned release that carries one', () => {
+  const buf = zipNamed('../x');
+  assert.throws(() => readZip(buf), /refusing entry name "\.\.\/x"/);
+  assert.throws(() => readZip(zipNamed('a/../../x')), /refusing entry name/);
+  assert.throws(() => readZip(zipNamed('/abs')), /refusing entry name/);
+  const { root, pin, manifest } = fixture();
+  try {
+    const problems = verifyRelease(buf, { ...pin, sha256: sha(buf) }, manifest).problems.join('\n');
+    assert.match(problems, /refusing entry name "\.\.\/x"/);
+    assert.equal(existsSync(join(root, '.art-cache')), false, 'nothing was unpacked');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('known-bad: unpack refuses an entry that escapes the cache, and publishes nothing', () => {
+  const root = tmp();
+  try {
+    const dir = join(root, '.art-cache', 'hd-assets-v2', 'high');
+    for (const name of ['../x', '../../escaped', 'ok/../../../escaped']) {
+      assert.throws(() => unpack(new Map([['fine.txt', Buffer.from('a')], [name, Buffer.from('b')]]), dir, 'mark'), /escapes the cache directory/, name);
+      assert.equal(existsSync(dir), false, `${name}: no cache was published`);
+    }
+    assert.equal(existsSync(join(root, '.art-cache', 'hd-assets-v2', 'x')), false);
+    assert.equal(existsSync(join(root, '.art-cache', 'escaped')), false);
+    assert.deepEqual(readdirSync(join(root, '.art-cache', 'hd-assets-v2')), [], 'no staging directory is left behind');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('known-bad: asset-pack --source cache refuses a manifest path that escapes the verified cache', async () => {
+  const { root, zips, pin } = threePacks();
+  try {
+    await fetchArt({ root, pack: 'light', from: zips.light });
+    const manifest = JSON.parse(readFileSync(join(root, MANIFEST_PATH), 'utf8'));
+    const id = 'assets/bg/a.webp';
+    const rec = manifest.assets[id].light;
+    // The escaping path points at a real file with the record's bytes, so only
+    // the containment check stands between it and the pack.
+    const outside = join(root, '.art-cache', 'outside.webp');
+    writeFileSync(outside, readFileSync(join(packDirFor(pin, 'light', root), rec.path)));
+    manifest.assets[id].light = { ...rec, path: '../../outside.webp' };
+    writeFileSync(join(root, MANIFEST_PATH), JSON.stringify(manifest));
+    // Re-mark the cache against the edited manifest, so verifiedPackDir admits it.
+    writeFileSync(join(packDirFor(pin, 'light', root), '.verified'), `${markerFor(pin, manifest, 'light')}\n`);
+    const plan = planPacks(root, ['light'], { source: 'cache' });
+    assert.match(plan.problems.join('\n'), /assets\/bg\/a\.webp: its light path \.\.\/\.\.\/outside\.webp escapes the cache/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('under a schema-2 pin the high cache marker leaves out the font rows: a font change does not re-download the high pack', () => {
+  const rec = (n) => ({ path: `p${n}`, bytes: n, sha256: String(n).repeat(64).slice(0, 64) });
+  const pin = { schema: 2, sha256: 'a'.repeat(64), zip: 'hd-assets-v2.zip', packs: { high: { zip: 'hd-assets-v2.zip', sha256: 'a'.repeat(64) }, light: { zip: 'light-assets-v2.zip', sha256: 'b'.repeat(64) }, common: { zip: 'common-assets-v2.zip', sha256: 'c'.repeat(64) } } };
+  const base = { assets: { 'assets/bg/a.webp': { high: rec(1) }, 'assets/fonts/f.woff2': { common: rec(2) } } };
+  const mark = markerFor(pin, base, 'high');
+  const newFont = { assets: { ...base.assets, 'assets/fonts/f.woff2': { common: rec(6) }, 'assets/fonts/g.woff2': { common: rec(7) } } };
+  assert.equal(markerFor(pin, newFont, 'high'), mark, 'a changed or added font leaves the schema-2 high cache valid');
+  assert.notEqual(markerFor(pin, newFont, 'common'), markerFor(pin, base, 'common'), 'the common cache still re-verifies');
+  const newArt = { assets: { ...base.assets, 'assets/bg/a.webp': { high: rec(8) } } };
+  assert.notEqual(markerFor(pin, newArt, 'high'), mark, 'a changed high record still re-verifies the high cache');
+  const legacy = { sha256: 'a'.repeat(64) };
+  assert.notEqual(markerFor(legacy, newFont), markerFor(legacy, base), 'a schema-1 pin still folds the fonts in');
+});
+
+test('every ART_REPO_TOKEN a workflow passes is gated on a protected ref', () => {
+  const dir = new URL('../.github/workflows/', import.meta.url);
+  const GATE = `contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}`;
+  let lines = 0;
+  for (const name of readdirSync(dir).filter((n) => /\.ya?ml$/.test(n)).sort()) {
+    const text = readFileSync(new URL(name, dir), 'utf8');
+    text.split('\n').forEach((line, i) => {
+      if (/^\s*#/.test(line) || !line.includes('secrets.ART_REPO_TOKEN')) return;
+      lines += 1;
+      assert.match(line, /^\s*ART_REPO_TOKEN: \$\{\{ /, `${name}:${i + 1}: the secret is passed only as the ART_REPO_TOKEN env`);
+      assert.ok(line.trimEnd().endsWith(GATE), `${name}:${i + 1}: ART_REPO_TOKEN must be gated on a protected ref:\n${line.trim()}`);
+    });
+  }
+  assert.ok(lines >= 4, `the four fetching workflows pass the token (found ${lines})`);
 });

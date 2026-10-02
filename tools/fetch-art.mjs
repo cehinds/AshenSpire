@@ -59,12 +59,11 @@
 // its LF form, as the manifest records it), every shippable tree file is in the
 // cache, and the release's rows equal the rows derived from the trees.
 //
-// THE TOKEN. None is needed once cehinds/AshenSpire-art is public (owner answer
-// 1); the zip is then downloaded from the release's public URL. Until the owner
-// makes it public, the download needs ART_REPO_TOKEN (CI passes the secret of
-// that name in the env of the steps that fetch), else GITHUB_TOKEN, with read
-// access to its Contents. When a token is set it is always sent (to the API
-// only: fetch drops Authorization on the redirect to storage), which also raises
+// THE TOKEN. None is needed: cehinds/AshenSpire-art is public (owner answer 1,
+// step 10a), so the zip is downloaded from the release's public URL. When
+// ART_REPO_TOKEN (CI passes the secret of that name on protected branches only)
+// or else GITHUB_TOKEN is set, it is sent (to the API only: fetch drops
+// Authorization on the redirect to storage), which only raises
 // GitHub's rate limit. Every failure names its cause: the token refused, the
 // repository unreadable, the rate limit, the network. Node's fetch ignores
 // HTTPS_PROXY unless NODE_USE_ENV_PROXY=1 is set; behind a proxy, set it.
@@ -181,6 +180,9 @@ export function packDirFor(pin, pack, root = ROOT) {
   return join(cacheDirFor(pin, root), pack);
 }
 
+/** Is the pin schema 1 (the high zip alone, from before the packs)? A raw pin with no schema is. */
+const legacyPin = (pin) => (pin && pin.schema !== undefined ? pin.schema : 1) === 1;
+
 /** What the verified marker records: the zip, and the manifest rows it was checked against. */
 export function markerFor(pin, manifest, pack = 'high') {
   const zipSha = (pin.packs && pin.packs[pack] && pin.packs[pack].sha256) || (pack === 'high' ? pin.sha256 : null);
@@ -189,12 +191,15 @@ export function markerFor(pin, manifest, pack = 'high') {
   let ids;
   let recOf;
   if (pack === 'high') {
-    // The high records, and of the common ids only the ones a high release can
-    // carry (the fonts under assets/, as hd-assets-v1 does). Music and tiles
-    // never ride in the high zip, so a new track must not invalidate its cache.
-    // Which common ids a release lists is only known after the download, so the
-    // `assets/` prefix stands in for it.
-    ids = Object.keys(assets).filter((id) => assets[id].high || (commonOf(assets[id]) && id.startsWith('assets/')));
+    // The high records. Under a schema-1 pin, also the common ids a legacy high
+    // release can carry (the fonts under assets/, as hd-assets-v1 does); which
+    // ones it lists is only known after the download, so the `assets/` prefix
+    // stands in for it. Music and tiles never ride in the high zip. A schema-2
+    // high zip carries no common id at all (rowAgrees refuses one), so its
+    // marker leaves them out: a font change must not force the 203 MB high
+    // pack to download again.
+    const legacy = legacyPin(pin);
+    ids = Object.keys(assets).filter((id) => assets[id].high || (legacy && commonOf(assets[id]) && id.startsWith('assets/')));
     recOf = (e) => e.high || commonOf(e) || {};
   } else {
     ids = Object.keys(assets).filter((id) => inPack(assets[id], pack));
@@ -206,9 +211,6 @@ export function markerFor(pin, manifest, pack = 'high') {
   }).join('\n');
   return `${zipSha} ${sha256(Buffer.from(rows, 'utf8'))}`;
 }
-
-/** Is the pin schema 1 (the high zip alone, from before the packs)? A raw pin with no schema is. */
-const legacyPin = (pin) => (pin && pin.schema !== undefined ? pin.schema : 1) === 1;
 
 /**
  * The pack a zip's own manifest must name. Only the high zip of a schema-1 pin
@@ -366,8 +368,10 @@ function discard(dir) {
  * race keeps the winner's cache when it carries the same marker.
  * A run that replaces the cache (every --from run does) can remove one another
  * run has just returned; that run's `dir` is then briefly absent, never partial.
+ * Exported for the tests: an entry that resolves outside the staging directory
+ * is refused before anything is published.
  */
-function unpack(entries, dir, mark) {
+export function unpack(entries, dir, mark) {
   const stage = beside(dir, 'staging');
   try {
     mkdirSync(stage, { recursive: true });
@@ -475,7 +479,7 @@ export function httpCause(res, { pin, zip, url, tokenName }) {
   }
   if (status === 404) {
     if (tokenName) return `${where}: HTTP 404 — either ${pin.repo} has no release ${pin.tag} with ${zip}, or the token in ${tokenName} cannot read the repository (a private repository answers 404 to a token without access). Check the pin, then the token's repository access.`;
-    return `${where}: HTTP 404 at ${url} — no token was set, and ${pin.repo} answers 404 to anyone without one while it is private. Set ART_REPO_TOKEN to a token with read access to its Contents (in CI, pass the secret of that name in the step's env). If the repository is already public, the pin names a tag or zip that release does not have.`;
+    return `${where}: HTTP 404 at ${url} — no token was set, and ${pin.repo} answers 404 to anyone without one if it is private (it is public since step 10a). Set ART_REPO_TOKEN to a token with read access to its Contents (in CI, pass the secret of that name in the step's env). If the repository is already public, the pin names a tag or zip that release does not have.`;
   }
   if (status >= 500) return `${where}: HTTP ${status} — GitHub answered with a server error. Run again.`;
   return `${where}: HTTP ${status} ${res.statusText || ''}`.trim();
@@ -507,8 +511,8 @@ export const GITHUB = Object.freeze({ api: 'https://api.github.com', web: 'https
 /**
  * download(pin, pack, { api, web, env }) → the zip's bytes.
  *
- * WITH A TOKEN (the art repository is private until the owner flips it): the
- * releases API, the only door a private release has. GET the release by its
+ * WITH A TOKEN (only a rate-limit raise now that the art repository is public;
+ * it was the only door while the repository was private): the releases API. GET the release by its
  * tag, find the asset's id, GET /releases/assets/<id> with
  * `accept: application/octet-stream`; GitHub answers 302 to a signed storage
  * URL, which is fetched in a second request carrying NO Authorization header,

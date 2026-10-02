@@ -236,12 +236,19 @@ jobs:
       # before. UNDER SCHEMA 2 A FETCH FAILURE BLOCKS PUBLISHING: the step is
       # `set -e`, so a release main cannot fetch stops the stable build. The art
       # repository is public, so the fetch needs no token; one is passed only on
-      # a protected branch, for the higher rate limit. A failure names its cause.
+      # a protected branch, and only raises the rate limit (see the env comment
+      # below: that rule is defence in depth, not a boundary). A failure names
+      # its cause.
       - name: Build main from source when main no longer commits its build
         env:
-          # Only a protected branch gets the token: a dispatch of any other ref
-          # runs that ref's own copy of this step. The art repository is public
-          # (step 10a), so a run without it fetches the public release.
+          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
+          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
+          # Only a push or dispatch of a protected branch (dev, test, release, main)
+          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
+          # it; but anyone who can push a branch can edit this workflow to read any
+          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
+          # move it into a GitHub Environment limited to dev, test, release and main
+          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
           ART_REPO_TOKEN: ${{ contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
         run: |
           set -euo pipefail

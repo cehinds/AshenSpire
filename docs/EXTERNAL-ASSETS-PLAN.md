@@ -278,27 +278,30 @@ schema-2 pin whose top level disagrees with `packs.high`.
 - `--agree` (step 11, while the trees are still here): every verified cache
   equals the trees byte for byte, every shippable tree file is in a cache, and
   the release's rows equal the rows derived from the trees.
-- **No token is needed** once `cehinds/AshenSpire-art` is public (owner
-  answer 1): with none set, the zip comes from the release's public download
-  URL. Until the owner flips the visibility, the repository is private and the
-  download needs `ART_REPO_TOKEN` (else `GITHUB_TOKEN`); CI passes the
-  `ART_REPO_TOKEN` secret in the env of each step that fetches only on a push
-  or dispatch of a protected branch (dev, test, release, main), never on a pull
-  request or a dispatch of any other ref: that step runs the checked-out ref's
-  own `fetch-art.mjs`, which could read a token handed to it, so those runs
-  fetch the public release with none (step 10a comes first). A token, when
-  set, is always sent (to the API only), which also raises GitHub's rate
-  limit. A token that cannot read the repository falls back to the public
-  URL, so making the repository public is enough even with a stale secret.
-  Every failure names its cause: the token refused, the repository
-  unreadable, the rate limit, the network. Only a push or dispatch of dev,
-  test, release or main gets the token, and it always fetches and runs
-  `--agree`. Every other run (every pull request, same-repository or fork,
-  Dependabot, a dispatch of another ref) has none: while the repository is
-  private it skips the fetch and `--agree` with a notice, so **no pull
-  request checks release/tree agreement until step 10a**; the first push to
-  dev does. A run that cannot tell whether the repository is public fails
-  instead of skipping.
+- **No token is needed:** `cehinds/AshenSpire-art` is public (owner answer 1,
+  made so on 2026-10-02 as step 10a), and with none set the zip comes from the
+  release's public download URL. Every run that fetches (every pull request,
+  same-repository or fork, Dependabot, and every push or dispatch) downloads
+  the packs its branch uses and runs `--agree`; nothing skips the fetch, and a
+  run that cannot fetch fails and names why. A token, when set
+  (`ART_REPO_TOKEN`, else `GITHUB_TOKEN`), is sent to the API only and **only
+  raises GitHub's rate limit**. A token that cannot read the repository falls
+  back to the public URL, so a stale secret does not stop a fetch. Every
+  failure names its cause: the token refused, the repository unreadable, the
+  rate limit, the network.
+- **The token rule in CI is defence in depth, not a security boundary.** CI
+  passes the `ART_REPO_TOKEN` secret only to a push or dispatch of a protected
+  branch (dev, test, release, main); a pull request or a dispatch of any other
+  ref gets an empty string. That stops a branch that edits only
+  `tools/fetch-art.mjs` from reading the token. It does not stop a writer: a
+  same-repository pull request or a dispatched branch runs its own workflow
+  files, so anyone who can push a branch can edit a workflow to read any
+  secret. Because the repository is public the token buys only rate-limit
+  headroom, so **the real fix is an owner action**: delete the
+  `ART_REPO_TOKEN` repository secret, or, if it must stay, move it into a
+  GitHub Environment whose deployment branches are limited to dev, test,
+  release and main. `tests/fetch-art.test.mjs` holds the expression in place
+  in every workflow until then.
 
 ### Build identity
 
@@ -527,9 +530,9 @@ root" below means `/AshenSpire/`.
   - Rebuilt builds (`--build-missing`): the same, from the pin at that commit.
     The fetch cache is keyed by tag, so one fetch serves every rebuild.
   - From step 11 on, `pages-builds.yml`'s main build fetches the release
-    main pins, once main's pin is schema 2. It passes the `ART_REPO_TOKEN`
-    secret while the art repository is private and needs none once it is
-    public (owner answer 1).
+    main pins, once main's pin is schema 2. The art repository is public
+    (owner answer 1, step 10a), so it needs no secret; the `ART_REPO_TOKEN`
+    it passes on a protected branch only raises the rate limit.
 - The **main** build, whose default tier is `high`, also carries the `light`
   pack. A phone, and the high → light fallback, use it from the same page.
   Serving the high tier publicly on Pages for main and release is the owner's
@@ -716,7 +719,7 @@ light single file, about 30 MB, self-contained, plays by double-click. The
 | `tests/settings-revamp.test.mjs:21-25` (`buildChannel` of a `file://` name) | core suite | a single downloaded file's name | unchanged: the name inside the zip keeps the channel (`src/ui/buildChannel.js`) | — |
 | `tools/pages-site.mjs` `--check`, `--selftest`, the mobile editions (`:432-455`, `:700-766`), the base-tree archive (`:623-635`) | `pages-builds.yml` | one HTML (+ mobile) per build, copies of music and tiles, the whole main tree | base-tree exclusions; the object store and `asset-base.json` for every page kind; new checks (section 4); mobile links only on old builds | 6a, 6b |
 | dev-preview "Collect the playable build" (`dev-preview.yml:202-254`) | every push | `cp -r assets/…` into `preview/` | copies the built tree; the extra `assets/` copies for preview pages read the cache | 3a, 12 |
-| `pages-builds.yml` "Build main from source" (`:222-232`) | push to `main`, dispatch | copies two single files | copies the tree; fetches the release main pins (`ART_REPO_TOKEN` while the art repository is private, no secret once it is public) | 6b, 11 |
+| `pages-builds.yml` "Build main from source" (`:222-232`) | push to `main`, dispatch | copies two single files | copies the tree; fetches the release main pins (the art repository is public: no secret is needed; `ART_REPO_TOKEN`, on a protected branch, only raises the rate limit) | 6b, 11 |
 | `tests/run-node.mjs` checks 33, 49, 79; `content-expansion-equipment`, `rogue-parity`, `environment-art`, `relic-art` tests | core suite | files on disk under `assets/` | ids against the manifest (ART-REPO-PLAN step 4 rows, extended to the light tier, music and tiles) | 12 |
 | `tests/art-manifest.test.mjs`, `tests/fetch-art.test.mjs`, `tests/high-res-art.test.mjs` | core suite | schema 1, one pack | schema 2, three packs, the font migration, `licenses/OFL.txt`, the pin's aliases | 2, 11 |
 | doorplant `COPY_SET`, `sfx-filename-convention`, every `mkdtempSync` sandbox | various | the trees are in the repo | copy the pin and manifest (ART-REPO-PLAN). Step 11: every sandbox that runs the bundler copies both, because the build digest now refuses a tree without them (`bundle.test.mjs`, `sfx-filename-convention`; `buildversion-selftest` and `buildstamp-shot-selftest` copy `BUILD_IDENTITY_FILES` already). doorplant's `COPY_SET` builds nothing and needs neither until step 12 | 11, 12 |
@@ -756,8 +759,8 @@ after each. Runtime loading (b) comes first, while every file is still in this
 repository; storage (a) follows. The art repository therefore only becomes a
 build dependency at step 11. No token does: the owner made it public (answer
 1, step 10a, which comes before step 11), and a token only raises the rate
-limit. `fetch-art` still sends `ART_REPO_TOKEN` when CI passes it, as a
-belt-and-braces fallback.
+limit. `fetch-art` still sends `ART_REPO_TOKEN` when CI passes it; that is
+defence in depth, not a boundary (section 2).
 
 | # | step | ships | what still works |
 |---|---|---|---|
@@ -778,7 +781,7 @@ belt-and-braces fallback.
 | 9 | **Art repo PR.** Import the light tier generator (`mobile-art.mjs`, `mobileart-policy.mjs`) and generate `light/assets/` from `hd/assets/`; add `common/` (fonts, `OFL.txt`, music, tiles) with the score and tile tools; the pack script writes three zips and the schema-2 manifest; CI verifies each zip against the manifest. | — | this repo unchanged |
 | 10 | **Owner: merge step 9.** Releases are automatic (AshenSpire-art#2), so the merge publishes `hd-assets-v<N>` with three zips. | — | — |
 | 10a | **Owner: make `cehinds/AshenSpire-art` public** in its GitHub settings (owner answer 1). **Done 2026-10-02**, before step 11 landed. | — | — |
-| 11 | **Pin and fetch.** `art-release.json` schema 2; `fetch-art --pack`; `asset-pack.mjs` reads the cache (`--source cache`); the pin and manifest join `BUILD_IDENTITY_FILES`; every building workflow (dev-preview, tests, ci, pages-builds) fetches. They fetch the public release; the steps also get the `ART_REPO_TOKEN` secret in their env as a belt-and-braces fallback, and `fetch-art` sends `ART_REPO_TOKEN` (else `GITHUB_TOKEN`) whenever one is set, and uses the public release URL with none or when the token cannot read the repository (it no longer refuses without a token; README.md and DEVELOPER.md follow). A failure names its cause. Needs step 10a. The trees here are still present, and `fetch-art --agree` proves the cache and the trees agree byte for byte. | builds can read the release | all, with either source |
+| 11 | **Pin and fetch.** `art-release.json` schema 2; `fetch-art --pack`; `asset-pack.mjs` reads the cache (`--source cache`); the pin and manifest join `BUILD_IDENTITY_FILES`; every building workflow (dev-preview, tests, ci, pages-builds) fetches. They fetch the public release, every run including pull requests, and run `--agree`. Only a push or dispatch of a protected branch (dev, test, release, main) also gets the `ART_REPO_TOKEN` secret, which only raises the rate limit; that rule is defence in depth, not a security boundary (section 2: the owner's real fix is to delete the secret or move it into a GitHub Environment limited to those branches). `fetch-art` sends `ART_REPO_TOKEN` (else `GITHUB_TOKEN`) whenever one is set, and uses the public release URL with none or when the token cannot read the repository (it no longer refuses without a token; README.md and DEVELOPER.md follow). A failure names its cause. Needs step 10a (done 2026-10-02). The trees here are still present, and `fetch-art --agree` proves the cache and the trees agree byte for byte. | builds can read the release | all, with either source |
 | 12 | **Switch every reader** of `assets-mobile/`, `music/`, `map-detail/` and `assets/fonts/` to the manifest or the cache (section 6; ART-REPO-PLAN step 4's rows, extended). The PR records `git grep` output for each tree. | — | all |
 | 13 | **Delete** `assets-mobile/`, the MP3s, `map-detail/` and `assets/fonts/` from `dev` and add them to `.gitignore`, together with ART-REPO-PLAN step 6 for `assets/` and `art/`. **Needs its own owner go-ahead** (ART-REPO-PLAN Q3). Precondition: step 12's grep finds only fetch-aware code. History is untouched. | a smaller tree | all |
 

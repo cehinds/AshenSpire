@@ -355,65 +355,29 @@ jobs:
       # THE ART RELEASE IS A BUILD INPUT (docs/EXTERNAL-ASSETS-PLAN.md step 11).
       # art-release.json pins one tag of cehinds/AshenSpire-art with three zips;
       # tools/fetch-art.mjs downloads the ones named, checks each against the pin
-      # and art-manifest.json, and unpacks them into .art-cache/ (ignored). The
-      # token is passed because the art repository is private until the owner
-      # makes it public; with no token (a fork, or once it is public) the public
-      # release URL is used. A failure names its cause (token refused, repository
-      # unreadable, rate limit, network) on the step and as an annotation.
+      # and art-manifest.json, and unpacks them into .art-cache/ (ignored). The art
+      # repository is public (step 10a), so every run fetches, with or without a
+      # token, and runs the agreement check. A failure names its cause (token
+      # refused, repository unreadable, rate limit, network) on the step and as an
+      # annotation.
       # LAST, AND WHATEVER RAN BEFORE: a failed fetch never costs this commit
       # its build, its preview package or another gate's verdict.
-      # ONLY A PROTECTED BRANCH GETS THE TOKEN (a push or dispatch of dev, test,
-      # release or main). Every other run (a pull request, a fork, Dependabot,
-      # a dispatch of another ref) fetches with none, which works only once
-      # cehinds/AshenSpire-art is public (step 10a). Until then such a run skips
-      # the fetch and the agreement check and says so in a notice; a protected
-      # branch still fetches, and fails by name when it cannot.
-      - name: Decide whether this run can read the art release
-        id: art
+      - name: Fetch the art packs this build's tier uses
         if: ${{ !cancelled() }}
         env:
-          # The same rule the fetch step's env applies: only a push or dispatch
-          # of a protected branch gets the token.
-          TRUSTED_REF: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) }}
-        run: |
-          # A protected branch always fetches: with no token it fails by name
-          # in the fetch step, it is never skipped.
-          if [ "$TRUSTED_REF" = "true" ]; then
-            echo "fetch=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          # Any other run (a pull request, a fork, Dependabot, a dispatch of
-          # another ref) gets no token, so it can fetch only once
-          # cehinds/AshenSpire-art is public. Ask GitHub anonymously: 404 means
-          # private (skip, with a notice); 200 with "private": false means
-          # public (fetch); anything else (rate limit, network) cannot be
-          # established and fails the step rather than skipping the gate.
-          code=$(curl -s -o "$RUNNER_TEMP/art-repo.json" -w '%{http_code}' https://api.github.com/repos/cehinds/AshenSpire-art || true)
-          if [ "$code" = "404" ]; then
-            echo "::notice title=Art release not fetched::this run gets no ART_REPO_TOKEN (only pushes and dispatches of dev, test, release and main do) and cehinds/AshenSpire-art is not public yet, so it skips the art fetch and the agreement check; once the repository is public every run fetches"
-            echo "fetch=false" >> "$GITHUB_OUTPUT"
-          elif [ "$code" = "200" ] && node -e "process.exit(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).private === false ? 0 : 1)" "$RUNNER_TEMP/art-repo.json"; then
-            echo "fetch=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "::error title=Art release access unknown::could not tell whether cehinds/AshenSpire-art is public (HTTP $code); failing rather than skipping the art agreement check"
-            exit 1
-          fi
-
-      - name: Fetch the art packs this build's tier uses
-        if: ${{ !cancelled() && steps.art.outputs.fetch == 'true' }}
-        env:
-          # NO TOKEN ON A PULL REQUEST: this step runs the PR's own
-          # tools/fetch-art.mjs, so a token here would be readable by any
-          # branch. Pull requests fetch the public art repository without
-          # one (EXTERNAL-ASSETS-PLAN step 10a makes it public before this
-          # step lands). Only a push or dispatch on a protected branch (dev,
-          # test, release, main) runs reviewed code, so only those get it; a
-          # dispatch on any other ref fetches with none, like a pull request.
+          # THE TOKEN RULE IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. The art
+          # repository is public, so ART_REPO_TOKEN only raises the API rate limit.
+          # Only a push or dispatch of a protected branch (dev, test, release, main)
+          # passes it, so a branch that edits tools/fetch-art.mjs alone cannot read
+          # it; but anyone who can push a branch can edit this workflow to read any
+          # secret. The real fix is the owner's: delete the ART_REPO_TOKEN secret, or
+          # move it into a GitHub Environment limited to dev, test, release and main
+          # (docs/EXTERNAL-ASSETS-PLAN.md, step 11).
           ART_REPO_TOKEN: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) && secrets.ART_REPO_TOKEN || '' }}
         run: node tools/fetch-art.mjs --pack "$ART_PACKS"
 
       - name: The fetched packs and the trees here agree byte for byte
-        if: ${{ !cancelled() && steps.art.outputs.fetch == 'true' }}
+        if: ${{ !cancelled() }}
         run: node tools/verdict.mjs -- node tools/fetch-art.mjs --agree --pack "$ART_PACKS"
 
   # THE BROWSER GATES THAT NOTHING RAN ON `dev`, AND WHAT THAT COST.
