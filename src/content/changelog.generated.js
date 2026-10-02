@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Art quality: Auto, Light or High",
     "detail": "In the web edition, Settings → Display → Art quality now offers Auto, Light, High and Local high-res. Auto loads lighter art on a narrow or phone-sized screen, with Data Saver on or on a device with little memory, and the best art the game carries otherwise; Light and High pick one, and the change takes effect at once and is remembered on this device. A single-file copy carries its art inside it, so there Light and High are greyed out and the setting says why.",
-    "build": "0.7.1.739",
+    "build": "0.7.1.740",
     "pullRequest": 1452,
     "url": "https://github.com/cehinds/AshenSpire/pull/1452"
+  },
+  {
+    "id": "pr-1446",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the browser checks wait longer for a slow browser to start",
+    "detail": "Nothing you play changes. The automated checks that open the game in a real browser sometimes failed because the browser took longer than 12 seconds to start on the build servers. They now wait up to 30 seconds for it, and this limit can be changed without editing any check. A browser that crashes on start still fails the check at once.",
+    "build": "0.7.1.739",
+    "pullRequest": 1446,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1446"
   },
   {
     "id": "pr-1451",
