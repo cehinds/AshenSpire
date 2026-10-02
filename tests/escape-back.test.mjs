@@ -348,8 +348,9 @@ test('the inventory: every screen with a plain Back marks it, and each row of th
     assert.ok(lines.length, `${file} builds ${id}`);
     for (const line of lines) assert.match(line, /'data-back': ''/, `${file}: ${id} is marked data-back`);
   }
-  const { SCREENS, NOT_DRIVEN } = await import('../tools/escape-back.mjs');
+  const { SCREENS, NOT_DRIVEN, READY } = await import('../tools/escape-back.mjs');
   for (const row of SCREENS) {
+    assert.ok(READY[row.shot], `${row.id}: ?shot=${row.shot} names the landmark it must show`);
     assert.ok(['back', 'peel', 'leave', 'none', 'popover', 'layer'].includes(row.expect), row.id);
     if (row.expect === 'none') assert.ok(row.why, `${row.id} documents why it has no Back`);
     if (row.expect === 'layer') assert.ok(row.mount && row.back, `${row.id} names its layer and the Back under it`);

@@ -79,6 +79,36 @@ export const SCREENS = [
   { id: 'hold', shot: 'history', mount: 'hold', expect: 'layer', back: '#hx-back' },
 ];
 
+// The landmark each `?shot=` state must show before a row is judged (Copilot
+// on #1463): "some screen mounted" is not "the named screen mounted", and a
+// `none` row on a blank or fallen-back page would otherwise pass. A row whose
+// shot has no landmark here is red.
+export const READY = {
+  startup: '.startup-gate',
+  title: '.title-screen',
+  settings: '.settings-modal',
+  about: '.settings-modal',
+  profile: '.profile-archive-modal',
+  history: '.history-screen',
+  compendium: '.screen.compendium',
+  customrun: '.screen.customrun',
+  customize: '.screen.customize',
+  lobby: '.screen.lobby',
+  atlas: '.world-atlas-screen',
+  map: '.mapscreen.map-fog',
+  combat: '.combat',
+  smith: '.smith-modal-veil',
+  shop: '.shop-workspace:not(.master-workspace):not(.blacksmith-workspace)',
+  master: '.master-workspace',
+  blacksmith: '.blacksmith-workspace',
+  rest: '.rest-screen',
+  reward: '.reward-door',
+  event: '.dialogue-screen',
+  death: '.screen.gameover',
+  victory: '.screen.gameover',
+  prologue: '.prologue-screen',
+};
+
 // `mount` rows: page-side code that opens the layer through the production
 // module (the same module instance the page runs) and leaves `__layerOpen()`.
 const MOUNTS = {
@@ -183,6 +213,11 @@ async function main() {
     let booted = false;
     for (let i = 0; i < 80 && !booted; i += 1) { await wait(250); booted = await ev("!!document.getElementById('app')?.firstElementChild"); }
     if (!booted) throw new Error(`?shot=${row.shot} never mounted a screen`);
+    const landmark = READY[row.shot];
+    if (!landmark) throw new Error(`?shot=${row.shot} has no READY landmark`);
+    let ready = false;
+    for (let i = 0; i < 40 && !ready; i += 1) { ready = await ev(`!!document.querySelector(${JSON.stringify(landmark)})`); if (!ready) await wait(250); }
+    if (!ready) throw new Error(`?shot=${row.shot} did not show ${landmark}`);
     await wait(2500);
     if (row.open) {
       // A dispatched click, not .click(): an SVG map node has no click().
