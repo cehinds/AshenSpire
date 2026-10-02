@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Fighters breathe while they wait",
     "detail": "Your fighter and every enemy now bob gently in place between actions, each at its own rhythm; before, the idle motion was meant to play but reached no one. This covers the Animated, Rendered and Classic figure styles; the Glyph style shows a sigil, not a figure, and stays still, and a fallen fighter, including a downed co-op ally, stops moving. With Reduced motion on, in the game's settings or your device's, they stand still, and a new check plays a whole turn that way to prove nothing on the board moves.",
-    "build": "0.7.1.790",
+    "build": "0.7.1.792",
     "pullRequest": 1475,
     "url": "https://github.com/cehinds/AshenSpire/pull/1475"
+  },
+  {
+    "id": "pr-1471",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition shows its art loading on the start screen, and can retry",
+    "detail": "Behind the scenes, in the web edition only: the start screen now appears at once while the art loads, with one line saying how far it has got, and if the art cannot be loaded the title screen says so and offers Retry (also in Settings → Art quality), which loads it again without reloading the page; the downloaded single file is unchanged, and nothing you play changes.",
+    "build": "0.7.1.791",
+    "pullRequest": 1471,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1471"
+  },
+  {
+    "id": "pr-1485",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Fight sounds land at the right moment",
+    "detail": "A boss fight's first draw and turn sting now play when its name card lifts, not hidden behind it. In LAN co-op your turn stings once per round however many players are in the fight, and joining or reloading a fight after someone has already acted no longer replays that action's sounds.",
+    "build": "0.7.1.790",
+    "pullRequest": 1485,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1485"
   },
   {
     "id": "pr-1486",

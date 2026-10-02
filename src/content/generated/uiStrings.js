@@ -1004,6 +1004,55 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "art.loading",
+    "extends": "",
+    "short": "Loading art…",
+    "full": "The game is loading its art.",
+    "tip": ""
+  },
+  {
+    "id": "art.progress",
+    "extends": "",
+    "short": "Loading art · {done} of {total}",
+    "full": "The game has loaded {done} of the {total} files the title screen needs first.",
+    "tip": ""
+  },
+  {
+    "id": "art.failed.gate",
+    "extends": "",
+    "short": "The art could not be loaded",
+    "full": "The art could not be loaded, so the game will show placeholders. You can retry from the title screen.",
+    "tip": ""
+  },
+  {
+    "id": "art.failed.notice",
+    "extends": "",
+    "short": "The art could not be loaded",
+    "full": "The art could not be loaded, so the game is showing placeholders.",
+    "tip": ""
+  },
+  {
+    "id": "art.failed.settings",
+    "extends": "",
+    "short": "The art could not be loaded",
+    "full": "The art could not be loaded, so the game is showing placeholders. Choose Retry to load it again.",
+    "tip": ""
+  },
+  {
+    "id": "art.failed.again",
+    "extends": "",
+    "short": "The art still could not be loaded",
+    "full": "The art still could not be loaded. Check your connection, then try again.",
+    "tip": ""
+  },
+  {
+    "id": "art.retry",
+    "extends": "",
+    "short": "Retry",
+    "full": "Load the art again.",
+    "tip": "Retry"
+  },
+  {
     "id": "map.enter",
     "extends": "",
     "short": "Enter",

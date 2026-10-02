@@ -1,3 +1,4 @@
+import { swapOnError } from '../artFallback.js';
 import { characterLevel } from '../../model/levelup.js';
 import { levelProgress, skillProgressRows, skillProgressSummary, staleSkillTracks } from '../../model/progression.js';
 import { armamentIconAsset } from '../../model/equipmentArt.js';
@@ -456,7 +457,7 @@ function modSummary(registries, piece) {
 function pieceArt(piece, fallback = '⚔') {
   const well = artWell({ src: thumbSrc(piece), alt: '', small: true });
   const image = well.querySelector('img');
-  image.addEventListener('error', () => image.replaceWith(Object.assign(document.createElement('span'), { textContent: piece.icon || fallback })));
+  swapOnError(image, () => Object.assign(document.createElement('span'), { textContent: piece.icon || fallback }));
   return well;
 }
 
