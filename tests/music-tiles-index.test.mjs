@@ -267,3 +267,66 @@ test('a source change while a tile is still loading: the old failure is not reco
     for (const [k, d] of Object.entries(saved)) { if (d) Object.defineProperty(globalThis, k, d); else delete globalThis[k]; }
   }
 });
+
+test('file:// (step 4): a tile the pack index lists is requested; without an index nothing is asked for', async () => {
+  const { tileReachable } = await import('../src/ui/components/mapDetail.js');
+  const id = tileId('c0903c6d0ba56c76', '512/0-0');
+  assert.equal(tileReachable(id, { protocol: 'http:', source: null }), true, 'over http(s) every tile is asked for, as before');
+  assert.equal(tileReachable(id, { protocol: 'file:', source: null }), false, 'a single file under file:// asks for nothing');
+  assert.equal(tileReachable(id, { protocol: 'file:', source: new Map([[id, `${OBJ('c')}.webp`]]) }), true, 'a double-clicked web edition reads its objects');
+  assert.equal(tileReachable(id, { protocol: 'file:', source: new Map() }), false, 'an id the index lacks is not asked for');
+
+  // The mounted layer, under file://.
+  const listeners = new Map();
+  const frames = [];
+  const el = (extra = {}) => ({
+    attrs: {}, dataset: {}, style: { setProperty() {} }, classList: { add() {} }, children: [], isConnected: true,
+    setAttribute(k, v) { this.attrs[k] = String(v); }, getAttribute(k) { return this.attrs[k] ?? null; },
+    append() {}, remove() {}, replaceChildren(...n) { this.children = n; },
+    addEventListener() {}, removeEventListener() {},
+    getBoundingClientRect: () => ({ left: 0, top: 0, right: 300, bottom: 300, width: 300, height: 300 }),
+    ...extra,
+  });
+  const saved = {};
+  for (const k of ['document', 'MutationObserver', 'ResizeObserver', 'requestAnimationFrame', 'cancelAnimationFrame', 'Image', 'location', 'devicePixelRatio']) saved[k] = Object.getOwnPropertyDescriptor(globalThis, k);
+  const set = (k, v) => Object.defineProperty(globalThis, k, { value: v, configurable: true, writable: true });
+  let images = 0;
+  set('document', {
+    body: el(), createElementNS: () => el(),
+    addEventListener: (t, f) => listeners.set(t, f), removeEventListener: (t) => listeners.delete(t),
+  });
+  set('MutationObserver', class { observe() {} disconnect() {} });
+  set('ResizeObserver', class { observe() {} disconnect() {} });
+  set('requestAnimationFrame', (f) => { frames.push(f); return frames.length; });
+  set('cancelAnimationFrame', () => {});
+  set('location', { protocol: 'file:' });
+  set('devicePixelRatio', 1);
+  set('Image', class { constructor() { images++; } decode() { return /^\.\/objects\//.test(this.src || '') ? Promise.resolve() : Promise.reject(new Error('missing')); } removeAttribute() { this.src = ''; } });
+  const settle = async () => { for (let i = 0; i < 20; i++) { while (frames.length) frames.shift()(); await new Promise((r) => setImmediate(r)); } };
+  try {
+    const { mountMapDetail } = await import('../src/ui/components/mapDetail.js');
+    const { ART_SOURCE_EVENT } = await import('../src/ui/highResArt.js');
+    const [source, art] = Object.entries(MAP_ART)[0];
+    const svg = el({ querySelectorAll: () => [], parentElement: null });
+    const base = el({ ownerSVGElement: svg, getScreenCTM: () => null });
+    base.attrs = { width: '1000', height: '1000' };
+    const surface = el({ querySelector: () => base });
+    const port = el();
+    setBuiltInSource(null);
+    const dispose = mountMapDetail(port, surface, source);
+    await settle();
+    assert.equal(images, 0, 'a single file under file:// requests no tile');
+    assert.equal(port.dataset.detailState, 'offline-fallback', 'and keeps the low-detail map, as before');
+    const ids = new Map();
+    for (const level of art.levels) for (const t of visibleTiles(level, { x0: 0, y0: 0, x1: 1, y1: 1 })) ids.set(tileId(art.assetHash, t.key), `${OBJ('d')}.webp`);
+    setBuiltInSource(ids);
+    listeners.get(ART_SOURCE_EVENT)();
+    await settle();
+    assert.ok(images > 0, 'the tiles the index lists are requested as images');
+    assert.equal(port.dataset.detailState, 'ready', 'and drawn from the objects beside the page');
+    dispose();
+  } finally {
+    setBuiltInSource(null);
+    for (const [k, d] of Object.entries(saved)) { if (d) Object.defineProperty(globalThis, k, d); else delete globalThis[k]; }
+  }
+});

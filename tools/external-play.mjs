@@ -37,6 +37,16 @@
 // (and muted, as every browser tool is), so the title's track is fetched
 // without a gesture.
 //
+// FILE:// (step 4, --file): the same seven screens, opened by double-click —
+// the HTML as a file:// URL, no server, no flag that loosens Chrome's file://
+// rules. The indexes must arrive through their .js twins (no .json index is
+// asked for), the "AS Lore" faces through the font sidecar as FontFace objects
+// (no font object is fetched, which Chrome would refuse), the masks inline, the
+// backdrops, sprites and map tiles as plain loads of the objects beside the
+// HTML, and the score must stay synthesized: no manifest, no track, no music/
+// path is asked for (SPEC §7.4; Web Audio cannot play a file: track).
+//   node tools/external-play.mjs --file [--dir build/web] [--expect-tier light]
+//
 // VERDICT: "external-play: OK — N checks passed".
 //
 // WHAT IT DOES NOT CHECK: gameplay. It mounts seven screens and watches the
@@ -48,12 +58,21 @@ import { resolve, dirname, relative } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { objectPath } from './asset-pack.mjs';
 import { SFX_RECIPES, SFX_MANIFEST } from '../src/content/sfx.js';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ARGV = process.argv.slice(2);
 const dirFlag = ARGV.indexOf('--dir');
 const DIR = resolve(ROOT, dirFlag >= 0 ? ARGV[dirFlag + 1] : 'build/web');
+// --file: open the build by its file:// URL, as a double-click does (step 4).
+const FILE_MODE = ARGV.includes('--file');
+const DIR_URL = pathToFileURL(DIR + '/').href;
+/** A request's url relative to the build: the http origin, or the build's file:// folder, stripped. */
+const rel = (url) => {
+  const u = String(url || '');
+  if (u.startsWith(DIR_URL)) return u.slice(DIR_URL.length);
+  return u.replace(/^https?:\/\/[^/]+\//, '');
+};
 
 if (!existsSync(resolve(DIR, 'AshenSpire.html'))) {
   console.error(`external-play: no build at ${relative(ROOT, DIR)} — node tools/bundle.mjs --external-art --out ${relative(ROOT, DIR)}`);
@@ -123,7 +142,9 @@ function wrongTier(url, tier = EXPECT_TIER) {
 
 /** True for the SFX convention probe of a synth-only cue: `assets/sfx/<recipe id>.ogg` with no SFX_MANIFEST entry. */
 function sfxProbe404(url) {
-  const m = /^https?:\/\/[^/]+\/assets\/sfx\/([^/?#]+)\.ogg$/.exec(String(url));
+  // Over http(s) a 404; under --file the fetch is refused outright (Chrome's
+  // fetch does not do file:), which the single file has always met the same way.
+  const m = /^assets\/sfx\/([^/?#]+)\.ogg$/.exec(rel(url));
   if (!m) return false;
   let id;
   try { id = decodeURIComponent(m[1]); } catch { return false; }
@@ -166,7 +187,7 @@ const SCREENS = [
   ['dmap', '?shot=map', `!!document.querySelector('.map-node')`, DESKTOP],
 ];
 
-const server = await serve({ root: DIR, port: 8317, open: false });
+const server = FILE_MODE ? null : await serve({ root: DIR, port: 8317, open: false });
 // Autoplay allowed, so the title's track is requested and played without a
 // gesture (DEFAULT_ARGS already mutes the output).
 const { wsUrl, close } = await launchBrowser({ prefix: 'extplay-', browser: process.env.CHROME || process.env.CHROME_PATH, timeoutMs: 30000, args: ['--autoplay-policy=no-user-gesture-required'] });
@@ -182,7 +203,8 @@ const failures = []; const thrown = []; const urls = new Map();
 // The requests of the screen being mounted, reset before each navigation: one
 // entry per request, so a url an earlier screen also asked for still counts.
 let screenLog = [];
-const removedIndex = (url) => EXPECT_TIER !== PINNED_TIER && new RegExp(`(^|/)packs/${PINNED_TIER}-[0-9a-f]{12}\\.json$`).test(String(url));
+// The removed index is its .json over http(s) and its .js twin under --file.
+const removedIndex = (url) => EXPECT_TIER !== PINNED_TIER && new RegExp(`(^|/)packs/${PINNED_TIER}-[0-9a-f]{12}\\.(?:json|js)$`).test(String(url));
 cdp.on((m) => {
   // /api/lan/* is the LAUNCHER's endpoint (src/net/lan.js), not an asset: a
   // plain static server does not implement it and the source tree 404s on it
@@ -206,14 +228,18 @@ cdp.on((m) => {
       && !/\/api\/lan\//.test(m.params.response.url) && !/favicon\.ico/i.test(m.params.response.url)
       && !(m.params.response.status === 404 && sfxProbe404(m.params.response.url))
       && !(m.params.response.status === 404 && removedIndex(m.params.response.url))) {
-    failures.push(`${m.params.response.status} ${m.params.response.url.replace(/^https?:\/\/[^/]+\//, '')}`);
+    failures.push(`${m.params.response.status} ${rel(m.params.response.url)}`);
   }
   if (m.method === 'Network.requestWillBeSent') {
-    const u = m.params.request.url.replace(/^https?:\/\/[^/]+\//, '');
+    const u = rel(m.params.request.url);
     urls.set(m.params.requestId, u);
     screenLog.push([m.params.loaderId, u]);
   }
-  if (m.method === 'Network.loadingFailed' && !/favicon/i.test(m.params.errorText || '') && !removedIndex(urls.get(m.params.requestId) || '')) failures.push(`${m.params.errorText} ${urls.get(m.params.requestId) || ''}`.trim());
+  if (m.method === 'Network.loadingFailed' && !/favicon/i.test(m.params.errorText || '') && !removedIndex(urls.get(m.params.requestId) || '')
+      && !(FILE_MODE && sfxProbe404(urls.get(m.params.requestId) || ''))
+      // The launcher's /api/lan/ under --file is file:///api/lan/…, refused as
+      // a fetch rather than answered 404: the same non-finding as above.
+      && !(FILE_MODE && /^file:\/\/\/api\/lan\//.test(urls.get(m.params.requestId) || ''))) failures.push(`${m.params.errorText} ${urls.get(m.params.requestId) || ''}`.trim());
   if (m.method === 'Runtime.exceptionThrown') thrown.push(m.params.exceptionDetails.text || 'exception');
 });
 const ev = async (e) => {
@@ -234,7 +260,8 @@ for (const [name, query, ready, viewport] of SCREENS) {
   screenLog = [];
   // The document this navigation makes: requests are kept by its loaderId, so
   // a late request from the screen before cannot be counted as this one's.
-  const { loaderId } = await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/AshenSpire.html${query}` }, S);
+  const pageUrl = FILE_MODE ? `${DIR_URL}AshenSpire.html${query}` : `http://localhost:${server.port}/AshenSpire.html${query}`;
+  const { loaderId } = await cdp.send('Page.navigate', { url: pageUrl }, S);
   const t0 = Date.now(); let up = false;
   while (Date.now() - t0 < 20000) { if (await ev(ready).catch(() => false)) { up = true; break; } await wait(200); }
   await wait(1200);
@@ -342,11 +369,43 @@ if (PINNED_TIER) {
   if (off.length) findings.push(`${off.length} requested object(s) are not their screen's tier or common: ${off.slice(0, 3).map(([u, tier, name]) => `${name} ${u.slice(-40)} (${wrongTier(u, tier)})`).join(', ')}`);
   checks++;
   const fonts = asked.filter((u) => /\.woff2$/.test(u));
-  if (!fonts.length) findings.push('the page fetched no font from objects/');
-  for (const u of fonts) if (!PACK_OF.get(objectPathOf(u))?.has('common')) findings.push(`a font came from outside the common pack: ${u.slice(-80)}`);
-  fontsAsked = fonts.length;
+  if (FILE_MODE) {
+    // file://: the faces are FontFace objects from the sidecar (each screen's
+    // lore check above proves they loaded); a font object fetched would be a
+    // load Chrome refuses from a file:// page.
+    if (fonts.length) findings.push(`--file: the page asked for ${fonts.length} font object(s) by url(), which Chrome refuses under file:// — ${fonts[0].slice(-60)}`);
+    checks++;
+    const sidecar = [...new Set(urls.values())].filter((u) => /^packs\/fonts-[0-9a-f]{12}\.js$/.test(u));
+    if (!sidecar.length) findings.push('--file: the font sidecar (packs/fonts-….js) was never loaded');
+    fontsAsked = sidecar.length;
+  } else {
+    if (!fonts.length) findings.push('the page fetched no font from objects/');
+    for (const u of fonts) if (!PACK_OF.get(objectPathOf(u))?.has('common')) findings.push(`a font came from outside the common pack: ${u.slice(-80)}`);
+    fontsAsked = fonts.length;
+  }
+  if (FILE_MODE) {
+    // The indexes through their .js twins, never a .json fetch.
+    checks++;
+    const all = [...new Set(urls.values())];
+    const json = all.filter((u) => /^packs\/.+\.json$/.test(u));
+    if (json.length) findings.push(`--file: ${json.length} .json index request(s), which a file:// page cannot fetch — ${json[0]}`);
+    checks++;
+    const twins = all.filter((u) => /^packs\/(?:light|high|common)-[0-9a-f]{12}\.js$/.test(u));
+    if (!twins.some((u) => u.startsWith('packs/common-')) || !twins.some((u) => !u.startsWith('packs/common-'))) findings.push(`--file: the art and common indexes were not read from their .js twins (twins asked for: ${twins.join(', ') || 'none'})`);
+  }
 }
-if (PINNED_TIER) {
+if (PINNED_TIER && FILE_MODE) {
+  // THE SCORE UNDER file:// (step 4, §3.9): it stays synthesized. Nothing may
+  // ask for the manifest, a track (object or bare path) or the music/ folder;
+  // a map-detail/ path is never bare either.
+  const asked = [...new Set(urls.values())];
+  checks++;
+  const bare = asked.filter((u) => /^(?:music|map-detail)\//.test(u));
+  if (bare.length) findings.push(`${bare.length} request(s) named a bare music/ or map-detail/ path, not an object: ${bare.slice(0, 3).join(', ')}`);
+  checks++;
+  const music = asked.filter((u) => commonIds(u).some((id) => id.startsWith('music/')));
+  if (music.length) findings.push(`--file: ${music.length} music object(s) asked for; under file:// the score stays synthesized — ${music[0].slice(-60)}`);
+} else if (PINNED_TIER) {
   // THE SCORE (step 3c): the manifest and some track came from the common
   // pack's objects, nothing asked for the old music/ or map-detail/ folders,
   // and every track asked for decodes as audio (decoded in the page, on the
@@ -380,12 +439,12 @@ if (failures.length) findings.push(`${failures.length} failed request(s): ${[...
 checks++;
 if (thrown.length) findings.push(`${thrown.length} uncaught exception(s): ${thrown.slice(0, 2).join(' | ')}`);
 
-await close(); server.server.close();
+await close(); server?.server.close();
 for (const f of findings) console.log('  RED ' + f);
 if (findings.length) { console.log(`external-play: RED — ${findings.length} finding(s) over ${checks} checks`); process.exit(1); }
 // Same grammar rule as verify-external: the verdict line ends at the count, or
 // tools/verdict.mjs reads the whole thing as prose and calls the run silent.
-console.log(`  ${SCREENS.length} screens mounted from ${relative(ROOT, DIR)}; 0 broken images; 0 failed requests${PINNED_TIER ? `; ${seenObjects} images from objects/ (light on the phone, ${EXPECT_TIER} on the desktop); ${cssBackdrops} CSS backdrop(s) and ${fontsAsked} font(s) from objects, ${cssMasks} inline mask(s); ${tilesDrawn} map tile(s) and ${tracksDecoded} track(s) from common objects, decoded` : ''}.`);
+console.log(`  ${SCREENS.length} screens mounted from ${relative(ROOT, DIR)}${FILE_MODE ? ' by file:// URL' : ''}; 0 broken images; 0 failed requests${PINNED_TIER ? `; ${seenObjects} images from objects/ (light on the phone, ${EXPECT_TIER} on the desktop); ${cssBackdrops} CSS backdrop(s) and ${FILE_MODE ? `the faces from ${fontsAsked} font sidecar` : `${fontsAsked} font(s) from objects`}, ${cssMasks} inline mask(s); ${tilesDrawn} map tile(s)${FILE_MODE ? ' from common objects, decoded; the score synthesized' : ` and ${tracksDecoded} track(s) from common objects, decoded`}` : ''}.`);
 console.log(`external-play: OK — ${checks} checks passed`);
 console.log('BOUNDARY: seven screens and the network. No run was played, and a screen that');
 console.log('          mounts with the WRONG art passes this; a track that decodes is not');

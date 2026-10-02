@@ -16,7 +16,11 @@ a built page by `file://` ask it); **step 6b built** (2026-10-02: the Pages
 store, `asset-base.json` for every page kind, `/AshenSpire/sw.js` with
 Range/206 and a kill-switch, "Make available offline", and the light single
 file at `download/` for every kept build; see
-[Step 6b as built](#step-6b-as-built)); the rest is plan (2026-09-27). The owner answered its
+[Step 6b as built](#step-6b-as-built)); **step 4 built** (2026-10-02: the web
+edition plays by double-click: the indexes through their `.js` twins, the
+faces through the font sidecar, tiles from the objects under `file://`, the
+score synthesized, and `external-play --file`; see
+[Step 4 as built](#step-4-as-built)); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -770,7 +774,7 @@ Where the build differs from, or settles, the text above (2026-10-02):
   (`builtInArtArrived` in `highResArt.js`).
 - **Over http(s) only.** Under `file://` the loader loads nothing and the web
   edition shows placeholders (the `.js` twins are step 4). The single files are
-  unaffected.
+  unaffected. Done: see [Step 4 as built](#step-4-as-built).
 - **`asset-base.json` is written by the bundler** beside every web-edition
   HTML (`{"base":"./"}`), so the loader's first request is never a 404; the
   loader accepts only a plain relative folder from it.
@@ -872,6 +876,7 @@ Where the build differs from, or settles, §3.8 and §3.9 (2026-10-02):
   is disposed has its `src` dropped, which stops the request (the old
   `AbortController`). The `file://` guard stays: under `file://` the map
   requests nothing and keeps its low-detail fallback until step 4 lifts it.
+  Done: see [Step 4 as built](#step-4-as-built).
 - **Music.** For the shipped score only (the Custom music folder blank),
   `configureMusic` in `audio.js` passes the manifest path and every relative
   track path through `assetUrl()`; `SHIPPED_MUSIC_FOLDER` (`music`) is the id
@@ -941,6 +946,64 @@ Where the build differs from, or settles, §3.8 and §3.9 (2026-10-02):
   only for an id that is an `SFX_RECIPES` key with no `SFX_MANIFEST` entry.
   Against the 3b runtime with this step's build (no copies) it is red on the
   bare requests, the missing manifest and the missing track.
+
+### Step 4 as built
+
+Where the build settles §3.2, §3.8–§3.10 for `file://` (2026-10-02):
+
+- **The indexes.** Under `file://`, `loadBuiltInPacks` reads each pinned index
+  from its `.js` twin (`loadTwinIndex`), one classic `<script>` per twin,
+  removed once it has run. The twin calls `window.__ashenPack(name, text)`;
+  the loader keeps what each name handed over, hashes **the string** (as
+  UTF-8) against the index's pin and only then parses it, so a twin that does
+  not match is dropped unparsed and the tier fallback applies exactly as for a
+  `.json` that fails its pin. A twin that is missing, or never calls its hook,
+  is a failed index. The deadlines, the high sub-budget, the parallel common
+  load and `keepOnFail` are the http(s) ones.
+- **The base is `./`.** A `file://` page cannot fetch `asset-base.json`, and
+  is always the build's own folder (the bundler's `build/web`, `dist/`, or the
+  unpacked zip of step 7), so the loader does not read it there.
+- **The faces.** Once the common index is verified, the font sidecar is read
+  the same way (`__ashenFonts`), its text checked against `ASSET_PACKS.fonts`,
+  and each face it carries must be one an `ASSET_CSS` `@font-face` rule
+  declares, listed by the verified common map, and decode to bytes that hash
+  to that common record. Each that passes becomes a `FontFace` whose family
+  and descriptors are read from that same rule (`fontFaceRules`), added to
+  `document.fonts`; the `@font-face` rules themselves are left out of the
+  injected `<style data-asset-css>` under `file://` (Chrome refuses their
+  url() loads). A tier switch never adds the same faces twice. A sidecar off
+  its pin, or a face off its record, leaves that face on the system fallback
+  and is reported in the load's `failed` list; the art still loads.
+- **The backdrops** need nothing new: `ASSET_CSS` fills each slot with the
+  object path made absolute against the page, and a `file:` background is a
+  plain image load. **The masks** stay inline (step 3b), so the entrance hall
+  keeps its door under `file://`.
+- **The map tiles** (`mapDetail.js`) are requested under `file://` when the
+  built-in source lists the tile id (`tileReachable`), as `Image` loads of its
+  object. A single file under `file://` has no index, so it asks for nothing
+  and keeps its low-detail fallback, as before; a tile the index lacks counts
+  as failed, as a 404 would, so the listed ones still draw.
+- **The score stays synthesized** under `file://` (§3.9, SPEC §7.4):
+  `main.js` still applies the shipped folder only over http(s). Nothing else
+  changed for audio.
+- **Not changed:** `tools/browser.mjs` `buildPageUrl` still serves a
+  pack-shaped build over http for the measuring tools (step 8d's choice: the
+  loader's primary path, and the score); `ASHEN_BUILD_OVER=file` puts them on
+  the double-click door. A sprite whose bounds are read from its pixels
+  (`combatSpriteGeometry.js`) cannot read a `file:` image (a tainted canvas),
+  so under `file://` it keeps its box geometry, as its own fallback already
+  does.
+- **`external-play --file`** opens the build by its `file://` URL, with no
+  server and no flag that loosens Chrome's `file://` rules, and runs the same
+  seven screens. It also requires that no `.json` index and no font object was
+  asked for, that the art and common twins and the font sidecar were loaded,
+  that the 15 lore faces loaded, and that no music object or `music/` path was
+  asked for. Two non-findings are filtered by name: the SFX convention probe
+  (`fetch` refuses a `file:` url, as it always has for the single file) and the
+  launcher's `/api/lan/`. `dev-preview.yml`'s browser-gates job runs it on the
+  web edition and on the high-default build with its high twin removed
+  (`--expect-tier light`). Against dev's runtime it is red (built-in art
+  `failed`, no ASSET_CSS, no faces, bare `assets/` images).
 
 ### Step 8c as built
 
