@@ -362,26 +362,35 @@ jobs:
       # unreadable, rate limit, network) on the step and as an annotation.
       # LAST, AND WHATEVER RAN BEFORE: a failed fetch never costs this commit
       # its build, its preview package or another gate's verdict.
-      # A FORK'S PULL REQUEST, and any Dependabot run, gets no secrets (a
-      # Dependabot branch is not a fork, so it is named here too), and cehinds/AshenSpire-art is
-      # private until the owner makes it public (step 10a), so such a run cannot
-      # read the release. It skips the fetch and the agreement check, says so in
-      # a notice, and nothing else: a same-repository pull request and every
-      # push still fetch, and fail by name when they cannot. Once the art
-      # repository is public a fork can fetch with no token, and this guard can go.
+      # ONLY A PROTECTED BRANCH GETS THE TOKEN (a push or dispatch of dev, test,
+      # release or main). Every other run (a pull request, a fork, Dependabot,
+      # a dispatch of another ref) fetches with none, which works only once
+      # cehinds/AshenSpire-art is public (step 10a). Until then such a run skips
+      # the fetch and the agreement check and says so in a notice; a protected
+      # branch still fetches, and fails by name when it cannot.
       - name: Decide whether this run can read the art release
         id: art
         if: ${{ !cancelled() }}
         env:
+          # The same rule the fetch step's env applies: only a push or dispatch
+          # of a protected branch gets the token.
+          TRUSTED_REF: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) }}
           HAS_TOKEN: ${{ secrets.ART_REPO_TOKEN != '' }}
-          FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
-          DEPENDABOT: ${{ github.actor == 'dependabot[bot]' }}
         run: |
-          if [ "$HAS_TOKEN" != "true" ] && { [ "$FORK_PR" = "true" ] || [ "$DEPENDABOT" = "true" ]; }; then
-            echo "::notice title=Art release not fetched::a fork's or Dependabot's run gets no ART_REPO_TOKEN and cehinds/AshenSpire-art is still private, so this run skips the art fetch and the agreement check; pull requests fetch the public release with no token, and pushes run both"
-            echo "fetch=false" >> "$GITHUB_OUTPUT"
-          else
+          if [ "$TRUSTED_REF" = "true" ] && [ "$HAS_TOKEN" = "true" ]; then
             echo "fetch=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # A run with no token (a pull request, a fork, Dependabot, any other
+          # ref) can fetch only once cehinds/AshenSpire-art is public. Ask
+          # GitHub anonymously; a private repository answers 404, a public one
+          # says "private": false.
+          code=$(curl -s -o "$RUNNER_TEMP/art-repo.json" -w '%{http_code}' https://api.github.com/repos/cehinds/AshenSpire-art || true)
+          if [ "$code" = "200" ] && node -e "process.exit(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).private === false ? 0 : 1)" "$RUNNER_TEMP/art-repo.json"; then
+            echo "fetch=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice title=Art release not fetched::this run gets no ART_REPO_TOKEN (only pushes and dispatches of dev, test, release and main do) and cehinds/AshenSpire-art is not public yet (HTTP $code), so it skips the art fetch and the agreement check; once the repository is public every run fetches"
+            echo "fetch=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Fetch the art packs this build's tier uses
