@@ -13,7 +13,8 @@
 // node entered the way the map enters it, on the shot boot's memory storage.
 //
 //   IDLE <who>    every combatant (players and enemies) draws at least one
-//                 visible, loaded figure image (an <img> with pixels, or the
+//                 visible (laid out with area, effective opacity above 0),
+//                 loaded figure image (an <img> with pixels, or the
 //                 Classic style's drawn <svg>), and every one is moved by an
 //                 idle animation: on the image or on the layer inside .sprite
 //                 that carries it (.facing, a painted .pose-layer; D42),
@@ -57,7 +58,16 @@
 //
 // BOUNDARY: a CSS animation or transition that is started and cancelled
 // between two frames (no frame sees it, no end event fires) is not measured;
-// nor is motion from a canvas or a video. An idle carrier "moves" when its
+// nor is motion from a canvas or a video. Script motion is seen only as
+// writes to an element's inline style or an image's src: a timer or rAF loop
+// that moves an element by toggling CLASSES (static rules, no transition) is
+// not seen. No combat code moves that way today (its flipbooks and tweens
+// write src/style: presentationSequence.js, combatantEffectLayers.js, the
+// pose animators), so the observer does not watch `class`, whose ordinary
+// state toggles (selected, hover, turn state) would read as motion.
+// tests/motion-probe-boundary.test.mjs pins this line to the observer's
+// attributeFilter, so widening one without the other fails.
+// An idle carrier "moves" when its
 // running animation's keyframes are not all the same value; the probe does
 // not measure on-screen pixels.
 
@@ -143,6 +153,24 @@ if (argv.includes('--selftest')) {
         find: '@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }',
         replace: '@keyframes sprite-idle { 0%, 100% { opacity: 1; } 50% { opacity: 0.85; } }',
         expectRed: /RED IDLE \w+#\d+ — .*keyframes never move it/,
+      },
+      {
+        // #1475 review: a figure laid out but transparent draws nothing, so
+        // it is not a visible figure the bob could be credited for.
+        name: 'the idle carriers are made transparent',
+        file: 'styles/combat.css',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: sprite-idle 3.1s ease-in-out infinite;',
+        replace: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { opacity: 0; animation: sprite-idle 3.1s ease-in-out infinite;',
+        expectRed: /RED IDLE \w+#\d+ — .*no visible figure image to animate/,
+      },
+      {
+        // #1475 review: the co-op board rebuilds its combatants on every
+        // render, and each rebuilt carrier restarted the bob at its start.
+        name: 'the idle bob starts with its carrier instead of keeping the clock',
+        file: 'src/ui/assets.js',
+        find: "  if (run && run.startTime !== 0) run.startTime = 0;",
+        replace: "  if (run && run.startTime !== 0) void run;",
+        expectRed: /RED IDLE \w+#\d+ — .*off the document clock/,
       },
       {
         // #1475 review: a moving companion animation on the carrier must not
@@ -463,7 +491,12 @@ const show = (a) => `${a.kind} ${a.name} on ${a.target} (${a.active === 'Infinit
 // .facing / .pose-layer). A carrier needs a computed animationName AND a
 // running infinite CSSAnimation of that name on that element.
 async function idle({ evaluate }, label) {
-  const figures = await evaluate(`[...document.querySelectorAll('.combatant')].map((c, i) => {
+  // Two frames first: an animation the probe's own style reads create is
+  // started, and its animationstart (which pins the bob's phase to the
+  // clock) dispatched, only at a frame. A painted frame never shows it
+  // unpinned: events go out before that frame paints.
+  const figures = await evaluate(`(async () => { await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  return [...document.querySelectorAll('.combatant')].map((c, i) => {
     const who = (c.classList.contains('player') ? 'player' : c.classList.contains('enemy') ? 'enemy' : 'combatant') + '#' + i;
     const dead = c.classList.contains('dead') || c.classList.contains('down');
     const name = c.querySelector('.nm')?.textContent?.trim() || '';
@@ -472,8 +505,13 @@ async function idle({ evaluate }, label) {
       // not a nested part of one or a decorative layer (the pose aura).
       if (img.tagName.toLowerCase() === 'svg' && (img.parentElement.closest('svg') || img.closest('[aria-hidden="true"]'))) return false;
       const cs = getComputedStyle(img);
+      // Drawn means a box with area and an effective opacity above zero
+      // (the image's and every ancestor's up to the combatant).
+      const box = img.getBoundingClientRect();
+      let alpha = 1;
+      for (let el = img; el && el !== c; el = el.parentElement) alpha *= Number(getComputedStyle(el).opacity);
       return cs.visibility === 'visible' && cs.display !== 'none' && !img.classList.contains('defeated-frame')
-        && !img.classList.contains('pose-previous');
+        && !img.classList.contains('pose-previous') && box.width > 0 && box.height > 0 && alpha > 0;
     });
     // An <img> that did not load draws nothing, whatever moves it.
     const loaded = (img) => img.tagName !== 'IMG' || (img.complete && img.naturalWidth > 0);
@@ -495,7 +533,17 @@ async function idle({ evaluate }, label) {
           const MOVE = ['translate', 'transform', 'top', 'bottom', 'left', 'right', 'inset', 'marginTop', 'marginBottom',
             'marginLeft', 'marginRight', 'offsetDistance'];
           const moves = live.some((a) => new Set(a.effect.getKeyframes().map((k) => JSON.stringify(MOVE.map((p) => k[p] ?? null)))).size > 1);
-          named.push({ on: tag(el), anim, running: live.length > 0 && moves, flat: live.length > 0 && !moves });
+          // The phase follows the document clock (assets.js holdIdlePhase):
+          // the iteration progress is what the timeline's time says, so a
+          // rebuilt or re-inserted carrier does not snap back to the start.
+          const clock = live.every((a) => {
+            const t = a.effect.getComputedTiming(), now = document.timeline.currentTime;
+            const want = ((((now - t.delay) % t.duration) + t.duration) % t.duration) / t.duration;
+            const off = Math.abs(want - t.progress);
+            return Math.min(off, 1 - off) < 0.02;
+          });
+          named.push({ on: tag(el), anim, running: live.length > 0 && moves && clock, flat: live.length > 0 && !moves,
+            offClock: live.length > 0 && moves && !clock });
         }
         if (el.classList.contains('sprite')) break;
       }
@@ -506,13 +554,14 @@ async function idle({ evaluate }, label) {
       return { img: tag(img), src: img.tagName === 'IMG' ? (img.getAttribute('src') || '').slice(0, 120) : '', loaded: loaded(img), carrier: idles.find((n) => n.running) || null,
         stopped: idles.find((n) => !n.running) || null, twice: carriers.length > 1 ? carriers.map((n) => n.on) : null };
     }) };
-  })`);
+  }); })()`);
   for (const f of figures) {
     if (label !== 'IDLE' && f.dead) continue;
     const bare = f.imgs.filter((i) => !i.carrier || !i.loaded || i.twice);
     const why = (i) => !i.loaded ? `the image did not load, it draws nothing (src ${i.src || 'empty'})`
       : i.twice ? `bobbed twice, by sprite-idle on ${i.twice.join(' and ')}`
         : !i.carrier && i.stopped?.flat ? `${i.stopped.anim} runs on ${i.stopped.on} but its keyframes never move it`
+          : !i.carrier && i.stopped?.offClock ? `${i.stopped.anim} runs on ${i.stopped.on} off the document clock, so a rebuild snaps its phase`
           : !i.carrier && i.stopped ? `${i.stopped.anim} is named on ${i.stopped.on} but not running (cancelled from script?)` : 'no idle animation on it or its layers';
     check(f.imgs.length > 0 && bare.length === 0, `${label} ${f.who}`,
       f.imgs.length === 0 ? `${f.name}: no visible figure image to animate`

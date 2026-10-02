@@ -69,6 +69,26 @@ export function prologueArtwork(id, layout = 'desktop', {classId = 'reaver', des
 // window (main.js applyUiScale), so larger base sizes mean a bolder board rather
 // than overflow. These are non-text geometry and remain px when Text size
 // changes; UI size still scales the containing application.
+// THE IDLE BOB KEEPS THE DOCUMENT'S CLOCK (D42; #1475 review). A CSS
+// animation's timeline starts when its element is inserted, so a board that
+// rebuilds its combatants (the co-op board replaces them on every render and
+// every received snapshot) snapped every figure back to the bob's start
+// phase. When `sprite-idle` starts on a carrier, its start time is pinned to
+// the document timeline's origin, so its phase is the clock's phase (plus the
+// per-slot delay in styles/combat.css) however often the carrier is rebuilt
+// or re-inserted. A carrier that holds still (dead, Reduced motion, lite)
+// runs no sprite-idle, so nothing is pinned. tools/motion-probe.mjs IDLE
+// checks every carrier's phase against the clock.
+const IDLE_ANIMATION = 'sprite-idle';
+function holdIdlePhase(event) {
+  if (event.animationName !== IDLE_ANIMATION) return;
+  const run = event.target?.getAnimations?.().find((a) => a.animationName === IDLE_ANIMATION);
+  if (run && run.startTime !== 0) run.startTime = 0;
+}
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+  document.addEventListener('animationstart', holdIdlePhase, true);
+}
+
 const SIZE_TIERS = balance.ui.spriteTiers;
 const px = (value) => `${value}px`;
 

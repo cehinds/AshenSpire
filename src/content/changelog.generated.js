@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Fighters breathe while they wait",
     "detail": "Your fighter and every enemy now bob gently in place between actions, each at its own rhythm; before, the idle motion was meant to play but reached no one. This covers the Animated, Rendered and Classic figure styles; the Glyph style shows a sigil, not a figure, and stays still, and a fallen fighter, including a downed co-op ally, stops moving. With Reduced motion on, in the game's settings or your device's, they stand still, and a new check plays a whole turn that way to prove nothing on the board moves.",
-    "build": "0.7.1.796",
+    "build": "0.7.1.797",
     "pullRequest": 1475,
     "url": "https://github.com/cehinds/AshenSpire/pull/1475"
+  },
+  {
+    "id": "pr-1440",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the spec wording for loading assets as separate files is approved",
+    "detail": "This is a docs-only change, and nothing you play changes. The spec now says the game will load its art, fonts and music as separate files, keep one light-art single file you can download and open by double-click, and retire the 254 MB file.",
+    "build": "0.7.1.796",
+    "pullRequest": 1440,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1440"
   },
   {
     "id": "pr-1496",
