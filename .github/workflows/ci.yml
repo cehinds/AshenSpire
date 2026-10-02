@@ -785,7 +785,7 @@ jobs:
 
   # FINISH §5 "The idle animation plays" and §9 "Reduced motion is proven in a
   # browser". Its own job so its bound is its own: one probe run is about a
-  # minute and the five-plant selftest about four (measured locally), well inside
+  # minute and the six-plant selftest about five (measured locally), well inside
   # the 20 below.
   browser-motion:
     name: idle animation and reduced motion in a real browser
@@ -800,7 +800,7 @@ jobs:
       - uses: ./.github/actions/which-browser
       - name: Every combatant idles, and reduced motion leaves nothing over 0.01 s in one turn
         run: node tools/verdict.mjs -- node tools/motion-probe.mjs
-      - name: …and that gate can fail (5 plants)
+      - name: …and that gate can fail (6 plants)
         run: node tools/verdict.mjs -- node tools/motion-probe.mjs --selftest
 
   # SOP 3 requirement 4. Always runs, including when everything above is red, so

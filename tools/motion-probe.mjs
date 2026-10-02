@@ -13,7 +13,8 @@
 //
 //   IDLE <who>    every combatant (players and enemies) draws at least one
 //                 visible figure image, and every visible figure image has
-//                 `getComputedStyle(img).animationName !== 'none'`.
+//                 `getComputedStyle(img).animationName !== 'none'` AND a running
+//                 CSSAnimation of that name (a script cancel leaves the name).
 //   CONTROL       with motion on, the same sampler over the same turn sees at
 //                 least one animation longer than the limit, so a green
 //                 REDUCED line below is not a blind sampler.
@@ -57,9 +58,24 @@ const DUMP = argv.includes('--dump'); // print every animation and scripted chan
 
 if (argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
+  // Count the harness's own verdict lines: each plant CAUGHT and the clean
+  // copy CLEAN pass; anything else it prints as a verdict fails.
+  let passed = 0, failed = 0;
+  const tally = (write) => (...parts) => {
+    const line = parts.join(' ');
+    if (/^\s+(CAUGHT|CLEAN)\s/.test(line)) passed++;
+    else if (/^\s*(UNCAUGHT|RED-FOR-WRONG-REASON|RED-NOT-EXIT|RED)\s/.test(line)) failed++;
+    write(...parts);
+  };
+  console.log = tally(console.log.bind(console));
+  console.error = tally(console.error.bind(console));
   const code = await doorSelftest({
     tool: 'motion-probe.mjs',
     timeoutMs: 240000,
+    // The enemy figure images: without them an enemy's img errors and is
+    // replaced (src/ui/assets.js), so the clean copy would have no figure to
+    // check. The player's painted outfit falls back to a drawn frame on its own.
+    extraCopy: ['assets/enemy-poses', 'assets/enemy-states', 'assets/defeated-poses'],
     plants: [
       {
         name: 'the idle bob goes back to the dead `.sprite > img` selector',
@@ -67,6 +83,13 @@ if (argv.includes('--selftest')) {
         find: '.combatant .sprite :is(img.pose-frame, img.enemy-pose-idle) { animation: sprite-idle',
         replace: '.combatant .sprite > img { animation: sprite-idle',
         expectRed: /RED IDLE /,
+      },
+      {
+        name: 'a pose swap cancels the CSS idle bob along with its own blend',
+        file: 'src/ui/paintedOutfits.js',
+        find: '    cancelBlends(img);',
+        replace: '    img.getAnimations().forEach(a => a.cancel());',
+        expectRed: /RED IDLE player#\d+ — .*named but not running/,
       },
       {
         name: 'the Reduced motion setting stops shortening CSS animations',
@@ -98,7 +121,8 @@ if (argv.includes('--selftest')) {
       },
     ],
   });
-  process.exit(code);
+  console.info(`motion-probe --selftest: ${passed} passed, ${failed} failed`);
+  process.exit(code || (failed ? 1 : 0));
 }
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -316,17 +340,25 @@ try {
       return cs.visibility === 'visible' && cs.display !== 'none' && !img.classList.contains('defeated-frame')
         && !img.classList.contains('pose-previous');
     });
-    return { who, name: c.querySelector('.nm')?.textContent?.trim() || '', imgs: imgs.map((img) => ({ cls: img.className, anim: getComputedStyle(img).animationName })) };
+    return { who, name: c.querySelector('.nm')?.textContent?.trim() || '', imgs: imgs.map((img) => ({ cls: img.className, anim: getComputedStyle(img).animationName,
+      running: img.getAnimations().some((a) => a.animationName === getComputedStyle(img).animationName && a.playState === 'running') })) };
   })`);
   const players = figures.filter((f) => f.who.startsWith('player')).length;
   const enemies = figures.filter((f) => f.who.startsWith('enemy')).length;
   check(players >= 1 && enemies >= 1, 'IDLE-BOARD', `seed ${SEED}: ${players} player(s) and ${enemies} enemy(ies) on the board`);
   for (const f of figures) {
+    // FINISH's test is the computed name; a name whose CSSAnimation was
+    // cancelled from script (Animation.cancel() on a CSS animation holds until
+    // the name changes) still reads as that name and draws nothing, so the
+    // animation must also be running.
     const still = f.imgs.filter((i) => i.anim === 'none');
-    check(f.imgs.length > 0 && still.length === 0, `IDLE ${f.who}`,
+    const stopped = f.imgs.filter((i) => i.anim !== 'none' && !i.running);
+    const named = (list) => list.map((i) => `img.${i.cls.replace(/\s+/g, '.')}`).join(', ');
+    check(f.imgs.length > 0 && still.length === 0 && stopped.length === 0, `IDLE ${f.who}`,
       f.imgs.length === 0 ? `${f.name}: no visible figure image to animate`
-        : still.length ? `${f.name}: animationName none on ${still.map((i) => `img.${i.cls.replace(/\s+/g, '.')}`).join(', ')}`
-          : `${f.name}: ${f.imgs.map((i) => i.anim).join(', ')}`);
+        : still.length ? `${f.name}: animationName none on ${named(still)}`
+          : stopped.length ? `${f.name}: ${stopped[0].anim} is named but not running on ${named(stopped)} (cancelled from script?)`
+            : `${f.name}: ${f.imgs.map((i) => `${i.anim} running`).join(', ')}`);
   }
 
   // ---- CONTROL: the sampler can see a long animation when motion is on ------
