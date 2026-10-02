@@ -75,7 +75,12 @@ import { sigilInventoryProblems } from './sigils.js';
 // first entry). The bump is what makes an OLDER build refuse-and-keep such a
 // save rather than open a kind it has no screen for; a v16 save has no
 // blacksmith stock, so 16 → 17 fills nothing at the migration door.
-export const RUN_SCHEMA_VERSION = 17;
+// 18 (SPEC §14.5, §14.6 step 7): `trainingPool`, the XP a wise master's
+// respec refunded and redistribute spends, rides the save; and a `master`
+// stock can sit on `shopStock` and on an atlas master point's
+// `serviceStates[pointId].stock`, which an older build must refuse and keep.
+// A v17-or-older save is filled with a pool of 0 at migrateRunSchema.
+export const RUN_SCHEMA_VERSION = 18;
 
 /** Deterministic instance-id generator ('p1', 'p2', ... for prefix 'p'). */
 export function createIdGen(prefix = 'i') {
@@ -213,6 +218,9 @@ export function createRunState({
     // into items ({ [itemRef]: (sigilId|null)[] }, keyed like itemMounts).
     sigils: [],
     sigilSlots: {},
+    // SPEC §14.5: the XP a wise master's respec refunded, spent on any track
+    // through his redistribute.
+    trainingPool: 0,
     // SPEC §14.3 (schema 16): skill books and revive tokens carried, and the
     // companions travelling with the run.
     consumables: {},
@@ -697,6 +705,10 @@ export const RUN_SHAPE = [
   // preConsumables save (≤ 15) is filled with {} and [] at the migration door.
   { key: 'consumables', type: 'object' },
   { key: 'companions', type: 'array' },
+  // SPEC §14.5. Required at schema 18: the training pool a respec fills and
+  // redistribute spends, a whole number of at least 0. A preTrainingPool save
+  // (≤ 17) is filled with 0 at the migration door.
+  { key: 'trainingPool', type: 'number' },
   // SPEC §14.2. The open shop visit's stock, null between visits. Since
   // schema 14 it carries `kind` and `offerings` (shopStockProblems); a
   // preShopKinds save (≤ 13) is read as a market at the migration door.
@@ -823,7 +835,7 @@ export function levelProblems(level) {
   return problems;
 }
 
-export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils } = {}) {
+export function validateRunShape(run, { legacy = false, preLedger = legacy, preHpLedger = preLedger, preEquipmentPools = preHpLedger, preSeats = false, preZones = false, preSkills = false, preCoreTags = preSkills, preXpLevels = preCoreTags, preSideboard = preXpLevels, preRefinedStones = preSideboard, preShopKinds = preRefinedStones, preSigils = preShopKinds, preConsumables = preSigils, preTrainingPool = preConsumables } = {}) {
   const problems = [];
   problems.push(...legacyDungeonProblems(run));
   if (run.journey !== undefined) problems.push(...journeyProblems(run.journey));
@@ -845,6 +857,7 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
     if (preRefinedStones && f.key === 'smithingStonesRefined') continue;
     if (preSigils && (f.key === 'sigils' || f.key === 'sigilSlots')) continue;
     if (preConsumables && (f.key === 'consumables' || f.key === 'companions')) continue;
+    if (preTrainingPool && f.key === 'trainingPool') continue;
     const v = run[f.key];
     if (v === undefined) {
       if (!f.optional) problems.push(`missing '${f.key}'`);
@@ -940,6 +953,9 @@ export function validateRunShape(run, { legacy = false, preLedger = legacy, preH
   if (run.level !== undefined) problems.push(...levelProblems(run.level));
   if (run.smithingStones !== undefined && (!Number.isInteger(run.smithingStones) || run.smithingStones < 0)) {
     problems.push('smithingStones must be a non-negative integer');
+  }
+  if (run.trainingPool !== undefined && (!Number.isSafeInteger(run.trainingPool) || run.trainingPool < 0)) {
+    problems.push(`trainingPool must be a whole number of at least 0, got ${JSON.stringify(run.trainingPool)}`);
   }
   if (run.smithingStonesRefined !== undefined && (!Number.isInteger(run.smithingStonesRefined) || run.smithingStonesRefined < 0)) {
     problems.push('smithingStonesRefined must be a non-negative integer');
@@ -1366,11 +1382,15 @@ export function migrateRunSchema(run) {
   // run that could not buy either holds none.
   const preConsumables = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].includes(run.schemaVersion);
   // v16: no blacksmith stock could be written (SPEC §14.4); nothing to fill.
-  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
-    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, ${RUN_SCHEMA_VERSION})`);
+  // v17 and older: no training pool. Filled HERE with 0 (SPEC §14.5): no
+  // respec could have refunded anything before the wise master existed.
+  const preTrainingPool = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17].includes(run.schemaVersion);
+  if (![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, RUN_SCHEMA_VERSION].includes(run.schemaVersion)) {
+    throw new Error(`Unknown run schemaVersion ${run.schemaVersion} (supported: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, ${RUN_SCHEMA_VERSION})`);
   }
   if (preShopKinds) bringShopStockForward(run);
-  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables });
+  const problems = validateRunShape(run, { legacy, preLedger, preHpLedger, preEquipmentPools, preSeats, preZones, preSkills, preCoreTags, preXpLevels, preSideboard, preRefinedStones, preShopKinds, preSigils, preConsumables, preTrainingPool });
+  if (preTrainingPool && (run.trainingPool === undefined || run.trainingPool === null)) run.trainingPool = 0;
   if (preSigils && (run.sigils === undefined || run.sigils === null)) run.sigils = [];
   if (preConsumables && (run.consumables === undefined || run.consumables === null)) run.consumables = {};
   if (preConsumables && (run.companions === undefined || run.companions === null)) run.companions = [];
