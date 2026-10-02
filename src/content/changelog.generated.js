@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the folder copy refuses a font file it could not fetch",
     "detail": "Nothing you play changes. The zip download and the site's publishing step now refuse a build whose font file is named in a way the site never publishes, instead of failing partway through the download.",
-    "build": "0.7.1.772",
+    "build": "0.7.1.785",
     "pullRequest": 1484,
     "url": "https://github.com/cehinds/AshenSpire/pull/1484"
+  },
+  {
+    "id": "pr-1479",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Sealed and Draft climbs can be continued after a reload",
+    "detail": "A Custom Climb with a Sealed or Draft starting deck could not be loaded again: Continue set the save aside as broken, and the climb also stopped working at the end of its first fight. Both now carry on. A save made before this change loads too, with the fix noted in its load report. An older build of the game won't open a save made by this one; it leaves the save untouched rather than adding cards to your deck. Your dealt deck stays the deck you were dealt. Reloading, a mid-fight save, the end of a fight, changing weapons in the Armoury and swapping weapons mid-fight no longer add your equipment's own cards (its Strike and Defend, weapon arts or Dodge Roll) to it. Your first fight now plays your cards with the same weapon bonuses a reloaded climb gives them.",
+    "build": "0.7.1.784",
+    "pullRequest": 1479,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1479"
   },
   {
     "id": "pr-1472",

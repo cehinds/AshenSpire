@@ -164,6 +164,8 @@ export function createCombat({
     // the run was BORN with. Absent for a headless fixture with no run behind
     // it, which is the one case a replan is the right answer.
     removedAttackSlotIds: structuredClone(player.removedAttackSlotIds || []),
+    // A Sealed/Draft deck's fight: its swap door deals no lent cards (cardRemoval.js).
+    ...(player.poolDeck === true ? { poolDeck: true } : {}),
     equipmentAttackSlotCount: Number.isFinite(player.equipmentAttackSlotCount)
       ? player.equipmentAttackSlotCount
       : undefined,
@@ -841,6 +843,7 @@ function doSwapArmament(combat, { slotId, setIndex }) {
     // slot the replan dropped throws mid-swap.
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     removedAttackSlotIds: combat.removedAttackSlotIds,
+    ...(combat.poolDeck ? { poolDeck: true } : {}),
     itemMounts: combat.itemMounts,
     // The rows a restamped card's rating reads are the run's own (ruleset 7,
     // model/statRows.js), at the level the fight opened at.
@@ -958,6 +961,7 @@ function doChangeEquipment(combat, { slotId, setIndex, pieceId = null }) {
     equipmentProfileRuleSnapshot: combat.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: combat.equipmentAttackSlotCount,
     removedAttackSlotIds: combat.removedAttackSlotIds,
+    ...(combat.poolDeck ? { poolDeck: true } : {}),
     itemMounts: combat.itemMounts,
     // The rows a restamped card's rating reads are the run's own (ruleset 7,
     // model/statRows.js), at the level the fight opened at.
