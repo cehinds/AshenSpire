@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: no CI job runs longer than 20 minutes",
     "detail": "Nothing you play changes. The slowest automated checks now run in parallel pieces, so every check still runs but no single job takes more than 20 minutes.",
-    "build": "0.7.1.765",
+    "build": "0.7.1.768",
     "pullRequest": 1458,
     "url": "https://github.com/cehinds/AshenSpire/pull/1458"
+  },
+  {
+    "id": "pr-1463",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Escape and the controller's B button take you back",
+    "detail": "Run history, the Compendium, Custom Climb, character creation, the LAN lobby, a conversation, a reward's detail view, the quest board and the \"safe to close\" screen now go back when you press Escape or B, the same as pressing their Back button. On a controller, B now also closes Settings, About, Profile and the Armoury, as Escape already did. On the map, Escape or B puts away the selected room's tray. Each press goes back one step: an open tooltip closes first, then a menu or the dialog on top, and only then the screen. Where going back would give something up, Escape and B do nothing, so you have to choose to leave: a shop, the Shrine, your rewards, a fight (they never end your turn), the map, or a finished run.",
+    "build": "0.7.1.767",
+    "pullRequest": 1463,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1463"
+  },
+  {
+    "id": "pr-1481",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: desktop and mobile polish inspiration is saved with the project",
+    "detail": "Twelve illustrated boards explore the player-facing screens, from character creation and combat to towns, equipment, rewards, co-op and settings. The searchable gallery opens each board at full size; exact prompts, art credits and notes distinguish the generated examples from the game's real rules. These are design references, not changes to gameplay.",
+    "build": "0.7.1.765",
+    "pullRequest": 1481,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1481"
   },
   {
     "id": "pr-1478",
