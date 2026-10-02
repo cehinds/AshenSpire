@@ -7,10 +7,30 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "date": "2026-10-02",
     "group": "2026-10-02",
     "summary": "Art quality: Auto, Light or High",
-    "detail": "In the web edition, Settings → Display → Art quality now offers Auto, Light, High and Local high-res. Auto loads lighter art on a narrow screen, with Data Saver on or on a device with little memory, and the best art the game carries otherwise; Light and High pick one, and the change takes effect at once and is remembered on this device. The single-file download carries its art inside it, so there Light and High are greyed out and the setting says why.",
-    "build": "0.7.1.737",
+    "detail": "In the web edition, Settings → Display → Art quality now offers Auto, Light, High and Local high-res. Auto loads lighter art on a narrow or phone-sized screen, with Data Saver on or on a device with little memory, and the best art the game carries otherwise; Light and High pick one, and the change takes effect at once and is remembered on this device. A single-file copy carries its art inside it, so there Light and High are greyed out and the setting says why.",
+    "build": "0.7.1.739",
     "pullRequest": 1452,
     "url": "https://github.com/cehinds/AshenSpire/pull/1452"
+  },
+  {
+    "id": "pr-1451",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition's fonts and backdrops follow its art packs",
+    "detail": "Behind the scenes: the served web edition now loads its lore fonts and backdrop pictures through the same checked list as the rest of its art. When the high-resolution list is missing it now shows the light backdrops, the same as the rest of its art, instead of asking for high-resolution pictures the list no longer vouches for; when no list loads it keeps its plain background and system fonts. The door masks stay inside the game file. Nothing you play changes.",
+    "build": "0.7.1.738",
+    "pullRequest": 1451,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1451"
+  },
+  {
+    "id": "pr-1441",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the action-bar layout check runs again",
+    "detail": "Nothing you play changes. When co-op got the solo action bar, the bar's markup moved into a shared component, and the tool that checks the bar never lands on your cards, the top bar or the battlefield was still looking for it in the old place. It stopped before it measured anything. It now reads the shared component and checks all 44 cells again.",
+    "build": "0.7.1.737",
+    "pullRequest": 1441,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1441"
   },
   {
     "id": "pr-1442",

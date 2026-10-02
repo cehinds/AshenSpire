@@ -233,3 +233,28 @@ test('Auto is decided after the batch that set it has applied the new layout', a
   assert.equal(s.tier, 'light', 'Auto read the layout the same batch wrote');
   fresh();
 });
+
+test('a tier switch in play refills the CSS assets from the new tier (step 3b)', async () => {
+  fresh();
+  const tree = packTree('high');
+  const styles = [];
+  const make = () => { const el = { attrs: {}, textContent: '', setAttribute(k, v) { el.attrs[k] = v; }, replaceWith(next) { styles.splice(styles.indexOf(el), 1, next); } }; return el; };
+  const doc = {
+    head: { appendChild: (el) => styles.push(el) }, baseURI: 'https://example.com/AshenSpire/', createElement: make,
+    querySelector: (sel) => (sel === 'style[data-asset-css]' ? styles.find((el) => 'data-asset-css' in el.attrs) || null : null),
+  };
+  const css = { schema: 1, rules: [`:root{--as-css-bg:url("{{${ID}}}")}`] };
+  const load = { ...tree.load, css, doc };
+  const opts = { pin: tree.pin, inlineMap: {}, load, env: { doc: wide, nav: desktop } };
+  await applyArtTier(set(ART_LIGHT), opts);
+  await loadBuiltInPacks({ pin: tree.pin, ...load, tier: 'light' });
+  assert.equal(styles.length, 1);
+  assert.match(styles[0].textContent, new RegExp(`objects/${A.slice(0, 2)}/${A}`), 'light backdrop at boot');
+  await applyArtTier(set(ART_HIGH), opts);
+  assert.equal(styles.length, 1, 'the one <style data-asset-css> is replaced, not added to');
+  assert.match(styles[0].textContent, new RegExp(`objects/${C.slice(0, 2)}/${C}`), 'high backdrop after the switch');
+  tree.offline = true;
+  await applyArtTier(set(ART_LIGHT), opts);
+  assert.match(styles[0].textContent, new RegExp(C), 'a failed switch leaves the CSS as it was');
+  fresh();
+});

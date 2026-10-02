@@ -1,13 +1,15 @@
 # Every asset outside the game file — plan
 
-Status: **steps 2, 3a, 6a and 8c built** (2026-10-01: `tools/asset-pack.mjs`,
+Status: **steps 2, 3a, 3b, 6a and 8c built** (2026-10-01: `tools/asset-pack.mjs`,
 `art-manifest.json` schema 2; 2026-10-02: the loader `src/ui/assetPacks.js`,
 `setBuiltInSource`, the `ASSET_PACKS` stamp and the tier fallback, with
 `bundle.mjs --external-art` writing packs and `verify-external` rewritten; see
-[Step 3a as built](#step-3a-as-built); the Pages base tree without `art/`,
-the `og:image` Pages path and the site size in `pages-site --check`, see section 4;
-and Settings → Art quality Auto / Light / High, see
-[Step 8c as built](#step-8c-as-built)); the rest is plan (2026-09-27). The owner answered its
+[Step 3a as built](#step-3a-as-built); the `ASSET_CSS` template for the fonts
+and backdrops, the masks inline, see [Step 3b as built](#step-3b-as-built);
+the Pages base tree without `art/`, the `og:image` Pages path and the site
+size in `pages-site --check`, see section 4; and Settings → Art quality
+Auto / Light / High, see [Step 8c as built](#step-8c-as-built)); the rest is
+plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -731,11 +733,13 @@ Where the build differs from, or settles, the text above (2026-10-02):
   - **3b:** the CSS-named ids move into the `ASSET_CSS` template, filled from
     the index the loader actually used, so a high-default build whose high
     index failed shows light backdrops and fonts instead of 404ing high
-    objects, and a failed load leaves the CSS on its fallbacks.
+    objects, and a failed load leaves the CSS on its fallbacks. Done: see
+    [Step 3b as built](#step-3b-as-built).
   - **6b:** CSS urls are relative to the HTML, not to `asset-base.json`'s
     base. On a Pages page at depth 1 or 2 they would miss the shared store, so
     pack-shaped builds must not be published there before 3b fills the
-    template from the base.
+    template from the base. Met by 3b: the slots are filled from the loader's
+    map, whose object paths are built on `asset-base.json`'s base.
 - **`map-detail/` and `music/` are still copied** beside the HTML until step
   3c reads them through the common index, so a 3a web edition carries those
   bytes twice (as copies and as common objects, about 32 MB).
@@ -783,6 +787,68 @@ Where the build differs from, or settles, the text above (2026-10-02):
 - `external-play` now also requires every screen to have loaded the pinned
   tier (`<html data-built-in-art>`) and its images to come from `objects/`.
 
+### Step 3b as built
+
+Where the build differs from, or settles, §3.7 (2026-10-02):
+
+- **The backdrop rules stay where they are; only their `url()` moves.**
+  §3.7 says every rule that names an asset moves into the template. Moved into
+  a later `<style>`, a rule would win where it lost before: `.startup-gate`
+  names `title-city-tower` and is restated as `background: #100e0b` further
+  down `kit.css`, so the moved rule would bring that backdrop back. Instead
+  `tools/asset-css.mjs` rewrites each backdrop `url()` in place to
+  `var(--as-css-<id>, none)`, and the template carries one rule per id,
+  `:root{--as-css-<id>:url("{{id}}")}`. Every selector keeps its place in the
+  cascade; an unset variable falls back to `none`, which is what a backdrop
+  that never loaded showed anyway, and a gradient layer beside it stays. Only
+  `background` and `background-image` may carry such a `url()`; anywhere
+  else, where `none` would change the declaration's meaning, the build stops.
+- **The 15 "AS Lore" `@font-face` rules move whole** into the template (no two
+  name the same face, so their order is free), with `{{assets/fonts/…}}` slots
+  the common index fills.
+- **The two SVG masks stay inline as `data:` in the inlined `<style>`**, not
+  in the template: inlined from the default tier's object, as the single file
+  inlines them. They then never depend on the load (a mask loads in CORS mode,
+  §3.7), and nothing about them changes when the load fails.
+- **`ASSET_CSS` is stamped into `src/ui/assetPacks.js`** beside `ASSET_PACKS`
+  (`{"schema":1,"rules":[…]}`, one line of JSON; `null` in the single files
+  and the source tree), so the bundler computes the CSS in section 2b, before
+  the modules are transformed.
+- **The loader fills the slots from the map it handed `setBuiltInSource`**:
+  the tier that loaded plus common. A high-default build whose high index
+  failed gets light backdrops; a rule whose id that map lacks (a face, when
+  the common index failed) is left out on its own and reported in the load's
+  `failed` list; a failed load injects nothing. Object paths are made absolute
+  against the page before injection, so a `url()` read through a custom
+  property cannot resolve against anything else. The rules go into one
+  `<style data-asset-css>` at the end of `<head>`.
+- **The bundler refuses a slot that a tier could not fill**: each id must be
+  in the common index or in every art tier the build carries.
+- **`verify-external` D** now checks that no inlined stylesheet names a file by
+  `url()` (only the SVG masks, as `data:`), that `ASSET_CSS` is present, that
+  every slot names an id the common index or every pinned art tier lists, and
+  that the `--as-css-…` variables read and defined agree. Its selftest plants
+  a direct object `url()`, an unlisted slot, an undefined variable and a missing
+  template (16 plants).
+- **`external-play`** also mounts the cold-boot startup gate (four screens),
+  and checks on each that every CSS background is an object of the loaded tier
+  (or common) that decodes, every mask is an inline SVG, the template is in the
+  page with no unfilled slot, and the 15 lore faces load; across the screens,
+  that every object requested belongs to the loaded tier or common and every
+  font came from common. `--expect-tier light` runs it on a high-default build
+  whose high index was removed (the removed index's 404 is the plant, not a
+  finding). `dev-preview.yml`'s browser-gates job runs that pass on every push
+  to `test`, `release` and `main`: it builds a high-default web edition when
+  the job's own build is light, hard-link copies it, deletes the pinned high
+  index and its twin, and runs `external-play --expect-tier light`.
+- **The act backdrops** (`.backdrop.act-N`, `bg_act1`–`3`) are slotted like the
+  rest, but nothing on dev draws them (`backdropClass()` has no caller), so no
+  browser check sees them load.
+- The source tree and the light single file are unchanged: the single file's
+  `ASSET_MAP` and inlined `<style>`s hash the same as dev's, and its
+  `ASSET_CSS` is `null`. SPEC §2's status row (the CSS bypass) still holds for
+  them and is left to step 8a.
+
 ### Step 8c as built
 
 Where the build settles the text above (2026-10-02):
@@ -823,17 +889,21 @@ Where the build settles the text above (2026-10-02):
   carries its art inside it. A stored *Light* or *High* is kept, not
   rewritten, so the same choice still applies in the web edition on the same
   origin.
-- **`external-play`** now expects Auto's tier for each window: its three
-  phone screens must load light (Auto on a narrow layout), and two more passes,
-  combat and the map on a 1280×800 desktop window, must load the tier the build
+- **`external-play`** now expects Auto's tier for each window: its
+  phone screens must load light (Auto on a narrow layout), and three more
+  passes, the startup gate, combat and the map on a 1280×800 desktop window, must load the tier the build
   pins, so a high build is checked at both tiers. Each pass also sets the
   emulated screen size: a headless browser's own screen is 800×600, whose
   short side would read as a small screen.
-- **Not yet:** until step 3b, CSS `url()`s (fonts, backdrops) still name the
-  default tier's objects, so *Light* on a high-default build swaps the images
-  but not the CSS backdrops. 3b fills `ASSET_CSS` from the index the loader
-  used; a tier switch in play goes through `loadBuiltInPacks`, so 3b's refill
-  should hook there to follow it.
+- **The CSS follows a switch** (step 3b): a switch in play goes through
+  `loadBuiltInPacks`, which fills `ASSET_CSS` from the map it publishes and
+  replaces the one `<style data-asset-css>`, so *Light* on a high-default
+  build swaps the backdrops too, and fonts stay on common. A switch that fails
+  or is superseded publishes nothing and leaves the CSS as it was.
+- **`external-play` with 3b**: the phone screens (the startup gate among them)
+  check light objects and CSS, the desktop screens the build's tier, or the
+  one `--expect-tier` names; each screen's requested objects are checked
+  against that screen's tier.
 
 ---
 
