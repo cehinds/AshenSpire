@@ -44,6 +44,7 @@ import { createRng } from '../src/engine/rng.js';
 import { dispatch, cardChoicePlan, cardPlayCosts } from '../src/engine/combat.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { affordableCards, refusalsFor } from './simbot.mjs';
+import { chargeFlaskId } from '../src/model/gracerefill.js';
 import { skillXpReceipt, applySkillXp } from '../src/engine/skillXp.js';
 import { skillTracks, spendSkillDraft, skillUpgradesCards, classSkillId } from '../src/model/skills.js';
 import { awardClassXp, pickClassNode } from '../src/model/classTree.js';
@@ -206,7 +207,7 @@ let skillDraftsTaken = 0;
 let classDraftsTaken = 0;
 let levelUpsInWins = 0;
 // Per-class Mana book for --mana-ab, zeroed at each class's first seed.
-let manaBook = { spent: 0, waived: 0, fights: 0 };
+let manaBook = { spent: 0, waived: 0, fights: 0, flasks: 0 };
 // Every per-fleet counter, zeroed together: the A/B runs fleet() twice and a
 // counter that survived the first fleet would report the OFF side's level-ups
 // and cinders inside the ON side's lines.
@@ -410,6 +411,15 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
     const card = affordableCards(REG, combat, refused)[0];
     const tgt = combat.enemies.find((e) => e.alive);
     if (!card) {
+      // AN AZURE CHARGE BEFORE THE TURN ENDS (shipped rules only). Nothing is
+      // affordable, but a card short only on Mana would be once a Mana charge
+      // is drunk: a player drinks it, so the bot does. Without this the ON arm
+      // carried its Azure charges unspent and scored the plays they would have
+      // paid for against the Mana line. The OFF arm never reaches here short
+      // of Mana, so its charges stay where they are.
+      if (MANA_ON && manaChargeWouldPay(combat, refused)) {
+        try { dispatch(combat, { type: 'useFlask', chargeKind: 'mana' }); continue; } catch (e) { setAsideOrCrash(e); /* refused: end the turn */ }
+      }
       // Plants (--selftest): a throw inside a fight must surface as a CRASH,
       // and a turn that never ends must surface as a SOFT-LOCK.
       if (PLANT !== 'combat-stall') dispatch(combat, { type: 'endTurn' });
@@ -433,7 +443,11 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   const outcome = combat.result || 'stalemate';
   if (MANA_AB) {
     manaBook.fights++;
-    for (const ev of combat.eventLog) if (ev.type === 'manaSpent') manaBook.spent += ev.amount;
+    const azure = chargeFlaskId(REG, 'mana');
+    for (const ev of combat.eventLog) {
+      if (ev.type === 'manaSpent') manaBook.spent += ev.amount;
+      else if (ev.type === 'flaskUsed' && ev.flaskId === azure && ev.slot === undefined) manaBook.flasks++;
+    }
   }
   if (deepStats) tallyFight(deepStats, combat, run.hp);
   if (INCOMING && run._incoming) tallyIncoming(run._incoming, combat, run, enc.pool);
@@ -472,6 +486,22 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
 // every play and prices each card with the engine's own cardPlayCosts, so in
 // this arm a card is never set aside for "Not enough mana" — anything in the
 // set was refused for another reason and is not played this turn anyway.
+// Whether drinking the run's Mana charges would pay for a card in hand that
+// is short ONLY on Mana: playable, Actions and Stamina in hand, its Mana price
+// within the pool's maximum and within what the charges left can restore.
+function manaChargeWouldPay(combat, refused) {
+  const p = combat.player;
+  const charges = (p.flaskCharges && p.flaskCharges.manaCurrent) || 0;
+  if (charges <= 0) return false;
+  const def = REG.flasks.get(chargeFlaskId(REG, 'mana'));
+  const per = (def.effects || []).filter((e) => e.op === 'restoreMana').reduce((n, e) => n + (Number(e.amount) || 0), 0);
+  if (per <= 0) return false;
+  return affordableCards(REG, { ...combat, player: { ...p, mana: Infinity } }, refused).some((h) => {
+    const need = cardPlayCosts(combat, h.instanceId).mana || 0;
+    return need > p.mana && need <= (p.maxMana ?? need) && need <= p.mana + charges * per;
+  });
+}
+
 function waiveMana(combat, refused) {
   const p = combat.player;
   let need = 0;
@@ -630,7 +660,7 @@ function simulateRun(classId, seed, ds = null) {
             const encId = typeof run.combatEntered === 'string' ? run.combatEntered : run.combatEntered.encounterId;
             run.combatEntered = null;
             const hpIn = run.hp;
-        const fought = botFight(run, rng, encId, cm, ds);
+            const fought = botFight(run, rng, encId, cm, ds);
             if (fought !== 'victory') { result.deaths = `ambush${fought === 'stalemate' ? '·stalemate' : ''}:${encId}`; recordDeath(ds, act, hpIn); return finish(); }
             afterVictory(run, rng, 'normal');
           }
@@ -643,6 +673,7 @@ function simulateRun(classId, seed, ds = null) {
         const encId = pool === 'boss' ? bossEncounterForNode(REG, map, pick.id, { seat, tier: contentAct })
           : rollEncounter(REG, rng, { pool, seat });
         const hpIn = run.hp;
+        if (pool === 'boss') result.tiers[result.tiers.length - 1].boss = encId;
         const fought = botFight(run, rng, encId, cm, ds);
         if (fought !== 'victory') { result.deaths = `${pool}${fought === 'stalemate' ? '·stalemate' : ''}:${encId}`; recordDeath(ds, act, hpIn); return finish(); }
         afterVictory(run, rng, pool);
@@ -719,7 +750,7 @@ const tierBook = {};
 const tierRow = (key) => (tierBook[key] = tierBook[key] || { reached: 0, cleared: 0 });
 for (const cls of REG.classes.all()) {
   let wins = 0, acts = 0, floors = 0, maxAct = 0;
-  manaBook = { spent: 0, waived: 0, fights: 0 };
+  manaBook = { spent: 0, waived: 0, fights: 0, flasks: 0 };
   const deaths = {};
   const ds = DEEP || INCOMING ? newDeepStats() : null;
   if (ds && INCOMING) ds.incoming = newIncomingBook();
@@ -743,7 +774,9 @@ for (const cls of REG.classes.all()) {
     if (r.victory) wins++;
     if (SEAT_TIERS) {
       for (const t of r.tiers) {
-        for (const key of [`${cls.id}|${t.tier}`, `*|${t.tier}|${t.seat}`, `*|${t.tier}`]) {
+        const keys = [`${cls.id}|${t.tier}`, `*|${t.tier}|${t.seat}`, `*|${t.tier}`];
+        if (t.boss) keys.push(`*|${t.tier}|${t.seat}|${t.boss}`);
+        for (const key of keys) {
           const row = tierRow(key); row.reached++; if (t.cleared) row.cleared++;
         }
       }
@@ -769,6 +802,7 @@ for (const cls of REG.classes.all()) {
   classRows.push({ id: cls.id, name: cls.name, wins, runs: N, manaSpent: manaBook.spent, manaWaived: manaBook.waived, fights: manaBook.fights });
   if (MANA_AB) {
     console.log(`  mana: spent ${(manaBook.spent / N).toFixed(1)} per run (${(manaBook.spent / Math.max(1, manaBook.fights)).toFixed(2)} per fight over ${manaBook.fights} fights)` +
+      `, ${(manaBook.flasks / N).toFixed(1)} Mana flask charges drunk per run` +
       (MANA_ON ? '' : `, ${(manaBook.waived / N).toFixed(1)} per run waived by the OFF arm`));
   }
   if (SKILL_LEVELS) {
@@ -846,8 +880,18 @@ function printSeatTiers(book) {
     for (const seat of seats) {
       const row = book[`*|${t}|${seat.id}`];
       if (!row) continue;
-      const boss = bossTierScale(REG, { encounter: { pool: 'boss', seat: seat.id }, tier: t });
-      console.log(`  tier ${t} in ${seat.id.padEnd(8)} enemy HP x${seatTierHpMult(REG, seat.id, t).toFixed(3)}  boss hp x${boss.hp.toFixed(3)} damage x${boss.damage.toFixed(3)}  cleared ${cell(row)}`);
+      console.log(`  tier ${t} in ${seat.id.padEnd(8)} enemy HP x${seatTierHpMult(REG, seat.id, t).toFixed(3)}  cleared ${cell(row)}`);
+      // THE BOSS ACTUALLY FOUGHT, and its own scale. The final tier can send a
+      // seat to the null-seat boss (SPEC §13.5), whose baseline is the final
+      // tier, so a multiplier derived from the seat would name a fight that
+      // never happened. Each boss met here is listed with the scale botFight
+      // used for it (bossTierScale on that encounter).
+      const prefix = `*|${t}|${seat.id}|`;
+      for (const key of Object.keys(book).filter((k) => k.startsWith(prefix)).sort()) {
+        const id = key.slice(prefix.length);
+        const scale = bossTierScale(REG, { encounter: REG.encounters.get(id), tier: t });
+        console.log(`    boss ${id} at tier ${t}: hp x${scale.hp.toFixed(3)} damage x${scale.damage.toFixed(3)}  fought ${book[key].reached}, cleared ${book[key].cleared}`);
+      }
     }
   }
 }

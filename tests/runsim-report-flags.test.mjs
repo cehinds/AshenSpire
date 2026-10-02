@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
+import { bossTierScale } from '../src/model/seats.js';
 
 const run = (...args) => {
   const r = spawnSync(process.execPath, ['tools/runsim.mjs', ...args], {
@@ -55,6 +56,16 @@ test('the OFF arm actually lifts the Mana line, and the ON arm never does', () =
   assert.doesNotMatch(out.slice(cut), /waived by the OFF arm/, 'the ON arm must not waive Mana');
 });
 
+test('the ON arm drinks a Mana flask charge to pay a card the pool is short for', () => {
+  // Every class carries Azure charges and Shrines refill them; an ON bot that
+  // never drinks one blames its own unused consumable on the Mana line.
+  const out = run('2', '--mana-ab');
+  const onHalf = out.slice(out.indexOf('-'.repeat(72)));
+  const drunk = [...onHalf.matchAll(/([\d.]+) Mana flask charges drunk per run/g)].map((m) => Number(m[1]));
+  assert.equal(drunk.length, classes.length, 'the ON arm should report Mana flask charges drunk for every class');
+  assert.ok(drunk.some((d) => d > 0), `the ON arm drank no Mana flask charge on any class: ${drunk.join(', ')}`);
+});
+
 test('--seat-tiers prints the configured multipliers from content and a row per tier', () => {
   const out = run('2', '--seat-tiers', '--seeded-seats');
   const tiers = Object.keys(REG.balance.seatTiers).map(Number).filter(Number.isInteger);
@@ -68,4 +79,22 @@ test('--seat-tiers prints the configured multipliers from content and a row per 
   }
   // Every class's runs open tier 1: the pooled row reached count is the fleet.
   assert.match(out, new RegExp(`^  per tier, every class: tier 1 \\d+/${2 * classes.length} \\(`, 'm'));
+});
+
+test('--seat-tiers pairs each boss multiplier with the boss actually fought', () => {
+  // The final tier can send a seat to the null-seat Valkyrie; a multiplier
+  // derived from the seat instead would print that seat's boss scale beside a
+  // fight that never used it.
+  const out = run('2', '--seat-tiers', '--seeded-seats');
+  const rows = [...out.matchAll(/^    boss (\S+) at tier (\d+): hp x([\d.]+) damage x([\d.]+)  fought (\d+), cleared (\d+)$/gm)];
+  assert.ok(rows.length > 0, 'no per-boss rows');
+  for (const [, id, tier, hp, damage, fought, cleared] of rows) {
+    const enc = REG.encounters.get(id);
+    assert.ok(enc && enc.pool === 'boss', `${id} is not a boss encounter`);
+    const scale = bossTierScale(REG, { encounter: enc, tier: Number(tier) });
+    assert.equal(hp, scale.hp.toFixed(3), `${id} at tier ${tier}: hp multiplier`);
+    assert.equal(damage, scale.damage.toFixed(3), `${id} at tier ${tier}: damage multiplier`);
+    assert.ok(Number(cleared) <= Number(fought));
+  }
+  assert.doesNotMatch(out, /^  tier \d+ in .*boss hp x/m, 'a seat row must not print a boss multiplier of its own');
 });
