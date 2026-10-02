@@ -1308,7 +1308,7 @@ export function mountEquipment(host, {
     const owned = (run.sigils || []).filter((id) => registries.sigils.has(id) && registries.sigils.get(id).rarity === 'legendary');
     if (!owned.length) return null;
     const attuned = attunedSigilIds(run);
-    const section = el('section', { class: 'armoury-sigils', dataset: { component: 'armoury.sigils' } });
+    const section = el('section', { class: 'armoury-sigils', dataset: { component: 'armoury.sigilsPanel' } });
     section.append(
       titleS(t('armoury.sigils.title')),
       statusText(t('armoury.sigils.count', { n: attuned.length, max: attuneMaxOf(registries) }), { class: 'armoury-sigils-count' }),
