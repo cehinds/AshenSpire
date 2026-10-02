@@ -631,5 +631,23 @@ export const nodeTerms = [
     "playerTermId": "",
     "tooltipTermId": "",
     "template": "Whenever you heal, gain {block} Block."
+  },
+  {
+    "nodeId": "vigilSigil",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "At the start of each fight, if your HP is at or below {pct}%, gain {block} Block."
+  },
+  {
+    "nodeId": "pyreSigil",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Whenever a card is exhausted, gain {block} Block."
+  },
+  {
+    "nodeId": "gravelightSigil",
+    "playerTermId": "",
+    "tooltipTermId": "",
+    "template": "Whenever an enemy dies while your HP is at or below {pct}%, heal {heal} HP."
   }
 ];

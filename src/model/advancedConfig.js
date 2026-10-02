@@ -119,6 +119,13 @@ const BALANCE_DOMAINS = Object.freeze({
   'smithing.rewardChancePct.elite': PERCENT,
   'smithing.rewardChancePct.boss': PERCENT,
   'smithing.rewardChancePct.treasure': PERCENT,
+  // SPEC §15.4's legendary-sigil drop chances ship at 0 (a range read off the
+  // value would cap them at 20); attuneMax starts at 0, nothing attuned.
+  'sigils.dropChancePct.normal': PERCENT,
+  'sigils.dropChancePct.elite': PERCENT,
+  'sigils.dropChancePct.boss': PERCENT,
+  'sigils.dropChancePct.treasure': PERCENT,
+  'sigils.attuneMax': Object.freeze({ integer: true, step: 1, min: 0, max: 20 }),
   // Refined payouts ship at 0, which a range read off the value caps at 20.
   'smithing.refinedRewardByPool.normal': Object.freeze({ integer: true, step: 1, min: 0, max: 100 }),
   'smithing.refinedRewardByPool.elite': Object.freeze({ integer: true, step: 1, min: 0, max: 100 }),

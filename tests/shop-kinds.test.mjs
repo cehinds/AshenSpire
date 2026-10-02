@@ -320,8 +320,9 @@ test('FINISH: the classic merchant\'s existing shelves are byte-identical on 50 
 // ---------------------------------------------------------------------------
 
 test('shopOffers is appended to the END of STREAM_NAMES, so no existing stream moves', () => {
-  assert.equal(STREAM_NAMES.at(-1), 'shopOffers');
-  assert.equal(STREAM_NAMES.at(-2), 'rewardRolls');
+  // §15.4's `sigils` was appended after it later (tests/legendary-sigils.test.mjs).
+  assert.equal(STREAM_NAMES.at(-2), 'shopOffers');
+  assert.equal(STREAM_NAMES.at(-3), 'rewardRolls');
   assert.equal(STREAM_NAMES.indexOf('shop'), 9);
   // A save written before the stream existed restores it at 0.
   assert.equal(createRng(7, { shop: 3 }).getCounters().shopOffers, 0);
