@@ -144,12 +144,15 @@ export async function loadIndex(pack, pin, { base = './', fetchImpl = globalThis
 export async function loadBuiltInPacks({
   pin = ASSET_PACKS, inlineMap = ASSET_MAP, fetchImpl = globalThis.fetch,
   protocol = globalThis.location?.protocol, subtle, onSource = null, deadlineMs = BOOT_WAIT_MS,
+  tier = null, keepOnFail = false,
 } = {}) {
   if (!packsPinned(pin, inlineMap)) {
     status = { state: Object.keys(inlineMap || {}).length ? 'inline' : 'none', tier: null, requested: null, ids: 0, failed: [] };
     return builtInArtStatus();
   }
-  const requested = ART_TIERS.includes(pin.tier) ? pin.tier : 'light';
+  // `tier`: Art quality's choice (step 8c, src/ui/artTier.js), else the default.
+  const requested = ART_TIERS.includes(tier) ? tier : ART_TIERS.includes(pin.tier) ? pin.tier : 'light';
+  const before = status;
   if (typeof fetchImpl !== 'function' || !isHttp(protocol)) {
     // file:// reads the .js twins, which is step 4; until then a double-clicked
     // web edition shows its placeholders.
@@ -200,6 +203,8 @@ export async function loadBuiltInPacks({
       failed.push(got === TIMED_OUT ? `${candidate}: the index did not load within ${ms} ms` : got.error.message);
     }
     if (!art) {
+      // A tier switch in play (keepOnFail) keeps the art already on screen.
+      if (keepOnFail && before.state === 'loaded') { status = { ...before, failed }; return builtInArtStatus(); }
       // Placeholders: no art index, so no source. The common pack alone does
       // not make a source either.
       status = { state: 'failed', tier: null, requested, ids: 0, failed };

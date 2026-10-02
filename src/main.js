@@ -1,5 +1,6 @@
 import { applyArtQuality, onArtSourceChange, builtInArtArrived } from './ui/highResArt.js';
 import { whenBuiltInArtReady, musicHold, bootLine } from './ui/assetPacks.js';
+import { applyArtTier, onTierArrived, requestedTier } from './ui/artTier.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
@@ -783,6 +784,10 @@ function applyDisplaySettings(settings) {
   // it. Asynchronous (a served hd/ folder is fetched); screens drawn after it
   // resolves use the new tier, and anything the source lacks stays built-in.
   applyArtQuality(settings);
+  // Auto / Light / High: which pack the web edition loads (src/ui/artTier.js).
+  // A change in play reloads the indexes; a single file and the source tree
+  // pin no packs and this does nothing.
+  applyArtTier(settings);
   applyHudVisibility(document.documentElement, settings);
   applyCardSizeSettings(settings);
   const advancedPresentation = presentationConfig(settings);
@@ -3981,4 +3986,8 @@ if (shotState === 'combat-test') {
 }
 }
 const dropBootLine = bootLine(app);
-whenBuiltInArtReady(() => bootMusic.firstScreen(() => { dropBootLine(); showFirstScreen(); }), { onSource: builtInArtArrived });
+// The boot load asks for the tier Art quality names (Auto decides from the
+// layout applyUiScale has already written); a switch later re-points the
+// images on screen the same way the first load does.
+onTierArrived(builtInArtArrived);
+whenBuiltInArtReady(() => bootMusic.firstScreen(() => { dropBootLine(); showFirstScreen(); }), { onSource: builtInArtArrived, tier: requestedTier(activeSettings) });

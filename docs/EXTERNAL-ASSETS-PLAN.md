@@ -1,10 +1,12 @@
 # Every asset outside the game file — plan
 
-Status: **steps 2 and 3a built** (2026-10-01: `tools/asset-pack.mjs`,
+Status: **steps 2, 3a and 8c built** (2026-10-01: `tools/asset-pack.mjs`,
 `art-manifest.json` schema 2; 2026-10-02: the loader `src/ui/assetPacks.js`,
 `setBuiltInSource`, the `ASSET_PACKS` stamp and the tier fallback, with
 `bundle.mjs --external-art` writing packs and `verify-external` rewritten; see
-[Step 3a as built](#step-3a-as-built)); the rest is plan (2026-09-27). The owner answered its
+[Step 3a as built](#step-3a-as-built); 2026-10-02: Settings → Art quality
+Auto / Light / High, see [Step 8c as built](#step-8c-as-built)); the rest is
+plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -744,6 +746,48 @@ Where the build differs from, or settles, the text above (2026-10-02):
   lacks.
 - `external-play` now also requires every screen to have loaded the pinned
   tier (`<html data-built-in-art>`) and its images to come from `objects/`.
+
+### Step 8c as built
+
+Where the build settles the text above (2026-10-02):
+
+- **The choices** are *Auto*, *Light*, *High* and *Local high-res*
+  (`src/ui/highResArt.js` `ART_QUALITY_CHOICES`); the default is *Auto*. The
+  one choice before, *Built-in*, is read as *Auto* (`legacyChoices` on the row,
+  and `artQualityChoice()`), so a stored value keeps working and imports.
+- **Auto** (`src/ui/artTier.js` `autoTier`) asks for light when the build's
+  default is high and any of these holds: `navigator.connection.saveData`, the
+  layout is narrow (`<html data-layout="narrow">`, written by `applyUiScale`
+  before the boot load starts), or `navigator.deviceMemory` is at or under
+  `LOW_MEMORY_GB` (2). Otherwise it asks for the default. A light-default build
+  always asks for light. *Local high-res* lays its folder over Auto's tier,
+  unchanged otherwise.
+- **When it applies.** The boot load asks for the setting's tier
+  (`loadBuiltInPacks({ tier })`; with no tier it is still the build's
+  default). A change in play **reloads the indexes at once** (`applyArtTier`,
+  called from `applyDisplaySettings`): the new map goes through
+  `builtInArtArrived`, which re-points the images on screen. A switch that
+  cannot load anything keeps the art already shown (`keepOnFail`), and quick
+  switches run one at a time, only the latest. Auto is decided at boot and when
+  it is chosen; a window resized later does not swap the art.
+- **The fallback is the loader's**: High on a build that pins no high pack, or
+  whose high index fails, shows light; the row's live line says which tier is
+  on screen and why (`tierStatus`, `aria-live="polite"`).
+- **A single file and the source tree** pin no packs, so *Light* and *High* are
+  shown **disabled** (the row's new `choiceDisabled`, honoured by the choice
+  renderer for `<option>`s and segment buttons) and the live line says the file
+  carries its light art inside it. A stored *Light* or *High* is kept, not
+  rewritten, so the same choice still applies in the web edition on the same
+  origin.
+- **`external-play`** now expects Auto's tier for each window: its three
+  phone screens must load light (Auto on a narrow layout), and a fourth pass,
+  combat on a 1280×800 desktop window, must load the tier the build pins, so a
+  high build is checked at both tiers.
+- **Not yet:** until step 3b, CSS `url()`s (fonts, backdrops) still name the
+  default tier's objects, so *Light* on a high-default build swaps the images
+  but not the CSS backdrops. 3b fills `ASSET_CSS` from the index the loader
+  used; a tier switch in play goes through `loadBuiltInPacks`, so 3b's refill
+  should hook there to follow it.
 
 ---
 
