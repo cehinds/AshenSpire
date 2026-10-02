@@ -32,7 +32,8 @@ import { createEquipmentProfileRuleSnapshot, createLoadout, normalizeArmamentLoc
 // Every composition step — plan, apply, restamp — through the ONE framework
 // door (owner ruling), so the save/load path cannot split across the boundary.
 import { stampDeck, WeaponDeckCompositionService, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
-import { healMissingSlotCells } from '../model/loadout.js';
+import { healMissingSlotCells, isItemOwned } from '../model/loadout.js';
+import { isPoolDeckMode, dealtAttackSlotCount, POOL_DECK_RULE } from '../model/cardRemoval.js';
 import { initializeRunSmithing } from '../model/smithing.js';
 import { normalizeRunAttributes } from '../model/attributes.js';
 import { validateRunStartingKit } from '../model/startingKits.js';
@@ -197,7 +198,24 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   // run's, and neither is written back — a load must not rewrite a snapshot
   // it understands (tools/weapon-card-packages.mjs holds that line).
   const itemMounts = snapshot.itemMounts !== undefined ? snapshot.itemMounts : run.itemMounts;
-  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout, itemMounts }, snapshot.piles);
+  // A Sealed/Draft fight keeps its dealt piles: no lent card is dealt into a
+  // resumed fight either (model/cardRemoval.js). The run's own deck mode
+  // decides; the snapshot's flag was cross-checked against it at the door.
+  const poolDeck = isPoolDeckMode(run);
+  const lentBefore = poolDeck ? COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]).filter(isItemOwned).map((c) => c.instanceId) : [];
+  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout, itemMounts, ...(poolDeck ? { poolDeck: true } : {}) }, snapshot.piles);
+  const lentAfter = new Set(COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]).filter(isItemOwned).map((c) => c.instanceId));
+  const swept = lentBefore.filter((id) => !lentAfter.has(id));
+  if (swept.length) {
+    note(run, {
+      kind: 'heal',
+      site: 'save.js:sweepPoolDeckLentCards',
+      field: 'combatEntered.snapshot.piles',
+      was: swept,
+      now: [],
+      why: `a ${run.custom?.deckMode || 'pool'} fight saved by an older build held cards its equipment lent at a mid-fight swap; a dealt deck holds none, so they are swept`,
+    });
+  }
   const cards = COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]);
   // THE BIRTH QUOTA REACHES THE MIGRATION TOO. Persisting it on the run and the
   // combat snapshot is only half the job: this door builds its own plan and
@@ -227,6 +245,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
     derivedStatRuleSnapshot: snapshot.derivedStatRuleSnapshot || run.derivedStatRuleSnapshot,
     level: run.level,
     itemMounts,
+    ...(poolDeck ? { poolDeck: true } : {}),
     deck: cards,
   }, cards, {
     adoptEquipmentBonuses: false,
@@ -234,6 +253,10 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   });
   snapshot.itemUpgradeLevels = structuredClone(runLevels);
   delete snapshot.armamentLevels;
+  // The rule rides the snapshot from here on: a fight saved before the fix
+  // has no flag, and restoreCombatSnapshot builds the live combat from the
+  // snapshot alone, so its next mid-fight swap would deal lent cards.
+  if (poolDeck) snapshot.poolDeck = true;
 
   // Commit only after validation and every pile rebind succeed. Resume then
   // observes the exact same loadout in run state and restored combat state.
@@ -834,6 +857,69 @@ export function createSaveManager(storage) {
             why: 'run saved before the birth attack quota was recorded; its own deck is the record of what it was born with',
           });
         }
+        // A POOL-BUILT DECK IS HELD TO ITS OWN RULE, NOT THE COMPOSED ONE.
+        // Sealed and Draft (Custom Climb) deal the starting deck from a pool
+        // after createRunState composed one from the equipment. Before main.js
+        // newRun wrote the dealt deck's own quota (and `poolDeckRule`), the
+        // save kept the composed deck's, naming attack slots the deck never
+        // held, and the full restamp below refused every such save ("attack
+        // instance count 0 does not match authored N"). This one-time heal is
+        // for exactly those saves — a pool run with no `poolDeckRule` and no
+        // retired slot — and replaces a quota ABOVE what the deck holds with
+        // the dealt count. A run that carries the marker is held to its quota
+        // like any other, so a lost attack card is refused, not healed; a gap
+        // or an excess is refused either way; a Standard run is not touched.
+        // Only an ABSENT marker is a pre-fix save. A present marker must be
+        // the one rule this build knows, on a pool run; anything else (a
+        // future rule, a string, null, a marker on a Standard run) is refused
+        // by name, never migrated (Codex review on #1479).
+        // A FLAG IS CHECKED AGAINST THE RUN, NEVER TRUSTED (Codex review on
+        // #1479). `poolDeck` is a fight's flag: on a saved run it is refused,
+        // and a combat snapshot's must agree with the run's own deck mode — a
+        // Standard fight claiming the pool rule would have its equipment cards
+        // swept, a pool fight denying it would be dealt them. Absent on a pool
+        // fight is a pre-fix snapshot; the migration below writes it.
+        if (Object.hasOwn(run, 'poolDeck')) throw new Error('poolDeck is a fight\'s flag, not a run field');
+        {
+          const fight = run.combatEntered && run.combatEntered.snapshot;
+          if (fight && Object.hasOwn(fight, 'poolDeck') && (fight.poolDeck !== true || !isPoolDeckMode(run))) {
+            throw new Error(`combat snapshot poolDeck ${JSON.stringify(fight.poolDeck)} disagrees with the run's '${run.custom?.deckMode || 'standard'}' deck`);
+          }
+        }
+        if (Object.hasOwn(run, 'poolDeckRule')) {
+          if (run.poolDeckRule !== POOL_DECK_RULE) throw new Error(`poolDeckRule ${JSON.stringify(run.poolDeckRule)} is not a dealt-deck rule this build knows (${POOL_DECK_RULE})`);
+          if (!isPoolDeckMode(run)) throw new Error(`poolDeckRule is set on a '${run.custom?.deckMode || 'standard'}' run; only a Sealed or Draft run carries it`);
+        }
+        // The heal is a schema migration: only a save written before schema
+        // 20 can lack the marker. A schema-20 Sealed/Draft save without it
+        // was not written by newRun, so it is refused by name.
+        if (isPoolDeckMode(run) && !Object.hasOwn(run, 'poolDeckRule') && run.migratedFromRunSchemaVersion === undefined) {
+          throw new Error(`a schema-${RUN_SCHEMA_VERSION} ${run.custom.deckMode} run is missing poolDeckRule`);
+        }
+        if (isPoolDeckMode(run) && !Object.hasOwn(run, 'poolDeckRule')) {
+          const legacy = !(run.removedAttackSlotIds || []).length;
+          const healQuota = (holder, cards) => {
+            const dealt = dealtAttackSlotCount(cards);
+            if (!Number.isInteger(holder.equipmentAttackSlotCount) || holder.equipmentAttackSlotCount <= dealt) return null;
+            const was = holder.equipmentAttackSlotCount;
+            holder.equipmentAttackSlotCount = dealt;
+            return was;
+          };
+          const was = legacy ? healQuota(run, [...(run.deck || []), ...(run.sideboard || [])]) : null;
+          const snapshot = run.combatEntered && run.combatEntered.snapshot;
+          const snapshotWas = legacy && snapshot && snapshot.piles && !(snapshot.removedAttackSlotIds || []).length
+            ? healQuota(snapshot, COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile] || []))
+            : null;
+          run.poolDeckRule = POOL_DECK_RULE;
+          note(run, {
+            kind: 'heal',
+            site: 'save.js:dealtAttackSlotCount',
+            field: 'equipmentAttackSlotCount',
+            was: { run: was, snapshot: snapshotWas, poolDeckRule: undefined },
+            now: { run: run.equipmentAttackSlotCount, snapshot: snapshot ? snapshot.equipmentAttackSlotCount ?? null : null, poolDeckRule: POOL_DECK_RULE },
+            why: `a ${run.custom.deckMode} deck saved before the dealt-deck rule: its birth attack quota is the slots it was dealt, and it is marked as held to that rule from now on`,
+          });
+        }
         const smithingReceipt = initializeRunSmithing(registries, run);
         const hydratedRunProfiles = hydrateMissingEquipmentProfiles(registries, run.equipmentProfileRuleSnapshot);
         const hydratedCombatProfiles = hydrateMissingEquipmentProfiles(registries, run.combatEntered?.snapshot?.equipmentProfileRuleSnapshot);
@@ -852,6 +938,9 @@ export function createSaveManager(storage) {
         // Every load crosses the same deterministic composition door. This is
         // also the one-time migration for legacy role-only attack instances:
         // deck order binds them to attack:0..N-1; no instance is appended.
+        // A pool-built deck (Sealed, Draft) is not dealt the equipment's lent
+        // cards here either (loadout.js reconcileGrantedCards), so a reload
+        // restores it exactly (SPEC §9 M2).
         stampDeck(registries, run, undefined, {
           adoptEquipmentBonuses: false,
           reconcileEquipmentPools: false,

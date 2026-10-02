@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1474",
+    "id": "pr-1479",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "Turning on \"Use flasks outside combat\" now works straight away on the map",
-    "detail": "Turning the setting on from the map's menu used to leave the Potions control refusing Drink until you left the map. Now the map updates as soon as you change it, and a drink taken there is saved. Behind the scenes, new browser checks open every flask menu (in combat, on the map and in the room rail) and confirm each one offers the same actions and does exactly what you pick.",
-    "build": "0.7.1.772",
-    "pullRequest": 1474,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1474"
+    "summary": "Sealed and Draft climbs can be continued after a reload",
+    "detail": "A Custom Climb with a Sealed or Draft starting deck could not be loaded again: Continue set the save aside as broken, and the climb also stopped working at the end of its first fight. Both now carry on. A save made before this change loads too, with the fix noted in its load report. An older build of the game won't open a save made by this one; it leaves the save untouched rather than adding cards to your deck. Your dealt deck stays the deck you were dealt. Reloading, a mid-fight save, the end of a fight, changing weapons in the Armoury and swapping weapons mid-fight no longer add your equipment's own cards (its Strike and Defend, weapon arts or Dodge Roll) to it. Your first fight now plays your cards with the same weapon bonuses a reloaded climb gives them.",
+    "build": "0.7.1.784",
+    "pullRequest": 1479,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1479"
   },
   {
     "id": "pr-1472",
