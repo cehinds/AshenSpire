@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1500",
+    "id": "pr-1498",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "Behind the scenes: builds and checks read the game's light art, fonts, music and map tiles from the art release",
-    "detail": "Nothing you play changes. Every build, test and preview page now takes the light art, the lore fonts, the shipped score and the map detail tiles from the verified art release instead of the copies still kept in this repository, so those copies can be removed in a later step.",
-    "build": "0.7.1.797",
-    "pullRequest": 1500,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1500"
+    "summary": "The game's starting settings follow the owner's latest configuration",
+    "detail": "Character-level XP growth starts at 1.5, reward card choices at zero and the normal-fight card reward chance at 24%. Enemy sprites start at 1.5 scale, the player starts in column 1, row B uses double scale, and the opening's first-step traveller uses the supplied desktop placement. All 38 supplied settings become defaults; settings you already chose keep their values.",
+    "build": "0.7.1.798",
+    "pullRequest": 1498,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1498"
   },
   {
     "id": "pr-1440",
