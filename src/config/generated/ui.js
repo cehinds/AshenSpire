@@ -44,7 +44,7 @@
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json b44124e6a29150d9
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json e42ea228fc081f59
+// source content/config/ui/screens/prologue.json 4baac70fb0a0a190
 // source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -818,11 +818,15 @@ export const uiConfig = deepFreeze({
               "enabled": true,
               "order": 1,
               "banner": false,
-              "ownStaging": false,
+              "ownStaging": true,
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {},
+              "stage": {
+                "imageFocusX": 57,
+                "textPosition": "middle-center",
+                "textScale": 1
+              },
               "actor": {
                 "desktop": {
                   "x": 33,
@@ -846,17 +850,22 @@ export const uiConfig = deepFreeze({
               "seconds": 5,
               "speaker": "Hamlet witness",
               "text": "The cities burned toward their towers.\nThe bells fell silent. No spring followed.",
-              "effect": "fade",
+              "effect": "push",
               "character": false,
               "art": "year",
               "enabled": true,
               "order": 2,
               "banner": false,
-              "ownStaging": false,
+              "ownStaging": true,
               "waitForInput": false,
               "music": "keep",
               "stinger": "none",
-              "stage": {},
+              "stage": {
+                "cameraEase": "ease-out",
+                "camera": "up",
+                "imageFocusX": 52,
+                "imageFocusY": 0
+              },
               "actor": {
                 "desktop": {
                   "x": 33,
@@ -925,7 +934,8 @@ export const uiConfig = deepFreeze({
               "music": "keep",
               "stinger": "none",
               "stage": {
-                "wash": 0.06
+                "wash": 0.06,
+                "camera": "out"
               },
               "actor": {
                 "desktop": {
@@ -978,7 +988,10 @@ export const uiConfig = deepFreeze({
               "music": "keep",
               "stinger": "none",
               "stage": {
-                "imageFocusY": 0
+                "imageFocusY": 0,
+                "transitionEase": "ease-out",
+                "camera": "out",
+                "cameraEase": "ease-out"
               }
             },
             {
@@ -1148,8 +1161,8 @@ export const uiConfig = deepFreeze({
             "textBoxVisible": true,
             "textBoxOpacity": 1,
             "textBoxColor": "#100e0c",
-            "captionFixedHeight": false,
-            "captionHeightVh": 18,
+            "captionFixedHeight": true,
+            "captionHeightVh": 15,
             "bannerBox": true,
             "bannerBoxColor": "#100e0c",
             "bannerBoxOpacity": 1,

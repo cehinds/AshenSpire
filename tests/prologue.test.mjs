@@ -535,15 +535,15 @@ test('a scene may keep its own staging, and inherits the house style until it do
     [`${PROLOGUE_PREFIX}scenes.step.stage.layout`]: 'letterbox',
   });
   const staged = id => prologueStaging(config, config.scenes.find(scene => scene.id === id));
-  assert.equal(staged('warmth').layout, 'overlay', 'the house style');
+  assert.equal(staged('carry').layout, 'overlay', 'the house style');
   assert.equal(staged('step').layout, 'letterbox', 'one scene may letterbox while the rest do not');
   // A SCENE'S BLOCK IS ONLY WHAT IT ANSWERS FOR ITSELF. `step` set its frame and
   // nothing else, so it still follows the opening's text size. Shipping a full
   // copy of the house style inside every scene is what made `night` — the one
   // scene with its own wash — silently ignore every other setting changed here.
-  assert.equal(staged('warmth').textScale, 1.4);
+  assert.equal(staged('carry').textScale, 1.4);
   assert.equal(staged('step').textScale, 1.4, 'what a scene has not set still follows the house style');
-  assert.deepEqual(PROLOGUE_DEFAULTS.scenes.find(scene => scene.id === 'night').stage, {wash: .06}, 'night answers for its wash alone');
+  assert.deepEqual(PROLOGUE_DEFAULTS.scenes.find(scene => scene.id === 'night').stage, {wash: .06, camera: 'out'}, 'night answers for its wash and camera alone');
   const housed = prologueConfig({[`${PROLOGUE_PREFIX}presentation.layout`]: 'letterbox'});
   for (const scene of housed.scenes) assert.equal(prologueStaging(housed, scene).layout, 'letterbox', `${scene.id} ignored the house style`);
   assert.equal(prologueStaging(housed, housed.scenes.find(scene => scene.id === 'night')).wash, .06, 'while night keeps the one thing it answers for');
