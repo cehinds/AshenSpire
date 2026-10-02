@@ -109,7 +109,9 @@ test('every registered tag, domain and family pairing is derived unchanged; the 
   // per shipped companion, whose rule is what it does; and §14.4's sigils
   // (step 6): the `sigil` branch and one leaf per shipped sigil.
   const SPEC_14_PROPERTIES = ['deckEdit', 'companion', 'hollowSquire', 'emberHound', 'sigil', 'emberSigil', 'thornSigil', 'tideSigil', 'hearthSigil'];
-  const NAMED = [...PHASE_5A_PROPERTIES, ...PHASE_5B_PROPERTIES, ...PHASE_7_PROPERTIES, ...PHASE_8_PROPERTIES, ...PHASE_10B_PROPERTIES, ...SPEC_14_PROPERTIES];
+  // SPEC §15.4: the three legendary sigils' leaves under the sigil branch.
+  const SPEC_15_PROPERTIES = ['vigilSigil', 'pyreSigil', 'gravelightSigil'];
+  const NAMED = [...PHASE_5A_PROPERTIES, ...PHASE_5B_PROPERTIES, ...PHASE_7_PROPERTIES, ...PHASE_8_PROPERTIES, ...PHASE_10B_PROPERTIES, ...SPEC_14_PROPERTIES, ...SPEC_15_PROPERTIES];
   assert.ok(addedTags.every((t) => t.visibility || (t.domain === 'property' && NAMED.includes(t.id)) || (t.id === 'bow' && t.domain === 'card')),
     'every tag that joined is a framework node, a named property, or the Bow presentation tag');
   assert.deepEqual(addedTags.filter((t) => !t.visibility).map((t) => t.id).sort(), [...NAMED, 'bow'].sort(), 'and the non-framework additions are exactly the named ones');
@@ -132,7 +134,7 @@ test('every object states exactly one kind, the one its collection and type name
     }
   }
   // Current 505 objects plus the blacksmith's four sigils.
-  assert.equal(counted, 509, 'all 509 shipped objects, including projected shared armor sets, companions and sigils');
+  assert.equal(counted, 512, 'all 512 shipped objects, including projected shared armor sets, companions and sigils (three legendary, SPEC §15.4)');
 });
 
 test('a node carries no numbers: every variable resolves through a binding to a balance row, and the ladder reads highest scope first', () => {

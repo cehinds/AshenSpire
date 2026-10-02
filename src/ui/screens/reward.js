@@ -48,6 +48,7 @@
 // Math.random — a UI pick that desyncs a seeded run is a defect.
 
 import { renderCard } from '../components/card.js';
+import { sigilRuleText } from '../../model/sigils.js';
 import { renderEquipmentInspection } from '../components/equipmentCard.js';
 import { renderCollectibleInspection } from '../components/collectibleCard.js';
 import { esc, attachTooltip, showTooltipFor } from '../components/tooltip.js';
@@ -74,7 +75,7 @@ import { reasonWhenDisabled } from '../components/refusal.js';
 import { clearSelection } from '../components/cardSelection.js';
 import { unusedInstanceId, ownedCopies } from '../../model/deckRules.js';
 
-const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', levelChoice: '✧', levelCard: '✧', flask: '⚗', armament: '⚔', relic: '◆' };
+const KIND_GLYPHS = { cinders: '◉', smithingStone: '⚒', classDraft: '☉', skillDraft: '✦', card: '🂠', levelChoice: '✧', levelCard: '✧', flask: '⚗', armament: '⚔', relic: '◆', sigil: '◈' };
 
 // `onCollectArmament` is the armament's whole persistence, handed in by the
 // caller (main.js collectArmament): run storage + meta.found + the discovery
@@ -226,6 +227,12 @@ export function mountRewards(app, {
       return true;
     },
     armament(row) { return onCollectArmament ? onCollectArmament(row.armamentId) !== false : false; },
+    // SPEC §15.4: a dropped legendary sigil joins the inventory, unattuned;
+    // one the run already holds adds nothing.
+    sigil(row) {
+      if (!(run.sigils || []).includes(row.sigilId)) run.sigils = [...(run.sigils || []), row.sigilId];
+      return true;
+    },
   };
 
   function take(row, viaKind) {
@@ -373,6 +380,13 @@ export function mountRewards(app, {
       case 'relic': {
         const def = registries.relics.get(row.relicId);
         return { title: t('reward.kind.relic'), body: `<b>${esc(def.icon || '◆')} ${esc(def.name)}</b> — ${esc(relicText(def, registries))}` };
+      }
+      case 'sigil': {
+        const def = registries.sigils.get(row.sigilId);
+        return {
+          title: t('reward.kind.sigil'),
+          body: `<b>${esc(def.name)}</b> — ${esc(sigilRuleText(registries, row.sigilId) || def.blurb)}<br><span style="color:var(--muted)">${esc(t('reward.sigil.note'))}</span>`,
+        };
       }
       default:
         return { title: row.kind, body: '' };

@@ -50,7 +50,8 @@ import { awardClassXp } from './model/classTree.js';
 import { runClassIdentity } from './model/classCard.js';
 import { peakClassLevel } from './model/classSwap.js';
 import { applyLevelUp, awardLevelXp, bankLevelXp, claimBankedLevel, combatXpReceipt, pendingLevelCount, xpToNext as levelXpToNext } from './model/levelup.js';
-import { configuredRewardOffer as rewardOfferForSource } from './model/rewardSourcePolicy.js';
+import { configuredRewardOffer as rewardOfferForSource, pendingRewardCheckpoint, settleTreasureNode } from './model/rewardSourcePolicy.js';
+import { rollSigilDrop } from './model/sigils.js';
 import { combatXpGains } from './model/rewardprogress.js';
 import { commitCombatSnapshot, restoreCombatSnapshot } from './engine/combatSnapshot.js';
 import { buildActMap, bossEncounterForNode, drawSeatOrder } from './engine/actmap.js';
@@ -100,7 +101,7 @@ import { mountCompendium } from './ui/screens/compendium.js';
 import { autoLoadProfile, autoLoadEnabled } from './ui/components/settingsSync.js';
 import { seedSettingsDefaults, seedAfterChange, SEED_KEY } from './model/settingsDefaults.js';
 import { SETTINGS_DEFAULTS } from './content/settingsDefaults.js';
-import { pageDebug } from './ui/buildChannel.js';
+import { pageDebug, promotionDebug } from './ui/buildChannel.js';
 import { openSettings, dropUndoOffer, settingsRows, promotionFor, settingOn, settingsRow, showSettingsNotice, clearSettingsNotice, resolveTapSize, resolveGraceRefill, resolveLevelUpValue, fullscreenCapability, isFullscreen, toggleFullscreen, musicEnabledCondition, resolveArmamentsPresentation, resolveArmamentsPhonePlacement } from './ui/screens/settings.js';
 import { mountPrologue } from './ui/screens/prologue.js';
 import { shouldPlayPrologue, pendingPrologueScene, migratePrologueState, PROLOGUE_STATE_VERSION } from './model/prologue.js';
@@ -341,7 +342,7 @@ let activeSettings = bringStoredProfileForward(activeMeta);
 // player chose is theirs. Applied before anything reads the profile.
 // The same step runs again when a restored profile replaces this one.
 function seedPromotedDefaults(meta, settings) {
-  const seeded = seedSettingsDefaults(settings, promotionFor(SETTINGS_DEFAULTS, pageDebug()));
+  const seeded = seedSettingsDefaults(settings, promotionFor(SETTINGS_DEFAULTS, promotionDebug()));
   if (!Object.keys(seeded).length) return;
   for (const [key, value] of Object.entries(seeded)) {
     if (value === undefined) delete settings[key]; else settings[key] = value;
@@ -2225,21 +2226,13 @@ function enterNode(nodeId) {
       // §15.3), and only when its tables pay anything: both ship at 0, so no
       // zero-amount claim is written and a save is unchanged.
       const smithingStoneReceipt = treasureSmithingReward();
-      return mountRewards(app, {
-        registries,
-        run,
-        saves,
-        rng,
-        onCollectArmament: (id) => collectArmament(id, 'treasure'),
-        onPersist: persist,
-        rewards: configuredRewardOffer({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), title: 'TREASURE' }, 'treasure'),
-        onDone: () => {
-          rewardDoneCount++;
-          if (run.journey) completeJourneyNode(run.journey);
-          persist();
-          showMap();
-        },
-      });
+      // SPEC §15.4: the treasure CHECKPOINTS its offer (beginPendingReward),
+      // as the legacy dungeon's treasure door does, so a reload remounts an
+      // unclaimed sigil row instead of losing it. A World Journey's atlas
+      // point is completed first: the checkpoint's Continue only persists and
+      // returns to the map.
+      settleTreasureNode(run, completeJourneyNode);
+      return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), ...sigilOffer('treasure'), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
     }
     default:
       throw new Error(`Unknown node kind '${kind}'`);
@@ -2300,7 +2293,7 @@ function enterDungeonLocation() {
       const armamentId = rollDrop('treasure');
       const smithingStoneReceipt = treasureSmithingReward();
       resolveDungeonNode(run);
-      return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
+      return beginPendingReward({ relicId, armamentId, ...(smithingStoneReceipt ? { smithingStoneReceipt } : {}), ...sigilOffer('treasure'), title: 'TREASURE' }, { source: 'treasure', after: 'map' });
     }
     case 'combat': return enterCombat(run.legacyDungeon.parentNodeId, dungeonNode(run).encounter);
     case 'dialogue': return showDungeonDialogue();
@@ -2620,6 +2613,7 @@ async function onCombatEnd(result, combat, enc) {
       skillDrafts: bossDrafts,
       ...rollCardRows('boss', bossDrafts.length || bossClassDrafts.length, levelsEarned),
       relicId: rollRelicReward(registries, rng, run.relics, { rarities: ['boss'] }),
+      ...sigilOffer('boss'),
       armamentId: bossArmament,
       smithingStoneReceipt,
       xpGains,
@@ -2643,6 +2637,8 @@ async function onCombatEnd(result, combat, enc) {
     ...rollCardRows(enc.pool, drafts.length || classDrafts.length, levelsEarned),
     flaskId: rollFlaskDrop(registries, rng, run),
     relicId: enc.pool === 'elite' ? rollRelicReward(registries, rng, run.relics) : null,
+    // SPEC §15.4: a legendary sigil, on its own `sigils` stream (0 ships: none).
+    ...sigilOffer(enc.pool),
     // Elites are the mid-run source of armaments; ordinary fights are not by
     // default (balance.equipment.drops.chance.normal ships at 0, which rolls
     // nothing — SPEC §15.3 — until the owner raises it).
@@ -2736,18 +2732,17 @@ function rollClassDrafts(includeBanked = false) {
 
 function beginPendingReward(rewards, { source, after }) {
   rewards = configuredRewardOffer(rewards, source);
-  run.pendingReward = {
-    schemaVersion: 1,
-    source,
-    after,
-    rewards: structuredClone(rewards),
-    states: rewards.smithingStoneReceipt?.amount > 0 ? { smithingStone: 'taken' } : {},
-    chosenCardId: null,
-    chosenDraftCardIds: {},
-    chosenDraftNodeIds: {},
-  };
+  run.pendingReward = pendingRewardCheckpoint(rewards, { source, after });
   persist();
   return mountPendingReward();
+}
+
+// SPEC §15.4: a legendary sigil drop for this pool, on its own `sigils`
+// stream. The offer carries `sigilId` only when one dropped, so with the
+// shipped chances of 0 every offer is the one it was before, and no stream moves.
+function sigilOffer(pool) {
+  const sigilId = rollSigilDrop(registries, rng, run, pool);
+  return sigilId ? { sigilId } : {};
 }
 
 function configuredRewardOffer(rewards, source) {
@@ -3976,7 +3971,8 @@ if (shotState === 'combat-test') {
   // left for the next start rather than applied mid-session.
   const PROFILE_WAIT_MS = 3000;
   let waiting = true;
-  const loaded = autoLoadProfile({ settings: activeSettings, onChange: persistSettingsChange, rows: settingsRows(), stillWanted: () => waiting })
+  const loaded = autoLoadProfile({ settings: activeSettings, onChange: persistSettingsChange, rows: settingsRows(), stillWanted: () => waiting,
+    promoted: promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values })
     .then((result) => { if (result.applied) console.info(`settings profile: ${result.applied} setting(s) loaded from GitHub.`); })
     .catch((error) => console.warn(`settings profile: not loaded — ${error.message}`));
   Promise.race([loaded, new Promise((settle) => setTimeout(settle, PROFILE_WAIT_MS))])

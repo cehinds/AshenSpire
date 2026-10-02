@@ -8,9 +8,39 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "A greyed-out Next now says why",
     "detail": "When a Next, Continue, Confirm, Begin or Enter button is greyed out because you still have something to do, a short line under it now tells you what, for example \"Choose a class.\", \"Choose a response first.\" or \"No saved climb yet.\" Before, the reason only showed in a tooltip, which you never see on a phone. This covers character creation, events, conversations, card rewards, the title screen and save slots, the discard choice, the map and atlas, and the Smith.",
-    "build": "0.7.1.746",
+    "build": "0.7.1.748",
     "pullRequest": 1459,
     "url": "https://github.com/cehinds/AshenSpire/pull/1459"
+  },
+  {
+    "id": "pr-1457",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Turning Developer tools off no longer changes how the game plays",
+    "detail": "On development and test builds, switching Settings → Advanced → Developer tools off and reloading used to drop the developer's chosen starting values for the hidden tuning settings, and switching it back on brought them back. Those values now follow the kind of build you are playing, so the switch only decides which settings sections you see. A downloaded build the game cannot place no longer takes those developer-only values even with the tools switched on; every setting it shows keeps its usual starting value.",
+    "build": "0.7.1.747",
+    "pullRequest": 1457,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1457"
+  },
+  {
+    "id": "pr-1456",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Play the hosted game offline, and download it whole",
+    "detail": "On the build site, newer builds now play as the web edition, loading their art from one shared store, and each build's Download saves the light-art single file, one self-contained HTML that plays by double-click. In the game, Download & saves → Make available offline keeps the build and its art in your browser, so the same address opens without internet (the map uses simpler artwork and the music is synthesized offline); Remove this build's offline copy undoes it.",
+    "build": "0.7.1.745",
+    "pullRequest": 1456,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1456"
+  },
+  {
+    "id": "pr-1455",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Legendary sigils: attune one in the Armoury and it works in every fight",
+    "detail": "Three legendary sigils join the game: the Sigil of the Last Vigil raises a guard when you start a fight wounded, the Pyre Sigil raises a guard whenever a card is exhausted, and the Gravelight Sigil heals you when a foe falls while you are wounded. A new Sigils panel in the Armoury's Inventory view lets you attune and unattune them out of a fight, one at a time by default; an attuned sigil needs no slot and no weapon, and a refusal is shown in the panel. No shop sells one. A won fight, a boss before the last, or a treasure room can drop one you do not own, but every drop chance starts at 0, so none drops until you raise it in Settings. A treasure room's spoils now survive a reload before you take them. Older saves load with nothing attuned.",
+    "build": "0.7.1.744",
+    "pullRequest": 1455,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1455"
   },
   {
     "id": "pr-1452",
