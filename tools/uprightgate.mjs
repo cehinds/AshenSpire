@@ -216,7 +216,7 @@
 //
 // Usage
 //   node tools/uprightgate.mjs                 source tree via tools/serve.mjs
-//   node tools/uprightgate.mjs --dist          dist/AshenSpire.html over file://
+//   node tools/uprightgate.mjs --dist          dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
 //   node tools/uprightgate.mjs --only 844x390
 //   node tools/uprightgate.mjs --text XL
 //   node tools/uprightgate.mjs --selftest      the same-door known-bad corpus
@@ -262,7 +262,7 @@
 // this file has no subject without it, and clause K is what will tell you.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -1416,7 +1416,7 @@ async function main() {
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
     if (!existsSync(f)) { console.error(`uprightgate: ${f} does not exist — run \`node tools/launch.mjs --build-only\` first`); process.exit(2); }
-    base = pathToFileURL(f).href;
+    base = await buildPageUrl(f);
   } else {
     const s = await serve({ root: ROOT, port: 8291, open: false });
     server = s.server; base = `http://localhost:${s.port}/`;

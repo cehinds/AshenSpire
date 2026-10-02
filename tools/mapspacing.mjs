@@ -21,11 +21,11 @@
 // phone shapes × fog/path × 115/Fit) and carries an observed-red compression.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 import { NODE_PITCH_MIN_PX } from '../src/model/mapview.js';
 
@@ -137,7 +137,7 @@ async function main() {
   if (OUT) mkdirSync(OUT, { recursive: true });
   const served = useDist ? null : await serve({ root: ROOT, port: 8377, open: false });
   const base = useDist
-    ? pathToFileURL(resolve(ROOT, 'dist', 'AshenSpire.html')).href
+    ? await buildPageUrl(resolve(ROOT, 'dist', 'AshenSpire.html'))
     : `http://127.0.0.1:${served.port}/index.html`;
   // ONE HOME for launching a browser: tools/browser.mjs owns the profile, pins
   // Chrome's own TMPDIR inside it, and removes it whatever happens.

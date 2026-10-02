@@ -35,7 +35,7 @@
 //
 // Usage
 //   node tools/veil-owns-input.mjs                source tree via tools/serve.mjs
-//   node tools/veil-owns-input.mjs --dist         dist/AshenSpire.html over file://
+//   node tools/veil-owns-input.mjs --dist         dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
 //   node tools/veil-owns-input.mjs --only 1200x730
 // Exit: 0 all green · 1 a finding · 2 usage / no browser / NOTHING RAN
 //
@@ -50,11 +50,11 @@
 // REMOVAL: deleted the day no screen guards a key on whether a veil is standing.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 import { printArtifactProvenance } from './artifact-provenance.mjs';
 
@@ -103,7 +103,7 @@ async function main() {
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
     if (!existsSync(f)) { console.error('veil-owns-input: no dist — run launch.mjs --build-only'); process.exit(2); }
-    base = pathToFileURL(f).href;
+    base = await buildPageUrl(f);
   } else { const s = await serve({ root: ROOT, port: 8477, open: false }); server = s.server; base = `http://localhost:${s.port}/`; }
   console.log(`veil-owns-input — ${base}${useDist ? ' (shipped bundle)' : ' (source tree)'}`);
 
