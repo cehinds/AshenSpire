@@ -32,6 +32,7 @@ import { commitCombatSnapshot, restoreCombatSnapshot } from '../src/engine/comba
 import { dispatch } from '../src/engine/combat.js';
 import { isPoolDeckRun, dealtAttackSlotCount, POOL_DECK_RULE } from '../src/model/cardRemoval.js';
 import { stampDeck } from '../src/model/loadout.js';
+import { extractionPlan, commitExtraction, commitInstall } from '../src/model/cardExtraction.js';
 
 const registries = createRegistries(contentBundle);
 const SEED = 5;
@@ -222,6 +223,63 @@ test('sealed: a full restamp sweeps a lent card from a dealt deck and appends no
   run.deck.push({ instanceId: 'weaponArt:stale:x', cardId: 'dodgeRoll', upgraded: false, equipmentRole: 'weaponArt', grantedBy: 'stale' });
   stampDeck(registries, run);
   assert.deepEqual(ids(run.deck), dealt);
+});
+
+// A card the PLAYER seats in a mount at the Blacksmith is theirs riding on the
+// item, not a card the equipment lends (Codex review 4166580092): a dealt deck
+// keeps it, as any run does, through every restamp, a reload and the sweep.
+function installedKatanaArt() {
+  const fx = deal('reaver', 'sealed');
+  const { run } = fx;
+  run.loadout.sets.rightHand[1] = 'katana';
+  run.deck.push({ instanceId: 'bought:1', cardId: 'katanaDrawCut', upgraded: false });
+  const item = extractionPlan(registries, run).candidates.find((c) => c.itemRef === 'armament/katana');
+  const mount = item.mounts.find((m) => m.cardId === 'katanaDrawCut');
+  commitExtraction(registries, run, item.itemRef, mount.mountKey, undefined, { free: true });
+  commitInstall(registries, run, item.itemRef, mount.mountKey, 'bought:1', undefined, { free: true });
+  return { ...fx, mountKey: mount.mountKey };
+}
+const kitOf = (deck) => deck.filter((c) => c && c.kitRole).map((c) => c.instanceId);
+
+test('sealed: a Blacksmith-installed card rides the equipped item through every restamp and a reload', () => {
+  const { run, rng, saves, mountKey } = installedKatanaArt();
+  assert.ok(!run.deck.some((c) => c.instanceId === 'bought:1'), 'seating consumed the loose copy');
+  // main.js Armoury onChange: equip the katana, full restamp.
+  run.loadout.active.rightHand = 1;
+  stampDeck(registries, run);
+  const seated = () => run.deck.filter((c) => c.instanceId === mountKey);
+  assert.equal(seated().length, 1, 'the installed card is in the deck while its item is worn');
+  assert.equal(seated()[0].cardId, 'katanaDrawCut');
+  assert.deepEqual(kitOf(run.deck), [], 'the katana\'s own kit basics are still not dealt');
+  stampDeck(registries, run, undefined, { adoptEquipmentBonuses: false }); // end of a fight
+  assert.equal(seated().length, 1, 'it survives the end-of-fight restamp');
+  saves.saveRun(run, rng);
+  const back = saves.loadRun(registries, 1);
+  assert.ok(back, `reload refused: ${saves.runStatus().reason}`);
+  assert.equal(saves.runStatus().state, 'ok');
+  assert.equal(back.deck.filter((c) => c.instanceId === mountKey).length, 1, 'and a reload');
+});
+
+test('sealed: a fight holding a Blacksmith-installed card keeps it through the legacy sweep and a swap', () => {
+  const { run, rng, saves, mountKey } = installedKatanaArt();
+  run.loadout.active.rightHand = 1;
+  stampDeck(registries, run);
+  const combat = fight(run, rng);
+  const inFight = () => Object.values(combat.piles).flat().filter((c) => c && c.instanceId === mountKey).length;
+  assert.equal(inFight(), 1, 'the installed card is in the fight');
+  combat.player.energy = 10;
+  dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 0 });
+  dispatch(combat, { type: 'swapArmament', slotId: 'rightHand', setIndex: 1 });
+  assert.equal(inFight(), 1, 'swapping away and back keeps it, and deals no kit');
+  assert.deepEqual(kitOf(Object.values(combat.piles).flat()), []);
+  commitCombatSnapshot({ run, combat, nodeId: 'n0', encounterId: 'loneSoldier' });
+  delete run.combatEntered.snapshot.poolDeck; // the sweep path a pre-fix fight takes
+  saves.saveRun(run, rng);
+  const back = saves.loadRun(registries, 1);
+  assert.ok(back, `reload refused: ${saves.runStatus().reason}`);
+  const held = Object.values(back.combatEntered.snapshot.piles).flat().filter((c) => c && c.instanceId === mountKey);
+  assert.equal(held.length, 1, 'the sweep keeps the installed card');
+  assert.ok(!(saves.runStatus().ledger?.entries || []).some((e) => e.site === 'save.js:sweepPoolDeckLentCards'), 'nothing was swept');
 });
 
 test('sealed: a mid-fight weapon swap deals no lent card into the piles', () => {

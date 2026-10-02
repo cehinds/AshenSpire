@@ -203,12 +203,14 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   const poolDeck = isPoolDeckRun(run) || snapshot.poolDeck === true;
   const lentBefore = poolDeck ? COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]).filter(isItemOwned).map((c) => c.instanceId) : [];
   reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout, itemMounts, ...(poolDeck ? { poolDeck: true } : {}) }, snapshot.piles);
-  if (lentBefore.length) {
+  const lentAfter = new Set(COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]).filter(isItemOwned).map((c) => c.instanceId));
+  const swept = lentBefore.filter((id) => !lentAfter.has(id));
+  if (swept.length) {
     note(run, {
       kind: 'heal',
       site: 'save.js:sweepPoolDeckLentCards',
       field: 'combatEntered.snapshot.piles',
-      was: lentBefore,
+      was: swept,
       now: [],
       why: `a ${run.custom?.deckMode || 'pool'} fight saved by an older build held cards its equipment lent at a mid-fight swap; a dealt deck holds none, so they are swept`,
     });
