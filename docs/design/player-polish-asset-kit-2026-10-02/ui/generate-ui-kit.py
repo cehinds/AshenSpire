@@ -234,7 +234,8 @@ css='''/* Suggested concept styling. Map these aliases to the game's authoritati
 .as-action{box-sizing:border-box;border:solid transparent;border-width:16px 24px;min-height:56px;color:var(--as-ivory);border-image:url(components/button-neutral.svg) 16 24 fill stretch;}
 .as-action[data-role=primary][data-ready=true]:not(:disabled):not([aria-disabled=true]){border-image-source:url(components/button-primary-ready.svg)}
 .as-action[data-role=primary][data-ready=true]:not(:disabled):not([aria-disabled=true]):is(:hover,:focus-visible){border-image-source:url(components/button-primary-focus.svg)}
-.as-action[data-role=exit]:not(:disabled):not([aria-disabled=true]):is(:hover,:focus-visible),.as-action[data-role=destructive][data-ready=true]:not(:disabled):not([aria-disabled=true]){border-image-source:url(components/button-exit-focus.svg)}
+.as-action[data-role=destructive][data-ready=true]:not(:disabled):not([aria-disabled=true]){border-image-source:url(components/button-danger-ready.svg)}
+.as-action[data-role=exit]:not(:disabled):not([aria-disabled=true]):is(:hover,:focus-visible),.as-action[data-role=destructive][data-ready=true]:not(:disabled):not([aria-disabled=true]):focus-visible{border-image-source:url(components/button-exit-focus.svg)}
 .as-action:is(:disabled,[aria-disabled=true]){border-image-source:url(components/button-disabled.svg)}
 .as-action:focus-visible{outline:2px solid var(--as-ivory);outline-offset:3px}
 @media(max-width:720px){.as-footer-action{width:100%;min-height:56px}.as-folio{max-width:100%;box-sizing:border-box}}
@@ -254,7 +255,7 @@ html=f'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewpo
 <script>const rows=[...document.querySelectorAll('.asset')],search=document.querySelector('#search'),kind=document.querySelector('#kind');function filter(){{let count=0;for(const row of rows){{row.hidden=!(row.dataset.name.includes(search.value.trim().toLowerCase())&&(!kind.value||row.classList.contains(kind.value)));if(!row.hidden)count++}}document.querySelector('#count').textContent=count+' assets'}}search.addEventListener('input',filter);kind.addEventListener('change',filter);</script></html>'''
 (ROOT/"index.html").write_text(html,encoding="utf-8",newline="\n")
 
-notes={"svgAssets":len(FILES),"icons":len(ICONS),"components":len(FILES)-len(ICONS),"directory":str(ROOT),
+notes={"svgAssets":len(FILES),"icons":len(ICONS),"components":len(FILES)-len(ICONS),"directory":"ui",
        "rationale":"Precise geometry and quiet engraved surfaces complement the painted references. Text, values, legality, icon semantic palettes and input behavior stay in the actual UI.",
        "canonicalMappings":{"health":"HP","mana":"MP","stamina":"SP","actions":"Actions (engine energy)","blight":"crimsonBlight","poise":"Poise buildup","block":"Block","staggered":"staggered"},
        "limitations":["An asset kit, not a runtime implementation or exhaustive replacement of every authored status symbol.","No uncommon class-specific status symbol is assigned a speculative replacement; use existing canonical symbols until authored.","Some neutral decorative brass shades are concept polish additions; map through the authoritative palette at implementation.","Raster img elements cannot inherit currentColor or CSS custom properties inside a separate SVG document. Inline the SVG or use a mask for theme-aware icons.","Mobile tray artwork does not implement drag interaction. Navigation and disclosure stay accessible DOM controls."]}

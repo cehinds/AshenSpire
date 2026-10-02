@@ -61,12 +61,19 @@ Static art review, manifest/link/hash validation and an independent agent review
 ## Rebuilding and exporting the kit
 
 The saved previews open without a framework or network dependency. Optional
-Python helpers require Pillow; `verify-package.py` also uses Node for JavaScript
+Python helpers require Pillow 10.1 or newer; review captions use its bundled
+default font consistently across operating systems. `verify-package.py` also uses Node for JavaScript
 syntax checks. Run them from this folder. They locate this repository from the
 kit's checked-in location; set `ASHENSPIRE_REPO` to another checkout when using a
 standalone copy. `verify-package.py` verifies delivered asset hashes, dimensions
 and references, refreshes `SHA256SUMS.txt`, and writes a ZIP plus checksum beside
 the kit. The repository ignores those generated archives.
+
+The paths already recorded in `SHA256SUMS.txt` define the package inventory;
+local caches and editor artifacts are excluded. When adding a package file,
+add its relative path to that inventory before refreshing hashes. ZIP entries
+use fixed timestamps and permissions, so identical package bytes produce the
+same archive with the same Python/zlib versions regardless of checkout metadata.
 
 `ui/generate-ui-kit.py` regenerates vector sources using Python's standard
 library. `ui/render-review.cjs` renders static sheets using Sharp resolved from

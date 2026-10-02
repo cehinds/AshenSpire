@@ -2,7 +2,7 @@
   "svgAssets": 129,
   "icons": 79,
   "components": 50,
-  "directory": "D:\\repos\\.codex\\visualizations\\2026\\10\\02\\ashen-spire-polish-asset-kit\\ui",
+  "directory": "ui",
   "rationale": "Precise geometry and quiet engraved surfaces complement the painted references. Text, values, legality, icon semantic palettes and input behavior stay in the actual UI.",
   "canonicalMappings": {
     "health": "HP",

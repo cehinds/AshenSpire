@@ -6,7 +6,8 @@
 .as-action{box-sizing:border-box;border:solid transparent;border-width:16px 24px;min-height:56px;color:var(--as-ivory);border-image:url(components/button-neutral.svg) 16 24 fill stretch;}
 .as-action[data-role=primary][data-ready=true]:not(:disabled):not([aria-disabled=true]){border-image-source:url(components/button-primary-ready.svg)}
 .as-action[data-role=primary][data-ready=true]:not(:disabled):not([aria-disabled=true]):is(:hover,:focus-visible){border-image-source:url(components/button-primary-focus.svg)}
-.as-action[data-role=exit]:not(:disabled):not([aria-disabled=true]):is(:hover,:focus-visible),.as-action[data-role=destructive][data-ready=true]:not(:disabled):not([aria-disabled=true]){border-image-source:url(components/button-exit-focus.svg)}
+.as-action[data-role=destructive][data-ready=true]:not(:disabled):not([aria-disabled=true]){border-image-source:url(components/button-danger-ready.svg)}
+.as-action[data-role=exit]:not(:disabled):not([aria-disabled=true]):is(:hover,:focus-visible),.as-action[data-role=destructive][data-ready=true]:not(:disabled):not([aria-disabled=true]):focus-visible{border-image-source:url(components/button-exit-focus.svg)}
 .as-action:is(:disabled,[aria-disabled=true]){border-image-source:url(components/button-disabled.svg)}
 .as-action:focus-visible{outline:2px solid var(--as-ivory);outline-offset:3px}
 @media(max-width:720px){.as-footer-action{width:100%;min-height:56px}.as-folio{max-width:100%;box-sizing:border-box}}

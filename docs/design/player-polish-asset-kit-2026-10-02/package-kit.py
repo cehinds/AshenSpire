@@ -29,6 +29,6 @@ for p in paths:
     im=Image.open(out)
     canon.append({'id':p,'file':out.relative_to(ROOT).as_posix(),'source':p,'sha256':hashlib.sha256(out.read_bytes()).hexdigest(),'width':im.width,'height':im.height,'mode':im.mode,'origin':'canonical-repository-copy','transformed':False})
 save('canonical-map.json',{'repository':'https://github.com/cehinds/AshenSpire','readAt':'2026-10-02','assets':canon,'note':'Curated copies only. Runtime must continue resolving original ids through assetUrl and existing outfit/equipment/environment models. Source CREDITS.md applies; new kit credit does not relicense canonical files.'})
-shutil.copy2(REPO/'CREDITS.md',ROOT/'CANONICAL-CREDITS.md')
-shutil.copy2(REPO/'LICENSE',ROOT/'CANONICAL-LICENSE.txt') if (REPO/'LICENSE').exists() else None
+write('CANONICAL-CREDITS.md',(REPO/'CREDITS.md').read_text(encoding='utf-8'))
+write('CANONICAL-LICENSE.txt',(REPO/'LICENSE').read_text(encoding='utf-8')) if (REPO/'LICENSE').exists() else None
 print('Canonical copies:',len(canon))

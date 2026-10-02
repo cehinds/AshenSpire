@@ -75,8 +75,7 @@ manifest={'schema':1,'title':'AshenSpire player polish asset kit','created':'202
 save('manifest.json',manifest)
 
 # Review compositions only: source art is never modified or overwritten.
-fontpath=Path('C:/Windows/Fonts/segoeui.ttf')
-def font(size): return ImageFont.truetype(str(fontpath),size) if fontpath.exists() else ImageFont.load_default()
+def font(size): return ImageFont.load_default(size=size)
 def sheet(rows,name,cols=4,cell=(340,290)):
     cw,ch=cell;sheet=Image.new('RGB',(cw*cols,ch*math.ceil(len(rows)/cols)),(13,11,8));draw=ImageDraw.Draw(sheet)
     for i,a in enumerate(rows):

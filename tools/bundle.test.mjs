@@ -38,7 +38,9 @@ function sandbox() {
   // buildordinal.json became authored build input after this sandbox was first
   // written. Omitting it makes every real-bundler fixture refuse before it can
   // reach the property the fixture is meant to exercise.
-  for (const f of ['index.html', 'buildordinal.json']) {
+  // art-release.json and art-manifest.json joined BUILD_IDENTITY_FILES at
+  // docs/EXTERNAL-ASSETS-PLAN.md step 11: the digest refuses a tree without them.
+  for (const f of ['index.html', 'buildordinal.json', 'art-release.json', 'art-manifest.json']) {
     if (existsSync(resolve(ROOT, f))) cpSync(resolve(ROOT, f), resolve(dir, f));
   }
   // One deterministic commit per disposable sandbox, so a fixture is a real
