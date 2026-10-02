@@ -677,11 +677,11 @@ export const balance = {
   // costStep, measured twice) is gone with the purse.
   level: {
     xp: {
-      base: 100, linear: true, multScaler: 1.3, growth: 1, roundTo: 10,
+      base: 100, linear: false, multScaler: 1.3, growth: 1.75, roundTo: 10,
       [NOTE]: {
         base: 'Character XP for the first step and the base used for later increases.',
         linear: 'Use base + (level − 1) × base × scaler. Off: use base × exponential growth^(level − 1).',
-        multScaler: 'Linear increase per character level as a multiple of the base. At base 100 and scaler 1.3: 100, 230, 360 XP.',
+        multScaler: 'Linear increase per character level as a multiple of the base, used only when the linear curve is on. At base 100 and scaler 1.3: 100, 230, 360 XP.',
         growth: 'Exponential character-step growth, used only when the linear curve is off.',
         roundTo: 'The character level curve: every step cost is rounded to a multiple of this.',
       },

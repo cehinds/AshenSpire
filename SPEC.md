@@ -1022,10 +1022,12 @@ player assigns them.
 §13.4i): fights pay XP (`balance.xp` — a won fight, and each kill by the door's pool).
 The configured character curve reads `balance.level.xp`; legacy exponential tables use
 `xpToNext(n) = round(base × growth^(n − 1), roundTo)`.
-The October 1 owner default uses a linear table (`linear: true`):
-`xpToNext(n) = round(base + (n − 1) × base × multScaler, roundTo)`.
-The first character step costs 100 XP and `multScaler` defaults to 1.3;
-at base 100 the steps cost 100, 230, 360, 490 XP. Base, scaler, rounding and
+A linear table (`linear: true`) uses
+`xpToNext(n) = round(base + (n − 1) × base × multScaler, roundTo)`; at base 100 and
+`multScaler` 1.3 (the October 1 default) the steps cost 100, 230, 360, 490 XP.
+Since 2026-10-02 (owner) the character default is exponential (`linear: false`): base 100,
+growth 1.75, roundTo 10 — steps 100, 180, 310, 540, 940, 1,640, 2,870, 5,030, 8,800,
+15,390, so 35,800 XP reaches level 11. Base, scaler, rounding and
 the linear/exponential toggle are configurable. Tables without `linear: true`
 retain their exponential behavior. New runs record `advancedConfigSnapshot.xpCurveVersion: 1`.
 Older snapshots without that marker use exponential defaults unless the player explicitly
@@ -1038,7 +1040,7 @@ rounding 10 — owner, 2026-09-24): the steps from level 1 cost 10, 10, 10, 10, 
 of 10); the old curve's steps were 100, 120, 130, 150, 170, 200, 230, 270, 310, 350 — 2,030 XP.
 The historical awards were `balance.xp` combatWin 15 and kill normal 5 / elite 75 / boss 200 (50 and
 25 / 75 / 200 before 2026-09-24). The equipment skill tracks (`balance.skill.xp`) and the class
-track (`balance.skill.class.xp`) historically opened at base 5 too (30 and 60 before); the October 1 defaults use base 100, and since 2026-10-02 (owner) both use the exponential curve (`linear: false`, growth 1.75, roundTo 5): steps 100, 175, 305, 535, 940 — 2,055 XP to level 5. The character level keeps the linear curve. The 11–12 levels a full
+track (`balance.skill.class.xp`) historically opened at base 5 too (30 and 60 before); the October 1 defaults use base 100, and since 2026-10-02 (owner) both use the exponential curve (`linear: false`, growth 1.75, roundTo 5): steps 100, 175, 305, 535, 940 — 2,055 XP to level 5. The character level uses the same ×1.75 growth (above). The 11–12 levels a full
 run earned (measured: 11.5) were measured on the old curve and awards and are due a re-measure;
 `tools/runsim.mjs --xp-levels` measures the owner's 10–20 band. No cinder buys a
 level; the ladder that priced purchases (`firstCost + costStep × n`, measured twice against the
