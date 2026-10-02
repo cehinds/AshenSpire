@@ -41,7 +41,7 @@ import { LORE_FACES, LORE_SIZES, LORE_LEADING, LORE_TRACKING, LORE_SLANTS, LORE_
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
-import { pageDebug, debugSwitch, setDebugEnabled } from '../buildChannel.js';
+import { pageDebug, promotionDebug, debugSwitch, setDebugEnabled } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
 import { deckRules } from '../../content/deckRules.js';
 import { deckSettingsProblems } from '../../model/deckRules.js';
@@ -232,7 +232,10 @@ function graceRefillRows() {
  * still apply, but nothing on screen can see or reset them — so the options
  * menu offers to clear them.
  */
-export function hiddenTuningKeys(settings = {}, debug = pageDebug()) {
+// A dev or test build has every row even with Developer tools switched off
+// (the switch only hides them), and boot seeds their promoted values there
+// (promotionDebug), so nothing on it counts as hidden tuning to clear.
+export function hiddenTuningKeys(settings = {}, debug = pageDebug() || promotionDebug()) {
   if (debug) return [];
   const hidden = releaseHidden();
   return Object.keys(settings).filter((key) => settings[key] !== undefined && hidden(key));
@@ -259,7 +262,7 @@ function releaseHidden() {
  * nor reset it), so those keys are left out there — and a value an earlier
  * promotion seeded for one is withdrawn by the seed's own "dropped key" rule.
  */
-export function promotionFor(defaults, debug = pageDebug()) {
+export function promotionFor(defaults, debug = promotionDebug()) {
   if (debug) return defaults;
   const hidden = releaseHidden();
   const values = Object.fromEntries(Object.entries(defaults?.values || {}).filter(([key]) => !hidden(key)));
@@ -271,9 +274,11 @@ export function promotionFor(defaults, debug = pageDebug()) {
  * Reset goes back to. On a release build that leaves out every row it does
  * not show, as boot does, so no Reset reinstalls hidden tuning.
  */
-function buildPromotion(debug = pageDebug()) {
-  return debug ? PROMOTED_DEFAULTS : promotionFor(SETTINGS_DEFAULTS, false).values;
+function buildPromotion(debug = promotionDebug()) {
+  if (debug) return PROMOTED_DEFAULTS;
+  return releasePromotion ??= Object.freeze(promotionFor(SETTINGS_DEFAULTS, false).values);
 }
+let releasePromotion = null;
 
 /** The owner's promoted defaults, by setting key (tools/settings-defaults.mjs). */
 const PROMOTED_DEFAULTS = Object.freeze({ ...(SETTINGS_DEFAULTS.values || {}) });
@@ -1405,7 +1410,7 @@ function markModified(container, settings, changes) {
  * rowDefault(row) → the value Reset restores: the owner's promoted default
  * (src/content/settingsDefaults.js) when there is one, else the row's own.
  */
-export function rowDefault(row, promoted = PROMOTED_DEFAULTS) {
+export function rowDefault(row, promoted = buildPromotion()) {
   if (row && Object.hasOwn(promoted, row.key)) return promoted[row.key];
   return row?.def;
 }
@@ -1531,7 +1536,7 @@ export function resetKeys(settings, onChange, keys, label = 'Reset', { promoted 
 const VALUE_ROW_TYPES = new Set(['number', 'range', 'choice', 'color', 'colorSwatch', 'text', 'textarea', undefined, 'toggle']);
 
 /** rowModified(settings, row) → true when the stored value differs from the default. */
-export function rowModified(settings, row, promoted = PROMOTED_DEFAULTS) {
+export function rowModified(settings, row, promoted = buildPromotion()) {
   if (!row || !VALUE_ROW_TYPES.has(row.type)) return false;
   const stored = settings?.[row.key];
   if (stored === undefined) return false;
@@ -3048,7 +3053,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   const changelogMount = container.querySelector('.set-changelog-mount');
   if (changelogMount) renderChangelogSection(changelogMount);
   const syncMount = container.querySelector('.set-sync-mount');
-  if (syncMount) renderSettingsSync(syncMount, { settings, onChange, rows: ROWS, afterApply: (moved, before, seedMoved = false) => {
+  if (syncMount) renderSettingsSync(syncMount, { settings, onChange, rows: ROWS, promoted: buildPromotion(), afterApply: (moved, before, seedMoved = false) => {
     if (moved || seedMoved) {
       // A new profile: nothing offered before it applies any more. Its own
       // Undo belongs to the new generation.
