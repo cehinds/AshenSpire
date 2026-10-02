@@ -36,6 +36,7 @@ import { serve } from './serve.mjs';
 // The orientation gate's one number, read from its single home. See THE FIRST
 // VIEWPORT IS DERIVED, NOT TYPED below for why this import exists.
 import { balance } from '../src/content/balance.js';
+import { SETTINGS_DEFAULTS } from '../src/content/settingsDefaults.js';
 
 // Derived here, above --selftest, because BOTH readers need it and two reads of
 // one number is the defect this derivation exists to remove.
@@ -67,6 +68,7 @@ if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
   process.exit(await doorSelftest({
     tool: 'tutorial-reach.mjs',
+    extraCopy: ['art-release.json'], // Required by the source server's build identity.
     // DERIVED, not typed — this named the viewport as a literal '800x450' until
     // 2026-08-16. When the gate moved 432 -> 465 the first viewport moved with
     // it and this string did not, so `--only` would have matched NO viewport and
@@ -775,13 +777,25 @@ async function main() {
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080, deviceScaleFactor: 1, mobile: false }, S);
     await cdp.send('Page.navigate', { url: base }, S);
     await until(`document.readyState === 'complete'`, 'the page');
-    await evalIn(`(() => { localStorage.clear(); return 1; })()`);
+    ok(await evalIn(`(() => { localStorage.clear(); return localStorage.length === 0; })()`),
+      'first-run: durable storage is empty before boot');
     await cdp.send('Page.navigate', { url: base }, S);
     await passStartupGate();
+    // Promoted defaults legitimately save a settings-only profile during boot.
+    // Freshness means no prior play or completed tutorial, not no profile file.
     ok(
-      await evalIn(`localStorage.getItem('sote_meta_v1') === null`),
-      'first-run: a genuinely new player — no meta in durable storage at all'
+      await evalIn(`(() => {
+        const meta = JSON.parse(localStorage.getItem('sote_meta_v1') || 'null');
+        const noRun = !Object.keys(localStorage).some(key => /^sote_run_v1(?:_s\\d+)?$/.test(key));
+        return noRun && (!meta || (meta.settings.seenTutorial !== true &&
+          meta.results.length === 0 && meta.discoveredArmaments.length === 0 && meta.discoveryReceipts.length === 0));
+      })()`),
+      'first-run: a genuinely new player — no saved run, results, discoveries or completed tutorial'
     );
+    ok(await evalIn(`(() => {
+      const meta = JSON.parse(localStorage.getItem('sote_meta_v1') || 'null');
+      return Object.entries(${JSON.stringify(SETTINGS_DEFAULTS.values)}).every(([key, value]) => meta?.settings?.[key] === value);
+    })()`), 'first-run: every promoted default is applied to the fresh profile');
     await wait(400);
     // History kept short: this path once measured #cz-start laid out below the
     // fold at 1920x1080, scrolled past it and went green for a week — a tool
