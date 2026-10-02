@@ -105,3 +105,20 @@ test('every sharded job in ci.yml runs every shard of its count, each once', () 
     }
   }
 });
+
+test('doorSelftest shards only when its caller passes a shard, never from a stray env', () => {
+  // A tool that never opted in (its corpus count is a literal, or it prints
+  // "N plants, N caught" over the whole corpus) must not be silently cut to a
+  // shard because DOORPLANT_SHARD happened to be set in the environment. The
+  // opted-in tools (startup-gate, hintstrip) resolve the shard themselves and
+  // pass it, so the default of doorSelftest's `shard` is "every plant".
+  const src = readFileSync(`${ROOT}tools/doorplant.mjs`, 'utf8');
+  const sig = /export async function doorSelftest\(\{(.*)\}\)\s*\{/.exec(src);
+  assert.ok(sig, 'doorSelftest signature not found in tools/doorplant.mjs');
+  const dflt = /\bshard\s*=\s*([^,]+?)\s*(,|$)/.exec(sig[1]);
+  assert.ok(dflt, 'doorSelftest takes no `shard` option');
+  assert.equal(dflt[1], 'null', `doorSelftest's shard defaults to ${dflt[1]}, so an unrelated tool shards from the environment`);
+  for (const tool of ['startup-gate.mjs', 'hintstrip.mjs']) {
+    assert.match(readFileSync(`${ROOT}tools/${tool}`, 'utf8'), /doorSelftest\(\{\s*\.\.\.SELFTEST,\s*shard\s*\}\)/, `${tool} no longer passes its shard to doorSelftest`);
+  }
+});

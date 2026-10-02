@@ -135,6 +135,9 @@ function copyTree(extra = [], { includePng = false } = {}, realRoot = REAL_ROOT)
  * plant joins a shard by its position alone. Unsharded (no flag, no env, or
  * `all`) runs every plant, exactly as before. Each shard still finishes with
  * its clean run(s), so every shard proves its own reds were its plants.
+ * A tool opts in by resolving the shard itself (resolveShard) and passing it
+ * to doorSelftest; doorSelftest's own default is every plant, so a stray
+ * DOORPLANT_SHARD never cuts a corpus whose tool did not opt in.
  * tests/doorplant-shard.test.mjs pins the partition (union = all, no overlap)
  * and that every sharded CI job lists every shard of its count.
  */
@@ -218,7 +221,7 @@ function runTool(root, tool, args, timeoutMs, env) {
  * corollary, counted not judged): cut them if no plant ever needs a second file
  * or a compile — then they are decoration.
  */
-export async function doorSelftest({ tool, plants: corpus, args = [], timeoutMs = 300000, env = {}, extraCopy = [], includePng = false, realRoot = REAL_ROOT, shard = resolveShard() }) {
+export async function doorSelftest({ tool, plants: corpus, args = [], timeoutMs = 300000, env = {}, extraCopy = [], includePng = false, realRoot = REAL_ROOT, shard = null }) {
   const plants = selectShard(corpus, shard);
   console.log(`${tool} --selftest — same-door known-bad corpus (${plants.length} plant(s))`);
   if (shard) console.log(`SHARD ${shard.index}/${shard.count}: plants at index ${shard.index} mod ${shard.count} — ${plants.length} of ${corpus.length}; the other ${shard.count - 1} shard(s) run the rest (see SHARDS in tools/doorplant.mjs).`);

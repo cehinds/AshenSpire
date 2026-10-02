@@ -121,7 +121,7 @@ if (CORE) {
     ['tests/confirmation-modal.test.mjs', 'exports runConfirmationModalContract(); check 76 below calls it'],
     ['tests/reward-confirm.test.mjs', 'exports runRewardConfirmTests(); called below'],
     ['tests/card-removal-flick.test.mjs', 'exports runCardRemovalFlickTests(); called below'],
-    ['tools/bundle.test.mjs', 'runs the real bundler against temporary checkouts for several minutes; CI runs it as its own step'],
+    ['tools/bundle.test.mjs', 'runs the real bundler against temporary checkouts for several minutes; ci.yml runs it as its own job, `parse-gate`'],
   ]);
   const found = [];
   const walk = (dir) => {
@@ -973,6 +973,46 @@ if (CORE) {
     );
     if (uiTree.code !== 0 || !uiTreeV.text) zoomExtra++;
     else zoomPassed++;
+  }
+
+  // 96/97 — the flask action contract (tools/flask-action-contract.mjs).
+  // It sat red on dev because nothing ran it, and it had stopped following
+  // the map's live flask menu (components/runPotions.js, e1ff8c9f4). 96 is
+  // its planted corpus; 97 is the tree. Its verdict is its own "N passed, M failed" line.
+  const runFlaskActions = (args) => {
+    try {
+      return { out: execFileSync(process.execPath, ['tools/flask-action-contract.mjs', ...args], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }), code: 0 };
+    } catch (error) {
+      return { out: `${error.stdout || ''}${error.stderr || ''}`, code: error.status ?? 1 };
+    }
+  };
+  if (SELFTESTS) {
+    const flaskSelf = runFlaskActions(['--selftest']);
+    const flaskSelfV = flaskSelf.out.match(/^SELFTEST (?:GREEN|RED)[^\n]*/m)?.[0] || '';
+    const flaskSelfOk = flaskSelf.code === 0 && /^SELFTEST GREEN/.test(flaskSelfV);
+    console.log(
+      `${flaskSelfOk ? 'PASS' : 'FAIL'}  96. the flask action contract still catches its own known-bad corpus` +
+        ` — ${flaskSelfV || `flask-action-contract --selftest (exit ${flaskSelf.code}) printed no SELFTEST verdict`}`
+    );
+    if (flaskSelfOk) zoomPassed++;
+    else zoomExtra++;
+  }
+
+  // The enclosing block is unconditional, so the tree verdict carries its own
+  // CORE gate like rung 95: the --selftests-only lane must not run it.
+  if (CORE) {
+    const flaskTree = runFlaskActions([]);
+    const flaskTreeV = flaskTree.out.match(/^flask-action-contract: (\d+) passed, (\d+) failed$/m);
+    const flaskTreeOk = flaskTree.code === 0 && !!flaskTreeV && flaskTreeV[2] === '0' && Number(flaskTreeV[1]) > 0;
+    const flaskFails = [...flaskTree.out.matchAll(/^FAIL (.*)$/gm)].map((m) => m[1]).join('; ');
+    console.log(
+      `${flaskTreeOk ? 'PASS' : 'FAIL'}  97. combat and the map's Potions control share one flask action contract` +
+        ` — ${flaskTreeV ? flaskTreeV[0] : `flask-action-contract (exit ${flaskTree.code}) printed no verdict`}` +
+        `${flaskFails ? ` (${flaskFails})` : ''}` +
+        ` (\`node tools/flask-action-contract.mjs\` names each check)`
+    );
+    if (flaskTreeOk) zoomPassed++;
+    else zoomExtra++;
   }
 }
 

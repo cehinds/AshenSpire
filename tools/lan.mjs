@@ -227,7 +227,7 @@ export function attachLan(server, { port, root }) {
     switch (msg.t) {
       case 'resync': broadcastState(); return;
       case 'chooseNode': g.chooseNode(id, msg.nodeId); break;
-      case 'playCard': g.combatPlay(id, msg.cardInstanceId, msg.targetId); break;
+      case 'playCard': g.combatPlay(id, msg.cardInstanceId, msg.targetId, msg.choice); break;
       case 'endTurn': g.combatEndTurn(id); break;
       case 'flaskIntent': g.flaskIntent(id, msg.intent); break;
       case 'chooseReward': g.chooseReward(id, msg.pick || {}); break;

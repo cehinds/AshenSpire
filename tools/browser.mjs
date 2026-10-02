@@ -507,8 +507,10 @@ export async function launchBrowser({
 // BOUNDARY. A static GET/HEAD server for local tools, bound to 127.0.0.1. It
 // streams bodies, answers one byte range (`206`) for media, sends no body for
 // HEAD, sends `no-cache`, and lists no directories. Under http a page still
-// differs from `file://` where the game asks the protocol itself (map-detail
-// tiles and music load over http): that is the reason to serve a pack build. It is not the dev server (`tools/serve.mjs` stamps the source
+// differs from `file://` where the game asks the protocol itself (the shipped
+// score loads over http only; under `file://` the indexes come from their `.js`
+// twins and the faces from the font sidecar, step 4): that is the reason to
+// serve a pack build. It is not the dev server (`tools/serve.mjs` stamps the source
 // tree and carries LAN play) and not the Pages service worker.
 
 const SERVE_MIME = {

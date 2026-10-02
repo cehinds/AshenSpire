@@ -1,7 +1,7 @@
 {
   "_": "DERIVED — written by tools/bundle.mjs, never by a hand. tools/buildversion.mjs owns the rule.",
   "release": "0.7.1",
-  "ordinal": 753,
-  "digest": "72d0938b4b",
+  "ordinal": 758,
+  "digest": "4cb38187f3",
   "built": "2026-10-02"
 }

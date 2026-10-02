@@ -129,8 +129,8 @@ if (args.includes('--selftest')) {
     }, {
       name: 'playCard commit door records a duplicate cardPlayed event',
       file: 'src/ui/screens/combat.js',
-      find: "      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined });",
-      replace: "      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined });\n      combat.eventLog.push({ type: 'cardPlayed', cardInstanceId: instanceId }); // planted: duplicate commit receipt",
+      find: "      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined, ...(choice != null ? { choice } : {}) });",
+      replace: "      out = dispatch(combat, { type: 'playCard', cardInstanceId: instanceId, targetId: targetId || undefined, ...(choice != null ? { choice } : {}) });\n      combat.eventLog.push({ type: 'cardPlayed', cardInstanceId: instanceId }); // planted: duplicate commit receipt",
       expectRed: /FAIL held controller Confirm fires one activation and one multi-target commit/,
     }, {
       name: 'controller self Cancel leaves stale self targeting armed',
