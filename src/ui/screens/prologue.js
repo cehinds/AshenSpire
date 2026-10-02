@@ -189,8 +189,11 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   // What the fit depends on: the frame's size (offset sizes count a scrollbar
   // in, so one appearing after a refit is not itself a resize that refits
   // again) and the player's text size, which moves every rem without moving
-  // the frame.
-  const fitMetrics = () => `${root.offsetWidth}x${root.offsetHeight}@${getComputedStyle(document.documentElement).fontSize}`;
+  // the frame — and every other display setting written on <html> or <body>
+  // (readable headings swap the typeface by a class), named by their classes
+  // and inline style.
+  const fitMetrics = () => [`${root.offsetWidth}x${root.offsetHeight}`, getComputedStyle(document.documentElement).fontSize,
+    ...[document.documentElement, document.body].flatMap(node => [node.className, node.style.cssText])].join('|');
   function captionFit() {
     if (!root.isConnected || !root.offsetWidth || !root.offsetHeight) return 1;
     const key = fitMetrics();
@@ -201,8 +204,8 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   const changed = () => { if (currentStage && fixedCaption(currentStage) && fitMetrics() !== fitKey) refit(); };
   const resized = typeof ResizeObserver === 'function' ? new ResizeObserver(changed) : null;
   resized?.observe(root);
-  // Text size is written on <html> (and UI size on <body>) from Settings, which
-  // the opening can open over itself; neither resizes the frame.
+  // Text size is written on <html> (UI size and readable headings on <body>)
+  // from Settings, which the opening can open over itself; none resizes the frame.
   const restyled = typeof MutationObserver === 'function' ? new MutationObserver(changed) : null;
   for (const node of [document.documentElement, document.body]) restyled?.observe(node,{attributes:true,attributeFilter:['style','class']});
   document.fonts?.ready?.then(refit);
