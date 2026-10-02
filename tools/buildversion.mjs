@@ -180,6 +180,12 @@ export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/dirorder.mjs',
   'tools/mobileart-policy.mjs',
   'tools/head-meta.mjs',
+  // The art release this tree pins and the manifest every pack is checked
+  // against (docs/EXTERNAL-ASSETS-PLAN.md §2 *Build identity*, step 11). Not
+  // executable, but they decide which media a build is made from once it reads
+  // the fetched cache, so a bumped pin or a changed record is a new build.
+  'art-release.json',
+  'art-manifest.json',
 ]);
 
 /**
