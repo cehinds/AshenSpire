@@ -1,7 +1,8 @@
 # Every asset outside the game file — plan
 
 Status: **step 2 built** (2026-10-01: `tools/asset-pack.mjs`, `art-manifest.json`
-schema 2); the rest is plan (2026-09-27). The owner answered its
+schema 2); **step 6a built** (2026-10-02: the Pages base tree, the `og:image`
+Pages path and the site size in `pages-site --check`); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -480,9 +481,34 @@ into the site root, and nothing excludes media. On `origin/main` today that is
 
 **Step 6a**, a precondition of the store, makes `pages-site` exclude the media
 and authoring roots from the base tree: `art/`, `assets/`, `assets-mobile/`,
-`map-detail/`, `music/` and the committed build HTML (the stable links are
-written from the fresh build anyway). Those roots are only ever served as build
-payloads. `docs/preview` stays in the base tree (owner answer 7, FINISH D26).
+`map-detail/`, `music/` and the committed build HTML. `docs/preview` stays in
+the base tree (owner answer 7, FINISH D26).
+
+As built (corrected against the code; the first draft said these roots "are
+only ever served as build payloads"):
+
+- **No build page reads them from the root.** Each `/<branch>/<ordinal>/`
+  build is one inline file that reads only the `map-detail/` and `music/`
+  written beside it. The stable links are the same kind of file: every image
+  under `assets/` is in their `ASSET_MAP`, and they fetch only `map-detail/`
+  and `music/` beside themselves.
+- **The stable links keep their payload.** `pages-site` writes
+  `/AshenSpire.html`, `/build/`, `/dist/` and `-mobile` from main's committed
+  build (or from `--main-build` once main no longer commits one), as before. It
+  also writes main's `map-detail/` and `music/` back at the root as that
+  build's payload, so those two folders cost what they did until step 6b
+  serves the stable links from the store. The size saved today comes from
+  `art/`, `assets/` and the committed HTML copies.
+- **Pages other than builds lose what they linked into these roots.** This
+  covers main's source page at `/index-game.html` (its art under `assets/`).
+  It covers the art-review sections under `art/`, which leave the site and its
+  index. It also covers the images in `docs/component-catalog.html`,
+  `items-preview.html`, `docs/low-poly-fighters/` and `pose-studio/`.
+- **The share image.** `og:image` is now
+  `https://cehinds.github.io/AshenSpire/og-image.webp`. `pages-site` writes it
+  at the site root from `assets/bg/title-city-tower.webp` in main's tree, or
+  from the first other branch that has it. `OG_IMAGE` in `tools/head-meta.mjs`
+  names all three, and `--check` is red without it.
 
 | term | today | steady state after the plan |
 |---|---|---|
