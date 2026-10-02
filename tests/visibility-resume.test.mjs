@@ -375,7 +375,7 @@ const KNOWN = {
   'src/ui/debuglog.js': ["'error'", "'unhandledrejection'"],
   'src/ui/fx.js': ["'pointerdown'", "'pointerup'", "'pointercancel'", "'pointerdown'", '.__fx'],
   'src/ui/gesture.js': [["'blur'", 'aborts the in-flight gesture as CANCELLED; driven above through finishCardDrag, which drops nothing'], "'pointerdown'", "'pointermove'", "'pointerup'", "'pointercancel'"],
-  'src/ui/input.js': ["'keydown'", "'keyup'", ["'blur'", 'cancels the input gate and ends any held press CANCELLED (nothing commits); both halves armed and exercised above'], "'gamepadconnected'", "'gamepaddisconnected'"],
+  'src/ui/input.js': ["'keydown'", "'keydown'", "'keydown'", "'keyup'", ["'blur'", 'cancels the input gate and ends any held press CANCELLED (nothing commits); both halves armed and exercised above'], "'gamepadconnected'", "'gamepaddisconnected'"],
   'src/ui/kit/categoryNav.js': ["'keydown'"],
   'src/ui/screens/combat.js': ["'keydown'", '.__combat', '.__combatRunForShot', '.__renderCombatForShot', ['ART_REDRAW_EVENT', "the constant 'ashen:art-redraw' (src/ui/highResArt.js), sent by main.js once the built-in art arrives after a failed load (a Retry, step 5) and no dialog is open, not the page cycle: forgets the cached sprite figures and calls render() from the combat's own state; it reads run and combat state and moves none"]],
   'src/ui/screens/coop.js': ["'keydown'", "'keydown'", '.__coopSnapshot', '.__guardCoopTool'],

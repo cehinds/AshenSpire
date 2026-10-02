@@ -314,8 +314,8 @@ export function mountTitle(app, {
   window.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape' || event.repeat || event.defaultPrevented) return;
 
-    // Controller Cancel is synthesized at window rather than at the focused
-    // element. Give the title's own modal and the shared Load selector the same
+    // Controller Cancel is synthesized at the document rather than at the
+    // focused element. Give the title's own modal and the shared Load selector the same
     // priority they receive from a physical keyboard press.
     if (modal) {
       event.preventDefault();

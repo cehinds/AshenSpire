@@ -763,8 +763,84 @@ function nudgeRange(el, delta) {
   el.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
+// A pad press (or a hint chip) arrives as the bound key, dispatched at the
+// DOCUMENT and bubbling to the window. It used to be dispatched at the window,
+// where no `document` listener ever hears it: the modal shell, the tooltip,
+// the Armoury and the save-slot selector all answer Escape on the document, so
+// pad B closed none of them while the keyboard's Escape closed every one
+// (docs/FINISH.md §9, measured by tools/escape-back.mjs). The window still
+// hears it, in capture and in bubble, exactly as before.
+// It is CANCELABLE, as a real key is: an event built without `cancelable`
+// ignores preventDefault(), so a layer that takes the press (the flask menu's
+// Cancel, a dropped hold) could not say so, and the Back rule below would
+// back the screen out from under it as well.
 function synthKey(key) {
-  dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+  document.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+}
+
+// ---- Back: Escape and pad B on a screen without an Escape of its own --------
+//
+// docs/FINISH.md §9: "Escape or pad B backs out of every screen." A screen
+// whose Back is a plain button (History, Compendium, Custom Climb, character
+// creation, the LAN lobby, a dialogue, a reward's detail pane, the quest
+// board, the farewell screen, the map tray) marks that button `data-back`, and
+// this ONE rule presses it — a click on the screen's existing Back, so the key
+// and the pad run the same handler the mouse runs, once.
+//
+// It is the LAST word on Escape, and "last" is enforced, not hoped for:
+//   1. `onBackCapture` (window, capture, registered ahead of initInput's own
+//      keydown) notes the focus scope, its Back and whether a native popover
+//      is open BEFORE the layers on the path answer the press.
+//   2. `onBackKey` (window, bubble) only schedules the decision for after the
+//      whole dispatch (a task, not a microtask: a real key's microtasks run
+//      between listeners). A listener registered after this one — the flask
+//      menu's window Cancel, a hold-to-confirm's Escape — has had its say.
+//   3. The decision steps aside if the press was taken (`defaultPrevented`),
+//      if the scope or the Back it was aimed at is gone or changed (a layer
+//      that closed itself without saying so, as the Armoury's document Escape
+//      once did; a screen that navigated on its own Escape), or if a
+//      native popover was open (character creation's menu): the press is that
+//      popover's. The browser closes a popover on a real Escape; a pad B is a
+//      synthetic key the browser ignores, so the rule closes it instead.
+// A screen that answers Escape itself must not mark a `data-back` too;
+// tools/escape-back.mjs counts the presses. A text field keeps its Escape.
+export const BACK_SELECTOR = '[data-back]';
+let backAim = null;
+function openPopover(root) {
+  try {
+    return root.querySelector('[popover]:popover-open');
+  } catch {
+    return null; // a DOM without the pseudo-class has no native popover either
+  }
+}
+function backIn(root) {
+  return [...root.querySelectorAll(BACK_SELECTOR)]
+    .find((el) => !el.disabled && !el.closest('[inert]') && visible(el)) || null;
+}
+function onBackCapture(ev) {
+  if (ev.key !== 'Escape') return;
+  const scope = scopeRoot();
+  backAim = { ev, scope, popover: openPopover(scope), back: backIn(scope) };
+}
+function onBackKey(ev) {
+  if (ev.key !== 'Escape' || ev.repeat) return;
+  const aim = backAim && backAim.ev === ev ? backAim : null;
+  backAim = null;
+  if (!aim) return;
+  const tag = (ev.target && ev.target.tagName) || '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  setTimeout(() => {
+    if (ev.defaultPrevented) return;
+    if (aim.popover) {
+      if (!ev.isTrusted && aim.popover.isConnected && aim.popover.matches?.(':popover-open')) aim.popover.hidePopover?.();
+      return;
+    }
+    // The Back pressed is the one the player was looking at when they pressed:
+    // same scope, same control, still standing.
+    const root = scopeRoot();
+    if (!aim.back || root !== aim.scope || !root.isConnected) return;
+    if (backIn(root) === aim.back) aim.back.click();
+  }, 0);
 }
 
 function doAction(id, source = 'key') {
@@ -1101,8 +1177,10 @@ export function initInput({ getSettings } = {}) {
   const s = (getSettings && getSettings()) || {};
   setBindings(s.bindings || {});
   setKeyBindings(s.keyBindings || {});
+  addEventListener('keydown', onBackCapture, true);
   addEventListener('keydown', onKeydown, true);
   addEventListener('keyup', onKeyup, true);
+  addEventListener('keydown', onBackKey);
   // Alt-tab away mid-hold and the keyup lands in another window. Same verdict
   // trackGesture gives a pointer the browser takes: cancelled, nothing commits.
   addEventListener('blur', () => {
