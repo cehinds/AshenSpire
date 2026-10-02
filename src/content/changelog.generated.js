@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1450",
+    "id": "pr-1491",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "Behind the scenes: every change now checks the game's art against the art repository's release",
-    "detail": "Nothing you play changes. The game pins one release of its art, light art, fonts, music and map tiles in a separate repository; each check downloads the parts it needs, verifies every file against its fingerprint, and proves the release and the copies still kept here are identical, byte for byte.",
+    "summary": "Behind the scenes: the architecture check passes again",
+    "detail": "Nothing you play changes. The offline folder download named a browser feature inside the game's core rules code, which the automatic architecture check forbids, so the check had failed on every change since. That name now lives with the game's other content settings.",
     "build": "0.7.1.792",
-    "pullRequest": 1450,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1450"
+    "pullRequest": 1491,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1491"
   },
   {
     "id": "pr-1471",
