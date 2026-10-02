@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the build checker's self-test catches up with the art-pack change",
     "detail": "Nothing you play changes. One of the build tool's self-tests plants a deliberate fault in a line the asset loading work rewrote, so it could no longer find that line and the test build's checks went red. It now plants the fault in the line as it reads today.",
-    "build": "0.7.1.751",
+    "build": "0.7.1.753",
     "pullRequest": 1465,
     "url": "https://github.com/cehinds/AshenSpire/pull/1465"
+  },
+  {
+    "id": "pr-1386",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Skills and your class get dearer with every level",
+    "detail": "Every weapon, armour, focus, dual-wield and class skill still needs 100 XP for its first level, but each level after now costs 1.75 times the one before (100, 175, 305, 535, 940) instead of 130 more. Like any XP setting, this reaches a run you already started the next time you load it. Your character level is unchanged.",
+    "build": "0.7.1.752",
+    "pullRequest": 1386,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1386"
   },
   {
     "id": "pr-1444",
