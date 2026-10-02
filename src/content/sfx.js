@@ -52,7 +52,7 @@ export const SFX_FAMILY_IDS = Object.freeze([
   'procBurst', 'beat', 'holdTick', 'holdCommit', 'rewardTake', 'hit',
 ]);
 
-// HIT TIERS (FINISH §5, D47). An attack that takes HP plays `hit_<tier>`, and
+// HIT TIERS (FINISH §5, D48). An attack that takes HP plays `hit_<tier>`, and
 // the tier is the highest row whose `min` the HP damage reaches (guard
 // consumed does not count — the guard half already plays `block`). The
 // thresholds are data (owner ruling D1) and match the damage-number sizes in
