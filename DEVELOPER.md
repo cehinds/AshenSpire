@@ -917,7 +917,12 @@ The browser tools that drive a built page (`--dist`, `--standalone`,
 single file opens over `file://`, exactly as before; a pack-shaped build (a
 `packs/` folder beside the HTML, docs/EXTERNAL-ASSETS-PLAN.md step 3a on) is
 served over local http from its own folder, because its indexes arrive by
-`fetch`. `ASHEN_BUILD_OVER=file` or `=http` forces either for a run.
+`fetch`. It is served under `/<channel>/latest/`, the channel the same file
+reads by double-click (`unknown` for `dist/AshenSpire.html`), so a served page
+keeps the file's channel and debug state instead of reading as `dev` on
+127.0.0.1. `ASHEN_BUILD_OVER=file` or `=http` forces either for a run;
+`node tools/browser.mjs --selftest --serve-only` (check S, no browser, run by
+`tests/browser-serve.test.mjs`) checks the helper.
 
 ## Balance & telemetry
 

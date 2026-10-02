@@ -135,8 +135,8 @@
 // lifetime — at which point this is a second copy of that library's job.
 
 import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
-import { readFile, stat } from 'node:fs/promises';
+import { createReadStream, existsSync, mkdtempSync, readdirSync, realpathSync, rmSync, statSync } from 'node:fs';
+import { realpath, stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { basename, dirname, extname, join, resolve, sep } from 'node:path';
@@ -469,11 +469,16 @@ export async function launchBrowser({
 // `ASHEN_BUILD_OVER=file|http|auto` (default `auto`) overrides the choice for a
 // run: `file` keeps the double-click door under every tool, `http` serves even
 // an inline file. The server is `unref()`ed, so it never keeps a tool alive,
-// and it serves only files under the folder it was given.
+// and it serves only files whose REAL path is under the folder it was given.
+// The folder is served under `/<channel>/latest/`, the channel the same file
+// reads by double-click (`unknown` for `dist/AshenSpire.html`), so the page's
+// channel and debug state do not turn into the loopback host's `dev`.
 //
 // BOUNDARY. A static GET/HEAD server for local tools, bound to 127.0.0.1. It
-// answers one byte range (`206`) for media, sends `no-cache`, and lists no
-// directories. It is not the dev server (`tools/serve.mjs` stamps the source
+// streams bodies, answers one byte range (`206`) for media, sends no body for
+// HEAD, sends `no-cache`, and lists no directories. Under http a page still
+// differs from `file://` where the game asks the protocol itself (map-detail
+// tiles and music load over http): that is the reason to serve a pack build. It is not the dev server (`tools/serve.mjs` stamps the source
 // tree and carries LAN play) and not the Pages service worker.
 
 const SERVE_MIME = {
@@ -494,39 +499,59 @@ export function isPackShaped(htmlPath) {
 /**
  * Serve `dir` over http on 127.0.0.1 (an ephemeral port unless `port` is given).
  * Resolves `{ server, port, origin, url(rel), close() }`; `url('a/b.html')` is
- * the http URL of `dir/a/b.html`. The server is unref()ed.
+ * the http URL of `dir/a/b.html`. With `prefix` (e.g. `unknown/latest`) every
+ * file is served under `/<prefix>/` and nothing outside it answers. The server
+ * is unref()ed.
+ *
+ * CONTAINMENT IS CHECKED ON REAL PATHS: the root and every candidate are
+ * realpath()ed first, so a symlink inside the folder that points outside it is
+ * refused (403), not followed. A body is streamed, never buffered whole: a
+ * Range request reads only its interval, and HEAD sends headers only.
  */
-export function serveDir(dir, { port = 0, host = '127.0.0.1' } = {}) {
-  const root = resolve(dir);
-  const inside = (p) => p === root || p.startsWith(root.endsWith(sep) ? root : root + sep);
+export function serveDir(dir, { port = 0, host = '127.0.0.1', prefix = '' } = {}) {
+  const mount = prefix ? `/${String(prefix).replace(/^\/+|\/+$/g, '')}` : '';
+  const rootReal = realpathSync(resolve(dir));
+  const inside = (p) => p === rootReal || p.startsWith(rootReal.endsWith(sep) ? rootReal : rootReal + sep);
   const server = createServer(async (req, res) => {
     try {
       if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405, { Allow: 'GET, HEAD' }); res.end(); return; }
       let rel;
       try { rel = decodeURIComponent(new URL(req.url || '/', 'http://x').pathname); } catch { res.writeHead(400); res.end(); return; }
-      let file = resolve(root, `.${rel}`);
+      if (mount) {
+        if (rel !== mount && !rel.startsWith(`${mount}/`)) { res.writeHead(404); res.end('Not found'); return; }
+        rel = rel.slice(mount.length) || '/';
+      }
+      let file = resolve(rootReal, `.${rel}`);
       if (!inside(file)) { res.writeHead(403); res.end('Forbidden'); return; }
       let st = await stat(file).catch(() => null);
       if (st && st.isDirectory()) { file = join(file, 'index.html'); st = await stat(file).catch(() => null); }
       if (!st || !st.isFile()) { res.writeHead(404); res.end('Not found'); return; }
+      const real = await realpath(file).catch(() => null);
+      if (!real || !inside(real)) { res.writeHead(403); res.end('Forbidden'); return; }
+      const size = st.size;
       const headers = { 'Content-Type': SERVE_MIME[extname(file).toLowerCase()] || 'application/octet-stream',
         'Cache-Control': 'no-cache', 'Accept-Ranges': 'bytes' };
-      const body = await readFile(file);
+      const send = (status, extra, from, to) => {
+        res.writeHead(status, { ...headers, ...extra });
+        if (req.method === 'HEAD' || to < from) { res.end(); return; }
+        const stream = createReadStream(real, { start: from, end: to });
+        stream.on('error', () => res.destroy());
+        stream.pipe(res);
+      };
       const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
       if (range && (range[1] || range[2])) {
-        const start = range[1] ? Number(range[1]) : Math.max(0, body.length - Number(range[2]));
-        const end = range[1] && range[2] ? Math.min(Number(range[2]), body.length - 1) : body.length - 1;
-        if (start >= body.length || start > end) {
-          res.writeHead(416, { ...headers, 'Content-Range': `bytes */${body.length}` }); res.end(); return;
+        const start = range[1] ? Number(range[1]) : Math.max(0, size - Number(range[2]));
+        const end = range[1] && range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
+        if (start >= size || start > end) {
+          res.writeHead(416, { ...headers, 'Content-Range': `bytes */${size}` }); res.end(); return;
         }
-        res.writeHead(206, { ...headers, 'Content-Range': `bytes ${start}-${end}/${body.length}`, 'Content-Length': end - start + 1 });
-        res.end(req.method === 'HEAD' ? undefined : body.subarray(start, end + 1));
+        send(206, { 'Content-Range': `bytes ${start}-${end}/${size}`, 'Content-Length': end - start + 1 }, start, end);
         return;
       }
-      res.writeHead(200, { ...headers, 'Content-Length': body.length });
-      res.end(req.method === 'HEAD' ? undefined : body);
+      send(200, { 'Content-Length': size }, 0, size - 1);
     } catch {
-      res.writeHead(500); res.end('Server error');
+      if (!res.headersSent) res.writeHead(500);
+      res.end();
     }
   });
   return new Promise((done, fail) => {
@@ -537,19 +562,36 @@ export function serveDir(dir, { port = 0, host = '127.0.0.1' } = {}) {
       server.unref();
       const p = server.address().port;
       const origin = `http://${host}:${p}`;
-      const url = (rel = '') => `${origin}/${String(rel).split(/[\\/]/).map(encodeURIComponent).join('/')}`;
+      const url = (rel = '') => `${origin}${mount}/${String(rel).split(/[\\/]/).map(encodeURIComponent).join('/')}`;
       done({ server, port: p, origin, url, close: () => new Promise((r) => server.close(() => r())) });
     });
   });
 }
 
-// One server per folder per process: two pages of one build share it.
+// One server per folder and channel per process: two pages of one build share it.
 const served = new Map();
+
+/**
+ * The channel `src/ui/buildChannel.js` reads for this file opened by
+ * double-click: `dev`/`test`/`release`/`main` from a download's name
+ * (`AshenSpire-dev-0.7.1.449.html`), otherwise `unknown`.
+ */
+export async function fileChannel(htmlPath) {
+  const { buildChannel } = await import('../src/ui/buildChannel.js');
+  const u = pathToFileURL(resolve(htmlPath));
+  return buildChannel({ pathname: u.pathname, hostname: u.hostname, protocol: u.protocol }, 'standalone file');
+}
 
 /**
  * The URL a tool opens for a built page at `htmlPath`. See the block above:
  * `file://` for a self-contained file (unchanged), local http for a pack-shaped
  * build. `over` (or `ASHEN_BUILD_OVER`) forces `file` or `http`.
+ *
+ * THE SERVED PAGE KEEPS THE FILE'S CHANNEL. A page on 127.0.0.1 would read as
+ * `dev` (pageDebug on, dev-promoted settings), while the same file by
+ * double-click reads `unknown`. So the folder is served under
+ * `/<channel>/latest/`, the Pages path shape `buildChannel()` reads before the
+ * host, and the tool measures the configuration the file would have.
  */
 export async function buildPageUrl(htmlPath, { over = process.env.ASHEN_BUILD_OVER || 'auto' } = {}) {
   const file = resolve(htmlPath);
@@ -557,8 +599,10 @@ export async function buildPageUrl(htmlPath, { over = process.env.ASHEN_BUILD_OV
   const http = over === 'http' || (over === 'auto' && isPackShaped(file));
   if (!http) return pathToFileURL(file).href;
   const dir = dirname(file);
-  if (!served.has(dir)) served.set(dir, serveDir(dir));
-  return (await served.get(dir)).url(basename(file));
+  const prefix = `${await fileChannel(file)}/latest`;
+  const key = `${dir}\0${prefix}`;
+  if (!served.has(key)) served.set(key, serveDir(dir, { prefix }));
+  return (await served.get(key)).url(basename(file));
 }
 
 // ---------------------------------------------------------------------------
@@ -655,28 +699,49 @@ const SCENARIOS = [
 // would go wrong: an inline file that stopped opening as itself, a pack build
 // left on `file://`, a path that escapes the folder, a wrong byte range.
 async function serveChecks() {
-  const { mkdtempSync: mk, writeFileSync, mkdirSync, rmSync: rm } = await import('node:fs');
+  const { mkdtempSync: mk, writeFileSync, mkdirSync, rmSync: rm, symlinkSync } = await import('node:fs');
+  const { request } = await import('node:http');
+  const { buildChannel, debugEnabled } = await import('../src/ui/buildChannel.js');
   const td = mk(join(tmpdir(), 'vbsv-'));
   const results = [];
   const check = (ok, what) => { results.push([!!ok, what]); };
+  // A raw request, because fetch() normalises `..` away before it is sent and
+  // always reads a body; this one reports the status, headers and body length.
+  const raw = (url, { method = 'GET', path = null, headers = {} } = {}) => new Promise((r) => {
+    const u = new URL(url);
+    const q = request({ host: u.hostname, port: u.port, path: path ?? u.pathname, method, headers }, (res) => {
+      const chunks = []; res.on('data', (c) => chunks.push(c));
+      res.on('end', () => r({ status: res.statusCode, headers: res.headers, body: Buffer.concat(chunks) }));
+    });
+    q.on('error', () => r({ status: 0, headers: {}, body: Buffer.alloc(0) })); q.end();
+  });
+  const where = (href) => { const u = new URL(href); return { pathname: u.pathname, hostname: u.hostname, protocol: u.protocol }; };
   try {
     mkdirSync(join(td, 'inline'));
     mkdirSync(join(td, 'pack', 'packs'), { recursive: true });
     mkdirSync(join(td, 'pack', 'objects', 'ab'), { recursive: true });
+    mkdirSync(join(td, 'named', 'packs'), { recursive: true });
     writeFileSync(join(td, 'secret.txt'), 'outside');
     writeFileSync(join(td, 'inline', 'AshenSpire.html'), '<!doctype html><title>inline</title>');
     writeFileSync(join(td, 'pack', 'AshenSpire.html'), '<!doctype html><title>pack</title>');
+    writeFileSync(join(td, 'named', 'AshenSpire-test-0.7.1.9.html'), '<!doctype html><title>named</title>');
     writeFileSync(join(td, 'pack', 'packs', 'light-000000000000.json'), '{"ids":{}}\n');
-    writeFileSync(join(td, 'pack', 'objects', 'ab', 'ab01.mp3'), Buffer.from('0123456789'));
+    const big = Buffer.alloc(3 * 1024 * 1024);
+    for (let i = 0; i < big.length; i++) big[i] = i % 251;
+    writeFileSync(join(td, 'pack', 'objects', 'ab', 'ab01.mp3'), big);
+    // KNOWN-BAD: a symlink inside the folder that points outside it.
+    symlinkSync(join(td, 'secret.txt'), join(td, 'pack', 'escape.txt'));
+    symlinkSync(td, join(td, 'pack', 'up'));
     const inline = join(td, 'inline', 'AshenSpire.html');
     const pack = join(td, 'pack', 'AshenSpire.html');
+    const named = join(td, 'named', 'AshenSpire-test-0.7.1.9.html');
 
     check(await buildPageUrl(inline, { over: 'auto' }) === pathToFileURL(inline).href,
       'an inline single file opens as pathToFileURL(file), unchanged');
     check(!isPackShaped(inline) && isPackShaped(pack), 'a packs/ folder beside the HTML, and only that, marks the pack shape');
     check(await buildPageUrl(pack, { over: 'file' }) === pathToFileURL(pack).href, 'over=file keeps a pack build on file://');
     const u = await buildPageUrl(pack, { over: 'auto' });
-    check(/^http:\/\/127\.0\.0\.1:\d+\/AshenSpire\.html$/.test(u), `a pack build is served over http (${u})`);
+    check(/^http:\/\/127\.0\.0\.1:\d+\/unknown\/latest\/AshenSpire\.html$/.test(u), `a pack build is served over http under its channel (${u})`);
     check(await buildPageUrl(pack) === u, 'a second page of the same build reuses the server');
     const httpInline = await buildPageUrl(inline, { over: 'http' });
     check(/^http:/.test(httpInline) && (await (await fetch(httpInline)).text()).includes('inline'), 'over=http serves even an inline file');
@@ -684,28 +749,51 @@ async function serveChecks() {
     try { await buildPageUrl(inline, { over: 'ftp' }); } catch { threw = true; }
     check(threw, 'an unknown over= value is refused by name');
 
-    const origin = new URL(u).origin;
+    // THE CHANNEL AND DEBUG STATE ARE THE FILE'S, NOT 127.0.0.1's.
+    const fileCh = buildChannel(where(pathToFileURL(pack).href), 'standalone file');
+    const httpCh = buildChannel(where(u), 'standalone file');
+    const bare = (await serveDir(dirname(pack))).url('AshenSpire.html');
+    check(fileCh === 'unknown' && httpCh === fileCh, `the served page reads the file's channel (file ${fileCh}, served ${httpCh})`);
+    check(buildChannel(where(bare), 'standalone file') === 'dev', 'control: the same folder served bare on 127.0.0.1 reads dev — the case this guards');
+    check(debugEnabled(httpCh, { search: '', storage: null }) === debugEnabled(fileCh, { search: '', storage: null }) && !debugEnabled(httpCh, { search: '', storage: null }),
+      'and its debug state matches the file (off by default)');
+    const namedUrl = await buildPageUrl(named, { over: 'http' });
+    check(buildChannel(where(namedUrl), 'standalone file') === 'test' && buildChannel(where(pathToFileURL(named).href), 'standalone file') === 'test',
+      `a download named for its channel keeps it served (${namedUrl})`);
+
+    const base = u.replace(/AshenSpire\.html$/, '');
     const html = await fetch(u);
     check(html.status === 200 && /text\/html/.test(html.headers.get('content-type')) && (await html.text()).includes('pack'), 'the HTML comes back 200 text/html');
-    const idx = await fetch(`${origin}/packs/light-000000000000.json`);
+    const idx = await fetch(`${base}packs/light-000000000000.json`);
     check(idx.status === 200 && (await idx.text()) === '{"ids":{}}\n', 'a pack index beside it is fetchable, byte for byte');
-    const part = await fetch(`${origin}/objects/ab/ab01.mp3`, { headers: { Range: 'bytes=2-5' } });
-    check(part.status === 206 && (await part.text()) === '2345' && part.headers.get('content-range') === 'bytes 2-5/10', 'a byte range answers 206 with those bytes');
-    const tail = await fetch(`${origin}/objects/ab/ab01.mp3`, { headers: { Range: 'bytes=-3' } });
-    check(tail.status === 206 && (await tail.text()) === '789', 'a suffix range answers the last bytes');
-    const past = await fetch(`${origin}/objects/ab/ab01.mp3`, { headers: { Range: 'bytes=40-' } });
-    check(past.status === 416, 'a range past the end answers 416');
-    // A raw request, because fetch() normalises `..` away before it is sent.
-    const { request } = await import('node:http');
-    const raw = (path) => new Promise((r) => {
-      const q = request({ host: '127.0.0.1', port: new URL(u).port, path }, (res) => { res.resume(); r(res.statusCode); });
-      q.on('error', () => r(0)); q.end();
-    });
-    const esc = [await raw('/../secret.txt'), await raw('/..%2fsecret.txt'), await raw('/%2e%2e/secret.txt')];
+    const obj = `${base}objects/ab/ab01.mp3`;
+    const whole = await raw(obj);
+    check(whole.status === 200 && whole.body.equals(big) && Number(whole.headers['content-length']) === big.length, 'a 3 MB object streams whole, byte for byte');
+    const part = await raw(obj, { headers: { Range: 'bytes=1048576-1048585' } });
+    check(part.status === 206 && part.body.equals(big.subarray(1048576, 1048586)) && part.headers['content-range'] === `bytes 1048576-1048585/${big.length}`,
+      'a byte range answers 206 with exactly those bytes');
+    const tail = await raw(obj, { headers: { Range: 'bytes=-3' } });
+    check(tail.status === 206 && tail.body.equals(big.subarray(big.length - 3)), 'a suffix range answers the last bytes');
+    const past = await raw(obj, { headers: { Range: `bytes=${big.length + 10}-` } });
+    check(past.status === 416 && past.body.length === 0, 'a range past the end answers 416');
+    const head = await raw(obj, { method: 'HEAD' });
+    check(head.status === 200 && head.body.length === 0 && Number(head.headers['content-length']) === big.length, 'HEAD sends the length and no body');
+    const headRange = await raw(obj, { method: 'HEAD', headers: { Range: 'bytes=0-9' } });
+    check(headRange.status === 206 && headRange.body.length === 0 && Number(headRange.headers['content-length']) === 10, 'HEAD with a range sends the interval length and no body');
+
+    const port = new URL(u).port;
+    const at = (path) => raw(`http://127.0.0.1:${port}/`, { path });
     // `..` and `%2e%2e` are normalised inside the folder by the URL parser (404);
-    // only an encoded slash reaches the guard, which must answer 403.
+    // an encoded slash reaches the guard, which must answer 403.
+    const esc = [await at('/unknown/latest/../secret.txt'), await at('/unknown/latest/..%2f..%2fsecret.txt'), await at('/unknown/latest/%2e%2e/secret.txt')].map((r) => r.status);
     check(esc.every((c) => c === 403 || c === 404) && esc[1] === 403, `a path outside the folder is never served (${esc.join(', ')})`);
-    const miss = await fetch(`${origin}/packs/nope.json`);
+    const link = await at('/unknown/latest/escape.txt');
+    const linkDir = await at('/unknown/latest/up/secret.txt');
+    check(link.status === 403 && linkDir.status === 403 && !link.body.toString().includes('outside'),
+      `a symlink inside the folder that points outside it is refused (${link.status}, ${linkDir.status})`);
+    const unmounted = await at('/AshenSpire.html');
+    check(unmounted.status === 404, 'nothing answers outside the channel mount');
+    const miss = await fetch(`${base}packs/nope.json`);
     check(miss.status === 404, 'a missing file is 404');
   } catch (e) {
     check(false, `the serve checks threw: ${e.message}`);

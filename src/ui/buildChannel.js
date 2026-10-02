@@ -15,6 +15,8 @@
 //   file:///…/AshenSpire-dev-0.7.1.449.html        a download from that site
 //   file:///…/AshenSpire-mobile-test-0.7.1.1.html  the mobile download
 //   http://localhost:8080/                 tools/serve.mjs (the source tree)
+//   http://127.0.0.1:N/unknown/latest/     tools/browser.mjs serving a build
+//                                          with the channel its file reads
 //
 // Anything else — the site root (main's tree) — is treated as `main`; an
 // unrecognised file is `unknown` and never opens debug on its own.
@@ -43,7 +45,10 @@ export function buildChannel(loc = globalThis.location, runPath = RUN_PATH) {
   try { path = decodeURIComponent(path); } catch { /* a malformed %-escape: read it raw */ }
   const host = String(loc?.hostname || '');
   const protocol = String(loc?.protocol || '');
-  const served = path.match(/\/(dev|test|release|main)\/(?:\d+|latest)(?:\/|$)/);
+  // `unknown` is never a Pages path; it is how a local tool (tools/browser.mjs
+  // buildPageUrl) serves a build over http while keeping the channel the same
+  // file reads by double-click, so the tool measures that configuration.
+  const served = path.match(/\/(dev|test|release|main|unknown)\/(?:\d+|latest)(?:\/|$)/);
   if (served) return served[1];
   const saved = path.match(/AshenSpire-(?:mobile-)?(dev|test|release|main)-[^/]*\.html$/i);
   if (saved) return saved[1].toLowerCase();

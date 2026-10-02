@@ -1,0 +1,40 @@
+// tests/browser-serve.test.mjs — the serve half of tools/browser.mjs in the core
+// suite (docs/EXTERNAL-ASSETS-PLAN.md step 8d).
+//
+// `node tools/browser.mjs --selftest --serve-only` runs check S: buildPageUrl()
+// leaves an inline file on file://, serves a pack-shaped build under the
+// channel its file reads, streams bodies and ranges, sends no body for HEAD,
+// and refuses paths and symlinks that leave the folder. It needs no browser,
+// so it runs here on every pull request rather than only by hand.
+
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { buildChannel, debugEnabled } from '../src/ui/buildChannel.js';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+test('browser.mjs check S holds (buildPageUrl / serveDir, no browser)', () => {
+  const r = spawnSync(process.execPath, [join(ROOT, 'tools', 'browser.mjs'), '--selftest', '--serve-only'], { encoding: 'utf8', timeout: 60000 });
+  const out = `${r.stdout || ''}${r.stderr || ''}`;
+  assert.equal(r.status, 0, out);
+  assert.match(out, /^PASS {2}S {2}buildPageUrl \/ serveDir \((\d+) checks, no browser\)/m, out);
+  assert.doesNotMatch(out, /RED /, out);
+  // The checks that answer the review findings must still be among them.
+  for (const name of [/reads the file's channel/, /symlink inside the folder/, /HEAD sends the length and no body/, /byte range answers 206/]) {
+    assert.match(out, name, `check S no longer covers ${name}`);
+  }
+});
+
+test('a build served under /unknown/latest/ reads the channel its file reads', () => {
+  const at = (href) => { const u = new URL(href); return { pathname: u.pathname, hostname: u.hostname, protocol: u.protocol }; };
+  const file = buildChannel(at('file:///home/p/dist/AshenSpire.html'), 'standalone file');
+  const served = buildChannel(at('http://127.0.0.1:41234/unknown/latest/AshenSpire.html'), 'standalone file');
+  assert.equal(file, 'unknown');
+  assert.equal(served, file);
+  assert.equal(debugEnabled(served, { search: '', storage: null }), debugEnabled(file, { search: '', storage: null }));
+  // The control: the same page at the bare loopback root is a developer's seat.
+  assert.equal(buildChannel(at('http://127.0.0.1:41234/AshenSpire.html'), 'standalone file'), 'dev');
+});
