@@ -28,6 +28,25 @@
 // must be an inline SVG data: URI; the "AS Lore" faces must be declared and
 // load, and every font the page fetched must be a common object.
 //
+// MUSIC AND TILES (step 3c): the shipped score's manifest and at least one
+// track must be requested as common objects (the ids `music/manifest.json` and
+// `music/…mp3`), and each track asked for must decode as audio; the map screen
+// must draw its detail tiles, each one a common object whose id is a
+// `map-detail/…` tile, and each must decode as an image. No request may name a
+// bare `music/` or `map-detail/` path. The browser runs with autoplay allowed
+// (and muted, as every browser tool is), so the title's track is fetched
+// without a gesture.
+//
+// FILE:// (step 4, --file): the same seven screens, opened by double-click —
+// the HTML as a file:// URL, no server, no flag that loosens Chrome's file://
+// rules. The indexes must arrive through their .js twins (no .json index is
+// asked for), the "AS Lore" faces through the font sidecar as FontFace objects
+// (no font object is fetched, which Chrome would refuse), the masks inline, the
+// backdrops, sprites and map tiles as plain loads of the objects beside the
+// HTML, and the score must stay synthesized: no manifest, no track, no music/
+// path is asked for (SPEC §7.4; Web Audio cannot play a file: track).
+//   node tools/external-play.mjs --file [--dir build/web] [--expect-tier light]
+//
 // VERDICT: "external-play: OK — N checks passed".
 //
 // WHAT IT DOES NOT CHECK: gameplay. It mounts seven screens and watches the
@@ -38,12 +57,22 @@ import { serve } from './serve.mjs';
 import { resolve, dirname, relative } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { objectPath } from './asset-pack.mjs';
-import { fileURLToPath } from 'node:url';
+import { SFX_RECIPES, SFX_MANIFEST } from '../src/content/sfx.js';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ARGV = process.argv.slice(2);
 const dirFlag = ARGV.indexOf('--dir');
 const DIR = resolve(ROOT, dirFlag >= 0 ? ARGV[dirFlag + 1] : 'build/web');
+// --file: open the build by its file:// URL, as a double-click does (step 4).
+const FILE_MODE = ARGV.includes('--file');
+const DIR_URL = pathToFileURL(DIR + '/').href;
+/** A request's url relative to the build: the http origin, or the build's file:// folder, stripped. */
+const rel = (url) => {
+  const u = String(url || '');
+  if (u.startsWith(DIR_URL)) return u.slice(DIR_URL.length);
+  return u.replace(/^https?:\/\/[^/]+\//, '');
+};
 
 if (!existsSync(resolve(DIR, 'AshenSpire.html'))) {
   console.error(`external-play: no build at ${relative(ROOT, DIR)} — node tools/bundle.mjs --external-art --out ${relative(ROOT, DIR)}`);
@@ -75,6 +104,8 @@ if (tierFlag >= 0 && !['high', 'light'].includes(EXPECT_TIER)) {
 // Which pinned pack lists each object, read from the indexes on disk (the ones
 // still there: a removed high index lists nothing). object path → Set of packs.
 const PACK_OF = new Map();
+// object path → Set of the ids that name it, for the music and tile checks.
+const IDS_OF = new Map();
 if (PINNED_TIER) {
   let pin = null;
   try { pin = JSON.parse((HTML_TEXT.match(/const ASSET_PACKS = (\{.*?\});\n/) || [])[1]); } catch { pin = null; }
@@ -85,6 +116,10 @@ if (PINNED_TIER) {
       const path = objectPath(sha, id);
       if (!PACK_OF.has(path)) PACK_OF.set(path, new Set());
       PACK_OF.get(path).add(pack);
+      if (pack === 'common') {
+        if (!IDS_OF.has(path)) IDS_OF.set(path, new Set());
+        IDS_OF.get(path).add(id);
+      }
     }
   }
 }
@@ -93,6 +128,8 @@ if (PINNED_TIER) {
 let LORE_FACES = 0;
 try { LORE_FACES = (JSON.parse((HTML_TEXT.match(/const ASSET_CSS = (\{.*?\}|null);\n/) || [])[1] || 'null')?.rules || []).filter((r) => /^@font-face\b/.test(r) && /AS Lore/.test(r)).length; } catch { LORE_FACES = 0; }
 const objectPathOf = (url) => (String(url).match(/objects\/[0-9a-f]{2}\/[0-9a-f]{64}\.[a-z0-9]+/) || [])[0] || null;
+/** The common ids an object url stands for (empty when it is not a common object). */
+const commonIds = (url) => [...(IDS_OF.get(objectPathOf(url)) || [])];
 /** Why an object url is not one the expected tier (or common) may show, or ''. */
 function wrongTier(url, tier = EXPECT_TIER) {
   const path = objectPathOf(url);
@@ -101,6 +138,17 @@ function wrongTier(url, tier = EXPECT_TIER) {
   if (!packs) return 'listed by no index beside the build';
   if (packs.has(tier) || packs.has('common')) return '';
   return `only the ${[...packs].join('/')} index lists it`;
+}
+
+/** True for the SFX convention probe of a synth-only cue: `assets/sfx/<recipe id>.ogg` with no SFX_MANIFEST entry. */
+function sfxProbe404(url) {
+  // Over http(s) a 404; under --file the fetch is refused outright (Chrome's
+  // fetch does not do file:), which the single file has always met the same way.
+  const m = /^assets\/sfx\/([^/?#]+)\.ogg$/.exec(rel(url));
+  if (!m) return false;
+  let id;
+  try { id = decodeURIComponent(m[1]); } catch { return false; }
+  return Object.hasOwn(SFX_RECIPES, id) && !Object.hasOwn(SFX_MANIFEST, id);
 }
 
 function connect(wsUrl) {
@@ -139,8 +187,10 @@ const SCREENS = [
   ['dmap', '?shot=map', `!!document.querySelector('.map-node')`, DESKTOP],
 ];
 
-const server = await serve({ root: DIR, port: 8317, open: false });
-const { wsUrl, close } = await launchBrowser({ prefix: 'extplay-', browser: process.env.CHROME || process.env.CHROME_PATH, timeoutMs: 30000 });
+const server = FILE_MODE ? null : await serve({ root: DIR, port: 8317, open: false });
+// Autoplay allowed, so the title's track is requested and played without a
+// gesture (DEFAULT_ARGS already mutes the output).
+const { wsUrl, close } = await launchBrowser({ prefix: 'extplay-', browser: process.env.CHROME || process.env.CHROME_PATH, timeoutMs: 30000, args: ['--autoplay-policy=no-user-gesture-required'] });
 const cdp = connect(wsUrl); await cdp.ready;
 const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
 const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -153,7 +203,8 @@ const failures = []; const thrown = []; const urls = new Map();
 // The requests of the screen being mounted, reset before each navigation: one
 // entry per request, so a url an earlier screen also asked for still counts.
 let screenLog = [];
-const removedIndex = (url) => EXPECT_TIER !== PINNED_TIER && new RegExp(`(^|/)packs/${PINNED_TIER}-[0-9a-f]{12}\\.json$`).test(String(url));
+// The removed index is its .json over http(s) and its .js twin under --file.
+const removedIndex = (url) => EXPECT_TIER !== PINNED_TIER && new RegExp(`(^|/)packs/${PINNED_TIER}-[0-9a-f]{12}\\.(?:json|js)$`).test(String(url));
 cdp.on((m) => {
   // /api/lan/* is the LAUNCHER's endpoint (src/net/lan.js), not an asset: a
   // plain static server does not implement it and the source tree 404s on it
@@ -165,17 +216,30 @@ cdp.on((m) => {
   // first cut filtered only loadingFailed and went red on the responseReceived.
   // Under --expect-tier, the pinned tier's index is ABSENT by design (that is
   // the fallback being tested), so its 404 is the plant, not a finding.
+  // assets/sfx/<id>.ogg is the SFX filename convention (src/ui/audio.js sfx(),
+  // content/sfx.js): with the context running (autoplay is allowed here, for
+  // the score) every cue plays its synth and probes for a sample file, and no
+  // build ships one. The source tree and the single file 404 on it
+  // identically. Only a BARE path is filtered, and only for a cue that is a
+  // synth recipe with no SFX_MANIFEST entry (sfxProbe404): an override the
+  // manifest names, whose file a build forgot, still fails here, and an id an
+  // index listed would have resolved to objects/ and is checked like any other.
   if (m.method === 'Network.responseReceived' && m.params.response.status >= 400
       && !/\/api\/lan\//.test(m.params.response.url) && !/favicon\.ico/i.test(m.params.response.url)
+      && !(m.params.response.status === 404 && sfxProbe404(m.params.response.url))
       && !(m.params.response.status === 404 && removedIndex(m.params.response.url))) {
-    failures.push(`${m.params.response.status} ${m.params.response.url.replace(/^https?:\/\/[^/]+\//, '')}`);
+    failures.push(`${m.params.response.status} ${rel(m.params.response.url)}`);
   }
   if (m.method === 'Network.requestWillBeSent') {
-    const u = m.params.request.url.replace(/^https?:\/\/[^/]+\//, '');
+    const u = rel(m.params.request.url);
     urls.set(m.params.requestId, u);
     screenLog.push([m.params.loaderId, u]);
   }
-  if (m.method === 'Network.loadingFailed' && !/favicon/i.test(m.params.errorText || '') && !removedIndex(urls.get(m.params.requestId) || '')) failures.push(`${m.params.errorText} ${urls.get(m.params.requestId) || ''}`.trim());
+  if (m.method === 'Network.loadingFailed' && !/favicon/i.test(m.params.errorText || '') && !removedIndex(urls.get(m.params.requestId) || '')
+      && !(FILE_MODE && sfxProbe404(urls.get(m.params.requestId) || ''))
+      // The launcher's /api/lan/ under --file is file:///api/lan/…, refused as
+      // a fetch rather than answered 404: the same non-finding as above.
+      && !(FILE_MODE && /^file:\/\/\/api\/lan\//.test(urls.get(m.params.requestId) || ''))) failures.push(`${m.params.errorText} ${urls.get(m.params.requestId) || ''}`.trim());
   if (m.method === 'Runtime.exceptionThrown') thrown.push(m.params.exceptionDetails.text || 'exception');
 });
 const ev = async (e) => {
@@ -185,6 +249,7 @@ const ev = async (e) => {
 };
 
 let checks = 0; const findings = []; let seenObjects = 0; let cssBackdrops = 0; let cssMasks = 0; let fontsAsked = 0;
+let tilesDrawn = 0; let tracksDecoded = 0;
 // Every object url each screen asked for, with the tier that screen must show.
 const askedBy = [];
 for (const [name, query, ready, viewport] of SCREENS) {
@@ -195,7 +260,8 @@ for (const [name, query, ready, viewport] of SCREENS) {
   screenLog = [];
   // The document this navigation makes: requests are kept by its loaderId, so
   // a late request from the screen before cannot be counted as this one's.
-  const { loaderId } = await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/AshenSpire.html${query}` }, S);
+  const pageUrl = FILE_MODE ? `${DIR_URL}AshenSpire.html${query}` : `http://localhost:${server.port}/AshenSpire.html${query}`;
+  const { loaderId } = await cdp.send('Page.navigate', { url: pageUrl }, S);
   const t0 = Date.now(); let up = false;
   while (Date.now() - t0 < 20000) { if (await ev(ready).catch(() => false)) { up = true; break; } await wait(200); }
   await wait(1200);
@@ -260,8 +326,32 @@ for (const [name, query, ready, viewport] of SCREENS) {
     cssBackdrops += bgs.length; cssMasks += masks.length;
     cssNote = `; css ${bgs.length} backdrop(s) from objects, ${masks.length} inline mask(s), ${css.loaded}/${css.faces} lore faces`;
   }
+  let tileNote = '';
+  if (PINNED_TIER && /map$/.test(name)) {
+    // THE MAP TILES (step 3c), on the phone's map and the desktop's: the
+    // detail layer must reach `ready`, every tile it drew must be a common
+    // object that is a map-detail tile (the tiles are common ids, so the same
+    // objects serve either art tier), and each must decode.
+    const tiles = await ev(`(async () => {
+      const t0 = Date.now();
+      const port = () => document.querySelector('[data-detail-state]');
+      while (Date.now() - t0 < 15000 && port()?.dataset.detailState !== 'ready') await new Promise((r) => setTimeout(r, 200));
+      const hrefs = [...document.querySelectorAll('.map-detail-tiles image')].map((i) => i.getAttribute('href') || '');
+      const decoded = await Promise.all(hrefs.map((h) => new Promise((done) => {
+        const img = new Image(); img.src = h; img.decode().then(() => done(img.naturalWidth > 0), () => done(false)); })));
+      return { state: port()?.dataset.detailState || '', hrefs, decoded };
+    })()`);
+    checks++;
+    if (tiles.state !== 'ready' || !tiles.hrefs.length) findings.push(`${name}: the detail tiles did not draw (state ${tiles.state || 'none'}, ${tiles.hrefs.length} tile(s))`);
+    checks++;
+    for (const h of tiles.hrefs) if (!commonIds(h).some((id) => id.startsWith('map-detail/'))) findings.push(`${name}: a detail tile is not a common map-detail object — ${h.slice(-80)}`);
+    checks++;
+    tiles.decoded.forEach((ok, i) => { if (!ok) findings.push(`${name}: a detail tile did not decode — ${tiles.hrefs[i].slice(-80)}`); });
+    tilesDrawn += tiles.decoded.filter(Boolean).length;
+    tileNote = `; ${tiles.decoded.filter(Boolean).length}/${tiles.hrefs.length} detail tile(s) from common objects decoded`;
+  }
   for (const u of new Set(screenLog.filter(([id]) => id === loaderId).map(([, u]) => u))) if (objectPathOf(u)) askedBy.push([u, wantTier, name]);
-  console.log(`  ${name.padEnd(7)} mounted, ${art.imgs} image(s), ${art.objects} from objects/, ${art.broken.length} broken${PINNED_TIER ? `, built-in art ${art.tier || 'none'}` : ''}${cssNote}`);
+  console.log(`  ${name.padEnd(7)} mounted, ${art.imgs} image(s), ${art.objects} from objects/, ${art.broken.length} broken${PINNED_TIER ? `, built-in art ${art.tier || 'none'}` : ''}${cssNote}${tileNote}`);
 }
 if (PINNED_TIER) {
   // Across the screens: some backdrop and some mask came through, and every
@@ -279,9 +369,64 @@ if (PINNED_TIER) {
   if (off.length) findings.push(`${off.length} requested object(s) are not their screen's tier or common: ${off.slice(0, 3).map(([u, tier, name]) => `${name} ${u.slice(-40)} (${wrongTier(u, tier)})`).join(', ')}`);
   checks++;
   const fonts = asked.filter((u) => /\.woff2$/.test(u));
-  if (!fonts.length) findings.push('the page fetched no font from objects/');
-  for (const u of fonts) if (!PACK_OF.get(objectPathOf(u))?.has('common')) findings.push(`a font came from outside the common pack: ${u.slice(-80)}`);
-  fontsAsked = fonts.length;
+  if (FILE_MODE) {
+    // file://: the faces are FontFace objects from the sidecar (each screen's
+    // lore check above proves they loaded); a font object fetched would be a
+    // load Chrome refuses from a file:// page.
+    if (fonts.length) findings.push(`--file: the page asked for ${fonts.length} font object(s) by url(), which Chrome refuses under file:// — ${fonts[0].slice(-60)}`);
+    checks++;
+    const sidecar = [...new Set(urls.values())].filter((u) => /^packs\/fonts-[0-9a-f]{12}\.js$/.test(u));
+    if (!sidecar.length) findings.push('--file: the font sidecar (packs/fonts-….js) was never loaded');
+    fontsAsked = sidecar.length;
+  } else {
+    if (!fonts.length) findings.push('the page fetched no font from objects/');
+    for (const u of fonts) if (!PACK_OF.get(objectPathOf(u))?.has('common')) findings.push(`a font came from outside the common pack: ${u.slice(-80)}`);
+    fontsAsked = fonts.length;
+  }
+  if (FILE_MODE) {
+    // The indexes through their .js twins, never a .json fetch.
+    checks++;
+    const all = [...new Set(urls.values())];
+    const json = all.filter((u) => /^packs\/.+\.json$/.test(u));
+    if (json.length) findings.push(`--file: ${json.length} .json index request(s), which a file:// page cannot fetch — ${json[0]}`);
+    checks++;
+    const twins = all.filter((u) => /^packs\/(?:light|high|common)-[0-9a-f]{12}\.js$/.test(u));
+    if (!twins.some((u) => u.startsWith('packs/common-')) || !twins.some((u) => !u.startsWith('packs/common-'))) findings.push(`--file: the art and common indexes were not read from their .js twins (twins asked for: ${twins.join(', ') || 'none'})`);
+  }
+}
+if (PINNED_TIER && FILE_MODE) {
+  // THE SCORE UNDER file:// (step 4, §3.9): it stays synthesized. Nothing may
+  // ask for the manifest, a track (object or bare path) or the music/ folder;
+  // a map-detail/ path is never bare either.
+  const asked = [...new Set(urls.values())];
+  checks++;
+  const bare = asked.filter((u) => /^(?:music|map-detail)\//.test(u));
+  if (bare.length) findings.push(`${bare.length} request(s) named a bare music/ or map-detail/ path, not an object: ${bare.slice(0, 3).join(', ')}`);
+  checks++;
+  const music = asked.filter((u) => commonIds(u).some((id) => id.startsWith('music/')));
+  if (music.length) findings.push(`--file: ${music.length} music object(s) asked for; under file:// the score stays synthesized — ${music[0].slice(-60)}`);
+} else if (PINNED_TIER) {
+  // THE SCORE (step 3c): the manifest and some track came from the common
+  // pack's objects, nothing asked for the old music/ or map-detail/ folders,
+  // and every track asked for decodes as audio (decoded in the page, on the
+  // last screen, from the same object url).
+  const asked = [...new Set(urls.values())];
+  checks++;
+  const bare = asked.filter((u) => /^(?:music|map-detail)\//.test(u));
+  if (bare.length) findings.push(`${bare.length} request(s) named a bare music/ or map-detail/ path, not an object: ${bare.slice(0, 3).join(', ')}`);
+  checks++;
+  if (!asked.some((u) => commonIds(u).includes('music/manifest.json'))) findings.push('the page did not request music/manifest.json from the common pack');
+  const trackUrls = asked.filter((u) => commonIds(u).some((id) => /^music\/.+\.mp3$/.test(id)));
+  checks++;
+  if (!trackUrls.length) findings.push('the page requested no music track from the common pack');
+  const decodedTracks = await ev(`Promise.all(${JSON.stringify(trackUrls.map((u) => '/' + u))}.map(async (u) => {
+    try { const buf = await (await fetch(u)).arrayBuffer(); const a = await new OfflineAudioContext(1, 1, 44100).decodeAudioData(buf); return [u, a.duration > 0]; }
+    catch { return [u, false]; } }))`);
+  for (const [u, ok] of decodedTracks) {
+    checks++;
+    if (ok) tracksDecoded++;
+    else findings.push(`a music track did not decode — ${u.slice(-80)}`);
+  }
 }
 if (PINNED_TIER) {
   // At least one screen drew pack art: a build whose screens all happened to
@@ -294,12 +439,13 @@ if (failures.length) findings.push(`${failures.length} failed request(s): ${[...
 checks++;
 if (thrown.length) findings.push(`${thrown.length} uncaught exception(s): ${thrown.slice(0, 2).join(' | ')}`);
 
-await close(); server.server.close();
+await close(); server?.server.close();
 for (const f of findings) console.log('  RED ' + f);
 if (findings.length) { console.log(`external-play: RED — ${findings.length} finding(s) over ${checks} checks`); process.exit(1); }
 // Same grammar rule as verify-external: the verdict line ends at the count, or
 // tools/verdict.mjs reads the whole thing as prose and calls the run silent.
-console.log(`  ${SCREENS.length} screens mounted from ${relative(ROOT, DIR)}; 0 broken images; 0 failed requests${PINNED_TIER ? `; ${seenObjects} images from objects/ (light on the phone, ${EXPECT_TIER} on the desktop); ${cssBackdrops} CSS backdrop(s) and ${fontsAsked} font(s) from objects, ${cssMasks} inline mask(s)` : ''}.`);
+console.log(`  ${SCREENS.length} screens mounted from ${relative(ROOT, DIR)}${FILE_MODE ? ' by file:// URL' : ''}; 0 broken images; 0 failed requests${PINNED_TIER ? `; ${seenObjects} images from objects/ (light on the phone, ${EXPECT_TIER} on the desktop); ${cssBackdrops} CSS backdrop(s) and ${FILE_MODE ? `the faces from ${fontsAsked} font sidecar` : `${fontsAsked} font(s) from objects`}, ${cssMasks} inline mask(s); ${tilesDrawn} map tile(s)${FILE_MODE ? ' from common objects, decoded; the score synthesized' : ` and ${tracksDecoded} track(s) from common objects, decoded`}` : ''}.`);
 console.log(`external-play: OK — ${checks} checks passed`);
 console.log('BOUNDARY: seven screens and the network. No run was played, and a screen that');
-console.log('          mounts with the WRONG art passes this.');
+console.log('          mounts with the WRONG art passes this; a track that decodes is not');
+console.log('          proven to be heard, and only the tiles the map screens show are drawn.');

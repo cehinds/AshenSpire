@@ -899,13 +899,22 @@ function applyDisplaySettings(settings) {
   scheduleCardFits(document.querySelectorAll('.card'));
   // Re-point external music only when the folder actually changed (avoids
   // re-fetching the manifest on every unrelated settings tweak). Blank means the
-  // score shipped beside the page (content/music.js SHIPPED_MUSIC_FOLDER) when
+  // shipped score (content/music.js SHIPPED_MUSIC_FOLDER: the common pack's
+  // objects in the web edition, the music/ folder beside a single file) when
   // served over http(s); a file:// page cannot fetch it and keeps the synth.
+  // That holds for a double-clicked web edition too (docs/EXTERNAL-ASSETS-PLAN.md
+  // §3.9, step 4): its art, tiles and fonts load from the objects beside it,
+  // but Web Audio cannot play a file: track (a CORS-mode load Chrome refuses,
+  // or silence without one), so the score stays synthesized there.
   const served = /^https?:$/.test(globalThis.location?.protocol || '');
   const folder = settings.musicFolder || (served ? SHIPPED_MUSIC_FOLDER : '');
-  if (folder !== lastMusicFolder) {
-    lastMusicFolder = folder;
-    bootMusic.apply(folder);
+  // Only the shipped score is read through the asset index; a folder the
+  // player typed is fetched by its literal path, even one spelled `music/`.
+  const indexed = !settings.musicFolder && served;
+  const musicKey = `${indexed ? 'shipped' : 'custom'}:${folder}`;
+  if (musicKey !== lastMusicFolder) {
+    lastMusicFolder = musicKey;
+    bootMusic.apply(folder, { indexed });
   }
   // THE WIREFRAME CHOICES (Settings → Advanced → Wireframes). One word per
   // choice on the root, read by the modal shell, the kit's category navigation,
@@ -3985,5 +3994,7 @@ const dropBootLine = bootLine(app);
 // The boot load asks for the tier Art quality names (Auto decides from the
 // layout applyUiScale has already written); a switch later re-points the
 // images on screen the same way the first load does.
-onTierArrived(builtInArtArrived);
+// A tier switch re-points the images on screen and, when the boot load had
+// failed, lets the shipped score be read through the new source.
+onTierArrived((map) => { builtInArtArrived(map); bootMusic.sourceArrived(); });
 whenBuiltInArtReady(() => bootMusic.firstScreen(() => { dropBootLine(); showFirstScreen(); }), { onSource: builtInArtArrived, tier: requestedTier(activeSettings) });

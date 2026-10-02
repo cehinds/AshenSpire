@@ -120,8 +120,17 @@ turns each backdrop `url()` into `var(--as-css-<id>, none)` defined there, and
 inlines the two SVG masks as `data:`; the loader fills the slots from the index it
 used (light when high failed) and injects one `<style data-asset-css>`, and a
 failed load injects nothing (no backdrop, system faces; `tests/asset-css.test.mjs`).
+The map-detail tiles and the shipped score follow the common index too (step
+3c): `mapDetail.js` loads each tile as an image of
+`assetUrl('map-detail/<hash>/<edge>/<x>-<y>.webp')` and `audio.js` reads
+`music/manifest.json` and its tracks through `assetUrl()`, so the web edition
+carries no `map-detail/` or `music/` folder; a single file served over http(s)
+and the source tree still read those folders beside the page
+(`tests/music-tiles-index.test.mjs`).
 `node tools/verify-external.mjs` checks the tree on disk (D: every `ASSET_CSS`
-slot names an id the common index or every art tier lists) and
+slot names an id the common index or every art tier lists; E: the common index
+lists every tile and track, and no `map-detail/` or `music/` copy is beside the
+HTML) and
 `node tools/external-play.mjs` loads it in Chromium (`--expect-tier light` for a
 high-default build whose high index was removed). The single files are
 unchanged: their `ASSET_PACKS` stays null and the loader does nothing.
@@ -967,6 +976,14 @@ With no flag it bundles the full art from `assets/`; `--light` reads the
 `assets-mobile/` twins (the dev/test tier), `--mobile` writes the budgeted
 `AshenSpire-mobile.html`, and `--external-art` leaves the art beside the HTML
 in the pack shape (`asset-base.json`, `packs/`, `objects/`; see *Run & test*).
+That folder plays by double-click too, as long as it stays together
+(docs/EXTERNAL-ASSETS-PLAN.md step 4): under `file://` the loader reads each
+index from its `.js` twin through a `<script>` tag and checks the string
+against the same pin, adds the "AS Lore" faces from the font sidecar as
+`FontFace` objects (Chrome refuses a `file://` page's `@font-face` url()
+loads), and draws sprites, backdrops and map tiles from the objects beside
+the HTML; the score stays synthesized, as for any `file://` page.
+`node tools/external-play.mjs --file` opens it that way in Chromium.
 `node tools/launch.mjs --build-only` picks the flags for you (see *Run & test*).
 The file is a local build output, ignored by git on `dev`: of the build's own
 outputs, commit only `buildordinal.json` (and the generated changelog module).
@@ -1020,8 +1037,17 @@ runs/class on 2026-09-24, under the live rules (plan A1, simulator parity): Reav
 Frostbite is not on this list: it is CUT (SPEC §4.4, which carries the
 falsifier), not deferred.
 
-1. **Warrior's Vow** enters Gorefire instead of "a stance of your choice" —
-   a generic choose-one UI primitive is an M2/M3 feature.
+None open.
+
+Resolved: **Warrior's Vow** enters a stance of your choice, solo and in co-op.
+Its `enterStance` effect carries `choose: 'classStance'` instead of a fixed
+`stance`; `cardChoicePlan` (engine/combat.js, and engine/coopCombat.js for a
+seat) offers every stance row whose `class` is the player's class (the card's
+own class when the player's owns none, `model/cardChoices.js`), the play intent
+answers it with `choice`, and a play without a legal choice is refused before
+anything is spent. Solo and co-op screens ask through one dialog
+(`ui/components/cardChoiceModal.js`); bots take the first option
+(`tests/warriors-vow.test.mjs`).
 
 Resolved: **Goreblood** no longer freezes Bleed as well as Poise. Bleed
 thresholds are constant by design (#61), so `meterMaxGrowthDisabled` binds
@@ -1090,6 +1116,12 @@ reach the audio engine through the `audio` option `main.js` passes to
 `mountPrologue`; the settings preview passes none and keeps what is playing.
 Deliberate quiet is the `quiet` bed (`src/content/music.js`), never `stopMusic()` —
 the engine remembers the context it is in.
+
+With `captionFixedHeight` on (caption or letterbox layout), the screen sets every
+scene's words at one size: the largest, never above `textScale`, at which the
+longest caption in the opening fits the band, measured in a hidden copy of the
+caption and again on every resize. Under 12 on-screen pixels of dialogue it stops
+shrinking and the band scrolls (a phone on its side at a short band height).
 
 The controls are the FRAME's, not the caption's: a band (`.prologue-bar`) that
 is the last grid row of every wireframe, so text that floats does not take

@@ -125,7 +125,7 @@ export const PROLOGUE_STAGE_FIELDS = Object.freeze([
     note: 'How much of the motif colour lies over the painting. A dark plate wants less.' },
   { key: 'textPosition', topic: 'Text', label: 'Text position', type: 'choice',
     choices: Object.fromEntries(PROLOGUE_TEXT_POSITIONS.map((id) => [id, id.split('-').map((word, index) => (index ? word : word[0].toUpperCase() + word.slice(1))).join(' ')])),
-    note: 'Where the words sit. Floating positions need a wireframe that puts text over the art.' },
+    note: 'Where the words sit. Floating positions need a wireframe that puts text over the art; in a fixed-height caption band, Middle centres the words in the band.' },
   { key: 'textAlign', topic: 'Text', label: 'Text alignment', type: 'choice', choices: { left: 'Left', center: 'Centred', right: 'Right' } },
   { key: 'textScale', topic: 'Text', label: 'Text size', min: .6, max: 2, step: .05,
     note: 'Multiplies every line in the caption, title and speaker together.' },

@@ -42,22 +42,34 @@
 //      common index lists or EVERY pinned art tier lists (so the high → light
 //      fallback can fill it), and every `var(--as-css-…)` a stylesheet reads is
 //      one a template rule defines, and the other way round
+//   E  the music and the map tiles go through the index (step 3c): the common
+//      index lists `music/manifest.json`, every track that manifest (read from
+//      its object) names under `music/`, and every map-detail tile the map can
+//      ask for (each MAP_ART source, each level, every tile, built with the
+//      same tileId() and visibleTiles() the page uses); and no map-detail/ or
+//      music/ folder sits beside the HTML, where it would quietly serve what
+//      the index misses
 //
 // WHAT IT DOES NOT CHECK, and the boundary matters as much as the checks:
 // paths built at RUNTIME (`assets/equipment/weapon_${id}.webp`) are not
 // enumerable from this source — that is the whole reason src/ui/assetmap.js
 // exists. C covers them only in the sense that the index lists every id the
 // manifest has, so any id that resolved in the source tree resolves here too.
-// map-detail/ and music/ are still copies beside the HTML until step 3c, and
-// are not checked here. Nothing here loads the page or plays the game; that is
-// tools/external-play.mjs.
+// E proves the common index LISTS the tiles and tracks; C proves each listed
+// object is present and correct. Nothing here loads the page, plays a track or
+// draws a tile; that is tools/external-play.mjs.
 import { readFileSync, existsSync, rmSync, cpSync, mkdtempSync, writeFileSync, unlinkSync, readdirSync, mkdirSync } from 'node:fs';
 import { resolve, dirname, relative, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { createHash } from 'node:crypto';
-import { verifyPacks, PACKS, objectPath } from './asset-pack.mjs';
+import { verifyPacks, PACKS, objectPath, indexText } from './asset-pack.mjs';
 import { slotIds, VAR_PREFIX } from './asset-css.mjs';
+import { unmappedFaceDescriptors } from '../src/ui/assetPacks.js';
+import { MAP_ART } from '../src/content/mapArt.generated.js';
+import { visibleTiles } from '../src/ui/models/MapDetailModel.js';
+import { tileId } from '../src/ui/components/mapDetail.js';
+import { SHIPPED_MUSIC_FOLDER } from '../src/content/music.js';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ARGV = process.argv.slice(2);
@@ -99,6 +111,25 @@ function readPin(text) {
 
 // The object name is asset-pack's own: one home, so the two cannot drift.
 const objectOf = (id, sha) => objectPath(sha, id);
+
+/** Every map-detail tile id the page can ask for: each source, each level, the whole painting. */
+function mapTileIds(mapArt = MAP_ART) {
+  const ids = [];
+  for (const art of Object.values(mapArt)) for (const level of art.levels) {
+    for (const tile of visibleTiles(level, { x0: 0, y0: 0, x1: 1, y1: 1 })) ids.push(tileId(art.assetHash, tile.key));
+  }
+  return ids;
+}
+
+/** The track ids a music manifest names: relative entries under the shipped folder (audio.js configureMusic). */
+function musicTrackIds(manifest, folder = SHIPPED_MUSIC_FOLDER) {
+  const ids = [];
+  for (const [key, list] of Object.entries(manifest || {})) {
+    if (key.startsWith('_') || !Array.isArray(list)) continue;
+    for (const f of list) if (typeof f === 'string' && !/^(https?:)?\/\//.test(f) && !f.startsWith('/')) ids.push(`${folder}/${f}`);
+  }
+  return ids;
+}
 
 function verify(outDir) {
   const findings = [];
@@ -213,6 +244,11 @@ function verify(outDir) {
         findings.push(`ASSET_CSS carries a rule that is neither a backdrop variable nor an @font-face: ${String(rule).slice(0, 60)}`);
       }
     }
+    // file:// (step 4) builds each face as a FontFace from its rule: a
+    // descriptor FACE_DESCRIPTORS does not map would make that door declare a
+    // different face than the @font-face rule over http(s).
+    checks++;
+    for (const d of unmappedFaceDescriptors(css)) findings.push(`an ASSET_CSS @font-face carries ${d}, which the file:// FontFace would drop — map it in FACE_DESCRIPTORS (src/ui/assetPacks.js)`);
     const used = new Set([...styles.matchAll(VAR_USE)].map((m) => m[1]));
     for (const name of used) {
       checks++;
@@ -223,11 +259,47 @@ function verify(outDir) {
       if (!used.has(name)) findings.push(`ASSET_CSS defines ${name}, which no stylesheet reads`);
     }
   }
-  return { findings, checks, objects, packs: pinned };
+
+  // E — the music and the map tiles go through the common index (step 3c)
+  for (const dir of ['map-detail', SHIPPED_MUSIC_FOLDER]) {
+    checks++;
+    if (existsSync(resolve(outDir, dir))) findings.push(`a ${dir}/ folder sits beside the HTML — the web edition reads ${dir === 'map-detail' ? 'its tiles' : 'its score'} through the common index, and a copy would quietly serve what the index misses`);
+  }
+  let tiles = 0, tracks = 0;
+  const common = idsOf.common;
+  if (common) {
+    const tileIds = mapTileIds();
+    checks++;
+    if (!tileIds.length) findings.push('MAP_ART names no map-detail tile — nothing for this check to compare');
+    const lost = tileIds.filter((id) => !common.has(id));
+    checks += tileIds.length;
+    if (lost.length) findings.push(`the common index lists ${tileIds.length - lost.length} of the ${tileIds.length} map-detail tiles the map can ask for; missing ${lost.slice(0, 3).join(', ')}`);
+    tiles = tileIds.length - lost.length;
+    const manifestId = `${SHIPPED_MUSIC_FOLDER}/manifest.json`;
+    checks++;
+    let musicManifest = null;
+    try {
+      const entries = JSON.parse(readFileSync(resolve(outDir, String(pin.packs.common.index)), 'utf8'));
+      if (entries[manifestId]) musicManifest = JSON.parse(readFileSync(resolve(outDir, objectOf(manifestId, entries[manifestId][0])), 'utf8'));
+    } catch { musicManifest = null; }
+    if (!common.has(manifestId)) findings.push(`the common index does not list ${manifestId} — the shipped score cannot load`);
+    else if (!musicManifest) findings.push(`${manifestId}'s object is missing or is not JSON`);
+    else {
+      const trackIds = musicTrackIds(musicManifest);
+      checks++;
+      if (!trackIds.length) findings.push(`${manifestId} names no track`);
+      for (const id of trackIds) {
+        checks++;
+        if (!common.has(id)) findings.push(`${manifestId} names ${id}, which the common index does not list`);
+        else tracks++;
+      }
+    }
+  }
+  return { findings, checks, objects, packs: pinned, tiles, tracks };
 }
 
 if (!SELFTEST) {
-  const { findings, checks, objects, packs } = verify(OUT);
+  const { findings, checks, objects, packs, tiles, tracks } = verify(OUT);
   for (const f of findings) console.log('  RED ' + f);
   if (findings.length) {
     console.log(`verify-external: RED — ${findings.length} finding(s) over ${checks} check(s) in ${relative(ROOT, OUT) || '.'}`);
@@ -238,12 +310,11 @@ if (!SELFTEST) {
   // passed (…)` read as prose, so an exit-0 run reported SILENCE and the CI
   // step failed with "a tool that checked nothing and a tool that found
   // nothing are the same green". The detail belongs on the line above.
-  console.log(`  ${packs.join(', ')} packs pinned and present; ${objects} objects listed, each present and named by its bytes.`);
+  console.log(`  ${packs.join(', ')} packs pinned and present; ${objects} objects listed, each present and named by its bytes; ${tiles} map tiles and ${tracks} tracks listed by the common index.`);
   console.log(`verify-external: OK — ${checks} checks passed`);
   console.log('BOUNDARY: files on disk only. Runtime-built paths are covered only insofar as every');
   console.log('          manifest id is in its index; a path that was already wrong is still wrong;');
-  console.log('          map-detail/ and music/ are unchecked copies until step 3c; and nothing here');
-  console.log('          loaded the page or played the game.');
+  console.log('          and nothing here loaded the page, drew a tile, played a track or played the game.');
   process.exit(0);
 }
 
@@ -277,18 +348,21 @@ const strayObject = () => {
   const sha = sha256(Buffer.from('stray'));
   return resolve(d, `objects/${sha.slice(0, 2)}/${sha}.webp`);
 };
-const plant = (name, touches, mutate) => {
+// `expect`, when given, must match a finding: a plant that some OTHER check
+// happens to catch (a re-pinned index also disagrees with the manifest) has
+// not shown that the check it was written for can fail.
+const plant = (name, touches, mutate, expect = null) => {
   const files = touches();
   const saved = files.map((f) => [f, existsSync(f) ? readFileSync(f) : null]);
   try {
     mutate(...files);
     const { findings } = verify(d);
-    const red = findings.length > 0;
+    const red = expect ? findings.some((f) => expect.test(f)) : findings.length > 0;
     console.log(`  ${red ? 'caught' : 'MISSED'}  ${name}`);
     red ? pass++ : fail++;
   } finally {
     for (const [f, bytes] of saved) {
-      if (bytes === null) rmSync(f, { force: true });
+      if (bytes === null) rmSync(f, { recursive: true, force: true });
       else { mkdirSync(dirname(f), { recursive: true }); writeFileSync(f, bytes); }
     }
   }
@@ -333,8 +407,39 @@ plant('an ASSET_CSS slot naming an id no index lists', () => [html],
 plant('a stylesheet reading a backdrop variable no ASSET_CSS rule defines', () => [html],
   (f) => edit(f, /(<style data-src="[^"]*">[\s\S]*?)var\(--as-css-([A-Za-z0-9_-]+)/, (_, head, name) => `${head}var(--as-css-planted-${name}`));
 plant('no ASSET_CSS template', () => [html], (f) => edit(f, CSS_PIN, 'const ASSET_CSS = null;\n'));
+plant('an ASSET_CSS @font-face with a descriptor the file:// FontFace would drop', () => [html],
+  (f) => edit(f, /@font-face \{ /, '@font-face { font-palette:light; '), /which the file:\/\/ FontFace would drop/);
 plant('an injected ASSET_MAP — the wrong shape shipped', () => [html],
   (f) => edit(f, /ASSET_MAP = \{\}/g, 'ASSET_MAP = {"assets/x.webp":"data:image/webp;base64,AAAA"}'));
+// E — the music and the tiles (step 3c).
+plant('a map-detail/ copy left beside the HTML', () => [resolve(d, 'map-detail')], (f) => {
+  mkdirSync(join(f, 'x'), { recursive: true });
+  writeFileSync(join(f, 'x', 'tile.webp'), 'old');
+}, /a map-detail\/ folder sits beside the HTML/);
+plant('a music/ copy left beside the HTML', () => [resolve(d, SHIPPED_MUSIC_FOLDER)], (f) => {
+  mkdirSync(f, { recursive: true });
+  writeFileSync(join(f, 'manifest.json'), '{}');
+}, /a music\/ folder sits beside the HTML/);
+// Drop ids from the common index and re-pin it, so A still passes and the
+// finding has to come from E.
+const dropFromCommon = (match) => (htmlFile, indexFile) => {
+  const pin = pinOf();
+  const entries = JSON.parse(readFileSync(indexFile, 'utf8'));
+  const victim = Object.keys(entries).find(match);
+  if (!victim) throw new Error('nothing to drop');
+  delete entries[victim];
+  const text = indexText(entries);
+  writeFileSync(indexFile, text);
+  const sizes = new Map(Object.values(entries).map((row) => [row[0], row[1]]));
+  const common = { ...pin.packs.common, sha256: sha256(Buffer.from(text)), ids: Object.keys(entries).length, objects: sizes.size, bytes: [...sizes.values()].reduce((a, b) => a + b, 0) };
+  edit(htmlFile, PIN, () => `const ASSET_PACKS = ${JSON.stringify({ ...pin, packs: { ...pin.packs, common } })};\n`);
+};
+plant('a common index missing one tile the map can ask for', () => [html, indexOf('common')],
+  dropFromCommon((id) => id.startsWith('map-detail/')), /map-detail tiles the map can ask for/);
+plant('a common index missing one track the score names', () => [html, indexOf('common')],
+  dropFromCommon((id) => /^music\/.+\.mp3$/.test(id)), /which the common index does not list/);
+plant('a common index without the music manifest', () => [html, indexOf('common')],
+  dropFromCommon((id) => id === `${SHIPPED_MUSIC_FOLDER}/manifest.json`), /the shipped score cannot load/);
 // Every plant was undone: the copy must be green again, or a restore leaked
 // into the plants after it.
 baseline('restored baseline');

@@ -223,8 +223,9 @@ jobs:
           # launch.mjs already wrote the web edition to build/web with this
           # job's tier (light on dev/test, full on release/main): AshenSpire.html
           # plus the pack shape (asset-base.json, packs/, objects/ —
-          # docs/EXTERNAL-ASSETS-PLAN.md step 3a) and the map-detail/ and music/
-          # copies. It is copied here as built, not rebuilt.
+          # docs/EXTERNAL-ASSETS-PLAN.md step 3a); its map tiles and score are
+          # common-pack objects since step 3c, so no map-detail/ or music/
+          # folder comes with it. It is copied here as built, not rebuilt.
           cp -r build/web/. preview/
           cp preview/AshenSpire.html preview/index.html
           # THE WORKBENCH IS A SUB-FOLDER, SO THE GAME HAS NO assets/ BESIDE IT.
@@ -415,6 +416,14 @@ jobs:
           node tools/bundle.mjs --external-art $WEB_TIER --out build/web
           node tools/verdict.mjs -- node tools/external-play.mjs --dir build/web
 
+      # THE SAME BUILD BY DOUBLE-CLICK (docs/EXTERNAL-ASSETS-PLAN.md step 4).
+      # Opened by its file:// URL, no server and no flag that loosens Chrome's
+      # file:// rules: the indexes through their .js twins, the faces through
+      # the font sidecar, the sprites, backdrops and map tiles from the objects
+      # beside the HTML, the masks inline, and the score synthesized. About 30 s.
+      - name: The de-inlined build plays by double-click (file://)
+        run: node tools/verdict.mjs -- node tools/external-play.mjs --file --dir build/web
+
       # THE PAGES SERVICE WORKER (docs/EXTERNAL-ASSETS-PLAN.md step 6b). The web
       # edition above, published into a local copy of the Pages shape (the shared
       # store, asset-base.json, /AshenSpire/sw.js) and served under /AshenSpire/:
@@ -432,7 +441,8 @@ jobs:
       # high-default edition is built here (about 12 s); on release and main the
       # build above already is one. The copy is hard links, then the pinned high
       # index (and its .js twin) is removed — the 404 is the plant, which
-      # external-play --expect-tier names and filters.
+      # external-play --expect-tier names and filters. Run twice: over http, and
+      # by file:// (step 4), where the missing twin is the plant.
       - name: A high-default build with its high index removed falls back to light, CSS included
         run: |
           if [ "$(echo $WEB_TIER)" = "--light" ]; then
@@ -446,6 +456,7 @@ jobs:
           ls build/web-nohigh/packs/high-*.json >/dev/null
           rm build/web-nohigh/packs/high-*.json build/web-nohigh/packs/high-*.js
           node tools/verdict.mjs -- node tools/external-play.mjs --dir build/web-nohigh --expect-tier light
+          node tools/verdict.mjs -- node tools/external-play.mjs --file --dir build/web-nohigh --expect-tier light
 
       - name: Hand-side placement reaches the correct rendered side
         run: node tools/verdict.mjs -- node tools/hand-side-probe.mjs
