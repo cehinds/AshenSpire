@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the balance report now measures Mana and each act's difficulty",
     "detail": "Nothing you play changes. The run simulator can now compare whole climbs with and without Mana limits, and report how often each act's boss falls in each region. Both results are written into the balance notes for the owner to tune from later.",
-    "build": "0.7.1.768",
+    "build": "0.7.1.769",
     "pullRequest": 1473,
     "url": "https://github.com/cehinds/AshenSpire/pull/1473"
+  },
+  {
+    "id": "pr-1480",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Save the game as a folder you can unzip",
+    "detail": "Download & saves now offers a folder copy of a newer build as one zip, beside the single-file download: unzip it, keep the folder together and double-click the game file inside to play offline with the light art. The game checks every file against the published build as it adds it, and saves nothing if one does not match.",
+    "build": "0.7.1.768",
+    "pullRequest": 1480,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1480"
   },
   {
     "id": "pr-1463",
