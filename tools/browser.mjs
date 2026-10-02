@@ -558,7 +558,10 @@ export function isPackShaped(htmlPath) {
  */
 export function serveDir(dir, { port = 0, host = '127.0.0.1', prefix = '' } = {}) {
   const mount = prefix ? `/${String(prefix).replace(/^\/+|\/+$/g, '')}` : '';
-  const rootReal = realpathSync(resolve(dir));
+  // The NATIVE realpath, as each file's below (fs/promises realpath is native):
+  // the JS realpathSync() keeps a Windows 8.3 short name (C:\Users\RUNNER~1)
+  // that the native one expands, and no file would then be inside its folder.
+  const rootReal = realpathSync.native(resolve(dir));
   const inside = (p) => p === rootReal || p.startsWith(rootReal.endsWith(sep) ? rootReal : rootReal + sep);
   const server = createServer(async (req, res) => {
     try {

@@ -35,6 +35,18 @@ const slowBrowser = (delayS) => {
   return { bin, done: () => rmSync(dir, { recursive: true, force: true }) };
 };
 
+// A stand-in browser that exits 0 at once. Written here rather than pointing at
+// /bin/true: macOS has no /bin/true (it is /usr/bin/true), so there the spawn
+// failed ENOENT before the exit handler this test is about could run (ci.yml
+// run 36981774214, tests (macos-latest)).
+const deadBrowser = () => {
+  const dir = mkdtempSync(join(tmpdir(), 'blf-'));
+  const bin = join(dir, 'dead-chrome.sh');
+  writeFileSync(bin, '#!/bin/sh\nexit 0\n');
+  chmodSync(bin, 0o755);
+  return { bin, done: () => rmSync(dir, { recursive: true, force: true }) };
+};
+
 test('the floor is a named constant, overridable by env, never above a caller who asks for more', async () => {
   assert.equal(LAUNCH_FLOOR_ENV, 'ASHEN_BROWSER_LAUNCH_MS');
   assert.ok(Number.isInteger(LAUNCH_FLOOR_MS) && LAUNCH_FLOOR_MS > 12000, `floor ${LAUNCH_FLOOR_MS} must exceed the 12000 ms the tools pass`);
@@ -70,13 +82,16 @@ test('a slow endpoint is waited out under the floor, and times out without it', 
   } finally { fake.done(); }
 });
 
-test('a dead browser still fails fast under the default floor', { skip: !POSIX && 'needs /bin/true' }, async () => {
-  await withEnv(undefined, async () => {
-    const t0 = Date.now();
-    await assert.rejects(
-      launchBrowser({ prefix: 'blf-', browser: '/bin/true', timeoutMs: 12000, pinTmp: false }),
-      /exited \(code 0/,
-    );
-    assert.ok(Date.now() - t0 < 5000, `took ${Date.now() - t0} ms; the exit handler, not the floor, must end it`);
-  });
+test('a dead browser still fails fast under the default floor', { skip: !POSIX && 'needs a POSIX sh' }, async () => {
+  const dead = deadBrowser();
+  try {
+    await withEnv(undefined, async () => {
+      const t0 = Date.now();
+      await assert.rejects(
+        launchBrowser({ prefix: 'blf-', browser: dead.bin, timeoutMs: 12000, pinTmp: false }),
+        /exited \(code 0/,
+      );
+      assert.ok(Date.now() - t0 < 5000, `took ${Date.now() - t0} ms; the exit handler, not the floor, must end it`);
+    });
+  } finally { dead.done(); }
 });

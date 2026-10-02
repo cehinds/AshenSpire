@@ -10,7 +10,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { dirname, join } from 'node:path';
+import { dirname, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildChannel, debugEnabled } from '../src/ui/buildChannel.js';
 
@@ -48,4 +48,43 @@ test('an /unknown/ path is a channel only on this machine', () => {
   // Pages keeps its four channels: /unknown/ there is just the site's tree.
   assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/unknown/1/'), 'standalone file'), 'main');
   assert.equal(buildChannel(at('http://localhost:8080/unknown/latest/AshenSpire.html'), 'standalone file'), 'unknown');
+});
+
+// THE WINDOWS RED (ci.yml run 36981774214, tests (windows-latest)): every check
+// that serves a body answered 403. The runner's TMPDIR is an 8.3 short name
+// (C:\Users\RUNNER~1\...). The JS realpathSync() does not expand short names;
+// the native realpath (fs/promises, realpathSync.native) does. serveDir took the
+// folder's real path from one and each file's from the other, so no file was
+// ever "inside" its own folder. Linux has no short names, so this simulates one:
+// SHORT~1 is an alias of the folder, which the JS realpathSync leaves as typed
+// (as Windows does) while the native realpath resolves it to the long name.
+test('serveDir serves a folder named by an alias the JS realpathSync keeps (Windows 8.3 short names)', async () => {
+  const fs = (await import('node:fs')).default;
+  const { syncBuiltinESMExports } = await import('node:module');
+  const { mkdtempSync, mkdirSync, writeFileSync, symlinkSync, rmSync } = fs;
+  const { tmpdir } = await import('node:os');
+  const td = fs.realpathSync.native(mkdtempSync(join(tmpdir(), 'bsv83-')));
+  const long = join(td, 'runneradmin');
+  const short = join(td, 'RUNNER~1');
+  mkdirSync(long);
+  writeFileSync(join(long, 'AshenSpire.html'), 'served');
+  symlinkSync(long, short, 'dir');
+  const jsRealpathSync = fs.realpathSync;
+  const shortName = (p) => (p === short || p.startsWith(short + sep) ? p : jsRealpathSync(p));
+  shortName.native = jsRealpathSync.native;
+  fs.realpathSync = shortName;
+  syncBuiltinESMExports();
+  try {
+    const { serveDir } = await import('../tools/browser.mjs');
+    const s = await serveDir(short, { prefix: 'unknown/latest' });
+    try {
+      const res = await fetch(s.url('AshenSpire.html'));
+      assert.equal(res.status, 200, 'the folder\'s own file is refused: root and file real paths came from two realpath implementations');
+      assert.equal(await res.text(), 'served');
+    } finally { await s.close(); }
+  } finally {
+    fs.realpathSync = jsRealpathSync;
+    syncBuiltinESMExports();
+    rmSync(td, { recursive: true, force: true });
+  }
 });
