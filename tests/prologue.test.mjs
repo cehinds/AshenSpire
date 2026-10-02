@@ -850,7 +850,8 @@ test('the words sit centred in the fixed band, and a short landscape screen give
   // On a short landscape screen the caption layout is a side panel: no band height, no fit.
   assert.match(css, /@media\(max-height:500px\) and \(orientation:landscape\)\{[^@]*\.prologue-fixed-caption\.prologue-layout-caption \.prologue-caption\{height:auto\}/);
   const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
-  assert.match(screen, /stage\.layout === 'caption' && !shortLandscape\.matches/);
+  assert.match(screen, /stage\.layout === 'caption' && !\(shortLandscape\.matches && !root\.closest\('\.pse-phone'\)\)/, 'the editor phone preview keeps its fitted band');
+  assert.match(css, /\.pse-phone \.prologue-fixed-caption\.prologue-layout-caption \.prologue-caption\{height:calc\(var\(--prologue-caption-vh,18\) \* 1cqh\)\}/);
   assert.match(screen, /if \(currentStage\?\.captionFixedHeight !== true\) return;/, 'a rotation into the panel lets go of the fitted size');
   assert.match(screen, /if \(key !== seen\) \{ seen = key; refit\(\); \}/, 'an unmeasured panel is not re-staged on every callback');
 });

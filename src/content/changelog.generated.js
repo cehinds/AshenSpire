@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The opening's words sit in the middle of the caption band",
     "detail": "The narration is now centred top to bottom in the fixed caption band, not pinned to its top. On a phone turned on its side, where the words sit in a panel beside the painting, the panel now fills its whole column instead of a thin strip at the top.",
-    "build": "0.7.1.755",
+    "build": "0.7.1.756",
     "pullRequest": 1445,
     "url": "https://github.com/cehinds/AshenSpire/pull/1445"
   },

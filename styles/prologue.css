@@ -183,6 +183,8 @@
   /* Here the caption is a side panel, not a band: a fixed band height would
      leave it a strip at the top of an empty column. It fills the panel. */
   .prologue-fixed-caption.prologue-layout-caption .prologue-caption{height:auto}
+  /* The editor's phone preview stays one column in any window, so it keeps the band. */
+  .pse-phone .prologue-fixed-caption.prologue-layout-caption .prologue-caption{height:calc(var(--prologue-caption-vh,18) * 1cqh)}
 }
 /* A scene with no painting is a text card: the backdrop, and the words. */
 .prologue-plate-bare{background:#100e0c}

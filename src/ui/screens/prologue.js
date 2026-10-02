@@ -131,10 +131,10 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   let currentStage = null, fit = 1, fitKey = '';
   // On a short landscape screen the caption layout is a side panel (the
   // stylesheet's max-height:500px fallback): it fills its column, so there is
-  // no band to fit.
+  // no band to fit. The editor's phone preview stays one column in any window.
   const shortLandscape = matchMedia('(max-height:500px) and (orientation:landscape)');
   const fixedCaption = stage => stage.captionFixedHeight === true
-    && (stage.layout === 'letterbox' || (stage.layout === 'caption' && !shortLandscape.matches));
+    && (stage.layout === 'letterbox' || (stage.layout === 'caption' && !(shortLandscape.matches && !root.closest('.pse-phone'))));
   function measureFit() {
     const scenes = order.map(index => config.scenes[index])
       .map((scene, at) => ({at, stage: prologueStaging(config,scene), copy: prologueCopy(scene,config,{classId,name:run.customization?.name || 'Forsaken',location:destination.name})}))
