@@ -137,12 +137,14 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     if (!scenes.length) return 1;
     // The probe stands in a hidden copy of the FRAME, so each scene's wireframe
     // classes (the box, which takes the side padding and the border with it)
-    // reach it the way they reach the real caption.
+    // reach it the way they reach the real caption. The copy is the frame's
+    // SIBLING, the same size, not its child: inside it, the live scene's own
+    // classes would reach the probe too.
     const frame = el('div',{class:root.className,'aria-hidden':'true'});
-    Object.assign(frame.style,{position:'absolute',inset:'0',height:'auto',minHeight:'0',visibility:'hidden',pointerEvents:'none',zIndex:'-1'});
+    Object.assign(frame.style,{position:'fixed',left:'0',top:'0',width:`${root.offsetWidth}px`,height:`${root.offsetHeight}px`,minHeight:'0',visibility:'hidden',pointerEvents:'none',zIndex:'-1'});
     const probe = caption.cloneNode(true);
     frame.append(probe);
-    root.append(frame);
+    root.after(frame);
     const [t,sp,d,l,pr] = ['.prologue-title','.prologue-speaker','.prologue-dialogue','.prologue-location','.prologue-progress'].map(selector => probe.querySelector(selector));
     const fits = factor => scenes.every(({stage,copy}) => {
       // Each scene in its OWN staging: a scene may keep a taller band, more
