@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: a flask check that had stopped working runs again",
     "detail": "Nothing you play changes. A check makes sure flasks on the map offer the same choices as flasks in a fight. It had stopped looking at the Potions button you use on the map, and nothing ran it, so it failed without anyone noticing. It now follows that Potions button to the choices each flask offers, and the test suite runs it on every change.",
-    "build": "0.7.1.748",
+    "build": "0.7.1.749",
     "pullRequest": 1447,
     "url": "https://github.com/cehinds/AshenSpire/pull/1447"
+  },
+  {
+    "id": "pr-1454",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition's music and map detail follow its art packs",
+    "detail": "Behind the scenes: the served web edition now finds its recorded score and the sharp map close-ups through the same checked list as its art, instead of from folders copied beside it. When that list does not load, the game plays its built-in generated score and shows the softer map, as it does for any missing file. The downloadable single file is unchanged. Nothing you play changes.",
+    "build": "0.7.1.748",
+    "pullRequest": 1454,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1454"
   },
   {
     "id": "pr-1457",

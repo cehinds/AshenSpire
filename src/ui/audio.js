@@ -577,6 +577,7 @@ export function initAudio(settings = {}) {
 
   /**
    * configureMusic({ folder }) — point the engine at a folder/URL of music.
+   * `indexed` (the shipped score only) resolves those paths as asset ids.
    * Fetches `<folder>/manifest.json` mapping context → [file paths], e.g.
    *   { "combat": ["combat/track1.mp3", "combat/track2.mp3"], "boss": [...] }
    * Relative entries resolve against the folder; each context then plays a
@@ -588,7 +589,7 @@ export function initAudio(settings = {}) {
   // boot-time shipped folder landing after the player typed their own) is
   // dropped rather than overwriting the newer choice.
   let musicConfigTicket = 0;
-  async function configureMusic({ folder } = {}) {
+  async function configureMusic({ folder, indexed = false } = {}) {
     const ticket = ++musicConfigTicket;
     state.folder = folder || '';
     state.tracks = {};
@@ -596,13 +597,24 @@ export function initAudio(settings = {}) {
     if (folder) {
       try {
         const base = String(folder).replace(/\/+$/, '');
-        const res = await fetch(`${base}/manifest.json`);
+        // THROUGH THE INDEX (docs/EXTERNAL-ASSETS-PLAN.md §3.9, step 3c), FOR
+        // THE SHIPPED SCORE ONLY. `indexed` is set by main.js when the Custom
+        // music folder is blank and the page plays the score it ships: its
+        // paths are asset ids (`music/manifest.json`,
+        // `music/<context>/<track>.mp3`; content/music.js
+        // SHIPPED_MUSIC_FOLDER is the prefix), which the web edition resolves
+        // to the common pack's objects, and a single file or the source tree
+        // passes through as the same path. A folder the PLAYER typed is
+        // always fetched by its literal path, even when it is spelled `music/`
+        // (music/README.md's own example): it names their files, not ours.
+        const at = indexed ? assetUrl : (path) => path;
+        const res = await fetch(at(`${base}/manifest.json`));
         if (res.ok) {
           const m = await res.json();
           for (const key of MUSIC_CONTEXTS) {
             const list = m[key];
             if (Array.isArray(list) && list.length) {
-              tracks[key] = list.map((f) => (/^(https?:)?\/\//.test(f) || f.startsWith('/') ? f : `${base}/${f}`));
+              tracks[key] = list.map((f) => (/^(https?:)?\/\//.test(f) || f.startsWith('/') ? f : at(`${base}/${f}`)));
             }
           }
         }
