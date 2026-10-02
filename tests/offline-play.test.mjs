@@ -52,7 +52,7 @@ test('backup failure happens before live storage is touched', () => {
 });
 test('download metadata pins the exact released file and derives version and filename', () => {
   const result = releasedDownload({ branch: 'main', ordinal: 42, version: '0.6.0', bytes: 500 }, 'https://example.org/game/main/latest/build.json');
-  assert.deepEqual(result, { version: '0.6.0.42', bytes: 500, filename: 'AshenSpire-main-0.6.0.42.html', url: 'https://example.org/game/main/42/index.html' });
+  assert.deepEqual(result, { version: '0.6.0.42', bytes: 500, sha256: null, filename: 'AshenSpire-main-0.6.0.42.html', url: 'https://example.org/game/main/42/index.html' });
   assert.throws(() => releasedDownload({ branch: 'dev', ordinal: 42, version: '0.6.0', bytes: 500 }));
   assert.throws(() => releasedDownload({ branch: 'main', ordinal: '../bad', version: '0.6.0', bytes: 500 }));
 });
