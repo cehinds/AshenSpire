@@ -1553,7 +1553,12 @@ export function rowModified(settings, row, promoted = buildPromotion()) {
   }
   const def = rowDefault(row, promoted);
   if (row.type === 'number' && typeof stored === 'number' && typeof def === 'number') return Math.abs(stored - def) > 1e-9;
-  return stored !== def;
+  // A choice row reads an older build's stored word through `legacyChoices`
+  // before drawing (renderRow), so it is compared the same way: a profile
+  // still on the old spelling of the default is not "changed" (Codex, #1489).
+  const current = row.type === 'choice' && row.legacyChoices && Object.hasOwn(row.legacyChoices, stored)
+    ? row.legacyChoices[stored] : stored;
+  return current !== def;
 }
 
 function resetButtonHtml(settings, r) {

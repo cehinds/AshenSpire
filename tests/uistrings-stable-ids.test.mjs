@@ -31,7 +31,7 @@ reword('lore.face.inter', 'Display capitals');
 
 const { WIREFRAME_CHOICE_GROUPS } = await import('../src/ui/models/WireframeChoiceModel.js');
 const { advancedSubgroups } = await import('../src/ui/models/AdvancedSettingsGroups.js');
-const { categoryHandler, storedAdvancedTopic } = await import('../src/ui/screens/settings.js');
+const { categoryHandler, storedAdvancedTopic, rowModified } = await import('../src/ui/screens/settings.js');
 const { LORE_FACES, LORE_TYPE_DEFAULTS, resolveLoreType } = await import('../src/ui/models/LoreTypeModel.js');
 
 test('the rewording took: the models read the edited rows', () => {
@@ -86,4 +86,15 @@ test('the Typeface row offers ids, shows the reworded labels, and reads dev-era 
   assert.equal(row.choiceLabels.fell, 'Fell Type (reworded)');
   assert.equal(row.choiceLabels.inter, 'Display capitals');
   assert.equal(row.legacyChoices['EB Garamond'], 'garamond');
+});
+
+test('a dev-era stored face label counts as modified only when it names a face other than the default', () => {
+  // Codex, #1489: rowModified compared the raw stored label to the id default,
+  // so a profile still on dev's default ('IM Fell English') showed Reset and
+  // appeared in the Changed view although nothing had changed.
+  const row = categoryHandler('Advanced').rows.find((entry) => entry.key === 'loreFace');
+  assert.equal(rowModified({ loreFace: 'IM Fell English' }, row, {}), false, 'the dev-era default label reads as modified');
+  assert.equal(rowModified({ loreFace: 'fell' }, row, {}), false);
+  assert.equal(rowModified({ loreFace: 'EB Garamond' }, row, {}), true, 'a dev-era non-default label reads as unchanged');
+  assert.equal(rowModified({ loreFace: 'garamond' }, row, {}), true);
 });
