@@ -96,6 +96,22 @@ let retrying = false; // a Retry (step 5) is running
 // The Retry in flight, from the press until it settles (queued or loading):
 // one at a time, shared by the title's notice and Settings (Codex on #1471).
 let retryInFlight = null;
+// The load the queue is running now (a switch or a Retry) and its round. A
+// newer round aborts it at once, so a Retry stalled on its 60 s deadline does
+// not hold back the switch the player made after it (Codex on #1471): its
+// requests are aborted and it settles as superseded (null).
+let inFlight = null; // { round, controller }
+function startInFlight(mine) {
+  const controller = typeof AbortController === 'function' ? new AbortController() : null;
+  inFlight = { round: mine, controller };
+  return controller?.signal || null;
+}
+function supersedeInFlight() {
+  if (inFlight && inFlight.round !== round) {
+    try { inFlight.controller?.abort(); } catch { /* settled */ }
+    inFlight = null;
+  }
+}
 
 /**
  * True from a Retry's press until it settles. Every Retry control reads this
@@ -204,6 +220,7 @@ export function applyArtTier(settings, opts = {}) {
   if (choice === lastChoice) { showTierStatus(settings); return Promise.resolve(null); }
   lastChoice = choice;
   const mine = ++round;
+  supersedeInFlight();
   queue = queue.then(async () => {
     if (mine !== round) return null;
     // Decided here, in the queued job, not when the setting changed: a batch
@@ -218,7 +235,7 @@ export function applyArtTier(settings, opts = {}) {
     showTierStatus(settings);
     try {
       const result = await loadBuiltInPacks({
-        ...opts.load, pin, tier: want, keepOnFail: true, stillWanted: () => mine === round,
+        ...opts.load, pin, tier: want, keepOnFail: true, stillWanted: () => mine === round, signal: startInFlight(mine),
         onSource: (map) => { if (onArrived) try { onArrived(map); } catch { /* a listener must not fail the switch */ } },
       });
       if (result.superseded) return null;
@@ -257,6 +274,7 @@ export function retryBuiltInArt(settings = lastSettings, opts = {}) {
   if (settings) lastSettings = settings;
   lastChoice = artQualityChoice(lastSettings);
   const mine = ++round;
+  supersedeInFlight();
   queue = queue.then(async () => {
     if (mine !== round) return null;
     const want = requestedTier(lastSettings, { defaultTier: pin.tier, ...(opts.env || {}) });
@@ -267,7 +285,7 @@ export function retryBuiltInArt(settings = lastSettings, opts = {}) {
       // Its own deadline (RETRY_WAIT_MS, content/config), not the boot's: the
       // title stays usable meanwhile, and a slow link needs the time.
       const result = await loadBuiltInPacks({
-        deadlineMs: RETRY_WAIT_MS, ...opts.load, pin, tier: want, keepOnFail: true, stillWanted: () => mine === round,
+        deadlineMs: RETRY_WAIT_MS, ...opts.load, pin, tier: want, keepOnFail: true, stillWanted: () => mine === round, signal: startInFlight(mine),
         onSource: (map) => { if (onArrived) try { onArrived(map); } catch { /* a listener must not fail the retry */ } },
       });
       if (result.superseded) return null;
@@ -296,6 +314,7 @@ export function resetArtTier() {
   switching = false;
   retrying = false;
   retryInFlight = null;
+  inFlight = null;
   queue = Promise.resolve();
   round = 0;
   onArrived = null;

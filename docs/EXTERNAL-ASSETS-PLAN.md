@@ -1098,7 +1098,10 @@ the step 3a boot wait (2026-10-02):
 - **Retry** (`retryBuiltInArt` in `src/ui/artTier.js`) loads the tier the
   setting asks for through the same queue as a tier switch, so the 8c rules
   hold: it supersedes a switch still waiting, a switch made after it
-  supersedes it (`stillWanted`), and it keeps the art on screen when it fails
+  supersedes it (`stillWanted`; the newer round also aborts the requests of
+  the load in flight through its `signal`, so a Retry stalled on its 60 s
+  deadline settles as superseded at once and the switch starts; review of
+  #1471), and it keeps the art on screen when it fails
   (`keepOnFail`). A map that loads goes through `onTierArrived`: the images on
   screen are re-pointed, the shipped score is applied again (3c's
   `musicHold().sourceArrived()`), `ART_SOURCE_EVENT` makes the map tiles ask

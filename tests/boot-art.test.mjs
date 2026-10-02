@@ -484,3 +484,32 @@ test('a Retry that loads mid-run redraws the active screen’s art in place (Cod
   assert.match(combat, /document\.addEventListener\(ART_REDRAW_EVENT, redrawArt\);/);
   assert.match(combat, /document\.removeEventListener\(ART_REDRAW_EVENT, redrawArt\);/, 'released with the combat');
 });
+
+test('a tier change during a stalled Retry aborts it and starts at once (Codex on #1471)', async () => {
+  fresh();
+  const tree = packTree('high');
+  const settings = { [ART_QUALITY_KEY]: ART_AUTO };
+  const opts = { pin: tree.pin, inlineMap: {}, load: { ...tree.load }, env: { doc: wide, nav: desktop } };
+  await applyArtTier(settings, opts);
+  tree.blocked.add('all');
+  await loadBuiltInPacks({ pin: tree.pin, ...tree.load, tier: 'high', deadlineMs: 200 });
+  tree.blocked.clear();
+  // A stalled link for the Retry: nothing answers until the request is aborted.
+  const aborted = [];
+  const stalled = (url, o) => new Promise((_, fail) => {
+    o?.signal?.addEventListener?.('abort', () => { aborted.push(url); fail(new Error('aborted')); });
+  });
+  const retry = retryBuiltInArt(settings, { ...opts, load: { ...tree.load, fetchImpl: stalled } });
+  await new Promise((r) => setTimeout(r, 30));
+  // The player chooses Light meanwhile, on a link that answers.
+  const t0 = Date.now();
+  const light = applyArtTier({ [ART_QUALITY_KEY]: ART_LIGHT }, opts);
+  assert.equal(await retry, null, 'the Retry settles as superseded (the notice reverts)');
+  const switched = await light;
+  const took = Date.now() - t0;
+  assert.equal(switched.state, 'loaded');
+  assert.equal(switched.tier, 'light');
+  assert.ok(took < 2000, `the switch started at once, not after the Retry's 60 s deadline (${took} ms)`);
+  assert.ok(aborted.length >= 1, 'the stalled requests were aborted');
+  assert.equal(tierOf(), 'light');
+});

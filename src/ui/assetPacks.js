@@ -456,6 +456,11 @@ export async function loadBuiltInPacks({
   css = ASSET_CSS, doc = globalThis.document,
   tier: askedTier = null, keepOnFail = false, stillWanted = null,
   scriptImpl = null, FontFaceImpl = globalThis.FontFace,
+  // An AbortSignal from the caller (a Retry or a tier switch the player has
+  // replaced, src/ui/artTier.js): every request in flight is aborted at once
+  // and the load settles as superseded, publishing nothing, rather than
+  // holding the queue for its whole deadline (Codex on #1471).
+  signal = null,
 } = {}) {
   if (!packsPinned(pin, inlineMap)) {
     status = { state: Object.keys(inlineMap || {}).length ? 'inline' : 'none', tier: null, requested: null, ids: 0, css: 0, failed: [] };
@@ -492,11 +497,22 @@ export async function loadBuiltInPacks({
     timers.push(setTimeout(() => { try { controller?.abort(); } catch { /* settled */ } settle(fallback); }, ms));
   });
   const TIMED_OUT = { timedOut: true };
+  const CUT = { cut: true };
+  let onCut = null;
+  const cut = new Promise((settle) => {
+    if (!signal) return;
+    onCut = () => { for (const c of controllers) try { c.abort(); } catch { /* settled */ } settle(CUT); };
+    if (signal.aborted) onCut(); else signal.addEventListener?.('abort', onCut, { once: true });
+  });
+  const superseded = () => { status = before; return { ...builtInArtStatus(), superseded: true }; };
+  const isCut = () => !!signal?.aborted;
   try {
+    if (isCut()) return superseded();
     const baseCtl = abortable();
     // A file:// page cannot fetch asset-base.json, and is the build's own
     // folder: packs/ and objects/ are beside it.
-    const base = viaFile ? './' : await Promise.race([readAssetBase({ fetchImpl, signal: baseCtl?.signal }), budget(Math.min(left(), Math.round(deadlineMs * BASE_SHARE)), baseCtl, './')]);
+    const base = viaFile ? './' : await Promise.race([readAssetBase({ fetchImpl, signal: baseCtl?.signal }), budget(Math.min(left(), Math.round(deadlineMs * BASE_SHARE)), baseCtl, './'), cut]);
+    if (base === CUT || isCut()) return superseded();
     // The common index, alongside the tiers; its failure is recorded, never fatal.
     let common = null;
     let commonDone = !pin.packs.common;
@@ -517,7 +533,9 @@ export async function loadBuiltInPacks({
       const got = await Promise.race([
         readIndex(candidate, { base, subtle, signal: ctl?.signal }).then((map) => ({ map }), (e) => ({ error: e })),
         budget(ms, ctl, TIMED_OUT),
+        cut,
       ]);
+      if (got === CUT || isCut()) return superseded();
       if (got.map) { art = got.map; tier = candidate; break; }
       failed.push(got === TIMED_OUT ? `${candidate}: the index did not load within ${ms} ms` : got.error.message);
     }
@@ -534,7 +552,8 @@ export async function loadBuiltInPacks({
     // A verified art map is kept whatever common does: common gets the time
     // left, and is left out if it is not there by then.
     if (!commonDone) {
-      const waited = await Promise.race([commonLoad.then(() => true), budget(left(), commonCtl, false)]);
+      const waited = await Promise.race([commonLoad.then(() => true), budget(left(), commonCtl, false), cut]);
+      if (waited === CUT || isCut()) return superseded();
       if (!waited) failed.push(`common: the index did not load within ${deadlineMs} ms; the art loads without it`);
     }
     const commonSha = pin.packs.common?.sha256;
@@ -546,7 +565,7 @@ export async function loadBuiltInPacks({
     const map = new Map(common || []);
     for (const [id, url] of art) map.set(id, url);
     // A tier switch the player has since replaced (stillWanted) publishes nothing.
-    if (typeof stillWanted === 'function' && !stillWanted()) { status = before; return { ...builtInArtStatus(), superseded: true }; }
+    if (isCut() || (typeof stillWanted === 'function' && !stillWanted())) return superseded();
     // file://: the faces, from the font sidecar, before the source is
     // published (within what is left of the deadline). Chrome refuses a
     // file:// page's @font-face url() loads, so those rules are left out of
@@ -557,7 +576,9 @@ export async function loadBuiltInPacks({
       const got = await Promise.race([
         loadFontSidecar(pin, common, { base, scriptImpl: loadScript, subtle, signal: fontCtl?.signal, css, doc, FontFaceImpl, stillWanted }),
         budget(left(), fontCtl, { faces: 0, failed: [`fonts: the sidecar did not load within ${deadlineMs} ms`] }),
+        cut,
       ]);
+      if (got === CUT || isCut()) return superseded();
       faces = got.faces;
       failed.push(...got.failed);
       // The sidecar was awaited: a switch the player replaced meanwhile still
@@ -575,6 +596,7 @@ export async function loadBuiltInPacks({
     if (typeof onSource === 'function') try { onSource(map); } catch { /* a listener must not fail the load */ }
     return builtInArtStatus();
   } finally {
+    if (onCut) signal?.removeEventListener?.('abort', onCut);
     for (const t of timers) clearTimeout(t);
     // Whatever is still in flight is not wanted: a late answer is never used.
     for (const c of controllers) try { c.abort(); } catch { /* settled */ }
