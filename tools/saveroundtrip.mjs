@@ -481,8 +481,8 @@ function assertPlayerValuesSurvive(old, run, retired, registries) {
   // re-minting permanently removed filler" — and the Dodge Roll every composed
   // deck carries. What that loadout lends is asked of the game's own composer
   // (reconcileGrantedCards over a copy of the run with its item-owned cards
-  // removed), and the adopted cards must be exactly that set — a card whose id
-  // merely agrees with its own grantedBy is not enough.
+  // removed), and the adopted cards must be exactly that set, each exactly
+  // once — a card whose id merely agrees with its own grantedBy is not enough.
   const oldDeck = Array.isArray(old.deck) ? old.deck : [];
   const newDeck = Array.isArray(run.deck) ? run.deck : [];
   const oldIds = new Set(oldDeck.map((card) => card.instanceId));
@@ -505,8 +505,16 @@ function assertPlayerValuesSurvive(old, run, retired, registries) {
   reconcileGrantedCards(registries, lent);
   const ownerKey = (card) => [card.instanceId, card.cardId, card.equipmentRole, card.kitRole || '', card.grantedBy || ''].join('/');
   const expected = new Map(lent.deck.filter((card) => !runOwnedIds.has(card.instanceId)).map((card) => [card.instanceId, ownerKey(card)]));
+  // Each lent card is adopted at most once: two copies of the same valid lent
+  // card would both match its expected entry, so multiplicity is checked too.
+  const adoptedSeen = new Set();
   for (const card of adopted) {
     fieldsCompared++;
+    if (adoptedSeen.has(card.instanceId)) {
+      problems.push(`deck: ${ownerKey(card)} was ADDED more than once (the loadout lends one card under that id)`);
+      continue;
+    }
+    adoptedSeen.add(card.instanceId);
     if (!isItemOwned(card) || expected.get(card.instanceId) !== ownerKey(card)) {
       problems.push(`deck: ${ownerKey(card)} was ADDED and is not a card the loaded loadout lends (expected ${expected.get(card.instanceId) || 'nothing under that id'})`);
     }
