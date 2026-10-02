@@ -86,17 +86,33 @@ async function serveGameFile(request) {
   const file = path.resolve(GAME_DIR, rel || GAME_ENTRY);
   // Nothing outside the game folder is ever served.
   if (!file.startsWith(GAME_DIR + path.sep)) return new Response('forbidden', { status: 403 });
-  try {
-    const data = await fs.promises.readFile(file);
-    return new Response(data, {
-      headers: {
-        'content-type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream',
-        'cache-control': 'no-cache',
-      },
+  let data;
+  try { data = await fs.promises.readFile(file); } catch { return new Response('not found', { status: 404 }); }
+  const headers = {
+    'content-type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream',
+    'cache-control': 'no-cache',
+    'accept-ranges': 'bytes',
+  };
+  // Byte ranges: <audio> needs them to seek, and a looping track seeks to 0 at
+  // its end (src/ui/audio.js); a plain 200 makes the media unseekable.
+  const range = /^bytes=(\d*)-(\d*)$/.exec(request.headers.get('range') || '');
+  if (range && (range[1] || range[2])) {
+    const size = data.length;
+    let start = range[1] ? Number(range[1]) : size - Number(range[2]);
+    let end = range[1] && range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
+    if (start < 0) start = 0;
+    if (start >= size || start > end) {
+      return new Response(null, { status: 416, headers: { ...headers, 'content-range': `bytes */${size}` } });
+    }
+    const part = data.subarray(start, end + 1);
+    return new Response(request.method === 'HEAD' ? null : part, {
+      status: 206,
+      headers: { ...headers, 'content-range': `bytes ${start}-${end}/${size}`, 'content-length': String(part.length) },
     });
-  } catch {
-    return new Response('not found', { status: 404 });
   }
+  return new Response(request.method === 'HEAD' ? null : data, {
+    headers: { ...headers, 'content-length': String(data.length) },
+  });
 }
 
 function serveGame() {

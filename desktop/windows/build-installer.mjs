@@ -50,7 +50,7 @@ const STAGE_ONLY = args.includes('--stage-only');
 function fail(msg) { console.error(`build-installer: ${msg}`); process.exit(1); }
 function run(cmd, argv, opts = {}) {
   console.log(`build-installer: ${cmd} ${argv.join(' ')}`);
-  const r = spawnSync(cmd, argv, { stdio: 'inherit', shell: process.platform === 'win32' && cmd === 'npx', ...opts });
+  const r = spawnSync(cmd, argv, { stdio: 'inherit', ...opts });
   if (r.error) fail(`${cmd}: ${r.error.message}`);
   if (r.status !== 0) fail(`${cmd} exited ${r.status}`);
 }
@@ -138,7 +138,15 @@ if (process.platform === 'win32') {
   packagerArgs.push('--win32metadata.CompanyName=cehinds', '--win32metadata.ProductName=Ashen Spire',
     '--win32metadata.FileDescription=Ashen Spire', '--win32metadata.OriginalFilename=AshenSpire.exe');
 }
-run('npx', packagerArgs, { cwd: ELECTRON });
+// npx through its JS entry, never a shell: on Windows `npx` is a .cmd that needs
+// cmd.exe, which would split the --ignore regexes at `|` and the metadata at spaces.
+const npxCli = [
+  join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npx-cli.js'),
+  join(dirname(process.execPath), '..', 'lib', 'node_modules', 'npm', 'bin', 'npx-cli.js'),
+].find(existsSync);
+if (npxCli) run(process.execPath, [npxCli, ...packagerArgs], { cwd: ELECTRON });
+else if (process.platform !== 'win32') run('npx', packagerArgs, { cwd: ELECTRON });
+else fail('npx-cli.js not found beside node.exe');
 const packaged = join(PKG_OUT, 'AshenSpire-win32-x64');
 if (!existsSync(join(packaged, 'AshenSpire.exe'))) fail(`no AshenSpire.exe in ${packaged}`);
 cpSync(packaged, APP, { recursive: true });

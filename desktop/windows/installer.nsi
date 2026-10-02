@@ -77,9 +77,26 @@ VIAddVersionKey "LegalCopyright" "MIT License"
 !insertmacro MUI_LANGUAGE "English"
 
 ; ---- the game ------------------------------------------------------------------
+; A running game holds its files open, and the section below deletes the old
+; version before it copies the new one: close it first, or stop before anything
+; is touched.
+!macro CloseRunningGame UN
+  nsExec::ExecToStack '"$SYSDIR\cmd.exe" /c tasklist /FI "IMAGENAME eq ${APP_EXE}" /NH | find /I "${APP_EXE}"'
+  Pop $0
+  Pop $1
+  ${If} $0 == 0
+    MessageBox MB_OKCANCEL|MB_ICONEXCLAMATION "${APP_NAME} is running. Click OK to close it and continue (your progress is saved as you play), or Cancel to stop." /SD IDOK IDOK close_${UN}
+      Abort
+    close_${UN}:
+    nsExec::Exec '"$SYSDIR\taskkill.exe" /F /IM ${APP_EXE}'
+    Pop $0
+    Sleep 1500
+  ${EndIf}
+!macroend
+
 Section "Ashen Spire (required)" SecGame
   SectionIn RO
-  AddSize ${BASE_SIZE_KB}
+  !insertmacro CloseRunningGame ""
 
   ; An upgrade: everything of the old version goes except game\objects\, whose
   ; files are named by their content (an unchanged high-res file is kept, so a
@@ -93,6 +110,9 @@ Section "Ashen Spire (required)" SecGame
   RMDir /r "$INSTDIR\locales"
 
   File /r "${APP_DIR}/*.*"
+
+  ; The desktop shortcut is the optional section's to make again.
+  Delete "$DESKTOP\${APP_NAME}.lnk"
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   CreateDirectory "$SMPROGRAMS\${APP_NAME}"
@@ -159,6 +179,7 @@ FunctionEnd
 
 ; ---- uninstall ---------------------------------------------------------------------
 Section "Uninstall"
+  !insertmacro CloseRunningGame "un"
   ; Exactly the files the installer wrote, then the folder only if it is empty:
   ; nothing the player put there is removed.
 !include "${UNINSTALL_LIST}"
