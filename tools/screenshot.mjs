@@ -14,7 +14,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
-import { readyExpression } from './shotReady.mjs';
+import { devtoolsClient, readyExpression } from './shotReady.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 
@@ -202,6 +202,8 @@ const READY_TIMEOUT_MS = ri >= 0 && Number(args[ri + 1]) > 0 ? Number(args[ri + 
 // must agree with it (captureReady).
 const si = args.indexOf('--settle-ms');
 const SETTLE_MS = si >= 0 && Number(args[si + 1]) >= 0 ? Number(args[si + 1]) : 500;
+// The longest one DevTools screenshot call may take once the art is ready.
+const SHOT_CALL_MS = 20000;
 
 const browser = BROWSERS.find((p) => existsSync(p)) || playwrightChromium();
 if (!browser) {
@@ -292,25 +294,24 @@ async function captureReady(shot) {
     const tab = tabs.find((t) => t.type === 'page');
     if (!tab) throw new Error('no page target');
     const socket = new WebSocket(tab.webSocketDebuggerUrl);
-    await new Promise((ok, no) => { socket.onopen = ok; socket.onerror = () => no(new Error('DevTools socket failed')); });
-    let id = 0;
-    const waiting = new Map();
-    socket.onmessage = (message) => {
-      const data = JSON.parse(message.data);
-      const pair = data.id != null && waiting.get(data.id);
-      if (!pair) return;
-      waiting.delete(data.id);
-      data.error ? pair.no(new Error(data.error.message)) : pair.ok(data.result);
-    };
-    const send = (method, params = {}) => new Promise((ok, no) => {
-      const next = ++id; waiting.set(next, { ok, no }); socket.send(JSON.stringify({ id: next, method, params }));
+    await new Promise((ok, no) => {
+      const timer = setTimeout(() => no(new Error('DevTools socket did not open in 20000 ms')), 20000);
+      socket.onopen = () => { clearTimeout(timer); ok(); };
+      socket.onerror = () => { clearTimeout(timer); no(new Error('DevTools socket failed')); };
     });
+    // Every call settles (tools/shotReady.mjs devtoolsClient): a reply, a
+    // dropped socket, or its time limit. Until the art is ready a call may take
+    // only the time left before the --ready-timeout deadline; each capture
+    // after that gets SHOT_CALL_MS. So a Chromium that exits or stalls mid-run
+    // fails this shot by name and still reaches the cleanup below.
+    const call = devtoolsClient(socket);
+    const deadline = Date.now() + READY_TIMEOUT_MS;
+    const send = (method, params = {}, ms = deadline - Date.now()) => call(method, params, ms);
     try {
       await send('Page.enable');
       await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
       const nav = await send('Page.navigate', { url: `http://localhost:${port}/${shot.query}` });
       if (nav.errorText) throw new Error(`navigation failed: ${nav.errorText}`);
-      const deadline = Date.now() + READY_TIMEOUT_MS;
       let state = null;
       while (Date.now() < deadline) {
         const r = await send('Runtime.evaluate', { expression: readyExpression(), awaitPromise: true, returnByValue: true });
@@ -334,7 +335,7 @@ async function captureReady(shot) {
       // byte-identical, 12 of 12 runs), so keep a frame only when a retake
       // SETTLE_MS later agrees with it, the same bar captureStable sets.
       const grab = async () => Buffer.from((await send('Page.captureScreenshot',
-        { format: 'png', fromSurface: true, captureBeyondViewport: false })).data, 'base64');
+        { format: 'png', fromSurface: true, captureBeyondViewport: false }, SHOT_CALL_MS)).data, 'base64');
       let frame = await grab();
       let agreed = false;
       for (let attempt = 1; attempt <= MAX_TRIES && !agreed; attempt++) {

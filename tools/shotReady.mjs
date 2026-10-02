@@ -22,12 +22,14 @@
  * An image counts as SHOWN when it has a src and is not display:none,
  * visibility:hidden or opacity:0 — hidden pose and state frames are skipped,
  * exactly the ones the game keeps parked for later.
+ * `shownImages` is the list of those shown elements, so readyExpression
+ * decodes exactly the images this check counted (one filter, not two).
  * @returns {{ ready: boolean, combatants: Array<{ eid: string, shown: number, drawn: number }>,
- *   pending: string[], broken: string[] }}
+ *   pending: string[], broken: string[], shownImages: object[] }}
  */
 export function combatantArt(doc = globalThis.document, view = globalThis.window) {
   const frames = [...doc.querySelectorAll('.combatant')];
-  const pending = [], broken = [];
+  const pending = [], broken = [], shownImages = [];
   const combatants = frames.map((frame) => {
     const eid = frame.dataset?.eid || '?';
     let shown = 0, drawn = 0;
@@ -37,6 +39,7 @@ export function combatantArt(doc = globalThis.document, view = globalThis.window
       const css = view.getComputedStyle(img);
       if (css.display === 'none' || css.visibility === 'hidden' || Number(css.opacity) === 0) continue;
       shown++;
+      shownImages.push(img);
       const label = `${eid}:${src.split('/').pop()}`;
       if (!img.complete) pending.push(label);
       else if (!(img.naturalWidth > 0)) broken.push(label);
@@ -46,7 +49,7 @@ export function combatantArt(doc = globalThis.document, view = globalThis.window
   });
   const ready = frames.length > 0 && !pending.length && !broken.length
     && combatants.every((c) => c.drawn > 0);
-  return { ready, combatants, pending, broken };
+  return { ready, combatants, pending, broken, shownImages };
 }
 
 /**
@@ -56,16 +59,51 @@ export function combatantArt(doc = globalThis.document, view = globalThis.window
 export function readyExpression() {
   return `(async () => {
     const combatantArt = ${combatantArt.toString()};
-    const state = combatantArt(document, window);
+    const { shownImages, ...state } = combatantArt(document, window);
     if (!state.ready) return state;
-    const shown = [...document.querySelectorAll('.combatant img')].filter((img) => {
-      const css = getComputedStyle(img);
-      return img.getAttribute('src') && css.display !== 'none' && css.visibility !== 'hidden' && Number(css.opacity) !== 0;
-    });
     const failed = [];
-    await Promise.all(shown.map((img) => img.decode().catch(() => failed.push(img.getAttribute('src').split('/').pop()))));
+    await Promise.all(shownImages.map((img) => img.decode().catch(() => failed.push(img.getAttribute('src').split('/').pop()))));
     // Two frames: one to commit the decoded images, one to paint them.
     await new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)));
     return failed.length ? { ...state, ready: false, broken: failed } : state;
   })()`;
+}
+
+/**
+ * A DevTools client over an open WebSocket in which every call settles.
+ * `send(method, params, timeoutMs)` resolves with the reply, rejects with the
+ * reply's error, rejects by name once `timeoutMs` passes with no reply, and
+ * rejects when the socket closes or errors, so a Chromium that exits mid-run
+ * cannot leave screenshot.mjs waiting forever short of its cleanup. The caller
+ * passes the time left before its own deadline (--ready-timeout).
+ */
+export function devtoolsClient(socket) {
+  let id = 0;
+  let gone = null;
+  const waiting = new Map();
+  const fail = (why) => {
+    gone ??= why;
+    for (const [key, pair] of waiting) { waiting.delete(key); pair.no(new Error(gone)); }
+  };
+  socket.onmessage = (message) => {
+    const data = JSON.parse(message.data);
+    const pair = data.id != null && waiting.get(data.id);
+    if (!pair) return;
+    waiting.delete(data.id);
+    data.error ? pair.no(new Error(data.error.message)) : pair.ok(data.result);
+  };
+  socket.onclose = () => fail('DevTools connection closed');
+  socket.onerror = () => fail('DevTools connection failed');
+  return (method, params = {}, timeoutMs) => new Promise((ok, no) => {
+    if (gone) { no(new Error(gone)); return; }
+    const next = ++id;
+    const limit = Math.max(1, Math.floor(timeoutMs));
+    const timer = setTimeout(() => {
+      waiting.delete(next);
+      no(new Error(`DevTools ${method} gave no reply in ${limit} ms`));
+    }, limit);
+    const settle = (fn) => (value) => { clearTimeout(timer); fn(value); };
+    waiting.set(next, { ok: settle(ok), no: settle(no) });
+    try { socket.send(JSON.stringify({ id: next, method, params })); } catch (e) { waiting.delete(next); settle(no)(e); }
+  });
 }
