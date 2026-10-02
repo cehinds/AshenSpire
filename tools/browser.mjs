@@ -82,7 +82,9 @@
 // budget to the measured ceiling, or measure `SingletonSocket` and the pinned
 // temp path separately and refuse on the longer one.
 //
-// SELFTEST: `node tools/browser.mjs --selftest` (needs CHROME). Eight
+// SELFTEST: `node tools/browser.mjs --selftest` (needs CHROME). First S, the
+// serve checks for `buildPageUrl`/`serveDir` (node only; `--serve-only` stops
+// there and needs no browser). Then eight
 // scenarios, each in its own private TMPDIR, each asserting the leftover SET.
 // The control is a clean run leaving nothing; the plants are a throw after
 // launch, SIGINT, SIGTERM, an early process.exit, a launch that never yields an
@@ -119,8 +121,10 @@
 //
 // BOUNDARY. Linux, headless Chromium 141, one box. Nothing here is measured on
 // Windows or macOS; `SIGKILL` and the socket budget are POSIX assumptions.
-// This file owns the PROFILE. It does not own the http server a caller starts,
-// the CDP socket, or any sandbox tree a tool copies — those are the caller's,
+// This file owns the PROFILE, and, since step 8d of EXTERNAL-ASSETS-PLAN, the
+// one helper that serves a built page (`buildPageUrl`, `serveDir`; see the
+// block above the selftest). It does not own any other http server a caller
+// starts, the CDP socket, or any sandbox tree a tool copies — those are the caller's,
 // and this launcher is silent about them. It also does not own BROWSER
 // RESOLUTION: `resolveBrowser()` is exported and is the single home available,
 // but the tools' candidate lists genuinely differ (CHROME vs CHROME_PATH, four
@@ -132,9 +136,11 @@
 
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { readFile, stat } from 'node:fs/promises';
+import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { basename, dirname, extname, join, resolve, sep } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 // A UNIX socket path is capped at 108 bytes and Chrome puts `SingletonSocket`
 // inside the profile. 90 leaves room for that name and for the mkdtemp suffix.
@@ -443,6 +449,119 @@ export async function launchBrowser({
 }
 
 // ---------------------------------------------------------------------------
+// OPENING A BUILT PAGE — `buildPageUrl()` and `serveDir()`
+// (docs/EXTERNAL-ASSETS-PLAN.md section 6, the `--dist` row; step 8d).
+//
+// Every tool that drives a built page (`dist/AshenSpire.html`,
+// `build/AshenSpire.html`, the root copy) asks here for the URL to open,
+// instead of writing `pathToFileURL(file).href` itself.
+//
+//   * A SELF-CONTAINED single file (today's inline builds, and the light single
+//     file the plan keeps) opens exactly as before: the answer IS
+//     `pathToFileURL(file).href`, byte for byte. Nothing those tools measure
+//     moves.
+//   * A PACK-SHAPED build (a `packs/` folder beside the HTML, written from step
+//     3a on) is served over local http from the HTML's own folder, because its
+//     indexes and objects arrive by `fetch`, which Chrome blocks under
+//     `file://`. The `.js` twins of step 4 make `file://` play too, but a tool
+//     measuring the game should see the loader's primary path.
+//
+// `ASHEN_BUILD_OVER=file|http|auto` (default `auto`) overrides the choice for a
+// run: `file` keeps the double-click door under every tool, `http` serves even
+// an inline file. The server is `unref()`ed, so it never keeps a tool alive,
+// and it serves only files under the folder it was given.
+//
+// BOUNDARY. A static GET/HEAD server for local tools, bound to 127.0.0.1. It
+// answers one byte range (`206`) for media, sends `no-cache`, and lists no
+// directories. It is not the dev server (`tools/serve.mjs` stamps the source
+// tree and carries LAN play) and not the Pages service worker.
+
+const SERVE_MIME = {
+  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
+  '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8', '.txt': 'text/plain; charset=utf-8',
+  '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif', '.webp': 'image/webp', '.avif': 'image/avif', '.ico': 'image/x-icon',
+  '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg', '.wav': 'audio/wav',
+  '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf',
+};
+
+/** True when the HTML is pack-shaped: a `packs/` folder stands beside it. */
+export function isPackShaped(htmlPath) {
+  try { return statSync(join(dirname(resolve(htmlPath)), 'packs')).isDirectory(); } catch { return false; }
+}
+
+/**
+ * Serve `dir` over http on 127.0.0.1 (an ephemeral port unless `port` is given).
+ * Resolves `{ server, port, origin, url(rel), close() }`; `url('a/b.html')` is
+ * the http URL of `dir/a/b.html`. The server is unref()ed.
+ */
+export function serveDir(dir, { port = 0, host = '127.0.0.1' } = {}) {
+  const root = resolve(dir);
+  const inside = (p) => p === root || p.startsWith(root.endsWith(sep) ? root : root + sep);
+  const server = createServer(async (req, res) => {
+    try {
+      if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405, { Allow: 'GET, HEAD' }); res.end(); return; }
+      let rel;
+      try { rel = decodeURIComponent(new URL(req.url || '/', 'http://x').pathname); } catch { res.writeHead(400); res.end(); return; }
+      let file = resolve(root, `.${rel}`);
+      if (!inside(file)) { res.writeHead(403); res.end('Forbidden'); return; }
+      let st = await stat(file).catch(() => null);
+      if (st && st.isDirectory()) { file = join(file, 'index.html'); st = await stat(file).catch(() => null); }
+      if (!st || !st.isFile()) { res.writeHead(404); res.end('Not found'); return; }
+      const headers = { 'Content-Type': SERVE_MIME[extname(file).toLowerCase()] || 'application/octet-stream',
+        'Cache-Control': 'no-cache', 'Accept-Ranges': 'bytes' };
+      const body = await readFile(file);
+      const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
+      if (range && (range[1] || range[2])) {
+        const start = range[1] ? Number(range[1]) : Math.max(0, body.length - Number(range[2]));
+        const end = range[1] && range[2] ? Math.min(Number(range[2]), body.length - 1) : body.length - 1;
+        if (start >= body.length || start > end) {
+          res.writeHead(416, { ...headers, 'Content-Range': `bytes */${body.length}` }); res.end(); return;
+        }
+        res.writeHead(206, { ...headers, 'Content-Range': `bytes ${start}-${end}/${body.length}`, 'Content-Length': end - start + 1 });
+        res.end(req.method === 'HEAD' ? undefined : body.subarray(start, end + 1));
+        return;
+      }
+      res.writeHead(200, { ...headers, 'Content-Length': body.length });
+      res.end(req.method === 'HEAD' ? undefined : body);
+    } catch {
+      res.writeHead(500); res.end('Server error');
+    }
+  });
+  return new Promise((done, fail) => {
+    server.once('error', fail);
+    // Neither the server nor a kept-alive connection may hold a tool open.
+    server.on('connection', (socket) => socket.unref());
+    server.listen(port, host, () => {
+      server.unref();
+      const p = server.address().port;
+      const origin = `http://${host}:${p}`;
+      const url = (rel = '') => `${origin}/${String(rel).split(/[\\/]/).map(encodeURIComponent).join('/')}`;
+      done({ server, port: p, origin, url, close: () => new Promise((r) => server.close(() => r())) });
+    });
+  });
+}
+
+// One server per folder per process: two pages of one build share it.
+const served = new Map();
+
+/**
+ * The URL a tool opens for a built page at `htmlPath`. See the block above:
+ * `file://` for a self-contained file (unchanged), local http for a pack-shaped
+ * build. `over` (or `ASHEN_BUILD_OVER`) forces `file` or `http`.
+ */
+export async function buildPageUrl(htmlPath, { over = process.env.ASHEN_BUILD_OVER || 'auto' } = {}) {
+  const file = resolve(htmlPath);
+  if (!['auto', 'file', 'http'].includes(over)) throw new Error(`browser: ASHEN_BUILD_OVER must be auto, file or http (got ${over})`);
+  const http = over === 'http' || (over === 'auto' && isPackShaped(file));
+  if (!http) return pathToFileURL(file).href;
+  const dir = dirname(file);
+  if (!served.has(dir)) served.set(dir, serveDir(dir));
+  return (await served.get(dir)).url(basename(file));
+}
+
+// ---------------------------------------------------------------------------
 // THE SELFTEST — every scenario in its own private TMPDIR, so the leftover set
 // is this run's BY CONSTRUCTION rather than by a set difference over shared /tmp.
 // ---------------------------------------------------------------------------
@@ -531,18 +650,89 @@ const SCENARIOS = [
   },
 ];
 
+// THE SERVE CHECKS — `buildPageUrl` and `serveDir`, in node alone (no browser).
+// Each one is a property a flipped tool leans on, and the plants are the ways it
+// would go wrong: an inline file that stopped opening as itself, a pack build
+// left on `file://`, a path that escapes the folder, a wrong byte range.
+async function serveChecks() {
+  const { mkdtempSync: mk, writeFileSync, mkdirSync, rmSync: rm } = await import('node:fs');
+  const td = mk(join(tmpdir(), 'vbsv-'));
+  const results = [];
+  const check = (ok, what) => { results.push([!!ok, what]); };
+  try {
+    mkdirSync(join(td, 'inline'));
+    mkdirSync(join(td, 'pack', 'packs'), { recursive: true });
+    mkdirSync(join(td, 'pack', 'objects', 'ab'), { recursive: true });
+    writeFileSync(join(td, 'secret.txt'), 'outside');
+    writeFileSync(join(td, 'inline', 'AshenSpire.html'), '<!doctype html><title>inline</title>');
+    writeFileSync(join(td, 'pack', 'AshenSpire.html'), '<!doctype html><title>pack</title>');
+    writeFileSync(join(td, 'pack', 'packs', 'light-000000000000.json'), '{"ids":{}}\n');
+    writeFileSync(join(td, 'pack', 'objects', 'ab', 'ab01.mp3'), Buffer.from('0123456789'));
+    const inline = join(td, 'inline', 'AshenSpire.html');
+    const pack = join(td, 'pack', 'AshenSpire.html');
+
+    check(await buildPageUrl(inline, { over: 'auto' }) === pathToFileURL(inline).href,
+      'an inline single file opens as pathToFileURL(file), unchanged');
+    check(!isPackShaped(inline) && isPackShaped(pack), 'a packs/ folder beside the HTML, and only that, marks the pack shape');
+    check(await buildPageUrl(pack, { over: 'file' }) === pathToFileURL(pack).href, 'over=file keeps a pack build on file://');
+    const u = await buildPageUrl(pack, { over: 'auto' });
+    check(/^http:\/\/127\.0\.0\.1:\d+\/AshenSpire\.html$/.test(u), `a pack build is served over http (${u})`);
+    check(await buildPageUrl(pack) === u, 'a second page of the same build reuses the server');
+    const httpInline = await buildPageUrl(inline, { over: 'http' });
+    check(/^http:/.test(httpInline) && (await (await fetch(httpInline)).text()).includes('inline'), 'over=http serves even an inline file');
+    let threw = false;
+    try { await buildPageUrl(inline, { over: 'ftp' }); } catch { threw = true; }
+    check(threw, 'an unknown over= value is refused by name');
+
+    const origin = new URL(u).origin;
+    const html = await fetch(u);
+    check(html.status === 200 && /text\/html/.test(html.headers.get('content-type')) && (await html.text()).includes('pack'), 'the HTML comes back 200 text/html');
+    const idx = await fetch(`${origin}/packs/light-000000000000.json`);
+    check(idx.status === 200 && (await idx.text()) === '{"ids":{}}\n', 'a pack index beside it is fetchable, byte for byte');
+    const part = await fetch(`${origin}/objects/ab/ab01.mp3`, { headers: { Range: 'bytes=2-5' } });
+    check(part.status === 206 && (await part.text()) === '2345' && part.headers.get('content-range') === 'bytes 2-5/10', 'a byte range answers 206 with those bytes');
+    const tail = await fetch(`${origin}/objects/ab/ab01.mp3`, { headers: { Range: 'bytes=-3' } });
+    check(tail.status === 206 && (await tail.text()) === '789', 'a suffix range answers the last bytes');
+    const past = await fetch(`${origin}/objects/ab/ab01.mp3`, { headers: { Range: 'bytes=40-' } });
+    check(past.status === 416, 'a range past the end answers 416');
+    // A raw request, because fetch() normalises `..` away before it is sent.
+    const { request } = await import('node:http');
+    const raw = (path) => new Promise((r) => {
+      const q = request({ host: '127.0.0.1', port: new URL(u).port, path }, (res) => { res.resume(); r(res.statusCode); });
+      q.on('error', () => r(0)); q.end();
+    });
+    const esc = [await raw('/../secret.txt'), await raw('/..%2fsecret.txt'), await raw('/%2e%2e/secret.txt')];
+    // `..` and `%2e%2e` are normalised inside the folder by the URL parser (404);
+    // only an encoded slash reaches the guard, which must answer 403.
+    check(esc.every((c) => c === 403 || c === 404) && esc[1] === 403, `a path outside the folder is never served (${esc.join(', ')})`);
+    const miss = await fetch(`${origin}/packs/nope.json`);
+    check(miss.status === 404, 'a missing file is 404');
+  } catch (e) {
+    check(false, `the serve checks threw: ${e.message}`);
+  } finally {
+    try { rm(td, { recursive: true, force: true }); } catch { /* tidying */ }
+  }
+  return results;
+}
+
 async function selftest() {
   const { mkdtempSync: mk, writeFileSync, rmSync: rm, mkdirSync } = await import('node:fs');
   const { spawnSync } = await import('node:child_process');
   const HERE = resolve(fileURLToPath(new URL('.', import.meta.url)));
   const BIN = resolveBrowser();
+  // The serve checks need no browser, so they run first and report on their own.
+  const sv = await serveChecks();
+  const svFail = sv.filter(([ok]) => !ok).length;
+  console.log(`${svFail ? 'FAIL' : 'PASS'}  S  buildPageUrl / serveDir (${sv.length} checks, no browser)`);
+  for (const [ok, what] of sv) console.log(`        ${ok ? 'ok  ' : 'RED '} ${what}`);
+  if (process.argv.includes('--serve-only')) process.exit(svFail ? 1 : 0);
   if (!BIN) { console.error('browser --selftest: no Chrome/Chromium found — set CHROME'); process.exit(2); }
   console.log(`browser --selftest — ${BIN}\n`);
 
   // A SHORT root, deliberately: /tmp/vb-XXXXXX keeps every profile path far
   // under PATH_BUDGET, which is the condition the tools run under.
   mkdirSync('/tmp/vbst', { recursive: true });
-  let pass = 0; let fail = 0; const unknown = [];
+  let pass = svFail ? 0 : 1; let fail = svFail ? 1 : 0; const unknown = [];
 
   for (const s of SCENARIOS) {
     const td = mk('/tmp/vbst/r');
@@ -623,7 +813,7 @@ async function selftest() {
   // and a clean sweep with nothing in it is not evidence of anything.
   if (pass + fail + unknown.length === 0) { console.error('\nbrowser --selftest: NOTHING RAN — this is not a pass'); process.exit(2); }
   console.log(`\nbrowser --selftest: ${fail ? `${fail} FAIL` : 'held'} — ${pass} PASS / ${fail} FAIL`
-    + `${unknown.length ? ` / ${unknown.length} UNKNOWN (${unknown.join('; ')})` : ''} over ${SCENARIOS.length} scenario(s)`);
+    + `${unknown.length ? ` / ${unknown.length} UNKNOWN (${unknown.join('; ')})` : ''} over ${SCENARIOS.length + 1} scenario(s) (the browser ones and S)`);
   console.log('  BOUNDARY: Linux, headless Chromium, one box, one process per scenario, each in its own');
   console.log('  private TMPDIR so a leftover is that run\'s BY CONSTRUCTION. Silent on Windows and macOS,');
   console.log('  on SIGKILL of the node process (nothing can run then — the profile stays, by design of');

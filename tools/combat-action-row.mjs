@@ -26,8 +26,8 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { launchBrowser } from './browser.mjs';
+import { fileURLToPath } from 'node:url';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -276,7 +276,7 @@ const PLAN_TOLERANCE_PX = 1;
 async function main() {
   const served = standalone ? null : await serve({ root: ROOT, port: 8321, open: false });
   const base = standalone
-    ? pathToFileURL(resolve(ROOT, 'AshenSpire.html')).href
+    ? await buildPageUrl(resolve(ROOT, 'AshenSpire.html'))
     : `http://localhost:${served.port}/index.html`;
   const browser = await launchBrowser({ prefix: 'action-row-', browser: browserPath, args: ['--disable-background-networking', '--disable-component-update'], timeoutMs: 15000 });
   const cdp = connectCdp(browser.wsUrl);

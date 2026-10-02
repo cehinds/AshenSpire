@@ -199,7 +199,7 @@
 // LINEAR scale is the one he meant, or about any screen that is not combat.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdirSync, mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -1275,7 +1275,7 @@ async function main() {
   }
   console.log('hudbars — does the HUD bar length track the maximum?\n');
   printArtifactProvenance(artifact, TREE);
-  const href = pathToFileURL(artifact).href;
+  const href = await buildPageUrl(artifact);
 
   if (flag('--model-scale')) { await printModelScale(); return; }
   if (flag('--falsifier')) { process.exit(await runFalsifier(href)); }

@@ -30,7 +30,7 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 import { printArtifactProvenance } from './artifact-provenance.mjs';
 
@@ -187,7 +187,7 @@ const READ = `(() => {
 async function main() {
   let base;
   let stopServer = () => {};
-  if (useDist) base = pathToFileURL(join(ROOT, 'dist/AshenSpire.html')).href;
+  if (useDist) base = await buildPageUrl(join(ROOT, 'dist/AshenSpire.html'));
   else {
     const served = await serve({ root: ROOT, port: Number(argOf('--port') || 8317), open: false });
     base = `http://127.0.0.1:${served.port}/index.html`;

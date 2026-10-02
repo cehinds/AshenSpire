@@ -911,6 +911,14 @@ The file is a local build output, ignored by git on `dev`: of the build's own
 outputs, commit only `buildordinal.json` (and the generated changelog module).
 Generated content and config modules are committed as usual.
 
+The browser tools that drive a built page (`--dist`, `--standalone`,
+`--artifact`, and `tapsize`/`hudbars`, which always read `dist/`) ask
+`buildPageUrl()` in `tools/browser.mjs` for the URL to open. A self-contained
+single file opens over `file://`, exactly as before; a pack-shaped build (a
+`packs/` folder beside the HTML, docs/EXTERNAL-ASSETS-PLAN.md step 3a on) is
+served over local http from its own folder, because its indexes arrive by
+`fetch`. `ASHEN_BUILD_OVER=file` or `=http` forces either for a run.
+
 ## Balance & telemetry
 
 `node tools/balance.mjs` regenerates [docs/BALANCE.md](docs/BALANCE.md): enemy

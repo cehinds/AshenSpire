@@ -2,9 +2,9 @@
 // Browser witness for Settings > Advanced configuration.
 
 import { resolve } from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
@@ -39,7 +39,7 @@ function connect(wsUrl) {
 async function main() {
   mkdirSync(OUT, { recursive: true });
   const server = await serve({ root: ROOT, port: 8547, open: false });
-  const previewURL = process.argv.includes('--standalone') ? pathToFileURL(resolve(ROOT, 'AshenSpire.html')).href : `http://localhost:${server.port}/`;
+  const previewURL = process.argv.includes('--standalone') ? await buildPageUrl(resolve(ROOT, 'AshenSpire.html')) : `http://localhost:${server.port}/`;
   const browser = await launchBrowser({ prefix: 'advconfig-', timeoutMs: 20000 });
   const cdp = connect(browser.wsUrl);
   await cdp.ready;

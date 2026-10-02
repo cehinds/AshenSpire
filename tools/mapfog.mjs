@@ -54,11 +54,11 @@
 // three files do not exist yet, so every shot below is of the placeholder wash.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 import { printArtifactProvenance } from './artifact-provenance.mjs';
 import { mapConfigs } from '../src/content/mapconfig.js';
@@ -603,7 +603,7 @@ async function runRendered() {
   let base;
   let stop = () => {};
   if (useDist) {
-    base = pathToFileURL(resolve(ROOT, 'dist/AshenSpire.html')).href;
+    base = await buildPageUrl(resolve(ROOT, 'dist/AshenSpire.html'));
   } else {
     const s = await serve({ root: ROOT, port: Number(argOf('--port') || 8291), open: false });
     base = `http://127.0.0.1:${s.port}/index.html`;
