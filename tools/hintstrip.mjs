@@ -498,13 +498,17 @@ const DECLARED_CONTROLS = Object.freeze([
 // not notice. Naming what is NOT identity is the smaller, more durable list.
 const LAYOUT_MODIFIERS = new Set(['cell', 'stack', 'lg', 'sm', 'wide', 'tall', 'fill']);
 const identityOf = (classList) => classList.split(/\s+/).filter((k) => k && !LAYOUT_MODIFIERS.has(k)).join(' ');
+const ROW_SOURCE = 'src/ui/components/combatActionRow.js';
 const EXPECTED_CONTROLS = (() => {
-  const src = readFileSync(join(ROOT, 'src/ui/screens/combat.js'), 'utf8');
+  // The row's markup lives in the shared component (#1436: solo and co-op
+  // mount the same row), not in screens/combat.js.
+  const src = readFileSync(join(ROOT, ROW_SOURCE), 'utf8');
   // The row is found by its class PREFIX so the H0 plant (which renames the
   // class to make the row vanish) still parses: that plant must reach H0's
-  // empty-population red, not a thrown "could not read the template".
-  const row = src.match(/<div class="combat-action-row[^"]*"[\s\S]*?<\/div>\s*<!-- Context hints/);
-  if (!row) throw new Error('hintstrip: could not read the action row out of src/ui/screens/combat.js');
+  // empty-population red, not a thrown "could not read the template". It ends
+  // at the template's closing `</div>\`;` (combatActionRowHtml's return).
+  const row = src.match(/<div class="combat-action-row[^"]*"[\s\S]*?<\/div>\s*<\/div>`;/);
+  if (!row) throw new Error(`hintstrip: could not read the action row out of ${ROW_SOURCE}`);
   // THE KIT SWEEP (2026-09-04): the row's controls are kit builders, so the
   // hook classes are read off the builder calls — the StatPair's `class:`,
   // `pileButton('<kind>')`, End Turn's `className:` — the same names the
@@ -522,7 +526,7 @@ const EXPECTED_CONTROLS = (() => {
   const missing = DECLARED_CONTROLS.filter((d) => !named.some((n) => sameSet(n) === sameSet(d)));
   const extra = named.filter((n) => !DECLARED_CONTROLS.some((d) => sameSet(n) === sameSet(d)));
   if (missing.length || extra.length) {
-    throw new Error(`hintstrip: the action row in src/ui/screens/combat.js and DECLARED_CONTROLS disagree — `
+    throw new Error(`hintstrip: the action row in ${ROW_SOURCE} and DECLARED_CONTROLS disagree — `
       + `${missing.length ? `the row no longer names ${missing.map((m) => `"${m}"`).join(', ')}` : ''}`
       + `${missing.length && extra.length ? '; ' : ''}`
       + `${extra.length ? `the row names ${extra.map((m) => `"${m}"`).join(', ')} that this gate does not declare` : ''}`
