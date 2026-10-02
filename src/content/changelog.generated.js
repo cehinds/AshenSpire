@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The Smith counts every card an upgrade improves",
     "detail": "Upgrading a weapon or shield at the Smith already improved the Strike and Guard it lends you, but the preview and the receipt left those two cards out, so it said fewer cards improved than really did and showed a lent Guard as unused. Both now list every card the upgrade changes. Behind the scenes, four checking tools that had fallen behind the game's rules pass again.",
-    "build": "0.7.1.799",
+    "build": "0.7.1.800",
     "pullRequest": 1497,
     "url": "https://github.com/cehinds/AshenSpire/pull/1497"
+  },
+  {
+    "id": "pr-1495",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Sealed and Draft climbs can no longer extract cards at the smith",
+    "detail": "A Sealed or Draft deck is never given the cards your equipment lends, but extracting one at the Blacksmith, the Shrine or a merchant's smith used to hand you a free copy anyway. In those climbs Extract now shows as unavailable, saying why, and cannot be done; reloading the climb does not bring it back. Seating a card you already own in an item works as before, and Standard climbs are unchanged.",
+    "build": "0.7.1.799",
+    "pullRequest": 1495,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1495"
   },
   {
     "id": "pr-1498",
