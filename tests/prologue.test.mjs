@@ -836,8 +836,12 @@ test('the fixed caption is one share of every screen, centred, and its words shr
   // The band is measured in container units, so it is the same share of any screen.
   assert.match(css, /\.prologue-fixed-caption:is\(\.prologue-layout-caption,\.prologue-layout-letterbox\) \.prologue-caption\{[^}]*height:calc\(var\(--prologue-caption-vh,18\) \* 1cqh\)/);
   assert.match(css, /\.prologue-caption\[data-position\^=middle\]\{align-content:center\}/, 'Middle centres the words in a fixed band');
+  // THE LAST WORD WINS: a later rule for the same part that sets its size
+  // without the fit would quietly undo it, so every game-side size is checked.
   for (const part of ['title', 'speaker', 'dialogue', 'location']) {
-    assert.match(css, new RegExp(`\\.prologue-${part}\\{font-size:calc\\([^}]*var\\(--prologue-caption-fit,1\\)\\)\\}`), `${part} does not shrink with the band`);
+    const sizes = [...css.matchAll(new RegExp(`(?:^|\\})\\.prologue-${part}\\{[^}]*font-size:(calc\\([^;}]*\\))`, 'gm'))].map(m => m[1]);
+    assert.ok(sizes.length, `${part} has no size`);
+    assert.match(sizes.at(-1), /var\(--prologue-caption-fit,1\)/, `${part} does not shrink with the band`);
   }
   const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
   assert.match(screen, /function fitCaption\(\)/);

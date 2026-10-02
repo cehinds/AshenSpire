@@ -228,8 +228,8 @@
 .prologue-plate::after{content:'';position:absolute;inset:0;pointer-events:none;opacity:var(--prologue-vignette,0);background:radial-gradient(ellipse at center,transparent 45%,#000 120%)}
 .prologue-layout-letterbox .prologue-stage{background:var(--prologue-letterbox,#000)}
 /* The words, part by part. */
-.prologue-title{color:var(--prologue-title-color,var(--gold));font-size:calc(1.6rem*var(--prologue-text-scale,1)*var(--prologue-title-scale,1))}
-.prologue-speaker{color:var(--prologue-speaker-color,#c0b39d);font-size:calc(1.2rem*var(--prologue-text-scale,1)*var(--prologue-speaker-scale,1))}
+.prologue-title{color:var(--prologue-title-color,var(--gold));font-size:calc(1.6rem*var(--prologue-text-scale,1)*var(--prologue-title-scale,1)*var(--prologue-caption-fit,1))}
+.prologue-speaker{color:var(--prologue-speaker-color,#c0b39d);font-size:calc(1.2rem*var(--prologue-text-scale,1)*var(--prologue-speaker-scale,1)*var(--prologue-caption-fit,1))}
 .prologue-dialogue{color:var(--prologue-dialogue-color,#eee6d5);line-height:var(--prologue-line-height,1.5);letter-spacing:var(--prologue-letter-spacing,0);max-width:var(--prologue-measure,65ch);font-family:var(--prologue-font,var(--font-body))}
 .prologue-location{color:var(--prologue-location-color,var(--gold))}
 .prologue-text-waiting .prologue-title,.prologue-text-waiting .prologue-speaker,.prologue-text-waiting .prologue-dialogue,.prologue-text-waiting .prologue-location{visibility:hidden}
