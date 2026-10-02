@@ -65,3 +65,15 @@ test('a deleted tier/seat row is caught: each table covers its whole tier × sea
   assert.match(recorded, fixedBoss, 'fixture: no fixed-order tier 3 boss row');
   assert.ok(recordedMultiplierProblems(REG, recorded.replace(fixedBoss, '')).some((p) => /Fixed seat order boss table: no row for tier 3 reach/.test(p)));
 });
+
+test('a real boss from another seat, with its own correct scale, is caught', () => {
+  // Tier-1 Weald's bossOmen swapped for the Reach's Furnace Saint at its own
+  // tier-1 scale used to pass: every number was right, the boss was not one
+  // the Weald can send (PR #1473 review).
+  const row = /^\| 1 \| weald \| `bossOmen` \| 0\.800 \| 0\.800 \| (\d+) \| (\d+) \|$/m;
+  assert.match(recorded, row, 'fixture: no seeded tier-1 weald bossOmen row');
+  const planted = recorded.replace(row, '| 1 | weald | `a3_bossFurnaceSaint` | 0.421 | 0.421 | $1 | $2 |');
+  const problems = recordedMultiplierProblems(REG, planted);
+  assert.ok(problems.some((p) => /a3_bossFurnaceSaint' is not a boss the weald seat can send at tier 1/.test(p)), problems.join('\n'));
+  assert.ok(!problems.some((p) => /Boss HP|Boss damage/.test(p)), 'the plant carries the stand-in boss its own correct scale');
+});

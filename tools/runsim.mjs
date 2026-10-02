@@ -111,6 +111,13 @@ let MANA_ON = true;
 // THE SEAT-TIER REPORT (SPEC §13.3, FINISH §4 *Seat-tier tolerance is stated*).
 // READ-ONLY: it records which seat each act climbed and whether its boss fell.
 const SEAT_TIERS = argv.includes('--seat-tiers');
+// Endless acts past 3 repeat content tiers 1..3 with cycle HP and Strength on
+// top, so a per-tier table would pool act 4 with act 1 under tier 1's base
+// multipliers and label both wrongly. The combination is refused, not guessed.
+if (SEAT_TIERS && ENDLESS) {
+  console.error('runsim: --seat-tiers cannot be combined with --endless — endless acts past 3 reuse tiers 1-3 with cycle scaling the per-tier report does not carry. Run --seat-tiers on the 3-act climb.');
+  process.exit(2);
+}
 // THE CLASS-SPREAD DEEPENING (Vira, 2026-08-15). `--deep` tallies each fight's
 // own eventLog — playerTurnStart / cardPlayed / blockGained / healed / hpLost /
 // damageDealt / energySpent / flaskUsed — into per-class counters, plus the

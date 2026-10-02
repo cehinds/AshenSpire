@@ -14,7 +14,9 @@
 //     `balance.bossTiers` text must equal the live rows, formatted as below;
 //   - every row of a table with an "Enemy HP ×" column: seatTierHpMult;
 //   - every row of a table with a "Boss" column and "Boss HP ×" / "Boss
-//     damage ×": bossTierScale for that boss encounter at that tier;
+//     damage ×": the boss is one its seat can send at that tier
+//     (encounterFitsSeat, buildActMap's rule), and its multipliers are
+//     bossTierScale for that boss encounter at that tier;
 //   - at least one table of each kind exists;
 //   - every such table covers its whole tier × seat set: the line before it
 //     names the order ("Seeded seat order" → every configured tier × every
@@ -24,7 +26,7 @@
 //     `damage × 1.5`): prose cannot be checked, so the report carries every
 //     multiplier in a checked table.
 
-import { seatTierHpMult, bossTierScale, defaultSeatOrder } from '../src/model/seats.js';
+import { seatTierHpMult, bossTierScale, defaultSeatOrder, encounterFitsSeat, finalTier } from '../src/model/seats.js';
 
 const safeGet = (reg, id) => { try { return reg.get(id) || null; } catch { return null; } };
 const tierKeys = (table) => Object.keys(table).map(Number).filter(Number.isInteger).sort((a, b) => a - b);
@@ -120,6 +122,13 @@ export function recordedMultiplierProblems(REG, text) {
         const id = row[boss].replace(/`/g, '');
         const enc = safeGet(REG.encounters, id);
         if (!enc || enc.pool !== 'boss') { problems.push(`${where}: '${id}' is not a boss encounter`); continue; }
+        // The boss must be one that seat can send at that tier — the rule
+        // buildActMap picks bosses by (encounterFitsSeat) — or a real boss
+        // with its own correct scale could stand in for another seat's.
+        if (seat < 0 || !encounterFitsSeat(enc, { seat: row[seat], tier: t, finalTier: finalTier(REG) })) {
+          problems.push(`${where}: '${id}' is not a boss ${seat < 0 ? 'this row names a seat for' : `the ${row[seat]} seat can send at tier ${row[tier]}`}`);
+          continue;
+        }
         const scale = bossTierScale(REG, { encounter: enc, tier: t });
         if (row[bossHp] !== fmt(scale.hp)) problems.push(`${where} ${id}: Boss HP × ${row[bossHp]} recorded, ${fmt(scale.hp)} configured`);
         if (row[bossDmg] !== fmt(scale.damage)) problems.push(`${where} ${id}: Boss damage × ${row[bossDmg]} recorded, ${fmt(scale.damage)} configured`);
