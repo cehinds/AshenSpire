@@ -3,6 +3,36 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1492",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the class balance checker plays the same climbs as the run simulator",
+    "detail": "Nothing you play changes. The tool that counts each class's wins used its own older copy of what happens between fights (levels, drafts, rewards, events). Over 500 climbs it reached different fights and got a different result. It now uses the simulator's own steps between fights, agrees with it fight for fight, and its own self-check runs to the end again instead of crashing.",
+    "build": "0.7.1.801",
+    "pullRequest": 1492,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1492"
+  },
+  {
+    "id": "pr-1495",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Sealed and Draft climbs can no longer extract cards at the smith",
+    "detail": "A Sealed or Draft deck is never given the cards your equipment lends, but extracting one at the Blacksmith, the Shrine or a merchant's smith used to hand you a free copy anyway. In those climbs Extract now shows as unavailable, saying why, and cannot be done; reloading the climb does not bring it back. Seating a card you already own in an item works as before, and Standard climbs are unchanged.",
+    "build": "0.7.1.799",
+    "pullRequest": 1495,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1495"
+  },
+  {
+    "id": "pr-1498",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The game's starting settings follow the owner's latest configuration",
+    "detail": "Character-level XP growth starts at 1.5, reward card choices at zero and the normal-fight card reward chance at 24%. Enemy sprites start at 1.5 scale, the player starts in column 1, row B uses double scale, and the opening's first-step traveller uses the supplied desktop placement. All 38 supplied settings become defaults; settings you already chose keep their values.",
+    "build": "0.7.1.798",
+    "pullRequest": 1498,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1498"
+  },
+  {
     "id": "pr-1440",
     "date": "2026-10-02",
     "group": "2026-10-02",
