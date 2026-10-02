@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Warrior's Vow lets you choose your stance",
     "detail": "Playing Warrior's Vow used to put you in Gorefire Stance every time, though the card promised a stance of your choice. Now it asks: you pick Gorefire, Bulwark or Brace, each with what it does, and that is the stance you enter. Cancel keeps the card in your hand. It works the same in co-op, and on a shared couch screen the chooser keeps the keyboard while it is open: Tab moves between the stances instead of switching player, and the card and End Turn keys wait until you choose.",
-    "build": "0.7.1.749",
+    "build": "0.7.1.751",
     "pullRequest": 1449,
     "url": "https://github.com/cehinds/AshenSpire/pull/1449"
+  },
+  {
+    "id": "pr-1444",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The opening is restaged",
+    "detail": "The first scene shifts its view slightly right. The Burning's camera now rises slowly up the burning towers. The last two scenes pull the camera back, and the final step eases in. The caption band holds one fixed height on every scene, slightly lower than before, and the words take one size across the whole opening: the largest at which the longest line still fits your screen, so nothing spills or needs scrolling. On a phone held sideways the words stop shrinking before they become too small to read, and the longest caption may scroll there.",
+    "build": "0.7.1.750",
+    "pullRequest": 1444,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1444"
   },
   {
     "id": "pr-1454",

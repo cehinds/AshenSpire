@@ -1109,6 +1109,12 @@ reach the audio engine through the `audio` option `main.js` passes to
 Deliberate quiet is the `quiet` bed (`src/content/music.js`), never `stopMusic()` —
 the engine remembers the context it is in.
 
+With `captionFixedHeight` on (caption or letterbox layout), the screen sets every
+scene's words at one size: the largest, never above `textScale`, at which the
+longest caption in the opening fits the band, measured in a hidden copy of the
+caption and again on every resize. Under 12 on-screen pixels of dialogue it stops
+shrinking and the band scrolls (a phone on its side at a short band height).
+
 The controls are the FRAME's, not the caption's: a band (`.prologue-bar`) that
 is the last grid row of every wireframe, so text that floats does not take
 Continue with it. `presentation.controlsPosition: 'text'` puts them back under
