@@ -139,7 +139,7 @@ test('a fresh fight sounds its opening draw and turn stinger; a restored one rep
   const combatSrc = src('src/ui/screens/combat.js');
   assert.match(combatSrc, /if \(opening\) playEventCues\(combat\.eventLog\);/, 'mountCombat sounds the setup only when told the fight is fresh');
   assert.match(combatSrc, /opening = false \}\) \{/, 'a caller that says nothing (a restore, a preview) replays no history');
-  assert.match(src('src/main.js'), /opening: !savedSnapshot,/, 'enterCombat marks only a newly created fight as an opening');
+  assert.match(src('src/main.js'), /opening: !savedSnapshot && !bossIntro,/, 'enterCombat marks only a newly created fight as an opening (a boss splash defers it)');
   // What that call hears for a real fresh solo fight's setup log.
   const reg = createRegistries(contentBundle);
   const host = createSession({ registries: reg, seedString: 'SOUND1' });
@@ -214,4 +214,89 @@ test('instant playback keeps cue order: the enemy hit lands before "your turn" s
   } finally {
     for (const k of Object.keys(restore)) if (restore[k] === undefined) delete globalThis[k];
   }
+});
+
+// ---- follow-ups to #1472's last review (Codex P2 threads) ------------------
+
+test('co-op: only the setup-bearing first scene is an opening; a turn-1 join after an action is silent', () => {
+  const reg = createRegistries(contentBundle);
+  const host = createSession({ registries: reg, seedString: 'GUARD2' });
+  for (const id of ['p1', 'p2']) host.addMember({ id, name: id, classId: 'reaver' });
+  host.start();
+  for (const id of ['p1', 'p2']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
+  const opening = host.snapshot().scene;
+  assert.equal(opening.opening, true, 'the fight\'s first scene is marked as its opening');
+  const p = host.live.combat.players.get('p2'); p.entity.energy = 99;
+  p.piles.hand.push({ instanceId: 'snd-join', cardId: 'gorefireSlash', upgraded: false });
+  assert.ok(host.combatPlay('p2', 'snd-join', 'e1').ok);
+  const attack = host.snapshot().scene;
+  assert.equal(attack.turn, 1, 'still turn 1');
+  assert.notEqual(attack.opening, true, 'a later turn-1 scene is not the opening');
+  assert.deepEqual(played(() => coopReceiptSounds(attack, 0)), [], 'a client joining after a turn-1 action replays nothing');
+  // A client that has heard nothing still hears the opening itself.
+  const cues = played(() => coopReceiptSounds(opening, 0));
+  assert.ok(cues.includes('cardDraw') && cues.includes('turnStinger'), `the opening sounds (${cues})`);
+});
+
+test('co-op: the turn stinger plays once per shared turn, however many seats start it', () => {
+  const reg = createRegistries(contentBundle);
+  const host = createSession({ registries: reg, seedString: 'GUARD2' });
+  for (const id of ['p1', 'p2', 'p3']) host.addMember({ id, name: id, classId: 'reaver' });
+  host.start();
+  for (const id of ['p1', 'p2', 'p3']) host.chooseNode(id, host.session.mapGraph.startIds[0]);
+  const stings = (cues) => cues.filter((id) => id === 'turnStinger').length;
+  const opening = host.snapshot().scene;
+  assert.ok(opening.events.filter((e) => e.type === 'playerTurnStart').length > 1, 'each seat starts its own turn in the receipts');
+  // The dedup is keyed on the shared turn the digest carries; a digest that
+  // dropped it would collapse every turn into one.
+  assert.ok(opening.events.filter((e) => e.type === 'playerTurnStart').every((e) => e.turn === 1), 'each opening turn start carries turn 1');
+  let heard = 0;
+  assert.equal(stings(played(() => { heard = coopReceiptSounds(opening, heard); })), 1, 'the opening stings once');
+  for (const id of ['p1', 'p2']) { host.combatEndTurn(id); heard = coopReceiptSounds(host.snapshot().scene, heard); }
+  host.combatEndTurn('p3');
+  const round = host.snapshot().scene;
+  assert.ok(round.events.filter((e) => e.type === 'playerTurnStart').length > 1, 'the next round starts every living seat');
+  assert.ok(round.events.filter((e) => e.type === 'playerTurnStart').every((e) => e.turn === 2), 'each next-round turn start carries turn 2');
+  assert.equal(stings(played(() => { heard = coopReceiptSounds(round, heard); })), 1, 'the next shared turn stings once');
+  // Solo's one-turn-start dispatch is unchanged, and a later turn in the same
+  // list still stings (coalescing is by turn, not by list).
+  assert.equal(stings(played(() => playEventCues([{ type: 'playerTurnStart', turn: 1 }, { type: 'cardDrawn' }, { type: 'playerTurnStart', turn: 2 }]))), 2);
+});
+
+test('a fresh boss fight holds its opening cues until the name splash closes', () => {
+  const main = src('src/main.js');
+  assert.match(main, /opening: !savedSnapshot && !bossIntro,/, 'mountCombat does not sound the opening under the boss splash');
+  assert.match(main, /onClose: !savedSnapshot \? \(\) => playEventCues\(openingLog\) : null/, 'the splash sounds the opening when it closes');
+  const intro = src('src/ui/components/intro.js');
+  assert.match(intro, /onClose = null/, 'showBossIntro takes an onClose');
+});
+
+test('the boss splash runs onClose exactly once, whichever way it closes', async (t) => {
+  const { withKitDom } = await import('./helpers/kit-dom.mjs');
+  const { showBossIntro } = await import('../src/ui/components/intro.js');
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const ways = {
+    timer: () => t.mock.timers.tick(2300),
+    click: (veil) => veil.dispatchEvent(new globalThis.Event('pointerdown')),
+    key: (veil, win) => win.press('Escape'),
+  };
+  for (const [name, closeIt] of Object.entries(ways)) {
+    withKitDom((dom, win) => {
+      let ran = 0;
+      const veil = showBossIntro({ name: 'Rot Valkyrie', act: 3 }, { onClose: () => { ran += 1; } });
+      closeIt(veil, win);
+      assert.equal(ran, 1, `${name}: onClose ran once`);
+      // Every other way, after the first, is a no-op.
+      for (const other of Object.values(ways)) other(veil, win);
+      t.mock.timers.tick(2300);
+      assert.equal(ran, 1, `${name}: a later timer, click or key does not run onClose again`);
+    });
+  }
+  // Screenshot mode freezes the card and never closes it, so onClose never runs.
+  withKitDom(() => {
+    let ran = 0;
+    showBossIntro({ name: 'Rot Valkyrie', act: 3 }, { hold: true, onClose: () => { ran += 1; } });
+    t.mock.timers.tick(5000);
+    assert.equal(ran, 0, 'hold mode does not run onClose');
+  });
 });

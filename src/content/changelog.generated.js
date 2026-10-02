@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the balance report's checks are stricter",
     "detail": "Nothing you play changes. The run simulator now refuses to print per-act difficulty for an endless climb, where later loops would have been counted as the first three acts, and the balance notes' check now catches a boss listed for a region that cannot meet it, or the same row recorded twice.",
-    "build": "0.7.1.790",
+    "build": "0.7.1.791",
     "pullRequest": 1487,
     "url": "https://github.com/cehinds/AshenSpire/pull/1487"
+  },
+  {
+    "id": "pr-1485",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Fight sounds land at the right moment",
+    "detail": "A boss fight's first draw and turn sting now play when its name card lifts, not hidden behind it. In LAN co-op your turn stings once per round however many players are in the fight, and joining or reloading a fight after someone has already acted no longer replays that action's sounds.",
+    "build": "0.7.1.790",
+    "pullRequest": 1485,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1485"
   },
   {
     "id": "pr-1486",
