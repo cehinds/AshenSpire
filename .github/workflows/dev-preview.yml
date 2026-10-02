@@ -223,8 +223,9 @@ jobs:
           # launch.mjs already wrote the web edition to build/web with this
           # job's tier (light on dev/test, full on release/main): AshenSpire.html
           # plus the pack shape (asset-base.json, packs/, objects/ —
-          # docs/EXTERNAL-ASSETS-PLAN.md step 3a) and the map-detail/ and music/
-          # copies. It is copied here as built, not rebuilt.
+          # docs/EXTERNAL-ASSETS-PLAN.md step 3a); its map tiles and score are
+          # common-pack objects since step 3c, so no map-detail/ or music/
+          # folder comes with it. It is copied here as built, not rebuilt.
           cp -r build/web/. preview/
           cp preview/AshenSpire.html preview/index.html
           # THE WORKBENCH IS A SUB-FOLDER, SO THE GAME HAS NO assets/ BESIDE IT.
