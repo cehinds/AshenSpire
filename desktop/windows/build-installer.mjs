@@ -204,6 +204,8 @@ const dirs = new Set();
 })(APP);
 for (const r of highRows) { files.push(`game/${r.path}`); dirs.add(`game/${dirname(r.path)}`); }
 for (const f of packFiles.filter((f) => f.startsWith(`${high.name}.`))) files.push(`game/packs/${f}`);
+// The art step's log (fetch-hd-art.ps1 writes it, never the installer).
+files.push('install-data/hd-art.log');
 const win = (rel) => rel.split('/').join('\\');
 const uninstall = [...new Set(files)].sort().map((f) => `  Delete "$INSTDIR\\${win(f)}"`)
   .concat([...dirs].sort((a, b) => b.split('/').length - a.split('/').length || (a < b ? 1 : -1))
