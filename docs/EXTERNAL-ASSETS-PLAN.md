@@ -257,8 +257,11 @@ schema-2 pin whose top level disagrees with `packs.high`.
 
 - `--pack light|high|common|all`, or a comma list. With no `--pack` the tool
   fetches all three. Each workflow asks for what its build needs: `light` and
-  `common` on dev/test, all three on release/main; `tests.yml`'s core job,
-  which gates every pull request, fetches all three for `--agree`.
+  `common` on dev/test, all three on release/main. `tests.yml`'s core job,
+  which gates every pull request, fetches `light,common` for `--agree` on a
+  pull request and a push to dev, and all three only on test and release, so
+  a high-tree or high-release mismatch is caught after promotion, not at the
+  pull-request gate.
 - Each pack is cached as `.art-cache/<tag>/<pack>/`, with the checks it already
   has: the zip's sha256, then each file against its record, nothing extra in
   the zip, the `.verified` marker written last and the unpack published with
