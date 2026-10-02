@@ -43,6 +43,18 @@ test('the ON arm is the shipped game: its wins equal a plain fleet on the same s
   }
 });
 
+test('the OFF arm actually lifts the Mana line, and the ON arm never does', () => {
+  // A regression that ran the shipped rules twice would print two equal arms
+  // and still pass the shape checks above; the waived Mana tells them apart.
+  const out = run('2', '--mana-ab');
+  const cut = out.indexOf('-'.repeat(72));
+  assert.ok(cut > 0, 'no separator between the arms');
+  const waived = [...out.slice(0, cut).matchAll(/([\d.]+) per run waived by the OFF arm/g)].map((m) => Number(m[1]));
+  assert.equal(waived.length, classes.length, 'the OFF arm should report waived Mana for every class');
+  assert.ok(waived.some((w) => w > 0), `the OFF arm waived no Mana on any class: ${waived.join(', ')}`);
+  assert.doesNotMatch(out.slice(cut), /waived by the OFF arm/, 'the ON arm must not waive Mana');
+});
+
 test('--seat-tiers prints the configured multipliers from content and a row per tier', () => {
   const out = run('2', '--seat-tiers', '--seeded-seats');
   const tiers = Object.keys(REG.balance.seatTiers).map(Number).filter(Number.isInteger);
