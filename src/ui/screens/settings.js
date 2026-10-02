@@ -41,7 +41,7 @@ import { LORE_FACES, LORE_SIZES, LORE_LEADING, LORE_TRACKING, LORE_SLANTS, LORE_
 import { settingsRowShowsHelp, stepCategory } from '../models/SettingsWorkspaceModel.js';
 import { cardLevels, cardLevelsWithOverrides, cardSizingExport, cardSizingExportPath, cardWidthBounds, normalizeTunedNumber } from '../models/CardSizeModel.js';
 import { contentBundle } from '../../content/index.js';
-import { pageDebug, debugSwitch, setDebugEnabled } from '../buildChannel.js';
+import { pageDebug, promotionDebug, debugSwitch, setDebugEnabled } from '../buildChannel.js';
 import { SETTINGS_DEFAULTS } from '../../content/settingsDefaults.js';
 import { deckRules } from '../../content/deckRules.js';
 import { deckSettingsProblems } from '../../model/deckRules.js';
@@ -259,7 +259,7 @@ function releaseHidden() {
  * nor reset it), so those keys are left out there — and a value an earlier
  * promotion seeded for one is withdrawn by the seed's own "dropped key" rule.
  */
-export function promotionFor(defaults, debug = pageDebug()) {
+export function promotionFor(defaults, debug = promotionDebug()) {
   if (debug) return defaults;
   const hidden = releaseHidden();
   const values = Object.fromEntries(Object.entries(defaults?.values || {}).filter(([key]) => !hidden(key)));
@@ -271,7 +271,7 @@ export function promotionFor(defaults, debug = pageDebug()) {
  * Reset goes back to. On a release build that leaves out every row it does
  * not show, as boot does, so no Reset reinstalls hidden tuning.
  */
-function buildPromotion(debug = pageDebug()) {
+function buildPromotion(debug = promotionDebug()) {
   return debug ? PROMOTED_DEFAULTS : promotionFor(SETTINGS_DEFAULTS, false).values;
 }
 

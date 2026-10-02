@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildChannel, debugEnabled, debugSwitch, setDebugEnabled, setPageDebugForTests, DEBUG_STORAGE_KEY } from '../src/ui/buildChannel.js';
+import { buildChannel, debugEnabled, debugSwitch, promotionDebug, setDebugEnabled, setPageDebugForTests, DEBUG_STORAGE_KEY } from '../src/ui/buildChannel.js';
 import {
   visibleAdvancedGroups, developerSwitchHtml, RELEASE_ADVANCED_GROUP_IDS, ADVANCED_GROUP_IDS, settingsSearchHits,
   settingsRowHtml, settingsRow, sliderSpan, niceCeil, buttonStep, rowModified, settingsRows,
@@ -45,6 +45,21 @@ test('debug is on by default on dev and test, never on main or release, and off 
   assert.equal(debugEnabled('dev', { search: '?debug=0', storage: devStore }), false, 'a dev build can be switched off');
   assert.equal(debugEnabled('dev', { search: '', storage: devStore }), false, 'and stays off on this device');
   assert.equal(debugEnabled('test', { search: '?debug=0', storage: null }), false, 'without storage the flag still counts for the page');
+});
+
+test('promoted defaults follow the build, never the Developer tools switch', async () => {
+  assert.equal(promotionDebug('dev'), true);
+  assert.equal(promotionDebug('test'), true);
+  for (const channel of ['main', 'release', 'unknown']) assert.equal(promotionDebug(channel), false, channel);
+  const main = await import('node:fs').then((fs) => fs.readFileSync(new URL('../src/main.js', import.meta.url), 'utf8'));
+  assert.match(main, /seedSettingsDefaults\(settings, promotionFor\(SETTINGS_DEFAULTS, promotionDebug\(\)\)\)/,
+    'boot seeds by the build, so hiding the tools and reloading changes no gameplay value');
+  try {
+    setPageDebugForTests(false);
+    const { promotionFor } = await import('../src/ui/screens/settings.js');
+    const defaults = { digest: 'x', values: { 'gameConfig.balance.x': 1 } };
+    assert.deepEqual(promotionFor(defaults), defaults, 'a dev seat with the tools switched off still applies every promoted value');
+  } finally { setPageDebugForTests(null); }
 });
 
 test('Developer tools is a toggle on dev, test and unknown builds, and hidden on the release builds', () => {
