@@ -1,4 +1,5 @@
-import { applyArtQuality, onArtSourceChange } from './ui/highResArt.js';
+import { applyArtQuality, onArtSourceChange, builtInArtArrived } from './ui/highResArt.js';
+import { whenBuiltInArtReady, musicHold, bootLine } from './ui/assetPacks.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
@@ -449,6 +450,10 @@ installHoldBeat({ root: document, at: (UI.holdBeat || {}).at || [] });
 
 // Apply persisted display settings at boot (defaults: sprites on, motion normal).
 let lastMusicFolder;
+// The music folder: in a build that pins packs (the web edition) it is first
+// applied once the first screen is drawn, after the load has settled; a single
+// file and the source tree apply it at once, as before (assetPacks.js musicHold).
+const bootMusic = musicHold({ configureMusic: (opts) => audio.configureMusic(opts) });
 // UI size — the whole app is zoomed by `body.style.zoom` so every fixed-px
 // element (cards, sprites, map nodes, menus) scales together. "Auto" flexes the
 // zoom with the window against a design baseline so the board fills big screens
@@ -894,7 +899,7 @@ function applyDisplaySettings(settings) {
   const folder = settings.musicFolder || (served ? SHIPPED_MUSIC_FOLDER : '');
   if (folder !== lastMusicFolder) {
     lastMusicFolder = folder;
-    audio.configureMusic({ folder });
+    bootMusic.apply(folder);
   }
   // THE WIREFRAME CHOICES (Settings → Advanced → Wireframes). One word per
   // choice on the root, read by the modal shell, the kit's category navigation,
@@ -3329,6 +3334,16 @@ if (shotState) {
   };
 }
 
+// THE FIRST SCREEN WAITS FOR THE BUILT-IN ART (docs/EXTERNAL-ASSETS-PLAN.md
+// §3, step 3a). The web edition carries no art inside it: src/ui/assetPacks.js
+// loads the pack index the HTML pins, and a screen drawn before that would ask
+// for `assets/…` paths that are not beside the page, and the images' own error
+// handlers would swap in placeholders for good. So the first screen is drawn
+// once the load has SETTLED — loaded, or failed (placeholders), which it is by
+// BOOT_WAIT_MS at the latest; a late index is dropped, never laid over a screen
+// already drawn on placeholders. A single file and the source tree pin
+// nothing, and this calls showFirstScreen() at once.
+function showFirstScreen() {
 if (shotState === 'combat-test') {
   mountCombatTest(app, { params: shotParams, meta: activeMeta });
 } else if (shotState === 'atlas' || shotState === 'map' || shotState === 'combat' || shotState === 'fx' || shotState === 'boss' || shotState === 'death' || shotState === 'victory' || shotState === 'rest' || shotState === 'smith' || shotState === 'event' || shotState === 'shop' || shotState === 'blacksmith' || shotState === 'master' || shotState === 'reward') {
@@ -3964,3 +3979,6 @@ if (shotState === 'combat-test') {
 } else {
   showTitle();
 }
+}
+const dropBootLine = bootLine(app);
+whenBuiltInArtReady(() => bootMusic.firstScreen(() => { dropBootLine(); showFirstScreen(); }), { onSource: builtInArtArrived });

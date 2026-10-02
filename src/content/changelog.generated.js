@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the browser checks wait longer for a slow browser to start",
     "detail": "Nothing you play changes. The automated checks that open the game in a real browser sometimes failed because the browser took longer than 12 seconds to start on the build servers. They now wait up to 30 seconds for it, and this limit can be changed without editing any check. A browser that crashes on start still fails the check at once.",
-    "build": "0.7.1.735",
+    "build": "0.7.1.737",
     "pullRequest": 1446,
     "url": "https://github.com/cehinds/AshenSpire/pull/1446"
+  },
+  {
+    "id": "pr-1442",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The Pages site no longer copies the art review folder",
+    "detail": "Behind the scenes: the project site stops carrying the art review pages and old build-file copies from main, the stable links get their map tiles beside every copy, and link previews use a picture the site itself serves; nothing you play changes.",
+    "build": "0.7.1.736",
+    "pullRequest": 1442,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1442"
+  },
+  {
+    "id": "pr-1443",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition loads its art from hash-pinned packs",
+    "detail": "Behind the scenes: the served web edition now keeps its art as files named by their contents, checks the list of them against a fingerprint inside the game file before using it, and falls back from high to light art (or to placeholders) when a list is missing; the single-file download is unchanged and nothing you play changes.",
+    "build": "0.7.1.735",
+    "pullRequest": 1443,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1443"
   },
   {
     "id": "pr-1437",

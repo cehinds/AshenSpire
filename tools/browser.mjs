@@ -157,12 +157,16 @@ const ENDPOINT = /DevTools listening on (ws:\/\/\S+)/;
 // settle the wait the moment the process goes, whatever the budget. The floor
 // is data, not a literal in each tool (D1): ASHEN_BROWSER_LAUNCH_MS overrides it
 // (a non-negative integer in ms; 0 turns it off; anything else is ignored).
+// A value above Node's timer ceiling (2^31-1 ms, about 24.8 days) is ignored
+// too: setTimeout would clamp it to 1 ms and fail every slow launch at once.
 export const LAUNCH_FLOOR_MS = 30000;
+export const TIMER_MAX_MS = 2147483647;
 export const LAUNCH_FLOOR_ENV = 'ASHEN_BROWSER_LAUNCH_MS';
 export function launchFloorMs(env = process.env) {
   const raw = env[LAUNCH_FLOOR_ENV];
   if (raw === undefined || !/^\d+$/.test(String(raw).trim())) return LAUNCH_FLOOR_MS;
-  return Number(String(raw).trim());
+  const n = Number(String(raw).trim());
+  return Number.isSafeInteger(n) && n <= TIMER_MAX_MS ? n : LAUNCH_FLOOR_MS;
 }
 export function effectiveLaunchMs(timeoutMs, env = process.env) {
   return Math.max(Number(timeoutMs) || 0, launchFloorMs(env));

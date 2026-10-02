@@ -45,7 +45,8 @@ test('the floor is a named constant, overridable by env, never above a caller wh
   });
   await withEnv('45000', () => assert.equal(effectiveLaunchMs(12000), 45000));
   await withEnv('0', () => assert.equal(effectiveLaunchMs(12000), 12000, 'a floor of 0 leaves the caller value'));
-  for (const bad of ['', 'abc', '-5', '1.5e', 'Infinity']) {
+  await withEnv('2147483647', () => assert.equal(launchFloorMs(), 2147483647, 'the timer ceiling itself is accepted'));
+  for (const bad of ['', 'abc', '-5', '1.5e', 'Infinity', '2147483648', '30000000000', '9'.repeat(400)]) {
     await withEnv(bad, () => assert.equal(launchFloorMs(), LAUNCH_FLOOR_MS, `bad override ${JSON.stringify(bad)} falls back to the default`));
   }
 });

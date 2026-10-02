@@ -18,10 +18,14 @@
 // edit. The changelog link points at CHANGELOG.md AT THAT COMMIT, not at a
 // moving branch head, so a build's changelog stays the one it shipped with.
 //
-// WHAT ELSE IS SERVED. The whole `main` tree is copied first, so every URL the
-// site serves today (/AshenSpire.html, /hud/, /review-approval-hub/, /docs/…)
-// keeps working. The one deliberate replacement is the root index.html: it is
-// the build index now; main's own root page is kept at /index-game.html.
+// WHAT ELSE IS SERVED. `main`'s tree is copied first, so every page the site
+// serves from it (/index-game.html, /docs/component-catalog.html,
+// /docs/preview/…, /pose-studio/, /items-preview.html) keeps working — less the media and authoring roots and the committed build HTML
+// (BASE_TREE_PATHSPECS, docs/EXTERNAL-ASSETS-PLAN.md step 6a). The stable Play
+// links and the score and tiles they read beside themselves are written back
+// explicitly as that build's payload. The one deliberate replacement is the
+// root index.html: it is the build index now; main's own root page is kept at
+// /index-game.html.
 //
 // USAGE
 //   node tools/pages-site.mjs --out _site [--keep 12] [--branches dev,test,release,main] [--remote origin]
@@ -34,6 +38,7 @@
 // no longer committed, to the rebuild made from its commit), plus one per
 // index page proven to link every build it lists.
 import { readGitArtifact } from './git-artifact.mjs';
+import { OG_IMAGE } from './og-image.mjs';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, cpSync, readdirSync, statSync, mkdtempSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
@@ -130,6 +135,41 @@ const BUILD_PATHS = new Set(['AshenSpire.html', 'AshenSpire-mobile.html', 'build
 // list it does not go stale when a page is added: a new page under docs/ or a
 // new indexed section appears without an edit here.
 const HARNESS_DIRS = new Set(['tools', 'tests']);
+// MAIN'S BASE TREE LEAVES OUT ITS MEDIA AND AUTHORING ROOTS AND ITS COMMITTED
+// BUILD HTML (docs/EXTERNAL-ASSETS-PLAN.md, section 4 "Main's base tree, and the
+// site's size", step 6a), except assets/ (owner, 2026-10-02: kept). Measured on
+// origin/main, art/ and the build copies were about 770 MB of a site already
+// far over the documented 1 GB Pages limit, and no build page reads them, or
+// the other excluded roots, from the root:
+//   - every build at /<branch>/<ordinal>/ is one inline file that reads only the
+//     map-detail/ and music/ written beside it below;
+//   - the stable Play links (/AshenSpire.html, /build/, /dist/, -mobile) are the
+//     same inline file: every image under assets/ is in its ASSET_MAP, and the
+//     only folders it fetches beside itself are map-detail/ and music/. Those
+//     two are written back from main's tree as that build's payload
+//     (STABLE_PAYLOAD_DIRS), so the stable links serve what they served before.
+// assets/ STAYS (owner, 2026-10-02): /index-game.html (main's source page),
+// docs/component-catalog.html, items-preview.html, docs/low-poly-fighters/ and
+// pose-studio/ load their images from it. art/ GOES: its seven review sections
+// leave the site and, because discovery reads the assembled tree, the index
+// with them. Plain links into art/ now 404: docs/component-catalog.html,
+// pose-studio/, and docs/low-poly-fighters/index.html:38 (`../../art/poses/`).
+// docs/preview stays (owner answer 7).
+// Pathspecs are from the repository root: `map-detail` is the top-level folder.
+const BASE_TREE_EXCLUDED_DIRS = Object.freeze(['art', 'assets-mobile', 'map-detail', 'music']);
+// Kept on purpose, and checked by the selftest so a later edit cannot drop it unseen.
+const BASE_TREE_KEPT_DIRS = Object.freeze(['assets', 'docs/preview']);
+const BASE_TREE_EXCLUDED_HTML = Object.freeze(['AshenSpire*.html', 'build/**/*.html', 'dist/**/*.html']);
+const BASE_TREE_PATHSPECS = Object.freeze(['.',
+  ...BASE_TREE_EXCLUDED_DIRS.map((d) => `:(exclude)${d}`),
+  ...BASE_TREE_EXCLUDED_HTML.map((g) => `:(exclude,glob)${g}`)]);
+// The stable build's own payload: the folders it fetches from beside itself
+// (mapDetail.js resolves map-detail/ against document.baseURI; content/music.js
+// SHIPPED_MUSIC_FOLDER is music/). Written from main's tree, as before.
+const STABLE_PAYLOAD_DIRS = Object.freeze(['map-detail', 'music']);
+// The stable Play links and their build/ and dist/ aliases.
+const STABLE_LINKS = Object.freeze(['AshenSpire.html', 'AshenSpire-mobile.html']);
+const STABLE_ALIASES = Object.freeze(['build', 'dist']);
 
 function git(args, opts = {}) {
   return execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 28, ...opts });
@@ -616,6 +656,68 @@ ${rowsTable(builds, '../', new Set(current && builds[0] ? [builds[0]] : []))}
 <footer>Generated ${esc(generatedAt)} by <code>tools/pages-site.mjs</code>.</footer></main></body></html>`;
 }
 
+/** `git archive <ref> -- <pathspecs>` extracted into `outDir`. */
+function extractTree(ref, pathspecs, outDir) {
+  const tmp = mkdtempSync(join(tmpdir(), 'pages-site-main-'));
+  const archive = join(tmp, 'source.tar');
+  try {
+    execFileSync('git', ['-C', ROOT, 'archive', '--format=tar', '--output', archive, ref, '--', ...pathspecs]);
+    execFileSync('tar', ['-xf', archive, '-C', outDir]);
+  } finally { rmSync(tmp, { recursive: true, force: true }); }
+}
+/** Whether `path` (file or folder) is in `ref`'s tree. */
+function inTree(ref, path) {
+  try { git(['cat-file', '-e', `${ref}:${path}`], { stdio: ['ignore', 'pipe', 'ignore'] }); return true; } catch { return false; }
+}
+/**
+ * THE SHARE IMAGE every build's og:image names (OG_IMAGE in tools/og-image.mjs),
+ * written at the site root from the art in main's tree, or from the first other
+ * published branch that has it while main predates it. Absent everywhere, the
+ * run says so and --check goes red: a link preview with no picture is a defect,
+ * not a reason to withhold the site.
+ */
+function writeOgImage(outDir, mainRef) {
+  const ref = ogImageSource(mainRef);
+  if (!ref) {
+    const why = `no published branch carries ${OG_IMAGE.source}; /${OG_IMAGE.sitePath} (every build's og:image) is not served`;
+    console.log(`  NO OG IMAGE ${why}`);
+    if (process.env.GITHUB_ACTIONS) console.log(`::warning title=pages-site has no og:image::${why}`);
+    return;
+  }
+  writeFileSync(join(outDir, OG_IMAGE.sitePath), readGitArtifact(ROOT, ref, OG_IMAGE.source));
+}
+/**
+ * THE ONE ANSWER TO "WHICH BRANCH SUPPLIES THE SHARE IMAGE": main's tree, else
+ * the first other published branch that carries OG_IMAGE.source, else null.
+ * writeOgImage() and the selftest both ask it, so the selftest compares the
+ * served file with the branch that really supplied it (Codex, #1442). `others`
+ * and `has` are parameters only so the fallback can be proved without a repo
+ * in that state.
+ */
+function ogImageSource(mainRef, others = BRANCHES.filter((b) => b !== 'main').map(refFor), has = (r) => inTree(r, OG_IMAGE.source)) {
+  return [mainRef, ...others].find((r) => r && has(r)) || null;
+}
+const isWebp = (buf) => buf.length > 12 && buf.subarray(0, 4).toString('latin1') === 'RIFF' && buf.subarray(8, 12).toString('latin1') === 'WEBP';
+/** Total bytes and files under `dir`, and the bytes per top-level entry. Symlinks are not followed. */
+function siteSize(dir) {
+  const roots = new Map();
+  let bytes = 0; let files = 0;
+  const walk = (abs, top) => {
+    for (const e of readdirSync(abs, { withFileTypes: true })) {
+      const p = join(abs, e.name);
+      const root = top ?? e.name;
+      if (e.isDirectory()) walk(p, root);
+      else if (e.isFile()) { const n = statSync(p).size; bytes += n; files++; roots.set(root, (roots.get(root) || 0) + n); }
+    }
+  };
+  walk(dir, null);
+  return { bytes, files, roots: [...roots].sort((a, b) => b[1] - a[1]) };
+}
+function sizeLine(dir) {
+  const { bytes, files, roots } = siteSize(dir);
+  return `site size: ${mb(bytes)} in ${files} files; largest: ${roots.slice(0, 6).map(([r, n]) => `${r} ${mb(n)}`).join(', ')}`;
+}
+
 function assemble(outDir, keep) {
   const generatedAt = new Date().toISOString();
   skippedBuilds.length = 0;
@@ -628,17 +730,20 @@ function assemble(outDir, keep) {
   // own section; a missing FOUNDATION costs the run, and says which it was.
   const mainRef = refFor('main');
   if (!mainRef) throw new Error("no ref for 'main' — it is the site's base tree, so nothing can be assembled without it");
-  const tmp = mkdtempSync(join(tmpdir(), 'pages-site-main-'));
-  const archive = join(tmp, 'source.tar');
-  execFileSync('git', ['-C', ROOT, 'archive', '--format=tar', '--output', archive, mainRef]);
-  try { execFileSync('tar', ['-xf', archive, '-C', outDir]); }
-  finally { rmSync(tmp, { recursive: true, force: true }); }
-  // git archive preserves LFS pointers; hydrate the downloadable aliases of both editions.
-  for (const artifact of ['AshenSpire.html', 'build/AshenSpire.html', 'dist/AshenSpire.html',
-    MOBILE_ARTIFACT, `build/${MOBILE_ARTIFACT}`, `dist/${MOBILE_ARTIFACT}`]) {
-    if (existsSync(join(outDir, artifact))) writeFileSync(join(outDir, artifact), readGitArtifact(ROOT, mainRef, artifact));
+  extractTree(mainRef, BASE_TREE_PATHSPECS, outDir);
+  // THE STABLE BUILD'S PAYLOAD, written back from main's tree: the excluded
+  // map-detail/ and music/ are what /AshenSpire.html fetches beside itself.
+  const payload = STABLE_PAYLOAD_DIRS.filter((d) => inTree(mainRef, d));
+  if (payload.length) extractTree(mainRef, payload, outDir);
+  // The committed build HTML is left out of the archive and written here, only
+  // at the stable paths, hydrated from LFS where it is a pointer.
+  for (const name of STABLE_LINKS) for (const artifact of [name, `build/${name}`, `dist/${name}`]) {
+    if (!inTree(mainRef, artifact)) continue;
+    mkdirSync(dirname(join(outDir, artifact)), { recursive: true });
+    writeFileSync(join(outDir, artifact), readGitArtifact(ROOT, mainRef, artifact));
   }
   mainHeadSha = git(['rev-parse', mainRef]).trim();
+  writeOgImage(outDir, mainRef);
   // THE STABLE PLAY LINKS (README: /AshenSpire.html, /AshenSpire-mobile.html).
   // A main tree that no longer tracks its build gets main's CI build instead;
   // with no build handed in, the run fails rather than publishing a site whose
@@ -649,8 +754,8 @@ function assemble(outDir, keep) {
   // to serve and never had one; demanding it failed every run from 2026-09-26
   // ("main's tree carries no AshenSpire-mobile.html"). That link is absent
   // until main is promoted past the edition, and the run says so.
-  const mainTracksBuild = existsSync(join(outDir, 'AshenSpire.html'));
-  for (const artifact of ['AshenSpire.html', MOBILE_ARTIFACT]) {
+  const mainTracksBuild = inTree(mainRef, 'AshenSpire.html');
+  for (const artifact of STABLE_LINKS) {
     if (existsSync(join(outDir, artifact))) continue;
     if (mainTracksBuild) { console.log(`  note: main's committed build predates ${artifact}; /${artifact} is not served until main is promoted past it`); continue; }
     if (!MAIN_BUILD) throw new Error(`main's tree carries no ${artifact} — pass --main-build <dir> holding a build of main's source, or the stable Play link at /${artifact} 404s`);
@@ -660,7 +765,7 @@ function assemble(outDir, keep) {
   // serves them when main tracks its build, and tools/launch.mjs writes the
   // same file there, so a seeded main must not 404 at /build/ or /dist/.
   if (!mainTracksBuild && MAIN_BUILD) {
-    for (const artifact of ['AshenSpire.html', MOBILE_ARTIFACT]) {
+    for (const artifact of STABLE_LINKS) {
       if (!existsSync(resolve(MAIN_BUILD, artifact))) continue;
       for (const alias of ['build', 'dist']) {
         mkdirSync(join(outDir, alias), { recursive: true });
@@ -669,10 +774,15 @@ function assemble(outDir, keep) {
     }
   }
   if (existsSync(join(outDir, 'index.html'))) cpSync(join(outDir, 'index.html'), join(outDir, 'index-game.html'));
-  // The build/ and dist/ aliases fetch the shipped score from beside themselves
-  // (content/music.js SHIPPED_MUSIC_FOLDER); git carries it only at the root.
-  if (existsSync(join(outDir, 'music'))) {
-    for (const alias of ['build', 'dist']) if (existsSync(join(outDir, alias))) cpSync(join(outDir, 'music'), join(outDir, alias, 'music'), { recursive: true });
+  // The build/ and dist/ aliases fetch the shipped score AND the map tiles from
+  // beside themselves (content/music.js SHIPPED_MUSIC_FOLDER; mapDetail.js
+  // resolves map-detail/ against document.baseURI); git carries them only at
+  // the root, so every stable location gets its own copy of the payload.
+  for (const alias of STABLE_ALIASES) {
+    if (!STABLE_LINKS.some((name) => existsSync(join(outDir, alias, name)))) continue;
+    for (const d of STABLE_PAYLOAD_DIRS) {
+      if (existsSync(join(outDir, d)) && !existsSync(join(outDir, alias, d))) cpSync(join(outDir, d), join(outDir, alias, d), { recursive: true });
+    }
   }
   writeFileSync(join(outDir, '.nojekyll'), '');
 
@@ -838,6 +948,12 @@ function check(outDir) {
     if (!root.includes(`href="${pg.href}"`)) { console.error(`UNLINKED page ${pg.path}: in the manifest, not linked from the root index`); process.exitCode = 1; continue; }
     checks++;
   }
+  // THE SHARE IMAGE every build's og:image names (OG_IMAGE.url) is served.
+  const og = join(outDir, OG_IMAGE.sitePath);
+  if (!existsSync(og) || !isWebp(readFileSync(og))) { console.error(`MISSING ${OG_IMAGE.sitePath}: every build's og:image (${OG_IMAGE.url}) names it, and the site has no WebP there`); process.exitCode = 1; }
+  else checks++;
+  // THE SITE'S SIZE, printed so its growth is seen (Pages documents a 1 GB limit).
+  console.log(`  ${sizeLine(outDir)}`);
   return checks;
 }
 
@@ -937,6 +1053,91 @@ function syntheticVictim(dir) {
   return { branch, builds: [b], bytes };
 }
 
+/**
+ * STEP 6a ON THE REAL ASSEMBLY, each against main's own tree rather than
+ * against what assemble() says it did: the excluded roots are absent, docs/
+ * preview is kept, the stable links are main's committed bytes (or the build
+ * handed in), and the stable build's payload is main's map-detail/ and music/.
+ */
+function baseTreeFindings(dir) {
+  const mainRef = refFor('main');
+  const out = [];
+  const leaked = BASE_TREE_EXCLUDED_DIRS.filter((d) => !STABLE_PAYLOAD_DIRS.includes(d) && existsSync(join(dir, d)));
+  out.push([`main's base tree leaves out ${BASE_TREE_EXCLUDED_DIRS.filter((d) => !STABLE_PAYLOAD_DIRS.includes(d)).join(', ')}${leaked.length ? ` (present: ${leaked.join(', ')})` : ''}`, leaked.length === 0]);
+  const strayHtml = [];
+  for (const sub of ['', 'build', 'dist']) {
+    const abs = join(dir, sub);
+    if (!existsSync(abs)) continue;
+    for (const e of readdirSync(abs, { withFileTypes: true })) {
+      const rel = sub ? `${sub}/${e.name}` : e.name;
+      if (e.isFile() && e.name.endsWith('.html') && (sub || e.name.startsWith('AshenSpire')) && !STABLE_LINKS.includes(e.name)) strayHtml.push(rel);
+    }
+  }
+  out.push([`no committed build HTML but the stable links${strayHtml.length ? ` (found: ${strayHtml.join(', ')})` : ''}`, strayHtml.length === 0]);
+  // The share image is the supplying branch's art, byte for byte: main's
+  // while main carries it, else the fallback writeOgImage() used.
+  const og = join(dir, OG_IMAGE.sitePath);
+  const ogRef = ogImageSource(mainRef);
+  if (ogRef) out.push([`/${OG_IMAGE.sitePath} is ${ogRef}'s ${OG_IMAGE.source}, byte for byte`, existsSync(og) && Buffer.compare(readFileSync(og), readGitArtifact(ROOT, ogRef, OG_IMAGE.source)) === 0]);
+  else out.push([`no published branch carries ${OG_IMAGE.source}, and /${OG_IMAGE.sitePath} is said to be missing rather than invented`, !existsSync(og)]);
+  for (const d of BASE_TREE_KEPT_DIRS) if (inTree(mainRef, d)) out.push([`${d}/ is kept (${d === 'assets' ? 'owner, 2026-10-02' : 'owner answer 7'})`, existsSync(join(dir, d))]);
+  // The index links nothing under an excluded root (the art review sections).
+  const index = existsSync(join(dir, 'index.html')) ? readFileSync(join(dir, 'index.html'), 'utf8') : '';
+  const listed = (JSON.parse(readFileSync(join(dir, 'builds.json'), 'utf8')).otherPages || []).filter((pg) => BASE_TREE_EXCLUDED_DIRS.includes(pg.path.split('/')[0]));
+  const linked = BASE_TREE_EXCLUDED_DIRS.filter((d) => index.includes(`href="${d}/`));
+  out.push([`the site index lists and links no page under ${BASE_TREE_EXCLUDED_DIRS.join(', ')}${listed.length || linked.length ? ` (found: ${[...listed.map((pg) => pg.path), ...linked].join(', ')})` : ''}`, listed.length === 0 && linked.length === 0]);
+  for (const name of STABLE_LINKS) for (const artifact of [name, `build/${name}`, `dist/${name}`]) {
+    const fromMain = inTree(mainRef, artifact);
+    const fromBuild = !inTree(mainRef, 'AshenSpire.html') && MAIN_BUILD && existsSync(resolve(MAIN_BUILD, name));
+    if (!fromMain && !fromBuild) continue;
+    const want = fromMain ? readGitArtifact(ROOT, mainRef, artifact) : readFileSync(resolve(MAIN_BUILD, name));
+    const at = join(dir, artifact);
+    out.push([`stable link /${artifact} is ${fromMain ? "main's committed build" : 'the main build handed in'}, byte for byte`, existsSync(at) && Buffer.compare(readFileSync(at), want) === 0]);
+  }
+  for (const d of STABLE_PAYLOAD_DIRS) {
+    if (!inTree(mainRef, d)) continue;
+    const files = git(['ls-tree', '-r', '--name-only', mainRef, '--', d]).trim().split('\n').filter(Boolean);
+    const missing = files.filter((f) => !existsSync(join(dir, f)) || Buffer.compare(readFileSync(join(dir, f)), gitBuf(['show', `${mainRef}:${f}`])) !== 0);
+    out.push([`the stable build's ${d}/ is main's (${files.length} files${missing.length ? `, ${missing.length} wrong, e.g. ${missing[0]}` : ''})`, missing.length === 0]);
+    // Beside every stable location, not only the root (Copilot, #1442).
+    for (const alias of STABLE_ALIASES) {
+      if (!STABLE_LINKS.some((name) => existsSync(join(dir, alias, name)))) continue;
+      const absent = files.filter((f) => !existsSync(join(dir, alias, f)) || Buffer.compare(readFileSync(join(dir, alias, f)), readFileSync(join(dir, f))) !== 0);
+      out.push([`/${alias}/ carries the stable build's ${d}/ beside itself${absent.length ? ` (${absent.length} missing or wrong, e.g. ${alias}/${absent[0]})` : ''}`, absent.length === 0]);
+    }
+  }
+  return out;
+}
+
+/** --check is red with no share image, and green once a WebP is there. */
+function ogImagePlant() {
+  const dir = mkdtempSync(join(tmpdir(), 'pages-site-og-'));
+  try {
+    writeFileSync(join(dir, 'builds.json'), JSON.stringify({ branches: [], otherPages: [] }));
+    const saved = process.exitCode;
+    process.exitCode = 0;
+    check(dir);
+    const redWithout = process.exitCode === 1;
+    process.exitCode = 0;
+    writeFileSync(join(dir, OG_IMAGE.sitePath), Buffer.from('RIFF\0\0\0\0WEBPVP8 '));
+    const n = check(dir);
+    const greenWith = process.exitCode !== 1 && n === 1;
+    process.exitCode = saved || 0;
+    // The fallback, on hand-written refs: main without the art defers to the
+    // first other branch that has it, a missing branch is skipped, and none
+    // at all is null — the case writeOgImage() reports instead of throwing.
+    const holders = new Set(['origin/test', 'origin/dev']);
+    const has = (r) => holders.has(r);
+    return [
+      ['the share image comes from main when main carries it', ogImageSource('origin/main', ['origin/dev'], () => true) === 'origin/main'],
+      ['the share image falls back to the first other branch that carries it', ogImageSource('origin/main', [null, 'origin/release', 'origin/test', 'origin/dev'], has) === 'origin/test'],
+      ['no branch carrying the share image is null, not a throw', ogImageSource('origin/main', ['origin/release'], has) === null],
+      [`--check is red when /${OG_IMAGE.sitePath} is missing`, redWithout],
+      [`--check passes /${OG_IMAGE.sitePath} once it is a WebP`, greenWith],
+    ];
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+
 function boundary() {
   console.log(`BOUNDARY: this proves each committed build served is byte-identical to its git blob, each rebuilt one carries the source digest its commit's buildordinal.json names and left the committed box unmoved, and every index links every build it lists. It does not prove a build boots, and lists only the newest ${KEEP} builds per branch — older ordinals are in git, not on this site.`);
 }
@@ -965,9 +1166,13 @@ try {
     // takes the victim's two FULL checks and leaves its mobile pair standing.
     const pages = branchData.reduce((n, d) => n + d.builds.reduce((m, b) => m + 2 + (b.mobileBytes ? 2 : 0), 0), 0) + (synthetic ? 2 : 0);
     const discovered = JSON.parse(readFileSync(join(dir, 'builds.json'), 'utf8')).otherPages || [];
+    // The og:image row: always one check. A missing image is not discounted
+    // here; baseTreeFindings names it and check() turns red.
+    const ogRow = 1;
+    const baseTree = baseTreeFindings(dir);
     const before = process.exitCode;
     const ok = check(dir);
-    const caught = process.exitCode === 1 && ok === pages - 2 + discovered.length;
+    const caught = process.exitCode === 1 && ok === pages - 2 + discovered.length + ogRow;
     process.exitCode = before || 0;
     void checks;
     if (!caught) { console.error(`MISS planted drift on ${victim.branch}/${victim.builds[0].ordinal} was not caught`); process.exitCode = 1; }
@@ -1030,6 +1235,8 @@ try {
     // answer: an unfetchable mobile object is an error, not "predates"; and a
     // head whose committed build was skipped gets no /latest/.
     const rules = [
+      ...baseTree,
+      ...ogImagePlant(),
       ['a tracked mobile file that cannot be fetched skips the build', Boolean(committedEditions(Buffer.from('x'), true, () => null).error)],
       ['a commit with no mobile file serves the full one alone', committedEditions(Buffer.from('x'), false, () => { throw new Error('probed'); }).mobile === null],
       ['a committed head whose build was skipped gets no /latest/', isCurrent({ builds: [{ ordinal: 5 }], headTracksBuild: true, headOrdinal: 6 }) === false],
@@ -1143,6 +1350,7 @@ try {
     // Named on its own line, above the verdict, so it cannot hide inside a green.
     if (missingBranches.length) console.log(`  MISSING: ${missingBranches.join(', ')} — no such branch on ${REMOTE}; assembled without it`);
     for (const s of skippedBuilds) console.log(`  SKIPPED ${s.branch}/${s.ordinal} (${s.sha.slice(0, 10)}): ${s.reason}`);
+    console.log(`  ${sizeLine(outDir)}`);
     console.log(`pages-site: OK — ${checks} checks passed`);
   }
   boundary();

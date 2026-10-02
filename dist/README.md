@@ -18,7 +18,7 @@ mobile single file with `--mobile`, and the de-inlined one with `--external-art`
 |---|---|---|---|
 | consolidated, full (`AshenSpire.html` here, in `build/`, and the root alias) | **~253 MB** | nothing — `file://` | double-click, offline, the art as painted |
 | consolidated, mobile (`AshenSpire-mobile.html` here, in `build/`, and the root alias) | **under 30 MB** (gated) | nothing — `file://` | phones, slow connections, the second download on the site |
-| de-inlined (`build/web/`, CI's `preview/`) | **~8 MB** + art beside it | a server | the hosted site's own page |
+| de-inlined (`build/web/`, CI's `preview/`) | **~10 MB** + packs and objects beside it | a server | the hosted site's own page |
 
 Over 95% of the full single file is base64 art. The mobile file carries the
 SAME files under the SAME `assets/…` keys, read from `assets-mobile/` — a
@@ -75,12 +75,17 @@ node tools/verify-shipped.mjs          # check root + dist/ ARE those builds, ca
 node tools/mobile-art.mjs              # regenerate assets-mobile/ from assets/ (needs cwebp); --check needs no encoder
 
 node tools/bundle.mjs --external-art --out build/web   # the de-inlined build
-node tools/verify-external.mjs                         # its art is present and byte-identical
+node tools/verify-external.mjs                         # its pinned packs and every object they list are present
 CHROME=… node tools/external-play.mjs                  # it actually loads, and nothing 404s
 ```
 
-`--external-art` writes `AshenSpire.html`, `assets/` and `map-detail/` into the
-output directory in one pass. The map tiles matter: `src/ui/components/
+`--external-art` writes `AshenSpire.html`, `asset-base.json`, `packs/`,
+`objects/`, `map-detail/` and `music/` into the output directory in one pass
+(docs/EXTERNAL-ASSETS-PLAN.md, step 3a). The art is not a copy of `assets/`: it is
+a content-addressed store (`objects/<xx>/<sha256>.<ext>`) and one index per pack
+(`packs/<pack>-<digest12>.json`, `light` and `common`, plus `high` without
+`--light`), each index's sha256 pinned inside the HTML and checked at boot. The
+output must be under `build/` or `dist/` (or outside the checkout). The map tiles matter: `src/ui/components/
 mapDetail.js` says detail files are never bundled into the single HTML and that
 "hosted builds carry a sibling map-detail directory" — the de-inlined build is a
 hosted build, so it carries them. `build/web/` is git-ignored; CI rebuilds it.
