@@ -836,7 +836,9 @@ test('a fixed-height caption sets every scene at one size, the largest at which 
   assert.match(screen, /probe\.scrollHeight <= probe\.clientHeight/);
   // Re-measured when the frame changes size, and the observer goes with the screen.
   assert.match(screen, /new ResizeObserver/);
-  assert.match(screen, /resized\?\.disconnect\(\)/);
+  assert.match(screen, /resized\?\.disconnect\(\); restyled\?\.disconnect\(\)/);
+  // The player's text size moves every rem without resizing the frame.
+  assert.match(screen, /getComputedStyle\(document\.documentElement\)\.fontSize/);
   // A floor in on-screen pixels: a frame too short for readable words scrolls.
   assert.match(screen, /const MIN_DIALOGUE_PX = 12;/);
 });

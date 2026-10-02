@@ -184,19 +184,25 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     frame.remove();
     return best;
   }
+  // What the fit depends on: the frame's size (offset sizes count a scrollbar
+  // in, so one appearing after a refit is not itself a resize that refits
+  // again) and the player's text size, which moves every rem without moving
+  // the frame.
+  const fitMetrics = () => `${root.offsetWidth}x${root.offsetHeight}@${getComputedStyle(document.documentElement).fontSize}`;
   function captionFit() {
     if (!root.isConnected || !root.offsetWidth || !root.offsetHeight) return 1;
-    // Offset sizes count a scrollbar in, so one appearing after a refit is not
-    // itself a resize that refits again.
-    const key = `${root.offsetWidth}x${root.offsetHeight}`;
+    const key = fitMetrics();
     if (key !== fitKey) { fit = measureFit(); fitKey = key; }
     return fit;
   }
   const refit = () => { fitKey = ''; if (currentStage && !stopped) applyStaging(currentStage); };
-  const resized = typeof ResizeObserver === 'function' ? new ResizeObserver(() => {
-    if (currentStage && fixedCaption(currentStage) && `${root.offsetWidth}x${root.offsetHeight}` !== fitKey) refit();
-  }) : null;
+  const changed = () => { if (currentStage && fixedCaption(currentStage) && fitMetrics() !== fitKey) refit(); };
+  const resized = typeof ResizeObserver === 'function' ? new ResizeObserver(changed) : null;
   resized?.observe(root);
+  // Text size is written on <html> (and UI size on <body>) from Settings, which
+  // the opening can open over itself; neither resizes the frame.
+  const restyled = typeof MutationObserver === 'function' ? new MutationObserver(changed) : null;
+  for (const node of [document.documentElement, document.body]) restyled?.observe(node,{attributes:true,attributeFilter:['style','class']});
   document.fonts?.ready?.then(refit);
   function applyStaging(stage) {
     for (const name of Object.keys(PROLOGUE_LAYOUTS)) root.classList.toggle(`prologue-layout-${name}`, name === stage.layout);
@@ -280,7 +286,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   function cleanup() {
     if (stopped) return;
     stopped = true; serial++; cancelAnimationFrame(raf);
-    resized?.disconnect();
+    resized?.disconnect(); restyled?.disconnect();
     animations.forEach(a=>a.cancel());
     portrait.removeEventListener('change',rotate);
     document.removeEventListener('visibilitychange',visibility);
