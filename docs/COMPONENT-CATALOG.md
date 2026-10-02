@@ -129,7 +129,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `startup-subtitle` | `startupGateModel.properties.subtitle` | `startupGate.mountStartupGate` | Startup Mark | Replaceable genre subtitle. |
 | `startup-divider` | semantic child | `startupGate.mountStartupGate` | Startup Mark | Decorative gold rule separating title copy from the prompt. |
 | `startup-prompt` | input-family prompt record | `startupGate.mountStartupGate` | Startup Mark | Polite live-region invitation updated for pointer, touch, keyboard, or controller. |
-| `startup-art-status` | `startupGateModel.properties.artStatus` (`bootArt.bootArtLine`) | `startupGate.mountStartupGate`, rewritten by `bootArt.paintBootArt` | Startup Gate | Web edition only (a build that pins packs): one polite, aria-busy status line between the lockup and the build stamp — "Loading art…", then "Loading art · n of N" over the critical set `content/config` lists, then nothing; the failure sentence when the load failed. Stays through the reveal; pulses unless Reduced motion. |
+| `boot-art-status` | `bootArtStatusModel` (`bootArt.bootArtLine`) | `bootArtStatus.mountBootArtStatus` (beside the gate, by `main.js showStartupGate`), rewritten by `bootArt.paintBootArt` | Cold boot, beside Startup Gate | Web edition only (a build that pins packs). Not one of the gate's parts: a sibling in `#app`, outside the gate's `role="button"`, laid over its top edge, clear of the lockup and the build stamp, and taking no input. One polite, aria-busy status line — "Loading art…", then "Loading art · n of N" over the critical set `content/config` lists, then nothing; the failure sentence when the load failed. Stays through the reveal; pulses unless Reduced motion. |
 | `art-load-notice` | `artLoadNoticeModel` | `artLoadNotice.mountArtLoadNotice` (drawn by `main.js` through `mountTitle`'s `artNotice`) | Title screen | Web edition only, when the built-in art could not be loaded: a non-blocking panel at the top of the title whose message is a polite live region; failed, retrying and failed-again states. |
 | `art-load-notice-retry` | `artLoadNoticeModel` child | `artLoadNotice.mountArtLoadNotice` | Art Load Notice | Retry: reloads the indexes through the Art quality queue (`artTier.retryBuiltInArt`); disabled while it runs; a load that succeeds redraws the title on the new art. |
 | `title-brand-lockup` | title content records | `title.mountTitle` | Title screen | Centered wordmark, subtitle, and divider composition. |
@@ -268,12 +268,13 @@ markup.
 startup-gate
 ├─ startup-ash-field
 │  └─ startup-ash-particle × N
-├─ startup-mark
-│  ├─ startup-wordmark
-│  ├─ startup-subtitle
-│  ├─ startup-divider
-│  └─ startup-prompt
-└─ startup-art-status (web edition only)
+└─ startup-mark
+   ├─ startup-wordmark
+   ├─ startup-subtitle
+   ├─ startup-divider
+   └─ startup-prompt
+
+boot-art-status (web edition only; a sibling of startup-gate, not its child)
 
 title screen
 ├─ title-brand-lockup

@@ -11,7 +11,7 @@ export const UI_COMPONENTS = Object.freeze({
   startupSubtitle: 'startup-subtitle',
   startupDivider: 'startup-divider',
   startupPrompt: 'startup-prompt',
-  startupArtStatus: 'startup-art-status',
+  bootArtStatus: 'boot-art-status',
   artLoadNotice: 'art-load-notice',
   artLoadNoticeRetry: 'art-load-notice-retry',
   titleBrandLockup: 'title-brand-lockup',

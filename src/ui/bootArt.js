@@ -10,7 +10,9 @@
 // title, where a late backdrop or face swaps in as it arrives (the CSS already
 // names them; `font-display: swap` is set).
 //
-// THE LINE. One status line on the gate says where the load is: "Loading art…"
+// THE LINE. One status line beside the gate (its own component,
+// src/ui/components/bootArtStatus.js, never one of the gate's parts: SPEC §7.1)
+// says where the load is: "Loading art…"
 // while the indexes load, "Loading art · 12 of 21" while the set warms, nothing
 // once it is done, and a sentence when the load failed (the title then offers
 // Retry). The words are rows of content/source/uiStrings.csv. The line is a

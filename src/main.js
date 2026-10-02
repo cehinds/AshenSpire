@@ -5,6 +5,8 @@ import { startBootArt, bootArtLine, bootArtRetried } from './ui/bootArt.js';
 import { builtInSource } from './ui/assetmap.js';
 import { mountArtLoadNotice } from './ui/components/artLoadNotice.js';
 import { artLoadNoticeModel } from './ui/models/ArtLoadNoticeModel.js';
+import { mountBootArtStatus } from './ui/components/bootArtStatus.js';
+import { bootArtStatusModel } from './ui/models/BootArtStatusModel.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
@@ -1460,8 +1462,7 @@ function showStartupGate({ forcedFamily = '' } = {}) {
   audio.music('title');
   const family = startupInputFamily(forcedFamily);
   unmountStartupGate = mountStartupGate(app, {
-    // The built-in art's status line (step 5): null when nothing is pinned.
-    model: startupGateModel({ inputFamily: family, settings: activeSettings, artStatus: bootArtLine() }),
+    model: startupGateModel({ inputFamily: family, settings: activeSettings }),
     registerInputGate: setInputGate,
     onReveal: ({ family }) => {
       startupGatePending = false;
@@ -1476,6 +1477,11 @@ function showStartupGate({ forcedFamily = '' } = {}) {
       }));
     },
   });
+  // The built-in art's status line (step 5), beside the gate, never inside it:
+  // the gate's children are SPEC §7.1's, and it is one role="button". None
+  // when nothing is pinned.
+  const artLine = bootArtLine();
+  if (artLine) mountBootArtStatus(app, bootArtStatusModel(artLine));
 }
 
 // ---- THE BUILT-IN ART, AS THE PLAYER SEES IT (docs/EXTERNAL-ASSETS-PLAN.md
@@ -1488,9 +1494,14 @@ function showStartupGate({ forcedFamily = '' } = {}) {
 // settle at once and never show either.
 let bootArtSettledNow = false;
 const bootArtWaiters = [];
+// Anything else the title waits for once the gate is up (the debug profile
+// auto-load, below), so the gate need not wait for it before it is drawn.
+const titleHolds = [];
+function holdTitleFor(promise) { titleHolds.push(Promise.resolve(promise).catch(() => {})); }
 function afterBootArt(fn) {
-  if (bootArtSettledNow) fn();
-  else bootArtWaiters.push(fn);
+  const go = () => (titleHolds.length ? Promise.all(titleHolds).then(fn) : fn());
+  if (bootArtSettledNow) go();
+  else bootArtWaiters.push(go);
 }
 // null (no notice), 'failed', 'retrying' or 'again' (a Retry failed too).
 let artNoticeState = null;
@@ -4042,8 +4053,16 @@ if (shotState === 'combat-test') {
     promoted: promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values })
     .then((result) => { if (result.applied) console.info(`settings profile: ${result.applied} setting(s) loaded from GitHub.`); })
     .catch((error) => console.warn(`settings profile: not loaded — ${error.message}`));
-  Promise.race([loaded, new Promise((settle) => setTimeout(settle, PROFILE_WAIT_MS))])
-    .finally(() => { waiting = false; showTitle(); });
+  const profileSettled = Promise.race([loaded, new Promise((settle) => setTimeout(settle, PROFILE_WAIT_MS))])
+    .finally(() => { waiting = false; });
+  if (gateFirst) {
+    // A pack build's cold boot draws the gate at once (step 5): the profile
+    // keeps loading behind it, and the title waits for it as well as the art.
+    holdTitleFor(profileSettled);
+    showTitle();
+  } else {
+    profileSettled.finally(() => showTitle());
+  }
 } else {
   showTitle();
 }

@@ -15,6 +15,8 @@ import { loadBuiltInPacks, resetBuiltInArt, builtInArtStatus, BOOT_WAIT_MS } fro
 import { retryBuiltInArt, retryOffered, tierStatus, onTierArrived, resetArtTier, applyArtTier } from '../src/ui/artTier.js';
 import { builtInSource, assetUrl } from '../src/ui/assetmap.js';
 import { startupGateModel } from '../src/ui/models/StartupGateModels.js';
+import { bootArtStatusModel } from '../src/ui/models/BootArtStatusModel.js';
+import { bootArtStatusHtml } from '../src/ui/components/bootArtStatus.js';
 import { artLoadNoticeModel, ART_NOTICE_STATES } from '../src/ui/models/ArtLoadNoticeModel.js';
 import { artLoadNoticeHtml } from '../src/ui/components/artLoadNotice.js';
 import { ART_QUALITY_KEY, ART_LIGHT, ART_AUTO } from '../src/ui/highResArt.js';
@@ -96,10 +98,26 @@ test('the gate’s line: none when nothing is pinned, then loading, counting, no
   assert.deepEqual(bootArtLine({ state: 'done' }), { state: 'done', text: '' });
   assert.equal(bootArtLine({ state: 'failed' }).text, tFull('art.failed.gate'));
   assert.match(bootArtLine({ state: 'failed' }).text, /placeholders.*retry from the title screen/i);
-  // The gate's model carries it; a build that pins nothing carries none.
-  assert.equal(startupGateModel({}).properties.artStatus, null);
-  assert.deepEqual(startupGateModel({ artStatus: bootArtLine({ state: 'index' }) }).properties.artStatus, { state: 'loading', text: 'Loading art…' });
-  assert.equal(startupGateModel({}).accessibility.artStatusLive, 'polite');
+  // Its own component, a polite status that is busy while it counts.
+  const model = bootArtStatusModel(bootArtLine({ state: 'index' }));
+  assert.equal(model.component, 'boot-art-status');
+  assert.deepEqual(model.accessibility, { role: 'status', live: 'polite', busy: true });
+  const html = bootArtStatusHtml(model);
+  assert.match(html, /^<p class="boot-art-status" data-component="boot-art-status" data-boot-art-status data-state="loading"/);
+  assert.match(html, /role="status" aria-live="polite" aria-busy="true">Loading art…<\/p>$/);
+  assert.match(bootArtStatusHtml(bootArtStatusModel(bootArtLine({ state: 'failed' }))), /aria-busy="false">The art could not be loaded/);
+});
+
+test('the status line is not part of the startup gate: the gate’s model and markup are SPEC §7.1’s, unchanged', () => {
+  const gate = readFileSync(new URL('../src/ui/components/startupGate.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(gate, /boot-art|art-status|artStatus/, 'the gate renders no art status');
+  assert.equal('artStatus' in startupGateModel({}).properties, false, 'the gate model carries no art status');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  // Mounted after the gate, as a sibling in #app (outside its role="button").
+  assert.match(main, /const artLine = bootArtLine\(\);\n  if \(artLine\) mountBootArtStatus\(app, bootArtStatusModel\(artLine\)\);/);
+  const css = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  assert.match(css, /#app > \.boot-art-status \{[^}]*pointer-events: none;/, 'it takes no input: a press on it is a press on the gate');
+  assert.match(css, /\.reduced-motion #app > \.boot-art-status \{ animation: none; \}/);
 });
 
 test('the warm-up counts only what the source lists; faces under file:// are already loaded', async () => {
@@ -195,7 +213,8 @@ test('Retry after a failed boot load: loads through the Art quality queue, re-po
   await loadBuiltInPacks({ pin: tree.pin, ...tree.load, tier: 'high', deadlineMs: 200 });
   assert.equal(builtInArtStatus().state, 'failed');
   assert.equal(retryOffered({ pin: tree.pin, inlineMap: {} }), true, 'the row offers Retry');
-  assert.match(tierStatus(settings, { pin: tree.pin, inlineMap: {} }), /placeholders\. Choose Retry/);
+  assert.equal(tierStatus(settings, { pin: tree.pin, inlineMap: {} }), tFull('art.failed.settings'), 'the sentence is a uiStrings row');
+  assert.match(tFull('art.failed.settings'), /placeholders\. Choose Retry/);
   assert.equal(await applyArtTier(settings, opts), null, 'the same choice again loads nothing: that is what Retry is for');
   const arrived = [];
   onTierArrived((map) => arrived.push(map));
@@ -262,6 +281,10 @@ test('main.js draws the gate before the load settles and holds the title until i
   assert.match(main, /const dropBootLine = gateFirst \? \(\) => \{\} : bootLine\(app\);/, 'a ?shot= boot keeps the static line');
   assert.match(main, /if \(gateFirst\) \{\n  startBootArt\(\{ settled: builtInArtSettled\(\), source: builtInSource \}\);\n  showFirstScreen\(\);\n\}/);
   assert.match(main, /afterBootArt\(\(\) => showTitle\(\{\n        skipStartup: true,/, 'a press during the load reveals the title once it settles');
-  assert.match(main, /artStatus: bootArtLine\(\)/, 'the gate carries the line');
+  // The debug profile auto-load (Settings → Advanced → Defaults & sync) no
+  // longer leaves the cold boot blank: the gate is drawn at once and the title
+  // waits for the profile as well as the art (Codex on #1471).
+  assert.match(main, /if \(gateFirst\) \{\n    \/\/ A pack build's cold boot draws the gate at once \(step 5\): the profile\n    \/\/ keeps loading behind it, and the title waits for it as well as the art\.\n    holdTitleFor\(profileSettled\);\n    showTitle\(\);\n  \}/);
+  assert.match(main, /const go = \(\) => \(titleHolds\.length \? Promise\.all\(titleHolds\)\.then\(fn\) : fn\(\)\);/);
   assert.match(main, /artNotice: drawArtNotice,/, 'the title carries the notice');
 });

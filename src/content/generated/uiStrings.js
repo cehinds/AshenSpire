@@ -1032,6 +1032,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "art.failed.settings",
+    "extends": "",
+    "short": "The art could not be loaded",
+    "full": "The art could not be loaded, so the game is showing placeholders. Choose Retry to load it again.",
+    "tip": ""
+  },
+  {
     "id": "art.failed.again",
     "extends": "",
     "short": "The art still could not be loaded",

@@ -32,10 +32,6 @@ export function startupGateModel({
   prompts = DEFAULT_PROMPTS,
   particleCount = GATE.motion.particles.defaultCount,
   settings = {},
-  // The built-in art's status line (src/ui/bootArt.js bootArtLine, step 5):
-  // { state, text } in a build that pins packs, null in a single file and the
-  // source tree, where the gate draws no line at all.
-  artStatus = null,
 } = {}) {
   const family = Object.hasOwn(prompts, inputFamily) ? inputFamily : 'keyboard';
   return componentModel(UI.startupGate, {
@@ -47,9 +43,6 @@ export function startupGateModel({
       inputFamily: family,
       prompts: { ...DEFAULT_PROMPTS, ...prompts },
       particles: particles(particleCount),
-      artStatus: artStatus && typeof artStatus === 'object'
-        ? Object.freeze({ state: String(artStatus.state || 'loading'), text: String(artStatus.text || '') })
-        : null,
       entrance: {
         lightUpMs: TITLE_ENTRANCE_TIMING.lightUpMs,
         fadeMs: TITLE_ENTRANCE_TIMING.fadeMs,
@@ -62,7 +55,6 @@ export function startupGateModel({
       role: 'button',
       label: 'Continue to the Ashen Spire title menu',
       promptLive: 'polite',
-      artStatusLive: 'polite',
     },
     behaviors: [behaviorModel('reveal-title', {
       event: 'input',

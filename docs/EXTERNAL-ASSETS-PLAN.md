@@ -687,7 +687,7 @@ light single file, about 30 MB, self-contained, plays by double-click. The
 | SPEC §11, non-goals | "bundled audio asset files" is a non-goal | still true in letter; reword to "audio ships as pack files; SFX stay synthesized" | **yes** |
 | SPEC §1, *Entry point* | "`index.html` opened directly or via any static server" | "via `node tools/serve.mjs`" once the media leaves the tree (ART-REPO-PLAN already names this) | **yes** |
 | FINISH.md D5 and §4 line 107 | "the 254 MB file stays a download"; "the single-file download stays available" | the 254 MB file is retired; the light single file stays a download, beside the install and the zip (owner answers 3 and 6; FINISH D24) | **yes** |
-| SPEC §7.1, the cold boot (*"It contains only the Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source stamp"*) | the gate contains only those four | in the web edition the gate also carries the built-in art's one status line, and a press during the load reveals the title once the load has settled; the title carries the art notice with Retry when the load failed (step 5) | **yes** |
+| SPEC §7.1, the cold boot (*"It contains only the Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source stamp"*) | the gate contains only those four, and a press reveals the title | unchanged for the gate itself: step 5 keeps the boot status line **outside** the gate (`boot-art-status`, a sibling in `#app`). Whether SPEC should name that line, the wait for the load before the title, and the title's art notice with Retry is a question for the 8a SPEC PR ([#1440](https://github.com/cehinds/AshenSpire/pull/1440), awaiting owner approval) | **yes** |
 | SPEC §2 status row and §2.4 | the CSS backdrops bypass `assetUrl()` (open) | closed by `ASSET_CSS` | no (a status row) |
 | SPEC §8, the `release-shots` row | "the built bundle (`dist/AshenSpire.html`)" | `dist/` (HTML + packs) | no (wording) |
 | DEVELOPER.md, *Standalone build* (`:873-885`) | "single self-contained HTML … no external files" | the build tree, whose light single file is still self-contained; the pack HTML's double-click works when the folder stays together | no |
@@ -1043,13 +1043,20 @@ the step 3a boot wait (2026-10-02):
   state) still waits behind the static boot line. The music hold is released
   when the load settles, either way. A single file and the source tree settle
   at once and are unchanged.
-- **The line.** One polite, `aria-busy` status line on the gate
-  (`startup-art-status`, `src/ui/bootArt.js`): "Loading art…" while the
-  indexes load, "Loading art · n of N" while the critical set warms, nothing
-  once it is done, and the failure sentence when the load failed. It sits
-  outside the lockup, so it stays through the reveal while a late load
-  settles. It pulses unless Reduced motion is on (`.reduced-motion` or
-  `prefers-reduced-motion`), where it is plain text.
+- **The line is not part of the gate.** One polite, `aria-busy` status line
+  (`boot-art-status`, `src/ui/components/bootArtStatus.js`, its words from
+  `src/ui/bootArt.js`): "Loading art…" while the indexes load, "Loading art ·
+  n of N" while the critical set warms, nothing once it is done, and the
+  failure sentence when the load failed. It is its own component, mounted by
+  `showStartupGate` as a **sibling** of the gate in `#app`, laid over the
+  gate's top edge and taking no input (a press on it is a press on the gate):
+  the gate's model, children and markup are unchanged, so SPEC §7.1's
+  "contains only" still holds, and the live region is not inside the gate's
+  `role="button"`, where assistive tech would treat it as presentational
+  (review of #1471). It stays through the reveal while a late load settles,
+  and is replaced with the rest of `#app` by the title. It pulses unless
+  Reduced motion is on (`.reduced-motion` or `prefers-reduced-motion`), where
+  it is plain text.
 - **The critical set** is `presentation.startupGate.components.artLoading.critical`
   in `content/config` (the 15 faces and the six title backdrops: 21 ids), and
   `behavior.artLoading.criticalWaitMs` (20 s) caps how long the line counts.
@@ -1058,7 +1065,8 @@ the step 3a boot wait (2026-10-02):
   `file://` the faces are already `FontFace` objects from the sidecar and
   count at once. Nothing waits for it.
 - **The wording is in `content/source/uiStrings.csv`** (`art.loading`,
-  `art.progress`, `art.failed.*`, `art.retry`), not in `content/config` as
+  `art.progress`, `art.failed.*` including Settings' `art.failed.settings`,
+  `art.retry`), not in `content/config` as
   the step's row says: every sentence the interface says is a row of that
   table (DEVELOPER.md, *Reword the interface*), and `content/config` holds
   layout numbers and options. `content/config` holds the critical set and its
@@ -1098,9 +1106,17 @@ the step 3a boot wait (2026-10-02):
   fails falls to its element's own placeholder recipe, as any missing file
   does (§3, *Failure and fallback*, "otherwise to the placeholder recipe").
 - **SPEC §7.1** says the gate "contains only" the wordmark, the ash, the
-  prompt and the build stamp; the status line is a fifth part in the web
-  edition. That wording is a row for step 8a (section 6, *Written rules*); the
-  web edition reaches players only at step 6b's Pages builds.
+  prompt and the build stamp. Step 5 does not change SPEC (CONTRIBUTING rule
+  1): the status line stays outside the gate. Whether SPEC should mention the
+  boot status, the title's wait for the load and the art notice belongs with
+  the 8a SPEC PR ([#1440](https://github.com/cehinds/AshenSpire/pull/1440),
+  awaiting owner approval; section 6, *Written rules*).
+- **The debug profile auto-load** (Settings → Advanced → Defaults & sync, on
+  a dev or test page) used to make the cold boot wait up to 3 s before the
+  gate; with the gate drawn at once that wait was a blank screen (review of
+  #1471). In a pack build the gate is now drawn at once and the title waits
+  for the profile as well as the art (`holdTitleFor`); elsewhere it is as
+  before.
 - **`external-play --block-index`** (http only; Chromium cannot intercept a
   `file://` twin): every `packs/` request is held on the cold boot, and the
   gate must be drawn before the load settles with its line saying "Loading
@@ -1109,8 +1125,11 @@ the step 3a boot wait (2026-10-02):
   art in the page, and raise no failure banner; with the block lifted, Retry
   must load the pinned tier and redraw the title (`ASSET_CSS` in, notice
   gone); with the index refused, combat and the map must mount on placeholders
-  with no object image. Against the 3a boot (the gate drawn after the load,
-  no notice) it is red on ten findings. `dev-preview.yml`'s browser-gates job
+  with no object image. The cold boot runs with the debug profile auto-load on
+  and its GitHub request held, and the gate must be drawn within 2.5 s of
+  that request (it was 3 s late before the fix). Against the 3a boot (the
+  gate drawn after the load, no notice) it is red on ten findings; with the
+  profile branch planted back, on that one. `dev-preview.yml`'s browser-gates job
   runs it on the web edition. The remove-high pass is 3b's
   `--expect-tier light`, unchanged; `tests/boot-art.test.mjs` covers both at
   the loader, the critical set, the line, the warm-up and the Retry.

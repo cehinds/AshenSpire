@@ -55,7 +55,10 @@
 // and no debug failure banner. The block is lifted and Retry is pressed: the
 // pinned tier must load, the title be drawn again on it (ASSET_CSS in the page,
 // no notice). The combat and map screens must mount on placeholders with the
-// index refused, asking for no object.
+// index refused, asking for no object. The cold boot runs with the debug
+// profile auto-load on (Settings → Advanced → Defaults & sync) and its GitHub
+// request held too: the gate must still be drawn at once, not after the
+// profile's 3 s wait (Codex on #1471).
 //   node tools/external-play.mjs --block-index [--dir build/web]
 //
 // VERDICT: "external-play: OK — N checks passed".
@@ -276,14 +279,18 @@ async function blockedIndexPass() {
   // network); 'fail' refuses it at once; 'pass' lets it through.
   let mode = 'hold';
   const held = [];
+  let profileAskedAt = 0;
   cdp.on((m) => {
     if (m.method !== 'Fetch.requestPaused') return;
     const { requestId } = m.params;
+    // The settings profile's GitHub request: held for good, so the profile
+    // waits out its whole timeout.
+    if (/^https:\/\/api\.github\.com\//.test(m.params.request.url)) { profileAskedAt ||= Date.now(); return; }
     if (mode === 'pass') cdp.send('Fetch.continueRequest', { requestId }, S).catch(() => {});
     else if (mode === 'fail') cdp.send('Fetch.failRequest', { requestId, errorReason: 'Failed' }, S).catch(() => {});
     else held.push(requestId);
   });
-  await cdp.send('Fetch.enable', { patterns: [{ urlPattern: '*/packs/*', requestStage: 'Request' }] }, S);
+  await cdp.send('Fetch.enable', { patterns: [{ urlPattern: '*/packs/*', requestStage: 'Request' }, { urlPattern: 'https://api.github.com/*', requestStage: 'Request' }] }, S);
   const poll = async (expr, ms) => { const t0 = Date.now(); while (Date.now() - t0 < ms) { if (await ev(expr).catch(() => false)) return Date.now() - t0; await wait(100); } return -1; };
   // The banner (src/ui/debuglog.js failureBanner) names what died; '' when there is none.
   const bannerText = `(() => { const n = [...document.body.querySelectorAll('*')].find((e) => e.children.length === 0 && !/^(?:SCRIPT|STYLE|TEMPLATE)$/.test(e.tagName) && /STOPPED WORKING/.test(e.textContent || '')); return n ? (n.parentElement?.textContent || n.textContent).slice(0, 200) : ''; })()`;
@@ -296,21 +303,30 @@ async function blockedIndexPass() {
   };
   thrown.length = 0;
 
-  // 1. The cold boot, the indexes held: the gate at once, its line loading.
+  // 1. The cold boot, the indexes held and the profile auto-load on: the gate
+  // at once, its line loading. localhost is a dev page, so the debug-only
+  // auto-load runs; the flag is set on the page's own origin first.
   await cdp.send('Emulation.setDeviceMetricsOverride', DESKTOP, S);
+  await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/asset-base.json` }, S);
+  await wait(500);
+  await ev(`localStorage.setItem('ashenspire.sync.auto', '1')`);
   const t0 = Date.now();
   await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/AshenSpire.html` }, S);
   const gateAt = await poll(`!!document.querySelector('.startup-gate')`, 6000);
   check(gateAt >= 0, 'the cold boot did not draw the startup gate within 6 s while the indexes were held');
-  const early = await ev(`({ line: document.querySelector('[data-component="startup-art-status"]')?.textContent || '', state: document.documentElement.dataset.builtInArt || '',
-    busy: document.querySelector('[data-component="startup-art-status"]')?.getAttribute('aria-busy') || '', live: document.querySelector('[data-component="startup-art-status"]')?.getAttribute('aria-live') || '' })`);
+  const gateSeen = Date.now();
+  check(profileAskedAt > 0, 'the profile auto-load never asked GitHub (the pass did not exercise it)');
+  const afterProfile = profileAskedAt ? gateSeen - profileAskedAt : -1;
+  check(profileAskedAt > 0 && afterProfile < 2500, `the gate was drawn ${afterProfile} ms after the profile request, i.e. after the profile's 3 s wait, not at once`);
+  const early = await ev(`({ line: document.querySelector('[data-component="boot-art-status"]')?.textContent || '', state: document.documentElement.dataset.builtInArt || '',
+    busy: document.querySelector('[data-component="boot-art-status"]')?.getAttribute('aria-busy') || '', live: document.querySelector('[data-component="boot-art-status"]')?.getAttribute('aria-live') || '' })`);
   check(early.state === '', `the gate was drawn after the load settled (data-built-in-art "${early.state}"), not behind it`);
   check(/^Loading art/.test(early.line), `the gate's status line says "${early.line}", not "Loading art…"`);
   check(early.busy === 'true' && early.live === 'polite', `the status line is not a polite, busy live region (aria-busy ${early.busy}, aria-live ${early.live})`);
   // A press during the load: the reveal runs, but the title waits for the load.
   await click('.startup-gate');
   await wait(4500);
-  const waiting = await ev(`({ title: !!document.querySelector('.title-screen'), line: document.querySelector('[data-component="startup-art-status"]')?.textContent || '', state: document.documentElement.dataset.builtInArt || '' })`);
+  const waiting = await ev(`({ title: !!document.querySelector('.title-screen'), line: document.querySelector('[data-component="boot-art-status"]')?.textContent || '', state: document.documentElement.dataset.builtInArt || '' })`);
   check(!waiting.title && waiting.state === '', `the title was drawn before the load settled (title ${waiting.title}, data-built-in-art "${waiting.state}")`);
   check(/^Loading art/.test(waiting.line), `after the press the line says "${waiting.line}", not "Loading art…"`);
   const failedAt = await poll(`document.documentElement.dataset.builtInArt === 'failed'`, 12000);
@@ -337,6 +353,7 @@ async function blockedIndexPass() {
   check(!raised, `the debug failure banner was raised after Retry${raised}`);
 
   // 3. The index refused on a phone: combat and the map mount on placeholders.
+  await ev(`localStorage.removeItem('ashenspire.sync.auto')`);
   mode = 'fail';
   const shots = [];
   for (const [name, query, ready] of [['combat', '?shot=combat', `!!document.querySelector('.combat .hand .card')`], ['map', '?shot=map', `!!document.querySelector('.map-node')`]]) {
@@ -353,7 +370,7 @@ async function blockedIndexPass() {
   }
   check(!thrown.length, `${thrown.length} uncaught exception(s): ${thrown.slice(0, 2).join(' | ')}`);
   await close(); server?.server.close();
-  console.log(`  gate drawn ${gateAt} ms after navigation with the indexes held; the load failed at ${failedAt} ms past the press wait; boot to notice ${bootMs} ms`);
+  console.log(`  gate drawn ${gateAt} ms after navigation (${afterProfile} ms after the held profile request) with the indexes held; the load failed at ${failedAt} ms past the press wait; boot to notice ${bootMs} ms`);
   console.log(`  Retry loaded ${PINNED_TIER} in ${loadedAt} ms and redrew the title; ${shots.join(', ')} on placeholders with the index refused`);
   for (const f of found) console.log('  RED ' + f);
   if (found.length) { console.log(`external-play: RED — ${found.length} finding(s) over ${n} checks`); process.exit(1); }
