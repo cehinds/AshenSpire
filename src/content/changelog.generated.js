@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Skills and your class get dearer with every level",
     "detail": "Every weapon, armour, focus, dual-wield and class skill still needs 100 XP for its first level, but each level after now costs 1.75 times the one before (100, 175, 305, 535, 940) instead of 130 more. Like any XP setting, this reaches a run you already started the next time you load it. Your character level is unchanged.",
-    "build": "0.7.1.750",
+    "build": "0.7.1.752",
     "pullRequest": 1386,
     "url": "https://github.com/cehinds/AshenSpire/pull/1386"
+  },
+  {
+    "id": "pr-1444",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The opening is restaged",
+    "detail": "The first scene shifts its view slightly right. The Burning's camera now rises slowly up the burning towers. The last two scenes pull the camera back, and the final step eases in. The caption band holds one fixed height on every scene, slightly lower than before, and the words take one size across the whole opening: the largest at which the longest line still fits your screen, so nothing spills or needs scrolling. On a phone held sideways the words stop shrinking before they become too small to read, and the longest caption may scroll there.",
+    "build": "0.7.1.750",
+    "pullRequest": 1444,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1444"
   },
   {
     "id": "pr-1454",
