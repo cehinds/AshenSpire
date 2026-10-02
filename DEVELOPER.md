@@ -1029,7 +1029,10 @@ by the engine's own `cardPlayCosts`), set a refused card aside and play on, and
 concede a fight still open after 150 turns as a stalemate.
 `node tools/balance.mjs --check` fails when docs/BALANCE.md is stale
 (`tests/balance-doc.test.mjs` runs it); regenerate with
-`node tools/balance.mjs > docs/BALANCE.md`.
+`node tools/balance.mjs > docs/BALANCE.md`. Both also fail when the hand-recorded
+runsim reports in docs/balance-runs.md state a seat or boss multiplier that is
+not the live `balance.seatTiers` / `balance.bossTiers` (`tools/balance-runs-check.mjs`,
+`node --test tests/balance-runs-check.test.mjs`): re-run those reports after a retune.
 
 `node tools/runsim.mjs [N]` goes further: it plays **whole seeded runs** (map
 path → encounters → combats → rewards → shrines/events/ambushes → act bosses,

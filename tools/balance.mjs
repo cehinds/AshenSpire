@@ -307,6 +307,15 @@ P('');
   const recorded = readFileSync(new URL('../docs/balance-runs.md', import.meta.url), 'utf8').replace(/\r\n/g, '\n').replace(/\n+$/, '');
   for (const line of recorded.split('\n')) P(line);
   P('');
+  // Verbatim, but not unchecked: every multiplier the report states must be
+  // the live configuration, or the rates beside it were measured under a
+  // config that no longer ships (tools/balance-runs-check.mjs).
+  const { recordedMultiplierProblems } = await import('./balance-runs-check.mjs');
+  const stale = recordedMultiplierProblems(REG, recorded);
+  if (stale.length) {
+    console.error(`docs/balance-runs.md records configuration that is not live content:\n  ${stale.join('\n  ')}\nRe-run the runsim reports it names and record them, then regenerate.`);
+    process.exit(1);
+  }
 }
 
 // `--check` is the drift gate: regenerate, compare with the committed
