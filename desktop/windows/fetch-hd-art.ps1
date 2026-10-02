@@ -4,11 +4,13 @@
 #       make the high art tier complete in <dir>\game: every object the high pack
 #       index lists is put under game\objects\ (downloading the pinned release zip
 #       only when one is missing), then the high index is copied into game\packs\.
-#   -Mode Prune -InstallDir <dir> [-OldFiles <list>]
+#   -Mode Prune -InstallDir <dir>
 #       delete every file under game\objects\ that no installed pack lists (the
-#       high objects after the player unticked the art, an older version's objects);
-#       with -OldFiles (the previous version's install-data\files.txt), also delete
-#       each file it lists that this version's files.txt does not.
+#       high objects after the player unticked the art, an older version's objects).
+#   -Mode Drop -InstallDir <dir> -OldFiles <list> -NewFiles <list>
+#       before an upgrade copies its files: delete each file the previous version's
+#       install-data\files.txt lists and the new one does not, and the folders that
+#       leaves empty, so a path that changes between file and folder can be written.
 #
 # WHY THIS SHAPE (desktop/windows/README.md). The game is the web edition: its
 # HTML pins the light, common and high pack indexes and loads the high tier when
@@ -29,11 +31,12 @@
 
 [CmdletBinding()]
 param(
-  [Parameter(Mandatory = $true)][ValidateSet('Install', 'Prune')][string]$Mode,
+  [Parameter(Mandatory = $true)][ValidateSet('Install', 'Prune', 'Drop')][string]$Mode,
   [Parameter(Mandatory = $true)][string]$InstallDir,
   [string]$Url,
   [string]$Sha256,
-  [string]$OldFiles
+  [string]$OldFiles,
+  [string]$NewFiles
 )
 
 $ErrorActionPreference = 'Stop'
@@ -172,20 +175,29 @@ function Install-HighArt {
 
 function Remove-DroppedFiles {
   if (-not $OldFiles -or -not (Test-Path -LiteralPath $OldFiles)) { return }
+  if (-not $NewFiles -or -not (Test-Path -LiteralPath $NewFiles)) { Fail 5 'Drop needs -NewFiles.' }
   $now = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
-  foreach ($l in [IO.File]::ReadAllLines((Join-Path $Data 'files.txt'))) { if ($l) { [void]$now.Add($l) } }
+  foreach ($l in [IO.File]::ReadAllLines($NewFiles)) { if ($l) { [void]$now.Add($l) } }
+  $root = [IO.Path]::GetFullPath($InstallDir).TrimEnd('\', '/')
   $removed = 0
   foreach ($l in [IO.File]::ReadAllLines($OldFiles)) {
     # Only plain relative paths the old installer wrote; never outside the folder.
     if (-not $l -or $now.Contains($l) -or $l.StartsWith('game/objects/') -or $l -match '(^|/)\.\.(/|$)' -or $l -match '^[\\/]|:') { continue }
     $file = Join-Path $InstallDir ($l.Replace('/', [IO.Path]::DirectorySeparatorChar))
-    if (Test-Path -LiteralPath $file -PathType Leaf) { Remove-Item -LiteralPath $file -Force; $removed++ }
+    if (Test-Path -LiteralPath $file -PathType Leaf) {
+      Remove-Item -LiteralPath $file -Force; $removed++
+      # The folders this leaves empty go too, up to (never including) the install folder.
+      $dir = Split-Path -Parent $file
+      while ($dir -and [IO.Path]::GetFullPath($dir).TrimEnd('\', '/') -ne $root -and (Test-Path -LiteralPath $dir) -and -not (Get-ChildItem -LiteralPath $dir -Force)) {
+        Remove-Item -LiteralPath $dir -Force
+        $dir = Split-Path -Parent $dir
+      }
+    }
   }
   if ($removed) { Say "Removed $removed files the previous version installed and this one does not." }
 }
 
 function Invoke-Prune {
-  Remove-DroppedFiles
   $keep = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
   foreach ($e in (Read-ObjectList (Join-Path $Data 'base-objects.tsv'))) { [void]$keep.Add($e.Path) }
   $highOn = @(Get-ChildItem -LiteralPath $Packs -Filter 'high-*.json' -File -ErrorAction SilentlyContinue).Count -gt 0
@@ -205,7 +217,11 @@ function Invoke-Prune {
 }
 
 try {
-  if ($Mode -eq 'Install') { Install-HighArt } else { Invoke-Prune }
+  switch ($Mode) {
+    'Install' { Install-HighArt }
+    'Prune' { Invoke-Prune }
+    'Drop' { Remove-DroppedFiles }
+  }
   exit 0
 } catch {
   Fail 5 $_.Exception.Message

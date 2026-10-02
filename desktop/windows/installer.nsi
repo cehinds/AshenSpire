@@ -115,9 +115,15 @@ Section "Ashen Spire (required)" SecGame
   ${If} $0 == $INSTDIR
   ${AndIf} ${FileExists} "$INSTDIR\${APP_EXE}"
     StrCpy $Upgrade 1
-    ; The old version's file list, for the prune step to drop what this one lacks.
+    ; Before anything is copied: delete what the old version installed and this
+    ; one does not (its files.txt against ours), so a path that changes between
+    ; file and folder can be written.
     InitPluginsDir
     CopyFiles /SILENT "$INSTDIR\install-data\files.txt" "$PLUGINSDIR\old-files.txt"
+    File "/oname=$PLUGINSDIR\new-files.txt" "${APP_DIR}/install-data/files.txt"
+    File "/oname=$PLUGINSDIR\fetch-hd-art.ps1" "${APP_DIR}/install-data/fetch-hd-art.ps1"
+    nsExec::ExecToLog '"${PS_EXE}" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\fetch-hd-art.ps1" -Mode Drop -InstallDir "$INSTDIR" -OldFiles "$PLUGINSDIR\old-files.txt" -NewFiles "$PLUGINSDIR\new-files.txt"'
+    Pop $0
     Delete "$INSTDIR\game\packs\*.json"
     Delete "$INSTDIR\game\packs\*.js"
     Delete "$INSTDIR\install-data\hd-index\*.*"
@@ -166,7 +172,7 @@ SectionEnd
 Section "-Prune"
   ; Only an upgrade can leave objects behind; a first install prunes nothing.
   ${If} $Upgrade == 1
-    nsExec::ExecToLog '"${PS_EXE}" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "${PS_SCRIPT}" -Mode Prune -InstallDir "$INSTDIR" -OldFiles "$PLUGINSDIR\old-files.txt"'
+    nsExec::ExecToLog '"${PS_EXE}" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "${PS_SCRIPT}" -Mode Prune -InstallDir "$INSTDIR"'
     Pop $0
   ${EndIf}
   ; The estimated size Windows shows under Installed apps.
