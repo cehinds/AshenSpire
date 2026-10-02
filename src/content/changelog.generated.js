@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1471",
+    "id": "pr-1470",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "The web edition shows its art loading on the start screen, and can retry",
-    "detail": "Behind the scenes, in the web edition only: the start screen now appears at once while the art loads, with one line saying how far it has got, and if the art cannot be loaded the title screen says so and offers Retry (also in Settings → Art quality), which loads it again without reloading the page; the downloaded single file is unchanged, and nothing you play changes.",
+    "summary": "Behind the scenes: a test keeps the Windows file-serving fix from coming back",
+    "detail": "Nothing you play changes. The fix itself landed in #1476; this adds a test that imitates Windows' short folder names on any computer and fails if the local test server ever again turns away files in its own folder.",
     "build": "0.7.1.769",
-    "pullRequest": 1471,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1471"
+    "pullRequest": 1470,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1470"
   },
   {
     "id": "pr-1480",
