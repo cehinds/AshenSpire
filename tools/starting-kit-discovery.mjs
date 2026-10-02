@@ -68,7 +68,9 @@ for (const classId of R.classes.ids()) {
     if (pieces.length > 1) {
       for (const missing of pieces) {
         const partial = startingKitViews(R, classId, { discoveredArmaments: pieces.filter((id) => id !== missing) });
-        check(!partial.some((row) => row.id === alternates[classId].id && row.available === true),
+        // The shipped policy hides undiscovered kits outright, so the alternate
+        // must not appear at all, not even as an unavailable row.
+        check(!partial.some((row) => row.id === alternates[classId].id),
           `${classId} alternate stays hidden while ${missing} is undiscovered`, JSON.stringify(partial));
       }
     }
