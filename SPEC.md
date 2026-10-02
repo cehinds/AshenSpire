@@ -690,6 +690,14 @@ id only (§3.3).
   saves and deterministically migrated (or receives an explicit schema migration) before any
   current save is written. A missing new field may never make an otherwise valid current save
   archive. Prefer existing opcodes/statuses/snapshots so no new persisted field is needed.
+- **Run schemaVersion 20** (2026-10-02, #1479): a Sealed or Draft run carries
+  `poolDeckRule` (`RUN_SHAPE`; `POOL_DECK_RULE` in `model/cardRemoval.js`), the mark that
+  its starting deck is held to the attack slots it was dealt, not the ones its equipment
+  composes. A Standard run never carries it. A pool save from schema 19 or older has no
+  mark: the load door heals its quota down to the dealt slots once, marks it, and notes the
+  heal. A schema-20 pool save without the mark is refused by name. The bump is what makes a
+  schema-19 build refuse and preserve a schema-20 pool save (runStatus `newer`) instead of
+  dealing the equipment's own cards back into the dealt deck.
 - **Run schemaVersion 3** (2026-08-14): `flaskCharges` carries its **capacity ledger** —
   `base` (born), `grown` (possession door), `granted` (moment door) — and
   `validateRunShape` enforces `capacity === base + grown.hp + grown.mana + granted`

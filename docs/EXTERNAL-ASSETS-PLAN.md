@@ -1201,8 +1201,11 @@ Where the build settles §5 B (2026-10-02):
   the same name: the build's page as `AshenSpire-<branch>-<version>.html` (the
   name a download has, so `buildChannel` reads the same channel from it),
   `asset-base.json` (`{"base":"./"}`), the **light and common** indexes with
-  their `.js` twins, the font sidecar's `.js` twin (the file a double-clicked
-  page reads, whatever suffix the pin names; Codex, #1480), and every object those two indexes
+  their `.js` twins, the font sidecar (always `packs/fonts-<digest12>.js`, the
+  only name `asset-pack` writes; a pin naming anything else is refused by the
+  zip and by `pages-store` `publishPack`, as `verify-external` already does;
+  Codex, #1480; `verify-external` checks the sidecar only when the common
+  pack is pinned, and requires it there), and every object those two indexes
   list (about 5,500 entries, 58 MB for a dev build). **High is never packed**
   (`offlinePlay.zip.packs`): a build whose default is high shows the packed
   light art through the tier fallback. The score is packed with common, and a
