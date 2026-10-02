@@ -39,7 +39,7 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `tests.yml` → core suite | yes | yes (also on push to `dev`) |
 | `map-camera.yml` → map camera re-fit (`map-camera-persistence.mjs --check`, real browser) | yes | yes (also on push to `dev`) |
 | `map-camera.yml` → the full map-camera persistence drive (same job) | no | yes |
-| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | yes | yes (also on push to `dev`) |
+| `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | no | yes |
 | `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`, real browser) | yes | yes (also on push to `dev`) |
 | `tests.yml` → tool self-tests, bundler parse gate | no | yes |
 | `ci.yml` → Fullscreen first through both Settings doors | no | yes |
@@ -1062,6 +1062,11 @@ and flasks into the next fight. The bots choose from `tools/simbot.mjs`
 (`affordableCards`: playable and affordable in Actions, Mana and Stamina, priced
 by the engine's own `cardPlayCosts`), set a refused card aside and play on, and
 concede a fight still open after 150 turns as a stalemate.
+Between fights, `runsim` and `measure-classes` walk one run loop,
+`tools/simrun.mjs` (`createRunLoop`: map path, events and their history,
+shrines, rewards, drafts and the XP a fight pays), so `measure-classes --check`
+can require every fight to open on runsim's state; only the fight bot is each
+tool's own.
 `node tools/balance.mjs --check` fails when docs/BALANCE.md is stale
 (`tests/balance-doc.test.mjs` runs it); regenerate with
 `node tools/balance.mjs > docs/BALANCE.md`. Both also fail when the hand-recorded

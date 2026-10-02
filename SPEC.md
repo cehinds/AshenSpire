@@ -523,6 +523,15 @@ its mounts, and **seat** a run-owned card in an emptied or open mount.
 - **Seat.** The reverse: the deck instance leaves, the card rides with the item from then on,
   and is extractable again. Extra mounts beyond the authored ones (`cardMounts.extraMounts`,
   per item, a kind) sit behind a flag that is off — the seam a later rune feature opens.
+- **Not in a Sealed or Draft run** (owner, 2026-10-02). A pool-built deck is never dealt the
+  equipment's lent cards (`isPoolDeckRun`, `model/cardRemoval.js`), and extracting one would
+  hand the run a free copy of what those modes exclude. `extractionRefusal` answers `poolDeck`
+  from the run's own Custom Climb rules every time, never from a stored field: `extractionPlan`
+  lists no candidate and carries that `refusal`, `commitExtraction` refuses it by name (a free
+  grant too) before touching the run, and every smith door — the Shrine, a merchant's rolled
+  smith, the blacksmith's `extractArt` — shows the service unavailable with the
+  `blacksmith.refuse.extract.poolDeck` sentence. Seating a card the run already owns is
+  unchanged.
 - **Priced in Smithing Stones** (`smithing.services.extract.cost`, `.install.cost`), free by
   the owner's word. **Who offers what** is `smithing.services.offeredAt`: a node kind, a chance
   and a service list. A chance of 100 is a promise and consumes no roll; a merchant's 25 rolls
