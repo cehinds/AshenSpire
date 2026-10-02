@@ -115,6 +115,9 @@ Section "Ashen Spire (required)" SecGame
   ${If} $0 == $INSTDIR
   ${AndIf} ${FileExists} "$INSTDIR\${APP_EXE}"
     StrCpy $Upgrade 1
+    ; The old version's file list, for the prune step to drop what this one lacks.
+    InitPluginsDir
+    CopyFiles /SILENT "$INSTDIR\install-data\files.txt" "$PLUGINSDIR\old-files.txt"
     Delete "$INSTDIR\game\packs\*.json"
     Delete "$INSTDIR\game\packs\*.js"
     Delete "$INSTDIR\install-data\hd-index\*.*"
@@ -163,7 +166,7 @@ SectionEnd
 Section "-Prune"
   ; Only an upgrade can leave objects behind; a first install prunes nothing.
   ${If} $Upgrade == 1
-    nsExec::ExecToLog '"${PS_EXE}" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "${PS_SCRIPT}" -Mode Prune -InstallDir "$INSTDIR"'
+    nsExec::ExecToLog '"${PS_EXE}" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "${PS_SCRIPT}" -Mode Prune -InstallDir "$INSTDIR" -OldFiles "$PLUGINSDIR\old-files.txt"'
     Pop $0
   ${EndIf}
   ; The estimated size Windows shows under Installed apps.

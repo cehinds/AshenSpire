@@ -4,9 +4,11 @@
 #       make the high art tier complete in <dir>\game: every object the high pack
 #       index lists is put under game\objects\ (downloading the pinned release zip
 #       only when one is missing), then the high index is copied into game\packs\.
-#   -Mode Prune -InstallDir <dir>
+#   -Mode Prune -InstallDir <dir> [-OldFiles <list>]
 #       delete every file under game\objects\ that no installed pack lists (the
-#       high objects after the player unticked the art, an older version's objects).
+#       high objects after the player unticked the art, an older version's objects);
+#       with -OldFiles (the previous version's install-data\files.txt), also delete
+#       each file it lists that this version's files.txt does not.
 #
 # WHY THIS SHAPE (desktop/windows/README.md). The game is the web edition: its
 # HTML pins the light, common and high pack indexes and loads the high tier when
@@ -30,7 +32,8 @@ param(
   [Parameter(Mandatory = $true)][ValidateSet('Install', 'Prune')][string]$Mode,
   [Parameter(Mandatory = $true)][string]$InstallDir,
   [string]$Url,
-  [string]$Sha256
+  [string]$Sha256,
+  [string]$OldFiles
 )
 
 $ErrorActionPreference = 'Stop'
@@ -167,7 +170,22 @@ function Install-HighArt {
   Say 'High-resolution art installed.'
 }
 
+function Remove-DroppedFiles {
+  if (-not $OldFiles -or -not (Test-Path -LiteralPath $OldFiles)) { return }
+  $now = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+  foreach ($l in [IO.File]::ReadAllLines((Join-Path $Data 'files.txt'))) { if ($l) { [void]$now.Add($l) } }
+  $removed = 0
+  foreach ($l in [IO.File]::ReadAllLines($OldFiles)) {
+    # Only plain relative paths the old installer wrote; never outside the folder.
+    if (-not $l -or $now.Contains($l) -or $l.StartsWith('game/objects/') -or $l -match '(^|/)\.\.(/|$)' -or $l -match '^[\\/]|:') { continue }
+    $file = Join-Path $InstallDir ($l.Replace('/', [IO.Path]::DirectorySeparatorChar))
+    if (Test-Path -LiteralPath $file -PathType Leaf) { Remove-Item -LiteralPath $file -Force; $removed++ }
+  }
+  if ($removed) { Say "Removed $removed files the previous version installed and this one does not." }
+}
+
 function Invoke-Prune {
+  Remove-DroppedFiles
   $keep = New-Object 'System.Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
   foreach ($e in (Read-ObjectList (Join-Path $Data 'base-objects.tsv'))) { [void]$keep.Add($e.Path) }
   $highOn = @(Get-ChildItem -LiteralPath $Packs -Filter 'high-*.json' -File -ErrorAction SilentlyContinue).Count -gt 0

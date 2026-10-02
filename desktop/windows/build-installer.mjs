@@ -160,6 +160,20 @@ cpSync(packaged, APP, { recursive: true });
 // is in English, and the other 54 locales are ~45 MB.
 for (const f of readdirSync(join(APP, 'locales'))) if (f !== 'en-US.pak') rmSync(join(APP, 'locales', f));
 
+// install-data/files.txt: every file this version installs outside the object
+// store. The next version's upgrade deletes what this list has and its own does
+// not (fetch-hd-art.ps1 -Mode Prune -OldFiles), so a file a later version drops
+// does not outlive it.
+const installed = [];
+(function walk(dir) {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    const rel = relative(APP, join(dir, e.name)).split(/[\\/]/).join('/');
+    if (e.isDirectory()) walk(join(dir, e.name)); else if (!rel.startsWith('game/objects/')) installed.push(rel);
+  }
+})(APP);
+installed.push('install-data/files.txt');
+writeFileSync(join(DATA, 'files.txt'), installed.sort().join('\n') + '\n');
+
 // The uninstaller deletes exactly the files the installer can have written —
 // every staged file, plus the high-res objects and index the download adds —
 // then each folder only once it is empty (RMDir without /r), deepest first.
