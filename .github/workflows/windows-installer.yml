@@ -75,6 +75,8 @@ jobs:
               -File (Join-Path $dir 'install-data\fetch-hd-art.ps1') -Mode Install -InstallDir $dir `
               -Url "https://github.com/$($pin.repo)/releases/download/$($pin.tag)/$($pin.packs.high.zip)" -Sha256 $pin.packs.high.sha256
             "direct run exited $LASTEXITCODE"
+            # Whatever the direct run did, the installer's own art step failed: so does this job.
+            throw "the installer's high-resolution art step did not install the high index (see hd-art.log above)"
           }
           foreach ($p in 'light-', 'common-', 'high-') {
             if (-not ($packs | Where-Object { $_ -like "$p*.json" })) { throw "no $p index in game\packs — the high-resolution art did not install" }
