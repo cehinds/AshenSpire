@@ -254,7 +254,7 @@ export function mountBlacksmith(app, { registries, run, meta, onLeave, onChanged
       SHELVES[key](shelf);
       // A service with nothing to act on now says why, and stays on the rail.
       if (BLACKSMITH_SERVICES.includes(key) && !readyCount(key)) {
-        idle[key] = serviceIdleReason(key);
+        idle[key] = serviceIdleReason(key, run);
         shelf.prepend(statusText(idle[key], { class: 'shop-offer-avail bs-idle', role: 'status' }));
       }
     }
