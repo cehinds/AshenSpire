@@ -132,7 +132,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   const fixedCaption = stage => stage.captionFixedHeight === true && (stage.layout === 'caption' || stage.layout === 'letterbox');
   function measureFit() {
     const scenes = order.map(index => config.scenes[index])
-      .map(scene => ({stage: prologueStaging(config,scene), copy: prologueCopy(scene,config,{classId,name:run.customization?.name || 'Forsaken',location:destination.name})}))
+      .map((scene, at) => ({at, stage: prologueStaging(config,scene), copy: prologueCopy(scene,config,{classId,name:run.customization?.name || 'Forsaken',location:destination.name})}))
       .filter(({stage}) => fixedCaption(stage));
     if (!scenes.length) return 1;
     // The probe stands in a hidden copy of the FRAME, so each scene's wireframe
@@ -146,7 +146,9 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     frame.append(probe);
     root.after(frame);
     const [t,sp,d,l,pr] = ['.prologue-title','.prologue-speaker','.prologue-dialogue','.prologue-location','.prologue-progress'].map(selector => probe.querySelector(selector));
-    const fits = factor => scenes.every(({stage,copy}) => {
+    // Continue is the last control, and on the last scene it reads Set forth.
+    const forward = probe.querySelector('.prologue-controls')?.lastElementChild;
+    const fits = factor => scenes.every(({at,stage,copy}) => {
       // Each scene in its OWN staging: a scene may keep a taller band, more
       // padding or no title, and the frame holds only the one on screen.
       probe.style.setProperty('--prologue-text-scale', String((stage.textScale ?? 1) * factor));
@@ -169,6 +171,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
         if (stage.progressStyle === 'dots') pr.replaceChildren(...order.map(() => el('span',{class:'prologue-dot'})));
         else pr.textContent = `${order.length} / ${order.length}`;
       }
+      if (forward) forward.textContent = at === order.length - 1 ? config.labels.setForth : config.labels.continue;
       return probe.scrollHeight <= probe.clientHeight;
     });
     // On-screen pixels, not CSS ones: the page may be zoomed.
