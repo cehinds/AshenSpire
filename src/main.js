@@ -903,9 +903,13 @@ function applyDisplaySettings(settings) {
   // served over http(s); a file:// page cannot fetch it and keeps the synth.
   const served = /^https?:$/.test(globalThis.location?.protocol || '');
   const folder = settings.musicFolder || (served ? SHIPPED_MUSIC_FOLDER : '');
-  if (folder !== lastMusicFolder) {
-    lastMusicFolder = folder;
-    bootMusic.apply(folder);
+  // Only the shipped score is read through the asset index; a folder the
+  // player typed is fetched by its literal path, even one spelled `music/`.
+  const indexed = !settings.musicFolder && served;
+  const musicKey = `${indexed ? 'shipped' : 'custom'}:${folder}`;
+  if (musicKey !== lastMusicFolder) {
+    lastMusicFolder = musicKey;
+    bootMusic.apply(folder, { indexed });
   }
   // THE WIREFRAME CHOICES (Settings → Advanced → Wireframes). One word per
   // choice on the root, read by the modal shell, the kit's category navigation,

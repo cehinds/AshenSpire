@@ -34,7 +34,7 @@ const { visibleTiles } = await import('../src/ui/models/MapDetailModel.js');
 
 async function tracksFor(context) {
   const engine = initAudio({ musicVolume: 100, sfxVolume: 100, muteAudio: false });
-  await engine.configureMusic({ folder: SHIPPED_MUSIC_FOLDER });
+  await engine.configureMusic({ folder: SHIPPED_MUSIC_FOLDER, indexed: true });
   graph.reset();
   engine.music(context);
   const srcs = graph.elements.map((el) => el.src);
@@ -61,7 +61,7 @@ test('an id the index lacks, and an absolute url, pass through unchanged', async
   setBuiltInSource(new Map([['music/manifest.json', `${OBJ('a')}.json`]]));
   try {
     const engine = initAudio({ musicVolume: 100, sfxVolume: 100, muteAudio: false });
-    await engine.configureMusic({ folder: SHIPPED_MUSIC_FOLDER });
+    await engine.configureMusic({ folder: SHIPPED_MUSIC_FOLDER, indexed: true });
     // Two tracks: the pick is random, so play until both have been seen.
     const seen = new Set();
     for (let i = 0; i < 60 && seen.size < 2; i++) {
@@ -84,6 +84,28 @@ test('without a pack (single file, source tree) the music/ folder beside the pag
   const srcs = await tracksFor('title');
   assert.deepEqual(asked, ['music/manifest.json']);
   assert.deepEqual(srcs, ['music/title/title.mp3']);
+});
+
+test('a Custom music folder spelled music/ is the player\'s own: fetched by its path, never the built-in objects', async () => {
+  setBuiltInSource(new Map([
+    ['music/manifest.json', `${OBJ('a')}.json`],
+    ['music/title/title.mp3', `${OBJ('b')}.mp3`],
+  ]));
+  try {
+    for (const folder of ['music/', 'music']) {
+      asked.length = 0;
+      const engine = initAudio({ musicVolume: 100, sfxVolume: 100, muteAudio: false });
+      await engine.configureMusic({ folder }); // no `indexed`: what main.js passes for a typed folder
+      graph.reset();
+      engine.music('title');
+      const srcs = graph.elements.map((el) => el.src);
+      engine.stopMusic(0);
+      assert.deepEqual(asked, ['music/manifest.json'], `${folder}: the sibling manifest, not the object`);
+      assert.deepEqual(srcs, ['music/title/title.mp3'], `${folder}: the sibling track, not the object`);
+    }
+  } finally {
+    setBuiltInSource(null);
+  }
 });
 
 test('a map-detail tile id is the path the tree and the pack both use', () => {

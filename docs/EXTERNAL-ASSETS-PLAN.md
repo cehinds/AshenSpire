@@ -639,7 +639,7 @@ light single file, about 30 MB, self-contained, plays by double-click. The
 | `tools/verify-shipped.mjs` check A (art inline, the count floor) | `ci.yml` reproducible, `dev-preview.yml` | ASSET_MAP entries in the HTML | **stays, for the light single file** (owner answer 3), with its light count floor. The pack HTML gains its own checks: it carries `ASSET_PACKS`, zero `data:` media except the two masks, and each named index is in `packs/` with that hash. Checks B and C (the aliases are this build, nothing tracked) stay. | 8e |
 | `verify-shipped` mobile-edition check (budget, smaller than full) | same | a mobile file | removed with the edition | 8e |
 | `tests/mobile-art-distinct.test.mjs:20` | core suite | the bundle's `ASSET_MAP[alias] = ASSET_MAP[key]` loop | unchanged for the light single file, which keeps the loop; adds that the pack index maps aliased ids to one object | 8e |
-| `tools/verify-external.mjs` A–D (`--dir preview`, `--selftest`) | dev-preview | `assets/` copied beside the HTML, compared with source `assets/` | A: pins are present; B: no `data:` media except the masks; C: every object in every index is present and hashes to its name; D: every `ASSET_CSS` slot names an id the index has; E (3c): the common index lists every map tile and every track the score's manifest names, and no `map-detail/` or `music/` copy sits beside the HTML. The selftest plants a missing object, a wrong hash, a stale pin and a twin whose string does not match. | 3a–3c |
+| `tools/verify-external.mjs` A–E (`--dir preview`, `--selftest`) | dev-preview | `assets/` copied beside the HTML, compared with source `assets/` | A: pins are present; B: no `data:` media except the masks; C: every object in every index is present and hashes to its name; D: every `ASSET_CSS` slot names an id the index has; E (3c): the common index lists every map tile and every track the score's manifest names, and no `map-detail/` or `music/` copy sits beside the HTML. The selftest plants a missing object, a wrong hash, a stale pin and a twin whose string does not match. | 3a–3c |
 | `tools/external-play.mjs` (reachability job) | `test`, `release`, `main`, dispatch | served build, art over the wire | unchanged over http; adds a `file://` pass (the zip shape, masks and fonts included) and a pass that must stay playable with the index blocked (placeholders), plus one with only light present on a high-default build | 3a, 4, 5 |
 | `tools/bundle.test.mjs` parse gate and EOL corpus (`tests.yml:125`, `ci.yml:287-308`) | `test`/`release` | sandboxes copy `assets/`, run the unflagged full-art build, and read `bg_act1.webp` | sandboxes build the pack shape from a small fixture pack and the light single file with `--light`; the EOL corpus reads a fixture object | 8e |
 | `ci.yml` reproducible (3 OSes) and `reproducible-agree` | `test`/`release` | the HTML digest is the build | digests of the HTML, the light single file **and** each pack index; objects are a function of the pin | 8e |
@@ -864,11 +864,14 @@ Where the build differs from, or settles, §3.8 and §3.9 (2026-10-02):
   is disposed has its `src` dropped, which stops the request (the old
   `AbortController`). The `file://` guard stays: under `file://` the map
   requests nothing and keeps its low-detail fallback until step 4 lifts it.
-- **Music.** `configureMusic` in `audio.js` passes the manifest path and every
-  relative track path through `assetUrl()`; `SHIPPED_MUSIC_FOLDER` (`music`) is
-  the id prefix (`music/manifest.json`, `music/<context>/<track>.mp3`). A path
-  the index does not list (a player's own folder, a single file, the source
-  tree) passes through unchanged, and an absolute URL is left alone. `main.js`
+- **Music.** For the shipped score only (the Custom music folder blank),
+  `configureMusic` in `audio.js` passes the manifest path and every relative
+  track path through `assetUrl()`; `SHIPPED_MUSIC_FOLDER` (`music`) is the id
+  prefix (`music/manifest.json`, `music/<context>/<track>.mp3`). `main.js`
+  says which with `indexed`. A folder the player typed is always fetched by
+  its literal path, even one spelled `music/` (music/README.md's own example;
+  review of #1454). A single file and the source tree pass through unchanged,
+  and an absolute URL is left alone. `main.js`
   still applies the folder only when served over http(s), so `file://` keeps
   the synth (§3.9, unchanged).
 - **Only with an art index.** The common ids reach `assetUrl()` through the map

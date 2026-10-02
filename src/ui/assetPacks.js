@@ -306,7 +306,8 @@ export function whenBuiltInArtReady(fn, opts = {}) {
  * per screen a ?shot= boot walks through: the folder is held and applied once
  * the first screen is drawn. A single file and the source tree pin nothing and
  * apply it at once, before the first screen, exactly as before step 3a.
- *   apply(folder)     — the settings path: apply now, or hold
+ *   apply(folder, o)  — the settings path: apply now, or hold; `o` (e.g.
+ *                       { indexed }) is passed to configureMusic with it
  *   firstScreen(show) — draw the first screen, then release the hold (always,
  *                       even if `show` throws)
  */
@@ -314,18 +315,20 @@ export function musicHold({ pinned = packsPinned(), configureMusic }) {
   let waiting = !!pinned;
   let held = false;
   let folder;
+  let opts = {};
   return {
-    apply(next) {
+    apply(next, extra = {}) {
       folder = next;
+      opts = extra;
       if (waiting) held = true;
-      else configureMusic({ folder });
+      else configureMusic({ ...opts, folder });
     },
     firstScreen(show) {
       try {
         show();
       } finally {
         waiting = false;
-        if (held) { held = false; configureMusic({ folder }); }
+        if (held) { held = false; configureMusic({ ...opts, folder }); }
       }
     },
   };

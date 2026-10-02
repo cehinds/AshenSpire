@@ -331,12 +331,20 @@ test('the music folder: a single file applies it before the first screen, as on 
   assert.deepEqual(calls, ['music:music'], 'the hold releases even when the first screen throws');
   assert.equal(musicHold({ configureMusic }).apply('x') ?? null, null);
   assert.deepEqual(calls.slice(-1), ['music:x'], 'the default reads the pin: the source tree pins nothing');
+
+  const seen = [];
+  const passes = musicHold({ pinned: true, configureMusic: (o) => seen.push(o) });
+  passes.apply('music', { indexed: true });
+  passes.firstScreen(() => {});
+  passes.apply('music/', { indexed: false });
+  assert.deepEqual(seen, [{ indexed: true, folder: 'music' }, { indexed: false, folder: 'music/' }], 'the options travel with the folder, held or not');
 });
 
 test('main.js routes the boot music and the first screen through musicHold', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(main, /const bootMusic = musicHold\(\{ configureMusic:/);
-  assert.match(main, /bootMusic\.apply\(folder\)/);
+  assert.match(main, /bootMusic\.apply\(folder, \{ indexed \}\)/);
+  assert.match(main, /const indexed = !settings\.musicFolder && served;/, 'only the shipped score is indexed');
   assert.match(main, /whenBuiltInArtReady\(\(\) => bootMusic\.firstScreen\(\(\) => \{ dropBootLine\(\); showFirstScreen\(\); \}\)/);
   assert.doesNotMatch(main, /audio\.configureMusic\(\{ folder \}\)/, 'no second, unheld call');
 });
