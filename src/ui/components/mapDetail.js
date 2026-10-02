@@ -2,6 +2,7 @@ import { MAP_ART } from '../../content/mapArt.generated.js';
 import { MAP_PRESENTATION as policy } from '../../content/mapPresentation.js';
 import { detailLevel, visibleTiles } from '../models/MapDetailModel.js';
 import { assetUrl } from '../assetmap.js';
+import { ART_SOURCE_EVENT } from '../highResArt.js';
 
 // Fallback stays underneath at all times. Detail files are never bundled into
 // the single HTML. Each tile is an asset id, `map-detail/<hash>/<edge>/<x>-<y>.webp`
@@ -90,6 +91,12 @@ export function mountMapDetail(port, surface, source) {
   geometry.observe(svg,{attributes:true,attributeFilter:['viewBox','style']});
   if (svg.parentElement) geometry.observe(svg.parentElement,{attributes:true,attributeFilter:['style']});
   port.addEventListener('scroll',schedule,{passive:true});
+  // THE SOURCE CHANGED (a tier switch, highResArt.js builtInArtArrived): a tile
+  // that failed because the earlier source did not list it (the common index
+  // missed at boot) may resolve now, so the failures are forgotten and the
+  // visible set is requested again. Tiles already drawn stay until replaced.
+  const sourceChanged = () => { if (disposed) return; failed.clear(); schedule(); };
+  document.addEventListener(ART_SOURCE_EVENT, sourceChanged);
   const removal = new MutationObserver(() => { if (!port.isConnected) dispose(); });
   removal.observe(document.body,{childList:true,subtree:true});
   function dispose() {
@@ -98,6 +105,7 @@ export function mountMapDetail(port, surface, source) {
     for (const image of loading) image.removeAttribute('src');
     loading.clear();
     resize.disconnect(); geometry.disconnect(); removal.disconnect(); port.removeEventListener('scroll',schedule);
+    document.removeEventListener(ART_SOURCE_EVENT, sourceChanged);
     tiles.remove(); cache.clear();
   }
   schedule(); return dispose;

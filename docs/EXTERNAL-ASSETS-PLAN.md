@@ -874,7 +874,13 @@ Where the build differs from, or settles, §3.8 and §3.9 (2026-10-02):
   and an absolute URL is left alone. Paths are resolved when the folder is
   applied, so when the boot load failed (no source, the synth plays) and a
   later Art quality switch loads, `musicHold().sourceArrived()` applies the
-  shipped score again through the new source.
+  shipped score again through the new source. "Missed" means the source did
+  not list `music/manifest.json` (`shippedScoreResolves`), which also covers
+  a boot whose art loaded and whose common index did not.
+- **Tiles retry on a source change.** A mounted detail layer listens for
+  `ART_SOURCE_EVENT` (`highResArt.js`, sent after `builtInArtArrived`); it
+  forgets its failed tiles and requests the visible set again, so a switch
+  that brings the common index draws the tiles a failed one could not.
 - **SPEC §7.4** still describes "the `music/` beside the page"; that wording is
   left to step 8a (section 6, *Written rules*), as 3b left SPEC §2's status
   row. The web edition reaches players only at step 6b.

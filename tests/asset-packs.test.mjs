@@ -379,6 +379,23 @@ test('the music folder: a single file applies it before the first screen, as on 
   source = true;
   late.sourceArrived();
   assert.deepEqual(again, ['music', 'music', 'mine'], 'a typed folder is never re-applied');
+
+  // The default test is the manifest itself: art loaded but common did not, so
+  // a source exists and the score still missed; a switch that lists the
+  // manifest brings it back.
+  const real = [];
+  setBuiltInSource(new Map([['assets/bg/bg_act1.webp', `./objects/aa/${A}.webp`]]));
+  const art = musicHold({ pinned: true, configureMusic: (o) => real.push(o.folder) });
+  art.apply('music', { indexed: true });
+  art.firstScreen(() => {});
+  art.sourceArrived();
+  assert.deepEqual(real, ['music'], 'art only: the manifest still does not resolve');
+  setBuiltInSource(new Map([['assets/bg/bg_act1.webp', `./objects/aa/${A}.webp`], ['music/manifest.json', `./objects/bb/${B}.json`]]));
+  art.sourceArrived();
+  assert.deepEqual(real, ['music', 'music'], 'common arrived with the switch: the score is configured again');
+  art.sourceArrived();
+  assert.deepEqual(real, ['music', 'music'], 'and not again once it resolved');
+  setBuiltInSource(null);
 });
 
 test('main.js routes the boot music and the first screen through musicHold', () => {

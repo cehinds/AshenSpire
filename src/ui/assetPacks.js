@@ -311,6 +311,12 @@ export function whenBuiltInArtReady(fn, opts = {}) {
   startBuiltInArt(opts).then(go, go);
 }
 
+/** True when the built-in source lists `<folder>/manifest.json`: the shipped score resolves to an object. */
+export function shippedScoreResolves(folder) {
+  const source = builtInSource();
+  return !!(source && folder && source.has(`${String(folder).replace(/\/+$/, '')}/manifest.json`));
+}
+
 /**
  * musicHold({ pinned, configureMusic }) — when the music folder is applied at
  * boot. A build that pins packs draws its first screen only after the load has
@@ -326,17 +332,18 @@ export function whenBuiltInArtReady(fn, opts = {}) {
  *   firstScreen(show) — draw the first screen, then release the hold (always,
  *                       even if `show` throws)
  */
-export function musicHold({ pinned = packsPinned(), configureMusic, hasSource = () => !!builtInSource() }) {
+export function musicHold({ pinned = packsPinned(), configureMusic, hasSource = shippedScoreResolves }) {
   let waiting = !!pinned;
   let held = false;
   let folder;
   let opts = {};
   // True when the last configure asked for the shipped score through the index
-  // while no built-in source was set (the boot load failed): its paths missed
-  // and the synth plays. sourceArrived() configures again once a source lands.
+  // while the built-in source did not list its manifest (the boot load failed,
+  // or the art loaded and the common index did not): its paths missed and the
+  // synth plays. sourceArrived() configures again once a source lists it.
   let missed = false;
   const run = () => {
-    missed = !!opts.indexed && !hasSource();
+    missed = !!opts.indexed && !hasSource(folder);
     configureMusic({ ...opts, folder });
   };
   return {
@@ -358,7 +365,7 @@ export function musicHold({ pinned = packsPinned(), configureMusic, hasSource = 
     // shipped score is read again through it. A player's own folder, or a
     // configure that already had a source, is left alone.
     sourceArrived() {
-      if (!waiting && missed && opts.indexed && hasSource()) run();
+      if (!waiting && missed && opts.indexed && hasSource(folder)) run();
     },
   };
 }

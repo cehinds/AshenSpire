@@ -10,6 +10,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 const { installWebAudioStub, stubGraph } = await import('../tools/webaudio-stub.mjs');
 installWebAudioStub();
@@ -111,7 +112,7 @@ test('a Custom music folder spelled music/ is the player\'s own: fetched by its 
 test('bundle.mjs clears old map-detail/ and music/ copies only strictly inside build/ or dist/', async () => {
   const { strictlyUnderBuild } = await import('../tools/asset-pack.mjs');
   const { resolve } = await import('node:path');
-  const root = new URL('..', import.meta.url).pathname;
+  const root = fileURLToPath(new URL('..', import.meta.url));
   for (const out of ['build', 'dist', 'build/', 'src', 'music']) assert.equal(strictlyUnderBuild(resolve(root, out), root), false, out);
   for (const out of ['build/web', 'dist/web', 'build/a/b']) assert.equal(strictlyUnderBuild(resolve(root, out), root), true, out);
   const bundle = readFileSync(new URL('../tools/bundle.mjs', import.meta.url), 'utf8');
@@ -148,4 +149,59 @@ test('mapDetail loads tiles as images through assetUrl, not fetch and blob URLs'
   assert.match(src, /assetUrl\(tileId\(art\.assetHash, tile\.key\)\)/);
   assert.doesNotMatch(src, /\bfetch\(/);
   assert.doesNotMatch(src, /createObjectURL/);
+});
+
+test('a tile that failed before common was listed is retried when the art source changes', async () => {
+  // A minimal DOM: one map, one detail layer, Images that decode only objects.
+  const listeners = new Map();
+  const frames = [];
+  const el = (extra = {}) => ({
+    attrs: {}, dataset: {}, style: { setProperty() {} }, classList: { add() {} }, children: [], isConnected: true,
+    setAttribute(k, v) { this.attrs[k] = String(v); }, getAttribute(k) { return this.attrs[k] ?? null; },
+    append() {}, remove() {}, replaceChildren(...n) { this.children = n; },
+    addEventListener() {}, removeEventListener() {},
+    getBoundingClientRect: () => ({ left: 0, top: 0, right: 300, bottom: 300, width: 300, height: 300 }),
+    ...extra,
+  });
+  const saved = {};
+  for (const k of ['document', 'MutationObserver', 'ResizeObserver', 'requestAnimationFrame', 'cancelAnimationFrame', 'Image', 'location', 'devicePixelRatio']) saved[k] = Object.getOwnPropertyDescriptor(globalThis, k);
+  const set = (k, v) => Object.defineProperty(globalThis, k, { value: v, configurable: true, writable: true });
+  set('document', {
+    body: el(), createElementNS: () => el(),
+    addEventListener: (t, f) => listeners.set(t, f), removeEventListener: (t) => listeners.delete(t),
+  });
+  set('MutationObserver', class { observe() {} disconnect() {} });
+  set('ResizeObserver', class { observe() {} disconnect() {} });
+  set('requestAnimationFrame', (f) => { frames.push(f); return frames.length; });
+  set('cancelAnimationFrame', () => {});
+  set('location', { protocol: 'http:' });
+  set('devicePixelRatio', 1);
+  set('Image', class { decode() { return /^\.\/objects\//.test(this.src || '') ? Promise.resolve() : Promise.reject(new Error('404')); } removeAttribute() { this.src = ''; } });
+  const settle = async () => { for (let i = 0; i < 20; i++) { while (frames.length) frames.shift()(); await new Promise((r) => setImmediate(r)); } };
+  try {
+    const { mountMapDetail } = await import('../src/ui/components/mapDetail.js');
+    const { ART_SOURCE_EVENT } = await import('../src/ui/highResArt.js');
+    const [source, art] = Object.entries(MAP_ART)[0];
+    const svg = el({ querySelectorAll: () => [], parentElement: null });
+    const base = el({ ownerSVGElement: svg, getScreenCTM: () => null });
+    base.attrs = { width: '1000', height: '1000' };
+    const surface = el({ querySelector: () => base });
+    const port = el();
+    setBuiltInSource(null);
+    const dispose = mountMapDetail(port, surface, source);
+    await settle();
+    assert.equal(port.dataset.detailState, 'fallback', 'no common index: every tile failed, the low-detail map stays');
+    assert.ok(listeners.has(ART_SOURCE_EVENT), 'the layer listens for a source change');
+    const ids = new Map();
+    for (const level of art.levels) for (const t of visibleTiles(level, { x0: 0, y0: 0, x1: 1, y1: 1 })) ids.set(tileId(art.assetHash, t.key), `${OBJ('d')}.webp`);
+    setBuiltInSource(ids);
+    listeners.get(ART_SOURCE_EVENT)();
+    await settle();
+    assert.equal(port.dataset.detailState, 'ready', 'the switch listed the tiles: they are retried and drawn');
+    dispose();
+    assert.ok(!listeners.has(ART_SOURCE_EVENT), 'dispose stops listening');
+  } finally {
+    setBuiltInSource(null);
+    for (const [k, d] of Object.entries(saved)) { if (d) Object.defineProperty(globalThis, k, d); else delete globalThis[k]; }
+  }
 });
