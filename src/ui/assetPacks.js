@@ -265,7 +265,10 @@ export async function loadBuiltInPacks({
     // The CSS assets come from the same map: the tier that loaded, plus common.
     const filled = applyAssetCss(map, { css, doc });
     if (filled.dropped.length) failed.push(`css: ${filled.dropped.length} rule(s) left on their fallbacks, the loaded indexes list no ${filled.dropped.slice(0, 3).join(', ')}`);
-    status = { state: 'loaded', tier, requested, ids, css: filled.rules, failed: [...failed] };
+    // `base` is where packs/ and objects/ live (asset-base.json's base): the
+    // offline install (src/ui/offlineInstall.js) registers the service worker
+    // and reads the indexes there.
+    status = { state: 'loaded', tier, requested, ids, css: filled.rules, failed: [...failed], base };
     if (typeof onSource === 'function') try { onSource(map); } catch { /* a listener must not fail the load */ }
     return builtInArtStatus();
   } finally {

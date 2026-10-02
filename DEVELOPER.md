@@ -135,6 +135,27 @@ HTML) and
 high-default build whose high index was removed). The single files are
 unchanged: their `ASSET_PACKS` stays null and the loader does nothing.
 
+**On Pages** (step 6b): `tools/pages-site.mjs` serves each build whose rebuild
+writes that web edition as the page at `/<branch>/<ordinal>/`, with an
+`asset-base.json` beside it and its packs and objects in one store at the
+site root shared by every build (`tools/pages-store.mjs`), and its light
+single file whole at `/<branch>/<ordinal>/download/AshenSpire.html`, which
+the Download links and the in-game downloader (`build.json`'s `download`)
+name. `/sw.js` is the service worker (`tools/pages-sw.mjs`: objects
+cache-first and hash-checked, Range answered `206`, pages network-first; its
+kill-switch is the committed `SW_KILL`), registered only by Download & saves
+→ *Make available offline* (`src/ui/offlineInstall.js`). `pages-site --check`
+proves the store, the bases, the downloads and `sw.js`; its `--selftest`
+plants each known-bad. `node tools/pages-offline.mjs` drives the worker in
+Chromium over `serveDir` (`tests/pages-sw.test.mjs` runs it in a sandbox).
+**To pull the worker** from every browser that kept a build: set
+`SW_KILL = true` in `tools/pages-sw.mjs` and merge that PR to `dev`, whose push
+republishes `/sw.js` as the kill-switch; each browser deletes its `ashen-`
+caches, unregisters and reloads the windows it controlled on its next visit.
+Leave it published for weeks, then set it back in a later PR. Publish it from
+`dev`: a site published by a pre-6b `pages-site` has no `/sw.js`, and a 404 does
+not unregister a worker (docs/EXTERNAL-ASSETS-PLAN.md, *Step 6b as built*).
+
 **The high-res release** (docs/ART-REPO-PLAN.md). `art-release.json` pins one
 release of the private `cehinds/AshenSpire-art` (repo, tag, zip, sha256; today
 `hd-assets-v1`). `node tools/fetch-art.mjs` downloads

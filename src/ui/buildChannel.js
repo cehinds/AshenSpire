@@ -119,6 +119,17 @@ export function setDebugEnabled(on, { channel = buildChannel(), storage = safeSt
   return cached;
 }
 
+/**
+ * promotionDebug(channel) → whether this BUILD applies the debug-only promoted
+ * defaults (src/content/settingsDefaults.js): dev and test do, every other
+ * build does not. Deliberately not the Developer tools switch, which only
+ * decides which sections are SHOWN — hiding them must never change what the
+ * game plays by after a reload (Codex, #1393).
+ */
+export function promotionDebug(channel = buildChannel()) {
+  return DEBUG_CHANNELS.has(channel);
+}
+
 let cached = null;
 /** The page's own answer, computed once. Tests call the two functions above. */
 export function pageDebug() {

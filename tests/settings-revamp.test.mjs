@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildChannel, debugEnabled, debugSwitch, setDebugEnabled, setPageDebugForTests, DEBUG_STORAGE_KEY } from '../src/ui/buildChannel.js';
+import { buildChannel, debugEnabled, debugSwitch, promotionDebug, setDebugEnabled, setPageDebugForTests, DEBUG_STORAGE_KEY } from '../src/ui/buildChannel.js';
 import {
   visibleAdvancedGroups, developerSwitchHtml, RELEASE_ADVANCED_GROUP_IDS, ADVANCED_GROUP_IDS, settingsSearchHits,
   settingsRowHtml, settingsRow, sliderSpan, niceCeil, buttonStep, rowModified, settingsRows,
@@ -45,6 +45,44 @@ test('debug is on by default on dev and test, never on main or release, and off 
   assert.equal(debugEnabled('dev', { search: '?debug=0', storage: devStore }), false, 'a dev build can be switched off');
   assert.equal(debugEnabled('dev', { search: '', storage: devStore }), false, 'and stays off on this device');
   assert.equal(debugEnabled('test', { search: '?debug=0', storage: null }), false, 'without storage the flag still counts for the page');
+});
+
+test('promoted defaults follow the build, never the Developer tools switch', async () => {
+  assert.equal(promotionDebug('dev'), true);
+  assert.equal(promotionDebug('test'), true);
+  for (const channel of ['main', 'release', 'unknown']) assert.equal(promotionDebug(channel), false, channel);
+  const main = await import('node:fs').then((fs) => fs.readFileSync(new URL('../src/main.js', import.meta.url), 'utf8'));
+  assert.match(main, /seedSettingsDefaults\(settings, promotionFor\(SETTINGS_DEFAULTS, promotionDebug\(\)\)\)/,
+    'boot seeds by the build, so hiding the tools and reloading changes no gameplay value');
+  try {
+    setPageDebugForTests(false);
+    const { promotionFor } = await import('../src/ui/screens/settings.js');
+    const defaults = { digest: 'x', values: { 'gameConfig.balance.x': 1 } };
+    assert.deepEqual(promotionFor(defaults), defaults, 'a dev seat with the tools switched off still applies every promoted value');
+  } finally { setPageDebugForTests(null); }
+});
+
+test('Settings Sync loads with the promotion this build seeds, never the unfiltered set', async () => {
+  const { readFileSync } = await import('node:fs');
+  const sync = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const render = sync.slice(sync.indexOf('export function renderSettingsSync('));
+  assert.doesNotMatch(render, /\bPROMOTED\b(?!\s*\})/, 'the panel reads the promotion it was handed');
+  assert.match(sync, /applied = applyProfile\(settings, onChange, parsed, promoted\)/, 'auto-load passes it on');
+  assert.match(screen, /renderSettingsSync\(syncMount, \{ settings, onChange, rows: ROWS, promoted: buildPromotion\(\),/);
+  assert.match(main, /stillWanted: \(\) => waiting,\n    promoted: promotionFor\(SETTINGS_DEFAULTS, promotionDebug\(\)\)\.values \}\)/, 'start-up auto-load passes the build promotion');
+});
+
+test('a dev seat with Developer tools off offers no hidden tuning to clear', async () => {
+  const { hiddenTuningKeys } = await import('../src/ui/screens/settings.js');
+  const { SETTINGS_DEFAULTS } = await import('../src/content/settingsDefaults.js');
+  const settings = { shrineMultiUse: true, 'gameConfig.balance.anything': 3, ...(SETTINGS_DEFAULTS.values || {}) };
+  try {
+    setPageDebugForTests(false);
+    assert.deepEqual(hiddenTuningKeys(settings), [], 'dev/test hide the rows but keep them, so Clear would fight the boot seed');
+    assert.ok(hiddenTuningKeys(settings, false).length > 0, 'a release build still lists what it cannot show');
+  } finally { setPageDebugForTests(null); }
 });
 
 test('Developer tools is a toggle on dev, test and unknown builds, and hidden on the release builds', () => {
@@ -569,7 +607,11 @@ test('a Reset goes back to the promotion this build applies, never hidden tuning
   const { readFileSync } = await import('node:fs');
   const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.match(screen, /export function resetKeys\(settings, onChange, keys, label = 'Reset', \{ promoted = buildPromotion\(\) \} = \{\}\)/);
-  assert.match(screen, /return debug \? PROMOTED_DEFAULTS : promotionFor\(SETTINGS_DEFAULTS, false\)\.values;/);
+  assert.match(screen, /if \(debug\) return PROMOTED_DEFAULTS;\n  return releasePromotion \?\?= Object\.freeze\(promotionFor\(SETTINGS_DEFAULTS, false\)\.values\);/);
+  // The row's dot, its Reset button and the Changed filter read the same
+  // promotion boot seeds, so they cannot disagree with it (#1457 review).
+  assert.match(screen, /export function rowDefault\(row, promoted = buildPromotion\(\)\)/);
+  assert.match(screen, /export function rowModified\(settings, row, promoted = buildPromotion\(\)\)/);
   const { resetKeys } = await import('../src/ui/screens/settings.js');
   const settings = { shrineMultiUse: true, screenShake: true };
   resetKeys(settings, () => ({ ok: true }), ['shrineMultiUse', 'screenShake'], 'all', { promoted: { screenShake: false } });
@@ -714,7 +756,7 @@ test('a no-op load still records promotion ownership; the unrecorded warning sur
 test('a manual load that matches still saves promotion ownership before it is marked loaded', async () => {
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
-  assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?try \{ applyProfile\(settings, onChange, parsed\); \} catch \(error\) \{ status\(error\.message\); return; \}[\s\S]*?if \(!write\(SYNC_STORAGE\.lastSha/);
+  assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?try \{ applyProfile\(settings, onChange, parsed, promoted\); \} catch \(error\) \{ status\(error\.message\); return; \}[\s\S]*?if \(!write\(SYNC_STORAGE\.lastSha/);
 });
 
 test('a profile carries which values are promoted defaults, and a loading device takes that ownership over', async () => {
