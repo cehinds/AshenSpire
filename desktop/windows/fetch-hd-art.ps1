@@ -180,9 +180,17 @@ function Remove-DroppedFiles {
   foreach ($l in [IO.File]::ReadAllLines($NewFiles)) { if ($l) { [void]$now.Add($l) } }
   $root = [IO.Path]::GetFullPath($InstallDir).TrimEnd('\', '/')
   $removed = 0
+  $drop = New-Object System.Collections.Generic.List[string]
   foreach ($l in [IO.File]::ReadAllLines($OldFiles)) {
+    if (-not $l) { continue }
+    # The old high index, if its download put a copy in game/packs: that copy
+    # goes too (the art section copies the new one in when it is ticked).
+    if ($l -match '^install-data/hd-index/([^/]+)$' -and -not $now.Contains("game/packs/$($Matches[1])")) { $drop.Add("game/packs/$($Matches[1])") }
+    if (-not $now.Contains($l)) { $drop.Add($l) }
+  }
+  foreach ($l in $drop) {
     # Only plain relative paths the old installer wrote; never outside the folder.
-    if (-not $l -or $now.Contains($l) -or $l.StartsWith('game/objects/') -or $l -match '(^|/)\.\.(/|$)' -or $l -match '^[\\/]|:') { continue }
+    if (-not $l -or $l.StartsWith('game/objects/') -or $l -match '(^|/)\.\.(/|$)' -or $l -match '^[\\/]|:') { continue }
     $file = Join-Path $InstallDir ($l.Replace('/', [IO.Path]::DirectorySeparatorChar))
     if (Test-Path -LiteralPath $file -PathType Leaf) {
       Remove-Item -LiteralPath $file -Force; $removed++

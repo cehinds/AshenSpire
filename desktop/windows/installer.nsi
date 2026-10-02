@@ -124,10 +124,6 @@ Section "Ashen Spire (required)" SecGame
     File "/oname=$PLUGINSDIR\fetch-hd-art.ps1" "${APP_DIR}/install-data/fetch-hd-art.ps1"
     nsExec::ExecToLog '"${PS_EXE}" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$PLUGINSDIR\fetch-hd-art.ps1" -Mode Drop -InstallDir "$INSTDIR" -OldFiles "$PLUGINSDIR\old-files.txt" -NewFiles "$PLUGINSDIR\new-files.txt"'
     Pop $0
-    Delete "$INSTDIR\game\packs\*.json"
-    Delete "$INSTDIR\game\packs\*.js"
-    Delete "$INSTDIR\install-data\hd-index\*.*"
-    Delete "$INSTDIR\install-data\*.*"
   ${EndIf}
 
   File /r "${APP_DIR}/*.*"
