@@ -19,12 +19,21 @@
 // synced (LOCAL_ONLY_KEYS in src/model/settingsSync.js): a folder on this machine means
 // nothing on another.
 
-import { setHighResSource, assetUrl, ASSET_MAP } from './assetmap.js';
+import { setHighResSource, assetUrl, ASSET_MAP, builtInSource } from './assetmap.js';
 
 export const ART_QUALITY_KEY = 'artQuality';
-export const ART_BUILT_IN = 'Built-in';
+// The built-in tier (docs/EXTERNAL-ASSETS-PLAN.md §5, step 8c): Auto picks
+// light or high for this device (src/ui/artTier.js), Light and High force one.
+// They choose which pack the web edition loads; a single file carries its art
+// inside it and has no other tier to load.
+export const ART_AUTO = 'Auto';
+export const ART_LIGHT = 'Light';
+export const ART_HIGH = 'High';
 export const ART_LOCAL_HIGH = 'Local high-res';
-export const ART_QUALITY_CHOICES = Object.freeze([ART_BUILT_IN, ART_LOCAL_HIGH]);
+/** The one choice before step 8c; a stored value reads as Auto (LEGACY_ART_QUALITY). */
+export const ART_BUILT_IN = 'Built-in';
+export const LEGACY_ART_QUALITY = Object.freeze({ [ART_BUILT_IN]: ART_AUTO });
+export const ART_QUALITY_CHOICES = Object.freeze([ART_AUTO, ART_LIGHT, ART_HIGH, ART_LOCAL_HIGH]);
 /** Where a high-res folder served next to the game lives, relative to the page. */
 export const SERVED_HD_BASE = 'hd/';
 
@@ -133,6 +142,9 @@ const urlToId = new Map();
 // all its ids and the one a source covers is taken: any of them is the same art.
 const inlineIds = new Map();
 let inlineIndexed = false;
+// The built-in pack (the web edition) does the same: byte-identical assets are
+// one object, so an object URL maps to all its ids (builtInArtArrived fills it).
+const builtInIds = new Map();
 function remember(map) {
   if (map) for (const [id, url] of map) urlToId.set(url, id);
 }
@@ -148,7 +160,8 @@ function idOfUrl(url) {
   // A URL from an earlier source names one alias; its group is recovered from
   // that id's inlined URI, so a folder that covers only another alias still wins.
   const id = url.startsWith('assets/') ? url : urlToId.get(url) || null;
-  const aliases = inlineIds.get(url) || (id && inlineIds.get(ASSET_MAP[id]));
+  const aliases = inlineIds.get(url) || builtInIds.get(url)
+    || (id && (inlineIds.get(ASSET_MAP[id]) || builtInIds.get(builtInSource()?.get(id))));
   if (!aliases || aliases.length < 2) return id || (aliases ? aliases[0] : null);
   return aliases.find((a) => current && current.has(a)) || id || aliases[0];
 }
@@ -237,6 +250,23 @@ export function watchMissingFiles(doc = globalThis.document) {
   }, true);
 }
 
+/**
+ * builtInArtArrived(map) — src/ui/assetPacks.js has set the built-in pack.
+ * The same moment as a tier change: images drawn before it are traced back to
+ * their ids and re-pointed, and the warmers keyed by URL start over.
+ */
+export function builtInArtArrived(map) {
+  remember(map);
+  builtInIds.clear();
+  for (const [id, url] of map || []) {
+    const list = builtInIds.get(url);
+    if (list) list.push(id); else builtInIds.set(url, [id]);
+  }
+  const moved = refreshMountedArt();
+  announce(current ? current.size : 0);
+  return moved;
+}
+
 /** False on browsers whose file picker cannot hand over a folder (phones). */
 export function canPickFolder(doc = globalThis.document) {
   if (!doc || typeof doc.createElement !== 'function') return false;
@@ -258,7 +288,7 @@ function publish() {
 
 /**
  * applyArtQuality(settings) — called at boot and whenever settings change.
- * Built-in clears any source; Local high-res uses the picked folder, else a
+ * Any other choice clears the source; Local high-res uses the picked folder, else a
  * served `hd/` folder, else nothing (and says so).
  */
 export async function applyArtQuality(settings, opts = {}) {
@@ -323,7 +353,7 @@ export function pickHighResFolder(settings, doc = globalThis.document) {
     input.setAttribute('webkitdirectory', '');
     input.addEventListener('change', async () => {
       // Stamped BEFORE the manifest read (a few MB): a folder picked after
-      // this one, or a switch to Built-in meanwhile, must win over it.
+      // this one, or a switch away from Local high-res meanwhile, must win over it.
       const round = ++pickRound;
       const files = [...(input.files || [])];
       let manifest = null;
@@ -358,5 +388,6 @@ export function resetHighResArt() {
   urlToId.clear();
   inlineIds.clear();
   inlineIndexed = false;
+  builtInIds.clear();
   setHighResSource(null);
 }

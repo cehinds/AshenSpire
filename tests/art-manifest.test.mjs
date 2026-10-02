@@ -8,9 +8,9 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { buildManifest, checkManifest, serialize, MANIFEST_PATH, dimensions } from '../tools/art-manifest.mjs';
+import { buildManifest, checkManifest, serialize, MANIFEST_PATH, dimensions, isCommonEntry, SCHEMA, LICENSE_ID } from '../tools/art-manifest.mjs';
 
-test('art-manifest.json matches assets/ and assets-mobile/', () => {
+test('art-manifest.json matches assets/, assets-mobile/ and the common sources', () => {
   const problems = checkManifest();
   assert.deepEqual(problems, [], `run node tools/art-manifest.mjs --write:\n${problems.slice(0, 10).join('\n')}`);
 });
@@ -146,11 +146,61 @@ test('dimensions reads webp, png, gif, jpeg and svg sizes (svg by viewBox too) a
   assert.equal(dimensions(Buffer.from('wOF2'), '.woff2'), null);
 });
 
-test('every image id in the real manifest records a pixel size in both tiers', () => {
+test('every image id in the real manifest records a pixel size in both tiers (common ids have one record)', () => {
   const m = JSON.parse(readFileSync(new URL(`../${MANIFEST_PATH}`, import.meta.url), 'utf8'));
   const missing = Object.entries(m.assets)
-    .filter(([id]) => /\.(webp|png|gif|jpe?g|svg)$/i.test(id))
+    .filter(([id, e]) => /\.(webp|png|gif|jpe?g|svg)$/i.test(id) && !isCommonEntry(e))
     .filter(([, e]) => !(e.high?.width > 0 && e.light?.width > 0))
     .map(([id]) => id);
   assert.deepEqual(missing, []);
+});
+
+// SCHEMA 2 (docs/EXTERNAL-ASSETS-PLAN.md §2): the fonts, the licence, the score
+// and the map tiles are `common` ids — one {path, bytes, sha256} record each.
+const commonBase = {
+  ...base,
+  'assets/fonts/f-400-normal.woff2': Buffer.from('wOF2-face'),
+  'assets-mobile/fonts/f-400-normal.woff2': Buffer.from('wOF2-face'),
+  'asset-data/fonts/OFL.txt': 'SIL OPEN FONT LICENSE\r\nVersion 1.1\r\n',
+  'music/manifest.json': '{"tracks":[]}\n',
+  'music/title/title.mp3': Buffer.from('ID3-title'),
+  'music/score/title.mjs': 'authoring source, not shipped\n',
+  'map-detail/abc/256/0-0.webp': webp(256, 256),
+};
+
+test('schema 2: fonts, the licence, music and map tiles are common records; art keeps light and high', () => {
+  withManifest(commonBase, (root) => {
+    const m = buildManifest(root);
+    assert.equal(m.schema, 2);
+    assert.equal(SCHEMA, 2);
+    assert.ok(m.tiers.common);
+    assert.deepEqual(Object.keys(m.assets).sort(), ['assets/bg/a.webp', 'assets/fonts/f-400-normal.woff2', LICENSE_ID, 'map-detail/abc/256/0-0.webp', 'music/manifest.json', 'music/title/title.mp3']);
+    assert.equal(m.count, 6);
+    for (const id of ['assets/fonts/f-400-normal.woff2', LICENSE_ID, 'music/manifest.json', 'music/title/title.mp3', 'map-detail/abc/256/0-0.webp']) {
+      assert.deepEqual(Object.keys(m.assets[id]), ['common'], `${id} has one common record`);
+      assert.deepEqual(Object.keys(m.assets[id].common), ['path', 'bytes', 'sha256']);
+    }
+    assert.equal(m.assets[LICENSE_ID].common.path, 'licenses/OFL.txt', 'the licence sits at its pack path');
+    assert.equal(m.assets[LICENSE_ID].common.bytes, 'SIL OPEN FONT LICENSE\nVersion 1.1\n'.length, 'text hashes by its LF form');
+    assert.ok(m.assets['assets/bg/a.webp'].light && m.assets['assets/bg/a.webp'].high);
+    assert.deepEqual(checkManifest(root), []);
+  });
+});
+
+test('known-bad: a light font twin that differs from the common record is caught', () => {
+  withManifest(commonBase, (root) => {
+    writeFileSync(join(root, 'assets-mobile/fonts/f-400-normal.woff2'), 'other');
+    assert.match(checkManifest(root).join('\n'), /f-400-normal\.woff2: the assets-mobile\/ copy differs/);
+  });
+});
+
+test('known-bad: a changed track or a new tile without a regenerated manifest is caught', () => {
+  withManifest(commonBase, (root) => {
+    writeFileSync(join(root, 'music/title/title.mp3'), 'ID3-retake');
+    mkdirSync(join(root, 'map-detail/abc/256'), { recursive: true });
+    writeFileSync(join(root, 'map-detail/abc/256/1-0.webp'), webp(256, 256, 3));
+    const problems = checkManifest(root).join('\n');
+    assert.match(problems, /music\/title\/title\.mp3: the common file changed/);
+    assert.match(problems, /map-detail\/abc\/256\/1-0\.webp: in the common sources but not in the manifest/);
+  });
 });

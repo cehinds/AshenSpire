@@ -96,7 +96,56 @@ fails the core suite while it is stale, or when any field differs from what
 `src/ui/assetmap.js` resolves; `assetUrl()` checks an optional high-res source
 first (built from a manifest by the Art quality setting), then the built-in
 art. Not yet covered: game code still builds many `assets/…` paths from
-templates, and 14 CSS `url(../assets/…)` backdrops bypass `assetUrl()`.
+templates, and the CSS `url(../assets/…)` backdrops bypass `assetUrl()` in the
+source tree and the single file (the web edition reads them through `ASSET_CSS`).
+Schema 2 (docs/EXTERNAL-ASSETS-PLAN.md, step 2) adds `common` ids with one
+`{path, bytes, sha256}` record each: the 15 fonts under `assets/fonts/`,
+`licenses/OFL.txt` (read from `asset-data/fonts/OFL.txt`), `music/manifest.json`
+and the score's MP3s, and the `map-detail/` tiles; readers that walk the light
+and high twins skip them. `node tools/asset-pack.mjs` writes the plan's pack
+format from these trees into `build/asset-pack/` (ignored): a content-addressed
+`objects/<xx>/<sha256>.<ext>` store and `packs/<pack>-<digest12>.json` indexes
+for `light`, `high` and `common`, each with its `.js` twin, plus the
+`packs/fonts-<digest12>.js` sidecar; `--check` verifies a written tree and
+`tests/asset-pack.test.mjs` covers it. **The web edition reads them** (step 3a):
+`bundle.mjs --external-art` writes the packs beside its HTML (`light` and
+`common` with `--light`; `high`, `light` and `common` without it), stamps each
+index's sha256 and the default tier into `ASSET_PACKS` (`src/ui/assetPacks.js`),
+and the loader checks the indexes at boot and resolves ids to objects through
+`setBuiltInSource()` in `src/ui/assetmap.js` (high → light → placeholders when
+an index is missing or fails its pin; `tests/asset-packs.test.mjs`).
+The CSS assets follow the same index (step 3b): `tools/asset-css.mjs` moves the
+"AS Lore" `@font-face` rules into an `ASSET_CSS` template with `{{id}}` slots,
+turns each backdrop `url()` into `var(--as-css-<id>, none)` defined there, and
+inlines the two SVG masks as `data:`; the loader fills the slots from the index it
+used (light when high failed) and injects one `<style data-asset-css>`, and a
+failed load injects nothing (no backdrop, system faces; `tests/asset-css.test.mjs`).
+`node tools/verify-external.mjs` checks the tree on disk (D: every `ASSET_CSS`
+slot names an id the common index or every art tier lists) and
+`node tools/external-play.mjs` loads it in Chromium (`--expect-tier light` for a
+high-default build whose high index was removed). The single files are
+unchanged: their `ASSET_PACKS` stays null and the loader does nothing.
+
+**On Pages** (step 6b): `tools/pages-site.mjs` serves each build whose rebuild
+writes that web edition as the page at `/<branch>/<ordinal>/`, with an
+`asset-base.json` beside it and its packs and objects in one store at the
+site root shared by every build (`tools/pages-store.mjs`), and its light
+single file whole at `/<branch>/<ordinal>/download/AshenSpire.html`, which
+the Download links and the in-game downloader (`build.json`'s `download`)
+name. `/sw.js` is the service worker (`tools/pages-sw.mjs`: objects
+cache-first and hash-checked, Range answered `206`, pages network-first; its
+kill-switch is the committed `SW_KILL`), registered only by Download & saves
+→ *Make available offline* (`src/ui/offlineInstall.js`). `pages-site --check`
+proves the store, the bases, the downloads and `sw.js`; its `--selftest`
+plants each known-bad. `node tools/pages-offline.mjs` drives the worker in
+Chromium over `serveDir` (`tests/pages-sw.test.mjs` runs it in a sandbox).
+**To pull the worker** from every browser that kept a build: set
+`SW_KILL = true` in `tools/pages-sw.mjs` and merge that PR to `dev`, whose push
+republishes `/sw.js` as the kill-switch; each browser deletes its `ashen-`
+caches, unregisters and reloads the windows it controlled on its next visit.
+Leave it published for weeks, then set it back in a later PR. Publish it from
+`dev`: a site published by a pre-6b `pages-site` has no `/sw.js`, and a 404 does
+not unregister a worker (docs/EXTERNAL-ASSETS-PLAN.md, *Step 6b as built*).
 
 **The high-res release** (docs/ART-REPO-PLAN.md). `art-release.json` pins one
 release of the private `cehinds/AshenSpire-art` (repo, tag, zip, sha256; today
@@ -108,8 +157,19 @@ refuses unless the zip's sha256 is the pinned one and every file matches its
 re-hashes a cache. `tools/zip.mjs` is the same file the art repository packs
 with; `tests/fetch-art.test.mjs` pins their shared vector.
 
-**Settings → Display → Art quality** (`src/ui/highResArt.js`): *Built-in* uses
-the art the build carries; *Local high-res* lays full-resolution files over it
+**Settings → Display → Art quality** (`src/ui/artTier.js`, `src/ui/highResArt.js`):
+*Auto*, *Light* and *High* choose which pack the web edition loads (step 8c of
+docs/EXTERNAL-ASSETS-PLAN.md). *Auto* is light on a narrow layout
+(`data-layout="narrow"`), on a screen whose short side is at most 600 CSS px
+(a phone in either orientation), with Save-Data on or with
+`navigator.deviceMemory` at or under 2 GB, and the build's default tier otherwise; *Light* and *High* force
+one. The boot load asks for that tier, a change in play reloads the indexes and
+re-points the images on screen (a switch that cannot load keeps the art already
+shown), and the loader's fallback still applies (High on a build without the
+high pack, or whose high index fails, shows light). A single file and the
+source tree pin no packs, so there *Light* and *High* are disabled and the row
+says why. A stored *Built-in* (the old default) reads as *Auto*.
+*Local high-res* lays full-resolution files over Auto's tier
 from a folder served beside the game (`hd/art-manifest.json` plus `hd/assets/…`,
 found over http) or a folder the player picks (any build, `file://` included;
 the browser hands the files over for this page only, so a reload asks again).
@@ -270,6 +330,16 @@ Linux jobs, plus the bundler's parse-gate fixtures (`node tools/bundle.test.mjs`
 several minutes) as a third; on a pull request into `dev` only the fast half
 (`core suite`) runs, and all three run on every push to `test` and `release`
 (see *Which checks gate a pull request* above).
+
+Every browser tool launches Chromium through `tools/browser.mjs` (`CHROME`
+picks the binary). The wait for Chrome's DevTools endpoint is never shorter
+than a launch floor, `LAUNCH_FLOOR_MS` (30000 ms), whatever `timeoutMs` the
+tool passes, because a cold Chrome start on a GitHub runner can take longer
+than the 12000 ms most tools ask for (D35). Set `ASHEN_BROWSER_LAUNCH_MS` to
+change the floor in ms (`0` turns it off; a value that is not a whole number,
+or is above 2147483647, is ignored). A browser that exits or fails to start
+still fails at once; only a slow one is waited for.
+`node --test tests/browser-launch-floor.test.mjs` covers the floor.
 
 ```
 # what raises the red failure banner, and what must not
@@ -895,11 +965,25 @@ per-module-closure runtime (so file:// has no module/CORS issue). Double-click
 to play; no server, no Node, no external files. Re-run after any source change.
 With no flag it bundles the full art from `assets/`; `--light` reads the
 `assets-mobile/` twins (the dev/test tier), `--mobile` writes the budgeted
-`AshenSpire-mobile.html`, and `--external-art` leaves the art beside the HTML.
+`AshenSpire-mobile.html`, and `--external-art` leaves the art beside the HTML
+in the pack shape (`asset-base.json`, `packs/`, `objects/`; see *Run & test*).
 `node tools/launch.mjs --build-only` picks the flags for you (see *Run & test*).
 The file is a local build output, ignored by git on `dev`: of the build's own
 outputs, commit only `buildordinal.json` (and the generated changelog module).
 Generated content and config modules are committed as usual.
+
+The browser tools that drive a built page (`--dist`, `--standalone`,
+`--artifact`, and `tapsize`/`hudbars`, which always read `dist/`) ask
+`buildPageUrl()` in `tools/browser.mjs` for the URL to open. A self-contained
+single file opens over `file://`, exactly as before; a pack-shaped build (its
+HTML carries a non-empty `ASSET_PACKS` pin, docs/EXTERNAL-ASSETS-PLAN.md step 3a on) is
+served over local http from its own folder, because its indexes arrive by
+`fetch`. It is served under `/<channel>/latest/`, the channel the same file
+reads by double-click (`unknown` for `dist/AshenSpire.html`), so a served page
+keeps the file's channel and debug state instead of reading as `dev` on
+127.0.0.1. (`buildChannel()` honours `/unknown/` only on a loopback host). `ASHEN_BUILD_OVER=file` or `=http` forces either for a run;
+`node tools/browser.mjs --selftest --serve-only` (check S, no browser, run by
+`tests/browser-serve.test.mjs`) checks the helper.
 
 ## Balance & telemetry
 

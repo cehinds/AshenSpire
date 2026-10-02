@@ -145,6 +145,12 @@ export function combatSnapshotProblems(snapshot) {
       problems.push('sigilSlots must be an object { [itemRef]: (sigilId|null)[] }');
     }
   }
+  // SPEC §15.4: the attuned legendaries, a list of distinct sigil ids.
+  if (snapshot.attunedSigils !== undefined) {
+    if (!Array.isArray(snapshot.attunedSigils) || snapshot.attunedSigils.some((id) => !nonEmptyString(id)) || new Set(snapshot.attunedSigils).size !== snapshot.attunedSigils.length) {
+      problems.push('attunedSigils must be a list of distinct sigil ids');
+    }
+  }
   if (snapshot.companions !== undefined) {
     if (!Array.isArray(snapshot.companions) || snapshot.companions.some((id) => !nonEmptyString(id)) || new Set(snapshot.companions).size !== snapshot.companions.length) {
       problems.push('companions must be a list of distinct companion ids');
@@ -254,6 +260,12 @@ export function combatSnapshotReferenceProblems(snapshot, registries) {
   }
   has(registries.classes, snapshot.player?.classId, 'player.classId');
   for (const id of snapshot.player?.relicIds || []) has(registries.relics, id, 'player.relicIds');
+  // SPEC §15.4 (rarity at every door): an attuned id is a known LEGENDARY.
+  for (const id of Array.isArray(snapshot.attunedSigils) ? snapshot.attunedSigils : []) {
+    if (!nonEmptyString(id)) continue;
+    if (!registries.sigils || !registries.sigils.has(id)) problems.push(`attunedSigils '${id}' is unknown`);
+    else if (registries.sigils.get(id).rarity !== 'legendary') problems.push(`attunedSigils '${id}' is not a legendary sigil`);
+  }
   for (const flask of snapshot.player?.flasks || []) has(registries.flasks, flask?.flaskId, 'player.flasks.flaskId');
   if (snapshot.player?.stanceId != null) has(registries.stances, snapshot.player.stanceId, 'player.stanceId');
   for (const id of Object.keys(snapshot.player?.statuses || {})) has(registries.statuses, id, 'player.statuses');

@@ -16,5 +16,15 @@ export const speakers = [
     "id": "roadWarden",
     "name": "The Road Warden",
     "portraitKey": ""
+  },
+  {
+    "id": "swordSaint",
+    "name": "The Sword Saint",
+    "portraitKey": ""
+  },
+  {
+    "id": "starReader",
+    "name": "The Star Reader",
+    "portraitKey": ""
   }
 ];

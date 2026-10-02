@@ -140,3 +140,8 @@ default,,thornSigil,bleed,sigils.thornSigil.bleed
 default,,tideSigil,n,sigils.tideSigil.n
 default,,tideSigil,draw,sigils.tideSigil.draw
 default,,hearthSigil,block,sigils.hearthSigil.block
+default,,vigilSigil,pct,sigils.vigilSigil.pct
+default,,vigilSigil,block,sigils.vigilSigil.block
+default,,pyreSigil,block,sigils.pyreSigil.block
+default,,gravelightSigil,pct,sigils.gravelightSigil.pct
+default,,gravelightSigil,heal,sigils.gravelightSigil.heal

@@ -463,18 +463,19 @@ test('FINISH: a granted card or a Strike cannot be stacked, each refused by name
 // ---------------------------------------------------------------------------
 
 test('schema 17: the bump, the appended corpus entry, and a schema-16 save loads unchanged', () => {
-  assert.equal(RUN_SCHEMA_VERSION, 17);
+  // Step 7 (SPEC §14.5) bumped once more; this entry and its migration stay.
+  assert.ok(RUN_SCHEMA_VERSION >= 17);
   const corpus = JSON.parse(readFileSync(new URL('./fixtures/run-save-schema-versions.json', import.meta.url), 'utf8'));
   const v17 = JSON.parse(corpus.versions['17'].bytes);
   assert.equal(v17.schemaVersion, 17, 'one schema-17 save is appended');
-  assert.deepEqual(validateRunShape(v17), []);
+  assert.deepEqual(validateRunShape(v17, { preTrainingPool: true }), [], 'a schema-17 save, before the training pool (SPEC §14.5)');
   const v16 = JSON.parse(corpus.versions['16'].bytes);
   assert.equal(v16.schemaVersion, 16, 'the schema-16 entry is untouched');
   const storage = createMemoryStorage();
   storage.setItem(RUN_KEY, JSON.stringify(v16));
   const run = createSaveManager(storage).loadRun(REG);
   assert.ok(run);
-  assert.equal(run.schemaVersion, 17);
+  assert.equal(run.schemaVersion, RUN_SCHEMA_VERSION);
   assert.deepEqual(run.sigilSlots, v16.sigilSlots);
 });
 

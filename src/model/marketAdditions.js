@@ -105,6 +105,9 @@ export function sigilPurchasePlan(registries, run, item) {
   let reason = '';
   if (!offered(run, 'sigils') || !item || !(run.shopStock.sigils || []).includes(item)) reason = say('shop.refuse.gone');
   else if (!def || !priced(item.cost)) reason = say('shop.refuse.unpriced');
+  // Defence in depth (SPEC §15.4, rarity at every door): a legendary is never
+  // shop stock, so a shelf a hand edit filled cannot sell one.
+  else if (def.rarity === 'legendary') reason = say('shop.refuse.sigilLegendary', { name: def.name });
   else if (ownedSigilIds(run).includes(item.id)) reason = say('shop.refuse.sigilOwned', { name: def.name });
   else if (!affordable(run, item.cost)) reason = say('shop.refuse.cinders');
   return { ok: !reason, reason, item, def, cost: item?.cost, revision: revision(run) };
