@@ -3053,7 +3053,7 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
   const changelogMount = container.querySelector('.set-changelog-mount');
   if (changelogMount) renderChangelogSection(changelogMount);
   const syncMount = container.querySelector('.set-sync-mount');
-  if (syncMount) renderSettingsSync(syncMount, { settings, onChange, rows: ROWS, afterApply: (moved, before, seedMoved = false) => {
+  if (syncMount) renderSettingsSync(syncMount, { settings, onChange, rows: ROWS, promoted: buildPromotion(), afterApply: (moved, before, seedMoved = false) => {
     if (moved || seedMoved) {
       // A new profile: nothing offered before it applies any more. Its own
       // Undo belongs to the new generation.

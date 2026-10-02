@@ -62,6 +62,18 @@ test('promoted defaults follow the build, never the Developer tools switch', asy
   } finally { setPageDebugForTests(null); }
 });
 
+test('Settings Sync loads with the promotion this build seeds, never the unfiltered set', async () => {
+  const { readFileSync } = await import('node:fs');
+  const sync = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
+  const screen = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  const render = sync.slice(sync.indexOf('export function renderSettingsSync('));
+  assert.doesNotMatch(render, /\bPROMOTED\b(?!\s*\})/, 'the panel reads the promotion it was handed');
+  assert.match(sync, /applied = applyProfile\(settings, onChange, parsed, promoted\)/, 'auto-load passes it on');
+  assert.match(screen, /renderSettingsSync\(syncMount, \{ settings, onChange, rows: ROWS, promoted: buildPromotion\(\),/);
+  assert.match(main, /stillWanted: \(\) => waiting,\n    promoted: promotionFor\(SETTINGS_DEFAULTS, promotionDebug\(\)\)\.values \}\)/, 'start-up auto-load passes the build promotion');
+});
+
 test('a dev seat with Developer tools off offers no hidden tuning to clear', async () => {
   const { hiddenTuningKeys } = await import('../src/ui/screens/settings.js');
   const { SETTINGS_DEFAULTS } = await import('../src/content/settingsDefaults.js');
@@ -744,7 +756,7 @@ test('a no-op load still records promotion ownership; the unrecorded warning sur
 test('a manual load that matches still saves promotion ownership before it is marked loaded', async () => {
   const { readFileSync } = await import('node:fs');
   const panel = readFileSync(new URL('../src/ui/components/settingsSync.js', import.meta.url), 'utf8');
-  assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?try \{ applyProfile\(settings, onChange, parsed\); \} catch \(error\) \{ status\(error\.message\); return; \}[\s\S]*?if \(!write\(SYNC_STORAGE\.lastSha/);
+  assert.match(panel, /if \(!diff\.length\) \{[\s\S]*?try \{ applyProfile\(settings, onChange, parsed, promoted\); \} catch \(error\) \{ status\(error\.message\); return; \}[\s\S]*?if \(!write\(SYNC_STORAGE\.lastSha/);
 });
 
 test('a profile carries which values are promoted defaults, and a loading device takes that ownership over', async () => {

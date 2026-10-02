@@ -3971,7 +3971,8 @@ if (shotState === 'combat-test') {
   // left for the next start rather than applied mid-session.
   const PROFILE_WAIT_MS = 3000;
   let waiting = true;
-  const loaded = autoLoadProfile({ settings: activeSettings, onChange: persistSettingsChange, rows: settingsRows(), stillWanted: () => waiting })
+  const loaded = autoLoadProfile({ settings: activeSettings, onChange: persistSettingsChange, rows: settingsRows(), stillWanted: () => waiting,
+    promoted: promotionFor(SETTINGS_DEFAULTS, promotionDebug()).values })
     .then((result) => { if (result.applied) console.info(`settings profile: ${result.applied} setting(s) loaded from GitHub.`); })
     .catch((error) => console.warn(`settings profile: not loaded — ${error.message}`));
   Promise.race([loaded, new Promise((settle) => setTimeout(settle, PROFILE_WAIT_MS))])
