@@ -1522,7 +1522,7 @@ Where the build settles the step-12 row and section 6's step-12 rows (2026-10-02
   manifest), and dev-preview's workbench (`assets/` from the light pack, the
   fonts from the common pack).
 - **CI fetches first.** `.github/actions/fetch-art` (actions/cache keyed on
-  the pin and the manifest, then `fetch-art --recheck --pack`) runs right
+  the pin and the manifest, then `fetch-art --recheck --refetch`) runs right
   after setup-node in every job of `ci.yml`, `tests.yml`, `dev-preview.yml`,
   `coop-hud.yml`, `map-camera.yml` and `tutorial-reach.yml`, and those
   workflows set `ASHEN_ART_SOURCE=cache`. The step-11 fetch steps that ran

@@ -271,12 +271,16 @@ jobs:
           W=preview/workbench
           mkdir -p "$W/assets" "$W/art/combat-effects-2026-09-07"
           if [ "$(echo $WEB_TIER)" = "--light" ]; then
-            cp -r "$(node tools/art-source.mjs --dir assets-mobile)"/. "$W/assets/"
+            LIGHT_DIR=$(node tools/art-source.mjs --dir assets-mobile)
+            cp -r "$LIGHT_DIR"/. "$W/assets/"
           else
             cp -r assets/. "$W/assets/"
           fi
           mkdir -p "$W/assets/fonts"
-          cp -r "$(node tools/art-source.mjs --dir assets/fonts)"/. "$W/assets/fonts/"
+          # Assigned first: errexit ignores a failed substitution inside an
+          # argument, which would turn the source into "/.".
+          FONTS_DIR=$(node tools/art-source.mjs --dir assets/fonts)
+          cp -r "$FONTS_DIR"/. "$W/assets/fonts/"
           # The standalone is collected and uploaded by its own steps, right
           # after the build, so nothing here can cost a commit its download.
           cp -r src "$W/src"
