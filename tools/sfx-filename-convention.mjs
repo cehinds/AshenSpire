@@ -351,7 +351,9 @@ function scoreRuntime(report) {
 }
 
 function copyBundleInputs(to) {
-  for (const name of ['index.html', 'buildordinal.json', 'src', 'styles', 'assets', 'tools']) {
+  // The pin and the manifest are build identity (tools/buildversion.mjs
+  // BUILD_IDENTITY_FILES, docs/EXTERNAL-ASSETS-PLAN.md step 11).
+  for (const name of ['index.html', 'buildordinal.json', 'art-release.json', 'art-manifest.json', 'src', 'styles', 'assets', 'tools']) {
     const from = resolve(ROOT, name);
     if (existsSync(from)) cpSync(from, resolve(to, name), { recursive: true });
   }
@@ -555,8 +557,11 @@ function selftest() {
     writeFileSync(resolve(dir, 'assets/sfx/cardPlay.ogg'), Buffer.from('OggS-fixture-47'));
     const gitSteps = [
       ['init', '-q'],
-      ['add', 'index.html', 'buildordinal.json', 'src', 'styles', 'assets', 'tools'],
-      ['-c', 'user.name=SFX Fixture', '-c', 'user.email=sfx-fixture@example.invalid',
+      ['add', 'index.html', 'buildordinal.json', 'art-release.json', 'art-manifest.json', 'src', 'styles', 'assets', 'tools'],
+      // gc.auto=0: the fixture holds about 6,700 objects, git's default auto-gc
+      // threshold, so a commit could start a detached `git gc` that is still
+      // writing .git/objects when the sandbox is removed (ENOTEMPTY).
+      ['-c', 'gc.auto=0', '-c', 'user.name=SFX Fixture', '-c', 'user.email=sfx-fixture@example.invalid',
         'commit', '-qm', 'fixture'],
     ];
     for (const step of gitSteps) {

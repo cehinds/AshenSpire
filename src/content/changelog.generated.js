@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: every owner decision has its own number",
     "detail": "Nothing you play changes. Two decisions in the project's finish list were both numbered D38, so a note citing D38 could mean either; the hit sound tiers decision is now D47, and a test fails if two decisions ever share a number again.",
-    "build": "0.7.1.794",
+    "build": "0.7.1.795",
     "pullRequest": 1493,
     "url": "https://github.com/cehinds/AshenSpire/pull/1493"
+  },
+  {
+    "id": "pr-1450",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: every change now checks the game's art against the art repository's release",
+    "detail": "Nothing you play changes. The game pins one release of its art, light art, fonts, music and map tiles in a separate repository; each check downloads the parts it needs, verifies every file against its fingerprint, and proves the release and the copies still kept here are identical, byte for byte.",
+    "build": "0.7.1.794",
+    "pullRequest": 1450,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1450"
   },
   {
     "id": "pr-1488",
