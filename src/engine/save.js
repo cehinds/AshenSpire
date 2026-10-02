@@ -868,7 +868,15 @@ export function createSaveManager(storage) {
         // the dealt count. A run that carries the marker is held to its quota
         // like any other, so a lost attack card is refused, not healed; a gap
         // or an excess is refused either way; a Standard run is not touched.
-        if (isPoolDeckRun(run) && run.poolDeckRule !== POOL_DECK_RULE) {
+        // Only an ABSENT marker is a pre-fix save. A present marker must be
+        // the one rule this build knows, on a pool run; anything else (a
+        // future rule, a string, null, a marker on a Standard run) is refused
+        // by name, never migrated (Codex review on #1479).
+        if (Object.hasOwn(run, 'poolDeckRule')) {
+          if (run.poolDeckRule !== POOL_DECK_RULE) throw new Error(`poolDeckRule ${JSON.stringify(run.poolDeckRule)} is not a dealt-deck rule this build knows (${POOL_DECK_RULE})`);
+          if (!isPoolDeckRun(run)) throw new Error(`poolDeckRule is set on a '${run.custom?.deckMode || 'standard'}' run; only a Sealed or Draft run carries it`);
+        }
+        if (isPoolDeckRun(run) && !Object.hasOwn(run, 'poolDeckRule')) {
           const legacy = !(run.removedAttackSlotIds || []).length;
           const healQuota = (holder, cards) => {
             const dealt = dealtAttackSlotCount(cards);

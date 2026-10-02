@@ -305,6 +305,29 @@ test('sealed: a marked save that lost an attack card is refused, not healed (Cod
   assert.match(saves.runStatus().reason, /attack instance count 0 does not match authored 1/);
 });
 
+test('sealed: a present but unknown dealt-deck marker is refused, never migrated (Codex review)', () => {
+  for (const marker of [2, '1', null]) {
+    // A marked run that lost an attack card: an unknown marker must not route it into the pre-fix heal.
+    const { run, rng, saves } = deal('starseer', 'sealed');
+    run.equipmentAttackSlotCount = 1;
+    run.poolDeckRule = marker;
+    saves.saveRun(run, rng);
+    assert.equal(saves.loadRun(registries, 1), null, `poolDeckRule ${JSON.stringify(marker)} must be refused`);
+    assert.equal(saves.runStatus().state, 'archived');
+    assert.match(saves.runStatus().reason, /poolDeckRule/);
+  }
+  // Absent still heals: a pre-fix save.
+  const { saves } = deal('starseer', 'sealed', { fixed: false });
+  assert.ok(saves.loadRun(registries, 1));
+  assert.equal(saves.runStatus().state, 'healed');
+  // And the marker on a Standard run is refused.
+  const standard = deal('reaver', 'standard');
+  standard.run.poolDeckRule = POOL_DECK_RULE;
+  standard.saves.saveRun(standard.run, standard.rng);
+  assert.equal(standard.saves.loadRun(registries, 1), null);
+  assert.match(standard.saves.runStatus().reason, /poolDeckRule/);
+});
+
 test('standard: a deck missing its composed attack slots is still refused', () => {
   const { run, rng, saves } = deal('reaver', 'standard');
   run.deck = run.deck.filter((c) => c.equipmentRole !== 'attack');
