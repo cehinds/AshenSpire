@@ -1,0 +1,204 @@
+/* Approved player artwork, layered under the existing live UI. Geometry,
+   semantic colours, text zoom, authored scene anchors and action legality
+   remain owned by their existing models. CSS assets use the tier exporter. */
+:root {
+  --polish-frame: url('../assets/player-polish/ui/components/panel-frame.svg');
+  --polish-slot: url('../assets/player-polish/ui/components/item-slot.svg');
+  --polish-slot-selected: url('../assets/player-polish/ui/components/item-slot-selected.svg');
+}
+.engraved-icon {
+  display:inline-block; flex:0 0 auto; width:24px; height:24px;
+  background-color:currentColor; vertical-align:middle;
+  mask:var(--engraving, var(--engraving-fallback)) center / contain no-repeat;
+  -webkit-mask:var(--engraving, var(--engraving-fallback)) center / contain no-repeat;
+  pointer-events:none;
+}
+.as-glyph .engraved-icon { width:100%; height:100%; }
+.as-iconbtn .engraved-icon { width:24px; height:24px; }
+.modal-close-face { font-size:0; }
+.modal-close-face::after {
+  content:''; display:block; width:20px; height:20px; background-color:currentColor;
+  mask:url('../assets/player-polish/ui/icons/close.svg') center / contain no-repeat;
+  -webkit-mask:url('../assets/player-polish/ui/icons/close.svg') center / contain no-repeat;
+}
+.m-label .engraved-icon { width:18px; height:18px; margin-inline-end:5px; color:var(--meter-tone, currentColor); }
+.card-costs .engraved-icon { width:16px; height:16px; }
+.as-pip .engraved-icon { width:22px; height:22px; }
+
+/* Nine-sliced corners remain engraved at any folio aspect ratio. The skin
+   changes no border widths or layout shares. Small copy has a calm veil. */
+:is(.modal, .as-pagedoor, .shop-frame, .as-detailcard, .as-option, .as-face, .title-save-preview, .as-decide, .atlas-detail, .dungeon-detail, .dialogue-context, .as-tip) {
+  background-image:linear-gradient(color-mix(in srgb, var(--bg) 91%, transparent), color-mix(in srgb, var(--bg) 91%, transparent)), url('../assets/player-polish/materials/soot-leather-material.webp');
+  background-size:cover; background-repeat:no-repeat;
+  border-image-source:var(--polish-frame); border-image-slice:24;
+  border-image-width:12px; border-image-repeat:stretch;
+  border-radius:3px;
+}
+.modal-head, .modal-foot, .as-pane-head {
+  background-color:color-mix(in srgb, var(--bg) 94%, transparent);
+}
+.modal-head, .as-pane-head { border-bottom-color:var(--line-soft); }
+.modal-foot { border-top-color:var(--line-soft); }
+.modal-head-id h2, .as-head-id h2 { letter-spacing:.06em; }
+.as-subtitle, .as-flavor, .as-prose + .as-prose { color:var(--ink-dim); }
+.as-ornament {
+  height:12px; background:url('../assets/player-polish/ui/components/divider-ornate.svg') center / 100% 12px no-repeat;
+}
+.as-ornament::before, .as-ornament::after, .as-ornament > span { display:none; }
+
+/* The neutral texture is independent of state: the authoritative role rules
+   still paint green/red/gold, including End Turn's registered exception. */
+:is(.as-btn, .as-iconbtn, .as-tab, .as-railitem, .as-seg button, .modal-close-face) {
+  background-image:linear-gradient(#ffffff08, transparent 40%, #00000024);
+  background-size:cover; background-repeat:no-repeat; border-radius:3px;
+}
+:is(.as-option, .as-face):is([data-control-role='primary'], [data-control-role='destructive']):not(:disabled):not([aria-disabled='true']),
+:is(.as-option, .as-face)[data-control-role='exit']:is(:hover, :focus-visible) {
+  background-image:linear-gradient(#ffffff08, transparent 40%, #00000024);
+}
+:is(.as-btn, .as-iconbtn, .as-tab, .as-railitem, .as-option):focus-visible {
+  outline:2px solid var(--parchment); outline-offset:3px;
+}
+:is(.as-btn, .as-option, .as-tab, .as-railitem):is(:disabled, [aria-disabled='true']) {
+  opacity:1; color:var(--ink-dim);
+}
+:is(.as-tab, .as-railitem)[aria-selected='true'] {
+  box-shadow:inset 0 -2px var(--gold);
+}
+.as-slot, .cp-cell, .armoury-position-grid-card {
+  border-image:var(--polish-slot) 20 / 10px stretch;
+  background-color:var(--bg);
+}
+:is(.as-slot, .cp-cell, .armoury-position-grid-card):is(.on, .selected, .is-selected, [aria-selected='true']) {
+  border-image-source:var(--polish-slot-selected); outline:1px solid var(--gold); outline-offset:1px;
+}
+.m-track {
+  background-image:url('../assets/player-polish/ui/components/meter-track.svg');
+  background-size:100% 100%; background-repeat:no-repeat;
+}
+.m-fill { box-shadow:inset 0 1px 0 #ffffff30, inset 0 -1px 0 #00000070; }
+
+/* Cards remain documents with real costs/effects and their registered art.
+   The frame is sliced, rather than stretching the illustration aperture. */
+.card, .equipment-poker-card {
+  border-image:var(--polish-frame) 24 / 10px stretch;
+  background-image:linear-gradient(color-mix(in srgb, var(--bg) 88%, transparent), color-mix(in srgb, var(--bg) 88%, transparent)), url('../assets/player-polish/materials/soot-leather-material.webp');
+  background-size:cover; background-repeat:no-repeat;
+}
+.card .cname { font-family:var(--font-display); color:var(--parchment); }
+.card .ctype { letter-spacing:.11em; }
+.card .ctext { color:var(--parchment); }
+.card .art { background-color:var(--bg); }
+.card:is(.selected, .reward-selected, [aria-selected='true']) {
+  outline:2px solid var(--gold); outline-offset:2px;
+}
+.card .cost {
+  background-image:url('../assets/player-polish/ui/components/cost-medallion.svg');
+  background-size:100% 100%; background-repeat:no-repeat;
+}
+
+/* World paintings never replace map coordinates, combat atlases or floors. */
+.title-screen, .customize, .customrun, .draft, .history-screen, .gameover {
+  background-image:linear-gradient(90deg, #0d0b0838, #0d0b0870), url('../assets/player-polish/scenes/spire-vista-desktop.webp');
+  background-size:cover; background-position:center; background-repeat:no-repeat;
+}
+.title-screen .tower-hall { display:none; }
+.title-screen::before { background:linear-gradient(180deg, #0d0b0820, #0d0b0870); }
+.title-screen .as-titlemenu {
+  margin-inline:6% auto; width:46%; max-width:64rem;
+  padding:2.4rem; background:color-mix(in srgb, var(--bg) 76%, transparent);
+  border-image:var(--polish-frame) 24 / 12px stretch;
+}
+.title-screen .tm-name { color:var(--parchment); text-shadow:0 2px 16px var(--bg); }
+.title-screen .title-menu .tm-entry { min-height:var(--tap-floor); }
+.title-screen .title-menu { margin-block:1.6rem; }
+.title-screen .tm-foot { color:var(--ink-dim); }
+.shop-workspace {
+  background-image:linear-gradient(90deg, #0d0b0810, #0d0b0855), url('../assets/player-polish/scenes/merchant-desktop.webp');
+  background-size:cover; background-position:center; background-repeat:no-repeat;
+}
+.shop-workspace.blacksmith-workspace { background-image:linear-gradient(90deg, #0d0b0810, #0d0b0855), url('../assets/player-polish/scenes/forge-desktop.webp'); }
+.shop-workspace.master-workspace { background-image:linear-gradient(#0d0b0830, #0d0b0870), url('../assets/player-polish/scenes/armoury-still-life-master.webp'); }
+.rest-screen, .lobby, .lobby-screen {
+  background-image:linear-gradient(#0d0b0830, #0d0b0870), url('../assets/player-polish/scenes/chapel-rest-master.webp');
+  background-size:cover; background-position:center 38%; background-repeat:no-repeat;
+}
+.event-screen { background-color:var(--bg); }
+.polish-scene-painting { margin:0; width:min(100%, 92rem); height:26%; flex:0 0 auto; overflow:hidden; }
+.polish-scene-painting > img { display:block; width:100%; height:100%; object-fit:cover; object-position:center 44%; }
+.event-screen .polish-scene-painting > img { object-position:center 54%; }
+.event-screen .event-door, .rest-screen .rest-door { margin-top:0; }
+.compendium { background-image:linear-gradient(#0d0b0870, #0d0b08a0), url('../assets/player-polish/scenes/armoury-still-life-master.webp'); background-size:cover; background-position:center; }
+.armoury-sprite-pane { background-image:linear-gradient(#0d0b0820, #0d0b0860), url('../assets/player-polish/scenes/spire-vista-desktop.webp'); background-size:cover; background-position:center; }
+.character-skills, .armoury-skills { background-image:linear-gradient(#0d0b08db, #0d0b08db), url('../assets/player-polish/scenes/armoury-still-life-master.webp'); background-size:cover; }
+.modal:has(.set-railed), .profile-door, .controls-door {
+  background-image:linear-gradient(#0d0b08ed, #0d0b08ed), url('../assets/player-polish/scenes/spire-vista-desktop.webp');
+}
+.reward-backdrop { background-image:linear-gradient(#0d0b0830, #0d0b0870), url('../assets/player-polish/scenes/spire-vista-desktop.webp'); background-size:cover; background-position:center; }
+.modal.armoury { background-image:linear-gradient(#0d0b08ed, #0d0b08ed), url('../assets/player-polish/scenes/armoury-still-life-master.webp'); }
+.atlas-header, .atlas-detail, .map-header, .legacy-dungeon-header { background-color:color-mix(in srgb, var(--bg) 94%, transparent); }
+
+/* Service panoramas keep a visible landmark beside simultaneous stock/detail.
+   Compact layouts continue to use the existing model's selected detail tray. */
+:root[data-layout='wide']:not([data-composition='short-wide']) .shop-frame { width:78%; margin-inline:auto 0; }
+:is(.blacksmith-workspace, .master-workspace) .shop-shelf > .class-pick {
+  width:100%; max-width:none; flex:0 0 100%; flex-wrap:wrap; gap:1rem;
+  align-items:center; box-sizing:border-box;
+}
+:is(.blacksmith-workspace, .master-workspace) .shop-shelf > .class-pick > .cp-body { flex:1 1 calc(180px / var(--ui-zoom)); }
+:is(.blacksmith-workspace, .master-workspace) .class-pick h3 { white-space:normal; overflow:visible; }
+:is(.blacksmith-workspace, .master-workspace) .class-pick > .shop-offer-avail { flex:0 0 100%; }
+.class-pick > .glyph .engraved-icon { width:28px; height:28px; }
+:root[data-layout='narrow'] :is(.title-screen, .customize, .customrun, .draft, .history-screen, .gameover, .reward-backdrop) {
+  background-image:linear-gradient(#0d0b0838, #0d0b0870), url('../assets/player-polish/scenes/spire-vista-mobile.webp');
+}
+:root[data-layout='narrow'] .shop-workspace {
+  background-image:linear-gradient(#0d0b0810, #0d0b0855), url('../assets/player-polish/scenes/merchant-mobile.webp');
+}
+:root[data-layout='narrow'] .blacksmith-workspace {
+  background-image:linear-gradient(#0d0b0810, #0d0b0855), url('../assets/player-polish/scenes/forge-mobile.webp');
+}
+:root[data-layout='narrow'] .master-workspace {
+  background-image:linear-gradient(#0d0b0830, #0d0b0870), url('../assets/player-polish/scenes/armoury-still-life-master.webp');
+}
+:root[data-layout='narrow'] .title-screen { justify-content:flex-end; padding:1.6rem; }
+:root[data-layout='narrow'] .title-screen .as-titlemenu { width:100%; margin:0; max-width:none; padding:1.6rem; box-sizing:border-box; }
+:root[data-layout='narrow'] .title-screen .tm-name { font-size:min(11cqi, 4.8rem); }
+:root[data-layout='narrow'] .shop-workspace { padding-top:18%; }
+:root[data-layout='narrow'] .shop-frame { width:100%; }
+:root[data-layout='narrow'] :is(.blacksmith-workspace, .master-workspace) .shop-shelf > .class-pick { flex-direction:row; }
+:root[data-layout='narrow'] :is(.blacksmith-workspace, .master-workspace) .class-pick > .as-btn { flex-basis:100%; width:100%; }
+:root[data-layout='narrow'] :is(.shop-detail, .armoury-item-detail, .atlas-detail, .card-inspection-modal) {
+  background-color:var(--bg); border-top-color:var(--gold);
+}
+:root[data-layout='narrow'] .polish-scene-painting { height:auto; max-height:28%; aspect-ratio:4 / 3; }
+:root[data-layout='narrow'] :is(.event-door, .rest-door) { margin-top:0; }
+:root[data-layout='narrow'] .compendium .cp-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); align-content:start; gap:1rem; }
+:root[data-layout='narrow'] .compendium .cp-cell { min-width:0; height:auto; min-height:calc(128px / var(--ui-zoom)); overflow:hidden; flex-direction:column; align-items:center; text-align:center; }
+:root[data-layout='narrow'] .compendium .cp-cell .as-artwell { width:100%; height:calc(64px / var(--ui-zoom)); overflow:hidden; }
+:root[data-layout='narrow'] .compendium .cp-cell .as-artwell img { width:100%; height:100%; min-height:0; object-fit:contain; }
+:root[data-layout='narrow'] .compendium .cp-cell .ob { width:100%; min-width:0; flex:0 0 auto; }
+:root[data-layout='narrow'] .shop-frame .modal-head { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; }
+:root[data-layout='narrow'] .shop-frame .modal-head-actions { display:contents; }
+:root[data-layout='narrow'] .shop-frame .modal-head-status { grid-column:1 / -1; grid-row:2; white-space:normal; }
+:root[data-layout='narrow'] .shop-frame .modal-close { grid-column:2; grid-row:1; }
+:root[data-layout='narrow'] .shop-frame .modal-head-id h2 { overflow-wrap:normal; word-break:normal; }
+:root[data-composition='short-wide'] .title-screen .as-titlemenu { width:82%; margin:0 auto; padding:1rem 1.8rem; max-height:calc(100% - 2rem); overflow:auto; box-sizing:border-box; }
+:root[data-composition='short-wide'] .title-screen .tm-name { font-size:3rem; }
+:root[data-composition='short-wide'] .title-screen .title-menu { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.5rem; margin-block:.6rem; }
+:root[data-composition='short-wide'] .title-screen .title-menu > li { border:1px solid var(--line-soft); }
+:root[data-composition='short-wide'] .title-screen .title-menu .tm-entry { font-size:clamp(calc(14px / var(--ui-zoom)),1.5rem,calc(18px / var(--ui-zoom))); }
+:root[data-composition='short-wide'] .title-screen .title-menu .tm-entry { letter-spacing:.04em; font-size:calc(14px / var(--ui-zoom)); white-space:normal; overflow:visible; text-overflow:clip; line-height:1.15; }
+:root[data-composition='short-wide'] .title-screen .title-home { grid-template-columns:minmax(0,1fr) minmax(0,18rem); gap:1.2rem; }
+:root[data-composition='short-wide'] .title-screen .title-save-preview { font-size:calc(14px / var(--ui-zoom)); }
+:root[data-composition='short-wide'] .title-screen .tm-foot { margin-block:.6rem 0; }
+:root[data-composition='short-wide'] .title-screen .as-ornament { margin-top:.6rem; }
+:root[data-composition='short-wide'] .shop-frame { width:100%; }
+:root[data-composition='short-wide'] :is(.shop-workspace, .rest-screen, .event-screen) { padding-top:calc(var(--iconbtn-size) + 1rem); }
+:root[data-composition='short-wide'] :is(.event-door, .rest-door) { margin-top:0; }
+:root[data-composition='short-wide'] .polish-scene-painting { display:none; }
+/* Player-selected high contrast retains a stronger live semantic edge. */
+body.hi-contrast :is(.modal, .as-detailcard, .as-option, .card, .shop-frame, .as-slot, .cp-cell) {
+  border-image:none; border-color:var(--gold); background-image:none; background-color:var(--bg);
+}
+@media (prefers-reduced-motion:reduce) { .title-screen .ember { animation:none; } }

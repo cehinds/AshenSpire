@@ -23,6 +23,7 @@ import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
 import { t } from '../strings.js';
 import { loreLine } from './loreLine.js';
 import { cardChoice } from '../../model/cardChoices.js';
+import { engravedIconHtml } from './engravedIcon.js';
 
 // WCI3: rarity at the start of the band, the owned count at the end, each only
 // when the surface can state it. No domain action ever belongs in this band.
@@ -248,7 +249,7 @@ export function renderCard(registries, ref, opts = {}) {
       : [];
     el.innerHTML =
       region('facts', `<div class="card-costs card-cost-rail">${costRows.map(([resource, cls, icon, value]) =>
-        `<div class="${cls}" aria-label="${resourceWord(resource)} cost: ${esc(value)}"><span aria-hidden="true">${icon}</span> ${esc(value)}</div>`
+        `<div class="${cls}" aria-label="${resourceWord(resource)} cost: ${esc(value)}">${engravedIconHtml(resource) || `<span aria-hidden="true">${icon}</span>`} ${esc(value)}</div>`
       ).join('')}</div>`) +
 
       `<div class="cname" data-identity-part="name">${esc(model.name)}</div>` +

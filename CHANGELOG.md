@@ -34,6 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-02
 
+- **The Spire's menus gain painted places and engraved details** ([#1503](https://github.com/cehinds/AshenSpire/pull/1503), `0.7.1.798`). Title, services, choices and archives use the approved paintings; cards, item slots, resources and shared panels gain a consistent folio finish. On portrait phones the Compendium shows two columns with complete names and contained artwork, and forge offers keep their prices and Buy actions readable. On a phone held sideways every title action remains reachable and fully named. Your settings, control colours, canonical artwork and gameplay rules still decide what you see and can do.
+
 - **Behind the scenes: reusable desktop and mobile polish artwork is saved with the project** ([#1496](https://github.com/cehinds/AshenSpire/pull/1496), `0.7.1.795`). The illustrated design direction now has individual paintings, portraits, icons, frames and controls, with recipes for 24 player feature views and copies of the existing game art and fonts they need. Credits, provenance and portable preview helpers are included for the next visual polish pass. These are design assets; the playable screens and game rules stay as they are.
 
 - **Behind the scenes: every change now checks the game's art against the art repository's release** ([#1450](https://github.com/cehinds/AshenSpire/pull/1450), `0.7.1.794`). Nothing you play changes. The game pins one release of its art, light art, fonts, music and map tiles in a separate repository; each check downloads the parts it needs, verifies every file against its fingerprint, and proves the release and the copies still kept here are identical, byte for byte.

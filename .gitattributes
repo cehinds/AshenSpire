@@ -5,6 +5,9 @@
 # uploaded ~284 MB of new LFS objects per rebuild and exhausted the repository's
 # LFS budget; they were removed with the files. release/ and main keep their own
 # copies of this file until the owner promotes this change.
+# Original engraved UI bytes are shared by high/light exports on every OS.
+assets/player-polish/**/*.svg text eol=lf
+assets-mobile/player-polish/**/*.svg text eol=lf
 
 # Keep the polish kit checksum records stable across Windows and Linux.
 docs/design/player-polish-asset-kit-2026-10-02/**/*.svg text eol=lf

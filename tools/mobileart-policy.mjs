@@ -45,7 +45,7 @@ export const POLICY = Object.freeze({
     // The seven-step bow sheet adds 224 distinct frames. At 64px the motion
     // stays readable in the light build without exceeding its 30 MB download.
     Object.freeze({ prefixes: Object.freeze(['animations/bow/']), scale: 0.1, quality: 5 }),
-    Object.freeze({ prefixes: Object.freeze(['environments/', 'bg/', 'map/']), scale: 0.4, quality: 50 }),
+    Object.freeze({ prefixes: Object.freeze(['environments/', 'bg/', 'map/', 'player-polish/scenes/']), scale: 0.4, quality: 50 }),
   ]),
 });
 
@@ -69,14 +69,16 @@ export function policyFor(rel, policy = POLICY) {
 export const MOBILE_BUNDLE_BUDGET_BYTES = 30_000_000;
 
 /**
- * Where the mobile art itself has to land for the bundle to fit: the budget
- * less the code (~9.4 MB at 0.7.1.451) and base64 growth (4/3). A twin tree over
- * this is caught by --check before anyone builds with it.
+ * The committed twin-tree allowance, counted with base64 growth (4/3).
+ * The approved player paintings add about 0.42 MB inlined; the 2026-10-02
+ * light dev/test edition has no single-file size cap (DEVELOPER.md). The
+ * separate release mobile edition still has the 30 MB whole-file gate above;
+ * this art allowance is not proof that its code and art fit that gate.
  *
  * Counted as the bundle inlines it: each distinct image once
  * (`distinctInlinedBytes`), since the bundler aliases byte-identical files.
  */
-export const MOBILE_ART_INLINED_BUDGET_BYTES = 20_000_000;
+export const MOBILE_ART_INLINED_BUDGET_BYTES = 20_500_000;
 
 /** base64 length of `n` raw bytes — what an inlined asset costs the bundle. */
 export function inlinedBytes(n) {

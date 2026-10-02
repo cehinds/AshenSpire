@@ -18,6 +18,7 @@
 // that read the page; kit.css draws nothing for those names.
 
 import { resolveControlRole, assertControlException } from '../models/ControlAppearance.js';
+import { engravedIcon, engravedGlyphId } from '../components/engravedIcon.js';
 import { resolveButtonSize, planButtonGroup, buttonSizeTokens } from '../models/ButtonSizeModel.js';
 import {
   buttonRow as shellButtonRow, BUTTON_ROW_SIZES as SHELL_BUTTON_ROW_SIZES, modalHead as shellModalHead,
@@ -111,11 +112,12 @@ export const ornament = (attrs = {}) => el('div', { ...attrs, class: cls('as-orn
 // ---- control atoms ----------------------------------------------------------
 /** iconButton({ glyph, label, id, className, attrs }) → the one square box. */
 export function iconButton({ glyph, label, id = '', className = '', attrs = {} } = {}) {
+  const art = engravedIcon(engravedGlyphId(glyph));
   return el('button', {
     ...attrs, type: 'button', id: id || null,
     class: cls('as-iconbtn modal-iconbtn', className),
-    'aria-label': label, title: attrs.title ?? label, text: glyph,
-  });
+    'aria-label': label, title: attrs.title ?? label, text: art ? null : glyph,
+  }, art);
 }
 /** button({ label, weight: 'secondary'|'primary'|'danger', role?, exception?, size?, ... }) — three weights, no fourth;
  *  `role` names the appearance role when the weight alone does not (an exit).
@@ -209,7 +211,10 @@ export const pill = ({ label, on = null, round = false, attrs = {} } = {}) => el
 });
 export const tagChip = ({ label, more = false, attrs = {} } = {}) => el('span', { ...attrs, class: cls('as-tag', more ? 'more' : '', attrs.class), text: label });
 export const keycap = (label, attrs = {}) => el('span', { ...attrs, class: cls('as-keycap', attrs.class), text: label });
-export const glyph = (char, attrs = {}) => el('span', { ...attrs, class: cls('as-glyph', attrs.class), 'aria-hidden': 'true', text: char });
+export const glyph = (char, attrs = {}) => {
+  const art = engravedIcon(engravedGlyphId(char));
+  return el('span', { ...attrs, class: cls('as-glyph', attrs.class), 'aria-hidden': 'true', text: art ? null : char }, art);
+};
 export function labelStack({ label, hint = '', attrs = {} } = {}) {
   return el('span', { ...attrs, class: cls('as-labelstack', attrs.class) }, [
     el('span', { class: 'ls-label', text: label }),
@@ -218,7 +223,7 @@ export function labelStack({ label, hint = '', attrs = {} } = {}) {
 }
 export function artWell({ glyph: g = '', src = '', alt = '', small = false, cool = false, attrs = {} } = {}) {
   return el('div', { ...attrs, class: cls('as-artwell', small ? 'sm' : '', cool ? 'cool' : '', attrs.class), 'aria-hidden': src ? null : 'true' },
-    src ? el('img', { src, alt }) : g);
+    src ? el('img', { src, alt }) : (engravedIcon(engravedGlyphId(g)) || g));
 }
 export function detailCard({ eyebrow: eb = '', name = '', line = '', meta = '', muted = false, children = null, tag = 'div', attrs = {} } = {}) {
   return el(tag, { ...attrs, class: cls('as-detailcard', muted ? 'muted' : '', attrs.class) }, [
@@ -413,7 +418,7 @@ export function slot({ art = '', count = null, key = '', label = '', small = fal
 /** pip({ glyph, count, tone, ring, attrs }) → a round status badge with a count. */
 export function pip({ glyph: g = '?', count = null, tone = '', ring = false, attrs = {} } = {}) {
   return el('div', { ...attrs, class: cls('as-pip', ring ? 'ring' : '', attrs.class), style: { ...(attrs.style || {}), ...(tone ? { '--pip-tone': tone } : {}) } }, [
-    document.createTextNode(String(g)),
+    engravedIcon(engravedGlyphId(g)) || document.createTextNode(String(g)),
     count != null && count !== '' ? pill({ label: String(count), round: true, attrs: { class: 'stk' } }) : null,
   ]);
 }

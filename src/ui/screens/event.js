@@ -10,6 +10,7 @@
 
 import { commitEventChoice, choiceAffordable } from '../../engine/quests.js';
 import { mountDialogue } from './dialogue.js';
+import { scenePainting } from '../components/scenePainting.js';
 import { eventChoicesWithHistory } from '../../content/events.js';
 import { esc } from '../components/tooltip.js';
 import { isEngaged, focusFirst } from '../input.js';
@@ -68,6 +69,7 @@ export function mountEvent(app, opts) {
   if (hud) app.insertAdjacentHTML('afterbegin', runHudHtml({ registries, run, meta, place: 'event', headerClass: 'map-header room-header' }));
   const screen = el('div', { class: 'screen event-screen room-screen' });
   app.appendChild(screen);
+  screen.appendChild(scenePainting('event'));
   const door = mountChoiceBody(screen, {
     className: 'event-door',
     eyebrow: 'Event',

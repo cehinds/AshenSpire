@@ -1,5 +1,22 @@
 # AshenSpire component catalog
 
+`player.engravedIcon` replaces registered utility/resource glyphs with the
+reviewed SVG geometry through `assetUrl()`. Its mask inherits the existing
+semantic colour. Labels, ARIA names, costs and resource values stay live DOM
+text; unknown or class-specific glyphs retain their authored representation.
+Mounted masks follow high/light tier changes without remounting controls.
+
+`player.scenePainting` is a decorative illustration aperture shared by events
+and rest/service locations. Square scenes use a 4:3 mobile header, while short
+landscape gives the available space to the decision tray. It never changes
+map coordinates, combat atlas boxes, floors or character pose anchors.
+
+`styles/player-polish.css` supplies the common nine-sliced folio, item-slot,
+card, meter, control and scene treatments across all 24 feature recipes in the
+approved kit. Existing kit, W1 comparison and compact detail-tray components
+continue to own structure and action state; `ControlAppearance` retains the
+End Turn exception. Canonical card artwork remains bound to card identity.
+
 `prologue-screen` composes text-free WebP paintings, a class item layer, motif
 wash, live narration, and a control band that is the frame's own last row — the
 buttons and the scene counter stay at the bottom whichever wireframe is standing
