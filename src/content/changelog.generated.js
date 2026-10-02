@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Escape and pad B close the map legend before the map",
     "detail": "With a map node selected and the legend open, one press used to close the node's panel and leave the legend up; it now closes the legend only, and the next press closes the panel. In character creation's Equipment step, Escape went back nowhere while a card's info button was showing, and pad B hid the button instead; both now go back one step, as the Back button does.",
-    "build": "0.7.1.788",
+    "build": "0.7.1.789",
     "pullRequest": 1488,
     "url": "https://github.com/cehinds/AshenSpire/pull/1488"
+  },
+  {
+    "id": "pr-1468",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The first-fight tutorial no longer sits on your cards",
+    "detail": "The coach marks' speech bubble used to land on the first card in your hand, so you couldn't play that card while the tutorial was showing. The bubble now finds a spot clear of your hand. After a window resize, the spotlight now follows its target until the board stops moving, even on a busy machine that draws the board in fits and starts. Pressing Escape on an armed attack card now also drops the card's highlight, not just its targeting. Behind the scenes, the check that every tutorial button can be reached runs at eight screen sizes on every change, and it confirms that the tutorial stays dismissed after a reload.",
+    "build": "0.7.1.788",
+    "pullRequest": 1468,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1468"
+  },
+  {
+    "id": "pr-1473",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the balance report now measures Mana and each act's difficulty",
+    "detail": "Nothing you play changes. The run simulator can now compare whole climbs with and without Mana limits, and report how often each act's boss falls in each region. Both results are written into the balance notes for the owner to tune from later.",
+    "build": "0.7.1.787",
+    "pullRequest": 1473,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1473"
   },
   {
     "id": "pr-1459",
