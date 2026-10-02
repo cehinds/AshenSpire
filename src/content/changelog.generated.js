@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1493",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: every owner decision has its own number",
+    "detail": "Nothing you play changes. Two decisions in the project's finish list were both numbered D38, so a note citing D38 could mean either; the hit sound tiers decision is now D47, and a test fails if two decisions ever share a number again.",
+    "build": "0.7.1.792",
+    "pullRequest": 1493,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1493"
+  },
+  {
     "id": "pr-1471",
     "date": "2026-10-02",
     "group": "2026-10-02",
