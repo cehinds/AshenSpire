@@ -40,6 +40,7 @@ still be started by hand on any branch (Actions → *Run workflow*).
 | `map-camera.yml` → map camera re-fit (`map-camera-persistence.mjs --check`, real browser) | yes | yes (also on push to `dev`) |
 | `map-camera.yml` → the full map-camera persistence drive (same job) | no | yes |
 | `coop-hud.yml` → co-op HUD top layout (`coop-hud-top.mjs`, real browser) | yes | yes (also on push to `dev`) |
+| `tutorial-reach.yml` → first-run tutorial reach, three shards (`tutorial-reach.mjs --only …`, real browser) | yes | yes (also on push to `dev`) |
 | `tests.yml` → tool self-tests, bundler parse gate | no | yes |
 | `ci.yml` → Fullscreen first through both Settings doors | no | yes |
 | `ci.yml` → what this green does NOT cover (boundary) | no | yes |
@@ -237,13 +238,15 @@ using trusted desktop and phone inputs, including OS and in-game Reduced motion.
 `node tools/motion-probe.mjs` boots `?shot=combat&shotSeed=MOTION1` in Chromium
 and checks that every combatant's visible, loaded figure image is moved by
 exactly one running idle bob (on the image or its `.pose-layer` / `.facing`
-layer), at boot, after a turn, and with the player redrawn in the Rendered and
+layer, or the Rendered style's `.rendered-stage`), whose keyframes really move
+it, at boot, after a turn, and with the player redrawn in the Rendered and
 Classic sprite styles. It then plays one full turn under the Reduced motion setting with
 the OS preference emulated, the setting alone and the OS alone: no animation
 `document.getAnimations()` or `Element.animate()` reports may run longer than
-0.01 s, and no script flipbook or tween (3+ changes to one element inside 1 s)
-may run. A motion-on turn is the control that proves the sampler sees both
-kinds. `--selftest` plants seven known-bads through `doorplant.mjs`.
+0.01 s (a CSS animation or transition that ends between two frames is caught
+by its end event), and no script flipbook or tween (3+ changes to one element
+inside 1 s) may run. A motion-on turn is the control that proves the sampler sees both
+kinds. `--selftest` plants ten known-bads through `doorplant.mjs`.
 Enemy inspectors use `enemyMoveCards()` as a read-only presentation of the
 existing weighted move selector; rendering never chooses or rerolls an intent.
 Attack motion uses the actor/action, tag, intent and neutral precedence in
@@ -939,9 +942,12 @@ is the only writer of `seenTutorial`, the veil came back on every reload.
 viewports (zoom 0.62 → 1.70), advancing each step with **real mouse clicks at
 real screen coordinates**, plus the two exits that need no geometry — Escape,
 and a veil that lets board clicks through (`pointer-events: none`). It also
-walks the real first-run path and asserts the flag persists. Run it after any
-change to the tutorial, to `--ui-zoom`, or to the combat board's layout; it
-prints the boundary of what it did not cover.
+walks the real first-run path (startup gate, slot picker, character creation)
+and, after a reload, reads `seenTutorial` back from durable storage. Run it
+after any change to the tutorial, to `--ui-zoom`, or to the combat board's
+layout; it prints the boundary of what it did not cover. `--only` takes a comma
+list of cases (viewport names, `resize`, `first-run`); `tutorial-reach.yml`
+runs the whole sweep as three such shards on every pull request into `dev`.
 
 ## Character creation — the short form (D26)
 

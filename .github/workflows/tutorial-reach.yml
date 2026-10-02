@@ -1,0 +1,68 @@
+# .github/workflows/tutorial-reach.yml — the first-run tutorial's exits, in a
+# real browser, on every pull request into dev.
+#
+# WHY THIS FILE EXISTS (docs/FINISH.md §6, "The tutorial reachability probe runs
+# in CI"). The coach marks (src/ui/components/tutorial.js) are the only thing
+# that writes `seenTutorial`: if their buttons are off-screen or covered, the
+# veil cannot be dismissed and comes back on reload. `tools/tutorial-reach.mjs`
+# is the only check that sees it — real Chromium at eight viewports (--ui-zoom
+# 0.64–1.70), real mouse clicks at the buttons' screen coordinates, the ordered
+# Escape contract, a resize mid-tutorial, and the real first-run path through
+# durable storage, ending in a reload that reads `seenTutorial` back. ci.yml's
+# boundary block has said "NO job here runs it" since 2026-07-28; nothing did,
+# and on 2026-10-02 it was red at every viewport with nobody watching.
+#
+# WHERE IT RUNS. A pull request into dev is gated by fast checks (DEVELOPER.md,
+# *Which checks gate a pull request*). The full sweep is ~10 minutes of browser
+# time in one process, so it is SHARDED with the tool's own `--only` list into
+# three parallel jobs of a few minutes each; together they cover every case the
+# bare `node tools/tutorial-reach.mjs` runs, and a shard that names an unknown
+# case exits 2 instead of running nothing.
+#
+# A JOB OF ITS OWN, like map-camera.yml and coop-hud.yml: `core` is a no-browser
+# lane. It serves the SOURCE tree, so it needs no build and no LFS. With no
+# browser the tool throws and the door reads it as HARNESS (exit 2), never as a
+# pass. The verdict door requires the tool's counted "N passed, M failed" line.
+
+name: tutorial reach
+
+on:
+  pull_request:
+    branches: [dev]
+  push:
+    branches: [dev, test, release]
+  workflow_dispatch:
+
+concurrency:
+  group: tutorial-reach-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  reach:
+    name: tutorial reach ${{ matrix.shard.name }} (real browser)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        shard:
+          - name: small
+            only: smallest,1024x640,1200x730 # `smallest` = 800 x balance.ui.uiScale.gateBelowH
+          - name: mid
+            only: 1280x800,1366x768,1440x900
+          - name: large + first run
+            only: 1920x1080,2560x1440,resize,first-run
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # serves the checked-out source tree; reads no LFS object
+
+      - uses: ./.github/actions/setup-node
+
+      - uses: ./.github/actions/which-browser
+
+      - name: The tutorial's exits are reachable, and seenTutorial survives a reload
+        run: node tools/verdict.mjs -- node tools/tutorial-reach.mjs --only "${{ matrix.shard.only }}"

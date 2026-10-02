@@ -48,7 +48,15 @@
 //
 // "Active duration" is the Web Animations `getComputedTiming().activeDuration`
 // (duration x iterations; an infinite animation is Infinity). A delay is not
-// motion and is not counted.
+// motion and is not counted. A CSS animation or transition that starts and
+// ends between two frames is caught by its animationend/transitionend event,
+// whose elapsedTime is the same active duration.
+//
+// BOUNDARY: a CSS animation or transition that is started and cancelled
+// between two frames (no frame sees it, no end event fires) is not measured;
+// nor is motion from a canvas or a video. An idle carrier "moves" when its
+// running animation's keyframes are not all the same value; the probe does
+// not measure on-screen pixels.
 
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
@@ -94,7 +102,7 @@ if (argv.includes('--selftest')) {
       {
         name: 'the idle bob goes back to the dead `.sprite > img` selector',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation: sprite-idle',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: sprite-idle',
         replace: '.combatant .sprite > img { animation: sprite-idle',
         expectRed: /RED IDLE player#\d+ — .*no idle animation/,
       },
@@ -103,9 +111,26 @@ if (argv.includes('--selftest')) {
         // painting was in it, so that figure never bobbed.
         name: 'the idle bob leaves out the Rendered style\'s painting',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation: sprite-idle',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: sprite-idle',
         replace: '.combatant .sprite :is(.facing, .painted-stage > .pose-layer) { animation: sprite-idle',
         expectRed: /RED IDLE-rendered player#\d+ — .*img\.painted-presentation: no idle animation/,
+      },
+      {
+        // #1475 review: the Rendered carriers before they were the common
+        // stage, so the hidden nested stage started its own timeline.
+        name: 'the Rendered style bobs its painting and its nested stage separately',
+        file: 'styles/combat.css',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: sprite-idle',
+        replace: '.combatant .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation: sprite-idle',
+        expectRed: /RED IDLE-rendered-ONE-TIMELINE — a second idle timeline/,
+      },
+      {
+        // #1475 review: a named, running, infinite bob that never moves.
+        name: 'the idle keyframes are flattened to one position',
+        file: 'styles/combat.css',
+        find: '@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }',
+        replace: '@keyframes sprite-idle { 0%, 100% { translate: 0 0; } 50% { translate: 0 0; } }',
+        expectRed: /RED IDLE \w+#\d+ — .*keyframes never move it/,
       },
       {
         // This PR's first shape: the bob on the idle images themselves. The
@@ -113,7 +138,7 @@ if (argv.includes('--selftest')) {
         // (paintedOutfits.js), so the name stays and nothing runs.
         name: 'the idle bob sits on the figure images instead of their layer',
         file: 'styles/combat.css',
-        find: '.combatant .sprite :is(.facing, .painted-stage > .pose-layer, .rendered-stage > .painted-presentation) { animation: sprite-idle',
+        find: '.combatant .sprite :is(.facing, .painted-stage:not(.rendered-stage > .painted-stage) > .pose-layer, .rendered-stage) { animation: sprite-idle',
         replace: '.combatant .sprite :is(img.pose-frame, img.enemy-pose-idle) { animation: sprite-idle',
         expectRed: /RED IDLE player#\d+ — .*named on .* but not running/,
       },
@@ -130,6 +155,15 @@ if (argv.includes('--selftest')) {
         find: '@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation-duration: 0.01ms !important;',
         replace: '@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation-delay: 0s;',
         expectRed: /RED REDUCED os\b/,
+      },
+      {
+        // #1475 review: an animation just over the limit finishes between two
+        // frames, so only its end event sees it.
+        name: 'the OS preference shortens CSS animations to 11 ms, not 0.01 ms',
+        file: 'styles/base.css',
+        find: '@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation-duration: 0.01ms !important;',
+        replace: '@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation-duration: 11ms !important;',
+        expectRed: /RED REDUCED os — .*CSSAnimation .* \(11 ms/,
       },
       {
         name: 'the card-play flight (Element.animate) ignores reduced motion',
@@ -172,6 +206,9 @@ const check = (ok, id, detail) => {
 const SAMPLER = `(() => {
   const seen = new WeakSet();
   const log = [];
+  // What the frame poll already recorded, per element, so an end event for
+  // the same animation does not log it twice.
+  let polled = new WeakMap();
   let frames = 0;
   const describe = (el) => {
     if (!el || !el.tagName) return String(el);
@@ -185,9 +222,25 @@ const SAMPLER = `(() => {
     try { active = a.effect ? a.effect.getComputedTiming().activeDuration : 0; } catch {}
     const kind = a.constructor && a.constructor.name;
     const name = a.animationName || a.transitionProperty || a.id || '(script)';
+    const t = a.effect && a.effect.target;
+    if (t) { let k = polled.get(t); if (!k) polled.set(t, k = new Set()); k.add(kind + ':' + name); }
     log.push({ kind, name, via, active: active === Infinity ? 'Infinity' : Number(active) || 0,
       target: describe(a.effect && a.effect.target), at: Math.round(performance.now()) });
   };
+  // A CSS animation or transition that starts and finishes between two
+  // frames is never in getAnimations(); its end event still fires, and its
+  // elapsedTime is the active duration it ran (iterations x duration for
+  // animationend, the duration for transitionend). One that is cancelled
+  // between two frames is not seen (BOUNDARY in the header).
+  const ended = (kind, nameOf) => (e) => {
+    const t = e.target, name = nameOf(e);
+    if (polled.get(t)?.has(kind + ':' + name)) return;
+    let k = polled.get(t); if (!k) polled.set(t, k = new Set()); k.add(kind + ':' + name);
+    log.push({ kind, name, via: e.type + ' event', active: Number(e.elapsedTime) * 1000 || 0,
+      target: describe(t), at: Math.round(performance.now()) });
+  };
+  addEventListener('animationend', ended('CSSAnimation', (e) => e.animationName), true);
+  addEventListener('transitionend', ended('CSSTransition', (e) => e.propertyName), true);
   const nativeAnimate = Element.prototype.animate;
   Element.prototype.animate = function (...args) {
     const a = nativeAnimate.apply(this, args);
@@ -233,7 +286,7 @@ const SAMPLER = `(() => {
   };
   requestAnimationFrame(tick);
   window.__motionProbe = {
-    reset() { log.length = 0; frames = 0; changes.clear(); for (const a of document.getAnimations()) seen.delete(a); },
+    reset() { log.length = 0; frames = 0; changes.clear(); polled = new WeakMap(); for (const a of document.getAnimations()) seen.delete(a); },
     read() {
       for (const a of document.getAnimations()) record(a, 'getAnimations');
       const scripted = [...changes].map(([el, c]) => ({ target: describe(el), frames: c.frames.size, times: c.times, what: [...c.what].join('+') }))
@@ -390,9 +443,13 @@ async function idle({ evaluate }, label) {
       for (let el = img; el && el !== c; el = el.parentElement) {
         const anim = getComputedStyle(el).animationName;
         if (anim !== 'none') {
-          const running = el.getAnimations().some((a) => a.animationName && anim.split(/,\\s*/).includes(a.animationName)
+          const live = el.getAnimations().filter((a) => a.animationName && anim.split(/,\\s*/).includes(a.animationName)
             && a.playState === 'running' && a.effect.getComputedTiming().activeDuration === Infinity);
-          named.push({ on: tag(el), anim, running });
+          // Running is not moving: keyframes flattened to one value run
+          // forever and never shift the figure.
+          const moves = live.some((a) => new Set(a.effect.getKeyframes().map((k) => JSON.stringify(Object.entries(k)
+            .filter(([p]) => !['offset', 'computedOffset', 'easing', 'composite'].includes(p))))).size > 1);
+          named.push({ on: tag(el), anim, running: live.length > 0 && moves, flat: live.length > 0 && !moves });
         }
         if (el.classList.contains('sprite')) break;
       }
@@ -406,7 +463,8 @@ async function idle({ evaluate }, label) {
     const bare = f.imgs.filter((i) => !i.carrier || !i.loaded || i.twice);
     const why = (i) => !i.loaded ? `the image did not load, it draws nothing (src ${i.src || 'empty'})`
       : i.twice ? `bobbed twice, by sprite-idle on ${i.twice.join(' and ')}`
-        : !i.carrier && i.stopped ? `${i.stopped.anim} is named on ${i.stopped.on} but not running (cancelled from script?)` : 'no idle animation on it or its layers';
+        : !i.carrier && i.stopped?.flat ? `${i.stopped.anim} runs on ${i.stopped.on} but its keyframes never move it`
+          : !i.carrier && i.stopped ? `${i.stopped.anim} is named on ${i.stopped.on} but not running (cancelled from script?)` : 'no idle animation on it or its layers';
     check(f.imgs.length > 0 && bare.length === 0, `${label} ${f.who}`,
       f.imgs.length === 0 ? `${f.name}: no visible figure image to animate`
         : bare.length ? `${f.name}: ${bare.map((i) => `${i.img}: ${why(i)}`).join('; ')}`
@@ -453,6 +511,19 @@ try {
     await wait(300);
     const drawn = await idle(s, `IDLE-${style}`);
     check(drawn.some((f) => f.who.startsWith('player')), `IDLE-${style}-BOARD`, `the player is on the board in the ${style} style`);
+    if (style === 'rendered') {
+      // The Rendered stage swaps its still painting for a nested painted
+      // stage (hidden until then) on a guard, wounded, afflicted or defeated
+      // rest pose. One timeline on the stage keeps the phase across that
+      // swap; a second idle carrier inside it restarts at 0 when unhidden.
+      // Computed style answers even for the hidden nested stage.
+      const inner = await s.evaluate(`[...document.querySelectorAll('.combatant .sprite .rendered-stage *')]
+        .filter((el) => getComputedStyle(el).animationName.split(/,\\s*/).includes('sprite-idle'))
+        .map((el) => el.tagName.toLowerCase() + '.' + [...el.classList].join('.'))`);
+      check(inner.length === 0, 'IDLE-rendered-ONE-TIMELINE', inner.length
+        ? `a second idle timeline inside .rendered-stage: ${inner.join(', ')}`
+        : 'the Rendered stage is the only idle carrier; nothing inside it bobs on its own');
+    }
   }
   const flipbooks = scripted(control.scripted);
   check(flipbooks.length > 0, 'CONTROL-SCRIPT', `motion on: ${flipbooks.length} script-driven change burst(s) seen (e.g. ${flipbooks.slice(0, 3).map(showScripted).join('; ') || 'none'})`);

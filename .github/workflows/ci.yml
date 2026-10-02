@@ -972,7 +972,7 @@ jobs:
     name: idle animation and reduced motion in a real browser
     if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
         with:
@@ -981,7 +981,7 @@ jobs:
       - uses: ./.github/actions/which-browser
       - name: Every combatant idles, and reduced motion leaves nothing over 0.01 s in one turn
         run: node tools/verdict.mjs -- node tools/motion-probe.mjs
-      - name: …and that gate can fail (7 plants)
+      - name: …and that gate can fail (10 plants)
         run: node tools/verdict.mjs -- node tools/motion-probe.mjs --selftest
 
   # SOP 3 requirement 4. Always runs, including when everything above is red, so
@@ -1041,7 +1041,7 @@ jobs:
           echo "  · on seed MOTION1 every living combatant's visible figure is moved by a running"
           echo "    idle animation, at boot and after one turn; and one full turn under Reduced"
           echo "    motion (setting+OS, setting, OS) shows no animation over 0.01 s and no script"
-          echo "    flipbook, with seven same-door known-bads caught (browser-motion)"
+          echo "    flipbook, with ten same-door known-bads caught (browser-motion)"
           # WAS: "...and it is the only rendered claim in this file that is about the
           # GAME's layout." TRUE when Bjorn wrote it, FALSE the moment I added the
           # Armoury step below — a second browser-driven rendered-layout claim in this
@@ -1090,7 +1090,7 @@ jobs:
           # PASS over this rather than let it stand, on her own test: a MISSING boundary
           # leaves a reader uninformed; a FALSE one leaves them confidently wrong.
           # — Sunna.
-          echo "  · that the game is playable. NOTHING HERE PLAYS IT. Eight jobs open a browser."
+          echo "  · that the game is playable. NOTHING HERE PLAYS IT. Nine jobs open a browser."
           echo "    browser-guard owns focused checks like hand-side placement, browser-guard-stamp"
           echo "    the build stamp and cold boot, browser-guard-changelog the changelog's known-bads;"
           echo "    browser-layout-guard owns phone reach, browser-layout-hintstrip the hint strip and"
@@ -1098,8 +1098,9 @@ jobs:
           echo "    Settings through BOTH the cold Startup -> Title door and the in-run door. It sends"
           echo "    a complete CDP Enter down/up through Startup, then the Settings controls are DOM"
           echo "    clicks. browser-startup-plants runs the cold-boot known-bad corpus, in shards."
-          echo "    These gates inspect focused rectangles or alpha-weighted rendered pixels;"
-          echo "    none fights, wins, loses, or finishes a run, or proves general playability."
+          echo "    browser-motion samples idle and reduced motion over one seeded combat turn."
+          echo "    These gates inspect focused rectangles, alpha-weighted rendered pixels or"
+          echo "    animation state; none wins, loses, or finishes a run, or proves general playability."
           # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
           # this branch." True when Sunna wrote it, false the moment #7 merges — a
           # boundary block that names a branch dates itself. Replaced with the thing that
