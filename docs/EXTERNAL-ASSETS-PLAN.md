@@ -286,11 +286,14 @@ schema-2 pin whose top level disagrees with `packs.high`.
   limit. A token that cannot read the repository falls back to the public
   URL, so making the repository public is enough even with a stale secret.
   Every failure names its cause: the token refused, the repository
-  unreadable, the rate limit, the network. A pull request from a fork, and any
-  Dependabot run, gets no secrets, so while the repository is private those
-  `tests.yml` and `dev-preview.yml` runs skip the fetch and `--agree` with a
-  notice; every
-  same-repository pull request and every push runs both.
+  unreadable, the rate limit, the network. Only a push or dispatch of dev,
+  test, release or main gets the token, and it always fetches and runs
+  `--agree`. Every other run (every pull request, same-repository or fork,
+  Dependabot, a dispatch of another ref) has none: while the repository is
+  private it skips the fetch and `--agree` with a notice, so **no pull
+  request checks release/tree agreement until step 10a**; the first push to
+  dev does. A run that cannot tell whether the repository is public fails
+  instead of skipping.
 
 ### Build identity
 
