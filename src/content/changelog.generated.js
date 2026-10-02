@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1433",
+    "date": "2026-10-01",
+    "group": "2026-10-01",
+    "summary": "Behind the scenes: the format for loading art, fonts, music and map tiles as separate files is written and checked",
+    "detail": "Nothing you play changes. A new tool packs the art, fonts, music and map tiles into files named by their contents, with an index for each art tier, and the art list now records the fonts, the font licence, the music and the map tiles as one shared set; the game does not load them this way yet.",
+    "build": "0.7.1.726",
+    "pullRequest": 1433,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1433"
+  },
+  {
     "id": "pr-1431",
     "date": "2026-10-01",
     "group": "2026-10-01",
