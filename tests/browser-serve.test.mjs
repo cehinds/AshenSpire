@@ -56,8 +56,10 @@ test('an /unknown/ path is a channel only on this machine', () => {
 // the native realpath (fs/promises, realpathSync.native) does. serveDir took the
 // folder's real path from one and each file's from the other, so no file was
 // ever "inside" its own folder. Linux has no short names, so this simulates one:
-// SHORT~1 is an alias of the folder, which the JS realpathSync leaves as typed
-// (as Windows does) while the native realpath resolves it to the long name.
+// `alias` is a symlink to the folder, which the JS realpathSync is made to leave
+// as typed (as it leaves a short name on Windows) while the native realpath
+// resolves it to the long name. Not named RUNNER~1: on NTFS that IS the real
+// short name of `runneradmin`, so the symlink would collide with it (EEXIST).
 test('serveDir serves a folder named by an alias the JS realpathSync keeps (Windows 8.3 short names)', async () => {
   const fs = (await import('node:fs')).default;
   const { syncBuiltinESMExports } = await import('node:module');
@@ -65,7 +67,7 @@ test('serveDir serves a folder named by an alias the JS realpathSync keeps (Wind
   const { tmpdir } = await import('node:os');
   const td = fs.realpathSync.native(mkdtempSync(join(tmpdir(), 'bsv83-')));
   const long = join(td, 'runneradmin');
-  const short = join(td, 'RUNNER~1');
+  const short = join(td, 'alias');
   mkdirSync(long);
   writeFileSync(join(long, 'AshenSpire.html'), 'served');
   symlinkSync(long, short, 'dir');
