@@ -247,7 +247,21 @@ jobs:
             exit 0
           fi
           git worktree add --detach "$RUNNER_TEMP/main" origin/main
-          if (cd "$RUNNER_TEMP/main" && node -e "const fs=require('fs');process.exit(fs.existsSync('art-release.json') && JSON.parse(fs.readFileSync('art-release.json','utf8')).schema === 2 ? 0 : 1)"); then
+          # The probe prints `fetch` (schema 2), `legacy` (no pin, or schema 1),
+          # or fails: a pin that does not parse, or names a schema this workflow
+          # does not know, stops publishing instead of passing as legacy.
+          PIN_MODE=$(cd "$RUNNER_TEMP/main" && node -e "
+            const fs = require('fs');
+            if (!fs.existsSync('art-release.json')) { console.log('legacy'); process.exit(0); }
+            let pin;
+            try { pin = JSON.parse(fs.readFileSync('art-release.json', 'utf8')); }
+            catch (e) { console.error('art-release.json does not parse: ' + e.message); process.exit(2); }
+            const schema = pin && pin.schema;
+            if (schema === 2) console.log('fetch');
+            else if (schema === undefined || schema === 1) console.log('legacy');
+            else { console.error('art-release.json names schema ' + JSON.stringify(schema) + ', which this workflow does not know'); process.exit(2); }
+          ")
+          if [ "$PIN_MODE" = "fetch" ]; then
             (cd "$RUNNER_TEMP/main" && node tools/fetch-art.mjs --pack all && node tools/fetch-art.mjs --agree --pack all)
           else
             echo "main's art-release.json predates the packs (schema 2) — it builds from its trees, with nothing to fetch"
