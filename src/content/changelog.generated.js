@@ -3,14 +3,14 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1471",
+    "id": "pr-1478",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "The web edition shows its art loading on the start screen, and can retry",
-    "detail": "Behind the scenes, in the web edition only: the start screen now appears at once while the art loads, with one line saying how far it has got, and if the art cannot be loaded the title screen says so and offers Retry (also in Settings → Art quality), which loads it again without reloading the page; the downloaded single file is unchanged, and nothing you play changes.",
-    "build": "0.7.1.761",
-    "pullRequest": 1471,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1471"
+    "summary": "Your character level gets dearer with every level too",
+    "detail": "Your first character level still needs 100 XP, but each level after now costs 1.75 times the one before (100, 180, 310, 540, 940) instead of 130 more, the same growth skills and your class already use. Like any XP setting, this reaches a run you already started the next time you load it.",
+    "build": "0.7.1.764",
+    "pullRequest": 1478,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1478"
   },
   {
     "id": "pr-1476",
