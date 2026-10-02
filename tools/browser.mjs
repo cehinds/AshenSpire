@@ -135,7 +135,7 @@
 // lifetime — at which point this is a second copy of that library's job.
 
 import { spawn } from 'node:child_process';
-import { createReadStream, existsSync, mkdtempSync, readdirSync, realpathSync, rmSync, statSync } from 'node:fs';
+import { createReadStream, existsSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, statSync } from 'node:fs';
 import { realpath, stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
@@ -460,8 +460,8 @@ export async function launchBrowser({
 //     file the plan keeps) opens exactly as before: the answer IS
 //     `pathToFileURL(file).href`, byte for byte. Nothing those tools measure
 //     moves.
-//   * A PACK-SHAPED build (a `packs/` folder beside the HTML, written from step
-//     3a on) is served over local http from the HTML's own folder, because its
+//   * A PACK-SHAPED build (the HTML carries a non-empty `ASSET_PACKS` pin,
+//     written from step 3a on) is served over local http from the HTML's own folder, because its
 //     indexes and objects arrive by `fetch`, which Chrome blocks under
 //     `file://`. The `.js` twins of step 4 make `file://` play too, but a tool
 //     measuring the game should see the loader's primary path.
@@ -491,9 +491,25 @@ const SERVE_MIME = {
   '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf',
 };
 
-/** True when the HTML is pack-shaped: a `packs/` folder stands beside it. */
+// The pin tools/bundle.mjs stamps into a pack-shaped HTML (verify-external reads
+// the same shape). A single file carries `const ASSET_PACKS = null;`.
+const PACK_PIN = /const ASSET_PACKS = (\{.*?\});\n/;
+
+/**
+ * True when the HTML is pack-shaped: it carries a non-empty `ASSET_PACKS` pin.
+ * The HTML says so itself, so a stale `packs/` folder beside an inline file
+ * does not count, and a pinned build whose folder is missing still does (it is
+ * served, and its loader fails the way a hosted page would).
+ */
 export function isPackShaped(htmlPath) {
-  try { return statSync(join(dirname(resolve(htmlPath)), 'packs')).isDirectory(); } catch { return false; }
+  let text;
+  try { text = readFileSync(resolve(htmlPath), 'utf8'); } catch { return false; }
+  const m = PACK_PIN.exec(text);
+  if (!m) return false;
+  try {
+    const pin = JSON.parse(m[1]);
+    return !!(pin && pin.packs && typeof pin.packs === 'object' && Object.keys(pin.packs).length);
+  } catch { return false; }
 }
 
 /**
@@ -518,13 +534,22 @@ export function serveDir(dir, { port = 0, host = '127.0.0.1', prefix = '' } = {}
       let rel;
       try { rel = decodeURIComponent(new URL(req.url || '/', 'http://x').pathname); } catch { res.writeHead(400); res.end(); return; }
       if (mount) {
-        if (rel !== mount && !rel.startsWith(`${mount}/`)) { res.writeHead(404); res.end('Not found'); return; }
+        if (rel === mount) { res.writeHead(301, { Location: `${mount}/` }); res.end(); return; }
+        if (!rel.startsWith(`${mount}/`)) { res.writeHead(404); res.end('Not found'); return; }
         rel = rel.slice(mount.length) || '/';
       }
       let file = resolve(rootReal, `.${rel}`);
       if (!inside(file)) { res.writeHead(403); res.end('Forbidden'); return; }
       let st = await stat(file).catch(() => null);
-      if (st && st.isDirectory()) { file = join(file, 'index.html'); st = await stat(file).catch(() => null); }
+      if (st && st.isDirectory()) {
+        // A folder named without its slash: send the browser to the slash, so
+        // the page's relative URLs resolve inside it.
+        if (!rel.endsWith('/')) {
+          const q = (req.url || '').indexOf('?');
+          res.writeHead(301, { Location: `${(q < 0 ? req.url : req.url.slice(0, q))}/${q < 0 ? '' : req.url.slice(q)}` }); res.end(); return;
+        }
+        file = join(file, 'index.html'); st = await stat(file).catch(() => null);
+      }
       if (!st || !st.isFile()) { res.writeHead(404); res.end('Not found'); return; }
       const real = await realpath(file).catch(() => null);
       if (!real || !inside(real)) { res.writeHead(403); res.end('Forbidden'); return; }
@@ -538,11 +563,15 @@ export function serveDir(dir, { port = 0, host = '127.0.0.1', prefix = '' } = {}
         stream.on('error', () => res.destroy());
         stream.pipe(res);
       };
+      // One range. A syntactically invalid one (`bytes=5-3`) is ignored and the
+      // whole body answers 200 (RFC 9110 14.2); one that starts past the end,
+      // or an empty suffix, is unsatisfiable: 416.
       const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '');
-      if (range && (range[1] || range[2])) {
+      const invalid = range && range[1] && range[2] && Number(range[2]) < Number(range[1]);
+      if (range && (range[1] || range[2]) && !invalid) {
         const start = range[1] ? Number(range[1]) : Math.max(0, size - Number(range[2]));
         const end = range[1] && range[2] ? Math.min(Number(range[2]), size - 1) : size - 1;
-        if (start >= size || start > end) {
+        if (start >= size || start > end || (!range[1] && Number(range[2]) === 0)) {
           res.writeHead(416, { ...headers, 'Content-Range': `bytes */${size}` }); res.end(); return;
         }
         send(206, { 'Content-Range': `bytes ${start}-${end}/${size}`, 'Content-Length': end - start + 1 }, start, end);
@@ -717,14 +746,26 @@ async function serveChecks() {
   });
   const where = (href) => { const u = new URL(href); return { pathname: u.pathname, hostname: u.hostname, protocol: u.protocol }; };
   try {
+    // The shapes tools/bundle.mjs writes: a single file carries a null pin, a
+    // pack build a non-empty one.
+    const PIN = 'const ASSET_PACKS = {"tier":"light","packs":{"light":{"id":"light-000000000000"}}};\n';
+    const NULL_PIN = 'const ASSET_PACKS = null;\n';
     mkdirSync(join(td, 'inline'));
+    mkdirSync(join(td, 'stale', 'packs'), { recursive: true });
+    mkdirSync(join(td, 'orphan'));
     mkdirSync(join(td, 'pack', 'packs'), { recursive: true });
     mkdirSync(join(td, 'pack', 'objects', 'ab'), { recursive: true });
+    mkdirSync(join(td, 'pack', 'sub'));
     mkdirSync(join(td, 'named', 'packs'), { recursive: true });
     writeFileSync(join(td, 'secret.txt'), 'outside');
-    writeFileSync(join(td, 'inline', 'AshenSpire.html'), '<!doctype html><title>inline</title>');
-    writeFileSync(join(td, 'pack', 'AshenSpire.html'), '<!doctype html><title>pack</title>');
-    writeFileSync(join(td, 'named', 'AshenSpire-test-0.7.1.9.html'), '<!doctype html><title>named</title>');
+    writeFileSync(join(td, 'inline', 'AshenSpire.html'), `<!doctype html><title>inline</title><script>${NULL_PIN}</script>`);
+    // KNOWN-BAD: an inline file beside a stale packs/ folder, and a pinned
+    // build whose packs/ folder is missing.
+    writeFileSync(join(td, 'stale', 'AshenSpire.html'), `<!doctype html><title>stale</title><script>${NULL_PIN}</script>`);
+    writeFileSync(join(td, 'orphan', 'AshenSpire.html'), `<!doctype html><title>orphan</title><script>${PIN}</script>`);
+    writeFileSync(join(td, 'pack', 'AshenSpire.html'), `<!doctype html><title>pack</title><script>${PIN}</script>`);
+    writeFileSync(join(td, 'pack', 'sub', 'index.html'), 'sub index');
+    writeFileSync(join(td, 'named', 'AshenSpire-test-0.7.1.9.html'), `<!doctype html><title>named</title><script>${PIN}</script>`);
     writeFileSync(join(td, 'pack', 'packs', 'light-000000000000.json'), '{"ids":{}}\n');
     const big = Buffer.alloc(3 * 1024 * 1024);
     for (let i = 0; i < big.length; i++) big[i] = i % 251;
@@ -738,7 +779,11 @@ async function serveChecks() {
 
     check(await buildPageUrl(inline, { over: 'auto' }) === pathToFileURL(inline).href,
       'an inline single file opens as pathToFileURL(file), unchanged');
-    check(!isPackShaped(inline) && isPackShaped(pack), 'a packs/ folder beside the HTML, and only that, marks the pack shape');
+    check(!isPackShaped(inline) && isPackShaped(pack), 'a non-empty ASSET_PACKS pin in the HTML marks the pack shape');
+    const stale = join(td, 'stale', 'AshenSpire.html');
+    const orphan = join(td, 'orphan', 'AshenSpire.html');
+    check(!isPackShaped(stale) && await buildPageUrl(stale) === pathToFileURL(stale).href, 'an inline file beside a stale packs/ folder stays on file://');
+    check(isPackShaped(orphan) && /^http:/.test(await buildPageUrl(orphan)), 'a pinned build whose packs/ folder is missing is still served');
     check(await buildPageUrl(pack, { over: 'file' }) === pathToFileURL(pack).href, 'over=file keeps a pack build on file://');
     const u = await buildPageUrl(pack, { over: 'auto' });
     check(/^http:\/\/127\.0\.0\.1:\d+\/unknown\/latest\/AshenSpire\.html$/.test(u), `a pack build is served over http under its channel (${u})`);
@@ -757,6 +802,9 @@ async function serveChecks() {
     check(buildChannel(where(bare), 'standalone file') === 'dev', 'control: the same folder served bare on 127.0.0.1 reads dev — the case this guards');
     check(debugEnabled(httpCh, { search: '', storage: null }) === debugEnabled(fileCh, { search: '', storage: null }) && !debugEnabled(httpCh, { search: '', storage: null }),
       'and its debug state matches the file (off by default)');
+    check(buildChannel(where('file:///home/p/unknown/1/AshenSpire-test-0.7.1.9.html'), 'standalone file') === 'test'
+      && buildChannel(where('https://cehinds.github.io/AshenSpire/unknown/1/'), 'standalone file') === 'main',
+      'an /unknown/ path counts only on this machine: a saved file keeps its name, Pages keeps four channels');
     const namedUrl = await buildPageUrl(named, { over: 'http' });
     check(buildChannel(where(namedUrl), 'standalone file') === 'test' && buildChannel(where(pathToFileURL(named).href), 'standalone file') === 'test',
       `a download named for its channel keeps it served (${namedUrl})`);
@@ -776,6 +824,8 @@ async function serveChecks() {
     check(tail.status === 206 && tail.body.equals(big.subarray(big.length - 3)), 'a suffix range answers the last bytes');
     const past = await raw(obj, { headers: { Range: `bytes=${big.length + 10}-` } });
     check(past.status === 416 && past.body.length === 0, 'a range past the end answers 416');
+    const backwards = await raw(obj, { headers: { Range: 'bytes=5-3' } });
+    check(backwards.status === 200 && backwards.body.equals(big), 'an invalid range (bytes=5-3) is ignored: the whole body, 200');
     const head = await raw(obj, { method: 'HEAD' });
     check(head.status === 200 && head.body.length === 0 && Number(head.headers['content-length']) === big.length, 'HEAD sends the length and no body');
     const headRange = await raw(obj, { method: 'HEAD', headers: { Range: 'bytes=0-9' } });
@@ -791,6 +841,12 @@ async function serveChecks() {
     const linkDir = await at('/unknown/latest/up/secret.txt');
     check(link.status === 403 && linkDir.status === 403 && !link.body.toString().includes('outside'),
       `a symlink inside the folder that points outside it is refused (${link.status}, ${linkDir.status})`);
+    const dirNoSlash = await at('/unknown/latest/sub?x=1');
+    const dirSlash = await at('/unknown/latest/sub/');
+    const mountNoSlash = await at('/unknown/latest');
+    check(dirNoSlash.status === 301 && dirNoSlash.headers.location === '/unknown/latest/sub/?x=1' && dirSlash.status === 200 && dirSlash.body.toString() === 'sub index'
+      && mountNoSlash.status === 301 && mountNoSlash.headers.location === '/unknown/latest/',
+      `a folder named without its slash is sent to the slash (${dirNoSlash.status} ${dirNoSlash.headers.location}, ${mountNoSlash.status} ${mountNoSlash.headers.location})`);
     const unmounted = await at('/AshenSpire.html');
     check(unmounted.status === 404, 'nothing answers outside the channel mount');
     const miss = await fetch(`${base}packs/nope.json`);

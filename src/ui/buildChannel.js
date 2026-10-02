@@ -45,14 +45,16 @@ export function buildChannel(loc = globalThis.location, runPath = RUN_PATH) {
   try { path = decodeURIComponent(path); } catch { /* a malformed %-escape: read it raw */ }
   const host = String(loc?.hostname || '');
   const protocol = String(loc?.protocol || '');
-  // `unknown` is never a Pages path; it is how a local tool (tools/browser.mjs
-  // buildPageUrl) serves a build over http while keeping the channel the same
-  // file reads by double-click, so the tool measures that configuration.
-  const served = path.match(/\/(dev|test|release|main|unknown)\/(?:\d+|latest)(?:\/|$)/);
+  const served = path.match(/\/(dev|test|release|main)\/(?:\d+|latest)(?:\/|$)/);
   if (served) return served[1];
   const saved = path.match(/AshenSpire-(?:mobile-)?(dev|test|release|main)-[^/]*\.html$/i);
   if (saved) return saved[1].toLowerCase();
-  if (/^(localhost|127\.\d+\.\d+\.\d+|0\.0\.0\.0|\[::1\])$/.test(host)) return 'dev';
+  const loopback = /^(localhost|127\.\d+\.\d+\.\d+|0\.0\.0\.0|\[::1\])$/.test(host);
+  // `/unknown/<n|latest>/` on THIS machine only: how a local tool
+  // (tools/browser.mjs buildPageUrl) serves a build over http while keeping the
+  // channel the same file reads by double-click. Never a Pages path.
+  if (loopback && /\/unknown\/(?:\d+|latest)(?:\/|$)/.test(path)) return 'unknown';
+  if (loopback) return 'dev';
   // A private-network host is a workstation serving the dev preview to a
   // phone on the same Wi-Fi (tools/serve-preview.mjs): released builds are
   // only ever served from the Pages site or opened as files.

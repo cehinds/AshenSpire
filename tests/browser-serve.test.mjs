@@ -23,7 +23,7 @@ test('browser.mjs check S holds (buildPageUrl / serveDir, no browser)', () => {
   assert.match(out, /^PASS {2}S {2}buildPageUrl \/ serveDir \((\d+) checks, no browser\)/m, out);
   assert.doesNotMatch(out, /RED /, out);
   // The checks that answer the review findings must still be among them.
-  for (const name of [/reads the file's channel/, /symlink inside the folder/, /HEAD sends the length and no body/, /byte range answers 206/]) {
+  for (const name of [/reads the file's channel/, /stale packs\/ folder stays on file/, /invalid range/, /sent to the slash/, /symlink inside the folder/, /HEAD sends the length and no body/, /byte range answers 206/]) {
     assert.match(out, name, `check S no longer covers ${name}`);
   }
 });
@@ -37,4 +37,15 @@ test('a build served under /unknown/latest/ reads the channel its file reads', (
   assert.equal(debugEnabled(served, { search: '', storage: null }), debugEnabled(file, { search: '', storage: null }));
   // The control: the same page at the bare loopback root is a developer's seat.
   assert.equal(buildChannel(at('http://127.0.0.1:41234/AshenSpire.html'), 'standalone file'), 'dev');
+});
+
+test('an /unknown/ path is a channel only on this machine', () => {
+  const at = (href) => { const u = new URL(href); return { pathname: u.pathname, hostname: u.hostname, protocol: u.protocol }; };
+  // A download saved under a folder that happens to be called unknown/1 keeps
+  // the channel its name carries.
+  assert.equal(buildChannel(at('file:///home/p/unknown/1/AshenSpire-test-0.7.1.9.html'), 'standalone file'), 'test');
+  assert.equal(buildChannel(at('file:///home/p/unknown/1/AshenSpire.html'), 'standalone file'), 'unknown');
+  // Pages keeps its four channels: /unknown/ there is just the site's tree.
+  assert.equal(buildChannel(at('https://cehinds.github.io/AshenSpire/unknown/1/'), 'standalone file'), 'main');
+  assert.equal(buildChannel(at('http://localhost:8080/unknown/latest/AshenSpire.html'), 'standalone file'), 'unknown');
 });
