@@ -62,7 +62,13 @@
     .token-table th,.token-table td { padding:7px 9px; border-top:1px solid #3d3022; text-align:left; vertical-align:top; }
     .token-table th { color:var(--muted); font-weight:600; }
     .token-table code { color:#e9d59d; }
-    /* Miniature visual language: deliberately schematic, not a second implementation. */
+    /* Miniatures show the runtime's exported folio materials and frames. */
+    .mini :is(.mini-header,.panel,.card,.mini-btn,.mini-slot) {
+      background-image:linear-gradient(#100e0ce8,#100e0ce8),url('../assets/player-polish/materials/soot-leather-material.webp');
+      background-size:cover;
+      border-image:url('../assets/player-polish/ui/components/panel-frame.svg') 24 / 6px stretch;
+      border-radius:3px;
+    }
     .mini { width:min(250px,100%); min-height:70px; display:flex; align-items:center; justify-content:center; gap:8px; }
     .mini-header { width:100%; border:1px solid var(--line); padding:9px; display:grid; grid-template-columns:1.3fr .7fr 1.4fr; gap:7px; font:10px ui-monospace,monospace; color:var(--muted); }
     .mini-header b { color:var(--ink); } .mini-header i { color:var(--gold); font-style:normal; text-align:center; }
@@ -219,6 +225,8 @@
 </aside>
 <script>
 const V = {
+  playerPainting:'<div class="mini"><figure style="margin:0;width:220px;height:118px;overflow:hidden;border:8px solid transparent;border-image:url(../assets/player-polish/ui/components/panel-frame.svg) 24"><img src="../assets/player-polish/scenes/chapel-rest-master.webp" alt="Rest scene aperture" style="width:100%;height:100%;object-fit:cover;object-position:center 44%"></figure></div>',
+  playerEngraving:'<div class="mini mini-stack"><span aria-label="Engraved mana icon" role="img" style="display:block;width:32px;height:32px;background:#629bc9;mask:url(../assets/player-polish/ui/icons/mana.svg) center/contain no-repeat"></span><div class="mini-label">semantic colour · live DOM value</div></div>',
   equipmentAnimation:'<div class="mini mini-stack"><div class="mini-label">ALL CLASSES · WEAPON PROFILES</div><div class="mini-row"><img src="../assets/animations/reaver/greatsword-v2/STANCE-READY.webp" alt="Reaver ready stance" style="height:105px"><img src="../assets/animations/sword-shield-outfits/starseer/STANCE-READY.webp" alt="starseer sword and shield ready" style="height:75px"><img src="../assets/animations/twin-sword-outfits/rogue/STANCE-READY.webp" alt="rogue twin swords ready" style="height:75px"><img src="../assets/animations/bow/reaver/BOW-04.webp" alt="Reaver drawing a bow" style="height:75px"><img src="../assets/animations/sword-shield-outfits/herald/STANCE-READY.webp" alt="herald sword and shield ready" style="height:75px"><img src="../assets/animations/unarmed/herald/STANCE-READY.webp" alt="Herald unarmed ready" style="height:75px"><img src="../assets/animations/unarmed-magic/rogue/ATK-05.webp" alt="Rogue empty-hand magic release" style="height:75px"></div><div class="mini-label">Greatsword · Sword + Shield · Twin swords · Bow · Unarmed</div><div class="mini-label">Attack tags choose blade, bow, shield and spell motion</div></div>',
   settingsChoiceRow:'<div class="mini mini-stack"><div class="mini-label">ART QUALITY</div><div class="mini-btn">Auto ▾</div><div class="mini-label">Auto · <s>Light</s> · <s>High</s> · Local high-res</div><div class="mini-label">Disabled choices stay listed; the live line says why.</div></div>',
   touchFlick:'<div class="mini mini-stack"><div class="mini-label">CARD FLICK DISTANCE</div><div class="mini-btn">64 px · Reset</div><div style="width:150px;border-top:3px solid var(--gold);margin:10px"></div><div class="mini-panel" style="height:65px">↑ Practice flick</div><div class="mini-label">Selection + Information stay separate</div></div>',
@@ -640,7 +648,11 @@ const RENDERED_ARMOURY_COMPONENTS = [
 ].map(([id,owner,reuse,purpose,visual]) => ({
   id, model:'asset-data/components/armoury.json', owner, group:'armoury-assets', reuse, purpose, visual,
 }));
-const C = [...SEMANTIC_COMPONENTS, ...RENDERED_ARMOURY_COMPONENTS];
+const PLAYER_POLISH_COMPONENTS = [
+ {id:'player.scenePainting', model:'reviewed player-polish kit', owner:'components/scenePainting.js', group:'primitive', reuse:'Event and rest apertures', purpose:'A separate painted landmark above the live choice folio. Decorative art resolves through assetUrl and yields its space on short landscape phones.', visual:'playerPainting'},
+ {id:'player.engravedIcon', model:'registered engraved icon ID', owner:'components/engravedIcon.js', group:'primitive', reuse:'Shared controls, resources, costs and pips', purpose:'Original SVG geometry masked with the live semantic colour. Labels and values remain readable DOM, with built-in light/full and local high-resolution tier refresh.', visual:'playerEngraving'},
+];
+const C = [...SEMANTIC_COMPONENTS, ...RENDERED_ARMOURY_COMPONENTS, ...PLAYER_POLISH_COMPONENTS];
 const COMPOSITION = Object.freeze({
   'startup-gate':['startup-ash-field','startup-mark'],
   'art-load-notice':['art-load-notice-retry'],

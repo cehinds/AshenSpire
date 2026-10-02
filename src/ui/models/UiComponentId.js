@@ -2,6 +2,8 @@
 // enum: Component Models and Views share the names without either owning the
 // other's implementation.
 export const UI_COMPONENTS = Object.freeze({
+  playerScenePainting: 'player.scenePainting',
+  playerEngravedIcon: 'player.engravedIcon',
   formationLayoutEditor: 'formation-layout-editor',
   startupGate: 'startup-gate',
   startupAshField: 'startup-ash-field',

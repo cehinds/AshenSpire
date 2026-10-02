@@ -25,6 +25,7 @@
 
 import { attachTooltip, esc } from './tooltip.js';
 import { el, meter, meters } from '../kit/index.js';
+import { engravedIcon } from './engravedIcon.js';
 
 /**
  * resourceBars(plan, { surface, tooltipExtra }) → HTMLElement (.resbars)
@@ -78,6 +79,9 @@ function unit(bar, surface, tooltipExtra, tooltips) {
   });
   // The plate and the well carry the names the instruments read.
   node.querySelector('.m-plate')?.classList.add('resplate');
+  const label = node.querySelector('.m-label');
+  const icon = label && engravedIcon(bar.id);
+  if (icon) label.insertBefore(icon, label.firstChild);
   node.querySelector('.m-well').classList.add('restrack');
   // There is deliberately no absolute minimum width on the track: `width`
   // stays the rendered max/reference percentage even when it is a few pixels;

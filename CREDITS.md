@@ -1,5 +1,20 @@
 # Credits & Asset Licenses
 
+## Player interface paintings and engravings (2026-10-02)
+
+`assets/player-polish/` and its `assets-mobile/player-polish/` twin contain
+first-party paintings/materials generated with OpenAI's built-in Image
+Generation tool and original engraved SVG geometry from the reviewed
+[player polish source kit](docs/design/player-polish-asset-kit-2026-10-02/README.md).
+No third-party artwork or icon pack is included; no third-party license is
+claimed for this original work. Runtime exports are made by
+`tools/player-polish-art.py`, registered by `tools/art-manifest.mjs`, and retain
+the existing canonical characters, items, maps, fonts and their credits below.
+
+| Assets | Source | Rights |
+|---|---|---|
+| assets/player-polish/ (and assets-mobile/player-polish/) | Original generated paintings and authored SVG geometry in [the reviewed source kit](docs/design/player-polish-asset-kit-2026-10-02/README.md); exported by tools/player-polish-art.py | First-party AI-generated paintings and original vectors; no third-party asset license claimed |
+
 ## Player interface polish concepts (2026-10-01)
 
 Twelve original concept boards covering 24 player-facing feature views on

@@ -38,6 +38,7 @@ import { mountSmithUpgradeModal } from '../components/smithUpgradeModal.js';
 import { mountServiceOffer, openMountService, mountReceiptLine } from './smithServices.js';
 import { FOLD_GLYPH } from '../components/foldGlyph.js';
 import { runHudHtml, wireRunHud } from '../components/runHud.js';
+import { scenePainting } from '../components/scenePainting.js';
 // THE FOLDS' INSIDES ARE THE KIT'S (2026-09-04, the sweep): a flask row is a
 // kit Row — the flask's identity as its LabelStack, a −/count/+ Stepper of
 // tap-floor buttons trailing — the total is StatusText, the cinder preview
@@ -356,6 +357,7 @@ export function mountRest(app, { registries, run, meta, onDone, onReallocate = n
   // #1195), so the foot is the way out.
   const leave = multiUse || relicNoRest ? button({ label: t('rest.continue'), weight: 'primary', id: 'shrine-leave', className: 'shrine-leave' }) : null;
   const consequences = el('aside', { class: 'choice-body-consequences choice-status rest-consequences', 'aria-label': t('rest.consequences.heading') });
+  app.querySelector('.rest-screen').appendChild(scenePainting(stay.services.smith ? 'forge' : 'rest'));
   mountChoiceBody(app.querySelector('.rest-screen'), {
     className: 'rest-door',
     eyebrow: t('rest.eyebrow'),
