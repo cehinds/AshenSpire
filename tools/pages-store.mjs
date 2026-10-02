@@ -98,6 +98,11 @@ export function publishPack(siteDir, relDir, html, from, { name = 'index.html' }
   // the store cannot take is refused whole, by name, and leaves the site as it
   // was, so the caller skips that one build instead of the whole publication.
   const packFiles = pinnedPackFiles(pin);
+  // The font sidecar is only ever packs/fonts-<digest12>.js (tools/asset-pack.mjs),
+  // the name the file:// loader and the in-game zip ask for; a pin naming any
+  // other is refused here rather than published where nothing can read it (Codex, #1480).
+  if (pin.fonts?.file !== undefined && !SIDECAR_FILE.test(String(pin.fonts.file))) throw refused(`${where}: its pin names the font sidecar ${JSON.stringify(pin.fonts.file)}, which is not a packs/fonts-<digest12>.js file`);
+  if (pin.fonts?.file !== undefined && !OBJECT_SHA.test(String(pin.fonts.sha256))) throw refused(`${where}: its pin gives the font sidecar ${JSON.stringify(pin.fonts.sha256)} as its sha256, which is not 64 lowercase hex`);
   for (const file of packFiles) {
     if (!PIN_FILE.test(file)) throw refused(`${where}: its pin names ${JSON.stringify(file)}, which is not a packs/<pack>-<digest12>.json|js file`);
     const src = join(packsRoot, file);
@@ -143,6 +148,7 @@ export function publishPack(siteDir, relDir, html, from, { name = 'index.html' }
 // The names a pin and an index may use (review of #1456): nothing a pin or an
 // index says can write outside packs/ and objects/.
 const PIN_FILE = /^packs\/[a-z]+-[0-9a-f]{12}\.(?:json|js)$/;
+const SIDECAR_FILE = /^packs\/fonts-[0-9a-f]{12}\.js$/;
 const OBJECT_SHA = /^[0-9a-f]{64}$/;
 const OBJECT_FILE = /^objects\/[0-9a-f]{2}\/[0-9a-f]{64}(?:\.[a-z0-9]+)?$/;
 /** An error that refuses one build, not the run: `refused` is set. */
