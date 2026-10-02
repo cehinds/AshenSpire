@@ -400,11 +400,14 @@ if (TWIN_ART) {
   const rel = (dir) => walkAssets(dir).map((abs) => relative(dir, abs).split(/[\\/]/g).join('/'))
     .filter((p) => runtimeAsset(p) && MIME[extname(p).toLowerCase()] && sweptPath(p));
   const lightPrefix = `${MOBILE_ASSET_DIR}/`;
-  const want = new Set(Object.values(artManifest().assets || {})
-    .filter((entry) => entry && !entry.common && entry.light && entry.light.path.startsWith(lightPrefix))
-    .map((entry) => entry.light.path.slice(lightPrefix.length)));
+  const artEntries = Object.entries(artManifest().assets || {}).filter(([, entry]) => entry && !entry.common);
+  // An art id with no light record (buildManifest writes `light: null` for a
+  // missing twin) is a missing file, not one to leave out of the comparison.
+  const hasLight = ([, entry]) => Boolean(entry.light) && typeof entry.light.path === 'string' && entry.light.path.startsWith(lightPrefix);
+  const noLight = artEntries.filter((e) => !hasLight(e)).map(([id]) => `${id} (art-manifest.json has no light record)`);
+  const want = new Set(artEntries.filter(hasLight).map(([, entry]) => entry.light.path.slice(lightPrefix.length)));
   const have = new Set(rel(ART_DIR));
-  const missing = [...want].filter((p) => !have.has(p));
+  const missing = [...noLight, ...[...want].filter((p) => !have.has(p))];
   const stray = [...have].filter((p) => !want.has(p));
   if (missing.length || stray.length) {
     fail(`${ART_FROM} does not hold the light records of art-manifest.json — ${missing.length} missing, ${stray.length} stray; node tools/fetch-art.mjs --pack light (or, for the tree, node tools/mobile-art.mjs --check)`,

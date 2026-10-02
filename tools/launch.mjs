@@ -133,8 +133,11 @@ const commonCopy = (tree) => {
     return null;
   }
 };
+// Each destination is replaced, not overlaid: a copy an earlier launcher made
+// from the tree (with music/score/, or a track since removed) must not linger.
+const replaceCopy = (from, to) => { rmSync(to, { recursive: true, force: true }); cpSync(from, to, { recursive: true }); };
 const detailDir = commonCopy('map-detail');
-if (detailDir && existsSync(detailDir)) cpSync(detailDir, resolve(distDir, 'map-detail'), {recursive:true});
+if (detailDir && existsSync(detailDir)) replaceCopy(detailDir, resolve(distDir, 'map-detail'));
 // The shipped score, the same way: a served alias with the music-folder setting
 // blank fetches music/ from beside itself (content/music.js SHIPPED_MUSIC_FOLDER),
 // so build/ and dist/ each carry a copy. Git-ignored, like dist/map-detail/.
@@ -142,7 +145,7 @@ if (detailDir && existsSync(detailDir)) cpSync(detailDir, resolve(distDir, 'map-
 // source (music/score/, which is authoring).
 const musicDir = commonCopy('music');
 if (musicDir && existsSync(musicDir)) {
-  for (const dir of [distDir, resolve(ROOT, 'build')]) cpSync(musicDir, resolve(dir, 'music'), {recursive:true});
+  for (const dir of [distDir, resolve(ROOT, 'build')]) replaceCopy(musicDir, resolve(dir, 'music'));
 }
 const landed = aliases.filter((f) => existsSync(f)).length;
 console.log(`launch: current build refreshed → AshenSpire.html + dist/AshenSpire.html + dist/AshenSpire-${ver}.html`);

@@ -89,11 +89,24 @@ test('an unfetched pack falls back to the tree once, with a note naming the fetc
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('a cache for another pin or manifest is not verified', () => {
+test('a cache for another pin or manifest is not verified, even after it was in the same process', () => {
   const root = fixture(['common']);
   try {
+    assert.equal(packSource('common', { root, env: {}, warn: () => {} }).from, 'cache');
     writeFileSync(join(root, 'art-manifest.json'), JSON.stringify({ ...MANIFEST, assets: { ...MANIFEST.assets, 'music/x.mp3': { common: { path: 'music/x.mp3', bytes: 3, sha256: hex('5') } } } }));
     assert.equal(packSource('common', { root, env: {}, warn: () => {} }).from, 'trees');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a pack fetched while the process runs is used from then on (a long-running serve.mjs)', () => {
+  const root = fixture([]);
+  try {
+    assert.equal(packSource('light', { root, env: {}, warn: () => {} }).from, 'trees');
+    assert.throws(() => packSource('light', { root, env: { ASHEN_ART_SOURCE: 'cache' } }), /ASHEN_ART_SOURCE=cache/);
+    const dir = join(root, '.art-cache', PIN.tag, 'light');
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, '.verified'), `${markerFor(readPin(root), MANIFEST, 'light')}\n`);
+    assert.equal(packSource('light', { root, env: { ASHEN_ART_SOURCE: 'cache' } }).from, 'cache');
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 

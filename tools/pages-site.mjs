@@ -930,6 +930,14 @@ function assemble(outDir, keep) {
   // map-detail/ and music/ are what /AshenSpire.html fetches beside itself.
   const payload = STABLE_PAYLOAD_DIRS.filter((d) => inTree(mainRef, d));
   if (payload.length) extractTree(mainRef, payload, outDir);
+  // A main whose tree no longer carries them (EXTERNAL-ASSETS-PLAN step 13)
+  // hands them in with its build instead: tools/launch.mjs copies both from the
+  // fetched common pack beside the single file, and pages-builds.yml passes
+  // them in --main-build.
+  for (const d of STABLE_PAYLOAD_DIRS) {
+    if (payload.includes(d) || !MAIN_BUILD || !existsSync(resolve(MAIN_BUILD, d))) continue;
+    cpSync(resolve(MAIN_BUILD, d), join(outDir, d), { recursive: true });
+  }
   // The committed build HTML is left out of the archive and written here, only
   // at the stable paths, hydrated from LFS where it is a pointer.
   for (const name of STABLE_LINKS) for (const artifact of [name, `build/${name}`, `dist/${name}`]) {

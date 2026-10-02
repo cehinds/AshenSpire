@@ -38,10 +38,10 @@
 // green (every building workflow runs it), so which one a build read never
 // changes what it ships.
 
-import { existsSync, readFileSync, realpathSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { verifiedPackDir } from './fetch-art.mjs';
+import { CACHE_DIR, MANIFEST_PATH, PIN_PATH, verifiedPackDir } from './fetch-art.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const ENV = 'ASHEN_ART_SOURCE';
@@ -80,10 +80,19 @@ export function treeOf(rel) {
 }
 
 const noted = new Set();
-// One verification per root and pack per process: verifiedPackDir re-reads the
+// One verification per root and pack while nothing it depends on moves:
+// verifiedPackDir re-reads the
 // pin and the manifest and digests the pack's rows, and artPath runs per file.
 const verified = new Map();
 const defaultWarn = (m) => console.warn(m);
+const mtimeOf = (p) => { try { const st = statSync(p); return `${st.mtimeMs}:${st.size}`; } catch { return '-'; } };
+/** What a verification decision depends on: the pin, the manifest and the pack's marker, by mtime and size. */
+function stampOf(root, pack) {
+  let tag = '';
+  try { tag = String(JSON.parse(readFileSync(join(root, PIN_PATH), 'utf8')).tag || ''); } catch { /* verifiedPackDir names it */ }
+  const marker = tag && /^[A-Za-z0-9._-]+$/.test(tag) ? mtimeOf(join(root, CACHE_DIR, tag, pack, '.verified')) : '-';
+  return [mtimeOf(join(root, PIN_PATH)), mtimeOf(join(root, MANIFEST_PATH)), marker, tag].join('|');
+}
 
 /**
  * packSource(pack, { root, env, warn }) → { from: 'cache', dir } | { from: 'trees', dir: null, why }.
@@ -94,10 +103,15 @@ export function packSource(pack, { root = ROOT, env = process.env, warn = defaul
   const mode = sourceMode(env);
   if (mode === 'trees') return { from: 'trees', dir: null, why: `${ENV}=trees` };
   const vkey = `${real(root)}\0${pack}`;
-  if (!verified.has(vkey)) {
-    try { verified.set(vkey, { dir: resolve(verifiedPackDir(pack, { root })) }); } catch (e) { verified.set(vkey, { why: e.message }); }
+  // The decision is kept only while the pin, the manifest and every pack's
+  // verified marker are unchanged, so a long-running server (tools/serve.mjs)
+  // sees a fetch, a re-pin or a manifest edit on its next request.
+  const stamp = stampOf(root, pack);
+  let hit = verified.get(vkey);
+  if (!hit || hit.stamp !== stamp) {
+    try { hit = { stamp, dir: resolve(verifiedPackDir(pack, { root })) }; } catch (e) { hit = { stamp, why: e.message }; }
+    verified.set(vkey, hit);
   }
-  const hit = verified.get(vkey);
   if (hit.dir) return { from: 'cache', dir: hit.dir };
   const why = hit.why;
   // The refusal guards the four trees step 13 deletes. The high pack's tree,
