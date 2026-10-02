@@ -439,19 +439,21 @@ async function seatSwitchProbe(cdp, sessionId, base) {
 // act behind it. A seat switch that does happen (a pad press, a seat tab)
 // closes the chooser, so nothing is chosen for a seat that did not open it.
 // Through `?shot=coop&shotSeats=2` (vowChoiceProbe): seat 1 holds the Vow in
-// slot 1; key 1 opens the chooser; Tab keeps seat 1 and focus in the dialog;
+// slot 1 and stands in Gorefire; key 1 opens the chooser with Gorefire disabled; Tab keeps seat 1 and focus in the dialog;
 // E sends no endTurn; the pick sends one playCard as p1 with that stance; and
 // a seat-tab switch with the chooser open closes it and sends nothing; and a
 // snapshot that leaves combat (another player ends the fight) closes it too.
 const VOW_STEP = {
   ready: `(() => { const s = structuredClone(window.__coopSnapshotForShot); s.scene.players.forEach((p) => { p.ended = false; });
     s.scene.players[0].hand = [{ instanceId: 'vow1', cardId: 'warriorsVow', upgraded: false }, ...s.scene.players[0].hand];
+    s.scene.players[0].stanceId = 'gorefire';
     window.__receiveCoopSnapshotForShot(s); window.__coopSentForShot.length = 0; return true; })()`,
   state: `(() => { const d = document.querySelector('.card-choice'); return {
     open: !!d, inDialog: !!(d && d.contains(document.activeElement)), options: document.querySelectorAll('.card-choice .card-choice-option').length,
+    disabled: [...document.querySelectorAll('.card-choice .card-choice-option[disabled]')].map((b) => b.dataset.choice),
     seat: document.querySelector('.coop-seat-tabs [aria-selected="true"]')?.textContent || '',
     sent: window.__coopSentForShot.map((m) => ({ t: m.t, as: m.as, choice: m.choice })) }; })()`,
-  pick: `(async () => { const b = document.querySelector('.card-choice .card-choice-option'); const id = b?.dataset.choice || ''; if (b) b.click();
+  pick: `(async () => { const b = document.querySelector('.card-choice .card-choice-option:not([disabled])'); const id = b?.dataset.choice || ''; if (b) b.click();
     await new Promise((r) => setTimeout(r, 400)); return id; })()`,
   leaveCombat: `(async () => { const s = structuredClone(window.__coopSnapshot); s.scene = { kind: 'complete', victory: true };
     window.__receiveCoopSnapshotForShot(s); await new Promise((r) => setTimeout(r, 400)); return true; })()`,
@@ -478,6 +480,8 @@ async function vowChoiceProbe(cdp, sessionId, base) {
   await key('1', 'Digit1', 49);
   const opened = await ev(VOW_STEP.state);
   if (!opened.open || opened.options < 2) return [`vow chooser: key 1 on Warrior's Vow opened ${opened.open ? opened.options + ' option(s)' : 'no chooser'}; want a stance chooser`];
+  // The seat stands in Gorefire: that option is shown but disabled (#1449 review, Codex P2).
+  if (JSON.stringify(opened.disabled) !== '["gorefire"]') bad.push(`vow chooser: in Gorefire the disabled options are ${JSON.stringify(opened.disabled)}; want ["gorefire"]`);
   await key('Tab', 'Tab', 9);
   const tabbed = await ev(VOW_STEP.state);
   if (tabbed.seat !== before.seat) bad.push(`vow chooser: Tab with the chooser open switched the seat (${before.seat} -> ${tabbed.seat}); want the chooser to keep Tab`);
@@ -491,7 +495,7 @@ async function vowChoiceProbe(cdp, sessionId, base) {
   const choice = await ev(VOW_STEP.pick);
   const played = await ev(VOW_STEP.state);
   const plays = played.sent.filter((m) => m.t === 'playCard');
-  if (!(plays.length === 1 && plays[0].as === 'p1' && plays[0].choice === choice && choice)) bad.push(`vow chooser: picking ${choice} sent ${JSON.stringify(played.sent)}; want one playCard as p1 with choice ${choice}`);
+  if (!(plays.length === 1 && plays[0].as === 'p1' && plays[0].choice === choice && choice && choice !== 'gorefire')) bad.push(`vow chooser: picking ${choice} sent ${JSON.stringify(played.sent)}; want one playCard as p1 with choice ${choice}`);
   await fresh();
   await key('1', 'Digit1', 49);
   await ev(VOW_STEP.switchSeat);
@@ -506,7 +510,7 @@ async function vowChoiceProbe(cdp, sessionId, base) {
   if (!reopened.open) bad.push('vow chooser: key 1 did not reopen the chooser before the leave-combat check');
   if (left.open) bad.push('vow chooser: a snapshot that left combat kept the chooser open over the next scene; want it closed');
   if (left.sent.length) bad.push(`vow chooser: leaving combat with the chooser open sent ${JSON.stringify(left.sent)}; want nothing`);
-  console.log(`  ${bad.length ? '✗' : '✓'} vow chooser: Tab keeps ${tabbed.seat} (focus in dialog ${tabbed.inDialog}); pick ${choice} sends ${JSON.stringify(plays)}; seat switch closes it (${!moved.open}); leaving combat closes it (${!left.open})`);
+  console.log(`  ${bad.length ? '✗' : '✓'} vow chooser: disabled ${JSON.stringify(opened.disabled)}; Tab keeps ${tabbed.seat} (focus in dialog ${tabbed.inDialog}); pick ${choice} sends ${JSON.stringify(plays)}; seat switch closes it (${!moved.open}); leaving combat closes it (${!left.open})`);
   return bad;
 }
 

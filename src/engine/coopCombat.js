@@ -413,7 +413,7 @@ export function cardChoicePlan(C, playerId, cardInstanceId) {
   if (!P) throw new Error(`Unknown player '${playerId}'`);
   const inst = P.piles.hand.find((c) => c.instanceId === cardInstanceId);
   if (!inst) throw new Error(`Card '${cardInstanceId}' is not in hand`);
-  return cardChoice(C.registries, resolveCard(C.registries, inst), P.entity.classId);
+  return cardChoice(C.registries, resolveCard(C.registries, inst), P.entity.classId, P.entity.stanceId);
 }
 
 export function playCard(C, playerId, cardInstanceId, targetId, choice) {

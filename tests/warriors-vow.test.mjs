@@ -129,3 +129,41 @@ test('co-op: a seat\'s Vow offers its class stances and enters the chosen one on
     assert.equal(p1.entity.stanceId ?? null, null, 'the other seat is untouched');
   }
 });
+
+// The stance the player is already in does nothing as a pick: the foundation
+// rules refuse it ("That stance is already active") and the legacy rules make
+// it a no-op that still spends the card, so the offer marks it `active` and the
+// dialog disables it rather than offer a pick the engine refuses (#1449
+// review, Codex P2). The other stances stay choosable.
+test('the offer marks the stance already active, solo and co-op', async () => {
+  const c = soloCombat();
+  assert.ok(cardChoicePlan(c, 'pvow').options.every((o) => o.active === false), 'no stance yet: nothing marked');
+  c.player.stanceId = 'bulwark';
+  const plan = cardChoicePlan(c, 'pvow');
+  assert.deepEqual(plan.options.filter((o) => o.active).map((o) => o.id), ['bulwark']);
+  dispatch(c, { type: 'playCard', cardInstanceId: 'pvow', choice: 'gorefire' });
+  assert.equal(c.player.stanceId, 'gorefire');
+
+  const { createCoopCombat, cardChoicePlan: coopPlan } = await import('../src/engine/coopCombat.js');
+  const C = createCoopCombat({ registries: REG, rng: createRng(0xc0ffee), enemyIds: [ENEMY], players: [seat('p1'), seat('p2')] });
+  C.players.get('p2').entity.stanceId = 'brace';
+  assert.deepEqual(coopPlan(C, 'p2', 'p2vow').options.filter((o) => o.active).map((o) => o.id), ['brace']);
+  assert.ok(coopPlan(C, 'p1', 'p1vow').options.every((o) => !o.active), 'the other seat\'s stance is not this seat\'s');
+});
+
+// BOUNDARY (engine/actions.js enterStance, model/validate.js): only a played
+// card supplies a choice. An enterStance `choose` resolved anywhere else (a
+// stance onEnter, a status hook, an enemy move) has no pick and must fail
+// loudly, never enter a guessed stance. No shipped row does this.
+test('a chosen enterStance resolved with no play choice throws and enters nothing', async () => {
+  const { executeAction } = await import('../src/engine/actions.js');
+  const c = soloCombat();
+  assert.throws(
+    () => executeAction(c, { effect: { op: 'enterStance', choose: 'classStance' }, source: c.player, owner: c.player, target: c.player, meta: {} }),
+    /needs a play choice/,
+  );
+  assert.equal(c.player.stanceId ?? null, null);
+  const chosenStance = /"op":"enterStance"[^{}]*"choose"/;
+  const outside = Object.entries(contentBundle).filter(([kind]) => kind !== 'cards' && chosenStance.test(JSON.stringify(contentBundle[kind]))).map(([kind]) => kind);
+  assert.deepEqual(outside, [], 'no shipped row outside the cards carries enterStance choose');
+});

@@ -1027,7 +1027,7 @@ export function cardPlayCosts(combat, cardInstanceId) {
 export function cardChoicePlan(combat, cardInstanceId) {
   const inst = combat.piles.hand.find((c) => c.instanceId === cardInstanceId);
   if (!inst) throw new Error(`Card '${cardInstanceId}' is not in hand`);
-  return cardChoice(combat.registries, resolveCard(combat.registries, inst), combat.player.classId);
+  return cardChoice(combat.registries, resolveCard(combat.registries, inst), combat.player.classId, combat.player.stanceId);
 }
 
 function doPlayCard(combat, { cardInstanceId, targetId, choice }) {

@@ -811,6 +811,13 @@ function runOpcode(ctx, action, eff) {
       // A chosen stance (Warrior's Vow) is the play intent's pick, validated
       // before the card was paid for (model/cardChoices.js) and carried on meta.
       const stanceId = eff.choose ? action.meta && action.meta.choice : eff.stance;
+      // BOUNDARY (#1449 review, Codex P2): only a played card supplies a
+      // choice. The validator checks `choose` wherever enterStance may appear
+      // (stance onEnter, status hooks, enemy moves...), but no shipped row
+      // outside Warrior's Vow's card effects uses it. Such a row resolves
+      // here with no pick and fails loudly rather than entering a guessed
+      // stance (tests/warriors-vow.test.mjs pins the throw).
+      if (eff.choose && stanceId == null) throw new Error(`enterStance choose '${eff.choose}' needs a play choice; only a played card supplies one`);
       const def = ctx.registries.stances.get(stanceId);
       if (ctx.player.stanceId === stanceId) break; // already in it: no-op (StS)
       if (ctx.player.stanceId) {

@@ -294,7 +294,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       const seat = latestWireSnap?.scene?.players?.find((entry) => entry.id === me);
       const inst = seat?.hand?.find((entry) => entry.instanceId === obj.cardInstanceId);
       const def = inst ? resolveCard(registries, { cardId: inst.cardId, upgraded: inst.upgraded, mods: inst.mods }) : null;
-      const plan = def ? cardChoice(registries, def, seat.classId) : null;
+      const plan = def ? cardChoice(registries, def, seat.classId, seat.stanceId) : null;
       if (plan) {
         // THE CHOOSER OWNS THE COUCH KEYBOARD while it stands (#1449 review,
         // Codex P1): keyHandler and flaskKeyHandler stand down, so Tab moves

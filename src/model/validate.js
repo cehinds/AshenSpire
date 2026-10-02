@@ -2354,6 +2354,12 @@ export function validateEffects(effects, path, vctx) {
     }
     // enterStance enters a named stance OR offers a choice (Warrior's Vow,
     // model/cardChoices.js) — one selector, never neither nor both.
+    // BOUNDARY: this check does not know which context the effect list is
+    // in, so it also accepts `choose` in a stance onEnter, a status hook or an
+    // enemy move, where no play intent supplies a pick. No shipped row does
+    // that (only a card's own effects carry `choose`); such a row throws
+    // when it resolves (engine/actions.js enterStance;
+    // tests/warriors-vow.test.mjs pins the throw).
     if (eff.op === 'enterStance') {
       const named = eff.stance !== undefined;
       const chosen = eff.choose !== undefined;
