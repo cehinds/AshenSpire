@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Turning Developer tools off no longer changes how the game plays",
     "detail": "On development and test builds, switching Settings → Advanced → Developer tools off and reloading used to drop the developer's chosen starting values for the hidden tuning settings, and switching it back on brought them back. Those values now follow the kind of build you are playing, so the switch only decides which settings sections you see. A downloaded build the game cannot place no longer takes those developer-only values even with the tools switched on; every setting it shows keeps its usual starting value.",
-    "build": "0.7.1.746",
+    "build": "0.7.1.747",
     "pullRequest": 1457,
     "url": "https://github.com/cehinds/AshenSpire/pull/1457"
+  },
+  {
+    "id": "pr-1456",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Play the hosted game offline, and download it whole",
+    "detail": "On the build site, newer builds now play as the web edition, loading their art from one shared store, and each build's Download saves the light-art single file, one self-contained HTML that plays by double-click. In the game, Download & saves → Make available offline keeps the build and its art in your browser, so the same address opens without internet (the map uses simpler artwork and the music is synthesized offline); Remove this build's offline copy undoes it.",
+    "build": "0.7.1.745",
+    "pullRequest": 1456,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1456"
   },
   {
     "id": "pr-1455",

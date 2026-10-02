@@ -415,6 +415,16 @@ jobs:
           node tools/bundle.mjs --external-art $WEB_TIER --out build/web
           node tools/verdict.mjs -- node tools/external-play.mjs --dir build/web
 
+      # THE PAGES SERVICE WORKER (docs/EXTERNAL-ASSETS-PLAN.md step 6b). The web
+      # edition above, published into a local copy of the Pages shape (the shared
+      # store, asset-base.json, /AshenSpire/sw.js) and served under /AshenSpire/:
+      # "Make available offline" keeps it, the worker's scope is /AshenSpire/,
+      # online the network beats the kept copy, offline the page boots from the
+      # cache and a music object answers a Range with a 206, and the kill-switch
+      # unregisters the worker. About a minute.
+      - name: The hosted web edition keeps offline through the Pages service worker, and its kill-switch unregisters it
+        run: node tools/verdict.mjs -- node tools/pages-offline.mjs --web build/web
+
       # THE TIER FALLBACK, CSS INCLUDED (docs/EXTERNAL-ASSETS-PLAN.md §3.5, step
       # 3b). A high-default build whose high index is gone must load light: its
       # sprites, and its ASSET_CSS backdrops and fonts, from light and common
