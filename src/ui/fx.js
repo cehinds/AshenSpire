@@ -7,6 +7,7 @@ import { combatEffectForEvent } from '../model/combatEffectEvents.js';
 // Staggers get the loud treatment (they're the theme).
 
 import { sfx } from './sfx.js';
+import { hitTierFor } from '../content/sfx.js';
 import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
 import { playPoseOn } from './services/PoseAnimator.js';
@@ -467,6 +468,7 @@ function flare(layer, anchor, color) {
  */
 export function animateEvents(events, ctx, done) {
   flushRequested = false;
+  playBeatCues(events);
   pending = events.filter((e) => visualFor(e) !== null);
   const skip = () => {
     flushRequested = true;
@@ -670,6 +672,7 @@ export function playTimeline(events, ctx, done) {
     const beat = beats[bi++];
 
     if (beat.banner) {
+      safe(() => playBeatCues(beat.events));
       safe(() => { if (!ctx.layer.closest('.combat')?.querySelector('.turn-ribbon')) banner(ctx.layer, beat.banner, 'turn'); });
       safe(() => ctx.onBeatApplied && ctx.onBeatApplied(beat));
       schedule(nextBeat, Math.max(260, speed.beatMs));
@@ -731,6 +734,7 @@ export function playTimeline(events, ctx, done) {
           return;
         }
         const applyBeat = () => {
+          safe(() => playBeatCues(beat.events));
           // 3) HUD updates for this beat, 4) inter-beat breath. Painted actor
           // sequences retain their recovery frames before the render replaces
           // the sprite host; ordinary CSS lunges update immediately as before.
@@ -748,6 +752,35 @@ export function playTimeline(events, ctx, done) {
     }, windup);
   };
   nextBeat();
+}
+
+// ---------------------------------------------------------------------------
+// Sound seams (FINISH §5 hit sound tiers). Exported so a headless test can
+// drive the same calls the timeline makes; every id reaches audio through
+// sfx.play, whose sink honours the mute and SFX-volume settings.
+// ---------------------------------------------------------------------------
+
+const hurtsPlayer = (e) => e.targetPlayerId != null || e.targetId === 'player';
+
+/** The HP half of an attack: `playerHurt` on the player, else `hit_<tier>`. */
+export function playHitSound(e) {
+  const { residual } = guardHitFloatParts(e);
+  if (residual <= 0) return;
+  if (hurtsPlayer(e)) sfx.play('playerHurt');
+  else sfx.play(`hit_${hitTierFor(residual)}`);
+}
+
+/**
+ * Once-per-beat cues: the turn stinger and the pile sounds. A five-card
+ * refill or a whole-hand discard is ONE sound, not five, and adds no step to
+ * the beat's pacing (these events have no visual of their own).
+ */
+export function playBeatCues(events) {
+  const has = (type) => events.some((e) => e && e.type === type);
+  if (has('playerTurnStart')) sfx.play('turnStinger');
+  if (has('deckShuffled')) sfx.play('deckShuffle');
+  if (has('cardDrawn')) sfx.play('cardDraw');
+  if (has('cardDiscarded')) sfx.play('cardDiscard');
 }
 
 function visualFor(e, beatKind) {
@@ -781,7 +814,7 @@ function baseVisualFor(e, beatKind) {
             { x: paired ? -26 : 0, jitter: false });
         }
         if (!parts.damage) return; // fully guarded: no flinch, slash, or shake
-        sfx.play('hit');
+        playHitSound(e);
         const heavy = parts.residual >= 15;
         floatNum(ctx.layer, anchor, parts.damage.text, parts.damage.cls, null,
           { x: paired ? 26 : 0, jitter: !paired });
