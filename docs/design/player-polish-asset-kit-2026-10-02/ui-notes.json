@@ -1,0 +1,24 @@
+{
+  "svgAssets": 129,
+  "icons": 79,
+  "components": 50,
+  "directory": "ui",
+  "rationale": "Precise geometry and quiet engraved surfaces complement the painted references. Text, values, legality, icon semantic palettes and input behavior stay in the actual UI.",
+  "canonicalMappings": {
+    "health": "HP",
+    "mana": "MP",
+    "stamina": "SP",
+    "actions": "Actions (engine energy)",
+    "blight": "crimsonBlight",
+    "poise": "Poise buildup",
+    "block": "Block",
+    "staggered": "staggered"
+  },
+  "limitations": [
+    "An asset kit, not a runtime implementation or exhaustive replacement of every authored status symbol.",
+    "No uncommon class-specific status symbol is assigned a speculative replacement; use existing canonical symbols until authored.",
+    "Some neutral decorative brass shades are concept polish additions; map through the authoritative palette at implementation.",
+    "Raster img elements cannot inherit currentColor or CSS custom properties inside a separate SVG document. Inline the SVG or use a mask for theme-aware icons.",
+    "Mobile tray artwork does not implement drag interaction. Navigation and disclosure stay accessible DOM controls."
+  ]
+}
