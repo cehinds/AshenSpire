@@ -38,6 +38,20 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL combat and map menus share action availability/,
       },
       {
+        name: 'combat drives its Use control from an action other than use in the shared plan',
+        file: 'src/ui/components/combatActionRow.js',
+        find: ".actions.find(r => r.id === 'use');",
+        replace: ".actions.find(r => r.id === 'inspect');",
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'applyRunPotion stops consulting the plan it is handed',
+        file: 'src/ui/models/RunPotionModel.js',
+        find: 'const action = plan.actions.find((row) => row.id === actionId);',
+        replace: 'const action = { id: actionId, enabled: true };',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
         name: 'LAN stops routing the explicit flaskIntent through the host',
         file: 'tools/lan.mjs',
         find: "case 'flaskIntent': g.flaskIntent(id, msg.intent); break;",
@@ -317,6 +331,24 @@ try {
       && !!verb && verb.id === (entry.category === 'charge' ? 'use' : 'drop')
       && got.actions.includes(verb);
   });
+  // applyRunPotion is the last gate: it must authorize against the plan it is
+  // handed. Drive it on a carried potion: drop under a plan that enables drop
+  // removes one, under a plan that refuses drop (or lacks the action) changes
+  // nothing.
+  const carried = { category: 'carried', flaskId: 'fixture-potion', count: 1 };
+  const runWith = () => ({ flasks: [{ flaskId: 'fixture-potion' }] });
+  const apply = (plan, actionId = 'drop') => {
+    const run = runWith();
+    const changed = model.applyRunPotion({ registries: {}, run, entry: carried, actionId, plan });
+    return { changed, left: run.flasks.length };
+  };
+  const allowed = apply(shared({ context: 'run', canUse: false, useReason: 'x', canDrop: true }));
+  const refused = apply(shared({ context: 'run', canUse: false, useReason: 'x', canDrop: false, dropReason: 'x' }));
+  const missing = apply({ actions: [] });
+  modelShares = modelShares
+    && allowed.changed === true && allowed.left === 0
+    && refused.changed === false && refused.left === 1
+    && missing.changed === false && missing.left === 1;
 } catch { modelShares = false; /* observed red */ }
 const mapShares = /import \{[^}]*\bmountRunPotions\b[^}]*\} from '\.\.\/components\/runPotions\.js'/.test(mapCode)
   && /\bmountRunPotions\(potionsHost, \{/.test(mapCode)
@@ -337,7 +369,8 @@ const mapShares = /import \{[^}]*\bmountRunPotions\b[^}]*\} from '\.\.\/componen
   && modelShares;
 check('combat and map menus share action availability',
   /mountFlaskActionMenu/.test(component)
-    && /const action = flaskActionPlan\(\{ context: 'combat', canUse, useReason: reason \}\)/.test(potions) && /openCombatPotions\(/.test(combat)
+    && (potions.match(/\bflaskActionPlan\(/g) || []).length === 1
+    && /const action = flaskActionPlan\(\{ context: 'combat', canUse, useReason: reason \}\)\.actions\.find\(r => r\.id === 'use'\);/.test(potions) && /openCombatPotions\(/.test(combat)
     && mapShares);
 // The run HUD's room-rail flask icons (switched off by config today, so this
 // never stands in for the map): each menu it mounts takes the `plan` shorthand
