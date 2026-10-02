@@ -23,19 +23,44 @@
 // the screens show their placeholders (SPEC §2.4) — the game never stops
 // because an index is missing.
 //
+// THE CSS ASSETS (step 3b): once the map is set, the ASSET_CSS rules (the
+// "AS Lore" faces and the backdrops) are filled from that same map and
+// injected, so they follow the tier fallback too.
+//
+// MUSIC AND MAP TILES (step 3c) are common ids too: src/ui/audio.js resolves
+// `music/manifest.json` and each track, and src/ui/components/mapDetail.js
+// each `map-detail/…` tile, through assetUrl(), so they come from the common
+// pack's objects once this map is set. When it is not (no art index loaded),
+// they pass through as paths, miss, and the synth score and the low-detail map
+// stay, as they always have for a missing file.
+//
 // WHAT THIS DOES NOT DO YET. Over http(s) only: file:// (the .js twins and the
-// font sidecar) is step 4. CSS assets, music and map tiles are steps 3b and
-// 3c. The loading line on the startup gate, the Retry notice and per-file
-// high → light fallback are step 5; Settings → Art quality Auto/Light/High is
-// step 8c. A single file (ASSET_MAP filled) and the source tree (nothing
+// font sidecar) is step 4. The loading line
+// on the startup gate, the Retry notice and per-file high → light fallback are
+// step 5. Settings → Art quality Auto/Light/High (step 8c, src/ui/artTier.js)
+// passes the tier to ask for; a switch in play refills the CSS from the new
+// map too. A single file (ASSET_MAP filled) and the source tree (nothing
 // stamped) never load anything here.
 
-import { ASSET_MAP, setBuiltInSource } from './assetmap.js';
+import { ASSET_MAP, setBuiltInSource, builtInSource } from './assetmap.js';
 import { sha256Hex } from './sha256.js';
 
 /* ASSET_PACKS_START */
 export const ASSET_PACKS = null;
 /* ASSET_PACKS_END */
+
+// THE CSS ASSETS (§3.7, step 3b). The web edition's stylesheets name no asset
+// file: tools/asset-css.mjs moved each @font-face into a rule here and turned
+// each backdrop url() into `var(--as-css-<id>, none)`, defined by a rule here.
+// Each rule's `{{id}}` slots are filled from the index the loader actually used
+// (light when high failed), and the rules go into the page as one <style>. A
+// failed load injects nothing: no backdrop, and the system faces the
+// font-family stacks name. The two SVG masks never come here; they stay inline
+// as data: URIs (a mask loads in CORS mode). Stamped by tools/bundle.mjs
+// --external-art, in memory; null in a single file and the source tree.
+/* ASSET_CSS_START */
+export const ASSET_CSS = null;
+/* ASSET_CSS_END */
 
 /** The file beside the page that says where packs/ and objects/ live. */
 export const ASSET_BASE_FILE = 'asset-base.json';
@@ -54,8 +79,14 @@ export const HIGH_SHARE = 0.5;
 /** The share asset-base.json may use; past it the loader assumes `./`. */
 export const BASE_SHARE = 0.25;
 
-let status = { state: 'idle', tier: null, requested: null, ids: 0, failed: [] };
+let status = { state: 'idle', tier: null, requested: null, ids: 0, css: 0, failed: [] };
 let pending = null;
+// The last common index this page verified, with the pin it matched. A tier
+// switch fetches common again; when that fetch fails or misses its deadline,
+// these entries are kept rather than dropped, so the map tiles, the fonts and
+// the score do not fall back to bare paths for the rest of the session
+// (review of #1454). Used only while the pin names the same common index.
+let lastCommon = null;
 
 /** What the loader did: idle, none (nothing pinned), inline, loading, loaded or failed. */
 export function builtInArtStatus() {
@@ -132,8 +163,9 @@ export async function loadIndex(pack, pin, { base = './', fetchImpl = globalThis
  * the latest, and no single stalled request can take the whole budget:
  *   · the common index is fetched IN PARALLEL with the art tiers, and only
  *     ever adds to a verified art map: a common index that fails, or has not
- *     arrived by the deadline, is left out (in 3a nothing reads common through
- *     assetUrl; fonts, music and tiles reach the page by their own routes);
+ *     arrived by the deadline, is left out (the fonts' ASSET_CSS rules are
+ *     then dropped, the score stays synthesized and the map stays low
+ *     detail);
  *   · each art tier but the last gets a sub-budget (HIGH_SHARE of the
  *     deadline), so a high index that hangs is aborted and light still has
  *     time to load;
@@ -144,19 +176,23 @@ export async function loadIndex(pack, pin, { base = './', fetchImpl = globalThis
 export async function loadBuiltInPacks({
   pin = ASSET_PACKS, inlineMap = ASSET_MAP, fetchImpl = globalThis.fetch,
   protocol = globalThis.location?.protocol, subtle, onSource = null, deadlineMs = BOOT_WAIT_MS,
+  css = ASSET_CSS, doc = globalThis.document,
+  tier: askedTier = null, keepOnFail = false, stillWanted = null,
 } = {}) {
   if (!packsPinned(pin, inlineMap)) {
-    status = { state: Object.keys(inlineMap || {}).length ? 'inline' : 'none', tier: null, requested: null, ids: 0, failed: [] };
+    status = { state: Object.keys(inlineMap || {}).length ? 'inline' : 'none', tier: null, requested: null, ids: 0, css: 0, failed: [] };
     return builtInArtStatus();
   }
-  const requested = ART_TIERS.includes(pin.tier) ? pin.tier : 'light';
+  // `tier`: Art quality's choice (step 8c, src/ui/artTier.js), else the default.
+  const requested = ART_TIERS.includes(askedTier) ? askedTier : ART_TIERS.includes(pin.tier) ? pin.tier : 'light';
+  const before = status;
   if (typeof fetchImpl !== 'function' || !isHttp(protocol)) {
     // file:// reads the .js twins, which is step 4; until then a double-clicked
     // web edition shows its placeholders.
-    status = { state: 'failed', tier: null, requested, ids: 0, failed: ['the page is not served over http(s)'] };
+    status = { state: 'failed', tier: null, requested, ids: 0, css: 0, failed: ['the page is not served over http(s)'] };
     return builtInArtStatus();
   }
-  status = { state: 'loading', tier: null, requested, ids: 0, failed: [] };
+  status = { state: 'loading', tier: null, requested, ids: 0, css: 0, failed: [] };
   const failed = [];
   const controllers = [];
   const abortable = () => {
@@ -200,9 +236,12 @@ export async function loadBuiltInPacks({
       failed.push(got === TIMED_OUT ? `${candidate}: the index did not load within ${ms} ms` : got.error.message);
     }
     if (!art) {
+      // A tier switch in play (keepOnFail) keeps the art already on screen, and
+      // records the tier it asked for, so the row can say that one failed.
+      if (keepOnFail && before.state === 'loaded') { status = { ...before, requested, failed }; return builtInArtStatus(); }
       // Placeholders: no art index, so no source. The common pack alone does
       // not make a source either.
-      status = { state: 'failed', tier: null, requested, ids: 0, failed };
+      status = { state: 'failed', tier: null, requested, ids: 0, css: 0, failed };
       setBuiltInSource(null);
       return builtInArtStatus();
     }
@@ -212,10 +251,24 @@ export async function loadBuiltInPacks({
       const waited = await Promise.race([commonLoad.then(() => true), budget(left(), commonCtl, false)]);
       if (!waited) failed.push(`common: the index did not load within ${deadlineMs} ms; the art loads without it`);
     }
+    const commonSha = pin.packs.common?.sha256;
+    if (common) lastCommon = { sha: commonSha, base, map: common };
+    else if (lastCommon && lastCommon.sha === commonSha && lastCommon.base === base) {
+      common = lastCommon.map;
+      failed.push('common: kept the entries verified by the earlier load');
+    }
     const map = new Map(common || []);
     for (const [id, url] of art) map.set(id, url);
+    // A tier switch the player has since replaced (stillWanted) publishes nothing.
+    if (typeof stillWanted === 'function' && !stillWanted()) { status = before; return { ...builtInArtStatus(), superseded: true }; }
     const ids = setBuiltInSource(map);
-    status = { state: 'loaded', tier, requested, ids, failed: [...failed] };
+    // The CSS assets come from the same map: the tier that loaded, plus common.
+    const filled = applyAssetCss(map, { css, doc });
+    if (filled.dropped.length) failed.push(`css: ${filled.dropped.length} rule(s) left on their fallbacks, the loaded indexes list no ${filled.dropped.slice(0, 3).join(', ')}`);
+    // `base` is where packs/ and objects/ live (asset-base.json's base): the
+    // offline install (src/ui/offlineInstall.js) registers the service worker
+    // and reads the indexes there.
+    status = { state: 'loaded', tier, requested, ids, css: filled.rules, failed: [...failed], base };
     if (typeof onSource === 'function') try { onSource(map); } catch { /* a listener must not fail the load */ }
     return builtInArtStatus();
   } finally {
@@ -261,6 +314,12 @@ export function whenBuiltInArtReady(fn, opts = {}) {
   startBuiltInArt(opts).then(go, go);
 }
 
+/** True when the built-in source lists `<folder>/manifest.json`: the shipped score resolves to an object. */
+export function shippedScoreResolves(folder) {
+  const source = builtInSource();
+  return !!(source && folder && source.has(`${String(folder).replace(/\/+$/, '')}/manifest.json`));
+}
+
 /**
  * musicHold({ pinned, configureMusic }) — when the music folder is applied at
  * boot. A build that pins packs draws its first screen only after the load has
@@ -268,27 +327,48 @@ export function whenBuiltInArtReady(fn, opts = {}) {
  * per screen a ?shot= boot walks through: the folder is held and applied once
  * the first screen is drawn. A single file and the source tree pin nothing and
  * apply it at once, before the first screen, exactly as before step 3a.
- *   apply(folder)     — the settings path: apply now, or hold
+ *   apply(folder, o)  — the settings path: apply now, or hold; `o` (e.g.
+ *                       { indexed }) is passed to configureMusic with it
+ *   sourceArrived()   — a built-in source landed later (a tier switch after a
+ *                       failed boot load): an indexed configure that ran
+ *                       without one runs again
  *   firstScreen(show) — draw the first screen, then release the hold (always,
  *                       even if `show` throws)
  */
-export function musicHold({ pinned = packsPinned(), configureMusic }) {
+export function musicHold({ pinned = packsPinned(), configureMusic, hasSource = shippedScoreResolves }) {
   let waiting = !!pinned;
   let held = false;
   let folder;
+  let opts = {};
+  // True when the last configure asked for the shipped score through the index
+  // while the built-in source did not list its manifest (the boot load failed,
+  // or the art loaded and the common index did not): its paths missed and the
+  // synth plays. sourceArrived() configures again once a source lists it.
+  let missed = false;
+  const run = () => {
+    missed = !!opts.indexed && !hasSource(folder);
+    configureMusic({ ...opts, folder });
+  };
   return {
-    apply(next) {
+    apply(next, extra = {}) {
       folder = next;
+      opts = extra;
       if (waiting) held = true;
-      else configureMusic({ folder });
+      else run();
     },
     firstScreen(show) {
       try {
         show();
       } finally {
         waiting = false;
-        if (held) { held = false; configureMusic({ folder }); }
+        if (held) { held = false; run(); }
       }
+    },
+    // A source arrived later (a tier switch after a failed boot load): the
+    // shipped score is read again through it. A player's own folder, or a
+    // configure that already had a source, is left alone.
+    sourceArrived() {
+      if (!waiting && missed && opts.indexed && hasSource(folder)) run();
     },
   };
 }
@@ -311,9 +391,60 @@ export function bootLine(app, { pinned = packsPinned(), doc = globalThis.documen
   return () => line.remove();
 }
 
+const SLOT = /\{\{([^{}]+)\}\}/g;
+
+/**
+ * fillAssetCss(css, map, { resolveUrl }) → { text, rules, dropped }: the
+ * ASSET_CSS rules with every `{{id}}` slot replaced by that id's object from
+ * `map`. A rule naming an id the map lacks is left out whole (its face or
+ * backdrop stays on the fallback); `dropped` lists those ids.
+ */
+export function fillAssetCss(css, map, { resolveUrl = (url) => url } = {}) {
+  const kept = [];
+  const dropped = [];
+  if (!css || !Array.isArray(css.rules) || !map || typeof map.get !== 'function') return { text: '', rules: 0, dropped };
+  for (const rule of css.rules) {
+    let missing = null;
+    const text = String(rule).replace(SLOT, (_, id) => {
+      const url = map.get(id);
+      if (typeof url !== 'string' || !url) { missing ??= id; return ''; }
+      // An object path has no quote or backslash; escaped anyway, so a url can
+      // never close the string it sits in.
+      return String(resolveUrl(url)).replace(/["\\\n]/g, (c) => encodeURIComponent(c));
+    });
+    if (missing) dropped.push(missing);
+    else kept.push(text);
+  }
+  return { text: kept.join('\n'), rules: kept.length, dropped };
+}
+
+/**
+ * applyAssetCss(map, { css, doc }) → what fillAssetCss returned, after putting
+ * the filled rules in the page as <style data-asset-css> (replacing an earlier
+ * one). Each object path is made absolute against the document, so a url read
+ * through a custom property cannot resolve against anything else. Nothing is
+ * injected when there is no template, no map or no document.
+ */
+export function applyAssetCss(map, { css = ASSET_CSS, doc = globalThis.document } = {}) {
+  const filled = fillAssetCss(css, map, {
+    resolveUrl: (url) => { try { return new URL(url, doc?.baseURI).href; } catch { return url; } },
+  });
+  if (!filled.rules || !doc || typeof doc.createElement !== 'function') return filled;
+  try {
+    const style = doc.createElement('style');
+    style.setAttribute('data-asset-css', '');
+    style.textContent = filled.text;
+    const old = doc.querySelector?.('style[data-asset-css]');
+    if (old) old.replaceWith(style);
+    else (doc.head || doc.documentElement).appendChild(style);
+  } catch { /* no usable document: tests */ }
+  return filled;
+}
+
 /** For tests: forget the load. */
 export function resetBuiltInArt() {
   pending = null;
-  status = { state: 'idle', tier: null, requested: null, ids: 0, failed: [] };
+  lastCommon = null;
+  status = { state: 'idle', tier: null, requested: null, ids: 0, css: 0, failed: [] };
   setBuiltInSource(null);
 }

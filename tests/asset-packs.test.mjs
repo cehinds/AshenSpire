@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { createHash, randomBytes } from 'node:crypto';
 import {
   loadBuiltInPacks, whenBuiltInArtReady, resetBuiltInArt, packsPinned, tierOrder, objectUrl, cleanBase,
-  builtInArtStatus, ASSET_PACKS, musicHold, bootLine,
+  builtInArtStatus, ASSET_PACKS, musicHold, bootLine, ASSET_CSS, fillAssetCss, applyAssetCss,
 } from '../src/ui/assetPacks.js';
 import { readFileSync } from 'node:fs';
 import { assetUrl, builtInSource, setBuiltInSource, setHighResSource } from '../src/ui/assetmap.js';
@@ -227,7 +227,9 @@ test('a load past its deadline settles as failed before the first screen, and th
   }, { ...opts(tree), fetchImpl: slow, deadlineMs: 30, onSource: () => { sourced += 1; } }));
   assert.equal(drawnWith.state, 'failed', 'the first screen draws only after the load has settled');
   assert.equal(drawnWith.url, 'assets/bg/bg_act1.webp', 'placeholders: no source');
-  assert.match(builtInArtStatus().failed[0], /did not load within 30 ms/);
+  // The budget is what was LEFT of the 30 ms once asset-base.json answered,
+  // so a slow millisecond there makes it 29: the number is not the point.
+  assert.match(builtInArtStatus().failed[0], /^light: the index did not load within (?:[12]?\d|30) ms$/);
   assert.ok(aborted, 'the fetches are aborted');
   release();
   await new Promise((r) => setTimeout(r, 30));
@@ -283,6 +285,26 @@ test('a common index that hangs or fails never throws away a verified art map', 
   resetBuiltInArt();
 });
 
+test('a later load (a tier switch) whose common fetch fails keeps the common entries the earlier load verified', async () => {
+  resetBuiltInArt();
+  const tree = packTree({ tier: 'high' });
+  const first = await loadBuiltInPacks(opts(tree));
+  assert.equal(first.state, 'loaded');
+  assert.equal(assetUrl('assets/fonts/x.woff2'), `./objects/aa/${A}.woff2`, 'common loaded at boot');
+  // The switch: same pin, light asked for, and common now 404s.
+  const broken = async (url) => (/packs\/common-/.test(url) ? { ok: false, status: 404 } : tree.fetchImpl(url));
+  const second = await loadBuiltInPacks(opts(tree, { fetchImpl: broken, tier: 'light' }));
+  assert.equal(second.state, 'loaded');
+  assert.match(second.failed.join(';'), /common: kept the entries verified by the earlier load/);
+  assert.equal(assetUrl('assets/fonts/x.woff2'), `./objects/aa/${A}.woff2`, 'common survives the switch');
+  // A different common pin is never served from the earlier entries.
+  const other = { ...tree.pin, packs: { ...tree.pin.packs, common: { ...tree.pin.packs.common, sha256: 'd'.repeat(64) } } };
+  const third = await loadBuiltInPacks(opts(tree, { pin: other, fetchImpl: broken }));
+  assert.equal(third.state, 'loaded');
+  assert.equal(assetUrl('assets/fonts/x.woff2'), 'assets/fonts/x.woff2', 'another pin: left out');
+  resetBuiltInArt();
+});
+
 test('common is fetched alongside the art tiers, not after them', async () => {
   resetBuiltInArt();
   const tree = packTree({ tier: 'high' });
@@ -329,12 +351,59 @@ test('the music folder: a single file applies it before the first screen, as on 
   assert.deepEqual(calls, ['music:music'], 'the hold releases even when the first screen throws');
   assert.equal(musicHold({ configureMusic }).apply('x') ?? null, null);
   assert.deepEqual(calls.slice(-1), ['music:x'], 'the default reads the pin: the source tree pins nothing');
+
+  const seen = [];
+  const passes = musicHold({ pinned: true, configureMusic: (o) => seen.push(o) });
+  passes.apply('music', { indexed: true });
+  passes.firstScreen(() => {});
+  passes.apply('music/', { indexed: false });
+  assert.deepEqual(seen, [{ indexed: true, folder: 'music' }, { indexed: false, folder: 'music/' }], 'the options travel with the folder, held or not');
+
+  // A failed boot load: the shipped score was configured with no source, so it
+  // is configured again once a later tier switch sets one; a player's folder,
+  // or a configure that already had a source, is not.
+  let source = false;
+  const again = [];
+  const late = musicHold({ pinned: true, configureMusic: (o) => again.push(o.folder), hasSource: () => source });
+  late.apply('music', { indexed: true });
+  late.firstScreen(() => {});
+  late.sourceArrived();
+  assert.deepEqual(again, ['music'], 'no source yet: nothing to re-apply');
+  source = true;
+  late.sourceArrived();
+  assert.deepEqual(again, ['music', 'music'], 'the source arrived: the shipped score is read through it');
+  late.sourceArrived();
+  assert.deepEqual(again, ['music', 'music'], 'once only');
+  source = false;
+  late.apply('mine', { indexed: false });
+  source = true;
+  late.sourceArrived();
+  assert.deepEqual(again, ['music', 'music', 'mine'], 'a typed folder is never re-applied');
+
+  // The default test is the manifest itself: art loaded but common did not, so
+  // a source exists and the score still missed; a switch that lists the
+  // manifest brings it back.
+  const real = [];
+  setBuiltInSource(new Map([['assets/bg/bg_act1.webp', `./objects/aa/${A}.webp`]]));
+  const art = musicHold({ pinned: true, configureMusic: (o) => real.push(o.folder) });
+  art.apply('music', { indexed: true });
+  art.firstScreen(() => {});
+  art.sourceArrived();
+  assert.deepEqual(real, ['music'], 'art only: the manifest still does not resolve');
+  setBuiltInSource(new Map([['assets/bg/bg_act1.webp', `./objects/aa/${A}.webp`], ['music/manifest.json', `./objects/bb/${B}.json`]]));
+  art.sourceArrived();
+  assert.deepEqual(real, ['music', 'music'], 'common arrived with the switch: the score is configured again');
+  art.sourceArrived();
+  assert.deepEqual(real, ['music', 'music'], 'and not again once it resolved');
+  setBuiltInSource(null);
 });
 
 test('main.js routes the boot music and the first screen through musicHold', () => {
   const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
   assert.match(main, /const bootMusic = musicHold\(\{ configureMusic:/);
-  assert.match(main, /bootMusic\.apply\(folder\)/);
+  assert.match(main, /bootMusic\.apply\(folder, \{ indexed \}\)/);
+  assert.match(main, /const indexed = !settings\.musicFolder && served;/, 'only the shipped score is indexed');
+  assert.match(main, /onTierArrived\(\(map\) => \{ builtInArtArrived\(map\); bootMusic\.sourceArrived\(\); \}\)/, 'a tier switch can bring the score back');
   assert.match(main, /whenBuiltInArtReady\(\(\) => bootMusic\.firstScreen\(\(\) => \{ dropBootLine\(\); showFirstScreen\(\); \}\)/);
   assert.doesNotMatch(main, /audio\.configureMusic\(\{ folder \}\)/, 'no second, unheld call');
 });
@@ -376,4 +445,103 @@ test('a pack build shows a static loading line while it waits; a single file sho
   assert.match(children[0].textContent, /Loading art/);
   drop();
   assert.equal(children.length, 0, 'removed before the first screen');
+});
+
+// ---- the CSS assets (step 3b) ----------------------------------------------
+
+const CSS = {
+  schema: 1,
+  rules: [
+    ':root{--as-css-bg-bg_act1-webp:url("{{assets/bg/bg_act1.webp}}")}',
+    "@font-face { font-family:'AS Lore X'; src:url(\"{{assets/fonts/x.woff2}}\") format('woff2'); }",
+  ],
+};
+
+/** A document just big enough for applyAssetCss: a head, styles, a base URL. */
+function fakeDoc(baseURI = 'https://example.com/AshenSpire/dev/0001/index.html') {
+  const head = [];
+  const make = () => {
+    const el = { attrs: {}, textContent: '', setAttribute(k, v) { el.attrs[k] = v; }, replaceWith(next) { head.splice(head.indexOf(el), 1, next); } };
+    return el;
+  };
+  return {
+    head: { appendChild: (el) => head.push(el) },
+    baseURI,
+    createElement: make,
+    querySelector: (sel) => (sel === 'style[data-asset-css]' ? head.find((el) => 'data-asset-css' in el.attrs) || null : null),
+    styles: head,
+  };
+}
+
+test('the source tree carries no ASSET_CSS; the bundler stamps it in memory', () => {
+  assert.equal(ASSET_CSS, null);
+  const src = readFileSync(new URL('../src/ui/assetPacks.js', import.meta.url), 'utf8');
+  assert.match(src, /\/\* ASSET_CSS_START \*\/\nexport const ASSET_CSS = null;\n\/\* ASSET_CSS_END \*\//, 'the bundler anchors on these markers');
+});
+
+test('fillAssetCss fills every slot from the map, and leaves out a rule whose id the map lacks', () => {
+  const map = new Map([['assets/bg/bg_act1.webp', './objects/aa/a.webp'], ['assets/fonts/x.woff2', './objects/bb/b.woff2']]);
+  const all = fillAssetCss(CSS, map);
+  assert.equal(all.rules, 2);
+  assert.deepEqual(all.dropped, []);
+  assert.match(all.text, /--as-css-bg-bg_act1-webp:url\("\.\/objects\/aa\/a\.webp"\)/);
+  assert.match(all.text, /src:url\("\.\/objects\/bb\/b\.woff2"\)/);
+  assert.doesNotMatch(all.text, /\{\{/);
+  const noFonts = fillAssetCss(CSS, new Map([['assets/bg/bg_act1.webp', './objects/aa/a.webp']]));
+  assert.equal(noFonts.rules, 1, 'the face stays on the system fallback');
+  assert.deepEqual(noFonts.dropped, ['assets/fonts/x.woff2']);
+  const quoted = fillAssetCss(CSS, map, { resolveUrl: () => 'x"y\\z' });
+  assert.doesNotMatch(quoted.text, /x"y/, 'a quote in a url cannot close the string');
+  assert.equal(fillAssetCss(null, map).rules, 0, 'a single file has no template');
+  assert.equal(fillAssetCss(CSS, null).rules, 0, 'no map, nothing filled');
+});
+
+test('applyAssetCss injects one <style>, with object urls made absolute against the page', () => {
+  const doc = fakeDoc();
+  const map = new Map([['assets/bg/bg_act1.webp', '../../objects/aa/a.webp'], ['assets/fonts/x.woff2', '../../objects/bb/b.woff2']]);
+  const first = applyAssetCss(map, { css: CSS, doc });
+  assert.equal(first.rules, 2);
+  assert.equal(doc.styles.length, 1);
+  assert.match(doc.styles[0].textContent, /url\("https:\/\/example\.com\/AshenSpire\/objects\/aa\/a\.webp"\)/);
+  applyAssetCss(new Map([['assets/fonts/x.woff2', './objects/cc/c.woff2']]), { css: CSS, doc });
+  assert.equal(doc.styles.length, 1, 'a second fill replaces the first');
+  assert.doesNotMatch(doc.styles[0].textContent, /--as-css/);
+  const empty = fakeDoc();
+  applyAssetCss(map, { css: null, doc: empty });
+  assert.equal(empty.styles.length, 0, 'no template, nothing injected');
+});
+
+test('the CSS assets follow the tier the loader used: light when high failed, nothing when every tier failed', async () => {
+  const css = {
+    schema: 1,
+    rules: [':root{--as-css-bg-bg_act1-webp:url("{{assets/bg/bg_act1.webp}}")}', "@font-face { src:url(\"{{assets/fonts/x.woff2}}\"); }"],
+  };
+  resetBuiltInArt();
+  let doc = fakeDoc('http://localhost/AshenSpire.html');
+  const high = await loadBuiltInPacks(opts(packTree({ tier: 'high' }), { css, doc }));
+  assert.equal(high.css, 2);
+  assert.match(doc.styles[0].textContent, new RegExp(`objects/cc/${C}\\.webp`), 'the high backdrop');
+  assert.match(doc.styles[0].textContent, new RegExp(`objects/aa/${A}\\.woff2`), 'the font from common');
+
+  resetBuiltInArt();
+  doc = fakeDoc('http://localhost/AshenSpire.html');
+  const fell = await loadBuiltInPacks(opts(packTree({ tier: 'high', drop: ['high'] }), { css, doc }));
+  assert.equal(fell.tier, 'light');
+  assert.match(doc.styles[0].textContent, new RegExp(`objects/aa/${A}\\.webp`), 'the light backdrop');
+  assert.doesNotMatch(doc.styles[0].textContent, new RegExp(C), 'never the high object whose index failed');
+
+  resetBuiltInArt();
+  doc = fakeDoc('http://localhost/AshenSpire.html');
+  const noCommon = await loadBuiltInPacks(opts(packTree({ tier: 'light', drop: ['common'] }), { css, doc }));
+  assert.equal(noCommon.css, 1, 'the backdrop only');
+  assert.ok(noCommon.failed.some((f) => /^css: 1 rule/.test(f)), 'the face left on its fallback is reported');
+  assert.doesNotMatch(doc.styles[0].textContent, /font-face/);
+
+  resetBuiltInArt();
+  doc = fakeDoc('http://localhost/AshenSpire.html');
+  const none = await loadBuiltInPacks(opts(packTree({ tier: 'high', drop: ['high', 'light'] }), { css, doc }));
+  assert.equal(none.state, 'failed');
+  assert.equal(none.css, 0);
+  assert.equal(doc.styles.length, 0, 'a failed load injects nothing: the CSS stays on its fallbacks');
+  resetBuiltInArt();
 });

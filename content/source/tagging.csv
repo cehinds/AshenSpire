@@ -2079,3 +2079,11 @@ sigil,,tideSigil,tideSigil
 sigil,,tideSigil,classification.sigil
 sigil,,hearthSigil,hearthSigil
 sigil,,hearthSigil,classification.sigil
+# Legendary sigils (SPEC §15.4): attuned in the Armoury rather than slotted;
+# each derives exactly one property tag, a leaf under the sigil branch.
+sigil,,vigilSigil,vigilSigil
+sigil,,vigilSigil,classification.sigil
+sigil,,pyreSigil,pyreSigil
+sigil,,pyreSigil,classification.sigil
+sigil,,gravelightSigil,gravelightSigil
+sigil,,gravelightSigil,classification.sigil

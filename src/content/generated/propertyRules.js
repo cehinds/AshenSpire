@@ -171,6 +171,24 @@ export const propertyRules = [
     "textTemplate": "Whenever you heal, gain {block} Block."
   },
   {
+    "tag": "vigilSigil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "At the start of each fight, if your HP is at or below {pct}%, gain {block} Block."
+  },
+  {
+    "tag": "pyreSigil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Whenever a card is exhausted, gain {block} Block."
+  },
+  {
+    "tag": "gravelightSigil",
+    "requires": "",
+    "excludes": "",
+    "textTemplate": "Whenever an enemy dies while your HP is at or below {pct}%, heal {heal} HP."
+  },
+  {
     "tag": "warhorn",
     "requires": "",
     "excludes": "",

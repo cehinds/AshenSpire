@@ -22,9 +22,18 @@
 import { setHighResSource, assetUrl, ASSET_MAP, builtInSource } from './assetmap.js';
 
 export const ART_QUALITY_KEY = 'artQuality';
-export const ART_BUILT_IN = 'Built-in';
+// The built-in tier (docs/EXTERNAL-ASSETS-PLAN.md §5, step 8c): Auto picks
+// light or high for this device (src/ui/artTier.js), Light and High force one.
+// They choose which pack the web edition loads; a single file carries its art
+// inside it and has no other tier to load.
+export const ART_AUTO = 'Auto';
+export const ART_LIGHT = 'Light';
+export const ART_HIGH = 'High';
 export const ART_LOCAL_HIGH = 'Local high-res';
-export const ART_QUALITY_CHOICES = Object.freeze([ART_BUILT_IN, ART_LOCAL_HIGH]);
+/** The one choice before step 8c; a stored value reads as Auto (LEGACY_ART_QUALITY). */
+export const ART_BUILT_IN = 'Built-in';
+export const LEGACY_ART_QUALITY = Object.freeze({ [ART_BUILT_IN]: ART_AUTO });
+export const ART_QUALITY_CHOICES = Object.freeze([ART_AUTO, ART_LIGHT, ART_HIGH, ART_LOCAL_HIGH]);
 /** Where a high-res folder served next to the game lives, relative to the page. */
 export const SERVED_HD_BASE = 'hd/';
 
@@ -279,7 +288,7 @@ function publish() {
 
 /**
  * applyArtQuality(settings) — called at boot and whenever settings change.
- * Built-in clears any source; Local high-res uses the picked folder, else a
+ * Any other choice clears the source; Local high-res uses the picked folder, else a
  * served `hd/` folder, else nothing (and says so).
  */
 export async function applyArtQuality(settings, opts = {}) {
@@ -344,7 +353,7 @@ export function pickHighResFolder(settings, doc = globalThis.document) {
     input.setAttribute('webkitdirectory', '');
     input.addEventListener('change', async () => {
       // Stamped BEFORE the manifest read (a few MB): a folder picked after
-      // this one, or a switch to Built-in meanwhile, must win over it.
+      // this one, or a switch away from Local high-res meanwhile, must win over it.
       const round = ++pickRound;
       const files = [...(input.files || [])];
       let manifest = null;
