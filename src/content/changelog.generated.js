@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The opening's first scenes are restaged",
     "detail": "Remembered warmth reframes its painting; The Burning's camera rises slowly toward the towers; Last night and The first step ease the camera back out. The words now sit centred in a caption band that is the same share of every screen, and a long line shrinks to fit the band instead of hiding its last words behind a scrollbar.",
-    "build": "0.7.1.746",
+    "build": "0.7.1.748",
     "pullRequest": 1445,
     "url": "https://github.com/cehinds/AshenSpire/pull/1445"
+  },
+  {
+    "id": "pr-1457",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Turning Developer tools off no longer changes how the game plays",
+    "detail": "On development and test builds, switching Settings → Advanced → Developer tools off and reloading used to drop the developer's chosen starting values for the hidden tuning settings, and switching it back on brought them back. Those values now follow the kind of build you are playing, so the switch only decides which settings sections you see. A downloaded build the game cannot place no longer takes those developer-only values even with the tools switched on; every setting it shows keeps its usual starting value.",
+    "build": "0.7.1.747",
+    "pullRequest": 1457,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1457"
   },
   {
     "id": "pr-1456",
