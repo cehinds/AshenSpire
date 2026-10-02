@@ -57,7 +57,9 @@ art pin from that page, finds the site's store through the page's
 `asset-base.json`, and streams page, light and common indexes, their `.js`
 twins, the font sidecar and every listed object into a store-only zip
 (`src/model/zipStream.js`, the same bytes as `tools/zip.mjs`), hash-checking
-each before it is written. It saves through the picker where there is one, and
+each before it is written. `src/ui/offlineZipFlow.js` holds the screen's
+logic (which box shows, the failure words, one save), so CI tests it without a
+browser; `tools/pages-site.mjs` records the zip's exact size as `zipBytes`. It saves through the picker where there is one, and
 a Blob download otherwise, like the single file.
 
 `src/engine/saveTransfer.js` transfers only the profile and three run slots.

@@ -773,8 +773,8 @@ deckEditor.done,,Done,Keep this deck.,Done
 deckEditor.cancel,,Cancel,Put the deck back exactly as it was when the editor opened.,Cancel
 # ---- Download & saves: the folder copy (zip) — docs/EXTERNAL-ASSETS-PLAN.md step 7 ----
 offline.zip.heading,,Download a folder copy (zip),,
-offline.zip.button,,Download game folder (zip),"Builds a zip of this branch's game file with its light art, fonts, map tiles and music, checking every file as it is added.",
-offline.zip.save,,Save zip file,Save the folder copy that was already prepared.,
+offline.zip.button,,Download game folder (zip),,
+offline.zip.save,,Save zip file,,
 offline.zip.step.save,,"On a computer, choose Download game folder (zip). It is about {mb} MB and saves as {filename}.",,
 offline.zip.step.saveUnsized,,"On a computer, choose Download game folder (zip). It saves as {filename}.",,
 offline.zip.step.unzip,,"Unzip it, and keep the folder together: the game file reads its art from the packs and objects folders beside it.",,
@@ -791,3 +791,6 @@ offline.zip.error.unreachable,,"A file of this build could not be fetched, so no
 offline.zip.error.page,,"The game page did not match the published build, so no zip was saved. Choose Check for updates and try again.",,
 offline.zip.error.pack,,"This build's art packs are not published in full, so no zip was saved. Try another branch, or the single-file download.",,
 offline.zip.error.hash,,"A file of this build did not match its published checksum, so no zip was saved. Try again later.",,
+offline.zip.error.disk,,"There is not enough space where you chose to save, so no zip was saved. Free some space or choose another place, and try again.",,
+offline.zip.error.picker,,"The browser did not allow saving there, so no zip was saved. Try again and choose another place.",,
+offline.zip.error.generic,,"The folder copy could not be saved. Try again, or use the single-file download above.",,

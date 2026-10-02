@@ -12,7 +12,8 @@ import { join } from 'node:path';
 import { readZip, writeZip } from '../tools/zip.mjs';
 import { indexText, objectPath, twinText } from '../tools/asset-pack.mjs';
 import { createZipWriter, crc32, zipNameOk } from '../src/model/zipStream.js';
-import { assembleZip, coalesceSink, releasedZip, twinString, zipPinOf, ZipDownloadError } from '../src/model/offlineDownload.js';
+import { assembleZip, coalesceSink, folderZipBytes, releasedZip, twinFileOf, twinString, zipFolderName, zipPinOf, ZipDownloadError } from '../src/model/offlineDownload.js';
+import { createZipFlow, zipFailureText, zipOffer } from '../src/ui/offlineZipFlow.js';
 import { offlinePlay } from '../src/content/offlinePlay.js';
 import { t } from '../src/ui/strings.js';
 
@@ -74,11 +75,11 @@ function packInfo(extra = {}) {
 }
 
 test('releasedZip offers a folder copy for a pack-shaped build only, named like the download', () => {
-  const plan = releasedZip(packInfo({ pageBytes: 9, pageSha256: 'b'.repeat(64), packBytes: { light: 100, common: 50, high: 900 } }), MANIFEST, 'dev');
+  const plan = releasedZip(packInfo({ pageBytes: 9, pageSha256: 'b'.repeat(64), zipBytes: 159 }), MANIFEST, 'dev');
   assert.deepEqual(plan, { version: '0.7.1.760', folder: 'AshenSpire-dev-0.7.1.760', page: 'AshenSpire-dev-0.7.1.760.html', filename: 'AshenSpire-dev-0.7.1.760.zip',
     bytes: 159, pageBytes: 9, pageSha256: 'b'.repeat(64),
     pageUrl: 'https://example.org/AshenSpire/dev/760/index.html', baseUrl: 'https://example.org/AshenSpire/dev/760/asset-base.json' });
-  assert.equal(releasedZip(packInfo({ pageBytes: 9 }), MANIFEST, 'dev').bytes, null, 'no packBytes: the size is unknown, the zip still offered');
+  assert.equal(releasedZip(packInfo({ pageBytes: 9 }), MANIFEST, 'dev').bytes, null, 'no zipBytes: the size is unknown, the zip still offered');
   assert.equal(releasedZip({ branch: 'dev', ordinal: 5, version: '0.7.1', bytes: 500 }, MANIFEST, 'dev'), null, 'a single-file build offers no zip');
   for (const bad of [{ pageBytes: 0 }, { pageBytes: 9, pageSha256: 'nope' }, { pageBytes: -1 }]) assert.throws(() => releasedZip(packInfo(bad), MANIFEST, 'dev'));
 });
@@ -97,7 +98,7 @@ test('the pin and twin readers take exactly the shapes the bundler writes', () =
 
 // A small pack-shaped site: two light objects (one shared by two ids), a
 // common font and track, a font sidecar, and a page whose pin names them.
-function fixtureSite({ highPinned = true, commonExtra = {} } = {}) {
+function fixtureSite({ highPinned = true, commonExtra = {}, sidecarJson = false } = {}) {
   const files = new Map();
   const ids = {
     light: { 'assets/bg/a.webp': Buffer.from('light-a'), 'assets/bg/b.webp': Buffer.from('light-a'), 'assets/ui/c.svg': Buffer.from('<svg/>') },
@@ -121,7 +122,7 @@ function fixtureSite({ highPinned = true, commonExtra = {} } = {}) {
   }
   const faces = JSON.stringify({ 'assets/fonts/x.woff2': Buffer.from('font-bytes').toString('base64') });
   files.set('packs/fonts-abcdefabcdef.js', Buffer.from(twinText('__ashenFonts', 'fonts-abcdefabcdef', faces)));
-  pin.fonts = { file: 'packs/fonts-abcdefabcdef.js', sha256: sha(faces), faces: 1 };
+  pin.fonts = { file: sidecarJson ? 'packs/fonts-abcdefabcdef.json' : 'packs/fonts-abcdefabcdef.js', sha256: sha(faces), faces: 1 };
   const html = Buffer.from(`<!doctype html><script>\nconst ASSET_PACKS = ${JSON.stringify(pin)};\n</script>`);
   const site = new Map([...files].map(([path, bytes]) => [`https://example.org/AshenSpire/${path}`, bytes]));
   site.set('https://example.org/AshenSpire/dev/760/index.html', html);
@@ -227,7 +228,7 @@ test('every folder-copy sentence the screen asks for is an authored uiStrings ro
   const tokens = { mb: '57.0', filename: 'AshenSpire-dev-0.7.1.760.zip', done: 1, total: 2, totalMb: '57.0', files: 9 };
   for (const id of [...offlinePlay.zip.instructions, 'offline.zip.step.saveUnsized', 'offline.zip.heading', 'offline.zip.button', 'offline.zip.save',
     'offline.zip.unavailable', 'offline.zip.choose', 'offline.zip.working', 'offline.zip.finishing', 'offline.zip.saved', 'offline.zip.sent',
-    'offline.zip.canceled', ...['unreachable', 'page', 'pack', 'hash'].map((code) => `offline.zip.error.${code}`)]) {
+    'offline.zip.canceled', ...['unreachable', 'page', 'pack', 'hash', 'disk', 'picker', 'generic'].map((code) => `offline.zip.error.${code}`)]) {
     const text = t(id, tokens);
     assert.ok(text && !/[{}]/.test(text), `${id} resolves to a sentence`);
   }
@@ -243,13 +244,13 @@ test('a stalled request times out, headers or body, and is tried again before th
     // Stalls once, then answers: the retry saves the zip.
     { let tries = 0;
       const fetchImpl = async (url, init) => (url === target && ++tries === 1 ? (stall === 'headers' ? hangHeaders(init.signal) : hangBody()) : fx.fetchImpl(url, init));
-      const { result } = await assemble({ ...fx, fetchImpl }, { timeoutMs: 50 });
+      const { result } = await assemble({ ...fx, fetchImpl }, { timeoutMs: 50, idleMs: 50 });
       assert.equal(tries, 2, `${stall}: the stalled request is tried again`);
       assert.equal(result.objects, 4); }
     // Stalls every time: refused as unreachable, after two attempts.
     { let tries = 0;
       const fetchImpl = async (url, init) => (url === target ? (++tries, stall === 'headers' ? hangHeaders(init.signal) : hangBody()) : fx.fetchImpl(url, init));
-      await refusedWith({ ...fx, fetchImpl }, 'unreachable', { timeoutMs: 50 });
+      await refusedWith({ ...fx, fetchImpl }, 'unreachable', { timeoutMs: 50, idleMs: 50 });
       assert.equal(tries, 2, `${stall}: two attempts, then the zip gives up`); }
   }
 });
@@ -261,4 +262,131 @@ test('two indexes that list one object at different sizes are refused, not dedup
   const agree = fixtureSite({ commonExtra: { 'assets/other/a.webp': [sha(shared), shared.length, 'image/webp'] } });
   const { result } = await assemble(agree);
   assert.equal(result.objects, 4, 'the same object at the same size is still stored once');
+});
+
+test('a slow body that keeps moving finishes: the body deadline is idle time, not total time', async () => {
+  const fx = fixtureSite();
+  const pageUrl = fx.plan.pageUrl;
+  const fetchImpl = async (url, init) => {
+    if (url !== pageUrl) return fx.fetchImpl(url, init);
+    const bytes = fx.html;
+    let at = 0;
+    return new Response(new ReadableStream({ async pull(controller) {
+      await new Promise((r) => setTimeout(r, 20));          // 20 ms a chunk, idle limit 60 ms, total far more
+      if (at >= bytes.length) { controller.close(); return; }
+      controller.enqueue(new Uint8Array(bytes.subarray(at, at + 8))); at += 8;
+    } }));
+  };
+  const started = Date.now();
+  const { result } = await assemble({ ...fx, fetchImpl }, { timeoutMs: 60, idleMs: 60 });
+  assert.ok(Date.now() - started > 120, 'the page took longer than one deadline in total');
+  assert.equal(result.objects, 4);
+});
+
+test('a definitive 4xx is not tried again; a 5xx or 429 is', async () => {
+  for (const [status, attempts] of [[404, 1], [403, 1], [500, 2], [429, 2]]) {
+    const fx = fixtureSite();
+    const target = `https://example.org/AshenSpire/${[...fx.files.keys()].find((p) => p.endsWith('.svg'))}`;
+    let tries = 0;
+    const fetchImpl = async (url, init) => (url === target ? (++tries, new Response('no', { status })) : fx.fetchImpl(url, init));
+    await refusedWith({ ...fx, fetchImpl }, 'unreachable');
+    assert.equal(tries, attempts, `${status}: ${attempts} attempt(s)`);
+  }
+});
+
+test('a font sidecar pinned as .json is archived as the .js twin the file:// loader reads (Codex, #1480)', async () => {
+  assert.deepEqual(twinFileOf('packs/fonts-abcdefabcdef.json'), { file: 'packs/fonts-abcdefabcdef.js', id: 'fonts-abcdefabcdef' });
+  const fx = fixtureSite({ sidecarJson: true });
+  const { zip } = await assemble(fx);
+  const names = readZip(zip).map((e) => e.name);
+  assert.ok(names.some((n) => n.endsWith('/packs/fonts-abcdefabcdef.js')), 'the .js twin is in the folder');
+  assert.ok(!names.some((n) => n.endsWith('/packs/fonts-abcdefabcdef.json')), 'the .json name the loader never asks for is not');
+  assert.ok(fx.asked.includes('https://example.org/AshenSpire/packs/fonts-abcdefabcdef.js'));
+});
+
+test('folderZipBytes is the exact size of the zip assembleZip writes', async () => {
+  for (const options of [{}, { highPinned: false }, { sidecarJson: true }]) {
+    const fx = fixtureSite(options);
+    const { zip } = await assemble(fx);
+    const read = (rel) => { const b = fx.site.get(`https://example.org/AshenSpire/${rel}`); if (!b) throw new Error(`no ${rel}`); return b; };
+    assert.equal(folderZipBytes({ html: fx.html, folder: zipFolderName('dev', '0.7.1.760'), read }), zip.length, JSON.stringify(options));
+  }
+});
+
+// ---- the screen's logic (src/ui/offlineZipFlow.js), without a DOM ----
+const DEV = { id: 'dev', manifestUrl: MANIFEST };
+
+test('which box shows: the zip for a pack feed, one line for a single file, nothing for a malformed pack feed', () => {
+  const pack = zipOffer(packInfo({ pageBytes: 9, zipBytes: 60_000_000 }), DEV);
+  assert.equal(pack.show, 'zip');
+  assert.equal(pack.steps.length, offlinePlay.zip.instructions.length);
+  assert.match(pack.steps[0], /about 57\.2 MB and saves as AshenSpire-dev-0\.7\.1\.760\.zip/);
+  assert.match(zipOffer(packInfo({ pageBytes: 9 }), DEV).steps[0], /^On a computer, choose Download game folder \(zip\)\. It saves as /, 'unsized: no size is claimed');
+  assert.deepEqual(zipOffer({ branch: 'dev', ordinal: 5, version: '0.7.1', bytes: 500 }, DEV), { plan: null, show: 'none', steps: [] });
+  assert.equal(zipOffer(packInfo({ pageBytes: 0 }), DEV).show, 'hidden');
+});
+
+test('every failure maps to a uiStrings sentence; raw text goes to the console only', () => {
+  const logged = [];
+  const log = (...args) => logged.push(args);
+  assert.equal(zipFailureText(new ZipDownloadError('hash', 'x'), log), t('offline.zip.error.hash'));
+  assert.equal(zipFailureText(new DOMException('x', 'AbortError'), log), t('offline.zip.canceled'));
+  assert.equal(zipFailureText(new DOMException('raw quota text', 'QuotaExceededError'), log), t('offline.zip.error.disk'));
+  assert.equal(zipFailureText(new DOMException('raw', 'NotAllowedError'), log), t('offline.zip.error.picker'));
+  const generic = zipFailureText(new TypeError('Failed to fetch: internal detail'), log);
+  assert.equal(generic, t('offline.zip.error.generic'));
+  assert.ok(!generic.includes('internal detail'));
+  assert.equal(logged.length, 3, 'the three unexplained errors are logged, the zip\'s own and a cancel are not');
+});
+
+function flowFixture({ assemble, picker = () => null, clock = { t: 0 } } = {}) {
+  const statuses = [], saved = [], progress = [];
+  let prepared = 0;
+  const flow = createZipFlow({ saveBlob: (blob, name) => saved.push([blob, name]), onStatus: (text) => statuses.push(text),
+    onProgress: (p) => progress.push(p), onPrepared: () => { prepared++; }, assemble, picker, now: () => clock.t, statusEveryMs: 2000, log: () => {} });
+  return { flow, statuses, saved, progress, clock, get prepared() { return prepared; } };
+}
+const fakeAssemble = (clock, { files = 5000, fail = null } = {}) => async (plan, { sink, onProgress }) => {
+  for (let i = 1; i <= files; i++) { clock.t += 1; onProgress(i, files, i * 10, files * 10); }
+  if (fail) throw fail;
+  await sink(new Uint8Array([1, 2, 3]));
+  return { bytes: 3, count: files, objects: files - 7 };
+};
+
+test('a Blob save: throttled live line, final state announced, Save zip file re-saves without rebuilding, a branch change forgets it', async () => {
+  const clock = { t: 0 };
+  let builds = 0;
+  const assemble = async (...args) => { builds++; return fakeAssemble(clock)(...args); };
+  const fx = flowFixture({ assemble, clock });
+  fx.flow.offer(packInfo({ pageBytes: 9, zipBytes: 100 }), DEV);
+  assert.equal(await fx.flow.run(), 'sent');
+  const working = fx.statuses.filter((s) => s.startsWith('Building the folder copy'));
+  assert.ok(working.length <= 4 && working.length >= 2, `5,000 files over 5 s announce at most every 2 s (${working.length} lines)`);
+  assert.equal(fx.progress.at(-1), 100, 'the bar takes every step');
+  assert.match(fx.statuses.at(-1), /^Folder copy sent to your browser/);
+  assert.equal(fx.saved.length, 1); assert.equal(fx.saved[0][1], 'AshenSpire-dev-0.7.1.760.zip'); assert.equal(fx.prepared, 1);
+  assert.equal(await fx.flow.run(), 'resaved');
+  assert.equal(builds, 1, 'Save zip file does not build again');
+  assert.equal(fx.saved.length, 2); assert.equal(fx.saved[1][0], fx.saved[0][0]);
+  fx.flow.offer(packInfo({ pageBytes: 9, ordinal: 761 }), DEV);
+  assert.equal(fx.flow.prepared, null, 'a new feed forgets the prepared zip');
+  assert.equal(await fx.flow.run(), 'sent'); assert.equal(builds, 2); assert.equal(fx.saved.at(-1)[1], 'AshenSpire-dev-0.7.1.761.zip');
+  fx.flow.reset();
+  assert.equal(await fx.flow.run(), 'none');
+});
+
+test('a picker save streams into the chosen file and closes it; a failure aborts the file and announces why', async () => {
+  const clock = { t: 0 };
+  const written = []; let closed = false, aborted = false;
+  const picker = () => async (options) => ({ createWritable: async () => ({ write: async (c) => { written.push(...c); }, close: async () => { closed = true; }, abort: async () => { aborted = true; } }), name: options.suggestedName });
+  const ok = flowFixture({ assemble: fakeAssemble(clock), picker, clock });
+  ok.flow.offer(packInfo({ pageBytes: 9 }), DEV);
+  assert.equal(await ok.flow.run(), 'saved');
+  assert.deepEqual(written, [1, 2, 3]); assert.ok(closed); assert.equal(ok.saved.length, 0);
+  assert.match(ok.statuses.at(-1), /^Folder copy saved: 5000 files/);
+  const bad = flowFixture({ assemble: fakeAssemble(clock, { fail: new ZipDownloadError('hash', 'x') }), picker, clock });
+  bad.flow.offer(packInfo({ pageBytes: 9 }), DEV);
+  assert.equal(await bad.flow.run(), 'failed');
+  assert.ok(aborted); assert.equal(bad.statuses.at(-1), t('offline.zip.error.hash'));
+  assert.equal(bad.flow.prepared, null);
 });

@@ -1200,7 +1200,8 @@ Where the build settles §5 B (2026-10-02):
   the same name: the build's page as `AshenSpire-<branch>-<version>.html` (the
   name a download has, so `buildChannel` reads the same channel from it),
   `asset-base.json` (`{"base":"./"}`), the **light and common** indexes with
-  their `.js` twins, the font sidecar, and every object those two indexes
+  their `.js` twins, the font sidecar's `.js` twin (the file a double-clicked
+  page reads, whatever suffix the pin names; Codex, #1480), and every object those two indexes
   list (about 5,500 entries, 58 MB for a dev build). **High is never packed**
   (`offlinePlay.zip.packs`): a build whose default is high shows the packed
   light art through the tier fallback. The score is packed with common, and a
@@ -1213,28 +1214,40 @@ Where the build settles §5 B (2026-10-02):
   single-file download's.
 - **Integrity** (§3's table): the page against `build.json`'s `pageBytes` and
   `pageSha256`; each index against the pin; each twin and the font sidecar by
-  the string they hand the loader, against the same pin; every object against
-  its name and its listed size before it is written. A failure is refused by
-  code (`ZipDownloadError`: `unreachable`, `page`, `pack`, `hash`), the screen
-  says so through uiStrings, and nothing is called saved. Each request is
-  tried twice; objects are fetched six at a time and written in order.
+  the string they hand the loader, against the same pin, and by the id they
+  call it with (their file's basename); every object against its name and its
+  listed size before it is written, and two indexes listing one object at two
+  sizes are refused. A failure is refused by code (`ZipDownloadError`:
+  `unreachable`, `page`, `pack`, `hash`); the screen maps it, a cancel, a full
+  disk and a refused save location to uiStrings rows, anything else to a
+  generic row (its raw text to the console only), and nothing is called saved.
+  Each request waits `headerTimeoutMs` (60 s) for its headers and then fails
+  when no body chunk arrives for `idleTimeoutMs` (30 s), an idle deadline so a
+  slow but moving connection finishes the 10 MB page; it is tried twice, except
+  after a definitive 4xx. Objects are fetched six at a time and written in order.
+- **The screen** (`src/ui/offlineZipFlow.js`, no DOM, so CI drives it): which
+  box shows for a feed, the failure words, and one save from click to final
+  status. The polite status line is rewritten at most every 2 s while the zip
+  is built (the progress bar takes every step), and the final state is always
+  announced. A branch change forgets a prepared Blob.
 - **The writer** is `src/model/zipStream.js`: store-only, the same bytes as
   `tools/zip.mjs` `writeZip` for the same entries (the test holds them equal),
   entries in byte order. It streams to `showSaveFilePicker` where it exists
   (writes coalesced to about 1 MiB), else gathers a Blob and saves it, with a
   *Save zip file* retry, as the single-file download does.
-- **`pages-site`** now records `pageSha256` and `packBytes` (each pinned pack's
-  object bytes, from the page's pin) in a pack build's `build.json`; `--check`'s
-  DOWNLOAD DRIFT row also compares `pageSha256`. A `build.json` without
-  `pageSha256` (a site from before this step) still zips, checked by size and
-  the pin; without `packBytes` the size is not shown.
+- **`pages-site`** now records `pageSha256` and `zipBytes` (the zip's exact
+  size, from `folderZipBytes`, the same layout `assembleZip` writes, read from
+  the store just published) in a pack build's `build.json`; `--check`'s
+  DOWNLOAD DRIFT row compares both, and `--selftest` plants each. A
+  `build.json` without `pageSha256` (a site from before this step) still zips,
+  checked by size and the pin; without `zipBytes` the size is not shown.
 - **The words** are `offline.zip.*` rows in `content/source/uiStrings.csv`;
   `src/content/offlinePlay.js` `zip.instructions` names the four shown, in order.
 - **`offline-play-qa --zip`** publishes `build/web` into a local Pages shape
   (`publishPack`, a `download/` light single file, a `build.json` as
   `pages-site` writes it), boots the hosted page, has the game build the zip by
   both save paths (a Blob download, and a stubbed save-picker handle whose
-  writes must equal it byte for byte), unzips it, checks every entry against
+  writes must equal it byte for byte), checks its size is `zipBytes`, unzips it, checks every entry against
   the pin and the indexes, stops the server, and plays the folder under
   `file://` with the network off: light art from its own packs, the 15 lore
   faces, a title backdrop from its objects, then the shared import → map →

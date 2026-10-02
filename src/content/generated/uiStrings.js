@@ -4976,14 +4976,14 @@ export const uiStrings = [
     "id": "offline.zip.button",
     "extends": "",
     "short": "Download game folder (zip)",
-    "full": "Builds a zip of this branch's game file with its light art, fonts, map tiles and music, checking every file as it is added.",
+    "full": "",
     "tip": ""
   },
   {
     "id": "offline.zip.save",
     "extends": "",
     "short": "Save zip file",
-    "full": "Save the folder copy that was already prepared.",
+    "full": "",
     "tip": ""
   },
   {
@@ -5095,6 +5095,27 @@ export const uiStrings = [
     "id": "offline.zip.error.hash",
     "extends": "",
     "short": "A file of this build did not match its published checksum, so no zip was saved. Try again later.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.disk",
+    "extends": "",
+    "short": "There is not enough space where you chose to save, so no zip was saved. Free some space or choose another place, and try again.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.picker",
+    "extends": "",
+    "short": "The browser did not allow saving there, so no zip was saved. Try again and choose another place.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "offline.zip.error.generic",
+    "extends": "",
+    "short": "The folder copy could not be saved. Try again, or use the single-file download above.",
     "full": "",
     "tip": ""
   }

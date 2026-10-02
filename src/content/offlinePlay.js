@@ -53,6 +53,14 @@ export const offlinePlay = {
   zip: {
     packs: ['light', 'common'],
     concurrency: 6,
+    // Each request waits this long for its headers, then fails if no body
+    // chunk arrives for idleTimeoutMs (an idle deadline, so a slow but moving
+    // connection still finishes the ~10 MB page); it is tried twice.
+    headerTimeoutMs: 60000,
+    idleTimeoutMs: 30000,
+    // The polite status line is rewritten at most this often while the zip is
+    // built (about 5,500 files), and always for the final state.
+    statusEveryMs: 2000,
     instructions: ['offline.zip.step.save', 'offline.zip.step.unzip', 'offline.zip.step.open', 'offline.zip.step.limits'],
   },
   saveFormat: 'ashenspire-save-transfer',

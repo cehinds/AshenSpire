@@ -24,6 +24,7 @@ import { launchBrowser, resolveBrowser, serveDir } from './browser.mjs';
 import { packPinOf, publishPack } from './pages-store.mjs';
 import { objectPath } from './asset-pack.mjs';
 import { extractZip } from './zip.mjs';
+import { folderZipBytes, zipFolderName } from '../src/model/offlineDownload.js';
 import { createRegistries } from '../src/model/registries.js';
 import { contentBundle } from '../src/content/index.js';
 import { createRunState } from '../src/model/state.js';
@@ -181,7 +182,7 @@ try {
       writeFileSync(join(zipSite, rel, 'download', 'AshenSpire.html'), html);
       const sha = (b) => createHash('sha256').update(b).digest('hex');
       const info = { branch: 'main', ordinal: build.ordinal, version: build.release, bytes: null, pageBytes: page.length, pageSha256: sha(page),
-        packBytes: Object.fromEntries(Object.entries(zipPin.packs).map(([pack, p]) => [pack, p.bytes])), shape: 'pack', tier: zipPin.tier,
+        zipBytes: folderZipBytes({ html: page, folder: zipFolderName('main', `${build.release}.${build.ordinal}`), read: (r) => readFileSync(join(zipSite, r)) }), shape: 'pack', tier: zipPin.tier,
         download: { path: 'download/AshenSpire.html', bytes: html.length, sha256: sha(html) } };
       for (const dir of [rel, 'main/latest']) { mkdirSync(join(zipSite, dir), { recursive: true }); writeFileSync(join(zipSite, dir, 'build.json'), JSON.stringify(info, null, 2)); }
       await boot(`${origin}${rel}/`);
@@ -199,6 +200,7 @@ try {
       check(/^Folder copy sent to your browser/.test(said) && await evaluate('document.querySelector("#offline-zip").textContent') === 'Save zip file', 'the screen says the zip was sent and offers Save zip file to retry');
       await capture('zip-saved');
       const zipPath = resolve(downloads, completed.at(-1));
+      check(readFileSync(zipPath).length === info.zipBytes, `the zip is exactly the size build.json's zipBytes announced (${info.zipBytes} bytes)`);
       check(/^AshenSpire-main-\d+\.\d+\.\d+\.\d+\.zip$/.test(completed.at(-1)), `the zip keeps the download's name (${completed.at(-1)})`);
       // Unzip and prove every entry.
       const unzipped = zipUnzipped = mkdtempSync(join(tmpdir(), 'offline-zip-unzipped-'));

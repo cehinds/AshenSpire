@@ -57,7 +57,7 @@ export async function receiveDownload(response, { bytes = null, sha256 = null, w
 // THE FOLDER COPY: A ZIP THE GAME ASSEMBLES ITSELF (docs/EXTERNAL-ASSETS-PLAN.md
 // §5 B, step 7). Beside the light single file above, a pack-shaped build can
 // also be saved as its own folder: the build's HTML, its light and common
-// pack indexes (with their .js twins and the font sidecar, which a
+// pack indexes (with their .js twins and the font sidecar's .js twin, which a
 // double-clicked page reads, step 4) and every object those indexes list,
 // zipped as
 //
@@ -75,9 +75,9 @@ export async function receiveDownload(response, { bytes = null, sha256 = null, w
 // INTEGRITY (§3 "Integrity"): the page is checked against build.json's size
 // and, when the site records it, its sha256; each index against the pin the
 // page itself carries; each twin and the font sidecar by the string they hand
-// the loader, against that same pin; and every object against its own name
-// and size as it streams. Anything off is refused by name, and nothing is
-// called saved.
+// the loader, against that same pin, and by the id they call it with; and
+// every object against its own name and size as it streams. Anything off is
+// refused by name, and nothing is called saved.
 
 /** A zip refusal: `code` names the uiStrings row (offline.zip.error.<code>) the screen shows. */
 export class ZipDownloadError extends Error {
@@ -87,24 +87,27 @@ const zipError = (code, message) => new ZipDownloadError(code, message);
 const SHA = /^[0-9a-f]{64}$/;
 const PIN_FILE = /^packs\/[a-z]+-[0-9a-f]{12}\.(?:json|js)$/;
 const PACK_PIN = /const ASSET_PACKS = (\{.*?\});\n/;
+const ASSET_BASE_TEXT = '{"base":"./"}\n';
 
 /**
  * The folder copy a branch's latest build offers, or null when that build is
  * one self-contained file (an older build, or a site from before step 6b):
  * its Download is already the whole game, and no zip is offered for it.
+ * `zipBytes` (tools/pages-site.mjs, folderZipBytes below) is the archive's
+ * exact size; a build.json without it leaves the size unknown.
  */
 export function releasedZip(data, manifestUrl = offlinePlay.manifestUrl, branch = offlinePlay.releaseBranch) {
   const { version } = releasedDownload(data, manifestUrl, branch);
   if (data.shape !== 'pack') return null;
   if (!size(data.pageBytes) || (data.pageSha256 != null && !SHA.test(String(data.pageSha256)))) throw new Error('Download information is not ready yet. Try again later.');
-  const name = `AshenSpire-${branch}-${version}`;
-  // `packBytes` (tools/pages-site.mjs, from the page's pin) sizes the zip before
-  // anything is fetched; a build.json without it leaves the size unknown.
-  const packs = offlinePlay.zip.packs.map((pack) => data.packBytes?.[pack]);
-  const bytes = packs.every((value) => Number.isSafeInteger(value) && value >= 0) ? data.pageBytes + packs.reduce((n, value) => n + value, 0) : null;
-  return { version, folder: name, page: `${name}.html`, filename: `${name}.zip`, bytes, pageBytes: data.pageBytes, pageSha256: data.pageSha256 ?? null,
+  const name = zipFolderName(branch, version);
+  return { version, folder: name, page: `${name}.html`, filename: `${name}.zip`, bytes: size(data.zipBytes) ? data.zipBytes : null,
+    pageBytes: data.pageBytes, pageSha256: data.pageSha256 ?? null,
     pageUrl: new URL(`../${data.ordinal}/index.html`, manifestUrl).href, baseUrl: new URL(`../${data.ordinal}/asset-base.json`, manifestUrl).href };
 }
+
+/** The folder (and file) name of a build's zip: `AshenSpire-<branch>-<release>.<ordinal>`. */
+export function zipFolderName(branch, version) { return `AshenSpire-${branch}-${version}`; }
 
 /** The ASSET_PACKS pin a pack-shaped HTML carries (as tools/pages-store.mjs packPinOf reads it), or null. */
 export function zipPinOf(htmlText) {
@@ -131,8 +134,16 @@ export function twinString(text, fn, name = null) {
   } catch { return null; }
 }
 
-/** The id a twin at `file` must call its hook with: its basename (src/ui/assetPacks.js twinOf). */
-const twinId = (file) => String(file).split('/').pop().replace(/\.(?:json|js)$/, '');
+/**
+ * The file a double-clicked page reads for a pinned pack file, and the id it
+ * must call its hook with: the `.js` twin of that name, whatever suffix the pin
+ * gives (src/ui/assetPacks.js twinOf). So a font sidecar pinned as `.json` is
+ * archived as the `.js` the loader asks for (Codex, #1480).
+ */
+export function twinFileOf(file) {
+  const m = /^((?:[A-Za-z0-9_-]+\/)*)([A-Za-z0-9_-]+)\.(?:json|js)$/.exec(String(file || ''));
+  return m ? { file: `${m[1]}${m[2]}.js`, id: m[2] } : null;
+}
 
 /** objects/<xx>/<sha256>.<ext>: the name tools/asset-pack.mjs objectPath gives an id's bytes. */
 function zipObjectPath(sha, id) {
@@ -141,6 +152,63 @@ function zipObjectPath(sha, id) {
   return `objects/${sha.slice(0, 2)}/${sha}${ext}`;
 }
 const byteOrder = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+
+/**
+ * The folder's layout from a pin and its parsed indexes: the pack files to
+ * carry (each index, its twin, the sidecar's twin) and every object, deduped
+ * by path. Throws `pack` for a pin that does not pin a pack it must carry, an
+ * unsafe name, or two indexes listing one object at two sizes (Copilot, #1480).
+ */
+function zipLayout(pin, packs, indexOf) {
+  const packFiles = [];
+  const objects = new Map();
+  for (const pack of packs) {
+    const want = pin.packs?.[pack];
+    if (!want || !PIN_FILE.test(String(want.index)) || !/\.json$/.test(want.index) || !SHA.test(String(want.sha256))) throw zipError('pack', `The build does not pin its ${pack} art.`);
+    const twin = twinFileOf(want.index);
+    packFiles.push({ kind: 'index', pack, file: want.index, sha256: want.sha256 }, { kind: 'twin', pack, file: twin.file, id: twin.id, sha256: want.sha256 });
+    const entries = indexOf(pack, want);
+    if (!entries) continue;
+    for (const [id, row] of Object.entries(entries)) {
+      if (!Array.isArray(row) || !SHA.test(String(row[0])) || !Number.isSafeInteger(row[1]) || row[1] < 0) throw zipError('pack', `${want.index} lists ${id} without a sha256 and size.`);
+      const path = zipObjectPath(row[0], id);
+      const seen = objects.get(path);
+      if (seen && seen.bytes !== row[1]) throw zipError('pack', `${want.index} lists ${path} at ${row[1]} bytes; another index lists it at ${seen.bytes}.`);
+      if (!seen) objects.set(path, { sha: row[0], bytes: row[1] });
+    }
+  }
+  if (pin.fonts?.file) {
+    const twin = twinFileOf(pin.fonts.file);
+    if (!twin || !PIN_FILE.test(String(pin.fonts.file)) || !SHA.test(String(pin.fonts.sha256))) throw zipError('pack', 'The build does not pin its font sidecar.');
+    packFiles.push({ kind: 'sidecar', file: twin.file, id: twin.id, sha256: pin.fonts.sha256 });
+  }
+  return { packFiles, objects };
+}
+
+/** The exact size of a store-only zip of `entries` ([name, bytes]): headers, names, data and the end record. */
+export function zipArchiveBytes(entries) {
+  const encoder = new TextEncoder();
+  return entries.reduce((n, [name, bytes]) => n + 30 + 46 + 2 * encoder.encode(name).length + bytes, 0) + 22;
+}
+
+/**
+ * folderZipBytes({ html, folder, read, packs }) → the exact size of the zip
+ * assembleZip writes for this page, from files the caller can read
+ * (`read(rel)` → bytes, site-relative). tools/pages-site.mjs records it as
+ * build.json's `zipBytes`, so the screen's size is the file's.
+ */
+export function folderZipBytes({ html, folder, read, packs = offlinePlay.zip.packs }) {
+  const text = typeof html === 'string' ? html : new TextDecoder().decode(html);
+  const pin = zipPinOf(text);
+  if (!pin) return null;
+  const decoder = new TextDecoder();
+  const { packFiles, objects } = zipLayout(pin, packs, (pack, want) => JSON.parse(decoder.decode(read(want.index))));
+  const page = new TextEncoder().encode(text).length;
+  const entries = [[`${folder}/${folder}.html`, page], [`${folder}/asset-base.json`, ASSET_BASE_TEXT.length],
+    ...packFiles.map((f) => [`${folder}/${f.file}`, read(f.file).length]),
+    ...[...objects].map(([path, o]) => [`${folder}/${path}`, o.bytes])];
+  return zipArchiveBytes(entries);
+}
 
 /**
  * coalesceSink(write, limit) → { sink, flush }: gathers the zip's many small
@@ -160,15 +228,59 @@ export function coalesceSink(write, limit = 1 << 20) {
   return { sink: async (chunk) => { parts.push(chunk); held += chunk.length; if (held >= limit) await flush(); }, flush };
 }
 
+/** A definitive answer: a 4xx other than 408 (timeout) and 429 (rate limit) is not tried again (review of #1480). */
+const definitive = (status) => status >= 400 && status < 500 && status !== 408 && status !== 429;
+
 /**
- * assembleZip(plan, { sink, fetchImpl, packs, concurrency, onProgress, signal })
+ * readBody(response, { idleMs, signal }) → the body's bytes, failing when no
+ * chunk arrives for `idleMs` (an IDLE deadline, reset on every chunk, so a
+ * slow but moving connection finishes a large page; review of #1480).
+ */
+async function readBody(response, { idleMs, signal, what }) {
+  const idle = () => new DOMException(`${what} stopped arriving`, 'TimeoutError');
+  if (!response.body?.getReader) {
+    // A response with no stream: one idle window for the whole body.
+    let timer;
+    const stalled = new Promise((_, reject) => { timer = setTimeout(() => reject(idle()), idleMs); });
+    try { return new Uint8Array(await Promise.race([response.arrayBuffer(), stalled])); } finally { clearTimeout(timer); }
+  }
+  const reader = response.body.getReader();
+  const chunks = [];
+  let total = 0;
+  const onAbort = () => reader.cancel(signal.reason).catch(() => {});
+  signal?.addEventListener('abort', onAbort, { once: true });
+  try {
+    while (true) {
+      signal?.throwIfAborted();
+      let timer;
+      const stalled = new Promise((_, reject) => { timer = setTimeout(() => reject(idle()), idleMs); });
+      let step;
+      try { step = await Promise.race([reader.read(), stalled]); } finally { clearTimeout(timer); }
+      if (step.done) break;
+      chunks.push(step.value); total += step.value.length;
+    }
+  } catch (error) {
+    reader.cancel(error).catch(() => {});
+    throw signal?.aborted ? signal.reason : error;
+  } finally { signal?.removeEventListener('abort', onAbort); }
+  const out = new Uint8Array(total);
+  let at = 0;
+  for (const c of chunks) { out.set(c, at); at += c.length; }
+  return out;
+}
+
+/**
+ * assembleZip(plan, { sink, fetchImpl, packs, concurrency, timeoutMs, idleMs, onProgress, signal })
  * streams the folder copy `plan` (releasedZip's answer) into `sink(chunk)`,
  * in tools/zip.mjs writeZip's entry order and bytes. `onProgress(files, total,
  * bytes, totalBytes)` counts entries written. Resolves { bytes, count,
- * objects } once the archive's last byte is in the sink.
+ * objects } once the archive's last byte is in the sink. Each request waits
+ * `timeoutMs` for its headers and `idleMs` between body chunks, and is tried
+ * twice unless the answer was a definitive 4xx.
  */
 export async function assembleZip(plan, { sink, fetchImpl = globalThis.fetch, packs = offlinePlay.zip.packs,
-  concurrency = offlinePlay.zip.concurrency, timeoutMs = offlinePlay.requestTimeoutMs, onProgress = () => {}, signal, subtle } = {}) {
+  concurrency = offlinePlay.zip.concurrency, timeoutMs = offlinePlay.zip.headerTimeoutMs, idleMs = offlinePlay.zip.idleTimeoutMs,
+  onProgress = () => {}, signal, subtle } = {}) {
   const inner = new AbortController();
   const stop = () => inner.abort(signal?.reason);
   if (signal) { if (signal.aborted) stop(); else signal.addEventListener('abort', stop, { once: true }); }
@@ -177,26 +289,25 @@ export async function assembleZip(plan, { sink, fetchImpl = globalThis.fetch, pa
     let last = null;
     for (let attempt = 0; attempt < 2; attempt++) {
       inner.signal.throwIfAborted();
-      // Each attempt has its own deadline, over the headers AND the body: a
-      // request that stalls fails and is tried again instead of hanging the zip
-      // (Copilot and Codex, #1480). A cancel still ends everything at once.
+      // The headers have their own deadline; the body an idle one (readBody).
+      // A cancel still ends everything at once.
       const deadline = new AbortController();
       const timer = setTimeout(() => deadline.abort(new DOMException(`${what} timed out`, 'TimeoutError')), timeoutMs);
       const stopAttempt = () => deadline.abort(inner.signal.reason);
       inner.signal.addEventListener('abort', stopAttempt, { once: true });
       try {
-        const response = await fetchImpl(url, { signal: deadline.signal });
-        if (!response?.ok) throw zipError('unreachable', `${what} could not be fetched (${response ? response.status : 'no answer'}).`);
-        const body = response.arrayBuffer();
-        // A fetch implementation that ignores the signal mid-body still loses the race.
-        const timedOut = new Promise((_, reject) => {
-          if (deadline.signal.aborted) reject(deadline.signal.reason);
-          deadline.signal.addEventListener('abort', () => reject(deadline.signal.reason), { once: true });
-        });
-        timedOut.catch(() => {});
-        return new Uint8Array(await Promise.race([body, timedOut]));
+        const response = await Promise.race([fetchImpl(url, { signal: deadline.signal }),
+          new Promise((_, reject) => { if (deadline.signal.aborted) reject(deadline.signal.reason); deadline.signal.addEventListener('abort', () => reject(deadline.signal.reason), { once: true }); })]);
+        clearTimeout(timer);
+        if (!response?.ok) {
+          const failure = zipError('unreachable', `${what} could not be fetched (${response ? response.status : 'no answer'}).`);
+          if (response && definitive(response.status)) { failure.final = true; throw failure; }
+          throw failure;
+        }
+        return await readBody(response, { idleMs, signal: deadline.signal, what });
       } catch (error) {
-        if (inner.signal.aborted) throw error;
+        if (inner.signal.aborted) throw inner.signal.reason ?? error;
+        if (error?.final) throw error;
         last = error instanceof ZipDownloadError ? error : zipError('unreachable', `${what} could not be fetched (${error?.message || error}).`);
       } finally {
         clearTimeout(timer);
@@ -221,38 +332,28 @@ export async function assembleZip(plan, { sink, fetchImpl = globalThis.fetch, pa
     }
     if (typeof base !== 'string' || !/^(?:\.\.?\/)*(?:[A-Za-z0-9_-]+\/)*$/.test(base)) throw zipError('pack', 'The build does not say where its art is.');
     const root = new URL(base || './', plan.pageUrl);
-    // 3. Each pack's index, checked against the pin, and its twin by the string it hands the loader.
-    const files = new Map();              // zip-relative name → bytes (already verified)
-    const objects = new Map();            // objects/… → { sha, bytes, url }
+    // 3. The pack files, each checked against the pin, and the objects they list.
+    const files = new Map();              // folder-relative name → bytes (already verified)
     const textSha = async (text) => sha256Hex(new TextEncoder().encode(text), subtle);
+    const indexes = new Map();
     for (const pack of packs) {
-      const want = pin.packs[pack];
-      if (!want || !PIN_FILE.test(String(want.index)) || !SHA.test(String(want.sha256))) throw zipError('pack', `The build does not pin its ${pack} art.`);
+      const want = pin.packs?.[pack];
+      if (!want || !PIN_FILE.test(String(want.index))) continue;   // zipLayout refuses it by name
       const bytes = await get(new URL(want.index, root).href, want.index);
       if (await sha256Hex(bytes, subtle) !== want.sha256) throw zipError('hash', `${want.index} does not match the build's pin.`);
-      const twinName = want.index.replace(/\.json$/, '.js');
-      const twin = await get(new URL(twinName, root).href, twinName);
-      const carried = twinString(decoder.decode(twin), 'window.__ashenPack', twinId(want.index));
-      if (carried === null || await textSha(carried) !== want.sha256) throw zipError('hash', `${twinName} does not match the build's pin.`);
-      files.set(want.index, bytes); files.set(twinName, twin);
-      for (const [id, row] of Object.entries(JSON.parse(decoder.decode(bytes)) || {})) {
-        if (!Array.isArray(row) || !SHA.test(String(row[0])) || !Number.isSafeInteger(row[1]) || row[1] < 0) throw zipError('pack', `${want.index} lists ${id} without a sha256 and size.`);
-        const path = zipObjectPath(row[0], id);
-        const seen = objects.get(path);
-        // One object, two sizes: the indexes disagree about it, and no file can satisfy both (Copilot, #1480).
-        if (seen && seen.bytes !== row[1]) throw zipError('pack', `${want.index} lists ${path} at ${row[1]} bytes; another index lists it at ${seen.bytes}.`);
-        if (!seen) objects.set(path, { sha: row[0], bytes: row[1], url: new URL(path, root).href });
-      }
+      indexes.set(pack, JSON.parse(decoder.decode(bytes)) || {});
+      files.set(want.index, bytes);
     }
-    if (pin.fonts?.file) {
-      if (!PIN_FILE.test(String(pin.fonts.file)) || !SHA.test(String(pin.fonts.sha256))) throw zipError('pack', 'The build does not pin its font sidecar.');
-      const sidecar = await get(new URL(pin.fonts.file, root).href, pin.fonts.file);
-      const carried = twinString(decoder.decode(sidecar), '__ashenFonts', twinId(pin.fonts.file));
-      if (carried === null || await textSha(carried) !== pin.fonts.sha256) throw zipError('hash', `${pin.fonts.file} does not match the build's pin.`);
-      files.set(pin.fonts.file, sidecar);
+    const { packFiles, objects } = zipLayout(pin, packs, (pack) => indexes.get(pack));
+    for (const f of packFiles) {
+      if (f.kind === 'index') continue;
+      const bytes = await get(new URL(f.file, root).href, f.file);
+      const carried = twinString(decoder.decode(bytes), f.kind === 'sidecar' ? '__ashenFonts' : 'window.__ashenPack', f.id);
+      if (carried === null || await textSha(carried) !== f.sha256) throw zipError('hash', `${f.file} does not match the build's pin.`);
+      files.set(f.file, bytes);
     }
     files.set(plan.page, html);
-    files.set('asset-base.json', new TextEncoder().encode('{"base":"./"}\n'));
+    files.set('asset-base.json', new TextEncoder().encode(ASSET_BASE_TEXT));
     // 4. Write in writeZip's order: every name byte-sorted under the folder.
     const order = [...files.keys(), ...objects.keys()].sort(byteOrder);
     const totalBytes = [...files.values()].reduce((n, b) => n + b.length, 0) + [...objects.values()].reduce((n, o) => n + o.bytes, 0);
@@ -260,7 +361,7 @@ export async function assembleZip(plan, { sink, fetchImpl = globalThis.fetch, pa
     const pending = new Array(order.length);
     const fetchObject = async (path) => {
       const want = objects.get(path);
-      const bytes = await get(want.url, path);
+      const bytes = await get(new URL(path, root).href, path);
       if (bytes.length !== want.bytes || await sha256Hex(bytes, subtle) !== want.sha) throw zipError('hash', `${path} does not match its name.`);
       return bytes;
     };
