@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1473",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the balance report now measures Mana and each act's difficulty",
+    "detail": "Nothing you play changes. The run simulator can now compare whole climbs with and without Mana limits, and report how often each act's boss falls in each region. Both results are written into the balance notes for the owner to tune from later.",
+    "build": "0.7.1.760",
+    "pullRequest": 1473,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1473"
+  },
+  {
     "id": "pr-1448",
     "date": "2026-10-02",
     "group": "2026-10-02",
