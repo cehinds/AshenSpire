@@ -30,12 +30,14 @@ for (const [growth, expectedSkill, expectedCharacter] of [[1.025, 100, 105], [1.
   });
 }
 
-test('new snapshots use linear costs while legacy XP edits preserve their exponential curve', () => {
+test('new snapshots use the authored curve while legacy XP edits preserve their exponential curve', () => {
   const current = advancedConfigSnapshot({});
   const old = { schemaVersion: 1, overrides: { [xpKey]: 100, 'gameConfig.balance.level.xp.growth': 1.2 } };
   const currentBundle = configuredContentBundle(contentBundle, current);
   assert.equal(current.xpCurveVersion, 1);
-  assert.equal(currentBundle.balance.level.xp.linear, true);
+  // The authored character curve is exponential ×1.75 (owner, 2026-10-02).
+  assert.equal(currentBundle.balance.level.xp.linear, false);
+  assert.equal(currentBundle.balance.level.xp.growth, 1.75);
   const edited = updatedXpSnapshot(old, { [xpKey]: 200 });
   assert.equal(Object.hasOwn(edited, 'xpCurveVersion'), false);
   const legacy = configuredContentBundle(contentBundle, edited);
