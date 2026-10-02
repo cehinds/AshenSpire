@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Fight sounds land at the right moment",
     "detail": "A boss fight's first draw and turn sting now play when its name card lifts, not hidden behind it. In LAN co-op your turn stings once per round however many players are in the fight, and joining or reloading a fight after someone has already acted no longer replays that action's sounds.",
-    "build": "0.7.1.785",
+    "build": "0.7.1.786",
     "pullRequest": 1485,
     "url": "https://github.com/cehinds/AshenSpire/pull/1485"
+  },
+  {
+    "id": "pr-1484",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the folder copy refuses a font file it could not fetch",
+    "detail": "Nothing you play changes. The zip download and the site's publishing step now refuse a build whose font file is named in a way the site never publishes, instead of failing partway through the download.",
+    "build": "0.7.1.785",
+    "pullRequest": 1484,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1484"
   },
   {
     "id": "pr-1479",
