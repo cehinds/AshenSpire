@@ -128,7 +128,7 @@ test('§15.2: the XP past the cap is discarded, one short of the next step at mo
     levelUp: { ...contentBundle.balance.levelUp, maxLevels: 3 } } });
   const bank = { level: emptyLevel() };
   assert.equal(awardLevelXp(early, bank, 345).discarded, 0);
-  assert.equal(bank.level.xp, 15);
+  assert.equal(bank.level.xp, 65);
 });
 
 test('§15.2: the preview lists the XP to reach each of levels 2–20, from the live curve', () => {
@@ -140,8 +140,8 @@ test('§15.2: the preview lists the XP to reach each of levels 2–20, from the 
     total += row.step;
     assert.equal(row.total, total, `the running total to level ${row.level}`);
   }
-  // The shipped linear curve adds base × 1.3 each step.
-  assert.deepEqual(pace.curve.slice(0, 8).map((row) => row.step), [100, 230, 360, 490, 620, 750, 880, 1010]);
+  // The shipped curve (owner, 2026-10-02): base 100, ×1.75 a step, to the nearest 10.
+  assert.deepEqual(pace.curve.slice(0, 8).map((row) => row.step), [100, 180, 310, 540, 940, 1640, 2870, 5030]);
   // A curve setting moves it.
   const steeper = levelPacePreview({ 'gameConfig.balance.level.xp.base': 50 });
   assert.equal(steeper.curve[0].step, 50);
