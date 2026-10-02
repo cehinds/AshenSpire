@@ -29,7 +29,8 @@
  * Cinders lead because they are the certain, no-decision row; his named three
  * follow in his order (flask IS the potion seat in this game).
  */
-export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'skillDraft', 'card', 'levelChoice', 'levelCard', 'flask', 'armament', 'relic']);
+// `sigil` (SPEC §15.4) is a dropped legendary sigil, after the relic.
+export const REWARD_KIND_ORDER = Object.freeze(['cinders', 'smithingStone', 'classDraft', 'skillDraft', 'card', 'levelChoice', 'levelCard', 'flask', 'armament', 'relic', 'sigil']);
 
 // ---- the card reward schedule (SPEC §15.1) ----------------------------------
 
@@ -211,6 +212,12 @@ const KINDS = {
   relic: {
     present: (r) => !!r.relicId,
     row: (r) => ({ relicId: r.relicId }),
+    blocked: () => null,
+  },
+  // A dropped legendary sigil (SPEC §15.4): a take, carried unattuned.
+  sigil: {
+    present: (r) => typeof r.sigilId === 'string' && !!r.sigilId,
+    row: (r) => ({ sigilId: r.sigilId }),
     blocked: () => null,
   },
 };

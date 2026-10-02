@@ -171,7 +171,8 @@ test('with shipped defaults the pre-§14 shelves are byte-identical to buildShop
   // given seed, because the 5b offerings' chance rolls come before them on
   // `shopOffers`: SPEC §14.2 orders the roll by the written offerings, and
   // only today's shelves are promised unmoved (review, #1377).
-  assert.equal(STREAM_NAMES[STREAM_NAMES.length - 1], 'shopOffers', 'shopOffers is still the last stream');
+  // Only §15.4's `sigils` stream was appended after it, and a market draws nothing there.
+  assert.deepEqual(STREAM_NAMES.slice(STREAM_NAMES.indexOf('shopOffers')), ['shopOffers', 'sigils'], 'no stream was inserted before shopOffers');
   for (let seed = 1; seed <= 30; seed++) {
     const run = createRunState({ seed, classId: 'reaver', registries: REG });
     run.seenEvents = [];
