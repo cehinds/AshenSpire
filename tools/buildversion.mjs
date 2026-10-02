@@ -180,6 +180,11 @@ export const BUILD_IDENTITY_FILES = Object.freeze([
   'tools/dirorder.mjs',
   'tools/mobileart-policy.mjs',
   'tools/head-meta.mjs',
+  // Where the bundler reads the light pack and the fonts from: the verified
+  // fetched cache or (until step 13) the tree (docs/EXTERNAL-ASSETS-PLAN.md
+  // step 12). It decides which bytes a build carries, so a change to it is a
+  // new build.
+  'tools/art-source.mjs',
   // The art release this tree pins and the manifest every pack is checked
   // against (docs/EXTERNAL-ASSETS-PLAN.md §2 *Build identity*, step 11). Not
   // executable, but they decide which media a build is made from once it reads
