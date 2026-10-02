@@ -64,9 +64,14 @@ export function mountArtLoadNotice(root, { model, onRetry, announceDelayMs = 80,
     else { button.removeAttribute('aria-disabled'); button.removeAttribute('aria-busy'); }
   }
   const text = el.querySelector('.art-load-notice-text');
+  // Every write to the message takes a ticket; a delayed write lands only if
+  // no newer one came since (a Retry pressed inside the delay must not have
+  // its "Loading art…" overwritten by the older failure; Codex on #1471).
+  const ticket = (el.ashenWriteTicket || 0) + 1;
+  el.ashenWriteTicket = ticket;
   if (text && unannounced) {
     // Written after the node is in the page, so the change is announced.
-    if (fresh) schedule(() => { if (text.isConnected) text.textContent = message; }, announceDelayMs);
+    if (fresh) schedule(() => { if (text.isConnected && el.ashenWriteTicket === ticket) text.textContent = message; }, announceDelayMs);
     else text.textContent = message;
   } else if (text && text.textContent !== message) text.textContent = message;
   announced = model.variant;

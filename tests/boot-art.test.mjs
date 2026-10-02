@@ -435,3 +435,39 @@ test('a Settings slot rebuilt mid-retry draws Retry busy, and a second press is 
   const src = readFileSync(new URL('../src/ui/screens/settings.js', import.meta.url), 'utf8');
   assert.match(src, /if \(retry\) \{ if \(!retryRunning\(\) && retry\.getAttribute\('aria-disabled'\) !== 'true'\) retryBuiltInArt/);
 });
+
+test('a Retry pressed inside the announcement delay is not overwritten by the older failure (Codex on #1471)', async () => {
+  const { mountArtLoadNotice, resetArtLoadNotice } = await import('../src/ui/components/artLoadNotice.js');
+  resetArtLoadNotice();
+  // The smallest DOM the notice touches: one root, one notice, its message and its button.
+  const button = { a: {}, setAttribute(k, v) { this.a[k] = String(v); }, removeAttribute(k) { delete this.a[k]; }, getAttribute(k) { return this.a[k] ?? null; }, addEventListener() {} };
+  const root = {
+    notice: null,
+    insertAdjacentHTML(where, html) {
+      assert.equal(where, 'afterbegin');
+      const text = { isConnected: true, textContent: /role="status" aria-live="polite">([^<]*)<\/p>/.exec(html)[1] };
+      this.notice = { dataset: {}, querySelector: (sel) => (sel === '.art-load-notice-text' ? text : sel === '[data-art-notice-retry]' ? button : null), text };
+    },
+    querySelector(sel) { return sel === ':scope > .art-load-notice' ? this.notice : null; },
+  };
+  const later = [];
+  const schedule = (fn) => later.push(fn);
+  // The title draws the failed notice: its words are written after the delay.
+  mountArtLoadNotice(root, { model: artLoadNoticeModel({ state: 'failed' }), schedule });
+  assert.equal(root.notice.text.textContent, '', 'empty until the delayed write, so it is announced');
+  assert.equal(later.length, 1);
+  // Retry pressed inside the delay: the notice says it is loading.
+  mountArtLoadNotice(root, { model: artLoadNoticeModel({ state: 'retrying' }), schedule });
+  assert.equal(root.notice.text.textContent, 'Loading art…');
+  assert.equal(button.a['aria-disabled'], 'true');
+  // The old delayed write fires now: it must not bring the failure back.
+  later.shift()();
+  assert.equal(root.notice.text.textContent, 'Loading art…', 'the newer write wins');
+  // Without a newer write, the delayed one still lands.
+  resetArtLoadNotice();
+  root.notice = null;
+  mountArtLoadNotice(root, { model: artLoadNoticeModel({ state: 'failed' }), schedule });
+  later.shift()();
+  assert.equal(root.notice.text.textContent, tFull('art.failed.notice'));
+  resetArtLoadNotice();
+});
