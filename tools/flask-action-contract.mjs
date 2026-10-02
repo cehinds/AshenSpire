@@ -8,6 +8,7 @@
 // disk and re-runs this whole tool from that copy.
 // (Vira's doors audit 2026-08-14 listed this tool NO-KNOWN-BAD.)
 import { readFileSync } from 'node:fs';
+import { isDeepStrictEqual } from 'node:util';
 
 if (process.argv.includes('--selftest')) {
   const { doorSelftest } = await import('./doorplant.mjs');
@@ -77,6 +78,27 @@ if (process.argv.includes('--selftest')) {
         find: 'const planFor = (entry) => runPotionPlan(entry, { drinkOutsideCombat });',
         replace: 'const planFor = (entry) => runPotionPlan(entry, { drinkOutsideCombat, extra: {} });',
         expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'the map Potions model returns only the shared plan\'s actions array, not the plan',
+        file: 'src/ui/models/RunPotionModel.js',
+        find: "  return flaskActionPlan({ context: 'run', canUse: false, useReason: t('potions.run.combatOnly'), canDrop: true });",
+        replace: "  return flaskActionPlan({ context: 'run', canUse: false, useReason: t('potions.run.combatOnly'), canDrop: true }).actions;",
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'the map Potions model hands a charge flask the shared plan\'s actions array, not the plan',
+        file: 'src/ui/models/RunPotionModel.js',
+        find: "      dropReason: t('potions.run.keep'),\n    });",
+        replace: "      dropReason: t('potions.run.keep'),\n    }).actions;",
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'one run-HUD flask menu binds the shared plan\'s actions array, not the plan',
+        file: 'src/ui/components/runHud.js',
+        find: "          canDrop: true,\n        });",
+        replace: "          canDrop: true,\n        }).actions;",
+        expectRed: /FAIL every run-HUD flask menu is fed by the shared action plan/,
       },
       {
         name: 'one run-HUD flask menu opens without the shared action plan',
@@ -180,11 +202,6 @@ function menuMounts(src) {
   }
   return out;
 }
-// The body of `export function name(…) { … }`.
-function fnBody(src, name) {
-  const m = src.match(new RegExp(`export function ${name}\\([^)]*\\)\\s*\\{`));
-  return m ? balanced(src, m.index + m[0].length - 1) : null;
-}
 
 check('one pure flaskActionPlan owns action availability', typeof actions?.flaskActionPlan === 'function');
 if (actions?.flaskActionPlan) {
@@ -205,7 +222,7 @@ if (actions?.flaskActionPlan) {
 
 // MAP HALF, on the live path: map.js mounts the Potions control; every flask
 // menu that control opens is handed `planFor(entry)`; planFor is
-// runPotionPlan; and every plan runPotionPlan returns is a flaskActionPlan.
+// runPotionPlan; and runPotionPlan, driven for real, returns the shared plan.
 // planFor is matched as the WHOLE statement, through its closing `);`, so a
 // transform of the helper's result (`runPotionPlan(...).actions`) goes red.
 // BOUNDARY: the options argument must be a flat `{ ... }` with no nested
@@ -214,15 +231,45 @@ if (actions?.flaskActionPlan) {
 const mapCode = code(map);
 const runPotionsCode = code(runPotions);
 const potionMounts = menuMounts(runPotionsCode);
-const potionPlanBody = fnBody(code(runPotionModel), 'runPotionPlan');
-const potionReturns = potionPlanBody ? [...potionPlanBody.matchAll(/\breturn\b\s*([^;]*)/g)].map((m) => m[1]) : [];
+// BEHAVIOURAL, not a source match (three review rounds of `….actions`-style
+// bypasses ended the regex approach): import the real model and drive
+// runPotionPlan on fixture entries, a carried potion and a charge flask (with
+// charges and empty), with "Use flasks outside combat" on and off. Each result
+// must deep-equal what the shared flaskActionPlan returns for the inputs the
+// model documents, and its `.actions` must be an array of the shared action ids
+// in the shared order. Any transform of the helper's result goes red here.
+let modelShares = false;
+try {
+  const model = await import('../src/ui/models/RunPotionModel.js');
+  const { t } = await import('../src/ui/strings.js');
+  const shared = actions.flaskActionPlan;
+  const ids = (plan) => plan.actions.map((row) => row.id);
+  const sharedIds = ids(shared({ context: 'run' }));
+  const cases = [];
+  for (const drinkOutsideCombat of [false, true]) {
+    cases.push([{ category: 'carried', flaskId: 'fixture-potion', count: 1 }, { drinkOutsideCombat },
+      { context: 'run', canUse: false, useReason: t('potions.run.combatOnly'), canDrop: true }]);
+    for (const count of [2, 0]) {
+      cases.push([{ category: 'charge', kind: 'hp', count }, { drinkOutsideCombat },
+        { context: 'run', canUse: drinkOutsideCombat && count > 0,
+          useReason: count <= 0 ? t('potions.run.empty') : t('potions.run.setting'),
+          canDrop: false, dropReason: t('potions.run.keep') }]);
+    }
+  }
+  modelShares = cases.every(([entry, opts, inputs]) => {
+    const got = model.runPotionPlan(entry, opts);
+    return !!got && Array.isArray(got.actions)
+      && JSON.stringify(ids(got)) === JSON.stringify(sharedIds)
+      && isDeepStrictEqual(got, shared(inputs));
+  });
+} catch { modelShares = false; /* observed red */ }
 const mapShares = /import \{[^}]*\bmountRunPotions\b[^}]*\} from '\.\.\/components\/runPotions\.js'/.test(mapCode)
   && /\bmountRunPotions\(potionsHost, \{/.test(mapCode)
   && /import \{[^}]*\brunPotionPlan\b[^}]*\} from '\.\.\/models\/RunPotionModel\.js'/.test(runPotionsCode)
   && /const planFor = \(entry\) => runPotionPlan\(entry(?:, \{[^{}]*\})?\);/.test(runPotionsCode)
   && potionMounts.length > 0 && potionMounts.every((mount) => mount.plan === 'planFor(entry)')
   && /import \{ flaskActionPlan \} from '\.\.\/\.\.\/model\/flaskActions\.js'/.test(runPotionModel)
-  && potionReturns.length > 0 && potionReturns.every((ret) => /^flaskActionPlan\(\{/.test(ret));
+  && modelShares;
 check('combat and map menus share action availability',
   /mountFlaskActionMenu/.test(component)
     && /const action = flaskActionPlan\(\{ context: 'combat', canUse, useReason: reason \}\)/.test(potions) && /openCombatPotions\(/.test(combat)
@@ -231,6 +278,14 @@ check('combat and map menus share action availability',
 // never stands in for the map): each menu it mounts takes the `plan` shorthand
 // bound by `const plan = flaskActionPlan({` in that same activate block.
 const runHudCode = code(runHud);
+// The WHOLE initializer: `flaskActionPlan({ … })` and then the statement's `;`,
+// so `flaskActionPlan({ … }).actions` (or any other tail) goes red. The run
+// HUD's activate path needs a DOM, so this half stays a source check.
+function wholeInit(block) {
+  const m = block.match(/\bconst plan = flaskActionPlan\(/);
+  const call = m ? balanced(block, m.index + m[0].length - 1) : null;
+  return !!call && /^\s*;/.test(block.slice(m.index + m[0].length - 1 + call.length));
+}
 const hudMounts = menuMounts(runHudCode);
 check('every run-HUD flask menu is fed by the shared action plan',
   /import \{ flaskActionPlan \} from '\.\.\/\.\.\/model\/flaskActions\.js'/.test(runHud)
@@ -239,7 +294,8 @@ check('every run-HUD flask menu is fed by the shared action plan',
       const block = runHudCode.slice(runHudCode.lastIndexOf('activate: (node) => {', mount.at), mount.at);
       return /activate: \(node\) => \{/.test(block)
         && (block.match(/\bconst plan = flaskActionPlan\(\{/g) || []).length === 1
-        && (block.match(/\bplan\s*=[^=]/g) || []).length === 1;
+        && (block.match(/\bplan\s*=[^=]/g) || []).length === 1
+        && wholeInit(block);
     }));
 check('menu supports focus navigation, cancel, and back without dispatch',
   /focusFirst|\.focus\(/.test(component) && /Escape|cancel/i.test(component)
