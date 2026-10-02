@@ -281,6 +281,15 @@ several minutes) as a third; on a pull request into `dev` only the fast half
 (`core suite`) runs, and all three run on every push to `test` and `release`
 (see *Which checks gate a pull request* above).
 
+Every browser tool launches Chromium through `tools/browser.mjs` (`CHROME`
+picks the binary). The wait for Chrome's DevTools endpoint is never shorter
+than a launch floor, `LAUNCH_FLOOR_MS` (30000 ms), whatever `timeoutMs` the
+tool passes, because a cold Chrome start on a GitHub runner can take longer
+than the 12000 ms most tools ask for (D35). Set `ASHEN_BROWSER_LAUNCH_MS` to
+change the floor in ms (`0` turns it off). A browser that exits or fails to
+start still fails at once; only a slow one is waited for.
+`node --test tests/browser-launch-floor.test.mjs` covers the floor.
+
 ```
 # what raises the red failure banner, and what must not
 node --test tests/debug-banner.test.mjs
