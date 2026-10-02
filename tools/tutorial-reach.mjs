@@ -697,9 +697,10 @@ async function main() {
     // Turn). A settle loop that watched only the target never re-placed, and
     // the bubble sat on a card — the keep-clear rule (D45) undone by a resize.
     // This makes that move deterministic: on the Enemy intent step, the
-    // first re-place after the resize is followed, one frame later, by the
-    // hand sliding a card under where the bubble now stands. The target does
-    // not move; only the keep-clear set does. At rest, no card may be covered.
+    // first re-place after the resize, once the target has held its box for
+    // a few frames, is followed by the hand sliding a card under where the
+    // bubble now stands. The target does not move; only the keep-clear set
+    // does. At rest, no card may be covered.
     console.log('\n  resize, then the hand re-fans on its own (target still): bubble keeps off every card');
     await boardWithTutorial({ w: 1920, h: 1080 });
     await clickSel('.tut-next', 'tutorial Next from Energy');

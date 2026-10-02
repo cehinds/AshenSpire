@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1490",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The tutorial bubble moves off your cards when the hand rearranges itself",
+    "detail": "After a window resize, your hand can spread itself out again a moment after the tutorial has found a spot for its speech bubble. If that put a card under the bubble, the bubble stayed there and you couldn't click that card. The bubble now moves whenever your cards move, not only when the thing it points at moves.",
+    "build": "0.7.1.789",
+    "pullRequest": 1490,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1490"
+  },
+  {
     "id": "pr-1468",
     "date": "2026-10-02",
     "group": "2026-10-02",
