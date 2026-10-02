@@ -670,7 +670,7 @@ export const balance = {
   //
   // THE CHARACTER LEVEL IS EARNED (plan phase 6, proposal §10): a win pays
   // defeated-enemy combat power × 25 × 0.2, kills pay 10 × 0.2 × enemy level,
-  // and each step costs 100 XP.
+  // and the first step costs 100 XP, each later one ×1.75 (owner, 2026-10-02).
   // Settings → Progression → Experience previews the same configured curve
   // and awards the run uses. The existing per-award level cap remains separate.
   // Cinders buy no level any more: the ladder that sat here (firstCost /
