@@ -65,7 +65,7 @@ import { fileURLToPath } from 'node:url';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRng } from '../src/engine/rng.js';
-import { createCombat, dispatch, previewCard, previewIntent } from '../src/engine/combat.js';
+import { createCombat, dispatch, previewCard, previewIntent, cardChoicePlan } from '../src/engine/combat.js';
 import { emitEvent } from '../src/engine/triggers.js';
 import { createRunCombat, runCombatEnd } from '../src/engine/runCombat.js';
 import { affordableCards, refusalsFor } from './simbot.mjs';
@@ -598,8 +598,8 @@ function botFight(run, rng, encounterId, stats, pickRandom, policy) {
     try {
       if (card && chargedAtDecision) {
         decisionTrace = traceCardDispatch(combat, selectedDef, card.instanceId,
-          () => dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id }));
-      } else if (card) dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id });
+          () => dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id }));
+      } else if (card) dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id, choice: cardChoicePlan(combat, card.instanceId)?.options[0]?.id });
       else dispatch(combat, { type: 'endTurn' });
     } catch (e) {
       // Refused: set it aside for the turn and choose again (runsim.mjs). The

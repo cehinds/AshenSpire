@@ -501,7 +501,9 @@ export const EFFECT_SPECS = Object.freeze({
   loseHp: { allowed: ['cause'], required: ['amount'], refs: {} },
   heal: { allowed: [], required: ['amount'], refs: {} },
   shuffleDiscardIntoDraw: { allowed: [], required: [], refs: {} },
-  enterStance: { allowed: ['stance'], required: ['stance'], refs: { stance: 'stances' } },
+  // Exactly one of `stance` (a fixed stance) or `choose` (a pending choice the
+  // play intent answers, model/cardChoices.js); validate.js refuses neither and both.
+  enterStance: { allowed: ['stance', 'choose'], required: [], refs: { stance: 'stances' } },
   poiseDamage: { allowed: [], required: ['amount'], refs: {} },
   // Exactly one of `amount` (points) or `pct` (of the target's own threshold);
   // validate.js refuses neither or both. The school is the firing event's.
@@ -888,6 +890,7 @@ export const SCHEMAS = Object.freeze({
   stance: obj({
     id: str,
     name: str,
+    class: opt(ref('classes')),
     icon: opt(str),
     onEnter: opt(effects),
     modifiers: opt(modifiersSchema),

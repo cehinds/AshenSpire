@@ -3,6 +3,8 @@ import { combatantDetailBody } from '../components/combatantInspector.js';
 import { activeCombatAbilities } from '../components/combatAbilities.js';
 import { enemyMoveCards } from '../../model/enemyMoveCards.js';
 import { openModal } from '../kit/index.js';
+import { cardChoice } from '../../model/cardChoices.js';
+import { openCardChoiceModal } from '../components/cardChoiceModal.js';
 import { combatEffectForEvent, decorateCombatEffects, combatEffectReceipt, presentationTargetIds } from '../../model/combatEffectEvents.js';
 import { statureFor } from '../components/stature.js';
 import { combatEffectAngle } from '../combatEffectDirection.js';
@@ -278,6 +280,20 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
   // optimistic local intent. Remote seats and repeated resyncs use the same path.
   const send = (obj) => {
     if (pacing && ['playCard', 'endTurn', 'flaskIntent'].includes(obj.t)) return;
+    // A card that offers a choice (Warrior's Vow's stance, SPEC §5.2) asks it
+    // here, before its one network intent, from the same offer the host
+    // validates (model/cardChoices.js); Cancel sends nothing.
+    if (obj.t === 'playCard' && obj.choice == null) {
+      const seat = latestWireSnap?.scene?.players?.find((entry) => entry.id === me);
+      const inst = seat?.hand?.find((entry) => entry.instanceId === obj.cardInstanceId);
+      const def = inst ? resolveCard(registries, { cardId: inst.cardId, upgraded: inst.upgraded, mods: inst.mods }) : null;
+      const plan = def ? cardChoice(registries, def, seat.classId) : null;
+      if (plan) {
+        const seatAtOpen = me;
+        openCardChoiceModal({ plan, cardName: def.name, onChoose: (choice) => { if (me === seatAtOpen) send({ ...obj, choice }); } });
+        return;
+      }
+    }
     return conn.send(obj.t === 'resync' ? obj : { ...obj, as: me });
   };
 

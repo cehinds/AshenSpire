@@ -808,7 +808,9 @@ function runOpcode(ctx, action, eff) {
       break;
     }
     case 'enterStance': {
-      const stanceId = eff.stance;
+      // A chosen stance (Warrior's Vow) is the play intent's pick, validated
+      // before the card was paid for (model/cardChoices.js) and carried on meta.
+      const stanceId = eff.choose ? action.meta && action.meta.choice : eff.stance;
       const def = ctx.registries.stances.get(stanceId);
       if (ctx.player.stanceId === stanceId) break; // already in it: no-op (StS)
       if (ctx.player.stanceId) {

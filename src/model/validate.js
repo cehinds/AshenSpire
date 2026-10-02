@@ -73,6 +73,7 @@ import {
 } from './itemUpgrades.js';
 import { normalizeSmithingRules } from './smithingRules.js';
 import { normalizeCardMountRules } from './cardMounts.js';
+import { STANCE_CHOICE_SELECTORS } from './cardChoices.js';
 
 // Ops whose value binds to a text-template token; token name = op name,
 // except applyStatus which binds under its status id (SPEC §3.13).
@@ -2350,6 +2351,14 @@ export function validateEffects(effects, path, vctx) {
       const by = eff.amount !== undefined;
       const to = eff.toFloorPct !== undefined;
       if (by === to) err(p, `Opcode 'restoreMana' takes exactly one of 'amount' or 'toFloorPct'`);
+    }
+    // enterStance enters a named stance OR offers a choice (Warrior's Vow,
+    // model/cardChoices.js) — one selector, never neither nor both.
+    if (eff.op === 'enterStance') {
+      const named = eff.stance !== undefined;
+      const chosen = eff.choose !== undefined;
+      if (named === chosen) err(p, `Opcode 'enterStance' takes exactly one of 'stance' or 'choose'`);
+      else if (chosen && !STANCE_CHOICE_SELECTORS.includes(eff.choose)) err(`${p}.choose`, `Opcode 'enterStance' choose must be one of: ${STANCE_CHOICE_SELECTORS.join(', ')}`);
     }
     // arcaneBuildup pours BY an amount or a percent OF the target's threshold
     // (plan phase 8) — one selector, never neither nor both.

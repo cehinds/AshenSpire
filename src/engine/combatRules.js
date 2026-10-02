@@ -167,13 +167,13 @@ export function foundationCosts(ctx, def, weightClass, legacy) {
   return { ...legacy, action: rules.actions, mana: 0, stamina: rules.stamina[weight], variable: false };
 }
 
-export function assertFoundationPlayable(ctx, def) {
+export function assertFoundationPlayable(ctx, def, choice) {
   if (!ctx.foundation) return;
   if (def.effects?.some((e) => e.op === 'dodgeRoll')) {
     if ((ctx.player.evade || 0) >= ctx.foundation.rules.dodge.charges) throw new Error('Evade is already active');
     if ((ctx.player.evadeUses || 0) >= ctx.foundation.rules.dodge.usesPerTurn) throw new Error('Dodge Roll already used this turn');
   }
-  if (def.effects?.some((e) => e.op === 'enterStance' && e.stance === ctx.player.stanceId)) throw new Error('That stance is already active');
+  if (def.effects?.some((e) => e.op === 'enterStance' && (e.choose ? choice : e.stance) === ctx.player.stanceId)) throw new Error('That stance is already active');
 }
 
 export function startFoundationTurn(ctx, entity) {

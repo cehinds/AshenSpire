@@ -37,6 +37,7 @@ export { playerWeightClass };
 import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool, gripOf, gripTags } from '../model/loadout.js';
 // Deck restamping goes through the framework's adopted composition door.
 import { stampDeck, reconcileGrantedCardsInCombat } from '../framework/deckComposition.js';
+import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
 import { chargeFlaskId } from '../model/gracerefill.js';
 import { syncLoadoutProperties, syncRelicProperties, syncClassProperties, syncCompanionProperties, propertyMountsOf } from './properties.js';
 
@@ -684,7 +685,7 @@ function buildIntent(move, moveId, enemy = null) {
 /**
  * dispatch(combat, intent) → { events } (the events emitted by this intent).
  *
- *   { type: 'playCard', cardInstanceId, targetId? }
+ *   { type: 'playCard', cardInstanceId, targetId?, choice? }   (choice: cardChoicePlan's option id)
  *   { type: 'endTurn' }
  *   { type: 'useFlask', slot, targetId? }
  *
@@ -1014,7 +1015,18 @@ export function cardPlayCosts(combat, cardInstanceId) {
   return playCosts(combat, resolveCard(combat.registries, inst));
 }
 
-function doPlayCard(combat, { cardInstanceId, targetId }) {
+/**
+ * cardChoicePlan(combat, cardInstanceId) → the pending choice playing this
+ * card offers ({ kind, options }), or null. The play intent answers it with
+ * `choice` (model/cardChoices.js; SPEC §5.2 Warrior's Vow).
+ */
+export function cardChoicePlan(combat, cardInstanceId) {
+  const inst = combat.piles.hand.find((c) => c.instanceId === cardInstanceId);
+  if (!inst) throw new Error(`Card '${cardInstanceId}' is not in hand`);
+  return cardChoice(combat.registries, resolveCard(combat.registries, inst), combat.player.classId);
+}
+
+function doPlayCard(combat, { cardInstanceId, targetId, choice }) {
   if (combat.phase !== 'player') throw new Error('Cards can only be played on the player turn');
   const p = combat.player;
   const idx = combat.piles.hand.findIndex((c) => c.instanceId === cardInstanceId);
@@ -1022,7 +1034,8 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
   const inst = combat.piles.hand[idx];
   const def = resolveCard(combat.registries, inst);
   const kws = def.keywords || [];
-  F.assertFoundationPlayable(combat, def);
+  const chosen = assertCardChoice(cardChoice(combat.registries, def, p.classId), choice);
+  F.assertFoundationPlayable(combat, def, chosen);
 
   if (combat.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
 
@@ -1097,6 +1110,7 @@ function doPlayCard(combat, { cardInstanceId, targetId }) {
     ordinalThisTurn: p.counters.cardsPlayedThisTurn,
     ordinalThisCombat: p.counters.cardsPlayedThisCombat,
     attackOrdinal: null,
+    ...(chosen != null ? { choice: chosen } : {}),
   };
   if (kind === 'attack') {
     p.counters.attacksPlayedThisCombat += 1;
