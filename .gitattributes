@@ -5,3 +5,13 @@
 # uploaded ~284 MB of new LFS objects per rebuild and exhausted the repository's
 # LFS budget; they were removed with the files. release/ and main keep their own
 # copies of this file until the owner promotes this change.
+
+# Keep the polish kit checksum records stable across Windows and Linux.
+docs/design/player-polish-asset-kit-2026-10-02/**/*.svg text eol=lf
+docs/design/player-polish-asset-kit-2026-10-02/**/*.json text eol=lf
+docs/design/player-polish-asset-kit-2026-10-02/**/*.html text eol=lf
+docs/design/player-polish-asset-kit-2026-10-02/**/*.css text eol=lf
+docs/design/player-polish-asset-kit-2026-10-02/**/*.py text eol=lf
+docs/design/player-polish-asset-kit-2026-10-02/**/*.cjs text eol=lf
+docs/design/player-polish-asset-kit-2026-10-02/**/*.md text eol=lf
+docs/design/player-polish-asset-kit-2026-10-02/**/*.txt text eol=lf

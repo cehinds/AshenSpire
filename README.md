@@ -89,6 +89,8 @@ More captures — Armoury: [Equipment](docs/preview/armoury-simple-equipment-144
 
 ## UI component library
 
+- **[Player polish asset kit](docs/design/player-polish-asset-kit-2026-10-02/index.html)** — reusable desktop/mobile artwork, engraved SVG components, canonical art reuse, provenance and a 24-feature integration map. [Integration guide](docs/design/player-polish-asset-kit-2026-10-02/README.md).
+
 - **[Player polish inspiration](docs/design/player-polish-2026-10-01/index.html)** — twelve illustrated concept boards showing desktop and portrait-mobile directions for the player-facing feature families. [Design notes and implementation caveats](docs/design/player-polish-2026-10-01/README.md) distinguish generated examples from the game's rules.
 
 - **[Component catalog](https://cehinds.github.io/AshenSpire/docs/component-catalog.html)** ([source](docs/component-catalog.html)) — stable component IDs, model/renderer names, reuse surfaces and a visual miniature per component. Select a card for its detail drawer.
