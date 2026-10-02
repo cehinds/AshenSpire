@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The opening's words sit in the middle of the caption band",
     "detail": "The narration is now centred top to bottom in the fixed caption band, not pinned to its top. On a phone turned on its side, where the words sit in a panel beside the painting, the panel now fills its whole column instead of a thin strip at the top.",
-    "build": "0.7.1.754",
+    "build": "0.7.1.755",
     "pullRequest": 1445,
     "url": "https://github.com/cehinds/AshenSpire/pull/1445"
+  },
+  {
+    "id": "pr-1465",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the build checker's self-test catches up with the art-pack change",
+    "detail": "Nothing you play changes. One of the build tool's self-tests plants a deliberate fault in a line the asset loading work rewrote, so it could no longer find that line and the test build's checks went red. It now plants the fault in the line as it reads today.",
+    "build": "0.7.1.754",
+    "pullRequest": 1465,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1465"
   },
   {
     "id": "pr-1447",
