@@ -5,9 +5,14 @@
 // the plan, the model and the modal, and the one commit call.
 import { extractionPlan, installPlan, commitExtraction, commitInstall } from '../../model/cardExtraction.js';
 import { mountServiceModel } from '../models/MountServiceModel.js';
+import { serviceIdleReason } from '../../model/blacksmith.js';
 import { mountMountServiceModal } from '../components/mountServiceModal.js';
 
-/** How the screen decides whether to show a service at all. */
+/**
+ * How the screen decides whether to show a service at all. A service the
+ * run's rules refuse (extraction in a Sealed or Draft run) is shown
+ * unavailable with that reason, the blacksmith's sentence.
+ */
 export function mountServiceOffer(registries, run, service) {
   const plan = service === 'extract' ? extractionPlan(registries, run) : installPlan(registries, run);
   return Object.freeze({
@@ -16,7 +21,8 @@ export function mountServiceOffer(registries, run, service) {
     available: plan.candidates.length > 0,
     stones: plan.stones,
     cost: plan.cost,
-    summary: plan.candidates.length
+    refusal: plan.refusal || null,
+    summary: plan.refusal ? serviceIdleReason('extractArt', run) : plan.candidates.length
       ? `${plan.cost === 0 ? 'Free' : `${plan.cost} Smithing Stone${plan.cost === 1 ? '' : 's'}`} · ${plan.candidates.length} item${plan.candidates.length === 1 ? '' : 's'} to work on.`
       : (service === 'extract' ? 'Nothing you carry lends a card a smith can lift out.' : 'No item has an open mount, or no deck card would fit one.'),
   });
