@@ -62,8 +62,16 @@ function overrides() {
   const proto = Object.getPrototypeOf(document.body);
   Object.defineProperty(proto, 'ownerSVGElement', { configurable: true, get() { for (let at = this.parentNode; at; at = at.parentNode) if (at.tagName === 'SVG') return at; return null; } });
   proto.getScreenCTM = () => null;
-  // `hidden` reflects its attribute, as in a browser (the map legend toggles it).
-  Object.defineProperty(proto, 'hidden', { configurable: true, get() { return this.hasAttribute('hidden'); }, set(on) { if (on) this.setAttribute('hidden', ''); else this.removeAttribute('hidden'); } });
+  // `hidden` and `inert` reflect their attributes, as in a browser: the map
+  // legend toggles `hidden`, and the map tray sets `inert` while it is closed,
+  // which input.js's backIn reads as `[inert]`. Without the reflection a closed
+  // tray's Back would look live here and a test could pass that a browser fails.
+  // These shims patch the fixture's shared element prototype for every test in
+  // this file and are never undone; that is safe because they only make the
+  // fixture behave more like a browser, and resetDom rebuilds #app per test.
+  for (const name of ['hidden', 'inert']) {
+    Object.defineProperty(proto, name, { configurable: true, get() { return this.hasAttribute(name); }, set(on) { if (on) this.setAttribute(name, ''); else this.removeAttribute(name); } });
+  }
   const app = document.createElement('div');
   app.id = 'app';
   document.body.appendChild(app);
@@ -344,16 +352,35 @@ for (const [name, press] of Object.entries(PRESSES)) {
       const back = app().querySelector('#map-back');
       const legendBtn = app().querySelector('#map-legend');
       const legend = app().querySelector('.map-legend-pop');
-      assert.ok(back && legendBtn && legend, 'the map drew its Back, its ? and its legend');
+      const tray = app().querySelector('.map-tray');
+      const reveal = app().querySelector('.map-tray-reveal');
+      const node = app().querySelector('.map-node.reachable');
+      assert.ok(back && legendBtn && legend && tray && reveal && node, 'the map drew its Back, its ? and its legend, its tray and a reachable node');
+      const { wireframeUi } = await import('../src/content/wireframeUi.js');
+      const timing = wireframeUi.map.tray;
+      // Select a node: the tray opens after its delay and slide.
+      node.click();
+      await wait(timing.openDelayMs + timing.slideMs + 20);
+      assert.equal(tray.dataset.open, 'true', 'selecting a node opened the tray');
+      assert.equal(reveal.inert, false, 'the open tray is live');
       let backs = 0;
       back.addEventListener('click', () => { backs += 1; });
+      // A real click on the ? starts with a pointerdown, which (tooltip.js)
+      // drops the tap-to-explain selection the node click left; the fixture's
+      // click() sends no pointerdown, so the test sends it the browser's way.
+      globalThis.__deliver(legendBtn, new dom.Event('pointerdown', { bubbles: true }));
       legendBtn.click();
       assert.equal(legend.hidden, false, 'the legend opened');
       await press();
       assert.equal(legend.hidden, true, 'the press closed the legend');
       assert.equal(backs, 0, 'the tray\'s Back did not run');
+      assert.equal(tray.dataset.open, 'true', 'the tray stayed open');
+      assert.equal(reveal.inert, false, 'the tray stayed live');
       await press();
       assert.equal(backs, 1, 'the next press is the tray\'s Back');
+      assert.equal(reveal.inert, true, 'Back made the tray inert');
+      await wait(timing.fadeMs + 20);
+      assert.equal(tray.dataset.open, 'false', 'Back closed the tray');
     } finally {
       releaseMapScreen?.();
     }
