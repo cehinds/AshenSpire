@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "The web edition opens by double-click",
     "detail": "Behind the scenes: the web edition's game file, kept together with its folder of art, now plays when opened straight from disk, with its art, fonts and map close-ups, and the music played by the game's own synthesizer; nothing you play changes.",
-    "build": "0.7.1.755",
+    "build": "0.7.1.757",
     "pullRequest": 1461,
     "url": "https://github.com/cehinds/AshenSpire/pull/1461"
+  },
+  {
+    "id": "pr-1449",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Warrior's Vow lets you choose your stance",
+    "detail": "Playing Warrior's Vow used to put you in Gorefire Stance every time, though the card promised a stance of your choice. Now it asks: you pick Gorefire, Bulwark or Brace, each with what it does, and that is the stance you enter. Cancel keeps the card in your hand. It works the same in co-op, and on a shared couch screen the chooser keeps the keyboard while it is open: Tab moves between the stances instead of switching player, and the card and End Turn keys wait until you choose.",
+    "build": "0.7.1.756",
+    "pullRequest": 1449,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1449"
   },
   {
     "id": "pr-1465",

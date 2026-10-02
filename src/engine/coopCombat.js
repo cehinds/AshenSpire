@@ -31,6 +31,7 @@
 import { chargeFlaskId } from '../model/gracerefill.js';
 import { syncRelicProperties, syncClassProperties, syncLoadoutProperties, syncSigilProperties } from './properties.js';
 import { assertFriendlyTarget, friendlyTargetPlan } from '../model/friendlyTargets.js';
+import { cardChoice, assertCardChoice } from '../model/cardChoices.js';
 
 import * as A from './actions.js';
 import * as F from './combatRules.js';
@@ -401,8 +402,22 @@ function startPlayerPhase(C) {
   }
 }
 
-export function playCard(C, playerId, cardInstanceId, targetId) {
-  if (C.foundation && !C._foundationTransaction) return F.foundationTransaction(C, (candidate) => playCard(candidate, playerId, cardInstanceId, targetId));
+/**
+ * cardChoicePlan(C, playerId, cardInstanceId) → the pending choice playing
+ * this seat's card offers ({ kind, options }), or null — the solo engine's
+ * offer for this seat's class (model/cardChoices.js). playCard's `choice`
+ * answers it.
+ */
+export function cardChoicePlan(C, playerId, cardInstanceId) {
+  const P = C.players.get(playerId);
+  if (!P) throw new Error(`Unknown player '${playerId}'`);
+  const inst = P.piles.hand.find((c) => c.instanceId === cardInstanceId);
+  if (!inst) throw new Error(`Card '${cardInstanceId}' is not in hand`);
+  return cardChoice(C.registries, resolveCard(C.registries, inst), P.entity.classId, P.entity.stanceId);
+}
+
+export function playCard(C, playerId, cardInstanceId, targetId, choice) {
+  if (C.foundation && !C._foundationTransaction) return F.foundationTransaction(C, (candidate) => playCard(candidate, playerId, cardInstanceId, targetId, choice));
   if (C.result) throw new Error('Combat is over');
   if (C.phase !== 'player') throw new Error('Not the player phase');
   const P = C.players.get(playerId);
@@ -411,7 +426,7 @@ export function playCard(C, playerId, cardInstanceId, targetId) {
   setActive(C, P);
   C._buffer = [];
   try {
-    doPlayCard(C, { cardInstanceId, targetId });
+    doPlayCard(C, { cardInstanceId, targetId, choice });
     return { events: C._buffer };
   } finally {
     C._buffer = null;
@@ -430,14 +445,15 @@ function effectiveCost(C, def) {
   })).action;
 }
 
-function doPlayCard(C, { cardInstanceId, targetId }) {
+function doPlayCard(C, { cardInstanceId, targetId, choice }) {
   const p = C.player;
   const idx = C.piles.hand.findIndex((c) => c.instanceId === cardInstanceId);
   if (idx < 0) throw new Error(`Card '${cardInstanceId}' is not in hand`);
   const inst = C.piles.hand[idx];
   const def = resolveCard(C.registries, inst);
   const kws = def.keywords || [];
-  F.assertFoundationPlayable(C, def);
+  const chosen = assertCardChoice(cardChoice(C.registries, def, p.classId), choice);
+  F.assertFoundationPlayable(C, def, chosen);
   if (C.registries.framework.isUnplayable(def)) throw new Error(`'${def.name}' is unplayable`);
 
   const isX = def.cost === 'X';
@@ -517,6 +533,7 @@ function doPlayCard(C, { cardInstanceId, targetId }) {
     ordinalThisTurn: p.counters.cardsPlayedThisTurn,
     ordinalThisCombat: p.counters.cardsPlayedThisCombat,
     attackOrdinal: null,
+    ...(chosen != null ? { choice: chosen } : {}),
   };
   if (kind === 'attack') { p.counters.attacksPlayedThisCombat += 1; meta.attackOrdinal = p.counters.attacksPlayedThisCombat; }
   for (const action of F.cardActions(C, def, p, target, cardRef, meta, sourceSnapshots)) C.enqueue(action);
