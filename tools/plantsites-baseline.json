@@ -173,8 +173,8 @@
       "digest": "706f6319c868604e"
     },
     "tools/flask-action-contract.mjs": {
-      "count": 21,
-      "digest": "b03aa628c0e9186f"
+      "count": 25,
+      "digest": "6221cb3a91d4b9ef"
     },
     "tools/flask-intent-smoke.mjs": {
       "count": 3,

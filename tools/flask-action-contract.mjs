@@ -66,6 +66,34 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL combat and map menus share action availability/,
       },
       {
+        name: 'the map hands its Potions control a stand-in run instead of the live one',
+        file: 'src/ui/screens/map.js',
+        find: 'mountRunPotions(potionsHost, { registries, run, meta,',
+        replace: 'mountRunPotions(potionsHost, { registries, run: { flasks: [], flaskCharges: {} }, meta,',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'the map hands its Potions control a second run after the live one',
+        file: 'src/ui/screens/map.js',
+        find: 'mountRunPotions(potionsHost, { registries, run, meta,',
+        replace: 'mountRunPotions(potionsHost, { registries, run, run: { flasks: [] }, meta,',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'the map Potions control drops its registries binding',
+        file: 'src/ui/screens/map.js',
+        find: 'mountRunPotions(potionsHost, { registries, run, meta,',
+        replace: 'mountRunPotions(potionsHost, { registries: {}, run, meta,',
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
+        name: 'applyRunPotion drinks a charge flask without consulting the plan',
+        file: 'src/ui/models/RunPotionModel.js',
+        find: '  const action = plan.actions.find((row) => row.id === actionId);\n',
+        replace: "  if (actionId === 'use' && entry.category === 'charge') { useRunChargeFlask({ run, registries, rng: null, kind: entry.kind }); return true; }\n  const action = plan.actions.find((row) => row.id === actionId);\n",
+        expectRed: /FAIL combat and map menus share action availability/,
+      },
+      {
         name: 'the map Potions control hands its flask menu a plan that is not the shared one',
         file: 'src/ui/components/runPotions.js',
         find: 'def, plan: planFor(entry), charges:',
@@ -345,13 +373,54 @@ try {
   const allowed = apply(shared({ context: 'run', canUse: false, useReason: 'x', canDrop: true }));
   const refused = apply(shared({ context: 'run', canUse: false, useReason: 'x', canDrop: false, dropReason: 'x' }));
   const missing = apply({ actions: [] });
+  // And on a charge flask (the Drink verb): use under a plan that enables use
+  // spends exactly one charge; under a plan that refuses use (or lacks the
+  // action) the charges are untouched. Real registries and a real run, so an
+  // early charge branch that skips the plan goes red.
+  const { contentBundle } = await import('../src/content/index.js');
+  const { createRegistries } = await import('../src/model/registries.js');
+  const { createRunState } = await import('../src/model/state.js');
+  const registries = createRegistries(contentBundle);
+  const charge = { category: 'charge', kind: 'hp', count: 1 };
+  const drink = (plan) => {
+    const run = createRunState({ seed: 0x5eed, classId: 'reaver', registries });
+    run.flaskCharges.hpCurrent = Math.max(1, run.flaskCharges.hpCurrent || 0);
+    const before = run.flaskCharges.hpCurrent;
+    let changed;
+    try { changed = model.applyRunPotion({ registries, run, entry: charge, actionId: 'use', plan }); }
+    catch { changed = 'threw'; }
+    return { changed, spent: before - run.flaskCharges.hpCurrent };
+  };
+  const drinkAllowed = drink(shared({ context: 'run', canUse: true, canDrop: false, dropReason: 'x' }));
+  const drinkRefused = drink(shared({ context: 'run', canUse: false, useReason: 'x', canDrop: false, dropReason: 'x' }));
+  const drinkMissing = drink({ actions: [] });
   modelShares = modelShares
     && allowed.changed === true && allowed.left === 0
     && refused.changed === false && refused.left === 1
-    && missing.changed === false && missing.left === 1;
+    && missing.changed === false && missing.left === 1
+    && drinkAllowed.changed === true && drinkAllowed.spent === 1
+    && drinkRefused.changed === false && drinkRefused.spent === 0
+    && drinkMissing.changed === false && drinkMissing.spent === 0;
 } catch { modelShares = false; /* observed red */ }
+// Each `mountRunPotions(potionsHost, { … })` call must hand the control the
+// live run: its argument carries exactly one each of the `registries`, `run`
+// and `meta` shorthands (the screen's own bindings) and no spread or other
+// unkeyed entry, so a stand-in `run: { flasks: [] }` goes red. Source check of
+// the shipped form (see BOUNDARY above menuMounts).
+const runPotionsMounts = [...mapCode.matchAll(/\bmountRunPotions\(potionsHost, /g)].map((m) => {
+  const call = balanced(mapCode, m.index + m[0].length - 'potionsHost, '.length - 1);
+  const brace = call ? call.indexOf('{') : -1;
+  const obj = brace >= 0 ? balanced(call, brace) : null;
+  if (!obj) return false;
+  const entries = props(obj);
+  if (entries.some(([key]) => key === null)) return false;
+  return ['registries', 'run', 'meta'].every((name) => {
+    const hits = entries.filter(([key]) => key === name);
+    return hits.length === 1 && hits[0][1] === name;
+  });
+});
 const mapShares = /import \{[^}]*\bmountRunPotions\b[^}]*\} from '\.\.\/components\/runPotions\.js'/.test(mapCode)
-  && /\bmountRunPotions\(potionsHost, \{/.test(mapCode)
+  && runPotionsMounts.length > 0 && runPotionsMounts.every((ok) => ok)
   && /import \{[^}]*\brunPotionPlan\b[^}]*\} from '\.\.\/models\/RunPotionModel\.js'/.test(runPotionsCode)
   && /const planFor = \(entry\) => runPotionPlan\(entry(?:, \{[^{}]*\})?\);/.test(runPotionsCode)
   && potionMounts.length > 0 && potionMounts.every((mount) => mount.plan === 'planFor(entry)')
