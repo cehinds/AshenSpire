@@ -118,6 +118,14 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL persistence: the reopened tray names the destination as it did before the redraw/,
       },
       {
+        name: 'a legacy dungeon drops the selected node when "Use flasks outside combat" changes',
+        file: 'src/main.js',
+        find: '  if (run.legacyDungeon) return showLegacyDungeon({ selectedId });',
+        replace: '  if (run.legacyDungeon) return showLegacyDungeon();',
+        args: ['--only', 'persistence'],
+        expectRed: /FAIL persistence: legacy dungeon, the selected node, its tray open and named as before, survives/,
+      },
+      {
         name: 'the world atlas remounts when "Use flasks outside combat" changes, losing its selected destination',
         file: 'src/main.js',
         find: "const flaskKey = FLASK_REMOUNT_KEYS.some((k) => k in changed) && !!screen.querySelector('.map-potions, .hud-potions');",
@@ -402,6 +410,20 @@ const PLAN = `(async () => {
   return true;
 })()`;
 
+// Select the map's first reachable node the way a tap does; report the tray.
+const READ_SELECTION = `(async () => {
+  const open = await __fm.until(() => document.querySelector('.map-tray')?.dataset.shown === 'true');
+  const tray = [...document.querySelectorAll('.map-context .map-context-title, .map-context .map-context-line')].map((p) => p.textContent.trim());
+  return { open: !!open, selected: document.querySelector('.map-node.selected')?.dataset.node || null, tray };
+})()`;
+const SELECT_AND_READ = `(async () => {
+  await __fm.closeModal('run-potion-menu');
+  const node = document.querySelector('.mapscreen .map-node.reachable');
+  if (!node) return { why: 'no reachable node' };
+  node.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  return { id: node.dataset.node, ...(await ${READ_SELECTION}) };
+})()`;
+
 // The real Settings door: the screen's Menu → Settings → search → the toggle →
 // close. '' when the setting turned on, else what went wrong.
 const TOGGLE_SETTING = (opener) => `(async () => {
@@ -502,6 +524,25 @@ async function persistenceProbe(cdp, base, check) {
     await ev(`__fm.closeModal('run-potion-menu')`);
     check('persistence: no page error', page.errors.length === 0, page.errors.join(' | '));
   } finally { await page.close(); }
+
+  // A LEGACY DUNGEON is another mountMap surface with a Potions control
+  // (showMap → showLegacyDungeon → mountLegacyDungeon): the same change keeps
+  // its selected node, tray open and named as before (#1474 review).
+  const dungeon = await openPage(cdp, base, `shot=map&shotDungeon=BS&${settingsQuery(false)}`);
+  try {
+    const before = await dungeon.ev(SELECT_AND_READ);
+    check('persistence: legacy dungeon, a reachable node is selected and its tray opens',
+      !before.why && before.open && before.selected === before.id && before.tray.length > 0, JSON.stringify(before));
+    const toggled = await dungeon.ev(TOGGLE_SETTING('#open-menu'));
+    check('persistence: legacy dungeon, the setting turns on through Menu → Settings', toggled === '', toggled);
+    const after = await dungeon.ev(READ_SELECTION);
+    const drink = await dungeon.ev(`(async () => { const l = await __fm.mapList(); await __fm.closeModal('run-potion-menu'); return l && l['charge:hp']; })()`);
+    check('persistence: legacy dungeon, the setting reaches its Potions list (Drink offered)', drink?.enabled === true, JSON.stringify(drink));
+    check('persistence: legacy dungeon, the selected node, its tray open and named as before, survives the setting\'s redraw',
+      after.open && after.selected === before.id && JSON.stringify(after.tray) === JSON.stringify(before.tray),
+      JSON.stringify({ before, after }));
+    check('persistence: legacy dungeon, no page error', dungeon.errors.length === 0, dungeon.errors.join(' | '));
+  } finally { await dungeon.close(); }
 
   // THE WORLD ATLAS is a `.mapscreen` too, with no Potions control. Turning the
   // setting on there must not remount it: the atlas keeps the player's selected

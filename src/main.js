@@ -2008,7 +2008,7 @@ function showMap(opts) {
   const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : null;
   // The map's music follows the region it stands in (content/music.js).
   audio.music(mapMusicContext(run.environmentRegionId || regionForRun(run)?.id));
-  if (run.legacyDungeon) return showLegacyDungeon();
+  if (run.legacyDungeon) return showLegacyDungeon({ selectedId });
   if (run.journey) return mountWorldAtlas(app, {
     run, registries,
     serviceContext: {
@@ -2314,11 +2314,13 @@ function combatMods(pool, encounter = null) {
   return { hpMult, damageMult, enemyStatuses, playerStatuses };
 }
 
-function showLegacyDungeon() {
+function showLegacyDungeon(opts) {
+  // A flask-only redraw hands back the selected node, as on the act map.
+  const selectedId = typeof opts?.selectedId === 'string' ? opts.selectedId : null;
   if (run.pendingReward) return mountPendingReward();
   if (run.legacyDungeon.activeRest) return showRest();
   if (run.legacyDungeon.pending) return showDungeonDialogue();
-  mountLegacyDungeon(app, { run, registries, meta: activeMeta, hud: roomHud(showLegacyDungeon), onSave: saveNow,
+  mountLegacyDungeon(app, { run, registries, meta: activeMeta, hud: roomHud(showLegacyDungeon), onSave: saveNow, selectedId,
     onTravel: id => { if (travelDungeon(run, id)) { persist(); enterDungeonLocation(); } },
     onInspect: enterDungeonLocation, onLeave: leaveLegacyDungeon });
 }

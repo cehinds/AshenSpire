@@ -675,7 +675,7 @@ offers must equal `flaskActionPlan` for the Crimson and Azure flasks and the
 carried potions, every map Potions choice must do exactly that action, a
 Potions action and a setting change must be saved and survive the map's
 remount with the selected destination kept, and the world atlas must not remount for that setting. Its
-`--selftest` plants sixteen known-bads, each in its own copied tree
+`--selftest` plants seventeen known-bads, each in its own copied tree
 (`--shard i/n` runs part of them). They run in `ci.yml`'s *every flask menu in
 a real browser* and, in two shards, *flask-menu known-bads in a real browser*;
 `tools/flask-action-contract.mjs`
