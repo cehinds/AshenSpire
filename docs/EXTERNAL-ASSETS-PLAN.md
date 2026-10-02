@@ -20,10 +20,13 @@ file at `download/` for every kept build; see
 edition plays by double-click: the indexes through their `.js` twins, the
 faces through the font sidecar, tiles from the objects under `file://`, the
 score synthesized, and `external-play --file`; see
-[Step 4 as built](#step-4-as-built)); **step 7 built** (2026-10-02: the
-in-game folder copy, a zip the game assembles beside the light single-file
-download, and `offline-play-qa --zip`; see [Step 7 as built](#step-7-as-built));
-the rest is plan (2026-09-27). The owner answered its
+[Step 4 as built](#step-4-as-built)); **step 5 built** (2026-10-02: the
+startup gate drawn at once with its "Loading art" line and the critical set
+from `content/config`, the title's notice with Retry and Settings' Retry,
+`external-play --block-index`; see [Step 5 as built](#step-5-as-built));
+**step 7 built** (2026-10-02: the in-game folder copy, a zip the game
+assembles beside the light single-file download, and `offline-play-qa --zip`;
+see [Step 7 as built](#step-7-as-built)); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -686,6 +689,7 @@ light single file, about 30 MB, self-contained, plays by double-click. The
 | SPEC §11, non-goals | "bundled audio asset files" is a non-goal | still true in letter; reword to "audio ships as pack files; SFX stay synthesized" | **yes** |
 | SPEC §1, *Entry point* | "`index.html` opened directly or via any static server" | "via `node tools/serve.mjs`" once the media leaves the tree (ART-REPO-PLAN already names this) | **yes** |
 | FINISH.md D5 and §4 line 107 | "the 254 MB file stays a download"; "the single-file download stays available" | the 254 MB file is retired; the light single file stays a download, beside the install and the zip (owner answers 3 and 6; FINISH D24) | **yes** |
+| SPEC §7.1, the cold boot (*"It contains only the Ashen Spire wordmark, decorative ash/embers, the input-family prompt, and the shared BUILD/source stamp"*) | the gate contains only those four, and a press reveals the title | unchanged for the gate itself: step 5 keeps the boot status line **outside** the gate (`boot-art-status`, a sibling in `#app`). Whether SPEC should name that line, the wait for the load before the title, and the title's art notice with Retry is a question for the 8a SPEC PR ([#1440](https://github.com/cehinds/AshenSpire/pull/1440), awaiting owner approval) | **yes** |
 | SPEC §2 status row and §2.4 | the CSS backdrops bypass `assetUrl()` (open) | closed by `ASSET_CSS` | no (a status row) |
 | SPEC §8, the `release-shots` row | "the built bundle (`dist/AshenSpire.html`)" | `dist/` (HTML + packs) | no (wording) |
 | DEVELOPER.md, *Standalone build* (`:873-885`) | "single self-contained HTML … no external files" | the build tree, whose light single file is still self-contained; the pack HTML's double-click works when the folder stays together | no |
@@ -914,7 +918,9 @@ Where the build differs from, or settles, §3.8 and §3.9 (2026-10-02):
   common pack alone does not make a source"). That was kept: a build whose art
   failed shows placeholders, the synth score and the low-detail map, which is
   what a missing track or tile already gave. Making common usable on its own
-  is left to step 5's failure handling.
+  was left to step 5's failure handling, which **kept** it (see
+  [Step 5 as built](#step-5-as-built)): a Retry that loads brings the score
+  and the tiles back with the art.
 - **The single files and the source tree are unchanged.** Their `ASSET_MAP`
   is empty of music and tiles, so the ids pass through as the paths of the
   `music/` and `map-detail/` folders `launch.mjs` still writes beside
@@ -1022,6 +1028,171 @@ Where the build settles §3.2, §3.8–§3.10 for `file://` (2026-10-02):
   web edition and on the high-default build with its high twin removed
   (`--expect-tier light`). Against dev's runtime it is red (built-in art
   `failed`, no ASSET_CSS, no faces, bare `assets/` images).
+
+### Step 5 as built
+
+Where the build settles §3 (*The loading screen*, *Failure and fallback*) and
+the step 3a boot wait (2026-10-02):
+
+- **The gate is drawn at once, and the wait moved behind it.** In a pack
+  build, the cold boot (no `?shot=` state, or `?shot=startup`) draws the
+  startup gate before the load has settled (`gateFirst` in `src/main.js`): the
+  gate shows no pack art through an `<img>`, and its backdrops are `ASSET_CSS`,
+  which arrive with the load. A press during the load runs the reveal, and the
+  title is drawn only once the load has settled (`afterBootArt`), by
+  `BOOT_WAIT_MS` (8 s) at the latest, as 3a required (a screen drawn on
+  placeholders cannot be re-pointed). Every other first screen (a `?shot=`
+  state) still waits behind the static boot line. The music hold is released
+  when the load settles, either way. A single file and the source tree settle
+  at once and are unchanged.
+- **The line is not part of the gate.** One polite, `aria-busy` status line
+  (`boot-art-status`, `src/ui/components/bootArtStatus.js`, its words from
+  `src/ui/bootArt.js`): "Loading art…" while the indexes load, "Loading art ·
+  n of N" while the critical set warms, nothing once it is done, and the
+  failure sentence when the load failed. It is its own component, mounted by
+  `showStartupGate` as a **sibling** of the gate in `#app`, laid over the
+  gate's top edge and taking no input (a press on it is a press on the gate):
+  the gate's model, children and markup are unchanged, so SPEC §7.1's
+  "contains only" still holds, and the live region is not inside the gate's
+  `role="button"`, where assistive tech would treat it as presentational
+  (review of #1471). It stays through the reveal while a late load settles,
+  and is replaced with the rest of `#app` by the title. It pulses unless
+  Reduced motion is on (`.reduced-motion` or `prefers-reduced-motion`), where
+  it is plain text.
+- **The critical set** is `presentation.startupGate.components.artLoading.critical`
+  in `content/config`: the 15 faces and the five backdrops the gate and the
+  title's hall draw. An entry may carry `orientation` (`portrait` or
+  `landscape`): the entrance hall and its phone cut are swapped by kit.css's
+  `@media (orientation: portrait)`, so a screen warms only the one its CSS
+  asks for, and "n of N" counts only those (19 either way; review of #1471).
+  `title-city-tower` is not in it: the gate's later `background: #100e0b`
+  covers it, so nothing shows it. `behavior.artLoading.criticalWaitMs` (20 s)
+  caps how long the line counts. Each id the published map lists is warmed
+  once: an image is loaded, a face
+  over http(s) is fetched by the same url its `@font-face` names; under
+  `file://` the faces are already `FontFace` objects from the sidecar and
+  count at once. Nothing waits for it.
+- **The wording is in `content/source/uiStrings.csv`** (`art.loading`,
+  `art.progress`, `art.failed.*` including Settings' `art.failed.settings`,
+  `art.retry`), not in `content/config` as
+  the step's row says: every sentence the interface says is a row of that
+  table (DEVELOPER.md, *Reword the interface*), and `content/config` holds
+  layout numbers and options. `content/config` holds the critical set and its
+  cap. The 3a boot line (`bootLine`) reads `art.loading` too.
+- **The Retry notice** (`art-load-notice`, `src/ui/components/artLoadNotice.js`)
+  is drawn on the title, not on the gate: the gate consumes Enter, Space and
+  every click as its one first press (SPEC §7.1), so a control on it could not
+  be reached by keyboard or controller. It is a non-blocking panel inside the
+  title (in `#app`, so the controller cursor reaches it), redrawn with each
+  title render through `mountTitle`'s `artNotice`; its message is a polite
+  live region, ONE node per title root whose text is rewritten in place (a
+  state not yet announced is written just after the node appears, so it is
+  announced); the notice is the title root's FIRST child, so reading, Tab and
+  cursor order meet it before the menu, as it is drawn at the top. Retry is
+  `aria-disabled` while it runs (a disabled control would drop the focus on
+  it), and a Retry that fails again keeps focus on it. Settings → Art quality
+  offers the same Retry beside its line when the load has failed (the line no
+  longer says to reload the page), also `aria-disabled` while it runs; when it
+  loads, its button hides and the focus moves to the row's live line
+  (`tabindex="-1"`). A Retry the player replaces with a tier switch is not a
+  failure: the notice goes back to what it said (review of #1471).
+  The debug failure banner stays quiet: a failed load only warns.
+- **Retry** (`retryBuiltInArt` in `src/ui/artTier.js`) loads the tier the
+  setting asks for through the same queue as a tier switch, so the 8c rules
+  hold: it supersedes a switch still waiting, a switch made after it
+  supersedes it (`stillWanted`; the newer round also aborts the requests of
+  the load in flight through its `signal`, so a Retry stalled on its 60 s
+  deadline settles as superseded at once and the switch starts; review of
+  #1471), and it keeps the art on screen when it fails
+  (`keepOnFail`). A map that loads goes through `onTierArrived`: the images on
+  screen are re-pointed, the shipped score is applied again (3c's
+  `musicHold().sourceArrived()`), `ART_SOURCE_EVENT` makes the map tiles ask
+  again, and the title, when it is on screen, is drawn again on the new art
+  (`artArrivedAfterFailure`) — once nothing is open over it (Settings, the
+  Load/New door: `whenNoOverlay`), so the control a dialog returns focus to is
+  not replaced under it, and the focused title control keeps the focus. On
+  any other screen (a Retry from the in-run Settings) the same moment sends
+  `ART_REDRAW_EVENT` (`highResArt.js`): re-pointing cannot reach an enemy an
+  error handler already swapped for its placeholder, so combat forgets its
+  cached figures and draws the board again from its own state, keeping the
+  combat, the hand and the turn (review of #1471; `external-play
+  --block-index` checks the enemies become images). **Every placeholder
+  comes back, whatever screen it is on:** each place that swaps a failed
+  image for a glyph or a placeholder, or hides it, marks the node standing in
+  for the art (`data-art-placeholder`, `src/ui/artFallback.js`:
+  `swapOnError`, `hideOnError`, or `markArtPlaceholder` with the site's own
+  builder for `enemySprite`, `classSprite` and `relicIcon`), and main.js runs
+  `restoreArtPlaceholders()` once at that moment, before the screen redraw.
+  That covers the dialogue portraits, co-op enemies, the Armoury, the smith
+  and the compendium with no per-screen listener; a census test refuses an
+  image error handler that swaps or removes art without marking it.
+  `external-play --block-index` checks combat and a dialogue. Screens that
+  only flag a missing image (the map's plate) are re-pointed as before.
+  Combat's own redraw waits until no animation or resolving card owns the
+  board (`busy`), and puts the focus back on the same combatant; a hidden
+  image that re-pointing already loaded is shown at once by its restore; a
+  swap made before the image was attached is still marked; and the notice's
+  state counts as announced only once its words land (review 5394761200).
+  `tests/art-restore.test.mjs` restores `relicIcon`, `classSprite` and
+  `enemySprite` in a small fake DOM, and `--block-index` checks that combat's
+  frames are rebuilt with the focus kept and that the relic icon returns.
+  **A Retry has its own deadline**, `behavior.artLoading.retryWaitMs` (60 s,
+  `RETRY_WAIT_MS`), not the boot's 8 s: nothing waits on a Retry, and a link
+  too slow to bring the ~790 KB light index in 8 s failed every Retry the same
+  way before (review of #1471; `tests/boot-art.test.mjs` loads an index slower
+  than `BOOT_WAIT_MS` on Retry). Under `file://` it reads the `.js` twins (step
+  4). While it runs the loader's state is `loading`, so the offline panel
+  (6b) says the page is still loading, and offers the keep once it has loaded.
+- **The common pack alone still does not make a source** (the question 3c
+  left here). When every art index fails, a verified common index is not
+  published on its own. The likeliest way to get there is a slow link: the
+  19 KB common index arrives inside the boot's 8 s and the ~790 KB light index
+  does not. That case is now answered by the Retry, which has 60 s and so
+  brings the art index, and with it the score and the tiles, on the same
+  link; publishing common alone would give that player fonts, music and tiles
+  over placeholders for a few seconds more, at the cost of a half state
+  (fonts, score and tiles but no art) that every reader of the loader's status
+  (the tier row, the offline keep, `data-built-in-art`, the gates, the Retry
+  offer) would have to learn, and a second "loaded" that is not. The other way
+  there, an art index that fails its pin, is a broken build that no fallback
+  repairs. So the failure stays one state with one Retry.
+- **No per-file high → light fallback.** The light index is not loaded beside
+  a high one (a second ~700 KB index on every high boot), so a high object that
+  fails falls to its element's own placeholder recipe, as any missing file
+  does (§3, *Failure and fallback*, "otherwise to the placeholder recipe").
+- **SPEC §7.1** says the gate "contains only" the wordmark, the ash, the
+  prompt and the build stamp. Step 5 does not change SPEC (CONTRIBUTING rule
+  1): the status line stays outside the gate. Whether SPEC should mention the
+  boot status, the title's wait for the load and the art notice belongs with
+  the 8a SPEC PR ([#1440](https://github.com/cehinds/AshenSpire/pull/1440),
+  awaiting owner approval; section 6, *Written rules*).
+- **The debug profile auto-load** (Settings → Advanced → Defaults & sync, on
+  a dev or test page) used to make the cold boot wait up to 3 s before the
+  gate; with the gate drawn at once that wait was a blank screen (review of
+  #1471). In a pack build the gate is now drawn at once and the title waits
+  for the profile as well as the art (`holdTitleFor`); elsewhere it is as
+  before.
+- **Follow-up (not in this step):** run `tools/startup-gate.mjs` against
+  `build/web` with the indexes held, so the gate's focus and first-press
+  checks cover the wait between a press and the title (today it serves the
+  source tree, which pins no packs; review of #1471). Whether SPEC §7.1 should
+  bound or describe that wait is on the #1440 question list.
+- **`external-play --block-index`** (http only; Chromium cannot intercept a
+  `file://` twin): every `packs/` request is held on the cold boot, and the
+  gate must be drawn before the load settles with its line saying "Loading
+  art…" as a polite, busy live region; a press must not draw the title before
+  the load fails; the title must then carry the notice with Retry, put no pack
+  art in the page, and raise no failure banner; with the block lifted, Retry
+  must load the pinned tier and redraw the title (`ASSET_CSS` in, notice
+  gone); with the index refused, combat and the map must mount on placeholders
+  with no object image. The cold boot runs with the debug profile auto-load on
+  and its GitHub request held, and the gate must be drawn within 2.5 s of
+  that request (it was 3 s late before the fix). Against the 3a boot (the
+  gate drawn after the load, no notice) it is red on ten findings; with the
+  profile branch planted back, on that one. `dev-preview.yml`'s browser-gates job
+  runs it on the web edition. The remove-high pass is 3b's
+  `--expect-tier light`, unchanged; `tests/boot-art.test.mjs` covers both at
+  the loader, the critical set, the line, the warm-up and the Retry.
 
 ### Step 8c as built
 

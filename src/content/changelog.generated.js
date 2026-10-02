@@ -3,6 +3,76 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1488",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Escape and pad B close the map legend before the map",
+    "detail": "With a map node selected and the legend open, one press used to close the node's panel and leave the legend up; it now closes the legend only, and the next press closes the panel. In character creation's Equipment step, Escape went back nowhere while a card's info button was showing, and pad B hid the button instead; both now go back one step, as the Back button does.",
+    "build": "0.7.1.793",
+    "pullRequest": 1488,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1488"
+  },
+  {
+    "id": "pr-1491",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the architecture check passes again",
+    "detail": "Nothing you play changes. The offline folder download named a browser feature inside the game's core rules code, which the automatic architecture check forbids, so the check had failed on every change since. That name now lives with the game's other content settings.",
+    "build": "0.7.1.792",
+    "pullRequest": 1491,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1491"
+  },
+  {
+    "id": "pr-1471",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The web edition shows its art loading on the start screen, and can retry",
+    "detail": "Behind the scenes, in the web edition only: the start screen now appears at once while the art loads, with one line saying how far it has got, and if the art cannot be loaded the title screen says so and offers Retry (also in Settings → Art quality), which loads it again without reloading the page; the downloaded single file is unchanged, and nothing you play changes.",
+    "build": "0.7.1.791",
+    "pullRequest": 1471,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1471"
+  },
+  {
+    "id": "pr-1485",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Fight sounds land at the right moment",
+    "detail": "A boss fight's first draw and turn sting now play when its name card lifts, not hidden behind it. In LAN co-op your turn stings once per round however many players are in the fight, and joining or reloading a fight after someone has already acted no longer replays that action's sounds.",
+    "build": "0.7.1.790",
+    "pullRequest": 1485,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1485"
+  },
+  {
+    "id": "pr-1486",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the Sealed and Draft reload test checks what this build saves",
+    "detail": "Nothing you play changes. The test that loads a save from an older build kept treating every later save as that older build's, so it never checked that a climb saved again after the fix is saved the new way. It now does.",
+    "build": "0.7.1.789",
+    "pullRequest": 1486,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1486"
+  },
+  {
+    "id": "pr-1468",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The first-fight tutorial no longer sits on your cards",
+    "detail": "The coach marks' speech bubble used to land on the first card in your hand, so you couldn't play that card while the tutorial was showing. The bubble now finds a spot clear of your hand. After a window resize, the spotlight now follows its target until the board stops moving, even on a busy machine that draws the board in fits and starts. Pressing Escape on an armed attack card now also drops the card's highlight, not just its targeting. Behind the scenes, the check that every tutorial button can be reached runs at eight screen sizes on every change, and it confirms that the tutorial stays dismissed after a reload.",
+    "build": "0.7.1.788",
+    "pullRequest": 1468,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1468"
+  },
+  {
+    "id": "pr-1473",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the balance report now measures Mana and each act's difficulty",
+    "detail": "Nothing you play changes. The run simulator can now compare whole climbs with and without Mana limits, and report how often each act's boss falls in each region. Both results are written into the balance notes for the owner to tune from later.",
+    "build": "0.7.1.787",
+    "pullRequest": 1473,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1473"
+  },
+  {
     "id": "pr-1459",
     "date": "2026-10-02",
     "group": "2026-10-02",
