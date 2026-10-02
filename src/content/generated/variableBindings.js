@@ -691,6 +691,118 @@ export const variableBindings = [
   {
     "scope": "default",
     "scopeId": "",
+    "nodeId": "partingBlow",
+    "variable": "damage",
+    "balancePath": "classTree.partingBlow.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "ironRebuke",
+    "variable": "damage",
+    "balancePath": "classTree.ironRebuke.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "cinderGrip",
+    "variable": "bleed",
+    "balancePath": "classTree.cinderGrip.bleed"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "mendingGrip",
+    "variable": "heal",
+    "balancePath": "classTree.mendingGrip.heal"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "spentStars",
+    "variable": "restoreMana",
+    "balancePath": "classTree.spentStars.restoreMana"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "fallingStar",
+    "variable": "damage",
+    "balancePath": "classTree.fallingStar.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "lodestarPull",
+    "variable": "vulnerable",
+    "balancePath": "classTree.lodestarPull.vulnerable"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "shardHunger",
+    "variable": "restoreMana",
+    "balancePath": "classTree.shardHunger.restoreMana"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "burningGrace",
+    "variable": "damage",
+    "balancePath": "classTree.burningGrace.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "dazzlingLight",
+    "variable": "weak",
+    "balancePath": "classTree.dazzlingLight.weak"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "anointedBlade",
+    "variable": "strength",
+    "balancePath": "classTree.anointedBlade.strength"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "unsealedScroll",
+    "variable": "draw",
+    "balancePath": "classTree.unsealedScroll.draw"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "lowProfile",
+    "variable": "block",
+    "balancePath": "classTree.lowProfile.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "feint",
+    "variable": "poiseDamage",
+    "balancePath": "classTree.feint.poiseDamage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "spareWhetstone",
+    "variable": "gainEnergy",
+    "balancePath": "classTree.spareWhetstone.gainEnergy"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "whettedGuard",
+    "variable": "block",
+    "balancePath": "classTree.whettedGuard.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
     "nodeId": "restHpSmall",
     "variable": "pct",
     "balancePath": "rest.hpSmallPct"
@@ -729,5 +841,40 @@ export const variableBindings = [
     "nodeId": "emberHound",
     "variable": "damage",
     "balancePath": "powers.emberHound.damage"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "emberSigil",
+    "variable": "block",
+    "balancePath": "sigils.emberSigil.block"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "thornSigil",
+    "variable": "bleed",
+    "balancePath": "sigils.thornSigil.bleed"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "tideSigil",
+    "variable": "n",
+    "balancePath": "sigils.tideSigil.n"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "tideSigil",
+    "variable": "draw",
+    "balancePath": "sigils.tideSigil.draw"
+  },
+  {
+    "scope": "default",
+    "scopeId": "",
+    "nodeId": "hearthSigil",
+    "variable": "block",
+    "balancePath": "sigils.hearthSigil.block"
   }
 ];

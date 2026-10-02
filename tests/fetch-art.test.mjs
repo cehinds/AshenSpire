@@ -11,7 +11,7 @@ import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { crc32, readZip, writeZip } from '../tools/zip.mjs';
-import { fetchArt, readPin, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
+import { fetchArt, markerFor, readPin, verifyRelease, PIN_PATH, MANIFEST_PATH } from '../tools/fetch-art.mjs';
 
 const sha = (buf) => createHash('sha256').update(buf).digest('hex');
 const tmp = () => mkdtempSync(join(tmpdir(), 'fetch-art-'));
@@ -199,5 +199,102 @@ test('a cache copy an earlier run set aside but could not delete is swept by the
     writeFileSync(join(leftover, 'assets', 'old.webp'), 'old');
     await fetchArt({ root, from: zip });
     assert.deepEqual(readdirSync(join(root, '.art-cache')), ['hd-assets-v1'], 'the abandoned copy is gone');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+// SCHEMA 2 (docs/EXTERNAL-ASSETS-PLAN.md §2): the fonts became `common` records.
+// The pinned hd-assets-v1 zip still carries them under assets/fonts/, listed as
+// high in its own schema-1 manifest. That release must keep verifying, and a
+// font whose bytes differ from the common record must still be refused.
+function schema2Fixture({ fontBytes = Buffer.from('font') } = {}) {
+  const root = tmp();
+  const art = Buffer.from('high-a');
+  const font = Buffer.from('font');
+  const rec = (path, data) => ({ path, bytes: data.length, sha256: sha(data) });
+  const ours = { schema: 2, count: 3, assets: {
+    'assets/bg/a.webp': { high: rec('assets/bg/a.webp', art) },
+    'assets/fonts/f.woff2': { common: rec('assets/fonts/f.woff2', font) },
+    'music/title/title.mp3': { common: rec('music/title/title.mp3', Buffer.from('mp3')) },
+  } };
+  const theirs = { schema: 1, count: 2, assets: {
+    'assets/bg/a.webp': { high: rec('assets/bg/a.webp', art) },
+    'assets/fonts/f.woff2': { high: rec('assets/fonts/f.woff2', fontBytes) },
+  } };
+  writeFileSync(join(root, MANIFEST_PATH), JSON.stringify(ours));
+  const zip = join(root, 'hd-assets-v1.zip');
+  writeZip(zip, [{ name: 'art-manifest.json', data: Buffer.from(JSON.stringify(theirs)) },
+    { name: 'assets/bg/a.webp', data: art }, { name: 'assets/fonts/f.woff2', data: fontBytes }]);
+  const pin = { repo: 'cehinds/AshenSpire-art', tag: 'hd-assets-v1', zip: 'hd-assets-v1.zip', sha256: sha(readFileSync(zip)) };
+  writeFileSync(join(root, PIN_PATH), JSON.stringify(pin));
+  return { root, zip, pin, manifest: ours };
+}
+
+test('schema 2: a high release that still carries the fonts verifies against their common records', async () => {
+  const { root, zip, pin, manifest } = schema2Fixture();
+  try {
+    assert.deepEqual(verifyRelease(readFileSync(zip), pin, manifest).problems, []);
+    const { dir } = await fetchArt({ root, from: zip });
+    assert.equal(readFileSync(join(dir, 'assets/fonts/f.woff2'), 'utf8'), 'font');
+    assert.equal((await fetchArt({ root, recheck: true })).reused, true, 'a common id the high zip lacks (music) is not a recheck failure');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('known-bad: schema 2, a carried font that differs from its common record is refused', () => {
+  const { root, zip, pin, manifest } = schema2Fixture({ fontBytes: Buffer.from('other font') });
+  try {
+    const problems = verifyRelease(readFileSync(zip), pin, manifest).problems.join('\n');
+    assert.match(problems, /assets\/fonts\/f\.woff2: the release's file differs/);
+    assert.match(problems, /assets\/fonts\/f\.woff2: the release's art-manifest\.json disagrees/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('known-bad: schema 2, --recheck reports a cached font the release listed and the cache lost', async () => {
+  const { root, zip } = schema2Fixture();
+  try {
+    const { dir } = await fetchArt({ root, from: zip });
+    rmSync(join(dir, 'assets/fonts/f.woff2'));
+    await assert.rejects(fetchArt({ root, recheck: true }), (e) => {
+      const problems = e.problems.join('\n');
+      assert.match(problems, /assets\/fonts\/f\.woff2: missing from the cache/);
+      assert.doesNotMatch(problems, /music\/title\/title\.mp3/, 'a common id the release never listed stays optional');
+      return true;
+    });
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('known-bad: schema 2, a release whose manifest lists a font its zip lacks is refused', () => {
+  const { root, pin, manifest } = schema2Fixture();
+  try {
+    const theirs = { schema: 1, count: 2, assets: { 'assets/bg/a.webp': manifest.assets['assets/bg/a.webp'], 'assets/fonts/f.woff2': { high: manifest.assets['assets/fonts/f.woff2'].common } } };
+    const zip = join(root, 'short.zip');
+    writeZip(zip, [{ name: 'art-manifest.json', data: Buffer.from(JSON.stringify(theirs)) }, { name: 'assets/bg/a.webp', data: Buffer.from('high-a') }]);
+    const buf = readFileSync(zip);
+    const problems = verifyRelease(buf, { ...pin, sha256: sha(buf) }, manifest).problems.join('\n');
+    assert.match(problems, /assets\/fonts\/f\.woff2: not in the release/);
+    assert.doesNotMatch(problems, /music\/title/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('the cache marker folds in the fonts a high release can carry, not music or tiles', () => {
+  const rec = (n) => ({ path: `p${n}`, bytes: n, sha256: String(n).repeat(64).slice(0, 64) });
+  const pin = { sha256: 'a'.repeat(64) };
+  const base = { assets: { 'assets/bg/a.webp': { high: rec(1) }, 'assets/fonts/f.woff2': { common: rec(2) }, 'music/title/title.mp3': { common: rec(3) } } };
+  const mark = markerFor(pin, base);
+  const withTrack = { assets: { ...base.assets, 'music/boss/boss.mp3': { common: rec(4) }, 'map-detail/x/256/0-0.webp': { common: rec(5) } } };
+  assert.equal(markerFor(pin, withTrack), mark, 'a new track or tile leaves the high cache valid');
+  const newFont = { assets: { ...base.assets, 'assets/fonts/f.woff2': { common: rec(6) } } };
+  assert.notEqual(markerFor(pin, newFont), mark, 'a changed font re-verifies the cache');
+});
+
+test('known-bad: schema 2, a common file the release carries but its own manifest does not declare is an extra file', () => {
+  const { root, pin, manifest } = schema2Fixture();
+  try {
+    const theirs = { schema: 1, count: 1, assets: { 'assets/bg/a.webp': manifest.assets['assets/bg/a.webp'] } };
+    const zip = join(root, 'undeclared.zip');
+    writeZip(zip, [{ name: 'art-manifest.json', data: Buffer.from(JSON.stringify(theirs)) },
+      { name: 'assets/bg/a.webp', data: Buffer.from('high-a') }, { name: 'assets/fonts/f.woff2', data: Buffer.from('font') }]);
+    const buf = readFileSync(zip);
+    const problems = verifyRelease(buf, { ...pin, sha256: sha(buf) }, manifest).problems.join('\n');
+    assert.match(problems, /assets\/fonts\/f\.woff2: in the release, not in art-manifest\.json/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });

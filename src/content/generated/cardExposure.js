@@ -421,5 +421,75 @@ export const cardExposure = [
     "cardId": "kilnCleave",
     "damageSchool": "physical",
     "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "hewingArc",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "sunderingChop",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "shieldCrash",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "pinningShot",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "arrowVolley",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "aimedShot",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "barbedArrow",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "whirlingGuard",
+    "damageSchool": "physical",
+    "exposureBuildupPerHit": 0
+  },
+  {
+    "cardId": "cinderSigil",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "ashenMote",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  {
+    "cardId": "pyreOfCharts",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "cinderLance",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 1
+  },
+  {
+    "cardId": "ashfallRite",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
+  },
+  {
+    "cardId": "pyreLight",
+    "damageSchool": "magic",
+    "exposureBuildupPerHit": 5
   }
 ];

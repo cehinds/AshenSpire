@@ -31,6 +31,8 @@ import { createPlayerCombatEntity, createEnemyCombatEntity, stampPlayerPoiseMax,
 import { playerPoiseThresholdReceipt } from '../model/statProjection.js';
 import { playerWeightClass } from '../model/combatWeight.js';
 import { orderedDrawPile } from '../model/deckRules.js';
+import { recoveryRulesProblems, turnRecovery } from '../model/recoveryRules.js';
+import { RECOVERY_POOLS } from '../content/recoveryRules.js';
 export { playerWeightClass };
 import { canSwap, canEquip, cycleSet, equipPiece, ownership, swapCostFor, resolveSwapCostRule, createEquipmentProfileRuleSnapshot, runMods, EQUIPMENT_POOL_FIELDS, moveEquipmentPool, gripOf, gripTags } from '../model/loadout.js';
 // Deck restamping goes through the framework's adopted composition door.
@@ -57,8 +59,49 @@ const QUEUE_GUARD = 10000;
  * first player turn starts (energy set, 5 drawn, playerTurnStart triggers).
  * Setup events are in combat.eventLog.
  */
+const RECOVERY_MAX = { hp: 'maxHp', stamina: 'maxStamina', mana: 'maxMana' };
+// What "using" a pool means for the idle count: spending Stamina or Mana on a
+// card, losing HP to anything.
+const RECOVERY_USE = { hp: 'hpLost', stamina: 'staminaSpent', mana: 'manaSpent' };
+
+function newRecoveryState(rules) {
+  const problems = recoveryRulesProblems(rules);
+  if (problems.length) throw new Error(problems.join('; '));
+  return { rules: structuredClone(rules), idle: { hp: 0, stamina: 0, mana: 0 }, logIndex: 0 };
+}
+
+/**
+ * Settings → Advanced → Recovery, at the end of the player's turn. A pool is
+ * "used" by any spend (Stamina, Mana) or loss (HP) logged since the last
+ * check — the whole round, the enemies' turn included — and its idle streak
+ * counts the turns in a row it was not. Each pool then restores what its row
+ * gives this round (model/recoveryRules.js turnRecovery).
+ */
+function recoverAtTurnEnd(combat) {
+  const p = combat.player;
+  const state = combat.recovery;
+  const used = { hp: false, stamina: false, mana: false };
+  for (let i = state.logIndex; i < combat.eventLog.length; i++) {
+    const event = combat.eventLog[i];
+    for (const pool of RECOVERY_POOLS) {
+      if (event.type === RECOVERY_USE[pool] && (event.amount || 0) > 0
+        && (pool !== 'hp' || event.targetId === p.id)) used[pool] = true;
+    }
+  }
+  for (const pool of RECOVERY_POOLS) {
+    state.idle[pool] = used[pool] ? 0 : state.idle[pool] + 1;
+    const max = p[RECOVERY_MAX[pool]];
+    const amount = turnRecovery({ rules: state.rules, pool, round: combat.turn, idleStreak: state.idle[pool], current: p[pool], max });
+    if (amount > 0) {
+      p[pool] += amount;
+      combat.emit(pool === 'hp' ? 'healed' : `${pool}Recovered`, { targetId: p.id, amount, reason: 'recovery' });
+    }
+  }
+  state.logIndex = combat.eventLog.length;
+}
+
 export function createCombat({
-  registries, rng, player, enemyIds, hpMult = 1, enemyStatuses = [], playerStatuses = [],
+  registries, rng, player, enemyIds, enemyLevels = [], hpMult = 1, enemyStatuses = [], playerStatuses = [],
   // Every enemy's move damage × this (SPEC §13.3 balance.bossTiers: a boss
   // met at a later tier hits harder). Stamped on each enemy entity, so a
   // snapshot carries it; 1 stamps nothing.
@@ -70,6 +113,10 @@ export function createCombat({
   // already had, and `resolveSwapCostRule(registries, meta)` is the one place
   // his Settings choice is read.
   swapCostRule = null, ruleset = null, combatProfiles = {}, handRules = null, ratingsRules = null,
+  // Settings → Advanced → Recovery (model/recoveryRules.js recoveryRulesFor):
+  // null — every recovery setting at its default — keeps the idle-Stamina rule
+  // below and writes no recovery state into the fight or its save.
+  recoveryRules = null,
   // SPEC §14.1 Play in deck order: read once by the caller (runCombat.js) and
   // carried on the fight as `orderedDraw`, so a saved fight keeps its rule.
   orderedDraw = false,
@@ -108,6 +155,7 @@ export function createCombat({
   const combat = {
     ...(ratingsRules?.enabled ? { ratingsRules: structuredClone(ratingsRules) } : {}),
     ...(handRules ? { handRules: structuredClone(handRules), pendingDiscardDraw: 0 } : {}),
+    ...(recoveryRules ? { recovery: newRecoveryState(recoveryRules) } : {}),
     foundation: F.createFoundation(ruleset, combatProfiles, registries),
     registries,
     equipmentProfileRuleSnapshot,
@@ -181,6 +229,9 @@ export function createCombat({
     consumables: player.consumables && typeof player.consumables === 'object' ? { ...player.consumables } : null,
     // …and the companions travelling with the run, mounted below like relics.
     companions: Array.isArray(player.companionIds) ? [...player.companionIds] : [],
+    // SPEC §14.4: a copy of the run's sigil slots. A sigil set into a slot of
+    // an equipped armament mounts with it (syncLoadoutProperties).
+    sigilSlots: player.sigilSlots && typeof player.sigilSlots === 'object' ? structuredClone(player.sigilSlots) : {},
     swapCostRule: swapCostRule || resolveSwapCostRule(registries, null),
     swapsLeft: 0,
     piles: { draw: [], hand: [], discard: [], exhaust: [] },
@@ -223,7 +274,7 @@ export function createCombat({
     if (hpMult !== 1) hp = Math.max(1, Math.round(hp * hpMult));
     combat.enemies.push(
       createEnemyCombatEntity({
-        instanceId: `e${i + 1}`, enemyId, hp, poiseMax: def.poiseMax,
+        instanceId: `e${i + 1}`, enemyId, level: enemyLevels[i], hp, poiseMax: def.poiseMax,
         arcaneExposure: def.arcaneExposure,
         damageResistanceBySchool: def.damageResistanceBySchool,
         damageMult: enemyDamageMult,
@@ -398,7 +449,10 @@ function endPlayerTurn(combat, discardIds = []) {
 
   // …then stamina (framework contract: Mana and Stamina): an idle turn recovers,
   // a spending turn does not — the framework decides, this engine moves the pool.
-  if (!combat.foundation && Number.isFinite(p.maxStamina) && p.maxStamina > 0) {
+  // A fight built under non-default recovery settings recovers every pool by
+  // those rules instead (engine: recoverAtTurnEnd, model/recoveryRules.js).
+  if (combat.recovery && !combat.foundation) recoverAtTurnEnd(combat);
+  else if (!combat.foundation && Number.isFinite(p.maxStamina) && p.maxStamina > 0) {
     const next = combat.registries.framework.staminaTurnEnd({
       currentStamina: p.stamina, maxStamina: p.maxStamina, staminaSpentThisTurn: p.counters.staminaSpentThisTurn || 0,
     });

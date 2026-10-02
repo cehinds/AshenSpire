@@ -14,13 +14,22 @@
 // This is a completability floor, not a balance target: the bot can't pilot
 // combos or curate a deck. Any full-run crash = a real integration bug.
 //
-// Run: node tools/runsim.mjs [runsPerClass=30] [--endless]
+// Run: node tools/runsim.mjs [runsPerClass=30] [--endless] [--incoming] [--level-stat=<attr>]
 //   --endless: Endless Spire mode — acts loop past 3 with per-cycle scaling
 //   (capped at act 15 here); reports climb depth instead of win rate.
 //   --seeded-seats: draw the seat order per seed (SPEC §13.4) instead of the
 //   default order. Off by default so the win-rate corpus keeps comparing the
 //   same climbs it always measured (§13.6); on, it measures every order — the
 //   distribution a real run draws, and the one balance.bossTiers is tuned on.
+//   --selftest: the CI rung's own integrity (FINISH §3, *A headless full run in
+//   CI*). Plants a throw inside a card's resolution, a fight that never advances and a map
+//   whose path never reaches its boss, and requires each to exit 1 with a
+//   CRASH or SOFT-LOCK line; then requires a clean fleet to exit 0 and two
+//   fleets on the same seeds to print the same report.
+//   --plant=<fight-throw|combat-stall|map-cycle>: one of those plants alone.
+//   --step-budget=<n>: map nodes an act may walk before it is a soft-lock
+//   (default: the act map's own node count — a path visits one node a floor,
+//   so a walk longer than the map has nodes is going round in a circle).
 
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
@@ -46,6 +55,8 @@ import {
 import { createLocationVisit, arriveAt, restAt, leaveLocation } from '../src/engine/locations.js';
 import { cardRewardPlan } from '../src/model/rewardplan.js';
 import { endlessActInfo, ENDLESS_HP_PER_LOOP, ENDLESS_STR_PER_LOOP } from '../src/content/customMods.js';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const argv = process.argv.slice(2);
 // THE XP-CURVE A/B (plan phase 6). Constantine's acceptance test for
@@ -88,6 +99,24 @@ const SEEDED_SEATS = argv.includes('--seeded-seats');
 const DEEP = argv.includes('--deep');
 // Plan phase 4a: report the skill level each track reached, averaged per class.
 const SKILL_LEVELS = argv.includes('--skill-levels');
+// THE INCOMING-DAMAGE BOOK (A3, 2026-09-27). `--incoming` tallies, per class,
+// act and pool, what the enemies swung at the player in each fight (before
+// block) and the HP that got through, plus the maxHp and level each act opened
+// on. Starting pools are retuned from this measurement, not from an older
+// figure. READ-ONLY over the finished fight's eventLog, as `--deep` is.
+const INCOMING = argv.includes('--incoming');
+// `--level-stat=<attributeId>` — which attribute the bot puts its level-up
+// points into (default constitution, as it always has). The Actions breakpoint
+// is judged by comparing fleets that differ only here.
+// A PATH is a comma list of `attribute[:cap]`: each point goes to the first
+// entry still under its cap, so `dexterity:5,constitution` is "DEX to 5, then
+// CON" — the question a player at a shrine actually asks.
+const LEVEL_STAT = (argv.find((a) => a.startsWith('--level-stat=')) || '').slice('--level-stat='.length) || 'constitution';
+const LEVEL_PATH = LEVEL_STAT.split(',').map((entry) => {
+  const [id, cap] = entry.split(':');
+  return { id: id.trim(), cap: cap === undefined ? Infinity : Number(cap) };
+});
+const levelPick = (run) => (LEVEL_PATH.find((step) => ((run.attributes && run.attributes[step.id]) || 0) < step.cap) || LEVEL_PATH[LEVEL_PATH.length - 1]).id;
 // THE CON BAND (Vira, 2026-08-15). D22 put HP back on Constitution while D10
 // already had Stamina there, so one attribute now pays two resources and the
 // creation screen's five bonus points became a question nobody had measured.
@@ -108,6 +137,10 @@ const SKILL_LEVELS = argv.includes('--skill-levels');
 // than silently clamped into a number this tool would then report as a band.
 // Omit the flag and the fleet runs the shipped presets, exactly as before.
 const SPEND = (argv.find((a) => a.startsWith('--spend=')) || '').slice('--spend='.length) || null;
+for (const step of LEVEL_PATH) {
+  if (!REG.attributes.ids().includes(step.id)) throw new Error(`--level-stat: '${step.id}' is not an attribute id (${REG.attributes.ids().join(', ')})`);
+  if (!(step.cap > 0)) throw new Error(`--level-stat: '${step.id}' cap must be a positive number`);
+}
 function spendAllocation(classId) {
   if (!SPEND) return undefined;
   const ids = REG.attributes.ids();
@@ -155,12 +188,48 @@ let levelUpsInWins = 0;
 // counter that survived the first fleet would report the OFF side's level-ups
 // and cinders inside the ON side's lines.
 function resetFleetCounters() {
+  openingAll.length = 0;
   poured = 0; graces = 0;
   levelUps = 0; levelsReached = 0; levelsReachedInWins = 0; xpEarnedInWins = 0; cinderLeftAtEnd = 0; levelUpsInWins = 0; skillDraftsTaken = 0; classDraftsTaken = 0;
 }
 const N = Number(argv.find((a) => /^\d+$/.test(a)) || 30);
 const ENDLESS_ACT_CAP = 15; // sim guard only — the game itself has no cap
 const STALEMATE_TURNS = 150; // a fight still open this long is conceded (botFight)
+// THE CI RUNG (FINISH §3). A crash is an exception out of a run; a SOFT-LOCK is
+// a run that stops making progress — a fight whose actions never resolve it, or
+// a map walk that never reaches its boss. Both exit 1. Neither number below is
+// game balance: they are the simulator's own patience, and both are flags.
+class SoftLock extends Error {}
+const PLANTS = ['fight-throw', 'combat-stall', 'map-cycle'];
+const PLANT = (argv.find((a) => a.startsWith('--plant=')) || '').slice('--plant='.length) || null;
+if (PLANT && !PLANTS.includes(PLANT)) throw new Error(`--plant=${PLANT} is not a plant (${PLANTS.join(', ')})`);
+const STEP_BUDGET_ARG = (argv.find((a) => a.startsWith('--step-budget=')) || '').slice('--step-budget='.length);
+const STEP_BUDGET = STEP_BUDGET_ARG ? Number(STEP_BUDGET_ARG) : null;
+if (STEP_BUDGET_ARG && !(Number.isInteger(STEP_BUDGET) && STEP_BUDGET > 0)) throw new Error(`--step-budget expects a positive integer — got '${STEP_BUDGET_ARG}'`);
+const ACTION_GUARD = 9000; // bot actions one fight may take before it is a soft-lock
+// THE ENGINE'S DOOR REFUSALS (src/engine/combat.js doPlayCard / doUseFlask and
+// combatRules.js assertFoundationPlayable): the checks that turn an intent away
+// before anything resolves. The bot may set a card or flask aside for one of
+// these and play on. ANY OTHER error out of a dispatch is an engine bug in the
+// middle of resolution and escapes as a CRASH — a catch-all here once let a
+// throw in card resolution pass the rung green (#1437 review).
+const ENGINE_REFUSALS = [
+  /^Cards can only be played on the player turn$/,
+  /^Flasks can only be used on the player turn$/,
+  /^Card '.*' is not in hand$/,
+  /^'.*' is unplayable$/,
+  /^Not enough (energy|mana|stamina) \(need -?\d+, have -?\d+\)$/,
+  /^Invalid target '.*'$/,
+  /^No living enemy to target$/,
+  /^Evade is already active$/,
+  /^Dodge Roll already used this turn$/,
+  /^That stance is already active$/,
+  /^No \w+ flask charges$/,
+  /^No flask in slot .*$/,
+];
+function setAsideOrCrash(e) {
+  if (!ENGINE_REFUSALS.some((re) => re.test(String(e && e.message)))) throw e;
+}
 
 // ---- the deep tally (read-only over a finished fight's eventLog) ------------
 function newDeepStats() {
@@ -196,6 +265,68 @@ function tallyFight(ds, combat, hpEntering) {
   ds.energyBudget += turns * combat.player.energyMax;
 }
 
+// ---- the incoming-damage book (read-only, --incoming) ------------------------
+function newIncomingBook() { return { fights: {}, acts: {} }; }
+// Every class's opening-three total, pooled across the fleet: the one figure
+// a shared pool row (derivedStats hp.base) is sized against.
+const openingAll = [];
+function tallyIncoming(book, combat, run, pool) {
+  let incoming = 0; let hpLost = 0;
+  for (const ev of combat.eventLog) {
+    if (ev.targetId !== 'player') continue;
+    if (ev.type === 'damageDealt') incoming += ev.amount;
+    else if (ev.type === 'hpLost') hpLost += ev.amount;
+  }
+  const key = `${Math.min(run.actNumber || 1, 3)}:${pool}`;
+  (book.fights[key] = book.fights[key] || []).push({ incoming, hpLost, maxHp: combat.player.maxHp });
+  // THE OPENING FIGHTS: the starting pool is what the first fights of a run
+  // are fought on, before a level or a shrine has raised it. Bucketed by the
+  // run's fight ordinal (1, 2, 3), with the HP it walked in on and whether it
+  // walked out.
+  run._fightOrdinal = (run._fightOrdinal || 0) + 1;
+  if (run._fightOrdinal <= 3) {
+    run._openingLost = (run._openingLost || 0) + hpLost;
+    if (run._fightOrdinal === 3 || combat.result !== 'victory') {
+      (book.fights.openingSum = book.fights.openingSum || []).push(run._openingLost);
+      openingAll.push(run._openingLost);
+    }
+    const k = `open:${run._fightOrdinal}`;
+    (book.fights[k] = book.fights[k] || []).push({ incoming, hpLost, maxHp: combat.player.maxHp, hpIn: run.hp, lost: combat.result !== 'victory' });
+  }
+}
+function noteActOpen(book, run, act) {
+  if (!book) return;
+  const row = book.acts[act] = book.acts[act] || { runs: 0, maxHp: 0, level: 0, energyMax: 0 };
+  row.runs++; row.maxHp += run.maxHp; row.level += (run.level && run.level.level) || 1; row.energyMax += run.energyMax || 0;
+}
+function printIncoming(book, runs) {
+  const q = (xs, p) => { const s = [...xs].sort((a, b) => a - b); return s.length ? s[Math.min(s.length - 1, Math.floor(p * s.length))] : 0; };
+  const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
+  for (const n of [1, 2, 3]) {
+    const rows = book.fights[`open:${n}`] || [];
+    if (!rows.length) continue;
+    const lost = rows.map((r) => r.hpLost);
+    console.log(`  incoming run fight #${n}: ${rows.length} fights on mean maxHp ${mean(rows.map((r) => r.maxHp)).toFixed(1)}, walked in on ${mean(rows.map((r) => r.hpIn)).toFixed(1)}` +
+      `  incoming mean ${mean(rows.map((r) => r.incoming)).toFixed(1)}  hp lost mean ${mean(lost).toFixed(1)} median ${q(lost, 0.5)} p90 ${q(lost, 0.9)} max ${Math.max(...lost)}  lost ${rows.filter((r) => r.lost).length}`);
+  }
+  if (book.fights.openingSum) {
+    const sum = book.fights.openingSum;
+    console.log(`  incoming run fights #1-#3 together: hp lost mean ${mean(sum).toFixed(1)} median ${q(sum, 0.5)} p90 ${q(sum, 0.9)} max ${Math.max(...sum)}`);
+  }
+  for (const act of [1, 2, 3]) {
+    const open = book.acts[act];
+    if (open) console.log(`  incoming act ${act}: opened by ${open.runs}/${runs} runs on mean maxHp ${(open.maxHp / open.runs).toFixed(1)} at mean level ${(open.level / open.runs).toFixed(1)}, mean Actions ${(open.energyMax / open.runs).toFixed(2)}`);
+    for (const pool of ['normal', 'elite', 'boss']) {
+      const rows = book.fights[`${act}:${pool}`] || [];
+      if (!rows.length) continue;
+      const inc = rows.map((r) => r.incoming); const lost = rows.map((r) => r.hpLost);
+      console.log(`    ${pool.padEnd(6)} fights ${String(rows.length).padStart(4)} (${(rows.length / runs).toFixed(1)}/run)` +
+        `  incoming mean ${mean(inc).toFixed(1)} p90 ${q(inc, 0.9)}` +
+        `  hp lost mean ${mean(lost).toFixed(1)} median ${q(lost, 0.5)} p90 ${q(lost, 0.9)} max ${Math.max(...lost)}`);
+    }
+  }
+}
+
 // ---- the combat bot (same policy as tests/balance) --------------------------
 function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   const enc = REG.encounters.get(encounterId);
@@ -208,6 +339,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   const combat = createRunCombat({
     registries: REG, rng, run,
     enemyIds: enc.enemies,
+    encounter: enc,
     hpMult: boss ? (cm.loopMult || 1) * boss.hp : (cm.hpMult || 1),
     enemyDamageMult: boss ? boss.damage : 1,
     enemyStatuses: cm.enemyStatuses || [],
@@ -218,7 +350,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   // outpacing the enemy. A player there can only concede, so a fight still
   // open after STALEMATE_TURNS turns is scored as lost and counted as a
   // stalemate, and the crash below is kept for a bot stuck inside one turn.
-  while (!combat.result && guard++ < 9000 && combat.turn <= STALEMATE_TURNS) {
+  while (!combat.result && guard++ < ACTION_GUARD && combat.turn <= STALEMATE_TURNS) {
     // Drink a flask when hurt (below 55% HP) — humans use them; a bot that
     // hoards flasks under-measures the sustain the game actually provides.
     if (combat.player.hp < combat.player.maxHp * 0.55) {
@@ -234,7 +366,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
       // read zero: the refill was topping up a pool nothing ever spent.
       const ch = combat.player.flaskCharges;
       if (ch && (ch.hpCurrent || 0) > 0) {
-        try { dispatch(combat, { type: 'useFlask', chargeKind: 'hp' }); continue; } catch (e) { /* fall through */ }
+        try { dispatch(combat, { type: 'useFlask', chargeKind: 'hp' }); continue; } catch (e) { setAsideOrCrash(e); /* refused: fall through */ }
       }
       if (combat.player.flasks.length) {
         const fdef = REG.flasks.get(combat.player.flasks[0].flaskId);
@@ -243,25 +375,39 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
           dispatch(combat, { type: 'useFlask', slot: 0, targetId: fdef.targeted ? ftgt && ftgt.id : undefined });
           continue;
         } catch (e) {
-          /* flask rejected — fall through to cards */
+          setAsideOrCrash(e); /* flask refused — fall through to cards */
         }
       }
     }
     // Leftmost card affordable in every pool (tools/simbot.mjs); a card the
-    // engine still refuses is set aside for the turn, and the bot plays on.
+    // engine still refuses at its door (ENGINE_REFUSALS) is set aside for the
+    // turn, and the bot plays on. Any other throw is a CRASH.
     const refused = refusalsFor(combat);
     const card = affordableCards(REG, combat, refused)[0];
     const tgt = combat.enemies.find((e) => e.alive);
-    if (!card) { dispatch(combat, { type: 'endTurn' }); continue; }
+    if (!card) {
+      // Plants (--selftest): a throw inside a fight must surface as a CRASH,
+      // and a turn that never ends must surface as a SOFT-LOCK.
+      if (PLANT !== 'combat-stall') dispatch(combat, { type: 'endTurn' });
+      continue;
+    }
     try {
+      // The fight-throw plant throws from INSIDE this dispatch, the way an
+      // engine bug in card resolution would, so the selftest proves the catch
+      // below lets it escape as a CRASH rather than set the card aside.
+      if (PLANT === 'fight-throw') throw new Error(`planted: card resolution threw inside ${encounterId}`);
       dispatch(combat, { type: 'playCard', cardInstanceId: card.instanceId, targetId: tgt && tgt.id });
     } catch (e) {
+      setAsideOrCrash(e);
       refused.add(card.instanceId);
     }
   }
-  if (guard >= 9000) throw new Error(`combat stalled: ${encounterId}`);
+  // Still open, not conceded, and out of actions: a fight that resolves on
+  // exactly the last allowed action is not a soft-lock.
+  if (!combat.result && combat.turn <= STALEMATE_TURNS && guard >= ACTION_GUARD) throw new SoftLock(`combat stalled: ${encounterId} took ${ACTION_GUARD} bot actions on turn ${combat.turn} without resolving`);
   const outcome = combat.result || 'stalemate';
   if (deepStats) tallyFight(deepStats, combat, run.hp);
+  if (INCOMING && run._incoming) tallyIncoming(run._incoming, combat, run, enc.pool);
   // THE WRITE-BACK THE REAL RUN LOOP PERFORMS (engine/runCombat.js runCombatEnd,
   // the first thing main.js onCombatEnd does): HP, Mana and Stamina carry to
   // the next fight, as they do for a player. Only HP used to, so every fight
@@ -282,7 +428,7 @@ function botFight(run, rng, encounterId, cm = {}, deepStats = null) {
   // The levels this fight bought are kept for afterVictory's card rows (the
   // level card of SPEC §15.1), as main.js hands levelAward.levelUps on.
   run._fightLevelUps = awardLevelXp(REG, run, combatLevelXp(REG, {
-    victory: combat.result === 'victory', pool: enc.pool, kills: combat.eventLog.filter((e) => e.type === 'enemyDied').length,
+    victory: combat.result === 'victory', pool: enc.pool, enemies: combat.enemies,
   })).levelUps;
   return outcome;
 }
@@ -342,6 +488,7 @@ function afterVictory(run, rng, pool) {
 function simulateRun(classId, seed, ds = null) {
   const run = createRunState({ seed, classId, registries: REG, attributes: spendAllocation(classId) });
   run._id = createIdGen('sim');
+  if (INCOMING && ds && ds.incoming) run._incoming = ds.incoming;
   run.seenEvents = [];
   const rng = createRng(seed);
   // SPEC §13.4: the seeded order rides its own stream, so drawing it here moves
@@ -377,6 +524,7 @@ function simulateRun(classId, seed, ds = null) {
   for (let act = 1; act <= lastAct; act++) {
     run.actNumber = act;
     result.act = act;
+    noteActOpen(run._incoming, run, act);
     // Endless: acts past 3 reuse act 1-3 content, scaled per completed cycle.
     const { contentAct, loop } = ENDLESS ? endlessActInfo(act) : { contentAct: act, loop: 0 };
     const seat = seatAtTier(run.seatOrder, contentAct);
@@ -391,6 +539,11 @@ function simulateRun(classId, seed, ds = null) {
     // The ONE boot path (#54) — same module main.js and session.mjs use, so a
     // signature change lands on the game and the harnesses in the same act.
     const map = buildActMap(REG, rng, seat, contentAct, null, { history: run.history });
+    // Plant (--selftest): every node a skipped merchant whose only exit is
+    // itself — a walk that never fights, never dies and never reaches a boss.
+    if (PLANT === 'map-cycle') for (const node of Object.values(map.nodes)) { node.type = 'merchant'; node.resolved = null; node.next = [node.id]; }
+    const stepBudget = STEP_BUDGET || Object.keys(map.nodes).length;
+    let steps = 0;
 
     let currentId = null;
     let nextIds = map.startIds;
@@ -399,6 +552,9 @@ function simulateRun(classId, seed, ds = null) {
       const options = nextIds.map((id) => map.nodes[id]);
       const hurt = run.hp < run.maxHp * 0.55;
       const pick = (hurt && options.find((n) => n.type === 'shrine')) || options[0];
+      if (++steps > stepBudget) {
+        throw new SoftLock(`act ${act} walked ${steps - 1} map nodes (budget ${stepBudget}) without reaching its boss`);
+      }
       currentId = pick.id;
       result.floor = pick.floor;
 
@@ -477,7 +633,7 @@ function simulateRun(classId, seed, ds = null) {
         // level's points land (plan phase 6). Constitution every time: the
         // greedy pilot measures how many levels the climb pays, not which.
         for (let plan = levelUpPlan(REG, run); plan.offerable; plan = levelUpPlan(REG, run)) {
-          applyLevelUp(REG, run, 'constitution');
+          applyLevelUp(REG, run, levelPick(run));
           result.levelUps = (result.levelUps || 0) + 1;
           levelUps += 1;
         }
@@ -501,21 +657,31 @@ function simulateRun(classId, seed, ds = null) {
 // ---- fleet -------------------------------------------------------------------
 function fleet() {
 console.log(`AshenSpire ${ENDLESS ? `ENDLESS simulation (act cap ${ENDLESS_ACT_CAP})` : 'full-run simulation'} — ${N} runs/class, greedy bot`);
-console.log(`grace refill: ${GRACE_ON ? 'ON' : 'OFF'}` + (SPEND ? `  |  allocation: shipped preset with every movable point moved into ${SPEND}` : '  |  allocation: shipped class presets') + '\n');
+console.log(`grace refill: ${GRACE_ON ? 'ON' : 'OFF'}  |  level-up points into ${LEVEL_STAT}` + (SPEND ? `  |  allocation: shipped preset with every movable point moved into ${SPEND}` : '  |  allocation: shipped class presets') + '\n');
 let crash = null;
+let crashes = 0, softLocks = 0;
 const tally = { wins: 0, runs: 0, acts: 0, eventChoices: 0, questSteps: 0 };
 const skillLevelsByClass = {};
 for (const cls of REG.classes.all()) {
   let wins = 0, acts = 0, floors = 0, maxAct = 0;
   const deaths = {};
-  const ds = DEEP ? newDeepStats() : null;
+  const ds = DEEP || INCOMING ? newDeepStats() : null;
+  if (ds && INCOMING) ds.incoming = newIncomingBook();
   for (let i = 1; i <= N; i++) {
     let r;
     try {
       r = simulateRun(cls.id, (i * 2654435761) >>> 0, ds);
     } catch (e) {
       crash = `${cls.id} seed#${i}: ${e.message}`;
-      console.error(`CRASH ${crash}`);
+      if (e instanceof SoftLock) { softLocks++; console.error(`SOFT-LOCK ${crash}`); }
+      else { crashes++; console.error(`CRASH ${crash}`); }
+      break;
+    }
+    // Every run ends in a win or a death; one that returns neither stopped
+    // without an outcome, which is a soft-lock by another road.
+    if (!r.victory && !r.deaths) {
+      crash = `${cls.id} seed#${i}: the run returned neither a win nor a death`;
+      softLocks++; console.error(`SOFT-LOCK ${crash}`);
       break;
     }
     if (r.victory) wins++;
@@ -542,7 +708,8 @@ for (const cls of REG.classes.all()) {
     const line = skillTracks(REG).map((t) => `${t.id} ${((levels[t.id] || 0) / N).toFixed(1)}`).join('  ');
     console.log(`  skill levels/run: ${line}`);
   }
-  if (ds && ds.fights) {
+  if (ds && ds.incoming) printIncoming(ds.incoming, N);
+  if (DEEP && ds && ds.fights) {
     const perTurn = (x) => (x / ds.turns).toFixed(2);
     const perFight = (x) => (x / ds.fights).toFixed(1);
     console.log(
@@ -565,7 +732,16 @@ for (const cls of REG.classes.all()) {
     }
   }
 }
-if (crash) { console.error('\nFULL-RUN SIM FAILED'); process.exit(1); }
+if (crash) {
+  console.error('\nFULL-RUN SIM FAILED');
+  console.log(`RESULT: FAILED — ${crashes} crash${crashes === 1 ? '' : 'es'}, ${softLocks} soft-lock${softLocks === 1 ? '' : 's'}: ${crash}.`);
+  process.exit(1);
+}
+if (INCOMING && openingAll.length) {
+  const sorted = [...openingAll].sort((a, b) => a - b);
+  const at = (p) => sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))];
+  console.log(`\nincoming, every class pooled: HP lost over a run's first three fights — mean ${(sorted.reduce((a, b) => a + b, 0) / sorted.length).toFixed(1)} median ${at(0.5)} p75 ${at(0.75)} p90 ${at(0.9)} over ${sorted.length} runs`);
+}
 console.log(`\ngraces visited ${graces}, flask charges/grants poured ${poured}` + (GRACE_ON && graces && !poured ? '  <-- REFILL RAN DEAD' : ''));
 const levelsPerWin = levelsReachedInWins / Math.max(1, tally.wins);
 const inBand = tally.wins > 0 && levelsPerWin >= 10 && levelsPerWin <= 20;
@@ -577,10 +753,14 @@ console.log(`class tree picks: ${classDraftsTaken} over ${tally.runs} runs = ${(
 console.log(`skill drafts taken: ${skillDraftsTaken} over ${tally.runs} runs = ${(skillDraftsTaken / Math.max(1, tally.runs)).toFixed(1)} per run (plan phase 4b: one per track per door, the bot takes the first card)`);
 console.log(`cinder economy: ${cinderLeftAtEnd} left at run end = ${(cinderLeftAtEnd / Math.max(1, tally.runs)).toFixed(0)} cinders per run unspent (the bot buys nothing at merchants; cinders buy no level since plan phase 6)`);
 console.log('No crashes across all simulated runs — full loop (map → combat → rewards → events → acts) is integration-clean.');
+const classCount = REG.classes.all().length;
+console.log(`RESULT: ${tally.runs} runs over ${classCount} classes (${N} fixed seeds each), every one to a win or a death — ${tally.wins} win${tally.wins === 1 ? '' : 's'}, 0 crashes, 0 soft-locks.`);
 return { ...tally, graces, poured };
 }
 
-if (!GRACE_AB) {
+if (argv.includes('--selftest')) {
+  selftest();
+} else if (!GRACE_AB) {
   fleet();
 } else {
   // A/B. Same seeds both sides (simulateRun derives its seed from the class and
@@ -601,4 +781,36 @@ if (!GRACE_AB) {
   console.log(`  ${N} seeds per class, three classes. It measures SUSTAIN, not play. A human curates`);
   console.log('  a deck and saves a flask for a boss; this bot does neither, so read the sign and');
   console.log('  the order of magnitude, not the decimal. It is a number to argue from, not a verdict.');
+}
+
+// ---- --selftest: can the CI rung still go red? -------------------------------
+// Each plant runs in its own process through the same argv door a user types,
+// one seed a class, and must exit 1 naming the kind of failure it planted. A
+// plant that runs past its time limit counts as NOT caught: the rung would
+// have hung CI instead of failing it.
+function selftest() {
+  const self = fileURLToPath(import.meta.url);
+  const runSelf = (args) => spawnSync(process.execPath, [self, ...args], { encoding: 'utf8', timeout: 60000 });
+  const expect = { 'fight-throw': 'CRASH', 'combat-stall': 'SOFT-LOCK', 'map-cycle': 'SOFT-LOCK' };
+  const bad = [];
+  for (const plant of PLANTS) {
+    const r = runSelf([`--plant=${plant}`, '1']);
+    const kind = expect[plant];
+    const said = new RegExp(`^${kind} `, 'm').test(r.stderr || '');
+    if (r.error || r.status !== 1 || !said) {
+      bad.push(`${plant}: wanted exit 1 and a ${kind} line, got ${r.error ? r.error.code || r.error.message : `exit ${r.status}`}${said ? '' : `, no ${kind} line`}`);
+    } else console.log(`  caught  ${plant} → ${kind}`);
+  }
+  const a = runSelf(['2']);
+  const b = runSelf(['2']);
+  if (a.status !== 0) bad.push(`clean control: wanted exit 0, got exit ${a.status}\n${a.stderr}`);
+  else console.log('  green   clean control (2 seeds a class) exits 0');
+  if (a.stdout !== b.stdout) bad.push('determinism: two fleets on the same seeds printed different reports');
+  else console.log('  same    two fleets on the same seeds print the same report');
+  if (bad.length) {
+    for (const line of bad) console.error(`SELFTEST FAIL ${line}`);
+    console.log(`RESULT: FAILED — ${bad.length} of ${PLANTS.length + 2} selftest checks did not hold.`);
+    process.exit(1);
+  }
+  console.log(`RESULT: ${PLANTS.length}/${PLANTS.length} plants caught (a throw inside a fight, a stalled fight, a map walk that never reaches its boss), a clean fleet exits 0 and repeats seed for seed.`);
 }

@@ -64,6 +64,20 @@ import { check, REPO_ROOT, release, versionPrefix, sourceDigest, whichCommits, O
 /** The files a real tree needs for every row to have something to rule on. */
 const COPY = ['index.html', 'styles', 'src', 'assets', 'assets-mobile', 'asset-data', 'build', 'buildordinal.json', ...BUILD_IDENTITY_FILES];
 
+// CI spreads the expensive real-tree and git-history fixtures across Windows
+// runners. Each shard still enters the same check; the default runs everything.
+const shardArg = process.argv.indexOf('--shard');
+const shardText = shardArg < 0 ? 'all' : process.argv[shardArg + 1];
+const shardMatch = /^(\d+)\/(\d+)$/.exec(shardText || '');
+if (shardText !== 'all' && (!shardMatch || !Number.isSafeInteger(Number(shardMatch[1]))
+  || !Number.isSafeInteger(Number(shardMatch[2])) || Number(shardMatch[2]) < 1
+  || Number(shardMatch[1]) >= Number(shardMatch[2]))) {
+  console.error('buildversion --selftest: --shard must be all or an index/count such as 0/4');
+  process.exit(2);
+}
+const SHARD = shardText === 'all' ? null : { index: Number(shardMatch[1]), count: Number(shardMatch[2]) };
+const inShard = (index) => !SHARD || index % SHARD.count === SHARD.index;
+
 // macOS can report ENOTEMPTY for a just-closed Git worktree while directory
 // entries settle. Node retries that class of recursive-removal failure only
 // when maxRetries is non-zero. Keep the wait bounded and keep the final error:
@@ -600,7 +614,8 @@ function ordinalHistory() {
   );
 
   const WANT = { red: false, green: true, unknown: null };
-  for (const [second, want, label, first = null, moveDigest = true] of CASES) {
+  const selected = CASES.filter((_, index) => inShard(index));
+  for (const [second, want, label, first = null, moveDigest = true] of selected) {
     const dir = build(second, first, moveDigest);
     try {
       const row = check(dir).rows.find((r) => r.name === 'H ORDINAL INCREASES');
@@ -624,7 +639,7 @@ function ordinalHistory() {
   // DEVELOPER.md warns against a second copy of a corpus size for exactly this,
   // and this repo has paid for it before (opsctl.test.mjs spelled its contract
   // count into its own label).
-  return { failures, cases: CASES.length };
+  return { failures, cases: selected.length };
 }
 
 /** Returns { failures, cases }; prints one line per case. `cases` is what RAN. */
@@ -719,7 +734,8 @@ export async function selftest() {
   }
 
   // ---- the corpus -----------------------------------------------------------
-  for (const p of PLANTS) {
+  const selectedPlants = PLANTS.filter((_, index) => inShard(index));
+  for (const p of selectedPlants) {
     const root = fresh();
     try {
       p.plant(root, rel);
@@ -764,7 +780,7 @@ export async function selftest() {
   console.log('');
   console.log('  --which reads HISTORY, not files, so no plant above can reach it. These enter');
   console.log('  at whichCommits() over a real repo with a real merge in it.');
-  const trace = traceability();
+  const trace = inShard(0) ? traceability() : { failures: 0, cases: 0 };
   const TRACE = trace.cases;
   failures += trace.failures;
 
@@ -778,7 +794,7 @@ export async function selftest() {
   console.log('');
   console.log(`  the digest this tree derives: ${sourceDigest().digest}`);
   console.log('');
-  const total = PLANTS.length + TRACE + HIST;
+  const total = selectedPlants.length + TRACE + HIST;
   if (failures) {
     console.log(`buildversion --selftest: RED — ${failures} of ${total} known-bads walked through the check.`);
     return 1;
@@ -786,7 +802,7 @@ export async function selftest() {
   // #12: the counted claim terminates the line; the qualifier prints below it.
   console.log(`buildversion --selftest: OK — ${total}/${total} known-bads observed red`);
   console.log('  each by the row or command that owns it,');
-  console.log(`  ${PLANTS.length} planted as real edits to a real tree and entered at check(root), ${TRACE} planted as a real`);
+  console.log(`  ${selectedPlants.length} planted as real edits to a real tree and entered at check(root), ${TRACE} planted as a real`);
   console.log(`  git history and entered at whichCommits(), and ${HIST} planted as a real tree committed twice —`);
   console.log('  the same three doors the real runs use. That last group is watched across all three');
   console.log('  verdicts — RED, GREEN and UNKNOWN — each case naming the one it expects, so a row');

@@ -34,7 +34,7 @@
 //
 // Usage
 //   node tools/screenreach.mjs                    source tree via tools/serve.mjs
-//   node tools/screenreach.mjs --dist             dist/AshenSpire.html over file://
+//   node tools/screenreach.mjs --dist             dist/AshenSpire.html (file://; http if pack-shaped — browser.mjs buildPageUrl)
 //   node tools/screenreach.mjs --only 390x844
 //   CHROME=/path/to/chrome node tools/screenreach.mjs
 //
@@ -52,11 +52,11 @@
 // legibility, and cannot see a control that only appears mid-interaction.
 
 import { spawn } from 'node:child_process';
-import { launchBrowser } from './browser.mjs';
+import { buildPageUrl, launchBrowser } from './browser.mjs';
 import { existsSync, mkdtempSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { serve } from './serve.mjs';
 
 // DOOR, and why --selftest exists (Rune, 2026-08-15). The real input is the
@@ -111,9 +111,46 @@ if (process.argv.includes('--selftest')) {
       {
         name: 'controls inside collapsed disclosures are counted as visible targets',
         file: 'tools/screenreach.mjs',
-        find: "\n      && !e.closest('details:not([open])')",
+        find: "\n      && !e.closest('details:not([open]), [inert]')",
         replace: '',
         expectRed: /\b[1-9]\d* COVERED\b|UNREACHABLE/,
+      },
+      {
+        // The closed reveal is now zero-height, so dropping only `inert`
+        // leaves no covered control to find. Restore the actual bad geometry
+        // too: an interactive closed tray floating across the map canvas.
+        name: 'the closed map tray stays tall and interactive over the board',
+        edits: [
+          { file: 'src/ui/screens/map.js', find: 'trayReveal.inert = true;', replace: 'trayReveal.inert = false;', all: true },
+          { file: 'styles/map.css', append: '.map-tray[data-open="false"] { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; height: 50vh !important; pointer-events: auto !important; z-index: 9999 !important; } .map-tray[data-open="false"] > .map-tray-reveal { height: 50vh !important; pointer-events: auto !important; }' },
+        ],
+        expectRed: /^\s*map\s.*[1-9]\d* COVERED/m,
+      },
+      {
+        name: 'the truncated-card chevron is clipped at the top of the hand',
+        file: 'styles/kit.css',
+        find: 'top: max(calc(-1 * var(--tap-floor) + 16px / var(--ui-zoom, 1)), calc(4px / var(--ui-zoom, 1) - var(--hand-card-y)));',
+        replace: 'top: calc(-1 * var(--tap-floor));',
+        expectRed: /card More control clipped by the hand/,
+      },
+      {
+        name: 'enemy intent cannot be pressed anywhere in its badge',
+        file: 'styles/combat.css',
+        append: '.combatant-leading .intent { pointer-events: none !important; }',
+        expectRed: /390x650 combat: [1-9]\d* covered control\(s\) — .*\.intent/,
+      },
+      {
+        name: 'whole fighter frames once again trap intent badges under neighbouring sprites',
+        file: 'src/ui/components/battlefieldStage.js',
+        find: "      frame.style.zIndex = '';",
+        replace: '      frame.style.zIndex = String(slot.layer + (growth > 1 ? wireframeUi.formation.focusPriority : 0));',
+        expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.intent\s+<-\s+.*\.enemy-pose-stage/,
+      },
+      {
+        name: 'a silhouette loses its frame-level tap area',
+        file: 'styles/combat.css',
+        append: '.enemy-target-hitbox::after { pointer-events: none !important; }',
+        expectRed: /390x650 combat-xl: [1-9]\d* covered control\(s\) — .*\.combatant/,
       },
       {
         name: 'Settings cleanup watches the shared connected panel instead of its own render',
@@ -147,7 +184,7 @@ if (process.argv.includes('--selftest')) {
       },
     ],
   });
-  if (selftestCode === 0) console.log('screenreach-selftest: OK — 8 checks passed');
+  if (selftestCode === 0) console.log('screenreach-selftest: OK — 13 plants, 13 caught');
   process.exit(selftestCode);
 }
 
@@ -307,13 +344,43 @@ const PROBE = `(() => {
   const all = [...app.querySelectorAll(sel)].filter((e) => {
     const r = e.getBoundingClientRect();
     return r.width > 2 && r.height > 2 && getComputedStyle(e).visibility !== 'hidden'
-      && !e.closest('details:not([open])');
+      && !e.closest('details:not([open]), [inert]');
   });
+  const exposedPatch = (target, size, bounds = target?.getBoundingClientRect(), accepts = top => top === target || target.contains(top)) => {
+    if (!target) return false;
+    const half = size / 2;
+    const owns = (px, py) => {
+      const top = document.elementFromPoint(px, py);
+      return top && accepts(top);
+    };
+    for (let py = Math.max(half, bounds.top + half); py <= Math.min(innerHeight - half, bounds.bottom - half); py += 8) {
+      for (let px = Math.max(half, bounds.left + half); px <= Math.min(innerWidth - half, bounds.right - half); px += 8) {
+        if ([[0,0],[-half,-half],[half,-half],[-half,half],[half,half]].every(([dx,dy]) => owns(px + dx, py + dy))) return true;
+      }
+    }
+    return false;
+  };
   for (const c of all) {
     const r = c.getBoundingClientRect();
     const x = r.left + r.width / 2, y = r.top + r.height / 2;
     const hit = (x >= 0 && y >= 0 && x <= innerWidth && y <= innerHeight) ? document.elementFromPoint(x, y) : null;
     if (hit && (hit === c || c.contains(hit))) continue;
+    // Formation frames span a grid cell. Their sprite or 44 px frame target
+    // receives the tap; the frame centre may sit beneath another fighter.
+    if (c.matches('.combatant[data-ui-component="combatant-frame"]')) {
+      const sprite = c.querySelector('.combatant-card > .sprite');
+      const sr = sprite?.getBoundingClientRect();
+      const reach = c.matches('.enemy-target-hitbox') && sr
+        ? exposedPatch(c, 24, { left: sr.left + sr.width / 2 - 22, right: sr.left + sr.width / 2 + 22,
+            top: sr.bottom - 22, bottom: sr.bottom + 22 },
+          top => top === c || top === sprite || sprite.contains(top))
+        : exposedPatch(sprite, 24);
+      if (reach) continue;
+    }
+    // A tall neighbouring enemy can paint across an intent badge's centre on
+    // short phones. It is still usable if a finger-sized patch of that button
+    // wins the hit test. A wholly blocked badge remains a failure.
+    if (c.matches('.combatant-leading .overhead-control') && exposedPatch(c, 24)) continue;
     // A fan intentionally covers card centers. Require an exposed 24px square
     // on the actual card, and only permit another hand card to cover its center.
     if (c.matches('.hand .card') && hit?.closest('.hand .card')) {
@@ -403,6 +470,15 @@ const PROBE = `(() => {
       if (hud && r.top < hud.bottom - 0.5) visual.push(label + ' frame paints under the HUD by ' + (hud.bottom - r.top).toFixed(1) + 'px');
       if (hand && r.bottom > hand.top + 0.5) visual.push(label + ' frame paints under the hand by ' + (r.bottom - hand.top).toFixed(1) + 'px');
     }
+    // A chevron can win its centre hit-test while the hand clips the top of
+    // its tap-floor box. Keep the whole button inside the hand's visible band.
+    for (const more of document.querySelectorAll('.hand[data-wireframe-hand="true"] .card-more-button')) {
+      if (getComputedStyle(more).display === 'none') continue;
+      const r = more.getBoundingClientRect();
+      const port = more.closest('.hand').getBoundingClientRect();
+      if (r.top < port.top - 0.5 || r.bottom > port.bottom + 0.5)
+        visual.push('card More control clipped by the hand');
+    }
   }
   if (window.__settingsListenerBalance) {
     const leaks = Object.entries(window.__settingsListenerBalance).filter(([, count]) => count !== 0);
@@ -445,7 +521,7 @@ async function main() {
   if (useDist) {
     const f = resolve(ROOT, 'dist/AshenSpire.html');
     if (!existsSync(f)) { console.error(`screenreach: ${f} does not exist — run \`node tools/launch.mjs --build-only\` first`); process.exit(2); }
-    base = pathToFileURL(f).href;
+    base = await buildPageUrl(f);
   } else {
     const s = await serve({ root: ROOT, port: 8264, open: false });
     server = s.server; base = `http://localhost:${s.port}/`;

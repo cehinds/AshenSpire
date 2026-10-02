@@ -17,9 +17,10 @@ import { NOTE } from '../content/balance.js';
 import { shops as shippedShops } from '../content/shops.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { NEW_RUN_CLAUSE } from './balanceNotes.js';
-import { marketAdditionStockProblems, MARKET_ADDITIONS } from './marketStock.js';
+import { marketAdditionStockProblems, blacksmithStockProblems, MARKET_ADDITIONS } from './marketStock.js';
 import { utilityFlaskIds } from './gracerefill.js';
 import { consumableSettingsProblems } from './consumables.js';
+import { skillTracks } from './skills.js';
 
 /** The kinds a shop can be (SPEC §14.2) — a closed set; a new kind is a spec change. */
 export const SHOP_KINDS = Object.freeze(['market', 'blacksmith', 'master']);
@@ -27,9 +28,10 @@ export const SHOP_KINDS = Object.freeze(['market', 'blacksmith', 'master']);
 /**
  * The kinds whose screen has shipped. Only these may carry a non-zero
  * `kindWeights` entry, and only these get a weight row in Settings. §14.6
- * step 6 adds `blacksmith` here with its screen, and step 7 adds `master`.
+ * step 6 added `blacksmith` with its screen (ui/screens/blacksmith.js); step 7
+ * added `master` with its own (ui/screens/master.js).
  */
-export const SHOP_KIND_SCREENS = Object.freeze(['market']);
+export const SHOP_KIND_SCREENS = Object.freeze(['market', 'blacksmith', 'master']);
 
 /**
  * The market's shelves as the stock has always held them (engine/encounters.js
@@ -57,7 +59,20 @@ const AUTHORED_KEYS = Object.freeze(['conditional', 'stockKey']);
 // its per-visit count (`balance.shop.cardStock`); a service names none and
 // always counts. `valueAt` resolves the path, through a Settings override
 // when one is given.
-const resolvePath = (root, path) => String(path).split('.').reduce((at, key) => (at == null ? undefined : at[key]), root);
+// A path may also name an offering's own number as
+// `shops.<kind>.<offeringId>.<key>` (SPEC §14.4): the offering is found by its
+// id in that kind's list, so the path reads like its Settings key.
+function resolvePath(root, path) {
+  const parts = String(path).split('.');
+  if (parts[0] === 'shops' && parts.length >= 4 && parts[2] !== 'offerings') {
+    const list = root?.shops?.[parts[1]]?.offerings;
+    if (Array.isArray(list)) {
+      const row = list.find((offering) => offering && offering.id === parts[2]);
+      return parts.slice(3).reduce((at, key) => (at == null ? undefined : at[key]), row);
+    }
+  }
+  return parts.reduce((at, key) => (at == null ? undefined : at[key]), root);
+}
 // A NON-CONDITIONAL OFFERING ALSO NEEDS A NON-EMPTY AUTHORED POOL (SPEC
 // §14.2): content that could never stock it is refused by name. Each reader
 // returns why the pool is empty, or null. Read off the raw bundle, before any
@@ -88,7 +103,14 @@ const AUTHORED_POOLS = Object.freeze({
       return empty.length ? `the shop card pool of ${empty.join(', ')} is empty (no class card and no colourless shop card)` : null;
     },
   }),
+  // THE MASTER'S TWO SURE OFFERINGS (SPEC §14.5): training and appraisal act
+  // on the visiting master's own tracks, so their pool is the masters list.
+  master: Object.freeze({
+    training: (bundle) => (mastersOf(bundle).length ? null : 'shops.masters lists no master, so there is no track to train'),
+    appraisal: (bundle) => (mastersOf(bundle).length ? null : 'shops.masters lists no master, so there is no track to show'),
+  }),
 });
+const mastersOf = (bundle) => (Array.isArray(bundle?.shops?.masters) ? bundle.shops.masters : []);
 
 // The mountable weapon arts, read off the raw bundle the way
 // model/armamentTrading.js eligibleWeaponArts reads the registries: every
@@ -223,7 +245,111 @@ export function shopStockProblems(stock, path = 'shopStock', { required = false 
   }
   // The market additions' shelves (SPEC §14.3), each shape-checked by name.
   problems.push(...marketAdditionStockProblems(stock, path));
+  // The blacksmith's own shelf and every stock's trade revision (SPEC §14.4).
+  problems.push(...blacksmithStockProblems(stock, path));
+  // The master's (SPEC §14.5).
+  if (stock.kind === 'master') problems.push(...masterStockProblems(stock, path));
   return problems;
+}
+
+/**
+ * masterStockProblems(stock, path) → a `master` stock refused by name (SPEC
+ * §14.5): `{ kind: 'master', masterId, offerings, tradeRevision?, skillBooks?,
+ * weaponArts?, armaments?, training?, lessons? }`. The masterId must name a
+ * row of the shipped `shops.masters` (the list is content, never a Settings
+ * row, so the shipped table is the configured one); a shelf is `[{ id, cost }]`;
+ * `training` is `{ left }`; each `lessons` entry is keyed by one of that
+ * master's tracks and shaped `{ cardIds, taken }` with distinct card ids.
+ */
+export function masterStockProblems(stock, path = 'shopStock') {
+  const problems = [];
+  const master = (shippedShops.masters || []).find((row) => row && row.id === stock.masterId) || null;
+  if (!master) problems.push(`${path}.masterId must name a master of shops.masters (${(shippedShops.masters || []).map((row) => row.id).join(', ')}), got ${JSON.stringify(stock.masterId)}`);
+  for (const shelf of ['skillBooks', 'weaponArts', 'armaments']) {
+    const list = stock[shelf];
+    if (list === undefined) continue;
+    if (!Array.isArray(list)) { problems.push(`${path}.${shelf} must be a list of { id, cost }`); continue; }
+    list.forEach((item, index) => {
+      if (!object(item) || typeof item.id !== 'string' || !item.id || !(Number.isSafeInteger(item.cost) && item.cost > 0)) {
+        problems.push(`${path}.${shelf}[${index}] must be { id, cost } with a non-empty id and a whole cost above 0`);
+      }
+    });
+  }
+  if (stock.training !== undefined && !(object(stock.training) && Object.keys(stock.training).join() === 'left' && Number.isSafeInteger(stock.training.left) && stock.training.left >= 0)) {
+    problems.push(`${path}.training must be { left } with a whole left of at least 0, got ${JSON.stringify(stock.training)}`);
+  }
+  if (stock.lessons !== undefined) {
+    if (!object(stock.lessons)) problems.push(`${path}.lessons must be an object keyed by the master's tracks`);
+    else for (const [skillId, entry] of Object.entries(stock.lessons)) {
+      if (master && !master.skills.includes(skillId)) problems.push(`${path}.lessons.${skillId} is not a track ${master.id} teaches (${master.skills.join(', ')})`);
+      const ids = object(entry) ? entry.cardIds : undefined;
+      if (!object(entry) || !Array.isArray(ids) || !ids.every((id) => typeof id === 'string' && id) || new Set(ids).size !== ids.length || typeof entry.taken !== 'boolean' || Object.keys(entry).some((key) => key !== 'cardIds' && key !== 'taken')) {
+        problems.push(`${path}.lessons.${skillId} must be { cardIds, taken }: a list of distinct card ids and a true/false taken`);
+      }
+    }
+  }
+  return problems;
+}
+
+// The master's tracks can be weapon, focus or dual-wield tracks only (SPEC
+// §14.5): an armour track has no item type or schools, and a `class:`
+// respec would strand the class tree's picks.
+const MASTER_TRACK_KINDS = Object.freeze(['weapon', 'focus', 'dual']);
+
+/**
+ * masterTableProblems(table, err, bundle) — the master's numbers and the
+ * masters list, refused by name in validateContent (SPEC §14.5): every number
+ * whole; the prices `training.cinders`, `lesson.cinders` and
+ * `respec.cost.base` and the session's `training.xp` from 1; the counts from
+ * 0; `respecRefundPct` only refused when not whole (every reader clamps it to
+ * 50–75). The list is non-empty with unique ids; each master names a speaker
+ * row and 3 or 4 distinct weapon, focus or dual-wield tracks.
+ */
+export function masterTableProblems(table, err, bundle = null) {
+  if (!object(table)) return;
+  const offerings = Array.isArray(table.master?.offerings) ? table.master.offerings : [];
+  const valueAt = (id, path) => {
+    const row = offerings.find((offering) => offering && offering.id === id);
+    return row ? path.split('.').reduce((at, key) => (at == null ? at : at[key]), row) : undefined;
+  };
+  // Required when the offering is written (Copilot on #1438), not only
+  // checked when present: a missing number would reach a quote as undefined.
+  const whole = (id, path, floor) => {
+    if (!offerings.some((offering) => offering && offering.id === id)) return;
+    const value = valueAt(id, path);
+    if (!(Number.isSafeInteger(value) && value >= floor)) err(`shops.master.${id}.${path}`, value === undefined ? `is missing: write a whole number of at least ${floor}` : `must be a whole number of at least ${floor}, got ${JSON.stringify(value)}`);
+  };
+  for (const [id, path] of [['skillBooks', 'stock'], ['weaponArts', 'stock'], ['armaments', 'stock'], ['training', 'training.perVisit'], ['respec', 'respec.cost.perLevel']]) whole(id, path, 0);
+  for (const [id, path] of [['training', 'training.cinders'], ['training', 'training.xp'], ['lesson', 'cinders'], ['respec', 'respec.cost.base']]) whole(id, path, 1);
+  const pct = table.master?.respecRefundPct;
+  if (object(table.master) && !Number.isSafeInteger(pct)) err('shops.master.respecRefundPct', pct === undefined ? 'is missing: write a whole percentage (it is read between 50 and 75)' : `must be a whole percentage (it is read between 50 and 75), got ${JSON.stringify(pct)}`);
+
+  const masters = table.masters;
+  if (!Array.isArray(masters) || !masters.length) { err('shops.masters', 'must be a non-empty list of masters { id, name, speakerId, skills }'); return; }
+  const tracks = bundle ? new Map(skillTracks(bundle).map((row) => [row.id, row.kind])) : null;
+  const speakers = bundle && Array.isArray(bundle.speakers) ? new Set(bundle.speakers.map((row) => row && row.id)) : null;
+  const seen = new Set();
+  masters.forEach((row, index) => {
+    if (!object(row) || typeof row.id !== 'string' || !row.id) { err(`shops.masters[${index}]`, 'must be a master { id, name, speakerId, skills }'); return; }
+    const at = `shops.masters.${row.id}`;
+    if (seen.has(row.id)) err(at, 'is listed twice: master ids are unique');
+    seen.add(row.id);
+    for (const key of Object.keys(row)) if (!['id', 'name', 'speakerId', 'skills'].includes(key)) err(`${at}.${key}`, 'is not a master field (fields: id, name, speakerId, skills)');
+    if (typeof row.name !== 'string' || !row.name) err(`${at}.name`, 'must be a non-empty string');
+    if (typeof row.speakerId !== 'string' || !row.speakerId) err(`${at}.speakerId`, 'must name a row of content/source/speakers.csv');
+    else if (speakers && !speakers.has(row.speakerId)) err(`${at}.speakerId`, `names '${row.speakerId}', which is not a row of content/source/speakers.csv`);
+    const skills = row.skills;
+    if (!Array.isArray(skills) || skills.length < 3 || skills.length > 4) { err(`${at}.skills`, `must list 3 or 4 skill tracks, got ${Array.isArray(skills) ? skills.length : JSON.stringify(skills)}`); if (!Array.isArray(skills)) return; }
+    const named = new Set();
+    for (const skillId of skills) {
+      if (named.has(skillId)) err(`${at}.skills`, `names '${skillId}' twice: a master's tracks are distinct`);
+      named.add(skillId);
+      if (!tracks) continue;
+      const kind = tracks.get(skillId);
+      if (!kind) err(`${at}.skills`, `names '${skillId}', which is not a skill track skillTracks derives`);
+      else if (!MASTER_TRACK_KINDS.includes(kind)) err(`${at}.skills`, `names '${skillId}', a ${kind} track: a master teaches only weapon, focus and dual-wield tracks (SPEC §14.5)`);
+    }
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -278,7 +404,9 @@ export function shopsTableProblems(table, err, bundle = null) {
   // single missing sentence is refused by name.
   const noted = carriesNotes(table);
   const unnoted = noted ? unnotedNumbers : () => {};
-  for (const key of Object.keys(table)) if (key !== 'kindWeights' && !SHOP_KINDS.includes(key)) at(key, `is not a shop kind (kinds: ${SHOP_KINDS.join(', ')})`);
+  // `masters` is not a kind (SPEC §14.5): who a master visit can be, checked
+  // by masterTableProblems, with no Settings row.
+  for (const key of Object.keys(table)) if (key !== 'kindWeights' && key !== 'masters' && !SHOP_KINDS.includes(key)) at(key, `is not a shop kind (kinds: ${SHOP_KINDS.join(', ')})`);
 
   const weights = table.kindWeights;
   if (!object(weights)) at('kindWeights', 'must be an object { market, blacksmith, master }');
@@ -368,12 +496,23 @@ const SHOP_DOMAINS = Object.freeze({
   // The sigil markup may rise above 100 as well as discount (coordinator
   // ruling, #1374), bounded at 300.
   'market.sigils.pricePct': Object.freeze({ integer: true, step: 1, min: 1, max: 300 }),
+  // The blacksmith's refining (SPEC §14.4, Codex on #1378): `value` divides an
+  // upgrade's stone cost, and `from` is a count of stones consumed, so neither
+  // may be 0.
+  'blacksmith.refineStones.refine.value': Object.freeze({ integer: true, step: 1, min: 1 }),
+  'blacksmith.refineStones.refine.from': Object.freeze({ integer: true, step: 1, min: 1 }),
+  // The master's floors (SPEC §14.5): a session pays something, and every
+  // respec costs at least its base. The other prices are `cinders` (PAID).
+  'master.training.training.xp': Object.freeze({ integer: true, step: 1, min: 1 }),
+  'master.respec.respec.cost.base': Object.freeze({ integer: true, step: 1, min: 1 }),
 });
 // A PAID OFFERING IS NEVER FREE (Codex, on #1374): a price in cinders — a
 // `price`, a `cinders` cost, an armour cost bound — or the percent of its own
 // cost a sigil sells at starts at 1. A 0 would either silently close the
 // purchase or roll a free item the saved-stock check refuses on the next load.
-const PAID = /(^|\.)(price|cinders|pricePct)$|(^|\.)cost\.(min|max)$/;
+// A price in Smithing Stones (`stones`: an art upgrade, a stacked copy) is a
+// price too (SPEC §14.4).
+const PAID = /(^|\.)(price|cinders|pricePct|stones)$|(^|\.)cost\.(min|max)$/;
 function shopDomain(path, value) {
   if (SHOP_DOMAINS[path]) return { ...numberDomain(value), ...SHOP_DOMAINS[path] };
   if (PAID.test(path)) return { ...numberDomain(value), min: 1 };
@@ -594,6 +733,16 @@ export function shopSettingsProblems(bundle, settings = {}) {
         problems.push({ kind, keys: [minKey, maxKey], id: 'settings.shops.refuse.armourCost', tokens: { kind: words(kind), offering: words(offering.id), min: lo, max: hi } });
       }
     });
+  }
+  // A piece's base sigil slots are counted in its most (SPEC §14.4): a base
+  // above max is refused by name, costing only the blacksmith's rows.
+  const slots = (table.blacksmith?.offerings || []).find((offering) => offering && offering.id === 'sigilSlots')?.sigilSlots;
+  if (object(slots) && Number.isFinite(slots.base) && Number.isFinite(slots.max)) {
+    const baseKey = `${PREFIX}blacksmith.sigilSlots.sigilSlots.base`;
+    const maxKey = `${PREFIX}blacksmith.sigilSlots.sigilSlots.max`;
+    const base = Number(read(baseKey, slots.base));
+    const max = Number(read(maxKey, slots.max));
+    if (base > max) problems.push({ kind: 'blacksmith', keys: [baseKey, maxKey], id: 'settings.shops.refuse.sigilSlotBase', tokens: { base, max } });
   }
   // The consumables' own rows (SPEC §14.3): a sale above the price.
   problems.push(...consumableSettingsProblems(bundle, read));

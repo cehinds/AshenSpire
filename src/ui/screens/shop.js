@@ -958,7 +958,7 @@ export function mountShop(app, { registries, run, meta, onLeave, onChanged, onAr
  * the pane, offers and detail side by side or stacked, and the numbers CSS
  * places them with. The model owns every number (ShopWorkspaceModel.js).
  */
-function wireShopLayout(root) {
+export function wireShopLayout(root) {
   const frame = root.querySelector('.shop-frame');
   const body = root.querySelector('.shop-body');
   let pending = 0;

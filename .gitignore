@@ -466,6 +466,20 @@ build/components/
 # this one is 49 MB per build. CI rebuilds it; nobody commits it.
 build/web/
 
+# The pack format (tools/asset-pack.mjs, docs/EXTERNAL-ASSETS-PLAN.md §3–4): a
+# content-addressed object store and the pack indexes, written from the trees
+# in this repository. build/asset-pack/ is the tool's default output; the
+# packs/, objects/ and .asset-pack rules cover any --out under build/ or dist/,
+# at any depth (the plan's step 3a writes them beside the build). Derived and
+# ~230 MB: never committed.
+build/asset-pack/
+build/**/packs/
+build/**/objects/
+build/**/.asset-pack
+dist/**/packs/
+dist/**/objects/
+dist/**/.asset-pack
+
 # preview/ — what .github/workflows/dev-preview.yml assembles and uploads. It
 # has always been created by that workflow; it is named here because the
 # de-inlined build made it worth reproducing locally, and it is now ~123 MB

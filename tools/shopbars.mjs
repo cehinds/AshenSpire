@@ -38,6 +38,30 @@
 //                not exist. Not disabled, not greyed: no #shop-cat-sell and no
 //                #shop-sell node at all. The recorded answer's word is ABSENT.
 //
+// THE BLACKSMITH (SPEC §14.4, §14.6 step 6) is the same W1d workspace on its
+// own screen, so it gets its own shapes (390x844 and 1200x730, every offering
+// forced out through ?shotSettings) and its own four checks:
+//   B1 RAIL      exactly the blacksmith's offerings are drawn, BY KEY, in
+//                content/shops.js order, each label AND status on the glass.
+//   B2 ARRIVAL   the first offering's shelf is on the glass with area; every
+//                other shelf has no painted box.
+//   B3 SWITCH    tapping REFINE shows its shelf and hides the first one.
+//   B4 PLACE     refining through the shelf's own action re-renders the
+//                screen: REFINE is still the selected category, and the purse
+//                in the header shows one more refined stone.
+//
+// THE WISE MASTER (SPEC §14.5, §14.6 step 7) is the same workspace again, with
+// its own shapes (every offering forced out) and four checks:
+//   M1 RAIL      exactly the master's offerings, BY KEY, in content/shops.js
+//                order, then SELL (the shopSell toggle's pane), each label AND
+//                status on the glass.
+//   M2 ARRIVAL   the first offering's shelf is on the glass with area; every
+//                other shelf has no painted box.
+//   M3 SWITCH    tapping TRAINING shows its shelf and hides the first one.
+//   M4 PLACE     training through the shelf's own action re-renders the
+//                screen: TRAINING is still the selected category, and the
+//                purse shows one session fewer.
+//
 // BOUNDARY. This measures the shop's rail, not its economy: whether half the
 // low-end price is a GOOD price is Constantine's and the balance seat's
 // question, and the number's one home (balance.shop.sellFraction) says so.
@@ -133,6 +157,39 @@ const SHAPES = [
   { tag: '390x844+additions', w: 390, h: 844, d: 2, mobile: true, settings: ADDITIONS_OUT },
 ];
 const settingsQuery = (settings) => (settings ? `&shotSettings=${encodeURIComponent(JSON.stringify(settings))}` : '');
+
+// The blacksmith's roster is its offerings as content/shops.js writes them,
+// read through the module the game reads — never a copy.
+const { shops: SHOPS } = await import(pathToFileURL(join(ROOT, 'src/content/shops.js')).href);
+const SMITH_OFFERINGS = SHOPS.blacksmith.offerings.map((row) => row.id);
+const SMITH_ALL_OUT = Object.fromEntries(SMITH_OFFERINGS.map((id) => [`gameConfig.shops.blacksmith.${id}.chance`, 100]));
+const SMITH_SHAPES = [
+  { tag: '390x844+blacksmith', w: 390, h: 844, d: 2, mobile: true, settings: SMITH_ALL_OUT },
+  { tag: '1200x730+blacksmith', w: 1200, h: 730, d: 1, mobile: false, settings: SMITH_ALL_OUT },
+];
+const MASTER_OFFERINGS = SHOPS.master.offerings.map((row) => row.id);
+const MASTER_ALL_OUT = Object.fromEntries(MASTER_OFFERINGS.map((id) => [`gameConfig.shops.master.${id}.chance`, 100]));
+const MASTER_SHAPES = [
+  { tag: '390x844+master', w: 390, h: 844, d: 2, mobile: true, settings: MASTER_ALL_OUT },
+  { tag: '1200x730+master', w: 1200, h: 730, d: 1, mobile: false, settings: MASTER_ALL_OUT },
+];
+const SMITH_READ = `(() => {
+  const area = (el) => !!el && [...el.getClientRects()].some((r) => r.width > 0 && r.height > 0);
+  const items = [...document.querySelectorAll('.blacksmith-workspace .shop-rail [data-shop-category]')];
+  const selected = items.find((el) => el.getAttribute('aria-selected') === 'true');
+  return {
+    bars: items.map((el) => ({
+      key: el.dataset.shopCategory,
+      label: ((el.childNodes[0] || {}).textContent || '').trim(),
+      labelOnGlass: area(el),
+      valueOnGlass: area(el.querySelector('.as-status')),
+      value: ((el.querySelector('.as-status') || {}).textContent || '').trim(),
+    })),
+    open: selected ? selected.dataset.shopCategory : null,
+    shelves: Object.fromEntries([...document.querySelectorAll('.blacksmith-workspace [data-shop-shelf]')].map((el) => [el.dataset.shopShelf, area(el)])),
+    purse: ((document.querySelector('.blacksmith-workspace .modal-head-status') || {}).textContent || '').trim(),
+  };
+})()`;
 
 // The roster, a CONTRACT like creationbrief's: a category that stops being
 // drawn is red by name, a category that appears unnamed is red by name. The
@@ -341,6 +398,134 @@ async function main() {
       bad('S6', shape, `the toggled-off shop still carries sell in some form — items: ${offKeys.join(', ')}, sell nodes: ${off.sellNodes}`);
     }
 
+    await cdp.send('Target.closeTarget', { targetId }, S).catch(() => {});
+  }
+
+  for (const vp of SMITH_SHAPES) {
+    const shape = vp.tag;
+    const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+    const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+    await cdp.send('Page.enable', {}, S); await cdp.send('Runtime.enable', {}, S);
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: vp.h, deviceScaleFactor: vp.d, mobile: vp.mobile }, S);
+    const ev = async (e) => { const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
+      if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'threw'); return r.result.value; };
+    const until = async (x, w, ms = 20000) => { const t = Date.now();
+      while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(150); } throw new Error('timeout ' + w); };
+    console.log(`\n  ${shape}`);
+    await cdp.send('Page.navigate', { url: `${base}?shot=blacksmith${settingsQuery(vp.settings)}` }, S);
+    await until(`!!document.querySelector('.blacksmith-workspace .shop-rail [data-shop-category]')`, 'blacksmith rail', 60000);
+    await wait(600);
+    const compact = await ev(`(() => { const t = document.querySelector('.blacksmith-workspace .as-catnav-toggle');
+      if (!t || !t.getClientRects().length) return false; t.click(); return true; })()`);
+    if (compact) await wait(250);
+    const arrival = await ev(SMITH_READ);
+    if (compact) { await ev(`document.querySelector('.blacksmith-workspace .as-catnav-toggle').click(); true`); await wait(200); }
+
+    // B1 — the roster, in content order, and every item speaks.
+    const drawn = arrival.bars.map((b) => b.key);
+    const mute = arrival.bars.filter((b) => !b.labelOnGlass || !b.valueOnGlass || b.value === '' || b.label === '');
+    if (drawn.join() !== SMITH_OFFERINGS.join() || mute.length) {
+      bad('B1', shape, `the blacksmith rail is not its offerings — drawn ${drawn.join('>')} (want ${SMITH_OFFERINGS.join('>')})`
+        + `${mute.length ? ` · off the glass: ${mute.map((b) => b.key).join(', ')}` : ''}`);
+    } else {
+      ok('B1', shape, `${drawn.length} offerings by key in content order, each label+status on the glass — ${arrival.bars.map((b) => `${b.key} '${b.value}'`).join(' · ')}`);
+    }
+
+    // B2 — arrival: the first offering shown, the rest away.
+    const first = SMITH_OFFERINGS[0];
+    const leaking = Object.entries(arrival.shelves).filter(([k, v]) => k !== first && v).map(([k]) => k);
+    if (arrival.open !== first || !arrival.shelves[first] || leaking.length) {
+      bad('B2', shape, `arrival is not '${first} shown, the rest away' — selected=${arrival.open}, area=${arrival.shelves[first]}${leaking.length ? `, painted: ${leaking.join(', ')}` : ''}`);
+    } else {
+      ok('B2', shape, `${first.toUpperCase()} is selected with its shelf painted; every other shelf is away`);
+    }
+
+    // B3 — the rail switches.
+    await ev(`document.querySelector('#shop-cat-refineStones').click(); true`);
+    await wait(250);
+    const switched = await ev(SMITH_READ);
+    if (switched.open === 'refineStones' && switched.shelves.refineStones && !switched.shelves[first]) {
+      ok('B3', shape, 'REFINE shows on a tap and the first shelf leaves the glass');
+    } else {
+      bad('B3', shape, `the rail did not switch — selected=${switched.open}, refine area=${switched.shelves.refineStones}, ${first} area=${switched.shelves[first]}`);
+    }
+
+    // B4 — an action keeps the player's place, and the purse moves.
+    const refinedOf = (purse) => { const m = purse.match(/(\d+) refined/); return m ? +m[1] : null; };
+    const before = refinedOf(switched.purse);
+    const pressed = await ev(`(() => { const b = document.querySelector('#blacksmith-refine'); if (!b || b.disabled) return false; b.click(); return true; })()`);
+    await wait(400);
+    const after = await ev(SMITH_READ);
+    if (pressed && after.open === 'refineStones' && before !== null && refinedOf(after.purse) === before + 1) {
+      ok('B4', shape, `refined through the shelf: REFINE still selected, purse '${switched.purse}' -> '${after.purse}'`);
+    } else {
+      bad('B4', shape, `the refine action lost the place or the purse — pressed=${pressed}, selected=${after.open}, purse '${switched.purse}' -> '${after.purse}'`);
+    }
+    await cdp.send('Target.closeTarget', { targetId }, S).catch(() => {});
+  }
+
+  for (const vp of MASTER_SHAPES) {
+    const shape = vp.tag;
+    const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+    const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
+    await cdp.send('Page.enable', {}, S); await cdp.send('Runtime.enable', {}, S);
+    await cdp.send('Emulation.setDeviceMetricsOverride', { width: vp.w, height: vp.h, deviceScaleFactor: vp.d, mobile: vp.mobile }, S);
+    const ev = async (e) => { const r = await cdp.send('Runtime.evaluate', { expression: e, awaitPromise: true, returnByValue: true }, S);
+      if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || 'threw'); return r.result.value; };
+    const until = async (x, w, ms = 20000) => { const t = Date.now();
+      while (Date.now() - t < ms) { if (await ev(x).catch(() => false)) return 1; await wait(150); } throw new Error('timeout ' + w); };
+    const READ = SMITH_READ.replaceAll('.blacksmith-workspace', '.master-workspace');
+    console.log(`\n  ${shape}`);
+    await cdp.send('Page.navigate', { url: `${base}?shot=master${settingsQuery(vp.settings)}` }, S);
+    await until(`!!document.querySelector('.master-workspace .shop-rail [data-shop-category]')`, 'master rail', 60000);
+    await wait(600);
+    const compact = await ev(`(() => { const t = document.querySelector('.master-workspace .as-catnav-toggle');
+      if (!t || !t.getClientRects().length) return false; t.click(); return true; })()`);
+    if (compact) await wait(250);
+    const arrival = await ev(READ);
+    if (compact) { await ev(`document.querySelector('.master-workspace .as-catnav-toggle').click(); true`); await wait(200); }
+
+    // M1 — the roster, in content order, then SELL, and every item speaks.
+    const want = [...MASTER_OFFERINGS, 'sell'];
+    const drawn = arrival.bars.map((b) => b.key);
+    const mute = arrival.bars.filter((b) => !b.labelOnGlass || !b.valueOnGlass || b.value === '' || b.label === '');
+    if (drawn.join() !== want.join() || mute.length) {
+      bad('M1', shape, `the master rail is not its offerings then sell — drawn ${drawn.join('>')} (want ${want.join('>')})`
+        + `${mute.length ? ` · off the glass: ${mute.map((b) => b.key).join(', ')}` : ''}`);
+    } else {
+      ok('M1', shape, `${drawn.length} rail items by key in content order, each label+status on the glass — ${arrival.bars.map((b) => `${b.key} '${b.value}'`).join(' · ')}`);
+    }
+
+    // M2 — arrival: the first offering shown, the rest away.
+    const first = MASTER_OFFERINGS[0];
+    const leaking = Object.entries(arrival.shelves).filter(([k, v]) => k !== first && v).map(([k]) => k);
+    if (arrival.open !== first || !arrival.shelves[first] || leaking.length) {
+      bad('M2', shape, `arrival is not '${first} shown, the rest away' — selected=${arrival.open}, area=${arrival.shelves[first]}${leaking.length ? `, painted: ${leaking.join(', ')}` : ''}`);
+    } else {
+      ok('M2', shape, `${first.toUpperCase()} is selected with its shelf painted; every other shelf is away`);
+    }
+
+    // M3 — the rail switches.
+    await ev(`document.querySelector('#shop-cat-training').click(); true`);
+    await wait(250);
+    const switched = await ev(READ);
+    if (switched.open === 'training' && switched.shelves.training && !switched.shelves[first]) {
+      ok('M3', shape, 'TRAINING shows on a tap and the first shelf leaves the glass');
+    } else {
+      bad('M3', shape, `the rail did not switch — selected=${switched.open}, training area=${switched.shelves.training}, ${first} area=${switched.shelves[first]}`);
+    }
+
+    // M4 — an action keeps the player's place, and the purse moves.
+    const leftOf = (purse) => { const m = purse.match(/(\d+) session/); return m ? +m[1] : null; };
+    const before = leftOf(switched.purse);
+    const pressed = await ev(`(() => { const b = [...document.querySelectorAll('[id^="master-train-"]')].find((x) => !x.disabled); if (!b) return false; b.click(); return true; })()`);
+    await wait(400);
+    const after = await ev(READ);
+    if (pressed && after.open === 'training' && before !== null && leftOf(after.purse) === before - 1) {
+      ok('M4', shape, `trained through the shelf: TRAINING still selected, purse '${switched.purse}' -> '${after.purse}'`);
+    } else {
+      bad('M4', shape, `the training action lost the place or the purse — pressed=${pressed}, selected=${after.open}, purse '${switched.purse}' -> '${after.purse}'`);
+    }
     await cdp.send('Target.closeTarget', { targetId }, S).catch(() => {});
   }
 

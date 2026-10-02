@@ -27,6 +27,28 @@ export const ASSET_MAP = {};
 // only the files that exist, so an id it lacks falls back to the built-in art.
 let highRes = null;
 
+// THE BUILT-IN PACK (docs/EXTERNAL-ASSETS-PLAN.md §3, step 3a). The web
+// edition carries no art inside it: src/ui/assetPacks.js loads the pack index
+// the HTML pins and hands this module a Map from id to the content-addressed
+// object beside the page (`objects/xx/<sha256>.webp`). It sits between the
+// high-res overlay and ASSET_MAP. A single file (ASSET_MAP filled) never gets
+// one: the loader does nothing there.
+let builtIn = null;
+
+/**
+ * setBuiltInSource(map) — the built-in pack's id → object path Map, or null /
+ * an empty map to remove it. Returns how many ids it now covers.
+ */
+export function setBuiltInSource(map) {
+  builtIn = map && map.size ? map : null;
+  return builtIn ? builtIn.size : 0;
+}
+
+/** The built-in pack's Map while one is loaded, else null. */
+export function builtInSource() {
+  return builtIn;
+}
+
 /**
  * setHighResSource(map) — lay a high-res source over the built-in art, or
  * remove it with null / an empty map. Returns how many ids it now covers.
@@ -47,15 +69,20 @@ export function assetTier(path) {
 
 /**
  * assetUrl('assets/sprites/reaver_gold.webp') → the high-res file when a
- * source covers it, else the inlined data URI when the build carries one, else
- * the path. Unknown paths pass straight through, so a missing asset still 404s
+ * source covers it, else the built-in pack's object when one is loaded (the
+ * web edition), else the inlined data URI when the build carries one, else the
+ * path. Unknown paths pass straight through, so a missing asset still 404s
  * visibly rather than silently resolving.
  */
 export function assetUrl(path) {
-  return (highRes && highRes.get(path)) || ASSET_MAP[path] || path;
+  return (highRes && highRes.get(path)) || (builtIn && builtIn.get(path)) || ASSET_MAP[path] || path;
 }
 
-/** True when this build carries its own art (the single-file dist). */
+/**
+ * True when this build carries its own art inline (the light single file, and
+ * older inline builds). A web edition is not inlined; builtInSource() says
+ * whether its pack has loaded.
+ */
 export function assetsAreInlined() {
   return Object.keys(ASSET_MAP).length > 0;
 }

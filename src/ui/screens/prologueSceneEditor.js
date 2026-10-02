@@ -1,6 +1,6 @@
 import { openModal } from '../kit/index.js';
 import { mountPrologue } from './prologue.js';
-import { CHARACTER_LAYER_HEIGHT, placePrologueCharacter } from '../prologueCharacter.js';
+import { placePrologueCharacter, prologueCharacterDimensions, prologueTravellerGeometry, prologueTravellerHeightForWidth, prologueTravellerResizeScale } from '../prologueCharacter.js';
 import { anchorLocalBox } from '../fx.js';
 import {
   prologueConfig, prologueRows, prologueSequence, prologueSettingKey,
@@ -157,16 +157,19 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
   });
   const figureRect = actor => {
     const box = actor.getBoundingClientRect();
-    const sourceHeight = actor.height / CHARACTER_LAYER_HEIGHT;
-    const pad = Math.ceil(sourceHeight * .6);
-    const scale = box.height / actor.height;
-    return { left: box.left + pad * scale, top: box.top,
-      width: (actor.width - pad * 2) * scale, height: sourceHeight * scale };
+    const stage = actor.closest('.prologue-stage'), stageBox = stage.getBoundingClientRect();
+    const cssHeight = Number.parseFloat(getComputedStyle(actor).height);
+    const rotation = Number(/rotate\(([-\d.]+)deg\)/.exec(actor.style.transform)?.[1]) || 0;
+    return prologueTravellerGeometry({ canvasWidth:actor.width, canvasHeight:actor.height, source:prologueCharacterDimensions(actor),
+      renderedWidth:cssHeight*actor.width/actor.height*stageBox.width/stage.clientWidth,
+      renderedHeight:cssHeight*stageBox.height/stage.clientHeight, rotation, bounds:box });
   };
   const alignTransformBox = () => {
     const actor = viewport.querySelector('.prologue-actor');
     const visible = scope === 'scene' && group === 'Traveller' && actor?.width;
     transformBox.hidden = !visible;
+    const widthControl = fields.querySelector('[data-pse-width-vw]')?.closest('.pse-field');
+    for (const control of widthControl?.querySelectorAll('input, button') || []) control.disabled = !visible;
     if (!visible) return;
     const figure = figureRect(actor);
     const local = anchorLocalBox(viewport, figure);
@@ -175,8 +178,8 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
     transformBox.style.top = `${local.top}px`;
     transformBox.style.width = `${local.width}px`;
     transformBox.style.height = `${local.height}px`;
-    const widthVw = figure.width / stageBox.width * 100;
-    const heightVh = figure.height / stageBox.height * 100;
+    const widthVw = figure.intrinsicWidth / stageBox.width * 100;
+    const heightVh = figure.intrinsicHeight / stageBox.height * 100;
     const sizeLabel = `${widthVw.toFixed(1)}vw × ${heightVh.toFixed(1)}vh`;
     if (dimensions.textContent !== sizeLabel) dimensions.textContent = sizeLabel;
     const widthInput = fields.querySelector('[data-pse-width-vw]');
@@ -256,10 +259,8 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
     const rect = drag.stage.getBoundingClientRect();
     const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
     if (drag.kind === 'resize') {
-      const horizontal = dx * (drag.corner.includes('e') ? 1 : -1) / Math.max(1, drag.figure.width);
-      const vertical = dy * (drag.corner.includes('s') ? 1 : -1) / Math.max(1, drag.figure.height);
-      const change = Math.abs(horizontal) >= Math.abs(vertical) ? horizontal : vertical;
-      drag.next = { ...drag.position, height: Math.max(10, snapped(drag.position.height * (1 + change))) };
+      const scale = prologueTravellerResizeScale(drag.figure, dx, dy, drag.corner);
+      drag.next = { ...drag.position, height: Math.max(10, snapped(drag.position.height * scale)) };
       placePrologueCharacter(drag.actor, drag.next);
       syncField(prologueSettingKey(['scenes', selected, 'actor', layout, 'height']), drag.next.height);
       alignTransformBox();
@@ -457,6 +458,9 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
     if (scope === 'scene' && SCENE_GROUPS.some(([name]) => name === group)) {
       if (group === 'Traveller') {
         fields.append(element('p', 'pse-group-help', `Drag the box to place the traveller; pull any corner to scale. X and Y are positions in scene vw/vh. The width and height controls keep the figure's proportions. Switch Preview size to set ${layout === 'mobile' ? 'desktop' : 'mobile'} separately.`));
+        const characterKey = prologueSettingKey(['scenes', selected, 'character']);
+        const characterRow = rows.get(characterKey);
+        if (characterRow) fields.append(field(characterRow, scene.character, characterKey));
         for (const axis of ['x', 'y', 'height']) {
           const key = prologueSettingKey(['scenes', selected, 'actor', layout, axis]);
           const row = rows.get(key);
@@ -479,10 +483,10 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
           const stage = actor?.closest('.prologue-stage');
           const desired = Number(widthInput.value);
           if (!actor || !stage || !Number.isFinite(desired) || desired < 2 || desired > 100) return;
-          const current = figureRect(actor).width / stage.getBoundingClientRect().width * 100;
+          const current = figureRect(actor).intrinsicWidth / stage.getBoundingClientRect().width * 100;
           const position = configScene()?.actor?.[layout];
           if (!current || !position) return;
-          const height = Math.max(10, Math.min(100, Math.round(position.height * desired / current)));
+          const height = prologueTravellerHeightForWidth(position.height, desired, current);
           saved(prologueSettingKey(['scenes', selected, 'actor', layout, 'height']), height);
           placePrologueCharacter(actor, { ...position, height });
           syncField(prologueSettingKey(['scenes', selected, 'actor', layout, 'height']), height);
@@ -490,6 +494,13 @@ export function openPrologueSceneEditor(settings, onChange, { sceneId = null, ta
         });
         widthControl.append(widthLabel, widthInput, element('small', '', 'The figure keeps its proportions; editing width changes the shared height scale. Values are relative to the artwork frame.'));
         fields.append(addNumericControls(widthControl, widthRow, widthInput));
+        for (const name of ['rotation', 'layer']) {
+          const key = prologueSettingKey(['scenes', selected, 'actor', layout, name]);
+          const row = rows.get(key);
+          if (!row) continue;
+          const control = field(row, scene.actor?.[layout]?.[name], key);
+          fields.append(name === 'rotation' ? addNumericControls(control, row, control.querySelector('input[type=number]')) : control);
+        }
         alignTransformBox();
       } else {
         const names = SCENE_GROUPS.find(([name]) => name === group)[1];

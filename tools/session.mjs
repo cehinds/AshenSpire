@@ -34,6 +34,7 @@ import { defaultSeatOrder, seatOrderProblems, seatAtTier, seatTierHpMult, bossTi
 import { assertSavedBossReferences } from '../src/model/mapReferences.js';
 import { refreshBossDestinationLabels } from '../src/model/bossDestinationLabels.js';
 import { availableEventChoices, recordEventChoice, questsCompletedBy } from '../src/model/quests.js';
+import { enemyLevelsForFight } from '../src/engine/runCombat.js';
 import { commitEventChoice, completeQuest } from '../src/engine/quests.js';
 import { executeRunEffects } from '../src/engine/actions.js';
 import { eventChoicesWithHistory } from '../src/content/events.js';
@@ -533,6 +534,7 @@ export function createSession({ registries, seedString, endless = false, restore
       registries, rng,
       players: connectedMembers().map(memberAsPlayer),
       enemyIds: enc.enemies,
+      enemyLevels: enemyLevelsForFight(registries, session, enc.enemies, enc),
       extraHpMult,
       enemyDamageMult: boss ? boss.damage : 1,
       enemyStatuses: loop > 0 ? [{ status: 'strength', stacks: registries.balance.endless.strPerLoop * loop }] : [],
@@ -668,7 +670,7 @@ export function createSession({ registries, seedString, endless = false, restore
         // without it (Codex, #1203). Absent stays absent: no vessel, no bar.
         poiseMeter: P.entity.poiseMeter ? { ...P.entity.poiseMeter } : undefined,
         hand: P.piles.hand.map((c2) => ({ instanceId: c2.instanceId, cardId: c2.cardId, upgraded: c2.upgraded })),
-        drawCount: P.piles.draw.length, discardCount: P.piles.discard.length,
+        drawCount: P.piles.draw.length, discardCount: P.piles.discard.length, exhaustCount: P.piles.exhaust.length,
         flasks: P.entity.flasks, flaskCharges: P.entity.flaskCharges,
         relicIds: [...P.entity.relicIds],
         // AND THEIR TIERS. A client prices a card from this snapshot
@@ -740,7 +742,7 @@ export function createSession({ registries, seedString, endless = false, restore
         // every seat's. No settings dial here — the server is authoritative
         // and reads the authored points per level.
         levelUpsBy[m.id] = awardLevelXp(registries, m.run, combatLevelXp(registries, {
-          victory: c.result === 'victory', pool: live && live.pool, kills: c.eventLog.filter((e) => e.type === 'enemyDied').length,
+          victory: c.result === 'victory', pool: live && live.pool, enemies: c.enemies,
         })).levelUps;
       }
     }

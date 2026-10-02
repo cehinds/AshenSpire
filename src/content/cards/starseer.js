@@ -630,7 +630,7 @@ export const starseerCards = [
     },
   },
   {
-    id: 'astralInsight', name: 'Astral Insight', class: 'starseer', rarity: 'uncommon', cost: 1, type: 'skill',
+    id: 'astralInsight', name: 'Astral Insight', class: 'starseer', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
     flavor: "Clear sight into the charts.\n\nThe apprentices believed the Starwatch's ledgers were meant to end where the charts of the fourth hearth began. There the Astronomer once underlined a line, and later struck through his own mark.\n\nThe charts of the fourth hearth were not among those carried away.",
     keywords: [], icon: '🌠',
     effects: [
@@ -662,6 +662,220 @@ export const starseerCards = [
       keywords: [],
       effects: [{ op: 'restoreMana', target: 'self', amount: 1 }],
       textTemplate: 'Restore {restoreMana} Mana.',
+    },
+  },
+  // ---- Ash rites (skill-draft depth for the Ash Focus) ---------------------
+  // The Ash Focus is a ritual staff: a levelled one drafts ritual cards, and
+  // until these the Starseer's pool held none, so its baseline staff drafted
+  // nothing. Starstone combos still apply.
+  {
+    id: 'cinderSigil', name: 'Cinder Sigil', class: 'starseer', rarity: 'common', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    flavor: "A star traced in hot ash.\n\nThe Observatory's apprentices drew them on the terrace to fix a sighting, and swept them away at dawn. After the eclipse the sigils would not sweep; they had burned into the stone.\n\nThe terrace is covered in them now, none drawn by hand.",
+    keywords: [], icon: '✴',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 7 },
+      { op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 2, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Deal {damage} damage. Starstone: apply {burn} Burn.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 10 },
+        { op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 3, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'ashenMote', name: 'Ashen Mote', class: 'starseer', rarity: 'common', cost: 1, type: 'attack',
+    flavor: "A fleck of burnt chart, flung like a star.\n\nWhen the Observatory's archive burned, the apprentice Hollis gathered its ash in jars, believing the charts might be read again. Some of it could be.\n\nIt reads the same sky, though not the one above the Observatory.",
+    keywords: [], icon: '•',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 5 },
+      { op: 'damage', target: 'enemy', amount: 3, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Deal {damage} damage. Starstone: deal {damage.2} more.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 7 },
+        { op: 'damage', target: 'enemy', amount: 4, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'emberVigil', name: 'Ember Vigil', class: 'starseer', rarity: 'common', cost: 1, type: 'skill',
+    flavor: "A coal kept through the cloudy night.\n\nOn nights the reach would not clear, the Astronomer bade one apprentice keep an ember lit beneath the great lens, lest the lens forget warmth. None knew what he meant.\n\nThe lens was cold the morning after the eclipse. The apprentice was gone.",
+    keywords: [], icon: '🕯',
+    effects: [
+      { op: 'block', target: 'self', amount: 5 },
+      { op: 'draw', amount: 1, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Gain {block} Block. Starstone: draw {draw} card.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 8 },
+        { op: 'draw', amount: 1, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'readTheAsh', name: 'Read the Ash', class: 'starseer', rarity: 'common', cost: 1, type: 'skill',
+    flavor: "Divination by what the fire left behind.\n\nA practice the Astronomer forbade as superstition, and the apprentices kept in secret beneath the terrace stair. They burned a copy of each night's chart and read the ash against it.\n\nThe two agreed more often than the Astronomer would have liked.",
+    keywords: [], icon: '👁',
+    effects: [{ op: 'draw', amount: 2 }, GAIN_CHARGE],
+    textTemplate: 'Draw {draw} cards.',
+    upgrade: { effects: [{ op: 'draw', amount: 3 }, GAIN_CHARGE] },
+  },
+  {
+    id: 'pyreOfCharts', name: 'Pyre of Charts', class: 'starseer', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'attack',
+    flavor: "The catalogue given to the flame at once.\n\nWhen the Starwatch came for the Observatory's records, the apprentices burned them in the courtyard rather than surrender them. The fire rose higher than the tower.\n\nThe Starwatch recorded the fire as a new star, and catalogued it.",
+    keywords: [], icon: '🔥',
+    effects: [
+      { op: 'damage', target: 'allEnemies', amount: 5 },
+      { op: 'applyStatus', target: 'allEnemies', status: 'burn', stacks: 2, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Deal {damage} damage to ALL enemies. Starstone: apply {burn} Burn to ALL.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'allEnemies', amount: 7 },
+        { op: 'applyStatus', target: 'allEnemies', status: 'burn', stacks: 3, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'ashCircle', name: 'Ash Circle', class: 'starseer', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
+    flavor: "A ring of ash poured round the feet.\n\nThe apprentices drew one about the great lens each eclipse, to keep the dark from settling on the glass. On the last eclipse the ring was drawn, and the dark settled elsewhere.\n\nNobody inside the ring was harmed. Nobody outside it was found.",
+    keywords: [], icon: '⭕',
+    effects: [
+      { op: 'block', target: 'self', amount: 10 },
+      { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 2, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Gain {block} Block. Starstone: apply {weak} Weak to ALL enemies.',
+    upgrade: {
+      effects: [
+        { op: 'block', target: 'self', amount: 13 },
+        { op: 'applyStatus', target: 'allEnemies', status: 'weak', stacks: 2, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'kindledOmen', name: 'Kindled Omen', class: 'starseer', rarity: 'uncommon', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
+    flavor: "A sign read in sparks, then set upon a foe.\n\nThe apprentices threw pinches of ash into the brazier and named the shapes the sparks made. Most were nothing. A few were names of the living.\n\nThose whose names were read seldom lived the year, and the practice was stopped.",
+    keywords: [], icon: '✨',
+    effects: [
+      { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 2 },
+      { op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 3 },
+      { op: 'draw', amount: 1, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Apply {vulnerable} Vulnerable and {burn} Burn. Starstone: draw {draw} card.',
+    upgrade: {
+      effects: [
+        { op: 'applyStatus', target: 'enemy', status: 'vulnerable', stacks: 2 },
+        { op: 'applyStatus', target: 'enemy', status: 'burn', stacks: 5 },
+        { op: 'draw', amount: 1, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'cinderLance', name: 'Cinder Lance', class: 'starseer', rarity: 'uncommon', cost: 2, type: 'attack',
+    flavor: "A shaft of burning ash, cold at its point.\n\nThe Astronomer's first experiment with the ash of starstone, logged as a failure: the ash burned without heat. His apprentices kept the log.\n\nWhere the lance struck the Observatory's wall, frost still forms each night.",
+    keywords: [], icon: '➳',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 12 },
+      { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 2, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Deal {damage} damage. Starstone: apply {frost} Frost.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 16 },
+        { op: 'applyStatus', target: 'enemy', status: 'frost', stacks: 3, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'ashfallRite', name: 'Ashfall Rite', class: 'starseer', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
+    flavor: "The sky asked to rain ash, and answering.\n\nThe rite is recorded once, in Hollis's hand, on the night after the eclipse. It names no author. It names the Observatory as the altar, and the reach as the congregation.\n\nThe reach has been grey since, and is said to be listening.",
+    keywords: [], icon: '🌋',
+    effects: [
+      { op: 'damage', target: 'allEnemies', amount: 5, hits: 2 },
+      { op: 'applyStatus', target: 'allEnemies', status: 'burn', stacks: 3, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Deal {damage} damage to ALL enemies {hits} times. Starstone: apply {burn} Burn to ALL.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'allEnemies', amount: 7, hits: 2 },
+        { op: 'applyStatus', target: 'allEnemies', status: 'burn', stacks: 4, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'phoenixChart', name: 'Phoenix Chart', class: 'starseer', rarity: 'rare', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
+    flavor: "A chart that redraws itself from its ash.\n\nOne page of the burned catalogue did not stay burned. Each dawn it lay whole in the courtyard, its stars a little moved. The apprentices burned it thrice more.\n\nIt returned each time, and each time a little warmer to the touch.",
+    keywords: ['exhaust'], icon: '🐦',
+    effects: [
+      { op: 'heal', target: 'self', amount: 8 },
+      { op: 'block', target: 'self', amount: 8 },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Heal {heal} HP. Gain {block} Block. Exhaust.',
+    upgrade: {
+      effects: [
+        { op: 'heal', target: 'self', amount: 12 },
+        { op: 'block', target: 'self', amount: 12 },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'pyreLight', name: 'Pyre Light', class: 'starseer', rarity: 'rare', cost: 2, staminaCost: 1, manaCost: 1, type: 'attack',
+    flavor: "The last light of a burning star.\n\nThe Astronomer claimed a star gives its brightest light as it dies, and that the light can be caught if one is quick. His apprentices thought it a figure of speech.\n\nHe was holding a lens when the tower burned. The lens was found.",
+    keywords: ['exhaust'], icon: '☀',
+    effects: [
+      { op: 'damage', target: 'enemy', amount: 15 },
+      { op: 'damage', target: 'enemy', amount: 8, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Deal {damage} damage. Starstone: deal {damage.2} more. Exhaust.',
+    upgrade: {
+      effects: [
+        { op: 'damage', target: 'enemy', amount: 20 },
+        { op: 'damage', target: 'enemy', amount: 10, if: CHARGED },
+        GAIN_CHARGE,
+      ],
+    },
+  },
+  {
+    id: 'riteOfCinders', name: 'Rite of Cinders', class: 'starseer', rarity: 'rare', cost: 1, staminaCost: 1, manaCost: 1, type: 'skill',
+    flavor: "The embers stirred, and the mind with them.\n\nThe apprentices performed it before long watches, breathing the smoke of burned charts until the stars came clearer. The Astronomer called it poisoning. He also asked what they saw.\n\nThey saw a great deal. Little of it was in the sky.",
+    keywords: ['exhaust'], icon: '♨',
+    effects: [
+      { op: 'gainEnergy', amount: 1 },
+      { op: 'draw', amount: 2 },
+      { op: 'gainEnergy', amount: 1, if: CHARGED },
+      GAIN_CHARGE,
+    ],
+    textTemplate: 'Gain {gainEnergy} Energy. Draw {draw} cards. Starstone: gain {gainEnergy.2} more Energy. Exhaust.',
+    upgrade: {
+      effects: [
+        { op: 'gainEnergy', amount: 1 },
+        { op: 'draw', amount: 3 },
+        { op: 'gainEnergy', amount: 1, if: CHARGED },
+        GAIN_CHARGE,
+      ],
     },
   },
 ];

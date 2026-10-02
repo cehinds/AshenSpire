@@ -20,6 +20,7 @@
 //
 // Headless: no document/window/localStorage/timers.
 
+import { applyPercentRecovery } from '../model/recoveryRules.js';
 import { createRunContext, syncRunContext, drainRunContext } from './actions.js';
 import { emitEvent } from './triggers.js';
 import { mountProperties, unmountProperties } from './properties.js';
@@ -45,10 +46,13 @@ export function locationCarrier(registries, locationId) {
  * createLocationVisit({ run, registries, rng }, locationId, opts) → visit.
  *   opts.healMult      the custom mod's heal scale (1 when none)
  *   opts.refillCounts  the grace-refill counts the settings resolved, if any
+ *   opts.restBonus     { hp, stamina, mana } percents of each maximum a Rest
+ *                      adds on top of the place's own rules (Settings →
+ *                      Advanced → Recovery, model/recoveryRules.js)
  * The visit's rules are mounted on creation; nothing is emitted until
  * arriveAt. `restDenied` names the relic forbidding the Rest here, or null.
  */
-export function createLocationVisit({ run, registries, rng }, locationId, { healMult = 1, refillCounts = null, arrived = false } = {}) {
+export function createLocationVisit({ run, registries, rng }, locationId, { healMult = 1, refillCounts = null, arrived = false, restBonus = null } = {}) {
   const carrier = locationCarrier(registries, locationId);
   const mult = healMult * passiveMult(registries, run.relics || [], 'restHealMult');
   const ctx = createRunContext({ run, registries, rng }, {
@@ -62,7 +66,7 @@ export function createLocationVisit({ run, registries, rng }, locationId, { heal
     tags: [...carrier.tagIds],
     services: locationServices(registries, carrier.tagIds),
     restDenied: restDeniedBy(registries, run, carrier.tagIds),
-    opts: { healMult, refillCounts },
+    opts: { healMult, refillCounts, restBonus },
     ctx,
     // `arrived: true` REBUILDS a visit whose arrival already happened — a
     // saved session restored at the place (tools/session.mjs) — so `arrived`
@@ -120,6 +124,7 @@ export function restAt(visit) {
   const { run } = visit.ctx;
   const before = { hp: run.hp, mana: run.mana };
   const events = emitAndDrain(visit, 'rested');
+  if (visit.opts.restBonus) applyPercentRecovery(run, visit.opts.restBonus);
   visit.rested = true;
   return { heal: run.hp - before.hp, mana: run.mana - before.mana, hp: run.hp, maxHp: run.maxHp, manaAfter: run.mana, events };
 }

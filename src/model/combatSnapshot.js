@@ -1,5 +1,6 @@
 import { retiredAttackSlots } from './cardRemoval.js';
 import { handRulesProblems } from './handRules.js';
+import { recoveryRulesProblems } from './recoveryRules.js';
 import { combatRatingProblems, ratingIds } from './combatRatings.js';
 // src/model/combatSnapshot.js — versioned, DOM-free exact-combat save shape.
 //
@@ -87,6 +88,19 @@ export function combatSnapshotProblems(snapshot) {
       problems.push('orderedDraw.order must be an array of unique card instance ids');
     }
   }
+  // Settings → Advanced → Recovery: absent on a fight built at the defaults.
+  if (snapshot.recovery !== undefined) {
+    const state = snapshot.recovery;
+    if (!record(state)) problems.push('recovery must be an object');
+    else {
+      problems.push(...recoveryRulesProblems(state.rules));
+      if (!record(state.idle) || ['hp', 'stamina', 'mana'].some((pool) => !Number.isInteger(state.idle[pool]) || state.idle[pool] < 0)) problems.push('recovery.idle must hold a whole-number streak per pool');
+      // The cursor is where the next turn end starts reading the log: past the
+      // log's end, every spend and loss before it would read as an idle turn.
+      const logLength = Array.isArray(snapshot.eventLog) ? snapshot.eventLog.length : 0;
+      if (!Number.isInteger(state.logIndex) || state.logIndex < 0 || state.logIndex > logLength) problems.push('recovery.logIndex must be a whole number within the saved event log');
+    }
+  }
   if (snapshot.ratingsRules !== undefined) {
     problems.push(...combatRatingProblems(snapshot.ratingsRules));
     // A saved fight's rating rows are what `refreshCombatRatings` prices on
@@ -121,6 +135,14 @@ export function combatSnapshotProblems(snapshot) {
     if (!record(snapshot.consumables)) problems.push('consumables must be an object { [consumableId]: count }');
     else for (const [id, n] of Object.entries(snapshot.consumables)) {
       if (!Number.isSafeInteger(n) || n < 1) problems.push(`consumables.${id} must be a whole count of at least 1 (a spent-out entry is deleted)`);
+    }
+  }
+  // SPEC §14.4: the sigil slots, `{ [itemRef]: (sigilId|null)[] }`.
+  if (snapshot.sigilSlots !== undefined) {
+    const slots = snapshot.sigilSlots;
+    if (!slots || typeof slots !== 'object' || Array.isArray(slots)
+      || Object.values(slots).some((list) => !Array.isArray(list) || list.some((id) => id !== null && !nonEmptyString(id)))) {
+      problems.push('sigilSlots must be an object { [itemRef]: (sigilId|null)[] }');
     }
   }
   if (snapshot.companions !== undefined) {
