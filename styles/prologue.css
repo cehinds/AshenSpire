@@ -6,6 +6,9 @@
 .prologue-wash{position:absolute;inset:0;z-index:1;mix-blend-mode:color;pointer-events:none}
 .prologue-caption{position:relative;z-index:2;padding:var(--prologue-box-padding,1rem) max(1.25rem,env(safe-area-inset-right)) var(--prologue-box-padding,1rem) max(1.25rem,env(safe-area-inset-left));text-align:center;background:linear-gradient(#19150f,#100e0c)}
 .prologue-fixed-caption:is(.prologue-layout-caption,.prologue-layout-letterbox) .prologue-caption{box-sizing:border-box;height:calc(var(--prologue-caption-vh,18) * 1cqh);min-height:0;overflow:auto;display:grid;align-content:start}
+.prologue-fixed-caption:is(.prologue-layout-caption,.prologue-layout-letterbox) .prologue-caption[data-position^=middle]{align-content:center}
+.prologue-fixed-caption:is(.prologue-layout-caption,.prologue-layout-letterbox) .prologue-caption{padding-block:calc(var(--prologue-box-padding,1rem)*var(--prologue-caption-fit,1))}
+.prologue-fixed-caption:is(.prologue-layout-caption,.prologue-layout-letterbox) .prologue-caption>*{margin-block:.15em}
 .prologue-title{font-size:1.6rem;color:var(--gold);margin:0 0 .4rem;font-weight:normal}
 .prologue-speaker{font-size:1.2rem;letter-spacing:.12em;text-transform:uppercase;color:#c0b39d;margin:.25rem 0}
 .prologue-dialogue{font-size:1.8rem;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;max-width:65ch;margin:.4rem auto}
@@ -109,10 +112,10 @@
 .prologue-screen{--prologue-text-scale:1;--prologue-text-align:center;--prologue-box:rgba(16,14,12,.72);--prologue-outline-color:#100e0c;--prologue-outline-width:0px;--prologue-fit:cover;--prologue-focus:50% 50%;--prologue-scale:1}
 .prologue-background{object-fit:var(--prologue-fit);object-position:var(--prologue-focus);transform:scale(var(--prologue-scale))}
 .prologue-caption{text-align:var(--prologue-text-align)}
-.prologue-title{font-size:calc(1.6rem*var(--prologue-text-scale))}
-.prologue-speaker{font-size:calc(1.2rem*var(--prologue-text-scale))}
-.prologue-dialogue{font-size:calc(1.8rem*var(--prologue-text-scale))}
-.prologue-location{font-size:calc(2rem*var(--prologue-text-scale))}
+.prologue-title{font-size:calc(1.6rem*var(--prologue-text-scale)*var(--prologue-caption-fit,1))}
+.prologue-speaker{font-size:calc(1.2rem*var(--prologue-text-scale)*var(--prologue-caption-fit,1))}
+.prologue-dialogue{font-size:calc(1.8rem*var(--prologue-text-scale)*var(--prologue-caption-fit,1))}
+.prologue-location{font-size:calc(2rem*var(--prologue-text-scale)*var(--prologue-caption-fit,1))}
 .prologue-progress{font-size:calc(1.2rem*var(--prologue-text-scale))}
 /* The container: present or absent, and when present, visible or not. An
    invisible container still holds its spacing — that is the difference between

@@ -826,3 +826,21 @@ test('the opening renderer imports every opening symbol it names', () => {
   }
   assert.ok(named.has('PROLOGUE_DEFAULTS'), 'the symbol that taught this lesson is still one of them');
 });
+
+test('the fixed caption is one share of every screen, centred, and its words shrink to fit it', () => {
+  const p = PROLOGUE_DEFAULTS.presentation;
+  assert.equal(p.captionFixedHeight, true);
+  assert.equal(p.captionHeightVh, 15);
+  assert.equal(p.textPosition, 'middle-center', 'the owner centres the words in the band');
+  const css = readFileSync(new URL('../styles/prologue.css', import.meta.url), 'utf8');
+  // The band is measured in container units, so it is the same share of any screen.
+  assert.match(css, /\.prologue-fixed-caption:is\(\.prologue-layout-caption,\.prologue-layout-letterbox\) \.prologue-caption\{[^}]*height:calc\(var\(--prologue-caption-vh,18\) \* 1cqh\)/);
+  assert.match(css, /\.prologue-caption\[data-position\^=middle\]\{align-content:center\}/, 'Middle centres the words in a fixed band');
+  for (const part of ['title', 'speaker', 'dialogue', 'location']) {
+    assert.match(css, new RegExp(`\\.prologue-${part}\\{font-size:calc\\([^}]*var\\(--prologue-caption-fit,1\\)\\)\\}`), `${part} does not shrink with the band`);
+  }
+  const screen = readFileSync(new URL('../src/ui/screens/prologue.js', import.meta.url), 'utf8');
+  assert.match(screen, /function fitCaption\(\)/);
+  assert.match(screen, /new ResizeObserver\(\(\) => fitCaption\(\)\)/, 'a resize re-fits the words');
+  assert.match(screen, /resized\?\.disconnect\(\)/, 'cleanup lets the observer go');
+});

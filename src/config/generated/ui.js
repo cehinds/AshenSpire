@@ -44,7 +44,7 @@
 // source content/config/ui/scenes/w4c-dialogue.json 5d03f8eed0f350d9
 // source content/config/ui/screens/armoury.json b44124e6a29150d9
 // source content/config/ui/screens/creation.json 4b01329f1c288b81
-// source content/config/ui/screens/prologue.json 4baac70fb0a0a190
+// source content/config/ui/screens/prologue.json 2d851cb393f5834b
 // source content/config/ui/screens/shop.json 7d0a0f3e96065b3f
 // source content/config/ui/screens/smith.json 245dd6c5a41a5cd7
 // source content/config/ui/tokens.json 326394c15cac18dd
@@ -1154,7 +1154,7 @@ export const uiConfig = deepFreeze({
             "imageFocusX": 50,
             "imageFocusY": 50,
             "bannerPosition": "top",
-            "textPosition": "bottom-center",
+            "textPosition": "middle-center",
             "textAlign": "center",
             "textScale": 1,
             "textBox": true,

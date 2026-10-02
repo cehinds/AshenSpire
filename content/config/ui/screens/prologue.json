@@ -385,7 +385,7 @@
         "imageFocusX": 50,
         "imageFocusY": 50,
         "bannerPosition": "top",
-        "textPosition": "bottom-center",
+        "textPosition": "middle-center",
         "textAlign": "center",
         "textScale": 1,
         "textBox": true,

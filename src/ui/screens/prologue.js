@@ -191,9 +191,25 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
   const ownerVeil = root.closest('.modal-veil');
   const blocked = () => document.hidden || (topVeil() && topVeil() !== ownerVeil);
   const transitionMs = (scene,stage) => prologueTransitionMs(scene,stage,reduced());
+  // A FIXED CAPTION KEEPS ITS HEIGHT AND THE WORDS GIVE WAY. The band is the
+  // same share of every screen, so a long line on a short screen shrinks to
+  // fit rather than hiding its last line behind a scrollbar while the scene
+  // auto-advances. The reveal clips finished text, so the whole line is
+  // measured once, not re-fitted as it types.
+  function fitCaption() {
+    caption.style.removeProperty('--prologue-caption-fit');
+    if (!root.classList.contains('prologue-fixed-caption') || root.classList.contains('prologue-layout-overlay')) return;
+    if (!caption.clientHeight) return;
+    for (let fit = 0.95; fit >= 0.35 && caption.scrollHeight > caption.clientHeight + 1; fit -= 0.05) {
+      caption.style.setProperty('--prologue-caption-fit', fit.toFixed(2));
+    }
+  }
+  const resized = typeof ResizeObserver === 'function' ? new ResizeObserver(() => fitCaption()) : null;
+  resized?.observe(root);
   function cleanup() {
     if (stopped) return;
     stopped = true; serial++; cancelAnimationFrame(raf);
+    resized?.disconnect();
     animations.forEach(a=>a.cancel());
     portrait.removeEventListener('change',rotate);
     document.removeEventListener('visibilitychange',visibility);
@@ -333,6 +349,7 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     delayMs = Math.max(0,Number(stage_.textDelaySeconds) || 0) * 1000;
     reveal = startReveal(copy.text,stage_);
     paintDelay(elapsed);
+    fitCaption();
     // A scene may take the music with it, and may open on a sound — but only
     // when the scene is actually being ENTERED. `notify` is false when the same
     // scene is re-drawn in place (a rotation, a breakpoint change), and a
