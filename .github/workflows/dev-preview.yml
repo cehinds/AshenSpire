@@ -375,22 +375,28 @@ jobs:
           # The same rule the fetch step's env applies: only a push or dispatch
           # of a protected branch gets the token.
           TRUSTED_REF: ${{ github.event_name != 'pull_request' && contains(fromJSON('["refs/heads/dev","refs/heads/test","refs/heads/release","refs/heads/main"]'), github.ref) }}
-          HAS_TOKEN: ${{ secrets.ART_REPO_TOKEN != '' }}
         run: |
-          if [ "$TRUSTED_REF" = "true" ] && [ "$HAS_TOKEN" = "true" ]; then
+          # A protected branch always fetches: with no token it fails by name
+          # in the fetch step, it is never skipped.
+          if [ "$TRUSTED_REF" = "true" ]; then
             echo "fetch=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          # A run with no token (a pull request, a fork, Dependabot, any other
-          # ref) can fetch only once cehinds/AshenSpire-art is public. Ask
-          # GitHub anonymously; a private repository answers 404, a public one
-          # says "private": false.
+          # Any other run (a pull request, a fork, Dependabot, a dispatch of
+          # another ref) gets no token, so it can fetch only once
+          # cehinds/AshenSpire-art is public. Ask GitHub anonymously: 404 means
+          # private (skip, with a notice); 200 with "private": false means
+          # public (fetch); anything else (rate limit, network) cannot be
+          # established and fails the step rather than skipping the gate.
           code=$(curl -s -o "$RUNNER_TEMP/art-repo.json" -w '%{http_code}' https://api.github.com/repos/cehinds/AshenSpire-art || true)
-          if [ "$code" = "200" ] && node -e "process.exit(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).private === false ? 0 : 1)" "$RUNNER_TEMP/art-repo.json"; then
+          if [ "$code" = "404" ]; then
+            echo "::notice title=Art release not fetched::this run gets no ART_REPO_TOKEN (only pushes and dispatches of dev, test, release and main do) and cehinds/AshenSpire-art is not public yet, so it skips the art fetch and the agreement check; once the repository is public every run fetches"
+            echo "fetch=false" >> "$GITHUB_OUTPUT"
+          elif [ "$code" = "200" ] && node -e "process.exit(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).private === false ? 0 : 1)" "$RUNNER_TEMP/art-repo.json"; then
             echo "fetch=true" >> "$GITHUB_OUTPUT"
           else
-            echo "::notice title=Art release not fetched::this run gets no ART_REPO_TOKEN (only pushes and dispatches of dev, test, release and main do) and cehinds/AshenSpire-art is not public yet (HTTP $code), so it skips the art fetch and the agreement check; once the repository is public every run fetches"
-            echo "fetch=false" >> "$GITHUB_OUTPUT"
+            echo "::error title=Art release access unknown::could not tell whether cehinds/AshenSpire-art is public (HTTP $code); failing rather than skipping the art agreement check"
+            exit 1
           fi
 
       - name: Fetch the art packs this build's tier uses
