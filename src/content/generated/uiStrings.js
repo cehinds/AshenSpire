@@ -5015,6 +5015,132 @@ export const uiStrings = [
     "tip": "Cancel"
   },
   {
+    "id": "event.continue.reason",
+    "extends": "",
+    "short": "Choose a response first.",
+    "full": "Continue opens once you take one of the responses.",
+    "tip": ""
+  },
+  {
+    "id": "dialogue.continue.reason",
+    "extends": "",
+    "short": "Choose a reply first.",
+    "full": "Continue opens once you answer.",
+    "tip": ""
+  },
+  {
+    "id": "reward.confirm.reason",
+    "extends": "",
+    "short": "Choose one first.",
+    "full": "Confirm opens once you pick an option.",
+    "tip": ""
+  },
+  {
+    "id": "reward.continue.reason.levels",
+    "extends": "",
+    "short": "Claim your levels first.",
+    "full": "Continue opens once every level waiting here is claimed.",
+    "tip": ""
+  },
+  {
+    "id": "title.continue.reason",
+    "extends": "",
+    "short": "No saved climb yet.",
+    "full": "Continue resumes a saved climb; start one with New.",
+    "tip": ""
+  },
+  {
+    "id": "title.slots.continue.reason",
+    "extends": "",
+    "short": "Choose a slot first.",
+    "full": "The forward button opens once you pick a save slot.",
+    "tip": ""
+  },
+  {
+    "id": "handDiscard.confirm.reason",
+    "extends": "",
+    "short": "Choose at least {minimum}.",
+    "full": "This turn needs at least {minimum} cards discarded.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.class",
+    "extends": "",
+    "short": "Choose a class.",
+    "full": "Continue opens once you pick a class.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.statMode",
+    "extends": "",
+    "short": "Choose how to assign your stats.",
+    "full": "Continue opens once you pick how your stats are set.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.keepsake",
+    "extends": "",
+    "short": "Choose a keepsake.",
+    "full": "Continue opens once you pick a keepsake.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.armour",
+    "extends": "",
+    "short": "Choose starting armour.",
+    "full": "Continue opens once you pick your starting armour.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsLeft.one",
+    "extends": "",
+    "short": "{count} stat point still to assign.",
+    "full": "Assign every stat point before going on.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsLeft",
+    "extends": "",
+    "short": "{count} stat points still to assign.",
+    "full": "Assign every stat point before going on.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsOver.one",
+    "extends": "",
+    "short": "{count} stat point over the pool.",
+    "full": "Take back points until you are within the pool.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.pointsOver",
+    "extends": "",
+    "short": "{count} stat points over the pool.",
+    "full": "Take back points until you are within the pool.",
+    "tip": ""
+  },
+  {
+    "id": "creation.reason.handNeeds",
+    "extends": "",
+    "short": "{name} needs {stat} {required} — you have {actual}.",
+    "full": "Raise that stat or hold something you can wield.",
+    "tip": ""
+  },
+  {
+    "id": "atlas.enter.reason.none",
+    "extends": "",
+    "short": "Choose a place first.",
+    "full": "Enter opens once you pick a place.",
+    "tip": ""
+  },
+  {
+    "id": "atlas.enter.reason.closed",
+    "extends": "",
+    "short": "No open road to here yet.",
+    "full": "Pick a place on an open road or where you stand.",
+    "tip": ""
+  },
+  {
     "id": "offline.zip.heading",
     "extends": "",
     "short": "Download a folder copy (zip)",

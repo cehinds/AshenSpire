@@ -85,17 +85,18 @@ export function mountTitle(app, {
   // the page keep reading it.
   const menuHtml = () => {
     const continueSlot = occupied[0]?.slot ?? null;
-    const entry = (label, action, { id = '', className = '', disabled = false } = {}) => ({
+    const entry = (label, action, { id = '', className = '', disabled = false, reason = '' } = {}) => ({
       label,
       className: `title-menu-item ${className}`.trim(),
       disabled,
+      reason,
       attrs: { id: id || null, dataset: { titleAction: action, component: UI.titleMenuItem } },
     });
     const menu = titleMenu({
       name: 'ASHEN SPIRE',
       subtitle: 'A roguelike deckbuilder',
       entries: [
-        entry('Continue', 'continue', { className: 'slot-continue', disabled: continueSlot == null }),
+        entry('Continue', 'continue', { className: 'slot-continue', disabled: continueSlot == null, reason: t('title.continue.reason') }),
         entry('Load', 'load', { id: 'load-game' }),
         entry('New', 'new', { id: 'new-game', className: 'slot-new' }),
         // #armaments remains the compatibility anchor for the existing watched probe.

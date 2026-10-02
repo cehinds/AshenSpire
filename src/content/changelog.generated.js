@@ -3,14 +3,24 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
-    "id": "pr-1471",
+    "id": "pr-1473",
     "date": "2026-10-02",
     "group": "2026-10-02",
-    "summary": "The web edition shows its art loading on the start screen, and can retry",
-    "detail": "Behind the scenes, in the web edition only: the start screen now appears at once while the art loads, with one line saying how far it has got, and if the art cannot be loaded the title screen says so and offers Retry (also in Settings → Art quality), which loads it again without reloading the page; the downloaded single file is unchanged, and nothing you play changes.",
+    "summary": "Behind the scenes: the balance report now measures Mana and each act's difficulty",
+    "detail": "Nothing you play changes. The run simulator can now compare whole climbs with and without Mana limits, and report how often each act's boss falls in each region. Both results are written into the balance notes for the owner to tune from later.",
+    "build": "0.7.1.787",
+    "pullRequest": 1473,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1473"
+  },
+  {
+    "id": "pr-1459",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "A greyed-out Next now says why",
+    "detail": "When a Next, Continue, Confirm, Begin or Enter button is greyed out because you still have something to do, a short line under it now tells you what, for example \"Choose a class.\", \"Choose a response first.\" or \"No saved climb yet.\" Before, the reason only showed in a tooltip, which you never see on a phone. This covers character creation, events, conversations, card rewards, the title screen and save slots, the discard choice, the atlas, the Smith, and the rewards screen while a level is waiting to be claimed.",
     "build": "0.7.1.786",
-    "pullRequest": 1471,
-    "url": "https://github.com/cehinds/AshenSpire/pull/1471"
+    "pullRequest": 1459,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1459"
   },
   {
     "id": "pr-1484",

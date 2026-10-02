@@ -26,6 +26,7 @@ import { renderCard } from './card.js';
 // The interaction router goes through the framework's adopted door.
 import { armOptionDecision } from '../../framework/optionDecision.js';
 import { t } from '../strings.js';
+import { reasonWhenDisabled } from './refusal.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import { FOLD_GLYPH } from './foldGlyph.js';
 import { workspaceFrame, markCurrent } from './w1Workspace.js';
@@ -249,6 +250,10 @@ export function mountSmithUpgradeModal(host, initialModel, {
 
   const back = modal.querySelector('.smith-back');
   const confirm = modal.querySelector('.smith-confirm');
+  // A chosen item the purse cannot pay for says why under the foot (FINISH
+  // §6); with nothing chosen the button's own label says "Select an item".
+  let confirmBlocked = '';
+  const confirmReason = reasonWhenDisabled(confirm, () => confirmBlocked || null);
 
   /**
    * The pane, in W1i's order: the selected item (art, name, tier, kind and
@@ -342,6 +347,8 @@ export function mountSmithUpgradeModal(host, initialModel, {
     confirm.disabled = !selected;
     confirm.textContent = model.properties.confirmLabel;
     confirm.setAttribute('aria-disabled', String(!model.properties.canConfirm));
+    confirmBlocked = selected ? model.properties.blockedReasons.join(' ') : '';
+    confirmReason();
     confirm.dataset.smithActionState = !selected ? 'unselected' : (selected.affordable ? 'actionable' : 'blocked');
     if (selected) {
       confirm.setAttribute('aria-label', `Upgrade ${selected.name} for ${selected.cost} Smithing Stone${selected.cost === 1 ? '' : 's'}`);
