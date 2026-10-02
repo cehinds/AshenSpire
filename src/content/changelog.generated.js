@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: every change now checks the game's art against the art repository's release",
     "detail": "Nothing you play changes. The game pins one release of its art, light art, fonts, music and map tiles in a separate repository; each check downloads the parts it needs, verifies every file against its fingerprint, and proves the release and the copies still kept here are identical, byte for byte (pull requests from forks and Dependabot skip this while that repository is private).",
-    "build": "0.7.1.761",
+    "build": "0.7.1.765",
     "pullRequest": 1450,
     "url": "https://github.com/cehinds/AshenSpire/pull/1450"
+  },
+  {
+    "id": "pr-1478",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Your character level gets dearer with every level too",
+    "detail": "Your first character level still needs 100 XP, but each level after now costs 1.75 times the one before (100, 180, 310, 540, 940) instead of 130 more, the same growth skills and your class already use. Like any XP setting, this reaches a run you already started the next time you load it.",
+    "build": "0.7.1.764",
+    "pullRequest": 1478,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1478"
   },
   {
     "id": "pr-1476",
