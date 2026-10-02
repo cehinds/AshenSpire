@@ -8,7 +8,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { buildManifest, serialize, MANIFEST_PATH } from '../tools/art-manifest.mjs';
@@ -233,4 +233,44 @@ test('--out: a directory inside the checkout named like `..cache` is refused, a 
   assert.doesNotThrow(() => guardOut(join(root, 'build', 'asset-pack'), root));
   assert.doesNotThrow(() => guardOut(join(root, '..', 'elsewhere'), root));
   assert.doesNotThrow(() => guardOut(join(root, '..'), root));
+});
+
+test('known-bad: a tree missing a whole pack is not green; a partial write checks green against its own selection', () => {
+  withPacks(({ out, manifest }) => {
+    const name = packFile(out, /^high-.*\.json$/).slice(0, -5);
+    rmSync(join(out, 'packs', `${name}.json`));
+    rmSync(join(out, 'packs', `${name}.js`));
+    const problems = verifyPacks(out, { manifest });
+    assert.ok(problems.some((p) => /no high index/.test(p)), problems.join('\n'));
+  });
+  const root = tree(FILES);
+  const out = mkdtempSync(join(tmpdir(), 'asset-pack-out-'));
+  try {
+    writePacks({ root, out, packs: ['light'] });
+    const manifest = JSON.parse(readFileSync(join(root, MANIFEST_PATH), 'utf8'));
+    assert.deepEqual(verifyPacks(out, { manifest, packs: ['light'] }), []);
+    assert.match(verifyPacks(out, { manifest }).join('\n'), /no high index[\s\S]*no common index/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+    rmSync(out, { recursive: true, force: true });
+  }
+});
+
+test('known-bad: a symlinked --out, or a symlinked packs/ inside it, never clears a tracked directory', (t) => {
+  const root = tree(FILES);
+  const tracked = join(root, 'src');
+  mkdirSync(tracked, { recursive: true });
+  writeFileSync(join(tracked, 'keep.js'), 'tracked\n');
+  mkdirSync(join(tracked, 'packs'), { recursive: true });
+  writeFileSync(join(tracked, 'packs', 'keep.txt'), 'tracked\n');
+  try {
+    mkdirSync(join(root, 'build'), { recursive: true });
+    try { symlinkSync(tracked, join(root, 'build', 'out'), 'dir'); } catch (e) { t.skip(`symlinks unavailable here (${e.code})`); return; }
+    assert.throws(() => writePacks({ root, out: join(root, 'build', 'out') }), /--out src: write under build\/ or dist\//);
+    mkdirSync(join(root, 'build', 'real'), { recursive: true });
+    symlinkSync(join(tracked, 'packs'), join(root, 'build', 'real', 'packs'), 'dir');
+    assert.throws(() => writePacks({ root, out: join(root, 'build', 'real') }), /is a symlink/);
+    assert.equal(readFileSync(join(tracked, 'keep.js'), 'utf8'), 'tracked\n');
+    assert.equal(readFileSync(join(tracked, 'packs', 'keep.txt'), 'utf8'), 'tracked\n');
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });

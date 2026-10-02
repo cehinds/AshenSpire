@@ -247,3 +247,30 @@ test('known-bad: schema 2, a carried font that differs from its common record is
     assert.match(problems, /assets\/fonts\/f\.woff2: the release's art-manifest\.json disagrees/);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+test('known-bad: schema 2, --recheck reports a cached font the release listed and the cache lost', async () => {
+  const { root, zip } = schema2Fixture();
+  try {
+    const { dir } = await fetchArt({ root, from: zip });
+    rmSync(join(dir, 'assets/fonts/f.woff2'));
+    await assert.rejects(fetchArt({ root, recheck: true }), (e) => {
+      const problems = e.problems.join('\n');
+      assert.match(problems, /assets\/fonts\/f\.woff2: missing from the cache/);
+      assert.doesNotMatch(problems, /music\/title\/title\.mp3/, 'a common id the release never listed stays optional');
+      return true;
+    });
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('known-bad: schema 2, a release whose manifest lists a font its zip lacks is refused', () => {
+  const { root, pin, manifest } = schema2Fixture();
+  try {
+    const theirs = { schema: 1, count: 2, assets: { 'assets/bg/a.webp': manifest.assets['assets/bg/a.webp'], 'assets/fonts/f.woff2': { high: manifest.assets['assets/fonts/f.woff2'].common } } };
+    const zip = join(root, 'short.zip');
+    writeZip(zip, [{ name: 'art-manifest.json', data: Buffer.from(JSON.stringify(theirs)) }, { name: 'assets/bg/a.webp', data: Buffer.from('high-a') }]);
+    const buf = readFileSync(zip);
+    const problems = verifyRelease(buf, { ...pin, sha256: sha(buf) }, manifest).problems.join('\n');
+    assert.match(problems, /assets\/fonts\/f\.woff2: not in the release/);
+    assert.doesNotMatch(problems, /music\/title/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});

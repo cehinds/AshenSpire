@@ -116,9 +116,9 @@ export function verifyRelease(zipBuf, pin, manifest) {
   // (src/ui/highResArt.js reads `hd/art-manifest.json`), so it must be present
   // and must name every id with the same high record as this tree's.
   const embedded = entries.get(MANIFEST_PATH);
+  let theirs = null;
   if (!embedded) problems.push(`the release has no ${MANIFEST_PATH}`);
   else {
-    let theirs = null;
     try { theirs = JSON.parse(embedded.toString('utf8')).assets || {}; } catch { problems.push(`the release's ${MANIFEST_PATH} is not JSON`); }
     if (theirs) {
       for (const id of Object.keys(want)) {
@@ -132,9 +132,13 @@ export function verifyRelease(zipBuf, pin, manifest) {
   for (const [id, rec] of Object.entries(want)) {
     const common = commonOf(rec);
     if (common) {
-      // Not the high release's to carry; checked when it does carry it.
+      // Not the high release's to carry, unless its own manifest lists it;
+      // checked whenever it does carry it.
       const data = entries.get(common.path);
-      if (!data) continue;
+      if (!data) {
+        if (!theirs || Object.prototype.hasOwnProperty.call(theirs, id)) problems.push(`${id}: not in the release`);
+        continue;
+      }
       paths.add(common.path);
       if (data.length !== common.bytes || sha256(data) !== common.sha256) problems.push(`${id}: the release's file differs from ${MANIFEST_PATH}`);
       continue;
@@ -245,9 +249,9 @@ function unpack(entries, dir, mark) {
 export function recheck(dir, manifest) {
   const problems = [];
   const cached = join(dir, MANIFEST_PATH);
+  let theirs = null;
   if (!existsSync(cached)) problems.push(`the cache has no ${MANIFEST_PATH}`);
   else {
-    let theirs = null;
     try { theirs = JSON.parse(readFileSync(cached, 'utf8')).assets || {}; } catch { problems.push(`the cached ${MANIFEST_PATH} is not JSON`); }
     if (theirs) {
       const want = manifest.assets || {};
@@ -262,8 +266,13 @@ export function recheck(dir, manifest) {
     const common = commonOf(rec);
     const want = common || rec.high;
     const file = join(dir, want.path);
-    // A common id is in the high cache only when the release carried it.
-    if (!existsSync(file)) { if (!common) problems.push(`${id}: missing from the cache`); continue; }
+    // A common id is optional in the high cache only when the release's own
+    // manifest omits it; one the release lists (hd-assets-v1's fonts) must be
+    // there. With no readable cached manifest, every listed id is required.
+    if (!existsSync(file)) {
+      if (!common || !theirs || Object.prototype.hasOwnProperty.call(theirs, id)) problems.push(`${id}: missing from the cache`);
+      continue;
+    }
     const buf = readFileSync(file);
     if (buf.length !== want.bytes || sha256(buf) !== want.sha256) problems.push(`${id}: the cached file changed`);
   }

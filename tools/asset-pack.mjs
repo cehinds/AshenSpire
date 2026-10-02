@@ -5,7 +5,7 @@
 //   node tools/asset-pack.mjs [--out <dir>] [--pack light,high,common] [--json]
 //                                    write <dir>/objects/ and <dir>/packs/
 //                                    (default <dir>: build/asset-pack)
-//   node tools/asset-pack.mjs --check [--out <dir>]
+//   node tools/asset-pack.mjs --check [--out <dir>] [--pack …]
 //                                    verify a written tree (exit 1 = red)
 //
 // WHY (docs/EXTERNAL-ASSETS-PLAN.md §3, step 2). The game is moving from one
@@ -51,8 +51,8 @@
 // twin that does not match, each of which --check must catch.
 
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MIME } from './assetmime.mjs';
 import { MANIFEST_PATH, canonicalBytes, commonSources, isCommonEntry } from './art-manifest.mjs';
@@ -175,27 +175,58 @@ export function renderPacks(plan) {
   return { files, summary };
 }
 
-/** Refuse an output directory that would put packs/ or objects/ into the tracked tree. */
+/**
+ * realOut(p) → p with every existing component resolved through symlinks:
+ * the real path of its nearest existing ancestor, plus the part not yet made.
+ */
+export function realOut(p) {
+  let head = resolve(p);
+  const rest = [];
+  while (!existsSync(head)) {
+    const up = dirname(head);
+    if (up === head) break;
+    rest.unshift(basename(head));
+    head = up;
+  }
+  return join(existsSync(head) ? realpathSync(head) : head, ...rest);
+}
+
+/**
+ * Refuse an output directory that would put packs/ or objects/ into the
+ * tracked tree. Judged on REAL paths: `build/out` that is a symlink to `src/`
+ * is `src/`, and is refused. Returns the real output directory to write into.
+ */
 export function guardOut(out, root) {
-  const rel = relative(root, out);
+  const realRoot = realOut(root);
+  const real = realOut(out);
+  const rel = relative(realRoot, real);
   const r = posix(rel);
   if (!r || r === '.') throw new Error('--out must be a directory of its own, not the repository root');
   // Outside the checkout only when the first segment IS `..` (or the path is
   // on another drive): `..cache` is a directory inside the checkout.
-  if (r === '..' || r.startsWith('../') || rel.startsWith(`..${sep}`) || isAbsolute(rel)) return; // the caller's business
+  if (r === '..' || r.startsWith('../') || rel.startsWith(`..${sep}`) || isAbsolute(rel)) return real; // the caller's business
   if (!/^(build|dist)\//.test(`${r}/`)) {
     throw new Error(`--out ${r}: write under build/ or dist/ (ignored by .gitignore), or outside the checkout`);
   }
+  return real;
+}
+
+/** The packs/ or objects/ directory to clear, refused when it is a symlink (it could name a tracked tree). */
+function clearable(dir) {
+  let st = null;
+  try { st = lstatSync(dir); } catch (e) { if (e.code === 'ENOENT') return dir; throw e; }
+  if (st.isSymbolicLink()) throw new Error(`${dir} is a symlink; asset-pack clears this directory and will not follow one`);
+  return dir;
 }
 
 /** writePacks({ root, out, packs }) → summary. Clears out/packs and out/objects first. */
-export function writePacks({ root = ROOT, out = resolve(ROOT, DEFAULT_OUT), packs = PACKS } = {}) {
-  guardOut(out, root);
+export function writePacks({ root = ROOT, out: asked = resolve(ROOT, DEFAULT_OUT), packs = PACKS } = {}) {
+  const out = guardOut(asked, root);
   const plan = planPacks(root, packs);
   if (plan.problems.length) throw Object.assign(new Error('the sources do not match the manifest; nothing was written'), { problems: plan.problems });
   const { files, summary } = renderPacks(plan);
-  rmSync(resolve(out, PACKS_DIR), { recursive: true, force: true });
-  rmSync(resolve(out, OBJECTS_DIR), { recursive: true, force: true });
+  const clear = [clearable(resolve(out, PACKS_DIR)), clearable(resolve(out, OBJECTS_DIR))];
+  for (const dir of clear) rmSync(dir, { recursive: true, force: true });
   for (const path of [...files.keys()].sort(byteOrder)) {
     const abs = resolve(out, path);
     mkdirSync(dirname(abs), { recursive: true });
@@ -230,9 +261,10 @@ function twinArgs(text, fn) {
  * digest and is canonical; its twin carries exactly its text; every object it
  * lists is present and hashes to its name; nothing unlisted is in the store;
  * the font sidecar is named by its text's digest and each face matches the
- * common index; and, given the manifest, every id agrees with its record.
+ * common index; every pack in `packs` (default all three) has its index; and,
+ * given the manifest, every id agrees with its record.
  */
-export function verifyPacks(out, { manifest = null } = {}) {
+export function verifyPacks(out, { manifest = null, packs = PACKS } = {}) {
   const problems = [];
   const listed = new Set();
   const seen = new Map(); // pack → index name
@@ -294,6 +326,12 @@ export function verifyPacks(out, { manifest = null } = {}) {
       }
     }
   }
+  // Every selected pack is here: a tree missing a whole pack is not green.
+  for (const pack of packs) {
+    if (!PACKS.includes(pack)) problems.push(`unknown pack ${JSON.stringify(pack)} (one of ${PACKS.join(', ')})`);
+    else if (!seen.has(pack)) problems.push(`${PACKS_DIR}/: no ${pack} index (packs/${pack}-<digest12>.json)`);
+  }
+  for (const [pack, file] of seen) if (!packs.includes(pack)) problems.push(`${PACKS_DIR}/${file}: a ${pack} index, which was not asked for (--pack ${packs.join(',')})`);
   // Every object in the store is listed by some index, and named by its bytes.
   for (const path of walk(resolve(out, OBJECTS_DIR)).map((p) => `${OBJECTS_DIR}/${p}`)) {
     if (listed.has(path)) continue;
@@ -336,7 +374,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   try {
     if (args.includes('--check')) {
       const manifest = JSON.parse(readFileSync(resolve(ROOT, MANIFEST_PATH), 'utf8'));
-      const problems = verifyPacks(out, { manifest });
+      const problems = verifyPacks(out, { manifest, packs });
       if (problems.length) {
         console.error(`asset-pack: FAIL — ${problems.length} problem(s) in ${posix(relative(process.cwd(), out)) || '.'}:`);
         for (const p of problems.slice(0, 20)) console.error(`  · ${p}`);
