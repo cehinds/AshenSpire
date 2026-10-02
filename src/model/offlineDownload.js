@@ -86,6 +86,10 @@ export class ZipDownloadError extends Error {
 const zipError = (code, message) => new ZipDownloadError(code, message);
 const SHA = /^[0-9a-f]{64}$/;
 const PIN_FILE = /^packs\/[a-z]+-[0-9a-f]{12}\.(?:json|js)$/;
+// tools/asset-pack.mjs only ever writes the font sidecar as packs/fonts-<digest12>.js,
+// and tools/pages-store.mjs publishes exactly the pinned name, so a pin naming
+// anything else could never be fetched from the site (Codex, #1480).
+const SIDECAR_FILE = /^packs\/fonts-[0-9a-f]{12}\.js$/;
 const PACK_PIN = /const ASSET_PACKS = (\{.*?\});\n/;
 const ASSET_BASE_TEXT = '{"base":"./"}\n';
 
@@ -136,9 +140,8 @@ export function twinString(text, fn, name = null) {
 
 /**
  * The file a double-clicked page reads for a pinned pack file, and the id it
- * must call its hook with: the `.js` twin of that name, whatever suffix the pin
- * gives (src/ui/assetPacks.js twinOf). So a font sidecar pinned as `.json` is
- * archived as the `.js` the loader asks for (Codex, #1480).
+ * must call its hook with: the `.js` twin of that name (src/ui/assetPacks.js
+ * twinOf).
  */
 export function twinFileOf(file) {
   const m = /^((?:[A-Za-z0-9_-]+\/)*)([A-Za-z0-9_-]+)\.(?:json|js)$/.exec(String(file || ''));
@@ -179,7 +182,7 @@ function zipLayout(pin, packs, indexOf) {
   }
   if (pin.fonts?.file) {
     const twin = twinFileOf(pin.fonts.file);
-    if (!twin || !PIN_FILE.test(String(pin.fonts.file)) || !SHA.test(String(pin.fonts.sha256))) throw zipError('pack', 'The build does not pin its font sidecar.');
+    if (!twin || !SIDECAR_FILE.test(String(pin.fonts.file)) || !SHA.test(String(pin.fonts.sha256))) throw zipError('pack', 'The build does not pin its font sidecar as packs/fonts-<digest12>.js.');
     packFiles.push({ kind: 'sidecar', file: twin.file, id: twin.id, sha256: pin.fonts.sha256 });
   }
   return { packFiles, objects };
