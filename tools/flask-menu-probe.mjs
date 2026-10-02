@@ -20,7 +20,10 @@
 //                the mini's count one lower). After that remount the setting
 //                still holds — Drink is still offered — and a second Drink
 //                saves and empties the flask, whose Drink is then refused with
-//                the empty reason. It judges THAT the run is saved, not which
+//                the empty reason. Then `?shot=atlas`: the world atlas is a
+//                map screen with no Potions control, so turning the setting on
+//                there must leave it mounted with the destination the player
+//                selected. It judges THAT the run is saved, not which
 //                call saved it: dropping only the onChange's own onSave leaves
 //                the run saved (observed: the remounted map commits through
 //                onSave too), so that edit is not a known-bad here.
@@ -32,11 +35,16 @@
 //                action means (Use a charge flask spends one of ITS charges;
 //                Drop a carried potion removes one of IT; Inspect opens the
 //                inspect modal and changes nothing; a refused row changes
-//                nothing) and onChange rings exactly when the run changed. The
-//                same list with the setting OFF must refuse Drink.
+//                nothing) and onChange rings exactly when the run changed. Each
+//                mini's menu, carried potions included, must equal the shared
+//                plan (this host draws every mini; the map's own tray folds
+//                some into its overflow). The same list with the setting OFF
+//                must refuse Drink.
 //   plan         the offered actions against the shared flaskActionPlan
 //                (src/model/flaskActions.js, imported in the page), for the
-//                Crimson (hp) and Azure (mana) flasks:
+//                Crimson (hp) and Azure (mana) flasks and the carried potions
+//                (the combat pose carries two; the map pages carry a Crimson
+//                Flask and two Blight Coatings through `?shotCarried`):
 //                  · combat (`?shot=combat`): the Potions list's Use, before and
 //                    after the Azure flask is drunk to empty;
 //                  · the map Potions list and minis, setting OFF and ON, and ON
@@ -51,8 +59,8 @@
 //                a list's verb must be enabled exactly when the plan's is.
 //
 //   node tools/flask-menu-probe.mjs [--only persistence|dispatch|plan]
-//   node tools/flask-menu-probe.mjs --selftest   plants each known-bad in a
-//                                                  copy of the tree, requires red
+//   node tools/flask-menu-probe.mjs --selftest [--shard i/n]   plants each
+//                       known-bad in a copy of the tree, requires red
 //   FLASK_MENU_PORT=<n>   serve on another port (default 8597)
 //   CHROME=<path>         the browser (tools/browser.mjs)
 //
@@ -76,18 +84,29 @@ const SETTING = 'useRestorativeFlasksOutsideCombat';
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 if (process.argv.includes('--selftest')) {
-  const { doorSelftest } = await import('./doorplant.mjs');
+  // `--shard i/n` runs the plants at index i mod n (tools/doorplant.mjs SHARDS),
+  // so ci.yml can spread the corpus over legs under the 20-minute job rule.
+  const { doorSelftest, resolveShard } = await import('./doorplant.mjs');
   process.exit(await doorSelftest({
+    shard: resolveShard(),
     tool: 'flask-menu-probe.mjs',
     timeoutMs: 240000,
     plants: [
       {
         name: 'the map stops redrawing when "Use flasks outside combat" changes (the bug this tool found)',
         file: 'src/main.js',
-        find: "const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan', 'useRestorativeFlasksOutsideCombat'];",
-        replace: "const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan'];",
+        find: "const FLASK_REMOUNT_KEYS = ['useRestorativeFlasksOutsideCombat'];",
+        replace: 'const FLASK_REMOUNT_KEYS = [];',
         args: ['--only', 'persistence'],
         expectRed: /FAIL persistence: the setting turned on in Settings reaches the map Potions list/,
+      },
+      {
+        name: 'the world atlas remounts when "Use flasks outside combat" changes, losing its selected destination',
+        file: 'src/main.js',
+        find: "const flaskKey = FLASK_REMOUNT_KEYS.some((k) => k in changed) && !!screen.querySelector('.map-potions, .hud-potions');",
+        replace: 'const flaskKey = FLASK_REMOUNT_KEYS.some((k) => k in changed);',
+        args: ['--only', 'persistence'],
+        expectRed: /FAIL persistence: atlas, turning the setting on keeps the atlas and its selected destination/,
       },
       {
         name: 'the map stops remounting after a Potions action',
@@ -122,6 +141,14 @@ if (process.argv.includes('--selftest')) {
         expectRed: /FAIL dispatch: mini charge:hp → use/,
       },
       {
+        name: 'a carried Potions mini offers Use and refuses Drop (a charge flask\'s plan)',
+        file: 'src/ui/components/runPotions.js',
+        find: "def, plan: planFor(entry), charges: entry.category === 'charge' ? entry.count : null,",
+        replace: "def, plan: entry.category === 'carried' ? runPotionPlan({ ...entry, category: 'charge' }, { drinkOutsideCombat: true }) : planFor(entry), charges: entry.category === 'charge' ? entry.count : null,",
+        args: ['--only', 'dispatch'],
+        expectRed: /FAIL dispatch: mini carried:crimsonFlask's flask menu offers the shared plan/,
+      },
+      {
         name: 'the map Potions control ignores the "Use flasks outside combat" setting',
         file: 'src/ui/components/runPotions.js',
         find: "const drinkOutsideCombat = settingOn(meta.settings, 'useRestorativeFlasksOutsideCombat');",
@@ -136,6 +163,14 @@ if (process.argv.includes('--selftest')) {
         replace: 'const canUse = true;',
         args: ['--only', 'plan'],
         expectRed: /FAIL plan: combat, Azure drunk to empty/,
+      },
+      {
+        name: 'combat refuses Use on every carried potion',
+        file: 'src/ui/components/combatActionRow.js',
+        find: 'const canUse = !reason;',
+        replace: 'const canUse = !reason && chargeKind != null;',
+        args: ['--only', 'plan'],
+        expectRed: /FAIL plan: combat, opening hand, carried potions/,
       },
       {
         name: 'one run-HUD charge flask is always usable, ignoring the setting',
@@ -153,29 +188,76 @@ if (process.argv.includes('--selftest')) {
         args: ['--only', 'plan'],
         expectRed: /FAIL plan: run HUD, setting off/,
       },
+      {
+        name: 'a run-HUD carried potion offers Use outside combat',
+        file: 'src/ui/components/runHud.js',
+        find: "          canUse: false,\n          useReason: 'Flasks can only be used in combat',",
+        replace: "          canUse: true,\n          useReason: 'Flasks can only be used in combat',",
+        args: ['--only', 'plan'],
+        expectRed: /FAIL plan: run HUD carried icons, setting off/,
+      },
+      {
+        name: 'the run HUD drops a carried potion\'s Drop row',
+        file: 'src/ui/components/runHud.js',
+        find: '          def,\n          plan,\n          onCancel: () => {},',
+        replace: "          def,\n          plan: { ...plan, actions: plan.actions.filter((a) => a.id !== 'drop') },\n          onCancel: () => {},",
+        args: ['--only', 'plan'],
+        expectRed: /FAIL plan: run HUD carried icons, setting off/,
+      },
     ],
   }));
 }
+
+// A deadline per CDP command (#1474 review; tools/displayfirst.mjs has the same
+// two safeguards). Without them a Chromium that exits, a socket that closes or a
+// command the renderer drops leaves an awaited send() pending until the CI
+// step's own limit, with no verdict printed. Both end in a HARNESS exit (2):
+// nothing after them was measured. The longest in-page evaluate here (the
+// dispatch probe's every-row walk) takes about 20 s, so it gets 120 s and every
+// other command 30 s. They are deadlines, not performance budgets.
+const CDP_TIMEOUT_MS = 30000;
+const CDP_EVALUATE_TIMEOUT_MS = 120000;
+const harnessError = (message) => Object.assign(new Error(message), { harness: true });
 
 function connectCdp(wsUrl) {
   const ws = new WebSocket(wsUrl);
   let nextId = 1;
   const pending = new Map();
   const listeners = new Set();
+  let dead = null;
+  const killPending = (why) => {
+    dead = dead || why;
+    for (const [, p] of pending) { clearTimeout(p.timer); p.fail(harnessError(`${p.method}: ${why}`)); }
+    pending.clear();
+  };
   ws.addEventListener('message', (event) => {
     const msg = JSON.parse(event.data);
     if (msg.method) for (const fn of listeners) fn(msg);
     if (!msg.id || !pending.has(msg.id)) return;
-    const { done, fail } = pending.get(msg.id);
+    const { done, fail, timer } = pending.get(msg.id);
     pending.delete(msg.id);
+    clearTimeout(timer);
     if (msg.error) fail(new Error(msg.error.message)); else done(msg.result);
   });
+  ws.addEventListener('close', () => killPending('the DevTools socket closed with the command in flight (Chromium is gone)'));
+  ws.addEventListener('error', (e) => killPending(`the DevTools socket errored with the command in flight (${e?.message || e?.error?.message || 'no detail'})`));
   return {
-    ready: new Promise((done, fail) => { ws.addEventListener('open', done); ws.addEventListener('error', fail); }),
+    ready: new Promise((done, fail) => {
+      ws.addEventListener('open', done);
+      ws.addEventListener('error', () => fail(harnessError('the DevTools socket failed to open')));
+      ws.addEventListener('close', () => fail(harnessError('the DevTools socket closed before it opened')));
+    }),
     send(method, params = {}, sessionId) {
+      if (dead) return Promise.reject(harnessError(`${method} was not sent: ${dead}`));
       const id = nextId++;
+      const ms = method === 'Runtime.evaluate' ? CDP_EVALUATE_TIMEOUT_MS : CDP_TIMEOUT_MS;
       return new Promise((done, fail) => {
-        pending.set(id, { done, fail });
+        const timer = setTimeout(() => {
+          pending.delete(id);
+          fail(harnessError(`CDP ${method} did not answer within ${ms} ms (a blocked renderer or a dropped command); nothing after it was measured`));
+        }, ms);
+        timer.unref?.();
+        pending.set(id, { done, fail, timer, method });
         ws.send(JSON.stringify({ id, method, params, ...(sessionId ? { sessionId } : {}) }));
       });
     },
@@ -245,7 +327,7 @@ const HELPERS = `(() => {
   return true;
 })()`;
 
-async function openPage(cdp, base, query, { fetchOverride = null } = {}) {
+async function openPage(cdp, base, query, { fetchOverride = null, ready: readySelector = null } = {}) {
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
   await cdp.send('Page.enable', {}, sessionId);
@@ -272,7 +354,7 @@ async function openPage(cdp, base, query, { fetchOverride = null } = {}) {
     return r.result?.value;
   };
   await cdp.send('Page.navigate', { url: `${base}index.html?${query}` }, sessionId);
-  const ready = query.includes('shot=combat') ? '.combat-potions' : '.run-potions-btn';
+  const ready = readySelector || (query.includes('shot=combat') ? '.combat-potions' : '.run-potions-btn');
   let mounted = false;
   for (let t = 0; t < 90 && !mounted; t++) { await wait(400); mounted = await ev(`!!document.querySelector('${ready}')`).catch(() => false); }
   if (!mounted) throw Object.assign(new Error(`?${query}: ${ready} never mounted${errors.length ? ` (${errors[0]})` : ''}`), { harness: true });
@@ -294,10 +376,37 @@ const PLAN = `(async () => {
       useReason: count <= 0 ? t('potions.run.empty') : t('potions.run.setting'), canDrop: false, dropReason: t('potions.run.keep') })),
     // The run HUD: the same availability; it words its own refusals.
     hudCharge: (on, count) => rows(flaskActionPlan({ context: 'run', canUse: on && count > 0, canDrop: false })),
+    // A carried potion on the map: combat only, and it may be dropped here.
+    mapCarried: () => rows(flaskActionPlan({ context: 'run', canUse: false, useReason: t('potions.run.combatOnly'), canDrop: true })),
+    hudCarried: () => rows(flaskActionPlan({ context: 'run', canUse: false, canDrop: true })),
     combat: (count) => rows(flaskActionPlan({ context: 'combat', canUse: count > 0 })),
     t,
   };
   return true;
+})()`;
+
+// The real Settings door: the screen's Menu → Settings → search → the toggle →
+// close. '' when the setting turned on, else what went wrong.
+const TOGGLE_SETTING = (opener) => `(async () => {
+  await __fm.closeModal('run-potion-menu');
+  document.querySelector('${opener}').click();
+  const tab = await __fm.until(() => document.querySelector('.qn-row[data-tab="settings"]'));
+  if (tab) tab.click(); else if (!document.querySelector('.ov-tab')) return 'no Settings door';
+  const search = await __fm.until(() => document.querySelector('[data-search-toggle]'));
+  if (!search) return 'no Settings search';
+  search.click();
+  const input = document.querySelector('[data-advanced-search]');
+  input.value = 'outside combat';
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  const toggle = await __fm.until(() => document.querySelector('[data-key="${SETTING}"]'));
+  if (!toggle) return 'the "Use flasks outside combat" row did not appear';
+  if (toggle.getAttribute('aria-checked') !== 'false') return 'the toggle did not start off';
+  toggle.click();
+  await __fm.sleep(300);
+  const on = document.querySelector('[data-key="${SETTING}"]')?.getAttribute('aria-checked');
+  document.querySelector('.modal-close[aria-label="Close menu"]')?.click();
+  await __fm.sleep(400);
+  return on === 'true' ? '' : 'the toggle did not turn on';
 })()`;
 
 // ---------------------------------------------------------------------------
@@ -311,28 +420,7 @@ async function persistenceProbe(cdp, base, check) {
     check('persistence: with the setting off, the map Potions list refuses Drink with its reason',
       before && before['charge:hp'] && !before['charge:hp'].enabled && before['charge:hp'].text.includes(refusal),
       JSON.stringify(before?.['charge:hp']));
-    // The real Settings door: Menu → Settings → search → the toggle → close.
-    const toggled = await ev(`(async () => {
-      await __fm.closeModal('run-potion-menu');
-      document.querySelector('#open-menu').click();
-      const tab = await __fm.until(() => document.querySelector('.qn-row[data-tab="settings"]'));
-      if (tab) tab.click(); else if (!document.querySelector('.ov-tab')) return 'no Settings door';
-      const search = await __fm.until(() => document.querySelector('[data-search-toggle]'));
-      if (!search) return 'no Settings search';
-      search.click();
-      const input = document.querySelector('[data-advanced-search]');
-      input.value = 'outside combat';
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      const toggle = await __fm.until(() => document.querySelector('[data-key="${SETTING}"]'));
-      if (!toggle) return 'the "Use flasks outside combat" row did not appear';
-      if (toggle.getAttribute('aria-checked') !== 'false') return 'the toggle did not start off';
-      toggle.click();
-      await __fm.sleep(300);
-      const on = document.querySelector('[data-key="${SETTING}"]')?.getAttribute('aria-checked');
-      document.querySelector('.modal-close[aria-label="Close menu"]')?.click();
-      await __fm.sleep(400);
-      return on === 'true' ? '' : 'the toggle did not turn on';
-    })()`);
+    const toggled = await ev(TOGGLE_SETTING('#open-menu'));
     check('persistence: the setting turns on through Menu → Settings', toggled === '', toggled);
     const after = await ev(`__fm.mapList()`);
     check('persistence: the setting turned on in Settings reaches the map Potions list (Drink offered)',
@@ -373,6 +461,30 @@ async function persistenceProbe(cdp, base, check) {
     await ev(`__fm.closeModal('run-potion-menu')`);
     check('persistence: no page error', page.errors.length === 0, page.errors.join(' | '));
   } finally { await page.close(); }
+
+  // THE WORLD ATLAS is a `.mapscreen` too, with no Potions control. Turning the
+  // setting on there must not remount it: the atlas keeps the player's selected
+  // destination only in the mounted screen (#1474 review).
+  const atlas = await openPage(cdp, base, `shot=atlas&${settingsQuery(false)}`, { ready: '.world-atlas-screen' });
+  try {
+    const picked = await atlas.ev(`(async () => {
+      const current = document.querySelector('.atlas-node.current')?.dataset.atlasNode;
+      const road = [...document.querySelectorAll('.atlas-road-list [data-atlas-node]')].find((b) => b.dataset.atlasNode !== current);
+      if (!road) return { why: 'the atlas offers no road to select' };
+      road.click();
+      await __fm.sleep(200);
+      window.__fmAtlas = document.querySelector('.world-atlas-screen');
+      return { id: road.dataset.atlasNode, current, pressed: document.querySelector('.atlas-node[aria-pressed="true"]')?.dataset.atlasNode };
+    })()`);
+    check('persistence: atlas, a road other than the current place can be selected',
+      !picked.why && picked.pressed === picked.id && picked.id !== picked.current, JSON.stringify(picked));
+    const toggled = await atlas.ev(TOGGLE_SETTING('[data-atlas-menu]'));
+    check('persistence: atlas, the setting turns on through its Menu → Settings', toggled === '', toggled);
+    const kept = await atlas.ev(`({ same: !!window.__fmAtlas?.isConnected, pressed: document.querySelector('.atlas-node[aria-pressed="true"]')?.dataset.atlasNode })`);
+    check('persistence: atlas, turning the setting on keeps the atlas and its selected destination (no remount)',
+      kept.same && kept.pressed === picked.id, JSON.stringify({ ...kept, want: picked.id }));
+    check('persistence: atlas, no page error', atlas.errors.length === 0, atlas.errors.join(' | '));
+  } finally { await atlas.close(); }
 }
 
 // ---------------------------------------------------------------------------
@@ -412,6 +524,8 @@ const DISPATCH = (on) => `(async () => {
     const opened = await __fm.openMenu(ctx0.host.querySelector('.potion-mini[data-potion-key="' + key + '"]'));
     const rows = opened ? __fm.menuRows() : [];
     await __fm.closeMenu();
+    // The menu as offered, for the plan comparison (every mini, carried ones too).
+    out.push({ via: 'menu', key, count: __fm.count(ctx0.host.querySelector('.potion-mini[data-potion-key="' + key + '"]')), rows: opened ? rows : null });
     for (const row of rows) {
       const ctx = fresh();
       const before = snap(ctx.run);
@@ -451,7 +565,17 @@ export function expectedAfter(before, key, action, enabled) {
 async function dispatchProbe(cdp, base, check) {
   const page = await openPage(cdp, base, `shot=map&${settingsQuery(true)}`);
   try {
-    const on = await page.ev(DISPATCH(true));
+    await page.ev(PLAN);
+    const all = await page.ev(DISPATCH(true));
+    // Every mini's menu against the shared plan, carried potions included: this
+    // host is wide enough to draw every mini, where the map's own tray folds
+    // some into its overflow (#1474 review).
+    const menus = all.filter((r) => r.via === 'menu');
+    for (const m of menus) {
+      const want = await page.ev(m.key.startsWith('charge:') ? `__fmPlan.mapCharge(true, ${m.count})` : `__fmPlan.mapCarried()`);
+      check(`dispatch: mini ${m.key}'s flask menu offers the shared plan`, sameRows(m.rows, want), JSON.stringify({ got: m.rows, want }));
+    }
+    const on = all.filter((r) => r.via !== 'menu');
     const minis = on.filter((r) => r.via === 'mini');
     check('dispatch: every mini opens a flask menu with rows', minis.length > 0 && minis.every((r) => r.action),
       JSON.stringify(minis.filter((r) => !r.action)));
@@ -471,7 +595,7 @@ async function dispatchProbe(cdp, base, check) {
     const verbs = on.filter((r) => r.via === 'list').map((r) => `${r.key}:${r.action}:${r.enabled}`).sort().join(',');
     check('dispatch: the list offers Drink for charge flasks and Drop for carried potions',
       verbs === 'carried:blightCoating:drop:true,carried:crimsonFlask:drop:true,charge:hp:use:true,charge:mana:use:true', verbs);
-    const off = await page.ev(DISPATCH(false));
+    const off = (await page.ev(DISPATCH(false))).filter((r) => r.via !== 'menu');
     const refused = off.filter((r) => r.via === 'list' && r.key.startsWith('charge:'));
     check('dispatch: with the setting off, choosing Drink in the list changes nothing',
       refused.length === 2 && refused.every((r) => !r.enabled && r.changes === 0 && JSON.stringify(r.after) === JSON.stringify(r.before)),
@@ -481,28 +605,41 @@ async function dispatchProbe(cdp, base, check) {
 }
 
 // ---------------------------------------------------------------------------
+// The map pages carry potions (`?shotCarried`) so the carried minis and the
+// run HUD's carried icons have menus to compare (#1474 review): a Crimson Flask
+// and two Blight Coatings, two carried kinds.
+const CARRIED = ['crimsonFlask', 'blightCoating', 'blightCoating'];
+const CARRIED_KINDS = [...new Set(CARRIED)];
+const carriedQuery = `shotCarried=${CARRIED.join(',')}`;
+
+// Every entry the map draws, keyed by its WGH8 key (charge:hp, carried:<id>):
+// each mini's flask menu, and the Potions list's row.
 const MAP_SURFACES = `(async () => {
   const out = {};
-  for (const kind of ['hp', 'mana']) {
-    const node = document.querySelector('.map-potions .potion-mini[data-potion-key="charge:' + kind + '"]');
+  const keys = [...document.querySelectorAll('.map-potions .potion-mini[data-potion-key]')].map((n) => n.dataset.potionKey);
+  for (const key of keys) {
+    const node = document.querySelector('.map-potions .potion-mini[data-potion-key="' + key + '"]');
     const count = __fm.count(node);
     const opened = node ? await __fm.openMenu(node) : false;
-    out[kind] = { count, rows: opened ? __fm.menuRows() : null };
+    out[key] = { count, rows: opened ? __fm.menuRows() : null };
     await __fm.closeMenu();
   }
   const list = await __fm.mapList();
   await __fm.closeModal('run-potion-menu');
-  for (const kind of ['hp', 'mana']) out[kind].list = list && list['charge:' + kind];
+  for (const key of new Set([...keys, ...Object.keys(list || {})])) (out[key] ||= { count: null, rows: null }).list = list && list[key];
   return out;
 })()`;
 
+// Every icon the run HUD's room rail draws: the charge flasks by kind, the
+// carried potions by flask id, under the same keys as the map.
 const HUD_SURFACES = `(async () => {
   const out = {};
-  for (const kind of ['hp', 'mana']) {
-    const node = document.querySelector('.hud-potions .flask-charge[data-flask-kind="' + kind + '"]');
+  const icons = [...document.querySelectorAll('.hud-potions .flask-charge[data-flask-kind]')].map((n) => ['charge:' + n.dataset.flaskKind, n])
+    .concat([...document.querySelectorAll('.hud-potions .mh-flask[data-flask-id]')].map((n) => ['carried:' + n.dataset.flaskId, n]));
+  for (const [key, node] of icons) {
     const count = __fm.count(node);
-    const opened = node ? await __fm.openMenu(node) : false;
-    out[kind] = { count, rows: opened ? __fm.menuRows() : null };
+    const opened = await __fm.openMenu(node);
+    out[key] = { count, rows: opened ? __fm.menuRows() : null };
     await __fm.closeMenu();
   }
   return out;
@@ -518,6 +655,12 @@ const COMBAT_SURFACE = `(async () => {
     const use = fold?.querySelector('.potion-use');
     out[kind] = fold ? { count: Number(fold.dataset.charges), enabled: !!use && !use.disabled, text: fold.textContent } : null;
   }
+  // The carried potions' folds (#1474 review): keyed by slot, named by Use's label.
+  out.carried = [...(menu?.querySelectorAll('.potion-fold[data-potion-slot]') || [])].map((fold) => {
+    const use = fold.querySelector('.potion-use');
+    return { slot: fold.dataset.potionSlot, count: Number(fold.dataset.potionCount), name: (use?.getAttribute('aria-label') || '').replace(/^Use /, ''),
+      enabled: !!use && !use.disabled, text: fold.textContent };
+  });
   await __fm.closeModal('combat-potion-menu');
   return out;
 })()`;
@@ -541,6 +684,16 @@ async function planProbe(cdp, base, check) {
             !!row && row.enabled === want.enabled && (want.enabled || row.text.includes(want.enabled ? '' : 'No charges')),
             JSON.stringify({ row: row && { count: row.count, enabled: row.enabled }, want }));
         }
+        // The pose carries a Crimson Flask and a Blight Coating (main.js, shot=combat).
+        const carried = got.carried || [];
+        const wrong = [];
+        for (const row of carried) {
+          const want = (await page.ev(`__fmPlan.combat(${row.count})`)).find((a) => a.id === 'use');
+          if (row.enabled !== want.enabled) wrong.push({ ...row, text: undefined, want });
+        }
+        check(`plan: combat, ${label}, carried potions: each one's Use matches the shared plan`,
+          carried.length === 2 && wrong.length === 0,
+          JSON.stringify({ carried: carried.map(({ name, count, enabled }) => ({ name, count, enabled })), wrong }));
         return got;
       };
       await judge('opening hand');
@@ -572,7 +725,7 @@ async function planProbe(cdp, base, check) {
   }
   // THE MAP: the Potions list and its minis.
   for (const on of [false, true]) {
-    const page = await openPage(cdp, base, `shot=map&${settingsQuery(on)}`);
+    const page = await openPage(cdp, base, `shot=map&${carriedQuery}&${settingsQuery(on)}`);
     try {
       await page.ev(PLAN);
       const judge = async (label) => {
@@ -580,14 +733,32 @@ async function planProbe(cdp, base, check) {
         let ok = true;
         const detail = [];
         for (const kind of ['hp', 'mana']) {
-          const want = await page.ev(`__fmPlan.mapCharge(${on}, ${got[kind].count})`);
+          const entry = got['charge:' + kind] || { count: null, rows: null, list: null };
+          const want = await page.ev(`__fmPlan.mapCharge(${on}, ${entry.count})`);
           const use = want.find((a) => a.id === 'use');
-          const list = got[kind].list;
-          const rowsOk = sameRows(got[kind].rows, want);
+          const list = entry.list;
+          const rowsOk = sameRows(entry.rows, want);
           const listOk = !!list && list.enabled === use.enabled && list.label === 'Drink' && (use.enabled || list.text.includes(use.reason));
-          if (!rowsOk || !listOk) { ok = false; detail.push(JSON.stringify({ kind, got: got[kind], want })); }
+          if (!rowsOk || !listOk) { ok = false; detail.push(JSON.stringify({ kind, got: entry, want })); }
         }
         check(`plan: map minis, ${label}: the flask menus and the Potions list match the shared plan`, ok, detail.join(' '));
+        // The carried potions' minis and list rows (#1474 review).
+        const want = await page.ev(`__fmPlan.mapCarried()`);
+        const drop = want.find((a) => a.id === 'drop');
+        const carriedKeys = Object.keys(got).filter((k) => k.startsWith('carried:'));
+        const bad = [];
+        for (const id of CARRIED_KINDS) {
+          const entry = got['carried:' + id];
+          const held = CARRIED.filter((x) => x === id).length;
+          const list = entry?.list;
+          // The map's tray folds what does not fit into its overflow (the list),
+          // so a carried mini is judged where it is drawn; its list row always.
+          const drawn = entry?.rows != null || entry?.count != null;
+          if (!entry || (drawn && (entry.count !== held || !sameRows(entry.rows, want)))
+            || !list || list.label !== 'Drop' || list.enabled !== drop.enabled) bad.push(JSON.stringify({ id, held, got: entry, want }));
+        }
+        check(`plan: map carried potions, ${label}: each one's list row, and its mini's flask menu where drawn, match the shared plan`,
+          bad.length === 0 && carriedKeys.length === CARRIED_KINDS.length, bad.join(' ') || carriedKeys.join(','));
       };
       await judge(`setting ${on ? 'on' : 'off'}`);
       if (on) {
@@ -612,7 +783,7 @@ async function planProbe(cdp, base, check) {
     return;
   }
   for (const on of [false, true]) {
-    const page = await openPage(cdp, base, `shot=map&${settingsQuery(on)}`, { fetchOverride: { path: `/${configPath}`, body: railOn } });
+    const page = await openPage(cdp, base, `shot=map&${carriedQuery}&${settingsQuery(on)}`, { fetchOverride: { path: `/${configPath}`, body: railOn } });
     try {
       await page.ev(PLAN);
       const judge = async (label) => {
@@ -620,10 +791,23 @@ async function planProbe(cdp, base, check) {
         let ok = true;
         const detail = [];
         for (const kind of ['hp', 'mana']) {
-          const want = await page.ev(`__fmPlan.hudCharge(${on}, ${got[kind].count})`);
-          if (!sameRows(got[kind].rows, want, { reasons: false })) { ok = false; detail.push(JSON.stringify({ kind, got: got[kind], want })); }
+          const entry = got['charge:' + kind] || { count: null, rows: null };
+          const want = await page.ev(`__fmPlan.hudCharge(${on}, ${entry.count})`);
+          if (!sameRows(entry.rows, want, { reasons: false })) { ok = false; detail.push(JSON.stringify({ kind, got: entry, want })); }
         }
         check(`plan: run HUD, ${label}: the flask menus match the shared plan`, ok, detail.join(' '));
+        // The carried potions' icons (#1474 review): runHud.js builds their
+        // Use/Inspect/Drop plan itself.
+        const want = await page.ev(`__fmPlan.hudCarried()`);
+        const carriedKeys = Object.keys(got).filter((k) => k.startsWith('carried:'));
+        const bad = [];
+        for (const id of CARRIED_KINDS) {
+          const entry = got['carried:' + id];
+          const held = CARRIED.filter((x) => x === id).length;
+          if (!entry || entry.count !== held || !sameRows(entry.rows, want, { reasons: false })) bad.push(JSON.stringify({ id, held, got: entry, want }));
+        }
+        check(`plan: run HUD carried icons, ${label}: each carried potion's flask menu matches the shared plan`,
+          bad.length === 0 && carriedKeys.length === CARRIED_KINDS.length, bad.join(' ') || carriedKeys.join(','));
       };
       await judge(`setting ${on ? 'on' : 'off'}`);
       if (on) {

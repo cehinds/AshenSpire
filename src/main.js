@@ -1974,12 +1974,18 @@ function showDraft() {
  * Potions action re-read the meta it was mounted with
  * (tools/flask-menu-probe.mjs, persistence).
  */
-const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan', 'useRestorativeFlasksOutsideCombat'];
+const MAP_REMOUNT_KEYS = ['mapMode', 'mapZoom', 'mapFreePan'];
+// Only where a flask surface reads it: the world atlas is a `.mapscreen` too but
+// has no Potions control, and a remount drops its selected destination
+// (#1474 review).
+const FLASK_REMOUNT_KEYS = ['useRestorativeFlasksOutsideCombat'];
 function remountMapIfShowing(changed) {
   if (!run || !changed) return;
-  if (!MAP_REMOUNT_KEYS.some((k) => k in changed)) return;
-  if (!app.querySelector('.mapscreen')) return;
-  showMap();
+  const screen = app.querySelector('.mapscreen');
+  if (!screen) return;
+  const mapKey = MAP_REMOUNT_KEYS.some((k) => k in changed);
+  const flaskKey = FLASK_REMOUNT_KEYS.some((k) => k in changed) && !!screen.querySelector('.map-potions, .hud-potions');
+  if (mapKey || flaskKey) showMap();
 }
 
 function showMap() {
@@ -3485,6 +3491,15 @@ if (shotState === 'combat-test') {
   const posedPools = ['shotMaxHp', 'shotMana', 'shotMaxMana', 'shotMaxStamina']
     .some((k) => shotParams.has(k));
   if (posedPools && shotState === 'map') showMap();
+  // `?shotCarried=<flaskId,...>` — CARRY POTIONS ON THE MAP. The map pose
+  // carries none, so its Potions minis and the run HUD's carried icons had
+  // nothing to open; tools/flask-menu-probe.mjs compares their menus with the
+  // shared plan. Unknown ids are skipped; the map is redrawn, as above.
+  const shotCarried = shotState === 'map' ? shotParams.get('shotCarried') : null;
+  if (shotCarried) {
+    run.flasks = shotCarried.split(',').filter((id) => registries.flasks.has(id)).map((flaskId) => ({ flaskId }));
+    showMap();
+  }
   // `?shotAt=<nodeId|floor:N>` — STAND SOMEWHERE ON THE MAP.
   //
   // A REACH STATE, same shape and same reason as `?shotEvent` above. Every map

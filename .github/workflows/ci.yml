@@ -677,8 +677,8 @@ jobs:
         run: node tools/verdict.mjs -- node tools/startup-gate.mjs
 
   # ---------------------------------------------------------------------------
-  # The flask-menu probe and its plants: their own job by the owner's 20-minute
-  # rule (2026-10-02). Own checkout, build and browser.
+  # The flask-menu probe, and its plants sharded two ways: their own jobs by the
+  # owner's 20-minute rule (D38). The probe serves the SOURCE tree, so no build.
   # ---------------------------------------------------------------------------
   browser-flask-menu:
     name: every flask menu in a real browser
@@ -688,32 +688,44 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          lfs: false # the standalone is built below
+          lfs: false # the probe serves the source tree
       - uses: ./.github/actions/setup-node
-
-      - name: Build the standalone (the same build browser-guard makes)
-        # Light art on dev/test (owner, 2026-09-26); release/main keep the full art.
-        env:
-          ART_TIER: ${{ ((github.base_ref || github.ref_name) == 'release' || (github.base_ref || github.ref_name) == 'main') && '--full-art' || '' }}
-        shell: bash # $ART_TIER is an env var; Windows' default shell would not expand it
-        run: node tools/verdict.mjs -- node tools/launch.mjs --build-only $ART_TIER
-
       - uses: ./.github/actions/which-browser
 
       - name: Every flask menu offers the shared plan, and a map Potions choice does and saves what was chosen
         # FINISH §11 (#1447 review, D36): combat's Potions list, the map Potions
         # list and minis, and the run HUD's room-rail menus opened in Chromium
-        # and compared to flaskActionPlan for the Crimson and Azure flasks and a
-        # carried flask; every map Potions choice driven for what it does; a
-        # Potions action and a "Use flasks outside combat" change saved and kept
-        # across the remount. About 70s on the machine it was written on.
+        # and compared to flaskActionPlan for the Crimson and Azure flasks and
+        # the carried potions; every map Potions choice driven for what it does;
+        # a Potions action and a "Use flasks outside combat" change saved and
+        # kept across the remount, and the world atlas left mounted by it.
+        # About 2 minutes on the machine it was written on.
         run: node tools/verdict.mjs -- node tools/flask-menu-probe.mjs
 
-      - name: ...and that probe can fail (PLANTCOUNT plants)
+  browser-flask-menu-plants:
+    name: flask-menu known-bads in a real browser (${{ matrix.shard }})
+    if: github.event_name != 'pull_request' # heavy: push to test/release, or dispatch
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # tests/doorplant-shard.test.mjs requires every shard of the count here.
+        shard: ['0/2', '1/2']
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          lfs: false # the probe serves the source tree
+      - uses: ./.github/actions/setup-node
+      - uses: ./.github/actions/which-browser
+
+      - name: ...and that probe can fail (its plants, this leg's half)
         # Inverted expectation: each plant is copied into its own tree and the
         # one probe it breaks is run from there (`--only`), then each probe runs
-        # clean.
-        run: node tools/verdict.mjs -- node tools/flask-menu-probe.mjs --selftest
+        # clean. The whole corpus took 7.5 minutes unsharded on the machine it
+        # was written on; each leg runs the plants at index i mod 2, so the two
+        # legs together run every plant, each once.
+        run: node tools/verdict.mjs -- node tools/flask-menu-probe.mjs --selftest --shard ${{ matrix.shard }}
 
   # ---------------------------------------------------------------------------
   # about-changelog's known-bad corpus, sharded two ways by the owner's 20-minute
@@ -1009,13 +1021,13 @@ jobs:
   boundary:
     name: what this green does NOT cover
     runs-on: ubuntu-latest
-    needs: [test, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-layout-guard, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, display-first]
+    needs: [test, test-selftests, parse-gate, reproducible, reproducible-agree, browser-guard, browser-guard-stamp, browser-guard-changelog, browser-flask-menu, browser-flask-menu-plants, browser-layout-guard, browser-layout-hintstrip, browser-hintstrip-plants, browser-startup-plants, display-first]
     if: always()
     steps:
       - name: Named boundary
         run: |
           echo "upstream results: test=${{ needs.test.result }} test-selftests=${{ needs['test-selftests'].result }} parse-gate=${{ needs['parse-gate'].result }} reproducible=${{ needs.reproducible.result }} reproducible-agree=${{ needs['reproducible-agree'].result }}"
-          echo "  browser-guard=${{ needs['browser-guard'].result }} browser-guard-stamp=${{ needs['browser-guard-stamp'].result }} browser-guard-changelog=${{ needs['browser-guard-changelog'].result }} browser-flask-menu=${{ needs['browser-flask-menu'].result }}"
+          echo "  browser-guard=${{ needs['browser-guard'].result }} browser-guard-stamp=${{ needs['browser-guard-stamp'].result }} browser-guard-changelog=${{ needs['browser-guard-changelog'].result }} browser-flask-menu=${{ needs['browser-flask-menu'].result }} browser-flask-menu-plants=${{ needs['browser-flask-menu-plants'].result }}"
           echo "  browser-layout-guard=${{ needs['browser-layout-guard'].result }} browser-layout-hintstrip=${{ needs['browser-layout-hintstrip'].result }} browser-hintstrip-plants=${{ needs['browser-hintstrip-plants'].result }}"
           echo "  browser-startup-plants=${{ needs['browser-startup-plants'].result }} display-first=${{ needs['display-first'].result }}"
           echo ""
