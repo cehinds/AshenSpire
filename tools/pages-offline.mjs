@@ -275,12 +275,33 @@ try {
   }
 
   // 6. The kill-switch: the server returns serving it; an update retires the worker.
-  writeFileSync(join(SITE, SW_FILE), workerText('kill'));
+  // A SECOND TAB, opened under the live worker before the switch arrives: the
+  // kill-switch must reload it too (Codex, #1456).
   server = await serveDir(SITE, { prefix: 'AshenSpire', port: PORT });
+  const { targetId: t2 } = await cdp.send('Target.createTarget', { url: 'about:blank' });
+  const { sessionId: S2 } = await cdp.send('Target.attachToTarget', { targetId: t2, flatten: true });
+  await cdp.send('Runtime.enable', {}, S2);
+  const ev2 = async (expression) => {
+    const r = await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }, S2);
+    if (r.exceptionDetails) throw new Error(r.exceptionDetails.text || 'page threw');
+    return r.result.value;
+  };
+  await cdp.send('Page.navigate', { url: PAGE }, S2);
+  let tab2 = false;
+  for (let t0 = Date.now(); Date.now() - t0 < 30000 && !tab2; await wait(200)) {
+    tab2 = await ev2(`!!navigator.serviceWorker.controller && !!document.documentElement.dataset.builtInArt`).catch(() => false);
+  }
+  if (tab2) await ev2('window.__ashenBeforeKill = 1');
+  writeFileSync(join(SITE, SW_FILE), workerText('kill'));
   await ev(`navigator.serviceWorker.getRegistration().then((r) => r && r.update()).then(() => true, () => true)`).catch(() => null);
   const gone = await until(`navigator.serviceWorker.getRegistrations().then((rs) => rs.length === 0)`, 20000);
   const left = await until(`caches.keys().then((ks) => ks.filter((k) => k.startsWith('ashen-')).length === 0)`, 10000);
   check('KILL', gone && left, `the kill-switch sw.js unregisters the worker and deletes every ashen- cache (${gone ? 'unregistered' : 'still registered'}, ${left ? 'no caches' : 'caches left'})`);
+  let reloaded = false;
+  for (let t0 = Date.now(); tab2 && Date.now() - t0 < 15000 && !reloaded; await wait(200)) {
+    reloaded = await ev2(`typeof window.__ashenBeforeKill === 'undefined' && !navigator.serviceWorker.controller && document.readyState !== 'loading'`).catch(() => false);
+  }
+  check('KILL', tab2 && reloaded, `a second tab under the old worker is reloaded off it by the kill-switch (${tab2 ? (reloaded ? 'reloaded, uncontrolled' : 'not reloaded') : 'never controlled'})`);
 } catch (error) {
   if (error !== PLANTED_STOP) {
     console.error(`pages-offline: harness error — ${error.stack || error.message}`);

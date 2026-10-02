@@ -138,7 +138,11 @@ async function claim() {
 // and each page it controlled reloads from the network.
 async function retire() {
   for (const name of await caches.keys()) if (name.startsWith(CACHE_PREFIX)) await caches.delete(name);
-  const windows = await self.clients.matchAll({ type: 'window' });
+  // Take every page in scope first (Codex, #1456): a tab still controlled by
+  // the old worker is not this worker's client until claimed, and would not
+  // be reloaded off it.
+  try { await self.clients.claim(); } catch (error) { /* reload what we can */ }
+  const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
   await self.registration.unregister();
   for (const client of windows) { try { await client.navigate(client.url); } catch (error) { /* not ours to reload */ } }
 }

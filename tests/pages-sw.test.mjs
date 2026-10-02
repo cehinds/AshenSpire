@@ -61,7 +61,7 @@ test('pageKey folds the query and a trailing index.html; isPagePath names the ne
 function sandbox({ kill = false, network = async () => new Response('net', { status: 200 }) } = {}) {
   const listeners = {};
   const stores = new Map();
-  const log = { unregistered: false, deleted: [], claimed: false, navigated: [] };
+  const log = { unregistered: false, deleted: [], claimed: false, navigated: [], order: [] };
   const cacheOf = (name) => {
     if (!stores.has(name)) stores.set(name, new Map());
     const m = stores.get(name);
@@ -78,7 +78,12 @@ function sandbox({ kill = false, network = async () => new Response('net', { sta
   const self = {
     registration: { scope: 'https://x.io/AshenSpire/', async unregister() { log.unregistered = true; return true; } },
     location: { origin: 'https://x.io' },
-    clients: { async claim() { log.claimed = true; }, async matchAll() { return [{ url: 'https://x.io/AshenSpire/dev/1/', async navigate(u) { log.navigated.push(u); } }]; } },
+    clients: { async claim() { log.claimed = true; log.order.push('claim'); }, async matchAll(opts = {}) {
+      log.order.push('matchAll'); log.matchAll = opts;
+      // A tab still under the old worker is listed only with includeUncontrolled.
+      const old = { url: 'https://x.io/AshenSpire/dev/2/', async navigate(u) { log.navigated.push(u); } };
+      return [{ url: 'https://x.io/AshenSpire/dev/1/', async navigate(u) { log.navigated.push(u); } }, ...(opts.includeUncontrolled ? [old] : [])];
+    } },
     skipWaiting() {},
     addEventListener(type, fn) { listeners[type] = fn; },
   };
@@ -107,7 +112,9 @@ test('the kill-switch registers no fetch handler, deletes every ashen- cache, un
   await dead.activate();
   assert.deepEqual(dead.log.deleted, [OBJECT_CACHE]);
   assert.equal(dead.log.unregistered, true);
-  assert.deepEqual(dead.log.navigated, ['https://x.io/AshenSpire/dev/1/']);
+  assert.deepEqual(dead.log.navigated, ['https://x.io/AshenSpire/dev/1/', 'https://x.io/AshenSpire/dev/2/'], 'every window in scope, the old worker\'s too, is reloaded (Codex, #1456)');
+  assert.deepEqual(dead.log.order, ['claim', 'matchAll'], 'it claims before it lists');
+  assert.equal(dead.log.matchAll.includeUncontrolled, true);
   await live.activate();
   assert.equal(live.log.unregistered, false);
   assert.equal(live.log.claimed, true);
