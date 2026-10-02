@@ -136,7 +136,26 @@ if (STAGE_ONLY) process.exit(0);
 // ---- the Electron wrapper, win32-x64 -----------------------------------------
 const PKG_OUT = join(OUT, 'electron');
 rmSync(PKG_OUT, { recursive: true, force: true });
-const packagerArgs = ['--yes', '@electron/packager@18', ELECTRON, 'AshenSpire',
+// The Electron version, given explicitly: the packager otherwise reads it from
+// desktop/electron/node_modules, which a fresh checkout (CI) does not have. An
+// installed copy wins; else the newest release in package.json's range.
+const npmCli = (name) => [
+  join(dirname(process.execPath), 'node_modules', 'npm', 'bin', name),
+  join(dirname(process.execPath), '..', 'lib', 'node_modules', 'npm', 'bin', name),
+].find(existsSync);
+function electronVersion() {
+  const installed = join(ELECTRON, 'node_modules', 'electron', 'package.json');
+  if (existsSync(installed)) return JSON.parse(readFileSync(installed, 'utf8')).version;
+  const range = JSON.parse(readFileSync(join(ELECTRON, 'package.json'), 'utf8')).devDependencies.electron;
+  const cli = npmCli('npm-cli.js');
+  const r = spawnSync(cli ? process.execPath : 'npm', [...(cli ? [cli] : []), 'view', `electron@${range}`, 'version', '--json'], { encoding: 'utf8' });
+  if (r.status !== 0) fail(`npm view electron@${range}: ${r.stderr || r.error}`);
+  const v = JSON.parse(r.stdout);
+  return Array.isArray(v) ? v[v.length - 1] : v;
+}
+const ELECTRON_VERSION = electronVersion();
+console.log(`build-installer: Electron ${ELECTRON_VERSION}`);
+const packagerArgs = ['--yes', '@electron/packager@18', ELECTRON, 'AshenSpire', `--electron-version=${ELECTRON_VERSION}`,
   '--platform=win32', '--arch=x64', `--out=${PKG_OUT}`, `--app-version=${VERSION}`, '--overwrite', '--asar',
   '--ignore=^/(userdata|build|dist-embed)(/|$)', '--ignore=(run-spike\\.sh|package\\.sh|render-check\\.mjs|.*results\\.txt)$'];
 // Version resources (and an icon) are written with rcedit, which only runs on Windows.
@@ -146,10 +165,7 @@ if (process.platform === 'win32') {
 }
 // npx through its JS entry, never a shell: on Windows `npx` is a .cmd that needs
 // cmd.exe, which would split the --ignore regexes at `|` and the metadata at spaces.
-const npxCli = [
-  join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npx-cli.js'),
-  join(dirname(process.execPath), '..', 'lib', 'node_modules', 'npm', 'bin', 'npx-cli.js'),
-].find(existsSync);
+const npxCli = npmCli('npx-cli.js');
 if (npxCli) run(process.execPath, [npxCli, ...packagerArgs], { cwd: ELECTRON });
 else if (process.platform !== 'win32') run('npx', packagerArgs, { cwd: ELECTRON });
 else fail('npx-cli.js not found beside node.exe');
