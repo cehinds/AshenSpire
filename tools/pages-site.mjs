@@ -677,7 +677,7 @@ function inTree(ref, path) {
  * not a reason to withhold the site.
  */
 function writeOgImage(outDir, mainRef) {
-  const ref = [mainRef, ...BRANCHES.filter((b) => b !== 'main').map(refFor)].find((r) => r && inTree(r, OG_IMAGE.source));
+  const ref = ogImageSource(mainRef);
   if (!ref) {
     const why = `no published branch carries ${OG_IMAGE.source}; /${OG_IMAGE.sitePath} (every build's og:image) is not served`;
     console.log(`  NO OG IMAGE ${why}`);
@@ -685,6 +685,17 @@ function writeOgImage(outDir, mainRef) {
     return;
   }
   writeFileSync(join(outDir, OG_IMAGE.sitePath), readGitArtifact(ROOT, ref, OG_IMAGE.source));
+}
+/**
+ * THE ONE ANSWER TO "WHICH BRANCH SUPPLIES THE SHARE IMAGE": main's tree, else
+ * the first other published branch that carries OG_IMAGE.source, else null.
+ * writeOgImage() and the selftest both ask it, so the selftest compares the
+ * served file with the branch that really supplied it (Codex, #1442). `others`
+ * and `has` are parameters only so the fallback can be proved without a repo
+ * in that state.
+ */
+function ogImageSource(mainRef, others = BRANCHES.filter((b) => b !== 'main').map(refFor), has = (r) => inTree(r, OG_IMAGE.source)) {
+  return [mainRef, ...others].find((r) => r && has(r)) || null;
 }
 const isWebp = (buf) => buf.length > 12 && buf.subarray(0, 4).toString('latin1') === 'RIFF' && buf.subarray(8, 12).toString('latin1') === 'WEBP';
 /** Total bytes and files under `dir`, and the bytes per top-level entry. Symlinks are not followed. */
@@ -1063,9 +1074,12 @@ function baseTreeFindings(dir) {
     }
   }
   out.push([`no committed build HTML but the stable links${strayHtml.length ? ` (found: ${strayHtml.join(', ')})` : ''}`, strayHtml.length === 0]);
-  // The share image is main's own art, byte for byte (main carries it today).
+  // The share image is the supplying branch's art, byte for byte: main's
+  // while main carries it, else the fallback writeOgImage() used.
   const og = join(dir, OG_IMAGE.sitePath);
-  out.push([`/${OG_IMAGE.sitePath} is main's ${OG_IMAGE.source}, byte for byte`, existsSync(og) && Buffer.compare(readFileSync(og), readGitArtifact(ROOT, mainRef, OG_IMAGE.source)) === 0]);
+  const ogRef = ogImageSource(mainRef);
+  if (ogRef) out.push([`/${OG_IMAGE.sitePath} is ${ogRef}'s ${OG_IMAGE.source}, byte for byte`, existsSync(og) && Buffer.compare(readFileSync(og), readGitArtifact(ROOT, ogRef, OG_IMAGE.source)) === 0]);
+  else out.push([`no published branch carries ${OG_IMAGE.source}, and /${OG_IMAGE.sitePath} is said to be missing rather than invented`, !existsSync(og)]);
   for (const d of BASE_TREE_KEPT_DIRS) if (inTree(mainRef, d)) out.push([`${d}/ is kept (${d === 'assets' ? 'owner, 2026-10-02' : 'owner answer 7'})`, existsSync(join(dir, d))]);
   // The index links nothing under an excluded root (the art review sections).
   const index = existsSync(join(dir, 'index.html')) ? readFileSync(join(dir, 'index.html'), 'utf8') : '';
@@ -1109,7 +1123,15 @@ function ogImagePlant() {
     const n = check(dir);
     const greenWith = process.exitCode !== 1 && n === 1;
     process.exitCode = saved || 0;
+    // The fallback, on hand-written refs: main without the art defers to the
+    // first other branch that has it, a missing branch is skipped, and none
+    // at all is null — the case writeOgImage() reports instead of throwing.
+    const holders = new Set(['origin/test', 'origin/dev']);
+    const has = (r) => holders.has(r);
     return [
+      ['the share image comes from main when main carries it', ogImageSource('origin/main', ['origin/dev'], () => true) === 'origin/main'],
+      ['the share image falls back to the first other branch that carries it', ogImageSource('origin/main', [null, 'origin/release', 'origin/test', 'origin/dev'], has) === 'origin/test'],
+      ['no branch carrying the share image is null, not a throw', ogImageSource('origin/main', ['origin/release'], has) === null],
       [`--check is red when /${OG_IMAGE.sitePath} is missing`, redWithout],
       [`--check passes /${OG_IMAGE.sitePath} once it is a WebP`, greenWith],
     ];
