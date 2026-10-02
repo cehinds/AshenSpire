@@ -57,6 +57,13 @@ function overrides() {
   document.addEventListener = on(docListeners);
   document.removeEventListener = off(docListeners);
   document.dispatchEvent = (event) => deliver(document, event);
+  // The act map draws SVG; the fixture's elements stand in for it.
+  document.createElementNS = (_ns, tag) => document.createElement(tag);
+  const proto = Object.getPrototypeOf(document.body);
+  Object.defineProperty(proto, 'ownerSVGElement', { configurable: true, get() { for (let at = this.parentNode; at; at = at.parentNode) if (at.tagName === 'SVG') return at; return null; } });
+  proto.getScreenCTM = () => null;
+  // `hidden` reflects its attribute, as in a browser (the map legend toggles it).
+  Object.defineProperty(proto, 'hidden', { configurable: true, get() { return this.hasAttribute('hidden'); }, set(on) { if (on) this.setAttribute('hidden', ''); else this.removeAttribute('hidden'); } });
   const app = document.createElement('div');
   app.id = 'app';
   document.body.appendChild(app);
@@ -67,6 +74,13 @@ function overrides() {
     dispatchEvent: (event) => deliver(windowTarget, event),
     getComputedStyle: () => ({ visibility: 'visible', display: 'block', getPropertyValue: () => '', zIndex: '0' }),
     CSS: { escape: (s) => String(s) },
+    location: { search: '', hash: '', href: 'http://localhost/', pathname: '/', protocol: 'http:' },
+    devicePixelRatio: 1,
+    requestAnimationFrame: (fn) => setTimeout(() => fn(0), 0),
+    cancelAnimationFrame: (id) => clearTimeout(id),
+    ResizeObserver: class { observe() {} unobserve() {} disconnect() {} },
+    MutationObserver: class { observe() {} disconnect() {} takeRecords() { return []; } },
+    matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
     __deliver: deliver,
   };
 }
@@ -284,6 +298,65 @@ for (const [name, press] of Object.entries(PRESSES)) {
     await press();
     assert.equal(backs, 0, 'the creation step stayed');
     assert.equal(hidden, name === 'pad B' ? 1 : 0, 'pad B closes the popover; the browser closes it on a real Escape');
+  });
+
+  // Review of #1463 (Codex, input.js ~836): character creation's Equipment
+  // stage paints its card-info button in the top layer with popover="manual"
+  // (components/creationInfoLayer.js). A manual popover is presentation, not a
+  // layer the press can close: the browser never closes one on Escape, so
+  // stepping aside for it swallowed every physical Escape, and pad B hid the
+  // info button. Only a light-dismiss popover takes the press; Back runs.
+  test(`${name}: a manual popover (a control painted in the top layer) does not take the press`, async () => {
+    resetDom();
+    let backs = 0;
+    const back = dom.document.createElement('button');
+    back.setAttribute('data-back', '');
+    back.addEventListener('click', () => { backs += 1; });
+    app().appendChild(back);
+    const info = dom.document.createElement('button');
+    info.setAttribute('popover', 'manual');
+    info.classList.add('creation-info-popover');
+    let hidden = 0;
+    info.hidePopover = () => { hidden += 1; };
+    app().appendChild(info);
+    await press();
+    assert.equal(backs, 1, 'the creation step\'s Back ran once');
+    assert.equal(hidden, 0, 'the info button stayed painted');
+  });
+
+  // Review of #1463 (Codex, input.js ~832): the map legend is the kit's
+  // popover toggled by `hidden` (screens/map.js), not a native popover. With a
+  // node selected and the legend open, one press peels the legend only; the
+  // tray's Back (#map-back) does not run. The REAL mountMap.
+  test(`${name}: the map legend over the node tray takes the press alone`, async () => {
+    resetDom();
+    const { contentBundle } = await import('../src/content/index.js');
+    const { createRegistries } = await import('../src/model/registries.js');
+    const { createRunState } = await import('../src/model/state.js');
+    const { generateJourney, journeyGraph } = await import('../src/model/worldAtlas.js');
+    const { mountMap, releaseMapScreen } = await import('../src/ui/screens/map.js');
+    const registries = createRegistries(contentBundle);
+    const run = createRunState({ seed: 123, classId: 'reaver', registries });
+    run.journey = generateJourney('BOARD0');
+    run.mapGraph = journeyGraph(run.journey);
+    mountMap(app(), { registries, run, meta: { settings: {} }, onPick: () => {} });
+    try {
+      const back = app().querySelector('#map-back');
+      const legendBtn = app().querySelector('#map-legend');
+      const legend = app().querySelector('.map-legend-pop');
+      assert.ok(back && legendBtn && legend, 'the map drew its Back, its ? and its legend');
+      let backs = 0;
+      back.addEventListener('click', () => { backs += 1; });
+      legendBtn.click();
+      assert.equal(legend.hidden, false, 'the legend opened');
+      await press();
+      assert.equal(legend.hidden, true, 'the press closed the legend');
+      assert.equal(backs, 0, 'the tray\'s Back did not run');
+      await press();
+      assert.equal(backs, 1, 'the next press is the tray\'s Back');
+    } finally {
+      releaseMapScreen?.();
+    }
   });
 
   test(`${name}: a disabled Back, or none at all, does nothing`, async () => {
