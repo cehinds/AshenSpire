@@ -1,7 +1,7 @@
-import { retiredAttackSlots } from './cardRemoval.js';
+import { retiredAttackSlots, isPoolDeckRun } from './cardRemoval.js';
 import { tokenRe } from './validate.js';
 import {
-  applyMountOverrides, extraMountInstances, mountKey, ownerItemRef,
+  applyMountOverrides, extraMountInstances, itemMountEntries, mountKey, ownerItemRef,
 } from './cardMounts.js';
 import { deriveStat } from './derivedStats.js';
 import { effectiveEquipmentRating, ratingIds } from './ratingFormula.js';
@@ -2089,15 +2089,35 @@ function adoptWanted(inst, wanted) {
   return inst;
 }
 
+/**
+ * THE DEALT DECK'S SHARE OF WHAT THE WORN EQUIPMENT LENDS (model/cardRemoval.js
+ * isPoolDeckRun). A Sealed/Draft deck is never dealt the equipment's own
+ * cards — kit basics, weapon arts, Dodge Roll, authored grants — but a card
+ * the PLAYER seated in one of its mounts at the Blacksmith (a mount entry
+ * naming a card: an art-mount override or a filled extra mount) is the
+ * player's card riding on the item, and it stays, as it does in any run.
+ */
+function playerInstalledGrants(run, desired) {
+  return desired.filter((d) => {
+    const itemRef = ownerItemRef(d);
+    const entry = itemRef ? itemMountEntries(run, itemRef)[d.instanceId] : null;
+    return !!(entry && entry.card);
+  });
+}
+
 export function reconcileGrantedCards(registries, run) {
   if (!run.deck) run.deck = [];
-  const desired = desiredGrantInstances(registries, run);
+  // A dealt deck (Sealed, Draft) keeps only the cards the player installed in
+  // the worn equipment's mounts; every other lent card is swept (an older
+  // build may have left one) and none is appended.
+  const poolDeck = isPoolDeckRun(run);
+  const desired = poolDeck ? playerInstalledGrants(run, desiredGrantInstances(registries, run)) : desiredGrantInstances(registries, run);
   const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();
   // In place, not a reassignment: stampDeck captures its stamping list before
   // reconciling, so an appended instance must land in the SAME array to flow
   // through the carrier/mod stamping that follows.
-  carryDodgeRoll(registries, [run.deck], wanted);
+  if (!poolDeck) carryDodgeRoll(registries, [run.deck], wanted);
   const kept = [];
   for (const inst of run.deck) {
     if (!isItemOwned(inst)) { kept.push(inst); continue; }
@@ -2313,13 +2333,19 @@ export function itemMountInstances(registries, run, piece, { authored = false } 
  * Deterministic instance ids keep the sweep idempotent and combat-save-stable.
  */
 export function reconcileGrantedCardsInCombat(registries, run, piles) {
+  // A dealt deck's fight is held to the same rule (model/cardRemoval.js,
+  // playerInstalledGrants): only cards the player installed in the worn
+  // equipment's mounts ride; any other lent card (one an older build's
+  // mid-fight swap put into a pile) is swept, and none is appended.
+  const poolDeck = isPoolDeckRun(run);
   // Combat's swap hands in a synthetic run with an empty deck; the piles are
   // the deck here, and the Dodge Roll rule reads the deck for a legacy copy.
   const deck = run.deck && run.deck.length ? run.deck : [...piles.hand, ...piles.draw, ...piles.discard, ...piles.exhaust];
-  const desired = desiredGrantInstances(registries, { ...run, deck });
+  const allDesired = desiredGrantInstances(registries, { ...run, deck });
+  const desired = poolDeck ? playerInstalledGrants(run, allDesired) : allDesired;
   const wanted = new Map(desired.map((d) => [d.instanceId, d]));
   const present = new Set();
-  carryDodgeRoll(registries, [piles.hand, piles.draw, piles.discard, piles.exhaust], wanted);
+  if (!poolDeck) carryDodgeRoll(registries, [piles.hand, piles.draw, piles.discard, piles.exhaust], wanted);
   for (const pile of [piles.hand, piles.draw, piles.discard, piles.exhaust]) {
     const kept = [];
     for (const inst of pile) {
