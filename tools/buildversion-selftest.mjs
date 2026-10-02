@@ -76,7 +76,49 @@ if (shardText !== 'all' && (!shardMatch || !Number.isSafeInteger(Number(shardMat
   process.exit(2);
 }
 const SHARD = shardText === 'all' ? null : { index: Number(shardMatch[1]), count: Number(shardMatch[2]) };
-const inShard = (index) => !SHARD || index % SHARD.count === SHARD.index;
+
+// BALANCED BY MEASURED COST, NOT BY INDEX (owner rule D38, 2026-10-02: every CI
+// job finishes in 20 minutes or less). Shards used to take index mod count in
+// each list separately, so shard 0 got the first plant, the first row-H case
+// AND the traceability corpus, and the Windows shard 0/4 ran 26-36 minutes
+// while 3/4 ran 13-18. Now every unit of work is one item with a cost, and
+// planShards hands them out longest-first to the least-loaded shard (ties to
+// the lowest index) — deterministic, so every shard computes the same plan
+// and runs only its own part, and the union is the whole corpus, each once.
+//
+// THE COSTS ARE DATA, measured on Linux on 2026-10-02 (one whole unsharded run,
+// 21m55s): a planted real tree is ~22.5 s, a row-H case (the tree copied, made
+// a git repo and committed twice) ~55.5 s, the --which history ~1 s. Only the
+// RATIOS matter to the plan; re-measure and edit this row if they drift. The
+// control (~20 s) runs in every shard and is not planned.
+export const SHARD_COST = Object.freeze({ plant: 22.5, history: 55.5, trace: 1 });
+
+/**
+ * items: [{ key, cost }] → Map(key → shard index). Longest-processing-time
+ * first: a stable sort by cost, descending, then each item to the shard with
+ * the least load so far (ties to the lowest index). Pure and deterministic.
+ */
+export function planShards(items, count) {
+  const load = Array.from({ length: count }, () => 0);
+  const plan = new Map();
+  const order = items.map((item, at) => ({ ...item, at })).sort((a, b) => (b.cost - a.cost) || (a.at - b.at));
+  for (const item of order) {
+    let best = 0;
+    for (let i = 1; i < count; i++) if (load[i] < load[best]) best = i;
+    load[best] += item.cost;
+    plan.set(item.key, best);
+  }
+  return plan;
+}
+
+/** Every planned unit of this corpus, in run order. */
+export function shardItems(historyCount = historyCorpus().CASES.length) {
+  return [
+    ...PLANTS.map((_, i) => ({ key: `plant:${i}`, cost: SHARD_COST.plant })),
+    { key: 'trace', cost: SHARD_COST.trace },
+    ...Array.from({ length: historyCount }, (_, i) => ({ key: `history:${i}`, cost: SHARD_COST.history })),
+  ];
+}
 
 // macOS can report ENOTEMPTY for a just-closed Git worktree while directory
 // entries settle. Node retries that class of recursive-removal failure only
@@ -421,13 +463,7 @@ function freshRepo() {
 // watched GREEN and RED over one variable — otherwise a row that is red at
 // every commit would look like a catch.
 
-function ordinalHistory() {
-  let failures = 0;
-  const say = (ok, label, detail) => {
-    if (!ok) failures += 1;
-    console.log(`  ${ok ? 'RED  ' : 'FAIL '} [H ORDINAL INCREASES] ${ok ? 'caught' : 'NOT CAUGHT'} — ${label}`);
-    console.log(`          ${detail}`);
-  };
+function historyCorpus() {
 
   /**
    * A committed tree, then a second commit that ships a new bundle. `second`
@@ -593,9 +629,9 @@ function ordinalHistory() {
       `the target PATCH moves backward while the folded version rises (${MAJOR}.${MINOR}.2-rc.${CANDIDATE}.9 → ${MAJOR}.${MINOR}.1-rc.${CANDIDATE}.10) — two candidate lines the notation cannot tell apart`,
       (j) => ({ ...j, release: `${MAJOR}.${MINOR}.2-rc.${CANDIDATE}`, ordinal: 9 })],
   ];
-  if (BACKWARD === null) {
-    console.log(`  skip  [H ORDINAL INCREASES] no earlier release exists to move back to from '${CURRENT}' — the backward case is reported skipped, not silently dropped`);
-  }
+  const skipped = BACKWARD === null
+    ? `  skip  [H ORDINAL INCREASES] no earlier release exists to move back to from '${CURRENT}' — the backward case is reported skipped, not silently dropped`
+    : null;
 
   // THREE VERDICTS, NOT TWO. `unknown` is its own expectation because it is its
   // own outcome: check() treats null as blocking exactly as false does, and a
@@ -613,8 +649,19 @@ function ordinalHistory() {
       'the control: the record is untouched and the digest unchanged — no build shipped, n/a', null, false],
   );
 
+  return { build, CASES, skipped };
+}
+
+function ordinalHistory({ build, CASES, skipped }, picked = () => true) {
+  let failures = 0;
+  const say = (ok, label, detail) => {
+    if (!ok) failures += 1;
+    console.log(`  ${ok ? 'RED  ' : 'FAIL '} [H ORDINAL INCREASES] ${ok ? 'caught' : 'NOT CAUGHT'} — ${label}`);
+    console.log(`          ${detail}`);
+  };
+  if (skipped) console.log(skipped);
   const WANT = { red: false, green: true, unknown: null };
-  const selected = CASES.filter((_, index) => inShard(index));
+  const selected = CASES.filter((_, index) => picked(index));
   for (const [second, want, label, first = null, moveDigest = true] of selected) {
     const dir = build(second, first, moveDigest);
     try {
@@ -734,7 +781,16 @@ export async function selftest() {
   }
 
   // ---- the corpus -----------------------------------------------------------
-  const selectedPlants = PLANTS.filter((_, index) => inShard(index));
+  const history = historyCorpus();
+  const plan = SHARD ? planShards(shardItems(history.CASES.length), SHARD.count) : null;
+  const inShard = (key) => !plan || plan.get(key) === SHARD.index;
+  if (plan) {
+    const mine = shardItems(history.CASES.length).filter((item) => inShard(item.key));
+    const all = shardItems(history.CASES.length);
+    const sum = (list) => Math.round(list.reduce((n, item) => n + item.cost, 0));
+    console.log(`  shard ${SHARD.index}/${SHARD.count}: ${mine.length} of ${all.length} planned items, ~${sum(mine)} of ~${sum(all)} measured seconds (SHARD_COST, planShards); the control runs in every shard`);
+  }
+  const selectedPlants = PLANTS.filter((_, index) => inShard(`plant:${index}`));
   for (const p of selectedPlants) {
     const root = fresh();
     try {
@@ -780,14 +836,14 @@ export async function selftest() {
   console.log('');
   console.log('  --which reads HISTORY, not files, so no plant above can reach it. These enter');
   console.log('  at whichCommits() over a real repo with a real merge in it.');
-  const trace = inShard(0) ? traceability() : { failures: 0, cases: 0 };
+  const trace = inShard('trace') ? traceability() : { failures: 0, cases: 0 };
   const TRACE = trace.cases;
   failures += trace.failures;
 
   console.log('');
   console.log('  Row H is a claim about a commit AND ITS PARENT, so it has its own door too:');
   console.log('  the real tree, made a git repo, committed twice, entered at check(root).');
-  const hist = ordinalHistory();
+  const hist = ordinalHistory(history, (index) => inShard(`history:${index}`));
   const HIST = hist.cases;
   failures += hist.failures;
 
