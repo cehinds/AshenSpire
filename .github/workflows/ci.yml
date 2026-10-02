@@ -757,7 +757,7 @@ jobs:
       - name: ...and that probe can fail (its plants, this leg's half)
         # Inverted expectation: each plant is copied into its own tree and the
         # one probe it breaks is run from there (`--only`), then each probe runs
-        # clean. The whole corpus took 7.5 minutes unsharded on the machine it
+        # clean. The whole corpus took about 10 minutes unsharded (19 plants) on the machine it
         # was written on; each leg runs the plants at index i mod 2, so the two
         # legs together run every plant, each once.
         run: node tools/verdict.mjs -- node tools/flask-menu-probe.mjs --selftest --shard ${{ matrix.shard }}
