@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1452",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Art quality: Auto, Light or High",
+    "detail": "In the web edition, Settings → Display → Art quality now offers Auto, Light, High and Local high-res. Auto loads lighter art on a narrow or phone-sized screen, with Data Saver on or on a device with little memory, and the best art the game carries otherwise; Light and High pick one, and the change takes effect at once and is remembered on this device. A single-file copy carries its art inside it, so there Light and High are greyed out and the setting says why.",
+    "build": "0.7.1.742",
+    "pullRequest": 1452,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1452"
+  },
+  {
     "id": "pr-1453",
     "date": "2026-10-02",
     "group": "2026-10-02",

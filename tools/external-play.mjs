@@ -15,10 +15,11 @@
 // directory), and the map-detail tiles were not copied at all. Static checks
 // were green for both.
 //
-//   node tools/external-play.mjs [--dir build/web] [--expect-tier light]
+//   node tools/external-play.mjs [--dir build/web] [--expect-tier light] [--plant desktop-light]
 //
-// --expect-tier names the tier the page must END ON when it is not the one the
-// build pins: a high-default build whose high index was removed must load light
+// Art quality is Auto in a fresh profile, so the phone screens must load light
+// (step 8c) and the desktop screens the build's tier; --expect-tier names the
+// tier the desktop screens must END ON when it is not the one the build pins: a high-default build whose high index was removed must load light
 // (the tier fallback, §3.5), and then no object only the high index lists may
 // be asked for, its CSS backdrops included.
 //
@@ -38,7 +39,7 @@
 //
 // VERDICT: "external-play: OK — N checks passed".
 //
-// WHAT IT DOES NOT CHECK: gameplay. It mounts four screens and watches the
+// WHAT IT DOES NOT CHECK: gameplay. It mounts seven screens and watches the
 // network; it does not play a run, and a screen that mounts with the wrong art
 // passes. Two known non-findings are filtered and named where they are filtered.
 import { launchBrowser } from './browser.mjs';
@@ -67,6 +68,15 @@ const HTML_TEXT = readFileSync(resolve(DIR, 'AshenSpire.html'), 'utf8');
 const PINNED_TIER = (HTML_TEXT.match(/const ASSET_PACKS = \{"schema":1,"tier":"(high|light)"/) || [])[1] || null;
 const tierFlag = ARGV.indexOf('--expect-tier');
 const EXPECT_TIER = tierFlag >= 0 ? ARGV[tierFlag + 1] : PINNED_TIER;
+// --plant desktop-light: the self-check for the per-screen object rule. The
+// desktop screens are given a phone-sized SCREEN (their window stays 1280×800),
+// so Auto loads light where the gate expects the build's tier; on a high build
+// the run must go RED, the object rule included ("not their screen's tier").
+const PLANT = ARGV.includes('--plant') ? ARGV[ARGV.indexOf('--plant') + 1] : null;
+if (PLANT !== null && PLANT !== 'desktop-light') {
+  console.error('external-play: --plant takes desktop-light');
+  process.exit(2);
+}
 if (tierFlag >= 0 && !['high', 'light'].includes(EXPECT_TIER)) {
   console.error('external-play: --expect-tier takes high or light');
   process.exit(2);
@@ -101,12 +111,12 @@ const objectPathOf = (url) => (String(url).match(/objects\/[0-9a-f]{2}\/[0-9a-f]
 /** The common ids an object url stands for (empty when it is not a common object). */
 const commonIds = (url) => [...(IDS_OF.get(objectPathOf(url)) || [])];
 /** Why an object url is not one the expected tier (or common) may show, or ''. */
-function wrongTier(url) {
+function wrongTier(url, tier = EXPECT_TIER) {
   const path = objectPathOf(url);
   if (!path) return 'not an object';
   const packs = PACK_OF.get(path);
   if (!packs) return 'listed by no index beside the build';
-  if (packs.has(EXPECT_TIER) || packs.has('common')) return '';
+  if (packs.has(tier) || packs.has('common')) return '';
   return `only the ${[...packs].join('/')} index lists it`;
 }
 
@@ -125,13 +135,25 @@ function connect(wsUrl) {
 }
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Four screens on a phone, then the gate, combat and the map on a desktop window. Art quality
+// is Auto in a fresh profile (a ?shot= boot keeps no settings), and Auto loads
+// light on a narrow layout (src/ui/artTier.js, step 8c), so the phone screens
+// must show light art and the desktop one the tier the build pins: a high
+// build is checked at both tiers.
+// The screen size is set too: Auto also reads the screen's short side, and a
+// headless browser's own screen is 800×600, which is not a desktop's.
+const PHONE = { width: 390, height: 844, screenWidth: 390, screenHeight: 844, deviceScaleFactor: 2, mobile: true };
+const DESKTOP = { width: 1280, height: 800, screenWidth: 1920, screenHeight: 1080, deviceScaleFactor: 1, mobile: false };
 const SCREENS = [
   // The cold boot's startup gate: the river citadel backdrops and the
   // entrance hall's door mask (CSS assets, step 3b).
-  ['gate', '', `!!document.querySelector('.startup-gate')`],
-  ['title', '?shot=title', `!!document.querySelector('#app button')`],
-  ['combat', '?shot=combat', `!!document.querySelector('.combat .hand .card')`],
-  ['map', '?shot=map', `!!document.querySelector('.map-node')`],
+  ['gate', '', `!!document.querySelector('.startup-gate')`, PHONE],
+  ['title', '?shot=title', `!!document.querySelector('#app button')`, PHONE],
+  ['combat', '?shot=combat', `!!document.querySelector('.combat .hand .card')`, PHONE],
+  ['map', '?shot=map', `!!document.querySelector('.map-node')`, PHONE],
+  ['dgate', '', `!!document.querySelector('.startup-gate')`, DESKTOP],
+  ['desktop', '?shot=combat', `!!document.querySelector('.combat .hand .card')`, DESKTOP],
+  ['dmap', '?shot=map', `!!document.querySelector('.map-node')`, DESKTOP],
 ];
 
 const server = await serve({ root: DIR, port: 8317, open: false });
@@ -142,8 +164,14 @@ const cdp = connect(wsUrl); await cdp.ready;
 const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
 const { sessionId: S } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
 await cdp.send('Page.enable', {}, S); await cdp.send('Runtime.enable', {}, S); await cdp.send('Network.enable', {}, S);
+// Every screen must show its own requests: with the cache on, a screen that
+// reuses an earlier screen's objects could load them without a request.
+await cdp.send('Network.setCacheDisabled', { cacheDisabled: true }, S);
 
 const failures = []; const thrown = []; const urls = new Map();
+// The requests of the screen being mounted, reset before each navigation: one
+// entry per request, so a url an earlier screen also asked for still counts.
+let screenLog = [];
 const removedIndex = (url) => EXPECT_TIER !== PINNED_TIER && new RegExp(`(^|/)packs/${PINNED_TIER}-[0-9a-f]{12}\\.json$`).test(String(url));
 cdp.on((m) => {
   // /api/lan/* is the LAUNCHER's endpoint (src/net/lan.js), not an asset: a
@@ -168,7 +196,11 @@ cdp.on((m) => {
       && !(m.params.response.status === 404 && removedIndex(m.params.response.url))) {
     failures.push(`${m.params.response.status} ${m.params.response.url.replace(/^https?:\/\/[^/]+\//, '')}`);
   }
-  if (m.method === 'Network.requestWillBeSent') urls.set(m.params.requestId, m.params.request.url.replace(/^https?:\/\/[^/]+\//, ''));
+  if (m.method === 'Network.requestWillBeSent') {
+    const u = m.params.request.url.replace(/^https?:\/\/[^/]+\//, '');
+    urls.set(m.params.requestId, u);
+    screenLog.push([m.params.loaderId, u]);
+  }
   if (m.method === 'Network.loadingFailed' && !/favicon/i.test(m.params.errorText || '') && !removedIndex(urls.get(m.params.requestId) || '')) failures.push(`${m.params.errorText} ${urls.get(m.params.requestId) || ''}`.trim());
   if (m.method === 'Runtime.exceptionThrown') thrown.push(m.params.exceptionDetails.text || 'exception');
 });
@@ -178,11 +210,19 @@ const ev = async (e) => {
   return r.result.value;
 };
 
-await cdp.send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true }, S);
 let checks = 0; const findings = []; let seenObjects = 0; let cssBackdrops = 0; let cssMasks = 0; let fontsAsked = 0;
 let tilesDrawn = 0; let tracksDecoded = 0;
-for (const [name, query, ready] of SCREENS) {
-  await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/AshenSpire.html${query}` }, S);
+// Every object url each screen asked for, with the tier that screen must show.
+const askedBy = [];
+for (const [name, query, ready, viewport] of SCREENS) {
+  await cdp.send('Emulation.setDeviceMetricsOverride', PLANT === 'desktop-light' && !viewport.mobile ? { ...viewport, screenWidth: 390, screenHeight: 844 } : viewport, S);
+  // Auto's tier for this window: light on the phone; on a desktop the tier the
+  // build pins, or the one --expect-tier names when that index was removed.
+  const wantTier = viewport.mobile ? 'light' : EXPECT_TIER;
+  screenLog = [];
+  // The document this navigation makes: requests are kept by its loaderId, so
+  // a late request from the screen before cannot be counted as this one's.
+  const { loaderId } = await cdp.send('Page.navigate', { url: `http://localhost:${server.port}/AshenSpire.html${query}` }, S);
   const t0 = Date.now(); let up = false;
   while (Date.now() - t0 < 20000) { if (await ev(ready).catch(() => false)) { up = true; break; } await wait(200); }
   await wait(1200);
@@ -205,7 +245,7 @@ for (const [name, query, ready] of SCREENS) {
   if (art.broken.length) findings.push(`${name}: ${art.broken.length} broken image(s) — ${art.broken.slice(0, 3).join(', ')}`);
   if (PINNED_TIER) {
     checks++;
-    if (art.tier !== EXPECT_TIER) findings.push(`${name}: the page loaded built-in art "${art.tier || 'nothing'}", ${EXPECT_TIER === PINNED_TIER ? `the build pins ${PINNED_TIER}` : `expected ${EXPECT_TIER} (the build pins ${PINNED_TIER})`}`);
+    if (art.tier !== wantTier) findings.push(`${name}: the page loaded built-in art "${art.tier || 'nothing'}"; Auto on this window should load ${wantTier} (the build pins ${PINNED_TIER}${EXPECT_TIER !== PINNED_TIER ? `, --expect-tier ${EXPECT_TIER}` : ''})`);
     checks++;
     if (art.bare.length) findings.push(`${name}: image(s) asked for a bare path, not an object — ${art.bare.join(', ')}`);
   }
@@ -235,7 +275,7 @@ for (const [name, query, ready] of SCREENS) {
     const bgs = css.urls.filter(([kind, u]) => kind === 'bg' && !u.startsWith('data:'));
     const masks = css.urls.filter(([kind]) => kind === 'mask');
     checks++;
-    for (const [, u] of bgs) { const why = wrongTier(u); if (why) findings.push(`${name}: a CSS background is not a ${EXPECT_TIER}/common object (${why}) — ${u.slice(-80)}`); }
+    for (const [, u] of bgs) { const why = wrongTier(u, wantTier); if (why) findings.push(`${name}: a CSS background is not a ${wantTier}/common object (${why}) — ${u.slice(-80)}`); }
     checks++;
     for (const [u, ok] of css.decoded) if (!ok) findings.push(`${name}: a CSS image did not decode — ${u.slice(-80)}`);
     checks++;
@@ -248,10 +288,11 @@ for (const [name, query, ready] of SCREENS) {
     cssNote = `; css ${bgs.length} backdrop(s) from objects, ${masks.length} inline mask(s), ${css.loaded}/${css.faces} lore faces`;
   }
   let tileNote = '';
-  if (PINNED_TIER && name === 'map') {
-    // THE MAP TILES (step 3c): the detail layer must reach `ready`, every tile
-    // it drew must be a common object that is a map-detail tile, and each must
-    // decode.
+  if (PINNED_TIER && /map$/.test(name)) {
+    // THE MAP TILES (step 3c), on the phone's map and the desktop's: the
+    // detail layer must reach `ready`, every tile it drew must be a common
+    // object that is a map-detail tile (the tiles are common ids, so the same
+    // objects serve either art tier), and each must decode.
     const tiles = await ev(`(async () => {
       const t0 = Date.now();
       const port = () => document.querySelector('[data-detail-state]');
@@ -262,14 +303,15 @@ for (const [name, query, ready] of SCREENS) {
       return { state: port()?.dataset.detailState || '', hrefs, decoded };
     })()`);
     checks++;
-    if (tiles.state !== 'ready' || !tiles.hrefs.length) findings.push(`map: the detail tiles did not draw (state ${tiles.state || 'none'}, ${tiles.hrefs.length} tile(s))`);
+    if (tiles.state !== 'ready' || !tiles.hrefs.length) findings.push(`${name}: the detail tiles did not draw (state ${tiles.state || 'none'}, ${tiles.hrefs.length} tile(s))`);
     checks++;
-    for (const h of tiles.hrefs) if (!commonIds(h).some((id) => id.startsWith('map-detail/'))) findings.push(`map: a detail tile is not a common map-detail object — ${h.slice(-80)}`);
+    for (const h of tiles.hrefs) if (!commonIds(h).some((id) => id.startsWith('map-detail/'))) findings.push(`${name}: a detail tile is not a common map-detail object — ${h.slice(-80)}`);
     checks++;
-    tiles.decoded.forEach((ok, i) => { if (!ok) findings.push(`map: a detail tile did not decode — ${tiles.hrefs[i].slice(-80)}`); });
+    tiles.decoded.forEach((ok, i) => { if (!ok) findings.push(`${name}: a detail tile did not decode — ${tiles.hrefs[i].slice(-80)}`); });
     tilesDrawn += tiles.decoded.filter(Boolean).length;
     tileNote = `; ${tiles.decoded.filter(Boolean).length}/${tiles.hrefs.length} detail tile(s) from common objects decoded`;
   }
+  for (const u of new Set(screenLog.filter(([id]) => id === loaderId).map(([, u]) => u))) if (objectPathOf(u)) askedBy.push([u, wantTier, name]);
   console.log(`  ${name.padEnd(7)} mounted, ${art.imgs} image(s), ${art.objects} from objects/, ${art.broken.length} broken${PINNED_TIER ? `, built-in art ${art.tier || 'none'}` : ''}${cssNote}${tileNote}`);
 }
 if (PINNED_TIER) {
@@ -282,8 +324,10 @@ if (PINNED_TIER) {
   if (!cssMasks) findings.push('no screen showed an inline SVG mask');
   checks++;
   const asked = [...new Set(urls.values())].filter((u) => objectPathOf(u));
-  const off = asked.filter((u) => wrongTier(u));
-  if (off.length) findings.push(`${off.length} requested object(s) are not ${EXPECT_TIER}/common: ${off.slice(0, 3).map((u) => `${u.slice(-40)} (${wrongTier(u)})`).join(', ')}`);
+  // Each screen's requests against that screen's tier: light on the phone,
+  // EXPECT_TIER on the desktop.
+  const off = askedBy.filter(([u, tier]) => wrongTier(u, tier));
+  if (off.length) findings.push(`${off.length} requested object(s) are not their screen's tier or common: ${off.slice(0, 3).map(([u, tier, name]) => `${name} ${u.slice(-40)} (${wrongTier(u, tier)})`).join(', ')}`);
   checks++;
   const fonts = asked.filter((u) => /\.woff2$/.test(u));
   if (!fonts.length) findings.push('the page fetched no font from objects/');
@@ -329,8 +373,8 @@ for (const f of findings) console.log('  RED ' + f);
 if (findings.length) { console.log(`external-play: RED — ${findings.length} finding(s) over ${checks} checks`); process.exit(1); }
 // Same grammar rule as verify-external: the verdict line ends at the count, or
 // tools/verdict.mjs reads the whole thing as prose and calls the run silent.
-console.log(`  ${SCREENS.length} screens mounted from ${relative(ROOT, DIR)}; 0 broken images; 0 failed requests${PINNED_TIER ? `; ${seenObjects} images from the ${EXPECT_TIER} pack's objects; ${cssBackdrops} CSS backdrop(s) and ${fontsAsked} font(s) from objects, ${cssMasks} inline mask(s); ${tilesDrawn} map tile(s) and ${tracksDecoded} track(s) from common objects, decoded` : ''}.`);
+console.log(`  ${SCREENS.length} screens mounted from ${relative(ROOT, DIR)}; 0 broken images; 0 failed requests${PINNED_TIER ? `; ${seenObjects} images from objects/ (light on the phone, ${EXPECT_TIER} on the desktop); ${cssBackdrops} CSS backdrop(s) and ${fontsAsked} font(s) from objects, ${cssMasks} inline mask(s); ${tilesDrawn} map tile(s) and ${tracksDecoded} track(s) from common objects, decoded` : ''}.`);
 console.log(`external-play: OK — ${checks} checks passed`);
-console.log('BOUNDARY: four screens and the network. No run was played, and a screen that');
+console.log('BOUNDARY: seven screens and the network. No run was played, and a screen that');
 console.log('          mounts with the WRONG art passes this; a track that decodes is not');
-console.log('          proven to be heard, and only the tiles the map screen shows are drawn.');
+console.log('          proven to be heard, and only the tiles the map screens show are drawn.');

@@ -1,16 +1,18 @@
 # Every asset outside the game file — plan
 
-Status: **steps 2, 3a, 3b, 3c and 6a built** (2026-10-01: `tools/asset-pack.mjs`,
+Status: **steps 2, 3a, 3b, 3c, 6a and 8c built** (2026-10-01: `tools/asset-pack.mjs`,
 `art-manifest.json` schema 2; 2026-10-02: the loader `src/ui/assetPacks.js`,
 `setBuiltInSource`, the `ASSET_PACKS` stamp and the tier fallback, with
 `bundle.mjs --external-art` writing packs and `verify-external` rewritten; see
 [Step 3a as built](#step-3a-as-built); the `ASSET_CSS` template for the fonts
 and backdrops, the masks inline, see [Step 3b as built](#step-3b-as-built);
 the map tiles and the shipped score through the common index, see
-[Step 3c as built](#step-3c-as-built); and the Pages base tree without `art/`, the `og:image` Pages path and the site
-size in `pages-site --check`, see section 4); **step 8d built** (2026-10-02:
-`buildPageUrl`/`serveDir` in `tools/browser.mjs`, and the 30 tools that
-opened a built page by `file://` ask it); the rest is plan (2026-09-27). The owner answered its
+[Step 3c as built](#step-3c-as-built); the Pages base tree without `art/`, the
+`og:image` Pages path and the site size in `pages-site --check`, see section 4;
+Settings → Art quality Auto / Light / High, see
+[Step 8c as built](#step-8c-as-built)); **step 8d built** (2026-10-02:
+`buildPageUrl`/`serveDir` in `tools/browser.mjs`, and the 30 tools that opened
+a built page by `file://` ask it); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
@@ -292,7 +294,9 @@ schema-2 pin whose top level disagrees with `packs.high`.
    4. It hands `assetmap.js` a Map of id → **relative object path**
       (`<base>objects/xx/<sha>.webp`, not a `blob:` URL).
 5. **Tier selection, with fallback.** The requested tier is Settings → Art
-   quality (Auto/Light/High, section 5), and *Auto* means the build's default.
+   quality (Auto/Light/High, section 5). *Auto* means the build's default,
+   except light on a narrow layout or phone-sized screen, with Save-Data on or
+   on a low-memory device (see [Step 8c as built](#step-8c-as-built)).
    If the requested tier's index cannot be loaded or fails its hash, the loader
    uses the light index. The fallback order is **high → light → placeholders**.
    So a main build whose default is high still shows the light art:
@@ -903,6 +907,65 @@ Where the build differs from, or settles, §3.8 and §3.9 (2026-10-02):
   404 on that bare path is filtered by name, as `/api/lan/` already was.
   Against the 3b runtime with this step's build (no copies) it is red on the
   bare requests, the missing manifest and the missing track.
+
+### Step 8c as built
+
+Where the build settles the text above (2026-10-02):
+
+- **The choices** are *Auto*, *Light*, *High* and *Local high-res*
+  (`src/ui/highResArt.js` `ART_QUALITY_CHOICES`); the default is *Auto*. The
+  one choice before, *Built-in*, is read as *Auto* (`legacyChoices` on the row,
+  and `artQualityChoice()`), so a stored value keeps working and imports.
+- **Auto** (`src/ui/artTier.js` `autoTier`) asks for light when the build's
+  default is high and any of these holds: `navigator.connection.saveData`, the
+  layout is narrow (`<html data-layout="narrow">`, written by `applyUiScale`
+  before the boot load starts), the screen's short side is at most
+  `SMALL_SCREEN_PX` (600 CSS px, so a phone booted in landscape counts: Safari
+  and Firefox report no `deviceMemory`), or `navigator.deviceMemory` is at or
+  under `LOW_MEMORY_GB` (2). A coarse pointer alone was not used, because it
+  would also send tablets and touch laptops to light. Otherwise it asks for the default. A light-default build
+  always asks for light. *Local high-res* lays its folder over Auto's tier,
+  unchanged otherwise.
+- **When it applies.** The boot load asks for the setting's tier
+  (`loadBuiltInPacks({ tier })`; with no tier it is still the build's
+  default). A change in play **reloads the indexes at once** (`applyArtTier`,
+  called from `applyDisplaySettings`): the new map goes through
+  `builtInArtArrived`, which re-points the images on screen. A switch that
+  cannot load anything keeps the art already shown (`keepOnFail`) and records
+  the tier it asked for, so the row says that one failed. Quick switches run
+  one at a time, only the latest, and a load the player has replaced while it
+  was in flight publishes nothing (`stillWanted`). Auto is decided at boot and
+  when it is chosen, in the queued job, so a batch that sets Auto and a new
+  layout together reads the new layout; a window resized later does not swap
+  the art.
+- **The fallback is the loader's**: High on a build that pins no high pack, or
+  whose high index fails, shows light; the row's live line says which tier is
+  on screen and why (`tierStatus`, `aria-live="polite"`).
+- **A single file and the source tree** pin no packs, so *Light* and *High* are
+  shown **disabled** (the row's new `choiceDisabled`, honoured by the choice
+  renderer for `<option>`s and segment buttons; `settings-choice-row` in the
+  component catalogs) and the live line says the file
+  carries its art inside it. A stored *Light* or *High* is kept, not
+  rewritten, so the same choice still applies in the web edition on the same
+  origin.
+- **`external-play`** now expects Auto's tier for each window: its
+  phone screens must load light (Auto on a narrow layout), and three more
+  passes, the startup gate, combat and the map on a 1280×800 desktop window, must load the tier the build
+  pins, so a high build is checked at both tiers. Each pass also sets the
+  emulated screen size: a headless browser's own screen is 800×600, whose
+  short side would read as a small screen.
+- **The CSS follows a switch** (step 3b): a switch in play goes through
+  `loadBuiltInPacks`, which fills `ASSET_CSS` from the map it publishes and
+  replaces the one `<style data-asset-css>`, so *Light* on a high-default
+  build swaps the backdrops too, and fonts stay on common. A switch that fails
+  or is superseded publishes nothing and leaves the CSS as it was.
+- **`external-play` with 3b**: the phone screens (the startup gate among them)
+  check light objects and CSS, the desktop screens the build's tier, or the
+  one `--expect-tier` names; each screen's requested objects (its own
+  requests, by the navigation's `loaderId`, with the cache off) are checked
+  against that screen's tier. `--plant desktop-light` gives the desktop
+  screens a phone-sized screen, so Auto loads light there, and the run must
+  go RED.
 
 ---
 
