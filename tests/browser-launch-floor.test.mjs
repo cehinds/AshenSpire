@@ -70,12 +70,15 @@ test('a slow endpoint is waited out under the floor, and times out without it', 
   } finally { fake.done(); }
 });
 
-test('a dead browser still fails fast under the default floor', { skip: !POSIX && 'needs /bin/true' }, async () => {
+// The dead browser is node itself: it refuses Chrome's first flag (`--headless`)
+// and exits at once, on every OS. `/bin/true` was the first choice and is not
+// one — macOS keeps it at /usr/bin/true (spawn ENOENT), Windows has neither.
+test('a dead browser still fails fast under the default floor', async () => {
   await withEnv(undefined, async () => {
     const t0 = Date.now();
     await assert.rejects(
-      launchBrowser({ prefix: 'blf-', browser: '/bin/true', timeoutMs: 12000, pinTmp: false }),
-      /exited \(code 0/,
+      launchBrowser({ prefix: 'blf-', browser: process.execPath, timeoutMs: 12000, pinTmp: false }),
+      /exited \(code [1-9]\d*, signal null\) before printing a DevTools endpoint/,
     );
     assert.ok(Date.now() - t0 < 5000, `took ${Date.now() - t0} ms; the exit handler, not the floor, must end it`);
   });
