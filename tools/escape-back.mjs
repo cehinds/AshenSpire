@@ -20,10 +20,15 @@
 //   popover a native popover is open over the screen: the press closed it,
 //         the screen's Back (`back`) ran zero times and nothing else moved.
 //   layer a layer that is NOT a dialog is mounted over the screen by `mount`
-//         (the real flask menu, a real armed hold-to-confirm): the press
-//         closed or dropped it, the screen's Back ran zero times and the
-//         screen did not move (review of #1463: pad B's key was not
-//         cancelable, so the layer's preventDefault was lost and Back ran too).
+//         (the real flask menu, a real armed hold-to-confirm, the map legend
+//         over the node tray): the press closed or dropped it, the screen's
+//         Back ran zero times and the screen (and the map tray) did not move
+//         (review of #1463: pad B's key was not cancelable, so the layer's
+//         preventDefault was lost and Back ran too; the legend stayed open
+//         while the tray closed under it).
+// `open` is one control or a list clicked in order; `needs` is a selector
+// that must match before the press (the state the row is about), so a row
+// whose state never came up is red rather than vacuously green.
 // An open tooltip is dismissed before each press (it is a layer of its own,
 // and Escape peels it first by design: src/ui/components/tooltip.js).
 //
@@ -58,11 +63,15 @@ export const SCREENS = [
   { id: 'customrun', shot: 'customrun', expect: 'back', back: '#cr-back' },
   { id: 'customize', shot: 'customize', expect: 'back', back: '#cz-back' },
   { id: 'customize-menu', shot: 'customize', open: '.cz-menu-button', expect: 'popover', back: '#cz-back' },
+  // Review of #1463 (Codex): the Equipment stage paints its card-info button
+  // in the top layer as popover="manual"; that is not a layer, so Back runs.
+  { id: 'customize-info', shot: 'customize', open: ['#cz-tab-equipment', '#cz-equipment-fold summary', '#cz-armours .card-inspection-target'], needs: '.creation-info-popover:popover-open', expect: 'back', back: '#cz-back' },
   { id: 'lobby', shot: 'lobby', expect: 'back', back: '#lb-back' },
   { id: 'atlas', shot: 'atlas', expect: 'none', why: 'the world atlas is the run itself; its exits (Save & quit) end the session' },
   { id: 'armoury', shot: 'atlas', open: '[data-atlas-armoury]', expect: 'peel' },
   { id: 'map', shot: 'map', expect: 'none', why: 'the act map is the run itself; its exits (Save & quit) end the session' },
   { id: 'map-tray', shot: 'map', open: '.map-node.reachable', expect: 'back', back: '#map-back' },
+  { id: 'map-legend', shot: 'map', open: ['.map-node.reachable', '#map-legend'], mount: 'legend', expect: 'layer', back: '#map-back' },
   { id: 'combat', shot: 'combat', expect: 'none', why: 'a fight has no Back; Escape only cancels a selection and never ends the turn' },
   { id: 'smith', shot: 'smith', expect: 'peel' },
   { id: 'shop', shot: 'shop', expect: 'none', why: 'Leave ends the visit and discards the stock (D41): a commitment, not a Back' },
@@ -112,6 +121,12 @@ export const READY = {
 // `mount` rows: page-side code that opens the layer through the production
 // module (the same module instance the page runs) and leaves `__layerOpen()`.
 const MOUNTS = {
+  // The legend was opened by the row's `open` (its own ? button).
+  legend: `(() => {
+    const pop = document.querySelector('.map-legend-pop');
+    window.__layerOpen = () => !!pop && !pop.hidden;
+    return window.__layerOpen() && document.querySelector('.map-tray')?.dataset.open === 'true';
+  })()`,
   flask: `(async () => {
     const { mountFlaskActionMenu } = await import('/src/ui/components/flask.js');
     const anchor = document.createElement('button');
@@ -219,10 +234,10 @@ async function main() {
     for (let i = 0; i < 40 && !ready; i += 1) { ready = await ev(`!!document.querySelector(${JSON.stringify(landmark)})`); if (!ready) await wait(250); }
     if (!ready) throw new Error(`?shot=${row.shot} did not show ${landmark}`);
     await wait(2500);
-    if (row.open) {
+    for (const control of [row.open || []].flat()) {
       // A dispatched click, not .click(): an SVG map node has no click().
-      const opened = await ev(`(() => { const b = document.querySelector(${JSON.stringify(row.open)}); if (!b) return false; b.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); return true; })()`);
-      if (!opened) throw new Error(`opening control ${row.open} not found`);
+      const opened = await ev(`(() => { const b = document.querySelector(${JSON.stringify(control)}); if (!b) return false; b.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true })); return true; })()`);
+      if (!opened) throw new Error(`opening control ${control} not found`);
       await wait(1500);
     }
     const settle = async () => {
@@ -250,12 +265,18 @@ async function main() {
   for (const row of rows) {
     let clicked = null;
     if (row.expect === 'back') {
-      const p = await page(row);
-      await p.settle();
-      const found = await p.ev(`(() => { const b = document.querySelector(${JSON.stringify(row.back)}); if (!b) return false; b.click(); return true; })()`);
-      await wait(1200);
-      clicked = found ? await p.ev(SIGNATURE) : null;
-      await p.close();
+      let p;
+      try {
+        p = await page(row);
+        await p.settle();
+        const found = await p.ev(`(() => { const b = document.querySelector(${JSON.stringify(row.back)}); if (!b) return false; b.click(); return true; })()`);
+        await wait(1200);
+        clicked = found ? await p.ev(SIGNATURE) : null;
+      } catch (error) {
+        console.log(`    ${row.id}: the clicked load failed: ${error.message}`);
+      } finally {
+        await p?.close();
+      }
     }
     for (const input of ['key', 'pad']) {
       const label = `${row.id.padEnd(11)} ${input === 'key' ? 'Escape' : 'pad B '}`;
@@ -264,6 +285,7 @@ async function main() {
         p = await page(row);
         await p.settle();
         if (row.mount && !(await p.ev(MOUNTS[row.mount]))) throw new Error(`layer ${row.mount} did not open`);
+        if (row.needs && !(await p.ev(`!!document.querySelector(${JSON.stringify(row.needs)})`))) throw new Error(`${row.needs} is not showing`);
         const before = JSON.parse(await p.ev(SIGNATURE));
         if (row.expect === 'back' || row.expect === 'popover' || row.expect === 'layer') {
           await p.ev(`(() => { window.__backRuns = 0; document.querySelector(${JSON.stringify(row.back)})?.addEventListener('click', () => { window.__backRuns += 1; }, true); })()`);
@@ -287,7 +309,7 @@ async function main() {
         } else if (row.expect === 'layer') {
           const runs = await p.ev('window.__backRuns ?? -1');
           const open = await p.ev('window.__layerOpen()');
-          ok = !open && runs === 0 && after.screen === before.screen && after.modals === before.modals;
+          ok = !open && runs === 0 && after.screen === before.screen && after.modals === before.modals && after.tray === before.tray;
           note = `${row.mount} ${open ? 'STILL OPEN' : 'closed'}; Back ran ${runs}x; screen ${after.screen === before.screen ? 'unchanged' : 'CHANGED'}`;
         } else if (row.expect === 'leave') {
           const there = await p.ev(`!!document.querySelector(${JSON.stringify(row.to)})`);
