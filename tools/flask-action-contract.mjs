@@ -30,7 +30,7 @@ if (process.argv.includes('--selftest')) {
       },
       {
         name: 'combat drops the shared action availability plan',
-        file: 'src/ui/screens/combat.js',
+        file: 'src/ui/components/combatActionRow.js',
         find: "const action = flaskActionPlan({ context: 'combat', canUse, useReason: reason })",
         replace: "const action = plantedActionPlan({ context: 'combat', canUse, useReason: reason })",
         all: false,
@@ -59,6 +59,9 @@ let actions = null;
 try { actions = await import('../src/model/flaskActions.js'); } catch { /* observed red */ }
 const component = text('src/ui/components/flask.js');
 const combat = text('src/ui/screens/combat.js');
+// The Potions list both boards open (2026-10-01): solo and co-op mount the one
+// footer and the one list in components/combatActionRow.js.
+const potions = text('src/ui/components/combatActionRow.js');
 const coop = text('src/ui/screens/coop.js');
 const map = text('src/ui/screens/map.js');
 const session = text('tools/session.mjs');
@@ -82,15 +85,16 @@ if (actions?.flaskActionPlan) {
 }
 
 check('combat and map menus share action availability',
-  /mountFlaskActionMenu/.test(component) && /flaskActionPlan/.test(map) && /const action = flaskActionPlan\(\{ context: 'combat', canUse, useReason: reason \}\)/.test(combat) && /mountFlaskActionMenu/.test(map));
+  /mountFlaskActionMenu/.test(component) && /flaskActionPlan/.test(map) && /const action = flaskActionPlan\(\{ context: 'combat', canUse, useReason: reason \}\)/.test(potions) && /openCombatPotions\(/.test(combat) && /mountFlaskActionMenu/.test(map));
 check('menu supports focus navigation, cancel, and back without dispatch',
   /focusFirst|\.focus\(/.test(component) && /Escape|cancel/i.test(component)
     && /onCancel/.test(component) && /remove\(\)/.test(component));
 check('flask selection does not call useFlask directly',
-  /if \(action.enabled\) arm\(use, 'useFlask', \{[\s\S]*?onConfirm: \(\) => \{[\s\S]*?else useFlask\(slot, null, chargeKind\)/.test(combat)
-    && /fold.addEventListener\('toggle', moveUse\)/.test(combat));
-check('co-op flask selection also opens the shared menu instead of sending use',
-  /mountFlaskActionMenu/.test(coop) && !/coop-flask[\s\S]{0,500}send\(\{ t: 'useFlask'/.test(coop));
+  /if \(action.enabled\) arm\(use, 'useFlask', \{[\s\S]*?onConfirm: \(\) => \{[\s\S]*?onUse\(row\)/.test(potions)
+    && /onUse: [\s\S]*?else useFlask\(slot, null, chargeKind\)/.test(combat)
+    && /fold.addEventListener\('toggle', moveUse\)/.test(potions));
+check('co-op flask selection also opens the shared Potions list instead of sending use',
+  /openCombatPotions\(/.test(coop) && /combat-potions/.test(potions) && !/send\(\{ t: 'useFlask'/.test(coop));
 check('co-op transports an explicit flask intent to host authority',
   /flaskIntent/.test(session) && /host/i.test(session) && /useFlask/.test(session));
 check('LAN routes only the explicit flaskIntent action through the host',

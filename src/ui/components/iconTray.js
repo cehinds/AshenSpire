@@ -28,7 +28,9 @@ import { t, tFull } from '../strings.js';
 
 const trays = new WeakMap();
 const overflowActions = new WeakMap();
-const observed = new WeakSet();
+// Each observed tray's ResizeObserver, so a board that throws its tray away
+// (co-op, per snapshot) can stop it with unobserveIconTray (#1436 review).
+const observed = new WeakMap();
 
 // The icon whose explanation a tap last opened: its next tap acts. A press
 // anywhere else forgets it, so a later tap on it explains again first.
@@ -107,8 +109,15 @@ export function setIconTrayItems(row, items = []) {
 /** Fit a tray to its own box whenever that box changes size. */
 export function observeIconTray(row) {
   if (!row || observed.has(row) || typeof ResizeObserver === 'undefined') return;
-  observed.add(row);
-  new ResizeObserver(() => { if (row.isConnected) fitIconTray(row, row.getBoundingClientRect().width); }).observe(row);
+  const observer = new ResizeObserver(() => { if (row.isConnected) fitIconTray(row, row.getBoundingClientRect().width); });
+  observer.observe(row);
+  observed.set(row, observer);
+}
+
+/** Stop the observer observeIconTray started on this tray. */
+export function unobserveIconTray(row) {
+  observed.get(row)?.disconnect();
+  observed.delete(row);
 }
 
 // Reuse each icon and its listeners when space changes; only what shows moves.

@@ -516,6 +516,8 @@ export function receipt() {
     validate: read('src/model/validate.js'),
     map: read('src/ui/screens/map.js'),
     combat: read('src/ui/screens/combat.js'),
+    // The combat action row's one home since 2026-10-01; solo and co-op both mount it.
+    actionRow: read('src/ui/components/combatActionRow.js'),
     coop: read('src/ui/screens/coop.js'),
     quicknav: read('src/ui/components/quicknav.js'),
     overlay: read('src/ui/components/overlay.js'),
@@ -623,7 +625,7 @@ export function findings(r) {
       || !/function renderCombatantStage\(\)[\s\S]*?renderPlayer\(\);\s*renderEnemies\(\);[\s\S]*?battlefieldStage\.refresh\(\);[\s\S]*?function render\(\)/.test(r.combat)
       || (r.combat.match(/renderCombatantStage\(\);/g) || []).length < 2
       || !/UI\.playerHandTray/.test(r.combat)
-      || !/UI\.combatActionRail/.test(r.combat)
+      || !/UI\.combatActionRail/.test(r.actionRow) || !/combatActionRowHtml\(/.test(r.combat) || !/combatActionRowHtml\(/.test(r.coop)
       || !/markUiComponent\(frame, UI\.combatantFrame, role\)/.test(r.frame)
       || !/UI\.combatantSprite/.test(r.frame)
       || !/UI\.combatantNameplate/.test(r.frame)
