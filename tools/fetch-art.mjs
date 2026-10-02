@@ -10,6 +10,7 @@
 //                                                 its pack is read from its name when
 //                                                 --pack is not given
 //   node tools/fetch-art.mjs --recheck            hash a reused cache's files again
+//   node tools/fetch-art.mjs --recheck --refetch  … and download a pack whose cache fails it
 //   node tools/fetch-art.mjs --agree [--pack …]   prove the verified caches and the trees in
 //                                                 this repository agree byte for byte
 //   node tools/fetch-art.mjs --print-dir [--pack <p>]   print the cache directory and exit
@@ -592,24 +593,30 @@ export async function download(pin, pack, { api = GITHUB.api, web = GITHUB.web, 
  * fetchArt({ root, from, recheck, pack }) → the verified cache directory of one
  * pack. `get` replaces the download (the tests use it; nothing else should).
  */
-export async function fetchArt({ root = ROOT, from = null, recheck: again = false, pack = 'high', get = download } = {}) {
+export async function fetchArt({ root = ROOT, from = null, recheck: again = false, refetch = false, pack = 'high', get = download } = {}) {
   const pin = readPin(root);
   packsOf(pin, pack); // refuses a pack the pin does not name
   const manifest = JSON.parse(readFileSync(join(root, MANIFEST_PATH), 'utf8'));
   const dir = packDirFor(pin, pack, root);
   const mark = markerFor(pin, manifest, pack);
+  let rejected = null;
   if (!from && markOf(dir) === mark) {
     if (!again) return { dir, pack, reused: true };
     const problems = recheck(dir, manifest, pack, pin);
     if (!problems.length) return { dir, pack, reused: true };
     discard(dir);
-    throw Object.assign(new Error(`the ${pack} cache no longer matches the manifest; it was removed — run again to re-download`), { problems });
+    // --refetch (CI's restored cache, .github/actions/fetch-art): a cache that
+    // fails its recheck is removed and the pack downloaded and verified again in
+    // the same run. A cache key cannot be overwritten, so throwing here would
+    // restore the same broken cache on every rerun until someone cleared it.
+    if (!refetch) throw Object.assign(new Error(`the ${pack} cache no longer matches the manifest; it was removed — run again to re-download`), { problems });
+    rejected = problems;
   }
   const zipBuf = from ? readFileSync(from) : await get(pin, pack);
   const { problems, entries } = verifyRelease(zipBuf, pin, manifest, pack);
   if (problems.length) throw Object.assign(new Error(`${pin.packs[pack].zip} (${pin.tag}, ${pack}) failed verification`), { problems });
   unpack(entries, dir, mark);
-  return { dir, pack, reused: false, count: entries.size - (entries.has(MANIFEST_PATH) ? 1 : 0) };
+  return { dir, pack, reused: false, rejected, count: entries.size - (entries.has(MANIFEST_PATH) ? 1 : 0) };
 }
 
 /**
@@ -777,8 +784,9 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
       let failed = null;
       for (const pack of packs) {
         try {
-          const r = await fetchArt({ pack, from: fromArg ? resolve(fromArg) : null, recheck: args.includes('--recheck') });
+          const r = await fetchArt({ pack, from: fromArg ? resolve(fromArg) : null, recheck: args.includes('--recheck'), refetch: args.includes('--refetch') });
           const rel = relative(ROOT, r.dir);
+          if (r.rejected) console.warn(`fetch-art: ${pack}: the cache failed its recheck (${r.rejected[0]}${r.rejected.length > 1 ? `, and ${r.rejected.length - 1} more` : ''}); removed and fetched again`);
           console.log(r.reused ? `fetch-art: OK — ${pack}: ${rel} already verified` : `fetch-art: OK — ${pack}: ${r.count} files verified into ${rel}`);
         } catch (e) {
           // One pack's failure does not hide the next one's cause.
