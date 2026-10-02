@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Fight sounds land at the right moment",
     "detail": "A boss fight's first draw and turn sting now play when its name card lifts, not hidden behind it. In LAN co-op your turn stings once per round however many players are in the fight, and joining or reloading a fight after someone has already acted no longer replays that action's sounds.",
-    "build": "0.7.1.788",
+    "build": "0.7.1.790",
     "pullRequest": 1485,
     "url": "https://github.com/cehinds/AshenSpire/pull/1485"
+  },
+  {
+    "id": "pr-1486",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the Sealed and Draft reload test checks what this build saves",
+    "detail": "Nothing you play changes. The test that loads a save from an older build kept treating every later save as that older build's, so it never checked that a climb saved again after the fix is saved the new way. It now does.",
+    "build": "0.7.1.789",
+    "pullRequest": 1486,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1486"
+  },
+  {
+    "id": "pr-1468",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "The first-fight tutorial no longer sits on your cards",
+    "detail": "The coach marks' speech bubble used to land on the first card in your hand, so you couldn't play that card while the tutorial was showing. The bubble now finds a spot clear of your hand. After a window resize, the spotlight now follows its target until the board stops moving, even on a busy machine that draws the board in fits and starts. Pressing Escape on an armed attack card now also drops the card's highlight, not just its targeting. Behind the scenes, the check that every tutorial button can be reached runs at eight screen sizes on every change, and it confirms that the tutorial stays dismissed after a reload.",
+    "build": "0.7.1.788",
+    "pullRequest": 1468,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1468"
   },
   {
     "id": "pr-1473",
