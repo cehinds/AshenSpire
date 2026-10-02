@@ -48,6 +48,19 @@ function revealSteps(text, stage) {
   return null;
 }
 
+// The dials that change how much room a caption's words take: written on the
+// frame for the scene on screen, and on the fit's probe for every other scene.
+const CAPTION_DIALS = [
+  ['--prologue-title-scale', 'titleScale'],
+  ['--prologue-speaker-scale', 'speakerScale'],
+  ['--prologue-line-height', 'lineHeight'],
+  ['--prologue-letter-spacing', 'letterSpacing', value => `${value}em`],
+  ['--prologue-measure', 'textMaxWidth', value => `${value}ch`],
+  ['--prologue-font', 'textFont', value => `var(--font-${value === 'display' ? 'display' : 'body'})`],
+  ['--prologue-box-padding', 'boxPadding', value => `${value}rem`],
+  ['--prologue-box-border', 'boxBorderWidth', value => `${value}px`],
+];
+
 // One renderer serves both the real opening and the settings preview. Its only
 // writes are explicit callbacks; previewing cannot create a run or consume RNG.
 export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, preview = false, editorPreview = false, forceLayout = null, audio = null, onScene = () => {}, onFinish = () => {}, onSettings} = {}) {
@@ -122,39 +135,66 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
       .map(scene => ({stage: prologueStaging(config,scene), copy: prologueCopy(scene,config,{classId,name:run.customization?.name || 'Forsaken',location:destination.name})}))
       .filter(({stage}) => fixedCaption(stage));
     if (!scenes.length) return 1;
+    // The probe stands in a hidden copy of the FRAME, so each scene's wireframe
+    // classes (the box, which takes the side padding and the border with it)
+    // reach it the way they reach the real caption.
+    const frame = el('div',{class:root.className,'aria-hidden':'true'});
+    Object.assign(frame.style,{position:'absolute',inset:'0',height:'auto',minHeight:'0',visibility:'hidden',pointerEvents:'none',zIndex:'-1'});
     const probe = caption.cloneNode(true);
-    probe.setAttribute('aria-hidden','true');
-    Object.assign(probe.style,{position:'absolute',left:'0',bottom:'0',visibility:'hidden',pointerEvents:'none',width:`${caption.offsetWidth}px`});
-    root.append(probe);
-    const [t,sp,d,l] = ['.prologue-title','.prologue-speaker','.prologue-dialogue','.prologue-location'].map(selector => probe.querySelector(selector));
+    frame.append(probe);
+    root.append(frame);
+    const [t,sp,d,l,pr] = ['.prologue-title','.prologue-speaker','.prologue-dialogue','.prologue-location','.prologue-progress'].map(selector => probe.querySelector(selector));
     const fits = factor => scenes.every(({stage,copy}) => {
+      // Each scene in its OWN staging: a scene may keep a taller band, more
+      // padding or no title, and the frame holds only the one on screen.
       probe.style.setProperty('--prologue-text-scale', String((stage.textScale ?? 1) * factor));
+      probe.style.setProperty('--prologue-caption-vh', String(Number(stage.captionHeightVh) || 18));
+      // A dial at its shipped value is the stylesheet's own default, which
+      // `initial` reaches past whatever the frame carries for the scene on screen.
+      for (const [name, key, format = String] of CAPTION_DIALS) {
+        probe.style.setProperty(name, stage[key] === undefined || stage[key] === shipped[key] ? 'initial' : format(stage[key]));
+      }
+      for (const name of Object.keys(PROLOGUE_LAYOUTS)) frame.classList.toggle(`prologue-layout-${name}`, name === stage.layout);
+      frame.classList.toggle('prologue-fixed-caption', true);
+      frame.classList.toggle('prologue-has-box', stage.textBox !== false);
+      frame.classList.toggle('prologue-box-hidden', stage.textBox !== false && stage.textBoxVisible === false);
+      t.hidden = stage.titleVisible === false; sp.hidden = stage.speakerVisible === false;
       t.textContent = copy.title; sp.textContent = copy.speaker; d.textContent = copy.text; l.textContent = copy.location;
       l.hidden = !copy.location || stage.locationVisible === false;
+      // With the controls under the words, the counter is in the band too.
+      if (pr) {
+        pr.hidden = editorPreview || stage.progressStyle === 'hidden';
+        if (stage.progressStyle === 'dots') pr.replaceChildren(...order.map(() => el('span',{class:'prologue-dot'})));
+        else pr.textContent = `${order.length} / ${order.length}`;
+      }
       return probe.scrollHeight <= probe.clientHeight;
     });
     // On-screen pixels, not CSS ones: the page may be zoomed.
     probe.style.setProperty('--prologue-text-scale', '1');
     const glass = probe.getBoundingClientRect().height / (probe.offsetHeight || 1);
-    const floor = Math.min(1, MIN_DIALOGUE_PX / ((parseFloat(getComputedStyle(d).fontSize) || 18) * (glass || 1)));
+    const base = (parseFloat(getComputedStyle(d).fontSize) || 18) * (glass || 1);
+    // The floor is the size ON SCREEN, so a scene set smaller stops sooner.
+    const floor = Math.min(1, Math.max(...scenes.map(({stage}) => MIN_DIALOGUE_PX / (base * (Number(stage.textScale) || 1)))));
     let best = 1;
     if (!fits(1)) {
       let lo = floor, hi = 1;
       for (let step = 0; step < 8; step++) { const mid = (lo + hi) / 2; if (fits(mid)) lo = mid; else hi = mid; }
       best = lo;
     }
-    probe.remove();
+    frame.remove();
     return best;
   }
   function captionFit() {
-    if (!root.isConnected || !root.clientWidth || !root.clientHeight) return 1;
-    const key = `${root.clientWidth}x${root.clientHeight}`;
+    if (!root.isConnected || !root.offsetWidth || !root.offsetHeight) return 1;
+    // Offset sizes count a scrollbar in, so one appearing after a refit is not
+    // itself a resize that refits again.
+    const key = `${root.offsetWidth}x${root.offsetHeight}`;
     if (key !== fitKey) { fit = measureFit(); fitKey = key; }
     return fit;
   }
   const refit = () => { fitKey = ''; if (currentStage && !stopped) applyStaging(currentStage); };
   const resized = typeof ResizeObserver === 'function' ? new ResizeObserver(() => {
-    if (currentStage && fixedCaption(currentStage) && `${root.clientWidth}x${root.clientHeight}` !== fitKey) refit();
+    if (currentStage && fixedCaption(currentStage) && `${root.offsetWidth}x${root.offsetHeight}` !== fitKey) refit();
   }) : null;
   resized?.observe(root);
   document.fonts?.ready?.then(refit);
@@ -190,16 +230,9 @@ export function mountPrologue(host, {settings = {}, run = {}, startScene = 0, pr
     dial(root, '--prologue-speaker-color', stage.speakerColor, 'speakerColor');
     dial(root, '--prologue-dialogue-color', stage.dialogueColor, 'dialogueColor');
     dial(root, '--prologue-location-color', stage.locationColor, 'locationColor');
-    dial(root, '--prologue-title-scale', stage.titleScale, 'titleScale');
-    dial(root, '--prologue-speaker-scale', stage.speakerScale, 'speakerScale');
-    dial(root, '--prologue-line-height', stage.lineHeight, 'lineHeight');
-    dial(root, '--prologue-letter-spacing', stage.letterSpacing, 'letterSpacing', value => `${value}em`);
-    dial(root, '--prologue-measure', stage.textMaxWidth, 'textMaxWidth', value => `${value}ch`);
-    dial(root, '--prologue-font', stage.textFont, 'textFont', value => `var(--font-${value === 'display' ? 'display' : 'body'})`);
+    for (const [name, key, format] of CAPTION_DIALS) dial(root, name, stage[key], key, format);
     // The container, in detail.
-    dial(root, '--prologue-box-padding', stage.boxPadding, 'boxPadding', value => `${value}rem`);
     dial(root, '--prologue-box-radius', stage.boxRadius, 'boxRadius', value => `${value}px`);
-    dial(root, '--prologue-box-border', stage.boxBorderWidth, 'boxBorderWidth', value => `${value}px`);
     dial(root, '--prologue-box-border-color', stage.boxBorderColor, 'boxBorderColor');
     // A backdrop filter is a compositing pipeline; at zero it is written away
     // entirely rather than left as a no-op blur over the whole caption.
