@@ -335,7 +335,12 @@ export async function loadFontSidecar(pin, common, {
   } catch (e) {
     return { faces: 0, failed: [`fonts: ${e.message}`] };
   }
+  // Past the deadline (the load aborted `signal`) nothing more is added: the
+  // load has settled, and a face arriving later is never laid over it.
+  const ABORTED = { faces: 0, failed: ['fonts: aborted at the deadline; no face added'] };
+  if (signal?.aborted) return ABORTED;
   const sha = await sha256Hex(new TextEncoder().encode(got.text), subtle);
+  if (signal?.aborted) return ABORTED;
   if (sha !== want.sha256) return { faces: 0, failed: [`fonts: ${got.file} hashes to ${sha.slice(0, 12)}, the pin says ${want.sha256.slice(0, 12)}`] };
   let faces;
   try { faces = JSON.parse(got.text); } catch { return { faces: 0, failed: [`fonts: ${got.file} is not a sidecar`] }; }
@@ -348,20 +353,28 @@ export async function loadFontSidecar(pin, common, {
     let bytes;
     try { bytes = base64Bytes(b64); } catch { failed.push(`fonts: ${id} is not base64`); continue; }
     const got256 = await sha256Hex(bytes, subtle);
+    if (signal?.aborted) return ABORTED;
     if (got256 !== record) { failed.push(`fonts: ${id} hashes to ${got256.slice(0, 12)}, its common record says ${record.slice(0, 12)}`); continue; }
     made.push([id, rule, bytes]);
   }
-  let count = 0;
+  // Every face is loaded first and added only together, and only while the
+  // load is still wanted: an abort while a face is loading adds none of them
+  // and leaves the cache alone.
+  const ready = [];
   for (const [id, rule, bytes] of made) {
     try {
       const face = new FontFaceImpl(rule.family, bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), rule.descriptors);
       if (typeof face.load === 'function') await face.load();
-      doc.fonts.add(face);
-      count++;
+      if (signal?.aborted) return ABORTED;
+      ready.push(face);
     } catch (e) {
+      if (signal?.aborted) return ABORTED;
       failed.push(`fonts: ${id} did not load (${e?.message || e})`);
     }
   }
+  if (signal?.aborted) return ABORTED;
+  for (const face of ready) doc.fonts.add(face);
+  const count = ready.length;
   if (count) facesAdded = { sha: want.sha256, count };
   return { faces: count, failed };
 }

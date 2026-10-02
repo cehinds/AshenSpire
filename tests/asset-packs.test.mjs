@@ -289,6 +289,27 @@ test('file:// refuses a sidecar off its pin, and a face whose bytes are not its 
   resetBuiltInArt();
 });
 
+test('file://: a face still loading at the deadline is never added after the load settles', async () => {
+  resetBuiltInArt();
+  const tree = twinTree({ fonts: true });
+  const doc = fakeDoc('file:///p/AshenSpire.html');
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  class SlowFace extends FakeFontFace { async load() { await gate; return this; } }
+  const r = await loadBuiltInPacks(fileOpts(tree, { css: FACE_CSS, doc, FontFaceImpl: SlowFace, deadlineMs: 60 }));
+  assert.equal(r.state, 'loaded', 'the art is kept');
+  assert.equal(r.faces, 0);
+  assert.ok(r.failed.some((f) => /^fonts: the sidecar did not load within 60 ms/.test(f)), r.failed.join('; '));
+  release();
+  for (let i = 0; i < 20; i++) await new Promise((done) => setImmediate(done));
+  assert.equal(doc.fontList.length, 0, 'no face added after the load settled');
+  // And the cache was not written: a later load reads the sidecar again and adds the face.
+  const again = await loadBuiltInPacks(fileOpts(tree, { css: FACE_CSS, doc }));
+  assert.equal(again.faces, 1);
+  assert.equal(doc.fontList.length, 1);
+  resetBuiltInArt();
+});
+
 test('fontFaceRules reads a FontFace from each ASSET_CSS @font-face rule', () => {
   const rules = fontFaceRules({ schema: 1, rules: [
     ':root{--as-css-bg-x-webp:url("{{assets/bg/x.webp}}")}',
