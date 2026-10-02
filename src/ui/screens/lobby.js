@@ -77,7 +77,7 @@ export function mountLobby(app, { registries, meta = {}, defaultSeedString, onBa
   function renderBrowse(note) {
     const nameInput = textInput({ id: 'lb-name', maxlength: '18', value: state.name });
     const hostBtn = button({ label: 'Light a fire (host)', weight: 'primary', id: 'lb-host' });
-    const backBtn = button({ label: 'Back', role: 'exit', id: 'lb-back' });
+    const backBtn = button({ label: 'Back', role: 'exit', id: 'lb-back', attrs: { 'data-back': '' } });
     const hostsBox = options([flavour('Scanning…', { id: 'lb-scanning' })], { id: 'lb-hosts' });
     mountScreen(pane({
       eyebrow: 'Forsaken Together',
