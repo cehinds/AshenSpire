@@ -1,19 +1,21 @@
 # Every asset outside the game file — plan
 
-Status: **steps 2, 3a, 3b, 6a and 8c built** (2026-10-01: `tools/asset-pack.mjs`,
+Status: **steps 2, 3a, 3b, 3c, 6a and 8c built** (2026-10-01: `tools/asset-pack.mjs`,
 `art-manifest.json` schema 2; 2026-10-02: the loader `src/ui/assetPacks.js`,
 `setBuiltInSource`, the `ASSET_PACKS` stamp and the tier fallback, with
 `bundle.mjs --external-art` writing packs and `verify-external` rewritten; see
 [Step 3a as built](#step-3a-as-built); the `ASSET_CSS` template for the fonts
 and backdrops, the masks inline, see [Step 3b as built](#step-3b-as-built);
-the Pages base tree without `art/`, the `og:image` Pages path and the site
-size in `pages-site --check`, see section 4; Settings → Art quality
-Auto / Light / High, see [Step 8c as built](#step-8c-as-built)); **step 8d
-built** (2026-10-02: `buildPageUrl`/`serveDir` in `tools/browser.mjs`, and the
-30 tools that opened a built page by `file://` ask it); **step 6b built**
-(2026-10-02: the Pages store, `asset-base.json` for every page kind,
-`/AshenSpire/sw.js` with Range/206 and a kill-switch, "Make available
-offline", and the light single file at `download/` for every kept build; see
+the map tiles and the shipped score through the common index, see
+[Step 3c as built](#step-3c-as-built); the Pages base tree without `art/`, the
+`og:image` Pages path and the site size in `pages-site --check`, see section 4;
+Settings → Art quality Auto / Light / High, see
+[Step 8c as built](#step-8c-as-built)); **step 8d built** (2026-10-02:
+`buildPageUrl`/`serveDir` in `tools/browser.mjs`, and the 30 tools that opened
+a built page by `file://` ask it); **step 6b built** (2026-10-02: the Pages
+store, `asset-base.json` for every page kind, `/AshenSpire/sw.js` with
+Range/206 and a kill-switch, "Make available offline", and the light single
+file at `download/` for every kept build; see
 [Step 6b as built](#step-6b-as-built)); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
@@ -645,7 +647,7 @@ light single file, about 30 MB, self-contained, plays by double-click. The
 | `tools/verify-shipped.mjs` check A (art inline, the count floor) | `ci.yml` reproducible, `dev-preview.yml` | ASSET_MAP entries in the HTML | **stays, for the light single file** (owner answer 3), with its light count floor. The pack HTML gains its own checks: it carries `ASSET_PACKS`, zero `data:` media except the two masks, and each named index is in `packs/` with that hash. Checks B and C (the aliases are this build, nothing tracked) stay. | 8e |
 | `verify-shipped` mobile-edition check (budget, smaller than full) | same | a mobile file | removed with the edition | 8e |
 | `tests/mobile-art-distinct.test.mjs:20` | core suite | the bundle's `ASSET_MAP[alias] = ASSET_MAP[key]` loop | unchanged for the light single file, which keeps the loop; adds that the pack index maps aliased ids to one object | 8e |
-| `tools/verify-external.mjs` A–D (`--dir preview`, `--selftest`) | dev-preview | `assets/` copied beside the HTML, compared with source `assets/` | A: pins are present; B: no `data:` media except the masks; C: every object in every index is present and hashes to its name; D: every `ASSET_CSS` slot names an id the index has. The selftest plants a missing object, a wrong hash, a stale pin and a twin whose string does not match. | 3a–3c |
+| `tools/verify-external.mjs` A–E (`--dir preview`, `--selftest`) | dev-preview | `assets/` copied beside the HTML, compared with source `assets/` | A: pins are present; B: no `data:` media except the masks; C: every object in every index is present and hashes to its name; D: every `ASSET_CSS` slot names an id the index has; E (3c): the common index lists every map tile and every track the score's manifest names, and no `map-detail/` or `music/` copy sits beside the HTML. The selftest plants a missing object, a wrong hash, a stale pin and a twin whose string does not match. | 3a–3c |
 | `tools/external-play.mjs` (reachability job) | `test`, `release`, `main`, dispatch | served build, art over the wire | unchanged over http; adds a `file://` pass (the zip shape, masks and fonts included) and a pass that must stay playable with the index blocked (placeholders), plus one with only light present on a high-default build | 3a, 4, 5 |
 | `tools/bundle.test.mjs` parse gate and EOL corpus (`tests.yml:125`, `ci.yml:287-308`) | `test`/`release` | sandboxes copy `assets/`, run the unflagged full-art build, and read `bg_act1.webp` | sandboxes build the pack shape from a small fixture pack and the light single file with `--light`; the EOL corpus reads a fixture object | 8e |
 | `ci.yml` reproducible (3 OSes) and `reproducible-agree` | `test`/`release` | the HTML digest is the build | digests of the HTML, the light single file **and** each pack index; objects are a function of the pin | 8e |
@@ -749,9 +751,10 @@ Where the build differs from, or settles, the text above (2026-10-02):
     pack-shaped builds must not be published there before 3b fills the
     template from the base. Met by 3b: the slots are filled from the loader's
     map, whose object paths are built on `asset-base.json`'s base.
-- **`map-detail/` and `music/` are still copied** beside the HTML until step
-  3c reads them through the common index, so a 3a web edition carries those
-  bytes twice (as copies and as common objects, about 32 MB).
+- **`map-detail/` and `music/` were still copied** beside the HTML until step
+  3c read them through the common index, so a 3a web edition carried those
+  bytes twice (as copies and as common objects, about 32 MB). Done: see
+  [Step 3c as built](#step-3c-as-built).
 - **The first screen waits for the index**, behind a static "Loading art…"
   line (pack builds only). `src/main.js` draws its first
   screen through `whenBuiltInArtReady()`: at once when nothing is pinned (the
@@ -857,6 +860,87 @@ Where the build differs from, or settles, §3.7 (2026-10-02):
   `ASSET_MAP` and inlined `<style>`s hash the same as dev's, and its
   `ASSET_CSS` is `null`. SPEC §2's status row (the CSS bypass) still holds for
   them and is left to step 8a.
+
+### Step 3c as built
+
+Where the build differs from, or settles, §3.8 and §3.9 (2026-10-02):
+
+- **Tiles.** `mapDetail.js` names each tile by its id, `tileId(hash, key)` =
+  `map-detail/<hash>/<edge>/<x>-<y>.webp`, and resolves it with `assetUrl()`.
+  `load()` is now an `Image` load of that URL, awaited with `decode()`: no
+  `fetch`, no `blob:` URL, nothing to revoke. A tile still loading when the map
+  is disposed has its `src` dropped, which stops the request (the old
+  `AbortController`). The `file://` guard stays: under `file://` the map
+  requests nothing and keeps its low-detail fallback until step 4 lifts it.
+- **Music.** For the shipped score only (the Custom music folder blank),
+  `configureMusic` in `audio.js` passes the manifest path and every relative
+  track path through `assetUrl()`; `SHIPPED_MUSIC_FOLDER` (`music`) is the id
+  prefix (`music/manifest.json`, `music/<context>/<track>.mp3`). `main.js`
+  says which with `indexed`. A folder the player typed is always fetched by
+  its literal path, even one spelled `music/` (music/README.md's own example;
+  review of #1454). A single file and the source tree pass through unchanged,
+  and an absolute URL is left alone. Paths are resolved when the folder is
+  applied, so when the boot load failed (no source, the synth plays) and a
+  later Art quality switch loads, `musicHold().sourceArrived()` applies the
+  shipped score again through the new source. "Missed" means the source did
+  not list `music/manifest.json` (`shippedScoreResolves`), which also covers
+  a boot whose art loaded and whose common index did not.
+- **Tiles retry on a source change.** A mounted detail layer listens for
+  `ART_SOURCE_EVENT` (`highResArt.js`, sent after `builtInArtArrived`); it
+  forgets its failed tiles and requests the visible set again, so a switch
+  that brings the common index draws the tiles a failed one could not. A load
+  still in flight when the source changes belongs to the old source (a
+  generation counter): its failure is not recorded, and the tile is asked for
+  again once it ends.
+- **SPEC §7.4** still describes "the `music/` beside the page"; that wording is
+  left to step 8a (section 6, *Written rules*), as 3b left SPEC §2's status
+  row. The web edition reaches players only at step 6b.
+- **A tier switch keeps common.** Each load fetches the common index again;
+  when that fetch fails or misses its deadline on a switch, the entries the
+  earlier load verified (same pin, same base) are kept, so tiles, fonts and the
+  score do not fall back to bare paths for the rest of the session. `main.js`
+  still applies the folder only when served over http(s), so `file://` keeps
+  the synth (§3.9, unchanged).
+- **Only with an art index.** The common ids reach `assetUrl()` through the map
+  the loader sets, and the loader sets none when no art index loads (3a: "the
+  common pack alone does not make a source"). That was kept: a build whose art
+  failed shows placeholders, the synth score and the low-detail map, which is
+  what a missing track or tile already gave. Making common usable on its own
+  is left to step 5's failure handling.
+- **The single files and the source tree are unchanged.** Their `ASSET_MAP`
+  is empty of music and tiles, so the ids pass through as the paths of the
+  `music/` and `map-detail/` folders `launch.mjs` still writes beside
+  `build/` and `dist/` (and `pages-site` beside each build); the light single
+  file's `ASSET_MAP` and inlined `<style>`s hash the same as dev's, and its
+  `ASSET_PACKS` and `ASSET_CSS` stay `null`.
+- **The web edition stops carrying the copies.** `bundle.mjs --external-art`
+  no longer copies `map-detail/` or `music/` beside the HTML, and removes a
+  copy an earlier build left there (under `build/` or `dist/` only, as for the
+  retired `assets/` tree), because a copy would quietly serve a tile or a
+  track the index misses. Only a folder strictly inside `build/` or `dist/`
+  counts (`strictlyUnderBuild` in `tools/asset-pack.mjs`): `--out build` or
+  `--out dist` themselves keep the `music/` and `map-detail/` the single files
+  read. The summary counts the tiles and score files the
+  common index lists instead.
+- **`verify-external` E**: the common index lists `music/manifest.json`, every
+  track that manifest (read from its object) names, and every tile the map can
+  ask for (each `MAP_ART` source, each level, the whole painting, through the
+  page's own `tileId()` and `visibleTiles()`); and no `map-detail/` or `music/`
+  folder sits beside the HTML. Five new plants (21 in all); the three that
+  drop an id from the common index re-pin it, and must be caught by E's own
+  finding, not by C's.
+- **`external-play`** runs Chromium with autoplay allowed (output muted, as
+  every browser tool is), so the title's track is fetched without a gesture.
+  It requires: the map screen's detail layer to reach `ready` with each tile a
+  common `map-detail/` object that decodes; `music/manifest.json` and at least
+  one track requested as common objects, each track decoding with
+  `decodeAudioData`; and no request for a bare `music/` or `map-detail/` path.
+  With the audio context running, every SFX cue also probes
+  `assets/sfx/<id>.ogg` (the filename convention; no build ships one), so a
+  404 on that bare path is filtered by name, as `/api/lan/` already was, and
+  only for an id that is an `SFX_RECIPES` key with no `SFX_MANIFEST` entry.
+  Against the 3b runtime with this step's build (no copies) it is red on the
+  bare requests, the missing manifest and the missing track.
 
 ### Step 8c as built
 

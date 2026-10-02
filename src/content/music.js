@@ -22,10 +22,14 @@
 import { MUSIC_SILENCE_WORD } from '../model/schemas.js';
 
 // THE SHIPPED SCORE. The repo's music/ folder (music/manifest.json, filled from
-// music/PROMPTS.md) is served beside every hosted and preview build. With the
-// Custom music folder setting blank, a page served over http(s) reads it from
-// here; a context it leaves empty, a missing file or a file:// page (browsers
-// block the fetch) keeps the procedural beds below.
+// music/PROMPTS.md). With the Custom music folder setting blank, a page served
+// over http(s) reads it; a context it leaves empty, a missing file or a
+// file:// page (browsers block the fetch) keeps the procedural beds below.
+// This folder is also the ID PREFIX of the score's assets (step 3c,
+// docs/EXTERNAL-ASSETS-PLAN.md §3.9): `music/manifest.json` and
+// `music/<context>/<track>.mp3` resolve through assetUrl(), so the web edition
+// reads them from the common pack's objects, while a single file served over
+// http(s) and the source tree read the music/ folder beside the page.
 export const SHIPPED_MUSIC_FOLDER = 'music';
 
 // A real build can point these at files; missing/failed loads fall back to synth.
