@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import {
-  CRITICAL_SET, CRITICAL_WAIT_MS, bootArtLine, bootArtPhase, warmCriticalSet, startBootArt, bootArtRetried, resetBootArt,
+  CRITICAL_SET, CRITICAL_WAIT_MS, RETRY_WAIT_MS, criticalIds, bootArtLine, bootArtPhase, warmCriticalSet, startBootArt, bootArtRetried, resetBootArt,
 } from '../src/ui/bootArt.js';
 import { loadBuiltInPacks, resetBuiltInArt, builtInArtStatus, BOOT_WAIT_MS } from '../src/ui/assetPacks.js';
 import { retryBuiltInArt, retryOffered, tierStatus, onTierArrived, resetArtTier, applyArtTier } from '../src/ui/artTier.js';
@@ -67,26 +67,40 @@ const tierOf = () => (assetUrl(ID).includes(`/${C.slice(0, 2)}/`) ? 'high' : ass
 
 test('the critical set is content/config’s: the title backdrops and the faces, each an id the manifest ships', () => {
   const config = JSON.parse(readFileSync(new URL('../content/config/ui/presentation/startupGate.json', import.meta.url), 'utf8'));
-  assert.deepEqual(CRITICAL_SET, config.components.artLoading.critical, 'read from content/config, not typed in code');
-  assert.equal(new Set(CRITICAL_SET).size, CRITICAL_SET.length, 'no id twice');
+  const norm = (e) => (typeof e === 'string' ? { id: e, orientation: 'any' } : { id: e.id, orientation: e.orientation || 'any' });
+  assert.deepEqual(CRITICAL_SET.map((e) => ({ ...e })), config.components.artLoading.critical.map(norm), 'read from content/config, not typed in code');
+  const ids = CRITICAL_SET.map((e) => e.id);
+  assert.equal(new Set(ids).size, ids.length, 'no id twice');
+  for (const e of CRITICAL_SET) assert.ok(['any', 'portrait', 'landscape'].includes(e.orientation), e.id);
   assert.equal(CRITICAL_WAIT_MS, config.behavior.artLoading.criticalWaitMs);
   const manifest = JSON.parse(readFileSync(new URL('../art-manifest.json', import.meta.url), 'utf8')).assets;
-  const css = readdirSync(new URL('../styles/', import.meta.url)).filter((f) => f.endsWith('.css'))
-    .map((f) => readFileSync(new URL(`../styles/${f}`, import.meta.url), 'utf8')).join('\n');
-  const fonts = CRITICAL_SET.filter((id) => id.startsWith('assets/fonts/'));
-  const backdrops = CRITICAL_SET.filter((id) => id.startsWith('assets/bg/'));
-  assert.equal(fonts.length + backdrops.length, CRITICAL_SET.length, 'only faces and backdrops');
+  const kit = readFileSync(new URL('../styles/kit.css', import.meta.url), 'utf8');
+  const fonts = ids.filter((id) => id.startsWith('assets/fonts/'));
+  const backdrops = CRITICAL_SET.filter((e) => e.id.startsWith('assets/bg/'));
+  assert.equal(fonts.length + backdrops.length, ids.length, 'only faces and backdrops');
   const allFonts = Object.keys(manifest).filter((id) => id.startsWith('assets/fonts/'));
   assert.deepEqual([...fonts].sort(), [...allFonts].sort(), 'every face the common pack carries');
   for (const id of fonts) assert.ok(manifest[id].common, `${id} is a common record`);
-  for (const id of backdrops) {
+  // Each backdrop is one the gate or the title's hall draws, in the orientation
+  // it is tagged for: the portrait rule is kit.css's `@media (orientation: portrait)`.
+  const portrait = kit.slice(kit.indexOf('@media (orientation: portrait) {\n  .tower-door-frame'));
+  const portraitBlock = portrait.slice(0, portrait.indexOf('\n}\n'));
+  for (const { id, orientation } of backdrops) {
     assert.ok(manifest[id]?.light && manifest[id]?.high, `${id} ships in both art tiers`);
-    assert.ok(css.includes(`url('../${id}')`), `${id} is a backdrop the stylesheets name`);
+    const named = `url('../${id}')`;
+    assert.ok(kit.includes(named), `${id} is a backdrop the stylesheet names`);
+    if (orientation === 'portrait') assert.ok(portraitBlock.includes(named), `${id} is drawn only in portrait`);
+    if (orientation === 'landscape') assert.ok(portraitBlock.includes('tower-door-frame') && !portraitBlock.includes(named), `${id} is replaced in portrait`);
   }
-  // The title's own backdrops: the gate's and the hall's, phone and desktop.
-  for (const name of ['title-city-tower', 'river-citadel-unlit', 'river-citadel-lit', 'tower-city-background-unlit', 'tower-entrance-hall', 'tower-entrance-hall-phone']) {
-    assert.ok(backdrops.includes(`assets/bg/${name}.webp`), name);
-  }
+  // title-city-tower is not in it: the gate's later `background: #100e0b` covers it, so nothing shows it.
+  assert.ok(!ids.includes('assets/bg/title-city-tower.webp'));
+  // One orientation warms 19: the 15 faces, three backdrops both use, and its own hall.
+  assert.equal(criticalIds('portrait').length, 19);
+  assert.equal(criticalIds('landscape').length, 19);
+  assert.ok(criticalIds('portrait').includes('assets/bg/tower-entrance-hall-phone.webp') && !criticalIds('portrait').includes('assets/bg/tower-entrance-hall.webp'));
+  assert.ok(criticalIds('landscape').includes('assets/bg/tower-entrance-hall.webp') && !criticalIds('landscape').includes('assets/bg/tower-entrance-hall-phone.webp'));
+  assert.ok(RETRY_WAIT_MS > BOOT_WAIT_MS, 'a Retry is not held to the boot deadline');
+  assert.equal(RETRY_WAIT_MS, config.behavior.artLoading.retryWaitMs);
 });
 
 test('the gate’s line: none when nothing is pinned, then loading, counting, nothing, or the failure', () => {
@@ -269,7 +283,8 @@ test('the title’s notice: three states, a polite message, and Retry disabled w
   assert.match(html, /data-component="art-load-notice-retry"[^>]*>Retry<\/button>/);
   assert.doesNotMatch(html, /disabled/);
   const busy = artLoadNoticeHtml(artLoadNoticeModel({ state: 'retrying' }));
-  assert.match(busy, /disabled aria-busy="true"/);
+  assert.match(busy, /aria-disabled="true" aria-busy="true"/, 'aria-disabled, so the focus on it is kept');
+  assert.doesNotMatch(busy, / disabled/);
   assert.match(busy, /Loading art…/);
   assert.match(artLoadNoticeHtml(artLoadNoticeModel({ state: 'again' })), /still could not be loaded/);
   assert.equal(artLoadNoticeModel({ state: 'nonsense' }).variant, 'failed');
@@ -287,4 +302,93 @@ test('main.js draws the gate before the load settles and holds the title until i
   assert.match(main, /if \(gateFirst\) \{\n    \/\/ A pack build's cold boot draws the gate at once \(step 5\): the profile\n    \/\/ keeps loading behind it, and the title waits for it as well as the art\.\n    holdTitleFor\(profileSettled\);\n    showTitle\(\);\n  \}/);
   assert.match(main, /const go = \(\) => \(titleHolds\.length \? Promise\.all\(titleHolds\)\.then\(fn\) : fn\(\)\);/);
   assert.match(main, /artNotice: drawArtNotice,/, 'the title carries the notice');
+});
+
+test('a Retry is not held to the boot deadline: an index slower than BOOT_WAIT_MS loads on Retry', async () => {
+  fresh();
+  const tree = packTree('light');
+  const settings = { [ART_QUALITY_KEY]: ART_AUTO };
+  const opts = { pin: tree.pin, inlineMap: {}, load: { ...tree.load }, env: { doc: wide, nav: desktop } };
+  assert.equal(await applyArtTier(settings, opts), null);
+  // A slow link: every index answers only after BOOT_WAIT_MS.
+  const slow = tree.fetchImpl;
+  const fetchImpl = (url, o) => new Promise((done, fail) => {
+    const t = setTimeout(() => slow(url, o).then(done, fail), BOOT_WAIT_MS + 300);
+    o?.signal?.addEventListener?.('abort', () => { clearTimeout(t); fail(new Error('aborted')); });
+  });
+  const boot = await loadBuiltInPacks({ pin: tree.pin, ...tree.load, fetchImpl, tier: 'light' });
+  assert.equal(boot.state, 'failed', 'the boot load gives up at BOOT_WAIT_MS');
+  const r = await retryBuiltInArt(settings, { ...opts, load: { ...tree.load, fetchImpl } });
+  assert.equal(r.state, 'loaded', 'Retry waits RETRY_WAIT_MS, so the same link brings the index');
+  assert.equal(tierOf(), 'light');
+});
+
+test('Settings’ Retry is aria-disabled while it runs and hands focus to the row’s line when it loads', async () => {
+  fresh();
+  const tree = packTree('light');
+  const settings = { [ART_QUALITY_KEY]: ART_AUTO };
+  const opts = { pin: tree.pin, inlineMap: {}, load: { ...tree.load, deadlineMs: 300 }, env: { doc: wide, nav: desktop } };
+  await applyArtTier(settings, opts);
+  tree.blocked.add('all');
+  await loadBuiltInPacks({ pin: tree.pin, ...tree.load, tier: 'light', deadlineMs: 200 });
+  tree.blocked.clear();
+  const attrs = (el) => ({ ...el.a });
+  const element = (id) => ({ id, a: {}, hidden: false, textContent: '',
+    setAttribute(k, v) { this.a[k] = String(v); }, removeAttribute(k) { delete this.a[k]; }, getAttribute(k) { return this.a[k] ?? null; },
+    focus() { doc.activeElement = this; } });
+  const button = element('retry');
+  const line = element('set-artQuality-tier');
+  const doc = { activeElement: button, querySelectorAll: (sel) => (sel === '[data-art-retry]' ? [button] : sel === '[data-art-tier-status]' ? [line] : []),
+    getElementById: (id) => (id === 'set-artQuality-tier' ? line : null) };
+  const saved = globalThis.document;
+  globalThis.document = doc;
+  // ASSET_PACKS is null under test, so the button's "offered" reads false; drive the attributes through a running Retry.
+  try {
+    const run = retryBuiltInArt(settings, opts);
+    await new Promise((r) => setTimeout(r, 0));
+    assert.equal(attrs(button)['aria-disabled'], 'true', 'aria-disabled while it runs');
+    assert.equal(doc.activeElement, button, 'the focus stays on it while it runs');
+    const r = await run;
+    assert.equal(r.state, 'loaded');
+    assert.equal(button.hidden, true);
+    assert.equal(attrs(button)['aria-disabled'], undefined);
+    assert.equal(doc.activeElement, line, 'the focus moves to the live line');
+    assert.equal(attrs(line).tabindex, '-1');
+  } finally {
+    globalThis.document = saved;
+  }
+});
+
+test('a redraw waits until no dialog or title door is open over the screen', async () => {
+  const { whenNoOverlay, overlayOpen, OVERLAY_SELECTOR } = await import('../src/ui/whenNoOverlay.js');
+  assert.match(OVERLAY_SELECTOR, /\[aria-modal="true"\]/);
+  assert.match(OVERLAY_SELECTOR, /\.title-modal-veil/);
+  let open = true;
+  const doc = { body: {}, querySelector: () => (open ? {} : null) };
+  let observer = null;
+  class Observer { constructor(fn) { this.fn = fn; observer = this; } observe() { this.on = true; } disconnect() { this.on = false; } }
+  let ran = 0;
+  whenNoOverlay(() => { ran += 1; }, { doc, Observer });
+  assert.equal(ran, 0, 'Settings is open: not yet');
+  observer.fn();
+  assert.equal(ran, 0, 'a change while it is still open: not yet');
+  open = false;
+  observer.fn();
+  assert.equal(ran, 1, 'run once it has closed');
+  assert.equal(observer.on, false, 'and the watch ends');
+  observer.fn();
+  assert.equal(ran, 1, 'only once');
+  assert.equal(overlayOpen(doc), false);
+  whenNoOverlay(() => { ran += 1; }, { doc, Observer });
+  assert.equal(ran, 2, 'nothing open: at once');
+});
+
+test('main.js: a superseded Retry is not a failure, and the title redraw waits for dialogs and keeps focus', () => {
+  const main = readFileSync(new URL('../src/main.js', import.meta.url), 'utf8');
+  assert.match(main, /artNoticeState = result \? 'again' : before;/, 'null (superseded) restores what the notice said');
+  assert.match(main, /cancelTitleRedraw = whenNoOverlay\(\(\) => \{/);
+  assert.match(main, /if \(action\) app\.querySelector\(`\.title-screen \[data-title-action="\$\{action\}"\]`\)\?\.focus/);
+  const notice = readFileSync(new URL('../src/ui/components/artLoadNotice.js', import.meta.url), 'utf8');
+  assert.match(notice, /insertAdjacentHTML\('afterbegin'/, 'first in the title’s reading and tab order');
+  assert.match(notice, /else text\.textContent = message;/, 'a state change rewrites the one live node in place');
 });

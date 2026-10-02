@@ -36,6 +36,7 @@ import {
 } from './assetPacks.js';
 import { ASSET_MAP } from './assetmap.js';
 import { tFull } from './strings.js';
+import { RETRY_WAIT_MS } from './bootArt.js';
 
 /** At or under this many GB (navigator.deviceMemory), Auto picks light. */
 export const LOW_MEMORY_GB = 2;
@@ -132,16 +133,25 @@ export function retryOffered({ pin = ASSET_PACKS, inlineMap = ASSET_MAP } = {}) 
   return tiersAvailable(pin, inlineMap) && (retrying || (!switching && builtInArtStatus().state === 'failed'));
 }
 
-function showTierStatus(settings) {
+function showTierStatus(settings, where = {}) {
   const doc = globalThis.document;
   if (!doc || typeof doc.querySelectorAll !== 'function') return;
-  const text = tierStatus(settings);
+  const text = tierStatus(settings, where);
   for (const el of doc.querySelectorAll('[data-art-tier-status]')) el.textContent = text;
-  const offered = retryOffered();
+  const offered = retryOffered(where);
   for (const el of doc.querySelectorAll('[data-art-retry]')) {
+    const focused = doc.activeElement === el;
     el.hidden = !offered;
-    el.disabled = retrying;
-    if (retrying) el.setAttribute('aria-busy', 'true'); else el.removeAttribute('aria-busy');
+    // aria-disabled, not disabled, while it runs: a disabled control drops the
+    // focus the player put on it (the click handler ignores it meanwhile).
+    if (retrying) { el.setAttribute('aria-disabled', 'true'); el.setAttribute('aria-busy', 'true'); }
+    else { el.removeAttribute('aria-disabled'); el.removeAttribute('aria-busy'); }
+    // A Retry that loaded hides its button: the focus goes to the row's live
+    // line, which now says which art is on screen.
+    if (focused && !offered) {
+      const line = doc.getElementById?.('set-artQuality-tier');
+      if (line) { line.setAttribute('tabindex', '-1'); try { line.focus({ preventScroll: true }); } catch { /* detached */ } }
+    }
   }
 }
 
@@ -228,7 +238,8 @@ export function applyArtTier(settings, opts = {}) {
  */
 export function retryBuiltInArt(settings = lastSettings, opts = {}) {
   const pin = opts.pin ?? ASSET_PACKS;
-  if (!packsPinned(pin, opts.inlineMap ?? ASSET_MAP)) return Promise.resolve(null);
+  const where = { pin, inlineMap: opts.inlineMap ?? ASSET_MAP };
+  if (!packsPinned(pin, where.inlineMap)) return Promise.resolve(null);
   if (settings) lastSettings = settings;
   lastChoice = artQualityChoice(lastSettings);
   const mine = ++round;
@@ -237,10 +248,12 @@ export function retryBuiltInArt(settings = lastSettings, opts = {}) {
     const want = requestedTier(lastSettings, { defaultTier: pin.tier, ...(opts.env || {}) });
     switching = true;
     retrying = true;
-    showTierStatus(lastSettings);
+    showTierStatus(lastSettings, where);
     try {
+      // Its own deadline (RETRY_WAIT_MS, content/config), not the boot's: the
+      // title stays usable meanwhile, and a slow link needs the time.
       const result = await loadBuiltInPacks({
-        ...opts.load, pin, tier: want, keepOnFail: true, stillWanted: () => mine === round,
+        deadlineMs: RETRY_WAIT_MS, ...opts.load, pin, tier: want, keepOnFail: true, stillWanted: () => mine === round,
         onSource: (map) => { if (onArrived) try { onArrived(map); } catch { /* a listener must not fail the retry */ } },
       });
       if (result.superseded) return null;
@@ -252,7 +265,7 @@ export function retryBuiltInArt(settings = lastSettings, opts = {}) {
     } finally {
       switching = false;
       retrying = false;
-      showTierStatus(lastSettings);
+      showTierStatus(lastSettings, where);
     }
   });
   return queue;

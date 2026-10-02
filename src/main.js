@@ -7,6 +7,7 @@ import { mountArtLoadNotice } from './ui/components/artLoadNotice.js';
 import { artLoadNoticeModel } from './ui/models/ArtLoadNoticeModel.js';
 import { mountBootArtStatus } from './ui/components/bootArtStatus.js';
 import { bootArtStatusModel } from './ui/models/BootArtStatusModel.js';
+import { whenNoOverlay } from './ui/whenNoOverlay.js';
 import { resolveLocationPresentation } from './model/locationPresentation.js';
 import { LEGACY_DUNGEONS, dungeonForEncounter, dungeonDefinition, dungeonNode, dungeonNodeAction, beginDungeon, travelDungeon, dungeonChoices, chooseDungeon, continueDungeon, resolveDungeonNode } from './model/legacyDungeon.js';
 import { mountLegacyDungeon } from './ui/screens/legacyDungeon.js';
@@ -1514,28 +1515,42 @@ function refreshArtNotice() {
   if (root) drawArtNotice(root);
 }
 async function retryArtFromTitle() {
-  if (artNoticeState === 'retrying') return;
+  if (artNoticeState === 'retrying' || !artNoticeState) return;
+  const before = artNoticeState;
   artNoticeState = 'retrying';
   refreshArtNotice();
   const result = await retryBuiltInArt(activeSettings);
-  if (result?.state === 'loaded') return; // onTierArrived has cleared the notice and redrawn
-  // Failed again, or replaced by a switch the player made meanwhile.
-  if (builtInArtStatus().state === 'loaded') return;
-  artNoticeState = 'again';
-  bootArtRetried(result);
+  if (result?.state === 'loaded' || builtInArtStatus().state === 'loaded') return; // onTierArrived has cleared the notice
+  if (artNoticeState !== 'retrying') return;
+  // null is a Retry the player replaced (a tier switch): not a failure, so the
+  // notice goes back to what it said; the switch's own outcome decides.
+  artNoticeState = result ? 'again' : before;
+  if (result) bootArtRetried(result);
   refreshArtNotice();
 }
 // A load arrived after the boot load failed (a Retry from the title or from
 // Settings → Art quality, or a tier switch): the notice goes, and the title,
-// when it is on screen, is drawn again on the new art.
+// when it is on screen, is drawn again on the new art — once nothing is open
+// over it (Settings, the Load/New door), so the control a dialog returns focus
+// to is not replaced under it; the focused title control keeps the focus.
+let cancelTitleRedraw = () => {};
 function artArrivedAfterFailure() {
   if (!artNoticeState) return;
   artNoticeState = null;
   bootArtRetried(builtInArtStatus());
-  const root = app.querySelector('.title-screen');
-  if (!root) return;
-  const focusedNotice = !!root.querySelector('.art-load-notice')?.contains(document.activeElement);
-  showTitle({ skipStartup: true, focusDefault: focusedNotice, focusCursor: focusedNotice });
+  // Read before the notice goes: a Retry pressed on it hands focus to the menu.
+  const fromNotice = !!document.activeElement?.closest?.('.art-load-notice');
+  refreshArtNotice();
+  cancelTitleRedraw();
+  cancelTitleRedraw = whenNoOverlay(() => {
+    const root = app.querySelector('.title-screen');
+    if (!root) return;
+    const active = document.activeElement;
+    const action = root.contains(active) ? active.closest?.('[data-title-action]')?.dataset.titleAction : null;
+    const onNotice = fromNotice && !action;
+    showTitle({ skipStartup: true, focusDefault: onNotice, focusCursor: onNotice });
+    if (action) app.querySelector(`.title-screen [data-title-action="${action}"]`)?.focus({ preventScroll: true });
+  });
 }
 
 // Returning from a climb is a new arrival at the main menu, so it lands on the

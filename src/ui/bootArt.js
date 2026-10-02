@@ -13,7 +13,7 @@
 // THE LINE. One status line beside the gate (its own component,
 // src/ui/components/bootArtStatus.js, never one of the gate's parts: SPEC §7.1)
 // says where the load is: "Loading art…"
-// while the indexes load, "Loading art · 12 of 21" while the set warms, nothing
+// while the indexes load, "Loading art · 12 of 19" while the set warms, nothing
 // once it is done, and a sentence when the load failed (the title then offers
 // Retry). The words are rows of content/source/uiStrings.csv. The line is a
 // polite live region kept aria-busy while it counts, so a screen reader hears
@@ -27,10 +27,34 @@ import { packsPinned } from './assetPacks.js';
 import { t, tFull } from './strings.js';
 
 const LOADING = uiConfig.presentation.startupGate;
-/** The ids the gate and the title need first, in content/config's order. */
-export const CRITICAL_SET = Object.freeze([...(LOADING.components.artLoading?.critical || [])]);
+/**
+ * The files the gate and the title need first, in content/config's order:
+ * { id, orientation } with orientation 'any', 'portrait' or 'landscape'. A
+ * backdrop the stylesheets swap by orientation (the entrance hall and its
+ * phone cut, kit.css `@media (orientation: portrait)`) is tagged, so a screen
+ * warms only the one its CSS will ask for.
+ */
+export const CRITICAL_SET = Object.freeze((LOADING.components.artLoading?.critical || []).map((entry) => Object.freeze(
+  typeof entry === 'string' ? { id: entry, orientation: 'any' } : { id: String(entry.id), orientation: entry.orientation || 'any' },
+)));
 /** How long the line may count before it is cleared; the files keep loading. */
 export const CRITICAL_WAIT_MS = Number(LOADING.behavior?.artLoading?.criticalWaitMs) || 20000;
+/**
+ * A Retry's deadline (src/ui/artTier.js retryBuiltInArt). Nothing waits on a
+ * Retry, so it is not the boot's BOOT_WAIT_MS: a link too slow to bring the art
+ * index in 8 s must still be able to bring it on a Retry (review of #1471).
+ */
+export const RETRY_WAIT_MS = Number(LOADING.behavior?.artLoading?.retryWaitMs) || 60000;
+
+/** This screen's orientation, as the stylesheets' media queries read it. */
+export function screenOrientation(win = globalThis) {
+  try { return win.matchMedia?.('(orientation: portrait)')?.matches ? 'portrait' : 'landscape'; } catch { return 'landscape'; }
+}
+
+/** The critical ids for one orientation: the untagged ones and those tagged for it. */
+export function criticalIds(orientation = screenOrientation(), set = CRITICAL_SET) {
+  return set.filter((e) => e.orientation === 'any' || e.orientation === orientation).map((e) => e.id);
+}
 
 /** The attribute every element that shows the line carries. */
 export const BOOT_ART_ATTR = 'data-boot-art-status';
@@ -104,7 +128,7 @@ async function loadFontDefault(url) {
  * url(). Resolves when every file has settled, or after `waitMs`.
  */
 export function warmCriticalSet({
-  ids = CRITICAL_SET, map, protocol = globalThis.location?.protocol,
+  ids = criticalIds(), map, protocol = globalThis.location?.protocol,
   loadImage = loadImageDefault, loadFont = loadFontDefault, onProgress = () => {}, waitMs = CRITICAL_WAIT_MS,
 } = {}) {
   const items = ids.filter((id) => map && typeof map.get === 'function' && typeof map.get(id) === 'string');

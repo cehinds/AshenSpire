@@ -8,12 +8,17 @@
     },
     "artLoading": {
       "critical": [
-        "assets/bg/title-city-tower.webp",
         "assets/bg/river-citadel-unlit.webp",
         "assets/bg/river-citadel-lit.webp",
         "assets/bg/tower-city-background-unlit.webp",
-        "assets/bg/tower-entrance-hall.webp",
-        "assets/bg/tower-entrance-hall-phone.webp",
+        {
+          "id": "assets/bg/tower-entrance-hall.webp",
+          "orientation": "landscape"
+        },
+        {
+          "id": "assets/bg/tower-entrance-hall-phone.webp",
+          "orientation": "portrait"
+        },
         "assets/fonts/cinzel-400-normal.woff2",
         "assets/fonts/cormorant-garamond-500-italic.woff2",
         "assets/fonts/cormorant-garamond-500-normal.woff2",
@@ -71,7 +76,8 @@
   },
   "behavior": {
     "artLoading": {
-      "criticalWaitMs": 20000
+      "criticalWaitMs": 20000,
+      "retryWaitMs": 60000
     }
   }
 }

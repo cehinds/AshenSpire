@@ -34,7 +34,7 @@
 // source content/config/ui/presentation/poseAnimator.json d24e65c7e8f3721d
 // source content/config/ui/presentation/presentationSequence.json bc96d4294f49f6cb
 // source content/config/ui/presentation/reaverAttack.json 68d9c9659cf191a2
-// source content/config/ui/presentation/startupGate.json edddb4a3d80f78c2
+// source content/config/ui/presentation/startupGate.json a9fb421fb8ef4096
 // source content/config/ui/presentation/tooltipHelp.json f3968b1f1adea5e0
 // source content/config/ui/presentation/tooltipPlacement.json 2718119752f3c76b
 // source content/config/ui/presentation/uiContent.json 118475388559b5f2
@@ -47429,12 +47429,17 @@ export const uiConfig = deepFreeze({
         },
         "artLoading": {
           "critical": [
-            "assets/bg/title-city-tower.webp",
             "assets/bg/river-citadel-unlit.webp",
             "assets/bg/river-citadel-lit.webp",
             "assets/bg/tower-city-background-unlit.webp",
-            "assets/bg/tower-entrance-hall.webp",
-            "assets/bg/tower-entrance-hall-phone.webp",
+            {
+              "id": "assets/bg/tower-entrance-hall.webp",
+              "orientation": "landscape"
+            },
+            {
+              "id": "assets/bg/tower-entrance-hall-phone.webp",
+              "orientation": "portrait"
+            },
             "assets/fonts/cinzel-400-normal.woff2",
             "assets/fonts/cormorant-garamond-500-italic.woff2",
             "assets/fonts/cormorant-garamond-500-normal.woff2",
@@ -47492,7 +47497,8 @@ export const uiConfig = deepFreeze({
       },
       "behavior": {
         "artLoading": {
-          "criticalWaitMs": 20000
+          "criticalWaitMs": 20000,
+          "retryWaitMs": 60000
         }
       }
     },

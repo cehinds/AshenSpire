@@ -3803,7 +3803,8 @@ export function renderSettings(container, { settings, onChange, grouped = true, 
     container.addEventListener('click', (event) => {
       // Retry (step 5): load the built-in art again, through the same queue as
       // a tier switch; the row's line says how it went.
-      if (event.target.closest?.('[data-art-retry]')) { retryBuiltInArt(container._artQualitySettings); return; }
+      const retry = event.target.closest?.('[data-art-retry]');
+      if (retry) { if (retry.getAttribute('aria-disabled') !== 'true') retryBuiltInArt(container._artQualitySettings); return; }
       if (!event.target.closest?.('[data-art-folder]')) return;
       pickHighResFolder(container._artQualitySettings);
     });

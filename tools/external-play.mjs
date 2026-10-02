@@ -331,7 +331,8 @@ async function blockedIndexPass() {
   check(/^Loading art/.test(waiting.line), `after the press the line says "${waiting.line}", not "Loading art…"`);
   const failedAt = await poll(`document.documentElement.dataset.builtInArt === 'failed'`, 12000);
   check(failedAt >= 0, 'the held load did not fail by the boot deadline');
-  const titleAt = await poll(`!!document.querySelector('.title-screen [data-component="art-load-notice"] [data-component="art-load-notice-retry"]')`, 6000);
+  // The message is written into the live node just after it appears (so it is announced).
+  const titleAt = await poll(`!!document.querySelector('.title-screen [data-component="art-load-notice"] [data-component="art-load-notice-retry"]') && !!document.querySelector('.art-load-notice-text')?.textContent`, 6000);
   check(titleAt >= 0, 'after the load failed the title did not show the notice with Retry');
   const notice = await ev(`({ text: document.querySelector('.art-load-notice-text')?.textContent || '', live: document.querySelector('.art-load-notice-text')?.getAttribute('aria-live') || '',
     css: !!document.querySelector('style[data-asset-css]'), objects: [...document.images].filter((i) => (i.getAttribute('src') || '').includes('objects/')).length })`);

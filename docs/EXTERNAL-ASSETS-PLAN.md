@@ -1058,9 +1058,15 @@ the step 3a boot wait (2026-10-02):
   Reduced motion is on (`.reduced-motion` or `prefers-reduced-motion`), where
   it is plain text.
 - **The critical set** is `presentation.startupGate.components.artLoading.critical`
-  in `content/config` (the 15 faces and the six title backdrops: 21 ids), and
-  `behavior.artLoading.criticalWaitMs` (20 s) caps how long the line counts.
-  Each id the published map lists is warmed once: an image is loaded, a face
+  in `content/config`: the 15 faces and the five backdrops the gate and the
+  title's hall draw. An entry may carry `orientation` (`portrait` or
+  `landscape`): the entrance hall and its phone cut are swapped by kit.css's
+  `@media (orientation: portrait)`, so a screen warms only the one its CSS
+  asks for, and "n of N" counts only those (19 either way; review of #1471).
+  `title-city-tower` is not in it: the gate's later `background: #100e0b`
+  covers it, so nothing shows it. `behavior.artLoading.criticalWaitMs` (20 s)
+  caps how long the line counts. Each id the published map lists is warmed
+  once: an image is loaded, a face
   over http(s) is fetched by the same url its `@font-face` names; under
   `file://` the faces are already `FontFace` objects from the sidecar and
   count at once. Nothing waits for it.
@@ -1077,9 +1083,17 @@ the step 3a boot wait (2026-10-02):
   be reached by keyboard or controller. It is a non-blocking panel inside the
   title (in `#app`, so the controller cursor reaches it), redrawn with each
   title render through `mountTitle`'s `artNotice`; its message is a polite
-  live region; Retry is disabled while it runs, and a Retry that fails again
-  keeps focus on it. Settings → Art quality offers the same Retry beside its
-  line when the load has failed (the line no longer says to reload the page).
+  live region, ONE node per title root whose text is rewritten in place (a
+  state not yet announced is written just after the node appears, so it is
+  announced); the notice is the title root's FIRST child, so reading, Tab and
+  cursor order meet it before the menu, as it is drawn at the top. Retry is
+  `aria-disabled` while it runs (a disabled control would drop the focus on
+  it), and a Retry that fails again keeps focus on it. Settings → Art quality
+  offers the same Retry beside its line when the load has failed (the line no
+  longer says to reload the page), also `aria-disabled` while it runs; when it
+  loads, its button hides and the focus moves to the row's live line
+  (`tabindex="-1"`). A Retry the player replaces with a tier switch is not a
+  failure: the notice goes back to what it said (review of #1471).
   The debug failure banner stays quiet: a failed load only warns.
 - **Retry** (`retryBuiltInArt` in `src/ui/artTier.js`) loads the tier the
   setting asks for through the same queue as a tier switch, so the 8c rules
@@ -1089,18 +1103,29 @@ the step 3a boot wait (2026-10-02):
   screen are re-pointed, the shipped score is applied again (3c's
   `musicHold().sourceArrived()`), `ART_SOURCE_EVENT` makes the map tiles ask
   again, and the title, when it is on screen, is drawn again on the new art
-  (`artArrivedAfterFailure`). Under `file://` it reads the `.js` twins (step
+  (`artArrivedAfterFailure`) — once nothing is open over it (Settings, the
+  Load/New door: `whenNoOverlay`), so the control a dialog returns focus to is
+  not replaced under it, and the focused title control keeps the focus.
+  **A Retry has its own deadline**, `behavior.artLoading.retryWaitMs` (60 s,
+  `RETRY_WAIT_MS`), not the boot's 8 s: nothing waits on a Retry, and a link
+  too slow to bring the ~790 KB light index in 8 s failed every Retry the same
+  way before (review of #1471; `tests/boot-art.test.mjs` loads an index slower
+  than `BOOT_WAIT_MS` on Retry). Under `file://` it reads the `.js` twins (step
   4). While it runs the loader's state is `loading`, so the offline panel
   (6b) says the page is still loading, and offers the keep once it has loaded.
 - **The common pack alone still does not make a source** (the question 3c
   left here). When every art index fails, a verified common index is not
-  published on its own: the failure stays one state with one Retry; a half
-  state (fonts, score and tiles but no art) would need every reader of the
-  loader's status (the tier row, the offline keep, `data-built-in-art`, the
-  gates) to learn it; and the common index comes from the same host and pin
-  as the art indexes, so a load where only the art fails is a broken art
-  index, which the Retry or a fixed build answers. A Retry that loads brings
-  the score and the tiles back with the art.
+  published on its own. The likeliest way to get there is a slow link: the
+  19 KB common index arrives inside the boot's 8 s and the ~790 KB light index
+  does not. That case is now answered by the Retry, which has 60 s and so
+  brings the art index, and with it the score and the tiles, on the same
+  link; publishing common alone would give that player fonts, music and tiles
+  over placeholders for a few seconds more, at the cost of a half state
+  (fonts, score and tiles but no art) that every reader of the loader's status
+  (the tier row, the offline keep, `data-built-in-art`, the gates, the Retry
+  offer) would have to learn, and a second "loaded" that is not. The other way
+  there, an art index that fails its pin, is a broken build that no fallback
+  repairs. So the failure stays one state with one Retry.
 - **No per-file high → light fallback.** The light index is not loaded beside
   a high one (a second ~700 KB index on every high boot), so a high object that
   fails falls to its element's own placeholder recipe, as any missing file
@@ -1117,6 +1142,11 @@ the step 3a boot wait (2026-10-02):
   #1471). In a pack build the gate is now drawn at once and the title waits
   for the profile as well as the art (`holdTitleFor`); elsewhere it is as
   before.
+- **Follow-up (not in this step):** run `tools/startup-gate.mjs` against
+  `build/web` with the indexes held, so the gate's focus and first-press
+  checks cover the wait between a press and the title (today it serves the
+  source tree, which pins no packs; review of #1471). Whether SPEC §7.1 should
+  bound or describe that wait is on the #1440 question list.
 - **`external-play --block-index`** (http only; Chromium cannot intercept a
   `file://` twin): every `packs/` request is held on the cold boot, and the
   gate must be drawn before the load settles with its line saying "Loading
