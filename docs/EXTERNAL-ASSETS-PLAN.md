@@ -26,8 +26,8 @@ from `content/config`, the title's notice with Retry and Settings' Retry,
 `external-play --block-index`; see [Step 5 as built](#step-5-as-built));
 **step 7 built** (2026-10-02: the in-game folder copy, a zip the game
 assembles beside the light single-file download, and `offline-play-qa --zip`;
-see [Step 7 as built](#step-7-as-built)); **step 8a done (#1440)** (2026-10-02: the SPEC and FINISH wording, which the
-owner reviews in that PR); the rest is plan (2026-09-27). The owner answered its
+see [Step 7 as built](#step-7-as-built)); **step 8a drafted (#1440)** (2026-10-02: the SPEC and FINISH wording,
+**awaiting owner approval** in that PR; step 8e waits on it); the rest is plan (2026-09-27). The owner answered its
 questions the same day; see [Owner answers (2026-09-27)](#owner-answers-2026-09-27).
 It follows
 [ART-REPO-PLAN.md](./ART-REPO-PLAN.md): it adds rows to that plan and
