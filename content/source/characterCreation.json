@@ -7,6 +7,12 @@
     "equipmentChoiceView": "grid",
     "equipmentAutoAdvance": false
   },
+  "quickStart": {
+    "classId": "reaver",
+    "keepsakeId": "none",
+    "attributeMode": "lean",
+    "skipOpening": true
+  },
   "equipmentSections": [
     { "id": "armour", "label": "STARTING ARMOUR", "kind": "armour" },
     { "id": "rightHand", "label": "MAIN HAND", "kind": "hand", "slot": "rightHand" },

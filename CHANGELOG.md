@@ -34,7 +34,8 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
-- **Behind the scenes: a whole run is now played in a real browser** ([#1520](https://github.com/cehinds/AshenSpire/pull/1520), `0.7.1.826`). Nothing you play changes. A new automatic check starts the game from the title, creates a character on a fixed seed, plays a fight, walks the map to the act boss, dies to it, returns to the title and starts a new run, and fails if anything goes wrong on the way or an error is logged.
+- **Behind the scenes: a whole run is now played in a real browser** ([#1520](https://github.com/cehinds/AshenSpire/pull/1520), `0.7.1.827`). Nothing you play changes. A new automatic check starts the game from the title, creates a character on a fixed seed, plays a fight, walks the map to the act boss, dies to it, returns to the title and starts a new run, and fails if anything goes wrong on the way or an error is logged.
+- **Quick start: from the title to your first card in six presses** ([#1518](https://github.com/cehinds/AshenSpire/pull/1518), `0.7.1.826`). The title has a new Quick start. It begins a climb at once with the recommended character (the Reaver, no keepsake, Standard stats, the class's own starting gear), a fresh seed and the first empty save slot, and skips the opening. The opening still plays on your next ordinary climb. If every slot is full it asks before replacing slot 1, as Begin does. A new player now reaches their first card play in 6 inputs, down from 24 through New and character creation. New still lets you choose everything.
 
 ## 2026-10-02
 
