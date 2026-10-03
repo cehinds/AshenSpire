@@ -243,7 +243,7 @@ const PLANTS = [
     // He had to ASK for a switch because the screen never said one existed.
     name: 'S3 the gate stops naming the way out',
     file: 'src/ui/components/upright.js',
-    from: '      <p class="upright-hint">${say.hint}</p>',
+    from: "      flavour(hint(), { class: 'upright-hint' }),",
     to: '',
     what: 'the one line on the gate that names the setting',
     expect: 'the refusal is back to a dead end the player has to guess their way out of',

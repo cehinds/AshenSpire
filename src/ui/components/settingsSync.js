@@ -15,6 +15,7 @@ import {
   fetchProfile, pushProfile, profileWebUrl, listProfiles, profileName, profilePath, normalizeProfileName, DEVICE_KEYS,
 } from '../../model/settingsSync.js';
 import { esc } from './tooltip.js';
+import { t } from '../strings.js';
 
 const DIFF_PREVIEW = 12;
 
@@ -276,7 +277,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
           <span class="as-labelstack"><span class="ls-label">Without GitHub</span>
             <span class="ls-hint set-note">The same file, by hand: copy it, or download it and load it with Load settings.</span></span>
           <span class="r-trail set-sync-acts">
-            <button type="button" class="as-btn" data-sync="copy">Copy JSON</button>
+            <button type="button" class="as-btn" data-sync="copy">${esc(t('settingsSync.copy'))}</button>
             <button type="button" class="as-btn" data-sync="download">Download JSON</button>
           </span>
         </div>
@@ -342,7 +343,7 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
           <ul class="set-sync-diff">${diff.slice(0, DIFF_PREVIEW).map(({ key, from, to }) => `<li><span>${esc(labelOf.get(key) || key)}</span> <s>${esc(show(from))}</s> → <b>${esc(show(to))}</b></li>`).join('')}</ul>
           ${diff.length > DIFF_PREVIEW ? `<p class="set-note">…and ${diff.length - DIFF_PREVIEW} more.</p>` : ''}
           ${parsed.warnings.length ? `<p class="set-note">${esc(parsed.warnings.join(' '))}</p>` : ''}
-          <div class="set-sync-acts"><button type="button" class="as-btn" data-sync="apply">Apply</button><button type="button" class="as-btn" data-sync="cancel">Cancel</button></div>`
+          <div class="set-sync-acts"><button type="button" class="as-btn" data-sync="apply">Apply</button><button type="button" class="as-btn" data-sync="cancel">${esc(t('common.cancel'))}</button></div>`
         : '<p>This device already matches the profile.</p>';
       box.querySelector('[data-sync="apply"]')?.addEventListener('click', () => {
         try {
@@ -445,8 +446,8 @@ export function renderSettingsSync(mount, { settings, onChange, rows, afterApply
     });
     on('copy', async (btn) => {
       const text = profileText(settings, profileKeysNow(), { contentVersion: contentBundle.version });
-      try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied'; } catch { console.log(text); btn.textContent = 'In console'; }
-      setTimeout(() => { if (btn.isConnected) btn.textContent = 'Copy JSON'; }, 1800);
+      try { await navigator.clipboard.writeText(text); btn.textContent = t('settingsSync.copy.done'); } catch { console.log(text); btn.textContent = t('settingsSync.copy.console'); }
+      setTimeout(() => { if (btn.isConnected) btn.textContent = t('settingsSync.copy'); }, 1800);
     });
     on('download', () => saveJsonFile(profileText(settings, profileKeysNow(), { contentVersion: contentBundle.version }), {
       filename: `ashen-spire-settings-${profileName(cfg)}.json`, description: 'Ashen Spire settings profile',

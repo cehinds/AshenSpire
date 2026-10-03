@@ -2,7 +2,7 @@ import { dungeonDefinition, dungeonNeighbors } from '../../model/legacyDungeon.j
 import { mountMap } from './map.js';
 
 // Only authored data and dungeon intent differ; W4b owns every map control.
-export function mountLegacyDungeon(app, { run, registries, meta, hud, onTravel, onInspect, onLeave }) {
+export function mountLegacyDungeon(app, { run, registries, meta, hud, onTravel, onInspect, onLeave, selectedId = null }) {
   const d = dungeonDefinition(run), s = run.legacyDungeon;
   const width = 1536, height = 1024;
   const kinds = { entrance: 'event', observation: 'event', dialogue: 'event', encounter: 'event', fight: 'monster', shrine: 'shrine', cache: 'treasure', gate: 'event', boss: 'boss' };
@@ -17,7 +17,7 @@ export function mountLegacyDungeon(app, { run, registries, meta, hud, onTravel, 
     [nodes[e.b].mapPosition.x, nodes[e.b].mapPosition.y],
   ] }));
   const reachable = [s.current, ...(s.cleared || s.resolved.includes(s.current) ? dungeonNeighbors(run) : [])];
-  mountMap(app, { run, registries, meta, ...hud,
+  mountMap(app, { run, registries, meta, ...hud, selectedId,
     onPick: id => {
       if (s.cleared && id === d.bossNode) onLeave();
       else if (id === s.current) onInspect();

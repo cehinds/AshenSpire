@@ -231,14 +231,14 @@ export function viewLayout(id) {
 const REGIONS = [
   {
     id: 'slots',
-    label: 'Slots',
+    label: t('armoury.tab.slots'),
     sel: '.armoury-body',
     count: (el) => el.querySelectorAll('.equip-slot').length,
     unit: 'slot',
   },
   {
     id: 'inventory',
-    label: 'Inventory',
+    label: t('armoury.tab.inventory'),
     sel: '.armoury-inventory',
     count: (el) => [...el.querySelectorAll('[data-inventory-item]')]
       .reduce((sum, row) => sum + Number(row.dataset.itemCount || 0), 0),
@@ -246,14 +246,14 @@ const REGIONS = [
   },
   {
     id: 'cards',
-    label: 'Cards',
+    label: t('armoury.tab.cards'),
     sel: '.armoury-strip',
     count: (el) => el.querySelectorAll('[data-card-row]').length,
     unit: 'card',
   },
   {
     id: 'stats',
-    label: 'Stats',
+    label: t('armoury.tab.stats'),
     sel: '.armoury-stats-tray',
     count: () => null,
     unit: 'summary',
@@ -1689,7 +1689,7 @@ export function mountEquipment(host, {
       detailCard({ eyebrow: 'Character', name: runClassIdentity(registries, run).name, meta: `Level ${characterLevel(run)}`, attrs: { class: 'armoury-stats-identity' } }),
       group('Combat', [['Strike', valueFor('attack')], [labelFor('technique'), valueFor('technique')], ['Defense', valueFor('guard')]]),
       group('Attributes', projection.attributes.map((attr) => [attr.shortLabel || attr.label, attr.value])),
-      group('Resources', [['Actions', derived('energy')], ['Hand', derived('draw')], ['Resistance', '—']]),
+      group('Resources', [[t('combat.actions'), derived('energy')], ['Hand', derived('draw')], ['Resistance', '—']]),
       group('Run', [['Fights won', runStats.fightsWon || 0], ['Damage dealt', runStats.damageDealt || 0], ['Damage taken', runStats.damageTaken || 0]]),
       detailCard({ eyebrow: 'Relics', muted: true, attrs: { class: 'armoury-stats-group' }, children: relicNames.length
         ? kitLine(relicNames.map((name) => kitItem({ glyph: '◆', name })))

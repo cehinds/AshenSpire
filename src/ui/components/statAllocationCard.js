@@ -17,6 +17,7 @@ import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 import {
   el, eyebrow, titleS, flavour, hairline, statPair, row, button, buttonRow, openModal,
 } from '../kit/index.js';
+import { t } from '../strings.js';
 
 function stepperFor(rowModel, { onDecrease, onIncrease }) {
   const step = (glyph, action, allowed, label) => {
@@ -77,7 +78,7 @@ export function renderStatAllocationCard(host, {
   note = '',
   rows = [],
   modal = false,
-  cancelLabel = 'Cancel',
+  cancelLabel = t('common.cancel'),
   doneLabel = 'Done',
   doneDisabled = false,
   onDecrease = null,

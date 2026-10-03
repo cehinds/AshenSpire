@@ -221,9 +221,9 @@ export function renderCard(registries, ref, opts = {}) {
     // reader would announce a field the player cannot see.
     const body = region('type', `<div class="ctype">${esc(model.type.label)}</div>`)
       + region('effects', `<div class="ctext cd-text">${fillTemplate(def, model.tokens, model.baseTokens)}</div>`);
-    // The information button and the chevron are children of the card that
-    // `bindCardInspection` appended with their own listeners; a repaint must
-    // hand them back rather than take them away.
+    // The information button is a child of the card that
+    // `bindCardInspection` appended with its own listeners; a repaint must
+    // hand it back rather than take it away.
     // WHAT A REPAINT MAY DESTROY IS WHAT IT DREW, AND NOTHING ELSE.
     //
     // This kept a NAMED PAIR — the `i` and the chevron — on the premise that
@@ -399,7 +399,7 @@ export function renderCard(registries, ref, opts = {}) {
  *   data-name      long | verylong  — the name stepped its type down to stay one line
  *   data-tag-rows  0 | 1 | 2        — rows the tags took; text gets the rest
  *   data-tags-hidden n              — tags deferred past the second row (+n)
- *   data-truncated true             — both were full; the face carries the chevron
+ *   data-truncated true             — both were full; Information has the full text
  */
 const pendingFits = new Set();
 let fitFrame = 0;

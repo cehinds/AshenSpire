@@ -791,8 +791,7 @@ input[type="range"] { min-height: var(--tap-floor); }
    its landmarks so a landmark that changes moves the box with it. Below the
    band there is ONE budget of rows that tags and text share: one tag row
    leaves three lines of text, two leave two. Both full is the only case that
-   truncates, and a truncated face carries the chevron (hover: the full text;
-   click: the detail door). */
+   truncates; selecting the face reveals its Information button for full text. */
 :root {
   --card-w: 14rem;
   --card-name-h: 2.6rem;      /* FIXED. two lines' worth of room, one line of type */
@@ -1005,28 +1004,6 @@ input[type="range"] { min-height: var(--tap-floor); }
 [data-identity-part="artwork"][data-artwork-anchor] :is(img, video) { object-fit: contain; }
 [data-identity-part="artwork"][data-artwork-anchor="center"] :is(img, video) { object-position: center; }
 [data-identity-part="artwork"][data-artwork-anchor="bottom"] :is(img, video) { object-position: center bottom; }
-/* Truncated is never a dead end: the chevron says there is more. */
-
-/* Truncated is never a dead end: the chevron says there is more. On a face
-   with inspection bound (cardInspection.js) the chevron IS the control — a
-   tap-floor box drawn in the same corner, the glyph where it always sat —
-   and the drawn-only mark yields to it; a face without inspection keeps the
-   mark alone. */
-
-.card[data-truncated="true"]::after { content: '›'; position: absolute; bottom: 0.3rem; right: 0.5rem; color: var(--muted); font-size: 1.3rem; line-height: 1; }
-.card.card-inspection-target[data-truncated="true"]::after { content: none; }
-.card-inspection-target > .card-more-button { display: none; }
-.card-inspection-target[data-truncated="true"] > .card-more-button {
-  display: flex; align-items: flex-end; justify-content: flex-end;
-  position: absolute; right: 0; bottom: 0; z-index: 7;
-  width: var(--tap-floor); height: var(--tap-floor); min-width: var(--tap-floor); min-height: var(--tap-floor);
-  margin: 0; padding: 0 0.5rem 0.3rem 0; border: 0; border-radius: 0; background: transparent;
-  color: var(--muted); font: inherit; font-size: 1.3rem; line-height: 1; cursor: pointer;
-}
-.card-inspection-target[data-truncated="true"] > .card-more-button:hover,
-.card-inspection-target[data-truncated="true"] > .card-more-button:focus-visible { color: var(--gold); background: transparent; }
-.card-inspection-target[data-truncated="true"] > .card-more-button:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
-
 /* ═══ COMBATANT — one shape, three statures ════════════════════════════════ */
 /* Stature is DERIVED from the encounter pool (normal → normal, elite → large,
    boss → huge). Only the sprite well scales; nameplate, bars and meters stay
@@ -1319,8 +1296,8 @@ input[type="range"] { min-height: var(--tap-floor); }
    have overflowed its track rather than fitting in it. `--card-w` is the box's
    one width input and the height is computed from its landmarks, not from the
    width — so a narrower card is the same card with its text clamped by the
-   budget that already clamps it (`.ctext` line-clamp, and the chevron that
-   says so), never a cut-off one. */
+   budget that already clamps it (`.ctext` line-clamp); Information opens the
+   full text. */
 .card-shelf .card { --card-w: 100%; width: 100%; flex-shrink: 1; }
 /* `[data-small]` scales the card by transform: on a shelf the TRACK is what
    makes it small, and a transform on top of that only opens a gap. Hover and
@@ -5106,20 +5083,6 @@ button[data-button-size] {
   width: var(--hand-hit-width); height: var(--hand-card-height); z-index: 20;
   transform-origin: calc(var(--hand-card-width) / 2) calc(var(--hand-card-height) / 2);
   transform: rotate(calc(-1 * var(--hand-card-angle))) translateY(calc(-1 * var(--hand-card-arc)));
-}
-/* The next card's hit lane covers this card's lower corner in a tight fan.
-   Keep the reading chevron above the face, fully inside the hand's clip. */
-:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card > .card-more-button {
-  pointer-events: auto; z-index: 21;
-  left: 0; right: auto;
-  top: max(calc(-1 * var(--tap-floor) + 16px / var(--ui-zoom, 1)), calc(4px / var(--ui-zoom, 1) - var(--hand-card-y)));
-  bottom: auto;
-  align-items: center; justify-content: center; padding: 0;
-  border: 1px solid var(--line); border-radius: var(--r-2);
-  background: var(--panel);
-}
-:root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card[data-truncated='true'] .cname {
-  box-sizing: border-box; width: 100%; padding-left: var(--tap-floor);
 }
 :root .combat[data-layout='formation'] .hand[data-wireframe-hand='true'] .card:is(.selected,.inspection-selected) > .hand-hit-lane {
   transform: translateY(calc(var(--hand-selection-lift) - var(--hand-card-arc)));

@@ -4,12 +4,13 @@ import { behaviorModel } from './BehaviorModel.js';
 import { componentModel } from './ComponentModel.js';
 import { UI_COMPONENTS as UI } from './UiComponentId.js';
 import { armouryRailItems } from './ArmouryWorkspaceModel.js';
+import { t } from '../strings.js';
 
 const DEFAULT_REGIONS = Object.freeze([
-  Object.freeze({ id: 'slots', label: 'Slots', count: 0, unit: 'slot', edge: 'bottom', expanded: true }),
-  Object.freeze({ id: 'inventory', label: 'Inventory', count: 0, unit: 'item', edge: 'bottom', expanded: false }),
-  Object.freeze({ id: 'cards', label: 'Cards', count: 0, unit: 'card', edge: 'bottom', expanded: false }),
-  Object.freeze({ id: 'stats', label: 'Stats', count: 0, unit: 'stat', edge: 'bottom', expanded: false }),
+  Object.freeze({ id: 'slots', label: t('armoury.tab.slots'), count: 0, unit: 'slot', edge: 'bottom', expanded: true }),
+  Object.freeze({ id: 'inventory', label: t('armoury.tab.inventory'), count: 0, unit: 'item', edge: 'bottom', expanded: false }),
+  Object.freeze({ id: 'cards', label: t('armoury.tab.cards'), count: 0, unit: 'card', edge: 'bottom', expanded: false }),
+  Object.freeze({ id: 'stats', label: t('armoury.tab.stats'), count: 0, unit: 'stat', edge: 'bottom', expanded: false }),
 ]);
 
 // W1e: the views are the workspace's category rail. The ids are the saved
@@ -47,7 +48,7 @@ function armouryBodyModel({ view, figure, slots }) {
 
 export function armouryInventoryModel() {
   return componentModel(UI.armouryInventory, {
-    accessibility: { role: 'region', label: 'Inventory' },
+    accessibility: { role: 'region', label: t('armoury.tab.inventory') },
   });
 }
 
