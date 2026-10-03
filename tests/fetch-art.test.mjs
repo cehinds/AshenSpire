@@ -866,22 +866,33 @@ function jobsRunningToolsBeforeFetch(yml) {
     if (!/uses: actions\/checkout@/.test(job)) continue;
     checked += 1;
     const name = job.match(new RegExp(`^  (${JOB_ID}):`))[1];
-    let fetched = false, block = null, bad = false;
+    // A block scalar is judged as ONE command string: its non-comment lines
+    // joined with spaces and shell `\` continuations removed, so a command a
+    // folded scalar or a continuation splits over lines (`node` / `tools/x.mjs`)
+    // is still seen (#1524 review, Codex).
+    let fetched = false, block = null, bad = false, text = [];
+    const judge = () => {
+      if (!fetched && TOOL_CMD.test(text.join(' ').replace(/\\\s+/g, ' '))) bad = true;
+      text = [];
+    };
     for (const line of job.split('\n')) {
       const indent = line.match(/^ */)[0].length;
       if (block !== null) {
         if (!line.trim() || indent > block) {
-          if (!fetched && !line.trim().startsWith('#') && TOOL_CMD.test(line)) bad = true;
+          if (!line.trim().startsWith('#')) text.push(line.trim());
           continue;
         }
         block = null;
+        judge();
       }
       if (/^\s*(-\s+)?uses:\s*\.\/\.github\/actions\/fetch-art\b/.test(line)) fetched = true;
       const run = line.match(/^(\s*)(-\s+)?run:\s*(.*)$/);
       if (!run) continue;
       if (/^[|>][-+0-9]*\s*(#.*)?$/.test(run[3])) { block = run[1].length + (run[2] ? run[2].length : 0); continue; }
-      if (!fetched && TOOL_CMD.test(run[3])) bad = true;
+      text.push(run[3]);
+      judge();
     }
+    if (block !== null) judge();
     if (!fetched || bad) missing.push(name);
   }
   return { checked, missing };
@@ -909,8 +920,10 @@ test('known-bad: the art-fetch ordering guard sees inline and block-scalar tool 
     job('bad-dot-path', `      - run: node ./tools/a.mjs\n${fetch}`),
     job('good-before-underscore', `${fetch}      - run: echo ok\n`),
     job('bad_underscore', `      - run: node tools/a.mjs\n${fetch}`),
+    job('bad-folded-split', `      - name: x\n        run: >-\n          node\n          tools/build.mjs\n${fetch}`),
+    job('bad-continuation', `      - name: x\n        run: |\n          node \\\n            tools/build.mjs\n${fetch}`),
   ].join('\n') + '\n';
   const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
-  assert.equal(checked, 11);
-  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore']);
+  assert.equal(checked, 13);
+  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-continuation']);
 });
