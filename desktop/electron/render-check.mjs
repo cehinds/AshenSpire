@@ -17,10 +17,11 @@ if (!targets) { console.log('NO TARGET — the packaged app never exposed a page
 // GUARD: a stray HeadlessChrome answered this port once and my "PASS" was a
 // measurement of somebody else's browser — the exact failure this round is
 // about, in my own hands. Assert we are attached to THE PACKAGED APP: its page
-// must be the file:// URL inside the package, and the browser must be Electron.
+// must be the game's URL (file:// before the installer; now the wrapper's fixed
+// https://ashenspire.invalid/ origin, main.js), and the browser must be Electron.
 const ver = await (await fetch(`http://127.0.0.1:${PORT}/json/version`)).json();
 const page = targets.find(t => t.type === 'page');
-const isOurs = /Electron/i.test(ver['User-Agent'] || '') && /^file:\/\//.test(page.url) && /AshenSpire/.test(page.url);
+const isOurs = /Electron/i.test(ver['User-Agent'] || '') && /^(file:\/\/|https:\/\/ashenspire\.invalid\/)/.test(page.url) && /AshenSpire/.test(page.url);
 if (!isOurs) {
   console.log(`WRONG TARGET — refusing to measure. browser=${(ver['User-Agent']||'').slice(0,60)} url=${page.url.slice(0,70)}`);
   proc.kill('SIGKILL'); process.exit(2);
