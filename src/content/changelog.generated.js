@@ -8,7 +8,7 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-03",
     "summary": "Specify formation positioning and reward defaults",
     "detail": "Record the approved mirrored spawn order, authored layout profiles and separate combat, skill and class reward rolls before implementation.",
-    "build": "0.7.1.855",
+    "build": "0.7.1.857",
     "pullRequest": 1544,
     "url": "https://github.com/cehinds/AshenSpire/pull/1544"
   },
