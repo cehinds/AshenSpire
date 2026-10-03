@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: the map legend's Escape test now opens the node panel first",
     "detail": "Nothing you play changes. The automatic test for closing the map legend with Escape or pad B never selected a map node, so the node's panel was never open and the test could not see it close by mistake. It now selects a node, checks the panel stays open when the legend closes, and checks the next press closes the panel.",
-    "build": "0.7.1.802",
+    "build": "0.7.1.803",
     "pullRequest": 1499,
     "url": "https://github.com/cehinds/AshenSpire/pull/1499"
+  },
+  {
+    "id": "pr-1509",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the co-op layout check runs when a build goes to testing",
+    "detail": "Nothing you play changes. The automatic check that the co-op screen's top bar fits on phones and desktops now runs each time a build is promoted to testing, instead of on every proposed change, where it kept stalling and holding other changes up.",
+    "build": "0.7.1.802",
+    "pullRequest": 1509,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1509"
   },
   {
     "id": "pr-1492",
