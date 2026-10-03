@@ -20,6 +20,7 @@ import { CHARGE_FLASK_KINDS, chargeFlaskDefinition } from '../../model/gracerefi
 import { potionContents, potionCountStringId } from '../models/PotionContentsModel.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { t, tFull } from '../strings.js';
+import { staminaOrbHtml, paintStaminaOrb } from './staminaOrb.js';
 import { esc } from './tooltip.js';
 import { flaskTooltipHtml, flaskDetailLines, flaskPresentation } from './flask.js';
 import { observeIconTray, unobserveIconTray, setIconTrayItems, setIconTrayOverflow, trayIcon } from './iconTray.js';
@@ -44,7 +45,7 @@ export function pileButton(kind, label) {
  */
 export function combatActionRowHtml({ endTurnId = null } = {}) {
   return `<div class="combat-action-row as-btnrow" data-size="fill" ${uiComponentAttrs(UI.combatActionRail)} role="group" aria-label="Combat actions">
-          ${html(statPair({ key: t('combat.actions'), value: '', attrs: { class: 'energy-orb cell stack lg', role: 'status', 'aria-label': t('combat.actions.remaining') } }))}
+          ${staminaOrbHtml()}
           ${html(pileButton('draw', 'Draw'))}
           ${html(button({ label: t('combat.endTurn'), weight: 'primary', exception: 'combatEndTurn', className: 'end-turn wide tall', ...(endTurnId ? { id: endTurnId } : {}) }))}
           ${html(button({ label: t('combat.discard'), className: 'pile spent tall' }))}
@@ -65,7 +66,7 @@ export function setPotionRevealTiming(row, reveal) {
 /** The row's tooltips, one wording for both boards (counts read at open time). */
 export const actionsTipHtml = (left, max) => `<div class="tt-title">${esc(t('combat.actions'))}</div>`
   + `${left} of ${max} left this turn.`
-  + `<div class="ti-detail">Playing a card spends its cost. Unspent actions do not carry over.</div>`;
+  + `<div class="ti-detail">Playing a card spends its cost. Stamina refills at the start of every turn.</div>`;
 export const drawTipHtml = (count, { browse = true } = {}) => `<div class="tt-title">Draw pile</div>`
   + `${count} card${count === 1 ? '' : 's'} left to draw.`
   + `<div class="ti-detail">${browse ? 'Tap to look through it. ' : ''}When it empties, the discard pile is shuffled back in.</div>`;
@@ -93,12 +94,11 @@ export function paintEndTurnKey(endTurn, key) {
  * 2 of 3" as solo's renderControls writes it, and `browse: false` (co-op, no
  * pile viewer) drops the "Open piles" promise from Discard/Exhaust.
  */
-export function paintCombatActionCounts(row, { energy, energyMax, draw, discard, exhaust, browse = true }) {
+export function paintCombatActionCounts(row, { energy, energyMax, mana, maxMana, settings, draw, discard, exhaust, browse = true }) {
   if (!row) return;
   const orb = row.querySelector('.energy-orb');
   if (orb && energy != null) {
-    orb.querySelector('.sp-v').textContent = `${energy}/${energyMax}`;
-    orb.setAttribute('aria-label', `${t('combat.actions')} ${energy} of ${energyMax}`);
+    paintStaminaOrb(orb, { stamina: energy, maxStamina: energyMax, mana, maxMana, settings });
   }
   const drawNode = row.querySelector('.pile.draw');
   if (drawNode) {

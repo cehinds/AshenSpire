@@ -6138,7 +6138,7 @@ export const uiStrings = [
     "id": "settings.group.Stats",
     "extends": "",
     "short": "Stats",
-    "full": "Everything that turns attributes into Actions, Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.",
+    "full": "Everything that turns attributes into Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.",
     "tip": ""
   },
   {
@@ -6249,7 +6249,7 @@ export const uiStrings = [
   {
     "id": "combat.actions.remaining",
     "extends": "",
-    "short": "Actions remaining",
+    "short": "Stamina remaining",
     "full": "",
     "tip": ""
   },
@@ -6277,7 +6277,7 @@ export const uiStrings = [
   {
     "id": "combat.actions",
     "extends": "",
-    "short": "Actions",
+    "short": "Stamina",
     "full": "",
     "tip": ""
   },
@@ -6957,6 +6957,20 @@ export const uiStrings = [
     "id": "book.read.complete",
     "extends": "",
     "short": "Book read",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.manaRing",
+    "extends": "",
+    "short": "Mana ring",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.manaRing.note",
+    "extends": "",
+    "short": "Show mana as sapphire diamonds around the stamina orb. Turn off to use the top MP bar.",
     "full": "",
     "tip": ""
   }

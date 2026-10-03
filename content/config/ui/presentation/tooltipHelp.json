@@ -76,7 +76,7 @@
         "enemyTurn": "Enemies are resolving their moves. Your next turn follows.",
         "hp": "Health remaining. Reaching zero defeats this combatant.",
         "mana": "Mana pays spell costs.",
-        "stamina": "Stamina pays physical skill and Dodge costs.",
+        "stamina": "Stamina pays card and combat costs. It refills at the start of every turn.",
         "recovery": " Recovers {amount} per turn.",
         "block": "Absorbs attack damage. Expires at the start of the owner's turn unless an effect preserves it.",
         "playerPoise": "Your Stagger threshold — your Constitution, armament, armour and relics steady it. Enemy impact fills it.",

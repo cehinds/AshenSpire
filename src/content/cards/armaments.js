@@ -5,7 +5,7 @@ export const armamentCards = [
     flavor: "Kite shield of the Court's knights, its strap cut short.\n\nSuch shields lie easily found upon the marches road, where the knights who bore them were stitched to their posts and left standing. Climbers take the shields and leave the knights.\n\nThe knights have not objected.",
     keywords: ['exhaust'], icon: '🛡',
     effects: [{ op: 'block', target: 'self', amount: 5 }, { op: 'addCard', card: 'guardianBulwark', pile: 'hand', position: 'bottom' }],
-    textTemplate: 'Gain {block} Block. Add a temporary Enter: Bulwark to your hand. It costs 1 Energy and Exhausts. Exhaust.',
+    textTemplate: 'Gain {block} Block. Add a temporary Enter: Bulwark to your hand. It costs 1 Stamina and Exhausts. Exhaust.',
     upgrade: { effects: [{ op: 'block', target: 'self', amount: 8 }, { op: 'addCard', card: 'guardianBulwark', pile: 'hand', position: 'bottom' }] },
   },
   {

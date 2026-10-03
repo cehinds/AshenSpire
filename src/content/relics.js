@@ -138,7 +138,7 @@ export const relics = [
     name: 'Cracked Lantern',
     rarity: 'common',
     icon: '🏮',
-    textTemplate: 'On your first turn each combat, gain {gainEnergy} Energy.',
+    textTemplate: 'On your first turn each combat, gain {gainEnergy} Stamina.',
     flavor: 'The glass is broken but the flame refuses to notice.',
   },
   {
@@ -244,7 +244,7 @@ export const relics = [
     name: 'Pearl of Sagacity',
     rarity: 'uncommon',
     icon: '🔮',
-    textTemplate: 'Every 6th card you play each combat: gain {gainEnergy} Energy.',
+    textTemplate: 'Every 6th card you play each combat: gain {gainEnergy} Stamina.',
     flavor: 'It clouds when you are foolish. It has been cloudy for some time.',
   },
   {
@@ -260,7 +260,7 @@ export const relics = [
     name: 'Azure Sigil',
     rarity: 'uncommon',
     icon: '🔵',
-    textTemplate: 'The first Skill you play each combat: gain {gainEnergy} Energy.',
+    textTemplate: 'The first Skill you play each combat: gain {gainEnergy} Stamina.',
     flavor: 'Painted in a hand that trembled, by someone who steadied at the last stroke.',
   },
   {
@@ -288,7 +288,7 @@ export const relics = [
     // Denies the shrine's Rest (and any place whose set holds the partial
     // rest) — a town's bed and a camp's rough rest stay open (plan phase 7).
     passives: { restDenied: ['restHpPartial'] },
-    textTemplate: 'Gain {gainEnergy} extra Energy each turn. Shrines and chapels no longer offer Rest.',
+    textTemplate: 'Gain {gainEnergy} extra Stamina each turn. Shrines and chapels no longer offer Rest.',
     flavor: 'It still beats. It expects something of you.',
   },
   {
@@ -370,7 +370,7 @@ export const relics = [
     name: 'Ash of Remembrance',
     rarity: 'boss',
     icon: '⚱',
-    textTemplate: 'Gain {gainEnergy} extra Energy each turn. At the start of each combat, gain {madness} Madness.',
+    textTemplate: 'Gain {gainEnergy} extra Stamina each turn. At the start of each combat, gain {madness} Madness.',
     flavor: 'The dead lend strength. They are not gentle about it.',
   },
   {
@@ -378,7 +378,7 @@ export const relics = [
     name: 'Cinder of the Fallen',
     rarity: 'boss',
     icon: '☠',
-    textTemplate: 'Whenever an enemy dies, gain {gainEnergy} Energy. At the start of each combat, gain {madness} Madness.',
+    textTemplate: 'Whenever an enemy dies, gain {gainEnergy} Stamina. At the start of each combat, gain {madness} Madness.',
     flavor: 'It pays out in the coin of endings. It expects you to make more of them.',
   },
   {
@@ -463,7 +463,7 @@ export const relics = [
     name: 'Emberwick Charm',
     rarity: 'common',
     icon: '🕯',
-    textTemplate: 'The first time you lose HP each combat, gain {gainEnergy} Energy.',
+    textTemplate: 'The first time you lose HP each combat, gain {gainEnergy} Stamina.',
     flavor: 'It burns brightest at the moment you can least afford to slow down.',
   },
   {

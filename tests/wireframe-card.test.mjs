@@ -13,10 +13,10 @@ const registries = createRegistries(contentBundle);
 const ref = { cardId: contentBundle.cards[0].id };
 const render = (preview) => renderCard(registries, ref, { preview, tooltip: false, inspection: false }).innerHTML;
 const face = render({ cost: 3, staminaCost: 2, manaCost: 4, tokens: {} });
-assert.ok(face.indexOf('class="cost"') < face.indexOf('class="stamina-cost"'));
-assert.ok(face.indexOf('class="stamina-cost"') < face.indexOf('class="mana-cost"'));
+assert.ok(face.indexOf('class="cost stamina-cost"') < face.indexOf('class="mana-cost"'));
+assert.equal((face.match(/stamina-cost/g) || []).length, 1);
 assert.match(face, /cost: 3/);
-assert.match(face, /cost: 2/);
+assert.doesNotMatch(face, /cost: 2/);
 assert.match(face, /cost: 4/);
 const variable = render({ costIsX: true, cost: 9, staminaCost: 0, manaCost: 0, tokens: {} });
 assert.match(variable, /cost: X/);
@@ -29,7 +29,7 @@ assert.doesNotMatch(variable, /class="(?:stamina|mana)-cost"/);
 // counts what the turn can still afford. The SECONDARY pools keep eliding at
 // zero: two empty rails on every card is noise, not information.
 const free = render({ cost: 0, staminaCost: 0, manaCost: 0, tokens: {} });
-assert.match(free, /class="cost"/);
+assert.match(free, /class="cost stamina-cost"/);
 assert.match(free, /cost: 0/);
 assert.doesNotMatch(free, /class="(?:stamina|mana)-cost"/);
 assert.match(render(undefined), /card-cost-rail/);

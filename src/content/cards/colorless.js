@@ -11,7 +11,7 @@ export const colorlessCards = [
   // Weapon arts are ordinary loose cards when purchased. Their source items
   // lend mounted copies; the smith uses the existing extractable tag rules.
   {
-    id: 'katanaDrawCut', name: 'Draw Cut', class: 'colorless', rarity: 'uncommon', cost: 1, staminaCost: 1, type: 'attack',
+    id: 'katanaDrawCut', name: 'Draw Cut', class: 'colorless', rarity: 'uncommon', cost: 1, type: 'attack',
     flavor: "Single cut from the scabbard, as it is done beyond the marches.\n\nThe curved blades reached the ring in the years of the Mark Trade, borne by foreign lords who paid to be warm there. They burned with the rest of the marked, far from home, and left their swords where they fell.\n\nThe merchant knows whose each one was. He sells that separately.",
     keywords: [], icon: '⚔',
     effects: [{ op: 'damage', target: 'enemy', amount: 9 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 2 }],
@@ -19,7 +19,7 @@ export const colorlessCards = [
     upgrade: { effects: [{ op: 'damage', target: 'enemy', amount: 12 }, { op: 'applyStatus', target: 'enemy', status: 'bleed', stacks: 3 }] },
   },
   {
-    id: 'greatswordSunderingHew', name: 'Sundering Hew', class: 'colorless', rarity: 'uncommon', cost: 2, staminaCost: 1, type: 'attack',
+    id: 'greatswordSunderingHew', name: 'Sundering Hew', class: 'colorless', rarity: 'uncommon', cost: 2, type: 'attack',
     flavor: "Hew of a Court knight's greatsword.\n\nToo heavy to carry far, and too dear to leave. The corrupted knights pause at the sight of one in a Forsaken's hands, unable to believe an unmarked hand holds their steel.\n\nThat pause is worth the weight.",
     keywords: [], icon: '⚒',
     effects: [{ op: 'damage', target: 'enemy', amount: 16 }, { op: 'poiseDamage', target: 'enemy', amount: 3 }],
@@ -75,7 +75,7 @@ export const colorlessCards = [
       { op: 'gainEnergy', amount: 2 },
       { op: 'draw', amount: 1 },
     ],
-    textTemplate: 'Gain {gainEnergy} Energy. Draw {draw} card. Exhaust.',
+    textTemplate: 'Gain {gainEnergy} Stamina. Draw {draw} card. Exhaust.',
     upgrade: {
       effects: [
         { op: 'gainEnergy', amount: 2 },

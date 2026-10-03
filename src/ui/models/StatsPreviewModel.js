@@ -28,7 +28,7 @@ import { t } from '../strings.js';
 /** The settings key that remembers which class the out-of-run examples use. */
 export const STATS_EXAMPLE_CLASS_KEY = 'settingsStatsExampleClass';
 
-const DERIVED_BY_TOPIC = Object.freeze({ Actions: 'energy', HP: 'hp', Stamina: 'stamina', Mana: 'mana', Poise: 'poise' });
+const DERIVED_BY_TOPIC = Object.freeze({ Actions: 'stamina', HP: 'hp', Stamina: 'stamina', Mana: 'mana', Poise: 'poise' });
 const RATING_BY_TOPIC = Object.freeze({ 'Attack rating (AR)': 'ar', 'Defence rating (DR)': 'dr', 'Power rating (PR)': 'pr', Poise: 'poise', Ward: 'ward' });
 const RATING_LABELS = Object.freeze({ ar: 'AR', dr: 'DR', pr: 'PR', poise: 'Poise', ward: 'Ward' });
 
@@ -338,7 +338,7 @@ function ratingExample(ctx, id) {
 
 function overviewExample(ctx) {
   const config = ctx.ratings();
-  const derived = ['hp', 'energy', 'stamina', 'mana']
+  const derived = ['hp', 'stamina', 'mana']
     .filter((id) => ctx.configured.derivedStatRules.rules[id])
     .map((id) => derivedExample(ctx, id));
   const hand = handExample(ctx);

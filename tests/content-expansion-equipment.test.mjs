@@ -135,12 +135,12 @@ for (const [id, classId, slot, pool] of [
   for (let level = 2; level <= 6; level++) {
     const receipt = awardLevelXp(r, run, characterXpToNext(r, run.level.level));
     assert.equal(run.level.level, level);
-    assert.equal(run[maxKey], initialMax + (level === 6 ? 1 : 0), `${id}: final equipped maximum at level ${level}`);
+    assert.equal(run[maxKey], initialMax + (pool === 'mana' && level === 6 ? 1 : 0), `${id}: final equipped maximum at level ${level}`);
     assert.equal(run[maxKey] - run[pool], deficit, `${id}: leveling carries spent ${pool} at level ${level}`);
     assert.deepEqual(run.equipmentPoolBonuses, bonuses, `${id}: leveling preserves signed equipment bonuses`);
     // Ruleset 6: HP's growth is a decimal 1 per level, so it moves at EVERY
     // level; Mana and Stamina's 0.2 first reaches a whole point at level 6.
-    assert.equal(receipt.thresholds, level === 6 ? 3 : 1, `${id}: only genuine HP/Mana/Stamina maximum increases count`);
+    assert.equal(receipt.thresholds, level === 6 ? 2 : 1, `${id}: only genuine HP/Mana/Stamina maximum increases count`);
   }
   const beforeAssignment = run[maxKey];
   const assigned = pool === 'mana' ? 'wisdom' : 'constitution';
