@@ -29,7 +29,11 @@
 //              lit node (NODE_ORDER: a lit boss first, then Monster, Treasure,
 //              Rest, Shrine, Event, Merchant, Elite; unvisited before visited),
 //              selects it, presses Enter and leaves the room by its own door
-//              (Continue, a choice, Leave). The act's boss node opens its legacy
+//              (Continue, a choice, Leave). A door the game mounts disabled
+//              (an Event's Continue before a response, a reward's Continue
+//              while a level waits) is pressed only once enabled; a pending
+//              level is claimed by its Level up button and its chooser or
+//              completion door, inside ROOM_MS. The act's boss node opens its legacy
 //              dungeon, whose rooms are walked the same way to its boss. Fights after
 //              the first are resolved through the debug handle
 //              `window.__combat` (the enemies' hp set to 0, then End Turn
@@ -55,6 +59,9 @@
 // assets/sfx/<id>.ogg"; the synth plays when none is there, by design), whose
 // 404s the browser logs as errors. Any other error, of any kind, is red.
 //
+// Every CDP command is bounded (CDP_CALL_MS) and rejected the moment the
+// browser connection closes or errors, so a crash is a red DRIVE, not a hang.
+//
 // BOUNDARY. One class (the first offered), one seed, one viewport (1440x900).
 // It does not judge balance, art or the content of any screen; it proves the
 // doors from title back to title and on into a new run, with no error logged.
@@ -76,6 +83,8 @@ const VIEWPORT = { width: 1440, height: 900 };
 const COMBAT_TURNS = 20; // the played first fight
 const BOSS_TURNS = 40; // End Turn held until the boss kills the character
 const MAX_STEPS = 80; // screens the walk may visit before it calls itself lost
+const CDP_CALL_MS = 30000; // one CDP command (an in-page wait included) before it is a hang
+const ROOM_MS = 90000; // one room's doors, its XP and refill animations included, before it is lost
 const MOUNT_MS = 60000; // a document coming up from the source tree (see map-camera-persistence.mjs)
 // Optional files the game asks for and is built to do without (see header).
 const OPTIONAL_404 = [/\/assets\/sfx\/[A-Za-z0-9_%-]+\.ogg$/];
@@ -125,36 +134,6 @@ function onEvent(m) {
   if (c) (c.kind === 'optional' ? optional : errors).push(c.text);
 }
 
-// --selftest: each plant is an event the real drive must turn red (or, for the
-// one clean edge, must set aside). A change that weakens the listener or widens
-// the 404 exception fails here, without a browser.
-if (argv.includes('--selftest')) {
-  const net = (url, text = 'Failed to load resource: the server responded with a status of 404 (Not Found)', source = 'network') =>
-    ({ method: 'Log.entryAdded', params: { entry: { level: 'error', source, text, url } } });
-  const plants = [
-    ['console.error', 'error', { method: 'Runtime.consoleAPICalled', params: { type: 'error', args: [{ type: 'string', value: 'planted' }] } }],
-    ['console.assert', 'error', { method: 'Runtime.consoleAPICalled', params: { type: 'assert', args: [{ type: 'string', value: 'planted' }] } }],
-    ['uncaught exception', 'error', { method: 'Runtime.exceptionThrown', params: { exceptionDetails: { text: 'Uncaught', exception: { description: 'Error: planted' } } } }],
-    ['non-sound 404 (an image)', 'error', net('http://localhost:1/assets/enemies/planted.png')],
-    ['non-sound 404 (a script)', 'error', net('http://localhost:1/src/ui/planted.js')],
-    ['an .ogg outside assets/sfx/', 'error', net('http://localhost:1/assets/music/planted.ogg')],
-    ['an assets/sfx/ path that is not one .ogg', 'error', net('http://localhost:1/assets/sfx/sub/planted.ogg')],
-    ['an assets/sfx/ sample answered 500', 'error', net('http://localhost:1/assets/sfx/hit.ogg', 'Failed to load resource: the server responded with a status of 500 (Internal Server Error)')],
-    ['a javascript-source log error', 'error', net('', 'planted', 'javascript')],
-    ['clean edge: an optional assets/sfx/<id>.ogg 404', 'optional', net('http://localhost:1/assets/sfx/hit.ogg')],
-    ['clean edge: console.log', null, { method: 'Runtime.consoleAPICalled', params: { type: 'log', args: [{ type: 'string', value: 'fine' }] } }],
-  ];
-  let bad = 0;
-  for (const [name, want, m] of plants) {
-    const got = classify(m)?.kind ?? null;
-    const ok = got === want;
-    if (!ok) bad++;
-    console.log(`${ok ? 'PASS' : 'FAIL'} selftest ${name} — classified ${got ?? 'clean'}, wants ${want ?? 'clean'}`);
-  }
-  console.log(`${plants.length - bad} passed, ${bad} failed`);
-  process.exit(bad ? 1 : 0);
-}
-
 // The page-side recorder: the boss splash closes itself after 2.3 s, so it is
 // counted as it is drawn rather than looked for by a poll.
 const RECORDER = `window.__fullRunBossIntros = [];
@@ -162,24 +141,59 @@ new MutationObserver((records) => { for (const r of records) for (const n of r.a
   if (n.nodeType === 1 && n.classList.contains('boss-intro')) window.__fullRunBossIntros.push((n.querySelector('.bi-name') || n).textContent.trim());
 } }).observe(document, { childList: true, subtree: true });`;
 
-async function session(browser) {
-  const ws = new WebSocket(browser.wsUrl);
+// CDP call bookkeeping, pure so --selftest can plant a call the browser never
+// answers and a socket that drops under a pending call. Every call is bounded
+// (CDP_CALL_MS) and every pending call is rejected when the connection closes
+// or errors, so a browser crash fails the drive (and its cleanup runs) instead
+// of hanging the probe until CI kills the job.
+function cdpCalls(write, { timeoutMs = CDP_CALL_MS } = {}) {
   const pending = new Map();
   let id = 0;
+  let dead = null;
+  const settle = (call, fn, value) => { clearTimeout(call.timer); pending.delete(call.id); fn(value); };
+  return {
+    pending,
+    call(method, params = {}, sessionId) {
+      if (dead) return Promise.reject(new Error(`CDP ${method}: ${dead}`));
+      return new Promise((resolve, reject) => {
+        const call = { id: ++id, resolve, reject };
+        call.timer = setTimeout(() => settle(call, reject, new Error(`CDP ${method} unanswered after ${timeoutMs} ms`)), timeoutMs);
+        pending.set(call.id, call);
+        try {
+          write(JSON.stringify({ id: call.id, method, params, ...(sessionId ? { sessionId } : {}) }));
+        } catch (e) {
+          settle(call, reject, new Error(`CDP ${method}: ${e.message}`));
+        }
+      });
+    },
+    answer(m) {
+      const call = pending.get(m.id);
+      if (!call) return;
+      m.error ? settle(call, call.reject, new Error(m.error.message)) : settle(call, call.resolve, m.result);
+    },
+    fail(reason) {
+      dead = dead || reason;
+      for (const call of [...pending.values()]) settle(call, call.reject, new Error(`CDP call ${call.id}: ${dead}`));
+    },
+  };
+}
+
+async function session(browser) {
+  const ws = new WebSocket(browser.wsUrl);
+  const calls = cdpCalls((data) => ws.send(data));
   ws.onmessage = (event) => {
     const m = JSON.parse(event.data);
     if (m.method) onEvent(m);
-    const call = pending.get(m.id);
-    if (!call) return;
-    pending.delete(m.id);
-    m.error ? call.reject(new Error(m.error.message)) : call.resolve(m.result);
+    calls.answer(m);
   };
-  await new Promise((done, fail) => { ws.onopen = done; ws.onerror = fail; });
-  const raw = (method, params = {}, sessionId) => new Promise((done, fail) => {
-    const call = ++id;
-    pending.set(call, { resolve: done, reject: fail });
-    ws.send(JSON.stringify({ id: call, method, params, ...(sessionId ? { sessionId } : {}) }));
+  await new Promise((done, fail) => {
+    const timer = setTimeout(() => fail(new Error(`the CDP socket did not open within ${CDP_CALL_MS} ms`)), CDP_CALL_MS);
+    ws.onopen = () => { clearTimeout(timer); done(); };
+    ws.onerror = () => { clearTimeout(timer); fail(new Error('the CDP socket failed to open')); };
   });
+  ws.onclose = (e) => calls.fail(`the browser connection closed (code ${e.code})`);
+  ws.onerror = () => calls.fail('the browser connection errored');
+  const raw = calls.call;
   const { targetId } = await raw('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await raw('Target.attachToTarget', { targetId, flatten: true });
   const send = (method, params) => raw(method, params, sessionId);
@@ -351,32 +365,145 @@ async function resolveFight() {
 }
 
 // ---- leaving the screen a node opened --------------------------------------
+// The screen is read in one snapshot (each selector below, present or not) and
+// the door is picked from it by pickDoor, which is pure so --selftest can plant
+// screens: an Event whose Continue is still disabled, a reward holding Continue
+// for a level claim, a level chooser, an XP bar still filling.
+const DOORS = {
+  map: `.map-scroll .map-node.reachable`,
+  veil: `.modal-veil`,
+  gameover: `#to-title`,
+  rewardVeil: `.reward-veil`,
+  levelDone: `#reward-level-done`,
+  skillDone: `#reward-skill-done`,
+  chooserConfirm: `#reward-card-confirm:not([disabled])`,
+  chooserPick: `.reward-row .reward-pick`,
+  levelUp: `.reward-level-up:not([disabled])`,
+  rewardBack: `#reward-back`,
+  rewardExpand: `#reward-expand:not([disabled])`,
+  rewardContinue: `#reward-continue:not([disabled])`,
+  dialogueResponse: `.dialogue-response:not([disabled])`,
+  dialogueContinue: `#dialogue-continue:not([disabled])`,
+  eventContinue: `#event-continue:not([disabled])`,
+  choice: `#choices button:not([disabled])`,
+  leaveShop: `#leave-shop`,
+  shrineLeave: `#shrine-leave`,
+  confirm: `.confirm-modal [data-confirm="yes"], .as-modal .primary`,
+};
+const SNAPSHOT = `(() => { const out = {}; for (const [k, sel] of Object.entries(${JSON.stringify(DOORS)})) out[k] = !!document.querySelector(sel); out.combat = ${COMBAT_READY}; return out; })()`;
+// One snapshot → { done: 'map' | 'gameover' | 'combat' }, { press, hold?, ms? },
+// or { wait: why } (an animation or refill the screen is still running).
+function pickDoor(d) {
+  if (d.map && !d.veil) return { done: 'map' };
+  if (d.gameover) return { done: 'gameover' };
+  if (d.combat) return { done: 'combat' };
+  if (d.rewardVeil) {
+    // A claimed level or skill's completion door first, then a chooser the
+    // claim opened (a level card or draft): its first offer, then Confirm.
+    if (d.levelDone) return { press: DOORS.levelDone };
+    if (d.skillDone) return { press: DOORS.skillDone };
+    if (d.chooserConfirm) return { press: DOORS.chooserConfirm };
+    if (d.chooserPick) return { press: DOORS.chooserPick };
+    // A detail view (no chooser) goes back to the menu.
+    if (d.rewardBack) return { press: DOORS.rewardBack };
+    // A level waiting to be claimed holds Continue (reward.js): claim it.
+    if (d.levelUp) return { press: DOORS.levelUp };
+    // The victory card's Continue opens the spoils once its XP has counted;
+    // the spoils' Continue (a hold) collects and leaves.
+    if (d.rewardExpand) return { press: DOORS.rewardExpand };
+    if (d.rewardContinue) return { press: DOORS.rewardContinue, hold: true };
+    return { wait: 'the reward (XP count, refill, or a disabled Continue)' };
+  }
+  // A dialogue room (a legacy dungeon's rooms): the first response it offers
+  // (held: a binding one owes a hold), then Continue.
+  if (d.dialogueResponse) return { press: DOORS.dialogueResponse, hold: true, ms: 1000 };
+  if (d.dialogueContinue) return { press: DOORS.dialogueContinue };
+  // An Event's Continue is disabled until a response is taken (event.js).
+  if (d.eventContinue) return { press: DOORS.eventContinue, hold: true };
+  if (d.choice) return { press: DOORS.choice, hold: true };
+  if (d.leaveShop) return { press: DOORS.leaveShop, hold: true };
+  if (d.shrineLeave) return { press: DOORS.shrineLeave, hold: true };
+  if (d.confirm) return { press: DOORS.confirm };
+  return { wait: 'a door' };
+}
 async function leaveRoom() {
-  for (let step = 0; step < 12; step++) {
+  const end = Date.now() + ROOM_MS;
+  let last = null;
+  while (Date.now() < end) {
     await wait(300);
     await skipTutorial();
-    if (await ev(`!!document.querySelector('.map-scroll .map-node.reachable') && !document.querySelector('.modal-veil')`)) return 'map';
-    if (await has('#to-title')) return 'gameover';
-    if (await ev(COMBAT_READY)) return 'combat';
-    if (await has('.reward-veil')) {
-      // Sub-choosers the reward may stack (level, skill draft) close first.
-      for (const done of ['#reward-level-done', '#reward-skill-done', '#reward-back']) if (await has(done)) { await press(done); await wait(200); }
-      // The victory card's Continue (#reward-expand) opens the spoils; their
-      // Continue (#reward-continue, a hold) collects and leaves.
-      if (await has('#reward-expand')) { await press('#reward-expand'); continue; }
-      if (await has('#reward-continue')) { await press('#reward-continue', { hold: true }); continue; }
-    }
-    // A dialogue room (a legacy dungeon's rooms): the first response it
-    // offers (held: a binding one owes a hold), then Continue.
-    if (await has('.dialogue-response:not([disabled])')) { await press('.dialogue-response:not([disabled])', { hold: true, ms: 1000 }); continue; }
-    if (await has('#dialogue-continue:not([disabled])')) { await press('#dialogue-continue'); continue; }
-    if (await has('#event-continue')) { await press('#event-continue', { hold: true }); continue; }
-    if (await has('#choices button:not([disabled])')) { await press('#choices button:not([disabled])', { hold: true }); continue; }
-    if (await has('#leave-shop')) { await press('#leave-shop', { hold: true }); continue; }
-    if (await has('#shrine-leave')) { await press('#shrine-leave', { hold: true }); continue; }
-    if (await has('.confirm-modal [data-confirm="yes"], .as-modal .primary')) { await press('.confirm-modal [data-confirm="yes"], .as-modal .primary'); continue; }
+    const door = pickDoor(await ev(SNAPSHOT));
+    if (door.done) return door.done;
+    last = door;
+    if (door.press) await press(door.press, { hold: !!door.hold, ms: door.ms || 0 });
   }
-  throw new Error(`no way out of this screen: ${JSON.stringify(await ev(SCREEN))}`);
+  throw new Error(`no way out of this screen in ${ROOM_MS} ms (last: ${JSON.stringify(last)}): ${JSON.stringify(await ev(SCREEN))}`);
+}
+
+// --selftest: each plant is an event the real drive must turn red (or, for the
+// one clean edge, must set aside). A change that weakens the listener or widens
+// the 404 exception fails here, without a browser.
+if (argv.includes('--selftest')) {
+  const net = (url, text = 'Failed to load resource: the server responded with a status of 404 (Not Found)', source = 'network') =>
+    ({ method: 'Log.entryAdded', params: { entry: { level: 'error', source, text, url } } });
+  const plants = [
+    ['console.error', 'error', { method: 'Runtime.consoleAPICalled', params: { type: 'error', args: [{ type: 'string', value: 'planted' }] } }],
+    ['console.assert', 'error', { method: 'Runtime.consoleAPICalled', params: { type: 'assert', args: [{ type: 'string', value: 'planted' }] } }],
+    ['uncaught exception', 'error', { method: 'Runtime.exceptionThrown', params: { exceptionDetails: { text: 'Uncaught', exception: { description: 'Error: planted' } } } }],
+    ['non-sound 404 (an image)', 'error', net('http://localhost:1/assets/enemies/planted.png')],
+    ['non-sound 404 (a script)', 'error', net('http://localhost:1/src/ui/planted.js')],
+    ['an .ogg outside assets/sfx/', 'error', net('http://localhost:1/assets/music/planted.ogg')],
+    ['an assets/sfx/ path that is not one .ogg', 'error', net('http://localhost:1/assets/sfx/sub/planted.ogg')],
+    ['an assets/sfx/ sample answered 500', 'error', net('http://localhost:1/assets/sfx/hit.ogg', 'Failed to load resource: the server responded with a status of 500 (Internal Server Error)')],
+    ['a javascript-source log error', 'error', net('', 'planted', 'javascript')],
+    ['clean edge: an optional assets/sfx/<id>.ogg 404', 'optional', net('http://localhost:1/assets/sfx/hit.ogg')],
+    ['clean edge: console.log', null, { method: 'Runtime.consoleAPICalled', params: { type: 'log', args: [{ type: 'string', value: 'fine' }] } }],
+  ];
+  // Door plants: the screen a room shows, and the door the walk must take.
+  const D = (flags) => Object.fromEntries(Object.keys(DOORS).concat('combat').map((k) => [k, !!flags[k]]));
+  const doorPlants = [
+    ['an Event before a response: its disabled Continue is not a door', D({ choice: true }), DOORS.choice],
+    ['an Event after a response: Continue', D({ eventContinue: true, choice: false }), DOORS.eventContinue],
+    ['a reward holding Continue for a level: claim it', D({ rewardVeil: true, veil: true, levelUp: true }), DOORS.levelUp],
+    ['a reward whose level button is still refilling: wait', D({ rewardVeil: true, veil: true }), 'wait'],
+    ['the level chooser before a pick: the first offer', D({ rewardVeil: true, veil: true, chooserPick: true, rewardBack: true }), DOORS.chooserPick],
+    ['the level chooser after a pick: Confirm, not Back', D({ rewardVeil: true, veil: true, chooserPick: true, chooserConfirm: true, rewardBack: true }), DOORS.chooserConfirm],
+    ['a claimed level\'s completion door', D({ rewardVeil: true, veil: true, levelDone: true }), DOORS.levelDone],
+    ['the spoils with Continue enabled', D({ rewardVeil: true, veil: true, rewardContinue: true }), DOORS.rewardContinue],
+    ['the map under no veil', D({ map: true }), 'map'],
+  ];
+  // Doors the game mounts DISABLED (event.js Continue until a response,
+  // reward.js Continue while a level waits, the victory card's Continue while
+  // XP counts, a chooser's Confirm before a pick) are only doors when enabled.
+  for (const key of ['eventContinue', 'rewardContinue', 'rewardExpand', 'chooserConfirm', 'levelUp']) {
+    plants.push([`door: ${key} is pressed only when enabled`, true, null, /:not\(\[disabled\]\)$/.test(DOORS[key])]);
+  }
+  for (const [name, snap, want] of doorPlants) {
+    const door = pickDoor(snap);
+    const got = door.done || door.press || (door.wait ? 'wait' : null);
+    plants.push([`door: ${name}`, want, null, got]);
+  }
+  // CDP plants: a call the browser never answers is rejected by its bound; a
+  // call pending when the socket drops is rejected at once, as is any later.
+  const quiet = cdpCalls(() => {}, { timeoutMs: 50 });
+  const outcome = (p) => Promise.race([p.then(() => 'resolved', (e) => `rejected: ${e.message}`), wait(1000).then(() => 'hung')]);
+  plants.push(['cdp: an unanswered call is rejected by its timeout', 'rejected', null, (await outcome(quiet.call('Runtime.evaluate'))).split(':')[0]]);
+  const dropped = cdpCalls(() => {}, { timeoutMs: 60000 });
+  const inFlight = outcome(dropped.call('Runtime.evaluate'));
+  dropped.fail('the browser connection closed (planted)');
+  plants.push(['cdp: a pending call is rejected when the socket closes', 'rejected', null, (await inFlight).split(':')[0]]);
+  plants.push(['cdp: a call after the socket closed is rejected', 'rejected', null, (await outcome(dropped.call('Page.enable'))).split(':')[0]]);
+  const answered = cdpCalls((data) => setTimeout(() => answered.answer({ id: JSON.parse(data).id, result: {} }), 5), { timeoutMs: 1000 });
+  plants.push(['cdp: clean edge: an answered call resolves', 'resolved', null, await outcome(answered.call('Page.enable'))]);
+  let bad = 0;
+  for (const [name, want, m, planted] of plants) {
+    const got = m ? classify(m)?.kind ?? null : planted;
+    const ok = got === want;
+    if (!ok) bad++;
+    console.log(`${ok ? 'PASS' : 'FAIL'} selftest ${name} — ${m ? 'classified' : 'got'} ${got ?? 'clean'}, wants ${want ?? 'clean'}`);
+  }
+  console.log(`${plants.length - bad} passed, ${bad} failed`);
+  process.exit(bad ? 1 : 0);
 }
 
 // ---- the drive ------------------------------------------------------------------

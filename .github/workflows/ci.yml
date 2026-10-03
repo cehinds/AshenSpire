@@ -1279,9 +1279,19 @@ jobs:
           # PASS over this rather than let it stand, on her own test: a MISSING boundary
           # leaves a reader uninformed; a FALSE one leaves them confidently wrong.
           # — Sunna.
-          echo "  · that the game is playable. NOTHING HERE PLAYS IT. Nine jobs open a browser."
+          # CORRECTED 2026-10-03 (#1520): "NOTHING HERE PLAYS IT" went false when the
+          # full-run probe was wired into browser-guard-stamp. One step now plays one
+          # bounded run; the line says exactly how far it goes and no further.
+          echo "  · that the game is playable in general. ONE step plays it, bounded:"
+          echo "    browser-guard-stamp's full run (tools/full-run-probe.mjs; push and dispatch,"
+          echo "    not pull_request). One class, one seed, 1440x900: from the title it plays the"
+          echo "    first fight with trusted presses, resolves later fights through window.__combat,"
+          echo "    walks to the act-1 boss and LOSES to it, returns to the title and begins a second"
+          echo "    run, with 0 console errors. It never WINS a run, never reaches act 2, and judges"
+          echo "    no balance, art or screen content. Nine jobs open a browser."
           echo "    browser-guard owns focused checks like hand-side placement, browser-guard-stamp"
-          echo "    the build stamp and cold boot, browser-guard-changelog the changelog's known-bads;"
+          echo "    the build stamp, cold boot and that full run, browser-guard-changelog the"
+          echo "    changelog's known-bads;"
           echo "    browser-layout-guard owns phone reach, browser-layout-hintstrip the hint strip and"
           echo "    Armoury, browser-hintstrip-plants the hint strip's known-bads. display-first owns"
           echo "    Settings through BOTH the cold Startup -> Title door and the in-run door. It sends"
@@ -1289,7 +1299,7 @@ jobs:
           echo "    clicks. browser-startup-plants runs the cold-boot known-bad corpus, in shards."
           echo "    browser-motion samples idle and reduced motion over one seeded combat turn."
           echo "    These gates inspect focused rectangles, alpha-weighted rendered pixels or"
-          echo "    animation state; none wins, loses, or finishes a run, or proves general playability."
+          echo "    animation state; apart from the full run above, none wins, loses, or finishes a run."
           # Was: "the tutorial lockout is fixed on feature/tutorial-zoom-lock and NOT on
           # this branch." True when Sunna wrote it, false the moment #7 merges — a
           # boundary block that names a branch dates itself. Replaced with the thing that
