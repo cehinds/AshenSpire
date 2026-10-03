@@ -33,6 +33,10 @@ Unicode true
 ManifestDPIAware true
 SetCompressor /SOLID lzma
 RequestExecutionLevel user
+; A file that cannot be written (locked by antivirus or a running copy) offers
+; Abort/Retry, never Ignore: a silent install stops instead of finishing with a
+; mix of old and new files.
+AllowSkipFiles off
 
 !define APP_NAME "Ashen Spire"
 !define APP_EXE "AshenSpire.exe"
@@ -187,8 +191,11 @@ Section "Ashen Spire (required)" SecGame
 
   File /r "${APP_DIR}\*.*"
 
-  ; The desktop shortcut is the optional section's to make again.
-  Delete "$DESKTOP\${APP_NAME}.lnk"
+  ; The desktop shortcut is the optional section's to make again; only an
+  ; upgrade's own shortcut is removed, never one that was there before.
+  ${If} $Upgrade == 1
+    Delete "$DESKTOP\${APP_NAME}.lnk"
+  ${EndIf}
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   CreateDirectory "$SMPROGRAMS\${APP_NAME}"
@@ -264,6 +271,11 @@ Section "Uninstall"
   StrCpy $8 0
   ClearErrors
   FileOpen $0 "$INSTDIR\install-data\orphans.txt" r
+  ; There but unreadable: its files cannot be removed, so the uninstall is kept.
+  ${If} ${Errors}
+  ${AndIf} ${FileExists} "$INSTDIR\install-data\orphans.txt"
+    StrCpy $8 1
+  ${EndIf}
   ${IfNot} ${Errors}
     ${Do}
       FileRead $0 $1

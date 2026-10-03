@@ -220,6 +220,13 @@ function Remove-DroppedFiles {
     if (Test-Path -LiteralPath $full -PathType Leaf) { return $false }
     $inside = @(Get-ChildItem -LiteralPath $full -Recurse -File -Force)
     if (-not $inside.Count) { return $false }
+    # Every folder in it must hold one of those files: an empty or player-only
+    # folder would survive the cleanup and block the copy.
+    $sep = [IO.Path]::DirectorySeparatorChar
+    foreach ($d in @(Get-ChildItem -LiteralPath $full -Recurse -Directory -Force)) {
+      $prefix = $d.FullName.TrimEnd($sep) + $sep
+      if (-not ($inside | Where-Object { $_.FullName.StartsWith($prefix) } | Select-Object -First 1)) { return $false }
+    }
     foreach ($f in $inside) {
       if (-not $was.Contains($f.FullName.Substring($root.Length + 1).Replace([IO.Path]::DirectorySeparatorChar, '/'))) { return $false }
     }
