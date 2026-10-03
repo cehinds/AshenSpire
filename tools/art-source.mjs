@@ -1,34 +1,27 @@
 #!/usr/bin/env node
-// tools/art-source.mjs — where a tool reads the art packs' files: the fetched
-// release, and nothing else.
+// tools/art-source.mjs — where a tool reads the art packs' files.
 //
 //   node tools/art-source.mjs --dir <tree>     print the directory a tree's files are
 //                                             read from (assets, assets-mobile,
 //                                             assets/fonts, music, map-detail) and exit
 //   node tools/art-source.mjs --which          one line per tree: its pack and where
 //
-// WHY (docs/EXTERNAL-ASSETS-PLAN.md steps 12 and 13). The art trees left this
-// repository at step 13 (with ART-REPO-PLAN step 6): assets/ (the high pack),
-// assets-mobile/ (the light pack), and assets/fonts/, music/ and map-detail/
-// (the common pack) live in cehinds/AshenSpire-art and come back only as the
-// pinned release. tools/fetch-art.mjs verifies each pack into
+// The compact assets-mobile/ light tier is tracked in the game. High-resolution
+// assets/ and common files remain in cehinds/AshenSpire-art; fetch-art verifies
+// their pinned release into
 // .art-cache/<tag>/<pack>/, whose files sit at the trees' old paths
 // (`assets/bg/…`, `assets-mobile/bg/…`, `assets/fonts/…`, `music/…`,
 // `map-detail/…`). Every reader of those paths asks this file.
 //
-// THE RULE. A pack is read from its verified cache (fetch-art's marker matches
-// the current pin and manifest), or not at all: a pack that is not fetched is
-// an error naming the fetch (`node tools/fetch-art.mjs --pack <pack>`). Step 12
-// fell back to the trees here; step 13 deleted them, and the fallback with
-// them. ASHEN_ART_SOURCE:
+// THE RULE. Auto reads the tracked light tier when present. Other packs are
+// read from a verified cache (fetch-art's marker matches the current pin and
+// manifest); an unfetched pack names the fetch. ASHEN_ART_SOURCE:
 //
-//   unset, `auto` or `cache`   the verified cache (CI still sets `cache`; it is
-//                              now the only behaviour, kept as a name so an
-//                              older workflow line stays valid);
+//   unset or `auto`           local light, verified cache for high and common;
+//   `cache`                   verified release for every pack (CI);
 //   `trees`                    the files at the trees' paths under the root
 //                              itself, silently: for a tool's temporary sandbox
-//                              that copies them there on purpose (a fixture),
-//                              never for this checkout, which has none.
+//                              that copies them there on purpose (a fixture).
 //
 // It is listed in BUILD_IDENTITY_FILES (tools/buildversion.mjs), with every
 // other tools/ module tools/bundle.mjs reaches (tests/build-identity.test.mjs):
@@ -103,6 +96,10 @@ function stampOf(root, pack) {
 export function packSource(pack, { root = ROOT, env = process.env } = {}) {
   const mode = sourceMode(env);
   if (mode === 'trees') return { from: 'trees', dir: null, why: `${ENV}=trees` };
+  // The game carries its compact light tier. Auto uses those bytes directly;
+  // cache remains an explicit, pinned-release check for CI and remote builds.
+  if (mode === 'auto' && pack === 'light' && existsSync(join(root, 'assets-mobile')))
+    return { from: 'trees', dir: null, why: 'local light art' };
   const vkey = `${real(root)}\0${pack}`;
   // The decision is kept only while the pin, the manifest and every pack's
   // verified marker are unchanged, so a long-running server (tools/serve.mjs)

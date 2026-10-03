@@ -21,6 +21,7 @@ import { consumableTableProblems, companionTableProblems } from './consumables.j
 import { shopsTableProblems, masterTableProblems } from './shopKinds.js';
 import { marketAdditionTableProblems, blacksmithTableProblems } from './marketStock.js';
 import { resolveFloorPlan } from './floorplan.js';
+import { speakerPortraitAsset } from '../content/speakerArt.js';
 import { validateAttack } from './combatRules.js';
 import { assertTableSane } from './secondbeat.js';
 import { viewRefusals, geometryRefusals } from './mapview.js';
@@ -412,7 +413,8 @@ function collectContentProblems(bundle, errors = []) {
       if (speakerIds.has(row.id)) err(`speakers.${row.id}`, 'duplicate speaker id');
       speakerIds.add(row.id);
       if (typeof row.name !== 'string' || !row.name.trim()) err(`speakers.${row.id}.name`, 'a speaker needs a name for its caption and name plate');
-      if (row.portraitKey !== '' && row.portraitKey !== undefined && row.portraitKey !== null && !enemyIds.has(row.portraitKey)) {
+      if (row.portraitKey !== '' && row.portraitKey !== undefined && row.portraitKey !== null
+        && !enemyIds.has(row.portraitKey) && !speakerPortraitAsset(row.portraitKey)) {
         err(`speakers.${row.id}.portraitKey`, `unknown portrait key '${row.portraitKey}': no shipped art answers to it (leave it blank for the name plate)`);
       }
     });

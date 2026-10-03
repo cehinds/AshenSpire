@@ -1,5 +1,16 @@
 # Credits & Asset Licenses
 
+## Additional artwork carried by art release v6 (2026-10-03)
+
+These existing art-repository additions accompany the painted-book release.
+Their generation batches are recorded in the [art repository credits](https://github.com/cehinds/AshenSpire-art/blob/main/CREDITS.md).
+
+| Asset path | Source | Rights |
+| --- | --- | --- |
+| `assets/cards/` | Seven original OpenAI-generated card paintings and 56 project-authored SVG motifs, recorded in the art repository's 2026-10-03 additions | First-party generated and authored artwork; no third-party asset license claimed. |
+| `assets/events/` | Original OpenAI-generated event paintings from the art repository's 2026-10-02 production batch | First-party generated artwork; no third-party asset license claimed. |
+| `assets/portraits/` | Original OpenAI-generated Road Warden paintings from the art repository's 2026-10-02 production batch | First-party generated artwork; no third-party asset license claimed. |
+
 ## Skill-book shop assets (2026-10-02)
 
 | Asset path | Source | Rights |
@@ -19,6 +30,14 @@ SVG symbols, three trim overlays and a front-cover color mask. Its painted
 masters, prompts and editable vectors are retained in the linked layers kit.
 The old baked book WebPs were retired from runtime packs; their original
 masters remain available in the art package.
+
+The painted revision in `assets/shop/painted/` adds three neutral leather
+bindings and eleven separate painted emblems, including the feat emblem.
+They were generated with the built-in OpenAI image generator using the original
+approved Shield Manual as reference. [PNG masters, exact prompts and exporter](https://github.com/cehinds/AshenSpire-art/tree/main/art/manual-shop-2026-10-02/painted-v2)
+are retained in the art repository. These first-party generated layers have no
+third-party source or license claim. Full-binding recoloring preserves their
+painted shading, brass fittings and parchment.
 
 ## Player polish asset kit (2026-10-02)
 
@@ -354,3 +373,7 @@ third-party license is claimed.
 ## Rendered music score (2026-09-26)
 
 The recorded score is written as code. Each track is a list of notes in `music/score/<id>.mjs`, rendered offline by `node tools/score/render.mjs` on the synthesizer in `tools/score/synth.mjs` into `music/<context>/<id>.mp3`. Every instrument (strings, cello, wordless choir, organ, harp, bells, bowed metal, drones, taiko, frame drum) is synthesized from oscillators and noise: no samples, soundfonts or licensed music, and no AI music model. The two earlier AI-model recordings were removed on the owner's instruction (2026-09-26). No third-party asset licence is claimed.
+
+### Stamina orb and mana harness
+
+`assets/ui/stamina-orb/`: original OpenAI imagegen artwork directed and approved by the project owner. Modular weathered metal harness, emerald stamina orb, green sigil, sapphire mana gem and dim spent gem. PNG masters, prompts and approved layout live in cehinds/AshenSpire-art under `art/ui/stamina-orb/`; high and light runtime images ship in `hd-assets-v7`.

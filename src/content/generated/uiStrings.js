@@ -6138,7 +6138,7 @@ export const uiStrings = [
     "id": "settings.group.Stats",
     "extends": "",
     "short": "Stats",
-    "full": "Everything that turns attributes into Actions, Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.",
+    "full": "Everything that turns attributes into Draw and hand size, HP, Stamina, Mana, Poise, Ward and the combat ratings — one topic per trait, each with a live worked example.",
     "tip": ""
   },
   {
@@ -6249,7 +6249,7 @@ export const uiStrings = [
   {
     "id": "combat.actions.remaining",
     "extends": "",
-    "short": "Actions remaining",
+    "short": "Stamina remaining",
     "full": "",
     "tip": ""
   },
@@ -6277,7 +6277,7 @@ export const uiStrings = [
   {
     "id": "combat.actions",
     "extends": "",
-    "short": "Actions",
+    "short": "Stamina",
     "full": "",
     "tip": ""
   },
@@ -6887,6 +6887,90 @@ export const uiStrings = [
     "id": "lore.line.hint",
     "extends": "",
     "short": "— read the lore",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.classSummary",
+    "extends": "",
+    "short": "Gain {xp} class XP. Each reading has a {card}% chance of a combat card and a separate {feat}% chance of a feat. Cancel keeps the book.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.knownClass",
+    "extends": "",
+    "short": "This class is already learned. Reading still grants its XP and any bonus rewards.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.xpAwarded",
+    "extends": "",
+    "short": "Gained {xp} class XP.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.classLearned",
+    "extends": "",
+    "short": "Class card learned. Equip it later from your inventory.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.cardAwarded",
+    "extends": "",
+    "short": "Combat card learned: {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.featAwarded",
+    "extends": "",
+    "short": "Feat gained: {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.sideboard",
+    "extends": "",
+    "short": "This card was added to your sideboard because the deck copy limit was reached.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.noBonus",
+    "extends": "",
+    "short": "No bonus card or feat this time.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.done",
+    "extends": "",
+    "short": "Close book",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "book.read.complete",
+    "extends": "",
+    "short": "Book read",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.manaRing",
+    "extends": "",
+    "short": "Mana ring",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "settings.manaRing.note",
+    "extends": "",
+    "short": "Show mana as sapphire diamonds around the stamina orb. Turn off to use the top MP bar.",
     "full": "",
     "tip": ""
   }

@@ -3,6 +3,66 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1533",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "The Windows installer lets you browse and download art versions",
+    "detail": "A high-quality artwork button opens art-repository branch and published-version choices, shows installed, required and latest art versions, and lets you install the game's matching pack or save another verified release separately. The installer discloses ChatGPT-generated artwork. README links and action buttons each have their own row, while its opening description stays a plain sentence.",
+    "build": "0.7.1.843",
+    "pullRequest": 1533,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1533"
+  },
+  {
+    "id": "pr-1530",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "One turn budget, with an emerald stamina orb",
+    "detail": "Every class starts with 3 base SP, growing with Dexterity, Constitution, Wisdom, Intelligence and level. Cards and combat actions spend Stamina once, and it refills each turn. The approved emerald orb and weathered harness replace the action counter in solo and co-op, with independently positioned number and SP label. Sapphire diamonds show available mana around the rim; turn Mana ring off in Combat settings to use the top MP bar. Cards use green stamina diamonds. The component artwork is published in the separate art repository and the layout editor remains available.",
+    "build": "0.7.1.842",
+    "pullRequest": 1530,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1530"
+  },
+  {
+    "id": "pr-1532",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Full draws and selective Retain are the approved hand rules",
+    "detail": "The contract starts opening and turn draws at four with Intelligence scaling, keeps Retain cards, shuffles other unplayed cards into the draw pile, and sets a separate default hand limit of fifteen. Retained cards add to the next draw until that limit. This documents the next implementation; gameplay is unchanged in this build.",
+    "build": "0.7.1.839",
+    "pullRequest": 1532,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1532"
+  },
+  {
+    "id": "pr-1529",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "The README explains the current game and where to get each edition",
+    "detail": "The guide now covers retained hands, Actions, Stamina and Mana, combat ratings, equipment cards, the sideboard, progression, books and shop services. It links the installer, art repository, Unity adaptation and each browser channel's play and download paths, with verified GitHub build alternatives while hosted paths are unavailable. Gameplay is unchanged.",
+    "build": "0.7.1.838",
+    "pullRequest": 1529,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1529"
+  },
+  {
+    "id": "pr-1527",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Painted books and class-book bonuses",
+    "detail": "Books have separate painted covers and emblems, including a feat emblem, with color across the whole leather binding. Class books grant XP on every read, learn the class on the first read, and independently roll a matching combat card (25%) and feat (5%). Both chances are configurable in Advanced → Shops. The result shows what you received; excess card copies go to the sideboard.",
+    "build": "0.7.1.837",
+    "pullRequest": 1527,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1527"
+  },
+  {
+    "id": "pr-1526",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Class-book reward rules are documented",
+    "detail": "The approved contract keeps class learning and XP, makes class books repeatable, and specifies independent configurable combat-card and feat chances of 25% and 5%. This documents the next implementation; gameplay is unchanged in this build.",
+    "build": "0.7.1.835",
+    "pullRequest": 1526,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1526"
+  },
+  {
     "id": "pr-1517",
     "date": "2026-10-03",
     "group": "2026-10-03",

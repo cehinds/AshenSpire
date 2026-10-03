@@ -70,6 +70,7 @@ import { finishCardDrag } from '../cardDragEnd.js';
 import { resourceBars } from '../components/resbars.js';
 import { renderArcaneExposure, arcaneExposureReceipt } from '../components/arcaneExposure.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
+import { combatVitals } from '../models/StaminaOrbModel.js';
 import { beatArmer } from '../../framework/optionDecision.js';
 import { mountRelicRail } from '../components/relicRail.js';
 import { t } from '../strings.js';
@@ -916,7 +917,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     const host = $('.topbar .resbars-host');
     if (host) {
       host.innerHTML = '';
-      const mainPlan = resourceBarPlan(registries, 'main', pv, p, resDomains);
+      const mainPlan = combatVitals(resourceBarPlan(registries, 'main', pv, p, resDomains), readSettings());
       host.appendChild(resourceBars(mainPlan, { surface: 'main', tooltipExtra: poiseTip('player') }));
       host.querySelectorAll('[data-tip-attached]').forEach(node => { node.tabIndex = 0; });
     }
@@ -1083,7 +1084,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
           const magical = bar.id === 'ward';
           const loss = combat.ratingsRules.breaks[magical ? 'wardActionLoss' : 'poiseActionLoss'];
           const percent = entity ? Math.round((1 - ratingDamageMultiplier(combat, entity, magical)) * 100) : null;
-          return esc(`${magical ? 'Ward' : 'Poise'} resists ${magical ? 'magical' : 'physical'} attacks${percent === null ? '' : ` by ${percent}%`} and configured status effects. The bar fills with impact from hits that pass Block. A full bar causes ${magical ? 'Disruption' : 'Stagger'}: ${kind === 'player' ? `${loss} fewer Actions next turn` : 'lose the next move'}.`);
+          return esc(`${magical ? 'Ward' : 'Poise'} resists ${magical ? 'magical' : 'physical'} attacks${percent === null ? '' : ` by ${percent}%`} and configured status effects. The bar fills with impact from hits that pass Block. A full bar causes ${magical ? 'Disruption' : 'Stagger'}: ${kind === 'player' ? `${loss} less Stamina next turn` : 'lose the next move'}.`);
         }
       }
       if (bar.id !== 'poise') return '';
@@ -1590,7 +1591,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
     // without any screen tracking the dressing.
     if (endTurnBeat) endTurnBeat.refresh();
     $('.end-turn').disabled = busy || enemyPlayback || !!combat.result;
-    paintCombatActionCounts(actionRow, { energy: combat.player.energy, energyMax: combat.player.energyMax, draw: combat.piles.draw.length, discard: combat.piles.discard.length, exhaust: combat.piles.exhaust.length });
+    paintCombatActionCounts(actionRow, { energy: combat.player.energy, energyMax: combat.player.energyMax, mana: combat.player.mana, maxMana: combat.player.maxMana, settings: readSettings(), draw: combat.piles.draw.length, discard: combat.piles.discard.length, exhaust: combat.piles.exhaust.length });
 
   }
 
@@ -1834,7 +1835,7 @@ export function mountCombat(app, { registries, run, combat, meta, onEnd, showTut
         const reasons = [];
         const reason = unplayableReason(inst);
         if (reason) reasons.push(reason);
-        if (combat.player.energy < (pv.costIsX ? 0 : pv.cost)) reasons.push('Not enough actions.');
+        if (combat.player.energy < (pv.costIsX ? 0 : pv.cost)) reasons.push('Not enough stamina.');
         if (combat.player.mana < pv.manaCost) reasons.push('Not enough mana.');
         if (combat.player.stamina < (pv.staminaCost || 0)) reasons.push('Not enough stamina.');
         showTooltipFor(el, '<p>' + esc(reasons.join(' ')) + '</p>');

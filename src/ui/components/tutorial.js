@@ -13,6 +13,7 @@
 // the board's input (ui.css .tut-veil is pointer-events:none; only the bubble
 // takes clicks). Even with every callout mispositioned, the player can play.
 
+import { t } from '../strings.js';
 import { anchorLocalBox } from '../fx.js';
 import { veilIsOpen } from './veil.js';
 import { actionLabel } from '../input.js';
@@ -32,11 +33,11 @@ import { el, button, buttonRow, titleS, prose } from '../kit/index.js';
 // to derive from. Said here rather than leaving the next reader to work out which
 // of the two rules applied to which line.
 const STEPS = [
-  { sel: '.energy-orb', title: 'Energy', text: 'Three energy each turn. Cards cost energy to play — spend it wisely.' },
+  { sel: '.energy-orb', title: () => t('combat.actions'), text: 'Cards spend stamina. It refills each turn. Sapphire diamonds around the orb show your available mana.' },
   { sel: '.enemy-row .intent', title: 'Enemy intent', text: 'Enemies telegraph their next move. The number is the exact damage they will deal to you.' },
   { sel: '.hand .card', title: 'Play cards', text: 'Click a card or press 1–9. Attacks need a target — click an enemy, or drag the card onto it.' },
   { sel: '.end-turn', title: 'End your turn',
-    text: () => `Done? End Turn (or press ${actionLabel('endTurn')}). Unspent energy and most Block are lost at your next turn.` },
+    text: () => `Done? End Turn (or press ${actionLabel('endTurn')}). Unspent stamina and most Block are lost at your next turn.` },
 ];
 
 // What the bubble keeps off (place() below): the cards the player is being
@@ -136,7 +137,7 @@ export function mountTutorial(root, { onDone }) {
 
   function show() {
     const step = steps[i];
-    veil.querySelector('.tut-title').textContent = step.title;
+    veil.querySelector('.tut-title').textContent = typeof step.title === 'function' ? step.title() : step.title;
     veil.querySelector('.tut-text').textContent = typeof step.text === 'function' ? step.text() : step.text;
     veil.querySelector('.tut-next').textContent = i === steps.length - 1 ? 'Got it' : `Next (${i + 1}/${steps.length})`;
     if (!place()) next(); // target vanished between filter and show

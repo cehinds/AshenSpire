@@ -10,6 +10,7 @@ import { retiredAttackSlots } from './cardRemoval.js';
 //
 // Headless: no document/window/localStorage/timers.
 
+import { bindTurnStamina } from './turnStamina.js';
 import { createLoadout, runMods, stampDeck, startingDeckRefs, orderStartingDeck, createEquipmentProfileRuleSnapshot, restoreEquipmentProfileRuleSnapshot, equipmentRequirementReceipt, EQUIPMENT_POOL_FIELDS } from './loadout.js';
 import { chargeKindForFlask, createFlaskCharges, flaskCapacity } from './gracerefill.js';
 import { journeyProblems } from './worldAtlas.js';
@@ -1489,7 +1490,7 @@ export function deserializeRun(json) {
  * a zero-threshold player has no vessel, and the HUD's refusal path renders
  * it ABSENT rather than as an empty trough.
  */
-export function createPlayerCombatEntity({ classId, classUnequipped = false, maxHp, hp, maxMana, mana, maxStamina = 0, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {}, itemUpgradeLevels = {} }) {
+export function createPlayerCombatEntity({ classId, classUnequipped = false, maxHp, hp, maxMana, mana, maxStamina, stamina, relicIds = [], flasks = [], flaskCharges = null, energyMax, drawPerTurn, poiseMax = 0, damageBySchoolAdd = {}, itemUpgradeLevels = {} }) {
   if (!Number.isInteger(energyMax) || energyMax < 0) throw new Error('Player combat entity requires stamped non-negative integer energyMax');
   if (!Number.isInteger(drawPerTurn) || drawPerTurn < 0) throw new Error('Player combat entity requires stamped non-negative integer drawPerTurn');
   const entity = {
@@ -1501,8 +1502,8 @@ export function createPlayerCombatEntity({ classId, classUnequipped = false, max
     maxHp,
     mana: mana != null ? mana : maxMana,
     maxMana,
-    stamina: stamina != null ? stamina : maxStamina,
-    maxStamina,
+    stamina: stamina ?? maxStamina ?? energyMax,
+    maxStamina: maxStamina ?? energyMax,
     block: 0,
     energy: 0,
     energyMax,
@@ -1523,7 +1524,7 @@ export function createPlayerCombatEntity({ classId, classUnequipped = false, max
     alive: true,
   };
   stampPlayerPoiseMax(entity, poiseMax);
-  return entity;
+  return bindTurnStamina(entity);
 }
 
 /**

@@ -28,6 +28,9 @@ import { openBookLearning } from './src/ui/components/bookLearning.js';
 // No saved game or storage is read or written by this preview.
 const params = new URLSearchParams(location.search);
 const settings = { shopSell: false, 'gameConfig.consumables.shieldManual.xp': Number(params.get('xp') || 40) };
+for (const cls of contentBundle.classes) for (const [param, field] of [['cardChance', 'combatCardChance'], ['featChance', 'featChance']]) {
+  if (params.has(param)) settings[`gameConfig.consumables.${cls.id}ClassBook.${field}`] = Number(params.get(param));
+}
 const registries = createRegistries(configuredContentBundle(contentBundle, settings));
 const run = createRunState({ seed: 21, classId: 'reaver', registries });
 run.cinders = Number(params.get('cinders') || 999);

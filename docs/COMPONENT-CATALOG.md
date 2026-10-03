@@ -225,7 +225,7 @@ projection is [`RunHudViewModel.js`](../src/ui/viewModels/RunHudViewModel.js).
 | `guarded-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Amount absorbed by Guard. |
 | `health-damage-indicator` | `damageFeedback` variant | `fx.js` | Combat feedback | Residual damage applied to HP. |
 | `player-hand-tray` | `componentModel` | `combat.js` + `hand.js` | Combat | Faces fan by overlap, grow up to 184 physical pixels wide when space permits, and remain visible, inert and dim during enemy turns. The 5:7 face is the card's one authored shape (`content/config/ui/components/card.json` `sizing.ratio`, projected as `--card-ratio` by `CardSizeModel`): this row said 5:7 while the hand actually drew 5:8, and `node tools/card-one-shape.mjs` now holds every surface to the one number. |
-| `combat-action-rail` | `componentModel` | `components/combatActionRow.js` (mounted by `combat.js` and `coop.js`) | Combat, Co-op combat | Single centered row: Actions, flexible Draw, End Turn, flexible Discard/Exhaust, and Potions. All five controls share a vertical center at narrow widths. Co-op mounts the same row; its piles show counts (the host sends no cards) and its Potions list belongs to the seat that opened it. |
+| `combat-action-rail` | `componentModel` | `components/combatActionRow.js` (mounted by `combat.js` and `coop.js`) | Combat, Co-op combat | Single centered row: emerald stamina orb (`StaminaOrbModel` / `staminaOrb.js`) with independent number and SP label layers and an optional sapphire mana ring; flexible Draw, End Turn, flexible Discard/Exhaust, and Potions. All five controls share a vertical center at narrow widths. Co-op mounts the same row; its piles show counts (the host sends no cards) and its Potions list belongs to the seat that opened it. |
 | `kit.pageDoor` | `pageDoor(spec)` | `kit/index.js` pageDoor | Every screen that asks something | The one door-opener: head with eyebrow, title and a single close control, a body the surface owns, and a foot on the button ladder. Four named widths (sm, md, lg, xl) or full; Escape, veil click and focus return are bound here once. |
 | `kit.optionCard` | `optionCard(spec)` | `kit/index.js` optionCard | Every list of ways on | One choosable way on — glyph or art, name, description, optional badge, meta and trail — carrying its own selected and disabled states. |
 | `kit.detailCard` | `detailCard(spec)` | `kit/index.js` detailCard | Inspectors and summaries | One subject described: eyebrow, name, line, meta, and any body the caller adds. The muted variant is the same card standing back. |
@@ -411,6 +411,10 @@ and returning to Title reset it. `tray-resize-handle` remains the shared 44px
 mouse, touch-hold, and keyboard surface, while `tray-content` owns scrolling.
 
 ## Menu components
+
+| Component ID | Model | Renderer | Role |
+|---|---|---|---|
+| `installer-art-options` | `desktop/windows/art-releases.ps1` | `desktop/windows/art-options.ps1` + `installer.nsi` | Windows installer artwork chooser: repository branch and published release selectors; installed, required and latest art versions; compatible-pack installation, verified separate ZIP downloads and ChatGPT artwork disclosure. Native preview is included in the Windows installer artifact. |
 
 The production Quick Menu has one stable **Quick Menu** caption and defaults to
 **Mirror** when the stored value is absent or invalid. Mirror keeps the

@@ -20,6 +20,8 @@ import { balance } from '../../content/balance.js';
 import { flasks } from '../../content/flasks.js';
 import { tagService } from '../../model/tagService.js';
 import { metadataFooter, artworkAnchor } from '../models/IdentityModel.js';
+import { playingCardArt, defaultCardArtFallbacks } from '../cardArtwork.js';
+import { assetUrl } from '../assetmap.js';
 import { t } from '../strings.js';
 import { loreLine } from './loreLine.js';
 import { cardChoice } from '../../model/cardChoices.js';
@@ -160,7 +162,6 @@ export function renderCard(registries, ref, opts = {}) {
   // words come from the TermRegistry, like the tooltip's cost line.
   const cost = model.costs.variable ? 'X' : model.costs.action;
   const manaCost = model.costs.mana;
-  const staminaCost = model.costs.stamina;
   const resourceWord = (resource) => esc(registries.framework.resourceWord(resource));
 
   // WC0/WC1: keep every projected cost on the exposed left edge of a fan.
@@ -172,8 +173,7 @@ export function renderCard(registries, ref, opts = {}) {
   // as "free". Only the SECONDARY pools elide at zero: a card that spends no
   // stamina and no mana should not print two empty rails.
   const costRows = [
-    ['action', 'cost', '◆', cost, true],
-    ['stamina', 'stamina-cost', 'ϟ', staminaCost, false],
+    ['stamina', 'cost stamina-cost', '◆', cost, true],
     ['mana', 'mana-cost', '♦', manaCost, false],
   ].filter(([, , , value, keepZero]) => value != null && (keepZero || value !== 0));
   el.dataset.wireframe = 'WC1';
@@ -213,6 +213,7 @@ export function renderCard(registries, ref, opts = {}) {
   });
   let drawn = levelNow();
   const paint = (at) => {
+    const artwork = playingCardArt(ref, { large: at === 'inspect' });
     const visible = new Set(cardFields(at, { surface: opts.surface || 'none' }).visible);
     const region = (key, html) => (visible.has(key) ? html : '');
     // HIDE BY NOT RENDERING. A region left in the markup and hidden in CSS
@@ -252,7 +253,7 @@ export function renderCard(registries, ref, opts = {}) {
       ).join('')}</div>`) +
 
       `<div class="cname" data-identity-part="name">${esc(model.name)}</div>` +
-      region('art', `<div class="art" data-identity-part="artwork" data-artwork-anchor="${artworkAnchor('card')}"><span class="card-art-glyph">${esc(model.icon)}</span>` +
+      region('art', `<div class="art" data-identity-part="artwork" data-artwork-anchor="${artworkAnchor('card')}">${artwork ? `<img class="playing-card-art" data-card-art="${artwork.kind}" src="${esc(assetUrl(artwork.path))}" alt="" loading="lazy" decoding="async">` : ''}<span class="card-art-glyph" aria-hidden="true">${esc(model.icon)}</span>` +
       // Subtypes: authored in content/source/tagging.csv. Untagged cards
       // render nothing here, so the layout is unchanged for them.
       (tags.length && visible.has('tags')
@@ -266,6 +267,16 @@ export function renderCard(registries, ref, opts = {}) {
     // next repaint can tell the two apart. Guarded for the same minimal DOM.
     if (el.children) for (const node of el.children) { if (node.dataset) node.dataset.cardPainted = '1'; }
     for (const node of kept) el.append(node);
+    const image = el.querySelector?.('.playing-card-art');
+    if (image) {
+      const fallbacks = defaultCardArtFallbacks(ref).filter(path => path !== artwork.path);
+      image.addEventListener('error', () => {
+        const next = fallbacks.shift();
+        if (!next) return;
+        image.dataset.cardArt = 'outline';
+        image.src = assetUrl(next);
+      });
+    }
     // A WITHHELD REGION GIVES ITS TRACK BACK.
     //
     // WC1 lays the face out on four authored bands — name / art / body /
@@ -580,8 +591,7 @@ function cardTooltip(registries, def, tokens, liveCosts = null) {
   // Terms are data; escape them like every other field before innerHTML.
   const word = (resource) => esc(registries.framework.resourceWord(resource));
   const costText = `${esc(pools.variable ? 'X' : pools.action)} ${word('action')}`
-    + (pools.mana ? ` + ${esc(pools.mana)} ${word('mana')}` : '')
-    + (pools.stamina ? ` + ${esc(pools.stamina)} ${word('stamina')}` : '');
+    + (pools.mana ? ` + ${esc(pools.mana)} ${word('mana')}` : '');
   // THE TITLE IS THE NAME AND NOTHING ELSE (kit §08): type and cost sit on the
   // meta line as the same tag and value atoms the card face uses.
   let html = `<div class="tt-title">${esc(def.name)}</div>`

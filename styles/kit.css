@@ -346,6 +346,7 @@ button.primary.danger:hover, .as-btn.primary.danger:hover { background-color: co
   box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.35), 0 0 18px rgba(var(--accent-rgb), 0.18);
 }
 .as-option .og { flex: 0 0 3rem; font-size: 2.25rem; line-height: 1; color: var(--gold); text-align: center; }
+.cz-keepsake .og img { display: block; width: 3rem; height: 3rem; object-fit: contain; }
 .as-option .relic-art { width: 3rem; height: 3rem; }
 .tray-icon > .relic-art { width: 100%; height: 100%; }
 .as-option .ob { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.2rem; }
@@ -907,6 +908,11 @@ input[type="range"] { min-height: var(--tap-floor); }
   background: #0f0c09; border: 1px solid var(--line); border-radius: var(--r-2);
   font-size: 2.9rem; line-height: 1; color: var(--parchment);
 }
+.card .art .playing-card-art { width: 100%; height: 100%; object-fit: cover; object-position: center 42%; }
+.card[data-wireframe="WC1"] .art .playing-card-art { position: absolute; inset: 0; }
+.card .art:has(.playing-card-art) .card-art-glyph { display: none; }
+.card .art .ctags { z-index: 1; }
+.card-inspection-modal .card .art .playing-card-art { object-fit: contain; }
 /* TypeBand — the type's own tint, full card width, fixed landmark. */
 .card .ctype, .as-typeband {
   --track: 0.22em;
@@ -5254,6 +5260,8 @@ button[data-button-size] {
 /* The shared sprite functions stamp combat's fixed sizes inline; the stage
    adapter places the figure by transform from the layer's origin. */
 .dialogue-portrait-art > .dialogue-figure { position: absolute !important; left: 0; top: 0; margin: 0; transform-origin: 0 0; flex: none; }
+.speaker-portrait-still { width: 512px; height: 512px; }
+.speaker-portrait-image { display: block; width: 100%; height: 100%; object-fit: contain; }
 .dialogue-portrait[data-figure-fit='pending'] > .dialogue-portrait-art { visibility: hidden; }
 /* Painted player figures face right as authored (combat does the same). */
 .dialogue-portrait .class-sprite > .facing { transform: none; }
@@ -5621,11 +5629,23 @@ button[data-button-size] {
   .book-learning-rarity { font-size: 12px; }
 }
 .book-art { display: inline-block; position: relative; isolation: isolate; width: 100%; aspect-ratio: 1; flex-shrink: 0; }
-.book-art > .book-art-base { display: block; width: 100%; height: 100%; object-fit: contain; }
-.book-art-tint, .book-art-trim, .book-art-symbol { position: absolute; inset: 0; background: var(--book-layer-color); mask: var(--book-layer-mask) center / contain no-repeat; -webkit-mask: var(--book-layer-mask) center / contain no-repeat; pointer-events: none; }
-.book-art-tint { mix-blend-mode: color; }
-.book-art-trim { opacity: .85; filter: drop-shadow(1px 2px 1px #21150d); }
-.book-art-symbol { inset: 25% auto auto 38%; width: 36%; height: 38%; transform: matrix(1,-.21,.4,1,0,0); filter: drop-shadow(1px 2px 1px #21150d); }
+.book-art > svg { display: block; width: 100%; height: 100%; pointer-events: none; }
 .book-reading-art { float: right; width: 5.5rem; margin: -0.5rem 0 0.5rem 0.5rem; }
 .inventory-face .book-art { width: 4rem; }
 .inventory-model .book-art { width: min(100%, 15rem); }
+
+/* Unified turn Stamina uses the former action diamond, in green. */
+.card .card-cost-rail > .cost.stamina-cost,
+.card.playing-poker-card .cost.stamina-cost { color: #88e183; border-color: #529b58; background: #14271b; }
+.stamina-budget,
+.combat-action-row .energy-orb,
+.combat-action-row .energy-orb :is(.sp-k, .sp-v) { color: #88e183; }
+
+/* Approved SP Atelier assembly. Keep the shared footer's measured footprint. */
+:root .combat:is(.coop,:not(.coop)) .combat-action-row > .energy-orb.stamina-orb {
+  padding: 0; border: 0; background: transparent; box-shadow: none; position: relative;
+  overflow: visible; display: block;
+}
+:root .combat .stamina-orb > svg { display: block; width: 100%; height: 100%; overflow: visible; }
+:root .combat .stamina-orb > .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+:root .combat .stamina-orb:focus-visible { outline: 2px solid #96cbaa; outline-offset: 2px; }

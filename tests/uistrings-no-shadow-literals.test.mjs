@@ -44,6 +44,7 @@ function migratedIds() {
 // [file, text, reason]. Every entry must still match at least one site.
 const ID = 'an id or stored value, not copy';
 const ALLOWED = [
+  ['src/ui/screens/settings.js', 'Stamina', `Recovery topic id; ${ID}`],
   // Settings: category, advanced-group and topic ids. The faces read t('settings.group.*').
   ['src/ui/screens/settings.js', 'Audio', `category id (cat: 'Audio', GENERAL_GROUPS) and General › Audio's own subgroup; ${ID}`],
   ['src/ui/screens/settings.js', 'Stats', `advanced-group id (group.id === 'Stats', MERGED_ADVANCED_GROUPS); ${ID}`],
@@ -61,7 +62,7 @@ const ALLOWED = [
   ['src/ui/models/AdvancedSettingsGroups.js', 'Interface', `advanced-group id; ${ID}`],
   ['src/ui/models/AdvancedSettingsGroups.js', 'Battlefield', `advanced-group id; ${ID}`],
   ['src/ui/models/AdvancedSettingsGroups.js', 'Poise', `Stats topic id; ${ID}`],
-  ['src/ui/models/AdvancedSettingsGroups.js', 'Actions', `Stats topic id; ${ID}`],
+  ['src/ui/models/AdvancedSettingsGroups.js', 'Stamina', `Stats topic id; ${ID}`],
   ['src/ui/models/StatsPreviewModel.js', 'Poise', `Stats topic id and the rating abbreviation table (RATING_LABELS keys ratings, not this overview row); ${ID}`],
   ['src/ui/models/WireframeChoiceModel.js', 'Modals', `layout family id, persisted (tests/uistrings-stable-ids.test.mjs); ${ID}`],
   ['src/ui/models/WireframeChoiceModel.js', 'Menus', `layout family id, persisted; ${ID}`],
