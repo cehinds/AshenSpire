@@ -15,7 +15,7 @@
 //   * no part is lost: the resource bars, Leave and the quick-settings cluster
 //     are always there, the fight label is there off the compact band (the
 //     compact band hides it by design), and exactly EXPECTED_RESOURCE_ROWS
-//     resource rows (HP, Mana, Stamina) are shown;
+//     resource rows are shown (HP by default; Stamina and Mana use the orb);
 //   * every visible part of the HUD top lies inside the viewport on all four
 //     sides, and every part but the floating quick-settings cluster inside the
 //     topbar band;
@@ -74,7 +74,7 @@ export const VIEWPORTS = [
 const TOLERANCE = 0.5; // px: sub-pixel rounding, never a real overlap
 // The canned co-op host snapshot's seat shows HP, Mana and Stamina, one
 // `.resline` each. A row that goes missing is a lost part.
-export const EXPECTED_RESOURCE_ROWS = 3;
+export const EXPECTED_RESOURCE_ROWS = 1;
 // Compact band: a part must share at least this share of its own height with
 // the tallest part's row, so one sitting mostly on a second line is caught.
 const ROW_SHARE = 0.5;
@@ -139,7 +139,7 @@ const MEASURE = `(() => {
 })()`;
 
 /** Pure judge over one viewport's measurement → list of failure strings. */
-export function judge(g, label, { singleRow = false } = {}) {
+export function judge(g, label, { singleRow = false, expectedResourceRows = EXPECTED_RESOURCE_ROWS } = {}) {
   const bad = [];
   if (!g || !g.mounted) return [`${label}: co-op formation board did not mount`];
   if (!g.topbar || !g.hudTop) return [`${label}: no .topbar > .hud-top`];
@@ -148,7 +148,7 @@ export function judge(g, label, { singleRow = false } = {}) {
   if (!g.parts.some((p) => p.name === 'coop-leave')) bad.push(`${label}: Leave button missing from the HUD top`);
   if (!g.parts.some((p) => p.name === 'hud-quick-settings')) bad.push(`${label}: quick-settings cluster missing from the topbar`);
   if (!singleRow && !g.parts.some((p) => p.name === 'fight-label')) bad.push(`${label}: fight label missing from the HUD top`);
-  if ((g.bars || []).length !== EXPECTED_RESOURCE_ROWS) bad.push(`${label}: ${(g.bars || []).length} resource rows shown, want ${EXPECTED_RESOURCE_ROWS} (HP, Mana, Stamina)`);
+  if ((g.bars || []).length !== expectedResourceRows) bad.push(`${label}: ${(g.bars || []).length} resource rows shown, want ${expectedResourceRows}`);
   const measured = [...g.parts, ...(g.bars || [])];
   // Resource rows are children of the host: check each row against the band
   // and its peers without counting its overlap with its own parent.
@@ -370,8 +370,12 @@ export function selftest() {
   cases.push(['resource row over battlefield', { ...moveFirstBar({ top: 72, bottom: 82 }), field: { top: 80 } }, 1, {}, /resline reaches into the battlefield/]);
   // An optional fifth field names the failure the case must be caught BY, so a
   // case cannot pass on some other, accidental failure.
+  cases.push(['current HP-only HUD', { ...base, bars: base.bars.slice(0, 1) }, 0, { expectedResourceRows: EXPECTED_RESOURCE_ROWS }]);
+  cases.push(['current HUD loses HP', { ...base, bars: [] }, 1, { expectedResourceRows: EXPECTED_RESOURCE_ROWS }, /0 resource rows shown/]);
+  cases.push(['current HUD duplicates a resource', { ...base, bars: base.bars.slice(0, 2) }, 1, { expectedResourceRows: EXPECTED_RESOURCE_ROWS }, /2 resource rows shown/]);
   const wrong = cases.filter(([, g, want, opts, why]) => {
-    const bad = judge(g, 'st', opts);
+    // Keep the three-row geometry fixtures exercising row overlap as well.
+    const bad = judge(g, 'st', { expectedResourceRows: 3, ...opts });
     return (bad.length > 0 ? 1 : 0) !== want || (why && !bad.some((m) => why.test(m)));
   });
   for (const [name] of wrong) console.error(`  selftest: ${name} judged wrongly`);
@@ -521,9 +525,14 @@ const REPEAT_STEP = {
   press: `(() => { for (let i = 0; i < 3; i++) window.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', code: 'KeyF', bubbles: true, repeat: i > 0 }));
     return document.querySelectorAll('.combat-potion-menu').length; })()`,
   lists: `document.querySelectorAll('.combat-potion-menu').length`,
-  // The Actions and Discard/Exhaust labels follow the painted values (#1436 review).
+  // The Stamina/Mana and Discard/Exhaust labels follow the active seat and paint.
   labels: `(() => { const orb = document.querySelector('.combat.coop .energy-orb'); const spent = document.querySelector('.combat.coop .pile.spent');
-    return { orb: orb?.getAttribute('aria-label') || '', value: orb?.querySelector('.sp-v')?.textContent || '', spent: spent?.getAttribute('aria-label') || '' }; })()`,
+    const seat = window.__coopSnapshotForShot.scene.players.find(p => p.id === 'p1');
+    return { orb: orb?.getAttribute('aria-label') || '', value: orb?.querySelector('.sp-v')?.textContent || '',
+      painted: orb?.querySelector('text[data-orb-part=number]')?.textContent || '', ring: orb?.dataset.manaRing,
+      ready: orb?.querySelectorAll('[data-orb-part=diamond]').length, spentGems: orb?.querySelectorAll('[data-orb-part=spent]').length,
+      expected: { stamina: seat.stamina, maxStamina: seat.maxStamina, mana: seat.mana, maxMana: seat.maxMana },
+      spent: spent?.getAttribute('aria-label') || '' }; })()`,
 };
 
 async function repeatOpenProbe(cdp, sessionId, base) {
@@ -534,9 +543,15 @@ async function repeatOpenProbe(cdp, sessionId, base) {
   await ev(SEAT_STEP.ready);
   await wait(300);
   const labels = await ev(REPEAT_STEP.labels);
-  const [have, max] = String(labels?.value || '').split('/');
+  const seat = labels?.expected;
   const labelBad = [];
-  if (!have || labels.orb !== `Actions ${have} of ${max}`) labelBad.push(`labels: Actions reads "${labels?.orb}" while it shows ${labels?.value}; want "Actions ${have} of ${max}"`);
+  const expectedLabel = seat && `Stamina ${seat.stamina} of ${seat.maxStamina}. Mana ${seat.mana} of ${seat.maxMana}.`;
+  if (!seat || labels.value !== String(seat.stamina) || labels.painted !== labels.value || labels.orb !== expectedLabel) {
+    labelBad.push(`labels: Stamina reads "${labels?.orb}" and paints ${labels?.painted}; want "${expectedLabel}"`);
+  }
+  if (!seat || labels.ring !== 'true' || labels.ready !== seat.mana || labels.spentGems !== seat.maxMana - seat.mana) {
+    labelBad.push(`labels: Mana ring does not show the active seat's available and spent mana`);
+  }
   if (/Open piles/.test(labels?.spent || '')) labelBad.push(`labels: co-op Discard/Exhaust promises "Open piles" (${labels.spent}); co-op has no pile viewer`);
   await ev(REPEAT_STEP.press);
   await wait(400);

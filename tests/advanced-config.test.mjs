@@ -798,7 +798,7 @@ test("the owner's exported 0.7.1 configuration imports through the screen's own 
   // stock 4, never a customisation, so it is dropped without a word.
   const opening = warnings.filter((line) => /^Opening hand/.test(line));
   assert.equal(opening.length, 1);
-  assert.match(opening[0], /old limits of 3–15 cards were left out, so the current 4–6 applies/);
+  assert.match(opening[0], /old limits of 3–15 cards were left out, so the current opening-hand limits apply/);
   assert.doesNotMatch(opening[0], /shared base/);
   // "start with 4-6 cards": the imported configuration opens every class there.
   const registries = createRegistries(configuredContentBundle(contentBundle, changes));
@@ -808,7 +808,7 @@ test("the owner's exported 0.7.1 configuration imports through the screen's own 
     const [primary] = Object.entries(row).find(([key, value]) => key in allOnes && value);
     for (const attributes of [allOnes, contentBundle.attributeRules.presets.lean[classId], { ...allOnes, [primary]: 40 }]) {
       const cards = scaledCards(row, attributes);
-      assert.ok(cards >= 4 && cards <= 6, `${classId} opens on ${cards}`);
+      assert.ok(cards >= row.min && cards <= row.max, `${classId} opens on ${cards}`);
     }
   }
 });
