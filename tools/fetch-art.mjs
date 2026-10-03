@@ -451,8 +451,9 @@ export function recheck(dir, manifest, pack = 'high', pin = null) {
   // Nothing rides along unlisted: tools copy these directories whole (launch's
   // music/ and map-detail/, the previews' fonts), so a file the manifest does
   // not name for this pack — a stale track, an added music/score/ file — would
-  // ship. Only the cached manifest and dot-named markers are exempt.
-  const listed = new Set([MANIFEST_PATH]);
+  // ship. Only the cached manifest and the .verified marker are exempt; a
+  // dot-named file anywhere else is an extra like any other.
+  const listed = new Set([MANIFEST_PATH, VERIFIED]);
   for (const rec of Object.values(manifest.assets || {})) {
     const common = commonOf(rec);
     const want = common || (rec && rec[pack]);
@@ -460,7 +461,6 @@ export function recheck(dir, manifest, pack = 'high', pin = null) {
   }
   if (existsSync(dir)) {
     for (const rel of filesUnder(dir)) {
-      if (rel.split('/').some((part) => part.startsWith('.'))) continue;
       if (!listed.has(rel)) problems.push(`${rel}: in the cache, but ${MANIFEST_PATH} lists no ${pack} file there`);
     }
   }
