@@ -48,6 +48,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { artPath } from './art-source.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const BODY = 'assets/equipment/body_reaver_default.webp';
@@ -223,7 +224,7 @@ function armaments() {
         authoredHand,
         art,
         url,
-        missing: !existsSync(resolve(ROOT, url)),
+        missing: !existsSync(artPath(url, { root: ROOT })),
       });
     }
   }
