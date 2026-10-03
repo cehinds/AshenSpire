@@ -17,7 +17,9 @@ Single-player with optional LAN co-op. Four starting classes, seeded regional ro
 | **main** | Owner-promoted stable channel | [Play main](https://cehinds.github.io/AshenSpire/main/latest/) | [Download main HTML](https://cehinds.github.io/AshenSpire/main/latest/download/AshenSpire.html) · [GitHub build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Amain) | [Main builds](https://cehinds.github.io/AshenSpire/main/) |
 | **dev** | Integration source | [Play dev](https://cehinds.github.io/AshenSpire/dev/latest/) | [Download dev HTML](https://cehinds.github.io/AshenSpire/dev/latest/download/AshenSpire.html) · [GitHub build zip](https://github.com/cehinds/AshenSpire/actions/workflows/dev-preview.yml?query=branch%3Adev) | [Dev builds](https://cehinds.github.io/AshenSpire/dev/) |
 
-The hosted links select the latest **published** build, which can lag the branch while publishing runs. If a hosted game or download is unavailable, use that row's **GitHub build zip**: sign in, open a successful run for the branch, and download its `<branch>-standalone-<commit>` artifact. Unzip and open `AshenSpire-<branch>-preview.html` (for example, `AshenSpire-test-preview.html`), the self-contained light-art game file. Artifacts are kept for 14 days on dev, 30 on test, and 90 on release/main. Older builds may have different download names; their build lists provide the matching links.
+**Hosted availability, checked 2026-10-03:** the test/release/main game and HTML-download paths above returned 404 during this update. Their GitHub build downloads are available. Use the build zip until those hosted paths are published; a green source/build check alone does not prove a live Pages URL.
+
+The hosted links select the latest **published** build, which can lag the branch while publishing runs. For a **GitHub build zip**, sign in, open a successful run for the branch, and download its `<branch>-standalone-<commit>` artifact. Unzip and open `AshenSpire-<branch>-preview.html` (for example, `AshenSpire-test-preview.html`), the self-contained light-art game file. Artifacts are kept for 14 days on dev, 30 on test, and 90 on release/main. Older builds may have different download names; their build lists provide the matching links.
 
 Versions use `<major>.<minor>.<candidate>.<build>`. The build counter restarts when the candidate changes, so compare the full stamp, not just its last number. The source record is each branch's `buildordinal.json`; the build list and title screen identify the published artifact. See [versioning](docs/versioning.md).
 
@@ -30,7 +32,7 @@ The installer runs for your Windows user without an administrator prompt and cre
 ### Art and the Unity version
 
 - **[AshenSpire-art](https://github.com/cehinds/AshenSpire-art)** holds the runtime art, fonts, recorded music, map tiles, and authoring sources. [Art releases](https://github.com/cehinds/AshenSpire-art/releases) provide high, light, and common packs. The browser game uses the release pinned in `art-release.json`; use that matching release rather than assuming the newest art is compatible with an older game.
-- **[AshenedSpire — Unity adaptation](https://github.com/cehinds/AshenSpire-Unity)** is a separate mobile-first native C# project. Its [playable channels and downloads](https://cehinds.github.io/AshenSpire-Unity/) and [milestone status](https://github.com/cehinds/AshenSpire-Unity/blob/main/docs/Unity-Milestones.md) have their own version and parity evidence; the browser build number does not describe the Unity build.
+- **[AshenedSpire — Unity adaptation](https://github.com/cehinds/AshenSpire-Unity)** is a separate mobile-first native C# project. Its [playable channels and downloads](https://cehinds.github.io/AshenSpire-Unity/) and [milestone status](https://github.com/cehinds/AshenSpire-Unity/blob/dev/docs/Unity-Milestones.md) have their own version and parity evidence; the browser build number does not describe the Unity build.
 
 ### Local and offline play
 
@@ -77,7 +79,7 @@ The Armoury owns your right/left hands, prepared sets, armour, inventory, and ca
 
 You can change carried equipment on your turn in combat, paying the configured swap cost in Actions. Card sources, ratings, maximum resources, and weight class update with the change. Equipment ownership and requirements still apply.
 
-The **Deck editor** moves owned cards between the active deck and a sideboard outside combat. Defaults allow editing freely outside combat, require at least ten active cards, and impose no maximum size. Basic Strike/Defend slots are unlimited; other cards use owned-copy limits, with a default single active copy for class spells and Powers. Item-owned cards are managed through equipment. Deck bounds, copy limits, editing locations, and ordered draw are configurable. Excess limited copies go to the sideboard rather than disappearing.
+The **Deck editor** moves owned cards between the active deck and a sideboard outside combat. Defaults allow editing freely outside combat, require at least ten active cards, and impose no maximum size. Basic Strike/Defend slots are unlimited; other cards use owned-copy limits, with a default single active copy for the current class's spells and Powers. Cross-class book lessons are exempt from that own-class limit. Item-owned cards are managed through equipment. Deck bounds, copy limits, editing locations, and ordered draw are configurable. Excess limited copies go to the sideboard rather than disappearing.
 
 **Sealed and Draft** preserve the dealt card pool: changing gear still changes relevant weapon bonuses but does not insert the equipment's normal lent cards, weapon arts, or Dodge Roll. These modes also refuse extraction of equipment cards at a smith; seating an owned card remains available.
 
@@ -99,7 +101,7 @@ Rest is a location service: camps, shrines, chapels, and inns have different rec
 
 ### Co-op, saves, and configurable rules
 
-**Forsaken Together** shares a LAN map, route votes, and combat while each player keeps their own deck, relics, and flasks. A disconnected seat can return through catch-up. Solo rating and hand rules, and some progression reward doors, are not universally shared by the LAN path; the [spec](SPEC.md) records those boundaries.
+**Forsaken Together** shares a LAN map, route votes, and combat while each player keeps their own deck, relics, and flasks. A disconnected seat can return through catch-up. Modern LAN seats use the shipped retained-hand behavior and their own stat rows; legacy seats can keep older rules. Solo rating settings, configurable hand behavior, and some progression reward doors are not universally shared by the LAN path; the [spec](SPEC.md) records those boundaries.
 
 Runs are seeded, autosaved, and resumable. The profile stores settings, unlocks, and history separately. Many game-rule settings are snapshotted into a run, so older saves can retain older mechanics or numbers; settings that apply live say so in their descriptions. Advanced settings expose the stat formulas, hand and deck rules, recovery, rewards, shops, and progression. For exact behavior, use the in-game descriptions, [SPEC.md](SPEC.md), and [developer guide](DEVELOPER.md).
 
