@@ -34,7 +34,10 @@
 //                 call over the limit, so a green REDUCED line is not a blind
 //                 sampler.
 //   TURN <mode>   one full turn was played: a card landed on an enemy, End
-//                 Turn was held, the enemies acted and turn 2 is back in hand.
+//                 Turn was held, the enemies acted and the next turn is back
+//                 in hand. A hand with no Attack (a seed's opening hand can be
+//                 all Skills) is passed with End Turn, up to DRAW_TURNS times,
+//                 until one is drawn; the sampled turn is the one that plays.
 //   REDUCED <mode> no animation `document.getAnimations()` returned on any
 //                 frame of that turn — nor any `Element.animate()` call made
 //                 during it — has an active duration over MAX_ACTIVE_MS.
@@ -238,7 +241,11 @@ if (argv.includes('--selftest')) {
         expectRed: /RED REDUCED os — .*CSSAnimation .* \(11 ms/,
       },
       {
+        // #1475 review: seed T14's opening hand is four Skills, so the turn
+        // is passed until an Attack is drawn. This plant runs there (and so
+        // does its own clean copy), proving that drive still plays a card.
         name: 'the card-play flight (Element.animate) ignores reduced motion',
+        args: ['--seed', 'T14'],
         file: 'src/ui/screens/combat.js',
         find: "    if (readSettings().showPlayedCard !== true || reducedMotionRequested()) return;",
         replace: "    if (readSettings().showPlayedCard !== true) return;",
@@ -440,15 +447,34 @@ async function press({ send, evaluate }, selector, holdMs = 0) {
   await send('Input.dispatchMouseEvent', { type: 'mouseReleased', ...at, button: 'left', clickCount: 1 });
 }
 
+const ATTACK_IN_HAND = `(() => { const c = document.querySelector('.hand .card.type-attack'); return c ? c.dataset.cardId : null; })()`;
+// Turns the probe may end without playing while it waits for an Attack to be
+// drawn (a seed whose opening hand is all Skills; #1475 review).
+const DRAW_TURNS = 4;
+
+// End the player's turn and wait for the next one to come back to the hand.
+async function endTurn(s, turn) {
+  await until(s.evaluate, `!!document.querySelector('.end-turn') && !document.querySelector('.end-turn').disabled`, 'End Turn to be ready');
+  await press(s, '.end-turn', 1200);
+  await until(s.evaluate, `window.__combat.turn > ${turn} && !document.querySelector('.end-turn').disabled`, `turn ${turn + 1} to return to the player`, 30000);
+}
+
 // One full turn: play the first attack in hand on the first living enemy, hold
-// End Turn, wait for the enemies to act and turn 2 to come back to the player.
+// End Turn, wait for the enemies to act and the next turn to come back to the
+// player. A hand with no Attack is passed (End Turn, no card) until one is
+// drawn; the sampled turn starts with that hand.
 async function playTurn(s) {
   const { evaluate } = s;
+  let attack = await evaluate(ATTACK_IN_HAND), passed = 0;
+  for (; !attack; passed++) {
+    if (passed >= DRAW_TURNS) throw new Error(`no attack card in hand after ${DRAW_TURNS} turn(s) passed`);
+    await endTurn(s, await evaluate('window.__combat.turn'));
+    await until(evaluate, `document.querySelectorAll('.hand .card').length === window.__combat.piles.hand.length && window.__combat.piles.hand.length > 0`, 'the new hand to be drawn');
+    attack = await evaluate(ATTACK_IN_HAND);
+  }
   await evaluate('window.__motionProbe.reset()');
   const before = await evaluate(`({ turn: window.__combat.turn, hand: window.__combat.piles.hand.length,
     hp: window.__combat.enemies.reduce((t, e) => t + (e.hp || 0) + (e.block || 0), 0) })`);
-  const attack = await evaluate(`(() => { const c = document.querySelector('.hand .card.type-attack'); return c ? c.dataset.cardId : null; })()`);
-  if (!attack) throw new Error('no attack card in the opening hand');
   // Select the card, then the target. A press that lands while the board is
   // still settling can be read as a hover; the pair is retried, never forced.
   for (let attempt = 1; ; attempt++) {
@@ -469,13 +495,13 @@ async function playTurn(s) {
   }
   await wait(1500);
   const afterPlay = await evaluate(`window.__combat.enemies.reduce((t, e) => t + (e.hp || 0) + (e.block || 0), 0)`);
-  await until(evaluate, `!!document.querySelector('.end-turn') && !document.querySelector('.end-turn').disabled`, 'End Turn to be ready');
-  await press(s, '.end-turn', 1200);
-  await until(evaluate, `window.__combat.turn > ${before.turn} && !document.querySelector('.end-turn').disabled`, 'turn 2 to return to the player', 30000);
+  await endTurn(s, before.turn);
   await wait(800);
   const sample = await evaluate('window.__motionProbe.read()');
-  return { attack, landed: afterPlay < before.hp, turn: await evaluate('window.__combat.turn'), ...sample };
+  return { attack, passed, landed: afterPlay < before.hp, turn: await evaluate('window.__combat.turn'), ...sample };
 }
+
+const passedNote = (t) => (t.passed ? ` (after ${t.passed} turn(s) passed with no Attack in hand)` : '');
 
 const burst = (times) => {
   let most = 0;
@@ -597,7 +623,7 @@ try {
 
   // ---- CONTROL: the sampler can see a long animation when motion is on ------
   const control = await playTurn(s);
-  check(control.landed && control.turn >= 2, 'TURN motion-on', `${control.attack} landed, turn ${control.turn}, ${control.frames} frames sampled`);
+  check(control.landed && control.turn >= 2, 'TURN motion-on', `${control.attack} landed${passedNote(control)}, turn ${control.turn}, ${control.frames} frames sampled`);
   const seen = long(control.log);
   if (DUMP) dump('motion-on', control);
   const kinds = { 'finite CSS animation': seen.find((a) => a.kind === 'CSSAnimation' && a.active !== 'Infinity'),
@@ -640,7 +666,7 @@ try {
   for (const [mode, setting, os] of [['setting+os', true, true], ['setting', true, false], ['os', false, true]]) {
     await boot(s, base, { setting, os });
     const turn = await playTurn(s);
-    check(turn.landed && turn.turn >= 2 && turn.frames > 30, `TURN ${mode}`, `${turn.attack} landed, turn ${turn.turn}, ${turn.frames} frames sampled, ${turn.log.length} animation(s) seen`);
+    check(turn.landed && turn.turn >= 2 && turn.frames > 30, `TURN ${mode}`, `${turn.attack} landed${passedNote(turn)}, turn ${turn.turn}, ${turn.frames} frames sampled, ${turn.log.length} animation(s) seen`);
     if (DUMP) dump(mode, turn);
     const over = long(turn.log);
     check(over.length === 0, `REDUCED ${mode}`, over.length
