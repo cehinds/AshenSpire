@@ -31,7 +31,7 @@ export function bookLessons(registries, run, def, skillId = def.skill) {
   if (def.learnClass || def.learnAny) {
     const known = new Set([run.class, ...Object.keys(run.classCards || {})]);
     for (const cls of registries.classes.all()) {
-      if ((def.learnAny || def.learnClass === cls.id) && !known.has(cls.id)) {
+      if (def.learnClass === cls.id || (def.learnAny && !known.has(cls.id))) {
         choices.push({ kind: 'class', id: cls.id, name: cls.name });
       }
     }

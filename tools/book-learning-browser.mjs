@@ -38,6 +38,7 @@ try {
   await page.getByRole('button', { name: 'Read Starseer Class Book', exact: true }).click();
   await page.locator('[data-lesson-id="starseer"]').click();
   await page.locator('.book-learning-confirm').click();
+  await page.locator('[data-component="book-receipt"]').getByRole('button', { name: 'Close book', exact: true }).click();
   assert.equal(await page.evaluate(() => window.bookShopPreview.run.class), 'reaver');
   await page.getByRole('button', { name: 'Inventory & class cards', exact: true }).click();
   const pickClass = async (id) => { await page.locator(`.inventory-face[data-inventory-item="class:${id}"]`).click(); };

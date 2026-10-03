@@ -153,7 +153,7 @@ test('a fresh fight sounds its opening draw and turn stinger; a restored one rep
 });
 
 test('co-op: the session digest, through coop.js, plays the opening, hits, hurt and pile cues once', () => {
-  assert.match(src('src/ui/screens/coop.js'), /lastSoundSeq = coopReceiptSounds\(sc, lastSoundSeq\);\n\s*spawnCombatFx\(sc, prevCombat\);/,
+  assert.match(src('src/ui/screens/coop.js'), /lastSoundSeq = coopReceiptSounds\(sc, lastSoundSeq(?:, seats)?\);\n\s*spawnCombatFx\(sc, prevCombat\);/,
     'renderCombat hears each scene through coopReceiptSounds');
   const reg = createRegistries(contentBundle);
   const host = createSession({ registries: reg, seedString: 'GUARD2' });

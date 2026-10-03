@@ -23,7 +23,9 @@ import { awardSkillXp, skillTracks, skillUpgradesCards } from './skills.js';
 import { uiStrings } from '../content/generated/uiStrings.js';
 import { NEW_RUN_CLAUSE } from './balanceNotes.js';
 import { bookTracks, bookLessons, bookTags } from './bookLearning.js';
-import { learnClassCard } from './classLibraryState.js';
+import { learnClassCard, learnedClassIds } from './classLibraryState.js';
+import { classBookBonuses } from './bookBonusRewards.js';
+import { chooseFeat } from './feats.js';
 import { unusedInstanceId } from './cardInstanceIdentity.js';
 import { deckCopyLimit } from './deckCopyLimit.js';
 
@@ -102,7 +104,7 @@ export function skillBookReadPlan(registries, run, id, { inCombat = false, skill
   if (!reason && !tracks.some((row) => row.id === track)) reason = say('book.refuse.track');
   if (!reason && !lessons.length) reason = say('book.refuse.empty');
   if (!reason && choice && !lessons.some((row) => row.kind === choice.kind && row.id === choice.id)) reason = say('book.refuse.choice');
-  return { ok: !reason, reason, id, def, count: heldCount(run, id), tracks, skillId: track, lessons, choice, revision: run.bookReadRevision || 0 };
+  return { ok: !reason, reason, id, def, count: heldCount(run, id), tracks, skillId: track, lessons, choice, rewardChances: [def?.combatCardChance || 0, def?.featChance || 0], revision: run.bookReadRevision || 0 };
 }
 
 /** One validated lesson plus XP, then one fewer book. Returns both rewards. */
@@ -111,19 +113,31 @@ export function commitSkillBookRead(registries, run, quote, { inCombat = false, 
   if (!plan.ok) throw new Error(plan.reason);
   if (!plan.choice) throw new Error(say('book.refuse.choice'));
   if (quote.revision !== plan.revision || quote.count !== plan.count || quote.def?.xp !== plan.def.xp) throw new Error(say('book.refuse.stale'));
+  if (plan.rewardChances.some((chance, index) => chance !== quote.rewardChances?.[index])) throw new Error(say('book.refuse.stale'));
   // Re-read the live deck and settings before any mutation. Extra owned
   // copies remain available in the sideboard under the deck editor's rules.
   const destination = plan.choice.kind === 'card' && run.deck.filter((card) => card.cardId === plan.choice.id).length >= deckCopyLimit(registries, plan.choice.id, settings, run.class) ? 'sideboard' : 'deck';
   const schools = bookTags(registries, { skill: plan.skillId });
+  const bonuses = classBookBonuses(registries, run, plan.def);
   const receipt = awardSkillXp(registries, run, plan.skillId, plan.def.xp, { schools });
-  if (plan.choice.kind === 'class') learnClassCard(registries, run, plan.choice.id);
+  const classLearned = plan.choice.kind === 'class' && !learnedClassIds(run).includes(plan.choice.id);
+  if (plan.choice.kind === 'class') {
+    if (classLearned) learnClassCard(registries, run, plan.choice.id);
+  }
   else {
     const upgraded = skillUpgradesCards(registries, receipt.after) && (registries.cards.get(plan.choice.id).tags || []).some((tag) => schools.includes(tag));
     (run[destination] ||= []).push({ instanceId: unusedInstanceId(run, 'book', plan.choice.id), cardId: plan.choice.id, upgraded });
   }
+  if (bonuses.card) {
+    const id = bonuses.card.id;
+    const target = run.deck.filter((card) => card.cardId === id).length >= deckCopyLimit(registries, id, settings, run.class) ? 'sideboard' : 'deck';
+    (run[target] ||= []).push({ instanceId: unusedInstanceId(run, 'book', id), cardId: id, upgraded: false });
+    bonuses.card.destination = target;
+  }
+  if (bonuses.feat) chooseFeat(run, bonuses.feat.id);
   adjustCount(run.consumables, plan.id, -1);
   run.bookReadRevision = plan.revision + 1;
-  return { ...receipt, learned: { ...plan.choice }, destination: plan.choice.kind === 'card' ? destination : 'classLibrary' };
+  return { ...receipt, learned: { ...plan.choice }, classLearned, bonuses, destination: plan.choice.kind === 'card' ? destination : 'classLibrary' };
 }
 
 // ---------------------------------------------------------------------------
@@ -192,7 +206,7 @@ export function tickCompanions(run) {
 // ---------------------------------------------------------------------------
 
 const CONSUMABLE_FIELDS = Object.freeze({
-  skillBook: ['id', 'kind', 'name', 'blurb', 'cost', 'sellValue', 'skill', 'xp', 'learnTags', 'learnClass', 'learnAny'],
+  skillBook: ['id', 'kind', 'name', 'blurb', 'cost', 'sellValue', 'skill', 'xp', 'learnTags', 'learnClass', 'learnAny', 'combatCardChance', 'featChance'],
   revive: ['id', 'kind', 'name', 'blurb', 'cost', 'sellValue', 'hpPct'],
 });
 const COMPANION_FIELDS = Object.freeze(['id', 'name', 'blurb', 'cost', 'combats']);
@@ -229,6 +243,10 @@ export function consumableTableProblems(rows, bundle, err) {
     }
     if (row.kind === 'skillBook') {
       wholeAtLeast(row, 'xp', 1, at, err);
+      for (const key of ['combatCardChance', 'featChance']) if (row[key] !== undefined) {
+        wholeAtLeast(row, key, 0, at, err, 100);
+        if (!row.learnClass) err(`${at}.${key}`, 'bonus chances are only authored on class books');
+      }
       if (typeof row.skill !== 'string' || !(tracks.has(row.skill) || (row.skill === '*' && row.learnAny === true))) err(`${at}.skill`, 'must name a derived skill track, or * for a universal book');
       if (typeof row.skill === 'string' && row.skill.startsWith('class:') && row.learnClass !== row.skill.slice(6)) err(`${at}.skill`, 'a class XP track requires its matching class book');
       if (row.learnAny !== undefined && row.learnAny !== true) err(`${at}.learnAny`, 'must be true when present');
@@ -281,7 +299,9 @@ export function companionTableProblems(rows, bundle, err) {
 const ITEM_COLLECTIONS = Object.freeze(['consumables', 'companions']);
 const words = (value) => String(value).replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/[._-]+/g, ' ').replace(/^./, (c) => c.toUpperCase());
 // hpPct is a percent; every other item number is a whole count or price.
-const domainFor = (key, value) => (key === 'hpPct'
+const domainFor = (key, value) => (['combatCardChance', 'featChance'].includes(key)
+  ? { integer: true, step: 1, min: 0, max: 100 }
+  : key === 'hpPct'
   ? { integer: true, step: 1, min: 1, max: 100 }
   : { integer: true, step: 1, min: 1, max: Math.max(20, Math.ceil(Math.max(1, value) * 10)) });
 

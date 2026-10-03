@@ -168,7 +168,7 @@ export function applyAttackDamage(ctx, source, target, base, attackTags, carrier
   });
   if (hpLoss > 0) {
     if (ctx.ratingsRules) applyRatingImpact(ctx, source, target, carrier);
-    ctx.emit('hpLost', { targetId: target.id, amount: hpLoss, cause: 'attack' });
+    ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: hpLoss, cause: 'attack' });
     applyArcaneExposure(ctx, source, target, carrier);
   }
   afterHpChange(ctx, target);
@@ -258,13 +258,20 @@ export function gainBlock(ctx, entity, base, card = null) {
   return amt;
 }
 
+// Every player entity is id 'player', so in co-op an hpLost receipt names the
+// seat it cost, as damageDealt does; readers (triggers, haptics) cannot tell an
+// ally from the owner by targetId alone. Solo stamps nothing.
+function seatOf(ctx, target) {
+  return ctx.playerIdForEntity && target.kind === 'player' ? { targetPlayerId: ctx.playerIdForEntity(target) } : {};
+}
+
 /** loseHp — direct HP loss: ignores ALL attack modifiers AND block (SPEC §4.2). */
 export function applyLoseHp(ctx, target, amount, cause = 'effect') {
   if (!target || !target.alive) return 0;
   const n = Math.max(0, Math.floor(amount));
   if (n === 0) return 0;
   target.hp -= n;
-  ctx.emit('hpLost', { targetId: target.id, amount: n, cause });
+  ctx.emit('hpLost', { ...seatOf(ctx, target), targetId: target.id, amount: n, cause });
   afterHpChange(ctx, target);
   return n;
 }

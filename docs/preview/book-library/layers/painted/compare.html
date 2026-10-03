@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Painted book revision · AshenSpire</title><link rel="icon" href="data:,">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#14120f;color:#e8ddc6;font:15px/1.5 system-ui}main{max-width:1320px;margin:auto;padding:36px}h1,h2{font-family:Georgia;color:#e6c181;font-weight:normal}h1{font-size:36px;margin:8px 0}h2{font-size:22px;margin:0}p{color:#b6aa93}header{display:flex;justify-content:space-between;gap:20px;align-items:center;border-bottom:1px solid #4a3d29;padding-bottom:22px}a{color:#e6c181}small{text-transform:uppercase;letter-spacing:.15em;color:#b48c54}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:26px}.card{background:radial-gradient(ellipse at 50% 38%,#373024,#1d1914 72%);border:1px solid #4a3d29;border-radius:12px;padding:16px}.card .book-art{display:block;width:100%;aspect-ratio:1}.card p{margin:4px 0}.caption{margin-top:12px}.row{display:grid;grid-template-columns:120px 1fr 90px;align-items:center;gap:20px;border:1px solid #6e5733;border-radius:10px;padding:12px 20px;background:#251f16;margin:12px 0;min-height:145px}.row .book-art{display:block;width:120px;aspect-ratio:1}.buy{border:1px solid #a88541;border-radius:6px;padding:10px;background:#443318;color:#e6c181;font:inherit}.rows{max-width:860px;margin:32px auto}.price{font-size:11px;color:#caad70;text-align:center;margin-top:8px}section{margin-top:36px}.note{font-size:12px} @media(max-width:800px){.grid{grid-template-columns:repeat(2,1fr)}main{padding:18px}header{display:block}.row{grid-template-columns:75px 1fr 66px;gap:10px;padding:10px}.row .book-art{width:75px}h1{font-size:28px}.row h2{font-size:18px}.row p{font-size:12px}.buy{padding:8px}}
+</style><main><header><div><small>AshenSpire / Painted book revision</small><h1>Leather, brass, and real relief.</h1><p>The whole binding changes color. Every emblem remains a separate asset.</p></div><a href="../atelier.html">Customize in Book Atelier →</a></header>
+<div id="library-colors" class="grid"></div><section><h2>Full-binding color comparison</h2><div id="colors" class="grid"></div></section><section><h2>At shop size</h2><div id="rows" class="rows"></div></section><p class="note">Artwork revision preview. These samples do not purchase items or change your saved game.</p></main>
+<script type="module">
+import { renderBookArt } from './render.js';
+import { BOOK_ART_PRESETS } from '../../../../../src/content/bookArtPresets.js';
+import { consumables } from '../../../../../src/content/consumables.js';
+for (const book of consumables.filter((row)=>row.kind==='skillBook')) {
+ const card=document.createElement('article'); card.className='card shelf-card'; card.dataset.book=book.id;
+ card.append(renderBookArt(book,{recipe:BOOK_ART_PRESETS[book.id]}));
+ const title=document.createElement('h2');title.textContent=book.name;
+ const caption=document.createElement('p');caption.textContent='Independent painted emblem';card.append(title,caption);
+ document.querySelector('#library-colors').append(card);
+}
+const colors=[['Amber','#ac782d'],['Forest','#277348'],['Sapphire','#346e9f'],['Crimson','#a34237']];
+const recipe={cover:'classic',symbol:'shield',color:'#ac782d',ink:'#e0ad4b',trim:'none',treatment:'solid'};
+for(const [name,color] of colors){const card=document.createElement('article');card.className='card';card.dataset.color=color;card.append(renderBookArt(null,{recipe:{...recipe,color}}));const title=document.createElement('h2');title.textContent=name;card.append(title);const p=document.createElement('p');p.textContent='Front · spine · back · ribbon';card.append(p);document.querySelector('#colors').append(card);}
+for(const [name,symbol,color,description] of [['Shield Manual','shield','#ac782d','Gain 40 Shield XP and choose one matching card.'],['Blade Manual','blade','#277348','Gain 40 Blade XP and choose one matching card.']]){const row=document.createElement('article');row.className='row';row.append(renderBookArt(null,{recipe:{...recipe,symbol,color}}));const detail=document.createElement('div');const title=document.createElement('h2');title.textContent=name;const p=document.createElement('p');p.textContent=description;detail.append(title,p);row.append(detail);const buy=document.createElement('div');buy.innerHTML='<button class="buy" disabled>Buy</button><div class="price">180 CINDERS</div>';row.append(buy);document.querySelector('#rows').append(row);}
+</script></html>
