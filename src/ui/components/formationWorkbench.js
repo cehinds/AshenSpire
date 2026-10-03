@@ -10,6 +10,7 @@ import { formationTileOutline } from './formationGrid.js';
 import { wireframeUi } from '../../content/wireframeUi.js';
 import { esc } from './tooltip.js';
 import { suppliedFormationPositioning } from '../../content/formationPositioningPresets.js';
+import { t } from '../strings.js';
 
 // A presentation sandbox: no engine dispatch, roster writes, rewards or turn changes.
 export function openFormationWorkbench({ registries, readSettings, onSettingsChange, combatRoot }) {
@@ -17,7 +18,7 @@ export function openFormationWorkbench({ registries, readSettings, onSettingsCha
   const classes = registries.classes.all(), enemies = registries.enemies.all();
   const dialog = document.createElement('dialog');
   dialog.className = 'position-workbench';
-  dialog.setAttribute('aria-label', 'Positioning and sizing');
+  dialog.setAttribute('aria-label', t('formation.positioning.workbench'));
   const zoom = Number(getComputedStyle(document.documentElement).getPropertyValue('--ui-zoom')) || 1;
   dialog.style.zoom = String(1/zoom); dialog.style.setProperty('--ui-zoom','1');
   dialog.innerHTML = `<header class="position-workbench-heading"><button type="button" data-workbench-drag>Drag positioning &amp; sizing</button><button type="button" data-workbench-max>Maximize</button><button type="button" data-workbench-close>Close</button></header>

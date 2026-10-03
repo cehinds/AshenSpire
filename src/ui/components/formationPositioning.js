@@ -1,6 +1,7 @@
 import { FORMATION_GROUPS_KEY, formationGroups, formationGroupOptions, formationGroupContains, formationMember, snapFormationTranslation, FORMATION_SNAP_STEP, positioningConfiguration } from '../../model/formationGroups.js';
 import { esc } from './tooltip.js';
 import { presentationConfig } from '../../model/advancedConfig.js';
+import { t } from '../strings.js';
 let positioningId = 0;
 
 export function formationPositioningHtml() {
@@ -29,7 +30,7 @@ export function wireFormationPositioning(host, surface, { read, write, getPlan, 
   const gridId = `formation-snap-grid-${++positioningId}`;
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.classList.add('position-guides');
-  svg.setAttribute('aria-label', 'Drag highlighted formation anchors');
+  svg.setAttribute('aria-label', t('formation.positioning.dragAnchors'));
   surface.append(svg);
   const group = () => formationGroupOptions(getPlan().plan?.columns || 2, read(), getPlan().plan?.rows || 3).find(g => g.id === selected);
   function draw() {
@@ -61,7 +62,7 @@ export function wireFormationPositioning(host, surface, { read, write, getPlan, 
     $('[data-position-measure]').textContent = first ? `${members.length} positions · ${first.cell} anchor: left ${first.x.toFixed(1)} px · right ${(width-first.x).toFixed(1)} px · top ${first.ground.toFixed(1)} px · bottom ${(height-first.ground).toFixed(1)} px` : 'This group has no positions in the current grid.';
   }
   function save(groups, message = saveMessage) {
-    if (write(JSON.stringify(groups))?.ok === false) { $('[data-position-status]').textContent = 'Could not save layout.'; return; }
+    if (write(JSON.stringify(groups))?.ok === false) { $('[data-position-status]').textContent = t('formation.layout.saveFailed'); return; }
     $('[data-position-status]').textContent = message; onDraw(); draw();
   }
   function move(x, y) {
@@ -124,9 +125,9 @@ export function wireFormationPositioning(host, surface, { read, write, getPlan, 
   $('[data-position-reset]').addEventListener('click', () => save(formationGroups(read()).map(g => g.id === selected ? { ...g, x: 0, y: 0 } : g)));
   $('[data-position-create]').addEventListener('click', () => {
     const members = [...$('[data-position-members]').selectedOptions].map(o => o.value);
-    if (!members.length) { $('[data-position-status]').textContent = 'Select member positions first.'; return; }
+    if (!members.length) { $('[data-position-status]').textContent = t('formation.positioning.selectMembers'); return; }
     const groups = formationGroups(read());
-    if (groups.length >= 32) { $('[data-position-status]').textContent = 'Maximum of 32 groups reached.'; return; }
+    if (groups.length >= 32) { $('[data-position-status]').textContent = t('formation.positioning.groupLimit'); return; }
     selected = `custom-${Date.now()}`;
     groups.push({ id: selected, name: $('[data-position-name]').value.trim() || 'My group', members, x: 0, y: 0 }); save(groups, 'Group created.');
   });
