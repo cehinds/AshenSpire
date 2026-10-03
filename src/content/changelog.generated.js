@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-03",
     "summary": "Build your deck at the Reading Desk",
     "detail": "The illustrated deck editor has compact rows, two-line descriptions, inline Inspect, and proportionate card art. Sapphire Mana and green Stamina symbols show centered costs, with configurable resource grouping and order. Desktop inspection includes a looping skill animation with Pause. Any deck card can return to the library; adding equipment skills requires compatible equipped gear, and removed equipment cards stay removed after saving. A separate visual row editor lets you move, resize and snap components, then export the layout as JSON.",
-    "build": "0.7.1.846",
+    "build": "0.7.1.852",
     "pullRequest": 1535,
     "url": "https://github.com/cehinds/AshenSpire/pull/1535"
+  },
+  {
+    "id": "pr-1536",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keep prepared spells and draw a fresh hand each turn",
+    "detail": "Opening and turn draws start at four with Intelligence scaling. Unplayed cards shuffle back into the draw pile unless they have Retain; thirty-one Herald and Starseer spells now keep that keyword when upgraded. Retained cards add to the next full draw, up to a separate default hand limit of fifteen. Solo and co-op share the rule, played cards still leave the hand normally, and existing saved fights preserve their rules. The defaults remain configurable.",
+    "build": "0.7.1.851",
+    "pullRequest": 1536,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1536"
   },
   {
     "id": "pr-1542",
