@@ -289,6 +289,30 @@ test('known-bad: schema 2, --recheck reports a cached font the release listed an
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
+test('--recheck --refetch: a restored cache that fails its recheck is removed and fetched again in the same run', async () => {
+  const { root, zip } = schema2Fixture();
+  try {
+    const { dir } = await fetchArt({ root, from: zip });
+    writeFileSync(join(dir, 'assets/fonts/f.woff2'), 'a corrupted face');
+    // Without --refetch the rejection stands (and the cache is gone).
+    await assert.rejects(fetchArt({ root, recheck: true }), /no longer matches the manifest/);
+    await fetchArt({ root, from: zip });
+    writeFileSync(join(dir, 'assets/fonts/f.woff2'), 'a corrupted face');
+    let downloads = 0;
+    const r = await fetchArt({ root, recheck: true, refetch: true, get: async () => { downloads += 1; return readFileSync(zip); } });
+    assert.equal(downloads, 1, 'the pack is downloaded again');
+    assert.equal(r.reused, false);
+    assert.match(r.rejected.join('\n'), /assets\/fonts\/f\.woff2/);
+    assert.equal(readFileSync(join(dir, 'assets/fonts/f.woff2'), 'utf8'), 'font', 'the re-fetched file is the verified one');
+    assert.equal((await fetchArt({ root, recheck: true, refetch: true, get: async () => assert.fail('a good cache is not re-downloaded') })).reused, true);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('the CI fetch action re-fetches a cache that fails its recheck', () => {
+  const action = readFileSync(fileURLToPath(new URL('../.github/actions/fetch-art/action.yml', import.meta.url)), 'utf8');
+  assert.match(action, /node tools\/fetch-art\.mjs --recheck --refetch --pack "\$ART_PACKS"/);
+});
+
 test('known-bad: schema 2, a release whose manifest lists a font its zip lacks is refused', () => {
   const { root, pin, manifest } = schema2Fixture();
   try {
@@ -414,7 +438,7 @@ test('schema 2: asset-pack writes the same objects and indexes from the fetched 
   const b = join(root, 'build', 'out-cache');
   try {
     await fetchAll(root, zips);
-    writePacks({ root, out: a });
+    writePacks({ root, out: a, source: 'trees' });
     writePacks({ root, out: b, source: 'cache' });
     const files = (dir) => { const out = {}; const walk = (d) => { for (const n of readdirSync(d).sort()) { const p = join(d, n); if (lstatSync(p).isDirectory()) walk(p); else out[p.slice(dir.length)] = sha(readFileSync(p)); } }; walk(dir); return out; };
     assert.deepEqual(files(b), files(a));
