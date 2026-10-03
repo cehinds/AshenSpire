@@ -712,6 +712,24 @@ node tools/slot-load-door.mjs
 node tools/slot-load-door.mjs --selftest
 ```
 
+Changes to a flask menu (combat's Potions list, the map's Potions control in
+`components/runPotions.js`, the run HUD's room-rail icons) or to how the map
+reads "Use flasks outside combat" run the real menus in Chromium: what each
+offers must equal `flaskActionPlan` for the Crimson and Azure flasks and the
+carried potions, every map Potions choice must do exactly that action, a
+Potions action and a setting change must be saved and survive the map's
+remount with the selected destination kept, and the world atlas must not remount for that setting. Its
+`--selftest` plants nineteen known-bads, each in its own copied tree
+(`--shard i/n` runs part of them). They run in `ci.yml`'s *every flask menu in
+a real browser* and, in two shards, *flask-menu known-bads in a real browser*;
+`tools/flask-action-contract.mjs`
+keeps the Node half (the pure plan, the map model, co-op's host intent):
+
+```bash
+node tools/flask-menu-probe.mjs            # --only persistence|dispatch|plan
+node tools/flask-menu-probe.mjs --selftest
+```
+
 Exact combat-save changes additionally run the real Save / Save and Quit /
 Load-review path at desktop and phone sizes, plus its copied-tree known-bad
 corpus:
