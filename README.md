@@ -61,7 +61,7 @@ The seeded climb visits the Hollow Weald, Pale Marches, and Cinder Reach in a ru
 
 Enemy intents show what is coming. Cards can cost **Actions**, **Stamina**, **Mana**, or a combination; some also cost HP. Actions refresh each turn. Stamina starts full in each fight and normally recovers on turns when you do not spend it. Mana carries between fights and is restored through effects, flasks, and suitable rest services. Recovery rules are configurable.
 
-The solo default **retains unplayed cards** and draws the character's Draw stat each turn up to hand capacity. The opening hand, per-turn draw, capacity, Actions, and resource pools derive from attributes and configured stat rules. This is no longer a fixed “draw five, discard everything” loop. Ethereal, Exhaust, Retain, and Power rules still govern individual cards. Settings can change hand retention, draw, discard, and deck-order behavior.
+The default **keeps Retain cards and shuffles other unplayed cards back into the draw pile**. Opening and turn draws start at four, with Intelligence increasing the draw as usual. Each turn draws that full amount in addition to retained cards, stopping at a separate default capacity of fifteen: two retained cards plus four drawn gives six; twelve retained cards plus four drawn stops at fifteen. Many Herald and Starseer spells carry Retain. Ethereal, Exhaust, and Power rules still govern individual cards, and played cards leave the hand normally. Settings can change the stat formulas, retention, draw, discard, and deck-order behavior.
 
 Select a card to preview its legal targets. Its circular **(i)** button opens the full card details and play action; a stationary hold can play it. A targeted card then asks for its target. Keyboard and gamepad controls are supported, and unavailable actions show their reason.
 
@@ -101,7 +101,7 @@ Rest is a location service: camps, shrines, chapels, and inns have different rec
 
 ### Co-op, saves, and configurable rules
 
-**Forsaken Together** shares a LAN map, route votes, and combat while each player keeps their own deck, relics, and flasks. A disconnected seat can return through catch-up. Modern LAN seats use the shipped retained-hand behavior and their own stat rows; legacy seats can keep older rules. Solo rating settings, configurable hand behavior, and some progression reward doors are not universally shared by the LAN path; the [spec](SPEC.md) records those boundaries.
+**Forsaken Together** shares a LAN map, route votes, and combat while each player keeps their own deck, relics, and flasks. A disconnected seat can return through catch-up. Modern LAN seats use the same selective Retain and hand-shuffle defaults with their own stat rows; legacy seats can keep older rules. Solo rating settings, configurable hand behavior, and some progression reward doors are not universally shared by the LAN path; the [spec](SPEC.md) records those boundaries.
 
 Runs are seeded, autosaved, and resumable. The profile stores settings, unlocks, and history separately. Many game-rule settings are snapshotted into a run, so older saves can retain older mechanics or numbers; settings that apply live say so in their descriptions. Advanced settings expose the stat formulas, hand and deck rules, recovery, rewards, shops, and progression. For exact behavior, use the in-game descriptions, [SPEC.md](SPEC.md), and [developer guide](DEVELOPER.md).
 
