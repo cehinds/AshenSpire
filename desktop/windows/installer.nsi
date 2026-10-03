@@ -194,8 +194,12 @@ Section "Ashen Spire (required)" SecGame
   ; The desktop shortcut is the optional section's to make again; only an
   ; upgrade's own shortcut is removed, never one that was there before.
   ${If} $Upgrade == 1
-    Delete "$DESKTOP\${APP_NAME}.lnk"
+    ReadRegDWORD $0 HKCU "${UNINST_KEY}" "DesktopShortcut"
+    ${If} $0 == 1
+      Delete "$DESKTOP\${APP_NAME}.lnk"
+    ${EndIf}
   ${EndIf}
+  WriteRegDWORD HKCU "${UNINST_KEY}" "DesktopShortcut" 0
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   CreateDirectory "$SMPROGRAMS\${APP_NAME}"
@@ -226,7 +230,11 @@ Section "High-resolution art (download, about ${HD_MB} MB)" SecHD
 SectionEnd
 
 Section "Desktop shortcut" SecDesktop
-  CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
+  ; Only a shortcut this installer made is ever deleted again (the registry says so).
+  ${IfNot} ${FileExists} "$DESKTOP\${APP_NAME}.lnk"
+    CreateShortcut "$DESKTOP\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
+    WriteRegDWORD HKCU "${UNINST_KEY}" "DesktopShortcut" 1
+  ${EndIf}
 SectionEnd
 
 ; Last: drop art files no installed pack lists (the high-res art after it
@@ -334,7 +342,10 @@ Section "Uninstall"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
 
-  Delete "$DESKTOP\${APP_NAME}.lnk"
+  ReadRegDWORD $0 HKCU "${UNINST_KEY}" "DesktopShortcut"
+  ${If} $0 == 1
+    Delete "$DESKTOP\${APP_NAME}.lnk"
+  ${EndIf}
   Delete "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk"
   Delete "$SMPROGRAMS\${APP_NAME}\Uninstall ${APP_NAME}.lnk"
   RMDir "$SMPROGRAMS\${APP_NAME}"
