@@ -4,6 +4,7 @@ import { registerTooltipDecorator } from './tooltip.js';
 import { terms as frameworkTerms } from '../../framework/data/terms.js';
 
 const dictionaries = new WeakMap();
+const readings = new WeakMap();
 let decorate = () => {};
 
 /** Active bundle vocabulary, including resolved status numbers; no copied mechanics. */
@@ -36,6 +37,15 @@ export function configureTooltipGlossary(registries) {
     add('Poise', 'Poise damage builds toward an enemy’s Stagger threshold.');
     const names = [...terms.keys()].sort((a, b) => b.length - a.length);
     const pattern = names.length ? new RegExp(`\\b(${names.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`, 'gi') : null;
+    readings.set(registries, text => {
+      if (!pattern) return [];
+      const found = new Map();
+      for (const match of String(text).matchAll(new RegExp(pattern))) {
+        const key = match[0].toLowerCase();
+        found.set(key, { name: match[0], explanation: terms.get(key) });
+      }
+      return [...found.values()];
+    });
     dictionaries.set(registries, root => {
       if (!pattern) return;
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -68,6 +78,12 @@ export function configureTooltipGlossary(registries) {
 }
 
 export function decorateKeywords(root) { decorate(root); return root; }
+
+/** Persistent reading surfaces use the same active glossary as tooltips. */
+export function keywordExplanations(registries, text) {
+  configureTooltipGlossary(registries);
+  return readings.get(registries)?.(text) || [];
+}
 
 export function inspectionTag(label, explanation) {
   const tag = document.createElement('span');

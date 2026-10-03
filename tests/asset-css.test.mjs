@@ -30,7 +30,7 @@ test('the real stylesheets: 15 lore faces and 9 backdrops become slots, the 2 ma
   assert.equal(ids.filter((id) => id.startsWith('assets/fonts/')).length, 15, 'every "AS Lore" face');
   assert.equal(ids.filter((id) => id.startsWith('assets/bg/')).length, 9, 'every backdrop id, once');
   assert.equal(value.rules.length, 24);
-  assert.equal(template.urls, 29, '15 fonts + 10 backdrop uses + 4 mask uses');
+  assert.equal(template.urls, 30, '15 fonts + 11 backdrop uses (including Reading Desk) + 4 mask uses');
   assert.equal(template.inlined, 4);
   for (const { href, out } of sheets) {
     for (const m of out.matchAll(CSS_URL)) assert.match(m[2], /^data:image\/svg\+xml;base64,/, `${href}: only the masks stay as url()`);

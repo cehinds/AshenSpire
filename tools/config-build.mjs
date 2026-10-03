@@ -216,6 +216,7 @@ export function compileEntries(entries) {
     seen.set(slot, f.rel);
     config[f.group][f.key] = out;
     if (f.group === 'scenes') errors.push(...sceneProblems(f.rel, out));
+    if (f.group === 'presentation' && f.key === 'deckEditorCosts') errors.push(...deckEditorCostProblems(f.rel, out));
   }
 
   // Tokens: resolved inside their own scope and exported as plain values.
@@ -236,6 +237,41 @@ export function compileEntries(entries) {
 
   const sources = files.map((f) => ({ rel: f.rel, hash: hashOf(f.text) }));
   return { config, errors: [...new Set(errors)], sources };
+}
+
+/** Cost presentation may regroup pools, but cannot hide or double-count one. */
+export function deckEditorCostProblems(rel, presentation) {
+  const at = `${CONFIG_DIR}/${rel}: components.resourceGroups`;
+  const groups = presentation.components?.resourceGroups;
+  if (!Array.isArray(groups) || !groups.length) return [`${at} must be a non-empty array`];
+  const out = [], ids = new Set(), resources = new Set();
+  const canonicalResources = ['mana', 'stamina'];
+  const allowed = ['action', ...canonicalResources];
+  for (const [index, group] of groups.entries()) {
+    if (!isObject(group) || typeof group.id !== 'string' || !/^[a-z][a-z0-9-]*$/.test(group.id)) {
+      out.push(`${at}[${index}] needs a lowercase resource group id`);
+      continue;
+    }
+    if (ids.has(group.id)) out.push(`${at}: duplicate group id "${group.id}"`);
+    ids.add(group.id);
+    if (typeof group.label !== 'string' || !group.label.trim()) out.push(`${at}[${index}].label must be a non-empty string`);
+    if (group.art !== undefined && (typeof group.art !== 'string' || !/^assets\/(?:[a-z0-9_-]+\/)*[a-z0-9_-]+\.(?:webp|png|svg)$/i.test(group.art))) {
+      out.push(`${at}[${index}].art must be a safe assets/ image path`);
+    }
+    if (!Array.isArray(group.resources) || !group.resources.length) {
+      out.push(`${at}[${index}].resources must be a non-empty array`);
+      continue;
+    }
+    for (const resource of group.resources) if (!allowed.includes(resource)) out.push(`${at}: unknown resource "${resource}"`);
+    // Old Action/Stamina pairs in one group are one pool. A second group
+    // showing that same pool would misleadingly charge it twice.
+    for (const resource of new Set(group.resources.map(resource => resource === 'action' ? 'stamina' : resource))) {
+      if (resources.has(resource)) out.push(`${at}: resource "${resource}" is included more than once`);
+      resources.add(resource);
+    }
+  }
+  for (const resource of canonicalResources) if (!resources.has(resource)) out.push(`${at}: resource "${resource}" is missing`);
+  return out;
 }
 
 /** The W4 scene contract. Every refusal names the file and the rule. */

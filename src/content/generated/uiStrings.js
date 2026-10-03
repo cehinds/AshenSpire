@@ -4730,15 +4730,15 @@ export const uiStrings = [
   {
     "id": "deckEditor.pane.deck",
     "extends": "",
-    "short": "Deck",
-    "full": "The cards you will fight with. Tap one to take it out.",
+    "short": "Your Deck",
+    "full": "Select a card to inspect it. Use Remove to take a copy out.",
     "tip": "Deck"
   },
   {
     "id": "deckEditor.pane.collection",
     "extends": "",
-    "short": "Collection",
-    "full": "Every card you own. Tap one to add it to the deck.",
+    "short": "Card Library",
+    "full": "Select a card to inspect it. Use Add to put a copy in your deck.",
     "tip": "Collection"
   },
   {
@@ -5024,7 +5024,7 @@ export const uiStrings = [
   {
     "id": "deckEditor.keys",
     "extends": "",
-    "short": "Tap, ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Done · {cancel} Cancel",
+    "short": "Select to inspect · ＋ or － moves a card · {panes} switch panes · {filter} cycles filters · {move} picks up a row · {done} Done · {cancel} Cancel",
     "full": "",
     "tip": ""
   },
@@ -6901,6 +6901,202 @@ export const uiStrings = [
     "id": "lore.line.hint",
     "extends": "",
     "short": "— read the lore",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.readingDesk",
+    "extends": "",
+    "short": "Reading Desk",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.readingHint",
+    "extends": "",
+    "short": "Build your deck one card at a time.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.filterSort",
+    "extends": "",
+    "short": "Filters and sort",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.inspect",
+    "extends": "",
+    "short": "Inspect card",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.inspectNamed",
+    "extends": "",
+    "short": "Inspect {name}",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.search",
+    "extends": "",
+    "short": "Search cards…",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.addSelected",
+    "extends": "",
+    "short": "Add to deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.removeSelected",
+    "extends": "",
+    "short": "Remove from deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.all",
+    "extends": "",
+    "short": "All",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.inDeck",
+    "extends": "",
+    "short": "In Deck",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.searchDeck",
+    "extends": "",
+    "short": "Search your deck…",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.display.list",
+    "extends": "",
+    "short": "List",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.display.cards",
+    "extends": "",
+    "short": "Cards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.back",
+    "extends": "",
+    "short": "← Back to cards",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.dropHere",
+    "extends": "",
+    "short": "Drop a card here to add it to your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.undo",
+    "extends": "",
+    "short": "Undo",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.added",
+    "extends": "",
+    "short": "Added {name} to your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.removed",
+    "extends": "",
+    "short": "Removed {name} from your deck.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.animation",
+    "extends": "",
+    "short": "Card animation",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.animation.play",
+    "extends": "",
+    "short": "Play",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.animation.pause",
+    "extends": "",
+    "short": "Pause",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.animation.still",
+    "extends": "",
+    "short": "Card pose",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.animation.unavailable",
+    "extends": "",
+    "short": "No animation available for this card.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.art.alternative",
+    "extends": "",
+    "short": "Alternative artwork",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.art.basicOnly",
+    "extends": "",
+    "short": "Basic artwork is available. Alternative artwork has not been added yet.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.inspectAction",
+    "extends": "",
+    "short": "Inspect",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.equipmentNotFound",
+    "extends": "",
+    "short": "Equipment not found",
+    "full": "This card's equipment is no longer in your loadout.",
+    "tip": ""
+  },
+  {
+    "id": "deckEditor.refuse.equipment",
+    "extends": "deckEditor.equipmentNotFound",
+    "short": "",
     "full": "",
     "tip": ""
   },

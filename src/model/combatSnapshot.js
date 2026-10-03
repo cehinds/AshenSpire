@@ -70,6 +70,7 @@ export function combatSnapshotProblems(snapshot) {
   if (snapshot.version !== COMBAT_SNAPSHOT_VERSION) problems.push(`version must be ${COMBAT_SNAPSHOT_VERSION}`);
   if (!Number.isInteger(snapshot.turn) || snapshot.turn < 1) problems.push('turn must be a positive integer');
   try { retiredAttackSlots(snapshot.equipmentAttackSlotCount, snapshot.removedAttackSlotIds); } catch (error) { problems.push(error.message); }
+  if (snapshot.sideboardedEquipmentCardIds !== undefined && (!Array.isArray(snapshot.sideboardedEquipmentCardIds) || snapshot.sideboardedEquipmentCardIds.some((id) => !nonEmptyString(id)) || new Set(snapshot.sideboardedEquipmentCardIds).size !== snapshot.sideboardedEquipmentCardIds.length)) problems.push('sideboardedEquipmentCardIds must contain unique non-empty instance ids');
   if (snapshot.poolDeck !== undefined && snapshot.poolDeck !== true) problems.push('poolDeck must be true when present');
   if (!PHASES.includes(snapshot.phase)) problems.push(`phase must be one of ${PHASES.join(', ')}`);
   if (!RESULTS.includes(snapshot.result)) problems.push("result must be null, 'victory', or 'defeat'");

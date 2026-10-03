@@ -210,7 +210,7 @@ function migrateCombatSnapshotWeaponCards(registries, run) {
   // decides; the snapshot's flag was cross-checked against it at the door.
   const poolDeck = isPoolDeckMode(run);
   const lentBefore = poolDeck ? COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]).filter(isItemOwned).map((c) => c.instanceId) : [];
-  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout, itemMounts, ...(poolDeck ? { poolDeck: true } : {}) }, snapshot.piles);
+  reconcileGrantedCardsInCombat(registries, { class: classId, loadout: snapshot.loadout, itemMounts, sideboard: run.sideboard, sideboardedEquipmentCardIds: snapshot.sideboardedEquipmentCardIds, ...(poolDeck ? { poolDeck: true } : {}) }, snapshot.piles);
   const lentAfter = new Set(COMBAT_SNAPSHOT_PILE_ORDER.flatMap((pile) => snapshot.piles[pile]).filter(isItemOwned).map((c) => c.instanceId));
   const swept = lentBefore.filter((id) => !lentAfter.has(id));
   if (swept.length) {
