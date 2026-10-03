@@ -122,9 +122,19 @@ jobs:
         shell: pwsh
         run: |
           $dir = Join-Path $env:RUNNER_TEMP 'AshenSpire'
+          # An unlisted object (a name of 64 hex digits) goes; a look-alike that is
+          # not hex is the player's and stays.
+          $obj = Join-Path $dir 'game\objects\ab'
+          New-Item -ItemType Directory -Force $obj | Out-Null
+          $stray = Join-Path $obj ('ab' + ('0' * 62) + '.png')
+          $mine = Join-Path $obj ('ab' + ('z' * 62) + '.png')
+          Set-Content $stray 'x'; Set-Content $mine 'x'
           # _?= runs the uninstaller in place, so -Wait waits for it.
           $p = Start-Process (Join-Path $dir 'Uninstall.exe') -ArgumentList '/S', "_?=$dir" -Wait -PassThru
           if ($p.ExitCode -ne 0) { throw "uninstaller exited $($p.ExitCode)" }
+          if (Test-Path $stray) { throw 'an unlisted object outlived the uninstall' }
+          if (-not (Test-Path $mine)) { throw 'the uninstall deleted a file that is not an object' }
+          Remove-Item $mine
           $left = Get-ChildItem $dir -Recurse -File | Where-Object Name -ne 'Uninstall.exe'
           if ($left) { $left.FullName; throw 'files left after uninstall' }
 

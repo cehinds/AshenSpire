@@ -147,6 +147,24 @@ FunctionEnd
   ${EndIf}
 !macroend
 
+; A shortcut is made only where none exists or where this installer made it
+; before; the registry value VALUE records that it is the installer's, and only
+; then does the uninstaller delete it.
+!macro OwnedShortcut LINK TARGET VALUE
+  ReadRegDWORD $0 HKCU "${UNINST_KEY}" "${VALUE}"
+  ${If} $0 == 1
+  ${OrIfNot} ${FileExists} "${LINK}"
+    Delete "${LINK}"
+    ClearErrors
+    CreateShortcut "${LINK}" "${TARGET}"
+    ${If} ${Errors}
+      WriteRegDWORD HKCU "${UNINST_KEY}" "${VALUE}" 0
+    ${Else}
+      WriteRegDWORD HKCU "${UNINST_KEY}" "${VALUE}" 1
+    ${EndIf}
+  ${EndIf}
+!macroend
+
 Section "Ashen Spire (required)" SecGame
   SectionIn RO
   !insertmacro CloseRunningGame ""
@@ -203,8 +221,8 @@ Section "Ashen Spire (required)" SecGame
 
   WriteUninstaller "$INSTDIR\Uninstall.exe"
   CreateDirectory "$SMPROGRAMS\${APP_NAME}"
-  CreateShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}"
-  CreateShortcut "$SMPROGRAMS\${APP_NAME}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe"
+  !insertmacro OwnedShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "StartMenuGame"
+  !insertmacro OwnedShortcut "$SMPROGRAMS\${APP_NAME}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe" "StartMenuUninstall"
 
   WriteRegStr HKCU "${UNINST_KEY}" "DisplayName" "${APP_NAME}"
   WriteRegStr HKCU "${UNINST_KEY}" "DisplayVersion" "${VERSION}"
@@ -272,6 +290,84 @@ FunctionEnd
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 ; ---- uninstall ---------------------------------------------------------------------
+; The object store is the installer's own: every file in it is named by its
+; sha256. After the listed files go, this deletes every remaining file named so
+; (64 hex digits starting with its folder's two, a dot, an extension), so an old
+; object no list recorded cannot outlive the uninstall; any other name is kept.
+; $8 = 1 when such a file could not be deleted.
+Function un.SweepObjects
+  FindFirst $R0 $R1 "$INSTDIR\game\objects\*.*"
+  ${DoWhile} $R1 != ""
+    StrLen $R2 $R1
+    ${If} $R2 == 2
+    ${AndIf} $R1 != ".."
+    ${AndIf} ${FileExists} "$INSTDIR\game\objects\$R1\*.*"
+      FindFirst $R3 $R4 "$INSTDIR\game\objects\$R1\*.*"
+      ${DoWhile} $R4 != ""
+        Push $R4
+        Push $R1
+        Call un.IsObjectName
+        Pop $R5
+        ${If} $R5 == 1
+          Delete "$INSTDIR\game\objects\$R1\$R4"
+          ${If} ${FileExists} "$INSTDIR\game\objects\$R1\$R4"
+            StrCpy $8 1
+          ${EndIf}
+        ${EndIf}
+        FindNext $R3 $R4
+      ${Loop}
+      FindClose $R3
+    ${EndIf}
+    FindNext $R0 $R1
+  ${Loop}
+  FindClose $R0
+FunctionEnd
+
+; Pops a folder (xx) and a file name; pushes 1 when the name is xx + 62
+; lower-case hex digits + "." + an extension, else 0.
+Function un.IsObjectName
+  Exch $R6 ; folder
+  Exch
+  Exch $R7 ; name
+  Push $R8
+  Push $R9
+  Push $R2
+  Push $R5
+  StrCpy $R8 0
+  StrLen $R2 $R7
+  StrCpy $R9 $R7 2
+  StrCpy $R5 $R7 1 64
+  ${If} $R2 > 65
+  ${AndIf} $R9 S== $R6
+  ${AndIf} $R5 == "."
+    StrCpy $R8 1
+    StrCpy $R2 0
+    ${DoWhile} $R2 < 64
+      StrCpy $R9 $R7 1 $R2
+      StrCpy $R6 0
+      ${Do}
+        StrCpy $R5 "0123456789abcdef" 1 $R6
+        ${If} $R5 S== $R9
+          ${Break}
+        ${EndIf}
+        IntOp $R6 $R6 + 1
+      ${LoopUntil} $R6 >= 16
+      ${If} $R6 >= 16
+        StrCpy $R8 0
+        ${Break}
+      ${EndIf}
+      IntOp $R2 $R2 + 1
+    ${Loop}
+  ${EndIf}
+  StrCpy $R6 $R8
+  Pop $R5
+  Pop $R2
+  Pop $R9
+  Pop $R8
+  Pop $R7
+  Exch $R6
+FunctionEnd
+
 Section "Uninstall"
   !insertmacro CloseRunningGame "un"
   ; Unused art files an earlier prune could not remove (fetch-hd-art.ps1 lists
@@ -340,14 +436,29 @@ Section "Uninstall"
   Delete "$INSTDIR\install-data\orphans.txt"
   RMDir "$INSTDIR\install-data"
   Delete "$INSTDIR\Uninstall.exe"
+  ; Normally this runs from a temporary copy, so Uninstall.exe is not its own:
+  ; if it is still there something holds it, and the entry stays for a retry.
+  ; (Run in place with _?=, it cannot delete itself; that is not a failure.)
+  ${If} ${FileExists} "$INSTDIR\Uninstall.exe"
+  ${AndIf} $EXEDIR != $INSTDIR
+    MessageBox MB_OK|MB_ICONEXCLAMATION "Uninstall.exe is in use and was not removed. Close any program using it (or restart Windows) and run the uninstaller again from Installed apps." /SD IDOK
+    SetErrorLevel 2
+    Abort
+  ${EndIf}
   RMDir "$INSTDIR"
 
   ReadRegDWORD $0 HKCU "${UNINST_KEY}" "DesktopShortcut"
   ${If} $0 == 1
     Delete "$DESKTOP\${APP_NAME}.lnk"
   ${EndIf}
-  Delete "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk"
-  Delete "$SMPROGRAMS\${APP_NAME}\Uninstall ${APP_NAME}.lnk"
+  ReadRegDWORD $0 HKCU "${UNINST_KEY}" "StartMenuGame"
+  ${If} $0 == 1
+    Delete "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk"
+  ${EndIf}
+  ReadRegDWORD $0 HKCU "${UNINST_KEY}" "StartMenuUninstall"
+  ${If} $0 == 1
+    Delete "$SMPROGRAMS\${APP_NAME}\Uninstall ${APP_NAME}.lnk"
+  ${EndIf}
   RMDir "$SMPROGRAMS\${APP_NAME}"
   DeleteRegKey HKCU "${UNINST_KEY}"
 

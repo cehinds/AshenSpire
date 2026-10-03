@@ -222,16 +222,13 @@ files.push('install-data/hd-art.log');
 // (install-data/orphans.txt, the unused files a prune could not remove yet, is
 // deleted by the uninstaller itself, and only once everything it names is gone.)
 const win = (rel) => rel.split('/').join('\\');
-// The object store is the installer's own: every file in it is named by its
-// sha256. Besides the objects this version lists, the uninstaller deletes every
-// file with such a name (64 hex digits starting with its folder's two), so an
-// old object no list recorded (a prune that could not delete or record it)
-// cannot outlive the uninstall. No other name is touched.
+// Between the listed files and the folders, un.SweepObjects (installer.nsi)
+// deletes any other object-named file left in the store (an old object no list
+// recorded); every object folder is then removed if empty.
 const HEX = [...Array(256)].map((_, i) => i.toString(16).padStart(2, '0'));
-const objectPattern = (xx) => `game\\objects\\${xx}\\${xx}${'?'.repeat(62)}.*`;
 for (const xx of HEX) dirs.add(`game/objects/${xx}`);
 const uninstall = [...new Set(files)].sort().map((f) => `  Delete "$INSTDIR\\${win(f)}"`)
-  .concat(HEX.map((xx) => `  Delete "$INSTDIR\\${objectPattern(xx)}"`))
+  .concat(['  Call un.SweepObjects'])
   .concat([...dirs].sort((a, b) => b.split('/').length - a.split('/').length || (a < b ? 1 : -1))
     .map((d) => `  RMDir "$INSTDIR\\${win(d)}"`)).join('\n') + '\n';
 writeFileSync(join(STAGE, 'uninstall-files.nsh'), uninstall);
@@ -239,7 +236,6 @@ writeFileSync(join(STAGE, 'uninstall-files.nsh'), uninstall);
 // use), so the uninstaller keeps itself and its entry for another try.
 const uninstallCheck = [...new Set(files)].sort()
   .map((f) => `  \${If} \${FileExists} "$INSTDIR\\${win(f)}"\n    StrCpy $9 1\n  \${EndIf}`)
-  .concat(HEX.map((xx) => `  \${If} \${FileExists} "$INSTDIR\\${objectPattern(xx)}"\n    StrCpy $9 1\n  \${EndIf}`))
   .join('\n') + '\n';
 writeFileSync(join(STAGE, 'uninstall-check.nsh'), uninstallCheck);
 const sizeKb = (dir) => {
