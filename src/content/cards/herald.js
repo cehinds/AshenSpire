@@ -17,7 +17,7 @@ export const heraldCards = [
   {
     id: 'urgentHeal', name: 'Urgent Heal', class: 'herald', rarity: 'starter', cost: 1, manaCost: 1, type: 'skill',
     flavor: "Rite of the Furnace Chapel, for wounds taken in its service.\n\nPerformed swiftly, its prayer cut to the first line. The rubric bids the wound be bound beneath the brand, never over it, that the mark be left clear.\n\nWe bind the wound beneath the unspent brand.",
-    keywords: [], icon: '✚',
+    keywords: ['retain'], icon: '✚',
     effects: [{ op: 'heal', target: 'self', amount: 4 }],
     textTemplate: 'Heal {heal} HP.',
     upgrade: { effects: [{ op: 'heal', target: 'self', amount: 6 }] },
@@ -83,7 +83,7 @@ export const heraldCards = [
   {
     id: 'penance', name: 'Penance', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
     flavor: "Kneeling upon the cold stone of the nave.\n\nPrescribed for small failings of devotion, until the knees bled. The nave was repaved twice in the years of the Mark Trade, with stone from the caldera, and no reason given.\n\nWe kneel on the cold stone and are forgiven.",
-    keywords: [], icon: '🙏',
+    keywords: ['retain'], icon: '🙏',
     effects: [
       { op: 'block', target: 'self', amount: 5 },
       { op: 'heal', target: 'self', amount: 2 },
@@ -157,7 +157,7 @@ export const heraldCards = [
   {
     id: 'contagion', name: 'Contagion', class: 'herald', rarity: 'common', cost: 1, manaCost: 1, type: 'skill',
     flavor: "Communion of the Feral Ember.\n\nThe Chapel passed one cup along the pews, that the congregation be one body before the fire. The Feral Ember revived the rite with another cup.\n\nWe pass one cup along the pews, and every mouth is red.",
-    keywords: [], icon: '☣',
+    keywords: ['retain'], icon: '☣',
     effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'crimsonBlight', stacks: 2 }],
     textTemplate: 'Apply {crimsonBlight} Crimson Blight to ALL enemies.',
     upgrade: { effects: [{ op: 'applyStatus', target: 'allEnemies', status: 'crimsonBlight', stacks: 3 }] },
@@ -181,7 +181,7 @@ export const heraldCards = [
   {
     id: 'transfusion', name: 'Transfusion', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
     flavor: "Communion of blood, between Saint and dying.\n\nBlood poured from cup to cup, for the dying of good family. The rubric speaks of the Saint giving, never receiving. Novice Wen wrote that the flow ran both ways.\n\nThe Saints rose from the rite looking younger.",
-    keywords: [], icon: '➕',
+    keywords: ['retain'], icon: '➕',
     effects: [{ op: 'heal', target: 'self', amount: 6 }],
     textTemplate: 'Heal {heal} HP.',
     upgrade: { effects: [{ op: 'heal', target: 'self', amount: 9 }] },
@@ -189,7 +189,7 @@ export const heraldCards = [
   {
     id: 'blightward', name: 'Blightward', class: 'herald', rarity: 'common', cost: 1, type: 'skill',
     flavor: "Cloth laid over an unfinished brand.\n\nBegun for the Herald, whose mark began to burn on the night of the Burning and stopped partway. The Chapel remnant now lays such cloths over the brands of its dead, and teaches that the fire will return to finish its work.\n\nThe fire started on me and stopped. I do not know why.",
-    keywords: [], icon: '🛡',
+    keywords: ['retain'], icon: '🛡',
     effects: [
       { op: 'block', target: 'self', amount: 6 },
       { op: 'block', target: 'self', amount: 4, if: { p: 'hpBelowPct', of: 'self', pct: 50 } },
@@ -225,12 +225,12 @@ export const heraldCards = [
   {
     id: 'blightBloom', name: 'Blight Bloom', class: 'herald', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'skill',
     flavor: "Red flowers upon the graves of the crown-born.\n\nThey first appeared in the Furnace Chapel's garden in the Long Winter. The remnant tends them as a sign that the dead are giving yet.\n\nThey spread fastest where the earth is freshly turned. The remnant has begun turning more.",
-    keywords: ['exhaust'], icon: '🌺',
+    keywords: ['exhaust', 'retain'], icon: '🌺',
     effects: [
       { op: 'applyStatus', target: 'enemy', status: 'crimsonBlight', stacks: { f: 'stacks', status: 'crimsonBlight', of: 'target' } },
     ],
     textTemplate: "Double the target's Crimson Blight. Exhaust.",
-    upgrade: { keywords: [], textTemplate: "Double the target's Crimson Blight." },
+    upgrade: { keywords: ['retain'], textTemplate: "Double the target's Crimson Blight." },
   },
   {
     id: 'sacredHarvest', name: 'Sacred Harvest', class: 'herald', rarity: 'uncommon', cost: 1, manaCost: 1, type: 'attack',
@@ -259,7 +259,7 @@ export const heraldCards = [
   {
     id: 'communionCard', name: 'Communion', class: 'herald', rarity: 'uncommon', cost: 2, manaCost: 1, type: 'power',
     flavor: "Sharing of warmth, as kept at the Tidebound Chapel.\n\nThe Saints raised that chapel upon the Drowned Coast to keep watch upon the Spire, which they called heresy. Its congregation shrank with each winter after the Spire was finished.\n\nWe watched from Tidebound Chapel and never saw the heresy lit.",
-    keywords: [], icon: '🕊',
+    keywords: ['retain'], icon: '🕊',
     effects: [{ op: 'applyStatus', target: 'self', status: 'communion', stacks: one }],
     textTemplate: 'At the start of your turn, heal 3 HP.',
     upgrade: { cost: 1 },
@@ -267,7 +267,7 @@ export const heraldCards = [
   {
     id: 'gildedOath', name: 'Gilded Oath', class: 'herald', rarity: 'uncommon', cost: 2, type: 'skill',
     flavor: "Oath of the Goldbough crest.\n\nA gilded branch, three flames upon three twigs: the kingdom and its hearths. Novices swore it at their first vigil, before they were told what the hearths were fed.\n\nThe crest above the Furnace Chapel's nave bears a fourth twig, bare, blamed upon a careless gilder.",
-    keywords: [], icon: '🌞',
+    keywords: ['retain'], icon: '🌞',
     effects: [
       { op: 'applyStatus', target: 'self', status: 'strength', stacks: 2 },
       { op: 'applyStatus', target: 'self', status: 'dexterity', stacks: 2 },
@@ -341,13 +341,13 @@ export const heraldCards = [
   {
     id: 'reclamation', name: 'Reclamation', class: 'herald', rarity: 'uncommon', cost: 1, type: 'skill',
     flavor: "Return of warmth lent to the dying.\n\nPerformed at the deathbed once the name was read, and called a courtesy returned. After the rite the dying were colder, and the Saint warmer.\n\nThe rubric closes: do not explain this to the family.",
-    keywords: ['exhaust'], icon: '🍂',
+    keywords: ['exhaust', 'retain'], icon: '🍂',
     effects: [
       { op: 'heal', target: 'self', amount: { f: 'stacks', status: 'crimsonBlight', of: 'allEnemies', per: 2 } },
     ],
     textTemplate: 'Heal 1 HP for every 2 Crimson Blight on all enemies. Exhaust.',
     upgrade: {
-      keywords: ['exhaust'],
+      keywords: ['exhaust', 'retain'],
       effects: [
         { op: 'heal', target: 'self', amount: { f: 'stacks', status: 'crimsonBlight', of: 'allEnemies' } },
       ],
@@ -359,7 +359,7 @@ export const heraldCards = [
   {
     id: 'secondBloom', name: 'Second Bloom', class: 'herald', rarity: 'rare', cost: 2, manaCost: 1, type: 'skill',
     flavor: "Rite of recovery, named for the weald's second flowering.\n\nThe orchards bloomed a second time in years when the Field Flame burned strong, and the Chapel claimed both the blossom and the healing as its work. Neither has come since the Burning.\n\nThe last novice performs the rite regardless, and says it works.",
-    keywords: ['exhaust'], icon: '🌸',
+    keywords: ['exhaust', 'retain'], icon: '🌸',
     effects: [
       { op: 'heal', target: 'self', amount: { f: 'mul', args: [0.5, { f: 'missingHp', of: 'self' }] } },
     ],
@@ -393,7 +393,7 @@ export const heraldCards = [
   {
     id: 'crimsonRite', name: 'Crimson Rite', class: 'herald', rarity: 'rare', cost: 'X', manaCost: 1, type: 'attack',
     flavor: "Chalice of the high altar.\n\nReserved to the Saints. It draws from the Saint as the Saint draws from it. The Furnace Saint performs the rite alone now, and keeps the chalice full.\n\nWe drink from the chalice, and it drinks from us.",
-    keywords: [], icon: '🔺',
+    keywords: ['retain'], icon: '🔺',
     effects: [
       { op: 'damage', target: 'enemy', amount: 5, hits: { f: 'energySpent' } },
       { op: 'heal', target: 'self', amount: { f: 'energySpent', per: 2 } },
@@ -410,7 +410,7 @@ export const heraldCards = [
   {
     id: 'blightNova', name: 'Blight Nova', class: 'herald', rarity: 'rare', cost: 2, manaCost: 1, type: 'attack',
     flavor: "Reading of every name, aloud and at once.\n\nComposed by the Furnace Saint after the Burning. The novices say it is what the fire did that night, and that the rite exists so it will be remembered. The remnant holds it holiest of the liturgies.\n\nIt has never been performed to its end.",
-    keywords: [], icon: '💥',
+    keywords: ['retain'], icon: '💥',
     effects: [
       { op: 'damage', target: 'enemy', amount: { f: 'mul', args: [2, { f: 'stacks', status: 'crimsonBlight', of: 'target' }] } },
     ],
@@ -425,14 +425,14 @@ export const heraldCards = [
   {
     id: 'lastRites', name: 'Last Rites', class: 'herald', rarity: 'rare', cost: 2, manaCost: 1, type: 'skill',
     flavor: "Rite for those not to be written.\n\nForeigners, criminals, and in the last years, the bought-marked of whom the Chapel had not been told. The rubric forbids a name upon the headstone, and calls this discretion.\n\nThe lower cemetery stands blank by the thousand.",
-    keywords: ['exhaust'], icon: '🕯',
+    keywords: ['exhaust', 'retain'], icon: '🕯',
     effects: [
       { op: 'heal', target: 'self', amount: { f: 'percentMaxHp', of: 'self', pct: 20 } },
       { op: 'draw', amount: 2 },
     ],
     textTemplate: 'Heal 20% of your max HP. Draw {draw} cards. Exhaust.',
     upgrade: {
-      keywords: [],
+      keywords: ['retain'],
       textTemplate: 'Heal 20% of your max HP. Draw {draw} cards.',
     },
   },
@@ -569,7 +569,7 @@ export const heraldCards = [
   {
     id: 'lastMercy', name: "Last Mercy", class: 'herald', rarity: 'uncommon', cost: 1, type: 'skill',
     flavor: "Warming of a dying hand.\n\nThe Chapel's nursing sisters did it with a coal wrapped in cloth, that the fire might find the hand gentle. The Wandering Physician learned it from them, and does it without the coal.\n\nIt seems to work as well. He cannot say what working means.",
-    keywords: [], icon: '🙏',
+    keywords: ['retain'], icon: '🙏',
     effects: [
       { op: 'heal', target: 'self', amount: 5 },
       { op: 'block', target: 'self', amount: 4 },
@@ -588,7 +588,7 @@ export const heraldCards = [
   {
     id: 'warmLitany', name: 'Warm Litany', class: 'herald', rarity: 'starter', cost: 1, type: 'skill',
     flavor: "First prayer of the Furnace Chapel's novices.\n\nSaid over a small hurt, to keep it warm. The novices were taught its words were older than the Chapel, found by the first Saint cut into the caldera wall.\n\nWe give the name. We keep the warmth.",
-    keywords: [], icon: '📿',
+    keywords: ['retain'], icon: '📿',
     effects: [{ op: 'heal', target: 'self', amount: 3 }, { op: 'block', target: 'self', amount: 3 }],
     textTemplate: 'Heal {heal}. Gain {block} Block.',
     upgrade: {
