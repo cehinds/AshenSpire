@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-03",
     "summary": "Behind the scenes: a whole run is now played in a real browser",
     "detail": "Nothing you play changes. A new automatic check starts the game from the title, creates a character on a fixed seed, plays a fight, walks the map to the act boss, dies to it, returns to the title and starts a new run, and fails if anything goes wrong on the way or an error is logged.",
-    "build": "0.7.1.822",
+    "build": "0.7.1.823",
     "pullRequest": 1520,
     "url": "https://github.com/cehinds/AshenSpire/pull/1520"
+  },
+  {
+    "id": "pr-1516",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the art now lives only in its own repository",
+    "detail": "Nothing you play changes. The pictures, fonts, music and map tiles were stored twice, here and in the art repository; the copies here are gone, so a fresh download of the source is about 1.9 GB lighter. Every build now takes its art from the pinned art release, checked file by file, exactly as it already did.",
+    "build": "0.7.1.822",
+    "pullRequest": 1516,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1516"
   },
   {
     "id": "pr-1489",

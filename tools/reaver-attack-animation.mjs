@@ -14,6 +14,8 @@ import {
   reaverAttackTiming,
 } from '../src/ui/reaverAttack.js';
 
+import { authoringNeeds } from './art-authoring.mjs';
+authoringNeeds(import.meta.url, ['assets']);
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const FRAME_DIR = join(ROOT, 'assets', 'animations', 'reaver', 'default-greatsword', 'right');
 const EXPECTED_RUNS = [

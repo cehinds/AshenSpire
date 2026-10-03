@@ -5,6 +5,7 @@
 //   node tools/full-run-probe.mjs            the drive below, each stage timed; exit 0 green, 1 red, 2 harness
 //   node tools/full-run-probe.mjs --check    the same drive, verdict lines only (CI)
 //   node tools/full-run-probe.mjs --seed S   another fixed seed (default FULLRUN1)
+//   node tools/full-run-probe.mjs --selftest the console verdict's known-bads, no browser (seconds)
 //   FULL_RUN_PORT=<n>                        serve on another port (default: any free port)
 //   CHROME=<path>                            the browser (tools/browser.mjs)
 //
@@ -102,17 +103,56 @@ const say = (line) => { if (!CHECK) console.log(`  ${line}`); };
 
 const errors = [];
 const optional = [];
-function onEvent(m) {
+// One CDP event → 'error' (red), 'optional' (an OPTIONAL_404, counted) or null
+// (not an error). Pure, so --selftest can plant known-bads through it.
+function classify(m) {
   if (m.method === 'Runtime.exceptionThrown') {
     const d = m.params.exceptionDetails;
-    errors.push(`uncaught: ${d.exception?.description || d.text}`);
-  } else if (m.method === 'Runtime.consoleAPICalled' && (m.params.type === 'error' || m.params.type === 'assert')) {
-    errors.push(`console.${m.params.type}: ${m.params.args.map((a) => a.value ?? a.description ?? a.type).join(' ')}`);
-  } else if (m.method === 'Log.entryAdded' && m.params.entry.level === 'error') {
-    const { text, url = '', source } = m.params.entry;
-    if (source === 'network' && OPTIONAL_404.some((re) => re.test(url)) && /status of 404/.test(text)) optional.push(url);
-    else errors.push(`log (${source}): ${text}${url ? ` ${url}` : ''}`);
+    return { kind: 'error', text: `uncaught: ${d.exception?.description || d.text}` };
   }
+  if (m.method === 'Runtime.consoleAPICalled' && (m.params.type === 'error' || m.params.type === 'assert')) {
+    return { kind: 'error', text: `console.${m.params.type}: ${m.params.args.map((a) => a.value ?? a.description ?? a.type).join(' ')}` };
+  }
+  if (m.method === 'Log.entryAdded' && m.params.entry.level === 'error') {
+    const { text, url = '', source } = m.params.entry;
+    if (source === 'network' && OPTIONAL_404.some((re) => re.test(url)) && /status of 404/.test(text)) return { kind: 'optional', text: url };
+    return { kind: 'error', text: `log (${source}): ${text}${url ? ` ${url}` : ''}` };
+  }
+  return null;
+}
+function onEvent(m) {
+  const c = classify(m);
+  if (c) (c.kind === 'optional' ? optional : errors).push(c.text);
+}
+
+// --selftest: each plant is an event the real drive must turn red (or, for the
+// one clean edge, must set aside). A change that weakens the listener or widens
+// the 404 exception fails here, without a browser.
+if (argv.includes('--selftest')) {
+  const net = (url, text = 'Failed to load resource: the server responded with a status of 404 (Not Found)', source = 'network') =>
+    ({ method: 'Log.entryAdded', params: { entry: { level: 'error', source, text, url } } });
+  const plants = [
+    ['console.error', 'error', { method: 'Runtime.consoleAPICalled', params: { type: 'error', args: [{ type: 'string', value: 'planted' }] } }],
+    ['console.assert', 'error', { method: 'Runtime.consoleAPICalled', params: { type: 'assert', args: [{ type: 'string', value: 'planted' }] } }],
+    ['uncaught exception', 'error', { method: 'Runtime.exceptionThrown', params: { exceptionDetails: { text: 'Uncaught', exception: { description: 'Error: planted' } } } }],
+    ['non-sound 404 (an image)', 'error', net('http://localhost:1/assets/enemies/planted.png')],
+    ['non-sound 404 (a script)', 'error', net('http://localhost:1/src/ui/planted.js')],
+    ['an .ogg outside assets/sfx/', 'error', net('http://localhost:1/assets/music/planted.ogg')],
+    ['an assets/sfx/ path that is not one .ogg', 'error', net('http://localhost:1/assets/sfx/sub/planted.ogg')],
+    ['an assets/sfx/ sample answered 500', 'error', net('http://localhost:1/assets/sfx/hit.ogg', 'Failed to load resource: the server responded with a status of 500 (Internal Server Error)')],
+    ['a javascript-source log error', 'error', net('', 'planted', 'javascript')],
+    ['clean edge: an optional assets/sfx/<id>.ogg 404', 'optional', net('http://localhost:1/assets/sfx/hit.ogg')],
+    ['clean edge: console.log', null, { method: 'Runtime.consoleAPICalled', params: { type: 'log', args: [{ type: 'string', value: 'fine' }] } }],
+  ];
+  let bad = 0;
+  for (const [name, want, m] of plants) {
+    const got = classify(m)?.kind ?? null;
+    const ok = got === want;
+    if (!ok) bad++;
+    console.log(`${ok ? 'PASS' : 'FAIL'} selftest ${name} — classified ${got ?? 'clean'}, wants ${want ?? 'clean'}`);
+  }
+  console.log(`${plants.length - bad} passed, ${bad} failed`);
+  process.exit(bad ? 1 : 0);
 }
 
 // The page-side recorder: the boss splash closes itself after 2.3 s, so it is
@@ -340,8 +380,8 @@ async function leaveRoom() {
 }
 
 // ---- the drive ------------------------------------------------------------------
-const server = await serve({ root: ROOT, port: PORT, open: false, lan: true });
-const base = `http://localhost:${server.server.address().port}/`;
+const server = await serve({ root: ROOT, port: PORT, open: false, lan: true, quiet: CHECK });
+const base = server.url;
 let browser;
 let harness = null;
 try {

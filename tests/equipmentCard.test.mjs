@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
+import { manifestIds } from '../tools/art-source.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { equipmentCardModel, equipmentCardTokens } from '../src/model/equipmentCard.js';
@@ -15,7 +16,7 @@ test('every canonical equipment item has complete card facts, bonuses and availa
     assert.equal(m.tags.length, p.tags.length);
     assert.ok(m.facts.every(f => Number.isFinite(f.value) && f.explanation));
     assert.ok(m.bonuses.every(b => b.explanation && !b.label.includes('undefined')));
-    assert.ok(existsSync(p.kind === 'armor' ? armourMenuAsset(p.classId,p.id) : armamentIconAsset(p)), p.id);
+    assert.ok(manifestIds().has(p.kind === 'armor' ? armourMenuAsset(p.classId,p.id) : armamentIconAsset(p)), p.id);
   }
 });
 test('modifier copy preserves assignment versus signed changes and authored mechanics', () => {

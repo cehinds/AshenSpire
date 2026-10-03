@@ -1,8 +1,9 @@
-import { readFileSync, writeFileSync, renameSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateEquipmentAnimations, ANIMATION_ROLES } from '../src/model/equipmentAnimation.js';
 import { contentBundle } from '../src/content/index.js';
+import { manifestIds } from './art-source.mjs';
 
 const selector = b => JSON.stringify([b.classId,b.armourId,b.rightGroup,b.leftGroup,b.grip || '*']);
 
@@ -59,7 +60,9 @@ export function validateUnarmedFragmentCoverage(fragment, root) {
   if (JSON.stringify(expected) !== JSON.stringify(supplied)) throw new Error('unarmed import: incomplete or duplicate catalog coverage');
   if (new Set(fragment.bindings.map(row=>row.setId)).size !== Object.keys(fragment.sets).length) throw new Error('unarmed import: unbound appearance');
   for (const set of Object.values(fragment.sets)) for (const frame of Object.values(set.frames)) {
-    if (!existsSync(resolve(root,frame.file))) throw new Error('unarmed import: missing runtime asset '+frame.file);
+    // A runtime frame ships when the pinned release carries it: art-manifest.json
+    // lists it (the art left this repository at docs/EXTERNAL-ASSETS-PLAN.md step 13).
+    if (!manifestIds(root).has(frame.file)) throw new Error('unarmed import: missing runtime asset '+frame.file+' (not in art-manifest.json)');
   }
 }
 

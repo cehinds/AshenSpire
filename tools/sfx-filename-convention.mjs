@@ -14,6 +14,7 @@
 // The artifact lane checks the selected standalone file, never an assumed
 // output. Selftest plants the source seams and that selected artifact.
 
+import { copyPackTrees, SANDBOX_ENV } from './art-source.mjs';
 import {
   cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync,
 } from 'node:fs';
@@ -353,12 +354,16 @@ function scoreRuntime(report) {
 function copyBundleInputs(to) {
   // The pin and the manifest are build identity (tools/buildversion.mjs
   // BUILD_IDENTITY_FILES, docs/EXTERNAL-ASSETS-PLAN.md step 11).
-  // assets-mobile/ too: since step 8e the one inline shape is the light single
-  // file, whose payloads are the light twins (docs/EXTERNAL-ASSETS-PLAN.md).
-  for (const name of ['index.html', 'buildordinal.json', 'art-release.json', 'art-manifest.json', 'src', 'styles', 'assets', 'assets-mobile', 'tools']) {
+  // The light twins and the fonts too: since step 8e the one inline shape is
+  // the light single file, whose payloads are the light pack's. Since step 13
+  // they come from the fetched packs (or, in a sandbox of a sandbox, its own
+  // copies: copyPackTrees, tools/art-source.mjs), and every child this tool
+  // runs in a copy reads them with ASHEN_ART_SOURCE=trees (SANDBOX_ENV).
+  for (const name of ['index.html', 'buildordinal.json', 'art-release.json', 'art-manifest.json', 'src', 'styles', 'tools']) {
     const from = resolve(ROOT, name);
     if (existsSync(from)) cpSync(from, resolve(to, name), { recursive: true });
   }
+  copyPackTrees(to, ['assets-mobile', 'assets/fonts'], { root: ROOT });
 }
 
 function forceCrLfTree(path) {
@@ -557,10 +562,20 @@ function selftest() {
     copyBundleInputs(dir);
     // The fixture sample in both trees: the light single file inlines the twin
     // and refuses a source with no twin (tools/bundle.mjs, the twin check).
+    const sample = Buffer.from('OggS-fixture-47');
     for (const tree of ['assets', 'assets-mobile']) {
       mkdirSync(resolve(dir, tree, 'sfx'), { recursive: true });
-      writeFileSync(resolve(dir, tree, 'sfx/cardPlay.ogg'), Buffer.from('OggS-fixture-47'));
+      writeFileSync(resolve(dir, tree, 'sfx/cardPlay.ogg'), sample);
     }
+    // The bundler holds the light tree to art-manifest.json's light records
+    // (a file with no record is a stray), so the fixture sample gets a row in
+    // this copy's manifest, as a released sound would.
+    const manifestFile = resolve(dir, 'art-manifest.json');
+    const manifest = JSON.parse(readFileSync(manifestFile, 'utf8'));
+    const record = (path) => ({ path, bytes: sample.length, sha256: createHash('sha256').update(sample).digest('hex') });
+    manifest.assets['assets/sfx/cardPlay.ogg'] = { light: record('assets-mobile/sfx/cardPlay.ogg'), high: record('assets/sfx/cardPlay.ogg') };
+    manifest.count = Object.keys(manifest.assets).length;
+    writeFileSync(manifestFile, `${JSON.stringify(manifest)}\n`);
     const gitSteps = [
       ['init', '-q'],
       ['add', 'index.html', 'buildordinal.json', 'art-release.json', 'art-manifest.json', 'src', 'styles', 'assets', 'assets-mobile', 'tools'],
@@ -582,7 +597,7 @@ function selftest() {
     // The light single file (the only inline shape since step 8e), written
     // where this lane has always read the selected artifact.
     const built = spawnSync(process.execPath, [resolve(dir, 'tools/bundle.mjs'), '--single-file', '--out', 'build'], {
-      cwd: dir, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024,
+      cwd: dir, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024, env: { ...process.env, ...SANDBOX_ENV },
     });
     const artifact = resolve(dir, 'build/AshenSpire.html');
     if (built.status !== 0 || !existsSync(artifact)) {
@@ -609,7 +624,7 @@ function selftest() {
       forceCrLfTree(crlfDir);
       const crlfTool = resolve(crlfDir, 'tools/sfx-filename-convention.mjs');
       const control = spawnSync(process.execPath, [crlfTool, '--selftest', '--skip-eol-selftest'], {
-        cwd: crlfDir, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024,
+        cwd: crlfDir, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024, env: { ...process.env, ...SANDBOX_ENV },
       });
       const controlHeld = control.status === 0 && /SFX FILENAME CONVENTION OK/.test(control.stdout || '');
       check(controlHeld, 'forced-CRLF source and selected-standalone controls stay green',
@@ -626,7 +641,7 @@ function selftest() {
         writeFileSync(crlfTool,
           toolText.slice(0, anchorAt) + staleAnchor + toolText.slice(anchorAt + currentAnchor.length), 'utf8');
         const stale = spawnSync(process.execPath, [crlfTool, '--selftest', '--skip-eol-selftest'], {
-          cwd: crlfDir, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024,
+          cwd: crlfDir, encoding: 'utf8', maxBuffer: 20 * 1024 * 1024, env: { ...process.env, ...SANDBOX_ENV },
         });
         const staleOut = `${stale.stdout || ''}\n${stale.stderr || ''}`;
         const staleHeld = stale.status === 1

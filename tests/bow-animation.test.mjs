@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { manifestIds } from '../tools/art-source.mjs';
 import { test } from 'node:test';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
@@ -20,7 +20,7 @@ test('bow set covers every armor appearance and either hand', () => {
       assert.deepEqual(animationClip(component, 'bowAttack').frames, frames);
       assert.notDeepEqual(animationClip(component, 'attack').frames, frames, 'other attacks keep their physical motion');
       assert.equal(animationClip(component, 'cast').frames.length, 9, 'magic remains a separate sequence');
-      for (const name of frames) assert.ok(existsSync(new URL(`../${component.frames[name].file}`, import.meta.url)), component.frames[name].file);
+      for (const name of frames) assert.ok(manifestIds().has(component.frames[name].file), component.frames[name].file);
     }
   }
 });

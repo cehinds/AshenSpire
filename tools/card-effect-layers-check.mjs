@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
+import { authoringNeeds } from './art-authoring.mjs';
+authoringNeeds(import.meta.url, ['art']);
 const {chromium}=await import(process.env.POSE_STUDIO_PLAYWRIGHT?pathToFileURL(process.env.POSE_STUDIO_PLAYWRIGHT).href:'playwright');
 const out=process.env.POSE_STUDIO_EVIDENCE;if(!out)throw Error('Set POSE_STUDIO_EVIDENCE');await mkdir(out,{recursive:true});
 const origin=process.env.POSE_STUDIO_URL||'http://127.0.0.1:4321';

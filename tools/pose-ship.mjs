@@ -23,6 +23,8 @@ import { dataHome } from './asset-data.mjs';
 import { tmpdir } from 'node:os';
 import { decodePng, encodePng, resample } from './concept-cutout.mjs';
 
+import { authoringNeeds } from './art-authoring.mjs';
+authoringNeeds(import.meta.url, ['art']);
 const args = process.argv.slice(2);
 const arg = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d; };
 const inDir = arg('--in', 'art/poses');
