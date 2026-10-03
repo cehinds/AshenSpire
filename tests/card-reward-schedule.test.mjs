@@ -26,14 +26,14 @@ import { rewardDom } from './helpers/reward-dom.mjs';
 
 const REG = createRegistries(contentBundle);
 
-/** The registries with `balance.rewards.cardRewards` patched. */
+/** A guaranteed-offer fixture, with the requested schedule patch applied. */
 function withSchedule(patch) {
   const base = structuredClone(REG.balance.rewards.cardRewards);
   const merged = {
     ...base,
     ...patch,
     afterCombat: { ...base.afterCombat, ...(patch.afterCombat || {}) },
-    chancePct: { ...base.chancePct, ...(patch.chancePct || {}) },
+    chancePct: { normal: 100, elite: 100, boss: 100, ...(patch.chancePct || {}) },
   };
   return { ...REG, balance: { ...REG.balance, rewards: { ...REG.balance.rewards, cardRewards: merged } } };
 }
@@ -56,7 +56,7 @@ test('rewardRolls is appended after every stream before it, so no existing strea
 test('the shipped schedule is the §15.1 table', () => {
   assert.deepEqual(cardRewardSchedule(REG.balance), {
     afterCombat: { normal: true, elite: true, boss: true },
-    chancePct: { normal: 100, elite: 100, boss: 100 },
+    chancePct: { normal: 10, elite: 10, boss: 10 },
     onLevelUp: true,
     onLevelUpMaxPerFight: 1,
   });
@@ -166,10 +166,12 @@ test('cardRewardPlan is the one door: rowKey spells levelCard, and a waiting dra
   const drafted = cardRewardPlan(on, { pool: 'normal', levelsGained: 2, draftWaiting: true }, rng);
   assert.deepEqual(drafted, { offerCard: false, cardMissed: false, levelCards: 1 }, '…but the level card stays');
   assert.equal(rng.getCounters().rewardRolls, 0);
-  // Shipped schedule: always offer and never roll, including the level card.
+  // Shipped schedule rolls the combat card while guaranteeing the level card.
   const shipped = createRng(9);
-  assert.deepEqual(cardRewardPlan(REG.balance, { pool: 'boss', levelsGained: 4 }, shipped), { offerCard: true, cardMissed: false, levelCards: 1 });
-  assert.equal(shipped.getCounters().rewardRolls, 0);
+  const shippedPlan = cardRewardPlan(REG.balance, { pool: 'boss', levelsGained: 4 }, shipped);
+  assert.equal(shippedPlan.levelCards, 1);
+  assert.equal(shippedPlan.offerCard, !shippedPlan.cardMissed);
+  assert.equal(shipped.getCounters().rewardRolls, 1);
   // Through the offer roller too: a drafted, levelling fight has a level card row and no card row.
   const offer = rollCombatCardOffer(withSchedule({ onLevelUp: true }), createRng(5), args('elite', { draftWaiting: true, levelUps: 1 }));
   assert.deepEqual(offer.cardIds, []);
@@ -224,12 +226,12 @@ test('co-op reads the schedule through cardRewardPlan: a pool turned off offers 
   const deck = off.livingMembers()[0].run.deck;
   assert.equal(deck.length, deckBefore + 1);
   assert.equal(deck.at(-1).cardId, picked);
-  // The shipped schedule offers the ordinary card and a level card.
+  // The shipped schedule rolls one 10% card chance and still grants a level card.
   const shipped = coopFirstSpoils(REG, 'SCHEDULE');
-  assert.equal(shipped.scene.offers.p1.cardIds.length, REG.balance.rewards.cardChoices);
+  assert.ok([0, REG.balance.rewards.cardChoices].includes(shipped.scene.offers.p1.cardIds.length));
   assert.equal(shipped.scene.offers.p1.levelCards.length, 1);
-  assert.equal(shipped.scene.offers.p1.cardMissed, undefined);
-  assert.equal(shipped.livingMembers()[0].rng.getCounters().rewardRolls, 0);
+  assert.equal(!!shipped.scene.offers.p1.cardMissed, shipped.scene.offers.p1.cardIds.length === 0);
+  assert.equal(shipped.livingMembers()[0].rng.getCounters().rewardRolls, 1);
 });
 
 test('a waiting draft still takes the card row\'s seat, and rolls no chance', () => {

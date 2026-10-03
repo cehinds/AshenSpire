@@ -12,14 +12,18 @@
 //   · Reset puts a key back to this value, not to the row's code default.
 // Empty values mean the code defaults stand, exactly as before this file.
 export const SETTINGS_DEFAULTS = Object.freeze({
-  digest: '06146a8ffb',
+  digest: '0aa7fd2c1c',
   values: Object.freeze({
     "gameConfig.balance.level.xp.growth": 1.5,
-    "gameConfig.balance.rewards.cardChoices": 0,
-    "gameConfig.balance.rewards.cardRewards.chancePct.normal": 24,
+    "gameConfig.balance.rewards.cardChoices": 3,
+    "gameConfig.balance.rewards.cardRewards.chancePct.boss": 10,
+    "gameConfig.balance.rewards.cardRewards.chancePct.elite": 10,
+    "gameConfig.balance.rewards.cardRewards.chancePct.normal": 10,
     "gameConfig.presentation.backLayer": 200,
     "gameConfig.presentation.backOffsetX": 0,
     "gameConfig.presentation.backOffsetY": 0,
+    "gameConfig.presentation.enemySpawnColumn": "6",
+    "gameConfig.presentation.enemySpawnRow": "F",
     "gameConfig.presentation.enemySpriteScale": 1.5,
     "gameConfig.presentation.formationColumns": 2,
     "gameConfig.presentation.formationDepth": 60,
@@ -34,6 +38,7 @@ export const SETTINGS_DEFAULTS = Object.freeze({
     "gameConfig.presentation.groundSkew": 15,
     "gameConfig.presentation.groundTilt": 35,
     "gameConfig.presentation.playerSpawnColumn": "1",
+    "gameConfig.presentation.playerSpawnRow": "F",
     "gameConfig.presentation.rowALayer": 0,
     "gameConfig.presentation.rowAScale": 1,
     "gameConfig.presentation.rowBLayer": 0,

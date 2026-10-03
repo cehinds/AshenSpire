@@ -325,12 +325,13 @@ export function mountRewards(app, {
         };
       }
       case 'levelCard': {
+        const title = row.source === 'class' ? 'Class technique' : t('reward.levelCard.title');
         if (state === 'taken') {
           const def = registries.cards.get(chosenDraftCardIds[row.key]);
-          return { title: t('reward.levelCard.title'), body: t('reward.card.joins', { name: esc((def && def.name) || chosenDraftCardIds[row.key]) }) };
+          return { title, body: t('reward.card.joins', { name: esc((def && def.name) || chosenDraftCardIds[row.key]) }) };
         }
         return {
-          title: t('reward.levelCard.title'),
+          title,
           body: row.choice ? t('reward.card.chooseOne', { count: row.cardIds.length }) : t('reward.card.offered'),
         };
       }
@@ -339,9 +340,9 @@ export function mountRewards(app, {
         const option = row.options.find((entry) => `${entry.kind}:${entry.id}` === chosen);
         const feat = option?.kind === 'feat' ? featById(option.id) : null;
         const node = option?.kind === 'classNode' ? (registries.nodes || []).find((entry) => entry.id === option.id) : null;
-        return { title: t('reward.level.choice.title'), body: state === 'taken'
+        return { title: row.source === 'combat' ? 'Combat feat' : row.source === 'class' ? 'Class level feat' : t('reward.level.choice.title'), body: state === 'taken'
           ? `${esc(feat?.name || node?.label || option?.id || '')} gained.`
-          : `Choose one of ${row.options.length} feats or class upgrades.` };
+          : `Choose one of ${row.options.length} ${row.source ? 'feats' : 'feats or class upgrades'}.` };
       }
       case 'flask': {
         const def = registries.flasks.get(row.flaskId);
@@ -418,14 +419,14 @@ export function mountRewards(app, {
     claimedLevels += 1;
     persistProgress();
     progress = rewardProgress(registries, run, rewards.xpGains);
-    const card = plan.rows.find((row) => ['levelChoice', 'levelCard'].includes(row.kind)
+    const card = plan.rows.find((row) => characterLevelRow(row)
       && row.ordinal === claimedLevels - 1 && !states[row.key]);
     refillClaim('character', () => card ? renderChooser(card) : renderLevelReward(claim));
   }
 
   const draftTrackId = (row) => row.kind === 'classDraft' ? classSkillId(row.classId) : row.skillId;
-  const draftUnlocked = (row) => !['skillDraft', 'classDraft'].includes(row.kind)
-    || !row.claimOrdinal || (claimedSkills[draftTrackId(row)] || 0) >= row.claimOrdinal;
+  const characterLevelRow = (row) => ['levelChoice', 'levelCard'].includes(row.kind) && !row.source;
+  const draftUnlocked = (row) => !row.claimOrdinal || (claimedSkills[draftTrackId(row)] || 0) >= row.claimOrdinal;
 
   function claimSkill(skillId) {
     if (!xpAnimationDone || refill || !onClaimSkill || pendingSkillLevelCount(registries, run, skillId) < 1) return;
@@ -434,8 +435,8 @@ export function mountRewards(app, {
     claimedSkills[skillId] = (claimedSkills[skillId] || 0) + 1;
     persistProgress();
     progress = rewardProgress(registries, run, rewards.xpGains);
-    const draft = plan.rows.find((row) => ['skillDraft', 'classDraft'].includes(row.kind)
-      && draftTrackId(row) === skillId && row.claimOrdinal === claimedSkills[skillId] && !states[row.key]);
+    const draft = plan.rows.find((row) =>
+      draftTrackId(row) === skillId && row.claimOrdinal === claimedSkills[skillId] && !states[row.key]);
     refillClaim(skillId, () => draft ? renderChooser(draft) : renderSkillReward(skillId, claim));
   }
 
@@ -586,7 +587,7 @@ export function mountRewards(app, {
     // Level cards are claimed from the progression bar when it is present.
     // Older offers without an XP receipt still keep their normal reward row.
     const rowsHtml = plan.rows.filter((row) => draftUnlocked(row)
-      && (!['levelChoice', 'levelCard'].includes(row.kind) || !deferredLevelOffer() || (row.ordinal < claimedLevels && !states[row.key]))).map((row) => {
+      && (!characterLevelRow(row) || !deferredLevelOffer() || (row.ordinal < claimedLevels && !states[row.key]))).map((row) => {
       const state = states[row.key] || (row.blockedBy ? 'blocked' : 'pending');
       const { title, body } = rowBody(row);
       return `
@@ -701,7 +702,7 @@ export function mountRewards(app, {
       const { take: offered } = resolveContinue(plan, states, mode, pickFn);
       // Level cards belong to a level claim, never to auto-collect on Continue.
       const toTake = offered.filter((row) => draftUnlocked(row)
-        && (!['levelChoice', 'levelCard'].includes(row.kind) || !deferredLevelOffer() || row.ordinal < claimedLevels));
+        && (!characterLevelRow(row) || !deferredLevelOffer() || row.ordinal < claimedLevels));
       for (const row of toTake) {
         if (apply[row.kind](row)) {
           states[row.key] = 'taken';
@@ -884,12 +885,12 @@ export function mountRewards(app, {
     });
     door({
       eyebrow: row.kind === 'levelCard' || isLevelChoice ? '' : row.kind === 'skillDraft' || row.kind === 'classDraft' ? rowBody(row).title : t('reward.card.eyebrow'),
-      title: row.kind === 'levelCard' || isLevelChoice ? t('reward.levelUp.action') : rewards.title || t('reward.title.victory'),
+      title: row.source ? rowBody(row).title : row.kind === 'levelCard' || isLevelChoice ? t('reward.levelUp.action') : rewards.title || t('reward.title.victory'),
       body: el('div', { class: 'reward-row', role: 'radiogroup', 'aria-label': t('reward.card.aria') }),
       foot: modalFooter({ secondary: [backButton], primary: confirmButton, className: 'reward-foot reward-chooser-foot', size: 'medium' }),
     });
     const strip = app.querySelector('.reward-row');
-    if (row.kind === 'levelCard' || isLevelChoice) {
+    if (characterLevelRow(row)) {
       const stats = statAllocationSection();
       if (stats) strip.after(stats);
     }
@@ -1028,7 +1029,7 @@ export function mountRewards(app, {
   function expandVictory() {
     if (checkpoint) checkpoint.expanded = true;
     persistProgress();
-    const waitingCard = plan.rows.find((row) => ['levelChoice', 'levelCard'].includes(row.kind) && row.ordinal < claimedLevels && !states[row.key])
+    const waitingCard = plan.rows.find((row) => characterLevelRow(row) && row.ordinal < claimedLevels && !states[row.key])
       || plan.rows.find((row) => ['skillDraft', 'classDraft'].includes(row.kind)
         && row.claimOrdinal > 0 && draftUnlocked(row) && !states[row.key]);
     if (waitingCard) renderChooser(waitingCard);

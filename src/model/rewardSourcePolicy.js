@@ -14,7 +14,10 @@ export function configuredRewardOffer(rewards, source, enabled) {
     removeWhenOff('rewardBattleFlasks', ['flaskId']);
     removeWhenOff('rewardBattleRelics', ['relicId']);
     removeWhenOff('rewardBattleArmaments', ['armamentId']);
-    removeWhenOff('rewardLevelCards', ['levelCards']);
+    if (!enabled('rewardLevelCards') && offer.levelCards) {
+      offer.levelCards = offer.levelCards.filter(row => row.source === 'class');
+      if (!offer.levelCards.length) delete offer.levelCards;
+    }
   } else if (source === 'treasure') {
     removeWhenOff('rewardTreasureRelics', ['relicId']);
     removeWhenOff('rewardTreasureArmaments', ['armamentId']);
