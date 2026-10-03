@@ -1565,3 +1565,6 @@
 .formation-positioning .formation-help { font-size: max(11px, calc(11px / var(--ui-zoom, 1))); line-height: 1.5; opacity: .8; }
 .field[data-position-editing="true"] .formation-grid { display: block; }
 @media (max-width: 600px) { .combat-position-tools { left: 8px; } }
+@media (min-width: 601px) and (max-height: 500px) {
+  .combat-position-tools { left: 40%; }
+}
