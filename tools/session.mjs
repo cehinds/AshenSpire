@@ -622,7 +622,10 @@ export function createSession({ registries, seedString, endless = false, restore
     // Setup events are skipped, except the opening's sound cues (the first
     // draw, any shuffle, the first turn start), which ride the fight's first
     // scene once so a co-op client hears the opening as solo does.
-    live = { combat, pool, evCursor: combat.eventLog.length, opening: combat.eventLog.filter((e) => OPENING_CUE_EVENTS.includes(e.type)) };
+    // A setup HP loss (Warden Horn, Crimson Covenant) rides it too, so the
+    // hurt seat's device buzzes as solo's does; it plays no sound.
+    live = { combat, pool, evCursor: combat.eventLog.length, opening: combat.eventLog.filter((e) => OPENING_CUE_EVENTS.includes(e.type)
+      || (e.type === 'hpLost' && e.cause !== 'attack' && e.targetPlayerId != null)) };
     session.scene = combatScene();
     return { ok: true, combat: session.scene };
   }
@@ -747,6 +750,11 @@ export function createSession({ registries, seedString, endless = false, restore
     const c = live.combat;
     if (!c.result) { session.scene = combatScene(); return { ok: true }; }
     const pool = live.pool;
+    // THE FIGHT'S LAST RECEIPTS. The card or wound that ended it never reaches
+    // a combat scene, so its digest rides the scene that replaces combat, for
+    // the client to play its haptics (coop.js coopReceiptSounds).
+    const last = combatScene();
+    const combatReceipts = { receiptSeq: last.receiptSeq, events: last.events };
     const outcome = coopOutcome(c);
     // The levels each seat's award bought, for its level card (SPEC §15.1).
     const levelUpsBy = {};
@@ -789,13 +797,14 @@ export function createSession({ registries, seedString, endless = false, restore
       // defeat forfeits the queue with the seat (Codex on #557).
       if (!fighterLives) {
         for (const m of livingMembers()) { m.run.hp = 0; m.alive = false; m.catchup.length = 0; }
-        session.scene = { kind: 'complete', victory: false };
+        session.scene = { kind: 'complete', victory: false, combatReceipts };
         return { ok: true, result: 'defeat' };
       }
     }
     // Victory: revive any downed-but-not-dead members at 1 HP for the next floor.
     for (const m of livingMembers()) if (m.run.hp <= 0) m.run.hp = registries.balance.coop.reviveHp;
     grantRewards(pool, levelUpsBy);
+    session.scene.combatReceipts = combatReceipts;
     if (pool === 'boss') session.scene.afterReward = 'advanceAct';
     return { ok: true, result: c.result };
   }

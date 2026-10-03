@@ -855,6 +855,21 @@ export function playReceiptSounds(events, opts = {}) {
   playEventCues(events, opts);
 }
 
+/**
+ * The haptics alone of a batch of receipts, with no sound: card plays for
+ * this screen's seats, and one damage buzz per beat that cost a local seat
+ * HP. Co-op uses it for a fight's final receipts, which ride the reward or
+ * completion scene that replaces the combat scene (tools/session.mjs
+ * settleCombat), so the card that ends a fight still buzzes.
+ */
+export function playReceiptHaptics(events, { isLocalPlayer } = {}) {
+  const local = (seat) => typeof isLocalPlayer !== 'function' || seat == null || isLocalPlayer(seat);
+  for (const e of events || []) if (e && e.type === 'cardPlayed' && local(e.playerId)) haptic.play('cardPlay');
+  for (const beat of groupBeats(events || [])) {
+    if (beat.events.some((e) => playerLostHp(e, isLocalPlayer))) haptic.play('damageTaken');
+  }
+}
+
 function visualFor(e, beatKind) {
   const base=baseVisualFor(e,beatKind),effect=combatEffectForEvent(e);
   if(!effect)return base;

@@ -61,7 +61,7 @@ import { smithSelectionModel } from '../models/SmithSelectionModel.js';
 import { attachTooltip, hideTooltip, showTooltipFor, esc } from '../components/tooltip.js';
 import { iconTray, trayIcon } from '../components/iconTray.js';
 import { t } from '../strings.js';
-import { anchorLocalBox, clampBox, guardHitFloatParts, playReceiptSounds } from '../fx.js';
+import { anchorLocalBox, clampBox, guardHitFloatParts, playReceiptHaptics, playReceiptSounds } from '../fx.js';
 import { nodeName, nodeBlurb, actTitle, intentTooltip, statusInstancePresentation, statusInstanceSemanticAttrs } from '../uiContent.js';
 import { resolveCard, passiveSum } from '../../model/registries.js';
 import { resourceBarPlan, resourceDomains } from '../../model/resources.js';
@@ -163,13 +163,18 @@ export function levelCardStrips(registries, offer, picks) {
  * after any action, turn 1 included, replays no history.
  */
 export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null) {
-  if (!scene || scene.kind !== 'combat') return lastSeq;
-  const seq = Number(scene.receiptSeq) || 0;
+  // A FIGHT'S LAST RECEIPTS ride the reward or completion scene that replaced
+  // it (session.mjs settleCombat): the card that ended the fight buzzes, as
+  // solo's does. Haptics only — the fight's end has never played their sound.
+  const final = scene && scene.kind !== 'combat' ? scene.combatReceipts : null;
+  if (!scene || (scene.kind !== 'combat' && !final)) return lastSeq;
+  const seq = Number((final || scene).receiptSeq) || 0;
   if (seq <= lastSeq) return lastSeq;
   // Haptics are personal: a seat this screen does not play (a LAN teammate)
   // makes sound here, but does not buzz this device. No list = every seat.
   const isLocalPlayer = Array.isArray(localSeats) && localSeats.length ? (id) => localSeats.includes(id) : undefined;
-  if (lastSeq > 0 || scene.opening === true) playReceiptSounds(scene.events || [], { isLocalPlayer });
+  if (final) { if (lastSeq > 0) playReceiptHaptics(final.events || [], { isLocalPlayer }); }
+  else if (lastSeq > 0 || scene.opening === true) playReceiptSounds(scene.events || [], { isLocalPlayer });
   return seq;
 }
 
@@ -657,6 +662,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       closeCoopPotions();
       if (potionTray) { disposeCombatPotionTray(potionTray); potionTray = null; }
     }
+    if (snap.scene.kind !== 'combat') lastSoundSeq = coopReceiptSounds(snap.scene, lastSoundSeq, seats);
     const mm = myMember();
     if (mm && mm.catchupQueue && mm.catchupQueue.length) return renderCatchup(mm);
     if (snap.scene.kind !== 'combat') prevCombat = null;
