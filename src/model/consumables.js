@@ -110,10 +110,10 @@ export function commitSkillBookRead(registries, run, quote, { inCombat = false }
   if (!plan.ok) throw new Error(plan.reason);
   if (!plan.choice) throw new Error(say('book.refuse.choice'));
   if (quote.revision !== plan.revision || quote.count !== plan.count || quote.def?.xp !== plan.def.xp) throw new Error(say('book.refuse.stale'));
-  const receipt = awardSkillXp(registries, run, plan.skillId, plan.def.xp);
+  const schools = bookTags(registries, { skill: plan.skillId });
+  const receipt = awardSkillXp(registries, run, plan.skillId, plan.def.xp, { schools });
   if (plan.choice.kind === 'class') learnClassCard(registries, run, plan.choice.id);
   else {
-    const schools = bookTags(registries, { skill: plan.skillId });
     const upgraded = skillUpgradesCards(registries, receipt.after) && (registries.cards.get(plan.choice.id).tags || []).some((tag) => schools.includes(tag));
     run.deck.push({ instanceId: unusedInstanceId(run, 'book', plan.choice.id), cardId: plan.choice.id, upgraded });
   }

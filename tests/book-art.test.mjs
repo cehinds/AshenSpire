@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { consumables } from '../src/content/consumables.js';
 import { BOOK_ART_PRESETS } from '../src/content/bookArtPresets.js';
-import { BOOK_COVERS, BOOK_SYMBOLS, BOOK_TREATMENTS, BOOK_TRIMS, DEFAULT_BOOK_ART, bookArtRecipe, bookArtProblems, bookArtLayers } from '../src/content/bookArt.js';
+import { BOOK_COVERS, BOOK_SYMBOLS, BOOK_TREATMENTS, BOOK_TRIMS, BOOK_PALETTE, DEFAULT_BOOK_ART, bookArtRecipe, bookArtProblems, bookArtLayers } from '../src/content/bookArt.js';
 const root = fileURLToPath(new URL('..', import.meta.url));
 test('every shipped book has a valid independent artwork recipe', () => {
   const books = consumables.filter((row) => row.kind === 'skillBook');
@@ -32,6 +32,7 @@ test('unknown books get a complete neutral fallback without mutating defaults', 
   assert.deepEqual(bookArtRecipe({}, { ...DEFAULT_BOOK_ART, color: 'url(https://bad)' }), DEFAULT_BOOK_ART);
 });
 test('recipes reject unsafe colors, paths and unknown keys', () => {
+  for (const color of BOOK_PALETTE) assert.deepEqual(bookArtProblems({ ...DEFAULT_BOOK_ART, color }), []);
   for (const bad of [null, [], { ...DEFAULT_BOOK_ART, cover: '../escape' }, { ...DEFAULT_BOOK_ART, ink: 'red;display:none' }, { ...DEFAULT_BOOK_ART, surprise: true }]) assert.ok(bookArtProblems(bad).length);
   assert.equal(bookArtLayers({ ...DEFAULT_BOOK_ART, trim: 'none' }).trim, null);
 });

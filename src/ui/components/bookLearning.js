@@ -35,7 +35,7 @@ export function openBookLearning({ registries, run, id, inCombat = false, onLear
     if (choice.kind === 'card') detail.appendChild(renderCard(registries, { cardId: choice.id, upgraded: false }, { inspectReadOnly: true }));
     else {
       const cls = registries.classes.get(choice.id);
-      detail.append(el('h3', { text: cls.name }), el('p', { text: cls.description }), el('p', { text: 'Learn this class card now. Equip or remove it later in your inventory; its progress is kept.' }));
+      detail.append(el('h3', { text: cls.name }), el('p', { text: cls.description }), el('p', { text: t('book.read.class') }));
     }
   };
   const draw = () => {

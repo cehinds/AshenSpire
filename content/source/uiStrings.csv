@@ -841,6 +841,7 @@ book.read.cancel,,Cancel,,
 book.read.empty,,No lessons match your search.,,
 book.read.rarity,,Skill and spell choices follow the selected track's unlocked rarities; common cards are available from level zero.,,
 book.refuse.knownClass,,This class is already learned.,,
+book.read.class,,Learn this class card now. Equip or remove it later in your inventory; its progress is kept.,,
 # ---- Settings: each row's label (short) and its note (full); each Advanced section's name (short) and tip (full)
 settings.row.fullscreen,,Fullscreen,Fill the screen when this browser supports app-controlled fullscreen.,
 settings.row.useSprites,,Character sprites,Show a drawn class figure in combat instead of your chosen sigil.,

@@ -3,6 +3,8 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { mkdirSync, writeFileSync, copyFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { statSync } from 'node:fs';
 const sharp = createRequire(import.meta.url)(process.env.SHARP_MODULE || 'sharp');
 const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '../../..');
@@ -48,11 +50,14 @@ for (const name of ['classic', 'scholar', 'field']) {
   const input = resolve(here, 'masters', `${name}.png`);
   const meta = await sharp(input).metadata();
   if (!meta.hasAlpha) throw new Error(`${name}: transparent master required`);
-  for (const tier of ['assets', 'assets-mobile']) {
-    const out = resolve(root, tier, 'shop/layers/covers', `${name}.webp`);
-    mkdirSync(dirname(out), { recursive: true });
-    await sharp(input).resize(320, 320).webp({ quality: tier === 'assets' ? 90 : 35, alphaQuality: tier === 'assets' ? 100 : 40 }).toFile(out);
-  }
+  const high = resolve(root, 'assets/shop/layers/covers', `${name}.webp`);
+  const light = resolve(root, 'assets-mobile/shop/layers/covers', `${name}.webp`);
+  mkdirSync(dirname(high), { recursive: true }); mkdirSync(dirname(light), { recursive: true });
+  await sharp(input).resize(320, 320).webp({ quality: 90, alphaQuality: 100 }).toFile(high);
+  // Match the canonical art repository: encode the high WebP, not the PNG.
+  const encoded = spawnSync('cwebp', ['-quiet', '-m', '6', '-q', '35', '-alpha_q', '40', '-alpha_filter', 'best', high, '-o', light], { encoding: 'utf8' });
+  if (encoded.error || encoded.status !== 0) throw new Error(`cwebp 1.6.0 is required for light exports: ${encoded.error?.message || encoded.stderr}`);
+  if (statSync(light).size >= statSync(high).size) copyFileSync(high, light);
   paths.push(`assets/shop/layers/covers/${name}.webp`);
 }
 save(resolve(here, 'manifest.json'), JSON.stringify({ schema: 1, paintedCovers: 3, symbols: 10, treatments: 3, trims: 3, paths }, null, 2) + '\n');

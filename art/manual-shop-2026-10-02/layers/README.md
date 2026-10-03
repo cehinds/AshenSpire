@@ -39,7 +39,8 @@ draft untouched. Reset restores only the selected book to its shipped recipe.
 To add another cover/symbol, add its layer in both runtime tiers, extend
 `src/content/bookArt.js`, add its recipe, and regenerate the art manifest.
 `export.mjs` recreates all vector layers and encodes the retained PNG masters
-(set `SHARP_MODULE` if using a shared Sharp installation). It does not repaint
+(set `SHARP_MODULE` if using a shared Sharp installation; put libwebp 1.6.0's
+`cwebp` on PATH for canonical light exports). It does not repaint
 the generated masters. `node tools/art-manifest.mjs --write` registers them.
 
 ## Provenance
@@ -56,3 +57,8 @@ Browser receipts and screenshots live in `qa/`. `tools/book-art-browser.mjs`
 checks customization, persistence, both downloads, invalid imports, mobile
 layout and real shop rendering. `tests/book-art.test.mjs` verifies all recipes,
 asset combinations, mobile twins and unsafe input refusal.
+
+The game adopts the art repository's existing uniform light-sprite policy
+alongside the book release so its manifest and published packs agree. This
+changes light raster files only; full-resolution art, animation sequences,
+timing and display rules remain unchanged.

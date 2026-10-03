@@ -5400,6 +5400,13 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "book.read.class",
+    "extends": "",
+    "short": "Learn this class card now. Equip or remove it later in your inventory; its progress is kept.",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "settings.row.fullscreen",
     "extends": "",
     "short": "Fullscreen",

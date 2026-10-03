@@ -4,7 +4,7 @@ import { contentBundle } from '../src/content/index.js';
 import { createRegistries } from '../src/model/registries.js';
 import { createRunState, validateRunShape } from '../src/model/state.js';
 import { skillBookReadPlan, commitSkillBookRead } from '../src/model/consumables.js';
-import { bookLessons } from '../src/model/bookLearning.js';
+import { bookLessons, bookTags } from '../src/model/bookLearning.js';
 import { equipClassCard, learnedClassIds } from '../src/model/classLibrary.js';
 import { awardClassXp } from '../src/model/classTree.js';
 import { runClassIdentity } from '../src/model/classCard.js';
@@ -95,6 +95,24 @@ test('universal book chooses an XP track and can teach a card or a class', () =>
     if (kind === 'class') assert.ok(learnedClassIds(run).includes(choice.id));
     else assert.equal(run.deck.at(-1).cardId, choice.id);
   }
+});
+
+test('book XP upgrades existing and new matching ordinary cards without a held focus', () => {
+  const run = fresh(); run.consumables = { spellbook: 1 };
+  run.skills['item:magic-focus'] = { level: reg.balance.skill.upgradeAt, xp: 0, pendingDrafts: 0 };
+  const schools = bookTags(reg, { skill: 'item:magic-focus' });
+  const plan = skillBookReadPlan(reg, run, 'spellbook');
+  const choice = plan.lessons.find((row) => reg.cards.get(row.id).tags.some((tag) => schools.includes(tag)));
+  assert.ok(choice);
+  const ordinary = { instanceId: 'book-review-existing', cardId: choice.id, upgraded: false };
+  const aside = { instanceId: 'book-review-sideboard', cardId: choice.id, upgraded: false };
+  const bound = { instanceId: 'book-review-bound', cardId: choice.id, upgraded: false, sourceArmamentId: 'test-focus' };
+  run.deck.push(ordinary, bound); run.sideboard = [aside];
+  read(run, 'spellbook', choice);
+  assert.equal(ordinary.upgraded, true);
+  assert.equal(aside.upgraded, true);
+  assert.equal(run.deck.at(-1).upgraded, true);
+  assert.equal(bound.upgraded, false, 'equipment-owned upgrades remain governed by the smith');
 });
 
 test('cancel, missing or invalid choices, wrong tracks, and combat cannot spend books or XP', () => {
