@@ -70,5 +70,4 @@ After integrating unified turn Stamina, 75 cost/config/deck DOM tests passed,
 including every authored card and upgrade. Independent review approved the alias
 normalization; a legacy Action/Stamina group counts the shared pool once.
 The packaged game displayed Gorefire Slash as MP 1 / SP 1 with both icon images loaded.
-The broader test run overlapped a base merge and is being rerun on the settled
-tree. Final CI/merge evidence will be recorded before promotion.
+The full CI workflow at implementation commit 267ae3de2 passed the core suite, tool self-tests, and bundler parse gate (run 37148557819). Integrated build 0.7.1.845 completed with all four launcher aliases refreshed. Source-browser checks after the shared native-art merge confirmed one inspector image, 5:7 proportions, zero missing images or console errors, and inline Inspect/Pause. Final CI found inherited art-source, image-recovery, and changelog-fixture failures. The art fixes are incorporated from dev; the self-test fixture repair is included here. Final CI and promotion are required before delivery.
