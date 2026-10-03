@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
-import {readFileSync,existsSync} from 'node:fs';
-import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import {artRecord,manifestIds} from '../tools/art-source.mjs';
 import {fileURLToPath} from 'node:url';
 import {ARMOUR} from '../src/content/equipment.js';
 import {EQUIPMENT_ANIMATIONS,selectEquipmentAnimation,animationClip,animationTiming,animationView,equipmentAnimationForLoadout} from '../src/model/equipmentAnimation.js';
@@ -8,8 +8,11 @@ import {contentBundle} from '../src/content/index.js';
 import {createRegistries} from '../src/model/registries.js';
 import {createRunState} from '../src/model/state.js';
 import {gripOf} from '../src/model/loadout.js';
-const manifest=JSON.parse(readFileSync(fileURLToPath(new URL('../art/dagger-outfits-2026-09-19/manifest.json',import.meta.url))));
-const sequence=JSON.parse(readFileSync(fileURLToPath(new URL('../art/dagger-outfits-2026-09-19/attack-sequence.json',import.meta.url))));
+// The art studio's export files, kept as fixtures when art/ left for
+// cehinds/AshenSpire-art (docs/EXTERNAL-ASSETS-PLAN.md step 13); a frame ships
+// when art-manifest.json lists it.
+const manifest=JSON.parse(readFileSync(fileURLToPath(new URL('./fixtures/art-exports/dagger-outfits-2026-09-19/manifest.json',import.meta.url))));
+const sequence=JSON.parse(readFileSync(fileURLToPath(new URL('./fixtures/art-exports/dagger-outfits-2026-09-19/attack-sequence.json',import.meta.url))));
 assert.equal(manifest.groups.length,32);
 assert.deepEqual(manifest.missingAppearances,[]);
 assert.equal(manifest.outfits.length,ARMOUR.length);
@@ -34,15 +37,16 @@ for(const outfit of ARMOUR){
  assert.equal(equipmentAnimationForLoadout(registries,loadout,outfit.classId).setId,component.setId);
  loadout.sets.leftHand[0]='parryDagger';assert.equal(gripOf(registries,loadout,outfit.classId).mode,'dual');
  assert.notEqual(equipmentAnimationForLoadout(registries,loadout,outfit.classId)?.motionProfile,'daggerSingle');
- for(const frame of Object.values(component.frames))assert.ok(existsSync(fileURLToPath(new URL('../'+frame.file,import.meta.url))));
+ for(const frame of Object.values(component.frames))assert.ok(manifestIds().has(frame.file),frame.file);
 }
 assert.equal(selectedSets.size,32,'35 entries resolve to exactly 32 skins');
 for(const group of manifest.groups){
  for(const [pose,info] of Object.entries(group.frames)){
-  const file=fileURLToPath(new URL('../art/dagger-outfits-2026-09-19/'+info.file,import.meta.url));
-  assert.equal(createHash('sha256').update(readFileSync(file)).digest('hex'),info.sha256);
-  const runtime=fileURLToPath(new URL('../assets/animations/dagger-outfits/'+group.id+'/'+pose+'.webp',import.meta.url));
-  assert.equal(createHash('sha256').update(readFileSync(runtime)).digest('hex'),info.sha256,'runtime copy matches validated export');
+  // The export's own file (art/…/info.file) is the art repository's to check
+  // since step 13; here the shipped high file, by its manifest sha256, must be
+  // the validated export's bytes.
+  const runtime='assets/animations/dagger-outfits/'+group.id+'/'+pose+'.webp';
+  assert.equal(artRecord(runtime)?.high?.sha256,info.sha256,'runtime copy matches validated export');
   for(let axis=0;axis<2;axis++)assert.ok(Math.abs(info.anchor[axis]-manifest.bodyAnchor[axis])<=0.5,'stable foot anchor');
  }
 }

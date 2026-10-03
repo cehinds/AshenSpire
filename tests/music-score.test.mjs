@@ -16,9 +16,9 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const { BEDS } = await import('../src/content/music.js');
 const { Score, chord } = await import('../tools/score/compose.mjs');
 const { render } = await import('../tools/score/synth.mjs');
-// The shipped score's manifest and renders are the common pack's (step 12): the
-// manifest is read through tools/art-source.mjs (the fetched release, else the
-// tree until step 13), and a render exists when art-manifest.json lists it.
+// The shipped score's manifest and renders are the common pack's: the manifest
+// is read through tools/art-source.mjs from the fetched release (the tree left
+// at step 13), and a render exists when art-manifest.json lists it.
 const { artPath } = await import('../tools/art-source.mjs');
 const artIds = new Set(Object.keys(JSON.parse(readFileSync(join(ROOT, 'art-manifest.json'), 'utf8')).assets));
 

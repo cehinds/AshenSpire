@@ -6,8 +6,10 @@ import { mergeUnarmedAnimationFragment as merge, validateUnarmedFragmentCoverage
 import { EQUIPMENT_ANIMATIONS, validateEquipmentAnimations, selectEquipmentAnimation, animationClip, animationTiming } from '../src/model/equipmentAnimation.js';
 
 const read = path => JSON.parse(readFileSync(new URL(path, import.meta.url)));
-const magic = read('../art/unarmed-magic-2026-09-19/runtime-fragment.json');
-const physical = read('../art/unarmed-reference-2026-09-19/runtime-fragment.json');
+// The art studio's runtime fragments, kept as fixtures when art/ left for
+// cehinds/AshenSpire-art (docs/EXTERNAL-ASSETS-PLAN.md step 13).
+const magic = read('./fixtures/art-exports/unarmed-magic-2026-09-19/runtime-fragment.json');
+const physical = read('./fixtures/art-exports/unarmed-reference-2026-09-19/runtime-fragment.json');
 const base = structuredClone(EQUIPMENT_ANIMATIONS);
 delete base.motionProfiles.unarmed;
 base.bindings = base.bindings.filter(b => !(b.rightGroup === 'empty' && b.leftGroup === 'empty'));

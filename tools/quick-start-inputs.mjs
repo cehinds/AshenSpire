@@ -17,6 +17,8 @@
 //              Choose -> Next… -> Begin -> Skip opening -> fight -> card play),
 //              the same selectors tools/tutorial-reach.mjs walks. REPORTED, not
 //              judged: it is the comparison the FINISH line names.
+// After the quick route it also begins an ordinary climb on the same profile
+// and checks the opening plays (Quick start records nothing as seen).
 //
 // What counts as one input: one mouse click (press + release) or one key press.
 // A native <select> changed from the keyboard is counted as 2 (open, pick).
@@ -210,20 +212,8 @@ async function main() {
     return inputs.length;
   };
 
-  const counts = {};
-  if (want('quick')) {
-    console.log('\n  quick route: Title -> Quick start -> first card play (fresh profile, 1440x900)');
-    await freshBoot();
-    ok(await evalIn(`!!document.querySelector('.title-menu [data-title-action="quick-start"]:not([disabled])')`), 'the Title offers Quick start');
-    await click('.title-menu [data-title-action="quick-start"]', 'Quick start');
-    await toFirstCardPlay();
-    counts.quick = report('quick');
-    ok(counts.quick <= BUDGET, `quick start reaches the first card play in ${counts.quick} inputs (budget ${BUDGET})`);
-  }
-
-  if (want('baseline')) {
-    console.log('\n  baseline route: Title -> New -> character creation -> Begin -> first card play (fresh profile, 1440x900)');
-    await freshBoot();
+  // The full character-creation route, from the Title to BEGIN THE CLIMB.
+  const createAndBegin = async () => {
     await click('.title-menu .slot-new', 'New');
     await until(`!!document.querySelector('[data-title-action="modal-continue"]:not([disabled])')`, 'the new-slot picker');
     await click('[data-title-action="modal-continue"]', 'slot picker Continue');
@@ -253,6 +243,49 @@ async function main() {
     }
     await until(`(() => { const b = document.querySelector('#cz-start'); return !!b && !b.disabled && b.getAttribute('aria-disabled') !== 'true'; })()`, 'Begin accepting the finished character', 5000);
     await click('#cz-start', 'BEGIN THE CLIMB');
+  };
+
+  const counts = {};
+  if (want('quick')) {
+    console.log('\n  quick route: Title -> Quick start -> first card play (fresh profile, 1440x900)');
+    await freshBoot();
+    ok(await evalIn(`!!document.querySelector('.title-menu [data-title-action="quick-start"]:not([disabled])')`), 'the Title offers Quick start');
+    await click('.title-menu [data-title-action="quick-start"]', 'Quick start');
+    await toFirstCardPlay();
+    counts.quick = report('quick');
+    ok(counts.quick <= BUDGET, `quick start reaches the first card play in ${counts.quick} inputs (budget ${BUDGET})`);
+
+    // The changelog's promise: Quick start skips the opening for its own climb
+    // only and records nothing as seen, so the same profile's next ordinary
+    // climb (New -> character creation -> Begin) still plays it. Not counted.
+    // The shipped playback is "every", which plays the opening whatever was
+    // recorded; the profile is switched to "once" so the check reads the
+    // recorded prologueSeen and fails if the quick path ever writes it.
+    console.log('\n  after a quick start: the next ordinary climb on the same profile still plays the opening (playback "once")');
+    const seenAfterQuick = await evalIn(`(() => {
+      const meta = JSON.parse(localStorage.getItem('sote_meta_v1') || '{}');
+      const seen = meta.settings?.prologueSeen === true;
+      meta.settings = { ...(meta.settings || {}), 'gameConfig.prologue.presentation.playback': 'once' };
+      const json = JSON.stringify(meta);
+      localStorage.setItem('sote_meta_v1', json);
+      localStorage.setItem('sote_meta_backup_v1', json);
+      return seen;
+    })()`);
+    ok(!seenAfterQuick, 'a quick start records the opening as not seen');
+    await cdp.send('Page.navigate', { url: base }, S);
+    await until(`!!(document.querySelector('.startup-gate') || document.querySelector('.title-menu .slot-new'))`, 'the startup gate or the title (same profile)');
+    if (await evalIn(`!!document.querySelector('.startup-gate')`)) await pressKey('Enter', 'Enter', 13, 'the startup gate (Enter)');
+    await until(`!!document.querySelector('.title-menu .slot-new')`, 'the title screen (same profile)');
+    await wait(300);
+    await createAndBegin();
+    await until(`!!(document.querySelector('.prologue-screen') || document.querySelector('.map-node.reachable'))`, 'the opening sequence or the map (ordinary climb)');
+    ok(await evalIn(`!!document.querySelector('.prologue-screen')`), 'the next ordinary climb after a quick start plays the opening');
+  }
+
+  if (want('baseline')) {
+    console.log('\n  baseline route: Title -> New -> character creation -> Begin -> first card play (fresh profile, 1440x900)');
+    await freshBoot();
+    await createAndBegin();
     await toFirstCardPlay();
     counts.baseline = report('baseline');
   }

@@ -2,6 +2,8 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { PAINTED_OUTFITS } from '../src/content/paintedOutfits.js';
+import { authoringNeeds } from './art-authoring.mjs';
+authoringNeeds(import.meta.url, ['art']);
 const require = createRequire(import.meta.url);
 let sharp; try { sharp = require('sharp'); } catch { sharp = require('../work/deps/node_modules/sharp'); }
 const groups = {

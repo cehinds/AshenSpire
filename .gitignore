@@ -556,6 +556,20 @@ ui-studio/workspace/settings.json
 # High-res art fetched by tools/fetch-art.mjs (docs/ART-REPO-PLAN.md)
 /.art-cache/
 
+# The art trees that left this repository at docs/EXTERNAL-ASSETS-PLAN.md
+# step 13 (with ART-REPO-PLAN step 6). They live in cehinds/AshenSpire-art and
+# reach a checkout only through the pinned release: node tools/fetch-art.mjs
+# --pack light,common (or all) fills .art-cache/. Ignored so an older checkout's
+# leftover copy never shows as new files. History is untouched: old commits
+# still carry them. music/score/, music/README.md and music/PROMPTS.md (the
+# score's authoring source and notes) stay tracked.
+/art/
+/assets/
+/assets-mobile/
+/map-detail/
+/music/**/*.mp3
+/music/manifest.json
+
 # The Windows installer build (desktop/windows/build-installer.mjs): the staged
 # install tree, the packaged Electron app and AshenSpire-Setup-<version>.exe.
 build/windows-installer/

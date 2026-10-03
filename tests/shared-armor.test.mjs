@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { manifestIds } from '../tools/art-source.mjs';
 import { contentBundle } from '../src/content/index.js';
 import { createRegistries, resolveCard } from '../src/model/registries.js';
 import { createRunState } from '../src/model/state.js';
@@ -82,14 +82,14 @@ for (const cls of r.classes.ids()) for (const id of ids) test(`${cls} can equip 
   assert.equal(card.bonuses.length, 2 - blockMods.length);
   assert.equal(card.facts.find(f => f.label === 'DR').value, blockMods.reduce((n, raw) => n + Number(raw.split('=')[1]), 0));
   assert.equal(card.tags.length, 2);
-  assert.ok(existsSync(armourMenuAsset(cls, id)));
+  assert.ok(manifestIds().has(armourMenuAsset(cls, id)));
   const visual = paintedOutfit(cls, id);
   assert.equal(armourArtClass(cls, id), cls, 'outfit preserves wearer identity');
   assert.equal(visual.classId, cls);
   assert.equal(visual.outfitId, id);
   assert.notEqual(visual, paintedOutfit(cls, 'default'));
-  assert.ok(existsSync(visual.defeated.file));
+  assert.ok(manifestIds().has(visual.defeated.file));
   assert.deepEqual(visual.readiness, {}, 'no fallback to another costume for readiness');
   assert.equal(new Set(Object.values(visual.frames).map(f => f.file)).size, 7);
-  for (const frame of Object.values(visual.frames)) assert.ok(existsSync(frame.file));
+  for (const frame of Object.values(visual.frames)) assert.ok(manifestIds().has(frame.file), frame.file);
 });
