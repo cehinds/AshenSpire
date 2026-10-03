@@ -346,7 +346,7 @@ custom art does not require a second card implementation.
 | `sprite-choice` | sprite-style row + selected state | `creationCards.spriteChoiceButton` | Appearance + catalog; Animated is the default when no explicit style is stored. |
 | `tint-choice` | tint row + selected state | `creationCards.tintChoiceButton` | Appearance + catalog |
 | `sigil-choice` | glyph + selected state | `creationCards.sigilChoiceButton` | Appearance + catalog |
-| `keepsake-choice` | keepsake row + selected state | `creationCards.keepsakeChoiceButton` | Keepsake + catalog |
+| `keepsake-choice` | keepsake row + selected state + recoverable art fallback | `creationCards.keepsakeChoiceButton` | Keepsake + catalog |
 | `equipment-choice-card` | equipment row or Empty Hand + selected/preview state | `equipment.pieceChip` | Starting Equipment + Armoury/catalog |
 | `relic-choice-card` | relic row + selected state | `creationCards.relicChoiceButton` | Starting Equipment + catalog |
 
@@ -414,7 +414,7 @@ mouse, touch-hold, and keyboard surface, while `tray-content` owns scrolling.
 
 | Component ID | Model | Renderer | Role |
 |---|---|---|---|
-| `installer-art-options` | `desktop/windows/art-releases.ps1` | `desktop/windows/art-options.ps1` + `installer.nsi` | Windows installer artwork chooser: repository branch and published release selectors; installed, required and latest art versions; compatible-pack installation, verified separate ZIP downloads and ChatGPT artwork disclosure. Native preview is included in the Windows installer artifact. |
+| `installer-art-options` | `desktop/windows/art-releases.ps1` + `game-releases.ps1` | `desktop/windows/art-options.ps1` + `installer.nsi` | Windows installer chooser: game branch and exact build-version selectors open the selected GitHub installer artifact; art branch and published release selectors show installed, required and latest art versions, install the compatible pack or save a verified separate ZIP; ChatGPT artwork disclosure. Native preview is included in the Windows installer artifact. |
 
 The production Quick Menu has one stable **Quick Menu** caption and defaults to
 **Mirror** when the stored value is absent or invalid. Mirror keeps the

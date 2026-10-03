@@ -433,6 +433,20 @@ if (process.argv.includes('--selftest')) {
         expectRed: /BAD\s+H3 1200x730/,
       },
       {
+        name: 'the SVG Stamina number and label become transparent while their boxes remain',
+        edits: [{ file: 'styles/combat.css', append: '\n.stamina-orb svg text { fill: transparent !important; stroke: transparent !important; }\n' }],
+        expectRed: /BAD\s+H3 .*text.*paint/,
+      },
+      {
+        name: 'a later opaque SVG rectangle covers the Stamina number and label',
+        edits: [{
+          file: 'src/ui/components/staminaOrb.js',
+          find: "orb.querySelector('svg').innerHTML = html;",
+          replace: "orb.querySelector('svg').innerHTML = html + '<rect x=\"300\" y=\"280\" width=\"300\" height=\"350\" fill=\"black\"/>';",
+        }],
+        expectRed: /BAD\s+H3 .*text.*paint/,
+      },
+      {
         // A DECLARED CELL STOPS BEING REACHED. The row never renders, and every
         // H-check has nothing to measure. A green here would be the same
         // confident nothing this gate printed over the retired strip.
@@ -855,7 +869,7 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
     // the pile's label under its count, an inline ::after — is laid out
     // beside the text, not over it; a z-index:-1 glow or item paints below
     // the text; both stay in both capture pairs.
-    { const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); for (let t; (t = walker.nextNode());) { if (!t.data.trim()) continue;
+    { const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); for (let t; (t = walker.nextNode());) { if (!t.data.trim() || t.parentElement.closest('.sr-only')) continue;
       const rg = document.createRange(); rg.selectNodeContents(t);
       for (const b of rg.getClientRects()) if (b.width >= 1 && b.height >= 1 && b.right > r.left && b.left < r.right && b.bottom > r.top && b.top < r.bottom) texts.push({ t, b }); } }
     const stacks = (cs) => cs.transform !== 'none' || (cs.translate || 'none') !== 'none' || (cs.rotate || 'none') !== 'none' || (cs.scale || 'none') !== 'none'
@@ -884,6 +898,12 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
         for (const [x, y] of pts) {
           for (const n of document.elementsFromPoint(x, y)) {
             if (!(n === el || el.contains(n))) continue; // outside the control: judged above, by the paint stack
+            // SVG uses painter order inside its viewport. A filtered image
+            // before the text is its background, even though the filter forms
+            // a CSS stacking context. Later SVG objects remain cover candidates.
+            const textSvg = t.parentElement.ownerSVGElement;
+            if (textSvg && n.ownerSVGElement === textSvg && !n.contains(t)
+              && (n.compareDocumentPosition(t) & Node.DOCUMENT_POSITION_FOLLOWING)) continue;
             if (chain.includes(n)) { if (!ownPseudo.has(n)) ownPseudo.set(n, { t, pts: [] }); ownPseudo.get(n).pts.push([x, y]); }
             else if (!n.contains(t) && aboveText(n, null)) { if (!found.includes(n)) found.push(n); }
             // AN IN-FLOW DESCENDANT hit at a text point — positioned nowhere, no
@@ -922,7 +942,7 @@ const COVERS_OF = (sel) => `(() => { const el = document.querySelector(${JSON.st
       if (hide.length) { n.setAttribute('data-hintstrip-cover-anc', hide.length === 2 ? 'both' : hide[0]); n.setAttribute('data-hintstrip-cover-own', hide.map((w) => '::' + w).join(' and ')); }
     }
   } finally { style.remove(); for (const [n, [v, p]] of prior) { if (v) n.style.setProperty('pointer-events', v, p); else n.style.removeProperty('pointer-events'); } }
-  const name = (n) => (String(n.className).split(' ')[0] || n.tagName.toLowerCase());
+  const name = (n) => ((n.getAttribute('class') || '').split(' ')[0] || n.tagName.toLowerCase());
   found.forEach((n, i) => n.setAttribute('data-hintstrip-cover', String(i)));
   inflow.forEach((n, i) => n.setAttribute('data-hintstrip-inflow', String(i)));
   return { text: texts.length, inflow: inflow.map(name), names: found.map((n) => (el.contains(n) ? 'its ' + name(n) + ' over its text' : name(n)))
@@ -943,13 +963,15 @@ const COVERS_RESTORE = `(() => {
 // captures with and without it differ in the text's paint alone — a
 // currentColor border is not the text and keeps its colour.
 const TEXT_PROPS = ['-webkit-text-fill-color', 'text-shadow', '-webkit-text-stroke-color'];
-const TEXT_HIDE = (sel) => `(() => { const el = document.querySelector(${JSON.stringify(sel)}); const props = ${JSON.stringify(TEXT_PROPS)};
-  for (const n of [el, ...el.querySelectorAll('*')]) { n.setAttribute('data-hintstrip-text', JSON.stringify(props.map((p) => [n.style.getPropertyValue(p), n.style.getPropertyPriority(p)])));
-    n.style.setProperty(props[0], 'transparent', 'important'); n.style.setProperty(props[1], 'none', 'important'); n.style.setProperty(props[2], 'transparent', 'important'); }
+const TEXT_HIDE = (sel) => `(() => { const el = document.querySelector(${JSON.stringify(sel)}); const base = ${JSON.stringify(TEXT_PROPS)};
+  for (const n of [el, ...el.querySelectorAll('*')]) {
+    const props = n instanceof SVGTextContentElement ? [...base, 'fill', 'stroke'] : base;
+    n.setAttribute('data-hintstrip-text', JSON.stringify(props.map((p) => [p, n.style.getPropertyValue(p), n.style.getPropertyPriority(p)])));
+    for (const p of props) n.style.setProperty(p, p === 'text-shadow' ? 'none' : 'transparent', 'important'); }
   return 1; })()`;
-const TEXT_RESTORE = `(() => { const props = ${JSON.stringify(TEXT_PROPS)};
+const TEXT_RESTORE = `(() => {
   for (const n of document.querySelectorAll('[data-hintstrip-text]')) { const prior = JSON.parse(n.getAttribute('data-hintstrip-text'));
-    props.forEach((p, i) => { const [v, pr] = prior[i]; if (v) n.style.setProperty(p, v, pr); else n.style.removeProperty(p); }); n.removeAttribute('data-hintstrip-text'); }
+    prior.forEach(([p, v, pr]) => { if (v) n.style.setProperty(p, v, pr); else n.style.removeProperty(p); }); n.removeAttribute('data-hintstrip-text'); }
   return 1; })()`;
 // ANIMATION IS FROZEN FOR THE READ (play-state paused, transitions off, in
 // place): END TURN's pulse moving between two captures is a change of the
