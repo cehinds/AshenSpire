@@ -1,3 +1,4 @@
+import { manaGemSize } from '../../../src/ui/models/StaminaOrbModel.js';
 import { staminaOrb } from '../../../src/content/staminaOrb.js';
 const $ = s => document.querySelector(s);
 const componentUrl = id => `../../../${staminaOrb.assets[id]}`;
@@ -51,7 +52,7 @@ function draw(g=ctx) {
     const theta=(-90-i*360/state.maxMana+state.rotation)*Math.PI/180;
     const r=state.radius*9;
     // Fit even large mana pools without overlapping neighbouring gems.
-    const size=Math.min(state.gemSize*9,Math.max(12,2*Math.PI*r/Math.max(1,state.maxMana)*1.02));
+    const size=manaGemSize(state);
     art(id,450+Math.cos(theta)*r,450+Math.sin(theta)*r,size*state.layers[id].size/100,g);
   }
   for (const [id, text, fontSize, baseline] of [['number', state.stamina, 145, 430], ['label', 'SP', 68, 540]]) {

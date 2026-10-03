@@ -4827,8 +4827,7 @@ body.reduced-motion button.primary, body.reduced-motion .as-btn.primary { transi
 :root .combat[data-layout='formation'] .combat-action-row :is(.energy-orb,.combat-potions,.end-turn) {
   height: var(--combat-control-size); min-height: var(--combat-control-size); max-height: var(--combat-control-size);
 }
-:root .combat[data-layout='formation'] .stamina-budget,
-.combat-action-row .energy-orb,
+:root .combat[data-layout='formation'] .combat-action-row .energy-orb,
 :root .combat[data-layout='formation'] .combat-action-row .combat-potions {
   width: var(--combat-control-size); min-width: var(--combat-control-size); aspect-ratio: 1;
 }

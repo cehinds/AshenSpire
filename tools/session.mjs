@@ -765,7 +765,7 @@ export function createSession({ registries, seedString, endless = false, restore
       const P = c.players.get(m.id);
       if (P) {
         m.run.mana = P.entity.mana;
-        m.run.stamina = P.entity.stamina;
+        m.run.stamina = Math.min(P.entity.stamina, m.run.maxStamina);
         m.run.flasks = P.entity.flasks.map((f) => ({ ...f }));
         m.run.flaskCharges = P.entity.flaskCharges ? { ...P.entity.flaskCharges } : null;
         // The seat's skill receipt, keyed by its own id (plan phase 4a).

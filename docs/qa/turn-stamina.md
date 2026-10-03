@@ -12,7 +12,7 @@ additional Stamina charge is removed from authored cards and upgrades. X
 spends the remaining turn budget. Dodge retains its weight-priced Stamina
 cost (1 Light, 1 Medium, 2 Heavy) with no additional action charge.
 
-The top vitals bar shows HP and MP. The combat footer and shared card renderer
+The top vitals bar shows HP; disabling Mana ring restores MP there. The combat footer and shared card renderer
 use the former action diamond in green for Stamina. Card text, relic text,
 cost tooltips, smithing labels and co-op affordability use the new vocabulary.
 The former Actions settings and idle-Stamina recovery settings are retired
@@ -32,19 +32,29 @@ to new runs. A resumed old combat carries its remaining action budget into
 Stamina. Temporary overflow survives an exact combat save; the outer run's
 persistent pool remains capped for save validation.
 
-## Validation
+## Validation — integration receipt
 
-- 158 focused Node tests passed across turn-Stamina, framework, card costs,
-  derived stats, saved combat, co-op foundations, configuration and recovery.
-- 6 additional movement and smithing tests passed.
-- Content, framework-data and UI-config generation checks passed.
-- Desktop browser: HP/MP-only top bar, green card diamonds; playing Strike
-  moved Stamina 3 → 2; End Turn returned it to 3.
-- Mobile browser at 390 × 844: inspected the HP/MP bar, card cost rails and
-  green Stamina counter. No captured JavaScript errors on either inspection.
-- Screenshots are local at `.codex/stamina-evidence/desktop.jpg` and
-  `.codex/stamina-evidence/mobile.jpg`.
+Branch: `codex/turn-stamina-orb`, game PR #1530. Source preview evidence was
+captured on commit `7604de170f783d980d807e7280cc9e1812bab929` plus the released
+art-v7 pin/manifest adoption; the exact captured layout is committed in
+`src/content/staminaOrb.js`. Later fixes preserve that approved composition.
 
-The broad repository test run was interrupted and is not a full-suite pass.
-The checkout has no fetched art pack, so browser evidence uses fallback art.
-No packaged release, CI run, promotion or publication was performed.
+- **PASS**: 121 engine checks, focused mechanics and orb tests, content/config
+  generation, art-manifest checks, and UI copy/catalog checks.
+- **PASS**: Codex in-app Chromium browser, source preview at localhost:8093,
+  pointer input, 1280×720 desktop and 390×844 mobile viewport.
+- **PASS**: Gorefire Slash spent 1 SP and 1 MP. Next turn restored SP to 3;
+  spent MP stayed at 0. No captured JavaScript errors.
+- **PASS**: co-op fixture showed 2/3 SP and 1/2 MP. Mana ring off restored
+  the top MP bar. These are presentation fixtures, not a live LAN playthrough.
+- **PASS**: original art masters and both runtime tiers were published in
+  `hd-assets-v7`, with the three release-pack hashes pinned by the game.
+
+Retained screenshots:
+
+![Solo desktop](stamina-orb/orb-desktop.png)
+![Solo mobile](stamina-orb/orb-mobile.png)
+![Co-op](stamina-orb/orb-coop.png)
+
+Packaged build and final CI status are recorded in PR #1530 and its build
+receipt. This evidence does not claim physical-device or controller acceptance.

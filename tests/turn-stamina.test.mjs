@@ -82,6 +82,20 @@ test('saved combat restores the shared budget and continues identically', () => 
   assert.deepEqual(serializeCombatSnapshot(c), serializeCombatSnapshot(restored));
 });
 
+test('legacy combat snapshots retain the saved action maximum and refill it next turn', () => {
+  const original = fight();
+  const saved = serializeCombatSnapshot(original);
+  saved.player.energy = 2;
+  saved.player.energyMax = 3;
+  saved.player.stamina = 0;
+  saved.player.maxStamina = 1;
+  const restored = restoreCombatSnapshot({ registries, rng: createRng(5), snapshot: saved });
+  assert.equal(restored.player.stamina, 2);
+  assert.equal(restored.player.maxStamina, 3);
+  dispatch(restored, { type: 'endTurn' });
+  assert.equal(restored.player.stamina, 3);
+});
+
 test('co-op spends only the acting seat stamina and refills both seats next round', () => {
   const c = createCoopCombat({ registries, rng: createRng(5), players: [player('p1'), player('p2')], enemyIds: ['wanderingSoldier'] });
   const one = c.players.get('p1'), two = c.players.get('p2');

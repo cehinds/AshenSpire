@@ -169,7 +169,7 @@ export function restoreCombatSnapshot({ registries, rng, snapshot, fallbackAttac
     drawPerTurn: saved.drawPerTurn,
     // Absent on a fight saved before ruleset 7, whose rows read no level.
     ...(Number.isInteger(saved.characterLevel) ? { characterLevel: saved.characterLevel } : {}),
-    player: bindTurnStamina({ ...saved.player, stamina: saved.player.energy, maxStamina: saved.player.maxStamina ?? saved.player.energyMax }),
+    player: bindTurnStamina({ ...saved.player, stamina: saved.player.energy, maxStamina: saved.player.energyMax ?? saved.player.maxStamina }),
     enemies: saved.enemies,
     loadout: saved.loadout,
     attributes: saved.attributes,
