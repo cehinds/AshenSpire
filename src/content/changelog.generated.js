@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1524",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the full browser checks run again after the art moved out",
+    "detail": "Nothing you play changes. Three of the heavy browser checks were not downloading the art before they started, and one still looked for weapon pictures in a folder that was emptied when the art moved out, so they failed on pictures that never loaded. Two other checks were passing but ended their report in a form the checker does not recognise, and one of the checks was still looking for old Settings wording that had since moved into the wording table. All of them now run green against the fetched art.",
+    "build": "0.7.1.825",
+    "pullRequest": 1524,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1524"
+  },
+  {
     "id": "pr-1521",
     "date": "2026-10-02",
     "group": "2026-10-02",
