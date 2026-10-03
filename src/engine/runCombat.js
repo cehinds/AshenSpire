@@ -72,6 +72,7 @@ export function runCombatPlayer(run) {
     equipmentProfileRuleSnapshot: run.equipmentProfileRuleSnapshot,
     equipmentAttackSlotCount: run.equipmentAttackSlotCount,
     removedAttackSlotIds: run.removedAttackSlotIds,
+    sideboardedEquipmentCardIds: (run.sideboard || []).map((card) => card.instanceId),
     // A dealt deck's fight keeps the dealt deck's rule at its swap door.
     ...(isPoolDeckMode(run) ? { poolDeck: true } : {}),
     equipmentPoolDeficits,

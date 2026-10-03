@@ -1128,8 +1128,9 @@ export function checkOrder(markdown, { currentOrdinal, currentRelease } = {}) {
 
 // The plants are FILE BYTES: each writes a CHANGELOG.md and buildordinal.json
 // into an empty root and runs this tool whole against it (`--root`), as CI does.
-// They insert above the real file's first `## ` heading, so the corpus is the
-// real history plus one known-bad, and drifts with nothing.
+// The corpus owns its headings and receipts. Only the explicit grandfathered
+// rise pins are imported into its historical tail, so editorial changes to
+// CHANGELOG.md cannot remove a plant site or accidentally mask a known-bad.
 //
 // THE CORPUS RUNS TWICE: against buildordinal.json as it stands, and against the
 // same file with the release cut to the next major at ordinal 1 — the tree the
@@ -1152,7 +1153,6 @@ async function orderSelftest() {
 }
 
 async function orderCorpus(ordinalFile) {
-  const real = readFileSync(OWNER, 'utf8');
   const { ordinal: n, release: rel } = JSON.parse(ordinalFile);
   // ROOM FOR A RISE UNDER THE CEILING. Every plant runs against buildordinal.json
   // one build further on, so `${rel}.${n + 1}` is newer than `${rel}.${n}` and
@@ -1160,29 +1160,36 @@ async function orderCorpus(ordinalFile) {
   // bounds every stamp by buildordinal.json, not only the current release's.
   const roomy = JSON.stringify({ ...JSON.parse(ordinalFile), ordinal: n + 1 }, null, 2);
   const next = `${Number(rel.split('.')[0]) + 1}.0.0`;
-  const at = real.indexOf('\n## ');
-  if (at < 0) throw new Error('check-order selftest: CHANGELOG.md has no ## heading to plant above');
   const r = (pr, ord, rl = rel) => `- **P${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${rl}.${ord}\`).`;
-  const top = (block) => `${real.slice(0, at)}\n${block}\n${real.slice(at)}`;
-  const oldDate = /\n## 2026-09-1\d\n\n/;
-  const oldGroup = real.match(/\n## 2026-09-1\d\n\n([\s\S]*?)\n## /)?.[1] ?? '';
-  // The group's own stamps, whatever release they wear, ranked as the check
-  // ranks them — so the plant does not depend on the current release.
-  const oldStamps = [...oldGroup.matchAll(/`([^`]+)`\)\./g)]
-    .map((m) => ({ build: m[1], stamp: m[1].match(STAMP) }))
-    .filter((x) => x.stamp)
-    .map((x) => ({ build: x.build, key: stampKey(x.stamp[1], Number(x.stamp[2])) }))
-    .filter((x) => x.key !== null);
-  const oldLow = oldStamps.reduce((a, b) => (a && compareStamps(a.key, b.key) <= 0 ? a : b), null);
-  const oldHigh = oldStamps.reduce((a, b) => (a && compareStamps(a.key, b.key) >= 0 ? a : b), null);
-  if (!oldDate.test(real) || !oldLow || !(compareStamps(oldLow.key, oldHigh.key) < 0)) throw new Error('check-order selftest: plant site drifted — no 2026-09-1x group with two distinct builds to plant a grandfathered-date rise into');
   const rv = (pr, build) => `- **P${pr}** ([#${pr}](https://github.com/cehinds/AshenSpire/pull/${pr}), \`${build}\`).`;
+  const history = new Map();
+  for (const rise of GRANDFATHERED_RISES) {
+    const pair = rise.match(/^(\S+) #(\d+) (\S+) < #(\d+) (\S+)$/);
+    if (!pair) throw new Error(`check-order selftest: malformed grandfathered pin ${rise}`);
+    const [, date, abovePr, aboveBuild, belowPr, belowBuild] = pair;
+    const rows = history.get(date) || [];
+    const above = rv(abovePr, aboveBuild);
+    // Consecutive rises can share a receipt (A < B < C); write B only once.
+    if (rows.at(-1) !== above) rows.push(above);
+    rows.push(rv(belowPr, belowBuild));
+    history.set(date, rows);
+  }
+  const firstPin = GRANDFATHERED_RISES[0].match(/^(\S+) #\d+ (\S+) < #\d+ (\S+)$/);
+  const oldDate = `\n## ${firstPin[1]}\n\n`;
+  const oldLow = { build: firstPin[2] }, oldHigh = { build: firstPin[3] };
+  const real = `# Changelog ordering fixture\n\n## 2098-01-01\n\n${r(989999, n)}\n${rv(989998, oldHigh.build)}\n\n`
+    + [...history].map(([date, rows]) => `## ${date}\n\n${rows.join('\n')}\n`).join('\n');
+  // Validate the control first: all required pins must be present and no
+  // accidental rise may have been introduced while assembling the fixture.
+  checkOrder(real, { currentOrdinal: n + 1, currentRelease: rel });
+  const at = real.indexOf('\n## ');
+  const top = (block) => `${real.slice(0, at)}\n${block}\n${real.slice(at)}`;
   // A grandfathered rise SWAPPED for a new one: the pinned pair's lower build,
   // then a receipt tying the higher one written between them. The count of
   // rises is unchanged; the pair is not.
   const pin = GRANDFATHERED_RISES[0]?.match(/^\S+ #\d+ \S+ < #(\d+) (\S+)$/);
   const pinLine = pin && real.split('\n').find((l) => l.includes(`[#${pin[1]}](`));
-  if (!pinLine) throw new Error('check-order selftest: plant site drifted — the first GRANDFATHERED_RISES pin names a receipt CHANGELOG.md does not hold');
+  if (!pinLine) throw new Error('check-order selftest: grandfathered fixture is missing its pinned receipt');
   const plants = [
     ['date group above a newer one', top(`## 2020-01-01\n\n${r(990001, n)}\n`), null, 'newest first'],
     ['release heading dated older than the group below it', top(`## 1.0.0 — 2020-01-01\n\n${r(990001, n)}\n`), null, 'newest first'],
@@ -1222,7 +1229,7 @@ async function orderCorpus(ordinalFile) {
   // Must PASS: a release heading on top, a receipt AT buildordinal.json's
   // ordinal, a build one past it (the room every plant runs with), a tie, and a
   // descent inside the one date. (A descent ACROSS releases inside a date is
-  // proven by the real file, which has several.)
+  // proven by the fixture's modern date, which descends into a historical stamp.)
   const good = top(`## 1.0.0 — 2099-01-02\n\n${r(990001, n + 1)}\n${r(990002, n + 1)}\n${r(990003, n)}\n\n## 2099-01-01\n\n${r(990004, n)}\n`);
   // The scope blocks print on every exit, so the tail of the output is never the
   // reason; the one line that names it is.

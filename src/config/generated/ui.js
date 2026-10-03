@@ -26,6 +26,7 @@
 // source content/config/ui/presentation/combatEffectPresentation.json ff8285c5d6ef2192
 // source content/config/ui/presentation/combatFormationModel.json 7b45c4e60eafd36a
 // source content/config/ui/presentation/combatPoseStates.json c67c49bfb66aa177
+// source content/config/ui/presentation/deckEditorCosts.json 04140679f73bb06a
 // source content/config/ui/presentation/environments.json 1b9778ab17a88e57
 // source content/config/ui/presentation/equipmentAnimations.json 56d01ddfb62a6ab8
 // source content/config/ui/presentation/localMapPresentation.json 31b2a6d8a1fda9b0
@@ -3146,6 +3147,28 @@ export const uiConfig = deepFreeze({
           "zealotry",
           "emberTide",
           "harbingerOfBlight"
+        ]
+      }
+    },
+    "deckEditorCosts": {
+      "components": {
+        "resourceGroups": [
+          {
+            "id": "mana",
+            "label": "MP",
+            "resources": [
+              "mana"
+            ],
+            "art": "assets/ui/stamina-orb/diamond.webp"
+          },
+          {
+            "id": "stamina",
+            "label": "SP",
+            "resources": [
+              "stamina"
+            ],
+            "art": "assets/ui/stamina-orb/orb.webp"
+          }
         ]
       }
     },
