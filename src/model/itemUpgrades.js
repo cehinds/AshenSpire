@@ -210,7 +210,7 @@ export function applyItemCardUpgradeRows(def, role, rows, attributeIds = []) {
       target[field] = next;
       changed = true;
     } else if (descriptor.kind === 'cardCost') {
-      const field = descriptor.resource === 'action' ? 'cost' : `${descriptor.resource}Cost`;
+      const field = descriptor.resource !== 'mana' ? 'cost' : `${descriptor.resource}Cost`;
       const before = result[field] == null ? 0 : result[field];
       if (typeof before !== 'number') throw new Error(`${row.itemRef} tier ${row.nextTier} tag '${row.tag}' targets non-numeric ${field}`);
       const next = before + row.value;

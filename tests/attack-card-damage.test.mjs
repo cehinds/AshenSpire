@@ -109,8 +109,8 @@ test('advanced settings deterministically change costs and per-status reductions
   });
   const registries = createRegistries(configured);
   const slash = registries.cards.get('gorefireSlash');
-  assert.equal(slash.effects.find((effect) => effect.op === 'damage').amount, 25);
-  assert.equal(createRegistries(configured).cards.get('gorefireSlash').effects[0].amount, 25);
+  assert.equal(slash.effects.find((effect) => effect.op === 'damage').amount, 15);
+  assert.equal(createRegistries(configured).cards.get('gorefireSlash').effects[0].amount, 15);
 });
 
 test('X-cost attacks use one Action of value per repeated hit', () => {

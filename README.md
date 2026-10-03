@@ -96,9 +96,9 @@ The seeded climb visits the Hollow Weald, Pale Marches, and Cinder Reach in a ru
 
 ### Combat: cards and three resources
 
-Enemy intents show what is coming. Cards can cost **Actions**, **Stamina**, **Mana**, or a combination; some also cost HP. Actions refresh each turn. Stamina starts full in each fight and normally recovers on turns when you do not spend it. Mana carries between fights and is restored through effects, flasks, and suitable rest services. Recovery rules are configurable.
+Enemy intents show what is coming. Cards spend **Stamina (SP)** and may also cost **Mana** or HP. Stamina is the turn budget: every class starts with 3 base SP, plus growth from Dexterity, Constitution, Wisdom, Intelligence and level, and it refills each turn. The emerald orb shows SP; sapphire diamonds around its rim show mana. Turn Mana ring off in Combat settings to restore the top MP bar. Mana carries between fights and is restored through effects, flasks, and suitable rest services. Recovery rules are configurable.
 
-The solo default **retains unplayed cards** and draws the character's Draw stat each turn up to hand capacity. The opening hand, per-turn draw, capacity, Actions, and resource pools derive from attributes and configured stat rules. This is no longer a fixed “draw five, discard everything” loop. Ethereal, Exhaust, Retain, and Power rules still govern individual cards. Settings can change hand retention, draw, discard, and deck-order behavior.
+The solo default **retains unplayed cards** and draws the character's Draw stat each turn up to hand capacity. The opening hand, per-turn draw, capacity, and resource pools derive from attributes and configured stat rules. This is no longer a fixed “draw five, discard everything” loop. Ethereal, Exhaust, Retain, and Power rules still govern individual cards. Settings can change hand retention, draw, discard, and deck-order behavior.
 
 Select a card to preview its legal targets. Its circular **(i)** button opens the full card details and play action; a stationary hold can play it. A targeted card then asks for its target. Keyboard and gamepad controls are supported, and unavailable actions show their reason.
 
@@ -108,13 +108,13 @@ The current solo rules use **Attack Rating (AR)**, **Defense Rating (DR)**, and 
 
 Hits that damage HP can build physical impact against Poise or magical impact against Ward. Breaking Poise causes **Stagger**; breaking Ward causes **Disruption**. Under these solo defaults an enemy loses its next move, while the player loses an Action on the next turn. Block that absorbs the entire hit prevents its automatic impact. Bleed, Venom, Frost, Crimson Blight, and other effects have their own buildup, duration, or trigger rules; inspect them in combat for the current values.
 
-Equipment weight versus carrying capacity determines **Light, Medium, or Heavy** weight class. In a Standard deck, Dodge Roll is an equipment-independent card. It checks Dexterity against a d20 and grants Block on success; it does not guarantee avoidance. Weight class changes its cost: Light uses 1 Stamina, Medium adds 1 Action, and Heavy uses 2 Stamina plus 1 Action. The combat result shows the check and guard gained.
+Equipment weight versus carrying capacity determines **Light, Medium, or Heavy** weight class. In a Standard deck, Dodge Roll is an equipment-independent card. It checks Dexterity against a d20 and grants Block on success; it does not guarantee avoidance. Light and Medium cost 1 Stamina; Heavy costs 2 Stamina. The combat result shows the check and guard gained.
 
 ### Equipment and deck construction
 
 The Armoury owns your right/left hands, prepared sets, armour, inventory, and card sources. Basic attack slots take their face from the equipped weapon package; dual wield divides those slots between the hands without automatically growing the deck. Equipment can also lend guards, techniques, and weapon arts. Lent cards follow their item when it is equipped or removed, while cards you learn or acquire are owned independently.
 
-You can change carried equipment on your turn in combat, paying the configured swap cost in Actions. Card sources, ratings, maximum resources, and weight class update with the change. Equipment ownership and requirements still apply.
+You can change carried equipment on your turn in combat, paying the configured swap cost in Stamina. Card sources, ratings, maximum resources, and weight class update with the change. Equipment ownership and requirements still apply.
 
 The **Deck editor** moves owned cards between the active deck and a sideboard outside combat. Defaults allow editing freely outside combat, require at least ten active cards, and impose no maximum size. Basic Strike/Defend slots are unlimited; other cards use owned-copy limits, with a default single active copy for the current class's spells and Powers. Cross-class book lessons are exempt from that own-class limit. Item-owned cards are managed through equipment. Deck bounds, copy limits, editing locations, and ordered draw are configurable. Excess limited copies go to the sideboard rather than disappearing.
 

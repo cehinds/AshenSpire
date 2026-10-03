@@ -45,7 +45,7 @@ export const DRAW_FALLBACK = 'Co-op & legacy fallback';
 // combat ratings are filed by their row id exactly as the pools are.
 const RATING_TOPICS = Object.freeze({ ar: 'Attack rating (AR)', dr: 'Defence rating (DR)', pr: 'Power rating (PR)', poise: 'Poise', ward: 'Ward' });
 const DERIVED_TOPICS = Object.freeze({
-  energy: 'Actions', openingHand: 'Draw & hand', draw: 'Draw & hand', handSize: 'Draw & hand',
+  energy: 'Stamina', openingHand: 'Draw & hand', draw: 'Draw & hand', handSize: 'Draw & hand',
   hp: 'HP', stamina: 'Stamina', mana: 'Mana', ...RATING_TOPICS,
 });
 // The hand rows each head the subsection their behaviour options sit in.
@@ -53,7 +53,7 @@ const HAND_ROW_SECTIONS = Object.freeze({ openingHand: 'Starting hand', draw: 'T
 
 /** The Stats topics, in reading order: resources first, then the ratings, then the tables. */
 export const STATS_TOPICS = Object.freeze([
-  'Overview', 'Actions', 'Draw & hand', 'HP', 'Stamina', 'Mana', 'Poise', 'Ward',
+  'Overview', 'Draw & hand', 'HP', 'Stamina', 'Mana', 'Poise', 'Ward',
   'Attack rating (AR)', 'Defence rating (DR)', 'Power rating (PR)',
   'Resistance', 'Impact', 'Breaks', 'Status resistance', 'Status bonuses',
 ]);
@@ -192,7 +192,7 @@ function topic(row, section) {
     if (/damage\.wardCards/.test(key)) return 'Ward card values';
     if (/^(arcaneE|e)xposure\./.test(path)) return 'Exposure';
     if (/^(deck\.|startingDeckSize)/.test(path)) return 'Deck';
-    if (/^(costs|mana)\./.test(path)) return 'Actions & costs';
+    if (/^(costs|mana)\./.test(path)) return 'Stamina & costs';
     return words(path.split('.')[0]);
   }
   if (section === 'World') {
@@ -293,7 +293,7 @@ export function advancedSubgroups(rows, section) {
       'Shop stock & services', ...shop, 'Smithing', 'Flasks']);
   }
   if (section === 'Combat') {
-    byOrder(['Actions & costs', 'AR card values', 'DR card values', 'PR card values', 'Poise card values', 'Ward card values',
+    byOrder(['Stamina & costs', 'AR card values', 'DR card values', 'PR card values', 'Poise card values', 'Ward card values',
       'Deck', 'Exposure']);
   }
   if (section === 'Progression') {
