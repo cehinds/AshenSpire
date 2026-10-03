@@ -1189,9 +1189,27 @@ export function check(root = REPO_ROOT) {
   // `fatal: not a git repository`, and a row that already resolves that to
   // UNKNOWN in its own words does not also need git shouting between the rows.
   const g = (...a) => execFileSync('git', ['-C', root, ...a], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  // UNREAD IS NOT ABSENT. `null` means the commit's tree has no record — the
+  // pre-scheme n/a. A record the tree NAMES but git cannot hand over (its blob
+  // missing from a partial, shallow or damaged clone) is a different fact, and
+  // it comes back as { unreadable } so the row can say UNKNOWN instead of
+  // mistaking it for a parent from before the scheme. `--full-tree` makes the
+  // path read from the top of the repository, as `<rev>:<path>` does.
   const at = (rev) => {
+    let text;
     try {
-      const raw = JSON.parse(g('show', `${rev}:${ORDINAL_HOME}`));
+      text = g('show', `${rev}:${ORDINAL_HOME}`);
+    } catch (shown) {
+      let listed;
+      try {
+        listed = g('ls-tree', '--full-tree', '--name-only', rev, '--', ORDINAL_HOME).trim();
+      } catch (e) {
+        return { unreadable: String(e.message).split('\n')[0] };
+      }
+      return listed ? { unreadable: String(shown.message).split('\n')[0] } : null;
+    }
+    try {
+      const raw = JSON.parse(text);
       return { ordinal: Number(raw.ordinal), release: raw.release ?? null, digest: raw.digest ?? null };
     } catch { return null; }
   };
@@ -1203,6 +1221,14 @@ export function check(root = REPO_ROOT) {
     } else {
       const before = at(parent);
       const now = at('HEAD');
+      const unread = [[parent.slice(0, 7), before], ['HEAD', now]].find(([, r]) => r && r.unreadable);
+      if (unread) {
+        add(null, 'H ORDINAL INCREASES',
+          `UNKNOWN — ${unread[0]}'s tree names ${ORDINAL_HOME} but git could not read it (${unread[1].unreadable}).`
+          + ` A record git cannot show is not one that is absent, so this is not the pre-scheme n/a;`
+          + ` fetch the missing history (git fetch --unshallow, or a full clone) rather than reading this as a pass.`);
+        return { rows, red: rows.some((r) => !r.ok), unknown: rows.some((r) => r.ok === null) };
+      }
       // THE ORDINAL AND RELEASE COUNT TOO, not only the digest. A hand-edit (or a
       // bad hand-merge) of the record that leaves the digest alone used to be
       // caught by row F against the committed bundle; CI now rebuilds from the

@@ -54,7 +54,7 @@
 //
 // Usage:  node tools/buildversion.mjs --selftest
 
-import { cpSync, existsSync, mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+import { chmodSync, cpSync, existsSync, mkdtempSync, mkdirSync, rmSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { resolve, join, dirname } from 'node:path';
@@ -669,6 +669,33 @@ function historyCorpus() {
       'the control: the record is untouched and the digest unchanged — no build shipped, n/a', null, false],
   );
 
+  // THE PARENT RECORD GIT CANNOT READ. HEAD names its parent and the parent's
+  // commit is present, but the blob its tree names for buildordinal.json is not
+  // (a partial or shallow fetch, a pruned or damaged clone), so `git show
+  // <parent>:buildordinal.json` fails. That failure used to be read as "the
+  // parent has no record" — the pre-scheme n/a, a GREEN — when nothing about the
+  // parent was established at all. The record itself is the control's green one
+  // (ordinal bumped with the digest), so only the missing object moves the
+  // verdict. A missing parent COMMIT needs no case of its own: `git rev-list
+  // --parents` already fails on it and the row's catch says UNKNOWN.
+  const dropParentRecord = (dir) => {
+    const blob = git(dir, 'rev-parse', `HEAD^:${ORDINAL_HOME}`).trim();
+    const loose = resolve(dir, '.git', 'objects', blob.slice(0, 2), blob.slice(2));
+    // Loose objects are written read-only; Windows refuses to unlink those.
+    chmodSync(loose, 0o666);
+    rmSync(loose);
+    // The plant proves itself: if the object survived (packed, alternates, or
+    // shared with HEAD's record), the case would test nothing, so it refuses.
+    let gone = false;
+    try { git(dir, 'cat-file', '-e', blob); } catch { gone = true; }
+    if (!gone) throw new Error(`selftest plant: the parent's ${ORDINAL_HOME} blob ${blob.slice(0, 7)} is still readable after removing it`);
+  };
+  CASES.push(
+    [bump, 'unknown',
+      `the PARENT's ${ORDINAL_HOME} blob is missing (partial, shallow or damaged clone), so git cannot show its record — unread is not absent, and the row must not call it the pre-scheme n/a`,
+      null, true, dropParentRecord],
+  );
+
   return { build, CASES, skipped };
 }
 
@@ -682,9 +709,10 @@ function ordinalHistory({ build, CASES, skipped }, picked = () => true) {
   if (skipped) console.log(skipped);
   const WANT = { red: false, green: true, unknown: null };
   const selected = CASES.filter((_, index) => picked(index));
-  for (const [second, want, label, first = null, moveDigest = true] of selected) {
+  for (const [second, want, label, first = null, moveDigest = true, after = null] of selected) {
     const dir = build(second, first, moveDigest);
     try {
+      if (after) after(dir);
       const row = check(dir).rows.find((r) => r.name === 'H ORDINAL INCREASES');
       const detail = row ? row.detail.split('\n')[0].trim() : 'NO SUCH ROW';
       const hit = row !== undefined && row.ok === WANT[want];

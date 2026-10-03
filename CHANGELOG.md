@@ -32,6 +32,10 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 </details>
 
+## 2026-10-03
+
+- **Behind the scenes: the build-number check no longer passes when it cannot read the previous build** ([#1519](https://github.com/cehinds/AshenSpire/pull/1519), `0.7.1.822`). Nothing you play changes. The automatic check that each new build's number is higher than the last one read a previous build record it could not open (a partial or damaged copy of the history) as if there had been no record at all, and passed. It now stops and says it could not tell.
+
 ## 2026-10-02
 
 - **Behind the scenes: the game's wording lives in one table again** ([#1489](https://github.com/cehinds/AshenSpire/pull/1489), `0.7.1.821`). Nothing you see changes. About 230 labels and sentences that had crept back into the code since mid-September (most of the Settings rows, the combat action bar, level-up and Victory, the lore fonts, layout and HUD options) now come from the game's one wording table, and an automatic check stops new ones creeping in.

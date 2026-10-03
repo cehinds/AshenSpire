@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1519",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Behind the scenes: the build-number check no longer passes when it cannot read the previous build",
+    "detail": "Nothing you play changes. The automatic check that each new build's number is higher than the last one read a previous build record it could not open (a partial or damaged copy of the history) as if there had been no record at all, and passed. It now stops and says it could not tell.",
+    "build": "0.7.1.822",
+    "pullRequest": 1519,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1519"
+  },
+  {
     "id": "pr-1489",
     "date": "2026-10-02",
     "group": "2026-10-02",
