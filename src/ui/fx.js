@@ -7,6 +7,7 @@ import { combatEffectForEvent } from '../model/combatEffectEvents.js';
 // Staggers get the loud treatment (they're the theme).
 
 import { sfx } from './sfx.js';
+import { haptic } from './haptics.js';
 import { hitTierFor } from '../content/sfx.js';
 import { dlog } from './debuglog.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './components/uiComponents.js';
@@ -782,13 +783,32 @@ export function playHitSound(e) {
 }
 
 /**
+ * playerLostHp(e, isLocalPlayer?) → did this receipt cost a player HP? In
+ * co-op, `isLocalPlayer(seatId)` narrows it to the seats this screen plays.
+ */
+export function playerLostHp(e, isLocalPlayer) {
+  if (!e) return false;
+  let lost = false;
+  if (e.type === 'damageDealt') lost = hurtsPlayer(e) && guardHitFloatParts(e).residual > 0;
+  else if (e.type === 'hpLost') lost = hurtsPlayer(e) && e.cause !== 'attack' && (e.amount || 0) > 0;
+  if (!lost || typeof isLocalPlayer !== 'function') return lost;
+  const seat = e.targetPlayerId ?? e.playerId;
+  return seat == null || isLocalPlayer(seat);
+}
+
+/**
  * Once-per-beat cues: the turn stinger and the pile sounds. A five-card
  * refill or a whole-hand discard is ONE sound, not five, and adds no step to
  * the beat's pacing (these events have no visual of their own).
  */
-export function playBeatCues(events) {
+export function playBeatCues(events, { isLocalPlayer } = {}) {
   const has = (type) => events.some((e) => e && e.type === type);
-  if (has('playerTurnStart')) sfx.play('turnStinger');
+  // Haptics (content/haptics.js): ONE damage buzz per beat that cost the
+  // player HP by any route — an attack's residual, or a direct hpLost
+  // (Guilt, Herald, Gorefire, Venom). An attack's own hpLost twin is skipped,
+  // so the damageDealt/hpLost pair is one hit, not two.
+  if (events.some((e) => playerLostHp(e, isLocalPlayer))) haptic.play('damageTaken');
+  if (has('playerTurnStart')) { sfx.play('turnStinger'); haptic.play('turnStart'); }
   if (has('deckShuffled')) sfx.play('deckShuffle');
   if (has('cardDrawn')) sfx.play('cardDraw');
   if (has('cardDiscarded')) sfx.play('cardDiscard');
@@ -800,7 +820,7 @@ export function playBeatCues(events) {
  * paced: instant/reduced-motion playback, a fresh fight's setup (the opening
  * draw and turn start), and co-op receipts.
  */
-export function playEventCues(events) {
+export function playEventCues(events, opts = {}) {
   // ONE STINGER PER SHARED TURN. Co-op's startPlayerPhase emits a
   // playerTurnStart per living seat while the shared turn moves once, and
   // groupBeats gives each its own beat; a turn already stung in this list
@@ -812,7 +832,7 @@ export function playEventCues(events) {
     const starts = beat.events.filter((e) => e && e.type === 'playerTurnStart');
     const repeat = starts.length > 0 && starts.every((e) => stung.has(e.turn));
     for (const e of starts) stung.add(e.turn);
-    playBeatCues(repeat ? beat.events.filter((e) => !e || e.type !== 'playerTurnStart') : beat.events);
+    playBeatCues(repeat ? beat.events.filter((e) => !e || e.type !== 'playerTurnStart') : beat.events, opts);
   }
 }
 
@@ -821,9 +841,16 @@ export function playEventCues(events) {
  * attack (playHitSound) and the per-beat cues. Co-op plays its receipts
  * through this, since its floats are drawn by coop.js, not by visualFor.
  */
-export function playReceiptSounds(events) {
-  for (const e of events || []) if (e && e.type === 'damageDealt') playHitSound(e);
-  playEventCues(events);
+export function playReceiptSounds(events, opts = {}) {
+  const local = (seat) => typeof opts.isLocalPlayer !== 'function' || seat == null || opts.isLocalPlayer(seat);
+  for (const e of events || []) {
+    if (e && e.type === 'damageDealt') playHitSound(e);
+    // Co-op plays no 'cardPlay' sound or haptic at the tap (it only sends an
+    // intent); the card-play buzz follows the authoritative receipt, for a
+    // card this screen's own seat played.
+    if (e && e.type === 'cardPlayed' && local(e.playerId)) haptic.play('cardPlay');
+  }
+  playEventCues(events, opts);
 }
 
 function visualFor(e, beatKind) {

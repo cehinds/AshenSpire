@@ -151,7 +151,7 @@ export function levelCardStrips(registries, offer, picks) {
 }
 
 /**
- * coopReceiptSounds(scene, lastSeq) → the receiptSeq now heard.
+ * coopReceiptSounds(scene, lastSeq, localSeats?) → the receiptSeq now heard.
  *
  * Plays a combat scene's receipts (tools/session.mjs combatScene digest)
  * through the same sound seams solo uses (fx.js playReceiptSounds: tiered
@@ -162,11 +162,14 @@ export function levelCardStrips(registries, offer, picks) {
  * scene the host marks `opening` (the one carrying the setup cues); joining
  * after any action, turn 1 included, replays no history.
  */
-export function coopReceiptSounds(scene, lastSeq = 0) {
+export function coopReceiptSounds(scene, lastSeq = 0, localSeats = null) {
   if (!scene || scene.kind !== 'combat') return lastSeq;
   const seq = Number(scene.receiptSeq) || 0;
   if (seq <= lastSeq) return lastSeq;
-  if (lastSeq > 0 || scene.opening === true) playReceiptSounds(scene.events || []);
+  // Haptics are personal: a seat this screen does not play (a LAN teammate)
+  // makes sound here, but does not buzz this device. No list = every seat.
+  const isLocalPlayer = Array.isArray(localSeats) && localSeats.length ? (id) => localSeats.includes(id) : undefined;
+  if (lastSeq > 0 || scene.opening === true) playReceiptSounds(scene.events || [], { isLocalPlayer });
   return seq;
 }
 
@@ -1068,7 +1071,7 @@ export function mountCoop(app, { registries, conn, myId, myIds, meta, onSettings
       if(layer&&anchor)playCombatEffectPlan(layer,anchorLocalBox(layer,anchor),plan.spriteEffect,{targets:effectTargets.map(el=>anchorLocalBox(layer,el)),authoredTargets:authoredTargets.map(el=>anchorLocalBox(layer,el)),duration,actor:anchor,localBox:anchorLocalBox});
       stage?.play(pose, duration, plan.aura);
     }
-    lastSoundSeq = coopReceiptSounds(sc, lastSoundSeq);
+    lastSoundSeq = coopReceiptSounds(sc, lastSoundSeq, seats);
     spawnCombatFx(sc, prevCombat);
     prevCombat = sc;
     wireLeave();
