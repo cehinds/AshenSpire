@@ -853,9 +853,13 @@ test('every ART_REPO_TOKEN a workflow passes is gated on a protected ref', () =>
 // A tool runs from an inline `run: node tools/…` OR from a command line inside
 // a `run: |` / `run: >` block scalar (#1524 review): both are scanned; comment
 // lines inside a block are not commands.
-// Node options may come first (`node --test tests/…`), and the path may start
-// with `./` (#1524 review, Codex).
-const TOOL_CMD = /(^|[\s;&|(])node(\s+-[^\s]+)*\s+(\.\/)?(tools|tests)\//;
+// Not a parse of the command line: a step runs a repository tool when its
+// command text runs `node` AND names a script under tools/ or tests/. Node
+// options, their operands (`--require x.cjs`), `./` prefixes and env prefixes
+// all sit between the two and none of them can hide the pair (#1524 review,
+// Codex, four rounds of narrower matchers). Over-matching is safe: a step that
+// mentions both without running the tool merely has to come after the fetch.
+const TOOL_CMD = { test: (cmd) => /(^|[^\w-])node([^\w-]|$)/.test(cmd) && /(^|[^\w-])(\.\/)?(tools|tests)\/[\w./-]+\.m?js\b/.test(cmd) };
 // Any valid GitHub job id: letters, digits, `-` and `_`, starting with a letter or `_`.
 const JOB_ID = '[A-Za-z_][A-Za-z0-9_-]*';
 function jobsRunningToolsBeforeFetch(yml) {
@@ -921,9 +925,10 @@ test('known-bad: the art-fetch ordering guard sees inline and block-scalar tool 
     job('good-before-underscore', `${fetch}      - run: echo ok\n`),
     job('bad_underscore', `      - run: node tools/a.mjs\n${fetch}`),
     job('bad-folded-split', `      - name: x\n        run: >-\n          node\n          tools/build.mjs\n${fetch}`),
+    job('bad-node-operand', `      - run: node --require setup.cjs tools/build.mjs\n${fetch}`),
     job('bad-continuation', `      - name: x\n        run: |\n          node \\\n            tools/build.mjs\n${fetch}`),
   ].join('\n') + '\n';
   const { checked, missing } = jobsRunningToolsBeforeFetch(yml);
-  assert.equal(checked, 13);
-  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-continuation']);
+  assert.equal(checked, 14);
+  assert.deepEqual(missing, ['bad-inline', 'bad-block', 'bad-folded', 'bad-no-fetch', 'bad-node-flag', 'bad-dot-path', 'bad_underscore', 'bad-folded-split', 'bad-node-operand', 'bad-continuation']);
 });
