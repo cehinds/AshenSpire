@@ -8,9 +8,19 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-03",
     "summary": "Your phone can buzz on card play, damage taken and turn start",
     "detail": "On a device that can vibrate, playing a card, losing HP (from a hit, or from a card, curse or status that costs HP) and the start of your turn each give a short buzz of its own; in co-op, your own plays and wounds buzz your device, not a teammate's. Changing equipment does not buzz. A new switch, Settings → Audio → Haptics, is on by default and turns them all off. Desktop browsers and iPhones, which cannot vibrate a web page, stay as they were.",
-    "build": "0.7.1.831",
+    "build": "0.7.1.832",
     "pullRequest": 1517,
     "url": "https://github.com/cehinds/AshenSpire/pull/1517"
+  },
+  {
+    "id": "pr-1520",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Behind the scenes: a whole run is now played in a real browser",
+    "detail": "Nothing you play changes. A new automatic check starts the game from the title, creates a character on a fixed seed, plays a fight, walks the map to the act boss, dies to it, returns to the title and starts a new run, and fails if anything goes wrong on the way or an error is logged.",
+    "build": "0.7.1.830",
+    "pullRequest": 1520,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1520"
   },
   {
     "id": "pr-1524",

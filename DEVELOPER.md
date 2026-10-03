@@ -319,6 +319,24 @@ existing weighted move selector; rendering never chooses or rerolls an intent.
 Attack motion uses the actor/action, tag, intent and neutral precedence in
 `src/content/actionAnimations.js`. Keep those mappings separate from mechanics.
 
+`node tools/full-run-probe.mjs` (FINISH §3 "A browser full run") plays one
+whole run in Chromium from a normal boot of the source tree, served as
+`tools/launch.mjs` serves it (LAN layer on): the startup gate and the title's
+New Game, character creation step by step with the fixed seed (`--seed`,
+default `FULLRUN1`) typed into the Review's Seed field, the act map, a first
+fight played with the Attack cards in hand, the map walked to the act boss
+(later fights resolved through `window.__combat`), the boss left to kill the
+character with End Turn alone, Return to title, and a second New Game to a new
+act map. Red on any `console.error`, uncaught exception or browser-logged
+error over the drive; the optional `assets/sfx/<id>.ogg` sample 404s
+(`src/ui/audio.js`) are set aside by name and counted (about 18–19 a run;
+the count varies with timing). `--check` prints the verdict lines only; CI runs
+it in `ci.yml`'s *the build stamp and the cold boot in a real browser* job.
+About 4 minutes locally. `--selftest` (seconds, no browser; run by
+`tests/full-run-probe.test.mjs`) plants a `console.error`, an uncaught
+exception and non-sound 404s through the drive's own classifier and requires
+each red, and an optional SFX 404 set aside.
+
 Painted enemy art is selected in `src/content/enemyArt.js` and rendered through
 the shared `enemySprite()` asset function. The twelve PNGs in
 `assets/enemies-unity/` are unchanged imports from the Unity fork; retain their
