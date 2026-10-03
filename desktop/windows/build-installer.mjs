@@ -139,6 +139,8 @@ for (const f of packFiles.filter((f) => f.startsWith(`${high.name}.`))) cpSync(j
 writeFileSync(join(DATA, 'high-objects.tsv'), tsv(highRows));
 writeFileSync(join(DATA, 'base-objects.tsv'), tsv(baseRows));
 cpSync(join(HERE, 'fetch-hd-art.ps1'), join(DATA, 'fetch-hd-art.ps1'));
+for (const script of ['art-options.ps1', 'art-releases.ps1']) cpSync(join(HERE, script), join(DATA, script));
+cpSync(join(ROOT, 'art-release.json'), join(DATA, 'art-release.json'));
 
 const HD_MB = Math.round(highOnlyBytes / 1e6);
 console.log(`build-installer: staged ${GAME}`);
@@ -262,6 +264,7 @@ run(makensis, [
   define('LICENSE_FILE', join(ROOT, 'LICENSE')),
   define('OUTFILE', SETUP),
   define('HD_URL', HD_URL),
+  define('HD_TAG', pin.tag),
   define('HD_SHA256', highPin.sha256),
   define('HD_MB', String(HD_MB)),
   define('HD_SIZE_KB', String(Math.ceil(highOnlyBytes / 1024))),
