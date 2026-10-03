@@ -34,6 +34,7 @@ A receipt here names the pull request that landed a change; inventing one to fit
 
 ## 2026-10-03
 
+- **Behind the scenes: the build-number check no longer passes when the previous build's record is missing or unreadable** ([#1519](https://github.com/cehinds/AshenSpire/pull/1519), `0.7.1.828`). Nothing you play changes. The automatic check that each new build's number is higher than the last one treated a previous build record it could not open (a damaged copy of the history), or one too garbled to read, as if there had been no record at all, and passed. It now stops and says it could not tell. A shallow copy that holds no previous build at all still passes, as before.
 - **Quick start: from the title to your first card in six presses** ([#1518](https://github.com/cehinds/AshenSpire/pull/1518), `0.7.1.826`). The title has a new Quick start. It begins a climb at once with the recommended character (the Reaver, no keepsake, Standard stats, the class's own starting gear), a fresh seed and the first empty save slot, and skips the opening. The opening still plays on your next ordinary climb. If every slot is full it asks before replacing slot 1, as Begin does. A new player now reaches their first card play in 6 inputs, down from 24 through New and character creation. New still lets you choose everything.
 
 ## 2026-10-02
