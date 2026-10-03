@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "versionModule": "raw authoring module; no server digest injection",
+  "crossClassSpell": "cometFragment",
+  "responsive": [
+    {
+      "width": 374,
+      "left": 8,
+      "right": 382,
+      "scroll": 372,
+      "client": 372
+    },
+    {
+      "width": 304,
+      "left": 8,
+      "right": 312,
+      "scroll": 302,
+      "client": 302
+    }
+  ],
+  "errors": []
+}
