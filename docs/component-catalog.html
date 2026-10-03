@@ -395,6 +395,7 @@ const V = {
   relicChoiceCard:'<div class="mini"><div class="mini-panel" style="width:220px;height:auto;padding:10px"><b>GOLDEN SPROUT</b><br><span class="mini-label">Heal 3 HP at combat start.</span></div></div>'
 };
 const SEMANTIC_COMPONENTS = [
+ ['installer-art-options','desktop/windows/art-releases.ps1','desktop/windows/art-options.ps1 + installer.nsi','menu','Windows installer artwork page','Choose repository branch and published art version; show installed, required and latest versions; install compatible art or save a verified zip separately; disclose AI artwork provenance.','installerArt'],
  ['book-art','BOOK_ART_PRESETS + bookArtRecipe + bookArtLayers','bookArt.renderBookArt','primitive','Market + Armoury + reading + Book Atelier','Painted binding, full-binding color, optional tooling and engraved metal emblem. Three cover styles, eleven painted emblems with three treatments, and per-book editable recipes.','bookArt'],
  ['book-learning','skillBookReadPlan + bookLessons','bookLearning.openBookLearning','menu','Armoury + library preview','A searchable lesson list with a live card preview. Universal books choose an XP track. Read and learn grants XP and a lesson atomically; class books roll configurable combat-card and feat bonuses on every reading. Cancel keeps the book.','bookLearning'],
  ['skill-book-offer','consumables + consumablePurchasePlan + ui/screens/shop.json components.bookOffers','skillBookOffer.renderSkillBookOffer + shop.mountShop','primitive','Market skill-book shelf','Equal-height full-width book / details / Buy rows. Native purchase review and hold, revalidated stock and purse, readable refusal, configured XP and prices. Artwork and text remain separate.','skillBookOffer'],
@@ -647,10 +648,7 @@ const RENDERED_ARMOURY_COMPONENTS = [
 ].map(([id,owner,reuse,purpose,visual]) => ({
   id, model:'asset-data/components/armoury.json', owner, group:'armoury-assets', reuse, purpose, visual,
 }));
-const C = [...SEMANTIC_COMPONENTS, ...RENDERED_ARMOURY_COMPONENTS, {
-  id:'installer-art-options', model:'desktop/windows/art-releases.ps1', owner:'desktop/windows/art-options.ps1 + installer.nsi', group:'menu',
-  reuse:'Windows installer artwork page', purpose:'Choose repository branch and published art version; show installed/required/latest versions; install compatible art or save a verified zip separately; disclose AI artwork provenance.', visual:'installerArt',
-}];
+const C = [...SEMANTIC_COMPONENTS, ...RENDERED_ARMOURY_COMPONENTS];
 const COMPOSITION = Object.freeze({
   'startup-gate':['startup-ash-field','startup-mark'],
   'art-load-notice':['art-load-notice-retry'],
