@@ -1,10 +1,11 @@
 import { combatHealthModel } from '../models/CombatHealthModel.js';
+import { tFull } from '../strings.js';
 import { attachTooltip, esc } from './tooltip.js';
 import { UI_COMPONENTS as UI, markUiComponent } from './uiComponents.js';
 
 // Keep the shared resource renderer's HP amount, fill and total trough length.
 // Badges use space inside that length; removing one gives it back to health.
-export function combatHealthRow(hp, values, { tooltips = true, blockHelp = 'Absorbs attack damage.', wardHelp = 'Block granted by magical guards. Absorbs attack damage after ordinary Block.' } = {}) {
+export function combatHealthRow(hp, values, { tooltips = true, blockHelp = tFull('combat.protection.block'), wardHelp = tFull('combat.protection.ward') } = {}) {
   if (!hp) return null;
   const model = combatHealthModel(values);
   const row = document.createElement('div');
