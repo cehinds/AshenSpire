@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1552",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Keep positioning controls clear of combatants",
+    "detail": "Place the Positioning toggle on the player side in portrait and between the teams on short landscape screens. Keep the browser overlap check reliable across authored formation sizes, and make Quick Start's browser check target fighters without pressing their intent buttons.",
+    "build": "0.7.1.869",
+    "pullRequest": 1552,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1552"
+  },
+  {
     "id": "pr-1550",
     "date": "2026-10-03",
     "group": "2026-10-03",

@@ -44,6 +44,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
 import { serve } from './serve.mjs';
+import { pointerTargetExpression } from './pointer-target.mjs';
 
 const ROOT = resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const BROWSERS = [
@@ -154,7 +155,10 @@ async function main() {
       const before = e.getBoundingClientRect();
       if (before.bottom > innerHeight || before.top < 0) e.scrollIntoView({ block: 'center' });
       const r = e.getBoundingClientRect();
-      const x = r.left + r.width / 2, y = r.top + r.height / 2;
+      // A fighter's centre can be an intent button. Count one real click on
+      // the requested target, using the same visible-point rule as motion.
+      const { x, y } = e.matches('.combatant') ? ${pointerTargetExpression(sel)}
+        : { x: r.left + r.width / 2, y: r.top + r.height / 2 };
       const hit = document.elementFromPoint(x, y);
       return { x, y, expected: e.textContent?.trim().slice(0, 100), hit: hit?.tagName + '.' + hit?.className, inside: !!hit && e.contains(hit) };
     })()`);

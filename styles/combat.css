@@ -1517,7 +1517,7 @@
 :root .combat[data-layout='formation'] .hud-relics > * { pointer-events: auto; }
 
 /* Authoring guides sit above the actors only while Positioning is open. */
-.combat-position-tools { position: absolute; top: calc(100px / var(--ui-zoom, 1)); right: 12px; z-index: 2600; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; max-width: calc(100% - 24px); pointer-events: none; }
+.combat-position-tools { position: absolute; top: calc(100px / var(--ui-zoom, 1)); left: 12px; z-index: 2600; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; max-width: calc(100% - 24px); pointer-events: none; }
 .combat-position-toggle, .combat-position-panel { pointer-events: auto; }
 .combat-position-panel { width: min(calc(320px / var(--ui-zoom, 1)), 100%); max-height: calc(50dvh / var(--ui-zoom, 1)); overflow: auto; padding: 14px; font-size: max(14px, calc(12px / var(--ui-zoom, 1))); background: #101c23f5; color: #e0e9e9; border: 1px solid #55707c; border-radius: 10px; box-shadow: 0 10px 30px #0008; }
 .position-guides { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2500; touch-action: none; pointer-events: auto; }
@@ -1564,4 +1564,7 @@
 @container(max-width: 850px) { .position-workbench-layout { grid-template-columns: 1fr; } .position-workbench [data-workbench-editor] { max-height: none; } .position-workbench-heading { flex-wrap: wrap; } }
 .formation-positioning .formation-help { font-size: max(11px, calc(11px / var(--ui-zoom, 1))); line-height: 1.5; opacity: .8; }
 .field[data-position-editing="true"] .formation-grid { display: block; }
-@media (max-width: 600px) { .combat-position-tools { right: 8px; } }
+@media (max-width: 600px) { .combat-position-tools { left: 8px; } }
+@media (min-width: 601px) and (max-height: 500px) {
+  .combat-position-tools { left: 40%; }
+}
