@@ -3,6 +3,7 @@
 // quantities, categories, or equipped locations.
 
 import { ownership, slotHand } from './loadout.js';
+import { learnedClassIds } from './classLibraryState.js';
 
 const ARMAMENT_CATEGORIES = Object.freeze({
   weapon: 'Weapon',
@@ -53,6 +54,14 @@ export function inventoryRows(registries, run, meta = {}) {
   const mine = ownership(registries, { meta, loadout: run && run.loadout });
   const locations = equipmentLocations(registries, run);
   const rows = [];
+  for (const id of learnedClassIds(run)) {
+    const cls = registries.classes?.get(id);
+    if (!cls) continue;
+    const equipped = !run.classUnequipped && run.class === id;
+    rows.push({ key: `class:${id}`, id, name: cls.name, category: 'Class', count: 1,
+      equippedLabels: equipped ? ['Core slot'] : [], classCard: true,
+      item: { ...cls, kind: 'class', icon: cls.glyph, blurb: cls.description } });
+  }
 
   for (const item of (equipment.armour || []).filter((piece) => piece.classId === run.class && mine.has(piece))) {
     rows.push({
