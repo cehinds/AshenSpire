@@ -6345,6 +6345,34 @@ export const uiStrings = [
     "tip": ""
   },
   {
+    "id": "formation.positioning.dragAnchors",
+    "extends": "",
+    "short": "Drag highlighted formation anchors",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "formation.positioning.selectMembers",
+    "extends": "",
+    "short": "Select member positions first.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "formation.positioning.groupLimit",
+    "extends": "",
+    "short": "Maximum of 32 groups reached.",
+    "full": "",
+    "tip": ""
+  },
+  {
+    "id": "formation.positioning.workbench",
+    "extends": "",
+    "short": "Positioning and sizing",
+    "full": "",
+    "tip": ""
+  },
+  {
     "id": "formation.layout.saveFailed",
     "extends": "",
     "short": "The layout could not be saved. Your preview is still available; try applying again.",

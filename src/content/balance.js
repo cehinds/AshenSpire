@@ -401,6 +401,16 @@ export const balance = {
 
   // ---- M2 run economy (SPEC §6) ---------------------------------------------
   rewards: {
+    sourceBonuses: {
+      combatFeatChancePct: 5,
+      classFeatChancePct: 100,
+      classCardChancePct: 25,
+      [NOTE]: {
+        combatFeatChancePct: 'Percent chance a won fight offers a feat, independently of its combat card.',
+        classFeatChancePct: 'Percent chance each class-track level offers a feat in addition to its class-tree upgrade.',
+        classCardChancePct: 'Percent chance each class-track level offers a combat card from the class pool, independently of its feat.',
+      },
+    },
     cardChoices: 3,
     // ×3 the first ladder (Constantine, 2026-09-04: "3x the amount for the
     // base") — cinders are granted on arrival at the reward door now, so the
@@ -442,9 +452,8 @@ export const balance = {
     flaskDropBasePct: 35,
     flaskDropStepPct: 10,
     // THE CARD REWARD SCHEDULE (SPEC §15.1): when a won fight offers a card
-    // row, and whether a level the fight bought adds one. Every default here
-    // reproduces the rewards before the schedule existed: every pool offers,
-    // a chance of 100 rolls nothing on `rewardRolls`, and no level card.
+    // row, and whether a level the fight bought adds one. Combat cards ship
+    // at 10% in every pool (owner, 2026-10-03).
     // Read by engine/encounters.js `rollCombatCardOffer`.
     cardRewards: {
       afterCombat: {
@@ -454,7 +463,7 @@ export const balance = {
         },
       },
       chancePct: {
-        normal: 100, elite: 100, boss: 100,
+        normal: 10, elite: 10, boss: 10,
         [NOTE]: {
           '{kind}': 'The percent chance that winning {pool} offers its card row. At 100 nothing is rolled; a miss says "No card this time."',
         },

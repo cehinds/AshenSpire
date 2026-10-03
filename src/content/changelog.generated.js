@@ -3,6 +3,26 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1543",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Place and size your combat formations with a live workbench",
+    "detail": "Move whole rows, columns, teams or custom groups, snap to a 50 px grid, resize characters, test mixed classes and enemies in 1×1, 2×2 or 2×3 layouts, and export the positioning as JSON. The supplied 1×1 and 2×2 layouts retain their own offsets. Spawns fill from opposite bottom corners. Combat now rolls a card at 10% and a separate feat at 5%; skill levels guarantee a card draft, while class levels keep their tree upgrade and add a guaranteed feat plus an independent 25% technique-card chance.",
+    "build": "0.7.1.859",
+    "pullRequest": 1543,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1543"
+  },
+  {
+    "id": "pr-1544",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Specify formation positioning and reward defaults",
+    "detail": "Record the approved mirrored spawn order, authored layout profiles and separate combat, skill and class reward rolls before implementation.",
+    "build": "0.7.1.857",
+    "pullRequest": 1544,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1544"
+  },
+  {
     "id": "pr-1541",
     "date": "2026-10-03",
     "group": "2026-10-03",
