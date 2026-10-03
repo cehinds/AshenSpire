@@ -61,10 +61,7 @@ function run(cmd, argv, opts = {}) {
   if (r.status !== 0) fail(`${cmd} exited ${r.status}`);
 }
 
-// ---- version and the pinned high release -----------------------------------
-const ordinal = JSON.parse(readFileSync(join(ROOT, 'buildordinal.json'), 'utf8'));
-const VERSION = `${ordinal.release}.${ordinal.ordinal}`;
-if (!/^\d+\.\d+\.\d+\.\d+$/.test(VERSION)) fail(`buildordinal.json gives version ${VERSION}, not a.b.c.d`);
+// ---- the pinned high release ---------------------------------------------------
 const pin = JSON.parse(readFileSync(join(ROOT, 'art-release.json'), 'utf8'));
 const highPin = pin.packs?.high;
 if (!highPin?.zip || !/^[0-9a-f]{64}$/.test(highPin.sha256 || '')) fail('art-release.json pins no high pack');
@@ -77,6 +74,11 @@ if (!WEB) {
   run(process.execPath, [join(ROOT, 'tools', 'bundle.mjs'), '--external-art', '--out', WEB], { cwd: ROOT });
 }
 if (!existsSync(join(WEB, 'AshenSpire.html'))) fail(`${WEB} holds no AshenSpire.html`);
+
+// ---- version: read after the web build, which can bump buildordinal.json --------
+const ordinal = JSON.parse(readFileSync(join(ROOT, 'buildordinal.json'), 'utf8'));
+const VERSION = `${ordinal.release}.${ordinal.ordinal}`;
+if (!/^\d+\.\d+\.\d+\.\d+$/.test(VERSION)) fail(`buildordinal.json gives version ${VERSION}, not a.b.c.d`);
 
 const packFiles = readdirSync(join(WEB, 'packs'));
 function indexOf(pack) {
@@ -206,6 +208,8 @@ for (const r of highRows) { files.push(`game/${r.path}`); dirs.add(`game/${dirna
 for (const f of packFiles.filter((f) => f.startsWith(`${high.name}.`))) files.push(`game/packs/${f}`);
 // The art step's log (fetch-hd-art.ps1 writes it, never the installer).
 files.push('install-data/hd-art.log');
+// …and the unused files a prune could not remove yet (read by the uninstaller first).
+files.push('install-data/orphans.txt');
 const win = (rel) => rel.split('/').join('\\');
 const uninstall = [...new Set(files)].sort().map((f) => `  Delete "$INSTDIR\\${win(f)}"`)
   .concat([...dirs].sort((a, b) => b.split('/').length - a.split('/').length || (a < b ? 1 : -1))

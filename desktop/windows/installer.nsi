@@ -258,6 +258,46 @@ FunctionEnd
 ; ---- uninstall ---------------------------------------------------------------------
 Section "Uninstall"
   !insertmacro CloseRunningGame "un"
+  ; Unused art files an earlier prune could not remove (fetch-hd-art.ps1 lists
+  ; them, one installer path per line), before the folders are emptied below.
+  ClearErrors
+  FileOpen $0 "$INSTDIR\install-data\orphans.txt" r
+  ${IfNot} ${Errors}
+    ${Do}
+      FileRead $0 $1
+      ${If} ${Errors}
+        ${Break}
+      ${EndIf}
+      ${Do}
+        StrCpy $2 $1 1 -1
+        ${If} $2 == "$\r"
+        ${OrIf} $2 == "$\n"
+          StrCpy $1 $1 -1
+        ${Else}
+          ${Break}
+        ${EndIf}
+      ${Loop}
+      ; Only object-store paths, and never one that climbs out with "..".
+      StrCpy $3 $1 13
+      ${If} $3 == "game\objects\"
+        StrCpy $4 0
+        StrCpy $5 "ok"
+        StrLen $6 $1
+        ${DoWhile} $4 < $6
+          StrCpy $3 $1 2 $4
+          ${If} $3 == ".."
+            StrCpy $5 "bad"
+            ${Break}
+          ${EndIf}
+          IntOp $4 $4 + 1
+        ${Loop}
+        ${If} $5 == "ok"
+          Delete "$INSTDIR\$1"
+        ${EndIf}
+      ${EndIf}
+    ${Loop}
+    FileClose $0
+  ${EndIf}
   ; Exactly the files the installer wrote, then the folder only if it is empty:
   ; nothing the player put there is removed.
 !include "${UNINSTALL_LIST}"

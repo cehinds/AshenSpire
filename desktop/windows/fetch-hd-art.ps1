@@ -26,7 +26,8 @@
 # exits 0 the game plays on the light art.
 #
 # Exit codes: 0 done · 2 download failed · 3 zip sha256 mismatch · 4 an object is
-# missing from the zip or does not match · 5 anything else.
+# missing from the zip or does not match · 5 anything else · 6 (Prune) some unused
+# files could not be removed yet (recorded in install-data\orphans.txt).
 # Runs on Windows PowerShell 5.1 (every Windows 10/11) and PowerShell 7.
 
 [CmdletBinding()]
@@ -236,14 +237,24 @@ function Invoke-Prune {
   if (-not (Test-Path -LiteralPath $objects)) { return }
   $root = (Resolve-Path -LiteralPath $Game).Path.TrimEnd('\', '/')
   $removed = 0
+  # A file that cannot be removed now (antivirus, another process) is recorded in
+  # install-data\orphans.txt: the next prune tries it again, and the uninstaller
+  # deletes what that file names. Rewritten on every prune.
+  $orphans = New-Object System.Collections.Generic.List[string]
   foreach ($f in Get-ChildItem -LiteralPath $objects -Recurse -File) {
     $rel = $f.FullName.Substring($root.Length + 1) -replace '\\', '/'
-    if (-not $keep.Contains($rel)) { Remove-Item -LiteralPath $f.FullName -Force; $removed++ }
+    if ($keep.Contains($rel)) { continue }
+    try { Remove-Item -LiteralPath $f.FullName -Force; $removed++ }
+    catch { $orphans.Add('game\' + $rel.Replace('/', '\')); Say "Could not remove $rel now: $($_.Exception.Message)" }
   }
   foreach ($d in Get-ChildItem -LiteralPath $objects -Directory) {
-    if (-not (Get-ChildItem -LiteralPath $d.FullName -Force)) { Remove-Item -LiteralPath $d.FullName -Force }
+    if (-not (Get-ChildItem -LiteralPath $d.FullName -Force)) { Remove-Item -LiteralPath $d.FullName -Force -ErrorAction SilentlyContinue }
   }
+  $orphanList = Join-Path $Data 'orphans.txt'
+  if ($orphans.Count) { [IO.File]::WriteAllText($orphanList, (($orphans | ForEach-Object { "$_`r`n" }) -join '')) }
+  elseif (Test-Path -LiteralPath $orphanList) { Remove-Item -LiteralPath $orphanList -Force }
   if ($removed) { Say "Removed $removed art files no installed pack uses." }
+  if ($orphans.Count) { Fail 6 "$($orphans.Count) unused art files could not be removed yet; they are listed in install-data\orphans.txt and will be removed later." }
 }
 
 try {
