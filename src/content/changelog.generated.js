@@ -3,6 +3,16 @@
 
 export const GENERATED_CHANGELOG = Object.freeze([
   {
+    "id": "pr-1520",
+    "date": "2026-10-03",
+    "group": "2026-10-03",
+    "summary": "Behind the scenes: a whole run is now played in a real browser",
+    "detail": "Nothing you play changes. A new automatic check starts the game from the title, creates a character on a fixed seed, plays a fight, walks the map to the act boss, dies to it, returns to the title and starts a new run, and fails if anything goes wrong on the way or an error is logged.",
+    "build": "0.7.1.830",
+    "pullRequest": 1520,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1520"
+  },
+  {
     "id": "pr-1524",
     "date": "2026-10-03",
     "group": "2026-10-03",
