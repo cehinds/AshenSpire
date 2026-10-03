@@ -8,9 +8,29 @@ export const GENERATED_CHANGELOG = Object.freeze([
     "group": "2026-10-02",
     "summary": "Behind the scenes: every owner decision has its own number",
     "detail": "Nothing you play changes. Two decisions in the project's finish list were both numbered D38, so a note citing D38 could mean either; the hit sound tiers decision is now D48, and a test fails if two decisions ever share a number again.",
-    "build": "0.7.1.803",
+    "build": "0.7.1.805",
     "pullRequest": 1493,
     "url": "https://github.com/cehinds/AshenSpire/pull/1493"
+  },
+  {
+    "id": "pr-1500",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: builds and checks read the game's light art, fonts, music and map tiles from the art release",
+    "detail": "Nothing you play changes. Every build, test and preview page now takes the light art, the lore fonts, the shipped score and the map detail tiles from the verified art release instead of the copies still kept in this repository, so those copies can be removed in a later step.",
+    "build": "0.7.1.804",
+    "pullRequest": 1500,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1500"
+  },
+  {
+    "id": "pr-1505",
+    "date": "2026-10-02",
+    "group": "2026-10-02",
+    "summary": "Behind the scenes: the startup-gate checks run again",
+    "detail": "Nothing you play changes. The checks that plant known bugs in a scratch copy of the game did not copy the two files that name the pinned art release. So the copy could not stamp a build, and the checks failed before testing anything.",
+    "build": "0.7.1.803",
+    "pullRequest": 1505,
+    "url": "https://github.com/cehinds/AshenSpire/pull/1505"
   },
   {
     "id": "pr-1509",

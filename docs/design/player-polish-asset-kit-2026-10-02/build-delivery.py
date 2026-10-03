@@ -4,6 +4,10 @@ from html import escape
 import os,json, hashlib, math, shutil, re, zipfile, xml.etree.ElementTree as ET
 ROOT=Path(__file__).resolve().parent
 REPO=Path(os.environ.get('ASHENSPIRE_REPO', ROOT.parents[2])).resolve()
+# The fonts come from the verified common pack (tools/art-source.mjs, step 12),
+# which alone decides whether the assets/fonts/ tree may still stand in for it.
+import subprocess
+FONT_DIR=REPO/subprocess.run(['node',str(REPO/'tools/art-source.mjs'),'--dir','assets/fonts'],check=True,capture_output=True,text=True,cwd=REPO).stdout.strip()
 def write(p,s): (ROOT/p).write_text(s,encoding='utf-8',newline='\n')
 def save(p,obj): write(p,json.dumps(obj,indent=2)+'\n')
 def digest(p): return hashlib.sha256(p.read_bytes()).hexdigest()
@@ -29,7 +33,7 @@ vectors=[dict(a,id='ui/'+a['id'],file='ui/'+a['file'],origin='new-original-vecto
 canonical=[dict(a,id='canonical/'+a['id'],kind='canonical',bytes=(ROOT/a['file']).stat().st_size) for a in canon]
 fonts=[]
 for n in ['cinzel-400-normal.woff2','cormorant-garamond-500-normal.woff2','inter-400-normal.woff2']:
-    out=ROOT/'fonts'/n;out.parent.mkdir(exist_ok=True);shutil.copy2(REPO/'assets/fonts'/n,out)
+    out=ROOT/'fonts'/n;out.parent.mkdir(exist_ok=True);shutil.copy2(FONT_DIR/n,out)
     fonts.append({'file':'fonts/'+n,'source':'assets/fonts/'+n,'sha256':digest(out),'bytes':out.stat().st_size,'origin':'canonical-font-copy'})
 shutil.copy2(REPO/'asset-data/fonts/OFL.txt',ROOT/'fonts/OFL.txt')
 

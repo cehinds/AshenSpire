@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import { detailLevel, visibleTiles } from '../src/ui/models/MapDetailModel.js';
 import { MAP_ART } from '../src/content/mapArt.generated.js';
 import { MAP_PRESENTATION } from '../src/content/mapPresentation.js';
-import { existsSync } from 'node:fs';
+import { manifestIds } from '../tools/art-source.mjs';
+// Step 12: an id ships when art-manifest.json lists it (the pinned packs carry
+// exactly those), not when a tree in this checkout happens to hold the file.
+const SHIPPED = manifestIds();
 
 const levels = [512,1024,2048,4096].map(edge=>({edge,width:edge,height:edge}));
 test('detail adapts to displayed pixels, caps mobile density and resists boundary chatter',()=>{
@@ -25,7 +28,7 @@ test('tile selection clips to a visible region and preserves partial edge geomet
 });
 test('every derived tile address in each manifest resolves to a shipped external file',()=>{
   for(const art of Object.values(MAP_ART)) for(const level of art.levels) {
-    for(const tile of visibleTiles(level,{x0:0,y0:0,x1:1,y1:1})) assert.ok(existsSync(`map-detail/${art.assetHash}/${tile.key}.webp`));
+    for(const tile of visibleTiles(level,{x0:0,y0:0,x1:1,y1:1})) assert.ok(SHIPPED.has(`map-detail/${art.assetHash}/${tile.key}.webp`), `map-detail/${art.assetHash}/${tile.key}.webp`);
   }
   assert.ok(MAP_PRESENTATION.concurrentLoads<=4);
 });

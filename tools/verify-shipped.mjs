@@ -242,7 +242,7 @@ export function checkMobileFits(name, mobileBytes, fullBytes, budget = MOBILE_BU
     return {
       ok: false, code: 'MOBILE_BUDGET',
       detail: `${name} is not a mobile edition: ${problems.join('; ')}. Tighten tools/mobileart-policy.mjs, ` +
-        `regenerate assets-mobile/ (node tools/mobile-art.mjs), rebuild.`,
+        `regenerate the light tier (node tools/mobile-art.mjs; from step 13, in the art repository), rebuild.`,
     };
   }
   return {
